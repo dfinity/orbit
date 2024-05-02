@@ -1,10 +1,12 @@
 use super::TimestampRfc3339;
-use crate::{RequestOperationTypeDTO, UuidDTO};
+use crate::{EvaluationSummaryReasonDTO, RequestOperationTypeDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 use std::fmt::{Display, Formatter};
 
 pub const SYSTEM_MESSAGE_NOTIFICATION_TYPE: &str = "system-message";
 pub const REQUEST_CREATED_NOTIFICATION_TYPE: &str = "request-created";
+pub const REQUEST_FAILED_NOTIFICATION_TYPE: &str = "request-failed";
+pub const REQUEST_REJECTED_NOTIFICATION_TYPE: &str = "request-rejected";
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum NotificationStatusDTO {
@@ -16,6 +18,8 @@ pub enum NotificationStatusDTO {
 pub enum NotificationTypeDTO {
     SystemMessage,
     RequestCreated(RequestCreatedNotificationDTO),
+    RequestFailed(RequestFailedNotificationDTO),
+    RequestRejected(RequestRejectedNotificationDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -24,6 +28,20 @@ pub struct RequestCreatedNotificationDTO {
     pub operation_type: RequestOperationTypeDTO,
     pub account_id: Option<UuidDTO>,
     pub user_id: Option<UuidDTO>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct RequestFailedNotificationDTO {
+    pub request_id: UuidDTO,
+    pub operation_type: RequestOperationTypeDTO,
+    pub reason: Option<String>,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct RequestRejectedNotificationDTO {
+    pub request_id: UuidDTO,
+    pub operation_type: RequestOperationTypeDTO,
+    pub reasons: Option<Vec<EvaluationSummaryReasonDTO>>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

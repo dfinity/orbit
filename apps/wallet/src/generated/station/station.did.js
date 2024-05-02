@@ -753,7 +753,17 @@ export const idlFactory = ({ IDL }) => {
       'operation_type' : RequestOperationType,
       'user_id' : IDL.Opt(UUID),
     }),
+    'RequestRejected' : IDL.Record({
+      'request_id' : UUID,
+      'reasons' : IDL.Opt(IDL.Vec(EvaluationSummaryReason)),
+      'operation_type' : RequestOperationType,
+    }),
     'SystemMessage' : IDL.Null,
+    'RequestFailed' : IDL.Record({
+      'request_id' : UUID,
+      'operation_type' : RequestOperationType,
+      'reason' : IDL.Opt(IDL.Text),
+    }),
   });
   const Notification = IDL.Record({
     'id' : UUID,

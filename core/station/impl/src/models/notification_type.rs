@@ -1,6 +1,9 @@
 use orbit_essentials::storable;
 use orbit_essentials::types::UUID;
-use station_api::{REQUEST_CREATED_NOTIFICATION_TYPE, SYSTEM_MESSAGE_NOTIFICATION_TYPE};
+use station_api::{
+    REQUEST_CREATED_NOTIFICATION_TYPE, REQUEST_FAILED_NOTIFICATION_TYPE,
+    REQUEST_REJECTED_NOTIFICATION_TYPE, SYSTEM_MESSAGE_NOTIFICATION_TYPE,
+};
 use std::fmt::{Display, Formatter};
 
 #[storable]
@@ -8,13 +11,19 @@ use std::fmt::{Display, Formatter};
 pub enum NotificationType {
     SystemMessage,
     RequestCreated(RequestCreatedNotification),
+    RequestFailed(RequestFailedNotification),
+    RequestRejected(RequestRejectedNotification),
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct RequestCreatedNotification {
+pub struct RequestNotification {
     pub request_id: UUID,
 }
+
+pub type RequestCreatedNotification = RequestNotification;
+pub type RequestFailedNotification = RequestNotification;
+pub type RequestRejectedNotification = RequestNotification;
 
 impl Display for NotificationType {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -22,6 +31,12 @@ impl Display for NotificationType {
             NotificationType::SystemMessage => write!(f, "{}", SYSTEM_MESSAGE_NOTIFICATION_TYPE),
             NotificationType::RequestCreated(_) => {
                 write!(f, "{}", REQUEST_CREATED_NOTIFICATION_TYPE)
+            }
+            NotificationType::RequestFailed(_) => {
+                write!(f, "{}", REQUEST_FAILED_NOTIFICATION_TYPE)
+            }
+            NotificationType::RequestRejected(_) => {
+                write!(f, "{}", REQUEST_REJECTED_NOTIFICATION_TYPE)
             }
         }
     }
@@ -43,6 +58,22 @@ mod tests {
             })
             .to_string(),
             "request-created"
+        );
+
+        assert_eq!(
+            NotificationType::RequestFailed(RequestFailedNotification {
+                request_id: [0; 16]
+            })
+            .to_string(),
+            "request-failed"
+        );
+
+        assert_eq!(
+            NotificationType::RequestRejected(RequestRejectedNotification {
+                request_id: [0; 16]
+            })
+            .to_string(),
+            "request-rejected"
         );
     }
 }

@@ -182,6 +182,27 @@ type NotificationType = variant {
     // User id is available for relevant request types.
     user_id : opt UUID;
   };
+  // Notification for the failure of a request.
+  // This should be used to alert the requester when a request has failed to be executed.
+  RequestFailed : record {
+    // The request id that was created.
+    request_id : UUID;
+    // The type of the request (e.g. "transfer").
+    operation_type : RequestOperationType;
+    // Details about the failure.
+    reason : opt text;
+  };
+
+  // Notification for the rejection of a request.
+  // This should be used to alert the requester when a request has been rejected.
+  RequestRejected : record {
+    // The request id that was created.
+    request_id : UUID;
+    // The type of the request (e.g. "transfer").
+    operation_type : RequestOperationType;
+    // List of reasons why the request was rejected.
+    reasons : opt vec EvaluationSummaryReason;
+  };
 };
 
 type NotificationTypeInput = variant {

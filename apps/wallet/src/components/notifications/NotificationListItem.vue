@@ -35,12 +35,16 @@
 <script lang="ts" setup>
 import { mdiClockOutline, mdiClose, mdiEmailOpenOutline } from '@mdi/js';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import TextOverflow from '~/components/TextOverflow.vue';
 import { REQUEST_DIALOG_QUERY_PARAM } from '~/core/constants.core';
 import { Notification, UUID } from '~/generated/station/station.did';
 import { formatLocaleDatetimeString } from '~/utils/date.utils';
+import { statusReasonsToTextSummary } from '~/utils/evaluation.utils';
 import { variantIs } from '~/utils/helper.utils';
+
+const i18n = useI18n();
 
 const props = withDefaults(
   defineProps<{
@@ -62,17 +66,38 @@ const notification = computed({
   set: value => emit('update:notification', value),
 });
 
-const message = computed(() => notification.value.message?.[0]);
+const message = computed(() => {
+  if (
+    variantIs(notification.value.notification_type, 'RequestFailed') &&
+    notification.value.notification_type.RequestFailed.reason[0]
+  ) {
+    return i18n.t('app.notifications_request_failed', {
+      reason: notification.value.notification_type.RequestFailed.reason[0],
+    });
+  } else if (
+    variantIs(notification.value.notification_type, 'RequestRejected') &&
+    notification.value.notification_type.RequestRejected.reasons[0]
+  ) {
+    return statusReasonsToTextSummary(
+      { Rejected: null },
+      notification.value.notification_type.RequestRejected.reasons[0],
+    );
+  } else {
+    return notification.value.message?.[0];
+  }
+});
 
 const isRead = computed(() => variantIs(notification.value.status, 'Read'));
 const router = useRouter();
 
 const onRowClick = () => {
-  if (!variantIs(notification.value.notification_type, 'RequestCreated')) {
-    return;
+  if (variantIs(notification.value.notification_type, 'RequestCreated')) {
+    openRequest(notification.value.notification_type.RequestCreated.request_id);
+  } else if (variantIs(notification.value.notification_type, 'RequestRejected')) {
+    openRequest(notification.value.notification_type.RequestRejected.request_id);
+  } else if (variantIs(notification.value.notification_type, 'RequestFailed')) {
+    openRequest(notification.value.notification_type.RequestFailed.request_id);
   }
-
-  openRequest(notification.value.notification_type.RequestCreated.request_id);
 };
 
 const openRequest = (requestId: UUID): void => {

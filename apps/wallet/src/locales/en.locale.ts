@@ -52,6 +52,7 @@ export default {
     notifications_panel_title: 'Notifications',
     notifications_panel_no_results: "You're all caught up.",
     notifications_panel_read_all: 'Read all',
+    notifications_request_failed: 'Request failed: {reason}',
     btn_home_back: 'Back to home',
     no_download_available: 'No download available.',
     failed_to_download_item: 'Failed to download {item}, please try again.',

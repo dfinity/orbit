@@ -164,9 +164,15 @@ const loadRequest = async (): Promise<DataType> => {
   station.notifications.items.forEach(notification => {
     if (
       !notification.loading &&
-      variantIs(notification.data.notification_type, 'RequestCreated') &&
       !variantIs(notification.data.status, 'Read') &&
-      notification.data.notification_type.RequestCreated.request_id === currentRequestId.value
+      ((variantIs(notification.data.notification_type, 'RequestCreated') &&
+        notification.data.notification_type.RequestCreated.request_id === currentRequestId.value) ||
+        (variantIs(notification.data.notification_type, 'RequestFailed') &&
+          notification.data.notification_type.RequestFailed.request_id ===
+            currentRequestId.value) ||
+        (variantIs(notification.data.notification_type, 'RequestRejected') &&
+          notification.data.notification_type.RequestRejected.request_id ===
+            currentRequestId.value))
     ) {
       station.markNotificationRead(notification.data.id, true);
     }

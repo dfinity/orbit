@@ -502,7 +502,21 @@ export type NotificationType = {
       'user_id' : [] | [UUID],
     }
   } |
-  { 'SystemMessage' : null };
+  {
+    'RequestRejected' : {
+      'request_id' : UUID,
+      'reasons' : [] | [Array<EvaluationSummaryReason>],
+      'operation_type' : RequestOperationType,
+    }
+  } |
+  { 'SystemMessage' : null } |
+  {
+    'RequestFailed' : {
+      'request_id' : UUID,
+      'operation_type' : RequestOperationType,
+      'reason' : [] | [string],
+    }
+  };
 export type NotificationTypeInput = { 'RequestCreated' : null } |
   { 'SystemMessage' : null };
 export interface PaginationInput {

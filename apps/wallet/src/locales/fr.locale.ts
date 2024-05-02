@@ -53,6 +53,7 @@ export default {
     notifications_panel_title: 'Notifications',
     notifications_panel_no_results: 'Vous êtes à jour.',
     notifications_panel_read_all: 'Tout lire',
+    notifications_request_failed: 'Échec de la requête: {reason}',
     btn_home_back: "Page d'acceuil",
     no_download_available: 'Pas de téléchargement disponible',
     failed_to_download_item: 'Échec de téléchargement {item}, veuillez essayer de nouveau.',
