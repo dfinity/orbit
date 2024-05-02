@@ -1,11 +1,10 @@
 use crate::interfaces::{
     NnsIndexCanisterInitPayload, NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload,
 };
-use crate::utils::{controller_test_id, minter_test_id, update_canister_settings};
+use crate::utils::{controller_test_id, minter_test_id, set_controllers};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use control_panel_api::UploadCanisterModulesInput;
-use ic_cdk::api::management_canister::main::CanisterSettings;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{PocketIc, PocketIcBuilder};
 use station_api::{AdminInitInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
@@ -138,15 +137,7 @@ fn install_canisters(
     let control_panel = create_canister(env, controller);
     let station = create_canister(env, controller);
 
-    update_canister_settings(
-        env,
-        Some(controller),
-        station,
-        CanisterSettings {
-            controllers: Some(vec![controller, station]),
-            ..Default::default()
-        },
-    );
+    set_controllers(env, Some(controller), station, vec![controller, station]);
 
     let control_panel_wasm = get_canister_wasm("control_panel").to_vec();
     env.install_canister(

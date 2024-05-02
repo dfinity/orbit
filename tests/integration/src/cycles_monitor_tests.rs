@@ -159,7 +159,7 @@ fn successful_monitors_stations_and_tops_up() {
 
     // wait for the fund manager to complete and top up the cycles
     env.advance_time(Duration::from_secs(24 * 60 * 60));
-    for _ in 0..2 {
+    for _ in 0..3 {
         env.tick();
     }
 
