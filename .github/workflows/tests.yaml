@@ -151,13 +151,6 @@ jobs:
           node-version: 20
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@main
-      - name: 'Run sccache-cache'
-        uses: mozilla-actions/sccache-action@v0.0.4
-      - name: 'Download Artifacts'
-        uses: actions/download-artifact@v3
-        with:
-          name: integration-tests
-          path: tests/integration/wasms
       - name: 'Start local replica'
         run: dfx start --clean --host 127.0.0.1:4943 --background
       - name: 'Update /etc/hosts'
