@@ -42,12 +42,12 @@ impl CanisterService {
         Ok(())
     }
 
-    pub async fn upload_canister_modules(&self, modules: UploadCanisterModulesInput) -> ServiceResult<()> {
+    pub async fn upload_canister_modules(&self, input: UploadCanisterModulesInput) -> ServiceResult<()> {
         self.assert_controller(&CallContext::get(), "upload_canister_modules".to_string())?;
 
         let mut config = canister_config().unwrap_or_default();
-        config.upgrader_wasm_module = modules.upgrader_wasm_module;
-        config.station_wasm_module = modules.station_wasm_module;
+        config.upgrader_wasm_module = input.upgrader_wasm_module;
+        config.station_wasm_module = input.station_wasm_module;
         write_canister_config(config);
 
         Ok(())

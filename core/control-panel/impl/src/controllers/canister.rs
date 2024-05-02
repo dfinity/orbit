@@ -18,8 +18,8 @@ pub const USER_REGISTRATION_RATE: u32 = 100;
 pub const USER_REGISTRATION_LIMIT_PERIOD: Duration = Duration::from_secs(MINUTE);
 
 #[update]
-async fn upload_canister_modules(modules: UploadCanisterModulesInput) -> ApiResult<()> {
-    CANISTER_SERVICE.upload_canister_modules(modules).await
+async fn upload_canister_modules(input: UploadCanisterModulesInput) -> ApiResult<()> {
+    CANISTER_SERVICE.upload_canister_modules(input).await
 }
 
 fn init_timers_fn() {
