@@ -1,5 +1,8 @@
 //! Various error types for failure scenarios.
 
+mod canister;
+pub use canister::*;
+
 mod user;
 pub use user::*;
 

@@ -211,26 +211,20 @@ type CanDeployStationResult = variant {
   Err : ApiError;
 };
 
-// The init configuration for the control panel.
-type CanisterInit = record {
+// The canister modules required for the control panel.
+type UploadCanisterModulesInput = record {
   // The upgrader wasm module to use for the station canister.
   upgrader_wasm_module : blob;
   // The station wasm module to use.
   station_wasm_module : blob;
 };
 
-// The upgrade configuration for the control panel.
-type CanisterUpgrade = record {
-  // The updated wasm canister module to use for the upgrader canister.
-  upgrader_wasm_module : opt blob;
-  // The updated wasm canister module to use for the station canister.
-  station_wasm_module : opt blob;
-};
-
-// The install configuration for the control panel.
-type CanisterInstall = variant {
-  Init : CanisterInit;
-  Upgrade : CanisterUpgrade;
+// The result of uploading canister modules.
+type UploadUploadCanisterModulesInputResult = variant {
+  // Successfull operation result.
+  Ok;
+  // The error that occurred during the operation.
+  Err : ApiError;
 };
 
 type HeaderField = record { text; text };
@@ -249,7 +243,9 @@ type HttpResponse = record {
 };
 
 // The control panel service definition.
-service : (opt CanisterInstall) -> {
+service : () -> {
+  // Uploads the canister modules for the station and upgrader canisters.
+  upload_canister_modules : (UploadCanisterModulesInput) -> (UploadUploadCanisterModulesInputResult);
   // Set the last active time for the user associated with the caller.
   set_user_active : () -> (SetUserActiveResult);
   // Get the user information for the caller.
