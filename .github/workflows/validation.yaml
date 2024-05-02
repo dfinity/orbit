@@ -67,7 +67,7 @@ jobs:
       - name: 'Run dfx generate'
         run: |
           dfx generate control_panel
-          dfx generate wallet
+          dfx generate station
       - name: 'Check that no file changed'
         run: git diff --exit-code
   validate-rust:
@@ -80,6 +80,7 @@ jobs:
         run: |
           cargo fmt --all -- --check
           cargo clippy --locked --verbose --tests --benches --workspace -- -D clippy::all
+          cargo clippy --locked --verbose --target wasm32-unknown-unknown -p control-panel -p station -p upgrader -- -D clippy::all
         env:
           RUST_BACKTRACE: 1
   validate-node:

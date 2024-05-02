@@ -37,8 +37,8 @@ Options:
   --init-icp-index fresh installs the icp index canister, used to query the ledger transactions
   --init-icp-ledger fresh installs the icp ledger canister, the current identity will be credited with ICP tokens
   --init-internet-identity fresh installs the internet identity canister
-  --init-ui fresh installs the ui canister
-  --candid-generate generates the code for the candid specifications that the wallet uses
+  --init-app-wallet fresh installs the Orbit Wallet application
+  --candid-generate generates the code for the candid specifications that the Orbit applications are using
   --approve-waiting-list approves the given principal to the waiting list
 EOF
 }
@@ -156,15 +156,15 @@ function uninstall_control_panel() {
 function install_control_panel() {
   # Builds the dependencies and generates the WASM files
   build_wasm upgrader
-  build_wasm wallet
+  build_wasm station
 
   # Read the WASM files and convert them to hex format
   upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
-  wallet_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/wallet.wasm.gz | sed 's/../\\&/g')
+  station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/station.wasm.gz | sed 's/../\\&/g')
 
   dfx canister create --specified-id $CANISTER_ID_CONTROL_PANEL control_panel
   dfx build control_panel
-  dfx canister install control_panel --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; wallet_wasm_module = blob \"$wallet_wasm_module_bytes\"; } })")
+  dfx canister install control_panel --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = blob \"$station_wasm_module_bytes\"; } })")
 }
 
 function setup_control_panel() {
@@ -172,21 +172,21 @@ function setup_control_panel() {
   install_control_panel
 }
 
-function uninstall_ui() {
-  dfx canister delete ui -y >/dev/null 2>&1 || true
+function uninstall_app_wallet() {
+  dfx canister delete app_wallet -y >/dev/null 2>&1 || true
 }
 
-function install_ui() {
-  BUILD_MODE=local dfx deploy --specified-id $CANISTER_ID_UI ui
+function install_app_wallet() {
+  BUILD_MODE=local dfx deploy --specified-id $CANISTER_ID_UI app_wallet
 }
 
-function setup_ui() {
-  uninstall_ui
-  install_ui
+function setup_app_wallet() {
+  uninstall_app_wallet
+  install_app_wallet
 }
 
 function candid_generate() {
-  dfx generate wallet
+  dfx generate station
   dfx generate control_panel
   dfx generate icp_index
   dfx generate internet_identity
@@ -244,7 +244,7 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_icp_index
     exec_function setup_internet_identity
     exec_function setup_control_panel
-    exec_function setup_ui
+    exec_function setup_app_wallet
     echo
     ;;
   --init-icp-ledger)
@@ -265,10 +265,10 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_control_panel
     echo
     ;;
-  --init-ui)
+  --init-app-wallet)
     shift
     exec_function setup_devenv
-    exec_function setup_ui
+    exec_function setup_app_wallet
     echo
     ;;
   --candid-generate)

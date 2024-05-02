@@ -1,0 +1,37 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "control-panel"
+version = "0.1.0"
+edition = "2021"
+authors = ["DFINITY Stiftung"]
+license = "Apache-2.0"
+include = ["src", "Cargo.toml"]
+homepage = "https://github.com/dfinity/orbit#readme"
+repository = "https://github.com/dfinity/orbit"
+
+[lib]
+crate-type = ["cdylib"]
+bench = false
+
+[dependencies]
+candid = { workspace = true }
+canfund = { workspace = true }
+orbit-essentials = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic-stable-structures = { workspace = true }
+lazy_static = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_cbor = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true, features = ["serde", "v4"] }
+control-panel-api = { workspace = true }
+station-api = { workspace = true }
+email_address = "0.2.4"
+
+[dev-dependencies]
+candid_parser = { workspace = true }
+rstest = { workspace = true }
+tokio = { workspace = true, features = ["full"] }

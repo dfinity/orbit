@@ -1,5 +1,5 @@
 {
-  "name": "orbit-wallet",
+  "name": "@dfinity/orbit",
   "private": true,
   "scripts": {
     "build": "pnpm run -r build",

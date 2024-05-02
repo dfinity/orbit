@@ -1,0 +1,20 @@
+[package]
+name = "integration-tests"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+candid = { workspace = true }
+candid_parser = { workspace = true }
+hex = { workspace = true }
+orbit-essentials = { workspace = true }
+ic-cdk = { workspace = true }
+ic-ledger-types = { workspace = true }
+lazy_static = { workspace = true }
+num-bigint = { workspace = true }
+pocket-ic = { workspace = true }
+sha2 = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+control-panel-api = { workspace = true }
+upgrader-api = { workspace = true }
+station-api = { workspace = true }

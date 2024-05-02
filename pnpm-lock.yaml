@@ -45,7 +45,7 @@ importers:
         specifier: 2.0.6
         version: 2.0.6(typescript@5.4.2)
 
-  canisters/ui:
+  apps/wallet:
     dependencies:
       '@dfinity/agent':
         specifier: 1.0.1
@@ -53,6 +53,9 @@ importers:
       '@dfinity/auth-client':
         specifier: 1.0.1
         version: 1.0.1(@dfinity/agent@1.0.1)(@dfinity/identity@1.0.1)(@dfinity/principal@1.0.1)
+      '@dfinity/candid':
+        specifier: 1.0.1
+        version: 1.0.1(@dfinity/principal@1.0.1)
       '@dfinity/identity':
         specifier: 1.0.1
         version: 1.0.1(@dfinity/agent@1.0.1)(@dfinity/principal@1.0.1)(@peculiar/webcrypto@1.4.3)
@@ -1252,12 +1255,8 @@ packages:
       '@vue/compiler-dom': 3.4.21
       '@vue/shared': 3.4.21
 
-  /@vue/devtools-api@6.5.0:
-    resolution: {integrity: sha512-o9KfBeaBmCKl10usN4crU53fYtC1r7jJwdGKjPT24t348rHxgfpZ0xL3Xm/gLUYnc0oTp8LAmrxOeLyu6tbk2Q==}
-
   /@vue/devtools-api@6.6.1:
     resolution: {integrity: sha512-LgPscpE3Vs0x96PzSSB4IGVSZXZBZHpfxs+ZA1d+VEPwHdOXowy/Y2CsvCAIFrf+ssVU1pD1jidj505EpUnfbA==}
-    dev: false
 
   /@vue/language-core@2.0.6(typescript@5.4.2):
     resolution: {integrity: sha512-UzqU12tzf9XLqRO3TiWPwRNpP4fyUzE6MAfOQWQNZ4jy6a30ARRUpmODDKq6O8C4goMc2AlPqTmjOHPjHkilSg==}
@@ -1979,7 +1978,7 @@ packages:
       '@one-ini/wasm': 0.1.1
       commander: 10.0.1
       minimatch: 9.0.1
-      semver: 7.5.4
+      semver: 7.6.0
     dev: true
 
   /elliptic@6.5.4:
@@ -3273,7 +3272,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@vue/devtools-api': 6.5.0
+      '@vue/devtools-api': 6.6.1
       typescript: 5.4.2
       vue: 3.4.21(typescript@5.4.2)
       vue-demi: 0.14.6(vue@3.4.21)
@@ -3392,11 +3391,6 @@ packages:
 
   /punycode@1.4.1:
     resolution: {integrity: sha512-jmYNElW7yvO7TV33CjSmvSiE2yco3bV2czu/OzDKdMNVZQWfxCblURLhf+47syQRBntjfLdd/H0egrzIG+oaFQ==}
-    dev: true
-
-  /punycode@2.3.0:
-    resolution: {integrity: sha512-rRV+zQD8tVFys26lAGR9WUuS4iUAngJScM+ZRSKtvl5tKeZ2t5bvdNFdNHBW9FWR4guGHlgmsZ1G7BSm2wTbuA==}
-    engines: {node: '>=6'}
     dev: true
 
   /punycode@2.3.1:
@@ -3876,7 +3870,7 @@ packages:
     engines: {node: '>=6'}
     dependencies:
       psl: 1.9.0
-      punycode: 2.3.0
+      punycode: 2.3.1
       universalify: 0.2.0
       url-parse: 1.5.10
     dev: true
@@ -4219,7 +4213,7 @@ packages:
     dependencies:
       '@intlify/core-base': 9.10.1
       '@intlify/shared': 9.10.1
-      '@vue/devtools-api': 6.5.0
+      '@vue/devtools-api': 6.6.1
       vue: 3.4.21(typescript@5.4.2)
 
   /vue-router@4.3.0(vue@3.4.21):

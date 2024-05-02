@@ -1,0 +1,49 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[package]
+name = "station"
+version = "0.1.0"
+edition = "2021"
+authors = ["DFINITY Stiftung"]
+license = "Apache-2.0"
+include = ["src", "Cargo.toml"]
+homepage = "https://github.com/dfinity/orbit#readme"
+repository = "https://github.com/dfinity/orbit"
+
+[lib]
+crate-type = ["cdylib"]
+bench = false
+
+[features]
+canbench = ["canbench-rs"]
+
+[dependencies]
+anyhow = { workspace = true }
+deunicode = { workspace = true }
+async-trait = { workspace = true }
+byteorder = { workspace = true }
+canbench-rs = { workspace = true, optional = true }
+candid = { workspace = true }
+canfund = { workspace = true }
+futures = { workspace = true }
+hex = { workspace = true }
+orbit-essentials = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-ledger-types = { workspace = true }
+ic-stable-structures = { workspace = true }
+ic-cdk-timers = { workspace = true }
+lazy_static = { workspace = true }
+num-bigint = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_bytes = { workspace = true }
+serde_cbor = { workspace = true }
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true, features = ["v4"] }
+station-api = { workspace = true }
+upgrader-api = { workspace = true }
+
+[dev-dependencies]
+candid_parser = { workspace = true }
+rstest = { workspace = true }
+tokio = { workspace = true, features = ["full"] }

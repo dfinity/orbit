@@ -1,0 +1,280 @@
+// The canister id of a station.
+type StationID = principal;
+// The principal that is associated with an user.
+type UserIdentityID = principal;
+// A UUID used to identify items.
+type UUID = text;
+// The id of an user.
+type UserId = UUID;
+// The timestamp type used in the canister.
+type TimestampRFC3339 = text;
+
+// Generic error type added to responses that can fail.
+type ApiError = record {
+  // Error code, added as a string to allow for custom error codes.
+  code : text;
+  // Error message to be displayed to the user.
+  message : opt text;
+  // Error details to be displayed to the user.
+  details : opt vec record { text; text };
+};
+
+// The user user information.
+type User = record {
+  // The identity associated with the user.
+  identity : principal;
+  // Main station used to show in the UI for this user.
+  main_station : opt StationID;
+  // List of stations associated with the user.
+  stations : vec UserStation;
+  // The waiting list subscription status.
+  subscription_status : UserSubscriptionStatus;
+  // The last time the user was active in the system.
+  last_active : TimestampRFC3339;
+};
+
+// The result of setting the user active.
+type SetUserActiveResult = variant {
+  // Successfull operation result.
+  Ok;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The result of managing an user.
+type ManageUserInput = record {
+  // The main station to use for this user.
+  //
+  // If specified and the station is not already associated with the user it will be added.
+  main_station : opt StationID;
+  // Manage the stations associated with the user.
+  stations : opt vec UserStation;
+};
+
+// The result of managing an user.
+type ManageUserResult = variant {
+  // Successfull operation result.
+  Ok : record {
+    // The updated user information.
+    user : User;
+  };
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The result of subscribing to the waiting list.
+type SubscribeToWaitingListResult = variant {
+  // Successfull operation result.
+  Ok;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+type UserSubscriptionStatus = variant {
+  Unsubscribed;
+  Pending;
+  Approved;
+  Denylisted;
+};
+
+type SubscribedUser = record {
+  user_principal : principal;
+  email : text;
+};
+
+type GetWaitingListResponse = record {
+  subscribed_users : vec SubscribedUser;
+};
+
+type GetWaitingListResult = variant {
+  // Successfull operation result.
+  Ok : GetWaitingListResponse;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+type UpdateWaitingListInput = record {
+  users : vec principal;
+  new_status : UserSubscriptionStatus;
+};
+
+type UpdateWaitingListResult = variant {
+  // Successfull operation result.
+  Ok;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The station information.
+type UserStation = record {
+  // The id associated with the station.
+  canister_id : StationID;
+  // The name of the station.
+  name : text;
+};
+
+// The result of listing stations.
+type ListStationsResult = variant {
+  // The list of stations.
+  Ok : record {
+    // The list of stations.
+    stations : vec UserStation;
+  };
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The result of getting the main station.
+type GetMainStationResult = variant {
+  // The main station for the given user.
+  Ok : record {
+    // The main station for the given user.
+    station : opt UserStation;
+  };
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The result of getting the user information.
+type GetUserResult = variant {
+  // Successfull operation result.
+  Ok : record {
+    // The caller user information.
+    user : User;
+  };
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The input for registering an user.
+type RegisterUserInput = record {
+  // A station canister to use for this user.
+  station : opt UserStation;
+};
+
+// The result of registering an user.
+type RegisterUserResult = variant {
+  // Successfull operation result.
+  Ok : record {
+    // The caller newly created user information.
+    user : User;
+  };
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The result of removing the user associated with the caller.
+type RemoveUserResult = variant {
+  // Successfull operation result.
+  Ok : record {
+    // The caller user that was removed.
+    user : User;
+  };
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The result of deploying a station canister for the caller.
+type DeployStationResult = variant {
+  // Successfull operation result.
+  Ok : record {
+    // The station canister id.
+    canister_id : StationID;
+  };
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+/// The successful result of checking if the caller can deploy a station canister.
+/// Returns the remaining number of station canisters the caller can still deploy
+/// or a reason why the caller cannot deploy a station canister
+/// (bad subscription status or exceeded quota).
+type CanDeployStationResponse = variant {
+  NotAllowed : UserSubscriptionStatus;
+  Allowed : nat64;
+  QuotaExceeded;
+};
+
+/// The input for deploying a station canister.
+type DeployStationInput = record {
+  // The station name.
+  station_name : text;
+  // The station admin user name.
+  admin_name : text;
+};
+
+// The result of checking if the caller can deploy a station canister.
+type CanDeployStationResult = variant {
+  // Successfull operation result.
+  Ok : CanDeployStationResponse;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The init configuration for the control panel.
+type CanisterInit = record {
+  // The upgrader wasm module to use for the station canister.
+  upgrader_wasm_module : blob;
+  // The station wasm module to use.
+  station_wasm_module : blob;
+};
+
+// The upgrade configuration for the control panel.
+type CanisterUpgrade = record {
+  // The updated wasm canister module to use for the upgrader canister.
+  upgrader_wasm_module : opt blob;
+  // The updated wasm canister module to use for the station canister.
+  station_wasm_module : opt blob;
+};
+
+// The install configuration for the control panel.
+type CanisterInstall = variant {
+  Init : CanisterInit;
+  Upgrade : CanisterUpgrade;
+};
+
+type HeaderField = record { text; text };
+
+type HttpRequest = record {
+  method : text;
+  url : text;
+  headers : vec HeaderField;
+  body : blob;
+};
+
+type HttpResponse = record {
+  status_code : nat16;
+  headers : vec HeaderField;
+  body : blob;
+};
+
+// The control panel service definition.
+service : (opt CanisterInstall) -> {
+  // Set the last active time for the user associated with the caller.
+  set_user_active : () -> (SetUserActiveResult);
+  // Get the user information for the caller.
+  get_user : () -> (GetUserResult) query;
+  // Manage the user associated with the caller.
+  manage_user : (input : ManageUserInput) -> (ManageUserResult);
+  // Subscribe the user associated with the caller to the waiting list.
+  // Takes the user's e-mail address to which notifications can be pushed.
+  subscribe_to_waiting_list : (text) -> (SubscribeToWaitingListResult);
+  // Retrieves the users (principal and e-mail address) subscribed to the waiting list.
+  get_waiting_list : () -> (GetWaitingListResult);
+  // Updates the status of users on the waiting list.
+  update_waiting_list : (input : UpdateWaitingListInput) -> (UpdateWaitingListResult);
+  // Create a new user for the caller.
+  register_user : (input : RegisterUserInput) -> (RegisterUserResult);
+  // Delete user associated with the caller.
+  delete_user : () -> (RemoveUserResult);
+  // List all the stations associated with the caller.
+  list_stations : () -> (ListStationsResult) query;
+  // Get main station for the caller user.
+  get_main_station : () -> (GetMainStationResult) query;
+  // Deploys a new station canister for the caller.
+  deploy_station : (input : DeployStationInput) -> (DeployStationResult);
+  // Checks if the caller can deploy a new station canister.
+  can_deploy_station : () -> (CanDeployStationResult) query;
+  // HTTP Protocol interface.
+  http_request : (HttpRequest) -> (HttpResponse) query;
+};
