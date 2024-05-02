@@ -21,6 +21,7 @@ const pendingProps: RequestDetailViewProps = {
           },
         },
       ],
+      result_reasons: [],
     },
   },
   request: {

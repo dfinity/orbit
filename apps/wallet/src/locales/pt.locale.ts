@@ -283,6 +283,28 @@ export default {
       pending: 'Pendente',
       rejected: 'Rejeitado',
       approved: 'Aprovado',
+
+      summary_approved:
+        'Pedido aprovado para a seguinte razão: | Pedido aprovado para as seguintes razões:',
+      summary_rejected:
+        'Pedido rejeitado para a seguinte razão: | Pedido rejeitado para as seguintes razões:',
+      summary_pending:
+        'Pedido pendente para a seguinte razão: | Pedido pendente para as seguintes razões:',
+      approved_reason_approval_threshold: 'limite de aprovação do usuário atingido',
+      approved_reason_address_book: 'endereço de destino encontrado no livro de endereços',
+      approved_reason_address_book_metadata:
+        'endereço de destino tinha metadados no livro de endereços',
+      reason_auto_approved: 'pedido foi auto-aprovado',
+
+      rejected_reason_approval_threshold: 'limite de aprovação do usuário não atingido',
+      rejected_reason_address_book: 'endereço de destino não encontrado no livro de endereços',
+      rejected_reason_address_book_metadata:
+        'endereço de destino não tinha metadados no livro de endereços',
+
+      pending_reason_approval_threshold: 'aprovação do usuário pendente',
+      pending_reason_address_book: 'endereço de destino no livro de endereços',
+      pending_reason_address_book_metadata:
+        'endereço de destino no livro de endereços com metadados',
     },
   },
   landing: {

@@ -285,6 +285,26 @@ export default {
       pending: 'En attente',
       rejected: 'Rejeté',
       approved: 'Approuvé',
+
+      summary_approved:
+        'Demande approuvée pour la raison suivante: | Demande approuvée pour les raisons suivantes:',
+      summary_rejected:
+        'Demande rejetée pour la raison suivante: | Demande rejetée pour les raisons suivantes:',
+      summary_pending:
+        'Demande en attente pour la raison suivante: | Demande en attente pour les raisons suivantes:',
+      approved_reason_approval_threshold: 'seuil d approbation utilisateur atteint',
+      approved_reason_address_book: 'adresse de destination trouvée dans le carnet d adresses',
+      approved_reason_address_book_metadata:
+        'adresse de destination avait des métadonnées dans le carnet d adresses',
+      reason_auto_approved: 'demande auto-approuvée',
+      rejected_reason_approval_threshold: 'seuil d approbation utilisateur non atteint',
+      rejected_reason_address_book: 'adresse de destination non trouvée dans le carnet d adresses',
+      rejected_reason_address_book_metadata:
+        'adresse de destination n avait pas de métadonnées dans le carnet d adresses',
+      pending_reason_approval_threshold: 'approbation utilisateur en attente',
+      pending_reason_address_book: 'adresse de destination dans le carnet d adresses',
+      pending_reason_address_book_metadata:
+        'adresse de destination dans le carnet d adresses avec des métadonnées',
     },
   },
   landing: {

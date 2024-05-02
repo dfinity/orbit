@@ -77,6 +77,15 @@
       <VExpansionPanels data-test-id="request-approvals-and-evaluation">
         <VExpansionPanel :title="$t('requests.approvals_and_evaluation')">
           <VExpansionPanelText>
+            <template v-if="evaulationSummary">
+              <div class="text-body-1 font-weight-bold">
+                {{ $t('terms.summary') }}
+              </div>
+              <div class="mb-6 text-medium-emphasis text-body-2">
+                {{ evaulationSummary }}
+              </div>
+            </template>
+
             <table
               v-if="approvals.length > 0"
               class="approvers text-body-1"
@@ -238,6 +247,7 @@ import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntry
 import RemoveRequestPolicyOperation from './operations/RemoveRequestPolicyOperation.vue';
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
+import { statusReasonsToTextSummary } from '~/utils/evaluation.utils';
 
 const i18n = useI18n();
 
@@ -353,6 +363,15 @@ const policyResults = computed((): RequestPolicyRuleResult | null => {
   }
 
   return null;
+});
+
+const evaulationSummary = computed(() => {
+  if (props.details.evaluationResult) {
+    return statusReasonsToTextSummary(
+      props.details.evaluationResult.status,
+      props.details.evaluationResult.result_reasons,
+    );
+  }
 });
 </script>
 

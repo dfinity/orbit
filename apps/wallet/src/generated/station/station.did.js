@@ -433,6 +433,12 @@ export const idlFactory = ({ IDL }) => {
     'Rejected' : IDL.Null,
     'Pending' : IDL.Null,
   });
+  const StatusReason = IDL.Variant({
+    'AddressBookMetadata' : IDL.Null,
+    'AddressBook' : IDL.Null,
+    'ApprovalThreshold' : IDL.Null,
+    'AutoApproved' : IDL.Null,
+  });
   const EvaluatedRequestPolicyRule = IDL.Variant({
     'Not' : RequestPolicyRuleResult,
     'Quorum' : IDL.Record({
@@ -460,6 +466,7 @@ export const idlFactory = ({ IDL }) => {
   const RequestEvaluationResult = IDL.Record({
     'request_id' : UUID,
     'status' : EvaluationStatus,
+    'result_reasons' : IDL.Vec(StatusReason),
     'policy_results' : IDL.Vec(RequestPolicyRuleResult),
   });
   const DisplayUser = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });

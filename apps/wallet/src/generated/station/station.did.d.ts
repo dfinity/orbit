@@ -564,6 +564,7 @@ export interface RequestCallerPrivileges {
 export interface RequestEvaluationResult {
   'request_id' : UUID,
   'status' : EvaluationStatus,
+  'result_reasons' : Array<StatusReason>,
   'policy_results' : Array<RequestPolicyRuleResult>,
 }
 export type RequestExecutionSchedule = { 'Immediate' : null } |
@@ -699,6 +700,10 @@ export type ResourceSpecifier = { 'Any' : null } |
 export type Sha256Hash = string;
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
+export type StatusReason = { 'AddressBookMetadata' : null } |
+  { 'AddressBook' : null } |
+  { 'ApprovalThreshold' : null } |
+  { 'AutoApproved' : null };
 export interface SubmitRequestApprovalInput {
   'request_id' : UUID,
   'decision' : RequestApprovalStatus,
