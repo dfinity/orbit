@@ -42,7 +42,10 @@ impl CanisterService {
         Ok(())
     }
 
-    pub async fn upload_canister_modules(&self, input: UploadCanisterModulesInput) -> ServiceResult<()> {
+    pub async fn upload_canister_modules(
+        &self,
+        input: UploadCanisterModulesInput,
+    ) -> ServiceResult<()> {
         self.assert_controller(&CallContext::get(), "upload_canister_modules".to_string())?;
 
         let mut config = canister_config().unwrap_or_default();
