@@ -4,9 +4,7 @@ use crate::interfaces::{
 use crate::utils::{controller_test_id, minter_test_id, update_canister_settings};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
-use control_panel_api::{
-    CanisterInit as ControlPanelInitArg, CanisterInstall as ControlPanelInstallArg,
-};
+use control_panel_api::UploadCanisterModulesInput;
 use ic_cdk::api::management_canister::main::CanisterSettings;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{PocketIc, PocketIcBuilder};
@@ -22,7 +20,24 @@ static POCKET_IC_BIN: &str = "./pocket-ic";
 
 pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
 
+#[derive(Clone)]
+pub struct SetupConfig {
+    pub upload_canister_modules: bool,
+}
+
+impl Default for SetupConfig {
+    fn default() -> Self {
+        Self {
+            upload_canister_modules: true,
+        }
+    }
+}
+
 pub fn setup_new_env() -> TestEnv {
+    setup_new_env_with_config(SetupConfig::default())
+}
+
+pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
     let path = match env::var_os("POCKET_IC_BIN") {
         None => {
             env::set_var("POCKET_IC_BIN", POCKET_IC_BIN);
@@ -52,7 +67,7 @@ pub fn setup_new_env() -> TestEnv {
     env.set_time(SystemTime::now());
     let controller = controller_test_id();
     let minter = minter_test_id();
-    let canister_ids = install_canisters(&mut env, controller, minter);
+    let canister_ids = install_canisters(&mut env, config, controller, minter);
 
     TestEnv {
         env,
@@ -68,7 +83,12 @@ pub fn create_canister(env: &mut PocketIc, controller: Principal) -> Principal {
     canister_id
 }
 
-fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principal) -> CanisterIds {
+fn install_canisters(
+    env: &mut PocketIc,
+    config: SetupConfig,
+    controller: Principal,
+    minter: Principal,
+) -> CanisterIds {
     let specified_nns_ledger_canister_id =
         Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
     let nns_ledger_canister_id = env
@@ -128,20 +148,29 @@ fn install_canisters(env: &mut PocketIc, controller: Principal, minter: Principa
         },
     );
 
-    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
-    let station_wasm = get_canister_wasm("station").to_vec();
-
     let control_panel_wasm = get_canister_wasm("control_panel").to_vec();
-    let control_panel_init_args = ControlPanelInstallArg::Init(ControlPanelInitArg {
-        station_wasm_module: station_wasm.to_owned(),
-        upgrader_wasm_module: upgrader_wasm.to_owned(),
-    });
     env.install_canister(
         control_panel,
         control_panel_wasm,
-        Encode!(&control_panel_init_args).unwrap(),
+        Encode!(&()).unwrap(),
         Some(controller),
     );
+
+    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
+    let station_wasm = get_canister_wasm("station").to_vec();
+    if config.upload_canister_modules {
+        let upload_canister_modules_args = UploadCanisterModulesInput {
+            station_wasm_module: station_wasm.to_owned(),
+            upgrader_wasm_module: upgrader_wasm.to_owned(),
+        };
+        env.update_call(
+            control_panel,
+            controller,
+            "upload_canister_modules",
+            Encode!(&upload_canister_modules_args).unwrap(),
+        )
+        .unwrap();
+    }
 
     let station_init_args = SystemInstallArg::Init(SystemInitArg {
         name: "Station".to_string(),

@@ -1,10 +1,11 @@
 use crate::core::ic_cdk::api::time;
-use crate::core::{canister_config, write_canister_config, CanisterConfig};
+use crate::core::{canister_config, write_canister_config, CallContext};
+use crate::errors::CanisterError;
 use crate::repositories::{UserRepository, USER_REPOSITORY};
 use canfund::fetch::cycles::FetchCyclesBalanceFromPrometheusMetrics;
 use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
 use canfund::FundManager;
-use control_panel_api::{CanisterInit, CanisterUpgrade};
+use control_panel_api::UploadCanisterModulesInput;
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
@@ -32,34 +33,36 @@ impl CanisterService {
         Self { user_repository }
     }
 
-    pub async fn init_canister(&self, input: CanisterInit) -> ServiceResult<()> {
-        let mut config = CanisterConfig::new(input.upgrader_wasm_module, input.station_wasm_module);
-
-        config.last_upgrade_timestamp = time();
-
-        write_canister_config(config);
-
-        self.start_canister_cycles_monitoring();
+    /// Checks if the caller is a controller.
+    fn assert_controller(&self, ctx: &CallContext, method: String) -> ServiceResult<()> {
+        if !ctx.is_controller() {
+            Err(CanisterError::Forbidden { method })?
+        }
 
         Ok(())
     }
 
-    pub async fn upgrade_canister(&self, input: CanisterUpgrade) -> ServiceResult<()> {
-        let mut config = canister_config();
+    pub async fn upload_canister_modules(
+        &self,
+        input: UploadCanisterModulesInput,
+    ) -> ServiceResult<()> {
+        self.assert_controller(&CallContext::get(), "upload_canister_modules".to_string())?;
 
-        if let Some(upgrader_wasm_module) = input.upgrader_wasm_module {
-            config.upgrader_wasm_module = upgrader_wasm_module;
-        }
-
-        if let Some(station_wasm_module) = input.station_wasm_module {
-            config.station_wasm_module = station_wasm_module;
-        }
-
-        config.last_upgrade_timestamp = time();
-
+        let mut config = canister_config().unwrap_or_default();
+        config.upgrader_wasm_module = input.upgrader_wasm_module;
+        config.station_wasm_module = input.station_wasm_module;
         write_canister_config(config);
 
+        Ok(())
+    }
+
+    pub async fn init_canister(&self) -> ServiceResult<()> {
         self.start_canister_cycles_monitoring();
+
+        if let Some(mut config) = canister_config() {
+            config.last_upgrade_timestamp = time();
+            write_canister_config(config);
+        }
 
         Ok(())
     }

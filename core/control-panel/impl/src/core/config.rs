@@ -1,5 +1,5 @@
 use super::CANISTER_CONFIG_STATE_SIZE;
-use crate::core::ic_cdk::api::{time, trap};
+use crate::core::ic_cdk::api::time;
 use ic_stable_structures::{storable::Bound, Storable};
 use orbit_essentials::storable;
 use orbit_essentials::types::Timestamp;
@@ -40,15 +40,15 @@ impl CanisterConfig {
 
 /// Configuration state of the canister.
 pub enum CanisterState {
-    Uninitialized, // This state is only used between wasm module initialization and init().
+    Uninitialized, // This state is only used between wasm module initialization and the first call to `upload_canister_modules`.
     Initialized(CanisterConfig),
 }
 
 impl CanisterState {
-    pub fn get(&self) -> &CanisterConfig {
+    pub fn get(&self) -> Option<&CanisterConfig> {
         match &self {
-            CanisterState::Uninitialized => trap("canister config not initialized"),
-            CanisterState::Initialized(config) => config,
+            CanisterState::Uninitialized => None,
+            CanisterState::Initialized(config) => Some(config),
         }
     }
 }
