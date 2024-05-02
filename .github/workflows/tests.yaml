@@ -134,7 +134,6 @@ jobs:
           ! grep "canister reports healthy already before its initialization has finished" logs.txt
   deployment-test:
     name: 'deployment-test:required'
-    needs: [build-wasms, download-canisters]
     runs-on: ubuntu-latest
     env:
       BUILD_WASMS: 'false'
@@ -167,4 +166,4 @@ jobs:
         run: ./orbit --init
       - name: 'Test local deployment'
         run: |
-          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost
+          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/
