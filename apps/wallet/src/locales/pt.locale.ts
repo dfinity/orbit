@@ -52,6 +52,7 @@ export default {
     notifications_panel_title: 'Notificações',
     notifications_panel_no_results: 'Sem notificações por ler.',
     notifications_panel_read_all: 'Ler todas',
+    notifications_request_failed: 'Pedido falhou: {reason}',
     btn_home_back: 'Voltar ao início',
     no_download_available: 'Nenhum download disponível.',
     failed_to_download_item: 'Falha ao baixar {item}, por favor, tente novamente.',
