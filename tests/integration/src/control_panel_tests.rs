@@ -1,13 +1,15 @@
-use crate::setup::setup_new_env;
+use crate::setup::{get_canister_wasm, setup_new_env, setup_new_env_with_config, SetupConfig};
 use crate::utils::{controller_test_id, user_test_id};
 use crate::TestEnv;
+use candid::Principal;
+use control_panel_api::CanisterModules;
 use control_panel_api::{
     DeployStationInput, DeployStationResponse, GetMainStationResponse, ManageUserInput,
     ManageUserResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
     UserStationDTO, UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiResult;
-use pocket_ic::update_candid_as;
+use pocket_ic::{update_candid_as, CallError};
 use station_api::HealthStatus;
 
 #[test]
@@ -305,4 +307,142 @@ fn deploy_too_many_stations() {
     )
     .unwrap();
     assert_eq!(res.0.unwrap_err().code, "DEPLOY_STATION_QUOTA_EXCEEDED");
+}
+
+#[test]
+fn no_upload_canister_modules() {
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = setup_new_env_with_config(SetupConfig {
+        upload_canister_modules: false,
+    });
+
+    let user_id = user_test_id(0);
+
+    // register user
+    let register_args = RegisterUserInput { station: None };
+    let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "register_user",
+        (register_args,),
+    )
+    .unwrap();
+    let user_dto = res.0.unwrap().user;
+    assert_eq!(user_dto.identity, user_id);
+
+    // approve user
+    let update_waiting_list_args = UpdateWaitingListInput {
+        users: vec![user_id],
+        new_status: UserSubscriptionStatusDTO::Approved,
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        controller_test_id(),
+        "update_waiting_list",
+        (update_waiting_list_args,),
+    )
+    .unwrap();
+    res.0.unwrap();
+
+    // deploying user station fails before uploading canister modules
+    let deploy_station_args = DeployStationInput {
+        station_name: "station".to_string(),
+        admin_name: "admin".to_string(),
+    };
+    let res: Result<(ApiResult<DeployStationResponse>,), CallError> = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "deploy_station",
+        (deploy_station_args,),
+    );
+    let err = res.unwrap_err();
+    match err {
+        CallError::UserError(user_error) => assert!(user_error
+            .description
+            .contains("canister config not initialized")),
+        _ => panic!("unexpected CallError"),
+    };
+
+    // upload canister modules
+    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
+    let station_wasm = get_canister_wasm("station").to_vec();
+    let upload_canister_modules_args = CanisterModules {
+        station_wasm_module: station_wasm.to_owned(),
+        upgrader_wasm_module: upgrader_wasm.to_owned(),
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        controller,
+        "upload_canister_modules",
+        (upload_canister_modules_args.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap();
+
+    // deploying user station succeeds after uploading canister modules
+    let deploy_station_args = DeployStationInput {
+        station_name: "station".to_string(),
+        admin_name: "admin".to_string(),
+    };
+    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "deploy_station",
+        (deploy_station_args,),
+    )
+    .unwrap();
+    res.0.unwrap();
+}
+
+#[test]
+fn upload_canister_modules_authorization() {
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = setup_new_env();
+
+    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
+    let station_wasm = get_canister_wasm("station").to_vec();
+    let upload_canister_modules_args = CanisterModules {
+        station_wasm_module: station_wasm.to_owned(),
+        upgrader_wasm_module: upgrader_wasm.to_owned(),
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        controller,
+        "upload_canister_modules",
+        (upload_canister_modules_args.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap();
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        Principal::anonymous(),
+        "upload_canister_modules",
+        (upload_canister_modules_args,),
+    )
+    .unwrap();
+    let error = res.0.unwrap_err();
+    error
+        .message
+        .unwrap()
+        .contains("You don't have permission to make the call.");
+    assert_eq!(
+        error.details.unwrap().get("method").unwrap(),
+        "upload_canister_modules"
+    );
 }
