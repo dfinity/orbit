@@ -244,6 +244,10 @@ export type EvaluatedRequestPolicyRule = { 'Not' : RequestPolicyRuleResult } |
 export type EvaluationStatus = { 'Approved' : null } |
   { 'Rejected' : null } |
   { 'Pending' : null };
+export type EvaluationSummaryReason = { 'AllowList' : null } |
+  { 'AllowListMetadata' : null } |
+  { 'AutoApproved' : null } |
+  { 'ApprovalQuorum' : null };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
 export type FetchAccountBalancesResult = {
     'Ok' : { 'balances' : Array<AccountBalance> }
@@ -564,6 +568,7 @@ export interface RequestCallerPrivileges {
 export interface RequestEvaluationResult {
   'request_id' : UUID,
   'status' : EvaluationStatus,
+  'result_reasons' : [] | [Array<EvaluationSummaryReason>],
   'policy_results' : Array<RequestPolicyRuleResult>,
 }
 export type RequestExecutionSchedule = { 'Immediate' : null } |

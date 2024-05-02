@@ -13,8 +13,9 @@ use crate::{
 };
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::storable;
-use std::sync::Arc;
+use station_api::EvaluationSummaryReasonDTO;
 use std::{cmp, hash::Hash};
+use std::{collections::HashSet, sync::Arc};
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -82,12 +83,86 @@ pub struct RequestPolicyRuleResult {
     pub evaluated_rule: EvaluatedRequestPolicyRule,
 }
 
+type EvaluationSummaryReason = EvaluationSummaryReasonDTO;
+
+impl RequestPolicyRuleResult {
+    pub fn get_status_reason(
+        &self,
+        final_status: EvaluationStatus,
+    ) -> Vec<EvaluationSummaryReason> {
+        let mut reasons = vec![];
+
+        match &self.evaluated_rule {
+            EvaluatedRequestPolicyRule::AutoApproved => {
+                if final_status == EvaluationStatus::Approved {
+                    reasons.push(EvaluationSummaryReason::AutoApproved)
+                }
+            }
+            EvaluatedRequestPolicyRule::QuorumPercentage { .. }
+            | EvaluatedRequestPolicyRule::Quorum { .. } => {
+                if final_status == self.status {
+                    reasons.push(EvaluationSummaryReason::ApprovalQuorum);
+                }
+            }
+            EvaluatedRequestPolicyRule::AllowListedByMetadata { .. } => {
+                if final_status == self.status {
+                    reasons.push(EvaluationSummaryReason::AllowListMetadata);
+                }
+            }
+            EvaluatedRequestPolicyRule::AllowListed => {
+                if final_status == self.status {
+                    reasons.push(EvaluationSummaryReason::AllowList);
+                }
+            }
+            EvaluatedRequestPolicyRule::Or(rule_results)
+            | EvaluatedRequestPolicyRule::And(rule_results) => {
+                for rule_result in rule_results {
+                    if final_status == self.status {
+                        reasons.extend(rule_result.get_status_reason(final_status.clone()));
+                    }
+                }
+            }
+            EvaluatedRequestPolicyRule::Not(rule_result) => match final_status {
+                EvaluationStatus::Approved => {
+                    if rule_result.status == EvaluationStatus::Rejected {
+                        reasons.extend(rule_result.get_status_reason(EvaluationStatus::Rejected));
+                    }
+                }
+                EvaluationStatus::Rejected => {
+                    if rule_result.status == EvaluationStatus::Approved {
+                        reasons.extend(rule_result.get_status_reason(EvaluationStatus::Approved));
+                    }
+                }
+                EvaluationStatus::Pending => {
+                    if rule_result.status == EvaluationStatus::Pending {
+                        reasons.extend(rule_result.get_status_reason(EvaluationStatus::Pending));
+                    }
+                }
+            },
+        }
+
+        reasons
+    }
+}
+
 #[storable]
 #[derive(Debug, Clone)]
 pub struct RequestEvaluationResult {
     pub request_id: RequestId,
     pub status: EvaluationStatus,
     pub policy_results: Vec<RequestPolicyRuleResult>,
+}
+
+impl RequestEvaluationResult {
+    pub fn get_status_reason(&self) -> Vec<EvaluationSummaryReason> {
+        let mut reasons = HashSet::new();
+
+        for policy_result in &self.policy_results {
+            reasons.extend(policy_result.get_status_reason(self.status.clone()));
+        }
+
+        reasons.into_iter().collect()
+    }
 }
 
 #[storable]
@@ -498,5 +573,60 @@ mod test {
         )])])
         .validate()
         .expect_err("Rule with non-existent user specifier should fail");
+    }
+
+    #[test]
+    fn test_evaluation_reasons() {
+        let result = RequestPolicyRuleResult {
+            status: EvaluationStatus::Rejected,
+
+            evaluated_rule: EvaluatedRequestPolicyRule::And(vec![
+                RequestPolicyRuleResult {
+                    status: EvaluationStatus::Pending,
+                    evaluated_rule: EvaluatedRequestPolicyRule::Quorum {
+                        min_approved: 2,
+                        total_possible_approvers: 4,
+                        approvers: vec![],
+                    },
+                },
+                RequestPolicyRuleResult {
+                    status: EvaluationStatus::Rejected,
+                    evaluated_rule: EvaluatedRequestPolicyRule::AllowListedByMetadata {
+                        metadata: MetadataItem {
+                            key: "k".to_owned(),
+                            value: "v".to_owned(),
+                        },
+                    },
+                },
+                RequestPolicyRuleResult {
+                    status: EvaluationStatus::Approved,
+                    evaluated_rule: EvaluatedRequestPolicyRule::Or(vec![
+                        RequestPolicyRuleResult {
+                            status: EvaluationStatus::Pending,
+                            evaluated_rule: EvaluatedRequestPolicyRule::QuorumPercentage {
+                                min_approved: 1,
+                                total_possible_approvers: 1,
+                                approvers: vec![],
+                            },
+                        },
+                        RequestPolicyRuleResult {
+                            status: EvaluationStatus::Approved,
+                            evaluated_rule: EvaluatedRequestPolicyRule::AllowListed,
+                        },
+                    ]),
+                },
+            ]),
+        };
+
+        let request_result = RequestEvaluationResult {
+            request_id: [0; 16],
+            status: result.status.clone(),
+            policy_results: vec![result],
+        };
+
+        assert_eq!(
+            request_result.get_status_reason(),
+            vec![EvaluationSummaryReason::AllowListMetadata]
+        );
     }
 }

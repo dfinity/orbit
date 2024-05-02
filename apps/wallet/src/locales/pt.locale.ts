@@ -131,6 +131,9 @@ export default {
     },
     approvals: 'Aprovações',
     requester_auto_approval: 'Pedido aprovado automaticamente pelo requerente',
+    approvals_and_evaluation: 'Aprovações e regras',
+    failure_title: 'Falha na execução do pedido',
+    failure_reason_unknown: 'Pedido falhou por uma razão não especificada.',
     comment_optional: 'Comentário (opcional)',
     no_results_found: 'Nenhum resultado encontrado.',
     no_more_requests_to_approve: 'Não há mais pedidos para aprovar.',
@@ -255,6 +258,52 @@ export default {
         title: 'Desconhecido',
         request_title: 'Pedido desconhecido',
       },
+    },
+    evaluation: {
+      acceptance_rules: 'Regras de aceitação',
+      show_acceptance_rules: 'Mostrar regras de aceitação',
+      hide_acceptance_rules: 'Ocultar regras de aceitação',
+      allof_rule: 'Todas as seguintes {n} regras:',
+      anyof_rule: 'Qualquer das seguintes {n} regras:',
+      not_rule: 'Não deve passar:',
+      allowlisted_rule: 'O endereço de destino está no Livro de Endereços',
+      not_found_in_allow_list: 'Não está no Livro de Endereços',
+      found_in_allow_list: 'No Livro de Endereços',
+      allowlisted_with_metadata_rule: 'O endereço de destino tem metadados no Livro de Endereços',
+      allow_list_metadata_not_found: 'Não encontrado {metadata}',
+      allow_list_metadata_found: 'Encontrado: {metadata}',
+      quorum_rule: '1 assinatura de aprovação mínima | {n} assinaturas de aprovação mínimas',
+      quorum_percentage_rule:
+        '1 assinatura de aprovação mínima | {n} assinaturas de aprovação mínimas',
+      approval_summary_approved: 'Aprovado com {n} para {m} contra',
+      approval_summary_rejected: 'Rejeitado com {n} para {m} contra',
+      approval_summary_pending: 'Pendente com {n} para {m} contra',
+      approval_comments: '1 comentário | {n} comentários',
+      auto_approved: 'Auto-aprovado',
+      pending: 'Pendente',
+      rejected: 'Rejeitado',
+      approved: 'Aprovado',
+
+      summary_approved:
+        'Pedido aprovado para a seguinte razão: | Pedido aprovado para as seguintes razões:',
+      summary_rejected:
+        'Pedido rejeitado para a seguinte razão: | Pedido rejeitado para as seguintes razões:',
+      summary_pending:
+        'Pedido pendente para a seguinte razão: | Pedido pendente para as seguintes razões:',
+      approved_reason_approval_quorum: 'limite de aprovação do usuário atingido',
+      approved_reason_allowlist: 'endereço de destino encontrado no livro de endereços',
+      approved_reason_allowlist_metadata:
+        'endereço de destino tinha metadados no livro de endereços',
+      reason_auto_approved: 'pedido foi auto-aprovado',
+
+      rejected_reason_approval_quorum: 'limite de aprovação do usuário não atingido',
+      rejected_reason_allowlist: 'endereço de destino não encontrado no livro de endereços',
+      rejected_reason_allowlist_metadata:
+        'endereço de destino não tinha metadados no livro de endereços',
+
+      pending_reason_approval_quorum: 'aprovação do usuário pendente',
+      pending_reason_allowlist: 'endereço de destino no livro de endereços',
+      pending_reason_allowlist_metadata: 'endereço de destino no livro de endereços com metadados',
     },
   },
   landing: {

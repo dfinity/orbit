@@ -49,6 +49,7 @@ const approvableRequestResponse = {
   additional_info: {
     id: 'requesterid',
     requester_name: '',
+    evaluation_result: [],
   },
   //...
 } as ExtractOk<GetRequestResult>;
@@ -64,6 +65,7 @@ const nextApprovableRequestResponse = {
   additional_info: {
     id: 'next-id',
     requester_name: '',
+    evaluation_result: [],
   },
   //...
 } as GetRequestResultData;
@@ -79,6 +81,7 @@ const completedRequestResponse = {
   additional_info: {
     id: 'first-id',
     requester_name: '',
+    evaluation_result: [],
   },
   //...
 } as ExtractOk<GetRequestResult>;
