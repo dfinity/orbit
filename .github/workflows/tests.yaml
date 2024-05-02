@@ -161,4 +161,4 @@ jobs:
         run: ./orbit --init
       - name: 'Test local deployment'
         run: |
-          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/
+          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
