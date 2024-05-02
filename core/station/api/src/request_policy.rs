@@ -99,11 +99,20 @@ pub struct RequestPolicyRuleResultDTO {
     pub evaluated_rule: EvaluatedRequestPolicyRuleDTO,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+pub enum EvaluationSummaryReasonDTO {
+    ApprovalQuorum,
+    AllowList,
+    AllowListMetadata,
+    AutoApproved,
+}
+
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct RequestEvaluationResultDTO {
     pub request_id: UuidDTO,
     pub status: EvaluationStatusDTO,
     pub policy_results: Vec<RequestPolicyRuleResultDTO>,
+    pub result_reasons: Option<Vec<EvaluationSummaryReasonDTO>>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

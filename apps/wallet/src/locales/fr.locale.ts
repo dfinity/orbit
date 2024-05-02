@@ -135,6 +135,9 @@ export default {
     },
     approvals: 'Approbations',
     requester_auto_approval: 'Demande approuvée automatiquement par le demandeur.',
+    approvals_and_evaluation: 'Approbations et évaluation',
+    failure_title: 'Échec de l execution de la demande',
+    failure_reason_unknown: 'La demande',
     comment_optional: 'Commentaire (optionnel)',
     processing_started_at: 'Traitement commencé at {dt}',
     processing_completed_at: 'Traitement completé at {dt}',
@@ -256,6 +259,52 @@ export default {
         title: 'Inconnu',
         request_title: 'Demande Inconnue',
       },
+    },
+    evaluation: {
+      acceptance_rules: 'Règles d acceptation',
+      show_acceptance_rules: 'Afficher les règles d acceptation',
+      hide_acceptance_rules: 'Cacher les règles d acceptation',
+      allof_rule: 'Toutes les règles suivantes {n}:',
+      anyof_rule: 'Une des règles suivantes {n}:',
+      not_rule: 'Ne doit pas passer:',
+      allowlisted_rule: 'L adresse de destination est dans le carnet d adresses',
+      not_found_in_allow_list: 'Pas dans le carnet d adresses',
+      found_in_allow_list: 'Dans le carnet d adresses',
+      allowlisted_with_metadata_rule:
+        'L adresse de destination a des métadonnées dans le carnet d adresses',
+      allow_list_metadata_not_found: 'Non trouvé {metadata}',
+      allow_list_metadata_found: 'Trouvé: {metadata}',
+      quorum_rule: '1 signature d approbation minimum | {n} signatures d approbation minimum',
+      quorum_percentage_rule:
+        '1 signature d approbation minimum | {n} signatures d approbation minimum',
+      approval_summary_approved: 'Approuvé avec {n} pour {m} contre',
+      approval_summary_rejected: 'Rejeté avec {n} pour {m} contre',
+      approval_summary_pending: 'En attente avec {n} pour {m} contre',
+      approval_comments: '1 commentaire | {n} commentaires',
+      auto_approved: 'Auto-approuvé',
+      pending: 'En attente',
+      rejected: 'Rejeté',
+      approved: 'Approuvé',
+
+      summary_approved:
+        'Demande approuvée pour la raison suivante: | Demande approuvée pour les raisons suivantes:',
+      summary_rejected:
+        'Demande rejetée pour la raison suivante: | Demande rejetée pour les raisons suivantes:',
+      summary_pending:
+        'Demande en attente pour la raison suivante: | Demande en attente pour les raisons suivantes:',
+      approved_reason_approval_quorum: 'seuil d approbation utilisateur atteint',
+      approved_reason_allowlist: 'adresse de destination trouvée dans le carnet d adresses',
+      approved_reason_allowlist_metadata:
+        'adresse de destination avait des métadonnées dans le carnet d adresses',
+      reason_auto_approved: 'demande auto-approuvée',
+      rejected_reason_approval_quorum: 'seuil d approbation utilisateur non atteint',
+      rejected_reason_allowlist: 'adresse de destination non trouvée dans le carnet d adresses',
+      rejected_reason_allowlist_metadata:
+        'adresse de destination n avait pas de métadonnées dans le carnet d adresses',
+      pending_reason_approval_quorum: 'approbation utilisateur en attente',
+      pending_reason_allowlist: 'adresse de destination dans le carnet d adresses',
+      pending_reason_allowlist_metadata:
+        'adresse de destination dans le carnet d adresses avec des métadonnées',
     },
   },
   landing: {

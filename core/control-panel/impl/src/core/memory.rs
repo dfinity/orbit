@@ -38,8 +38,8 @@ pub fn config_memory() -> Memory {
 }
 
 /// A helper function to access the canister configuration.
-pub fn canister_config() -> CanisterConfig {
-    CONFIG.with(|m| m.borrow().get().get().clone())
+pub fn canister_config() -> Option<CanisterConfig> {
+    CONFIG.with(|m| m.borrow().get().get().cloned())
 }
 
 /// All the memory after the initial config page is managed by the [MemoryManager].
@@ -67,7 +67,7 @@ mod tests {
     fn test_canister_config() {
         let config = CanisterConfig::new(Vec::new(), Vec::new());
         write_canister_config(config.clone());
-        assert_eq!(canister_config(), config);
+        assert_eq!(canister_config(), Some(config));
     }
 
     #[test]
@@ -76,7 +76,7 @@ mod tests {
         write_canister_config(config.clone());
         let new_config = CanisterConfig::new(vec![1], vec![2]);
         write_canister_config(new_config.clone());
-        assert_eq!(canister_config(), new_config);
+        assert_eq!(canister_config(), Some(new_config));
     }
 }
 

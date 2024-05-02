@@ -132,3 +132,33 @@ jobs:
           ./scripts/run-integration-tests.sh 2> logs.txt
           grep "rng succesfully initialized" logs.txt
           ! grep "canister reports healthy already before its initialization has finished" logs.txt
+  deployment-test:
+    name: 'deployment-test:required'
+    runs-on: ubuntu-latest
+    env:
+      BUILD_WASMS: 'false'
+      DOWNLOAD_NNS_CANISTERS: 'false'
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: 'Setup pnpm'
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - name: 'Setup node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 'Run sccache-cache'
+        uses: mozilla-actions/sccache-action@v0.0.4
+      - name: 'Install dfx'
+        uses: dfinity/setup-dfx@main
+      - name: 'Start local replica'
+        run: dfx start --clean --host 127.0.0.1:4943 --background
+      - name: 'Update /etc/hosts'
+        run: echo '127.0.0.1 rdmx6-jaaaa-aaaaa-aaadq-cai.localhost werw6-ayaaa-aaaaa-774aa-cai.localhost' | sudo tee -a /etc/hosts
+      - name: 'Perform local deployment'
+        run: ./orbit --init
+      - name: 'Test local deployment'
+        run: |
+          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"

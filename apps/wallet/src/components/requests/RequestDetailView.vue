@@ -22,10 +22,11 @@
           </VTooltip>
         </span>
       </VToolbarTitle>
+
       <slot name="top-actions"></slot>
     </VToolbar>
-    <VCardText class="px-4 pt-2">
-      <VContainer class="px-0">
+    <VCardText class="px-4 pt-2 pb-0">
+      <VContainer class="px-0 pb-0">
         <VRow v-if="props.request.summary?.[0]">
           <VCol cols="12" class="text-h6 font-weight-bold">
             <VTextarea
@@ -59,58 +60,109 @@
       </VContainer>
     </VCardText>
 
-    <table
-      v-if="approvals.length > 0"
-      class="approvers mx-4 text-body-1"
-      data-test-id="request-approvals"
-    >
-      <thead>
-        <tr>
-          <th>{{ $t('requests.approvals') }}</th>
-          <th></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="approval in approvals" :key="approval.approver?.id">
-          <td>
-            {{ approval.approver.name || approval.approver.id }}
-          </td>
-          <td>
-            <RequestApprovalStatusChip
-              :status="approval.approval.status"
-              size="small"
-              class="ml-2"
-            />
-          </td>
-          <td>
-            <p v-if="approval.approval.status_reason[0]" class="text-medium-emphasis text-body-2">
-              {{ approval.approval.status_reason[0] }}
-            </p>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <VCardText v-if="props.details.can_approve || reason" class="px-4 pt-2">
-      <VContainer class="px-0">
-        <VRow>
-          <VCol cols="12">
-            <VTextarea
-              v-model.trim="reason"
-              data-test-id="request-details-comment"
-              :label="$t('requests.comment_optional')"
-              :variant="props.details.can_approve ? 'underlined' : 'plain'"
-              hide-details
-              rows="1"
-              auto-grow
-              :readonly="props.loading || !props.details.can_approve"
-            />
-          </VCol>
-        </VRow>
-      </VContainer>
+    <VCardText v-if="props.details.can_approve || reason" class="px-4 pt-0">
+      <VTextarea
+        v-model.trim="reason"
+        data-test-id="request-details-comment"
+        :label="$t('requests.comment_optional')"
+        :variant="props.details.can_approve ? 'underlined' : 'plain'"
+        hide-details
+        rows="1"
+        auto-grow
+        :readonly="props.loading || !props.details.can_approve"
+      />
     </VCardText>
-    <VDivider />
+
+    <VContainer class="pb-0">
+      <VExpansionPanels data-test-id="request-approvals-and-evaluation">
+        <VExpansionPanel :elevation="0">
+          <template #title>
+            <span class="text-body-1 font-weight-bold">{{
+              $t('requests.approvals_and_evaluation')
+            }}</span>
+          </template>
+          <VExpansionPanelText>
+            <template v-if="evaulationSummary">
+              <div class="text-body-1 font-weight-bold">
+                {{ $t('terms.summary') }}
+              </div>
+              <div class="mb-6 text-medium-emphasis text-body-2">
+                {{ evaulationSummary }}
+              </div>
+            </template>
+
+            <table
+              v-if="approvals.length > 0"
+              class="approvers text-body-1"
+              data-test-id="request-approvals"
+            >
+              <thead>
+                <tr>
+                  <th class="pl-0">{{ $t('requests.approvals') }}</th>
+                  <th></th>
+                  <th class="d-none d-sm-table-cell"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="approval in approvals" :key="approval.approver.id">
+                  <td class="pl-0">
+                    {{ approval.approver.name }}
+                  </td>
+
+                  <td>
+                    <RequestApprovalStatusChip
+                      :status="approval.approval.status"
+                      size="small"
+                      class="d-sm-none"
+                    />
+                    <p
+                      v-if="approval.approval.status_reason[0]"
+                      class="text-medium-emphasis text-body-2"
+                    >
+                      {{ approval.approval.status_reason[0] }}
+                    </p>
+                  </td>
+                  <td class="text-right d-none d-sm-table-cell">
+                    <RequestApprovalStatusChip
+                      :status="approval.approval.status"
+                      size="small"
+                      class="ml-2"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <template v-if="props.details.evaluationResult && policyResults">
+              <div class="text-body-1 font-weight-bold mt-4">
+                {{ $t('requests.evaluation.acceptance_rules') }}
+              </div>
+              <VList :density="'compact'" data-test-id="request-acceptance-rules">
+                <PolicyRuleResultView
+                  :evaluated-rule="policyResults.evaluated_rule"
+                  :status="policyResults.status"
+                  :request-approvals="props.request.approvals"
+                ></PolicyRuleResultView>
+              </VList>
+            </template>
+          </VExpansionPanelText>
+        </VExpansionPanel>
+      </VExpansionPanels>
+    </VContainer>
+
+    <VContainer v-if="!!requestFailed" class="" data-test-id="request-details-failure">
+      <VRow>
+        <VCol class="text-body-1 font-weight-bold pb-0">
+          {{ $t('requests.failure_title') }}
+        </VCol>
+      </VRow>
+      <VRow class="">
+        <VCol class="text-body-2 text-medium-emphasis pt-2 pb-0">
+          {{ requestFailed }}
+        </VCol>
+      </VRow>
+    </VContainer>
+
+    <VDivider class="mt-6" />
     <VCardActions class="pa-4 d-flex flex-column-reverse flex-column flex-md-row ga-4">
       <RequestMetadata
         :request="props.request"
@@ -163,24 +215,36 @@ import {
   VCol,
   VContainer,
   VDivider,
+  VExpansionPanel,
+  VExpansionPanelText,
+  VExpansionPanels,
+  VList,
   VRow,
   VTextarea,
   VToolbar,
   VToolbarTitle,
   VTooltip,
 } from 'vuetify/components';
-import { Request, RequestOperation } from '~/generated/station/station.did';
+import {
+  Request,
+  RequestOperation,
+  RequestPolicyRuleResult,
+} from '~/generated/station/station.did';
 import { RequestDetails } from '~/types/station.types';
-import { KeysOfUnion } from '~/utils/helper.utils';
+import { KeysOfUnion, variantIs } from '~/utils/helper.utils';
+import PolicyRuleResultView from './PolicyRuleResultView.vue';
+import RequestApprovalStatusChip from './RequestApprovalStatusChip.vue';
+import RequestMetadata from './RequestMetadata.vue';
+import RequestStatusChip from './RequestStatusChip.vue';
 import AddAccountOperation from './operations/AddAccountOperation.vue';
 import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperation.vue';
 import AddRequestPolicyOperation from './operations/AddRequestPolicyOperation.vue';
 import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
 import AddUserOperation from './operations/AddUserOperation.vue';
 import ChangeCanisterOperation from './operations/ChangeCanisterOperation.vue';
-import EditPermissionOperation from './operations/EditPermissionOperation.vue';
 import EditAccountOperation from './operations/EditAccountOperation.vue';
 import EditAddressBookEntryOperation from './operations/EditAddressBookEntryOperation.vue';
+import EditPermissionOperation from './operations/EditPermissionOperation.vue';
 import EditRequestPolicyOperation from './operations/EditRequestPolicyOperation.vue';
 import EditUserGroupOperation from './operations/EditUserGroupOperation.vue';
 import EditUserOperation from './operations/EditUserOperation.vue';
@@ -188,9 +252,7 @@ import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntry
 import RemoveRequestPolicyOperation from './operations/RemoveRequestPolicyOperation.vue';
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
-import RequestMetadata from './RequestMetadata.vue';
-import RequestStatusChip from './RequestStatusChip.vue';
-import RequestApprovalStatusChip from './RequestApprovalStatusChip.vue';
+import { statusReasonsToTextSummary } from '~/utils/evaluation.utils';
 
 const i18n = useI18n();
 
@@ -261,6 +323,14 @@ const requestType = computed(() => {
   return 'unknown';
 });
 
+const requestFailed = computed(() => {
+  if (variantIs(props.request.status, 'Failed')) {
+    return props.request.status.Failed.reason[0] ?? i18n.t('requests.failure_reason_unknown');
+  }
+
+  return false;
+});
+
 const reason = ref('');
 const reasonOrUndefined = computed(() => (reason.value.length ? reason.value : undefined));
 
@@ -281,6 +351,34 @@ const approvals = computed(() =>
     };
   }),
 );
+
+// if there are multiple policy results for the request, wrap them in an AnyOf rule for semantic consistency
+const policyResults = computed((): RequestPolicyRuleResult | null => {
+  if (props.details.evaluationResult) {
+    if (props.details.evaluationResult.policy_results.length > 1) {
+      return {
+        evaluated_rule: {
+          AnyOf: props.details.evaluationResult.policy_results,
+        },
+        status: props.details.evaluationResult.status,
+      };
+    } else {
+      return props.details.evaluationResult.policy_results[0];
+    }
+  }
+
+  return null;
+});
+
+const evaulationSummary = computed(() => {
+  if (props.details.evaluationResult && props.details.evaluationResult.result_reasons[0]) {
+    return statusReasonsToTextSummary(
+      props.details.evaluationResult.status,
+      props.details.evaluationResult.result_reasons[0],
+    );
+  }
+  return false;
+});
 </script>
 
 <style scoped lang="scss">

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '~/test.utils';
 import RequestDetailView from './RequestDetailView.vue';
+import { variantIs } from '~/utils/helper.utils';
 
 type RequestDetailViewProps = InstanceType<typeof RequestDetailView>['$props'];
 
@@ -8,7 +9,20 @@ const pendingProps: RequestDetailViewProps = {
   details: {
     can_approve: true,
     requester_name: 'requester',
-    approvers: [{ id: 'requester-id', name: '' }],
+    approvers: [{ id: 'requester-id', name: 'TestApprover' }],
+    evaluationResult: {
+      request_id: 'request-id',
+      status: { Pending: null },
+      policy_results: [
+        {
+          status: { Pending: null },
+          evaluated_rule: {
+            AutoApproved: null,
+          },
+        },
+      ],
+      result_reasons: [],
+    },
   },
   request: {
     status: { Created: null },
@@ -46,8 +60,8 @@ const approvedProps: RequestDetailViewProps = {
     can_approve: false,
     requester_name: 'requester',
     approvers: [
-      { id: 'approver-1-id', name: '' },
-      { id: 'approver-2-id', name: '' },
+      { id: 'approver-1-id', name: 'Approver1' },
+      { id: 'approver-2-id', name: 'Approver2' },
     ],
   },
   request: {
@@ -92,12 +106,57 @@ const rejectedProps: RequestDetailViewProps = {
     can_approve: false,
     requester_name: 'requester',
     approvers: [
+      { id: 'approver-1-id', name: 'Approver1' },
+      { id: 'approver-2-id', name: 'Approver2' },
+    ],
+  },
+  request: {
+    status: { Rejected: null },
+    approvals: [
+      {
+        approver_id: 'approver-1-id',
+        status: { Approved: null },
+        decided_at: '',
+        status_reason: [],
+      },
+      {
+        approver_id: 'approver-2-id',
+        status: { Rejected: null },
+        decided_at: '',
+        status_reason: ['Test comment'],
+      },
+    ],
+    operation: {
+      AddUser: {
+        user: [],
+        input: {
+          groups: [],
+          identities: [],
+          name: 'test',
+          status: { Active: null },
+        },
+      },
+    },
+    created_at: '',
+    id: '',
+    execution_plan: { Immediate: null },
+    expiration_dt: '',
+    requested_by: 'approver-1-id',
+    summary: [],
+    title: '',
+  },
+};
+const failedProps: RequestDetailViewProps = {
+  details: {
+    can_approve: false,
+    requester_name: 'requester',
+    approvers: [
       { id: 'approver-1-id', name: '' },
       { id: 'approver-2-id', name: '' },
     ],
   },
   request: {
-    status: { Rejected: null },
+    status: { Failed: { reason: ['test-reason'] } },
     approvals: [
       {
         approver_id: 'approver-1-id',
@@ -193,33 +252,64 @@ describe('RequestDetailView', () => {
     expect(wrapper.emitted().approve[0]).toEqual([undefined]);
   });
 
-  it('lists approvals for pending requests', () => {
+  it('lists approvals for pending requests', async () => {
     const wrapper = mount(RequestDetailView, {
       props: pendingProps,
     });
 
+    await wrapper.find('[data-test-id="request-approvals-and-evaluation"] button').trigger('click');
+
     expect(wrapper.find('[data-test-id="request-approvals"]').html()).toContain(
-      pendingProps.request.approvals[0].approver_id,
+      pendingProps.details.approvers[0].name,
     );
   });
 
-  it('lists approvals for approved requests', () => {
+  it('lists approvals for approved requests', async () => {
     const wrapper = mount(RequestDetailView, {
       props: approvedProps,
     });
 
+    await wrapper.find('[data-test-id="request-approvals-and-evaluation"] button').trigger('click');
+
     expect(wrapper.find('[data-test-id="request-approvals"]').html()).toContain(
-      approvedProps.request.approvals[0].approver_id,
+      approvedProps.details.approvers[0].name,
     );
   });
 
-  it('lists approvals for rejected requests', () => {
+  it('lists approvals for rejected requests', async () => {
     const wrapper = mount(RequestDetailView, {
       props: rejectedProps,
     });
 
+    await wrapper.find('[data-test-id="request-approvals-and-evaluation"] button').trigger('click');
+
     expect(wrapper.find('[data-test-id="request-approvals"]').html()).toContain(
-      rejectedProps.request.approvals[0].approver_id,
+      rejectedProps.details.approvers[0].name,
     );
+  });
+
+  it('shows failure reason for failed requests', () => {
+    const wrapper = mount(RequestDetailView, {
+      props: failedProps,
+    });
+
+    const failed = variantIs(failedProps.request.status, 'Failed')
+      ? failedProps.request.status.Failed
+      : null;
+    expect(failed).toBeTruthy();
+
+    expect(wrapper.find('[data-test-id="request-details-failure"]').html()).toContain(
+      failed!.reason[0],
+    );
+  });
+
+  it('shows acceptance rules', async () => {
+    const wrapper = mount(RequestDetailView, {
+      props: pendingProps,
+    });
+
+    await wrapper.find('[data-test-id="request-approvals-and-evaluation"] button').trigger('click');
+
+    expect(wrapper.find('[data-test-id="request-acceptance-rules"]').exists()).toBeTruthy();
   });
 });

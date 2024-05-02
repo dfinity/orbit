@@ -36,6 +36,12 @@ impl DeployService {
     ) -> ServiceResult<Principal> {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
 
+        let config = canister_config().ok_or(DeployError::Failed {
+            reason: "Canister config not initialized.".to_string(),
+        })?;
+        let station_wasm_module = config.station_wasm_module;
+        let upgrader_wasm_module = config.upgrader_wasm_module;
+
         let can_deploy_station_response = user.can_deploy_station();
         match can_deploy_station_response {
             CanDeployStation::Allowed(_) => {}
@@ -73,18 +79,17 @@ impl DeployService {
         })?;
 
         // installs the station canister with the associated upgrader wasm module
-        let config = canister_config();
         mgmt::install_code(mgmt::InstallCodeArgument {
             mode: mgmt::CanisterInstallMode::Install,
             canister_id: station_canister.canister_id,
-            wasm_module: config.station_wasm_module,
+            wasm_module: station_wasm_module,
             arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                 name: input.station_name.clone(),
                 admins: vec![station_api::AdminInitInput {
                     identity: user.identity,
                     name: input.admin_name.clone(),
                 }],
-                upgrader_wasm_module: config.upgrader_wasm_module,
+                upgrader_wasm_module,
             }))
             .map_err(|err| DeployError::Failed {
                 reason: err.to_string(),
