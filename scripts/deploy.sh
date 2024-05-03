@@ -183,7 +183,7 @@ function deploy_control_panel() {
     echo "Canister 'control_panel' does not exist, creating and installing..."
 
     dfx canister create control_panel --network $network --with-cycles 5000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
-    dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = blob \"$station_wasm_module_bytes\"; } })")
+    dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz
   else
     echo "Canister 'control_panel' already exists with ID: $canister_id_output"
 
@@ -191,12 +191,15 @@ function deploy_control_panel() {
 
     if [ "$module_hash" == "None" ]; then
       echo "Installing the wasm module to the control_panel canister..."
-      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode install --argument-file <(echo "(opt variant { Init = record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = blob \"$station_wasm_module_bytes\"; } })")
+      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode install
     else
       echo "Upgrading the wasm module to the control_panel canister..."
-      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode upgrade --argument-file <(echo "(opt variant { Upgrade = record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = opt blob \"$station_wasm_module_bytes\"; } })")
+      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode upgrade
     fi
   fi
+
+  echo "Updating the control_panel canister with the new station and upgrader WASM modules..."
+  dfx canister call control_panel --network $network upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = blob \"$station_wasm_module_bytes\"; })")
 }
 
 function deploy_app_wallet() {
