@@ -194,7 +194,7 @@ function deploy_control_panel() {
       dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode install
     else
       echo "Upgrading the wasm module to the control_panel canister..."
-      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode upgrade
+      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode upgrade --yes
     fi
   fi
 
