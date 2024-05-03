@@ -42,12 +42,14 @@
     "control_panel": {
       "type": "custom",
       "candid": "core/control-panel/api/spec.did",
-      "build": "./scripts/generate-wasm.sh control-panel"
+      "build": "./scripts/generate-wasm.sh control-panel",
+      "wasm": "./wasms/control_panel.wasm.gz"
     },
     "station": {
       "type": "custom",
       "candid": "core/station/api/spec.did",
-      "build": "./scripts/generate-wasm.sh station"
+      "build": "./scripts/generate-wasm.sh station",
+      "wasm": "./wasms/station.wasm.gz"
     },
     "app_wallet": {
       "type": "assets",
