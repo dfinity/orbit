@@ -181,9 +181,9 @@ jobs:
         run: dfx start --clean --host 127.0.0.1:4943 --background
       - name: 'Test prod deployment script'
         run: |
-          ./scripts/deploy.sh --local # install
+          echo y | ./scripts/deploy.sh --local # install
           curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
-          ./scripts/deploy.sh --local # upgrade
+          echo y | ./scripts/deploy.sh --local # upgrade
           curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
-          ./scripts/deploy.sh --local reset # uninstall and install
+          echo y | ./scripts/deploy.sh --local reset # uninstall and install
           curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
