@@ -48,21 +48,23 @@ where
     }
 }
 
-pub fn use_status_metric<T>(metric_key: &str, result: &ApiResult<T>)
+pub fn use_canister_call_metric<T>(called_method: &str, result: &ApiResult<T>)
 where
     T: std::fmt::Debug,
 {
     with_metrics_registry(SERVICE_NAME, |registry| {
         let counter = registry.counter_vec_mut(
-            metric_key,
-            &["status"],
-            &format!("number of times {} was called", metric_key),
+            "canister_call",
+            &["status", "method"],
+            "Number of calls to the canister method with the status of the call",
         );
         let status = match result {
             Ok(_) => "ok",
             Err(_) => "fail",
         };
 
-        counter.with(&labels! { "status" => status }).inc();
+        counter
+            .with(&labels! { "status" => status, "method" => called_method })
+            .inc();
     });
 }
