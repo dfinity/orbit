@@ -2,7 +2,6 @@
 [package]
 name = "orbit-essentials-macros-tests"
 include = ["src", "Cargo.toml"]
-version.workspace = true
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true

@@ -1,0 +1,7 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "orbit-essentials-macros",
+  "root": "libs/orbit-essentials-macros",
+  "sourceRoot": "libs/orbit-essentials-macros/src",
+  "projectType": "library"
+}

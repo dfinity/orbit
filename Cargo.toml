@@ -15,7 +15,6 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
 authors = ["DFINITY Stiftung"]
 edition = "2021"
 repository = "https://github.com/dfinity/orbit"

@@ -3,7 +3,6 @@
 name = "canfund"
 description = "This library provides a simple interface to monitor and add cycles to canisters on the Internet Computer."
 include = ["src", "Cargo.toml"]
-version.workspace = true
 edition.workspace = true
 repository.workspace = true
 license.workspace = true

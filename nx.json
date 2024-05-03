@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "plugins": ["@monodon/rust", "@nx/js"],
+  "release": {
+    "version": {
+      "conventionalCommits": true
+    },
+    "projectsRelationship": "independent",
+    "releaseTagPattern": "{groupName}-v{version}",
+    "changelog": {
+      "projectChangelogs": true
+    },
+    "groups": {
+      "orbit-station": {
+        "projectsRelationship": "fixed",
+        "projects": ["station", "station-api", "canfund", "orbit-essentials", "orbit-essentials-macros", "upgrader-api"]
+      }
+    }
+  }
+}
