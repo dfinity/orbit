@@ -31,7 +31,7 @@ flowchart LR
 
     Control_Panel[(Control Panel)] -- deploys --> Station;
     Station[(Station)] -- deploys & controls --> Upgrader;
-    Upgrader[(Upgrader)] -- controls --> Station;
+    Upgrader[(Upgrader)] -- deploys & controls --> Station;
 ```
 
 Orbit is composed of several components, each with its own role and responsibilities. Here is a brief overview of each component:
