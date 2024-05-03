@@ -42,12 +42,20 @@
     "control_panel": {
       "type": "custom",
       "candid": "core/control-panel/api/spec.did",
+      "declarations": {
+        "output": "apps/wallet/src/generated/control-panel",
+        "node_compatibility": true
+      },
       "build": "./scripts/generate-wasm.sh control-panel",
       "wasm": "./wasms/control_panel.wasm.gz"
     },
     "station": {
       "type": "custom",
       "candid": "core/station/api/spec.did",
+      "declarations": {
+        "output": "apps/wallet/src/generated/station",
+        "node_compatibility": true
+      },
       "build": "./scripts/generate-wasm.sh station",
       "wasm": "./wasms/station.wasm.gz"
     },
