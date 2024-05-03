@@ -160,7 +160,7 @@ jobs:
         run: |
           curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
   prod-deployment-test:
-    name: 'deployment-test:required'
+    name: 'prod-deployment-test:required'
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout'
