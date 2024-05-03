@@ -1,5 +1,5 @@
 use crate::{
-    core::middlewares::{authorize, call_context, use_status_metric},
+    core::middlewares::{authorize, call_context, use_canister_call_metric},
     mappers::HelperMapper,
     models::resource::{RequestResourceAction, Resource},
     services::{RequestService, REQUEST_SERVICE},
@@ -62,7 +62,7 @@ impl RequestController {
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
-    #[with_middleware(tail = use_status_metric("call_create_request", &result))]
+    #[with_middleware(tail = use_canister_call_metric("create_request", &result))]
     async fn create_request(&self, input: CreateRequestInput) -> ApiResult<CreateRequestResponse> {
         let ctx = &call_context();
         let request = self.request_service.create_request(input, ctx).await?;
@@ -166,7 +166,7 @@ impl RequestController {
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
-    #[with_middleware(tail = use_status_metric("call_submit_request_approval", &result))]
+    #[with_middleware(tail = use_canister_call_metric("submit_request_approval", &result))]
     async fn submit_request_approval(
         &self,
         input: SubmitRequestApprovalInput,
