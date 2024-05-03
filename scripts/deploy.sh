@@ -47,6 +47,7 @@ Usage:
 
 
 Options:
+  --local Deploys Orbit to the local network (If 'reset' is specified, the control-panel will be reset)
   --playground Deploys Orbit to the playground network (If 'reset' is specified, the control-panel will be reset)
   --testing Performs a testing deployment of Orbit to the IC
   --staging Performs a staging deployment of Orbit to the IC
@@ -119,17 +120,15 @@ function build_wasms() {
 function setup_cycles_wallet() {
   local network="$(get_network)"
 
-  if [ "$network" != "local" ]; then
-    set +e # Disable 'exit on error'
-    cycles_wallet_id_output=$(dfx identity get-wallet --network $network 2>&1)
-    cycles_wallet_id_exit_code=$?
-    set -e # Re-enable 'exit on error'
+  set +e # Disable 'exit on error'
+  cycles_wallet_id_output=$(dfx identity get-wallet --network $network 2>&1)
+  cycles_wallet_id_exit_code=$?
+  set -e # Re-enable 'exit on error'
 
-    if [ $cycles_wallet_id_exit_code -ne 0 ]; then
-      echo "Cycles wallet does not exist, using the default mainnet wallet for the deployment."
-      cycles_wallet_id=$(dfx identity get-wallet --network ic)
-      dfx identity set-wallet "$cycles_wallet_id" --network $network
-    fi
+  if [ $cycles_wallet_id_exit_code -ne 0 ]; then
+    echo "Cycles wallet does not exist, using the default mainnet wallet for the deployment."
+    cycles_wallet_id=$(dfx identity get-wallet --network ic)
+    dfx identity set-wallet "$cycles_wallet_id" --network $network
   fi
 }
 
@@ -227,45 +226,25 @@ while [[ $# -gt 0 ]]; do
     help
     exit 0
     ;;
+  --local)
+    shift
+    set_network "local"
+    ;;
   --production)
     shift
     set_network production
-    exec_function setup_enviroment
-    identity_warning_confirmation
-    exec_function deploy_control_panel
-    exec_function deploy_app_wallet
-    echo
     ;;
   --staging)
     shift
     set_network staging
-    exec_function setup_enviroment
-    identity_warning_confirmation
-    exec_function deploy_control_panel
-    exec_function deploy_app_wallet
-    echo
     ;;
   --testing)
     shift
     set_network testing
-    exec_function setup_enviroment
-    identity_warning_confirmation
-    exec_function deploy_control_panel
-    exec_function deploy_app_wallet
-    echo
     ;;
   --playground)
     shift
     set_network playground
-    exec_function setup_enviroment
-    identity_warning_confirmation
-    if [ "${1-}" == "reset" ]; then
-      shift
-      exec_function reset_control_panel
-    fi
-    exec_function deploy_control_panel
-    exec_function deploy_app_wallet
-    echo
     ;;
   *)
     echo "ERROR: unknown argument $1"
@@ -275,4 +254,13 @@ while [[ $# -gt 0 ]]; do
     exit 1
     ;;
   esac
+  exec_function setup_enviroment
+  identity_warning_confirmation
+  if [ "${1-}" == "reset" ]; then
+    shift
+    exec_function reset_control_panel
+  fi
+  exec_function deploy_control_panel
+  exec_function deploy_app_wallet
+  echo
 done
