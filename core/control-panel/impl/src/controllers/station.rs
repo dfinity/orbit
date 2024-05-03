@@ -1,5 +1,5 @@
 //! Station services.
-use crate::core::middlewares::{call_context, logger, use_status_metric};
+use crate::core::middlewares::{call_context, logger, use_canister_call_metric};
 use crate::errors::UserError;
 use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
 use crate::{core::CallContext, services::UserService};
@@ -93,7 +93,7 @@ impl StationController {
         tail = logger(__target_fn, context, Some(&result)),
         context = &call_context()
     )]
-    #[with_middleware(tail = use_status_metric("call_deploy_station", &result))]
+    #[with_middleware(tail = use_canister_call_metric("deploy_station", &result))]
     async fn deploy_station(&self, input: DeployStationInput) -> ApiResult<DeployStationResponse> {
         let ctx = CallContext::get();
         let _lock = STATE
