@@ -1,7 +1,12 @@
 [package]
 name = "upgrader"
-version = "0.1.0"
-edition = "2021"
+include = ["src", "Cargo.toml"]
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+homepage.workspace = true
 
 [lib]
 crate-type = ["cdylib"]

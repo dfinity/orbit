@@ -14,6 +14,14 @@ members = [
     "libs/orbit-essentials-macros-tests",
 ]
 
+[workspace.package]
+version = "0.1.0"
+authors = ["DFINITY Stiftung"]
+edition = "2021"
+repository = "https://github.com/dfinity/orbit"
+homepage = "https://github.com/dfinity/orbit#readme"
+license = "Apache-2.0"
+
 [profile.release]
 lto = true
 opt-level = 'z'

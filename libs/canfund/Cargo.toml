@@ -1,12 +1,13 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
 name = "canfund"
-version = "0.1.0"
-edition = "2021"
 description = "This library provides a simple interface to monitor and add cycles to canisters on the Internet Computer."
-authors = ["DFINITY Stiftung"]
-license = "Apache-2.0"
 include = ["src", "Cargo.toml"]
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+homepage.workspace = true
 
 [lib]
 path = "src/lib.rs"

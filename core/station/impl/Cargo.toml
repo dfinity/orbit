@@ -1,13 +1,13 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
 name = "station"
-version = "0.1.0"
-edition = "2021"
-authors = ["DFINITY Stiftung"]
-license = "Apache-2.0"
 include = ["src", "Cargo.toml"]
-homepage = "https://github.com/dfinity/orbit#readme"
-repository = "https://github.com/dfinity/orbit"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+homepage.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
