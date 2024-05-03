@@ -1,19 +1,31 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "plugins": ["@monodon/rust", "@nx/js"],
+  "plugins": ["@monodon/rust"],
   "release": {
+    "projectsRelationship": "independent",
     "version": {
       "conventionalCommits": true
     },
-    "projectsRelationship": "independent",
-    "releaseTagPattern": "{groupName}-v{version}",
     "changelog": {
-      "projectChangelogs": true
+      "projectChangelogs": true,
+      "workspaceChangelog": false
     },
     "groups": {
+      "orbit-libs": {
+        "projectsRelationship": "fixed",
+        "projects": ["libs/*", "!libs/canfund"]
+      },
+      "canfund": {
+        "projectsRelationship": "fixed",
+        "projects": ["libs/canfund"]
+      },
+      "control-panel": {
+        "projectsRelationship": "fixed",
+        "projects": ["core/control-panel/*"]
+      },
       "orbit-station": {
         "projectsRelationship": "fixed",
-        "projects": ["station", "station-api", "canfund", "orbit-essentials", "orbit-essentials-macros", "upgrader-api"]
+        "projects": ["core/station/*", "core/upgrader/*"]
       }
     }
   }
