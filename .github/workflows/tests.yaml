@@ -182,8 +182,8 @@ jobs:
       - name: 'Test prod deployment script'
         run: |
           echo y | ./scripts/deploy.sh --local # install
-          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
+          curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"
           echo y | ./scripts/deploy.sh --local # upgrade
-          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
+          curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"
           echo y | ./scripts/deploy.sh --local reset # uninstall and install
-          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
+          curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"

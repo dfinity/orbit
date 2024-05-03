@@ -40,26 +40,14 @@
       }
     },
     "control_panel": {
-      "type": "rust",
-      "package": "control-panel",
+      "type": "custom",
       "candid": "core/control-panel/api/spec.did",
-      "declarations": {
-        "output": "apps/wallet/src/generated/control-panel",
-        "node_compatibility": true
-      },
-      "optimize": "cycles",
-      "gzip": true
+      "build": "./scripts/generate-wasm.sh control-panel"
     },
     "station": {
-      "type": "rust",
-      "package": "station",
+      "type": "custom",
       "candid": "core/station/api/spec.did",
-      "declarations": {
-        "output": "apps/wallet/src/generated/station",
-        "node_compatibility": true
-      },
-      "optimize": "cycles",
-      "gzip": true
+      "build": "./scripts/generate-wasm.sh station"
     },
     "app_wallet": {
       "type": "assets",
