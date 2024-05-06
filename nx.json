@@ -12,6 +12,9 @@
       "automaticFromRef": true,
       "projectChangelogs": {
         "createRelease": "github"
+      },
+      "git": {
+        "commitMessage": "chore(release): release {project}@v{version}"
       }
     },
     "groups": {
@@ -21,17 +24,11 @@
           "!libs/orbit-essentials-macros-tests",
           "!libs/orbit-essentials-macros",
           "!libs/orbit-essentials"
-        ],
-        "changelog": {
-          "commitMessageFormat": "chore(libs): release {project}@v{version}"
-        }
+        ]
       },
       "wallet": {
         "projects": ["apps/wallet"],
-        "releaseTagPattern": "wallet@v{version}",
-        "changelog": {
-          "commitMessageFormat": "chore(wallet): release orbit-wallet@v{version}"
-        }
+        "releaseTagPattern": "wallet@v{version}"
       },
       "orbit": {
         "projectsRelationship": "fixed",
@@ -42,10 +39,7 @@
           "libs/orbit-essentials",
           "libs/orbit-essentials-macros"
         ],
-        "releaseTagPattern": "orbit@v{version}",
-        "changelog": {
-          "commitMessageFormat": "chore(orbit): release orbit@v{version}"
-        }
+        "releaseTagPattern": "orbit@v{version}"
       }
     }
   }
