@@ -16,7 +16,6 @@
     },
     "groups": {
       "libs": {
-        "projectsRelationship": "independent",
         "projects": [
           "libs/*",
           "!libs/orbit-essentials-macros-tests",
@@ -25,6 +24,13 @@
         ],
         "changelog": {
           "commitMessageFormat": "chore(libs): release {project}@v{version}"
+        }
+      },
+      "wallet": {
+        "projects": ["apps/wallet"],
+        "releaseTagPattern": "wallet@v{version}",
+        "changelog": {
+          "commitMessageFormat": "chore(wallet): release orbit-wallet@v{version}"
         }
       },
       "orbit": {
@@ -39,14 +45,6 @@
         "releaseTagPattern": "orbit@v{version}",
         "changelog": {
           "commitMessageFormat": "chore(orbit): release orbit@v{version}"
-        }
-      },
-      "wallet": {
-        "projectsRelationship": "fixed",
-        "projects": ["apps/wallet"],
-        "releaseTagPattern": "wallet@v{version}",
-        "changelog": {
-          "commitMessageFormat": "chore(wallet): release orbit-wallet@v{version}"
         }
       }
     }
