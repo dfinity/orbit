@@ -7,7 +7,6 @@
     "version": {
       "conventionalCommits": true
     },
-    "releaseTagPattern": "{project}@v{version}",
     "changelog": {
       "automaticFromRef": true,
       "projectChangelogs": {
@@ -24,8 +23,7 @@
         ]
       },
       "wallet": {
-        "projects": ["apps/wallet"],
-        "releaseTagPattern": "wallet@v{version}"
+        "projects": ["apps/wallet"]
       },
       "orbit": {
         "projectsRelationship": "fixed",
@@ -35,8 +33,7 @@
           "core/upgrader/*",
           "libs/orbit-essentials",
           "libs/orbit-essentials-macros"
-        ],
-        "releaseTagPattern": "orbit@v{version}"
+        ]
       }
     }
   }
