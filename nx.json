@@ -7,9 +7,6 @@
     "version": {
       "conventionalCommits": true
     },
-    "git": {
-      "commitMessage": "chore(release): release {project}@v{version}"
-    },
     "releaseTagPattern": "{project}@v{version}",
     "changelog": {
       "automaticFromRef": true,
