@@ -15,14 +15,24 @@ function getFirstRepositoryCommit(): string {
 
 program
   .description('Release a new version of projects in the workspace')
+  .option(
+    '-g, --groups',
+    'The release groups to include in the release, separated by commas. If not provided, all release groups will be included.',
+  )
   .option('-d, --dry-run', 'Whether or not to perform a dry-run of the release process')
   .option('-v, --verbose', 'Whether or not to log verbose output')
   .option('-f, --first-release', 'Whether or not this is the first release of the project')
   .action(async options => {
+    // remove the whitespace from the groups
+    const groups = options.groups
+      ? options.groups.split(',').map((group: string) => group.trim())
+      : undefined;
+
     const { workspaceVersion, projectsVersionData } = await releaseVersion({
       dryRun: options.dryRun,
       verbose: options.verbose,
       firstRelease: options.firstRelease,
+      groups,
     });
 
     // If this is the first release, we don't have a previous version to compare against
@@ -34,6 +44,7 @@ program
       version: workspaceVersion,
       dryRun: options.dryRun,
       verbose: options.verbose,
+      groups,
       from,
     });
   })
