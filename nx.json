@@ -7,6 +7,7 @@
     "version": {
       "conventionalCommits": true
     },
+    "releaseTagPattern": "{project}@v{version}",
     "changelog": {
       "automaticFromRef": true,
       "projectChangelogs": {
@@ -22,7 +23,6 @@
           "!libs/orbit-essentials-macros",
           "!libs/orbit-essentials"
         ],
-        "releaseTagPattern": "{project}@v{version}",
         "changelog": {
           "commitMessageFormat": "chore(libs): release {project}@v{version}"
         }
