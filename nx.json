@@ -28,6 +28,7 @@
       },
       "orbit": {
         "projectsRelationship": "fixed",
+        "releaseTagPattern": "release/orbit/{version}",
         "projects": [
           "core/control-panel/*",
           "core/station/*",
