@@ -9,11 +9,13 @@ program
     true,
   )
   .option('-v, --verbose', 'Whether or not to log verbose output, defaults to false', false)
+  .option('-f, --firstRelease', 'Whether or not this is the first release of the project', false)
   .action(async options => {
     console.log('options', options);
     const { workspaceVersion, projectsVersionData } = await releaseVersion({
       dryRun: options.dryRun,
       verbose: options.verbose,
+      firstRelease: options.firstRelease,
     });
 
     console.log('workspaceVersion', workspaceVersion);
