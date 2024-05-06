@@ -8,34 +8,46 @@
       "conventionalCommits": true
     },
     "changelog": {
-      "projectChangelogs": true,
-      "automaticFromRef": true
+      "automaticFromRef": true,
+      "projectChangelogs": {
+        "createRelease": "github"
+      }
     },
     "groups": {
-      "canfund": {
-        "projectsRelationship": "fixed",
-        "projects": ["libs/canfund"],
-        "releaseTagPattern": "canfund@v{version}"
-      },
       "libs": {
-        "projectsRelationship": "fixed",
-        "projects": ["libs/*", "!libs/orbit-essentials-macros-tests", "!libs/canfund"],
-        "releaseTagPattern": "libs@v{version}"
+        "projectsRelationship": "independent",
+        "projects": [
+          "libs/*",
+          "!libs/orbit-essentials-macros-tests",
+          "!libs/orbit-essentials-macros",
+          "!libs/orbit-essentials"
+        ],
+        "releaseTagPattern": "{project}@v{version}",
+        "changelog": {
+          "commitMessageFormat": "chore(libs): release {project}@v{version}"
+        }
       },
-      "control-panel": {
+      "orbit": {
         "projectsRelationship": "fixed",
-        "projects": ["core/control-panel/*"],
-        "releaseTagPattern": "control-panel@v{version}"
-      },
-      "station": {
-        "projectsRelationship": "fixed",
-        "projects": ["core/station/*", "core/upgrader/*"],
-        "releaseTagPattern": "station@v{version}"
+        "projects": [
+          "core/control-panel/*",
+          "core/station/*",
+          "core/upgrader/*",
+          "libs/orbit-essentials",
+          "libs/orbit-essentials-macros"
+        ],
+        "releaseTagPattern": "orbit@v{version}",
+        "changelog": {
+          "commitMessageFormat": "chore(orbit): release orbit@v{version}"
+        }
       },
       "wallet": {
         "projectsRelationship": "fixed",
         "projects": ["apps/wallet"],
-        "releaseTagPattern": "wallet@v{version}"
+        "releaseTagPattern": "wallet@v{version}",
+        "changelog": {
+          "commitMessageFormat": "chore(wallet): release orbit-wallet@v{version}"
+        }
       }
     }
   }
