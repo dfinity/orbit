@@ -1,7 +1,5 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "orbit-essentials",
-  "root": "libs/orbit-essentials",
-  "sourceRoot": "libs/orbit-essentials/src",
   "projectType": "library"
 }

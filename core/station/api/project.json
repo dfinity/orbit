@@ -1,7 +1,5 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "name": "station-api",
-  "root": "core/station/api",
-  "sourceRoot": "core/station/api/src",
   "projectType": "library"
 }

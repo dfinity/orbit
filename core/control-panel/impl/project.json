@@ -1,7 +1,5 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "name": "control-panel",
-  "root": "core/control-panel/impl",
-  "sourceRoot": "core/control-panel/impl/src",
   "projectType": "application"
 }

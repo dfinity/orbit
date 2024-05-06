@@ -1,7 +1,5 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "name": "station",
-  "root": "core/station/impl",
-  "sourceRoot": "core/station/impl/src",
   "projectType": "application"
 }

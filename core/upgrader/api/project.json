@@ -1,7 +1,5 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "name": "upgrader-api",
-  "root": "core/upgrader/api",
-  "sourceRoot": "core/upgrader/api/src",
   "projectType": "library"
 }

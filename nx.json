@@ -1,31 +1,40 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "plugins": ["@monodon/rust"],
+  "defaultBase": "main",
   "release": {
     "projectsRelationship": "independent",
     "version": {
       "conventionalCommits": true
     },
     "changelog": {
-      "projectChangelogs": true,
-      "workspaceChangelog": false
+      "projectChangelogs": true
     },
     "groups": {
-      "orbit-libs": {
-        "projectsRelationship": "fixed",
-        "projects": ["libs/*", "!libs/canfund"]
-      },
       "canfund": {
         "projectsRelationship": "fixed",
-        "projects": ["libs/canfund"]
+        "projects": ["libs/canfund"],
+        "releaseTagPattern": "canfund@v{version}"
+      },
+      "libs": {
+        "projectsRelationship": "fixed",
+        "projects": ["libs/*", "!libs/orbit-essentials-macros-tests", "!libs/canfund"],
+        "releaseTagPattern": "libs@v{version}"
       },
       "control-panel": {
         "projectsRelationship": "fixed",
-        "projects": ["core/control-panel/*"]
+        "projects": ["core/control-panel/*"],
+        "releaseTagPattern": "control-panel@v{version}"
       },
-      "orbit-station": {
+      "station": {
         "projectsRelationship": "fixed",
-        "projects": ["core/station/*", "core/upgrader/*"]
+        "projects": ["core/station/*", "core/upgrader/*"],
+        "releaseTagPattern": "station@v{version}"
+      },
+      "wallet": {
+        "projectsRelationship": "fixed",
+        "projects": ["apps/wallet"],
+        "releaseTagPattern": "wallet@v{version}"
       }
     }
   }
