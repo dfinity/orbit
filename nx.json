@@ -4,7 +4,6 @@
   "defaultBase": "main",
   "release": {
     "projectsRelationship": "independent",
-    "releaseTagPattern": "release/{projectName}/{version}",
     "version": {
       "conventionalCommits": true
     },
@@ -16,6 +15,7 @@
     },
     "groups": {
       "libs": {
+        "releaseTagPattern": "release/{projectName}/{version}",
         "projects": [
           "libs/*",
           "!libs/orbit-essentials-macros-tests",
@@ -24,6 +24,7 @@
         ]
       },
       "wallet": {
+        "releaseTagPattern": "release/{projectName}/{version}",
         "projects": ["apps/wallet"]
       },
       "orbit": {
