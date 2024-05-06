@@ -8,7 +8,8 @@
       "conventionalCommits": true
     },
     "changelog": {
-      "projectChangelogs": true
+      "projectChangelogs": true,
+      "automaticFromRef": true
     },
     "groups": {
       "canfund": {
