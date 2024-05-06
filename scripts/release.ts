@@ -4,12 +4,12 @@ import { program } from 'commander';
 program
   .description('Release a new version of projects in the workspace')
   .option(
-    '-d, --dryRun',
+    '-d, --dry-run',
     'Whether or not to perform a dry-run of the release process, defaults to true',
     true,
   )
   .option('-v, --verbose', 'Whether or not to log verbose output, defaults to false', false)
-  .option('-f, --firstRelease', 'Whether or not this is the first release of the project', false)
+  .option('-f, --first-release', 'Whether or not this is the first release of the project', false)
   .action(async options => {
     console.log('options', options);
     const { workspaceVersion, projectsVersionData } = await releaseVersion({
