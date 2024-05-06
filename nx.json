@@ -4,6 +4,7 @@
   "defaultBase": "main",
   "release": {
     "projectsRelationship": "independent",
+    "releaseTagPattern": "release/{projectName}/{version}",
     "version": {
       "conventionalCommits": true
     },
