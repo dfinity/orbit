@@ -4,6 +4,7 @@ import { releaseChangelog, releaseVersion } from 'nx/release';
 import { dirname, isAbsolute, join } from 'path';
 import { fileURLToPath } from 'url';
 import { parseArgsListSplitByComma } from '../utils';
+import { exec } from 'child_process';
 
 // Convert the import.meta.url to a file path
 const __filename = fileURLToPath(import.meta.url);
@@ -64,21 +65,6 @@ command.action(async options => {
     preid: options.preRelease !== 'prod' ? options.preRelease : undefined,
   });
 
-  if (!options.disableChangelogs) {
-    await releaseChangelog({
-      dryRun: options.dryRun,
-      firstRelease: options.firstRelease,
-      projects: options.projects,
-      verbose: options.verbose,
-      versionData: projectsVersionData,
-      version: workspaceVersion,
-      createRelease: false,
-      gitCommit: false,
-      gitTag: false,
-      stageChanges: false,
-    });
-  }
-
   if (!options.dryRun) {
     const releaseOutputPath = isAbsolute(options.releaseOutput)
       ? options.releaseOutput
@@ -98,6 +84,21 @@ command.action(async options => {
         2,
       ),
     );
+
+    exec(`git add ${releaseOutputPath}`);
+  }
+
+  if (!options.disableChangelogs) {
+    await releaseChangelog({
+      dryRun: options.dryRun,
+      firstRelease: options.firstRelease,
+      projects: options.projects,
+      verbose: options.verbose,
+      versionData: projectsVersionData,
+      version: workspaceVersion,
+      createRelease: false,
+      gitTag: false,
+    });
   }
 });
 
