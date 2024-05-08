@@ -4,7 +4,7 @@ import { releaseChangelog, releaseVersion } from 'nx/release';
 import { dirname, isAbsolute, join } from 'path';
 import { fileURLToPath } from 'url';
 import { parseArgsListSplitByComma } from '../utils';
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -80,20 +80,21 @@ command.action(async options => {
       ),
     );
 
-    exec(`git add ${releaseOutputPath}`);
-  }
+    execSync(`git add ${releaseOutputPath}`);
 
-  await releaseChangelog({
-    dryRun: options.dryRun,
-    firstRelease: options.firstRelease,
-    projects: options.projects,
-    verbose: options.verbose,
-    versionData: projectsVersionData,
-    version: workspaceVersion,
-    createRelease: false,
-    gitTag: false,
-    gitCommitArgs: '--allow-empty',
-  });
+    const stagedFiles = execSync('git diff --cached --name-only').toString().trim();
+
+    if (!stagedFiles) {
+      console.log('No staged changes to commit.');
+
+      return;
+    }
+
+    console.log('Staged changes detected, committing...');
+    // Commit the staged changes
+    const commitMessage = 'chore(release): bump versions and prepare release';
+    execSync(`git commit -m "${commitMessage}"`).toString().trim();
+  }
 });
 
 export default command;
