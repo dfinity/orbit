@@ -38,7 +38,7 @@ command.action(async options => {
     verbose: options.verbose,
     versionData: projectsVersionData,
     version: workspaceVersion,
-    gitCommit: true,
+    gitCommit: false,
     gitTag: true,
     firstRelease: true,
     createRelease: 'github',
