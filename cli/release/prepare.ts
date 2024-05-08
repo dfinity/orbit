@@ -72,6 +72,8 @@ command.action(async options => {
     ? options.releaseOutput
     : join(__dirname, '../..', options.releaseOutput);
 
+  console.log(`Writing release information to ${releaseOutputPath}`);
+
   writeFileSync(
     releaseOutputPath,
     JSON.stringify(
@@ -98,6 +100,7 @@ command.action(async options => {
     versionData: projectsVersionData,
     gitCommit: false,
     gitTag: false,
+    stageChanges: false,
   });
 });
 

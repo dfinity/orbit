@@ -8,4 +8,4 @@ program
   .name('orbit-cli')
   .description('The Orbit CLI includes tools for managing projects in the workspace')
   .addCommand(release)
-  .parse();
+  .parseAsync();
