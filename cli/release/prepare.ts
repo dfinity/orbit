@@ -1,10 +1,10 @@
+import { execSync } from 'child_process';
 import { createCommand } from 'commander';
 import { writeFile } from 'fs/promises';
-import { releaseChangelog, releaseVersion } from 'nx/release';
+import { releaseVersion } from 'nx/release';
 import { dirname, isAbsolute, join } from 'path';
 import { fileURLToPath } from 'url';
 import { parseArgsListSplitByComma } from '../utils';
-import { exec, execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
