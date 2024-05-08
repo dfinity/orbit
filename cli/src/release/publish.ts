@@ -1,13 +1,9 @@
 import { createCommand } from 'commander';
-import { dirname, isAbsolute, join } from 'path';
-import { fileURLToPath } from 'url';
+import { isAbsolute, join } from 'path';
 import { releaseChangelog } from 'nx/release';
 import { fileExists } from 'nx/src/utils/fileutils';
 import { getCurrentReleaseId } from '../utils';
 import { execSync } from 'child_process';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const command = createCommand('publish').description(
   'Handles the publishing of a given release. This command should be run after the release has been prepared.',
@@ -24,7 +20,7 @@ command
 command.action(async options => {
   const releaseFilePath = isAbsolute(options.releaseFile)
     ? options.releaseFile
-    : join(__dirname, '../..', options.releaseFile);
+    : join(__dirname, '../../..', options.releaseFile);
 
   if (!releaseFilePath.endsWith('.json')) {
     throw new Error('Invalid release file path. Must be a JSON file.');

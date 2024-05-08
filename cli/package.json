@@ -1,0 +1,16 @@
+{
+  "name": "orbit-cli",
+  "version": "0.0.1",
+  "bin": {
+    "orbit-cli": "./dist/cli.js"
+  },
+  "main": "cli.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "expose": "pnpm link --global"
+  },
+  "devDependencies": {
+    "commander": "12.0.0"
+  }
+}

@@ -2,12 +2,8 @@ import { execSync } from 'child_process';
 import { createCommand } from 'commander';
 import { writeFile } from 'fs/promises';
 import { releaseVersion } from 'nx/release';
-import { dirname, isAbsolute, join } from 'path';
-import { fileURLToPath } from 'url';
+import { isAbsolute, join } from 'path';
 import { getCurrentReleaseId, parseArgsListSplitByComma } from '../utils';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const parsePreReleaseMode = (releaseMode?: string): 'alpha' | 'beta' | 'rc' | 'prod' => {
   if (!releaseMode) {
@@ -63,7 +59,7 @@ command.action(async options => {
   if (!options.dryRun) {
     const releaseOutputPath = isAbsolute(options.releaseOutput)
       ? options.releaseOutput
-      : join(__dirname, '../..', options.releaseOutput);
+      : join(__dirname, '../../..', options.releaseOutput);
 
     const nextReleaseId = getCurrentReleaseId() + 1;
 
