@@ -5,7 +5,10 @@
   "release": {
     "projectsRelationship": "independent",
     "version": {
-      "conventionalCommits": true
+      "conventionalCommits": true,
+      "git": {
+        "commit": false
+      }
     },
     "changelog": {
       "automaticFromRef": true,
@@ -13,31 +16,7 @@
         "createRelease": "github"
       }
     },
-    "groups": {
-      "libs": {
-        "releaseTagPattern": "release/{projectName}/{version}",
-        "projects": [
-          "libs/*",
-          "!libs/orbit-essentials-macros-tests",
-          "!libs/orbit-essentials-macros",
-          "!libs/orbit-essentials"
-        ]
-      },
-      "wallet": {
-        "releaseTagPattern": "release/{projectName}/{version}",
-        "projects": ["apps/wallet"]
-      },
-      "orbit": {
-        "projectsRelationship": "fixed",
-        "releaseTagPattern": "release/orbit/{version}",
-        "projects": [
-          "core/control-panel/*",
-          "core/station/*",
-          "core/upgrader/*",
-          "libs/orbit-essentials",
-          "libs/orbit-essentials-macros"
-        ]
-      }
-    }
+    "releaseTagPattern": "release/{projectName}-{version}",
+    "projects": ["libs/*", "!libs/orbit-essentials-macros-tests", "core/**", "apps/**"]
   }
 }
