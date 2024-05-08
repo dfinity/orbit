@@ -1,3 +1,5 @@
+import { execSync } from 'child_process';
+
 // Parse a string of arguments separated by a separator and return an array of strings.
 export const parseArgsListSplitByComma = (arg?: string): string[] => {
   if (!arg) {
@@ -16,4 +18,14 @@ export const hashString = (str: string): string => {
     hash = hash & hash;
   }
   return hash.toString();
+};
+
+export const getCurrentReleaseId = (): number | undefined => {
+  try {
+    const tag = execSync('git describe --tags --match "release-*" --abbrev=0').toString().trim();
+
+    return parseInt(tag.replace('release-', ''));
+  } catch {
+    return undefined;
+  }
 };
