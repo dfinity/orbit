@@ -22,10 +22,22 @@ export const hashString = (str: string): string => {
 
 export const getCurrentReleaseId = (): number => {
   try {
-    const tag = execSync('git describe --tags --match "release-*" --abbrev=0').toString().trim();
+    const tags = execSync('git tag --list "release-*"').toString().trim();
+    if (!tags) {
+      console.log('No release tags found.');
 
-    return parseInt(tag.replace('release-', ''));
-  } catch {
-    return 0;
+      return 0;
+    }
+
+    const tag = execSync('git describe --tags --match "release-*" --abbrev=0').toString().trim();
+    const releaseId = parseInt(tag.replace('release-', ''), 10);
+    if (isNaN(releaseId)) {
+      console.error('Failed to parse release ID from tag:', tag);
+      return 0;
+    }
+
+    return releaseId;
+  } catch (error) {
+    throw new Error(`Error retrieving current release ID: ${error}`);
   }
 };
