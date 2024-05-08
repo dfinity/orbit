@@ -6,7 +6,6 @@ import { fileURLToPath } from 'url';
 import { parseArgsListSplitByComma } from '../utils';
 import { exec } from 'child_process';
 
-// Convert the import.meta.url to a file path
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -44,10 +43,6 @@ command
     '-P, --pre-release <VALUE>',
     'Specify the type of pre-release version to use (alpha, beta or rc)',
     parsePreReleaseMode,
-  )
-  .option(
-    '-n, --disable-changelogs',
-    'Whether or not to disable the generation of changelogs for the release',
   )
   .option(
     '-o, --release-output <TYPE>',
@@ -88,18 +83,16 @@ command.action(async options => {
     exec(`git add ${releaseOutputPath}`);
   }
 
-  if (!options.disableChangelogs) {
-    await releaseChangelog({
-      dryRun: options.dryRun,
-      firstRelease: options.firstRelease,
-      projects: options.projects,
-      verbose: options.verbose,
-      versionData: projectsVersionData,
-      version: workspaceVersion,
-      createRelease: false,
-      gitTag: false,
-    });
-  }
+  await releaseChangelog({
+    dryRun: options.dryRun,
+    firstRelease: options.firstRelease,
+    projects: options.projects,
+    verbose: options.verbose,
+    versionData: projectsVersionData,
+    version: workspaceVersion,
+    createRelease: false,
+    gitTag: false,
+  });
 });
 
 export default command;
