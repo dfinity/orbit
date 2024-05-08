@@ -58,6 +58,14 @@ command.action(async options => {
   });
 
   if (!options.dryRun) {
+    const stagedFiles = execSync('git diff --cached --name-only').toString().trim();
+
+    if (!stagedFiles) {
+      console.log('No staged changes to commit.');
+
+      return;
+    }
+
     const releaseOutputPath = isAbsolute(options.releaseOutput)
       ? options.releaseOutput
       : join(__dirname, '../../..', options.releaseOutput);
@@ -80,14 +88,6 @@ command.action(async options => {
     );
 
     execSync(`git add ${releaseOutputPath}`);
-
-    const stagedFiles = execSync('git diff --cached --name-only').toString().trim();
-
-    if (!stagedFiles) {
-      console.log('No staged changes to commit.');
-
-      return;
-    }
 
     console.log('Staged changes detected, committing...');
     // Commit the staged changes
