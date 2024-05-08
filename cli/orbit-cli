@@ -4,8 +4,11 @@ import { version } from '../package.json';
 import release from './release/index.ts';
 
 program
+  .storeOptionsAsProperties(false)
   .version(version)
   .name('orbit-cli')
   .description('The Orbit CLI includes tools for managing projects in the workspace')
-  .addCommand(release)
-  .parseAsync();
+  
+program.addCommand(release);
+  
+program.parseAsync();
