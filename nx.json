@@ -15,5 +15,9 @@
     },
     "releaseTagPattern": "release/{projectName}-{version}",
     "projects": ["libs/*", "!libs/orbit-essentials-macros-tests", "core/**", "apps/**"]
+  },
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": []
   }
 }
