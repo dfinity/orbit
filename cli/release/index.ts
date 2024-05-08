@@ -1,8 +1,8 @@
 import { createCommand } from 'commander';
-import releaseBump from './bump';
+import releasePrepare from './prepare';
 
 const command = createCommand('release').description('Handle the release of projects');
 
-command.addCommand(releaseBump);
+command.addCommand(releasePrepare);
 
 export default command;
