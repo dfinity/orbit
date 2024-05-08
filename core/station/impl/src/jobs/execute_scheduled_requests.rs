@@ -22,8 +22,8 @@ impl ScheduledJob for Job {
     const INTERVAL_SECS: u64 = 5;
     const ALLOW_CONCURRENT_EXECUTION: bool = true;
 
-    async fn run() {
-        Self::default().execute_scheduled_requests().await;
+    async fn run() -> bool {
+        Self::default().execute_scheduled_requests().await
     }
 }
 
@@ -35,11 +35,13 @@ impl Job {
     /// Processes all the requests that have been approved but are not yet executed.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` requests at once.
-    async fn execute_scheduled_requests(&self) {
+    async fn execute_scheduled_requests(&self) -> bool {
         let current_time = next_time();
         let mut requests = self
             .request_repository
             .find_scheduled(None, Some(current_time));
+
+        let processing_all_transfers = requests.len() <= Self::MAX_BATCH_SIZE;
 
         // truncate the list to avoid processing too many requests at once
         requests.truncate(Self::MAX_BATCH_SIZE);
@@ -86,6 +88,8 @@ impl Job {
                 }
             }
         }
+
+        processing_all_transfers
     }
 
     /// Executes a single request.

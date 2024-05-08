@@ -18,15 +18,15 @@ impl ScheduledJob for Job {
     const INTERVAL_SECS: u64 = 60;
     const ALLOW_CONCURRENT_EXECUTION: bool = false;
 
-    async fn run() {
-        Self::default().cancel_requests().await;
+    async fn run() -> bool {
+        Self::default().cancel_requests().await
     }
 }
 
 /// This job is responsible for canceling the requests that have expired while not approved/rejected.
 impl Job {
     /// Cancel the requests that have expired while still pending.
-    async fn cancel_requests(&self) {
+    async fn cancel_requests(&self) -> bool {
         let current_time = next_time();
         let mut requests = self.request_repository.find_by_expiration_dt_and_status(
             None,
@@ -42,5 +42,7 @@ impl Job {
             self.request_repository
                 .insert(request.to_key(), request.to_owned());
         }
+
+        true
     }
 }

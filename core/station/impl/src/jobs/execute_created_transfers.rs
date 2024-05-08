@@ -30,8 +30,8 @@ pub struct Job {
 impl ScheduledJob for Job {
     const INTERVAL_SECS: u64 = 5;
 
-    async fn run() {
-        Self::default().execute_created_transfers().await;
+    async fn run() -> bool {
+        Self::default().execute_created_transfers().await
     }
 }
 
@@ -43,13 +43,15 @@ impl Job {
     /// Executes all the transfers that have been created but are not yet submitted to the blockchain.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` transfers at once.
-    async fn execute_created_transfers(&self) {
+    async fn execute_created_transfers(&self) -> bool {
         let current_time = next_time();
         let mut transfers = self.transfer_repository.find_by_status(
             TransferStatus::Created.to_string(),
             None,
             Some(current_time),
         );
+
+        let processing_all_transfers = transfers.len() <= Self::MAX_BATCH_SIZE;
 
         // truncate the list to avoid processing too many transfers at once
         transfers.truncate(Self::MAX_BATCH_SIZE);
@@ -175,6 +177,8 @@ impl Job {
                 }
             }
         }
+
+        processing_all_transfers
     }
 
     /// Executes a single transfer.

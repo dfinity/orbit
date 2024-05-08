@@ -15,6 +15,7 @@ mod cancel_expired_requests;
 mod execute_created_transfers;
 mod execute_scheduled_requests;
 mod schedule_approved_requests;
+mod scheduler;
 
 #[async_trait]
 pub trait ScheduledJob: Send + Sync {
@@ -24,8 +25,10 @@ pub trait ScheduledJob: Send + Sync {
     /// The interval in seconds at which the job will be executed.
     const INTERVAL_SECS: u64;
 
-    /// Executes the job.
-    async fn run();
+    const TIME_TOLERANCE: Duration = Duration::from_secs(5);
+
+    /// Executes the job. Returns `true`` if the job was completed or `false` there is more work to be done.
+    async fn run() -> bool;
 }
 
 /// Registers the job to be executed at the defined interval, using the `spawn` function inside a timer.
