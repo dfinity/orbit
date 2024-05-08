@@ -24,8 +24,6 @@ export const getCurrentReleaseId = (): number => {
   try {
     const tags = execSync('git tag --list "release-*"').toString().trim();
     if (!tags) {
-      console.log('No release tags found.');
-
       return 0;
     }
 
