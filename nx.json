@@ -5,10 +5,7 @@
   "release": {
     "projectsRelationship": "independent",
     "version": {
-      "conventionalCommits": true,
-      "git": {
-        "commit": false
-      }
+      "conventionalCommits": true
     },
     "changelog": {
       "automaticFromRef": true,
