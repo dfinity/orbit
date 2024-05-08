@@ -58,6 +58,13 @@ command.action(async options => {
   });
 
   if (!options.dryRun) {
+    const newVersions = Object.values(projectsVersionData).filter(data => data.newVersion != null);
+    if (newVersions.length === 0) {
+      console.log('No new versions to commit.');
+
+      return;
+    }
+
     const stagedFiles = execSync('git diff --cached --name-only').toString().trim();
 
     if (!stagedFiles) {
