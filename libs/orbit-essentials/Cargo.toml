@@ -19,7 +19,7 @@ convert_case = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
-orbit-essentials-macros = { workspace = true }
+orbit-essentials-macros = { workspace = true, version = "0.0.0" }
 prometheus = { workspace = true }
 rand_chacha = { workspace = true }
 serde = { workspace = true }

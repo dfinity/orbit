@@ -16,7 +16,7 @@ anyhow = { workspace = true }
 async-trait = { workspace = true }
 candid = { workspace = true }
 hex = { workspace = true }
-orbit-essentials = { workspace = true }
+orbit-essentials = { workspace = true, version = "0.0.0" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
@@ -26,7 +26,7 @@ serde = { workspace = true, features = ["derive"] }
 serde_cbor = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
-upgrader-api = { workspace = true }
+upgrader-api = { workspace = true, version = "0.0.0" }
 
 [dev-dependencies]
 candid_parser = { workspace = true }

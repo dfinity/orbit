@@ -11,6 +11,6 @@ homepage.workspace = true
 
 [dependencies]
 candid = { workspace = true }
-orbit-essentials = { workspace = true }
+orbit-essentials = { workspace = true, version = "0.0.0" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

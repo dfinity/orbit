@@ -15,8 +15,8 @@ bench = false
 
 [dependencies]
 candid = { workspace = true }
-canfund = { workspace = true }
-orbit-essentials = { workspace = true }
+canfund = { workspace = true, version = "0.0.0" }
+orbit-essentials = { workspace = true, version = "0.0.0" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
@@ -27,8 +27,8 @@ serde_json = { workspace = true }
 serde_cbor = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
-control-panel-api = { workspace = true }
-station-api = { workspace = true }
+control-panel-api = { workspace = true, version = "0.0.0" }
+station-api = { workspace = true, version = "0.0.0" }
 email_address = "0.2.4"
 
 [dev-dependencies]
