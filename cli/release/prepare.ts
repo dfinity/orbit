@@ -92,6 +92,7 @@ command.action(async options => {
     version: workspaceVersion,
     createRelease: false,
     gitTag: false,
+    gitCommitArgs: '--allow-empty',
   });
 });
 
