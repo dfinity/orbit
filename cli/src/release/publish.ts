@@ -27,15 +27,24 @@ command.action(async options => {
   }
 
   if (!fileExists(releaseFilePath)) {
-    throw new Error(`Release file not found at path: ${releaseFilePath}`);
+    console.warn(`The release file at ${releaseFilePath} does not exist. Skipping release.`);
+
+    return;
   }
 
   const { projectsVersionData, releaseId } = await import(releaseFilePath);
   const currentReleaseId = getCurrentReleaseId();
+  const expectedNextReleaseId = currentReleaseId + 1;
 
-  if (releaseId !== currentReleaseId + 1) {
+  if (currentReleaseId === releaseId) {
+    console.log(`The current workspace is already at release ${releaseId}. Skipping release.`);
+
+    return;
+  }
+
+  if (releaseId !== expectedNextReleaseId) {
     throw new Error(
-      `The release ID in the release file is not the next release ID. Expected next release to be ${currentReleaseId + 1}, but was ${releaseId}.`,
+      `The release ID in the release file is not the next release ID. Expected next release to be ${expectedNextReleaseId}, but was ${releaseId}.`,
     );
   }
 
