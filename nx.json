@@ -11,7 +11,7 @@
       "automaticFromRef": true,
       "projectChangelogs": {
         "createRelease": "github",
-        "file": "false"
+        "file": false
       }
     },
     "releaseTagPattern": "release/{projectName}-{version}",
