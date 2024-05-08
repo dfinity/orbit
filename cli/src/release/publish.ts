@@ -50,20 +50,14 @@ command.action(async options => {
 
   execSync(`git tag release-${releaseId}`);
 
-  try {
-    await releaseChangelog({
-      verbose: options.verbose,
-      versionData: projectsVersionData,
-      gitCommit: false,
-      gitTag: true,
-      firstRelease: true,
-      createRelease: 'github',
-    });
-  } catch (e) {
-    execSync(`git tag -d release-${releaseId}`);
-
-    throw e;
-  }
+  await releaseChangelog({
+    verbose: options.verbose,
+    versionData: projectsVersionData,
+    gitCommit: false,
+    gitTag: true,
+    firstRelease: true,
+    createRelease: 'github',
+  });
 });
 
 export default command;
