@@ -13,6 +13,7 @@ mod call_context;
 pub use call_context::*;
 
 pub mod middlewares;
+pub mod observer;
 pub mod validation;
 
 #[cfg(not(test))]
