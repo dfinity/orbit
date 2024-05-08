@@ -7,8 +7,14 @@ program
   .storeOptionsAsProperties(false)
   .version(version)
   .name('orbit-cli')
-  .description('The Orbit CLI includes tools for managing projects in the workspace')
-  
+  .description('The Orbit CLI includes tools for managing projects in the workspace');
+
 program.addCommand(release);
-  
-program.parseAsync();
+
+program
+  .parseAsync()
+  .then(() => process.exit(0))
+  .catch(error => {
+    console.error(`The command failed with an error: ${error}`);
+    process.exit(1);
+  });

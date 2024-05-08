@@ -71,6 +71,7 @@ command.action(async options => {
       projects: options.projects,
       verbose: options.verbose,
       versionData: projectsVersionData,
+      version: workspaceVersion,
       createRelease: false,
       gitCommit: false,
       gitTag: false,

@@ -4,7 +4,7 @@
   "type": "module",
   "version": "0.0.1",
   "bin": {
-    "orbit-cli": "./cli/orbit"
+    "orbit-cli": "./cli/orbit-cli"
   },
   "scripts": {
     "build": "pnpm run -r build",
