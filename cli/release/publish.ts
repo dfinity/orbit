@@ -3,6 +3,8 @@ import { dirname, isAbsolute, join } from 'path';
 import { fileURLToPath } from 'url';
 import { releaseChangelog } from 'nx/release';
 import { fileExists } from 'nx/src/utils/fileutils';
+import { getCurrentReleaseId } from '../utils';
+import { execSync } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -32,17 +34,25 @@ command.action(async options => {
     throw new Error(`Release file not found at path: ${releaseFilePath}`);
   }
 
-  const { projectsVersionData, workspaceVersion } = await import(releaseFilePath);
+  const { projectsVersionData, releaseId } = await import(releaseFilePath);
+  const currentReleaseId = getCurrentReleaseId();
+
+  if (releaseId !== currentReleaseId + 1) {
+    throw new Error(
+      `The release ID in the release file is not the next release ID. Expected: ${currentReleaseId + 1}, Actual: ${releaseId}`,
+    );
+  }
 
   await releaseChangelog({
     verbose: options.verbose,
     versionData: projectsVersionData,
-    version: workspaceVersion,
     gitCommit: false,
     gitTag: true,
     firstRelease: true,
     createRelease: 'github',
   });
+
+  execSync(`git tag release-${releaseId}`);
 });
 
 export default command;

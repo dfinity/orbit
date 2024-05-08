@@ -1,4 +1,4 @@
-import { exec, execSync } from 'child_process';
+import { execSync } from 'child_process';
 import { createCommand } from 'commander';
 import { writeFile } from 'fs/promises';
 import { releaseVersion } from 'nx/release';
@@ -65,8 +65,7 @@ command.action(async options => {
       ? options.releaseOutput
       : join(__dirname, '../..', options.releaseOutput);
 
-    const currentReleaseId = getCurrentReleaseId() ?? 0;
-    const nextReleaseId = currentReleaseId + 1;
+    const nextReleaseId = getCurrentReleaseId() + 1;
 
     console.log(`Writing release information to ${releaseOutputPath}`);
 

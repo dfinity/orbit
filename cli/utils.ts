@@ -20,12 +20,12 @@ export const hashString = (str: string): string => {
   return hash.toString();
 };
 
-export const getCurrentReleaseId = (): number | undefined => {
+export const getCurrentReleaseId = (): number => {
   try {
     const tag = execSync('git describe --tags --match "release-*" --abbrev=0').toString().trim();
 
     return parseInt(tag.replace('release-', ''));
   } catch {
-    return undefined;
+    return 0;
   }
 };
