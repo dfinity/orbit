@@ -26,7 +26,7 @@ const parsePreReleaseMode = (releaseMode?: string): 'alpha' | 'beta' | 'rc' | 'p
   }
 };
 
-const command = createCommand('bump').description(
+const command = createCommand('prepare').description(
   'Handles versioning of projects and generating the changelogs.',
 );
 
