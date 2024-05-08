@@ -39,20 +39,26 @@ command.action(async options => {
 
   if (releaseId !== currentReleaseId + 1) {
     throw new Error(
-      `The release ID in the release file is not the next release ID. Expected: ${currentReleaseId + 1}, Actual: ${releaseId}`,
+      `The release ID in the release file is not the next release ID. Expected next release to be ${currentReleaseId + 1}, but was ${releaseId}.`,
     );
   }
 
-  await releaseChangelog({
-    verbose: options.verbose,
-    versionData: projectsVersionData,
-    gitCommit: false,
-    gitTag: true,
-    firstRelease: true,
-    createRelease: 'github',
-  });
-
   execSync(`git tag release-${releaseId}`);
+
+  try {
+    await releaseChangelog({
+      verbose: options.verbose,
+      versionData: projectsVersionData,
+      gitCommit: false,
+      gitTag: true,
+      firstRelease: true,
+      createRelease: 'github',
+    });
+  } catch (e) {
+    execSync(`git tag -d release-${releaseId}`);
+
+    throw e;
+  }
 });
 
 export default command;
