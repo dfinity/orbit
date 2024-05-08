@@ -1,0 +1,11 @@
+#!/usr/bin/env npx tsx
+import { program } from 'commander';
+import { version } from '../package.json';
+import release from './release/index.ts';
+
+program
+  .version(version)
+  .name('orbit-cli')
+  .description('The Orbit CLI includes tools for managing projects in the workspace')
+  .addCommand(release)
+  .parse();

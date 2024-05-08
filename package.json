@@ -1,6 +1,11 @@
 {
-  "name": "@dfinity/orbit",
+  "name": "orbit-monorepo",
   "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "bin": {
+    "orbit-cli": "./cli/orbit"
+  },
   "scripts": {
     "build": "pnpm run -r build",
     "lint": "pnpm run -r lint",
