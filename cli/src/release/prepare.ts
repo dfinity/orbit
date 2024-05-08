@@ -34,7 +34,6 @@ command
   )
   .option('-d, --dry-run', 'Whether or not to perform a dry-run of the release process')
   .option('-v, --verbose', 'Whether or not to log verbose output')
-  .option('-f, --first-release', 'Whether or not this is the first release of the project')
   .option(
     '-P, --pre-release <VALUE>',
     'Specify the type of pre-release version to use (alpha, beta or rc)',
@@ -47,13 +46,15 @@ command
   );
 
 command.action(async options => {
+  const releaseMode = !options.preRelease ? 'prod' : options.preRelease;
+
   const { projectsVersionData } = await releaseVersion({
+    firstRelease: true,
     dryRun: options.dryRun,
     verbose: options.verbose,
-    firstRelease: options.firstRelease,
     projects: options.projects,
-    specifier: options.preRelease !== 'prod' ? 'prerelease' : undefined,
-    preid: options.preRelease !== 'prod' ? options.preRelease : undefined,
+    specifier: releaseMode !== 'prod' ? 'prerelease' : undefined,
+    preid: releaseMode !== 'prod' ? options.preRelease : undefined,
   });
 
   if (!options.dryRun) {
