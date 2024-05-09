@@ -27,9 +27,6 @@ opt-level = 'z'
 codegen-units = 1
 
 [workspace.dependencies]
-control-panel-api = { path = "./core/control-panel/api" }
-upgrader-api = { path = "./core/upgrader/api" }
-station-api = { path = "./core/station/api" }
 anyhow = "1.0.75"
 deunicode = "1.4.4"
 async-trait = "0.1"
@@ -37,13 +34,10 @@ byteorder = "1.5"
 canbench-rs = "0.1.1"
 candid = "0.10.3"
 candid_parser = "0.1.3"
-canfund = { path = "./libs/canfund" }
 convert_case = "0.6"
 futures = "0.3"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
-orbit-essentials = { path = "./libs/orbit-essentials" }
-orbit-essentials-macros = { path = "./libs/orbit-essentials-macros" }
 ic-cdk = "0.13.2"
 ic-cdk-macros = "0.9"
 ic-cdk-timers = "0.7.0"
