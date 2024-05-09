@@ -135,9 +135,6 @@ jobs:
   deployment-test:
     name: 'deployment-test:required'
     runs-on: ubuntu-latest
-    env:
-      BUILD_WASMS: 'false'
-      DOWNLOAD_NNS_CANISTERS: 'false'
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -155,10 +152,36 @@ jobs:
         uses: dfinity/setup-dfx@main
       - name: 'Start local replica'
         run: dfx start --clean --host 127.0.0.1:4943 --background
-      - name: 'Update /etc/hosts'
-        run: echo '127.0.0.1 rdmx6-jaaaa-aaaaa-aaadq-cai.localhost werw6-ayaaa-aaaaa-774aa-cai.localhost' | sudo tee -a /etc/hosts
       - name: 'Perform local deployment'
         run: ./orbit --init
       - name: 'Test local deployment'
         run: |
           curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
+  prod-deployment-test:
+    name: 'prod-deployment-test:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: 'Setup pnpm'
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
+      - name: 'Setup node'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 'Run sccache-cache'
+        uses: mozilla-actions/sccache-action@v0.0.4
+      - name: 'Install dfx'
+        uses: dfinity/setup-dfx@main
+      - name: 'Start local replica'
+        run: dfx start --clean --host 127.0.0.1:4943 --background
+      - name: 'Test prod deployment script'
+        run: |
+          echo y | ./scripts/deploy.sh --local # install
+          curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"
+          echo y | ./scripts/deploy.sh --local # upgrade
+          curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"
+          echo y | ./scripts/deploy.sh --local reset # uninstall and install
+          curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"
