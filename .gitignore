@@ -69,3 +69,6 @@ wasms/*.wasm.gz
 /src
 .canbench
 .canbench_output
+
+
+.nx/cache

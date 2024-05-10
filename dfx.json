@@ -65,7 +65,7 @@
       "frontend": {
         "entrypoint": "apps/wallet/dist/index.html"
       },
-      "build": "pnpm --filter '@dfinity/orbit-wallet' build"
+      "build": "pnpm --filter 'wallet-dapp' build"
     }
   },
   "defaults": {

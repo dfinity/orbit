@@ -1,13 +1,13 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
 name = "station"
-version = "0.1.0"
-edition = "2021"
-authors = ["DFINITY Stiftung"]
-license = "Apache-2.0"
 include = ["src", "Cargo.toml"]
-homepage = "https://github.com/dfinity/orbit#readme"
-repository = "https://github.com/dfinity/orbit"
+version = "0.0.1"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+homepage.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
@@ -23,10 +23,10 @@ async-trait = { workspace = true }
 byteorder = { workspace = true }
 canbench-rs = { workspace = true, optional = true }
 candid = { workspace = true }
-canfund = { workspace = true }
+canfund = { path = "../../../libs/canfund", version = "0.0.1" }
 futures = { workspace = true }
 hex = { workspace = true }
-orbit-essentials = { workspace = true }
+orbit-essentials = { path = "../../../libs/orbit-essentials", version = "0.0.1" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
@@ -40,8 +40,8 @@ serde_cbor = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
-station-api = { workspace = true }
-upgrader-api = { workspace = true }
+station-api = { path = "../api", version = "0.0.1" }
+upgrader-api = { path = "../../upgrader/api", version = "0.0.1" }
 
 [dev-dependencies]
 candid_parser = { workspace = true }

@@ -1,5 +1,5 @@
 {
-  "name": "@dfinity/orbit-wallet",
+  "name": "wallet-dapp",
   "private": true,
   "version": "0.0.1",
   "type": "module",

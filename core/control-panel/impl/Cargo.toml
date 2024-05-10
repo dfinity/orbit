@@ -1,13 +1,13 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
 name = "control-panel"
-version = "0.1.0"
-edition = "2021"
-authors = ["DFINITY Stiftung"]
-license = "Apache-2.0"
 include = ["src", "Cargo.toml"]
-homepage = "https://github.com/dfinity/orbit#readme"
-repository = "https://github.com/dfinity/orbit"
+version = "0.0.1"
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+homepage.workspace = true
 
 [lib]
 crate-type = ["cdylib"]
@@ -15,8 +15,8 @@ bench = false
 
 [dependencies]
 candid = { workspace = true }
-canfund = { workspace = true }
-orbit-essentials = { workspace = true }
+canfund = { path = "../../../libs/canfund", version = "0.0.1" }
+orbit-essentials = { path = "../../../libs/orbit-essentials", version = "0.0.1" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
@@ -27,8 +27,8 @@ serde_json = { workspace = true }
 serde_cbor = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
-control-panel-api = { workspace = true }
-station-api = { workspace = true }
+control-panel-api = { path = "../api", version = "0.0.1" }
+station-api = { path = "../../station/api", version = "0.0.1" }
 email_address = "0.2.4"
 
 [dev-dependencies]
