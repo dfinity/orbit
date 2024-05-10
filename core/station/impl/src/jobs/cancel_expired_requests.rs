@@ -1,6 +1,6 @@
 use std::{
     cell::RefCell,
-    collections::{BTreeMap, HashSet},
+    collections::{BTreeMap, HashMap, HashSet},
 };
 
 use crate::{
@@ -9,16 +9,18 @@ use crate::{
     repositories::RequestRepository,
 };
 use async_trait::async_trait;
+use ic_cdk_timers::TimerId;
 use orbit_essentials::{cdk::api::time, repository::Repository};
 
 use super::{
-    scheduler::{ScheduleStrategy, Scheduler},
+    scheduler::{ScheduleStrategy, Scheduler, TimerAction},
     ScheduledJob,
 };
 
 thread_local! {
-    static TIMERS: RefCell<BTreeMap<u64, HashSet<RequestId>>> = const { RefCell::new(BTreeMap::new()) };
-    static REQUEST_MAP: RefCell<BTreeMap<RequestId, u64>> = const { RefCell::new(BTreeMap::new()) };
+    static SCHEDULE_REQUESTS_MAP: RefCell<BTreeMap<u64, HashSet<RequestId>>> = Default::default();
+    static REQUEST_SCHEDULE_MAP: RefCell<HashMap<RequestId, u64>> = Default::default();
+    static SCHEDULE_TIMERID_MAP: RefCell<HashMap<u64, TimerId>> = Default::default();
     static IS_RUNNING : RefCell<bool> = const { RefCell::new(false) };
 }
 
@@ -29,9 +31,6 @@ pub struct Job {
 
 #[async_trait]
 impl ScheduledJob for Job {
-    const INTERVAL_SECS: u64 = 60;
-    const ALLOW_CONCURRENT_EXECUTION: bool = false;
-
     async fn run() -> bool {
         Self::default().cancel_requests().await
     }
@@ -61,6 +60,7 @@ impl Job {
     }
 }
 
+#[derive(Clone)]
 pub struct ExpiredRequestScheduleStrategy {
     request_id: RequestId,
 }
@@ -68,55 +68,62 @@ pub struct ExpiredRequestScheduleStrategy {
 impl ScheduleStrategy for ExpiredRequestScheduleStrategy {
     const TOLERANCE_SEC: u64 = 5;
 
-    fn add_timer(&self, at_ns: u64) -> Option<u64> {
+    fn add_schedule(&self, at_ns: u64) -> TimerAction {
         // remove the request's expiration timer if it existed
-        self.remove_timer(at_ns);
+        self.remove_schedule(at_ns);
 
-        // add the timer
         let with_tolerance = at_ns + Self::TOLERANCE_SEC * 1_000_000_000;
-        let timer_at = TIMERS.with(|timers| {
+        let timer_action: TimerAction = SCHEDULE_REQUESTS_MAP.with(|timers| {
             let mut timers = timers.borrow_mut();
 
-            // see if there is a timer around the same time
-            let existing_timer = timers
+            if let Some(existing_timer) = timers
                 .range(at_ns..with_tolerance)
                 .next()
                 .map(|(timer_at, _)| *timer_at)
-                .unwrap_or(at_ns);
+            {
+                timers
+                    .entry(existing_timer)
+                    .or_default()
+                    .insert(self.request_id);
 
-            // if there is a timer around the same time, add the request to the existing timer
-            timers
-                .entry(existing_timer)
-                .or_default()
-                .insert(self.request_id);
+                TimerAction::UsedExisting(existing_timer)
+            } else {
+                timers.entry(at_ns).or_default().insert(self.request_id);
 
-            existing_timer
+                TimerAction::AddedNew(at_ns)
+            }
         });
 
-        REQUEST_MAP.with(|request_map| {
-            request_map.borrow_mut().insert(self.request_id, timer_at);
-        });
+        match timer_action {
+            TimerAction::AddedNew(at) | TimerAction::UsedExisting(at) => {
+                REQUEST_SCHEDULE_MAP.with(|request_map| {
+                    request_map.borrow_mut().insert(self.request_id, at);
+                });
+            }
+        }
 
-        None
+        timer_action
     }
 
-    fn remove_timer(&self, _at_ns: u64) -> Option<u64> {
-        REQUEST_MAP.with(|request_map| {
+    fn remove_schedule(&self, _at_ns: u64) -> Option<TimerId> {
+        REQUEST_SCHEDULE_MAP.with(|request_map| {
             let mut request_map = request_map.borrow_mut();
+
             if let Some(at_ns) = request_map.remove(&self.request_id) {
-                TIMERS.with(|timers| {
-                    if let Some(request_ids) = timers.borrow_mut().get_mut(&at_ns) {
+                SCHEDULE_REQUESTS_MAP.with(|schedules| {
+                    if let Some(request_ids) = schedules.borrow_mut().get_mut(&at_ns) {
                         request_ids.remove(&self.request_id);
                         if request_ids.is_empty() {
-                            timers.borrow_mut().remove(&at_ns);
-
-                            Some(at_ns)
-                        } else {
-                            None
+                            schedules.borrow_mut().remove(&at_ns);
                         }
-                    } else {
-                        None
                     }
+                });
+
+                SCHEDULE_TIMERID_MAP.with(|timer_map| {
+                    if let Some(timer_id) = timer_map.borrow_mut().remove(&at_ns) {
+                        return Some(timer_id);
+                    }
+                    None
                 })
             } else {
                 None
@@ -130,6 +137,12 @@ impl ScheduleStrategy for ExpiredRequestScheduleStrategy {
 
     fn set_running(&self, running: bool) {
         IS_RUNNING.with(|is_running| *is_running.borrow_mut() = running);
+    }
+
+    fn save_timer_id(&self, timer_id: TimerId, at_ns: u64) {
+        SCHEDULE_TIMERID_MAP.with(|timer_map| {
+            timer_map.borrow_mut().insert(at_ns, timer_id);
+        });
     }
 }
 
@@ -146,7 +159,7 @@ pub fn schedule_expiration(request_id: &RequestId, at_ns: u64) {
 
 pub fn cancel_scheduled_expiration(request_id: &RequestId) {
     if let Some(at_ns) =
-        REQUEST_MAP.with(|request_map| request_map.borrow().get(request_id).copied())
+        REQUEST_SCHEDULE_MAP.with(|request_map| request_map.borrow().get(request_id).copied())
     {
         let strategy = ExpiredRequestScheduleStrategy {
             request_id: request_id.to_owned(),

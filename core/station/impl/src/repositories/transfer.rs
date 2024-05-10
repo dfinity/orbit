@@ -3,7 +3,12 @@ use super::indexes::{
     transfer_status_index::TransferStatusIndexRepository,
 };
 use crate::{
-    core::{metrics::TRANSFER_METRICS, with_memory_manager, Memory, TRANSFER_MEMORY_ID},
+    core::{
+        metrics::{metrics_observe_insert_transfer, metrics_observe_remove_transfer},
+        observer::Observer,
+        with_memory_manager, Memory, TRANSFER_MEMORY_ID,
+    },
+    jobs::jobs_observe_insert_transfer,
     models::{
         indexes::{
             transfer_account_index::TransferAccountIndexCriteria,
@@ -22,12 +27,18 @@ use station_api::TransferStatusTypeDTO;
 use std::cell::RefCell;
 
 thread_local! {
-  /// The memory reference to the Transfer repository.
-  static DB: RefCell<StableBTreeMap<TransferKey, Transfer, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
-    RefCell::new(
-      StableBTreeMap::init(memory_manager.get(TRANSFER_MEMORY_ID))
-    )
-  })
+    /// The memory reference to the Transfer repository.
+    static DB: RefCell<StableBTreeMap<TransferKey, Transfer, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
+        RefCell::new(
+            StableBTreeMap::init(memory_manager.get(TRANSFER_MEMORY_ID))
+        )
+    });
+
+    /// The observer that listens to changes in the transfer repository.
+    static CHANGE_OBSERVER: RefCell<Observer<(Transfer, Option<Transfer>)>> = Default::default();
+
+    /// The observer that listens to removals in the transfer repository.
+    static REMOVE_OBSERVER: RefCell<Observer<Transfer>> = Default::default();
 }
 
 lazy_static! {
@@ -35,10 +46,28 @@ lazy_static! {
 }
 
 /// A repository that enables managing transfer in stable memory.
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct TransferRepository {
     account_index: TransferAccountIndexRepository,
     status_index: TransferStatusIndexRepository,
+}
+
+impl Default for TransferRepository {
+    fn default() -> Self {
+        CHANGE_OBSERVER.with(|observer| {
+            metrics_observe_insert_transfer(&mut observer.borrow_mut());
+            jobs_observe_insert_transfer(&mut observer.borrow_mut());
+        });
+
+        REMOVE_OBSERVER.with(|observer| {
+            metrics_observe_remove_transfer(&mut observer.borrow_mut());
+        });
+
+        Self {
+            account_index: TransferAccountIndexRepository::default(),
+            status_index: TransferStatusIndexRepository::default(),
+        }
+    }
 }
 
 impl Repository<TransferKey, Transfer> for TransferRepository {
@@ -54,13 +83,6 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
-            // Update metrics when a transfer is upserted.
-            TRANSFER_METRICS.with(|metrics| {
-                metrics
-                    .iter()
-                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
-            });
-
             self.account_index
                 .refresh_index_on_modification(RefreshIndexMode::Value {
                     previous: prev.clone().map(|prev| prev.to_index_by_account()),
@@ -72,22 +94,16 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
                     current: Some(value.to_index_by_status()),
                 });
 
-            prev
+            let args = (value, prev);
+            CHANGE_OBSERVER.with(|observer| observer.borrow().notify(&args));
+
+            args.1
         })
     }
 
     fn remove(&self, key: &TransferKey) -> Option<Transfer> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
-
-            // Update metrics when a transfer is removed.
-            if let Some(prev) = &prev {
-                TRANSFER_METRICS.with(|metrics| {
-                    metrics
-                        .iter()
-                        .for_each(|metric| metric.borrow_mut().sub(prev))
-                });
-            }
 
             self.account_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
@@ -97,6 +113,10 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
                     current: prev.clone().map(|prev| prev.to_index_by_status()),
                 });
+
+            if let Some(prev) = &prev {
+                REMOVE_OBSERVER.with(|observer| observer.borrow().notify(prev));
+            }
 
             prev
         })

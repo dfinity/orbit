@@ -1,58 +1,113 @@
 //! This module contains all the jobs that run in the background to perform tasks within the canister.
 //!
 //! The jobs are registered in the `register_jobs` function and are executed based on the defined timer intervals.
-use crate::core::ic_cdk::spawn;
-use async_trait::async_trait;
-use std::{
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
-    time::Duration,
+use crate::{
+    core::observer::Observer,
+    models::{Request, RequestExecutionPlan, RequestStatus, Transfer, TransferStatus},
+    repositories::REQUEST_REPOSITORY,
 };
+use async_trait::async_trait;
+use orbit_essentials::cdk::next_time;
+use orbit_essentials::repository::Repository;
 
 mod cancel_expired_requests;
 mod execute_created_transfers;
 mod execute_scheduled_requests;
-mod schedule_approved_requests;
 mod scheduler;
 
 #[async_trait]
 pub trait ScheduledJob: Send + Sync {
-    /// Whether the job can be executed concurrently.
-    const ALLOW_CONCURRENT_EXECUTION: bool = true;
-
-    /// The interval in seconds at which the job will be executed.
-    const INTERVAL_SECS: u64;
-
-    const TIME_TOLERANCE: Duration = Duration::from_secs(5);
-
     /// Executes the job. Returns `true`` if the job was completed or `false` there is more work to be done.
     async fn run() -> bool;
 }
 
-/// Registers the job to be executed at the defined interval, using the `spawn` function inside a timer.
-pub fn register_job<Job: ScheduledJob>() {
-    let interval = Duration::from_secs(Job::INTERVAL_SECS);
-    let is_running = Arc::new(AtomicBool::new(false));
-
-    ic_cdk_timers::set_timer_interval(interval, move || {
-        let is_running = is_running.clone();
-
-        spawn(async move {
-            if Job::ALLOW_CONCURRENT_EXECUTION || !is_running.load(Ordering::Relaxed) {
-                is_running.store(true, Ordering::Relaxed);
-                Job::run().await;
-                is_running.store(false, Ordering::Relaxed);
+pub fn jobs_observe_insert_request(observer: &mut Observer<(Request, Option<Request>)>) {
+    observer.add_listener(Box::new(|(request, prev)| match &request.status {
+        RequestStatus::Created => {
+            if prev
+                .as_ref()
+                .map(|p| p.status != RequestStatus::Created)
+                .unwrap_or(true)
+            {
+                // todo: add logging
+                return;
             }
-        });
-    });
+
+            cancel_expired_requests::schedule_expiration(&request.id, request.expiration_dt);
+        }
+        RequestStatus::Approved => {
+            if prev
+                .as_ref()
+                .map(|p| p.status != RequestStatus::Created)
+                .unwrap_or(true)
+            {
+                // todo: add logging
+                return;
+            }
+
+            cancel_expired_requests::cancel_scheduled_expiration(&request.id);
+
+            let request_processing_time = next_time();
+            let scheduled_at = match &request.execution_plan {
+                RequestExecutionPlan::Immediate => request_processing_time,
+                RequestExecutionPlan::Scheduled { execution_time } => *execution_time,
+            };
+
+            let mut request = request.clone();
+
+            request.status = RequestStatus::Scheduled { scheduled_at };
+            request.last_modification_timestamp = request_processing_time;
+
+            REQUEST_REPOSITORY.insert(request.to_key(), request.to_owned());
+
+            execute_scheduled_requests::schedule_request_execution(scheduled_at);
+        }
+        RequestStatus::Rejected | RequestStatus::Cancelled { .. } => {
+            if prev
+                .as_ref()
+                .map(|p| p.status != RequestStatus::Created)
+                .unwrap_or(true)
+            {
+                // todo: add logging
+                return;
+            }
+            cancel_expired_requests::cancel_scheduled_expiration(&request.id);
+        }
+        RequestStatus::Scheduled { .. } => {
+            // do nothing, these will exectuted by the timers already set when the request was approved
+        }
+        RequestStatus::Processing { .. }
+        | RequestStatus::Completed { .. }
+        | RequestStatus::Failed { .. } => {
+            // do nothing
+        }
+    }));
 }
 
-/// Register all the jobs that run in the background to perform tasks within the canister.
-pub fn register_jobs() {
-    register_job::<schedule_approved_requests::Job>();
-    register_job::<execute_scheduled_requests::Job>();
-    register_job::<cancel_expired_requests::Job>();
-    register_job::<execute_created_transfers::Job>();
+pub fn jobs_observe_remove_request(observer: &mut Observer<Request>) {
+    observer.add_listener(Box::new(|prev| {
+        if let Request {
+            id,
+            status: RequestStatus::Created,
+            ..
+        } = prev
+        {
+            cancel_expired_requests::cancel_scheduled_expiration(id);
+        }
+    }));
+}
+
+pub fn jobs_observe_insert_transfer(observer: &mut Observer<(Transfer, Option<Transfer>)>) {
+    observer.add_listener(Box::new(|(transfer, prev)| {
+        if let (
+            Transfer {
+                status: TransferStatus::Created,
+                ..
+            },
+            None,
+        ) = (transfer, prev)
+        {
+            execute_created_transfers::schedule_process_transfers(next_time());
+        }
+    }));
 }
