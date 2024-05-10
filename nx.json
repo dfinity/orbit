@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "plugins": ["@monodon/rust"],
+  "defaultBase": "main",
+  "release": {
+    "projectsRelationship": "independent",
+    "version": {
+      "conventionalCommits": true
+    },
+    "changelog": {
+      "automaticFromRef": true,
+      "projectChangelogs": {
+        "createRelease": "github",
+        "file": false
+      }
+    },
+    "releaseTagPattern": "release/{projectName}-{version}",
+    "projects": ["libs/*", "!libs/orbit-essentials-macros-tests", "core/**", "apps/**"]
+  },
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": []
+  }
+}
