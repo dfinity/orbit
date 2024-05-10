@@ -64,15 +64,19 @@ command.action(async options => {
     return;
   }
 
+  console.log('Generating changelogs...');
+
   const changelogs = await releaseChangelog({
     versionData: projectsVersionData,
     verbose: options.verbose,
     dryRun: options.dryRun,
     projects: options.projects,
-    gitCommit: false,
+    gitCommit: true,
     gitTag: false,
     createRelease: false,
   });
+
+  console.log('Changelogs generated.');
 
   if (!options.dryRun) {
     const stagedFiles = execSync('git diff --cached --name-only').toString().trim();

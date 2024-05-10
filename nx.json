@@ -10,8 +10,7 @@
     "changelog": {
       "automaticFromRef": true,
       "projectChangelogs": {
-        "createRelease": "github",
-        "file": false
+        "createRelease": false
       }
     },
     "releaseTagPattern": "release/{projectName}-{version}",
