@@ -29,7 +29,7 @@ const command = createCommand('prepare').description(
 command
   .option(
     '-p, --projects <VALUE>',
-    'The release projects to include in the release, separated by commas. If not provided, all projects will be included.',
+    'The projects to include in the release, separated by commas. If not provided, all projects will be included.',
     parseArgsListSplitByComma,
   )
   .option('-d, --dry-run', 'Whether or not to perform a dry-run of the release process')
