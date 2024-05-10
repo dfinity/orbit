@@ -1,8 +1,7 @@
-
 [package]
-name = 'upgrader'
-include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.0'
+name = "upgrader"
+include = ["src", "Cargo.toml"]
+version = "0.0.1"
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -10,24 +9,24 @@ license.workspace = true
 homepage.workspace = true
 
 [lib]
-crate-type = ['cdylib']
+crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 candid = { workspace = true }
 hex = { workspace = true }
-orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.0.2-alpha.0' }
+orbit-essentials = { path = "../../../libs/orbit-essentials", version = "0.0.1" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 lazy_static = { workspace = true }
 mockall = { workspace = true }
-serde = { workspace = true, features = ['derive'] }
+serde = { workspace = true, features = ["derive"] }
 serde_cbor = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
-upgrader-api = { path = '../api', version = '0.0.2-alpha.0' }
+upgrader-api = { path = "../api", version = "0.0.1" }
 
 [dev-dependencies]
 candid_parser = { workspace = true }

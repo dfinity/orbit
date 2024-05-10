@@ -1,8 +1,8 @@
-
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
-name = 'orbit-essentials'
-include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.0'
+name = "orbit-essentials"
+include = ["src", "Cargo.toml"]
+version = "0.0.1"
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -10,26 +10,26 @@ license.workspace = true
 homepage.workspace = true
 
 [lib]
-crate-type = ['cdylib', 'rlib']
+crate-type = ["cdylib", "rlib"]
 bench = false
 
 [dependencies]
 candid = { workspace = true }
 convert_case = { workspace = true }
-getrandom = { workspace = true, features = ['custom'] }
+getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
-orbit-essentials-macros = { path = '../orbit-essentials-macros', version = '0.0.2-alpha.0' }
+orbit-essentials-macros = { path = "../orbit-essentials-macros", version = "0.0.1" }
 prometheus = { workspace = true }
 rand_chacha = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_bytes = { workspace = true }
-time = { workspace = true, features = ['formatting', 'parsing'] }
+time = { workspace = true, features = ["formatting", "parsing"] }
 thiserror = { workspace = true }
-uuid = { workspace = true, features = ['serde', 'v4'] }
+uuid = { workspace = true, features = ["serde", "v4"] }
 
 [dev-dependencies]
-tokio = { workspace = true, features = ['full'] }
-serde = { workspace = true, features = ['derive'] }
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true, features = ["derive"] }
 serde_cbor = { workspace = true }
