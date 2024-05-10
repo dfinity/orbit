@@ -113,7 +113,7 @@ command.action(async options => {
 
     console.log('Staged changes detected, committing...');
     // Commit the staged changes
-    const commitMessage = 'chore(release): bump versions and prepare release';
+    const commitMessage = 'chore: prepare release';
     execSync(`git commit -m "${commitMessage}"`).toString().trim();
   }
 });
