@@ -71,6 +71,7 @@ command.action(async options => {
     projects: options.projects,
     gitCommit: false,
     gitTag: false,
+    createRelease: false,
   });
 
   if (!options.dryRun) {
