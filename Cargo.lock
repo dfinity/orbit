@@ -265,7 +265,7 @@ dependencies = [
 
 [[package]]
 name = "canfund"
-version = "0.0.2-alpha.0"
+version = "0.0.1"
 dependencies = [
  "async-trait",
  "candid",
@@ -302,7 +302,7 @@ dependencies = [
 
 [[package]]
 name = "control-panel"
-version = "0.0.2-alpha.0"
+version = "0.0.1"
 dependencies = [
  "candid",
  "candid_parser",
@@ -327,7 +327,7 @@ dependencies = [
 
 [[package]]
 name = "control-panel-api"
-version = "0.0.2-alpha.0"
+version = "0.0.1"
 dependencies = [
  "candid",
  "orbit-essentials",
@@ -1257,7 +1257,7 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "orbit-essentials"
-version = "0.0.2-alpha.0"
+version = "0.0.1"
 dependencies = [
  "candid",
  "convert_case",
@@ -1279,7 +1279,7 @@ dependencies = [
 
 [[package]]
 name = "orbit-essentials-macros"
-version = "0.0.2-alpha.0"
+version = "0.0.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2028,7 +2028,7 @@ dependencies = [
 
 [[package]]
 name = "station"
-version = "0.0.2-alpha.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2062,7 +2062,7 @@ dependencies = [
 
 [[package]]
 name = "station-api"
-version = "0.0.2-alpha.0"
+version = "0.0.1"
 dependencies = [
  "candid",
  "orbit-essentials",
@@ -2475,7 +2475,7 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "upgrader"
-version = "0.0.2-alpha.0"
+version = "0.0.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2498,7 +2498,7 @@ dependencies = [
 
 [[package]]
 name = "upgrader-api"
-version = "0.0.2-alpha.0"
+version = "0.0.1"
 dependencies = [
  "candid",
  "serde",

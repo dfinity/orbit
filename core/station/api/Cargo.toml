@@ -1,8 +1,8 @@
-
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
-name = 'station-api'
-include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.0'
+name = "station-api"
+include = ["src", "Cargo.toml"]
+version = "0.0.1"
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -11,6 +11,6 @@ homepage.workspace = true
 
 [dependencies]
 candid = { workspace = true }
-orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.0.2-alpha.0' }
+orbit-essentials = { path = "../../../libs/orbit-essentials", version = "0.0.1" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
