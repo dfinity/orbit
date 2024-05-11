@@ -50,7 +50,7 @@ impl Scheduler {
                             // at this point, or if the job panics, _guard will be dropped and the scheduled task will be cleaned up from the database
                         } else {
                             // if the job is already running, reschedule this timer just in case
-                            Self::schedule::<Job>(Job::JOB_TOLERANCE_NS * 1_000_000_000)
+                            Self::schedule::<Job>(Job::JOB_TOLERANCE_NS)
                         };
                     });
                 },
