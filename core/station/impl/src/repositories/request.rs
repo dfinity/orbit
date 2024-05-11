@@ -103,18 +103,7 @@ impl Default for RequestRepository {
         });
 
         Self {
-            approver_index: Default::default(),
-            creation_dt_index: Default::default(),
-            expiration_dt_index: Default::default(),
-            status_index: Default::default(),
-            scheduled_index: Default::default(),
-            requester_index: Default::default(),
-            status_modification_index: Default::default(),
-            prefixed_creation_time_index: Default::default(),
-            prefixed_expiration_time_index: Default::default(),
-            sort_index: Default::default(),
-            resource_index: Default::default(),
-            operation_type_index: Default::default(),
+           ..Default::default(),
         }
     }
 }
