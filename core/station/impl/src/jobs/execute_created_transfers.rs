@@ -15,7 +15,6 @@ use crate::{
 use async_trait::async_trait;
 use futures::future;
 
-use crate::core::ic_cdk::api::time;
 use orbit_essentials::repository::Repository;
 use std::collections::HashMap;
 
@@ -216,5 +215,5 @@ impl Job {
 }
 
 pub fn schedule_process_transfers(at_ns: u64) {
-    Scheduler::schedule::<Job>(at_ns.saturating_sub(time()));
+    Scheduler::schedule::<Job>(at_ns);
 }

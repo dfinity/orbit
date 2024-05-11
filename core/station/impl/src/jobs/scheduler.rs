@@ -19,9 +19,8 @@ impl Scheduler {
         }
     }
 
-    pub fn schedule<Job: ScheduledJob>(delay_ns: u64) {
-        let now = time();
-        let coarse_time_ns = to_coarse_time(now + delay_ns, Job::JOB_TOLERANCE_NS);
+    pub fn schedule<Job: ScheduledJob>(at_ns: u64) {
+        let coarse_time_ns = to_coarse_time(at_ns, Job::JOB_TOLERANCE_NS);
 
         if let Some(timer_id) =
             JobStateDatabase::check_existing_timer(Job::JOB_TYPE, coarse_time_ns)
@@ -31,7 +30,7 @@ impl Scheduler {
         } else {
             // schedule the timer
             let timer_id = set_timer(
-                Duration::from_nanos(coarse_time_ns.saturating_sub(now)),
+                Duration::from_nanos(coarse_time_ns.saturating_sub(time())),
                 move || {
                     spawn(async move {
                         // check if the job is already running
@@ -44,13 +43,13 @@ impl Scheduler {
                             let job_complete = Job::run().await;
 
                             if !job_complete {
-                                Self::schedule::<Job>(0)
+                                Self::schedule::<Job>(time())
                             }
 
                             // at this point, or if the job panics, _guard will be dropped and the scheduled task will be cleaned up from the database
                         } else {
                             // if the job is already running, reschedule this timer just in case
-                            Self::schedule::<Job>(Job::JOB_TOLERANCE_NS)
+                            Self::schedule::<Job>(time().saturating_add(Job::JOB_TOLERANCE_NS))
                         };
                     });
                 },

@@ -1,4 +1,4 @@
-use crate::{core::ic_cdk::api::time, jobs::JobType};
+use crate::jobs::JobType;
 use crate::{
     core::ic_cdk::next_time,
     models::{RequestStatus, RequestStatusCode},
@@ -47,7 +47,7 @@ impl Job {
 }
 
 pub fn schedule_expiration(at_ns: u64) {
-    Scheduler::schedule::<Job>(at_ns.saturating_sub(time()));
+    Scheduler::schedule::<Job>(at_ns);
 }
 
 pub fn cancel_scheduled_expiration(at_ns: u64) {

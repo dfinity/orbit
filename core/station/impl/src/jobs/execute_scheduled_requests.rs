@@ -1,5 +1,4 @@
 use super::{scheduler::Scheduler, JobType, ScheduledJob};
-use crate::core::ic_cdk::api::time;
 use crate::{
     core::ic_cdk::next_time,
     errors::RequestExecuteError,
@@ -124,5 +123,5 @@ impl Job {
 }
 
 pub fn schedule_request_execution(at_ns: u64) {
-    Scheduler::schedule::<Job>(at_ns.saturating_sub(time()));
+    Scheduler::schedule::<Job>(at_ns);
 }
