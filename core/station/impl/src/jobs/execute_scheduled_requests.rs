@@ -87,7 +87,7 @@ impl Job {
             }
         }
 
-        processing_all_transfers
+        processing_all_requests
     }
 
     /// Executes a single request.
