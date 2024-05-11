@@ -1,7 +1,4 @@
-use super::{
-    scheduler::{ScheduleStrategy, Scheduler, TimerAction},
-    ScheduledJob,
-};
+use super::{scheduler::Scheduler, JobType, ScheduledJob};
 use crate::{
     core::ic_cdk::{api::print, next_time},
     errors::TransferError,
@@ -17,19 +14,12 @@ use crate::{
 };
 use async_trait::async_trait;
 use futures::future;
-use ic_cdk_timers::TimerId;
-use orbit_essentials::cdk::api::time;
-use orbit_essentials::repository::Repository;
-use std::{
-    cell::RefCell,
-    collections::{BTreeSet, HashMap},
-};
-use uuid::Uuid;
 
-thread_local! {
-    static SCHEDULES: RefCell<BTreeSet<u64>> = Default::default();
-    static IS_RUNNING : RefCell<bool> = const { RefCell::new(false) };
-}
+use crate::core::ic_cdk::api::time;
+use orbit_essentials::repository::Repository;
+use std::collections::HashMap;
+
+use uuid::Uuid;
 
 #[derive(Debug, Default)]
 pub struct Job {
@@ -41,6 +31,7 @@ pub struct Job {
 
 #[async_trait]
 impl ScheduledJob for Job {
+    const JOB_TYPE: JobType = JobType::ExecuteCreatedTransfers;
     async fn run() -> bool {
         Self::default().execute_created_transfers().await
     }
@@ -224,53 +215,6 @@ impl Job {
     }
 }
 
-#[derive(Clone)]
-pub struct ExecuteCreatedTransfersScheduleStrategy;
-
-impl ScheduleStrategy for ExecuteCreatedTransfersScheduleStrategy {
-    const TOLERANCE_SEC: u64 = 5;
-
-    fn add_schedule(&self, at_ns: u64) -> TimerAction {
-        let with_tolerance = at_ns + Self::TOLERANCE_SEC * 1_000_000_000;
-
-        SCHEDULES.with(|timers| {
-            let mut timers = timers.borrow_mut();
-
-            if let Some(existing_timer) = timers.range(at_ns..with_tolerance).next().copied() {
-                timers.insert(at_ns);
-
-                TimerAction::UsedExisting(existing_timer)
-            } else {
-                timers.insert(at_ns);
-
-                TimerAction::AddedNew(at_ns)
-            }
-        })
-    }
-
-    fn remove_schedule(&self, _at_ns: u64) -> Option<TimerId> {
-        // this type of schedule does not need to be removed
-        None
-    }
-
-    fn is_running(&self) -> bool {
-        IS_RUNNING.with(|is_running| *is_running.borrow())
-    }
-
-    fn set_running(&self, running: bool) {
-        IS_RUNNING.with(|is_running| *is_running.borrow_mut() = running);
-    }
-
-    fn save_timer_id(&self, _timer_id: ic_cdk_timers::TimerId, _at_ns: u64) {
-        // not needed
-    }
-}
-
 pub fn schedule_process_transfers(at_ns: u64) {
-    let strategy = ExecuteCreatedTransfersScheduleStrategy;
-
-    Scheduler::schedule::<ExecuteCreatedTransfersScheduleStrategy, Job>(
-        strategy,
-        at_ns.saturating_sub(time()),
-    );
+    Scheduler::schedule::<Job>(at_ns.saturating_sub(time()));
 }

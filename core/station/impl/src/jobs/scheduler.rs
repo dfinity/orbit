@@ -1,81 +1,75 @@
 use std::time::Duration;
 
-use ic_cdk_timers::{clear_timer, set_timer, TimerId};
-use orbit_essentials::cdk::{api::time, spawn};
+use super::{to_coarse_time, JobStateDatabase, ScheduledJob, TimerResourceGuard};
+use crate::core::ic_cdk::{api::time, spawn};
 
-use super::ScheduledJob;
-
-pub enum TimerAction {
-    AddedNew(u64),
-    UsedExisting(u64),
-}
-
-pub trait ScheduleStrategy {
-    const TOLERANCE_SEC: u64 = 3;
-
-    /// If the call results in a new timer, return the timer value.
-    fn add_schedule(&self, at_ns: u64) -> TimerAction;
-    /// If the call results in a timer getting cancelled, return the timer value.
-    fn remove_schedule(&self, at_ns: u64) -> Option<TimerId>;
-    /// Return whether the job is currently running.
-    fn is_running(&self) -> bool;
-    /// Set whether the job is currently running.
-    fn set_running(&self, running: bool);
-    /// Saves the timer id and the time at which it was scheduled.
-    fn save_timer_id(&self, timer_id: TimerId, at_ns: u64);
-}
+#[cfg(not(test))]
+use ic_cdk_timers::{clear_timer, set_timer};
+#[cfg(test)]
+use mock_timers::{clear_timer, set_timer};
 
 pub struct Scheduler;
 
 impl Scheduler {
-    pub fn cancel_scheduled_timer<Strategy: ScheduleStrategy>(
-        strategy: Strategy,
-        timer_at_ns: u64,
-    ) {
-        if let Some(timer_id) = strategy.remove_schedule(timer_at_ns) {
+    pub fn cancel_scheduled_timer<Job: ScheduledJob>(at_ns: u64) {
+        let coarse_time = to_coarse_time(at_ns, Job::JOB_TOLERANCE_NS);
+        if let Some(timer_id) = JobStateDatabase::remove_scheduled_task(Job::JOB_TYPE, coarse_time)
+        {
             clear_timer(timer_id)
         }
     }
 
-    pub fn schedule<Strategy: ScheduleStrategy + Clone + 'static, Job: ScheduledJob>(
-        strategy: Strategy,
-        delay_ns: u64,
-    ) {
+    pub fn schedule<Job: ScheduledJob>(delay_ns: u64) {
         let now = time();
-        let future_time_ns = now + delay_ns;
+        let coarse_time_ns = to_coarse_time(now + delay_ns, Job::JOB_TOLERANCE_NS);
 
-        match strategy.add_schedule(future_time_ns) {
-            TimerAction::AddedNew(timer_at_ns) => {
-                let cloned_strategy = strategy.clone();
+        if let Some(timer_id) =
+            JobStateDatabase::check_existing_timer(Job::JOB_TYPE, coarse_time_ns)
+        {
+            // timer is already scheduled, just update the database
+            JobStateDatabase::add_scheduled_task(Job::JOB_TYPE, coarse_time_ns, timer_id);
+        } else {
+            // schedule the timer
+            let timer_id = set_timer(
+                Duration::from_nanos(coarse_time_ns.saturating_sub(now)),
+                move || {
+                    spawn(async move {
+                        // check if the job is already running
+                        if !JobStateDatabase::is_running(Job::JOB_TYPE) {
+                            // this guard will remove the scheduled task from the database at the end of the scope, even if the job panics
+                            let _guard = TimerResourceGuard::new(Job::JOB_TYPE, coarse_time_ns);
 
-                let timer_id = set_timer(
-                    Duration::from_nanos(timer_at_ns.saturating_sub(time())),
-                    move || {
-                        spawn(async move {
-                            if !strategy.is_running() {
-                                strategy.set_running(true);
-                                let job_complete = Job::run().await;
-                                strategy.set_running(false);
-                                strategy.remove_schedule(timer_at_ns);
+                            JobStateDatabase::set_running(Job::JOB_TYPE, true);
 
-                                if !job_complete {
-                                    Self::schedule::<Strategy, Job>(strategy, 0)
-                                }
-                            } else {
-                                Self::schedule::<Strategy, Job>(
-                                    strategy,
-                                    Strategy::TOLERANCE_SEC * 1_000_000_000,
-                                )
-                            };
-                        });
-                    },
-                );
+                            let job_complete = Job::run().await;
 
-                cloned_strategy.save_timer_id(timer_id, timer_at_ns);
-            }
-            TimerAction::UsedExisting(_) => {
-                // Do nothing
-            }
+                            if !job_complete {
+                                Self::schedule::<Job>(0)
+                            }
+
+                            // at this point, or if the job panics, _guard will be dropped and the scheduled task will be cleaned up from the database
+                        } else {
+                            // if the job is already running, reschedule this timer just in case
+                            Self::schedule::<Job>(Job::JOB_TOLERANCE_NS * 1_000_000_000)
+                        };
+                    });
+                },
+            );
+
+            // add the scheduled task to the database
+            JobStateDatabase::add_scheduled_task(Job::JOB_TYPE, coarse_time_ns, timer_id);
         }
     }
+}
+
+#[cfg(test)]
+mod mock_timers {
+    use ic_cdk_timers::TimerId;
+    use std::time::Duration;
+
+    pub fn set_timer(_duration: Duration, _callback: impl FnOnce() + Send + 'static) -> TimerId {
+        Default::default()
+    }
+
+    pub fn clear_timer(_timer_id: TimerId) {}
 }
