@@ -64,8 +64,7 @@ impl Default for TransferRepository {
         });
 
         Self {
-            account_index: TransferAccountIndexRepository::default(),
-            status_index: TransferStatusIndexRepository::default(),
+            ..Default::default(),
         }
     }
 }
