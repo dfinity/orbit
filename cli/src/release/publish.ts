@@ -42,11 +42,10 @@ command.action(async options => {
 
   for (const [project, changelog] of projectsWithoutReleaseTags) {
     console.log(`Creating release tag for project: ${project}...`);
-    const releaseTagMessage = changelog.releaseVersion.isPrerelease
-      ? `Pre-release ${changelog.releaseVersion.rawVersion}`
-      : `Release ${changelog.releaseVersion.rawVersion}`;
 
-    execSync(`git tag "${changelog.releaseVersion.gitTag}" -m "${releaseTagMessage}"`);
+    execSync(
+      `git tag "${changelog.releaseVersion.gitTag}" -m "Release ${changelog.releaseVersion.rawVersion}"`,
+    );
   }
 
   // push tags to remote and force update
