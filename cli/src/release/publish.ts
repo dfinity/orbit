@@ -48,7 +48,6 @@ command.action(async options => {
     );
   }
 
-  // push tags to remote and force update
   execSync('git push origin --tags');
 });
 
