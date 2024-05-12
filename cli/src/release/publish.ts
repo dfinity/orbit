@@ -1,9 +1,9 @@
 import { createCommand } from 'commander';
 import { isAbsolute, join } from 'path';
-import { releaseChangelog } from 'nx/release';
+// import { releaseChangelog } from 'nx/release';
 import { fileExists } from 'nx/src/utils/fileutils';
-import { getCurrentReleaseId } from '../utils';
-import { execSync } from 'child_process';
+// import { getCurrentReleaseId } from '../utils';
+// import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { ReleaseDetails } from '~/release/types';
 
