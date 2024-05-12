@@ -4,7 +4,7 @@ import { writeFile } from 'fs/promises';
 import { releaseChangelog, releaseVersion } from 'nx/release';
 import { isAbsolute, join } from 'path';
 import { parseArgsListSplitByComma } from '../utils';
-import { ReleaseDetails } from '~/release/types';
+import { ReleaseDetails } from './types';
 
 const parsePreReleaseMode = (releaseMode?: string): 'alpha' | 'beta' | 'rc' | 'prod' => {
   if (!releaseMode) {

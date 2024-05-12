@@ -3,8 +3,8 @@ import { createCommand } from 'commander';
 import { readFileSync } from 'fs';
 import { fileExists } from 'nx/src/utils/fileutils';
 import { isAbsolute, join } from 'path';
-import { ReleaseDetails } from '~/release/types';
-import { gitTagExists } from '~/utils';
+import { ReleaseDetails } from './types';
+import { gitTagExists } from '../utils';
 
 const command = createCommand('publish').description(
   'Handles the publishing of a given release. This command should be run after the release has been prepared.',
