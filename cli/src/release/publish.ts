@@ -4,6 +4,8 @@ import { releaseChangelog } from 'nx/release';
 import { fileExists } from 'nx/src/utils/fileutils';
 import { getCurrentReleaseId } from '../utils';
 import { execSync } from 'child_process';
+import { readFileSync } from 'fs';
+import { ReleaseDetails } from '~/release/types';
 
 const command = createCommand('publish').description(
   'Handles the publishing of a given release. This command should be run after the release has been prepared.',
@@ -32,32 +34,37 @@ command.action(async options => {
     return;
   }
 
-  const { projectsVersionData, releaseId } = await import(releaseFilePath);
-  const currentReleaseId = getCurrentReleaseId();
-  const expectedNextReleaseId = currentReleaseId + 1;
+  const release = JSON.parse(readFileSync(releaseFilePath, 'utf-8')) as ReleaseDetails;
 
-  if (currentReleaseId === releaseId) {
-    console.log(`The current workspace is already at release ${releaseId}. Skipping release.`);
+  console.log(`Publishing release ${release.releaseId}...`);
+  console.log('Versions:', release.versions);
+  console.log('Changes:', release.changes);
 
-    return;
-  }
+  // const currentReleaseId = getCurrentReleaseId();
+  // const expectedNextReleaseId = currentReleaseId + 1;
 
-  if (releaseId !== expectedNextReleaseId) {
-    throw new Error(
-      `The release ID in the release file is not the next release ID. Expected next release to be ${expectedNextReleaseId}, but was ${releaseId}.`,
-    );
-  }
+  // if (currentReleaseId === releaseId) {
+  //   console.log(`The current workspace is already at release ${releaseId}. Skipping release.`);
 
-  execSync(`git tag release-${releaseId}`);
+  //   return;
+  // }
 
-  await releaseChangelog({
-    verbose: options.verbose,
-    versionData: projectsVersionData,
-    gitCommit: false,
-    gitTag: true,
-    firstRelease: true,
-    createRelease: 'github',
-  });
+  // if (releaseId !== expectedNextReleaseId) {
+  //   throw new Error(
+  //     `The release ID in the release file is not the next release ID. Expected next release to be ${expectedNextReleaseId}, but was ${releaseId}.`,
+  //   );
+  // }
+
+  // execSync(`git tag release-${releaseId}`);
+
+  // await releaseChangelog({
+  //   verbose: options.verbose,
+  //   versionData: versions,
+  //   gitCommit: false,
+  //   gitTag: true,
+  //   firstRelease: true,
+  //   createRelease: 'github',
+  // });
 });
 
 export default command;
