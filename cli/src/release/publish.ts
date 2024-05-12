@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import { fileExists } from 'nx/src/utils/fileutils';
 import { isAbsolute, join } from 'path';
 import { ReleaseDetails } from './types';
-import { gitTagExists } from '../utils';
+import { capitalize, gitTagExists } from '../utils';
 
 const command = createCommand('publish').description(
   'Handles the publishing of a given release. This command should be run after the release has been prepared.',
@@ -49,6 +49,19 @@ command.action(async options => {
   }
 
   execSync('git push origin --tags');
+
+  for (const [project, changelog] of projectsWithoutReleaseTags) {
+    console.log(`Creating release page for project: ${project}...`);
+    const releaseTitle =
+      capitalize(project.replace(/[_-]/g, ' '), true) + ' ' + changelog.releaseVersion.rawVersion;
+
+    let ghReleaseCommand = `gh release create "${changelog.releaseVersion.gitTag}" -t "${releaseTitle}" -n "${changelog.contents}"`;
+    if (changelog.releaseVersion.isPrerelease) {
+      ghReleaseCommand += ' --prerelease';
+    }
+
+    execSync(ghReleaseCommand);
+  }
 });
 
 export default command;
