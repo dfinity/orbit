@@ -101,10 +101,11 @@ command.action(async options => {
         null,
         2,
       ),
+      'utf-8',
     );
 
-    execSync(`git add ${releaseOutputPath}`);
-    execSync(`git commit --amend --no-edit"`);
+    execSync(`git add "${releaseOutputPath}"`);
+    execSync(`git commit --amend --no-edit`);
 
     console.log('Release information written to file and added to release commit.');
   }
