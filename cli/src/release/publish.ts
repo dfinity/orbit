@@ -6,6 +6,7 @@ import { fileExists } from 'nx/src/utils/fileutils';
 // import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { ReleaseDetails } from '~/release/types';
+import { execSync } from 'child_process';
 
 const command = createCommand('publish').description(
   'Handles the publishing of a given release. This command should be run after the release has been prepared.',
@@ -36,9 +37,13 @@ command.action(async options => {
 
   const release = JSON.parse(readFileSync(releaseFilePath, 'utf-8')) as ReleaseDetails;
 
-  console.log(`Publishing release ${release.releaseId}...`);
-  console.log('Versions:', release.versions);
-  console.log('Changes:', release.changes);
+  for (const [project, changelog] of Object.entries(release.changes ?? {})) {
+    console.log(`Creating release tag for project: ${project}...`);
+
+    execSync(
+      `git tag "${changelog.releaseVersion.gitTag}" -m "Release ${changelog.releaseVersion.rawVersion}"`,
+    );
+  }
 
   // const currentReleaseId = getCurrentReleaseId();
   // const expectedNextReleaseId = currentReleaseId + 1;
