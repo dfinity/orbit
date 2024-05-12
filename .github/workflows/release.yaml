@@ -1,0 +1,21 @@
+name: 'Release'
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  update_changelog:
+    name: 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Install Dependencies'
+        run: pnpm install --frozen-lockfile
+      - name: 'Finalize release'
+        run: |
+          orbit-cli release publish
