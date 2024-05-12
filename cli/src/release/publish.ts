@@ -50,7 +50,7 @@ command.action(async options => {
   }
 
   // push tags to remote and force update
-  // execSync('git push --tags --force');
+  // execSync('git push origin --tags');
 });
 
 export default command;
