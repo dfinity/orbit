@@ -26,3 +26,5 @@ jobs:
       - name: 'If new tags, finalize release'
         run: |
           orbit-cli release publish
+        env:
+          GH_TOKEN: ${{ github.token }}
