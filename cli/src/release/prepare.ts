@@ -3,7 +3,7 @@ import { createCommand } from 'commander';
 import { writeFile } from 'fs/promises';
 import { releaseChangelog, releaseVersion } from 'nx/release';
 import { isAbsolute, join } from 'path';
-import { getCurrentReleaseId, parseArgsListSplitByComma } from '../utils';
+import { parseArgsListSplitByComma } from '../utils';
 import { ReleaseDetails } from '~/release/types';
 
 const parsePreReleaseMode = (releaseMode?: string): 'alpha' | 'beta' | 'rc' | 'prod' => {
@@ -84,12 +84,9 @@ command.action(async options => {
       ? options.releaseOutput
       : join(__dirname, '../../..', options.releaseOutput);
 
-    const nextReleaseId = getCurrentReleaseId() + 1;
-
     console.log(`Writing release information to ${releaseOutputPath}`);
 
     const releaseDetails: ReleaseDetails = {
-      releaseId: nextReleaseId,
       versions: projectsVersionData,
       changes: projectChangelogs,
     };
@@ -107,11 +104,9 @@ command.action(async options => {
     );
 
     execSync(`git add ${releaseOutputPath}`);
+    execSync(`git commit --amend --no-edit"`);
 
-    console.log('Staged changes detected, committing...');
-    // Commit the staged changes
-    const commitMessage = 'chore: prepare release';
-    execSync(`git commit -m "${commitMessage}"`).toString().trim();
+    console.log('Release information written to file and added to release commit.');
   }
 });
 

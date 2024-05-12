@@ -1,12 +1,10 @@
-import { createCommand } from 'commander';
-import { isAbsolute, join } from 'path';
-// import { releaseChangelog } from 'nx/release';
-import { fileExists } from 'nx/src/utils/fileutils';
-// import { getCurrentReleaseId } from '../utils';
-// import { execSync } from 'child_process';
-import { readFileSync } from 'fs';
-import { ReleaseDetails } from '~/release/types';
 import { execSync } from 'child_process';
+import { createCommand } from 'commander';
+import { readFileSync } from 'fs';
+import { fileExists } from 'nx/src/utils/fileutils';
+import { isAbsolute, join } from 'path';
+import { ReleaseDetails } from '~/release/types';
+import { gitTagExists } from '~/utils';
 
 const command = createCommand('publish').description(
   'Handles the publishing of a given release. This command should be run after the release has been prepared.',
@@ -37,39 +35,22 @@ command.action(async options => {
 
   const release = JSON.parse(readFileSync(releaseFilePath, 'utf-8')) as ReleaseDetails;
 
-  for (const [project, changelog] of Object.entries(release.changes ?? {})) {
-    console.log(`Creating release tag for project: ${project}...`);
+  // filter out projects that already have a release tag associated with them
+  const projectsWithoutReleaseTags = Object.entries(release.changes ?? {}).filter(
+    ([, changelog]) => !gitTagExists(changelog.releaseVersion.gitTag),
+  );
 
-    execSync(
-      `git tag "${changelog.releaseVersion.gitTag}" -m "Release ${changelog.releaseVersion.rawVersion}"`,
-    );
+  for (const [project, changelog] of projectsWithoutReleaseTags) {
+    console.log(`Creating release tag for project: ${project}...`);
+    const releaseTagMessage = changelog.releaseVersion.isPrerelease
+      ? `Pre-release ${changelog.releaseVersion.rawVersion}`
+      : `Release ${changelog.releaseVersion.rawVersion}`;
+
+    execSync(`git tag "${changelog.releaseVersion.gitTag}" -m "${releaseTagMessage}"`);
   }
 
-  // const currentReleaseId = getCurrentReleaseId();
-  // const expectedNextReleaseId = currentReleaseId + 1;
-
-  // if (currentReleaseId === releaseId) {
-  //   console.log(`The current workspace is already at release ${releaseId}. Skipping release.`);
-
-  //   return;
-  // }
-
-  // if (releaseId !== expectedNextReleaseId) {
-  //   throw new Error(
-  //     `The release ID in the release file is not the next release ID. Expected next release to be ${expectedNextReleaseId}, but was ${releaseId}.`,
-  //   );
-  // }
-
-  // execSync(`git tag release-${releaseId}`);
-
-  // await releaseChangelog({
-  //   verbose: options.verbose,
-  //   versionData: versions,
-  //   gitCommit: false,
-  //   gitTag: true,
-  //   firstRelease: true,
-  //   createRelease: 'github',
-  // });
+  // push tags to remote and force update
+  // execSync('git push --tags --force');
 });
 
 export default command;
