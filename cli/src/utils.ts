@@ -28,3 +28,11 @@ export const gitTagExists = (tag: string): boolean => {
 
 export const capitalize = (str: string, lower = false) =>
   (lower ? str.toLowerCase() : str).replace(/(?:^|\s|["'([{])+\S/g, match => match.toUpperCase());
+
+export const targetExists = (project: string, target: string): boolean => {
+  const output = execSync(`npx nx show projects --affected --withTarget="${target}" -p "${project}"`)
+    .toString()
+    .trim();
+
+  return output === project;
+};

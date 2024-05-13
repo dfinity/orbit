@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import { fileExists } from 'nx/src/utils/fileutils';
 import { isAbsolute, join } from 'path';
 import { ReleaseDetails } from './types';
-import { capitalize, gitTagExists } from '../utils';
+import { capitalize, gitTagExists, targetExists } from '../utils';
 
 const command = createCommand('publish').description(
   'Handles the publishing of a given release. This command should be run after the release has been prepared.',
@@ -40,6 +40,16 @@ command.action(async options => {
     ([, changelog]) => !gitTagExists(changelog.releaseVersion.gitTag),
   );
 
+  // create release artifacts for projects
+  for (const [project, _] of projectsWithoutReleaseTags) {
+    console.log(`Creating release artifacts for project: ${project}...`);
+
+    if (targetExists(project, 'create-artifacts')) {
+      execSync(`npx nx run ${project}:create-artifacts`);
+    }
+  }
+
+  // create release tags for projects
   for (const [project, changelog] of projectsWithoutReleaseTags) {
     console.log(`Creating release tag for project: ${project}...`);
 
@@ -55,7 +65,12 @@ command.action(async options => {
     const releaseTitle =
       capitalize(project.replace(/[_-]/g, ' '), true) + ' ' + changelog.releaseVersion.rawVersion;
 
-    let ghReleaseCommand = `gh release create "${changelog.releaseVersion.gitTag}" -t "${releaseTitle}" -n "${changelog.contents}"`;
+    let ghReleaseCommand = `gh release create "${changelog.releaseVersion.gitTag}"`;
+    if (targetExists(project, 'create-artifacts')) {
+      ghReleaseCommand += ` ./artifacts/${project}/**/*`;
+    }
+
+    ghReleaseCommand += ` -t "${releaseTitle}" -n "${changelog.contents}"`;
     if (changelog.releaseVersion.isPrerelease) {
       ghReleaseCommand += ' --prerelease';
     }

@@ -213,7 +213,7 @@
         "gitTag": "@orbit/upgrader-v0.0.2-alpha.0",
         "isPrerelease": true
       },
-      "contents": "## 0.0.2-alpha.0 (2024-05-12)\n\nThis was a version bump only for upgrader to align it with other projects, there were no code changes."
+      "contents": "## 0.0.2-alpha.0 (2024-05-12)\n\n\n### 🚀 Features\n\n- add trigger_upgrade function to enable the station canister to ask the upgrader to upgrade itself\n\n- add upgrade function to upgrade the station canister\n\n\n### ❤️  Thank You\n\n- rikonor\n\n- Kepler Vital"
     },
     "station": {
       "releaseVersion": {
@@ -229,7 +229,7 @@
         "gitTag": "@orbit/upgrader-api-v0.0.2-alpha.0",
         "isPrerelease": true
       },
-      "contents": "## 0.0.2-alpha.0 (2024-05-12)\n\nThis was a version bump only for upgrader-api to align it with other projects, there were no code changes."
+      "contents": "## 0.0.2-alpha.0 (2024-05-12)\n\n\n### 🚀 Features\n\n- add trigger_upgrade function to enable the station canister to ask the upgrader to upgrade itself\n\n- add upgrade function to upgrade the station canister\n\n\n### ❤️  Thank You\n\n- rikonor\n\n- Kepler Vital"
     },
     "station-api": {
       "releaseVersion": {

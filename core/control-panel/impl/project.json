@@ -1,5 +1,18 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "name": "control-panel",
-  "projectType": "application"
+  "projectType": "application",
+  "targets": {
+    "create-artifacts": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "mkdir -p ./artifacts/control-panel",
+          "./scripts/generate-wasm.sh control-panel",
+          "mv ./wasms/control_panel.wasm.gz ./artifacts/control-panel/control_panel.wasm.gz"
+        ],
+        "parallel": false
+      }
+    }
+  }
 }
