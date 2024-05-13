@@ -24,6 +24,14 @@ pub const SYSTEM_RESERVED_MEMORY_PAGES: u32 = MIB * 3 / WASM_PAGE_SIZE;
 pub const SYSTEM_RESERVED_MEMORY_BYTES: u32 = SYSTEM_RESERVED_MEMORY_PAGES * WASM_PAGE_SIZE;
 
 /// The size of the stable memory bucket in WASM pages.
+/// 
+/// We use a bucket size of 1MiB to ensure that the default memory allocated to the canister is as small as possible,
+/// this is due to the fact that this cansiter uses several MemoryIds to manage the stable memory similarly to to how
+/// a database arranges data per table.
+/// 
+/// Currently a bucket size of 1MiB limits the canister to 32GiB of stable memory, which is more than enough for the
+/// current use case, however, if the canister needs more memory in the future, `ic-stable-structures` will need to be
+/// updated to support storing more buckets in a backwards compatible way.
 pub const STABLE_MEMORY_BUCKET_SIZE: u16 = (MIB / WASM_PAGE_SIZE) as u16;
 
 /// The maximum number of Wasm pages that we allow to use for the stable storage.
