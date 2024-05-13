@@ -6,6 +6,8 @@ import { isAbsolute, join } from 'path';
 import { ReleaseDetails } from './types';
 import { capitalize, gitTagExists, targetExists } from '../utils';
 
+const artifactsRootPath = join(__dirname, '../../../artifacts');
+
 const command = createCommand('publish').description(
   'Handles the publishing of a given release. This command should be run after the release has been prepared.',
 );
@@ -42,9 +44,8 @@ command.action(async options => {
 
   // create release artifacts for projects
   for (const [project, _] of projectsWithoutReleaseTags) {
-    console.log(`Creating release artifacts for project: ${project}...`);
-
     if (targetExists(project, 'create-artifacts')) {
+      console.log(`Creating release artifacts for project: ${project}...`);
       execSync(`npx nx run ${project}:create-artifacts`);
     }
   }
@@ -67,7 +68,7 @@ command.action(async options => {
 
     let ghReleaseCommand = `gh release create "${changelog.releaseVersion.gitTag}"`;
     if (targetExists(project, 'create-artifacts')) {
-      ghReleaseCommand += ` ./artifacts/${project}/**/*`;
+      ghReleaseCommand += ` ${artifactsRootPath}/${project}/*`;
     }
 
     ghReleaseCommand += ` -t "${releaseTitle}" -n "${changelog.contents}"`;

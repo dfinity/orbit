@@ -30,7 +30,7 @@ export const capitalize = (str: string, lower = false) =>
   (lower ? str.toLowerCase() : str).replace(/(?:^|\s|["'([{])+\S/g, match => match.toUpperCase());
 
 export const targetExists = (project: string, target: string): boolean => {
-  const output = execSync(`npx nx show projects --affected --withTarget="${target}" -p "${project}"`)
+  const output = execSync(`npx nx show projects --withTarget="${target}" -p "${project}"`)
     .toString()
     .trim();
 
