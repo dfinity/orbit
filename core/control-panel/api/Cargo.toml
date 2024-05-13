@@ -2,7 +2,7 @@
 [package]
 name = 'control-panel-api'
 include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.0'
+version = '0.0.2-alpha.1'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -11,6 +11,6 @@ homepage.workspace = true
 
 [dependencies]
 candid = { workspace = true }
-orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.0.2-alpha.0' }
+orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.0.2-alpha.1' }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
