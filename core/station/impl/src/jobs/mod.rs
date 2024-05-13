@@ -5,9 +5,10 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use crate::core::ic_cdk::next_time;
+use crate::models::{RequestExecutionPlan, RequestStatusCode};
 use crate::{
     core::observer::Observer,
-    models::{Request, RequestExecutionPlan, RequestStatus, Transfer, TransferStatus},
+    models::{Request, RequestStatus, Transfer, TransferStatus},
     repositories::REQUEST_REPOSITORY,
 };
 use async_trait::async_trait;
@@ -213,4 +214,20 @@ pub fn jobs_observe_insert_transfer(observer: &mut Observer<(Transfer, Option<Tr
             execute_created_transfers::schedule_process_transfers(next_time());
         }
     }));
+}
+
+pub fn initialize_job_timers() {
+    // start the expiration timer for each request that is in Created state
+    for request in REQUEST_REPOSITORY.find_by_status(RequestStatusCode::Created, None, None) {
+        cancel_expired_requests::schedule_expiration(request.expiration_dt);
+    }
+    // start the execution timer for each request that is in Scheduled state
+    for request in REQUEST_REPOSITORY.find_by_status(RequestStatusCode::Scheduled, None, None) {
+        if let RequestStatus::Scheduled { scheduled_at } = request.status {
+            execute_scheduled_requests::schedule_request_execution(scheduled_at);
+        }
+    }
+
+    // start the execution timer for Transfers
+    execute_created_transfers::schedule_process_transfers(next_time());
 }

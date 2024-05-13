@@ -107,9 +107,14 @@ impl SystemService {
         });
 
         fn install_canister_post_process_finish(mut system_info: SystemInfo) {
+            use crate::jobs;
+
             install_canister_handlers::monitor_upgrader_cycles(
                 *system_info.get_upgrader_canister_id(),
             );
+
+            // initializes the job timers after the canister is fully initialized
+            jobs::initialize_job_timers();
 
             system_info.update_last_upgrade_timestamp();
             write_system_info(system_info.to_owned());
