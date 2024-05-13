@@ -62,7 +62,7 @@ describe('StationInfoCard', () => {
     expect(wrapper.exists()).toBe(true);
   });
 
-  it('renders the station name', async () => {
+  it('renders the user selected station name', async () => {
     const wrapper = mount(StationInfoCard);
 
     const session = useSessionStore();
@@ -76,10 +76,37 @@ describe('StationInfoCard', () => {
 
     await wrapper.vm.$nextTick();
 
-    const nameLine = wrapper.find('[data-test-id="station-name"]');
+    const nameLine = wrapper.find('[data-test-id="user-selected-station-name"]');
 
     expect(nameLine.exists()).toBeTruthy();
     expect(nameLine.text()).toContain('Personal');
+  });
+
+  it('renders the station default name', async () => {
+    const wrapper = mount(StationInfoCard);
+    const station = useStationStore();
+    const session = useSessionStore();
+
+    station.canisterId = Principal.anonymous().toText();
+    station.configuration.details = {
+      ...station.configuration.details,
+      name: 'Station',
+    };
+
+    session.data.stations = [
+      {
+        canisterId: Principal.anonymous().toText(),
+        main: true,
+        name: 'Personal',
+      },
+    ];
+
+    const nameLine = wrapper.find('[data-test-id="station-name"]');
+
+    await wrapper.vm.$nextTick();
+
+    expect(nameLine.exists()).toBeTruthy();
+    expect(nameLine.text()).toContain('Station');
   });
 
   it('shows a remove station button', () => {

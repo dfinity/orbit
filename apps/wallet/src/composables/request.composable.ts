@@ -68,6 +68,7 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
       { AddUserGroup: null },
       { EditUserGroup: null },
       { RemoveUserGroup: null },
+      { ManageSystemInfo: null },
     ],
   });
 

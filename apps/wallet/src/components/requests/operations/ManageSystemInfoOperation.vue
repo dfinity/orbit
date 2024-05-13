@@ -1,9 +1,9 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <RequestOperationListRow v-if="formValue.name">
+    <RequestOperationListRow v-if="formValue.name?.[0]">
       <template #name>{{ $t('terms.name') }}</template>
       <template #content>
-        {{ formValue.name }}
+        {{ formValue.name[0] }}
       </template>
     </RequestOperationListRow>
   </div>

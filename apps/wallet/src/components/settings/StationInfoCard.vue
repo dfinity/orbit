@@ -1,6 +1,6 @@
 <template>
   <VCard>
-    <VCardTitle>
+    <VCardTitle data-test-id="user-selected-station-name">
       {{ $t(`app.station_info_card_title`, { name: station.name }) }}
     </VCardTitle>
     <VCardText class="pb-0">
@@ -24,11 +24,56 @@
             </span>
           </VListItemSubtitle>
         </VListItem>
-        <VListItem class="px-0">
-          <VListItemTitle class="font-weight-bold">{{ $t(`terms.station_name`) }}</VListItemTitle>
-          <VListItemSubtitle data-test-id="station-name">{{
-            station.name ?? '-'
-          }}</VListItemSubtitle>
+        <VListItem class="px-0" :lines="hasOverridenStationName ? 'two' : 'one'">
+          <VListItemTitle class="font-weight-bold">
+            {{ $t(`terms.station_name`) }}
+            <AuthCheck :privileges="[Privilege.ManageSystemInfo]">
+              <ActionBtn
+                v-model="manageSystemInfoInput"
+                :icon="mdiPencil"
+                :title="$t(`requests.types.managesysteminfo.title`)"
+                color="primary"
+                :submit="submitManageSystemInfoOperation"
+                size="x-small"
+                variant="text"
+                data-test-id="manage-system-info-btn"
+                @failed="useOnFailedOperation"
+                @submitted="useOnSuccessfulOperation"
+              >
+                <template #default="{ model: elem, submit }">
+                  <ManageSystemInfoForm
+                    v-model="elem.value.model"
+                    @valid="isValid => (elem.value.valid = isValid)"
+                    @submit="submit"
+                  />
+                </template>
+                <template #actions="{ submit, loading: saving, model: elem }">
+                  <VSpacer />
+                  <VBtn
+                    :loading="saving"
+                    :disabled="!elem.value.valid"
+                    color="primary"
+                    variant="flat"
+                    @click="submit"
+                  >
+                    {{ $t('terms.save') }}
+                  </VBtn>
+                </template>
+              </ActionBtn>
+            </AuthCheck>
+          </VListItemTitle>
+          <VListItemSubtitle>
+            <span data-test-id="station-name">{{ station.configuration.details.name }}</span>
+            <VChip
+              v-if="hasOverridenStationName"
+              size="small"
+              class="ml-1"
+              color="success"
+              density="comfortable"
+            >
+              {{ $t(`terms.overriden`) }}
+            </VChip>
+          </VListItemSubtitle>
         </VListItem>
         <VListItem class="px-0">
           <VListItemTitle class="font-weight-bold">{{ $t(`terms.version`) }}</VListItemTitle>
@@ -58,6 +103,9 @@
         @submitted="onSuccessfulOperation"
       >
         <template #default="{ model: elem, submit }">
+          <VAlert type="info" density="compact" variant="tonal" class="mb-4">
+            {{ $t('app.station_info_card_edit_hint') }}
+          </VAlert>
           <StationInfoForm
             v-model="elem.value.model"
             @valid="isValid => (elem.value.valid = isValid)"
@@ -93,7 +141,7 @@
 
 <script lang="ts" setup>
 import { Principal } from '@dfinity/principal';
-import { mdiContentCopy } from '@mdi/js';
+import { mdiContentCopy, mdiPencil } from '@mdi/js';
 import { computed, ref } from 'vue';
 import {
   VBtn,
@@ -119,6 +167,14 @@ import { copyToClipboard } from '~/utils/app.utils';
 import StationInfoForm, { StationInfoModel } from './StationInfoForm.vue';
 import { useRouter } from 'vue-router';
 import { defaultHomeRoute } from '~/configs/routes.config';
+import AuthCheck from '~/components/AuthCheck.vue';
+import { Privilege } from '~/types/auth.types';
+import ManageSystemInfoForm from '~/components/settings/ManageSystemInfoForm.vue';
+import { ManageSystemInfoOperationInput, Request } from '~/generated/station/station.did';
+import {
+  useOnFailedOperation,
+  useOnSuccessfulOperation,
+} from '~/composables/notifications.composable';
 
 const station = useStationStore();
 const session = useSessionStore();
@@ -201,6 +257,12 @@ const save = async ({ model }: { valid: boolean; model: StationInfoModel }): Pro
   session.populateUser(user);
 };
 
+const hasOverridenStationName = computed(
+  () =>
+    station.configuration.details.name !==
+    session.data.stations.find(w => w.canisterId === station.canisterId)?.name,
+);
+
 const initialCreateInput = (): {
   valid: boolean;
   model: StationInfoModel;
@@ -216,4 +278,21 @@ const stationConfigInput = ref<{
   valid: boolean;
   model: StationInfoModel;
 }>(initialCreateInput());
+
+const manageSystemInfoInput = ref<{
+  valid: boolean;
+  model: ManageSystemInfoOperationInput;
+}>({
+  valid: false,
+  model: { name: [station.configuration.details.name] },
+});
+
+const submitManageSystemInfoOperation = async ({
+  model,
+}: {
+  valid: boolean;
+  model: ManageSystemInfoOperationInput;
+}): Promise<Request> => {
+  return station.service.createManageSystemInfoRequest(model);
+};
 </script>
