@@ -1,3 +1,13 @@
+## 0.0.2-alpha.1 (2024-05-13)
+
+### 🚀 Features
+
+- enable users to update the station name
+
+### ❤️ Thank You
+
+- Kepler Vital
+
 ## 0.0.2-alpha.0 (2024-05-12)
 
 ### 🚀 Features
