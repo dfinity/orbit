@@ -6,7 +6,7 @@ pub const MAX_BYTE_SIZE_UUID: u32 = std::mem::size_of::<Uuid>() as u32;
 
 /// Represents one gigabyte.
 pub const GIB: u64 = 1 << 30;
-pub const MIB_IN_BYTES: u32 = 1048576;
+pub const MIB_IN_BYTES: u32 = 1 << 20;
 
 /// The maximum memory size the canister can use for stable memory, currently set to 64GiB.
 pub const MAX_STABLE_MEMORY_SIZE: u64 = 64 * GIB;
