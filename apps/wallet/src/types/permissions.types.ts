@@ -22,6 +22,7 @@ export enum ResourceActionEnum {
   Transfer = 'Transfer',
   SystemInfoConfig = 'SystemInfoConfig',
   SystemInfoCapabilities = 'SystemInfoCapabilities',
+  ManageSystemInfo = 'ManageSystemInfo',
 }
 
 export enum AuthScopeEnum {

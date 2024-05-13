@@ -68,6 +68,10 @@ export const isSystemResourceActionContained = (
     return true;
   }
 
+  if (variantIs(a, 'ManageSystemInfo') && variantIs(b, 'ManageSystemInfo')) {
+    return true;
+  }
+
   return false;
 };
 

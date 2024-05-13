@@ -267,6 +267,12 @@ export const globalPermissions = (): AggregatedResoucePermissions[] => [
         allow: defaultAllowLevels(),
         canEdit: false,
       },
+      {
+        action: ResourceActionEnum.ManageSystemInfo,
+        resource: { System: { ManageSystemInfo: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
     ],
     match(specifier: Resource, resource: Resource): boolean {
       if (variantIs(specifier, 'System') && variantIs(resource, 'System')) {
