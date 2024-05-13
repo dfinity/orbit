@@ -310,7 +310,7 @@ export default {
   },
   landing: {
     title: 'Seamless Multichain',
-    subtitle: 'One Platform, Complete Oversight',
+    subtitle: 'One Platform, Full Control',
     description:
       'Orbit streamlines on-chain asset management for enterprises, DAOs, and teams, consolidating control and visibility into a single, intuitive platform.',
     connect_title: 'Securely connect to manage your digital assets',
@@ -606,7 +606,7 @@ export default {
       station_body:
         'Create your own wallet and manage your digital assets. You can add users, set permissions and manage request approval policies.',
       station_name_field: 'Wallet Name',
-      admin_name_field: 'Admin Name',
+      admin_name_field: 'Your username',
 
       check_permissions_title: 'Checking waiting list status...',
       join_waitlist_title: 'Join waiting list',

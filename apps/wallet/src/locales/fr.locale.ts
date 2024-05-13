@@ -615,7 +615,7 @@ export default {
       station_body:
         'Créez un portefeuille pour gérer vos actifs numériques. Entrez un nom pour votre portefeuille et cliquez sur "Créer".',
       station_name_field: 'Nom du Portefeuille',
-      admin_name_field: 'Nom de l Administrateur',
+      admin_name_field: "Ton nom d'utilisateur",
 
       waitlist_pending_title: 'Vous êtes sur la liste d attente!',
       waitlist_pending_body:
