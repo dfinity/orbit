@@ -6,6 +6,7 @@ pub const MAX_BYTE_SIZE_UUID: u32 = std::mem::size_of::<Uuid>() as u32;
 
 /// Represents one gigabyte.
 pub const GIB: u64 = 1 << 30;
+pub const MIB_IN_BYTES: u32 = 1048576;
 
 /// The maximum memory size the canister can use for stable memory, currently set to 64GiB.
 pub const MAX_STABLE_MEMORY_SIZE: u64 = 64 * GIB;
@@ -14,11 +15,20 @@ pub const MAX_STABLE_MEMORY_SIZE: u64 = 64 * GIB;
 /// - https://github.com/WebAssembly/design/pull/442#issuecomment-153203031
 pub const WASM_PAGE_SIZE: u32 = 65536;
 
+/// The number of Wasm pages reserved for the system state.
+pub const SYSTEM_RESERVED_MEMORY_PAGES: u32 = MIB_IN_BYTES * 3 / WASM_PAGE_SIZE;
+
+/// The number of bytes reserved for the system state.
+pub const SYSTEM_RESERVED_MEMORY_BYTES: u32 = SYSTEM_RESERVED_MEMORY_PAGES * WASM_PAGE_SIZE;
+
+/// The size of the stable memory bucket in WASM pages.
+pub const STABLE_MEMORY_BUCKET_SIZE: u16 = (MIB_IN_BYTES / WASM_PAGE_SIZE) as u16;
+
 /// The maximum number of Wasm pages that we allow to use for the stable storage.
 pub const MAX_WASM_PAGES: u64 = MAX_STABLE_MEMORY_SIZE / WASM_PAGE_SIZE as u64;
 
 /// The number of seconds that the account balance is considered fresh.
-pub const ACCOUNT_BALANCE_FRESHNESS_IN_MS: u64 = 15000;
+pub const ACCOUNT_BALANCE_FRESHNESS_IN_MS: u64 = 3000;
 
 /// The initial cycles balance to use when creating the upgrader canister.
 pub const INITIAL_UPGRADER_CYCLES: u128 = 250_000_000_000;
