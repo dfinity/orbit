@@ -60,12 +60,6 @@ thread_local! {
             StableBTreeMap::init(memory_manager.get(REQUEST_MEMORY_ID))
         )
     });
-
-    /// The observer that listens to changes in the request repository.
-    static CHANGE_OBSERVER: RefCell<Observer<(Request, Option<Request>)>> = Default::default();
-
-    /// The observer that listens to removals in the request repository.
-    static REMOVE_OBSERVER: RefCell<Observer<Request>> = Default::default();
 }
 
 lazy_static! {
@@ -88,21 +82,23 @@ pub struct RequestRepository {
     sort_index: RequestSortIndexRepository,
     resource_index: RequestResourceIndexRepository,
     operation_type_index: RequestOperationTypeIndexRepository,
+    change_observer: Observer<(Request, Option<Request>)>,
+    remove_observer: Observer<Request>,
 }
 
 impl Default for RequestRepository {
     fn default() -> Self {
-        CHANGE_OBSERVER.with(|observer| {
-            metrics_observe_insert_request(&mut observer.borrow_mut());
-            jobs_observe_insert_request(&mut observer.borrow_mut());
-        });
+        let mut change_observer = Observer::default();
+        metrics_observe_insert_request(&mut change_observer);
+        jobs_observe_insert_request(&mut change_observer);
 
-        REMOVE_OBSERVER.with(|observer| {
-            metrics_observe_remove_request(&mut observer.borrow_mut());
-            jobs_observe_remove_request(&mut observer.borrow_mut());
-        });
+        let mut remove_observer = Observer::default();
+        metrics_observe_remove_request(&mut remove_observer);
+        jobs_observe_remove_request(&mut remove_observer);
 
         Self {
+            change_observer,
+            remove_observer,
             approver_index: Default::default(),
             creation_dt_index: Default::default(),
             expiration_dt_index: Default::default(),
@@ -208,7 +204,7 @@ impl Repository<RequestKey, Request> for RequestRepository {
                 });
 
             let args = (value, prev);
-            CHANGE_OBSERVER.with(|observer| observer.borrow().notify(&args));
+            self.change_observer.notify(&args);
 
             args.1
         })
@@ -283,7 +279,7 @@ impl Repository<RequestKey, Request> for RequestRepository {
                 });
 
             if let Some(prev) = &prev {
-                REMOVE_OBSERVER.with(|observer| observer.borrow().notify(prev));
+                self.remove_observer.notify(prev);
             }
 
             prev

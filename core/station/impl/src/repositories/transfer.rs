@@ -33,12 +33,6 @@ thread_local! {
             StableBTreeMap::init(memory_manager.get(TRANSFER_MEMORY_ID))
         )
     });
-
-    /// The observer that listens to changes in the transfer repository.
-    static CHANGE_OBSERVER: RefCell<Observer<(Transfer, Option<Transfer>)>> = Default::default();
-
-    /// The observer that listens to removals in the transfer repository.
-    static REMOVE_OBSERVER: RefCell<Observer<Transfer>> = Default::default();
 }
 
 lazy_static! {
@@ -50,22 +44,24 @@ lazy_static! {
 pub struct TransferRepository {
     account_index: TransferAccountIndexRepository,
     status_index: TransferStatusIndexRepository,
+    change_observer: Observer<(Transfer, Option<Transfer>)>,
+    remove_observer: Observer<Transfer>,
 }
 
 impl Default for TransferRepository {
     fn default() -> Self {
-        CHANGE_OBSERVER.with(|observer| {
-            metrics_observe_insert_transfer(&mut observer.borrow_mut());
-            jobs_observe_insert_transfer(&mut observer.borrow_mut());
-        });
+        let mut change_observer = Observer::default();
+        metrics_observe_insert_transfer(&mut change_observer);
+        jobs_observe_insert_transfer(&mut change_observer);
 
-        REMOVE_OBSERVER.with(|observer| {
-            metrics_observe_remove_transfer(&mut observer.borrow_mut());
-        });
+        let mut remove_observer = Observer::default();
+        metrics_observe_remove_transfer(&mut remove_observer);
 
         Self {
             account_index: TransferAccountIndexRepository::default(),
             status_index: TransferStatusIndexRepository::default(),
+            change_observer,
+            remove_observer,
         }
     }
 }
@@ -95,7 +91,7 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
                 });
 
             let args = (value, prev);
-            CHANGE_OBSERVER.with(|observer| observer.borrow().notify(&args));
+            self.change_observer.notify(&args);
 
             args.1
         })
@@ -115,7 +111,7 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
                 });
 
             if let Some(prev) = &prev {
-                REMOVE_OBSERVER.with(|observer| observer.borrow().notify(prev));
+                self.remove_observer.notify(prev);
             }
 
             prev
