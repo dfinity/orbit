@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '.release.json'
 
 jobs:
   release_projects:
