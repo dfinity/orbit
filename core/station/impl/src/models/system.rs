@@ -1,6 +1,6 @@
 use crate::core::{
     ic_cdk::api::{time, trap},
-    WASM_PAGE_SIZE,
+    SYSTEM_RESERVED_MEMORY_BYTES,
 };
 use candid::Principal;
 use ic_stable_structures::{storable::Bound, Storable};
@@ -14,11 +14,7 @@ pub enum SystemState {
     Initialized(SystemInfo),
 }
 
-// Reserves 40 pages of memory for the system state in stable memory.
-pub const SYSTEM_STATE_WASM_PAGES: u64 = 40;
-pub const SYSTEM_STATE_MEMORY_SIZE: u32 = WASM_PAGE_SIZE * SYSTEM_STATE_WASM_PAGES as u32;
-
-#[storable(size = SYSTEM_STATE_MEMORY_SIZE)]
+#[storable(size = SYSTEM_RESERVED_MEMORY_BYTES)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SystemInfo {
     /// The system name.
@@ -144,7 +140,7 @@ impl Storable for SystemState {
     }
 
     const BOUND: Bound = Bound::Bounded {
-        max_size: SYSTEM_STATE_MEMORY_SIZE,
+        max_size: SYSTEM_RESERVED_MEMORY_BYTES,
         is_fixed_size: false,
     };
 }
