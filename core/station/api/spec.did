@@ -53,6 +53,7 @@ type RequestSpecifier = variant {
   AddUserGroup;
   EditUserGroup : ResourceIds;
   RemoveUserGroup : ResourceIds;
+  ManageSystemInfo;
 };
 
 // A record type that can be used to represent a percentage of users that are required to approve a rule.
@@ -643,6 +644,8 @@ type RequestOperation = variant {
   EditRequestPolicy : EditRequestPolicyOperation;
   // An operation for removing a request policy.
   RemoveRequestPolicy : RemoveRequestPolicyOperation;
+  // An operation for managing system info.
+  ManageSystemInfo : ManageSystemInfoOperation;
 };
 
 type RequestOperationInput = variant {
@@ -678,6 +681,8 @@ type RequestOperationInput = variant {
   EditRequestPolicy : EditRequestPolicyOperationInput;
   // An operation for removing a request policy.
   RemoveRequestPolicy : RemoveRequestPolicyOperationInput;
+  // An operation for managing system info.
+  ManageSystemInfo : ManageSystemInfoOperationInput;
 };
 
 type RequestOperationType = variant {
@@ -713,6 +718,8 @@ type RequestOperationType = variant {
   EditRequestPolicy;
   // An operation for removing a request policy.
   RemoveRequestPolicy;
+  // And operation for managing system info.
+  ManageSystemInfo;
 };
 
 // The schedule for executing a transaction of a given transfer.
@@ -830,6 +837,8 @@ type ListRequestsOperationType = variant {
   EditRequestPolicy;
   // An operation for removing a request policy.
   RemoveRequestPolicy;
+  // An operation for managing system info.
+  ManageSystemInfo;
 };
 
 // The direction to use for sorting.
@@ -1418,6 +1427,18 @@ type CapabilitiesResult = variant {
   Err : Error;
 };
 
+// An operation for managing the system information.
+type ManageSystemInfoOperation = record {
+  // The input to the request to manage the system information.
+  input : ManageSystemInfoOperationInput;
+};
+
+// Input type for managing the system information.
+type ManageSystemInfoOperationInput = record {
+  // The name of the station.
+  name : opt text;
+};
+
 // The system information.
 type SystemInfo = record {
   // The name of the station.
@@ -1556,6 +1577,7 @@ type RequestResourceAction = variant {
 type SystemResourceAction = variant {
   SystemInfo;
   Capabilities;
+  ManageSystemInfo;
 };
 
 // The actions that are available for users.
@@ -1747,6 +1769,7 @@ type ListRequestPoliciesResult = variant {
 type UserPrivilege = variant {
   Capabilities;
   SystemInfo;
+  ManageSystemInfo;
   ListAccounts;
   AddAccount;
   ListUsers;

@@ -95,6 +95,7 @@ pub struct ListUsersResponse {
 pub enum UserPrivilege {
     Capabilities,
     SystemInfo,
+    ManageSystemInfo,
     ListAccounts,
     AddAccount,
     ListUsers,

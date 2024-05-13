@@ -23,6 +23,7 @@ pub enum RequestOperationType {
     AddAddressBookEntry = 16,
     EditAddressBookEntry = 17,
     RemoveAddressBookEntry = 18,
+    ManageSystemInfo = 19,
 }
 
 impl FromStr for RequestOperationType {
@@ -46,6 +47,7 @@ impl FromStr for RequestOperationType {
             "add_request_policy" => Ok(RequestOperationType::AddRequestPolicy),
             "edit_request_policy" => Ok(RequestOperationType::EditRequestPolicy),
             "remove_request_policy" => Ok(RequestOperationType::RemoveRequestPolicy),
+            "manage_system_info" => Ok(RequestOperationType::ManageSystemInfo),
             _ => Err(()),
         }
     }
@@ -70,6 +72,7 @@ impl Display for RequestOperationType {
             RequestOperationType::AddRequestPolicy => write!(f, "add_request_policy"),
             RequestOperationType::EditRequestPolicy => write!(f, "edit_request_policy"),
             RequestOperationType::RemoveRequestPolicy => write!(f, "remove_request_policy"),
+            RequestOperationType::ManageSystemInfo => write!(f, "manage_system_info"),
         }
     }
 }
@@ -175,6 +178,10 @@ mod tests {
         assert_eq!(
             RequestOperationType::from_str("remove_request_policy").unwrap(),
             RequestOperationType::RemoveRequestPolicy
+        );
+        assert_eq!(
+            RequestOperationType::from_str("manage_system_info").unwrap(),
+            RequestOperationType::ManageSystemInfo
         );
     }
 }

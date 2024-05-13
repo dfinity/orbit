@@ -178,6 +178,9 @@ impl From<station_api::SystemResourceActionDTO> for SystemResourceAction {
             station_api::SystemResourceActionDTO::Capabilities => {
                 SystemResourceAction::Capabilities
             }
+            station_api::SystemResourceActionDTO::ManageSystemInfo => {
+                SystemResourceAction::ManageSystemInfo
+            }
         }
     }
 }
@@ -188,6 +191,9 @@ impl From<SystemResourceAction> for station_api::SystemResourceActionDTO {
             SystemResourceAction::SystemInfo => station_api::SystemResourceActionDTO::SystemInfo,
             SystemResourceAction::Capabilities => {
                 station_api::SystemResourceActionDTO::Capabilities
+            }
+            SystemResourceAction::ManageSystemInfo => {
+                station_api::SystemResourceActionDTO::ManageSystemInfo
             }
         }
     }

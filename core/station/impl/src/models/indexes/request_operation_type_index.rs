@@ -96,6 +96,10 @@ impl Request {
                 operation_type: RequestOperationFilterType::RemoveAddressBookEntry,
                 request_id: self.id,
             }],
+            RequestOperation::ManageSystemInfo(_) => vec![RequestOperationTypeIndex {
+                operation_type: RequestOperationFilterType::ManageSystemInfo,
+                request_id: self.id,
+            }],
         }
     }
 }

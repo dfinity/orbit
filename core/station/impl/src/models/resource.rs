@@ -66,7 +66,9 @@ impl ModelValidator<RecordValidationError> for Resource {
                 }
             },
             Resource::System(action) => match action {
-                SystemResourceAction::SystemInfo | SystemResourceAction::Capabilities => Ok(()),
+                SystemResourceAction::SystemInfo
+                | SystemResourceAction::Capabilities
+                | SystemResourceAction::ManageSystemInfo => Ok(()),
             },
             Resource::User(action) => match action {
                 UserResourceAction::List | UserResourceAction::Create => Ok(()),
@@ -127,6 +129,7 @@ pub enum AccountResourceAction {
 pub enum SystemResourceAction {
     SystemInfo,
     Capabilities,
+    ManageSystemInfo,
 }
 
 #[storable]
@@ -332,6 +335,9 @@ impl Resource {
                 SystemResourceAction::Capabilities => {
                     vec![Resource::System(SystemResourceAction::Capabilities)]
                 }
+                SystemResourceAction::ManageSystemInfo => {
+                    vec![Resource::System(SystemResourceAction::ManageSystemInfo)]
+                }
             },
             Resource::User(action) => match action {
                 UserResourceAction::Create => vec![Resource::User(UserResourceAction::Create)],
@@ -461,6 +467,7 @@ impl Display for SystemResourceAction {
         match self {
             SystemResourceAction::SystemInfo => write!(f, "SystemInfo"),
             SystemResourceAction::Capabilities => write!(f, "Capabilities"),
+            SystemResourceAction::ManageSystemInfo => write!(f, "ManageSystemInfo"),
         }
     }
 }

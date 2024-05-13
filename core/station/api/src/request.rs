@@ -8,7 +8,8 @@ use crate::{
     ChangeCanisterOperationInput, DisplayUserDTO, EditAccountOperationDTO,
     EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
     EditPermissionOperationDTO, EditPermissionOperationInput, EditUserGroupOperationDTO,
-    EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput, PaginationInput,
+    EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput,
+    ManageSystemInfoOperationDTO, ManageSystemInfoOperationInput, PaginationInput,
     RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
     RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
     RequestPolicyRuleDTO, RequestSpecifierDTO, SortDirection, UuidDTO,
@@ -69,6 +70,7 @@ pub enum RequestOperationDTO {
     AddRequestPolicy(Box<AddRequestPolicyOperationDTO>),
     EditRequestPolicy(Box<EditRequestPolicyOperationDTO>),
     RemoveRequestPolicy(Box<RemoveRequestPolicyOperationDTO>),
+    ManageSystemInfo(Box<ManageSystemInfoOperationDTO>),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -89,6 +91,7 @@ pub enum RequestOperationInput {
     AddRequestPolicy(AddRequestPolicyOperationInput),
     EditRequestPolicy(EditRequestPolicyOperationInput),
     RemoveRequestPolicy(RemoveRequestPolicyOperationInput),
+    ManageSystemInfo(ManageSystemInfoOperationInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -109,6 +112,28 @@ pub enum RequestOperationTypeDTO {
     AddRequestPolicy,
     EditRequestPolicy,
     RemoveRequestPolicy,
+    ManageSystemInfo,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ListRequestsOperationTypeDTO {
+    Transfer(Option<UuidDTO>),
+    AddAccount,
+    EditAccount,
+    AddAddressBookEntry,
+    EditAddressBookEntry,
+    RemoveAddressBookEntry,
+    AddUser,
+    EditUser,
+    AddUserGroup,
+    EditUserGroup,
+    RemoveUserGroup,
+    ChangeCanister,
+    EditPermission,
+    AddRequestPolicy,
+    EditRequestPolicy,
+    RemoveRequestPolicy,
+    ManageSystemInfo,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -179,26 +204,6 @@ pub struct GetRequestResponse {
     pub request: RequestDTO,
     pub privileges: RequestCallerPrivilegesDTO,
     pub additional_info: RequestAdditionalInfoDTO,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ListRequestsOperationTypeDTO {
-    Transfer(Option<UuidDTO>),
-    AddAccount,
-    EditAccount,
-    AddAddressBookEntry,
-    EditAddressBookEntry,
-    RemoveAddressBookEntry,
-    AddUser,
-    EditUser,
-    AddUserGroup,
-    EditUserGroup,
-    RemoveUserGroup,
-    ChangeCanister,
-    EditPermission,
-    AddRequestPolicy,
-    EditRequestPolicy,
-    RemoveRequestPolicy,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

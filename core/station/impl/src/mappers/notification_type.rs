@@ -86,6 +86,7 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::EditUserGroup(_)
                     | RequestOperation::RemoveRequestPolicy(_)
                     | RequestOperation::RemoveUserGroup(_)
+                    | RequestOperation::ManageSystemInfo(_)
                     | RequestOperation::ChangeCanister(_) => None,
                 };
 
@@ -105,6 +106,7 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::RemoveRequestPolicy(_)
                     | RequestOperation::RemoveUserGroup(_)
                     | RequestOperation::Transfer(_)
+                    | RequestOperation::ManageSystemInfo(_)
                     | RequestOperation::ChangeCanister(_) => None,
                 };
 

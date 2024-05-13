@@ -21,6 +21,7 @@ mod edit_permission;
 mod edit_request_policy;
 mod edit_user;
 mod edit_user_group;
+mod manage_system_info;
 mod remove_address_book_entry;
 mod remove_request_policy;
 mod remove_user_group;
@@ -49,7 +50,7 @@ use self::{
     transfer::{TransferRequestCreate, TransferRequestExecute},
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum RequestExecuteStage {
     Completed(RequestOperation),
     Processing(RequestOperation),
@@ -204,6 +205,12 @@ impl RequestFactory {
                     RemoveRequestPolicyRequestCreate,
                 >(id, requested_by_user, input.clone(), operation.clone())
             }
+            RequestOperationInput::ManageSystemInfo(operation) => {
+                create_request::<
+                    station_api::ManageSystemInfoOperationInput,
+                    manage_system_info::ManageSystemInfoRequestCreate,
+                >(id, requested_by_user, input.clone(), operation.clone())
+            }
         }
     }
 
@@ -273,6 +280,9 @@ impl RequestFactory {
                     Arc::clone(&REQUEST_POLICY_SERVICE),
                 ))
             }
+            RequestOperation::ManageSystemInfo(operation) => Box::new(
+                manage_system_info::ManageSystemInfoRequestExecute::new(request, operation),
+            ),
         }
     }
 }

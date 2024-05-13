@@ -4,7 +4,7 @@ use crate::models::{
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
         AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction, Resource,
-        ResourceAction, ResourceId, ResourceIds, UserResourceAction,
+        ResourceAction, ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
     },
     EvaluatedRequestPolicyRule, EvaluationStatus, Percentage, RequestEvaluationResult,
     RequestPolicy, RequestPolicyCallerPrivileges, RequestPolicyRuleResult,
@@ -264,6 +264,9 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::RemoveUserGroup(group) => {
                 station_api::RequestSpecifierDTO::RemoveUserGroup(group.into())
             }
+            RequestSpecifier::ManageSystemInfo => {
+                station_api::RequestSpecifierDTO::ManageSystemInfo
+            }
         }
     }
 }
@@ -311,6 +314,9 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             station_api::RequestSpecifierDTO::RemoveUserGroup(group) => {
                 RequestSpecifier::RemoveUserGroup(group.into())
             }
+            station_api::RequestSpecifierDTO::ManageSystemInfo => {
+                RequestSpecifier::ManageSystemInfo
+            }
         }
     }
 }
@@ -330,6 +336,9 @@ impl RequestSpecifier {
         match self {
             RequestSpecifier::AddAccount => vec![Resource::Account(AccountResourceAction::Create)],
             RequestSpecifier::AddUser => vec![Resource::User(UserResourceAction::Create)],
+            RequestSpecifier::ManageSystemInfo => {
+                vec![Resource::System(SystemResourceAction::ManageSystemInfo)]
+            }
 
             RequestSpecifier::Transfer(account_specifier) => match account_specifier {
                 ResourceIds::Any => vec![Resource::Account(AccountResourceAction::Transfer(

@@ -30,6 +30,7 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::RemoveRequestPolicy => {
                 RequestOperationType::RemoveRequestPolicy
             }
+            RequestOperationTypeDTO::ManageSystemInfo => RequestOperationType::ManageSystemInfo,
         }
     }
 }
@@ -61,6 +62,7 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::RemoveRequestPolicy => {
                 RequestOperationTypeDTO::RemoveRequestPolicy
             }
+            RequestOperationType::ManageSystemInfo => RequestOperationTypeDTO::ManageSystemInfo,
         }
     }
 }
@@ -86,6 +88,7 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::AddRequestPolicy(_) => RequestOperationType::AddRequestPolicy,
             RequestOperation::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
             RequestOperation::RemoveRequestPolicy(_) => RequestOperationType::RemoveRequestPolicy,
+            RequestOperation::ManageSystemInfo(_) => RequestOperationType::ManageSystemInfo,
         }
     }
 }
@@ -146,6 +149,10 @@ impl RequestOperation {
                 RequestOperation::RemoveRequestPolicy(_),
                 ListRequestsOperationTypeDTO::RemoveRequestPolicy,
             ) => true,
+            (
+                RequestOperation::ManageSystemInfo(_),
+                ListRequestsOperationTypeDTO::ManageSystemInfo,
+            ) => true,
             _ => false,
         }
     }
@@ -205,6 +212,9 @@ impl From<station_api::ListRequestsOperationTypeDTO> for RequestOperationFilterT
             }
             station_api::ListRequestsOperationTypeDTO::RemoveRequestPolicy => {
                 RequestOperationFilterType::RemoveRequestPolicy
+            }
+            station_api::ListRequestsOperationTypeDTO::ManageSystemInfo => {
+                RequestOperationFilterType::ManageSystemInfo
             }
         }
     }
