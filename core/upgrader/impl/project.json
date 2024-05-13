@@ -1,5 +1,18 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "name": "upgrader",
-  "projectType": "application"
+  "projectType": "application",
+  "targets": {
+    "create-artifacts": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "mkdir -p ./artifacts/upgrader",
+          "./scripts/generate-wasm.sh upgrader",
+          "mv ./wasms/upgrader.wasm.gz ./artifacts/upgrader/upgrader.wasm.gz"
+        ],
+        "parallel": false
+      }
+    }
+  }
 }
