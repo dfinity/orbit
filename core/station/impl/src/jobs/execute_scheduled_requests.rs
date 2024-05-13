@@ -39,7 +39,7 @@ impl Job {
             .request_repository
             .find_scheduled(None, Some(current_time));
 
-        let processing_all_transfers = requests.len() <= Self::MAX_BATCH_SIZE;
+        let processing_all_requests = requests.len() <= Self::MAX_BATCH_SIZE;
 
         // truncate the list to avoid processing too many requests at once
         requests.truncate(Self::MAX_BATCH_SIZE);
@@ -87,7 +87,7 @@ impl Job {
             }
         }
 
-        processing_all_transfers
+        processing_all_requests
     }
 
     /// Executes a single request.
