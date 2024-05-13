@@ -51,6 +51,7 @@ export const idlFactory = ({ IDL }) => {
     'Read' : ResourceId,
   });
   const SystemResourceAction = IDL.Variant({
+    'ManageSystemInfo' : IDL.Null,
     'SystemInfo' : IDL.Null,
     'Capabilities' : IDL.Null,
   });
@@ -160,6 +161,7 @@ export const idlFactory = ({ IDL }) => {
     'EditAddressBookEntry' : ResourceIds,
     'ChangeCanister' : IDL.Null,
     'EditUser' : ResourceIds,
+    'ManageSystemInfo' : IDL.Null,
     'Transfer' : ResourceIds,
     'EditAccount' : ResourceIds,
     'AddAddressBookEntry' : IDL.Null,
@@ -202,6 +204,9 @@ export const idlFactory = ({ IDL }) => {
     'groups' : IDL.Opt(IDL.Vec(UUID)),
     'name' : IDL.Opt(IDL.Text),
     'identities' : IDL.Opt(IDL.Vec(IDL.Principal)),
+  });
+  const ManageSystemInfoOperationInput = IDL.Record({
+    'name' : IDL.Opt(IDL.Text),
   });
   const TransferMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const NetworkId = IDL.Text;
@@ -267,6 +272,7 @@ export const idlFactory = ({ IDL }) => {
     'EditAddressBookEntry' : EditAddressBookEntryOperationInput,
     'ChangeCanister' : ChangeCanisterOperationInput,
     'EditUser' : EditUserOperationInput,
+    'ManageSystemInfo' : ManageSystemInfoOperationInput,
     'Transfer' : TransferOperationInput,
     'EditAccount' : EditAccountOperationInput,
     'AddAddressBookEntry' : AddAddressBookEntryOperationInput,
@@ -336,6 +342,9 @@ export const idlFactory = ({ IDL }) => {
     'arg_checksum' : IDL.Opt(Sha256Hash),
   });
   const EditUserOperation = IDL.Record({ 'input' : EditUserOperationInput });
+  const ManageSystemInfoOperation = IDL.Record({
+    'input' : ManageSystemInfoOperationInput,
+  });
   const AccountBalanceInfo = IDL.Record({
     'decimals' : IDL.Nat32,
     'balance' : IDL.Nat,
@@ -399,6 +408,7 @@ export const idlFactory = ({ IDL }) => {
     'EditAddressBookEntry' : EditAddressBookEntryOperation,
     'ChangeCanister' : ChangeCanisterOperation,
     'EditUser' : EditUserOperation,
+    'ManageSystemInfo' : ManageSystemInfoOperation,
     'Transfer' : TransferOperation,
     'EditAccount' : EditAccountOperation,
     'AddAddressBookEntry' : AddAddressBookEntryOperation,
@@ -536,6 +546,7 @@ export const idlFactory = ({ IDL }) => {
     'EditAddressBookEntry' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
+    'ManageSystemInfo' : IDL.Null,
     'Transfer' : IDL.Opt(UUID),
     'EditAccount' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
@@ -739,6 +750,7 @@ export const idlFactory = ({ IDL }) => {
     'EditAddressBookEntry' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
+    'ManageSystemInfo' : IDL.Null,
     'Transfer' : IDL.Null,
     'EditAccount' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
@@ -891,6 +903,7 @@ export const idlFactory = ({ IDL }) => {
     'AddUser' : IDL.Null,
     'ListUsers' : IDL.Null,
     'ChangeCanister' : IDL.Null,
+    'ManageSystemInfo' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,
     'AddRequestPolicy' : IDL.Null,

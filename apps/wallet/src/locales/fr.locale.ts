@@ -256,6 +256,10 @@ export default {
         title: "Modifier police d'aprobation",
         request_title: "Demande de modifier une police d'aprobation request",
       },
+      managesysteminfo: {
+        title: 'Gérer les informations système',
+        request_title: 'Demande de gérer les informations système',
+      },
       unknown: {
         title: 'Inconnu',
         request_title: 'Demande Inconnue',
@@ -700,6 +704,7 @@ export default {
       transfer: 'Transfert',
       request: 'Demande',
       addressbook: "Carnet d'Adresses",
+      managesysteminfo: 'Gérer les informations système',
     },
     actions: {
       list: 'Lister',
@@ -712,6 +717,7 @@ export default {
       systeminfo: 'Information Système',
       systeminfocapabilities: 'Capacités (Actifs Pris en Charge)',
       systeminfoconfig: 'Configuration (Mises à jour, Métriques, Utilisation)',
+      managesysteminfo: 'Gérer les informations système (par exemple. nom)',
     },
     allow: {
       public: "N'importe qui",
@@ -757,6 +763,7 @@ export default {
       addaddressbookentry: "Ajouter une entrée dans le carnet d'adresses",
       removeusergroup: "Éffacer un groupe d'usagers",
       addaccount: 'Ajouter un compte',
+      managesysteminfo: 'Gérer les informations système',
     },
   },
 };

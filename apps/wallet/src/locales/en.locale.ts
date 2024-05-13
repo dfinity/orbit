@@ -246,6 +246,10 @@ export default {
         title: 'Edit request policy',
         request_title: 'Edit request policy request',
       },
+      managesysteminfo: {
+        title: 'Manage system info',
+        request_title: 'Manage system info request',
+      },
       unknown: {
         title: 'Unknown',
         request_title: 'Unknown request',
@@ -690,6 +694,7 @@ export default {
       transfer: 'Transfer',
       request: 'Request',
       addressbook: 'Address Book',
+      managesysteminfo: 'Manage System Info',
     },
     actions: {
       list: 'List',
@@ -702,6 +707,7 @@ export default {
       systeminfo: 'System info',
       systeminfocapabilities: 'Capabilities (Supported Assets)',
       systeminfoconfig: 'Configuration (Upgrades, Metrics, Usage)',
+      managesysteminfo: 'Manage System Info (e.g. name)',
     },
     allow: {
       public: 'Anyone',
@@ -747,6 +753,7 @@ export default {
       addaddressbookentry: 'Add address book entry',
       removeusergroup: 'Remove user group',
       addaccount: 'Add account',
+      managesysteminfo: 'Manage system info',
     },
   },
 };

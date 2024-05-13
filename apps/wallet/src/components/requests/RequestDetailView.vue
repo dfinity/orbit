@@ -231,6 +231,7 @@ import {
   RequestPolicyRuleResult,
 } from '~/generated/station/station.did';
 import { RequestDetails } from '~/types/station.types';
+import { statusReasonsToTextSummary } from '~/utils/evaluation.utils';
 import { KeysOfUnion, variantIs } from '~/utils/helper.utils';
 import PolicyRuleResultView from './PolicyRuleResultView.vue';
 import RequestApprovalStatusChip from './RequestApprovalStatusChip.vue';
@@ -248,11 +249,11 @@ import EditPermissionOperation from './operations/EditPermissionOperation.vue';
 import EditRequestPolicyOperation from './operations/EditRequestPolicyOperation.vue';
 import EditUserGroupOperation from './operations/EditUserGroupOperation.vue';
 import EditUserOperation from './operations/EditUserOperation.vue';
+import ManageSystemInfoOperation from './operations/ManageSystemInfoOperation.vue';
 import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntryOperation.vue';
 import RemoveRequestPolicyOperation from './operations/RemoveRequestPolicyOperation.vue';
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
-import { statusReasonsToTextSummary } from '~/utils/evaluation.utils';
 
 const i18n = useI18n();
 
@@ -288,6 +289,7 @@ const componentsMap: {
   RemoveRequestPolicy: RemoveRequestPolicyOperation,
   ChangeCanister: ChangeCanisterOperation,
   EditPermission: EditPermissionOperation,
+  ManageSystemInfo: ManageSystemInfoOperation,
 };
 
 defineEmits<{

@@ -67,6 +67,10 @@ export const mapRequestSpecifierToEnum = (specifier: RequestSpecifier): RequestS
     return RequestSpecifierEnum.RemoveAddressBookEntry;
   }
 
+  if (variantIs(specifier, 'ManageSystemInfo')) {
+    return RequestSpecifierEnum.ManageSystemInfo;
+  }
+
   return unreachable(specifier);
 };
 

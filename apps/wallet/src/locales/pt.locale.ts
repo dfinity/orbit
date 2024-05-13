@@ -255,6 +255,10 @@ export default {
         title: 'Editar regra de aprovação',
         request_title: 'Pedido de alteração de regra de aprovação',
       },
+      managesysteminfo: {
+        title: 'Gerir informações do sistema',
+        request_title: 'Pedido de alteração de informações do sistema',
+      },
       unknown: {
         title: 'Desconhecido',
         request_title: 'Pedido desconhecido',
@@ -696,6 +700,7 @@ export default {
       transfer: 'Transfência',
       request: 'Pedido',
       addressbook: 'Livro de endereços',
+      managesysteminfo: 'Gerir informações do sistema',
     },
     actions: {
       list: 'Listar',
@@ -708,6 +713,7 @@ export default {
       systeminfo: 'Informações do sistema',
       systeminfocapabilities: 'Capacidades (Ativos Suportados)',
       systeminfoconfig: 'Configuração (Atualizações, Métricas, Uso)',
+      managesysteminfo: 'Gerir Informações do Sistema (e.g. nome)',
     },
     allow: {
       public: 'Acesso público',
@@ -753,6 +759,7 @@ export default {
       addaddressbookentry: 'Adicionar entrada no livro de endereços',
       removeusergroup: 'Remove grupo de usuários',
       addaccount: 'Adicionar conta',
+      managesysteminfo: 'Gerir informações do sistema',
     },
   },
 };

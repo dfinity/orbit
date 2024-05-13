@@ -62,6 +62,10 @@ export const mapRequestsOperationTypeToGroup = (
     return ListRequestsOperationTypeGroup.UserGroup;
   }
 
+  if (variantIs(operationType, 'ManageSystemInfo')) {
+    return ListRequestsOperationTypeGroup.SystemInfo;
+  }
+
   return unreachable(operationType);
 };
 
@@ -203,6 +207,9 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'RemoveUserGroup')) {
     return RequestOperationEnum.RemoveUserGroup;
   }
+  if (variantIs(operation, 'ManageSystemInfo')) {
+    return RequestOperationEnum.ManageSystemInfo;
+  }
 
   return unreachable(operation);
 };
@@ -258,6 +265,8 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { EditUserGroup: null };
   } else if (variantIs(requestOperation, 'RemoveUserGroup')) {
     return { RemoveUserGroup: null };
+  } else if (variantIs(requestOperation, 'ManageSystemInfo')) {
+    return { ManageSystemInfo: null };
   } else {
     return unreachable(requestOperation);
   }

@@ -425,6 +425,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
+  { 'ManageSystemInfo' : null } |
   { 'Transfer' : [] | [UUID] } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
@@ -471,6 +472,10 @@ export type ListUsersResult = {
     }
   } |
   { 'Err' : Error };
+export interface ManageSystemInfoOperation {
+  'input' : ManageSystemInfoOperationInput,
+}
+export interface ManageSystemInfoOperationInput { 'name' : [] | [string] }
 export type MarkNotificationReadResult = { 'Ok' : null } |
   { 'Err' : Error };
 export interface MarkNotificationsReadInput {
@@ -597,6 +602,7 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
   { 'ChangeCanister' : ChangeCanisterOperation } |
   { 'EditUser' : EditUserOperation } |
+  { 'ManageSystemInfo' : ManageSystemInfoOperation } |
   { 'Transfer' : TransferOperation } |
   { 'EditAccount' : EditAccountOperation } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
@@ -615,6 +621,7 @@ export type RequestOperationInput = {
   { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
   { 'ChangeCanister' : ChangeCanisterOperationInput } |
   { 'EditUser' : EditUserOperationInput } |
+  { 'ManageSystemInfo' : ManageSystemInfoOperationInput } |
   { 'Transfer' : TransferOperationInput } |
   { 'EditAccount' : EditAccountOperationInput } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
@@ -631,6 +638,7 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
+  { 'ManageSystemInfo' : null } |
   { 'Transfer' : null } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
@@ -673,6 +681,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'EditAddressBookEntry' : ResourceIds } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
+  { 'ManageSystemInfo' : null } |
   { 'Transfer' : ResourceIds } |
   { 'EditAccount' : ResourceIds } |
   { 'AddAddressBookEntry' : null } |
@@ -748,7 +757,8 @@ export interface SystemInit {
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
   { 'Init' : SystemInit };
-export type SystemResourceAction = { 'SystemInfo' : null } |
+export type SystemResourceAction = { 'ManageSystemInfo' : null } |
+  { 'SystemInfo' : null } |
   { 'Capabilities' : null };
 export interface SystemUpgrade { 'name' : [] | [string] }
 export type TimestampRFC3339 = string;
@@ -823,6 +833,7 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
   { 'ChangeCanister' : null } |
+  { 'ManageSystemInfo' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |
   { 'AddRequestPolicy' : null } |
