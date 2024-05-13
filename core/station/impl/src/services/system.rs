@@ -10,7 +10,7 @@ use crate::{
     errors::SystemError,
     models::{
         system::{SystemInfo, SystemState},
-        RequestId, RequestKey, RequestStatus,
+        ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
     },
     repositories::{RequestRepository, REQUEST_REPOSITORY},
 };
@@ -77,6 +77,16 @@ impl SystemService {
         if !self.is_healthy() {
             trap("Canister is not healthy, it must be initialized first.");
         }
+    }
+
+    pub fn update_system_info(&self, input: ManageSystemInfoOperationInput) {
+        let mut system_info = self.get_system_info();
+
+        if let Some(name) = input.name {
+            system_info.set_name(name.clone());
+        }
+
+        write_system_info(system_info);
     }
 
     #[cfg(not(target_arch = "wasm32"))]

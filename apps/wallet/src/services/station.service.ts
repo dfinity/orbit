@@ -58,6 +58,7 @@ import {
   UserStatus,
   SubmitRequestApprovalInput,
   _SERVICE,
+  ManageSystemInfoOperationInput,
 } from '~/generated/station/station.did';
 import { ExtractOk } from '~/types/helper.types';
 import {
@@ -716,6 +717,21 @@ export class StationService {
       title: [],
       summary: [],
       operation: { AddRequestPolicy: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async createManageSystemInfoRequest(input: ManageSystemInfoOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { ManageSystemInfo: input },
     });
 
     if (variantIs(result, 'Err')) {

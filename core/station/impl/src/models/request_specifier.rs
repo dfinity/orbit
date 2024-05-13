@@ -69,6 +69,7 @@ pub enum RequestSpecifier {
     AddUserGroup,
     EditUserGroup(ResourceIds),
     RemoveUserGroup(ResourceIds),
+    ManageSystemInfo,
 }
 
 impl ModelValidator<RecordValidationError> for RequestSpecifier {
@@ -79,6 +80,7 @@ impl ModelValidator<RecordValidationError> for RequestSpecifier {
             | RequestSpecifier::AddAddressBookEntry
             | RequestSpecifier::ChangeCanister
             | RequestSpecifier::AddRequestPolicy
+            | RequestSpecifier::ManageSystemInfo
             | RequestSpecifier::AddUserGroup => Ok(()),
 
             RequestSpecifier::Transfer(resource_ids)
@@ -130,6 +132,7 @@ impl From<&RequestSpecifier> for RequestOperationType {
             RequestSpecifier::AddUserGroup => RequestOperationType::AddUserGroup,
             RequestSpecifier::EditUserGroup(_) => RequestOperationType::EditUserGroup,
             RequestSpecifier::RemoveUserGroup(_) => RequestOperationType::RemoveUserGroup,
+            RequestSpecifier::ManageSystemInfo => RequestOperationType::ManageSystemInfo,
         }
     }
 }
@@ -295,6 +298,7 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
             | (RequestOperation::RemoveUserGroup(_), _)
             | (RequestOperation::RemoveRequestPolicy(_), _)
             | (RequestOperation::AddUserGroup(_), _)
+            | (RequestOperation::ManageSystemInfo(_), _)
             | (RequestOperation::Transfer(_), _) => false,
         })
     }

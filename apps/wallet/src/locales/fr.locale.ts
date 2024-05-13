@@ -13,7 +13,8 @@ export default {
     copied_to_clipboard: 'Valeur placée dans le presse-papiers',
     initial_account_name: 'Principal',
     station_info_card_title: 'Info {name}',
-    station_info_card_edit_btn: 'Éditer le portefeuille',
+    station_info_card_edit_btn: 'Préférences',
+    station_info_card_edit_hint: 'Modifiez vos préférences et paramètres pour ce portefeuille.',
     station_info_card_remove_btn: 'Retirer le portefeuille',
     station_info_card_remove_btn_confirm: 'Êtes-vous sûrs de vouloir retirer ce portefeuille?',
     manage_associated_station: 'Gerer le portefeuille associé',
@@ -256,6 +257,10 @@ export default {
         title: "Modifier police d'aprobation",
         request_title: "Demande de modifier une police d'aprobation request",
       },
+      managesysteminfo: {
+        title: 'Gérer les informations système',
+        request_title: 'Demande de gérer les informations système',
+      },
       unknown: {
         title: 'Inconnu',
         request_title: 'Demande Inconnue',
@@ -381,6 +386,7 @@ export default {
     identity: 'Identité',
     create: 'Créer',
     review: 'Revoir',
+    overriden: 'Remplacé',
     type: 'Type',
     summary: 'Sommaire',
     metadata: 'Metadata',
@@ -609,7 +615,7 @@ export default {
       station_body:
         'Créez un portefeuille pour gérer vos actifs numériques. Entrez un nom pour votre portefeuille et cliquez sur "Créer".',
       station_name_field: 'Nom du Portefeuille',
-      admin_name_field: 'Nom de l Administrateur',
+      admin_name_field: "Ton nom d'utilisateur",
 
       waitlist_pending_title: 'Vous êtes sur la liste d attente!',
       waitlist_pending_body:
@@ -700,6 +706,7 @@ export default {
       transfer: 'Transfert',
       request: 'Demande',
       addressbook: "Carnet d'Adresses",
+      managesysteminfo: 'Gérer les informations système',
     },
     actions: {
       list: 'Lister',
@@ -712,6 +719,7 @@ export default {
       systeminfo: 'Information Système',
       systeminfocapabilities: 'Capacités (Actifs Pris en Charge)',
       systeminfoconfig: 'Configuration (Mises à jour, Métriques, Utilisation)',
+      managesysteminfo: 'Gérer les informations système (par exemple. nom)',
     },
     allow: {
       public: "N'importe qui",
@@ -757,6 +765,7 @@ export default {
       addaddressbookentry: "Ajouter une entrée dans le carnet d'adresses",
       removeusergroup: "Éffacer un groupe d'usagers",
       addaccount: 'Ajouter un compte',
+      managesysteminfo: 'Gérer les informations système',
     },
   },
 };

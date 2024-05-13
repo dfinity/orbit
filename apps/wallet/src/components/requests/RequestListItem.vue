@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import type { Component } from 'vue';
 import { computed } from 'vue';
+import { VCard, VCardActions, VCardText, VCardTitle, VSpacer } from 'vuetify/components';
 import { Request, RequestOperation } from '~/generated/station/station.did';
 import { RequestDetails } from '~/types/station.types';
 import { KeysOfUnion } from '~/utils/helper.utils';
@@ -46,17 +47,17 @@ import AddRequestPolicyOperation from './operations/AddRequestPolicyOperation.vu
 import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
 import AddUserOperation from './operations/AddUserOperation.vue';
 import ChangeCanisterOperation from './operations/ChangeCanisterOperation.vue';
-import EditPermissionOperation from './operations/EditPermissionOperation.vue';
 import EditAccountOperation from './operations/EditAccountOperation.vue';
 import EditAddressBookEntryOperation from './operations/EditAddressBookEntryOperation.vue';
+import EditPermissionOperation from './operations/EditPermissionOperation.vue';
 import EditRequestPolicyOperation from './operations/EditRequestPolicyOperation.vue';
 import EditUserGroupOperation from './operations/EditUserGroupOperation.vue';
 import EditUserOperation from './operations/EditUserOperation.vue';
+import ManageSystemInfoOperation from './operations/ManageSystemInfoOperation.vue';
 import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntryOperation.vue';
 import RemoveRequestPolicyOperation from './operations/RemoveRequestPolicyOperation.vue';
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
-import { VCard, VCardActions, VCardText, VCardTitle, VSpacer } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{
@@ -90,6 +91,7 @@ const componentsMap: {
   RemoveRequestPolicy: RemoveRequestPolicyOperation,
   ChangeCanister: ChangeCanisterOperation,
   EditPermission: EditPermissionOperation,
+  ManageSystemInfo: ManageSystemInfoOperation,
 };
 
 defineEmits<{

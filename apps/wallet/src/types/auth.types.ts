@@ -14,6 +14,7 @@ export enum Privilege {
   AddAddressBookEntry = 'AddAddressBookEntry',
   ListRequests = 'ListRequests',
   ChangeCanister = 'ChangeCanister',
+  ManageSystemInfo = 'ManageSystemInfo',
 }
 
 export enum RequiredSessionState {

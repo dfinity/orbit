@@ -15,7 +15,7 @@
                 <VCol cols="12" md="8">
                   <RecentRequests
                     :title="$t(`app.station_upgrades_card_title`)"
-                    :types="[{ ChangeCanister: null }]"
+                    :types="[{ ChangeCanister: null }, { ManageSystemInfo: null }]"
                   >
                     <template #top-actions>
                       <AuthCheck :privileges="[Privilege.ChangeCanister]">

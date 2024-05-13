@@ -3,7 +3,7 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-            Resource, ResourceAction, ResourceId, UserResourceAction,
+            Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
@@ -12,7 +12,8 @@ use crate::{
         EditAccountOperation, EditAccountOperationInput, EditAddressBookEntryOperation,
         EditPermissionOperation, EditPermissionOperationInput, EditRequestPolicyOperation,
         EditRequestPolicyOperationInput, EditUserGroupOperation, EditUserOperation,
-        EditUserOperationInput, RemoveAddressBookEntryOperation, RemoveRequestPolicyOperation,
+        EditUserOperationInput, ManageSystemInfoOperation, ManageSystemInfoOperationInput,
+        RemoveAddressBookEntryOperation, RemoveRequestPolicyOperation,
         RemoveRequestPolicyOperationInput, RemoveUserGroupOperation, RequestOperation,
         TransferOperation, User,
     },
@@ -502,6 +503,34 @@ impl From<RemoveRequestPolicyOperation> for station_api::RemoveRequestPolicyOper
     }
 }
 
+impl From<ManageSystemInfoOperationInput> for station_api::ManageSystemInfoOperationInput {
+    fn from(input: ManageSystemInfoOperationInput) -> station_api::ManageSystemInfoOperationInput {
+        station_api::ManageSystemInfoOperationInput { name: input.name }
+    }
+}
+
+impl From<station_api::ManageSystemInfoOperationInput> for ManageSystemInfoOperationInput {
+    fn from(input: station_api::ManageSystemInfoOperationInput) -> ManageSystemInfoOperationInput {
+        ManageSystemInfoOperationInput { name: input.name }
+    }
+}
+
+impl From<ManageSystemInfoOperation> for station_api::ManageSystemInfoOperationDTO {
+    fn from(operation: ManageSystemInfoOperation) -> station_api::ManageSystemInfoOperationDTO {
+        station_api::ManageSystemInfoOperationDTO {
+            input: operation.input.into(),
+        }
+    }
+}
+
+impl From<station_api::ManageSystemInfoOperationDTO> for ManageSystemInfoOperation {
+    fn from(operation: station_api::ManageSystemInfoOperationDTO) -> ManageSystemInfoOperation {
+        ManageSystemInfoOperation {
+            input: operation.input.into(),
+        }
+    }
+}
+
 impl From<RequestOperation> for RequestOperationDTO {
     fn from(operation: RequestOperation) -> RequestOperationDTO {
         match operation {
@@ -573,6 +602,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             }
             RequestOperation::RemoveRequestPolicy(operation) => {
                 RequestOperationDTO::RemoveRequestPolicy(Box::new(operation.into()))
+            }
+            RequestOperation::ManageSystemInfo(operation) => {
+                RequestOperationDTO::ManageSystemInfo(Box::new(operation.into()))
             }
         }
     }
@@ -674,6 +706,9 @@ impl RequestOperation {
                     ))),
                     Resource::RequestPolicy(ResourceAction::Delete(ResourceId::Any)),
                 ]
+            }
+            RequestOperation::ManageSystemInfo(_) => {
+                vec![Resource::System(SystemResourceAction::ManageSystemInfo)]
             }
         }
     }

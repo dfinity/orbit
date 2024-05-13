@@ -19,6 +19,7 @@ pub enum RequestSpecifierDTO {
     AddUserGroup,
     EditUserGroup(ResourceIdsDTO),
     RemoveUserGroup(ResourceIdsDTO),
+    ManageSystemInfo,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

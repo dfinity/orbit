@@ -15,9 +15,10 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 15] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 16] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
+    UserPrivilege::ManageSystemInfo,
     UserPrivilege::ListUsers,
     UserPrivilege::AddUser,
     UserPrivilege::ListAccounts,
@@ -53,6 +54,9 @@ impl From<UserPrivilege> for Resource {
                 Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
             UserPrivilege::ListRequests => Resource::Request(RequestResourceAction::List),
+            UserPrivilege::ManageSystemInfo => {
+                Resource::System(SystemResourceAction::ManageSystemInfo)
+            }
         }
     }
 }
@@ -219,6 +223,9 @@ impl From<&station_api::CreateRequestInput> for Resource {
                         .expect("Invalid request policy id")
                         .as_bytes(),
                 )))
+            }
+            RequestOperationInput::ManageSystemInfo(_) => {
+                Resource::System(SystemResourceAction::ManageSystemInfo)
             }
         }
     }

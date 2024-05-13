@@ -101,6 +101,7 @@ export enum RequestSpecifierEnum {
   AddAddressBookEntry = 'AddAddressBookEntry',
   RemoveUserGroup = 'RemoveUserGroup',
   AddAccount = 'AddAccount',
+  ManageSystemInfo = 'ManageSystemInfo',
 }
 
 export enum RequestPolicyRuleEnum {
@@ -155,4 +156,5 @@ export enum RequestOperationEnum {
   EditPermission = 'EditPermission',
   ChangeCanister = 'ChangeCanister',
   Transfer = 'Transfer',
+  ManageSystemInfo = 'ManageSystemInfo',
 }

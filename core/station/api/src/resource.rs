@@ -62,6 +62,7 @@ pub enum AccountResourceActionDTO {
 pub enum SystemResourceActionDTO {
     SystemInfo,
     Capabilities,
+    ManageSystemInfo,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

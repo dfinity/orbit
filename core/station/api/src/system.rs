@@ -11,6 +11,16 @@ pub struct SystemInfoDTO {
     pub raw_rand_successful: bool,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ManageSystemInfoOperationDTO {
+    pub input: ManageSystemInfoOperationInput,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct ManageSystemInfoOperationInput {
+    pub name: Option<String>,
+}
+
 #[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct SystemInfoResponse {
     pub system: SystemInfoDTO,
