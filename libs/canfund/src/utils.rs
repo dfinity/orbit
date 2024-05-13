@@ -39,6 +39,10 @@ pub fn calc_estimated_cycles_per_sec(
     let time_spent_in_milis = time_spent_in_ns / 1_000_000;
     let time_spent_in_secs = time_spent_in_milis / 1_000;
 
+    if time_spent_in_secs == 0 {
+        return 0;
+    }
+
     consumed_cycles / time_spent_in_secs as u128
 }
 
