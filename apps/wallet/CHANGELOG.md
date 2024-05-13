@@ -1,3 +1,13 @@
+## 0.0.2-alpha.2 (2024-05-13)
+
+### 🚀 Features
+
+- show manage system info permission
+
+### ❤️ Thank You
+
+- Kepler Vital
+
 ## 0.0.2-alpha.1 (2024-05-13)
 
 ### 🚀 Features
