@@ -20,4 +20,5 @@ pub enum RequestOperationFilterType {
     AddAddressBookEntry,
     EditAddressBookEntry,
     RemoveAddressBookEntry,
+    ManageSystemInfo,
 }

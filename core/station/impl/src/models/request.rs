@@ -127,6 +127,7 @@ fn validate_request_operation_foreign_keys(
     operation: &RequestOperation,
 ) -> ModelValidatorResult<RecordValidationError> {
     match operation {
+        RequestOperation::ManageSystemInfo(_) => Ok(()),
         RequestOperation::Transfer(op) => EnsureAccount::id_exists(&op.input.from_account_id),
         RequestOperation::AddAccount(op) => {
             op.input.read_permission.validate()?;

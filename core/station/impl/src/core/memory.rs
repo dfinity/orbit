@@ -1,5 +1,5 @@
-use super::MAX_WASM_PAGES;
-use crate::models::system::{SystemInfo, SystemState, SYSTEM_STATE_WASM_PAGES};
+use super::{MAX_WASM_PAGES, STABLE_MEMORY_BUCKET_SIZE, SYSTEM_RESERVED_MEMORY_PAGES};
+use crate::models::system::{SystemInfo, SystemState};
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager},
     Cell, DefaultMemoryImpl, RestrictedMemory,
@@ -50,7 +50,7 @@ thread_local! {
   // The memory manager is used for simulating multiple memories. Given a `MemoryId` it can
   // return a memory that can be used by stable structures.
   static MEMORY_MANAGER: RefCell<MemoryManager<Memory>> =
-      RefCell::new(MemoryManager::init(managed_memory()));
+      RefCell::new(MemoryManager::init_with_bucket_size(managed_memory(), STABLE_MEMORY_BUCKET_SIZE));
 }
 
 /// A helper function that executes a closure with the memory manager.
@@ -60,14 +60,17 @@ pub fn with_memory_manager<R>(f: impl FnOnce(&MemoryManager<Memory>) -> R) -> R 
 
 /// Reserve the first stable memory page for the configuration stable cell.
 pub fn system_state_memory() -> Memory {
-    RestrictedMemory::new(DefaultMemoryImpl::default(), 0..SYSTEM_STATE_WASM_PAGES)
+    RestrictedMemory::new(
+        DefaultMemoryImpl::default(),
+        0..(SYSTEM_RESERVED_MEMORY_PAGES as u64),
+    )
 }
 
 /// All the memory after the initial config page is managed by the [MemoryManager].
 pub fn managed_memory() -> Memory {
     RestrictedMemory::new(
         DefaultMemoryImpl::default(),
-        SYSTEM_STATE_WASM_PAGES..MAX_WASM_PAGES,
+        (SYSTEM_RESERVED_MEMORY_PAGES as u64)..MAX_WASM_PAGES,
     )
 }
 

@@ -23,6 +23,11 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::System(SystemResourceAction::SystemInfo),
         ),
+        // Admins can manage the system info (e.g. change the canister's name)
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::System(SystemResourceAction::ManageSystemInfo),
+        ),
         // users
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
@@ -224,6 +229,11 @@ lazy_static! {
         // change canister
         (
             RequestSpecifier::ChangeCanister,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+        ),
+        // system info
+        (
+            RequestSpecifier::ManageSystemInfo,
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
     ];

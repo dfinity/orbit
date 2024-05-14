@@ -74,6 +74,7 @@ const componentsMap: {
   AddRequestPolicy: null,
   AddAddressBookEntry: null,
   ChangeCanister: null,
+  ManageSystemInfo: null,
   // below variants require more specific specifier model
   Transfer: TransferSpecifier,
   EditAccount: AccountSpecifier,
@@ -219,6 +220,9 @@ watch(
         model.value = { [specifier.value]: { Any: null } };
         break;
       case RequestSpecifierEnum.AddUser:
+        model.value = { [specifier.value]: null };
+        break;
+      case RequestSpecifierEnum.ManageSystemInfo:
         model.value = { [specifier.value]: null };
         break;
       default:

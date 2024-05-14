@@ -1,0 +1,32 @@
+name: 'Release'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.release.json'
+
+jobs:
+  release_projects:
+    name: 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Install Dependencies'
+        run: pnpm install --frozen-lockfile
+      - name: 'Configure Git'
+        run: |
+          git config --global user.email "github-actions[bot]@@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+      - name: 'If new tags, finalize release'
+        run: |
+          orbit-cli release publish
+        env:
+          GH_TOKEN: ${{ github.token }}

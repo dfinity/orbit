@@ -1,5 +1,18 @@
 {
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "name": "station",
-  "projectType": "application"
+  "projectType": "application",
+  "targets": {
+    "create-artifacts": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "mkdir -p ./artifacts/station",
+          "./scripts/generate-wasm.sh station",
+          "mv ./wasms/station.wasm.gz ./artifacts/station/station.wasm.gz"
+        ],
+        "parallel": false
+      }
+    }
+  }
 }

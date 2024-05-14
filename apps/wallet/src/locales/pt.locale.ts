@@ -13,7 +13,8 @@ export default {
     copied_to_clipboard: 'Texto copiado para a área de transferência.',
     initial_account_name: 'Principal',
     station_info_card_title: '{name} Informaçōes',
-    station_info_card_edit_btn: 'Editar carteira',
+    station_info_card_edit_btn: 'Preferências',
+    station_info_card_edit_hint: 'Edite suas preferências e configurações para esta carteira.',
     station_info_card_remove_btn: 'Remover carteira',
     station_info_card_remove_btn_confirm: 'Tem a certeza que pretende remover esta carteira?',
     manage_associated_station: 'Gerenciar carteira associada',
@@ -255,6 +256,10 @@ export default {
         title: 'Editar regra de aprovação',
         request_title: 'Pedido de alteração de regra de aprovação',
       },
+      managesysteminfo: {
+        title: 'Gerir informações do sistema',
+        request_title: 'Pedido de alteração de informações do sistema',
+      },
       unknown: {
         title: 'Desconhecido',
         request_title: 'Pedido desconhecido',
@@ -380,6 +385,7 @@ export default {
     withdraw_requests: 'Pedidos de retirada',
     approve: 'Aprovar',
     identity: 'Identidade',
+    overriden: 'Substituído',
     id: 'ID',
     any: 'Qualquer',
     comment_optional: 'Comentário (opcional)',
@@ -605,7 +611,7 @@ export default {
       station_body:
         'Crie a sua própria carteira e adicione usuários para gerenciar as suas contas e ativos digitais.',
       station_name_field: 'Nome da carteira',
-      admin_name_field: 'Nome do administrador',
+      admin_name_field: 'Seu nome de usuário',
 
       check_permissions_title: 'Verificando o estado da lista de espera ...',
       join_waitlist_title: 'Junte-se à lista de espera',
@@ -696,6 +702,7 @@ export default {
       transfer: 'Transfência',
       request: 'Pedido',
       addressbook: 'Livro de endereços',
+      managesysteminfo: 'Gerir informações do sistema',
     },
     actions: {
       list: 'Listar',
@@ -708,6 +715,7 @@ export default {
       systeminfo: 'Informações do sistema',
       systeminfocapabilities: 'Capacidades (Ativos Suportados)',
       systeminfoconfig: 'Configuração (Atualizações, Métricas, Uso)',
+      managesysteminfo: 'Gerir Informações do Sistema (e.g. nome)',
     },
     allow: {
       public: 'Acesso público',
@@ -753,6 +761,7 @@ export default {
       addaddressbookentry: 'Adicionar entrada no livro de endereços',
       removeusergroup: 'Remove grupo de usuários',
       addaccount: 'Adicionar conta',
+      managesysteminfo: 'Gerir informações do sistema',
     },
   },
 };

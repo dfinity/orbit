@@ -19,26 +19,24 @@
   "packageManager": "pnpm@8.7.4",
   "devDependencies": {
     "@monodon/rust": "1.4.0",
-    "@nx/js": "18.3.4",
-    "@nx/workspace": "18.3.4",
-    "@swc-node/register": "~1.8.0",
-    "@swc/core": "^1.4.17",
-    "@swc/helpers": "~0.5.2",
+    "@nx/js": "19.0.3",
+    "@nx/workspace": "19.0.3",
+    "@swc-node/register": "1.9.1",
+    "@swc/core": "1.5.5",
+    "@swc/helpers": "0.5.11",
     "@types/node": "20.11.25",
-    "@typescript-eslint/eslint-plugin": "6.18.1",
-    "@typescript-eslint/parser": "6.18.1",
-    "@vitest/coverage-v8": "1.3.1",
+    "@typescript-eslint/eslint-plugin": "7.9.0",
+    "@typescript-eslint/parser": "7.9.0",
+    "@vitest/coverage-v8": "1.6.0",
     "concurrently": "8.2.2",
     "eslint-config-prettier": "9.1.0",
-    "nx": "18.3.4",
+    "nx": "19.0.3",
     "prettier": "3.2.5",
-    "typescript": "5.4.2",
-    "vite": "4.5.3",
+    "typescript": "5.4.5",
+    "vite": "5.2.11",
     "vite-plugin-node-polyfills": "0.21.0",
-    "vitest": "1.3.1",
-    "vue-tsc": "2.0.6"
-  },
-  "dependencies": {
-    "@nx/devkit": "18.3.4"
+    "vitest": "1.6.0",
+    "vue-tsc": "2.0.17",
+    "@nx/devkit": "19.0.3"
   }
 }

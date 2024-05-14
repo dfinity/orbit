@@ -256,6 +256,10 @@ const toSystemResourceActionText = (specifier: SystemResourceAction): string => 
     return i18n.t('permissions.actions.systeminfo');
   }
 
+  if (variantIs(specifier, 'ManageSystemInfo')) {
+    return i18n.t('permissions.actions.managesysteminfo');
+  }
+
   return unreachable(specifier);
 };
 

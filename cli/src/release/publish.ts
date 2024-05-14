@@ -1,9 +1,12 @@
-import { createCommand } from 'commander';
-import { isAbsolute, join } from 'path';
-import { releaseChangelog } from 'nx/release';
-import { fileExists } from 'nx/src/utils/fileutils';
-import { getCurrentReleaseId } from '../utils';
 import { execSync } from 'child_process';
+import { createCommand } from 'commander';
+import { readFileSync } from 'fs';
+import { fileExists } from 'nx/src/utils/fileutils';
+import { isAbsolute, join } from 'path';
+import { ReleaseDetails } from './types';
+import { capitalize, gitTagExists, targetExists } from '../utils';
+
+const artifactsRootPath = join(__dirname, '../../../artifacts');
 
 const command = createCommand('publish').description(
   'Handles the publishing of a given release. This command should be run after the release has been prepared.',
@@ -32,32 +35,49 @@ command.action(async options => {
     return;
   }
 
-  const { projectsVersionData, releaseId } = await import(releaseFilePath);
-  const currentReleaseId = getCurrentReleaseId();
-  const expectedNextReleaseId = currentReleaseId + 1;
+  const release = JSON.parse(readFileSync(releaseFilePath, 'utf-8')) as ReleaseDetails;
 
-  if (currentReleaseId === releaseId) {
-    console.log(`The current workspace is already at release ${releaseId}. Skipping release.`);
+  // filter out projects that already have a release tag associated with them
+  const projectsWithoutReleaseTags = Object.entries(release.changes ?? {}).filter(
+    ([, changelog]) => !gitTagExists(changelog.releaseVersion.gitTag),
+  );
 
-    return;
+  // create release artifacts for projects
+  for (const [project, _] of projectsWithoutReleaseTags) {
+    if (targetExists(project, 'create-artifacts')) {
+      console.log(`Creating release artifacts for project: ${project}...`);
+      execSync(`npx nx run ${project}:create-artifacts`);
+    }
   }
 
-  if (releaseId !== expectedNextReleaseId) {
-    throw new Error(
-      `The release ID in the release file is not the next release ID. Expected next release to be ${expectedNextReleaseId}, but was ${releaseId}.`,
+  // create release tags for projects
+  for (const [project, changelog] of projectsWithoutReleaseTags) {
+    console.log(`Creating release tag for project: ${project}...`);
+
+    execSync(
+      `git tag "${changelog.releaseVersion.gitTag}" -m "Release ${changelog.releaseVersion.rawVersion}"`,
     );
   }
 
-  execSync(`git tag release-${releaseId}`);
+  execSync('git push origin --tags');
 
-  await releaseChangelog({
-    verbose: options.verbose,
-    versionData: projectsVersionData,
-    gitCommit: false,
-    gitTag: true,
-    firstRelease: true,
-    createRelease: 'github',
-  });
+  for (const [project, changelog] of projectsWithoutReleaseTags) {
+    console.log(`Creating release page for project: ${project}...`);
+    const releaseTitle =
+      capitalize(project.replace(/[_-]/g, ' '), true) + ' ' + changelog.releaseVersion.rawVersion;
+
+    let ghReleaseCommand = `gh release create "${changelog.releaseVersion.gitTag}"`;
+    if (targetExists(project, 'create-artifacts')) {
+      ghReleaseCommand += ` ${artifactsRootPath}/${project}/*`;
+    }
+
+    ghReleaseCommand += ` -t "${releaseTitle}" -n "${changelog.contents}"`;
+    if (changelog.releaseVersion.isPrerelease) {
+      ghReleaseCommand += ' --prerelease';
+    }
+
+    execSync(ghReleaseCommand);
+  }
 });
 
 export default command;

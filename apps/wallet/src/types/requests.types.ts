@@ -9,6 +9,7 @@ export enum ListRequestsOperationTypeGroup {
   RequestPolicy = 'request_policy',
   Permission = 'permission',
   ChangeCanister = 'change_canister',
+  SystemInfo = 'system_info',
 }
 
 export enum RequestApprovalStatusEnum {

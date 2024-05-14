@@ -13,13 +13,14 @@ export default {
     copied_to_clipboard: 'Value copied to clipboard.',
     initial_account_name: 'Main',
     station_info_card_title: '{name} Info',
-    station_info_card_edit_btn: 'Edit wallet',
+    station_info_card_edit_btn: 'Preferences',
+    station_info_card_edit_hint: 'Edit your own preferences and settings for this wallet.',
     station_info_card_remove_btn: 'Remove wallet',
     station_info_card_remove_btn_confirm: 'Are you sure you want to remove this wallet?',
     manage_associated_station: 'Manage associated wallet',
     manage_associated_station_hint: 'These settings only apply to your user and not to the wallet.',
     user_activities_card_title: 'User Activities',
-    station_upgrades_card_title: 'Wallet Upgrades',
+    station_upgrades_card_title: 'Wallet Changes',
     data_load_error: 'Failed to load data, please try again.',
     dialog_confirmation_title: 'Confirmation',
     dialog_confirmation_question: 'Are you sure you want to continue with this action?',
@@ -246,6 +247,10 @@ export default {
         title: 'Edit request policy',
         request_title: 'Edit request policy request',
       },
+      managesysteminfo: {
+        title: 'Manage system info',
+        request_title: 'Manage system info request',
+      },
       unknown: {
         title: 'Unknown',
         request_title: 'Unknown request',
@@ -305,7 +310,7 @@ export default {
   },
   landing: {
     title: 'Seamless Multichain',
-    subtitle: 'One Platform, Complete Oversight',
+    subtitle: 'One Platform, Full Control',
     description:
       'Orbit streamlines on-chain asset management for enterprises, DAOs, and teams, consolidating control and visibility into a single, intuitive platform.',
     connect_title: 'Securely connect to manage your digital assets',
@@ -377,6 +382,7 @@ export default {
     identity: 'Identity',
     type: 'Type',
     summary: 'Summary',
+    overriden: 'Overriden',
     metadata: 'Metadata',
     wasm: 'Wasm',
     arg: 'Arg',
@@ -600,7 +606,7 @@ export default {
       station_body:
         'Create your own wallet and manage your digital assets. You can add users, set permissions and manage request approval policies.',
       station_name_field: 'Wallet Name',
-      admin_name_field: 'Admin Name',
+      admin_name_field: 'Your username',
 
       check_permissions_title: 'Checking waiting list status...',
       join_waitlist_title: 'Join waiting list',
@@ -690,6 +696,7 @@ export default {
       transfer: 'Transfer',
       request: 'Request',
       addressbook: 'Address Book',
+      managesysteminfo: 'Manage System Info',
     },
     actions: {
       list: 'List',
@@ -702,6 +709,7 @@ export default {
       systeminfo: 'System info',
       systeminfocapabilities: 'Capabilities (Supported Assets)',
       systeminfoconfig: 'Configuration (Upgrades, Metrics, Usage)',
+      managesysteminfo: 'Manage System Info (e.g. name)',
     },
     allow: {
       public: 'Anyone',
@@ -747,6 +755,7 @@ export default {
       addaddressbookentry: 'Add address book entry',
       removeusergroup: 'Remove user group',
       addaccount: 'Add account',
+      managesysteminfo: 'Manage system info',
     },
   },
 };

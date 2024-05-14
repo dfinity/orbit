@@ -20,22 +20,19 @@ export const hashString = (str: string): string => {
   return hash.toString();
 };
 
-export const getCurrentReleaseId = (): number => {
-  try {
-    const tags = execSync('git tag --list "release-*"').toString().trim();
-    if (!tags) {
-      return 0;
-    }
+export const gitTagExists = (tag: string): boolean => {
+  const output = execSync(`git tag --list "${tag}"`).toString().trim();
 
-    const tag = execSync('git describe --tags --match "release-*" --abbrev=0').toString().trim();
-    const releaseId = parseInt(tag.replace('release-', ''), 10);
-    if (isNaN(releaseId)) {
-      console.error('Failed to parse release ID from tag:', tag);
-      return 0;
-    }
+  return output === tag;
+};
 
-    return releaseId;
-  } catch (error) {
-    throw new Error(`Error retrieving current release ID: ${error}`);
-  }
+export const capitalize = (str: string, lower = false) =>
+  (lower ? str.toLowerCase() : str).replace(/(?:^|\s|["'([{])+\S/g, match => match.toUpperCase());
+
+export const targetExists = (project: string, target: string): boolean => {
+  const output = execSync(`npx nx show projects --withTarget="${target}" -p "${project}"`)
+    .toString()
+    .trim();
+
+  return output === project;
 };

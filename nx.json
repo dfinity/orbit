@@ -10,11 +10,10 @@
     "changelog": {
       "automaticFromRef": true,
       "projectChangelogs": {
-        "createRelease": "github",
-        "file": false
+        "createRelease": false
       }
     },
-    "releaseTagPattern": "release/{projectName}-{version}",
+    "releaseTagPattern": "@orbit/{projectName}-v{version}",
     "projects": ["libs/*", "!libs/orbit-essentials-macros-tests", "core/**", "apps/**"]
   },
   "namedInputs": {

@@ -30,6 +30,7 @@ pub enum RequestOperation {
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
+    ManageSystemInfo(ManageSystemInfoOperation),
 }
 
 impl Display for RequestOperation {
@@ -51,6 +52,7 @@ impl Display for RequestOperation {
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
+            RequestOperation::ManageSystemInfo(_) => write!(f, "manage_system_info"),
         }
     }
 }
@@ -304,4 +306,16 @@ pub struct RemoveRequestPolicyOperationInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct RemoveRequestPolicyOperation {
     pub input: RemoveRequestPolicyOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ManageSystemInfoOperationInput {
+    pub name: Option<String>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ManageSystemInfoOperation {
+    pub input: ManageSystemInfoOperationInput,
 }
