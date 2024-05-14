@@ -33,10 +33,11 @@ vi.spyOn(mockedStationService, 'listRequests').mockReturnValue(
 );
 
 describe('RequestsPage', () => {
-  it('renders properly', () => {
+  it('renders the page body', () => {
     const wrapper = mount(RequestsPage);
+    const pageBody = wrapper.find('[data-test-id="page-body"]');
 
-    expect(wrapper.exists()).toBe(true);
+    expect(pageBody.exists()).toBe(true);
   });
 
   it('renders with empty list of requests', async () => {
