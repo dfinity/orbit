@@ -8,7 +8,6 @@
     :density="props.density"
     :rounded="props.rounded"
     :color="props.color"
-    :class="props.class"
     :disabled="props.disabled"
     @click="open = true"
   >
@@ -101,7 +100,6 @@ const props = withDefaults(
     content?: string;
     cancelText?: string;
     confirmText?: string;
-    class?: string;
     rounded?: boolean;
     disabled?: boolean;
     modelValue?: M;
@@ -123,7 +121,6 @@ const props = withDefaults(
     content: i18n.global.t('app.dialog_confirmation_question'),
     cancelText: i18n.global.t('terms.cancel'),
     confirmText: i18n.global.t('terms.confirm'),
-    class: undefined,
     rounded: false,
     disabled: false,
     dialogMaxWidth: 800,
