@@ -13,6 +13,8 @@ pub mod deserialize;
 pub mod metrics;
 pub mod model;
 pub mod repository;
+pub mod timers;
+
 pub mod types;
 pub mod utils;
 

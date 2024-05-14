@@ -5,6 +5,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use crate::core::ic_cdk::next_time;
+use crate::core::ic_timers::TimerId;
 use crate::models::{RequestExecutionPlan, RequestStatusCode};
 use crate::{
     core::observer::Observer,
@@ -12,7 +13,6 @@ use crate::{
     repositories::REQUEST_REPOSITORY,
 };
 use async_trait::async_trait;
-use ic_cdk_timers::TimerId;
 use orbit_essentials::repository::Repository;
 
 mod cancel_expired_requests;
@@ -46,6 +46,11 @@ thread_local! {
 struct JobStateDatabase;
 
 impl JobStateDatabase {
+    #[cfg(test)]
+    fn get_time_job_maps() -> HashMap<JobType, TimeJobMap> {
+        TIME_JOB_MAPS.with(|time_job_maps| time_job_maps.borrow().clone())
+    }
+
     fn is_running(job_type: JobType) -> bool {
         IS_RUNNINGS.with(|is_runnings| {
             let is_runnings = is_runnings.borrow();

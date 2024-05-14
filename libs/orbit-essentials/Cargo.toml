@@ -28,6 +28,7 @@ serde_bytes = { workspace = true }
 time = { workspace = true, features = ["formatting", "parsing"] }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["serde", "v4"] }
+ic-cdk-timers = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["full"] }
