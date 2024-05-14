@@ -3,9 +3,9 @@ use std::time::Duration;
 use super::{to_coarse_time, JobStateDatabase, ScheduledJob, TimerResourceGuard};
 use crate::core::ic_cdk::{api::time, spawn};
 
-#[cfg(not(test))]
+#[cfg(all(not(test), not(feature = "canbench")))]
 use ic_cdk_timers::{clear_timer, set_timer};
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench"))]
 use mock_timers::{clear_timer, set_timer};
 
 pub struct Scheduler;
@@ -61,7 +61,7 @@ impl Scheduler {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench"))]
 mod mock_timers {
     use ic_cdk_timers::TimerId;
     use std::time::Duration;
