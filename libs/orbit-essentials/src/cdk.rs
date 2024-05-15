@@ -50,8 +50,8 @@ pub mod mocks {
         };
 
         thread_local! {
-            static IC_TIME: RefCell<SystemTime> = RefCell::new(UNIX_EPOCH);
-            static IC_CANISTER_BALANCE: RefCell<u64> = RefCell::new(100_000_000_000);
+            static IC_TIME: RefCell<SystemTime> = const { RefCell::new(UNIX_EPOCH) };
+            static IC_CANISTER_BALANCE: RefCell<u64> = const { RefCell::new(100_000_000_000) };
         }
 
         pub fn set_mock_ic_time(time: SystemTime) {
