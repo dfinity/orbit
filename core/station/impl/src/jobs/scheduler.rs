@@ -146,13 +146,9 @@ mod test {
 
         super::Scheduler::run_scheduled::<OneShotJob>(0).await;
 
-        assert_eq!(
-            JobStateDatabase::get_time_job_maps()
-                .get(&OneShotJob::JOB_TYPE)
-                .expect("Job not scheduled")
-                .len(),
-            0
-        );
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&OneShotJob::JOB_TYPE)
+            .is_none());
     }
 
     #[tokio::test]
@@ -180,13 +176,9 @@ mod test {
         .await
         .expect_err("Job should panic");
 
-        assert_eq!(
-            JobStateDatabase::get_time_job_maps()
-                .get(&JobThatPanics::JOB_TYPE)
-                .expect("Job not scheduled")
-                .len(),
-            0
-        );
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&JobThatPanics::JOB_TYPE)
+            .is_none());
     }
 
     #[tokio::test]
@@ -249,6 +241,7 @@ mod test {
         });
 
         // trigger running first job again
+        // this time we can await it because it'll not be executed but rescheduled
         let _run_2 = tokio::spawn(async {
             super::Scheduler::run_scheduled::<LongJob>(0).await;
         })

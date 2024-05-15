@@ -100,6 +100,11 @@ impl JobStateDatabase {
                     if *count == 0 {
                         let timer_id = *timer_id;
                         job_map.remove(&at_ns);
+
+                        if job_map.is_empty() {
+                            time_job_maps.remove(&job_type);
+                        }
+
                         return Some(timer_id);
                     } else {
                         return None;
@@ -235,4 +240,187 @@ pub fn initialize_job_timers() {
 
     // start the execution timer for Transfers
     execute_created_transfers::schedule_process_transfers(next_time());
+}
+
+#[cfg(test)]
+mod test {
+    use std::time::Duration;
+
+    use crate::core::ic_cdk::api::time;
+    use crate::jobs::scheduler::Scheduler;
+    use crate::jobs::{execute_created_transfers, execute_scheduled_requests};
+    use crate::models::transfer_test_utils::mock_transfer;
+    use crate::models::RequestStatus;
+    use crate::repositories::TRANSFER_REPOSITORY;
+    use crate::{
+        jobs::{cancel_expired_requests, to_coarse_time, JobStateDatabase, ScheduledJob},
+        models::{request_test_utils::mock_request, Request},
+        repositories::REQUEST_REPOSITORY,
+    };
+    use orbit_essentials::repository::Repository;
+
+    #[tokio::test]
+    async fn test_request_insertion() {
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&cancel_expired_requests::Job::JOB_TYPE)
+            .is_none());
+
+        let expiration = time() + Duration::from_secs(30 * 24 * 60 * 60).as_nanos() as u64;
+        let expiration_coarse =
+            to_coarse_time(expiration, cancel_expired_requests::Job::JOB_TOLERANCE_NS);
+
+        // insert a new request, expiration timer should be set
+        let request_1 = Request {
+            status: crate::models::RequestStatus::Created,
+            expiration_dt: expiration,
+            ..mock_request()
+        };
+        REQUEST_REPOSITORY.insert(request_1.to_key(), request_1);
+
+        assert_eq!(
+            JobStateDatabase::get_time_job_maps()
+                .get(&cancel_expired_requests::Job::JOB_TYPE)
+                .expect("Job not scheduled at all")
+                .get(&expiration_coarse)
+                .expect("Job not scheduled at this time")
+                .1,
+            1
+        );
+
+        // insert another request with same expiration, expiration timer should be set
+        let mut request_2 = Request {
+            status: crate::models::RequestStatus::Created,
+            expiration_dt: expiration,
+            ..mock_request()
+        };
+        REQUEST_REPOSITORY.insert(request_2.to_key(), request_2.clone());
+
+        assert_eq!(
+            JobStateDatabase::get_time_job_maps()
+                .get(&cancel_expired_requests::Job::JOB_TYPE)
+                .expect("Job not scheduled at all")
+                .get(&expiration_coarse)
+                .expect("Job not scheduled at this time")
+                .1,
+            2
+        );
+
+        // 2nd request is approved, the timer should be removed
+        request_2.status = crate::models::RequestStatus::Approved;
+        REQUEST_REPOSITORY.insert(request_2.to_key(), request_2.clone());
+
+        assert_eq!(
+            JobStateDatabase::get_time_job_maps()
+                .get(&cancel_expired_requests::Job::JOB_TYPE)
+                .expect("Job not scheduled at all")
+                .get(&expiration_coarse)
+                .expect("Job not scheduled at this time")
+                .1,
+            1
+        );
+
+        let request_2 = REQUEST_REPOSITORY
+            .get(&request_2.to_key())
+            .expect("Request not found");
+
+        // request 2 should be scheduled now
+        let RequestStatus::Scheduled { scheduled_at } = request_2.status else {
+            panic!("Request not scheduled");
+        };
+
+        // scheduled request should have a timer set
+        assert_eq!(
+            JobStateDatabase::get_time_job_maps()
+                .get(&execute_scheduled_requests::Job::JOB_TYPE)
+                .expect("Job not scheduled at all")
+                .get(&to_coarse_time(
+                    scheduled_at,
+                    execute_scheduled_requests::Job::JOB_TOLERANCE_NS
+                ))
+                .expect("Job not scheduled at this time")
+                .1,
+            1
+        );
+
+        // scheduled request is executed, timer should be removed
+        Scheduler::run_scheduled::<execute_scheduled_requests::Job>(scheduled_at).await;
+
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&execute_scheduled_requests::Job::JOB_TYPE)
+            .expect("Job not scheduled at all")
+            .get(&scheduled_at)
+            .is_none(),);
+
+        // first job expires, cleaning up the timer
+        Scheduler::run_scheduled::<cancel_expired_requests::Job>(expiration_coarse).await;
+
+        // all timers should be removed
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&cancel_expired_requests::Job::JOB_TYPE)
+            .is_none());
+    }
+
+    #[tokio::test]
+    async fn test_request_removal() {
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&cancel_expired_requests::Job::JOB_TYPE)
+            .is_none());
+
+        let expiration = time() + Duration::from_secs(30 * 24 * 60 * 60).as_nanos() as u64;
+        let expiration_coarse =
+            to_coarse_time(expiration, cancel_expired_requests::Job::JOB_TOLERANCE_NS);
+
+        // insert a new request, expiration timer should be set
+        let request_1 = Request {
+            status: crate::models::RequestStatus::Created,
+            expiration_dt: expiration,
+            ..mock_request()
+        };
+        REQUEST_REPOSITORY.insert(request_1.to_key(), request_1.clone());
+
+        assert_eq!(
+            JobStateDatabase::get_time_job_maps()
+                .get(&cancel_expired_requests::Job::JOB_TYPE)
+                .expect("Job not scheduled at all")
+                .get(&expiration_coarse)
+                .expect("Job not scheduled at this time")
+                .1,
+            1
+        );
+
+        // remove the request, timer should be removed
+        REQUEST_REPOSITORY.remove(&request_1.to_key());
+
+        // all timers should be removed
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&cancel_expired_requests::Job::JOB_TYPE)
+            .is_none());
+    }
+
+    #[tokio::test]
+    async fn test_transfer_schedule_execution() {
+        let transfer = mock_transfer();
+        TRANSFER_REPOSITORY.insert(transfer.to_key(), transfer.clone());
+
+        let coarse_time = to_coarse_time(
+            transfer.created_timestamp,
+            execute_created_transfers::Job::JOB_TOLERANCE_NS,
+        );
+
+        assert_eq!(
+            JobStateDatabase::get_time_job_maps()
+                .get(&execute_created_transfers::Job::JOB_TYPE)
+                .expect("Job not scheduled at all")
+                .get(&coarse_time)
+                .expect("Job not scheduled at this time")
+                .1,
+            1
+        );
+
+        Scheduler::run_scheduled::<execute_created_transfers::Job>(coarse_time).await;
+
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&execute_created_transfers::Job::JOB_TYPE)
+            .is_none());
+    }
 }
