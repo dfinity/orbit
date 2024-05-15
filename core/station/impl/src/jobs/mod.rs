@@ -303,6 +303,8 @@ mod test {
 
     #[tokio::test]
     async fn test_request_insertion() {
+        set_mock_ic_time(SystemTime::UNIX_EPOCH);
+
         assert!(JobStateDatabase::get_time_job_maps()
             .get(&cancel_expired_requests::Job::JOB_TYPE)
             .is_none());
@@ -404,6 +406,8 @@ mod test {
 
     #[tokio::test]
     async fn test_request_removal() {
+        set_mock_ic_time(SystemTime::UNIX_EPOCH);
+
         assert!(JobStateDatabase::get_time_job_maps()
             .get(&cancel_expired_requests::Job::JOB_TYPE)
             .is_none());
@@ -441,6 +445,8 @@ mod test {
 
     #[tokio::test]
     async fn test_transfer_schedule_execution() {
+        set_mock_ic_time(SystemTime::UNIX_EPOCH);
+
         let transfer = mock_transfer();
         TRANSFER_REPOSITORY.insert(transfer.to_key(), transfer.clone());
 
@@ -448,6 +454,8 @@ mod test {
             transfer.created_timestamp,
             execute_created_transfers::Job::JOB_TOLERANCE_NS,
         );
+
+        println!("{:?}", JobStateDatabase::get_time_job_maps());
 
         assert_eq!(
             JobStateDatabase::get_time_job_maps()
@@ -468,6 +476,8 @@ mod test {
 
     #[tokio::test]
     async fn test_initialize_job_timers() {
+        set_mock_ic_time(SystemTime::UNIX_EPOCH);
+
         // create a repository with empty observers
         let request_repository = RequestRepository::with_empty_observers();
         let transfer_repository = TransferRepository::with_empty_observers();

@@ -71,7 +71,6 @@ mod test {
     use crate::jobs::{to_coarse_time, JobStateDatabase, JobType, ScheduledJob};
     use async_trait::async_trait;
     use futures::future::pending;
-    use ic_cdk::println;
 
     struct OneShotJob;
 
