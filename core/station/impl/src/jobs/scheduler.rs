@@ -27,7 +27,7 @@ impl Scheduler {
             let job_complete = Job::run().await;
 
             if !job_complete {
-                Self::schedule::<Job>(time())
+                Self::schedule::<Job>(time().saturating_add(Job::JOB_TOLERANCE_NS))
             }
 
             // at this point, or if the job panics, _guard will be dropped and the scheduled task will be cleaned up from the database
@@ -71,6 +71,7 @@ mod test {
     use crate::jobs::{to_coarse_time, JobStateDatabase, JobType, ScheduledJob};
     use async_trait::async_trait;
     use futures::future::pending;
+    use ic_cdk::println;
 
     struct OneShotJob;
 
@@ -185,22 +186,24 @@ mod test {
     async fn jobs_that_dont_complete_reschedule_themselves() {
         super::Scheduler::schedule::<JobWithMoreWorkToDo>(0);
 
+        assert_eq!(
+            JobStateDatabase::get_time_job_maps()
+                .get(&JobWithMoreWorkToDo::JOB_TYPE)
+                .expect("Job not scheduled at all")
+                .get(&0)
+                .expect("Job not scheduled at this time")
+                .1,
+            1
+        );
+
         super::Scheduler::run_scheduled::<JobWithMoreWorkToDo>(0).await;
 
         assert_eq!(
             JobStateDatabase::get_time_job_maps()
                 .get(&JobWithMoreWorkToDo::JOB_TYPE)
-                .expect("Job not scheduled")
-                .len(),
-            1
-        );
-
-        assert_eq!(
-            JobStateDatabase::get_time_job_maps()
-                .get(&JobWithMoreWorkToDo::JOB_TYPE)
-                .expect("Job not scheduled")
-                .get(&0) // time hasn't passed in tests, we're still at 0
-                .expect("Job not scheduled")
+                .expect("Job not scheduled at all")
+                .get(&JobWithMoreWorkToDo::JOB_TOLERANCE_NS)
+                .expect("Job not scheduled at this time")
                 .1,
             1
         );
@@ -208,9 +211,9 @@ mod test {
 
     #[tokio::test]
     async fn multiple_jobs_with_the_same_coarse_time() {
-        super::Scheduler::schedule::<LongJob>(4_000_000_001);
-        super::Scheduler::schedule::<LongJob>(4_999_999_999);
-        super::Scheduler::schedule::<LongJob>(5_000_000_000);
+        super::Scheduler::schedule::<OneShotJob>(4_000_000_001);
+        super::Scheduler::schedule::<OneShotJob>(4_999_999_999);
+        super::Scheduler::schedule::<OneShotJob>(5_000_000_000);
 
         assert_eq!(
             JobStateDatabase::get_time_job_maps()
@@ -229,6 +232,12 @@ mod test {
                 .1,
             3
         );
+
+        super::Scheduler::run_scheduled::<OneShotJob>(5_000_000_000u64).await;
+
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&JobType::CancelExpiredRequests)
+            .is_none());
     }
 
     #[tokio::test]

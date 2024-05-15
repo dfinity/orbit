@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use crate::core::ic_cdk::next_time;
 use crate::core::ic_timers::TimerId;
 use crate::models::{RequestExecutionPlan, RequestStatusCode};
+use crate::repositories::TRANSFER_REPOSITORY;
 use crate::{
     core::observer::Observer,
     models::{Request, RequestStatus, Transfer, TransferStatus},
@@ -46,11 +47,7 @@ thread_local! {
 struct JobStateDatabase;
 
 impl JobStateDatabase {
-    #[cfg(test)]
-    fn get_time_job_maps() -> HashMap<JobType, TimeJobMap> {
-        TIME_JOB_MAPS.with(|time_job_maps| time_job_maps.borrow().clone())
-    }
-
+    /// Checks if the job is currently running.
     fn is_running(job_type: JobType) -> bool {
         IS_RUNNINGS.with(|is_runnings| {
             let is_runnings = is_runnings.borrow();
@@ -58,12 +55,14 @@ impl JobStateDatabase {
         })
     }
 
+    /// Sets the running state of the job.
     fn set_running(job_type: JobType, running: bool) {
         IS_RUNNINGS.with(|is_runnings| {
             is_runnings.borrow_mut().insert(job_type, running);
         });
     }
 
+    /// Checks if a timer already exists for the given job type and time.
     fn check_existing_timer(job_type: JobType, at_ns: u64) -> Option<TimerId> {
         TIME_JOB_MAPS.with(|time_job_maps| {
             let time_job_maps = time_job_maps.borrow();
@@ -76,6 +75,7 @@ impl JobStateDatabase {
         })
     }
 
+    /// Adds a new scheduled task to the database, or increments the reference count if the task already exists.
     fn add_scheduled_task(job_type: JobType, at_ns: u64, timer_id: TimerId) {
         TIME_JOB_MAPS.with(|time_job_maps| {
             let mut time_job_maps = time_job_maps.borrow_mut();
@@ -90,6 +90,22 @@ impl JobStateDatabase {
         });
     }
 
+    /// After a scheduled task ends (either successfully or not), this will clean up the database.
+    fn finalize_scheduled_task(job_type: JobType, at_ns: u64) {
+        TIME_JOB_MAPS.with(|time_job_maps| {
+            let mut time_job_maps = time_job_maps.borrow_mut();
+
+            if let Some(job_map) = time_job_maps.get_mut(&job_type) {
+                job_map.remove(&at_ns);
+
+                if job_map.is_empty() {
+                    time_job_maps.remove(&job_type);
+                }
+            }
+        })
+    }
+
+    /// Decrements the reference count of the scheduled task. If the reference count reaches 0, the task is cleaned up.
     fn remove_scheduled_task(job_type: JobType, at_ns: u64) -> Option<TimerId> {
         TIME_JOB_MAPS.with(|time_job_maps| {
             let mut time_job_maps = time_job_maps.borrow_mut();
@@ -115,6 +131,12 @@ impl JobStateDatabase {
             None
         })
     }
+
+    /// Returns a copy of the current state of the time job maps for testing purposes.
+    #[cfg(test)]
+    fn get_time_job_maps() -> HashMap<JobType, TimeJobMap> {
+        TIME_JOB_MAPS.with(|time_job_maps| time_job_maps.borrow().clone())
+    }
 }
 
 struct TimerResourceGuard {
@@ -130,7 +152,7 @@ impl TimerResourceGuard {
 
 impl Drop for TimerResourceGuard {
     fn drop(&mut self) {
-        JobStateDatabase::remove_scheduled_task(self.job_type, self.at_ns);
+        JobStateDatabase::finalize_scheduled_task(self.job_type, self.at_ns);
         JobStateDatabase::set_running(self.job_type, false);
     }
 }
@@ -143,6 +165,23 @@ fn to_coarse_time(at_ns: u64, step_ns: u64) -> u64 {
     } else {
         at_ns - remainder + step_ns
     }
+}
+
+fn schedule_request_for_execution(request: &Request) -> u64 {
+    let request_processing_time = next_time();
+    let scheduled_at = match &request.execution_plan {
+        RequestExecutionPlan::Immediate => request_processing_time,
+        RequestExecutionPlan::Scheduled { execution_time } => *execution_time,
+    };
+
+    let mut request = request.clone();
+
+    request.status = RequestStatus::Scheduled { scheduled_at };
+    request.last_modification_timestamp = request_processing_time;
+
+    REQUEST_REPOSITORY.insert(request.to_key(), request.to_owned());
+
+    scheduled_at
 }
 
 pub fn jobs_observe_insert_request(observer: &mut Observer<(Request, Option<Request>)>) {
@@ -162,18 +201,7 @@ pub fn jobs_observe_insert_request(observer: &mut Observer<(Request, Option<Requ
             {
                 cancel_expired_requests::cancel_scheduled_expiration(request.expiration_dt);
 
-                let request_processing_time = next_time();
-                let scheduled_at = match &request.execution_plan {
-                    RequestExecutionPlan::Immediate => request_processing_time,
-                    RequestExecutionPlan::Scheduled { execution_time } => *execution_time,
-                };
-
-                let mut request = request.clone();
-
-                request.status = RequestStatus::Scheduled { scheduled_at };
-                request.last_modification_timestamp = request_processing_time;
-
-                REQUEST_REPOSITORY.insert(request.to_key(), request.to_owned());
+                let scheduled_at = schedule_request_for_execution(request);
 
                 execute_scheduled_requests::schedule_request_execution(scheduled_at);
             }
@@ -231,6 +259,12 @@ pub fn initialize_job_timers() {
     for request in REQUEST_REPOSITORY.find_by_status(RequestStatusCode::Created, None, None) {
         cancel_expired_requests::schedule_expiration(request.expiration_dt);
     }
+
+    // schedule requests that are already approved, but not yet scheduled
+    for request in REQUEST_REPOSITORY.find_by_status(RequestStatusCode::Approved, None, None) {
+        schedule_request_for_execution(&request);
+    }
+
     // start the execution timer for each request that is in Scheduled state
     for request in REQUEST_REPOSITORY.find_by_status(RequestStatusCode::Scheduled, None, None) {
         if let RequestStatus::Scheduled { scheduled_at } = request.status {
@@ -238,20 +272,28 @@ pub fn initialize_job_timers() {
         }
     }
 
-    // start the execution timer for Transfers
-    execute_created_transfers::schedule_process_transfers(next_time());
+    if !TRANSFER_REPOSITORY
+        .find_by_status(TransferStatus::Created.to_string(), None, None)
+        .is_empty()
+    {
+        // kick off execution timer for Transfers, once is enough
+        execute_created_transfers::schedule_process_transfers(next_time());
+    }
 }
 
 #[cfg(test)]
 mod test {
-    use std::time::Duration;
+    use std::time::{Duration, SystemTime};
 
-    use crate::core::ic_cdk::api::time;
+    use crate::core::ic_cdk::api::{set_mock_ic_time, time};
     use crate::jobs::scheduler::Scheduler;
     use crate::jobs::{execute_created_transfers, execute_scheduled_requests};
+    use crate::models::account_test_utils::mock_account;
     use crate::models::transfer_test_utils::mock_transfer;
-    use crate::models::RequestStatus;
-    use crate::repositories::TRANSFER_REPOSITORY;
+    use crate::models::{Account, RequestStatus};
+    use crate::repositories::{
+        RequestRepository, TransferRepository, ACCOUNT_REPOSITORY, TRANSFER_REPOSITORY,
+    };
     use crate::{
         jobs::{cancel_expired_requests, to_coarse_time, JobStateDatabase, ScheduledJob},
         models::{request_test_utils::mock_request, Request},
@@ -422,5 +464,144 @@ mod test {
         assert!(JobStateDatabase::get_time_job_maps()
             .get(&execute_created_transfers::Job::JOB_TYPE)
             .is_none());
+    }
+
+    #[tokio::test]
+    async fn test_initialize_job_timers() {
+        // create a repository with empty observers
+        let request_repository = RequestRepository::with_empty_observers();
+        let transfer_repository = TransferRepository::with_empty_observers();
+
+        let expiration = time() + Duration::from_secs(30 * 24 * 60 * 60).as_nanos() as u64;
+        let expiration_coarse =
+            to_coarse_time(expiration, cancel_expired_requests::Job::JOB_TOLERANCE_NS);
+
+        // create one account so transfer requests dont fail
+        let account = Account {
+            id: [1; 16],
+            ..mock_account()
+        };
+        ACCOUNT_REPOSITORY.insert(account.to_key(), account);
+
+        // create 2 requests that must be scheduled for expiration
+        for _ in 0..2 {
+            let request = Request {
+                status: RequestStatus::Created,
+                expiration_dt: expiration,
+                ..mock_request()
+            };
+            request_repository.insert(request.to_key(), request);
+        }
+
+        // create 3 requests that must be set to scheduled
+        for _ in 0..3 {
+            let request = mock_request();
+            request_repository.insert(request.to_key(), request);
+        }
+
+        // create 4 requests that must be scheduled for execution
+        for _ in 0..4 {
+            let request = Request {
+                status: RequestStatus::Scheduled {
+                    scheduled_at: time(),
+                },
+                ..mock_request()
+            };
+            request_repository.insert(request.to_key(), request);
+        }
+
+        // create 5 transfers that must be scheduled for execution
+        for _ in 0..5 {
+            let transfer = mock_transfer();
+            transfer_repository.insert(transfer.to_key(), transfer);
+        }
+
+        // at this time no jobs are scheduled because of the empty observers
+        // this emulates the moment after upgrade where the stable structure has data
+        assert_eq!(JobStateDatabase::get_time_job_maps().len(), 0);
+
+        // initialize the job timers
+        crate::jobs::initialize_job_timers();
+
+        // all 3 job types should have timers set
+        assert_eq!(JobStateDatabase::get_time_job_maps().len(), 3);
+
+        // 2 requests are scheduled for expiration
+        assert_eq!(
+            JobStateDatabase::get_time_job_maps()
+                .get(&cancel_expired_requests::Job::JOB_TYPE)
+                .expect("Job not scheduled at all")
+                .get(&expiration_coarse)
+                .expect("Job not scheduled at this time")
+                .1,
+            2
+        );
+
+        // 3+4=7 requests are scheduled for execution
+        assert_eq!(
+            JobStateDatabase::get_time_job_maps()
+                .get(&execute_scheduled_requests::Job::JOB_TYPE)
+                .expect("Job not scheduled at all")
+                .iter()
+                .map(|(_, (_, count))| count)
+                .sum::<usize>(),
+            7
+        );
+
+        // 5 transfers are scheduled for execution
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&execute_created_transfers::Job::JOB_TYPE)
+            .is_some());
+
+        let transfer_job_time = *JobStateDatabase::get_time_job_maps()
+            .get(&execute_created_transfers::Job::JOB_TYPE)
+            .expect("Job not scheduled at all")
+            .keys()
+            .next()
+            .expect("Job not scheduled at this time");
+
+        // run the transfer job
+        Scheduler::run_scheduled::<execute_created_transfers::Job>(transfer_job_time).await;
+
+        // transfer job should be removed
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&execute_created_transfers::Job::JOB_TYPE)
+            .is_none());
+
+        // time for expiration
+        set_mock_ic_time(SystemTime::UNIX_EPOCH + Duration::from_nanos(expiration_coarse));
+
+        // run the expiration job
+        Scheduler::run_scheduled::<cancel_expired_requests::Job>(expiration_coarse).await;
+
+        // expiration jobs should be removed
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&cancel_expired_requests::Job::JOB_TYPE)
+            .is_none());
+
+        // run the scheduled requests job
+        for at_ns in JobStateDatabase::get_time_job_maps()
+            .get(&execute_scheduled_requests::Job::JOB_TYPE)
+            .expect("Job not scheduled at all")
+            .keys()
+        {
+            Scheduler::run_scheduled::<execute_scheduled_requests::Job>(*at_ns).await;
+        }
+
+        // all scheduled requests should be executed
+        assert!(JobStateDatabase::get_time_job_maps()
+            .get(&execute_scheduled_requests::Job::JOB_TYPE)
+            .is_none());
+
+        // there should be 7 new transfer jobs scheduled
+        assert_eq!(
+            JobStateDatabase::get_time_job_maps()
+                .get(&execute_created_transfers::Job::JOB_TYPE)
+                .expect("Job not scheduled at all")
+                .iter()
+                .map(|(_, (_, count))| count)
+                .sum::<usize>(),
+            7
+        );
     }
 }

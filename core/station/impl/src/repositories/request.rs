@@ -624,6 +624,15 @@ impl RequestRepository {
 
         filters
     }
+
+    #[cfg(test)]
+    pub fn with_empty_observers() -> Self {
+        Self {
+            change_observer: Observer::default(),
+            remove_observer: Observer::default(),
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

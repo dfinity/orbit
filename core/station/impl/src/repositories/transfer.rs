@@ -174,6 +174,15 @@ impl TransferRepository {
             .filter_map(|id| self.get(&Transfer::key(*id)))
             .collect::<Vec<Transfer>>()
     }
+
+    #[cfg(test)]
+    pub fn with_empty_observers() -> Self {
+        Self {
+            change_observer: Observer::default(),
+            remove_observer: Observer::default(),
+            ..Default::default()
+        }
+    }
 }
 
 #[cfg(test)]
