@@ -455,8 +455,6 @@ mod test {
             execute_created_transfers::Job::JOB_TOLERANCE_NS,
         );
 
-        println!("{:?}", JobStateDatabase::get_time_job_maps());
-
         assert_eq!(
             JobStateDatabase::get_time_job_maps()
                 .get(&execute_created_transfers::Job::JOB_TYPE)
