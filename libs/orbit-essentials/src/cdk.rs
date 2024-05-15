@@ -44,25 +44,26 @@ pub mod mocks {
 
     pub mod api {
         use candid::Principal;
-        use std::time::{SystemTime, UNIX_EPOCH};
+        use std::{
+            cell::RefCell,
+            time::{SystemTime, UNIX_EPOCH},
+        };
 
-        static mut IC_TIME: SystemTime = UNIX_EPOCH;
-        static mut IC_CANISTER_BALANCE: u64 = 100_000_000_000;
+        thread_local! {
+            static IC_TIME: RefCell<SystemTime> = RefCell::new(UNIX_EPOCH);
+            static IC_CANISTER_BALANCE: RefCell<u64> = RefCell::new(100_000_000_000);
+        }
 
         pub fn set_mock_ic_time(time: SystemTime) {
-            unsafe {
-                IC_TIME = time;
-            }
+            IC_TIME.with(|t| *t.borrow_mut() = time);
         }
 
         pub fn set_mock_canister_balance(balance: u64) {
-            unsafe {
-                IC_CANISTER_BALANCE = balance;
-            }
+            IC_CANISTER_BALANCE.with(|b| *b.borrow_mut() = balance);
         }
 
         pub fn time() -> u64 {
-            unsafe { IC_TIME.duration_since(UNIX_EPOCH).unwrap().as_nanos() as u64 }
+            IC_TIME.with(|t| t.borrow().duration_since(UNIX_EPOCH).unwrap().as_nanos() as u64)
         }
 
         pub fn id() -> Principal {
@@ -82,7 +83,7 @@ pub mod mocks {
         }
 
         pub fn canister_balance() -> u64 {
-            unsafe { IC_CANISTER_BALANCE }
+            IC_CANISTER_BALANCE.with(|b| *b.borrow())
         }
 
         pub mod management_canister {
