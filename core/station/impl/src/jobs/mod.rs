@@ -37,10 +37,15 @@ pub trait ScheduledJob: Send + Sync {
     async fn run() -> bool;
 }
 
+/// Maps time to timerid and resource reference count.
+/// The reference count is used to keep track of how many resources requested to be scheduled scheduled at the same time.
+/// When the reference count reaches 0, the timer is removed.
 type TimeJobMap = HashMap<u64, (TimerId, usize)>;
 
 thread_local! {
+    /// Maps job types to a timer map, so that each job has isolated timers.
     static TIME_JOB_MAPS: RefCell<HashMap<JobType,TimeJobMap>> = Default::default();
+    /// Maps job types to a boolean indicating if the job is currently running.
     static IS_RUNNINGS : RefCell<HashMap<JobType, bool>> = Default::default();
 }
 
