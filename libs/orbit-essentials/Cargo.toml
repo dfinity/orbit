@@ -10,7 +10,7 @@ license.workspace = true
 homepage.workspace = true
 
 [lib]
-crate-type = ['cdylib', 'rlib']
+crate-type = ['lib']
 bench = false
 
 [dependencies]
@@ -27,7 +27,9 @@ serde_json = { workspace = true }
 serde_bytes = { workspace = true }
 time = { workspace = true, features = ['formatting', 'parsing'] }
 thiserror = { workspace = true }
-uuid = { workspace = true, features = ['serde', 'v4'] }
+uuid = { workspace = true, features = ["serde", "v4"] }
+ic-cdk-timers = { workspace = true }
+
 
 [dev-dependencies]
 tokio = { workspace = true, features = ['full'] }

@@ -13,12 +13,19 @@ mod call_context;
 pub use call_context::*;
 
 pub mod middlewares;
+pub mod observer;
 pub mod validation;
 
 #[cfg(not(test))]
 pub use orbit_essentials::cdk as ic_cdk;
 #[cfg(test)]
 pub use orbit_essentials::cdk::mocks as ic_cdk;
+
+#[cfg(all(not(test), not(feature = "canbench")))]
+pub use orbit_essentials::timers as ic_timers;
+
+#[cfg(any(test, feature = "canbench"))]
+pub use orbit_essentials::timers::mocks as ic_timers;
 
 #[cfg(not(test))]
 pub use orbit_essentials::utils::generate_uuid_v4;

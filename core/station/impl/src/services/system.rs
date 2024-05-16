@@ -104,27 +104,27 @@ impl SystemService {
             use orbit_essentials::utils::initialize_rng;
             if let Err(e) = initialize_rng().await {
                 ic_cdk::print(format!("initializing rng failed: {}", e));
-                ic_cdk_timers::set_timer(std::time::Duration::from_secs(60), move || {
+                crate::core::ic_timers::set_timer(std::time::Duration::from_secs(60), move || {
                     use crate::core::ic_cdk::spawn;
                     spawn(initialize_rng_timer())
                 });
             }
         }
 
-        ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
+        crate::core::ic_timers::set_timer(std::time::Duration::from_millis(0), move || {
             use crate::core::ic_cdk::spawn;
             spawn(initialize_rng_timer())
         });
 
         fn install_canister_post_process_finish(mut system_info: SystemInfo) {
-            use crate::jobs::register_jobs;
+            use crate::jobs;
 
             install_canister_handlers::monitor_upgrader_cycles(
                 *system_info.get_upgrader_canister_id(),
             );
 
-            // register the jobs after the canister is fully initialized
-            register_jobs();
+            // initializes the job timers after the canister is fully initialized
+            jobs::initialize_job_timers();
 
             system_info.update_last_upgrade_timestamp();
             write_system_info(system_info.to_owned());
@@ -171,16 +171,19 @@ impl SystemService {
                 install_canister_post_process_work(init.clone(), system_info.clone()).await
             {
                 ic_cdk::print(format!("canister initialization failed: {}", e));
-                ic_cdk_timers::set_timer(std::time::Duration::from_secs(3600), move || {
-                    use crate::core::ic_cdk::spawn;
-                    spawn(install_canister_post_process_timer(init, system_info))
-                });
+                crate::core::ic_timers::set_timer(
+                    std::time::Duration::from_secs(3600),
+                    move || {
+                        use crate::core::ic_cdk::spawn;
+                        spawn(install_canister_post_process_timer(init, system_info))
+                    },
+                );
             }
         }
 
         match install {
             SystemInstall::Init(init) => {
-                ic_cdk_timers::set_timer(std::time::Duration::from_millis(0), move || {
+                crate::core::ic_timers::set_timer(std::time::Duration::from_millis(0), move || {
                     use crate::core::ic_cdk::spawn;
                     spawn(install_canister_post_process_timer(init, system_info))
                 });

@@ -13,8 +13,13 @@ use super::indexes::{
     request_status_modification_index::RequestStatusModificationIndexRepository,
 };
 use crate::{
-    core::{metrics::REQUEST_METRICS, with_memory_manager, Memory, REQUEST_MEMORY_ID},
+    core::{
+        metrics::{metrics_observe_insert_request, metrics_observe_remove_request},
+        observer::Observer,
+        with_memory_manager, Memory, REQUEST_MEMORY_ID,
+    },
     errors::RepositoryError,
+    jobs::{jobs_observe_insert_request, jobs_observe_remove_request},
     models::{
         indexes::{
             request_approver_index::{RequestApproverIndex, RequestApproverIndexCriteria},
@@ -50,11 +55,11 @@ use station_api::ListRequestsSortBy;
 use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
 thread_local! {
-  static DB: RefCell<StableBTreeMap<RequestKey, Request, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
-    RefCell::new(
-      StableBTreeMap::init(memory_manager.get(REQUEST_MEMORY_ID))
-    )
-  })
+    static DB: RefCell<StableBTreeMap<RequestKey, Request, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
+        RefCell::new(
+            StableBTreeMap::init(memory_manager.get(REQUEST_MEMORY_ID))
+        )
+    });
 }
 
 lazy_static! {
@@ -63,7 +68,7 @@ lazy_static! {
 }
 
 /// A repository that enables managing system requests in stable memory.
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct RequestRepository {
     approver_index: RequestApproverIndexRepository,
     creation_dt_index: RequestCreationTimeIndexRepository,
@@ -77,6 +82,37 @@ pub struct RequestRepository {
     sort_index: RequestSortIndexRepository,
     resource_index: RequestResourceIndexRepository,
     operation_type_index: RequestOperationTypeIndexRepository,
+    change_observer: Observer<(Request, Option<Request>)>,
+    remove_observer: Observer<Request>,
+}
+
+impl Default for RequestRepository {
+    fn default() -> Self {
+        let mut change_observer = Observer::default();
+        metrics_observe_insert_request(&mut change_observer);
+        jobs_observe_insert_request(&mut change_observer);
+
+        let mut remove_observer = Observer::default();
+        metrics_observe_remove_request(&mut remove_observer);
+        jobs_observe_remove_request(&mut remove_observer);
+
+        Self {
+            change_observer,
+            remove_observer,
+            approver_index: Default::default(),
+            creation_dt_index: Default::default(),
+            expiration_dt_index: Default::default(),
+            status_index: Default::default(),
+            scheduled_index: Default::default(),
+            requester_index: Default::default(),
+            status_modification_index: Default::default(),
+            prefixed_creation_time_index: Default::default(),
+            prefixed_expiration_time_index: Default::default(),
+            sort_index: Default::default(),
+            resource_index: Default::default(),
+            operation_type_index: Default::default(),
+        }
+    }
 }
 
 impl Repository<RequestKey, Request> for RequestRepository {
@@ -91,13 +127,6 @@ impl Repository<RequestKey, Request> for RequestRepository {
     fn insert(&self, key: RequestKey, value: Request) -> Option<Request> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
-
-            // Update metrics when a request is upserted.
-            REQUEST_METRICS.with(|metrics| {
-                metrics
-                    .iter()
-                    .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
-            });
 
             self.approver_index
                 .refresh_index_on_modification(RefreshIndexMode::List {
@@ -174,22 +203,16 @@ impl Repository<RequestKey, Request> for RequestRepository {
                     current: value.to_index_for_resource(),
                 });
 
-            prev
+            let args = (value, prev);
+            self.change_observer.notify(&args);
+
+            args.1
         })
     }
 
     fn remove(&self, key: &RequestKey) -> Option<Request> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
-
-            // Update metrics when a request is removed.
-            if let Some(prev) = &prev {
-                REQUEST_METRICS.with(|metrics| {
-                    metrics
-                        .iter()
-                        .for_each(|metric| metric.borrow_mut().sub(prev))
-                });
-            }
 
             self.approver_index
                 .refresh_index_on_modification(RefreshIndexMode::CleanupList {
@@ -254,6 +277,10 @@ impl Repository<RequestKey, Request> for RequestRepository {
                         .map(|prev| prev.to_index_for_resource())
                         .unwrap_or_default(),
                 });
+
+            if let Some(prev) = &prev {
+                self.remove_observer.notify(prev);
+            }
 
             prev
         })
@@ -596,6 +623,15 @@ impl RequestRepository {
         }
 
         filters
+    }
+
+    #[cfg(test)]
+    pub fn with_empty_observers() -> Self {
+        Self {
+            change_observer: Observer::default(),
+            remove_observer: Observer::default(),
+            ..Default::default()
+        }
     }
 }
 

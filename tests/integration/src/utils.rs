@@ -296,6 +296,9 @@ pub fn advance_time_to_burn_cycles(
 
     // restart the canister
     env.start_canister(canister_id, Some(sender)).unwrap();
+    // need at least 2 ticks
+    env.tick();
+    env.tick();
 
     // adds cycles to be as close as possible to the target
     let canister_cycles = env.cycle_balance(canister_id);

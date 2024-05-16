@@ -1,4 +1,4 @@
-use super::ScheduledJob;
+use super::{scheduler::Scheduler, JobType, ScheduledJob};
 use crate::{
     core::ic_cdk::{api::print, next_time},
     errors::TransferError,
@@ -14,8 +14,10 @@ use crate::{
 };
 use async_trait::async_trait;
 use futures::future;
+
 use orbit_essentials::repository::Repository;
 use std::collections::HashMap;
+
 use uuid::Uuid;
 
 #[derive(Debug, Default)]
@@ -28,10 +30,9 @@ pub struct Job {
 
 #[async_trait]
 impl ScheduledJob for Job {
-    const INTERVAL_SECS: u64 = 5;
-
-    async fn run() {
-        Self::default().execute_created_transfers().await;
+    const JOB_TYPE: JobType = JobType::ExecuteCreatedTransfers;
+    async fn run() -> bool {
+        Self::default().execute_created_transfers().await
     }
 }
 
@@ -43,13 +44,15 @@ impl Job {
     /// Executes all the transfers that have been created but are not yet submitted to the blockchain.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` transfers at once.
-    async fn execute_created_transfers(&self) {
+    async fn execute_created_transfers(&self) -> bool {
         let current_time = next_time();
         let mut transfers = self.transfer_repository.find_by_status(
             TransferStatus::Created.to_string(),
             None,
             Some(current_time),
         );
+
+        let processing_all_transfers = transfers.len() <= Self::MAX_BATCH_SIZE;
 
         // truncate the list to avoid processing too many transfers at once
         transfers.truncate(Self::MAX_BATCH_SIZE);
@@ -175,6 +178,8 @@ impl Job {
                 }
             }
         }
+
+        processing_all_transfers
     }
 
     /// Executes a single transfer.
@@ -207,4 +212,8 @@ impl Job {
             })?,
         }
     }
+}
+
+pub fn schedule_process_transfers(at_ns: u64) {
+    Scheduler::schedule::<Job>(at_ns);
 }

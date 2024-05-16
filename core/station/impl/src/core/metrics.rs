@@ -16,6 +16,8 @@ use orbit_essentials::{
 };
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
+use super::observer::Observer;
+
 thread_local! {
     /// A collection of user related metrics.
     ///
@@ -98,6 +100,48 @@ pub fn recompute_metrics() {
             .iter()
             .for_each(|metric| metric.borrow_mut().recalculate(&accounts))
     });
+}
+
+// When a request is inserted, the metrics should be updated.
+pub fn metrics_observe_insert_request(observer: &mut Observer<(Request, Option<Request>)>) {
+    observer.add_listener(Box::new(|(value, prev)| {
+        REQUEST_METRICS.with(|metrics| {
+            metrics
+                .iter()
+                .for_each(|metric| metric.borrow_mut().sum(value, prev.as_ref()))
+        });
+    }));
+}
+
+// When a request is updated, the metrics should be updated.
+pub fn metrics_observe_remove_request(observer: &mut Observer<Request>) {
+    observer.add_listener(Box::new(|removed_request| {
+        REQUEST_METRICS.with(|metrics| {
+            metrics
+                .iter()
+                .for_each(|metric| metric.borrow_mut().sub(removed_request))
+        });
+    }));
+}
+
+pub fn metrics_observe_insert_transfer(observer: &mut Observer<(Transfer, Option<Transfer>)>) {
+    observer.add_listener(Box::new(|(value, prev)| {
+        TRANSFER_METRICS.with(|metrics| {
+            metrics
+                .iter()
+                .for_each(|metric| metric.borrow_mut().sum(value, prev.as_ref()))
+        });
+    }));
+}
+
+pub fn metrics_observe_remove_transfer(observer: &mut Observer<Transfer>) {
+    observer.add_listener(Box::new(|removed_transfer| {
+        TRANSFER_METRICS.with(|metrics| {
+            metrics
+                .iter()
+                .for_each(|metric| metric.borrow_mut().sub(removed_transfer))
+        });
+    }));
 }
 
 /// Metric for the number of users that have been registered, labeled by their status.
