@@ -11,7 +11,7 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.2"
     },
     "orbit-essentials": {
       "currentVersion": "0.0.2-alpha.1",
@@ -59,7 +59,7 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.2"
     },
     "canfund": {
       "currentVersion": "0.0.2-alpha.1",
@@ -77,12 +77,12 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.2"
     },
     "control-panel": {
       "currentVersion": "0.0.2-alpha.1",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.2"
     },
     "control-panel-api": {
       "currentVersion": "0.0.2-alpha.1",
@@ -100,17 +100,17 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.2"
     },
     "upgrader": {
       "currentVersion": "0.0.2-alpha.1",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.2"
     },
     "station": {
       "currentVersion": "0.0.2-alpha.1",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.2"
     },
     "upgrader-api": {
       "currentVersion": "0.0.2-alpha.1",
@@ -134,7 +134,7 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.2"
     },
     "station-api": {
       "currentVersion": "0.0.2-alpha.1",
@@ -158,22 +158,94 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.2"
     },
     "wallet-dapp": {
-      "currentVersion": "0.0.2-alpha.1",
+      "currentVersion": "0.0.2-alpha.2",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.2"
+      "newVersion": "0.0.2-alpha.3"
     }
   },
   "changes": {
-    "wallet-dapp": {
+    "orbit-essentials-macros": {
       "releaseVersion": {
         "rawVersion": "0.0.2-alpha.2",
-        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.2",
+        "gitTag": "@orbit/orbit-essentials-macros-v0.0.2-alpha.2",
         "isPrerelease": true
       },
-      "contents": "## 0.0.2-alpha.2 (2024-05-13)\n\n\n### 🚀 Features\n\n- show manage system info permission\n\n\n### ❤️  Thank You\n\n- Kepler Vital"
+      "contents": "## 0.0.2-alpha.2 (2024-05-17)\n\n\n### 🚀 Features\n\n- add user station labels\n\n\n### 🔥 Performance\n\n- reduce canister running costs\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- mraszyk\n- olaszakos"
+    },
+    "orbit-essentials": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.2",
+        "gitTag": "@orbit/orbit-essentials-v0.0.2-alpha.2",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.2 (2024-05-17)\n\n\n### 🚀 Features\n\n- add user station labels\n\n\n### 🔥 Performance\n\n- reduce canister running costs\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- mraszyk\n- olaszakos"
+    },
+    "canfund": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.2",
+        "gitTag": "@orbit/canfund-v0.0.2-alpha.2",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.2 (2024-05-17)\n\n\n### 🚀 Features\n\n- add user station labels\n\n\n### 🔥 Performance\n\n- reduce canister running costs\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- mraszyk\n- olaszakos"
+    },
+    "control-panel": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.2",
+        "gitTag": "@orbit/control-panel-v0.0.2-alpha.2",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.2 (2024-05-17)\n\n\n### 🚀 Features\n\n- add user station labels\n\n\n### 🔥 Performance\n\n- reduce canister running costs\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- mraszyk\n- olaszakos"
+    },
+    "control-panel-api": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.2",
+        "gitTag": "@orbit/control-panel-api-v0.0.2-alpha.2",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.2 (2024-05-17)\n\n\n### 🚀 Features\n\n- add user station labels\n\n\n### 🔥 Performance\n\n- reduce canister running costs\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- mraszyk\n- olaszakos"
+    },
+    "upgrader": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.2",
+        "gitTag": "@orbit/upgrader-v0.0.2-alpha.2",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.2 (2024-05-17)\n\n\n### 🚀 Features\n\n- add user station labels\n\n\n### 🔥 Performance\n\n- reduce canister running costs\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- mraszyk\n- olaszakos"
+    },
+    "station": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.2",
+        "gitTag": "@orbit/station-v0.0.2-alpha.2",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.2 (2024-05-17)\n\n\n### 🚀 Features\n\n- add user station labels\n\n\n### 🩹 Fixes\n\n- resource access control\n\n\n### 🔥 Performance\n\n- reduce canister running costs\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- mraszyk\n- olaszakos"
+    },
+    "upgrader-api": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.2",
+        "gitTag": "@orbit/upgrader-api-v0.0.2-alpha.2",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.2 (2024-05-17)\n\n\n### 🚀 Features\n\n- add user station labels\n\n\n### 🔥 Performance\n\n- reduce canister running costs\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- mraszyk\n- olaszakos"
+    },
+    "station-api": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.2",
+        "gitTag": "@orbit/station-api-v0.0.2-alpha.2",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.2 (2024-05-17)\n\n\n### 🚀 Features\n\n- add user station labels\n\n\n### 🔥 Performance\n\n- reduce canister running costs\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- mraszyk\n- olaszakos"
+    },
+    "wallet-dapp": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.3",
+        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.3",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.3 (2024-05-17)\n\n\n### 🚀 Features\n\n- add user station labels\n\n\n### 🔥 Performance\n\n- reduce canister running costs\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- mraszyk\n- olaszakos"
     }
   }
 }
