@@ -54,6 +54,6 @@ const target = computed(() => {
     return props.operation.target.UpgradeCanister.toText();
   }
 
-  return props.operation.target.InstallCanister.toText();
+  return props.operation.target.InstallCanister.canister_id.toText();
 });
 </script>
