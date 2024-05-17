@@ -5,8 +5,9 @@ use crate::utils::{
 };
 use crate::TestEnv;
 use control_panel_api::{
-    DeployStationInput, DeployStationResponse, RegisterUserInput, RegisterUserResponse,
-    UpdateWaitingListInput, UserSubscriptionStatusDTO,
+    AssociateWithCallerInput, DeployStationAdminUserInput, DeployStationInput,
+    DeployStationResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
+    UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
@@ -102,8 +103,12 @@ fn successful_monitors_stations_and_tops_up() {
     res.0.unwrap();
 
     let deploy_station_args = DeployStationInput {
-        station_name: "test_station".to_string(),
-        admin_name: "admin".to_string(),
+        name: "test_station".to_string(),
+        admins: vec![DeployStationAdminUserInput {
+            identity: user_id,
+            username: "admin".to_string(),
+        }],
+        associate_with_caller: Some(AssociateWithCallerInput { labels: Vec::new() }),
     };
 
     // deploy user station

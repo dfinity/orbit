@@ -50,15 +50,13 @@ pub struct User {
     pub identity: Principal,
     /// The subscription status of the user.
     pub subscription_status: UserSubscriptionStatus,
-    /// All the stations that the user has access to (including the main station).
+    /// All the stations that the user has access.
     ///
-    /// The user can optionally give a name to each station to make it easier to identify them.
+    /// The first station in the list is the main station of the user.
     pub stations: Vec<UserStation>,
     /// The stations that have ever been deployed for the user by the control panel.
     /// Used to bound the total number of stations a user could deploy via the control panel.
     pub deployed_stations: Vec<Principal>,
-    /// The main station to use for the user, this is the station that will be used by default.
-    pub main_station: Option<Principal>,
     /// The timestamp of last time the user was active.
     pub last_active: Timestamp,
     /// Last time the identity was updated.
@@ -139,34 +137,12 @@ fn validate_stations(stations: &[UserStation]) -> ModelValidatorResult<UserError
     Ok(())
 }
 
-fn validate_main_station(
-    main_station: &Option<Principal>,
-    stations: &Vec<UserStation>,
-) -> ModelValidatorResult<UserError> {
-    if let Some(main_station) = main_station {
-        if !stations
-            .iter()
-            .any(|station| &station.canister_id == main_station)
-        {
-            return Err(UserError::ValidationError {
-                info: format!(
-                    "Main station {} is not in the list of stations {:?}",
-                    main_station, stations
-                ),
-            });
-        }
-    }
-
-    Ok(())
-}
-
 impl ModelValidator<UserError> for User {
     fn validate(&self) -> ModelValidatorResult<UserError> {
         if let UserSubscriptionStatus::Pending(email) = &self.subscription_status {
             validate_email(email)?;
         }
         validate_stations(&self.stations)?;
-        validate_main_station(&self.main_station, &self.stations)?;
 
         Ok(())
     }
@@ -196,7 +172,6 @@ mod tests {
             model.deployed_stations,
             deserialized_model.deployed_stations
         );
-        assert_eq!(model.main_station, deserialized_model.main_station);
         assert_eq!(
             model.last_update_timestamp,
             deserialized_model.last_update_timestamp
@@ -207,7 +182,6 @@ mod tests {
     fn check_stations_validation() {
         let mut user = mock_user();
         user.stations = Vec::new();
-        user.main_station = None;
         user.deployed_stations = Vec::new();
 
         let user_with_no_stations = user.clone();
@@ -217,44 +191,20 @@ mod tests {
         user_with_one_station.stations.push(UserStation {
             canister_id: Principal::anonymous(),
             name: "main".to_string(),
+            labels: Vec::new(),
         });
 
         for _ in 0..=User::MAX_STATIONS {
             user_with_too_many_stations.stations.push(UserStation {
                 canister_id: Principal::anonymous(),
                 name: "main".to_string(),
+                labels: Vec::new(),
             });
         }
 
         assert!(validate_stations(&user_with_no_stations.stations).is_ok());
         assert!(validate_stations(&user_with_one_station.stations).is_ok());
         assert!(validate_stations(&user_with_too_many_stations.stations).is_err());
-    }
-
-    #[test]
-    fn valid_main_station() {
-        let mut user = mock_user();
-        user.deployed_stations = vec![];
-        user.main_station = Some(Principal::from_slice(&[10; 29]));
-        user.stations = vec![UserStation {
-            canister_id: Principal::from_slice(&[10; 29]),
-            name: "main".to_string(),
-        }];
-
-        assert!(validate_main_station(&user.main_station, &user.stations).is_ok());
-    }
-
-    #[test]
-    fn invalid_main_station() {
-        let mut user = mock_user();
-        user.deployed_stations = vec![];
-        user.main_station = Some(Principal::from_slice(&[10; 29]));
-        user.stations = vec![UserStation {
-            canister_id: Principal::from_slice(&[12; 29]),
-            name: "main".to_string(),
-        }];
-
-        assert!(validate_main_station(&user.main_station, &user.stations).is_err());
     }
 
     #[rstest]
@@ -269,27 +219,16 @@ mod tests {
 #[cfg(test)]
 pub mod user_model_utils {
     use super::{User, UserSubscriptionStatus};
-    use candid::Principal;
+    use crate::core::test_utils;
     use uuid::Uuid;
 
     pub fn mock_user() -> User {
-        // generate a random slice of 29 bytes to create a Principal
-        let mut principal_id = [0u8; 29];
-        Uuid::new_v4()
-            .as_bytes()
-            .iter()
-            .enumerate()
-            .for_each(|(i, byte)| {
-                principal_id[i] = *byte;
-            });
-
         User {
             id: *Uuid::new_v4().as_bytes(),
-            identity: Principal::from_slice(&principal_id),
+            identity: test_utils::random_principal(),
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             stations: vec![],
             deployed_stations: vec![],
-            main_station: None,
             last_active: 0,
             last_update_timestamp: 0,
         }

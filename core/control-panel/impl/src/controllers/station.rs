@@ -1,12 +1,15 @@
 //! Station services.
-use crate::core::middlewares::{call_context, logger, use_canister_call_metric};
+use crate::core::middlewares::use_canister_call_metric;
 use crate::errors::UserError;
-use crate::services::{DeployService, DEPLOY_SERVICE, USER_SERVICE};
+use crate::mappers::user_station::UpdateUserStationInputInto;
+use crate::services::{
+    DeployService, UserStationService, DEPLOY_SERVICE, USER_SERVICE, USER_STATION_SERVICE,
+};
 use crate::{core::CallContext, services::UserService};
 use candid::Principal;
 use control_panel_api::{
-    CanDeployStationResponse, DeployStationInput, DeployStationResponse, GetMainStationResponse,
-    ListStationsResponse, UserStationDTO,
+    CanDeployStationResponse, DeployStationInput, DeployStationResponse, ListUserStationsInput,
+    ListUserStationsResponse, ManageUserStationsInput, UserStationDTO,
 };
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
@@ -22,14 +25,14 @@ thread_local! {
 }
 
 // Canister entrypoints for the controller.
-#[query(name = "list_stations")]
-async fn list_stations() -> ApiResult<ListStationsResponse> {
-    CONTROLLER.list_stations().await
+#[query(name = "list_user_stations")]
+async fn list_user_stations(input: ListUserStationsInput) -> ApiResult<ListUserStationsResponse> {
+    CONTROLLER.list_user_stations(input).await
 }
 
-#[query(name = "get_main_station")]
-async fn get_main_station() -> ApiResult<GetMainStationResponse> {
-    CONTROLLER.get_main_station().await
+#[update(name = "manage_user_stations")]
+async fn manage_user_stations(input: ManageUserStationsInput) -> ApiResult<()> {
+    CONTROLLER.manage_user_stations(input).await
 }
 
 #[update(name = "deploy_station")]
@@ -44,55 +47,85 @@ async fn can_deploy_station() -> ApiResult<CanDeployStationResponse> {
 
 // Controller initialization and implementation.
 lazy_static! {
-    static ref CONTROLLER: StationController =
-        StationController::new(Arc::clone(&USER_SERVICE), Arc::clone(&DEPLOY_SERVICE));
+    static ref CONTROLLER: StationController = StationController::new(
+        Arc::clone(&USER_SERVICE),
+        Arc::clone(&USER_STATION_SERVICE),
+        Arc::clone(&DEPLOY_SERVICE)
+    );
 }
 
 #[derive(Debug)]
 pub struct StationController {
     user_service: Arc<UserService>,
+    user_station_service: Arc<UserStationService>,
     deploy_service: Arc<DeployService>,
 }
 
 impl StationController {
-    fn new(user_service: Arc<UserService>, deploy_service: Arc<DeployService>) -> Self {
+    fn new(
+        user_service: Arc<UserService>,
+        user_station_service: Arc<UserStationService>,
+        deploy_service: Arc<DeployService>,
+    ) -> Self {
         Self {
             user_service,
+            user_station_service,
             deploy_service,
         }
     }
 
     /// Returns list of stations associated with the user.
-    async fn list_stations(&self) -> ApiResult<ListStationsResponse> {
+    async fn list_user_stations(
+        &self,
+        input: ListUserStationsInput,
+    ) -> ApiResult<ListUserStationsResponse> {
         let ctx = CallContext::get();
-        let user = self
-            .user_service
-            .get_user_by_identity(&CallContext::get().caller(), &ctx)?;
+        let user: crate::models::User = ctx.user()?;
+        let stations = self.user_station_service.list_stations(
+            &user.id,
+            &input.filter_by_labels.unwrap_or_default(),
+            &ctx,
+        )?;
 
-        Ok(ListStationsResponse {
-            stations: user
-                .stations
-                .into_iter()
-                .map(UserStationDTO::from)
-                .collect(),
+        Ok(ListUserStationsResponse {
+            stations: stations.into_iter().map(UserStationDTO::from).collect(),
         })
     }
-    /// Returns main station associated with the user if any.
-    async fn get_main_station(&self) -> ApiResult<GetMainStationResponse> {
-        let ctx = CallContext::get();
-        let main_station = self.user_service.get_main_station(&ctx)?;
 
-        Ok(GetMainStationResponse {
-            station: main_station.map(UserStationDTO::from),
-        })
+    /// Manages the stations associated with the user.
+    #[with_middleware(tail = use_canister_call_metric("manage_user_stations", &result))]
+    async fn manage_user_stations(&self, input: ManageUserStationsInput) -> ApiResult<()> {
+        let ctx = CallContext::get();
+        let user = ctx.user()?;
+
+        match input {
+            ManageUserStationsInput::Add(stations) => {
+                self.user_station_service.add_stations(
+                    &user.id,
+                    stations.into_iter().map(Into::into).collect(),
+                    &ctx,
+                )?;
+            }
+            ManageUserStationsInput::Remove(canister_ids) => {
+                self.user_station_service
+                    .remove_stations(&user.id, canister_ids, &ctx)?;
+            }
+            ManageUserStationsInput::Update(stations) => {
+                self.user_station_service.update_stations(
+                    &user.id,
+                    stations
+                        .into_iter()
+                        .map(|e| e.into_user_station())
+                        .collect::<Vec<_>>(),
+                    &ctx,
+                )?;
+            }
+        }
+
+        Ok(())
     }
 
     /// Deploys a new station for the user and returns its id.
-    #[with_middleware(
-        guard = logger::<()>(__target_fn, context, None),
-        tail = logger(__target_fn, context, Some(&result)),
-        context = &call_context()
-    )]
     #[with_middleware(tail = use_canister_call_metric("deploy_station", &result))]
     async fn deploy_station(&self, input: DeployStationInput) -> ApiResult<DeployStationResponse> {
         let ctx = CallContext::get();
@@ -108,11 +141,6 @@ impl StationController {
     }
 
     /// Checks if the user can deploy a new station.
-    #[with_middleware(
-        guard = logger::<()>(__target_fn, context, None),
-        tail = logger(__target_fn, context, Some(&result)),
-        context = &call_context()
-    )]
     async fn can_deploy_station(&self) -> ApiResult<CanDeployStationResponse> {
         let ctx = CallContext::get();
         self.user_service
