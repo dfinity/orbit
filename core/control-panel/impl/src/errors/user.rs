@@ -32,12 +32,6 @@ pub enum UserError {
     /// The user has failed validation.
     #[error(r#"The user has failed validation."#)]
     ValidationError { info: String },
-    /// Removing the caller identity would lock the user.
-    #[error(r#"Removing the caller identity would lock the user."#)]
-    SelfLocked,
-    /// The main station associated with the user was not found.
-    #[error(r#"The main station associated with the user was not found."#)]
-    MainStationNotFound,
     /// The deploy station quota was exceeded.
     #[error(r#"Deploy station quota exceeded."#)]
     DeployStationQuotaExceeded,
@@ -45,6 +39,12 @@ pub enum UserError {
     #[error(r#"The user has an inappropriate subscription status for the operation."#)]
     BadUserSubscriptionStatus {
         subscription_status: UserSubscriptionStatusDTO,
+    },
+    /// The user station has too many labels.
+    #[error(r#"The user station has too many labels, must be at most {max_labels}."#)]
+    StationHasTooManyLabels {
+        /// The maximum number of labels allowed.
+        max_labels: usize,
     },
     /// Concurrent station canister deployment.
     #[error(r#"Concurrent station canister deployment is not allowed."#)]
@@ -82,6 +82,10 @@ impl DetailableError for UserError {
                     "subscription_status".to_string(),
                     subscription_status.to_string(),
                 );
+                Some(details)
+            }
+            UserError::StationHasTooManyLabels { max_labels } => {
+                details.insert("max_labels".to_string(), max_labels.to_string());
                 Some(details)
             }
             _ => None,

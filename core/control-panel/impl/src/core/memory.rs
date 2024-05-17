@@ -79,14 +79,3 @@ mod tests {
         assert_eq!(canister_config(), Some(new_config));
     }
 }
-
-#[cfg(test)]
-pub mod test_utils {
-    use super::write_canister_config;
-    use crate::core::CanisterConfig;
-
-    pub fn init_canister_config() {
-        let config = CanisterConfig::new(Vec::new(), Vec::new());
-        write_canister_config(config);
-    }
-}

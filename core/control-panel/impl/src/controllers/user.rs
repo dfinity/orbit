@@ -4,8 +4,8 @@ use crate::core::middlewares::{call_context, logger, use_canister_call_metric};
 use crate::services::USER_SERVICE;
 use crate::{core::CallContext, services::UserService};
 use control_panel_api::{
-    DeleteUserResponse, GetUserResponse, GetWaitingListResponse, ManageUserInput,
-    ManageUserResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput, UserDTO,
+    DeleteUserResponse, GetUserResponse, GetWaitingListResponse, RegisterUserInput,
+    RegisterUserResponse, UpdateWaitingListInput, UserDTO,
 };
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
@@ -45,11 +45,6 @@ async fn register_user(input: RegisterUserInput) -> ApiResult<RegisterUserRespon
     })?;
 
     CONTROLLER.register_user(input).await
-}
-
-#[update(name = "manage_user")]
-async fn manage_user(input: ManageUserInput) -> ApiResult<ManageUserResponse> {
-    CONTROLLER.manage_user(input).await
 }
 
 #[update(name = "subscribe_to_waiting_list")]
@@ -109,21 +104,6 @@ impl UserController {
         let user = self.user_service.register_user(input, &ctx).await?;
 
         Ok(RegisterUserResponse {
-            user: UserDTO::from(user),
-        })
-    }
-
-    #[with_middleware(
-        guard = logger::<()>(__target_fn, context, None),
-        tail = logger(__target_fn, context, Some(&result)),
-        context = &call_context()
-    )]
-    #[with_middleware(tail = use_canister_call_metric("manage_user", &result))]
-    async fn manage_user(&self, input: ManageUserInput) -> ApiResult<ManageUserResponse> {
-        let ctx: CallContext = CallContext::get();
-        let user = self.user_service.manage_user(input, &ctx).await?;
-
-        Ok(ManageUserResponse {
             user: UserDTO::from(user),
         })
     }

@@ -81,7 +81,7 @@
             station.configuration.details?.version ? station.configuration.details.version : '-'
           }}</VListItemSubtitle>
         </VListItem>
-        <VListItem class="px-0">
+        <VListItem v-if="session.data.stations.length > 1" class="px-0">
           <VListItemTitle class="font-weight-bold">{{ $t(`terms.main`) }}</VListItemTitle>
           <VListItemSubtitle>{{
             isMainStation ? $t(`terms.yes`) : $t(`terms.no`)
@@ -132,7 +132,6 @@
         :content="$t(`app.station_info_card_remove_btn_confirm`)"
         variant="text"
         :submit="removeStation"
-        :disabled="!isStationRemovable"
       >
       </ActionBtn>
     </VCardActions>
@@ -143,6 +142,7 @@
 import { Principal } from '@dfinity/principal';
 import { mdiContentCopy, mdiPencil } from '@mdi/js';
 import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import {
   VBtn,
   VCard,
@@ -155,50 +155,40 @@ import {
   VListItemTitle,
   VSpacer,
 } from 'vuetify/components';
+import AuthCheck from '~/components/AuthCheck.vue';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
-import { UserStation } from '~/generated/control-panel/control_panel.did';
-import { stationToUserStation } from '~/mappers/stations.mapper';
+import ManageSystemInfoForm from '~/components/settings/ManageSystemInfoForm.vue';
+import {
+  useOnFailedOperation,
+  useOnSuccessfulOperation,
+} from '~/composables/notifications.composable';
+import { defaultHomeRoute } from '~/configs/routes.config';
+import { ManageSystemInfoOperationInput, Request } from '~/generated/station/station.did';
+import { storeUserStationToUserStation } from '~/mappers/stations.mapper';
 import { i18n } from '~/plugins/i18n.plugin';
 import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { useStationStore } from '~/stores/station.store';
+import { Privilege } from '~/types/auth.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import StationInfoForm, { StationInfoModel } from './StationInfoForm.vue';
-import { useRouter } from 'vue-router';
-import { defaultHomeRoute } from '~/configs/routes.config';
-import AuthCheck from '~/components/AuthCheck.vue';
-import { Privilege } from '~/types/auth.types';
-import ManageSystemInfoForm from '~/components/settings/ManageSystemInfoForm.vue';
-import { ManageSystemInfoOperationInput, Request } from '~/generated/station/station.did';
-import {
-  useOnFailedOperation,
-  useOnSuccessfulOperation,
-} from '~/composables/notifications.composable';
 
 const station = useStationStore();
 const session = useSessionStore();
 const app = useAppStore();
 const router = useRouter();
 const isMainStation = computed(() => station.canisterId === session.mainStation?.toText());
-const isStationRemovable = computed(() => !isMainStation.value);
 const controlPanelService = services().controlPanel;
 
 async function removeStation(): Promise<void> {
-  if (!isStationRemovable.value) {
-    return;
-  }
-
-  const updatedUser = await services().controlPanel.editUser({
-    main_station: [], // do not change the main station
-    stations: [
-      session.data.stations
-        .filter(w => w.canisterId !== station.canisterId)
-        .map(w => stationToUserStation(w)),
-    ],
+  await services().controlPanel.manageUserStations({
+    Remove: session.data.stations
+      .filter(w => w.canisterId === station.canisterId)
+      .map(w => storeUserStationToUserStation(w).canister_id),
   });
 
-  session.populateUser(updatedUser);
+  await session.refreshUserStationsList();
 
   let maybeStationToRedirect = session.mainStation;
   if (!maybeStationToRedirect && session.data.stations[0]?.canisterId) {
@@ -233,28 +223,24 @@ const onSuccessfulOperation = (): void => {
 };
 
 const save = async ({ model }: { valid: boolean; model: StationInfoModel }): Promise<void> => {
-  const mainStation = model.main ? Principal.fromText(station.canisterId) : session.mainStation;
-  const updatedStations: UserStation[] =
-    session.data.stations.map(entry => {
-      if (entry.canisterId === station.canisterId) {
-        return {
-          name: model.name,
-          canister_id: Principal.fromText(entry.canisterId),
-        };
-      }
+  const maybeStation = session.data.stations.find(w => w.canisterId === station.canisterId);
+  if (!maybeStation) {
+    return;
+  }
 
-      return {
-        name: entry.name,
-        canister_id: Principal.fromText(entry.canisterId),
-      };
-    }) ?? [];
+  const updatedStation = storeUserStationToUserStation(maybeStation);
+  updatedStation.name = model.name;
 
-  const user = await controlPanelService.editUser({
-    main_station: mainStation ? [mainStation] : [],
-    stations: updatedStations.length ? [updatedStations] : [],
+  await controlPanelService.manageUserStations({
+    Update: [
+      {
+        index: model.main ? [BigInt(0)] : [],
+        station: updatedStation,
+      },
+    ],
   });
 
-  session.populateUser(user);
+  await session.refreshUserStationsList();
 };
 
 const hasOverridenStationName = computed(

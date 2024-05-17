@@ -2,12 +2,12 @@ use crate::setup::{get_canister_wasm, setup_new_env, setup_new_env_with_config, 
 use crate::utils::{controller_test_id, user_test_id};
 use crate::TestEnv;
 use candid::Principal;
-use control_panel_api::UploadCanisterModulesInput;
 use control_panel_api::{
-    DeployStationInput, DeployStationResponse, GetMainStationResponse, ManageUserInput,
-    ManageUserResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
-    UserStationDTO, UserSubscriptionStatusDTO,
+    AssociateWithCallerInput, DeployStationAdminUserInput, DeployStationInput,
+    DeployStationResponse, ListUserStationsInput, ManageUserStationsInput, RegisterUserInput,
+    RegisterUserResponse, UpdateWaitingListInput, UserStationDTO, UserSubscriptionStatusDTO,
 };
+use control_panel_api::{ListUserStationsResponse, UploadCanisterModulesInput};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
 use station_api::HealthStatus;
@@ -20,23 +20,12 @@ fn register_user_successful() {
 
     let user_id = user_test_id(0);
 
-    // user has no station so far
-    let res: (ApiResult<GetMainStationResponse>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        user_id,
-        "get_main_station",
-        (),
-    )
-    .unwrap();
-    let err = res.0.unwrap_err();
-    assert_eq!(err.code, "NOT_FOUND");
-
     // register user
     let register_args = RegisterUserInput {
         station: Some(UserStationDTO {
             canister_id: canister_ids.station,
             name: "main".to_string(),
+            labels: vec![],
         }),
     };
     let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
@@ -51,15 +40,17 @@ fn register_user_successful() {
     assert_eq!(user_dto.identity, user_id);
 
     // get main station
-    let res: (ApiResult<GetMainStationResponse>,) = update_candid_as(
+    let res: (ApiResult<ListUserStationsResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "get_main_station",
-        (),
+        "list_user_stations",
+        (ListUserStationsInput {
+            filter_by_labels: None,
+        },),
     )
     .unwrap();
-    let main_station_dto = res.0.unwrap().station.unwrap();
+    let main_station_dto = res.0.unwrap().stations[0].clone();
     assert_eq!(main_station_dto.canister_id, canister_ids.station);
 }
 
@@ -85,8 +76,12 @@ fn deploy_user_station() {
     assert_eq!(user_dto.identity, user_id);
 
     let deploy_station_args = DeployStationInput {
-        station_name: "station".to_string(),
-        admin_name: "admin".to_string(),
+        name: "station".to_string(),
+        admins: vec![DeployStationAdminUserInput {
+            identity: user_id,
+            username: "admin".to_string(),
+        }],
+        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
     };
 
     // user can't deploy station before being approved
@@ -112,8 +107,12 @@ fn deploy_user_station() {
     res.0.unwrap();
 
     let deploy_station_args = DeployStationInput {
-        station_name: "station".to_string(),
-        admin_name: "admin".to_string(),
+        name: "station".to_string(),
+        admins: vec![DeployStationAdminUserInput {
+            identity: user_id,
+            username: "admin".to_string(),
+        }],
+        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
     };
 
     // user can't deploy station before being approved
@@ -154,8 +153,12 @@ fn deploy_user_station() {
     res.0.unwrap();
 
     let deploy_station_args = DeployStationInput {
-        station_name: "station".to_string(),
-        admin_name: "admin".to_string(),
+        name: "station".to_string(),
+        admins: vec![DeployStationAdminUserInput {
+            identity: user_id,
+            username: "admin".to_string(),
+        }],
+        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
     };
 
     // deploy user station
@@ -170,15 +173,17 @@ fn deploy_user_station() {
     let newly_created_user_station = res.0.unwrap().canister_id;
 
     // get main station
-    let res: (ApiResult<GetMainStationResponse>,) = update_candid_as(
+    let res: (ApiResult<ListUserStationsResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "get_main_station",
-        (),
+        "list_user_stations",
+        (ListUserStationsInput {
+            filter_by_labels: None,
+        },),
     )
     .unwrap();
-    let main_station_dto = res.0.unwrap().station.unwrap();
+    let main_station_dto = res.0.unwrap().stations[0].clone();
     assert_eq!(main_station_dto.canister_id, newly_created_user_station);
 
     // the newly created station should be uninitialized at first
@@ -251,8 +256,12 @@ fn deploy_too_many_stations() {
     let mut stations = vec![];
     for i in 0..3 {
         let deploy_station_args = DeployStationInput {
-            station_name: format!("station_{}", i),
-            admin_name: "admin".to_string(),
+            name: format!("station_{}", i),
+            admins: vec![DeployStationAdminUserInput {
+                identity: user_id,
+                username: "admin".to_string(),
+            }],
+            associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
         };
 
         let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
@@ -266,35 +275,40 @@ fn deploy_too_many_stations() {
         stations.push(res.0.unwrap().canister_id);
     }
 
-    // check that the user has 10 stations and the first deployed station is the main station
-    let res: (ApiResult<ManageUserResponse>,) =
-        update_candid_as(&env, canister_ids.control_panel, user_id, "get_user", ()).unwrap();
-    let user_dto = res.0.unwrap().user;
-    assert_eq!(user_dto.stations.len(), 3);
-    assert_eq!(user_dto.main_station, Some(stations[0]));
-
-    // reset all but one deployed station
-    let manage_user_args = ManageUserInput {
-        main_station: Some(stations[0]),
-        stations: Some(vec![UserStationDTO {
-            canister_id: stations[0],
-            name: "main".to_string(),
-        }]),
-    };
-    let res: (ApiResult<ManageUserResponse>,) = update_candid_as(
+    // check that the user has 3 stations and the first deployed station is the main station
+    let res: (ApiResult<ListUserStationsResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
         user_id,
-        "manage_user",
-        (manage_user_args,),
+        "list_user_stations",
+        (ListUserStationsInput {
+            filter_by_labels: None,
+        },),
     )
     .unwrap();
-    let user_dto = res.0.unwrap().user;
-    assert_eq!(user_dto.stations.len(), 1);
+    let associated_stations = res.0.unwrap().stations;
+    assert_eq!(associated_stations.len(), 3);
+    assert_eq!(associated_stations[0].canister_id, stations[0]);
+
+    // reset all but one deployed station
+    let manage_user_stations_args = ManageUserStationsInput::Remove(stations[1..].to_vec());
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "manage_user_stations",
+        (manage_user_stations_args,),
+    )
+    .unwrap();
+    assert!(res.0.is_ok());
 
     let deploy_station_args = DeployStationInput {
-        station_name: "last_station".to_string(),
-        admin_name: "admin".to_string(),
+        name: "last_station".to_string(),
+        admins: vec![DeployStationAdminUserInput {
+            identity: user_id,
+            username: "admin".to_string(),
+        }],
+        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
     };
 
     // deploying an additional station should fail nonetheless
@@ -352,8 +366,12 @@ fn no_upload_canister_modules() {
 
     // deploying user station fails before uploading canister modules
     let deploy_station_args = DeployStationInput {
-        station_name: "station".to_string(),
-        admin_name: "admin".to_string(),
+        name: "station".to_string(),
+        admins: vec![DeployStationAdminUserInput {
+            identity: user_id,
+            username: "admin".to_string(),
+        }],
+        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
     };
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
@@ -389,8 +407,12 @@ fn no_upload_canister_modules() {
 
     // deploying user station succeeds after uploading canister modules
     let deploy_station_args = DeployStationInput {
-        station_name: "station".to_string(),
-        admin_name: "admin".to_string(),
+        name: "station".to_string(),
+        admins: vec![DeployStationAdminUserInput {
+            identity: user_id,
+            username: "admin".to_string(),
+        }],
+        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
     };
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,

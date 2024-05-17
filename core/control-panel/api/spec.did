@@ -23,10 +23,6 @@ type ApiError = record {
 type User = record {
   // The identity associated with the user.
   identity : principal;
-  // Main station used to show in the UI for this user.
-  main_station : opt StationID;
-  // List of stations associated with the user.
-  stations : vec UserStation;
   // The waiting list subscription status.
   subscription_status : UserSubscriptionStatus;
   // The last time the user was active in the system.
@@ -41,23 +37,27 @@ type SetUserActiveResult = variant {
   Err : ApiError;
 };
 
-// The result of managing an user.
-type ManageUserInput = record {
-  // The main station to use for this user.
-  //
-  // If specified and the station is not already associated with the user it will be added.
-  main_station : opt StationID;
-  // Manage the stations associated with the user.
-  stations : opt vec UserStation;
+// The action to perform on the stations associated with the user.
+//
+// This can be used to add, remove, update the stations associated with the user.
+type ManageUserStationsInput = variant {
+  // Add a the specified stations to the user, if the station already exists it will be updated.
+  Add : vec UserStation;
+  // Remove the specified stations from the user, if the station does not exist it will be ignored.
+  Remove : vec StationID;
+  // Update the specified stations associated with the user.
+  Update : vec record {
+    // The new index of the station, if the index is out of bounds it will set to the closest bound.
+    index : opt nat64;
+    // The stations to update, if the station does not exist it will be ignored.
+    station : UserStation;
+  };
 };
 
-// The result of managing an user.
-type ManageUserResult = variant {
+// The result of managing the user stations.
+type ManageUserStationsResult = variant {
   // Successfull operation result.
-  Ok : record {
-    // The updated user information.
-    user : User;
-  };
+  Ok;
   // The error that occurred during the operation.
   Err : ApiError;
 };
@@ -105,31 +105,37 @@ type UpdateWaitingListResult = variant {
   Err : ApiError;
 };
 
-// The station information.
+// The station information associated with the user.
 type UserStation = record {
   // The id associated with the station.
   canister_id : StationID;
   // The name of the station.
   name : text;
+  // The labels associated with the station.
+  //
+  // This can be used to store user preferences or other information related to the station such as the station type.
+  //
+  // Maximum of 10 labels per station and 64 characters per label.
+  labels : vec text;
 };
 
-// The result of listing stations.
-type ListStationsResult = variant {
+// The input for listing stations.
+type ListUserStationsInput = record {
+  // The labels to filter the stations by.
+  //
+  // All stations that have at least one of the provided labels will be returned, if no labels
+  // are provided all stations will be returned.
+  //
+  // The match is case insensitive.
+  filter_by_labels : opt vec text;
+};
+
+// The result of listing user stations.
+type ListUserStationsResult = variant {
   // The list of stations.
   Ok : record {
     // The list of stations.
     stations : vec UserStation;
-  };
-  // The error that occurred during the operation.
-  Err : ApiError;
-};
-
-// The result of getting the main station.
-type GetMainStationResult = variant {
-  // The main station for the given user.
-  Ok : record {
-    // The main station for the given user.
-    station : opt UserStation;
   };
   // The error that occurred during the operation.
   Err : ApiError;
@@ -195,12 +201,29 @@ type CanDeployStationResponse = variant {
   QuotaExceeded;
 };
 
+/// The input for deploying a station admin user.
+///
+/// Used to associate a user with a station canister as an admin when initializing the station.
+type DeployStationAdminUserInput = record {
+  // The username to associate with the station canister as an admin.
+  username : text;
+  // The principal of the user to associate with the station canister as an admin.
+  identity : principal;
+};
+
 /// The input for deploying a station canister.
 type DeployStationInput = record {
-  // The station name.
-  station_name : text;
-  // The station admin user name.
-  admin_name : text;
+  // The station name to use.
+  name : text;
+  // The initial admin users for the station.
+  admins : vec DeployStationAdminUserInput;
+  // Wether to associate the deployed station to the caller's stations.
+  //
+  // By default, the station is only added to the caller's stations if the caller is in the provided admins list.
+  associate_with_caller : opt record {
+    // The labels to associate with the station for the caller.
+    labels : vec text;
+  };
 };
 
 // The result of checking if the caller can deploy a station canister.
@@ -227,18 +250,28 @@ type UploadUploadCanisterModulesInputResult = variant {
   Err : ApiError;
 };
 
+// The HTTP request header field.
 type HeaderField = record { text; text };
 
+// The HTTP request.
 type HttpRequest = record {
+  // The HTTP method of the request (e.g. GET, POST, PUT).
   method : text;
+  // The URL of the request (e.g. https://example.com).
   url : text;
+  // The headers of the request.
   headers : vec HeaderField;
+  // The body of the request.
   body : blob;
 };
 
+// The HTTP response.
 type HttpResponse = record {
+  // The status code of the response (e.g. 200, 404, 500).
   status_code : nat16;
+  // The headers of the response.
   headers : vec HeaderField;
+  // The body of the response.
   body : blob;
 };
 
@@ -250,8 +283,6 @@ service : () -> {
   set_user_active : () -> (SetUserActiveResult);
   // Get the user information for the caller.
   get_user : () -> (GetUserResult) query;
-  // Manage the user associated with the caller.
-  manage_user : (input : ManageUserInput) -> (ManageUserResult);
   // Subscribe the user associated with the caller to the waiting list.
   // Takes the user's e-mail address to which notifications can be pushed.
   subscribe_to_waiting_list : (text) -> (SubscribeToWaitingListResult);
@@ -264,9 +295,9 @@ service : () -> {
   // Delete user associated with the caller.
   delete_user : () -> (RemoveUserResult);
   // List all the stations associated with the caller.
-  list_stations : () -> (ListStationsResult) query;
-  // Get main station for the caller user.
-  get_main_station : () -> (GetMainStationResult) query;
+  list_user_stations : (ListUserStationsInput) -> (ListUserStationsResult) query;
+  // Manage the stations associated with the caller.
+  manage_user_stations : (ManageUserStationsInput) -> (ManageUserStationsResult);
   // Deploys a new station canister for the caller.
   deploy_station : (input : DeployStationInput) -> (DeployStationResult);
   // Checks if the caller can deploy a new station canister.

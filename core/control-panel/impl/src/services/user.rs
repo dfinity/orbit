@@ -2,12 +2,12 @@ use crate::{
     core::{generate_uuid_v4, ic_cdk::next_time, CallContext},
     errors::UserError,
     mappers::{SubscribedUser, UserMapper},
-    models::{CanDeployStation, User, UserId, UserKey, UserStation, UserSubscriptionStatus},
+    models::{CanDeployStation, User, UserId, UserKey, UserSubscriptionStatus},
     repositories::{UserRepository, USER_REPOSITORY},
     services::canister::FUND_MANAGER,
 };
 use candid::Principal;
-use control_panel_api::{ManageUserInput, RegisterUserInput, UpdateWaitingListInput};
+use control_panel_api::{RegisterUserInput, UpdateWaitingListInput};
 use lazy_static::lazy_static;
 use orbit_essentials::repository::Repository;
 use orbit_essentials::{
@@ -64,23 +64,6 @@ impl UserService {
         Ok(user)
     }
 
-    pub fn get_main_station(&self, ctx: &CallContext) -> ServiceResult<Option<UserStation>> {
-        let user = self.get_user_by_identity(&ctx.caller(), ctx)?;
-
-        match user.main_station {
-            Some(main_station) => {
-                let main_station = user
-                    .stations
-                    .into_iter()
-                    .find(|station| station.canister_id == main_station)
-                    .ok_or(UserError::MainStationNotFound)?;
-
-                Ok(Some(main_station))
-            }
-            None => Ok(None),
-        }
-    }
-
     /// Sets the new last active timestamp for the user.
     pub async fn set_last_active(
         &self,
@@ -131,21 +114,6 @@ impl UserService {
         self.assert_user_access(&user, ctx)?;
 
         self.user_repository.remove(&user.to_key());
-
-        Ok(user)
-    }
-
-    pub async fn manage_user(
-        &self,
-        input: ManageUserInput,
-        ctx: &CallContext,
-    ) -> ServiceResult<User> {
-        let mut user = self.get_user_by_identity(&ctx.caller(), ctx)?;
-
-        user.update_with(input)?;
-        user.validate()?;
-
-        self.user_repository.insert(user.to_key(), user.clone());
 
         Ok(user)
     }
@@ -218,15 +186,10 @@ impl UserService {
         &self,
         user_id: &UserId,
         station_canister_id: Principal,
-        station_name: String,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
         let mut user = self.get_user(user_id, ctx)?;
 
-        user.stations.push(UserStation {
-            canister_id: station_canister_id,
-            name: station_name,
-        });
         user.deployed_stations.push(station_canister_id);
 
         user.validate()?;
@@ -245,23 +208,6 @@ impl UserService {
         let user = self.get_user_by_identity(&ctx.caller(), ctx)?;
 
         Ok(user.can_deploy_station())
-    }
-
-    pub async fn set_main_station(
-        &self,
-        user_id: &UserId,
-        station_canister_id: Principal,
-        ctx: &CallContext,
-    ) -> ServiceResult<User> {
-        let mut user = self.get_user(user_id, ctx)?;
-
-        user.main_station = Some(station_canister_id);
-
-        user.validate()?;
-
-        self.user_repository.insert(user.to_key(), user.clone());
-
-        Ok(user)
     }
 
     /// Checks if the caller is a controller.
@@ -369,6 +315,7 @@ mod tests {
             station: Some(UserStationDTO {
                 canister_id: Principal::from_slice(&[2; 29]),
                 name: "Station".to_string(),
+                labels: Vec::new(),
             }),
         };
 
@@ -387,6 +334,7 @@ mod tests {
             station: Some(UserStationDTO {
                 canister_id: Principal::from_slice(&[2; 29]),
                 name: "Station".to_string(),
+                labels: Vec::new(),
             }),
         };
 
