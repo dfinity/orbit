@@ -4,8 +4,8 @@ use crate::TestEnv;
 use candid::Principal;
 use control_panel_api::{
     AssociateWithCallerInput, DeployStationAdminUserInput, DeployStationInput,
-    DeployStationResponse, ManageUserStationsInput, RegisterUserInput, RegisterUserResponse,
-    UpdateWaitingListInput, UserStationDTO, UserSubscriptionStatusDTO,
+    DeployStationResponse, ListUserStationsInput, ManageUserStationsInput, RegisterUserInput,
+    RegisterUserResponse, UpdateWaitingListInput, UserStationDTO, UserSubscriptionStatusDTO,
 };
 use control_panel_api::{ListUserStationsResponse, UploadCanisterModulesInput};
 use orbit_essentials::api::ApiResult;
@@ -19,18 +19,6 @@ fn register_user_successful() {
     } = setup_new_env();
 
     let user_id = user_test_id(0);
-
-    // user has no station so far
-    let res: (ApiResult<ListUserStationsResponse>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        user_id,
-        "list_user_stations",
-        (),
-    )
-    .unwrap();
-    let res = res.0.unwrap();
-    assert_eq!(res.stations.len(), 0);
 
     // register user
     let register_args = RegisterUserInput {
@@ -57,7 +45,9 @@ fn register_user_successful() {
         canister_ids.control_panel,
         user_id,
         "list_user_stations",
-        (),
+        (ListUserStationsInput {
+            filter_by_labels: None,
+        },),
     )
     .unwrap();
     let main_station_dto = res.0.unwrap().stations[0].clone();
@@ -188,7 +178,9 @@ fn deploy_user_station() {
         canister_ids.control_panel,
         user_id,
         "list_user_stations",
-        (),
+        (ListUserStationsInput {
+            filter_by_labels: None,
+        },),
     )
     .unwrap();
     let main_station_dto = res.0.unwrap().stations[0].clone();
@@ -289,7 +281,9 @@ fn deploy_too_many_stations() {
         canister_ids.control_panel,
         user_id,
         "list_user_stations",
-        (),
+        (ListUserStationsInput {
+            filter_by_labels: None,
+        },),
     )
     .unwrap();
     let associated_stations = res.0.unwrap().stations;
