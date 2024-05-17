@@ -542,7 +542,7 @@ type CanisterInstallMode = variant {
 type InstallCanisterInput = record {
   // The canister to install.
   canister_id : principal;
-  // The canister installation mode
+  // The canister installation mode.
   mode : CanisterInstallMode;
 };
 
