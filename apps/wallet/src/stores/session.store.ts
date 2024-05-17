@@ -106,7 +106,7 @@ export const useSessionStore = defineStore('session', {
       return !!this.data.stations.length;
     },
     mainStation(): Principal | null {
-      const principal = this.data.stations?.[0].canisterId;
+      const principal = this.data.stations?.[0]?.canisterId;
 
       return principal ? Principal.fromText(principal) : null;
     },

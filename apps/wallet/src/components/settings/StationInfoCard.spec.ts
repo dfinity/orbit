@@ -134,7 +134,7 @@ describe('StationInfoCard', () => {
     expect(button.attributes('disabled')).toBeUndefined();
   });
 
-  it('calls editUser without the removed station when the dialog is confirmed', async () => {
+  it('calls manageUserStations with the station to remove when the dialog is confirmed', async () => {
     const wrapper = mount(StationInfoCard);
 
     initStation(stationCanisterId1, 'TEST WALLET');
@@ -150,14 +150,7 @@ describe('StationInfoCard', () => {
 
     expect(services().controlPanel.manageUserStations).toHaveBeenCalledWith(
       expect.objectContaining({
-        stations: [
-          [
-            {
-              canister_id: stationCanisterId1,
-              name: 'TEST WALLET',
-            },
-          ],
-        ],
+        Remove: [stationCanisterId2],
       }),
     );
   });
