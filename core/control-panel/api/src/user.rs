@@ -1,12 +1,9 @@
-use super::UserStationDTO;
 use crate::TimestampRfc3339;
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UserDTO {
     pub identity: Principal,
-    pub main_station: Option<Principal>,
-    pub stations: Vec<UserStationDTO>,
     pub subscription_status: UserSubscriptionStatusDTO,
     pub last_active: TimestampRfc3339,
 }

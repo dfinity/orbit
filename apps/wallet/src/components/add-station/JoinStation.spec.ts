@@ -50,7 +50,7 @@ describe('JoinStation', () => {
     submit.trigger('click');
     await flushPromises();
 
-    expect(sessionStore.addStation).not.toHaveBeenCalled();
+    expect(sessionStore.addUserStation).not.toHaveBeenCalled();
   });
 
   it('wont submit the form if its invalid', async () => {
@@ -100,7 +100,7 @@ describe('JoinStation', () => {
 
     await flushPromises();
 
-    expect(sessionStore.addStation).toHaveBeenCalled();
+    expect(sessionStore.addUserStation).toHaveBeenCalled();
 
     vi.resetAllMocks();
   });
@@ -110,7 +110,7 @@ describe('JoinStation', () => {
     const sessionStore = useSessionStore();
 
     // make sure the addStation call never resolves so we can test the spinner
-    sessionStore.addStation = vi.fn(async () => new Promise<void>(() => {}));
+    sessionStore.addUserStation = vi.fn(async () => new Promise<void>(() => {}));
 
     const name = wrapper.find('[data-test-id="join-station-form-canister-name"] input');
     const canisterId = wrapper.find('[data-test-id="join-station-form-canister-id"] input');
@@ -122,7 +122,7 @@ describe('JoinStation', () => {
 
     await flushPromises();
 
-    await vi.waitFor(() => expect(sessionStore.addStation).toHaveBeenCalled());
+    await vi.waitFor(() => expect(sessionStore.addUserStation).toHaveBeenCalled());
 
     expect(wrapper.find('button[type="submit"]').classes()).toContain('v-btn--loading');
     vi.resetAllMocks();
@@ -142,7 +142,7 @@ describe('JoinStation', () => {
 
     await flushPromises();
 
-    expect(sessionStore.addStation).toHaveBeenCalled();
+    expect(sessionStore.addUserStation).toHaveBeenCalled();
     vi.resetAllMocks();
   });
 
@@ -150,7 +150,7 @@ describe('JoinStation', () => {
     const wrapper = mount(JoinStation);
     const sessionStore = useSessionStore();
 
-    sessionStore.addStation = vi.fn(() => Promise.reject());
+    sessionStore.addUserStation = vi.fn(() => Promise.reject());
 
     const app = useAppStore();
     const name = wrapper.find('[data-test-id="join-station-form-canister-name"] input');
@@ -162,7 +162,7 @@ describe('JoinStation', () => {
 
     await flushPromises();
 
-    expect(sessionStore.addStation).toHaveBeenCalled();
+    expect(sessionStore.addUserStation).toHaveBeenCalled();
     expect(app.sendErrorNotification).toHaveBeenCalled();
 
     vi.resetAllMocks();

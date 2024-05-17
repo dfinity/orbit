@@ -6,6 +6,7 @@ import { flushPromises } from '@vue/test-utils';
 import { CanDeployStationResponse, User } from '~/generated/control-panel/control_panel.did';
 import { Principal } from '@dfinity/principal';
 import { StationService } from '~/services/station.service';
+import { ControlPanelService } from '~/services/control-panel.service';
 
 vi.mock('~/utils/helper.utils', async importOriginal => {
   const mod = (await importOriginal()) as object;
@@ -20,6 +21,19 @@ vi.mock('~/stores/station.store', async importOriginal => {
   return {
     ...mod,
     createUserInitialAccount: () => Promise.resolve(),
+  };
+});
+
+vi.mock('~/services/control-panel.service', () => {
+  const mock: Partial<ControlPanelService> = {
+    listUserStations: vi.fn().mockResolvedValue([]),
+    canDeployStation: vi.fn().mockReturnValue({}),
+    getCurrentUser: vi.fn().mockResolvedValue({}),
+    deployStation: vi.fn().mockResolvedValue({}),
+  };
+
+  return {
+    ControlPanelService: vi.fn(() => mock),
   };
 });
 

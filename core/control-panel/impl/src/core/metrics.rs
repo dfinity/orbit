@@ -268,6 +268,7 @@ mod tests {
         user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
             name: "Main Station".to_string(),
+            labels: Vec::new(),
         }];
         user.deployed_stations = vec![
             Principal::from_slice(&[1; 29]),
@@ -302,6 +303,7 @@ mod tests {
         user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
             name: "Main Station".to_string(),
+            labels: Vec::new(),
         }];
         user.deployed_stations = vec![
             Principal::from_slice(&[1; 29]),
@@ -316,6 +318,7 @@ mod tests {
         user2.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
             name: "Main Station".to_string(),
+            labels: Vec::new(),
         }];
         user2.deployed_stations = vec![Principal::from_slice(&[1; 29])];
         user2.subscription_status = UserSubscriptionStatus::Pending("email".to_string());
@@ -355,6 +358,7 @@ mod tests {
         user.stations = vec![UserStation {
             canister_id: Principal::from_slice(&[1; 29]),
             name: "Main Station".to_string(),
+            labels: Vec::new(),
         }];
         user.deployed_stations = vec![
             Principal::from_slice(&[1; 29]),
@@ -376,10 +380,12 @@ mod tests {
             UserStation {
                 canister_id: Principal::from_slice(&[1; 29]),
                 name: "Main Station".to_string(),
+                labels: Vec::new(),
             },
             UserStation {
                 canister_id: Principal::from_slice(&[2; 29]),
                 name: "Second Station".to_string(),
+                labels: Vec::new(),
             },
         ];
         user.deployed_stations = vec![

@@ -1,7 +1,8 @@
-use crate::core::ic_cdk::api::time;
+use crate::core::ic_cdk::api::{print, time};
 use crate::core::{canister_config, write_canister_config, CallContext};
 use crate::errors::CanisterError;
 use crate::repositories::{UserRepository, USER_REPOSITORY};
+use crate::SYSTEM_VERSION;
 use canfund::fetch::cycles::FetchCyclesBalanceFromPrometheusMetrics;
 use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
 use canfund::FundManager;
@@ -61,6 +62,9 @@ impl CanisterService {
 
         if let Some(mut config) = canister_config() {
             config.last_upgrade_timestamp = time();
+            self.handle_version_upgrades(config.version.as_deref());
+
+            config.version = Some(SYSTEM_VERSION.to_string());
             write_canister_config(config);
         }
 
@@ -110,5 +114,19 @@ impl CanisterService {
 
             fund_manager.start();
         });
+    }
+
+    pub fn handle_version_upgrades(&self, version: Option<&str>) {
+        match version {
+            // None is the initial version when the canister was not yet storing the version to stable memory.
+            None => USER_REPOSITORY.list().iter_mut().for_each(|user| {
+                user.stations.iter_mut().for_each(|station| {
+                    station.labels = vec!["orbit-wallet".to_string()];
+                });
+
+                USER_REPOSITORY.insert(user.to_key(), user.clone());
+            }),
+            Some(version) => print(format!("No migration for version: {}", version)),
+        };
     }
 }

@@ -1,5 +1,6 @@
 use super::CANISTER_CONFIG_STATE_SIZE;
 use crate::core::ic_cdk::api::time;
+use crate::SYSTEM_VERSION;
 use ic_stable_structures::{storable::Bound, Storable};
 use orbit_essentials::storable;
 use orbit_essentials::types::Timestamp;
@@ -16,6 +17,9 @@ pub struct CanisterConfig {
 
     /// Last time the canister was upgraded or initialized.
     pub last_upgrade_timestamp: Timestamp,
+
+    /// The version of the canister.
+    pub version: Option<String>,
 }
 
 impl Default for CanisterConfig {
@@ -24,6 +28,7 @@ impl Default for CanisterConfig {
             upgrader_wasm_module: vec![],
             station_wasm_module: vec![],
             last_upgrade_timestamp: time(),
+            version: None,
         }
     }
 }
@@ -34,6 +39,7 @@ impl CanisterConfig {
             upgrader_wasm_module,
             station_wasm_module,
             last_upgrade_timestamp: time(),
+            version: Some(SYSTEM_VERSION.to_string()),
         }
     }
 }
