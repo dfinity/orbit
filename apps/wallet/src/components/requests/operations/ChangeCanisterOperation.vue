@@ -54,8 +54,6 @@ const target = computed(() => {
     return props.operation.target.UpgradeCanister.toText();
   }
 
-  if (variantIs(props.operation.target, 'InstallCanister')) {
-    return props.operation.target.InstallCanister.toText();
-  }
+  return props.operation.target.InstallCanister.toText();
 });
 </script>
