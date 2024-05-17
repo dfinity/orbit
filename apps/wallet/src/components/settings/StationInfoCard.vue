@@ -81,7 +81,7 @@
             station.configuration.details?.version ? station.configuration.details.version : '-'
           }}</VListItemSubtitle>
         </VListItem>
-        <VListItem class="px-0">
+        <VListItem v-if="session.data.stations.length > 1" class="px-0">
           <VListItemTitle class="font-weight-bold">{{ $t(`terms.main`) }}</VListItemTitle>
           <VListItemSubtitle>{{
             isMainStation ? $t(`terms.yes`) : $t(`terms.no`)
@@ -132,7 +132,6 @@
         :content="$t(`app.station_info_card_remove_btn_confirm`)"
         variant="text"
         :submit="removeStation"
-        :disabled="!isStationRemovable"
       >
       </ActionBtn>
     </VCardActions>
@@ -180,14 +179,9 @@ const session = useSessionStore();
 const app = useAppStore();
 const router = useRouter();
 const isMainStation = computed(() => station.canisterId === session.mainStation?.toText());
-const isStationRemovable = computed(() => !isMainStation.value);
 const controlPanelService = services().controlPanel;
 
 async function removeStation(): Promise<void> {
-  if (!isStationRemovable.value) {
-    return;
-  }
-
   await services().controlPanel.manageUserStations({
     Remove: session.data.stations
       .filter(w => w.canisterId === station.canisterId)
@@ -229,21 +223,19 @@ const onSuccessfulOperation = (): void => {
 };
 
 const save = async ({ model }: { valid: boolean; model: StationInfoModel }): Promise<void> => {
-  const maybeStation = session.data.stations.find(
-    w => w.canisterId === station.canister_id.toText(),
-  );
+  const maybeStation = session.data.stations.find(w => w.canisterId === station.canisterId);
   if (!maybeStation) {
     return;
   }
 
-  const station = storeUserStationToUserStation(maybeStation);
-  station.name = model.name;
+  const updatedStation = storeUserStationToUserStation(maybeStation);
+  updatedStation.name = model.name;
 
   await controlPanelService.manageUserStations({
     Update: [
       {
         index: model.main ? [BigInt(0)] : [],
-        station,
+        station: updatedStation,
       },
     ],
   });

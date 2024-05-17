@@ -5,7 +5,7 @@ impl From<UserStation> for control_panel_api::UserStationDTO {
         control_panel_api::UserStationDTO {
             canister_id: user_station.canister_id,
             name: user_station.name,
-            labels: Vec::new(),
+            labels: user_station.labels,
         }
     }
 }
@@ -15,7 +15,7 @@ impl From<control_panel_api::UserStationDTO> for UserStation {
         UserStation {
             canister_id: dto.canister_id,
             name: dto.name,
-            labels: Vec::new(),
+            labels: dto.labels,
         }
     }
 }

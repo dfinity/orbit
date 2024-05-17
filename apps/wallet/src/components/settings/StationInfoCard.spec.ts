@@ -113,12 +113,12 @@ describe('StationInfoCard', () => {
     expect(wrapper.find('[data-test-id="remove-station-btn"]').exists()).toBe(true);
   });
 
-  it('is disabled if the station is the main station', async () => {
+  it('is not disabled if the station is the main station', async () => {
     const wrapper = mount(StationInfoCard);
     initStation(stationCanisterId1, 'TEST WALLET');
     await wrapper.vm.$nextTick();
     const button = wrapper.find('[data-test-id="remove-station-btn"]');
-    expect(button.attributes('disabled')).toBeDefined();
+    expect(button.attributes('disabled')).toBeUndefined();
   });
 
   it('is not disabled if the station is the only station', async () => {
