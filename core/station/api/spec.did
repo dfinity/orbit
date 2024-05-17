@@ -1788,6 +1788,8 @@ type UserPrivilege = variant {
   AddRequestPolicy;
   ListAddressBookEntries;
   AddAddressBookEntry;
+  ChangeStation;
+  ChangeUpgrader;
   ListRequests;
 };
 

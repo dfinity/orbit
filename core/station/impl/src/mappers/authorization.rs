@@ -3,9 +3,9 @@ use crate::{
     core::ic_cdk::api::trap,
     models::{
         resource::{
-            AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-            RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-            UserResourceAction,
+            AccountResourceAction, ChangeCanisterResourceAction, ChangeCanisterResourceTarget,
+            PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+            SystemResourceAction, UserResourceAction,
         },
         Transfer,
     },
@@ -15,7 +15,7 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 15] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 17] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
     UserPrivilege::ManageSystemInfo,
@@ -30,6 +30,8 @@ pub const USER_PRIVILEGES: [UserPrivilege; 15] = [
     UserPrivilege::AddUserGroup,
     UserPrivilege::ListAddressBookEntries,
     UserPrivilege::AddAddressBookEntry,
+    UserPrivilege::ChangeStation,
+    UserPrivilege::ChangeUpgrader,
     UserPrivilege::ListRequests,
 ];
 
@@ -49,6 +51,12 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::AddUserGroup => Resource::UserGroup(ResourceAction::Create),
             UserPrivilege::ListAddressBookEntries => Resource::AddressBook(ResourceAction::List),
             UserPrivilege::AddAddressBookEntry => Resource::AddressBook(ResourceAction::Create),
+            UserPrivilege::ChangeStation => Resource::ChangeCanister(
+                ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Station),
+            ),
+            UserPrivilege::ChangeUpgrader => Resource::ChangeCanister(
+                ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Upgrader),
+            ),
             UserPrivilege::ListRequests => Resource::Request(RequestResourceAction::List),
             UserPrivilege::ManageSystemInfo => {
                 Resource::System(SystemResourceAction::ManageSystemInfo)
