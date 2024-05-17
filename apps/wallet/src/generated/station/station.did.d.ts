@@ -837,11 +837,13 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
+  { 'ChangeUpgrader' : null } |
   { 'ManageSystemInfo' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |
   { 'AddRequestPolicy' : null } |
   { 'ListAddressBookEntries' : null } |
+  { 'ChangeStation' : null } |
   { 'ListRequests' : null } |
   { 'SystemInfo' : null } |
   { 'Capabilities' : null } |
