@@ -19,33 +19,30 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : CanDeployStationResponse,
     'Err' : ApiError,
   });
-  const StationID = IDL.Principal;
-  const UserStation = IDL.Record({
-    'name' : IDL.Text,
-    'canister_id' : StationID,
-  });
   const TimestampRFC3339 = IDL.Text;
   const User = IDL.Record({
-    'stations' : IDL.Vec(UserStation),
     'last_active' : TimestampRFC3339,
     'subscription_status' : UserSubscriptionStatus,
     'identity' : IDL.Principal,
-    'main_station' : IDL.Opt(StationID),
   });
   const RemoveUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
-  const DeployStationInput = IDL.Record({
-    'admin_name' : IDL.Text,
-    'station_name' : IDL.Text,
+  const DeployStationAdminUserInput = IDL.Record({
+    'username' : IDL.Text,
+    'identity' : IDL.Principal,
   });
+  const DeployStationInput = IDL.Record({
+    'name' : IDL.Text,
+    'admins' : IDL.Vec(DeployStationAdminUserInput),
+    'associate_with_caller' : IDL.Opt(
+      IDL.Record({ 'labels' : IDL.Vec(IDL.Text) })
+    ),
+  });
+  const StationID = IDL.Principal;
   const DeployStationResult = IDL.Variant({
     'Ok' : IDL.Record({ 'canister_id' : StationID }),
-    'Err' : ApiError,
-  });
-  const GetMainStationResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'station' : IDL.Opt(UserStation) }),
     'Err' : ApiError,
   });
   const GetUserResult = IDL.Variant({
@@ -75,16 +72,27 @@ export const idlFactory = ({ IDL }) => {
     'headers' : IDL.Vec(HeaderField),
     'status_code' : IDL.Nat16,
   });
-  const ListStationsResult = IDL.Variant({
+  const ListUserStationsInput = IDL.Record({
+    'filter_by_labels' : IDL.Opt(IDL.Vec(IDL.Text)),
+  });
+  const UserStation = IDL.Record({
+    'name' : IDL.Text,
+    'labels' : IDL.Vec(IDL.Text),
+    'canister_id' : StationID,
+  });
+  const ListUserStationsResult = IDL.Variant({
     'Ok' : IDL.Record({ 'stations' : IDL.Vec(UserStation) }),
     'Err' : ApiError,
   });
-  const ManageUserInput = IDL.Record({
-    'stations' : IDL.Opt(IDL.Vec(UserStation)),
-    'main_station' : IDL.Opt(StationID),
+  const ManageUserStationsInput = IDL.Variant({
+    'Add' : IDL.Vec(UserStation),
+    'Remove' : IDL.Vec(StationID),
+    'Update' : IDL.Vec(
+      IDL.Record({ 'station' : UserStation, 'index' : IDL.Opt(IDL.Nat64) })
+    ),
   });
-  const ManageUserResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'user' : User }),
+  const ManageUserStationsResult = IDL.Variant({
+    'Ok' : IDL.Null,
     'Err' : ApiError,
   });
   const RegisterUserInput = IDL.Record({ 'station' : IDL.Opt(UserStation) });
@@ -124,12 +132,19 @@ export const idlFactory = ({ IDL }) => {
         [DeployStationResult],
         [],
       ),
-    'get_main_station' : IDL.Func([], [GetMainStationResult], ['query']),
     'get_user' : IDL.Func([], [GetUserResult], ['query']),
     'get_waiting_list' : IDL.Func([], [GetWaitingListResult], []),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
-    'list_stations' : IDL.Func([], [ListStationsResult], ['query']),
-    'manage_user' : IDL.Func([ManageUserInput], [ManageUserResult], []),
+    'list_user_stations' : IDL.Func(
+        [ListUserStationsInput],
+        [ListUserStationsResult],
+        ['query'],
+      ),
+    'manage_user_stations' : IDL.Func(
+        [ManageUserStationsInput],
+        [ManageUserStationsResult],
+        [],
+      ),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
     'set_user_active' : IDL.Func([], [SetUserActiveResult], []),
     'subscribe_to_waiting_list' : IDL.Func(

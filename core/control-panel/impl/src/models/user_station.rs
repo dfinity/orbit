@@ -3,58 +3,85 @@ use candid::Principal;
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::storable;
 
+pub const NAME_LEN_RANGE: (u8, u8) = (1, 48);
+pub const MAX_LABELS: usize = 25;
+pub const MAX_LABEL_LEN: usize = 64;
+
 #[storable]
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Hash)]
+#[derive(Clone, Debug, Ord, Eq, PartialOrd)]
 pub struct UserStation {
+    // The canister id of the station.
     pub canister_id: Principal,
+    // The name of the station.
     pub name: String,
+    // The labels associated with the station.
+    #[serde(default)]
+    pub labels: Vec<String>,
 }
 
-pub struct UserStationValidator<'model> {
-    model: &'model UserStation,
+impl PartialEq for UserStation {
+    fn eq(&self, other: &Self) -> bool {
+        self.canister_id == other.canister_id
+    }
 }
 
-impl<'model> UserStationValidator<'model> {
-    pub const NAME_LEN_RANGE: (u8, u8) = (1, 48);
-
-    pub fn new(model: &'model UserStation) -> Self {
-        Self { model }
+fn validate_name(name: &str) -> ModelValidatorResult<UserError> {
+    if (name.trim().len() < NAME_LEN_RANGE.0 as usize)
+        || (name.trim().len() > NAME_LEN_RANGE.1 as usize)
+    {
+        return Err(UserError::ValidationError {
+            info: format!(
+                "Station name length must be between {} and {}",
+                NAME_LEN_RANGE.0, NAME_LEN_RANGE.1
+            ),
+        });
     }
 
-    pub fn validate_name(&self) -> ModelValidatorResult<UserError> {
-        let name = self.model.name.clone();
+    if name.starts_with(' ') || name.ends_with(' ') {
+        return Err(UserError::ValidationError {
+            info: "Station name cannot start or end with a space".to_string(),
+        });
+    }
 
-        if (name.trim().len() < Self::NAME_LEN_RANGE.0 as usize)
-            || (name.trim().len() > Self::NAME_LEN_RANGE.1 as usize)
-        {
+    Ok(())
+}
+
+fn validate_labels(labels: &[String]) -> ModelValidatorResult<UserError> {
+    if labels.len() > MAX_LABELS {
+        return Err(UserError::StationHasTooManyLabels {
+            max_labels: MAX_LABELS,
+        });
+    }
+
+    for label in labels {
+        if label.len() > MAX_LABEL_LEN {
             return Err(UserError::ValidationError {
-                info: format!(
-                    "Station name length must be between {} and {}",
-                    Self::NAME_LEN_RANGE.0,
-                    Self::NAME_LEN_RANGE.1
-                ),
+                info: format!("Station label length cannot exceed {}", MAX_LABEL_LEN),
             });
         }
 
-        if name.starts_with(' ') || name.ends_with(' ') {
+        if label.starts_with(' ') || label.ends_with(' ') {
             return Err(UserError::ValidationError {
-                info: "Station name cannot start or end with a space".to_string(),
+                info: "Station label value cannot start or end with a space".to_string(),
             });
         }
 
-        Ok(())
+        if label.is_empty() {
+            return Err(UserError::ValidationError {
+                info: "Station label value cannot be empty".to_string(),
+            });
+        }
     }
 
-    pub fn validate(&self) -> ModelValidatorResult<UserError> {
-        self.validate_name()?;
-
-        Ok(())
-    }
+    Ok(())
 }
 
 impl ModelValidator<UserError> for UserStation {
     fn validate(&self) -> ModelValidatorResult<UserError> {
-        UserStationValidator::new(self).validate()
+        validate_name(&self.name)?;
+        validate_labels(&self.labels)?;
+
+        Ok(())
     }
 }
 
@@ -69,6 +96,7 @@ mod tests {
         let user_station = UserStation {
             canister_id: Principal::from_text("wkt3w-3iaaa-aaaaa-774ba-cai").unwrap(),
             name: "Station 1".to_string(),
+            labels: Vec::new(),
         };
 
         let serialized_model = user_station.to_bytes();
@@ -88,10 +116,10 @@ mod tests {
         let user_station = UserStation {
             canister_id: Principal::anonymous(),
             name: String::from(name),
+            labels: Vec::new(),
         };
-        let validator = UserStationValidator::new(&user_station);
 
-        assert!(validator.validate_name().is_err());
+        assert!(validate_name(&user_station.name).is_err());
     }
 
     #[rstest]
@@ -103,9 +131,76 @@ mod tests {
         let user_station = UserStation {
             canister_id: Principal::anonymous(),
             name: String::from(name),
+            labels: Vec::new(),
         };
-        let validator = UserStationValidator::new(&user_station);
 
-        assert!(validator.validate_name().is_ok());
+        assert!(validate_name(&user_station.name).is_ok());
+    }
+
+    #[test]
+    fn empty_labels_should_be_ok() {
+        let user_station = UserStation {
+            canister_id: Principal::anonymous(),
+            name: "Station".to_string(),
+            labels: Vec::new(),
+        };
+
+        assert!(validate_labels(&user_station.labels).is_ok());
+    }
+
+    #[test]
+    fn too_many_labels_should_fail() {
+        let user_station = UserStation {
+            canister_id: Principal::anonymous(),
+            name: "Station".to_string(),
+            labels: vec!["label".to_string(); MAX_LABELS + 1],
+        };
+
+        assert!(validate_labels(&user_station.labels).is_err());
+    }
+
+    #[test]
+    fn should_pass_labels_validation() {
+        let user_station = UserStation {
+            canister_id: Principal::anonymous(),
+            name: "Station".to_string(),
+            labels: vec!["label".to_string(); MAX_LABELS],
+        };
+
+        assert!(validate_labels(&user_station.labels).is_ok());
+    }
+
+    #[rstest]
+    #[case::empty_label(&[""])]
+    #[case::too_long_label(&["a"; MAX_LABEL_LEN + 1])]
+    #[case::label_with_space_at_end(&["label "])]
+    #[case::label_with_space_at_start(&[" label"])]
+    fn invalid_labels(#[case] labels: &[&str]) {
+        let user_station = UserStation {
+            canister_id: Principal::anonymous(),
+            name: "Station".to_string(),
+            labels: labels.iter().map(|l| l.to_string()).collect(),
+        };
+
+        assert!(validate_labels(&user_station.labels).is_err());
+    }
+}
+
+#[cfg(test)]
+pub mod user_station_model_utils {
+    use uuid::Uuid;
+
+    use super::UserStation;
+    use crate::core::test_utils;
+
+    pub fn mock_user_station() -> UserStation {
+        let principal = test_utils::random_principal();
+        let station_name = Uuid::new_v4().to_string();
+
+        UserStation {
+            canister_id: principal,
+            name: station_name,
+            labels: Vec::new(),
+        }
     }
 }

@@ -2,7 +2,7 @@
 [package]
 name = 'control-panel'
 include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.1'
+version = '0.0.2-alpha.2'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -15,8 +15,8 @@ bench = false
 
 [dependencies]
 candid = { workspace = true }
-canfund = { path = '../../../libs/canfund', version = '0.0.2-alpha.1' }
-orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.0.2-alpha.1' }
+canfund = { path = '../../../libs/canfund', version = '0.0.2-alpha.2' }
+orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.0.2-alpha.2' }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
@@ -27,8 +27,8 @@ serde_json = { workspace = true }
 serde_cbor = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ['serde', 'v4'] }
-control-panel-api = { path = '../api', version = '0.0.2-alpha.1' }
-station-api = { path = '../../station/api', version = '0.0.2-alpha.1' }
+control-panel-api = { path = '../api', version = '0.0.2-alpha.2' }
+station-api = { path = '../../station/api', version = '0.0.2-alpha.2' }
 email_address = '0.2.4'
 
 [dev-dependencies]

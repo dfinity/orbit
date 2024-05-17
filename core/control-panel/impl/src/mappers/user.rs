@@ -1,12 +1,12 @@
 use crate::{
     core::ic_cdk::next_time,
     errors::UserError,
-    models::{CanDeployStation, User, UserStation, UserSubscriptionStatus},
+    models::{CanDeployStation, User, UserSubscriptionStatus},
 };
 use candid::Principal;
 use control_panel_api::{
-    CanDeployStationResponse, ManageUserInput, RegisterUserInput, SubscribedUserDTO, UserDTO,
-    UserStationDTO, UserSubscriptionStatusDTO,
+    CanDeployStationResponse, RegisterUserInput, SubscribedUserDTO, UserDTO,
+    UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiError;
 use orbit_essentials::types::UUID;
@@ -24,18 +24,11 @@ impl UserMapper {
         input: RegisterUserInput,
         user_identity: Principal,
     ) -> User {
+        let registration_time = next_time();
         let stations = match input.station {
             Some(station) => vec![station],
             None => vec![],
         };
-        // The order of the stations is important, the first station is the main station for the user at this stage
-        // so that it can be used to the `main_station` field of the user entity.
-        let main_station = match stations.is_empty() {
-            true => None,
-            false => Some(stations[0].canister_id),
-        };
-
-        let registration_time = next_time();
 
         User {
             id: new_user_id,
@@ -43,7 +36,6 @@ impl UserMapper {
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             stations: stations.into_iter().map(|station| station.into()).collect(),
             deployed_stations: vec![],
-            main_station,
             last_active: registration_time,
             last_update_timestamp: registration_time,
         }
@@ -54,32 +46,9 @@ impl From<User> for UserDTO {
     fn from(user: User) -> Self {
         UserDTO {
             identity: user.identity,
-            main_station: user.main_station,
-            stations: user
-                .stations
-                .into_iter()
-                .map(UserStationDTO::from)
-                .collect(),
             subscription_status: user.subscription_status.into(),
             last_active: timestamp_to_rfc3339(&user.last_active),
         }
-    }
-}
-
-impl User {
-    pub fn update_with(&mut self, input: ManageUserInput) -> Result<(), UserError> {
-        if let Some(station) = input.main_station {
-            self.main_station = Some(station);
-        }
-
-        if let Some(stations) = input.stations {
-            self.stations = stations
-                .iter()
-                .map(|b| UserStation::from(b.clone()))
-                .collect();
-        }
-
-        Ok(())
     }
 }
 
@@ -127,6 +96,7 @@ impl From<CanDeployStation> for CanDeployStationResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use control_panel_api::UserStationDTO;
 
     #[test]
     fn mapped_user_registration_with_no_station() {
@@ -138,7 +108,6 @@ mod tests {
 
         assert_eq!(user.id, user_id);
         assert_eq!(user.identity, user_identity);
-        assert_eq!(user.main_station, None);
         assert!(user.stations.is_empty());
     }
 
@@ -151,6 +120,7 @@ mod tests {
             station: Some(UserStationDTO {
                 canister_id: main_station,
                 name: "Main Station".to_string(),
+                labels: Vec::new(),
             }),
         };
 
@@ -158,7 +128,6 @@ mod tests {
 
         assert_eq!(user.id, user_id);
         assert_eq!(user.identity, user_identity);
-        assert_eq!(user.main_station, Some(main_station));
         assert_eq!(user.stations.len(), 1);
         assert_eq!(user.stations[0].canister_id, main_station);
         assert_eq!(user.stations[0].name, "Main Station".to_string());

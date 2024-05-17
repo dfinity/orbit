@@ -14,15 +14,16 @@ export type CanDeployStationResponse = {
   { 'QuotaExceeded' : null };
 export type CanDeployStationResult = { 'Ok' : CanDeployStationResponse } |
   { 'Err' : ApiError };
+export interface DeployStationAdminUserInput {
+  'username' : string,
+  'identity' : Principal,
+}
 export interface DeployStationInput {
-  'admin_name' : string,
-  'station_name' : string,
+  'name' : string,
+  'admins' : Array<DeployStationAdminUserInput>,
+  'associate_with_caller' : [] | [{ 'labels' : Array<string> }],
 }
 export type DeployStationResult = { 'Ok' : { 'canister_id' : StationID } } |
-  { 'Err' : ApiError };
-export type GetMainStationResult = {
-    'Ok' : { 'station' : [] | [UserStation] }
-  } |
   { 'Err' : ApiError };
 export type GetUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
@@ -43,15 +44,17 @@ export interface HttpResponse {
   'headers' : Array<HeaderField>,
   'status_code' : number,
 }
-export type ListStationsResult = {
+export interface ListUserStationsInput {
+  'filter_by_labels' : [] | [Array<string>],
+}
+export type ListUserStationsResult = {
     'Ok' : { 'stations' : Array<UserStation> }
   } |
   { 'Err' : ApiError };
-export interface ManageUserInput {
-  'stations' : [] | [Array<UserStation>],
-  'main_station' : [] | [StationID],
-}
-export type ManageUserResult = { 'Ok' : { 'user' : User } } |
+export type ManageUserStationsInput = { 'Add' : Array<UserStation> } |
+  { 'Remove' : Array<StationID> } |
+  { 'Update' : Array<{ 'station' : UserStation, 'index' : [] | [bigint] }> };
+export type ManageUserStationsResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface RegisterUserInput { 'station' : [] | [UserStation] }
 export type RegisterUserResult = { 'Ok' : { 'user' : User } } |
@@ -82,15 +85,17 @@ export interface UploadCanisterModulesInput {
 export type UploadUploadCanisterModulesInputResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface User {
-  'stations' : Array<UserStation>,
   'last_active' : TimestampRFC3339,
   'subscription_status' : UserSubscriptionStatus,
   'identity' : Principal,
-  'main_station' : [] | [StationID],
 }
 export type UserId = UUID;
 export type UserIdentityID = Principal;
-export interface UserStation { 'name' : string, 'canister_id' : StationID }
+export interface UserStation {
+  'name' : string,
+  'labels' : Array<string>,
+  'canister_id' : StationID,
+}
 export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
   { 'Approved' : null } |
   { 'Denylisted' : null } |
@@ -99,12 +104,17 @@ export interface _SERVICE {
   'can_deploy_station' : ActorMethod<[], CanDeployStationResult>,
   'delete_user' : ActorMethod<[], RemoveUserResult>,
   'deploy_station' : ActorMethod<[DeployStationInput], DeployStationResult>,
-  'get_main_station' : ActorMethod<[], GetMainStationResult>,
   'get_user' : ActorMethod<[], GetUserResult>,
   'get_waiting_list' : ActorMethod<[], GetWaitingListResult>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
-  'list_stations' : ActorMethod<[], ListStationsResult>,
-  'manage_user' : ActorMethod<[ManageUserInput], ManageUserResult>,
+  'list_user_stations' : ActorMethod<
+    [ListUserStationsInput],
+    ListUserStationsResult
+  >,
+  'manage_user_stations' : ActorMethod<
+    [ManageUserStationsInput],
+    ManageUserStationsResult
+  >,
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
   'set_user_active' : ActorMethod<[], SetUserActiveResult>,
   'subscribe_to_waiting_list' : ActorMethod<

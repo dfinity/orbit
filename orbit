@@ -173,6 +173,19 @@ function setup_control_panel() {
   install_control_panel
 }
 
+function upgrade_control_panel() {
+  build_wasm upgrader
+  build_wasm station
+
+  # Read the WASM files and convert them to hex format
+  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
+  station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/station.wasm.gz | sed 's/../\\&/g')
+
+  dfx build control_panel
+  dfx canister install control_panel --mode upgrade --yes
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = blob \"$station_wasm_module_bytes\"; })")
+}
+
 function uninstall_app_wallet() {
   dfx canister delete app_wallet -y >/dev/null 2>&1 || true
 }
@@ -264,6 +277,12 @@ while [[ $# -gt 0 ]]; do
     shift
     exec_function setup_devenv
     exec_function setup_control_panel
+    echo
+    ;;
+  --upgrade-control-panel)
+    shift
+    exec_function setup_devenv
+    exec_function upgrade_control_panel
     echo
     ;;
   --init-app-wallet)

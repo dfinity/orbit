@@ -1,3 +1,19 @@
+## 0.0.2-alpha.3 (2024-05-17)
+
+### 🚀 Features
+
+- add user station labels
+
+### 🔥 Performance
+
+- reduce canister running costs
+
+### ❤️ Thank You
+
+- Kepler Vital
+- mraszyk
+- olaszakos
+
 ## 0.0.2-alpha.2 (2024-05-13)
 
 ### 🚀 Features

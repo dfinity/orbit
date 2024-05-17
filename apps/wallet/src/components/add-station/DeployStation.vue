@@ -183,6 +183,7 @@ import { VFormValidation } from '~/types/helper.types';
 import { maxLengthRule } from '~/utils/form.utils';
 import { requiredRule, validEmail } from '~/utils/form.utils';
 import { unreachable, variantIs, wait } from '~/utils/helper.utils';
+import { CONTROL_PANEL_USER_STATION_LABEL } from '~/core/constants.core';
 
 enum CanDeployStatus {
   CheckPermissions = 'check_permissions',
@@ -260,17 +261,35 @@ const deployInitialStation = async (): Promise<void> => {
   try {
     deploymentStatus.value = DeployStationStatus.Deploying;
     const stationId = await controlPanelService.deployStation({
-      station_name: stationName.value,
-      admin_name: adminName.value,
+      name: stationName.value,
+      admins: [
+        {
+          identity: Principal.fromText(session.principal),
+          username: adminName.value,
+        },
+      ],
+      associate_with_caller: [
+        {
+          labels: [CONTROL_PANEL_USER_STATION_LABEL],
+        },
+      ],
     });
-    const controlPanelUser = await controlPanelService.getCurrentUser();
+    const [controlPanelUser, userStations] = await Promise.all([
+      controlPanelService.getCurrentUser(),
+      controlPanelService.listUserStations({
+        filter_by_labels: [[CONTROL_PANEL_USER_STATION_LABEL]],
+      }),
+    ]);
 
     // wait for the station to be initialized, this requires one round of consensus
     deploymentStatus.value = DeployStationStatus.WaitingForCanisterInitialization;
 
     await waitUntilStationIsInitialized(stationId);
 
-    session.populateUser(controlPanelUser);
+    session.populateUser({
+      user: controlPanelUser,
+      stations: userStations,
+    });
 
     await session.connectStation(stationId, false);
 

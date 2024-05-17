@@ -2,10 +2,11 @@ import { AnonymousIdentity, Identity } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { Ref } from 'vue';
+import { CONTROL_PANEL_USER_STATION_LABEL } from '~/core/constants.core';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
-import { User } from '~/generated/control-panel/control_panel.did';
-import { stationToUserStation } from '~/mappers/stations.mapper';
+import { User, UserStation } from '~/generated/control-panel/control_panel.did';
+import { userStationToStoreUserStation } from '~/mappers/stations.mapper';
 import { i18n } from '~/plugins/i18n.plugin';
 import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
@@ -15,10 +16,10 @@ import { unreachable } from '~/utils/helper.utils';
 import { objectDeserialize, objectSerialize, useStorage } from '~/utils/storage.utils';
 import { disableWorkers, enableWorkers } from '~/workers';
 
-export interface Station {
-  main: boolean;
-  name: string;
+export interface StoreUserStation {
   canisterId: string;
+  name: string;
+  labels: string[];
 }
 
 export interface SelectedStation {
@@ -40,7 +41,7 @@ export interface SessionStoreState {
   isAuthenticated: boolean;
   reauthenticationNeeded: boolean;
   data: {
-    stations: Station[];
+    stations: StoreUserStation[];
     selected: SelectedStation;
   };
 }
@@ -105,9 +106,9 @@ export const useSessionStore = defineStore('session', {
       return !!this.data.stations.length;
     },
     mainStation(): Principal | null {
-      const mainStation = this.data.stations.find(station => station.main);
+      const principal = this.data.stations?.[0]?.canisterId;
 
-      return mainStation ? Principal.fromText(mainStation.canisterId) : null;
+      return principal ? Principal.fromText(principal) : null;
     },
   },
   actions: {
@@ -226,22 +227,26 @@ export const useSessionStore = defineStore('session', {
 
         this.loading = true;
         const controlPanelService = services().controlPanel;
-        const controlPanelUser = await controlPanelService.getCurrentUser();
+        const [controlPanelUser, userStations] = await Promise.all([
+          controlPanelService.getCurrentUser(),
+          controlPanelService.listUserStations({
+            filter_by_labels: [[CONTROL_PANEL_USER_STATION_LABEL]],
+          }),
+        ]);
 
-        let initialStationId = null;
+        const initialStationId = this.data.selected.canisterId
+          ? Principal.fromText(this.data.selected.canisterId)
+          : userStations?.[0]?.canister_id;
 
-        if (this.data.selected.canisterId) {
-          initialStationId = Principal.fromText(this.data.selected.canisterId);
-        } else {
-          initialStationId = controlPanelUser.main_station?.[0]
-            ? controlPanelUser.main_station?.[0]
-            : controlPanelUser.stations?.[0]?.canister_id;
-        }
         const sameUser =
           this.isAuthenticated && this.principal === controlPanelUser.identity.toText();
 
         this.isAuthenticated = true;
-        this.populateUser(controlPanelUser);
+
+        this.populateUser({
+          user: controlPanelUser,
+          stations: userStations,
+        });
 
         if (!sameUser && initialStationId) {
           return this.connectStation(initialStationId);
@@ -257,15 +262,16 @@ export const useSessionStore = defineStore('session', {
         this.loading = false;
       }
     },
-    populateUser(user: User): void {
+    populateUser({ user, stations }: { user?: User; stations?: UserStation[] }): void {
       const selectedStationId = this.data.selected.canisterId;
-      const sameUser = this.isAuthenticated && this.principal === user.identity.toText();
-      this.principal = user.identity.toText();
-      this.data.stations = user.stations.map(station => ({
-        main: station.canister_id.toText() === user.main_station?.[0]?.toText(),
-        name: station.name,
-        canisterId: station.canister_id.toText(),
-      }));
+      let sameUser = true;
+      if (user) {
+        sameUser = this.isAuthenticated && this.principal === user.identity.toText();
+        this.principal = user.identity.toText();
+      }
+      if (stations) {
+        this.data.stations = stations.map(userStationToStoreUserStation);
+      }
 
       const hasStation = this.data.stations.some(
         station => station.canisterId === selectedStationId,
@@ -273,6 +279,17 @@ export const useSessionStore = defineStore('session', {
       if (!sameUser || !hasStation) {
         this.disconnectStation();
       }
+    },
+    async refreshUserStationsList(): Promise<void> {
+      const controlPanelService = services().controlPanel;
+
+      return controlPanelService
+        .listUserStations({
+          filter_by_labels: [[CONTROL_PANEL_USER_STATION_LABEL]],
+        })
+        .then(updated_list => {
+          this.populateUser({ stations: updated_list });
+        });
     },
     disconnectStation(): void {
       const station = useStationStore();
@@ -294,25 +311,24 @@ export const useSessionStore = defineStore('session', {
       }
     },
 
-    async addStation(canisterId: string, name: string): Promise<void> {
+    async addUserStation(
+      stationId: Principal,
+      name: string,
+      labels = [CONTROL_PANEL_USER_STATION_LABEL],
+    ): Promise<void> {
       const controlPanelService = services().controlPanel;
 
-      const user = await controlPanelService.editUser({
-        main_station: this.mainStation ? [this.mainStation] : [],
-        stations: [
-          [
-            ...this.data.stations.map(station => stationToUserStation(station)),
-            stationToUserStation({
-              canisterId: canisterId,
-              name: name,
-            }),
-          ],
-        ],
+      await controlPanelService.manageUserStations({
+        Add: [{ canister_id: stationId, name, labels }],
       });
 
-      this.populateUser(user);
+      const updated_list = await controlPanelService.listUserStations({
+        filter_by_labels: [[CONTROL_PANEL_USER_STATION_LABEL]],
+      });
 
-      await this.connectStation(Principal.fromText(canisterId));
+      this.populateUser({ stations: updated_list });
+
+      await this.connectStation(stationId);
     },
 
     requireReauthentication() {

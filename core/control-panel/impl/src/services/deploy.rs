@@ -1,9 +1,9 @@
-use super::UserService;
+use super::{UserService, UserStationService};
 use crate::{
     core::{canister_config, CallContext, INITIAL_STATION_CYCLES},
     errors::{DeployError, UserError},
-    models::CanDeployStation,
-    services::USER_SERVICE,
+    models::{CanDeployStation, UserStation},
+    services::{USER_SERVICE, USER_STATION_SERVICE},
 };
 use candid::{Encode, Principal};
 use control_panel_api::DeployStationInput;
@@ -14,18 +14,27 @@ use orbit_essentials::api::ServiceResult;
 use std::sync::Arc;
 
 lazy_static! {
-    pub static ref DEPLOY_SERVICE: Arc<DeployService> =
-        Arc::new(DeployService::new(Arc::clone(&USER_SERVICE)));
+    pub static ref DEPLOY_SERVICE: Arc<DeployService> = Arc::new(DeployService::new(
+        Arc::clone(&USER_SERVICE),
+        Arc::clone(&USER_STATION_SERVICE)
+    ));
 }
 
 #[derive(Default, Debug)]
 pub struct DeployService {
     user_service: Arc<UserService>,
+    user_station_service: Arc<UserStationService>,
 }
 
 impl DeployService {
-    pub fn new(user_service: Arc<UserService>) -> Self {
-        Self { user_service }
+    pub fn new(
+        user_service: Arc<UserService>,
+        user_station_service: Arc<UserStationService>,
+    ) -> Self {
+        Self {
+            user_service,
+            user_station_service,
+        }
     }
 
     /// Deploys a station canister for the user.
@@ -35,7 +44,6 @@ impl DeployService {
         ctx: &CallContext,
     ) -> ServiceResult<Principal> {
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
-
         let config = canister_config().ok_or(DeployError::Failed {
             reason: "Canister config not initialized.".to_string(),
         })?;
@@ -78,17 +86,24 @@ impl DeployService {
             reason: err.to_string(),
         })?;
 
+        // The initial admins added to the station.
+        let admins = input
+            .admins
+            .iter()
+            .map(|admin| station_api::AdminInitInput {
+                identity: admin.identity,
+                name: admin.username.clone(),
+            })
+            .collect::<Vec<_>>();
+
         // installs the station canister with the associated upgrader wasm module
         mgmt::install_code(mgmt::InstallCodeArgument {
             mode: mgmt::CanisterInstallMode::Install,
             canister_id: station_canister.canister_id,
             wasm_module: station_wasm_module,
             arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
-                name: input.station_name.clone(),
-                admins: vec![station_api::AdminInitInput {
-                    identity: user.identity,
-                    name: input.admin_name.clone(),
-                }],
+                name: input.name.clone(),
+                admins,
                 upgrader_wasm_module,
             }))
             .map_err(|err| DeployError::Failed {
@@ -101,18 +116,20 @@ impl DeployService {
         })?;
 
         self.user_service
-            .add_deployed_station(
-                &user.id,
-                station_canister.canister_id,
-                input.station_name,
-                ctx,
-            )
+            .add_deployed_station(&user.id, station_canister.canister_id, ctx)
             .await?;
 
-        if user.main_station.is_none() {
-            self.user_service
-                .set_main_station(&user.id, station_canister.canister_id, ctx)
-                .await?;
+        // Adds the deployed station to the user
+        if let Some(info) = input.associate_with_caller {
+            self.user_station_service.add_stations(
+                &user.id,
+                vec![UserStation {
+                    canister_id: station_canister.canister_id,
+                    name: input.name,
+                    labels: info.labels,
+                }],
+                ctx,
+            )?;
         }
 
         Ok(station_canister.canister_id)
