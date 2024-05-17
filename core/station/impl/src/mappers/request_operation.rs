@@ -12,10 +12,10 @@ use crate::{
         EditAccountOperation, EditAccountOperationInput, EditAddressBookEntryOperation,
         EditPermissionOperation, EditPermissionOperationInput, EditRequestPolicyOperation,
         EditRequestPolicyOperationInput, EditUserGroupOperation, EditUserOperation,
-        EditUserOperationInput, ManageSystemInfoOperation, ManageSystemInfoOperationInput,
-        RemoveAddressBookEntryOperation, RemoveRequestPolicyOperation,
-        RemoveRequestPolicyOperationInput, RemoveUserGroupOperation, RequestOperation,
-        TransferOperation, User,
+        EditUserOperationInput, InstallCanisterInput, ManageSystemInfoOperation,
+        ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
+        RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
+        RequestOperation, TransferOperation, User,
     },
     repositories::{
         AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
@@ -25,7 +25,7 @@ use orbit_essentials::repository::Repository;
 use station_api::{
     AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
     ChangeCanisterOperationDTO, ChangeCanisterTargetDTO, EditAccountOperationDTO,
-    EditAddressBookEntryOperationDTO, EditUserOperationDTO, NetworkDTO,
+    EditAddressBookEntryOperationDTO, EditUserOperationDTO, InstallCanisterInputDTO, NetworkDTO,
     RemoveAddressBookEntryOperationDTO, RequestOperationDTO, TransferOperationDTO,
 };
 use uuid::Uuid;
@@ -300,6 +300,24 @@ impl From<station_api::EditUserOperationInput> for EditUserOperationInput {
     }
 }
 
+impl From<InstallCanisterInput> for InstallCanisterInputDTO {
+    fn from(value: InstallCanisterInput) -> Self {
+        Self {
+            canister_id: value.canister_id,
+            mode: value.mode,
+        }
+    }
+}
+
+impl From<InstallCanisterInputDTO> for InstallCanisterInput {
+    fn from(value: InstallCanisterInputDTO) -> Self {
+        Self {
+            canister_id: value.canister_id,
+            mode: value.mode,
+        }
+    }
+}
+
 impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
     fn from(value: ChangeCanisterTarget) -> Self {
         match value {
@@ -307,6 +325,9 @@ impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
             ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterTargetDTO::UpgradeUpgrader,
             ChangeCanisterTarget::UpgradeCanister(canister_id) => {
                 ChangeCanisterTargetDTO::UpgradeCanister(canister_id)
+            }
+            ChangeCanisterTarget::InstallCanister(input) => {
+                ChangeCanisterTargetDTO::InstallCanister(input.into())
             }
         }
     }
@@ -319,6 +340,9 @@ impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
             ChangeCanisterTargetDTO::UpgradeUpgrader => ChangeCanisterTarget::UpgradeUpgrader,
             ChangeCanisterTargetDTO::UpgradeCanister(canister_id) => {
                 ChangeCanisterTarget::UpgradeCanister(canister_id)
+            }
+            ChangeCanisterTargetDTO::InstallCanister(input) => {
+                ChangeCanisterTarget::InstallCanister(input.into())
             }
         }
     }

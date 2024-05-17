@@ -1,13 +1,16 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     add_user, canister_status, execute_request, submit_request, submit_request_approval,
-    user_test_id, wait_for_request,
+    update_raw, user_test_id, wait_for_request,
 };
 use crate::TestEnv;
+use candid::Principal;
+use orbit_essentials::cdk::api::management_canister::main::CanisterInstallMode;
+use sha2::{Digest, Sha256};
 use station_api::{
     AddRequestPolicyOperationInput, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
-    EditPermissionOperationInput, QuorumDTO, RequestApprovalStatusDTO, RequestOperationInput,
-    RequestPolicyRuleDTO, RequestSpecifierDTO, UserSpecifierDTO,
+    EditPermissionOperationInput, InstallCanisterInputDTO, QuorumDTO, RequestApprovalStatusDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, UserSpecifierDTO,
 };
 
 #[test]
@@ -121,4 +124,127 @@ fn successful_four_eyes_upgrade() {
     // check canister status and ensure that the WASM matches the new canister module
     let status = canister_status(&env, Some(canister_ids.station), canister_id);
     assert_eq!(status.module_hash, Some(new_module_hash));
+}
+
+const COUNTER_WAT: &str = r#"
+    (module
+        (import "ic0" "msg_reply" (func $msg_reply))
+        (import "ic0" "msg_reply_data_append"
+            (func $msg_reply_data_append (param i32 i32)))
+        (import "ic0" "stable_grow"
+            (func $ic0_stable_grow (param $pages i32) (result i32)))
+        (import "ic0" "stable_read"
+            (func $ic0_stable_read (param $dst i32) (param $offset i32) (param $size i32)))
+        (import "ic0" "stable_write"
+            (func $ic0_stable_write (param $offset i32) (param $src i32) (param $size i32)))
+        (func $init
+            (drop (call $ic0_stable_grow (i32.const 1)))
+            (call $msg_reply))
+        (func $inc
+            (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
+            (i32.store
+                (i32.const 0)
+                (i32.add (i32.load (i32.const 0)) (i32.const 2)))
+            (call $ic0_stable_write (i32.const 0) (i32.const 0) (i32.const 4))
+            (call $msg_reply))
+        (func $read
+            (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
+            (call $msg_reply_data_append
+                (i32.const 0) ;; the counter from heap[0]
+                (i32.const 4)) ;; length
+            (call $msg_reply))
+        (memory $memory 1)
+        (export "canister_query read" (func $read))
+        (export "canister_update inc" (func $inc))
+        (export "canister_update init" (func $init))
+    )"#;
+
+#[test]
+fn reinstall_canister() {
+    let TestEnv {
+        mut env,
+        canister_ids,
+        ..
+    } = setup_new_env();
+
+    // create and install the canister to be reinstalled by a request
+    let canister_id = create_canister(&mut env, canister_ids.station);
+    let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
+    let mut sha256 = Sha256::new();
+    sha256.update(module_bytes.clone());
+    let module_hash = sha256.finalize().to_vec();
+    env.install_canister(
+        canister_id,
+        module_bytes.clone(),
+        vec![],
+        Some(canister_ids.station),
+    );
+
+    // check canister status and ensure that the WASM matches the counter canister module
+    let status = canister_status(&env, Some(canister_ids.station), canister_id);
+    assert_eq!(status.module_hash, Some(module_hash.clone()));
+
+    // initialize stable memory and increment the counter in stable memory
+    update_raw(&env, canister_id, Principal::anonymous(), "init", vec![]).unwrap();
+    update_raw(&env, canister_id, Principal::anonymous(), "inc", vec![]).unwrap();
+
+    // reading the counter should yield 2 after the increment
+    let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
+    assert_eq!(ctr, 2_u32.to_le_bytes());
+
+    // submit canister upgrade request
+    let install_canister_input = InstallCanisterInputDTO {
+        mode: CanisterInstallMode::Upgrade(None),
+        canister_id,
+    };
+    let change_canister_operation =
+        RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
+            target: ChangeCanisterTargetDTO::InstallCanister(install_canister_input),
+            module: module_bytes.clone(),
+            arg: None,
+        });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        change_canister_operation,
+    )
+    .unwrap();
+
+    // check canister status and ensure that the WASM matches the counter canister module
+    let status = canister_status(&env, Some(canister_ids.station), canister_id);
+    assert_eq!(status.module_hash, Some(module_hash.clone()));
+
+    // the counter value should be preserved across upgrade
+    let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
+    assert_eq!(ctr, 2_u32.to_le_bytes());
+
+    // submit canister reinstall request
+    let install_canister_input = InstallCanisterInputDTO {
+        mode: CanisterInstallMode::Reinstall,
+        canister_id,
+    };
+    let change_canister_operation =
+        RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
+            target: ChangeCanisterTargetDTO::InstallCanister(install_canister_input),
+            module: module_bytes,
+            arg: None,
+        });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        change_canister_operation,
+    )
+    .unwrap();
+
+    // check canister status and ensure that the WASM matches the counter canister module
+    let status = canister_status(&env, Some(canister_ids.station), canister_id);
+    assert_eq!(status.module_hash, Some(module_hash));
+
+    // stable memory should be reset now and thus "read" will trap
+    let err = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap_err();
+    assert!(err
+        .description
+        .contains("Canister trapped: stable memory out of bounds"));
 }

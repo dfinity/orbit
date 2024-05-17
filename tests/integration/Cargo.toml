@@ -19,3 +19,4 @@ serde = { workspace = true, features = ['derive'] }
 control-panel-api = { path = '../../core/control-panel/api', version = '0.0.2-alpha.1' }
 upgrader-api = { path = '../../core/upgrader/api', version = '0.0.2-alpha.1' }
 station-api = { path = '../../core/station/api', version = '0.0.2-alpha.1' }
+wat = "1.0.52"

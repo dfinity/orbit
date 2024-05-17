@@ -1,12 +1,20 @@
 use candid::{CandidType, Deserialize, Principal};
+use orbit_essentials::cdk::api::management_canister::main::CanisterInstallMode;
 
 use crate::Sha256HashDTO;
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct InstallCanisterInputDTO {
+    pub canister_id: Principal,
+    pub mode: CanisterInstallMode,
+}
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ChangeCanisterTargetDTO {
     UpgradeStation,
     UpgradeUpgrader,
     UpgradeCanister(Principal),
+    InstallCanister(InstallCanisterInputDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

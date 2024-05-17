@@ -8,6 +8,7 @@ use super::{
 };
 use crate::models::Metadata;
 use candid::Principal;
+use orbit_essentials::cdk::api::management_canister::main::CanisterInstallMode;
 use orbit_essentials::{storable, types::UUID};
 use std::fmt::Display;
 
@@ -231,10 +232,18 @@ pub struct RemoveUserGroupOperationInput {
 
 #[storable]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct InstallCanisterInput {
+    pub canister_id: Principal,
+    pub mode: CanisterInstallMode,
+}
+
+#[storable]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeCanisterTarget {
     UpgradeStation,
     UpgradeUpgrader,
     UpgradeCanister(Principal),
+    InstallCanister(InstallCanisterInput),
 }
 
 #[storable]

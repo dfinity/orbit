@@ -3,7 +3,7 @@ use candid::Principal;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
-use pocket_ic::{update_candid_as, PocketIc};
+use pocket_ic::{update_candid_as, PocketIc, UserError, WasmResult};
 use station_api::{
     AddUserOperationInput, ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetRequestInput,
     GetRequestResponse, HealthStatus, MeResponse, RequestApprovalStatusDTO, RequestDTO,
@@ -306,4 +306,18 @@ pub fn advance_time_to_burn_cycles(
     if add_cycles > 0 {
         env.add_cycles(canister_id, add_cycles);
     }
+}
+
+pub fn update_raw(
+    env: &PocketIc,
+    canister_id: CanisterId,
+    sender: Principal,
+    method: &str,
+    payload: Vec<u8>,
+) -> Result<Vec<u8>, UserError> {
+    env.update_call(canister_id, sender, method, payload)
+        .map(|res| match res {
+            WasmResult::Reply(bytes) => bytes,
+            WasmResult::Reject(message) => panic!("Unexpected reject: {}", message),
+        })
 }

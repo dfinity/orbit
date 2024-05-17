@@ -134,6 +134,27 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
                     self.request.operation.clone(),
                 ))
             }
+
+            ChangeCanisterTarget::InstallCanister(ref input) => {
+                CHANGE_CANISTER_SERVICE
+                    .install_canister(
+                        input.canister_id,
+                        input.mode,
+                        &self.operation.input.module,
+                        self.operation.input.arg.clone(),
+                    )
+                    .await
+                    .map_err(|err| RequestExecuteError::Failed {
+                        reason: format!(
+                            "failed to install canister {}: {}",
+                            input.canister_id, err
+                        ),
+                    })?;
+
+                Ok(RequestExecuteStage::Completed(
+                    self.request.operation.clone(),
+                ))
+            }
         }
     }
 }
