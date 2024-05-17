@@ -9,7 +9,7 @@ import StationInfoCard from './StationInfoCard.vue';
 
 vi.mock('~/services/control-panel.service', () => {
   const mock: Partial<ControlPanelService> = {
-    editUser: vi.fn().mockReturnThis(),
+    manageUserStations: vi.fn().mockReturnThis(),
   };
 
   return {
@@ -18,13 +18,13 @@ vi.mock('~/services/control-panel.service', () => {
 });
 
 describe('StationInfoCard', () => {
-  function initStation(principal: Principal, isMain: boolean, name: string) {
+  function initStation(principal: Principal, name: string) {
     const stationStore = useStationStore();
     const sessionStore = useSessionStore();
 
     sessionStore.$patch({
       data: {
-        stations: [{ canisterId: principal.toText(), main: isMain, name }],
+        stations: [{ canisterId: principal.toText(), name }],
         selected: { canisterId: principal.toText(), hasAccess: true },
       },
     });
@@ -37,10 +37,9 @@ describe('StationInfoCard', () => {
 
     sessionStore.$patch({
       data: {
-        stations: [
-          ...sessionStore.data.stations,
-          { canisterId: principal.toText(), main: isMain, name },
-        ],
+        stations: isMain
+          ? [{ canisterId: principal.toText(), name }, ...sessionStore.data.stations]
+          : [...sessionStore.data.stations, { canisterId: principal.toText(), name }],
       },
     });
     stationStore.$patch({ canisterId: principal.toText() });
@@ -69,8 +68,8 @@ describe('StationInfoCard', () => {
     session.data.stations = [
       {
         canisterId: Principal.anonymous().toText(),
-        main: true,
         name: 'Personal',
+        labels: [],
       },
     ];
 
@@ -96,8 +95,8 @@ describe('StationInfoCard', () => {
     session.data.stations = [
       {
         canisterId: Principal.anonymous().toText(),
-        main: true,
         name: 'Personal',
+        labels: [],
       },
     ];
 
@@ -116,7 +115,7 @@ describe('StationInfoCard', () => {
 
   it('is disabled if the station is the main station', async () => {
     const wrapper = mount(StationInfoCard);
-    initStation(stationCanisterId1, true, 'TEST WALLET');
+    initStation(stationCanisterId1, 'TEST WALLET');
     await wrapper.vm.$nextTick();
     const button = wrapper.find('[data-test-id="remove-station-btn"]');
     expect(button.attributes('disabled')).toBeDefined();
@@ -125,7 +124,7 @@ describe('StationInfoCard', () => {
   it('is not disabled if the station is the only station', async () => {
     const wrapper = mount(StationInfoCard);
 
-    initStation(stationCanisterId1, true, 'TEST WALLET');
+    initStation(stationCanisterId1, 'TEST WALLET');
     addStation(stationCanisterId2, false, 'TEST WALLET 2');
     selectStation(stationCanisterId2);
     await wrapper.vm.$nextTick();
@@ -138,7 +137,7 @@ describe('StationInfoCard', () => {
   it('calls editUser without the removed station when the dialog is confirmed', async () => {
     const wrapper = mount(StationInfoCard);
 
-    initStation(stationCanisterId1, true, 'TEST WALLET');
+    initStation(stationCanisterId1, 'TEST WALLET');
     addStation(stationCanisterId2, false, 'TEST WALLET 2');
     selectStation(stationCanisterId2);
     await wrapper.vm.$nextTick();
@@ -149,7 +148,7 @@ describe('StationInfoCard', () => {
       .querySelector('[data-test-id="action-btn-default-submit-btn"]')
       ?.dispatchEvent(new Event('click'));
 
-    expect(services().controlPanel.editUser).toHaveBeenCalledWith(
+    expect(services().controlPanel.manageUserStations).toHaveBeenCalledWith(
       expect.objectContaining({
         stations: [
           [

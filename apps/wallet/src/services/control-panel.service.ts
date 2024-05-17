@@ -5,13 +5,13 @@ import { idlFactory } from '~/generated/control-panel';
 import {
   CanDeployStationResponse,
   DeployStationInput,
-  ManageUserInput,
+  ListUserStationsInput,
+  ManageUserStationsInput,
   RegisterUserInput,
   User,
   UserStation,
   _SERVICE,
 } from '~/generated/control-panel/control_panel.did';
-import { Maybe } from '~/types/helper.types';
 import { transformIdlWithOnlyVerifiedCalls, variantIs } from '~/utils/helper.utils';
 
 export class ControlPanelService {
@@ -78,30 +78,20 @@ export class ControlPanelService {
     }
   }
 
-  async editUser(input: ManageUserInput): Promise<User> {
-    const result = await this.actor.manage_user(input);
+  async manageUserStations(input: ManageUserStationsInput): Promise<void> {
+    const result = await this.actor.manage_user_stations(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
-
-    return result.Ok.user;
   }
 
-  async getMainStation(verifiedCall = false): Promise<Maybe<UserStation>> {
+  async listUserStations(
+    input: ListUserStationsInput,
+    verifiedCall = false,
+  ): Promise<UserStation[]> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
-    const result = await actor.get_main_station();
-
-    if (variantIs(result, 'Err')) {
-      throw result.Err;
-    }
-
-    return result.Ok.station?.[0] ?? null;
-  }
-
-  async listStations(verifiedCall = false): Promise<UserStation[]> {
-    const actor = verifiedCall ? this.verified_actor : this.actor;
-    const result = await actor.list_stations();
+    const result = await actor.list_user_stations(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;

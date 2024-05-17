@@ -54,22 +54,20 @@
 </template>
 
 <script setup lang="ts">
-import { mdiChevronLeft, mdiContentCopy } from '@mdi/js';
-import { VBtn, VForm, VTextField } from 'vuetify/components';
-import { VFormValidation } from '~/types/helper.types';
-import { useSessionStore } from '~/stores/session.store';
-import { ref } from 'vue';
-import { computed } from 'vue';
-import { maxLengthRule, requiredRule, validCanisterId } from '~/utils/form.utils';
-import { useRouter } from 'vue-router';
-import { defaultHomeRoute } from '~/configs/routes.config';
-import { useAppStore } from '~/stores/app.store';
-import { copyToClipboard } from '~/utils/app.utils';
-import { StationService } from '~/services/station.service';
-import { icAgent } from '~/core/ic-agent.core';
 import { Principal } from '@dfinity/principal';
+import { mdiChevronLeft, mdiContentCopy } from '@mdi/js';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { VBtn, VForm, VTextField } from 'vuetify/components';
+import { defaultHomeRoute } from '~/configs/routes.config';
+import { icAgent } from '~/core/ic-agent.core';
 import logger from '~/core/logger.core';
-import { watch } from 'vue';
+import { StationService } from '~/services/station.service';
+import { useAppStore } from '~/stores/app.store';
+import { useSessionStore } from '~/stores/session.store';
+import { VFormValidation } from '~/types/helper.types';
+import { copyToClipboard } from '~/utils/app.utils';
+import { maxLengthRule, requiredRule, validCanisterId } from '~/utils/form.utils';
 
 const session = useSessionStore();
 const router = useRouter();
@@ -125,7 +123,7 @@ async function addNewStation() {
   if (valid) {
     working.value = true;
     try {
-      await session.addStation(canisterId.value, name.value);
+      await session.addUserStation(Principal.fromText(canisterId.value), name.value);
       await router.push({ name: defaultHomeRoute });
     } catch (e: unknown) {
       app.sendErrorNotification(e);
