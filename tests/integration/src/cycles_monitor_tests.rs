@@ -9,9 +9,9 @@ use control_panel_api::{
     UpdateWaitingListInput, UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiResult;
-use pocket_ic::update_candid_as;
+use pocket_ic::{update_candid_as, CallError};
 use sha2::{Digest, Sha256};
-use station_api::HealthStatus;
+use station_api::{HealthStatus, SystemInfoResponse};
 use std::time::Duration;
 
 #[test]
@@ -134,6 +134,22 @@ fn successful_monitors_stations_and_tops_up() {
     .unwrap();
     let health_status = res.0;
     assert_eq!(health_status, HealthStatus::Healthy);
+
+    // WALLET_ADMIN_USER is not admin of the newly created station and thus the following call should trap
+    let res: Result<(ApiResult<SystemInfoResponse>,), CallError> = update_candid_as(
+        &env,
+        newly_created_user_station,
+        WALLET_ADMIN_USER,
+        "system_info",
+        (),
+    );
+    let user_error = match res.unwrap_err() {
+        CallError::UserError(user_error) => user_error,
+        CallError::Reject(message) => panic!("Unexpected reject: {}", message),
+    };
+    assert!(user_error.description.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: System(SystemInfo)"
+    ));
 
     let upgrader_id = get_system_info(&env, user_id, newly_created_user_station).upgrader_id;
 
