@@ -50,10 +50,6 @@ const target = computed(() => {
     return i18n.t('terms.upgrader');
   }
 
-  if (variantIs(props.operation.target, 'UpgradeCanister')) {
-    return props.operation.target.UpgradeCanister.toText();
-  }
-
   return props.operation.target.InstallCanister.canister_id.toText();
 });
 </script>

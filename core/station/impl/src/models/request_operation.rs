@@ -242,7 +242,6 @@ pub struct InstallCanisterInput {
 pub enum ChangeCanisterTarget {
     UpgradeStation,
     UpgradeUpgrader,
-    UpgradeCanister(Principal),
     InstallCanister(InstallCanisterInput),
 }
 

@@ -13,7 +13,6 @@ pub struct InstallCanisterInputDTO {
 pub enum ChangeCanisterTargetDTO {
     UpgradeStation,
     UpgradeUpgrader,
-    UpgradeCanister(Principal),
     InstallCanister(InstallCanisterInputDTO),
 }
 

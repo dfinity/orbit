@@ -199,7 +199,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChangeCanisterTarget = IDL.Variant({
     'UpgradeUpgrader' : IDL.Null,
-    'UpgradeCanister' : IDL.Principal,
     'InstallCanister' : InstallCanisterInput,
     'UpgradeStation' : IDL.Null,
   });

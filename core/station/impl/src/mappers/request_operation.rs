@@ -323,9 +323,6 @@ impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
         match value {
             ChangeCanisterTarget::UpgradeStation => ChangeCanisterTargetDTO::UpgradeStation,
             ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterTargetDTO::UpgradeUpgrader,
-            ChangeCanisterTarget::UpgradeCanister(canister_id) => {
-                ChangeCanisterTargetDTO::UpgradeCanister(canister_id)
-            }
             ChangeCanisterTarget::InstallCanister(input) => {
                 ChangeCanisterTargetDTO::InstallCanister(input.into())
             }
@@ -338,9 +335,6 @@ impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
         match value {
             ChangeCanisterTargetDTO::UpgradeStation => ChangeCanisterTarget::UpgradeStation,
             ChangeCanisterTargetDTO::UpgradeUpgrader => ChangeCanisterTarget::UpgradeUpgrader,
-            ChangeCanisterTargetDTO::UpgradeCanister(canister_id) => {
-                ChangeCanisterTarget::UpgradeCanister(canister_id)
-            }
             ChangeCanisterTargetDTO::InstallCanister(input) => {
                 ChangeCanisterTarget::InstallCanister(input.into())
             }

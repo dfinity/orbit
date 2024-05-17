@@ -9,7 +9,6 @@ use crate::{
 };
 use async_trait::async_trait;
 use candid::Encode;
-use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use orbit_essentials::types::UUID;
 use sha2::{Digest, Sha256};
 use station_api::{ChangeCanisterOperationInput, CreateRequestInput};
@@ -110,24 +109,6 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
                         reason: format!("failed to upgrade upgrader: {}", err),
-                    })?;
-
-                Ok(RequestExecuteStage::Completed(
-                    self.request.operation.clone(),
-                ))
-            }
-
-            ChangeCanisterTarget::UpgradeCanister(canister_id) => {
-                CHANGE_CANISTER_SERVICE
-                    .install_canister(
-                        canister_id,
-                        CanisterInstallMode::Upgrade(None),
-                        &self.operation.input.module,
-                        self.operation.input.arg.clone(),
-                    )
-                    .await
-                    .map_err(|err| RequestExecuteError::Failed {
-                        reason: format!("failed to upgrade canister {}: {}", canister_id, err),
                     })?;
 
                 Ok(RequestExecuteStage::Completed(

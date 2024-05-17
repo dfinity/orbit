@@ -152,7 +152,6 @@ export interface ChangeCanisterOperationInput {
 }
 export type ChangeCanisterResourceAction = { 'Create' : null };
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
-  { 'UpgradeCanister' : Principal } |
   { 'InstallCanister' : InstallCanisterInput } |
   { 'UpgradeStation' : null };
 export interface CreateRequestInput {

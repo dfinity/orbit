@@ -83,9 +83,13 @@ fn successful_four_eyes_upgrade() {
         hex::decode("d7f602df8d1cb581cc5c886a4ff8809793c50627e305ef45f6d770f27e0261cc").unwrap();
 
     // submit canister upgrade request
+    let install_canister_input = InstallCanisterInputDTO {
+        mode: CanisterInstallMode::Upgrade(None),
+        canister_id,
+    };
     let change_canister_operation =
         RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
-            target: ChangeCanisterTargetDTO::UpgradeCanister(canister_id),
+            target: ChangeCanisterTargetDTO::InstallCanister(install_canister_input),
             module: new_module_bytes,
             arg: None,
         });
