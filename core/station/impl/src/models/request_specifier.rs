@@ -5,7 +5,9 @@ use crate::core::validation::{
     EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
 };
 use crate::errors::RecordValidationError;
+use crate::models::resource::ChangeCanisterResourceTarget;
 use crate::models::user::User;
+use crate::models::ChangeCanisterOperation;
 use crate::repositories::ADDRESS_BOOK_REPOSITORY;
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
@@ -61,7 +63,7 @@ pub enum RequestSpecifier {
     EditAddressBookEntry(ResourceIds),
     RemoveAddressBookEntry(ResourceIds),
     Transfer(ResourceIds),
-    ChangeCanister,
+    ChangeCanister(ChangeCanisterResourceTarget),
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIds),
@@ -78,7 +80,7 @@ impl ModelValidator<RecordValidationError> for RequestSpecifier {
             RequestSpecifier::AddAccount
             | RequestSpecifier::AddUser
             | RequestSpecifier::AddAddressBookEntry
-            | RequestSpecifier::ChangeCanister
+            | RequestSpecifier::ChangeCanister(_)
             | RequestSpecifier::AddRequestPolicy
             | RequestSpecifier::ManageSystemInfo
             | RequestSpecifier::AddUserGroup => Ok(()),
@@ -125,7 +127,7 @@ impl From<&RequestSpecifier> for RequestOperationType {
             }
             RequestSpecifier::Transfer(_) => RequestOperationType::Transfer,
             RequestSpecifier::EditPermission(_) => RequestOperationType::EditPermission,
-            RequestSpecifier::ChangeCanister => RequestOperationType::ChangeCanister,
+            RequestSpecifier::ChangeCanister(_) => RequestOperationType::ChangeCanister,
             RequestSpecifier::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestSpecifier::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
             RequestSpecifier::RemoveRequestPolicy(_) => RequestOperationType::RemoveRequestPolicy,
@@ -248,7 +250,13 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
             (RequestOperation::Transfer(params), RequestSpecifier::Transfer(account)) => self
                 .account_matcher
                 .is_match((p.clone(), params.input.from_account_id, account))?,
-            (RequestOperation::ChangeCanister(_), RequestSpecifier::ChangeCanister) => true,
+            (
+                RequestOperation::ChangeCanister(ChangeCanisterOperation { input, .. }),
+                RequestSpecifier::ChangeCanister(target),
+            ) => {
+                let input_target: ChangeCanisterResourceTarget = input.target.into();
+                input_target == target
+            }
             (RequestOperation::AddUserGroup(_), RequestSpecifier::AddUserGroup) => true,
             (
                 RequestOperation::EditPermission(operation),
@@ -347,7 +355,7 @@ mod tests {
                 UserInvolvedInPolicyRuleForRequestResource, UserMatcher, UserSpecifier,
             },
             request_test_utils::mock_request,
-            resource::ResourceIds,
+            resource::{ChangeCanisterResourceTarget, ResourceIds},
             AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
             Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
             EditUserOperationInput, Metadata, RequestKey, RequestOperation, TransferOperation,
@@ -356,7 +364,7 @@ mod tests {
         repositories::REQUEST_REPOSITORY,
     };
     use anyhow::{anyhow, Error};
-    use candid::Nat;
+    use candid::{Nat, Principal};
     use orbit_essentials::{model::ModelValidator, repository::Repository};
     use std::sync::Arc;
 
@@ -522,9 +530,17 @@ mod tests {
         RequestSpecifier::AddAddressBookEntry
             .validate()
             .expect("AddAddressBookEntry should be valid");
-        RequestSpecifier::ChangeCanister
+        RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Station)
             .validate()
             .expect("ChangeCanister should be valid");
+        RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Upgrader)
+            .validate()
+            .expect("ChangeCanister should be valid");
+        RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Canister(
+            Principal::management_canister(),
+        ))
+        .validate()
+        .expect("ChangeCanister should be valid");
         RequestSpecifier::AddRequestPolicy
             .validate()
             .expect("AddRequestPolicy should be valid");

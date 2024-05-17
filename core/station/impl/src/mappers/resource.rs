@@ -1,8 +1,9 @@
 use crate::models::resource::{
-    AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-    RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-    UserResourceAction,
+    AccountResourceAction, ChangeCanisterResourceAction, ChangeCanisterResourceTarget,
+    PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+    SystemResourceAction, UserResourceAction,
 };
+use crate::models::ChangeCanisterTarget;
 use uuid::Uuid;
 
 use super::HelperMapper;
@@ -199,15 +200,83 @@ impl From<SystemResourceAction> for station_api::SystemResourceActionDTO {
     }
 }
 
+impl From<station_api::ChangeCanisterTargetDTO> for ChangeCanisterResourceTarget {
+    fn from(target: station_api::ChangeCanisterTargetDTO) -> Self {
+        match target {
+            station_api::ChangeCanisterTargetDTO::UpgradeStation => {
+                ChangeCanisterResourceTarget::Station
+            }
+            station_api::ChangeCanisterTargetDTO::UpgradeUpgrader => {
+                ChangeCanisterResourceTarget::Upgrader
+            }
+            station_api::ChangeCanisterTargetDTO::UpgradeCanister(canister_id) => {
+                ChangeCanisterResourceTarget::Canister(canister_id)
+            }
+        }
+    }
+}
+
+impl From<ChangeCanisterTarget> for ChangeCanisterResourceTarget {
+    fn from(target: ChangeCanisterTarget) -> Self {
+        match target {
+            ChangeCanisterTarget::UpgradeStation => ChangeCanisterResourceTarget::Station,
+            ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterResourceTarget::Upgrader,
+            ChangeCanisterTarget::UpgradeCanister(canister_id) => {
+                ChangeCanisterResourceTarget::Canister(canister_id)
+            }
+        }
+    }
+}
+
+impl From<station_api::ChangeCanisterResourceTargetDTO> for ChangeCanisterResourceTarget {
+    fn from(action: station_api::ChangeCanisterResourceTargetDTO) -> Self {
+        match action {
+            station_api::ChangeCanisterResourceTargetDTO::Station => {
+                ChangeCanisterResourceTarget::Station
+            }
+            station_api::ChangeCanisterResourceTargetDTO::Upgrader => {
+                ChangeCanisterResourceTarget::Upgrader
+            }
+            station_api::ChangeCanisterResourceTargetDTO::Canister(canister_id) => {
+                ChangeCanisterResourceTarget::Canister(canister_id)
+            }
+        }
+    }
+}
+
+impl From<ChangeCanisterResourceTarget> for station_api::ChangeCanisterResourceTargetDTO {
+    fn from(action: ChangeCanisterResourceTarget) -> Self {
+        match action {
+            ChangeCanisterResourceTarget::Station => {
+                station_api::ChangeCanisterResourceTargetDTO::Station
+            }
+            ChangeCanisterResourceTarget::Upgrader => {
+                station_api::ChangeCanisterResourceTargetDTO::Upgrader
+            }
+            ChangeCanisterResourceTarget::Canister(canister_id) => {
+                station_api::ChangeCanisterResourceTargetDTO::Canister(canister_id)
+            }
+        }
+    }
+}
+
 impl From<station_api::ChangeCanisterResourceActionDTO> for ChangeCanisterResourceAction {
-    fn from(_: station_api::ChangeCanisterResourceActionDTO) -> Self {
-        ChangeCanisterResourceAction::Create
+    fn from(action: station_api::ChangeCanisterResourceActionDTO) -> Self {
+        match action {
+            station_api::ChangeCanisterResourceActionDTO::Create(target) => {
+                ChangeCanisterResourceAction::Create(target.into())
+            }
+        }
     }
 }
 
 impl From<ChangeCanisterResourceAction> for station_api::ChangeCanisterResourceActionDTO {
-    fn from(_: ChangeCanisterResourceAction) -> Self {
-        station_api::ChangeCanisterResourceActionDTO::Create
+    fn from(action: ChangeCanisterResourceAction) -> Self {
+        match action {
+            ChangeCanisterResourceAction::Create(target) => {
+                station_api::ChangeCanisterResourceActionDTO::Create(target.into())
+            }
+        }
     }
 }
 

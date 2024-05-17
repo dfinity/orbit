@@ -136,7 +136,7 @@ fn successful_monitors_stations_and_tops_up() {
     assert_eq!(health_status, HealthStatus::Healthy);
 
     let upgrader_id =
-        get_system_info(&env, WALLET_ADMIN_USER, newly_created_user_station).upgrader_id;
+        get_system_info(&env, user_id, newly_created_user_station).upgrader_id;
 
     // add cycles to the upgrader so that the station won't top it up
     env.add_cycles(upgrader_id, 100_000_000_000_000);

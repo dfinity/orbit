@@ -75,7 +75,14 @@ export const idlFactory = ({ IDL }) => {
     'Create' : IDL.Null,
     'Update' : ResourceId,
   });
-  const ChangeCanisterResourceAction = IDL.Variant({ 'Create' : IDL.Null });
+  const ChangeCanisterResourceTarget = IDL.Variant({
+    'Station' : IDL.Null,
+    'Upgrader' : IDL.Null,
+    'Canister' : IDL.Principal,
+  });
+  const ChangeCanisterResourceAction = IDL.Variant({
+    'Create' : ChangeCanisterResourceTarget,
+  });
   const PermissionResourceAction = IDL.Variant({
     'Read' : IDL.Null,
     'Update' : IDL.Null,
@@ -159,7 +166,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveRequestPolicy' : ResourceIds,
     'RemoveAddressBookEntry' : ResourceIds,
     'EditAddressBookEntry' : ResourceIds,
-    'ChangeCanister' : IDL.Null,
+    'ChangeCanister' : ChangeCanisterResourceTarget,
     'EditUser' : ResourceIds,
     'ManageSystemInfo' : IDL.Null,
     'Transfer' : ResourceIds,
@@ -902,7 +909,6 @@ export const idlFactory = ({ IDL }) => {
     'ListUserGroups' : IDL.Null,
     'AddUser' : IDL.Null,
     'ListUsers' : IDL.Null,
-    'ChangeCanister' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,

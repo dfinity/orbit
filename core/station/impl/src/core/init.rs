@@ -3,9 +3,9 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-        RequestResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
-        SystemResourceAction, UserResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ChangeCanisterResourceTarget,
+        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+        ResourceIds, SystemResourceAction, UserResourceAction,
     },
     ADMIN_GROUP_ID,
 };
@@ -139,10 +139,15 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
         ),
-        // change canister
+        // change canister (station)
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Station)),
+        ),
+        // change canister (upgrader)
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Upgrader)),
         ),
     ];
 
@@ -226,9 +231,14 @@ lazy_static! {
             )
 
         ),
-        // change canister
+        // change canister (station)
         (
-            RequestSpecifier::ChangeCanister,
+            RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Station),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+        ),
+        // change canister (upgrader)
+        (
+            RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Upgrader),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         // system info

@@ -686,9 +686,9 @@ impl RequestOperation {
                     Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
                 ]
             }
-            RequestOperation::ChangeCanister(_) => {
+            RequestOperation::ChangeCanister(ChangeCanisterOperation { input, .. }) => {
                 vec![Resource::ChangeCanister(
-                    ChangeCanisterResourceAction::Create,
+                    ChangeCanisterResourceAction::Create(input.target.clone().into()),
                 )]
             }
             RequestOperation::EditRequestPolicy(EditRequestPolicyOperation { input }) => {

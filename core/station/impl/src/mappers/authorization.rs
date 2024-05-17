@@ -15,7 +15,7 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 16] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 15] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
     UserPrivilege::ManageSystemInfo,
@@ -30,7 +30,6 @@ pub const USER_PRIVILEGES: [UserPrivilege; 16] = [
     UserPrivilege::AddUserGroup,
     UserPrivilege::ListAddressBookEntries,
     UserPrivilege::AddAddressBookEntry,
-    UserPrivilege::ChangeCanister,
     UserPrivilege::ListRequests,
 ];
 
@@ -50,9 +49,6 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::AddUserGroup => Resource::UserGroup(ResourceAction::Create),
             UserPrivilege::ListAddressBookEntries => Resource::AddressBook(ResourceAction::List),
             UserPrivilege::AddAddressBookEntry => Resource::AddressBook(ResourceAction::Create),
-            UserPrivilege::ChangeCanister => {
-                Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
-            }
             UserPrivilege::ListRequests => Resource::Request(RequestResourceAction::List),
             UserPrivilege::ManageSystemInfo => {
                 Resource::System(SystemResourceAction::ManageSystemInfo)
@@ -201,9 +197,9 @@ impl From<&station_api::CreateRequestInput> for Resource {
                         .as_bytes(),
                 )))
             }
-            RequestOperationInput::ChangeCanister(_) => {
-                Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
-            }
+            RequestOperationInput::ChangeCanister(input) => Resource::ChangeCanister(
+                ChangeCanisterResourceAction::Create(input.target.clone().into()),
+            ),
             RequestOperationInput::EditPermission(_) => {
                 Resource::Permission(PermissionResourceAction::Update)
             }

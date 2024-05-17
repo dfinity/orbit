@@ -1,3 +1,4 @@
+use candid::Principal;
 use orbit_essentials::storable;
 use orbit_essentials::{model::ModelValidator, types::UUID};
 use std::fmt::{Display, Formatter};
@@ -49,7 +50,7 @@ impl ModelValidator<RecordValidationError> for Resource {
                 }
             },
             Resource::ChangeCanister(action) => match action {
-                ChangeCanisterResourceAction::Create => Ok(()),
+                ChangeCanisterResourceAction::Create(_) => Ok(()),
             },
             Resource::Request(action) => match action {
                 RequestResourceAction::List => Ok(()),
@@ -134,8 +135,16 @@ pub enum SystemResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ChangeCanisterResourceTarget {
+    Station,
+    Upgrader,
+    Canister(Principal),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeCanisterResourceAction {
-    Create,
+    Create(ChangeCanisterResourceTarget),
 }
 
 #[storable]
@@ -269,9 +278,9 @@ impl Resource {
                 }
             },
             Resource::ChangeCanister(action) => match action {
-                ChangeCanisterResourceAction::Create => {
+                ChangeCanisterResourceAction::Create(target) => {
                     vec![Resource::ChangeCanister(
-                        ChangeCanisterResourceAction::Create,
+                        ChangeCanisterResourceAction::Create(target.clone()),
                     )]
                 }
             },
@@ -445,10 +454,21 @@ impl Display for AccountResourceAction {
     }
 }
 
+impl Display for ChangeCanisterResourceTarget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ChangeCanisterResourceTarget::Station => write!(f, "Station"),
+            ChangeCanisterResourceTarget::Upgrader => write!(f, "Upgrader"),
+            ChangeCanisterResourceTarget::Canister(canister_id) => {
+                write!(f, "Canister({})", canister_id)
+            }
+        }
+    }
+}
 impl Display for ChangeCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChangeCanisterResourceAction::Create => write!(f, "Create"),
+            ChangeCanisterResourceAction::Create(target) => write!(f, "Create({})", target),
         }
     }
 }
@@ -499,6 +519,8 @@ mod test {
     use orbit_essentials::model::ModelValidator;
 
     use crate::core::validation::disable_mock_resource_validation;
+    use crate::models::resource::ChangeCanisterResourceTarget;
+    use candid::Principal;
 
     use super::{
         AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
@@ -523,7 +545,15 @@ mod test {
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
+                ChangeCanisterResourceTarget::Station,
+            )),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
+                ChangeCanisterResourceTarget::Upgrader,
+            )),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
+                ChangeCanisterResourceTarget::Canister(Principal::management_canister()),
+            )),
             Resource::Request(RequestResourceAction::List),
             Resource::Request(RequestResourceAction::Read(ResourceId::Any)),
             Resource::RequestPolicy(ResourceAction::List),

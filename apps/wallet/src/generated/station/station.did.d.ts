@@ -147,7 +147,12 @@ export interface ChangeCanisterOperationInput {
   'target' : ChangeCanisterTarget,
   'module' : Uint8Array | number[],
 }
-export type ChangeCanisterResourceAction = { 'Create' : null };
+export type ChangeCanisterResourceAction = {
+    'Create' : ChangeCanisterResourceTarget
+  };
+export type ChangeCanisterResourceTarget = { 'Station' : null } |
+  { 'Upgrader' : null } |
+  { 'Canister' : Principal };
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
   { 'UpgradeCanister' : Principal } |
   { 'UpgradeStation' : null };
@@ -679,7 +684,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'RemoveRequestPolicy' : ResourceIds } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
   { 'EditAddressBookEntry' : ResourceIds } |
-  { 'ChangeCanister' : null } |
+  { 'ChangeCanister' : ChangeCanisterResourceTarget } |
   { 'EditUser' : ResourceIds } |
   { 'ManageSystemInfo' : null } |
   { 'Transfer' : ResourceIds } |
@@ -832,7 +837,6 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
-  { 'ChangeCanister' : null } |
   { 'ManageSystemInfo' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |

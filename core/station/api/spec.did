@@ -45,7 +45,7 @@ type RequestSpecifier = variant {
   AddAddressBookEntry;
   EditAddressBookEntry : ResourceIds;
   RemoveAddressBookEntry : ResourceIds;
-  ChangeCanister;
+  ChangeCanister : ChangeCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
   AddRequestPolicy;
   EditRequestPolicy : ResourceIds;
@@ -1562,9 +1562,16 @@ type AccountResourceAction = variant {
   Update : ResourceId;
 };
 
+// The target canister of a change canister request.
+type ChangeCanisterResourceTarget = variant {
+  Station;
+  Upgrader;
+  Canister : principal;
+};
+
 // The actions that are available for canister changes.
 type ChangeCanisterResourceAction = variant {
-  Create;
+  Create : ChangeCanisterResourceTarget;
 };
 
 // The actions that are available for requests.
@@ -1781,7 +1788,6 @@ type UserPrivilege = variant {
   AddRequestPolicy;
   ListAddressBookEntries;
   AddAddressBookEntry;
-  ChangeCanister;
   ListRequests;
 };
 
