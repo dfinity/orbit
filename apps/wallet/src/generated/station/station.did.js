@@ -188,9 +188,19 @@ export const idlFactory = ({ IDL }) => {
     'address_book_entry_id' : UUID,
     'address_owner' : IDL.Opt(IDL.Text),
   });
+  const CanisterInstallMode = IDL.Variant({
+    'reinstall' : IDL.Null,
+    'upgrade' : IDL.Opt(IDL.Opt(IDL.Bool)),
+    'install' : IDL.Null,
+  });
+  const InstallCanisterInput = IDL.Record({
+    'mode' : CanisterInstallMode,
+    'canister_id' : IDL.Principal,
+  });
   const ChangeCanisterTarget = IDL.Variant({
     'UpgradeUpgrader' : IDL.Null,
     'UpgradeCanister' : IDL.Principal,
+    'InstallCanister' : InstallCanisterInput,
     'UpgradeStation' : IDL.Null,
   });
   const ChangeCanisterOperationInput = IDL.Record({

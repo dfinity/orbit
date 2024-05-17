@@ -533,10 +533,24 @@ type RemoveUserGroupOperation = record {
   input : RemoveUserGroupOperationInput;
 };
 
+type CanisterInstallMode = variant {
+    install;
+    reinstall;
+    upgrade : opt opt bool;
+};
+
+type InstallCanisterInput = record {
+  // The canister to install.
+  canister_id : principal;
+  // The canister installation mode
+  mode : CanisterInstallMode;
+};
+
 type ChangeCanisterTarget = variant {
   UpgradeStation;
   UpgradeUpgrader;
   UpgradeCanister : principal;
+  InstallCanister : InstallCanisterInput;
 };
 
 type ChangeCanisterOperationInput = record {

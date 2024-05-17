@@ -125,6 +125,9 @@ export interface BasicUser {
   'status' : UserStatus,
   'name' : string,
 }
+export type CanisterInstallMode = { 'reinstall' : null } |
+  { 'upgrade' : [] | [[] | [boolean]] } |
+  { 'install' : null };
 export interface Capabilities {
   'name' : string,
   'version' : string,
@@ -150,6 +153,7 @@ export interface ChangeCanisterOperationInput {
 export type ChangeCanisterResourceAction = { 'Create' : null };
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
   { 'UpgradeCanister' : Principal } |
+  { 'InstallCanister' : InstallCanisterInput } |
   { 'UpgradeStation' : null };
 export interface CreateRequestInput {
   'title' : [] | [string],
@@ -327,6 +331,10 @@ export interface HttpResponse {
   'body' : Uint8Array | number[],
   'headers' : Array<HeaderField>,
   'status_code' : number,
+}
+export interface InstallCanisterInput {
+  'mode' : CanisterInstallMode,
+  'canister_id' : Principal,
 }
 export interface ListAccountTransfersInput {
   'account_id' : UUID,
