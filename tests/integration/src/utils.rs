@@ -15,6 +15,39 @@ use std::time::Duration;
 
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 
+pub const COUNTER_WAT: &str = r#"
+    (module
+        (import "ic0" "msg_reply" (func $msg_reply))
+        (import "ic0" "msg_reply_data_append"
+            (func $msg_reply_data_append (param i32 i32)))
+        (import "ic0" "stable_grow"
+            (func $ic0_stable_grow (param $pages i32) (result i32)))
+        (import "ic0" "stable_read"
+            (func $ic0_stable_read (param $dst i32) (param $offset i32) (param $size i32)))
+        (import "ic0" "stable_write"
+            (func $ic0_stable_write (param $offset i32) (param $src i32) (param $size i32)))
+        (func $init
+            (drop (call $ic0_stable_grow (i32.const 1)))
+            (call $msg_reply))
+        (func $inc
+            (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
+            (i32.store
+                (i32.const 0)
+                (i32.add (i32.load (i32.const 0)) (i32.const 2)))
+            (call $ic0_stable_write (i32.const 0) (i32.const 0) (i32.const 4))
+            (call $msg_reply))
+        (func $read
+            (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
+            (call $msg_reply_data_append
+                (i32.const 0) ;; the counter from heap[0]
+                (i32.const 4)) ;; length
+            (call $msg_reply))
+        (memory $memory 1)
+        (export "canister_query read" (func $read))
+        (export "canister_update inc" (func $inc))
+        (export "canister_update init" (func $init))
+    )"#;
+
 pub fn controller_test_id() -> Principal {
     let mut bytes = 0_u64.to_le_bytes().to_vec();
     bytes.push(0xfd); // internal marker for controller test id
