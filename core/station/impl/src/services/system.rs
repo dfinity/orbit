@@ -336,6 +336,7 @@ mod install_canister_handlers {
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
     use canfund::FundManager;
     use ic_cdk::api::management_canister::main::{self as mgmt};
+    use station_api::CanisterInstallMode;
     use std::cell::RefCell;
     use std::sync::Arc;
 
@@ -391,7 +392,7 @@ mod install_canister_handlers {
         .map_err(|e| format!("Failed to create upgrader canister: {:?}", e))?;
 
         mgmt::install_code(mgmt::InstallCodeArgument {
-            mode: mgmt::CanisterInstallMode::Install,
+            mode: CanisterInstallMode::Install.into(),
             canister_id: upgrader_canister.canister_id,
             wasm_module: upgrader_wasm_module,
             arg: Encode!(&upgrader_api::InitArg {

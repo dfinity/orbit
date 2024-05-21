@@ -5,8 +5,8 @@ use crate::utils::{
 };
 use crate::TestEnv;
 use candid::Principal;
-use orbit_essentials::cdk::api::management_canister::main::CanisterInstallMode;
 use sha2::{Digest, Sha256};
+use station_api::CanisterInstallMode;
 use station_api::{
     AddRequestPolicyOperationInput, ChangeCanisterOperationInput, ChangeCanisterTargetDTO,
     EditPermissionOperationInput, InstallCanisterInputDTO, QuorumDTO, RequestApprovalStatusDTO,
@@ -84,7 +84,7 @@ fn successful_four_eyes_upgrade() {
 
     // submit canister upgrade request
     let install_canister_input = InstallCanisterInputDTO {
-        mode: CanisterInstallMode::Upgrade(None),
+        mode: CanisterInstallMode::Upgrade,
         canister_id,
     };
     let change_canister_operation =
@@ -165,7 +165,7 @@ fn reinstall_canister() {
 
     // submit canister upgrade request
     let install_canister_input = InstallCanisterInputDTO {
-        mode: CanisterInstallMode::Upgrade(None),
+        mode: CanisterInstallMode::Upgrade,
         canister_id,
     };
     let change_canister_operation =

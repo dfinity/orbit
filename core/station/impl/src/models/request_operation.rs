@@ -8,8 +8,8 @@ use super::{
 };
 use crate::models::Metadata;
 use candid::Principal;
-use orbit_essentials::cdk::api::management_canister::main::CanisterInstallMode;
 use orbit_essentials::{storable, types::UUID};
+use station_api::CanisterInstallMode;
 use std::fmt::Display;
 
 #[storable]

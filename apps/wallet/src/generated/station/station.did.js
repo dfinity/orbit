@@ -190,7 +190,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CanisterInstallMode = IDL.Variant({
     'reinstall' : IDL.Null,
-    'upgrade' : IDL.Opt(IDL.Opt(IDL.Bool)),
+    'upgrade' : IDL.Null,
     'install' : IDL.Null,
   });
   const InstallCanisterInput = IDL.Record({

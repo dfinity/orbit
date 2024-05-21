@@ -536,7 +536,7 @@ type RemoveUserGroupOperation = record {
 type CanisterInstallMode = variant {
     install;
     reinstall;
-    upgrade : opt opt bool;
+    upgrade;
 };
 
 type InstallCanisterInput = record {

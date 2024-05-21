@@ -126,7 +126,7 @@ export interface BasicUser {
   'name' : string,
 }
 export type CanisterInstallMode = { 'reinstall' : null } |
-  { 'upgrade' : [] | [[] | [boolean]] } |
+  { 'upgrade' : null } |
   { 'install' : null };
 export interface Capabilities {
   'name' : string,

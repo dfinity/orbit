@@ -2069,6 +2069,7 @@ dependencies = [
  "orbit-essentials",
  "serde",
  "serde_bytes",
+ "serde_cbor",
 ]
 
 [[package]]
