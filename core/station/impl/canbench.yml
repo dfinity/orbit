@@ -1,3 +1,3 @@
-build_cmd: cargo build --locked --release --target wasm32-unknown-unknown --features canbench
-wasm_path: ../../../target/wasm32-unknown-unknown/release/station.wasm
+build_cmd: FEATURES=canbench ../../../scripts/generate-wasm.sh station
+wasm_path: ../../../wasms/station.wasm.gz
 results_path: results.yml
