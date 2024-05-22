@@ -1,32 +1,32 @@
 benches:
   repository_batch_insert_100_requests:
     total:
-      instructions: 489327940
+      instructions: 484479392
       heap_increase: 0
       stable_memory_increase: 241
     scopes: {}
   repository_filter_all_request_ids_by_default_filters:
     total:
-      instructions: 486677807
+      instructions: 479635161
       heap_increase: 1
       stable_memory_increase: 0
     scopes: {}
   repository_list_all_requests:
     total:
-      instructions: 98874831
+      instructions: 96803869
       heap_increase: 8
       stable_memory_increase: 0
     scopes: {}
   service_filter_all_requests_with_creation_time_filters:
     total:
-      instructions: 1121350371
+      instructions: 1105141962
       heap_increase: 0
       stable_memory_increase: 16
     scopes: {}
   service_filter_all_requests_with_default_filters:
     total:
-      instructions: 5598289443
+      instructions: 5517875008
       heap_increase: 3
       stable_memory_increase: 16
     scopes: {}
-version: 0.1.1
+version: 0.1.4
