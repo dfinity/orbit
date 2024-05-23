@@ -24,24 +24,26 @@ const i18n = createI18n({
 });
 
 const routeGuard =
-  (services: Services, app: () => ReturnType<typeof useAppStore>): NavigationGuard =>
+  (services: Services, getAppStore: () => ReturnType<typeof useAppStore>): NavigationGuard =>
   async (to, _from, next) => {
+    const app = getAppStore();
     const paramLocale = to.params.locale ? String(to.params.locale) : undefined;
+
     if (!paramLocale) {
       return next({
-        path: `/${app().locale}${to.path === '/' ? '' : to.path}`,
+        path: `${app.baseUrl}${to.path === appInitConfig.baseUrl ? '' : to.path}`,
         query: to.query,
         hash: to.hash,
       });
     }
 
     if (services.locales.isSupportedLocale(paramLocale)) {
-      await app().useLocale(paramLocale);
+      await app.useLocale(paramLocale);
     }
 
     if (!services.locales.isSupportedLocale(paramLocale)) {
       return next({
-        path: `/${app().locale}`,
+        path: app.baseUrl,
         query: to.query,
         hash: to.hash,
       });

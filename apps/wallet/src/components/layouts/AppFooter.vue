@@ -14,6 +14,5 @@
 
 <script lang="ts" setup>
 import { VCol, VContainer, VFooter, VImg, VRow } from 'vuetify/components';
-
-const poweredByBadge = `/images/powered-by-badge.svg`;
+import poweredByBadge from '~assets/images/powered-by-badge.svg';
 </script>

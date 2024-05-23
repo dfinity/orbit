@@ -1,15 +1,16 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
+import { useCompatibilityLayer } from '~/composables/compatibility.composable';
 import { STATION_ID_QUERY_PARAM } from '~/core/constants.core';
 import { InvalidStationError, UnregisteredUserError } from '~/core/errors.core';
 import { logger } from '~/core/logger.core';
 import {
+  Asset,
   Capabilities,
   Notification,
   UUID,
   User,
   UserPrivilege,
-  Asset,
 } from '~/generated/station/station.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { router } from '~/plugins/router.plugin';
@@ -175,7 +176,11 @@ export const useStationStore = defineStore('station', {
           throw new InvalidStationError();
         }
 
-        const stationService = await services().station.withStationId(stationId);
+        await useCompatibilityLayer().checkCompatibility(stationId, {
+          redirectIfIncompatible: true,
+        });
+
+        const stationService = services().station.withStationId(stationId);
         const myUser = await stationService.myUser();
         if (!myUser) {
           throw new UnregisteredUserError();

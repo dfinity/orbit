@@ -52,7 +52,7 @@ export const useAppStore = defineStore('app', {
       return i18n.global.locale.value as Locale;
     },
     baseUrl(): string {
-      return appInitConfig.baseUrl + this.locale;
+      return '/' + this.locale;
     },
   },
   actions: {

@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { throttle, transformIdlWithOnlyVerifiedCalls, variantIs } from './helper.utils';
+import {
+  isSemanticVersion,
+  throttle,
+  transformIdlWithOnlyVerifiedCalls,
+  variantIs,
+} from './helper.utils';
 import { idlFactory } from '~/generated/control-panel';
 import { IDL } from '@dfinity/candid';
 
@@ -67,6 +72,46 @@ describe('Candid utils', () => {
       ).toBeTruthy();
 
       expect(service._fields.some(field => field?.[1].annotations.includes('query'))).toBeFalsy();
+    });
+  });
+});
+
+describe('Semver utils', () => {
+  describe('isSemanticVersion', () => {
+    it.each([
+      '1.0.0',
+      '1.0.0-beta',
+      '1.0.0-beta+build',
+      '1.0.0-beta.1',
+      '1.0.0-beta.1+build',
+      '1.0.0+build',
+    ])('returns true for valid semantic version `%s`', version => {
+      expect(isSemanticVersion(version)).toBe(true);
+    });
+
+    it('returns true for valid semantic version with prefix `v1.0.0`', () => {
+      expect(isSemanticVersion('v1.0.0', 'v')).toBe(true);
+    });
+
+    it('returns true for valid semantic version without prefix `1.0.0-beta`', () => {
+      expect(isSemanticVersion('1.0.0-beta', '')).toBe(true);
+    });
+
+    it.each([
+      '',
+      'invalid',
+      '1.0',
+      '1.0-beta',
+      '1.0-beta+build',
+      '1.0-beta.1',
+      '1.0-beta.1+build',
+      '1.0+build',
+    ])('returns false for invalid semantic version `%s`', version => {
+      expect(isSemanticVersion(version)).toBe(false);
+    });
+
+    it('returns false for invalid semantic version with prefix `v1.0`', () => {
+      expect(isSemanticVersion('v1.0', 'v')).toBe(false);
     });
   });
 });

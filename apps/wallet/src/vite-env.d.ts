@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly APP_MODE: 'development' | 'production';
+  readonly APP_STATION_API_VERSION: string;
   readonly APP_URL: string;
   readonly APP_BASE_URL: string;
   readonly APP_TITLE: string;
