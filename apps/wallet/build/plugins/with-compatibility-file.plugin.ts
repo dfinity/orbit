@@ -1,8 +1,7 @@
-import { resolve } from 'path';
-import { STATION_API_VERSION, WALLET_VERSION } from '../core/configs.core';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { resolve } from 'path';
 import { Plugin } from 'vite';
-import { load } from 'cheerio';
+import { STATION_API_VERSION, WALLET_VERSION } from '../core/configs.core';
 
 interface ApiCompatibilityFile {
   // The current version of the wallet dapp.
@@ -37,10 +36,9 @@ const loadApiCompatibilityFile = (filePath: string): ApiCompatibilityFile => {
   } as ApiCompatibilityFile;
 };
 
-export const apiCompatibilityFile = (
+export const withApiCompatibilityFile = (
   publicDir = resolve(__dirname, '../../public'),
   filename = 'compat.json',
-  injectWindowProp = '__compat__',
 ): Plugin => {
   return {
     name: 'api-compatibility-file',
@@ -86,20 +84,6 @@ export const apiCompatibilityFile = (
       writeFileSync(filePath, JSON.stringify(configuration, null, 2), {
         encoding: 'utf-8',
       });
-    },
-    transformIndexHtml(originalHtml) {
-      const virtualDOM = load(originalHtml);
-      const compatFile = loadApiCompatibilityFile(resolve(publicDir, filename));
-
-      if ('__important__' in compatFile) {
-        delete compatFile.__important__;
-      }
-
-      virtualDOM('head').prepend(
-        `<script>window.${injectWindowProp} = ${JSON.stringify(compatFile)}</script>`,
-      );
-
-      return virtualDOM.html();
     },
   };
 };

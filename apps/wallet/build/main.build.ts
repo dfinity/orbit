@@ -12,8 +12,8 @@ import {
   STATION_API_VERSION,
   SUPPORTED_LOCALTES,
 } from './core/configs.core';
-import { generateICAssetsJson } from './core/ic-assets.core';
-import { apiCompatibilityFile } from './plugins/api-compatibility-file.plugin';
+import { withApiCompatibilityFile } from './plugins/with-compatibility-file.plugin';
+import { withIcAssetsFile } from './plugins/with-ic-assets.plugin';
 import { withVersionedEntrypoint } from './plugins/with-versioned-entrypoint.plugin';
 import { getCommitHash } from './utils/git.utils';
 
@@ -22,13 +22,11 @@ export default defineConfig(_ => {
   const canisters = resolveCanisterIds();
   const commitHash = getCommitHash();
 
-  // Generate the IC assets JSON file for the project.
-  generateICAssetsJson();
-
   // Defaults configuration for the build.
   const mode = MODE;
   const optimized = OPTIMIZED_BUILD;
   const outDir = resolve(__dirname, '../dist');
+  const isProduction = PRODUCTION;
 
   return {
     mode,
@@ -48,8 +46,9 @@ export default defineConfig(_ => {
       nodePolyfills(),
       vue(),
       vuetify({ autoImport: true }),
-      apiCompatibilityFile(),
+      withApiCompatibilityFile(),
       withVersionedEntrypoint(),
+      withIcAssetsFile(isProduction),
     ],
     build: {
       target: 'es2020',
@@ -130,8 +129,8 @@ export default defineConfig(_ => {
       // Make sure to use import.meta.env as the prefix since
       // vite uses that during runtime to access the variables.
       // https://vitejs.dev/guide/env-and-mode.html#env-variables
-      'import.meta.env.PROD': PRODUCTION,
-      'import.meta.env.DEV': !PRODUCTION,
+      'import.meta.env.PROD': isProduction,
+      'import.meta.env.DEV': !isProduction,
       'import.meta.env.APP_STATION_API_VERSION': JSON.stringify(STATION_API_VERSION),
       'import.meta.env.APP_MODE': JSON.stringify(ENV.APP_MODE),
       'import.meta.env.APP_URL': JSON.stringify(ENV.APP_URL),
@@ -144,7 +143,7 @@ export default defineConfig(_ => {
       'import.meta.env.APP_CANISTER_ID_INTERNET_IDENTITY': JSON.stringify(
         canisters.internet_identity,
       ),
-      'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY': PRODUCTION
+      'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY': isProduction
         ? JSON.stringify(ENV.APP_PROVIDER_URL_INTERNET_IDENTITY)
         : JSON.stringify(`http://${canisters.internet_identity}.localhost:4943`),
       'process.env.CANISTER_ID_CONTROL_PANEL': JSON.stringify(canisters.control_panel),
