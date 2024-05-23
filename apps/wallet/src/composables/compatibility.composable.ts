@@ -3,6 +3,8 @@ import { Principal } from '@dfinity/principal';
 import { icAgent } from '~/core/ic-agent.core';
 import { isSemanticVersion } from '~/utils/helper.utils';
 import logger from '~/core/logger.core';
+import { appInitConfig } from '~/configs/init.config';
+import { redirectToKey } from '~/plugins/router.plugin';
 
 /**
  * Fetch the version of the station API from the canister metadata.
@@ -46,6 +48,43 @@ async function fetchStationApiVersion(agent: HttpAgent, stationId: Principal): P
   return decodedVersion;
 }
 
+function redirectToURL(redirectTo: URL): void {
+  const url = new URL(redirectTo.href);
+  const pathParts = url.pathname.split('/').filter(Boolean);
+  const requestedVersion = isSemanticVersion(pathParts?.[0] ?? '', 'v') ? pathParts[0] : undefined;
+
+  if (!requestedVersion) {
+    window.location.href = redirectTo.href;
+
+    return;
+  }
+
+  // Since the asset canister does not support nested fallbacks for index.html yet, we need to redirect
+  // to the exact path of the requested version so that it's index.html can be served correctly by the asset canister.
+  //
+  // The hook after the user logs in will redirect the user back to the requested path based on the session storage.
+  const unversionedUrl = new URL(window.location.href);
+  unversionedUrl.pathname = '/' + pathParts.slice(1).join('/');
+  window.sessionStorage.setItem(redirectToKey, unversionedUrl.href);
+
+  const exactPathUrl = new URL(window.location.href);
+  exactPathUrl.pathname = '/' + requestedVersion + '/';
+
+  window.location.href = exactPathUrl.href;
+}
+
+/**
+ * Fetch the compatibility file for the UI, if a version is provided, then fetch the versioned file.
+ */
+async function fetchCompatFile(version?: string): Promise<typeof window.__compat__> {
+  const fileUrl = version
+    ? `${appInitConfig.baseUrl}${version}/compat.json`
+    : `${appInitConfig.baseUrl}compat.json`;
+
+  const response = await fetch(fileUrl);
+  return await response.json();
+}
+
 /**
  * Use the compatibility layer to check if the station API version is compatible with the UI.
  */
@@ -56,23 +95,47 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
       stationId: Principal,
       opts: { redirectIfIncompatible?: boolean } = {},
     ): Promise<URL | undefined> => {
-      const stationApiVersion = await fetchStationApiVersion(agent, stationId);
+      const url = new URL(window.location.href);
+      const pathParts = url.pathname.split('/').filter(Boolean); // Remove empty strings
+      const requestedVersion = isSemanticVersion(pathParts?.[0] ?? '', 'v')
+        ? pathParts[0]
+        : undefined;
+
+      const [stationApiVersion, compat, rootCompat] = requestedVersion
+        ? await Promise.all([
+            fetchStationApiVersion(agent, stationId),
+            fetchCompatFile(requestedVersion),
+            // Also fetch the root compatibility file to get the latest supported version of the UI.
+            fetchCompatFile(),
+          ])
+        : await Promise.all([fetchStationApiVersion(agent, stationId), window.__compat__, null]);
+
+      // If the requested version is the latest version supported by the UI, then the user gets redirected to
+      // the unversioned path.
+      if (requestedVersion && rootCompat?.api.latest === stationApiVersion) {
+        const parts = pathParts.filter(part => !isSemanticVersion(part, 'v'));
+        url.pathname = '/' + parts.join('/');
+
+        if (opts.redirectIfIncompatible) {
+          redirectToURL(url);
+        }
+
+        return url;
+      }
 
       // If the latest version of the API supported by the ui is the same as the
       // station API version, then it is compatible.
-      if (window.__compat__.api.latest === stationApiVersion) {
+      if (compat.api.latest === stationApiVersion) {
         return;
       }
 
-      const url = new URL(window.location.href);
-      const pathParts = url.pathname.split('/').filter(Boolean); // Remove empty strings
-      const compatibility = window.__compat__.api.compatibility as Record<string, { ui: string[] }>;
+      const compatibility = compat.api.compatibility;
 
       // If the station API version is newer than the latest supported version, then we treat it as incompatible
       // and redirect to the unversioned path to avoid breaking the UI. It will also get redirected
       // if the compatibility file does not have the station API version.
       if (
-        stationApiVersion > window.__compat__.api.latest ||
+        stationApiVersion > compat.api.latest ||
         !compatibility?.[stationApiVersion]?.ui ||
         compatibility[stationApiVersion].ui.length === 0
       ) {
@@ -85,7 +148,7 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
         url.pathname = '/' + parts.join('/');
 
         if (opts.redirectIfIncompatible) {
-          window.location.href = url.href;
+          redirectToURL(url);
         }
 
         return url;
@@ -110,7 +173,7 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
       url.pathname = '/' + parts.join('/');
 
       if (opts.redirectIfIncompatible) {
-        window.location.href = url.href;
+        redirectToURL(url);
       }
 
       return url;

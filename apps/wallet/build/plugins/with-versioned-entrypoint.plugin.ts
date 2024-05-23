@@ -123,6 +123,19 @@ export const withVersionedEntrypoint = (
           return next();
         }
 
+        const unversionedPath = pathParts.slice(1).join('/');
+        const unversionedUrl = new URL(url.href);
+        unversionedUrl.pathname = unversionedPath;
+
+        const filePath = join(publicDir, unversionedUrl.pathname);
+        if (existsSync(filePath) && statSync(filePath).isFile()) {
+          return res
+            .writeHead(307, {
+              Location: unversionedUrl.href,
+            })
+            .end();
+        }
+
         console.warn(
           `\x1b[33m[warning] Versioned path during dev.
           This could happen if you connect to a station canister that is still on a previous version.

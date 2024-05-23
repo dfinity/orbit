@@ -2,7 +2,7 @@ import { resolve } from 'path';
 import { STATION_API_VERSION, WALLET_VERSION } from '../core/configs.core';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { Plugin } from 'vite';
-import vm from 'node:vm';
+import { load } from 'cheerio';
 
 interface ApiCompatibilityFile {
   // The current version of the wallet dapp.
@@ -21,22 +21,9 @@ interface ApiCompatibilityFile {
   };
 }
 
-const loadApiCompatibilityFile = (
-  filePath: string,
-  windowPropKey: string,
-): ApiCompatibilityFile => {
+const loadApiCompatibilityFile = (filePath: string): ApiCompatibilityFile => {
   if (existsSync(filePath)) {
-    const fileContent = readFileSync(filePath, 'utf-8');
-    const sandbox = vm.createContext({ window: {} });
-    vm.runInContext(fileContent, sandbox);
-
-    if (!sandbox.window?.[windowPropKey]) {
-      throw new Error(
-        `The window property ${windowPropKey} is not defined in the compatibility file.`,
-      );
-    }
-
-    return sandbox.window[windowPropKey];
+    return JSON.parse(readFileSync(filePath, 'utf-8'));
   }
 
   return {
@@ -52,15 +39,14 @@ const loadApiCompatibilityFile = (
 
 export const apiCompatibilityFile = (
   publicDir = resolve(__dirname, '../../public'),
-  basePath = '/',
-  filename = 'compat.js',
-  windowPropKey = '__compat__',
+  filename = 'compat.json',
+  injectWindowProp = '__compat__',
 ): Plugin => {
   return {
     name: 'api-compatibility-file',
     buildStart() {
       const filePath = resolve(publicDir, filename);
-      const configuration = loadApiCompatibilityFile(filePath, windowPropKey);
+      const configuration = loadApiCompatibilityFile(filePath);
 
       // Set the latest station API and ui versions.
       configuration.version = WALLET_VERSION;
@@ -97,30 +83,23 @@ export const apiCompatibilityFile = (
         ...configuration.api.compatibility,
       };
 
-      writeFileSync(
-        filePath,
-        `window.${windowPropKey} = ${JSON.stringify(configuration, null, 2)}`,
-        {
-          encoding: 'utf-8',
-        },
-      );
+      writeFileSync(filePath, JSON.stringify(configuration, null, 2), {
+        encoding: 'utf-8',
+      });
     },
-    transformIndexHtml(html) {
-      return {
-        html,
-        tags: [
-          {
-            tag: 'script',
-            attrs: {
-              src: `${basePath}${filename}`,
-              type: 'module',
-              crossorigin: true,
-              'data-versioned-path': true,
-            },
-            injectTo: 'head-prepend',
-          },
-        ],
-      };
+    transformIndexHtml(originalHtml) {
+      const virtualDOM = load(originalHtml);
+      const compatFile = loadApiCompatibilityFile(resolve(publicDir, filename));
+
+      if ('__important__' in compatFile) {
+        delete compatFile.__important__;
+      }
+
+      virtualDOM('head').prepend(
+        `<script>window.${injectWindowProp} = ${JSON.stringify(compatFile)}</script>`,
+      );
+
+      return virtualDOM.html();
     },
   };
 };
