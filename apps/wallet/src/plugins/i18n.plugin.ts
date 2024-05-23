@@ -31,7 +31,7 @@ const routeGuard =
 
     if (!paramLocale) {
       return next({
-        path: `${app.baseUrl}${to.path === appInitConfig.baseUrl ? '' : to.path}`,
+        path: `${app.baseUrl}${to.path}`,
         query: to.query,
         hash: to.hash,
       });

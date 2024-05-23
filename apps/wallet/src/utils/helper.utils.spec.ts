@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   isSemanticVersion,
+  removeBasePathFromPathname,
   throttle,
   transformIdlWithOnlyVerifiedCalls,
   variantIs,
@@ -112,6 +113,31 @@ describe('Semver utils', () => {
 
     it('returns false for invalid semantic version with prefix `v1.0`', () => {
       expect(isSemanticVersion('v1.0', 'v')).toBe(false);
+    });
+  });
+});
+
+describe('Url utils', () => {
+  describe('removeBasePathFromPathname', () => {
+    it('removes the base path from the pathname', () => {
+      const pathname = '/base/pathname';
+      const basePath = '/base';
+
+      expect(removeBasePathFromPathname(pathname, basePath)).toBe('/pathname');
+    });
+
+    it('does not remove the base path if it is not at the start of the pathname', () => {
+      const pathname = '/pathname/base';
+      const basePath = '/base';
+
+      expect(removeBasePathFromPathname(pathname, basePath)).toBe(pathname);
+    });
+
+    it('adds a leading slash if the updated path does not have one', () => {
+      const pathname = 'pathname';
+      const basePath = '';
+
+      expect(removeBasePathFromPathname(pathname, basePath)).toBe('/pathname');
     });
   });
 });

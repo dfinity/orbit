@@ -1,6 +1,7 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { useCompatibilityLayer } from '~/composables/compatibility.composable';
+import { appInitConfig } from '~/configs/init.config';
 import { STATION_ID_QUERY_PARAM } from '~/core/constants.core';
 import { InvalidStationError, UnregisteredUserError } from '~/core/errors.core';
 import { logger } from '~/core/logger.core';
@@ -20,7 +21,7 @@ import { useAppStore } from '~/stores/app.store';
 import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 import { LoadableItem } from '~/types/helper.types';
 import { computedStationName, isApiError } from '~/utils/app.utils';
-import { arrayBatchMaker } from '~/utils/helper.utils';
+import { arrayBatchMaker, removeBasePathFromPathname } from '~/utils/helper.utils';
 import { accountsWorker, startWorkers, stopWorkers } from '~/workers';
 
 export enum ConnectionStatus {
@@ -237,9 +238,21 @@ export const useStationStore = defineStore('station', {
       } finally {
         // if the id has changed, force a navigation to re-run the route guards
         if (onConnectedReload && this.canisterId.length && this.canisterId !== stationId.toText()) {
+          // window.location is used because the router is not fully initialized yet in the first load
+          const url = new URL(window.location.href);
+          url.pathname = removeBasePathFromPathname(url.pathname, appInitConfig.versionedBaseUrl);
+          url.searchParams.set(STATION_ID_QUERY_PARAM, stationId.toText());
+
           router.push({
-            path: window.location.pathname,
-            query: { [STATION_ID_QUERY_PARAM]: stationId.toText() },
+            path: url.pathname,
+            query: Array.from(url.searchParams.entries()).reduce(
+              (acc: Record<string, string>, [key, value]) => {
+                acc[key] = value;
+                return acc;
+              },
+              {},
+            ),
+            hash: url.hash,
           });
         }
         this.canisterId = stationId.toText();

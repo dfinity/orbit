@@ -22,7 +22,7 @@ import { services } from './services.plugin';
 export const redirectToKey = 'redirectTo';
 
 const router = createRouter({
-  history: createWebHistory(appInitConfig.baseUrl),
+  history: createWebHistory(appInitConfig.versionedBaseUrl),
   routes: [
     {
       path: `/:locale(${supportedLocales.join('|')})?`,

@@ -62,6 +62,10 @@ export const apiCompatibilityFile = (
       const filePath = resolve(publicDir, filename);
       const configuration = loadApiCompatibilityFile(filePath, windowPropKey);
 
+      // Set the latest station API and ui versions.
+      configuration.version = WALLET_VERSION;
+      configuration.api.latest = STATION_API_VERSION;
+
       // Remove the current wallet version from the compat_apis if it exists.
       for (const key of Object.keys(configuration.api.compatibility)) {
         if (configuration.api.compatibility?.[key]?.['ui'].includes(WALLET_VERSION)) {

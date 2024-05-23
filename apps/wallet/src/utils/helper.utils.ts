@@ -223,3 +223,9 @@ export const isSemanticVersion = (version: string, prefix = ''): boolean => {
     versionWithoutPrefix,
   );
 };
+
+export const removeBasePathFromPathname = (pathname: string, basePath: string): string => {
+  const updatedPath = pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname;
+
+  return !updatedPath.startsWith('/') ? `/${updatedPath}` : updatedPath;
+};

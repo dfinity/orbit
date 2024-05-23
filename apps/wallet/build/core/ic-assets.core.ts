@@ -48,16 +48,16 @@ export const generateICAssetsJson = (assetsDir = 'public', fileName = '.ic-asset
       },
       allow_raw_access: false,
     },
-    fonts: {
-      match: '**/fonts/**/*',
-      headers: {
-        'Cache-Control': 'max-age=31536000',
-      },
-    },
     assets: {
       match: '**/assets/**/*',
       headers: {
         'Cache-Control': 'max-age=604800',
+      },
+    },
+    compatFiles: {
+      match: 'compat.js',
+      headers: {
+        'Cache-Control': 'max-age=3600',
       },
     },
     images: {

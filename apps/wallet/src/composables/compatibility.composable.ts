@@ -59,7 +59,7 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
       const stationApiVersion = await fetchStationApiVersion(agent, stationId);
 
       // If the latest version of the API supported by the ui is the same as the
-      // station API version, then we are compatible.
+      // station API version, then it is compatible.
       if (window.__compat__.api.latest === stationApiVersion) {
         return;
       }
@@ -77,11 +77,11 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
         compatibility[stationApiVersion].ui.length === 0
       ) {
         // If the path does not contain a semantic version, then we are already on the unversioned path.
-        if (!pathParts.find(part => isSemanticVersion(part))) {
+        if (!pathParts.find(part => isSemanticVersion(part, 'v'))) {
           return;
         }
 
-        const parts = pathParts.filter(part => !isSemanticVersion(part));
+        const parts = pathParts.filter(part => !isSemanticVersion(part, 'v'));
         url.pathname = '/' + parts.join('/');
 
         if (opts.redirectIfIncompatible) {
@@ -104,7 +104,7 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
         return;
       }
 
-      const parts = pathParts.filter(part => !isSemanticVersion(part));
+      const parts = pathParts.filter(part => !isSemanticVersion(part, 'v'));
       parts.unshift(compatibleUI);
 
       url.pathname = '/' + parts.join('/');

@@ -13,8 +13,8 @@ import {
   SUPPORTED_LOCALTES,
 } from './core/configs.core';
 import { generateICAssetsJson } from './core/ic-assets.core';
-import { apiCompatibilityFile } from './plugins/api-compatibility-file';
-import { withVersionedEntrypoint } from './plugins/with-versioned-entrypoint';
+import { apiCompatibilityFile } from './plugins/api-compatibility-file.plugin';
+import { withVersionedEntrypoint } from './plugins/with-versioned-entrypoint.plugin';
 import { getCommitHash } from './utils/git.utils';
 
 // https://vitejs.dev/config/
@@ -28,7 +28,7 @@ export default defineConfig(_ => {
   // Defaults configuration for the build.
   const mode = MODE;
   const optimized = OPTIMIZED_BUILD;
-  const outDir = resolve(__dirname, '../../dist');
+  const outDir = resolve(__dirname, '../dist');
 
   return {
     mode,
@@ -37,21 +37,9 @@ export default defineConfig(_ => {
     publicDir: './public',
     appType: 'spa',
     server: {
-      port: 5173,
-      proxy: {
-        '/^v(.*)/$': {
-          target: `http://localhost:5173`,
-          changeOrigin: true,
-          rewrite: path => {
-            console.log(path);
-
-            return path;
-          },
-        },
-      },
+      open: false,
     },
     preview: {
-      port: 4173,
       open: true,
     },
     // Vite automatically loads .env files from the root of the project if they are prefixed with the envPrefix.
@@ -129,7 +117,7 @@ export default defineConfig(_ => {
     test: {
       globals: true,
       environment: 'jsdom',
-      setupFiles: [resolve(__dirname, './polyfills/test.polyfills.ts')],
+      setupFiles: [resolve(__dirname, './polyfills/test.polyfill.ts')],
       server: {
         deps: {
           inline: ['vuetify'],
