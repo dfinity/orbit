@@ -9,17 +9,6 @@ export const SUPPORTED_LOCALTES = readdirSync(LOCALTES_PATH).map(file =>
   basename(file, '.locale.ts'),
 );
 
-export const DFX_CONFIG_PATH = resolve(__dirname, '../../../..', 'dfx.json');
-export const NETWORK = process.env.DFX_NETWORK || 'local';
-
-// The default canister IDs that are used in the wallet.
-export const DEFAULT_CANISTER_IDS = {
-  internet_identity: 'rdmx6-jaaaa-aaaaa-aaadq-cai',
-  icp_index: 'qhbym-qaaaa-aaaaa-aaafq-cai',
-  control_panel: '65evf-oqaaa-aaaal-add6q-cai',
-  app_wallet: '6uh6z-yyaaa-aaaal-add7a-cai',
-};
-
 // The current version of the wallet dapp.
 export const WALLET_VERSION = packageJson.version;
 

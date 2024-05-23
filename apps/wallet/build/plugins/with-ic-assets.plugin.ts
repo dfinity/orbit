@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { Plugin } from 'vite';
 import { load } from 'cheerio';
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 
 const getContentSecurityPolicy = (
   isProduction: boolean,

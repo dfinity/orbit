@@ -1,5 +1,4 @@
-import { describe } from 'node:test';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { setupComponent } from '~/test.utils';
 import { objectDeserialize, objectSerialize, useStorage } from './storage.utils';
 import logger from '~/core/logger.core';
