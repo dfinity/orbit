@@ -116,7 +116,7 @@ export default defineConfig(_ => {
     test: {
       globals: true,
       environment: 'jsdom',
-      setupFiles: [resolve(__dirname, './polyfills/test.polyfill.ts')],
+      setupFiles: [resolve(__dirname, './polyfills/test.polyfills.ts')],
       server: {
         deps: {
           inline: ['vuetify'],
