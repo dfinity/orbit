@@ -177,9 +177,18 @@ export const useStationStore = defineStore('station', {
           throw new InvalidStationError();
         }
 
-        await useCompatibilityLayer().checkCompatibility(stationId, {
+        const compat = await useCompatibilityLayer().checkCompatibility(stationId, {
           redirectIfIncompatible: true,
         });
+
+        // If the compatibility check fails, we warn the user but still allow them to proceed
+        // to enable them a chance to use the app with the station, even if it's not fully compatible.
+        if (compat === false) {
+          app.sendNotification({
+            type: 'warning',
+            message: i18n.global.t('app.api_compatibility_error'),
+          });
+        }
 
         const stationService = services().station.withStationId(stationId);
         const myUser = await stationService.myUser();
