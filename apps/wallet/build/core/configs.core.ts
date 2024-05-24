@@ -5,7 +5,7 @@ import packageJson from '../../package.json';
 import { execSync } from 'child_process';
 
 export const LOCALTES_PATH = resolve(__dirname, '../..', 'src/locales');
-export const SUPPORTED_LOCALTES = readdirSync(LOCALTES_PATH).map(file =>
+export const SUPPORTED_LOCALES = readdirSync(LOCALTES_PATH).map(file =>
   basename(file, '.locale.ts'),
 );
 

@@ -8,7 +8,7 @@ import {
   OPTIMIZED_BUILD,
   PRODUCTION,
   STATION_API_VERSION,
-  SUPPORTED_LOCALTES,
+  SUPPORTED_LOCALES,
 } from './core/configs.core';
 import { withApiCompatibilityFile } from './plugins/with-compatibility-file.plugin';
 import { withIcAssetsFile } from './plugins/with-ic-assets.plugin';
@@ -68,7 +68,7 @@ export default defineConfig(_ => {
 
               if (
                 folder.includes('/src/locales') &&
-                SUPPORTED_LOCALTES.some(locale => resolve(folder, `${locale}.locale.ts`) === id)
+                SUPPORTED_LOCALES.some(locale => resolve(folder, `${locale}.locale.ts`) === id)
               ) {
                 const [localeName] = basename(id).split('.');
                 return `locale-${localeName}`;
