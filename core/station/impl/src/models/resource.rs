@@ -284,10 +284,22 @@ impl Resource {
                 }
             },
             Resource::ChangeCanister(action) => match action {
-                ChangeCanisterResourceAction::Create(target) => {
+                ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any) => {
                     vec![Resource::ChangeCanister(
-                        ChangeCanisterResourceAction::Create(target.clone()),
+                        ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any),
                     )]
+                }
+                ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Canister(
+                    id,
+                )) => {
+                    vec![
+                        Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
+                            ChangeCanisterResourceTarget::Any,
+                        )),
+                        Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
+                            ChangeCanisterResourceTarget::Canister(*id),
+                        )),
+                    ]
                 }
             },
             Resource::Request(action) => match action {
