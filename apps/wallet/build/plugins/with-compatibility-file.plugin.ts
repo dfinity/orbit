@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { Plugin } from 'vite';
 import { STATION_API_VERSION, WALLET_VERSION } from '../core/configs.core';
+import { compareSemanticVersions } from '../utils/sort.utils';
 
 interface ApiCompatibilityFile {
   // The current version of the wallet dapp.
@@ -31,7 +32,15 @@ const loadApiCompatibilityFile = (filePath: string): ApiCompatibilityFile => {
     version: WALLET_VERSION,
     api: {
       latest: STATION_API_VERSION,
-      compatibility: {},
+      compatibility: {
+        [STATION_API_VERSION]: {
+          ui: [WALLET_VERSION],
+        },
+        // for backward compatibility with older versions of the station canister we also hardcode them here,
+        // this only affects for the very first time while the compat.json file is not created yet.
+        '0.0.2-alpha.1': { ui: [WALLET_VERSION] },
+        '0.0.2-alpha.0': { ui: [WALLET_VERSION] },
+      },
     },
   } as ApiCompatibilityFile;
 };
@@ -50,14 +59,8 @@ export const withApiCompatibilityFile = (
       configuration.version = WALLET_VERSION;
       configuration.api.latest = STATION_API_VERSION;
 
-      // Remove the current wallet version from the compat_apis if it exists.
+      // Cleanup the existing file if there are entries that are not compatible with UIs.
       for (const key of Object.keys(configuration.api.compatibility)) {
-        if (configuration.api.compatibility?.[key]?.['ui'].includes(WALLET_VERSION)) {
-          configuration.api.compatibility[key].ui = configuration.api.compatibility[key].ui.filter(
-            (version: string) => version !== WALLET_VERSION,
-          );
-        }
-
         // Remove the key if there are no UI versions compatible with it.
         if (configuration.api.compatibility?.[key]?.ui?.length === 0) {
           delete configuration.api.compatibility[key];
@@ -76,10 +79,23 @@ export const withApiCompatibilityFile = (
       // Mark the current wallet version as compatible with the current station API version.
       configuration.api.compatibility = {
         [STATION_API_VERSION]: {
-          ui: [WALLET_VERSION, ...currentCompatibility.ui],
+          ui: Array.from(new Set([WALLET_VERSION, ...currentCompatibility.ui])).sort(
+            compareSemanticVersions(),
+          ),
         },
         ...configuration.api.compatibility,
       };
+
+      // sorts the station api versions in descending order.
+      configuration.api.compatibility = Object.keys(configuration.api.compatibility)
+        .sort(compareSemanticVersions())
+        .reduce(
+          (acc, key) => {
+            acc[key] = configuration.api.compatibility[key];
+            return acc;
+          },
+          {} as Record<string, { ui: string[] }>,
+        );
 
       writeFileSync(filePath, JSON.stringify(configuration, null, 2), {
         encoding: 'utf-8',

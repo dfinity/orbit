@@ -110,6 +110,22 @@ async function fetchCompatFile(versionPath?: string): Promise<{
 }
 
 /**
+ * Get the currently loaded UI version from the meta tag or the import.meta.env
+ */
+function getCurrentlyLoadedUIVersion(): string {
+  // first try to get from the index.html meta tag
+  const versionMeta = document
+    .querySelector('meta[name="app:build-version"]')
+    ?.getAttribute('content');
+
+  if (versionMeta && isSemanticVersion(versionMeta)) {
+    return versionMeta;
+  }
+
+  return import.meta.env.APP_BUILD_VERSION;
+}
+
+/**
  * Use the compatibility layer to check if the station API version is compatible with the UI.
  *
  * Returns false if the compatible UI is not found.
@@ -138,7 +154,7 @@ export const createCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
           ])
         : await Promise.all([this.fetchStationApiVersion(stationId), this.fetchCompatFile(), null]);
 
-      const currentLoadedUIVersion = import.meta.env.APP_BUILD_VERSION;
+      const currentLoadedUIVersion = getCurrentlyLoadedUIVersion();
 
       // If the requested version is the latest version supported by the UI, then the user gets redirected to
       // the unversioned path, the same applies if the user is already in the versioned path but the ui build version

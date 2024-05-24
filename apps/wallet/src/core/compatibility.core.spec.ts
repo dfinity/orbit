@@ -11,7 +11,7 @@ vi.mock('~/core/ic-agent.core', () => ({
   },
 }));
 
-describe('Compatibility Composables', () => {
+describe('Compatibility Layer', () => {
   it('calls fetchStationApiVersion and fetchCompatFile to get the versions', async () => {
     const compatibility = createCompatibilityLayer();
 
