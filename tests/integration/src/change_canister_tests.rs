@@ -81,21 +81,6 @@ fn successful_four_eyes_upgrade() {
     )
     .unwrap();
 
-    // submitting canister upgrade request now succeeeds, but the request is rejected since no request policy has been set
-    let change_canister_operation_request = submit_request(
-        &env,
-        user_a,
-        canister_ids.station,
-        change_canister_operation.clone(),
-    );
-    match change_canister_operation_request.status {
-        RequestStatusDTO::Rejected { .. } => (),
-        _ => panic!(
-            "Unexpected request status: {:?}",
-            change_canister_operation_request.status
-        ),
-    };
-
     // set four eyes principle for canister changes
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {

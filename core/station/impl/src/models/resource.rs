@@ -522,6 +522,8 @@ mod test {
     use crate::core::validation::disable_mock_resource_validation;
     use crate::models::resource::ChangeCanisterResourceTarget;
     use candid::Principal;
+    use orbit_essentials::storable;
+    use ic_stable_structures::Storable;
 
     use super::{
         AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
@@ -607,5 +609,19 @@ mod test {
                 .validate()
                 .expect_err("Non existent resource should be invalid");
         }
+    }
+
+    #[test]
+    fn backwards_compatibility() {
+        #[storable]
+        #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+        pub enum ChangeCanisterResourceActionV0 {
+            Create,
+        }
+
+        let old_action = ChangeCanisterResourceActionV0::Create;
+        let bytes = old_action.to_bytes();
+        let new_action = ChangeCanisterResourceAction::from_bytes(bytes);
+        assert_eq!(new_action, ChangeCanisterResourceAction::Create(None));
     }
 }
