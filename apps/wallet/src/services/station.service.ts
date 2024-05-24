@@ -1,4 +1,4 @@
-import { Actor, ActorSubclass, Certificate, HttpAgent } from '@dfinity/agent';
+import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { idlFactory } from '~/generated/station';
 import {
@@ -67,11 +67,7 @@ import {
   ListAddressBookEntriesArgs,
   ListRequestsArgs,
 } from '~/types/station.types';
-import {
-  isSemanticVersion,
-  transformIdlWithOnlyVerifiedCalls,
-  variantIs,
-} from '~/utils/helper.utils';
+import { transformIdlWithOnlyVerifiedCalls, variantIs } from '~/utils/helper.utils';
 
 export class StationService {
   // This actor is modified to only perform calls that can be verified, such as update calls that go through consensus.
@@ -99,6 +95,10 @@ export class StationService {
         canisterId: stationId,
       },
     );
+  }
+
+  getStationId() {
+    return this.stationId;
   }
 
   withStationId(stationId: Principal): StationService {
@@ -865,43 +865,5 @@ export class StationService {
     }
 
     return result.Ok.request;
-  }
-
-  // Gets the version of the station canister from the state tree based on the canister public metadata.
-  async getVersion(): Promise<string> {
-    const encoder = new TextEncoder();
-    const versionPath: ArrayBuffer[] = [
-      encoder.encode('canister'),
-      this.stationId.toUint8Array(),
-      encoder.encode('metadata'),
-      encoder.encode('app:version'),
-    ];
-
-    const state = await this.agent.readState(this.stationId, {
-      paths: [versionPath],
-    });
-
-    const certificate = await Certificate.create({
-      canisterId: this.stationId,
-      certificate: state.certificate,
-      rootKey: this.agent.rootKey,
-    });
-
-    const version = certificate.lookup(versionPath);
-
-    if (!version) {
-      throw new Error('Version not found');
-    }
-
-    const decoder = new TextDecoder();
-    const decodedVersion = decoder.decode(version);
-
-    if (!isSemanticVersion(decodedVersion)) {
-      throw new Error(
-        'Invalid version format, expected semantic version but got `${' + decodedVersion + '}`',
-      );
-    }
-
-    return decodedVersion;
   }
 }

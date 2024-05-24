@@ -1,10 +1,10 @@
 import { Certificate, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
-import { icAgent } from '~/core/ic-agent.core';
-import { isSemanticVersion } from '~/utils/helper.utils';
-import logger from '~/core/logger.core';
 import { appInitConfig } from '~/configs/init.config';
+import { icAgent } from '~/core/ic-agent.core';
+import logger from '~/core/logger.core';
 import { redirectToKey } from '~/plugins/router.plugin';
+import { isSemanticVersion } from '~/utils/helper.utils';
 
 /**
  * Fetch the version of the station API from the canister metadata.
@@ -63,6 +63,15 @@ function redirectToURL(redirectTo: URL): void {
   // to the exact path of the requested version so that it's index.html can be served correctly by the asset canister.
   //
   // The hook after the user logs in will redirect the user back to the requested path based on the session storage.
+  //
+  // Moreover, the asset canister behaves differently then response verification v2, for the later it
+  // creates a certificate where  it will lookup if an index.html exists in nested paths recursively, which means
+  // that for SPA's it would properly lookup and add the correct witness to the index.html of a path like /v1.0.0
+  // even if it were to load a dynamic route like /v1.0.0/nested-route.
+
+  // However, the asset canister if it does not have an exact path, it will always fallback to the root path for
+  // the index.html which for that example it would not work for us, since it would load the
+  // latest html for a versioned UI.
   const unversionedUrl = new URL(window.location.href);
   unversionedUrl.pathname = '/' + pathParts.slice(1).join('/');
   window.sessionStorage.setItem(redirectToKey, unversionedUrl.href);
@@ -105,7 +114,7 @@ async function fetchCompatFile(versionPath?: string): Promise<{
  *
  * Returns false if the compatible UI is not found.
  */
-export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
+export const createCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
   return {
     redirectToURL: (url: URL) => redirectToURL(url),
     fetchCompatFile: (versionPath?: string) => fetchCompatFile(versionPath),

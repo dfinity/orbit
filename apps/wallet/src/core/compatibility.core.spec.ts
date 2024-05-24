@@ -1,7 +1,6 @@
-import { describe, vi, expect, it } from 'vitest';
-import { setupComponent } from '../test.utils';
-import { useCompatibilityLayer } from './compatibility.composable';
 import { Principal } from '@dfinity/principal';
+import { describe, expect, it, vi } from 'vitest';
+import { createCompatibilityLayer } from './compatibility.core';
 
 vi.mock('~/core/ic-agent.core', () => ({
   icAgent: {
@@ -14,14 +13,10 @@ vi.mock('~/core/ic-agent.core', () => ({
 
 describe('Compatibility Composables', () => {
   it('calls fetchStationApiVersion and fetchCompatFile to get the versions', async () => {
-    const vm = setupComponent(() => {
-      return {
-        compatibility: useCompatibilityLayer(),
-      };
-    });
+    const compatibility = createCompatibilityLayer();
 
-    vi.spyOn(vm.compatibility, 'fetchStationApiVersion').mockResolvedValue('1.0.0');
-    vi.spyOn(vm.compatibility, 'fetchCompatFile').mockResolvedValue({
+    vi.spyOn(compatibility, 'fetchStationApiVersion').mockResolvedValue('1.0.0');
+    vi.spyOn(compatibility, 'fetchCompatFile').mockResolvedValue({
       version: '1.0.0',
       api: {
         latest: '1.0.0',
@@ -33,23 +28,19 @@ describe('Compatibility Composables', () => {
       },
     });
 
-    await vm.compatibility.checkCompatibility(Principal.anonymous(), {
+    await compatibility.checkCompatibility(Principal.anonymous(), {
       redirectIfIncompatible: false,
     });
 
-    expect(vm.compatibility.fetchStationApiVersion).toHaveBeenCalled();
-    expect(vm.compatibility.fetchCompatFile).toHaveBeenCalled();
+    expect(compatibility.fetchStationApiVersion).toHaveBeenCalled();
+    expect(compatibility.fetchCompatFile).toHaveBeenCalled();
   });
 
   it('returns false if compatible UI is not found', async () => {
-    const vm = setupComponent(() => {
-      return {
-        compatibility: useCompatibilityLayer(),
-      };
-    });
+    const compatibility = createCompatibilityLayer();
 
-    vi.spyOn(vm.compatibility, 'fetchStationApiVersion').mockResolvedValue('1.0.0');
-    vi.spyOn(vm.compatibility, 'fetchCompatFile').mockImplementation(
+    vi.spyOn(compatibility, 'fetchStationApiVersion').mockResolvedValue('1.0.0');
+    vi.spyOn(compatibility, 'fetchCompatFile').mockImplementation(
       versionPath =>
         new Promise((resolve, reject) => {
           if (versionPath === 'v2.0.0') {
@@ -70,7 +61,7 @@ describe('Compatibility Composables', () => {
         }),
     );
 
-    const result = await vm.compatibility.checkCompatibility(Principal.anonymous(), {
+    const result = await compatibility.checkCompatibility(Principal.anonymous(), {
       redirectIfIncompatible: false,
     });
 
@@ -78,14 +69,10 @@ describe('Compatibility Composables', () => {
   });
 
   it('returns undefined if already compatible', async () => {
-    const vm = setupComponent(() => {
-      return {
-        compatibility: useCompatibilityLayer(),
-      };
-    });
+    const compatibility = createCompatibilityLayer();
 
-    vi.spyOn(vm.compatibility, 'fetchStationApiVersion').mockResolvedValue('1.0.0');
-    vi.spyOn(vm.compatibility, 'fetchCompatFile').mockResolvedValue({
+    vi.spyOn(compatibility, 'fetchStationApiVersion').mockResolvedValue('1.0.0');
+    vi.spyOn(compatibility, 'fetchCompatFile').mockResolvedValue({
       version: '1.0.0',
       api: {
         latest: '1.0.0',
@@ -97,7 +84,7 @@ describe('Compatibility Composables', () => {
       },
     });
 
-    const result = await vm.compatibility.checkCompatibility(Principal.anonymous(), {
+    const result = await compatibility.checkCompatibility(Principal.anonymous(), {
       redirectIfIncompatible: false,
     });
 
@@ -105,14 +92,10 @@ describe('Compatibility Composables', () => {
   });
 
   it('redirects to versioned path if incompatible', async () => {
-    const vm = setupComponent(() => {
-      return {
-        compatibility: useCompatibilityLayer(),
-      };
-    });
+    const compatibility = createCompatibilityLayer();
 
-    vi.spyOn(vm.compatibility, 'fetchStationApiVersion').mockResolvedValue('1.0.0');
-    vi.spyOn(vm.compatibility, 'fetchCompatFile').mockImplementation(
+    vi.spyOn(compatibility, 'fetchStationApiVersion').mockResolvedValue('1.0.0');
+    vi.spyOn(compatibility, 'fetchCompatFile').mockImplementation(
       versionPath =>
         new Promise(resolve => {
           if (versionPath === 'v2.0.0') {
@@ -143,7 +126,7 @@ describe('Compatibility Composables', () => {
         }),
     );
 
-    const result = (await vm.compatibility.checkCompatibility(Principal.anonymous(), {
+    const result = (await compatibility.checkCompatibility(Principal.anonymous(), {
       redirectIfIncompatible: false,
     })) as URL;
 
@@ -156,14 +139,10 @@ describe('Compatibility Composables', () => {
     versionedURL.pathname = '/v2.0.0';
     window.location = versionedURL as unknown as Location;
 
-    const vm = setupComponent(() => {
-      return {
-        compatibility: useCompatibilityLayer(),
-      };
-    });
+    const compatibility = createCompatibilityLayer();
 
-    vi.spyOn(vm.compatibility, 'fetchStationApiVersion').mockResolvedValue('1.0.0');
-    vi.spyOn(vm.compatibility, 'fetchCompatFile').mockImplementation(
+    vi.spyOn(compatibility, 'fetchStationApiVersion').mockResolvedValue('1.0.0');
+    vi.spyOn(compatibility, 'fetchCompatFile').mockImplementation(
       versionPath =>
         new Promise(resolve => {
           if (versionPath === 'v2.0.0') {
@@ -197,7 +176,7 @@ describe('Compatibility Composables', () => {
         }),
     );
 
-    const result = (await vm.compatibility.checkCompatibility(Principal.anonymous(), {
+    const result = (await compatibility.checkCompatibility(Principal.anonymous(), {
       redirectIfIncompatible: true,
     })) as URL;
 

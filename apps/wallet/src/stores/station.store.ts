@@ -1,7 +1,7 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
-import { useCompatibilityLayer } from '~/composables/compatibility.composable';
 import { appInitConfig } from '~/configs/init.config';
+import { createCompatibilityLayer } from '~/core/compatibility.core';
 import { STATION_ID_QUERY_PARAM } from '~/core/constants.core';
 import { InvalidStationError, UnregisteredUserError } from '~/core/errors.core';
 import { logger } from '~/core/logger.core';
@@ -177,7 +177,7 @@ export const useStationStore = defineStore('station', {
           throw new InvalidStationError();
         }
 
-        const compat = await useCompatibilityLayer().checkCompatibility(stationId, {
+        const compat = await createCompatibilityLayer().checkCompatibility(stationId, {
           redirectIfIncompatible: true,
         });
 
