@@ -76,8 +76,7 @@ export const idlFactory = ({ IDL }) => {
     'Update' : ResourceId,
   });
   const ChangeCanisterResourceTarget = IDL.Variant({
-    'Station' : IDL.Null,
-    'Upgrader' : IDL.Null,
+    'Any' : IDL.Null,
     'Canister' : IDL.Principal,
   });
   const ChangeCanisterResourceAction = IDL.Variant({
@@ -909,13 +908,12 @@ export const idlFactory = ({ IDL }) => {
     'ListUserGroups' : IDL.Null,
     'AddUser' : IDL.Null,
     'ListUsers' : IDL.Null,
-    'ChangeUpgrader' : IDL.Null,
+    'ChangeCanister' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,
     'AddRequestPolicy' : IDL.Null,
     'ListAddressBookEntries' : IDL.Null,
-    'ChangeStation' : IDL.Null,
     'ListRequests' : IDL.Null,
     'SystemInfo' : IDL.Null,
     'Capabilities' : IDL.Null,

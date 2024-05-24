@@ -134,17 +134,17 @@ pub enum SystemResourceAction {
 }
 
 #[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeCanisterResourceTarget {
-    Station,
-    Upgrader,
+    #[default]
+    Any,
     Canister(Principal),
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeCanisterResourceAction {
-    Create(ChangeCanisterResourceTarget),
+    Create(Option<ChangeCanisterResourceTarget>),
 }
 
 #[storable]
@@ -457,8 +457,7 @@ impl Display for AccountResourceAction {
 impl Display for ChangeCanisterResourceTarget {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChangeCanisterResourceTarget::Station => write!(f, "Station"),
-            ChangeCanisterResourceTarget::Upgrader => write!(f, "Upgrader"),
+            ChangeCanisterResourceTarget::Any => write!(f, "Any"),
             ChangeCanisterResourceTarget::Canister(canister_id) => {
                 write!(f, "Canister({})", canister_id)
             }
@@ -468,7 +467,9 @@ impl Display for ChangeCanisterResourceTarget {
 impl Display for ChangeCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChangeCanisterResourceAction::Create(target) => write!(f, "Create({})", target),
+            ChangeCanisterResourceAction::Create(target) => {
+                write!(f, "Create({})", target.clone().unwrap_or_default())
+            }
         }
     }
 }
@@ -545,15 +546,13 @@ mod test {
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
-                ChangeCanisterResourceTarget::Station,
-            )),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
-                ChangeCanisterResourceTarget::Upgrader,
-            )),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(None)),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(Some(
+                ChangeCanisterResourceTarget::Any,
+            ))),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(Some(
                 ChangeCanisterResourceTarget::Canister(Principal::management_canister()),
-            )),
+            ))),
             Resource::Request(RequestResourceAction::List),
             Resource::Request(RequestResourceAction::Read(ResourceId::Any)),
             Resource::RequestPolicy(ResourceAction::List),

@@ -63,7 +63,7 @@ pub enum RequestSpecifier {
     EditAddressBookEntry(ResourceIds),
     RemoveAddressBookEntry(ResourceIds),
     Transfer(ResourceIds),
-    ChangeCanister(ChangeCanisterResourceTarget),
+    ChangeCanister(Option<ChangeCanisterResourceTarget>),
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIds),
@@ -255,7 +255,7 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
                 RequestSpecifier::ChangeCanister(target),
             ) => {
                 let input_target: ChangeCanisterResourceTarget = input.target.into();
-                input_target == target
+                input_target == target.unwrap_or_default()
             }
             (RequestOperation::AddUserGroup(_), RequestSpecifier::AddUserGroup) => true,
             (
@@ -530,15 +530,15 @@ mod tests {
         RequestSpecifier::AddAddressBookEntry
             .validate()
             .expect("AddAddressBookEntry should be valid");
-        RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Station)
+        RequestSpecifier::ChangeCanister(None)
             .validate()
             .expect("ChangeCanister should be valid");
-        RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Upgrader)
+        RequestSpecifier::ChangeCanister(Some(ChangeCanisterResourceTarget::Any))
             .validate()
             .expect("ChangeCanister should be valid");
-        RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Canister(
+        RequestSpecifier::ChangeCanister(Some(ChangeCanisterResourceTarget::Canister(
             Principal::management_canister(),
-        ))
+        )))
         .validate()
         .expect("ChangeCanister should be valid");
         RequestSpecifier::AddRequestPolicy

@@ -139,15 +139,10 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
         ),
-        // change canister (station)
+        // change canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Station)),
-        ),
-        // change canister (upgrader)
-        (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Upgrader)),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(Some(ChangeCanisterResourceTarget::Any))),
         ),
     ];
 
@@ -231,14 +226,9 @@ lazy_static! {
             )
 
         ),
-        // change canister (station)
+        // change canister
         (
-            RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Station),
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
-        ),
-        // change canister (upgrader)
-        (
-            RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Upgrader),
+            RequestSpecifier::ChangeCanister(Some(ChangeCanisterResourceTarget::Any)),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         // system info

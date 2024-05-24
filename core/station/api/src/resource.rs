@@ -67,8 +67,7 @@ pub enum SystemResourceActionDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ChangeCanisterResourceTargetDTO {
-    Station,
-    Upgrader,
+    Any,
     Canister(Principal),
 }
 

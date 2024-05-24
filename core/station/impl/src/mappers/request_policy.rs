@@ -245,7 +245,7 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
                 station_api::RequestSpecifierDTO::Transfer(account.into())
             }
             RequestSpecifier::ChangeCanister(target) => {
-                station_api::RequestSpecifierDTO::ChangeCanister(target.into())
+                station_api::RequestSpecifierDTO::ChangeCanister(target.unwrap_or_default().into())
             }
             RequestSpecifier::EditPermission(policy) => {
                 station_api::RequestSpecifierDTO::EditPermission(policy.into())
@@ -297,7 +297,7 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
                 RequestSpecifier::Transfer(transfer_specifier.into())
             }
             station_api::RequestSpecifierDTO::ChangeCanister(target) => {
-                RequestSpecifier::ChangeCanister(target.into())
+                RequestSpecifier::ChangeCanister(Some(target.into()))
             }
             station_api::RequestSpecifierDTO::EditPermission(policy) => {
                 RequestSpecifier::EditPermission(policy.into())

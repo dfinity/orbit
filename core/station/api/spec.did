@@ -1564,8 +1564,7 @@ type AccountResourceAction = variant {
 
 // The target canister of a change canister request.
 type ChangeCanisterResourceTarget = variant {
-  Station;
-  Upgrader;
+  Any;
   Canister : principal;
 };
 
@@ -1788,8 +1787,7 @@ type UserPrivilege = variant {
   AddRequestPolicy;
   ListAddressBookEntries;
   AddAddressBookEntry;
-  ChangeStation;
-  ChangeUpgrader;
+  ChangeCanister;
   ListRequests;
 };
 

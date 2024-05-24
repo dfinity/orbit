@@ -15,7 +15,7 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 17] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 16] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
     UserPrivilege::ManageSystemInfo,
@@ -30,8 +30,7 @@ pub const USER_PRIVILEGES: [UserPrivilege; 17] = [
     UserPrivilege::AddUserGroup,
     UserPrivilege::ListAddressBookEntries,
     UserPrivilege::AddAddressBookEntry,
-    UserPrivilege::ChangeStation,
-    UserPrivilege::ChangeUpgrader,
+    UserPrivilege::ChangeCanister,
     UserPrivilege::ListRequests,
 ];
 
@@ -51,11 +50,8 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::AddUserGroup => Resource::UserGroup(ResourceAction::Create),
             UserPrivilege::ListAddressBookEntries => Resource::AddressBook(ResourceAction::List),
             UserPrivilege::AddAddressBookEntry => Resource::AddressBook(ResourceAction::Create),
-            UserPrivilege::ChangeStation => Resource::ChangeCanister(
-                ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Station),
-            ),
-            UserPrivilege::ChangeUpgrader => Resource::ChangeCanister(
-                ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Upgrader),
+            UserPrivilege::ChangeCanister => Resource::ChangeCanister(
+                ChangeCanisterResourceAction::Create(Some(ChangeCanisterResourceTarget::Any)),
             ),
             UserPrivilege::ListRequests => Resource::Request(RequestResourceAction::List),
             UserPrivilege::ManageSystemInfo => {
@@ -206,7 +202,7 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 )))
             }
             RequestOperationInput::ChangeCanister(input) => Resource::ChangeCanister(
-                ChangeCanisterResourceAction::Create(input.target.clone().into()),
+                ChangeCanisterResourceAction::Create(Some(input.target.clone().into())),
             ),
             RequestOperationInput::EditPermission(_) => {
                 Resource::Permission(PermissionResourceAction::Update)
