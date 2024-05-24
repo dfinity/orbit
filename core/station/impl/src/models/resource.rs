@@ -141,10 +141,16 @@ pub enum ChangeCanisterResourceTarget {
     Canister(Principal),
 }
 
-#[storable]
+#[storable(serializer = "cbor_or_default")]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeCanisterResourceAction {
-    Create(Option<ChangeCanisterResourceTarget>),
+    Create(ChangeCanisterResourceTarget),
+}
+
+impl Default for ChangeCanisterResourceAction {
+    fn default() -> Self {
+        ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::default())
+    }
 }
 
 #[storable]
@@ -468,7 +474,7 @@ impl Display for ChangeCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ChangeCanisterResourceAction::Create(target) => {
-                write!(f, "Create({})", target.clone().unwrap_or_default())
+                write!(f, "Create({})", target)
             }
         }
     }
@@ -522,8 +528,8 @@ mod test {
     use crate::core::validation::disable_mock_resource_validation;
     use crate::models::resource::ChangeCanisterResourceTarget;
     use candid::Principal;
-    use orbit_essentials::storable;
     use ic_stable_structures::Storable;
+    use orbit_essentials::storable;
 
     use super::{
         AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
@@ -548,13 +554,12 @@ mod test {
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(None)),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(Some(
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
                 ChangeCanisterResourceTarget::Any,
-            ))),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(Some(
+            )),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
                 ChangeCanisterResourceTarget::Canister(Principal::management_canister()),
-            ))),
+            )),
             Resource::Request(RequestResourceAction::List),
             Resource::Request(RequestResourceAction::Read(ResourceId::Any)),
             Resource::RequestPolicy(ResourceAction::List),
@@ -622,6 +627,9 @@ mod test {
         let old_action = ChangeCanisterResourceActionV0::Create;
         let bytes = old_action.to_bytes();
         let new_action = ChangeCanisterResourceAction::from_bytes(bytes);
-        assert_eq!(new_action, ChangeCanisterResourceAction::Create(None));
+        assert_eq!(
+            new_action,
+            ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any)
+        );
     }
 }

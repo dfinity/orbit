@@ -689,13 +689,12 @@ impl RequestOperation {
             }
             RequestOperation::ChangeCanister(ChangeCanisterOperation { input, .. }) => {
                 vec![
-                    Resource::ChangeCanister(ChangeCanisterResourceAction::Create(Some(
+                    Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
                         input.target.clone().into(),
-                    ))),
-                    Resource::ChangeCanister(ChangeCanisterResourceAction::Create(Some(
+                    )),
+                    Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
                         ChangeCanisterResourceTarget::Any,
-                    ))),
-                    Resource::ChangeCanister(ChangeCanisterResourceAction::Create(None)),
+                    )),
                 ]
             }
             RequestOperation::EditRequestPolicy(EditRequestPolicyOperation { input }) => {

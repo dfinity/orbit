@@ -63,7 +63,7 @@ pub enum RequestSpecifier {
     EditAddressBookEntry(ResourceIds),
     RemoveAddressBookEntry(ResourceIds),
     Transfer(ResourceIds),
-    ChangeCanister(Option<ChangeCanisterResourceTarget>),
+    ChangeCanister(ChangeCanisterResourceTarget),
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIds),
@@ -252,10 +252,17 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
                 .is_match((p.clone(), params.input.from_account_id, account))?,
             (
                 RequestOperation::ChangeCanister(ChangeCanisterOperation { input, .. }),
-                RequestSpecifier::ChangeCanister(target),
+                RequestSpecifier::ChangeCanister(specifier),
             ) => {
-                let input_target: ChangeCanisterResourceTarget = input.target.into();
-                input_target == target.unwrap_or_default()
+                let target: ChangeCanisterResourceTarget = input.target.into();
+                match (target, specifier) {
+                    (_, ChangeCanisterResourceTarget::Any) => true,
+                    (
+                        ChangeCanisterResourceTarget::Canister(target_id),
+                        ChangeCanisterResourceTarget::Canister(specifier_id),
+                    ) => target_id == specifier_id,
+                    _ => false,
+                }
             }
             (RequestOperation::AddUserGroup(_), RequestSpecifier::AddUserGroup) => true,
             (
@@ -530,15 +537,12 @@ mod tests {
         RequestSpecifier::AddAddressBookEntry
             .validate()
             .expect("AddAddressBookEntry should be valid");
-        RequestSpecifier::ChangeCanister(None)
+        RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Any)
             .validate()
             .expect("ChangeCanister should be valid");
-        RequestSpecifier::ChangeCanister(Some(ChangeCanisterResourceTarget::Any))
-            .validate()
-            .expect("ChangeCanister should be valid");
-        RequestSpecifier::ChangeCanister(Some(ChangeCanisterResourceTarget::Canister(
+        RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Canister(
             Principal::management_canister(),
-        )))
+        ))
         .validate()
         .expect("ChangeCanister should be valid");
         RequestSpecifier::AddRequestPolicy

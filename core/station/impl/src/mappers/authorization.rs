@@ -51,7 +51,7 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::ListAddressBookEntries => Resource::AddressBook(ResourceAction::List),
             UserPrivilege::AddAddressBookEntry => Resource::AddressBook(ResourceAction::Create),
             UserPrivilege::ChangeCanister => Resource::ChangeCanister(
-                ChangeCanisterResourceAction::Create(Some(ChangeCanisterResourceTarget::Any)),
+                ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any),
             ),
             UserPrivilege::ListRequests => Resource::Request(RequestResourceAction::List),
             UserPrivilege::ManageSystemInfo => {
@@ -202,7 +202,7 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 )))
             }
             RequestOperationInput::ChangeCanister(input) => Resource::ChangeCanister(
-                ChangeCanisterResourceAction::Create(Some(input.target.clone().into())),
+                ChangeCanisterResourceAction::Create(input.target.clone().into()),
             ),
             RequestOperationInput::EditPermission(_) => {
                 Resource::Permission(PermissionResourceAction::Update)

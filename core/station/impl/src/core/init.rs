@@ -142,7 +142,7 @@ lazy_static! {
         // change canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(Some(ChangeCanisterResourceTarget::Any))),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any)),
         ),
     ];
 
@@ -228,7 +228,7 @@ lazy_static! {
         ),
         // change canister
         (
-            RequestSpecifier::ChangeCanister(Some(ChangeCanisterResourceTarget::Any)),
+            RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         // system info

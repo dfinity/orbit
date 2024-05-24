@@ -7,8 +7,7 @@ use crate::TestEnv;
 use station_api::{
     AddRequestPolicyOperationInput, ChangeCanisterOperationInput, ChangeCanisterResourceTargetDTO,
     ChangeCanisterTargetDTO, EditPermissionOperationInput, QuorumDTO, RequestApprovalStatusDTO,
-    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, RequestStatusDTO,
-    UserSpecifierDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, UserSpecifierDTO,
 };
 
 #[test]

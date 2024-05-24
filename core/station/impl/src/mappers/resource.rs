@@ -254,7 +254,7 @@ impl From<station_api::ChangeCanisterResourceActionDTO> for ChangeCanisterResour
     fn from(action: station_api::ChangeCanisterResourceActionDTO) -> Self {
         match action {
             station_api::ChangeCanisterResourceActionDTO::Create(target) => {
-                ChangeCanisterResourceAction::Create(Some(target.into()))
+                ChangeCanisterResourceAction::Create(target.into())
             }
         }
     }
@@ -264,9 +264,7 @@ impl From<ChangeCanisterResourceAction> for station_api::ChangeCanisterResourceA
     fn from(action: ChangeCanisterResourceAction) -> Self {
         match action {
             ChangeCanisterResourceAction::Create(target) => {
-                station_api::ChangeCanisterResourceActionDTO::Create(
-                    target.unwrap_or_default().into(),
-                )
+                station_api::ChangeCanisterResourceActionDTO::Create(target.into())
             }
         }
     }
