@@ -76,7 +76,7 @@ function redirectToURL(redirectTo: URL): void {
 /**
  * Fetch the compatibility file for the UI, if a version is provided, then fetch the versioned file.
  */
-async function fetchCompatFile(version?: string): Promise<{
+async function fetchCompatFile(versionPath?: string): Promise<{
   // The current version of the wallet dapp.
   version: string;
   // The compatibility of the wallet with the station API.
@@ -92,8 +92,8 @@ async function fetchCompatFile(version?: string): Promise<{
     >;
   };
 }> {
-  const fileUrl = version
-    ? `${appInitConfig.baseUrl}${version}/compat.json`
+  const fileUrl = versionPath
+    ? `${appInitConfig.baseUrl}${versionPath}/compat.json`
     : `${appInitConfig.baseUrl}compat.json`;
 
   const response = await fetch(fileUrl);
@@ -107,11 +107,13 @@ async function fetchCompatFile(version?: string): Promise<{
  */
 export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
   return {
+    redirectToURL: (url: URL) => redirectToURL(url),
+    fetchCompatFile: (versionPath?: string) => fetchCompatFile(versionPath),
     fetchStationApiVersion: (stationId: Principal) => fetchStationApiVersion(agent, stationId),
-    checkCompatibility: async (
+    async checkCompatibility(
       stationId: Principal,
       opts: { redirectIfIncompatible?: boolean } = {},
-    ): Promise<URL | undefined | false> => {
+    ): Promise<URL | undefined | false> {
       const url = new URL(window.location.href);
       const pathParts = url.pathname.split('/').filter(Boolean); // Remove empty strings
       const requestedVersion = isSemanticVersion(pathParts?.[0] ?? '', 'v')
@@ -120,12 +122,12 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
 
       const [stationApiVersion, compat, rootCompat] = requestedVersion
         ? await Promise.all([
-            fetchStationApiVersion(agent, stationId),
-            fetchCompatFile(requestedVersion),
+            this.fetchStationApiVersion(stationId),
+            this.fetchCompatFile(requestedVersion),
             // Also fetch the root compatibility file to get the latest supported version of the UI.
-            fetchCompatFile(),
+            this.fetchCompatFile(),
           ])
-        : await Promise.all([fetchStationApiVersion(agent, stationId), fetchCompatFile(), null]);
+        : await Promise.all([this.fetchStationApiVersion(stationId), this.fetchCompatFile(), null]);
 
       const currentLoadedUIVersion = import.meta.env.APP_BUILD_VERSION;
 
@@ -141,7 +143,7 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
         url.pathname = '/' + parts.join('/');
 
         if (opts.redirectIfIncompatible) {
-          redirectToURL(url);
+          this.redirectToURL(url);
         }
 
         return url;
@@ -172,7 +174,7 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
         url.pathname = '/' + parts.join('/');
 
         if (opts.redirectIfIncompatible) {
-          redirectToURL(url);
+          this.redirectToURL(url);
         }
 
         return url;
@@ -194,7 +196,7 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
       const parts = pathParts.filter(part => !isSemanticVersion(part, 'v'));
       parts.unshift(compatibleUI);
 
-      const compatibleUIExists = await fetchCompatFile(compatibleUI)
+      const compatibleUIExists = await this.fetchCompatFile(compatibleUI)
         .then(() => true)
         .catch(() => {
           logger.warn(`The compatible version ${compatibleUI} does not exist.`);
@@ -209,7 +211,7 @@ export const useCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
       url.pathname = '/' + parts.join('/');
 
       if (opts.redirectIfIncompatible) {
-        redirectToURL(url);
+        this.redirectToURL(url);
       }
 
       return url;

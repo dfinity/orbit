@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, statSync } from 'fs';
 import { resolve } from 'path';
 import { Plugin } from 'vite';
-import { PRODUCTION } from '../core/configs.core';
+import { ENV_PREFIX, PRODUCTION } from '../core/configs.core';
 
 // The default canister IDs that are used in the wallet application.
 const DEFAULT_CANISTER_IDS = {
@@ -71,6 +71,7 @@ export const withCanisterIds = (
     dfxConfigDirPath?: string;
     network?: string;
     isProduction?: boolean;
+    envPrefix?: string;
   } = {},
 ): Plugin => {
   return {
@@ -82,21 +83,36 @@ export const withCanisterIds = (
         ? resolve(basePath, opts.dfxConfigDirPath)
         : findDfxConfigBasePath(basePath);
       const isProduction = opts.isProduction || PRODUCTION;
+      const envPrefix = opts.envPrefix || ENV_PREFIX;
 
       const canisters = resolveCanisterIds(icpNetwork, dfxConfigDirPath);
       const canisterEnvVars = Object.entries(canisters).reduce((acc, [key, value]) => {
-        acc[`import.meta.env.APP_CANISTER_ID_${key.toUpperCase()}`] = JSON.stringify(value);
+        acc[`import.meta.env.${envPrefix}CANISTER_ID_${key.toUpperCase()}`] = JSON.stringify(value);
         // This is to support the generated actors that use the process.env.CANISTER_ID_* variables.
         acc[`process.env.CANISTER_ID_${key.toUpperCase()}`] = JSON.stringify(value);
         return acc;
       }, {});
 
+      const buildEnvVars = {
+        ...canisterEnvVars,
+        'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY': isProduction
+          ? JSON.stringify('https://identity.ic0.app')
+          : JSON.stringify(`http://${canisters.internet_identity}.localhost:4943`),
+      };
+
       return {
-        define: {
-          ...canisterEnvVars,
-          'import.meta.env.APP_PROVIDER_URL_INTERNET_IDENTITY': isProduction
-            ? JSON.stringify(process.env.APP_PROVIDER_URL_INTERNET_IDENTITY)
-            : JSON.stringify(`http://${canisters.internet_identity}.localhost:4943`),
+        define: { ...buildEnvVars },
+        test: {
+          env: {
+            ...Object.entries(buildEnvVars).reduce((acc, [key, value]) => {
+              const keyParts = key.split('.');
+              if (keyParts.length) {
+                acc[keyParts.pop()] = JSON.parse(value);
+              }
+
+              return acc;
+            }, {}),
+          },
         },
       };
     },
