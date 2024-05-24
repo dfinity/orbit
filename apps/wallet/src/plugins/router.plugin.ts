@@ -409,9 +409,13 @@ export const routeAccessGuard: NavigationGuard = async (to, _from, next) => {
   if (!matchesRequiredSession) {
     switch (to.meta.auth.check.session) {
       case RequiredSessionState.Authenticated:
+        // save the current route to redirect back after login
+        sessionStorage.setItem(redirectToKey, to.fullPath);
         return next({ name: defaultLoginRoute });
       case RequiredSessionState.ConnectedToStation: {
         if (!session.isAuthenticated) {
+          // save the current route to redirect back after login
+          sessionStorage.setItem(redirectToKey, to.fullPath);
           return next({ name: defaultLoginRoute });
         }
 

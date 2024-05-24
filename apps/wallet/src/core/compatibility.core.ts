@@ -74,7 +74,10 @@ function redirectToURL(redirectTo: URL): void {
   // latest html for a versioned UI.
   const unversionedUrl = new URL(window.location.href);
   unversionedUrl.pathname = '/' + pathParts.slice(1).join('/');
-  window.sessionStorage.setItem(redirectToKey, unversionedUrl.href);
+  window.sessionStorage.setItem(
+    redirectToKey,
+    unversionedUrl.pathname + unversionedUrl.search + unversionedUrl.hash,
+  );
 
   const exactPathUrl = new URL(window.location.href);
   exactPathUrl.pathname = '/' + requestedVersion + '/';

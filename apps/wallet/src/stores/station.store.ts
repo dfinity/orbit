@@ -20,7 +20,7 @@ import { StationService } from '~/services/station.service';
 import { useAppStore } from '~/stores/app.store';
 import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 import { LoadableItem } from '~/types/helper.types';
-import { computedStationName, isApiError } from '~/utils/app.utils';
+import { computedStationName, isApiError, popRedirectToLocation } from '~/utils/app.utils';
 import { arrayBatchMaker, removeBasePathFromPathname } from '~/utils/helper.utils';
 import { accountsWorker, startWorkers, stopWorkers } from '~/workers';
 
@@ -248,7 +248,10 @@ export const useStationStore = defineStore('station', {
         // if the id has changed, force a navigation to re-run the route guards
         if (onConnectedReload && this.canisterId.length && this.canisterId !== stationId.toText()) {
           // window.location is used because the router is not fully initialized yet in the first load
-          const url = new URL(window.location.href);
+          const redirectTo = popRedirectToLocation();
+          const url = new URL(
+            redirectTo ? window.location.origin + redirectTo : window.location.href,
+          );
           url.pathname = removeBasePathFromPathname(url.pathname, appInitConfig.versionedBaseUrl);
           url.searchParams.set(STATION_ID_QUERY_PARAM, stationId.toText());
 
