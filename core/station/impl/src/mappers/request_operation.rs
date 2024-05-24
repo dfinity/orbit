@@ -688,14 +688,19 @@ impl RequestOperation {
                 ]
             }
             RequestOperation::ChangeCanister(ChangeCanisterOperation { input, .. }) => {
-                vec![
-                    Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
-                        input.target.clone().into(),
-                    )),
-                    Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
-                        ChangeCanisterResourceTarget::Any,
-                    )),
-                ]
+                match input.target.clone().into() {
+                    ChangeCanisterResourceTarget::Any => vec![Resource::ChangeCanister(
+                        ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any),
+                    )],
+                    ChangeCanisterResourceTarget::Canister(id) => vec![
+                        Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
+                            ChangeCanisterResourceTarget::Any,
+                        )),
+                        Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
+                            ChangeCanisterResourceTarget::Canister(id),
+                        )),
+                    ],
+                }
             }
             RequestOperation::EditRequestPolicy(EditRequestPolicyOperation { input }) => {
                 vec![
