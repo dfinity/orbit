@@ -27,6 +27,8 @@ jobs:
   validate-commits:
     name: 'validate-commits:required'
     runs-on: ubuntu-latest
+    env:
+      TITLE: ${{ github.event.pull_request.title }}
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -46,11 +48,10 @@ jobs:
       - if: ${{ github.event_name == 'pull_request' }}
         name: 'Check PR Title'
         run: |
-          if [[ "${{ github.event.pull_request.title }}" =~ ^(feat|fix|chore|build|ci|docs|style|refactor|perf|test)(\([-a-zA-Z0-9,]+\))?\!?\: ]]; then
+          if [[ "$TITLE" =~ ^(feat|fix|chore|build|ci|docs|style|refactor|perf|test)(\([-a-zA-Z0-9,]+\))?\!?\: ]]; then
               echo "PR Title passes"
           else
               echo "PR Title does not match conventions"
-              echo "PR Title: ${{ github.event.pull_request.title }}"
               exit 1
           fi
   # TODO(SDK-1297): dfx generate fails with remote canisters
