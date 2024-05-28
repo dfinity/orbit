@@ -16,7 +16,7 @@
         <slot name="footer">
           <AlphaWarning class="mb-12" />
           <a v-if="showFooter" href="https://internetcomputer.org" target="_blank">
-            <img src="/images/powered-by-badge.svg" height="20" />
+            <img :src="poweredByBadge" height="20" />
           </a>
         </slot>
       </div>
@@ -30,6 +30,7 @@ import { VNavigationDrawer } from 'vuetify/components';
 import AlphaWarning from '~/components/layouts/AlphaWarning.vue';
 import SidebarHighlights from '~/components/ui/SidebarHighlights.vue';
 import { useAppStore } from '~/stores/app.store';
+import poweredByBadge from '~assets/images/powered-by-badge.svg';
 import SidenavHeader from './sidebar/SidenavHeader.vue';
 import SidenavMenu from './sidebar/SidenavMenu.vue';
 

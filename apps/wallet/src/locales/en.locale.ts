@@ -8,6 +8,8 @@ export default {
       main: 'WARNING: Test environment.',
       info: 'Unstable features and data.',
     },
+    api_compatibility_error:
+      'Failed to check the compatibility of your wallet, you may experience issues.',
     stations: 'Wallets',
     confirm: 'Confirm',
     copied_to_clipboard: 'Value copied to clipboard.',

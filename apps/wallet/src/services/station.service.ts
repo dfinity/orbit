@@ -11,20 +11,20 @@ import {
   Capabilities,
   ChangeCanisterOperationInput,
   CreateRequestInput,
-  EditPermissionOperationInput,
   EditAccountOperationInput,
   EditAddressBookEntryOperationInput,
+  EditPermissionOperationInput,
   EditRequestPolicyOperationInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
-  GetPermissionInput,
-  GetPermissionResult,
   GetAccountInput,
   GetAccountResult,
   GetAddressBookEntryInput,
   GetAddressBookEntryResult,
   GetNextApprovableRequestResult,
+  GetPermissionInput,
+  GetPermissionResult,
   GetRequestInput,
   GetRequestPolicyResult,
   GetRequestResult,
@@ -33,22 +33,24 @@ import {
   GetUserGroupResult,
   GetUserInput,
   GetUserResult,
-  ListPermissionsInput,
-  ListPermissionsResult,
   ListAccountTransfersInput,
   ListAccountsResult,
   ListAddressBookEntriesResult,
   ListNotificationsInput,
+  ListPermissionsInput,
+  ListPermissionsResult,
   ListRequestPoliciesResult,
   ListRequestsInput,
   ListRequestsResult,
   ListUserGroupsResult,
   ListUsersResult,
+  ManageSystemInfoOperationInput,
   MarkNotificationsReadInput,
   Notification,
   PaginationInput,
-  Request,
   RemoveUserGroupOperationInput,
+  Request,
+  SubmitRequestApprovalInput,
   Transfer,
   TransferListItem,
   TransferOperationInput,
@@ -56,9 +58,7 @@ import {
   User,
   UserPrivilege,
   UserStatus,
-  SubmitRequestApprovalInput,
   _SERVICE,
-  ManageSystemInfoOperationInput,
 } from '~/generated/station/station.did';
 import { ExtractOk } from '~/types/helper.types';
 import {
@@ -81,7 +81,7 @@ export class StationService {
 
   constructor(
     private agent: HttpAgent,
-    stationId: Principal = Principal.anonymous(),
+    private stationId: Principal = Principal.anonymous(),
   ) {
     this.actor = Actor.createActor<_SERVICE>(idlFactory, {
       agent: this.agent,
@@ -97,7 +97,12 @@ export class StationService {
     );
   }
 
+  getStationId() {
+    return this.stationId;
+  }
+
   withStationId(stationId: Principal): StationService {
+    this.stationId = stationId;
     this.actor = Actor.createActor<_SERVICE>(idlFactory, {
       agent: this.agent,
       canisterId: stationId,

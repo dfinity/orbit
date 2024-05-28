@@ -1,5 +1,4 @@
-import { describe } from 'node:test';
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { arrayBufferToHashHex, arrayBufferToHex, hexStringToArrayBuffer } from './crypto.utils';
 
 describe('arrayBufferToHex', () => {

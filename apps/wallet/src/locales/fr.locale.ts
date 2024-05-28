@@ -8,6 +8,8 @@ export default {
       main: 'ATTENTION: Environnement de test.',
       info: 'Fonctionnalités et données instables.',
     },
+    api_compatibility_error:
+      'Échec de la vérification de la compatibilité de votre portefeuille, vous pouvez rencontrer des problèmes.',
     stations: 'Portefeuilles',
     confirm: 'Confirmez',
     copied_to_clipboard: 'Valeur placée dans le presse-papiers',

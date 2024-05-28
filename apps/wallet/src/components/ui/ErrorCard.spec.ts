@@ -1,7 +1,6 @@
-import { describe } from 'node:test';
 import ErrorCard from './ErrorCard.vue';
 import { mount } from '~/test.utils';
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('ErrorCard', () => {
   it('shows the error message', () => {

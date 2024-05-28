@@ -1,15 +1,17 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
+import { appInitConfig } from '~/configs/init.config';
+import { createCompatibilityLayer } from '~/core/compatibility.core';
 import { STATION_ID_QUERY_PARAM } from '~/core/constants.core';
 import { InvalidStationError, UnregisteredUserError } from '~/core/errors.core';
 import { logger } from '~/core/logger.core';
 import {
+  Asset,
   Capabilities,
   Notification,
   UUID,
   User,
   UserPrivilege,
-  Asset,
 } from '~/generated/station/station.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { router } from '~/plugins/router.plugin';
@@ -18,8 +20,8 @@ import { StationService } from '~/services/station.service';
 import { useAppStore } from '~/stores/app.store';
 import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 import { LoadableItem } from '~/types/helper.types';
-import { computedStationName, isApiError } from '~/utils/app.utils';
-import { arrayBatchMaker } from '~/utils/helper.utils';
+import { computedStationName, isApiError, popRedirectToLocation } from '~/utils/app.utils';
+import { arrayBatchMaker, removeBasePathFromPathname } from '~/utils/helper.utils';
 import { accountsWorker, startWorkers, stopWorkers } from '~/workers';
 
 export enum ConnectionStatus {
@@ -175,7 +177,20 @@ export const useStationStore = defineStore('station', {
           throw new InvalidStationError();
         }
 
-        const stationService = await services().station.withStationId(stationId);
+        const compat = await createCompatibilityLayer().checkCompatibility(stationId, {
+          redirectIfIncompatible: true,
+        });
+
+        // If the compatibility check fails, we warn the user but still allow them to proceed
+        // to enable them a chance to use the app with the station, even if it's not fully compatible.
+        if (compat === false) {
+          app.sendNotification({
+            type: 'warning',
+            message: i18n.global.t('app.api_compatibility_error'),
+          });
+        }
+
+        const stationService = services().station.withStationId(stationId);
         const myUser = await stationService.myUser();
         if (!myUser) {
           throw new UnregisteredUserError();
@@ -232,9 +247,24 @@ export const useStationStore = defineStore('station', {
       } finally {
         // if the id has changed, force a navigation to re-run the route guards
         if (onConnectedReload && this.canisterId.length && this.canisterId !== stationId.toText()) {
+          // window.location is used because the router is not fully initialized yet in the first load
+          const redirectTo = popRedirectToLocation();
+          const url = new URL(
+            redirectTo ? window.location.origin + redirectTo : window.location.href,
+          );
+          url.pathname = removeBasePathFromPathname(url.pathname, appInitConfig.versionedBaseUrl);
+          url.searchParams.set(STATION_ID_QUERY_PARAM, stationId.toText());
+
           router.push({
-            path: window.location.pathname,
-            query: { [STATION_ID_QUERY_PARAM]: stationId.toText() },
+            path: url.pathname,
+            query: Array.from(url.searchParams.entries()).reduce(
+              (acc: Record<string, string>, [key, value]) => {
+                acc[key] = value;
+                return acc;
+              },
+              {},
+            ),
+            hash: url.hash,
           });
         }
         this.canisterId = stationId.toText();

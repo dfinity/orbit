@@ -105,6 +105,10 @@ command.action(async options => {
     );
 
     execSync(`git add "${releaseOutputPath}"`);
+
+    // Build the apps to make sure any generated files based on the new versions are included in the commit.
+    execSync(`pnpm -w build && git add "${join(__dirname, '../../..')}"`);
+
     execSync(`git commit --amend --no-edit`);
 
     console.log('Release information written to file and added to release commit.');

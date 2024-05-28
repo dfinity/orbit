@@ -73,7 +73,7 @@ const performLogin = (): void => {
   isAuthenticating.value = true;
 
   session
-    .signIn()
+    .signIn({ redirectOnSignIn: false })
     .then(() => afterLoginRedirect())
     .catch((e: Error) => {
       logger.error(`Authentication failed`, e);

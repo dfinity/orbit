@@ -1,5 +1,18 @@
 {
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "wallet-dapp",
-  "projectType": "application"
+  "projectType": "application",
+  "targets": {
+    "create-artifacts": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "mkdir -p ./artifacts/wallet-dapp",
+          "pnpm --filter wallet-dapp run build",
+          "DAPP_VERSION=$(node -p \"require('./{projectRoot}/package.json').version\") && tar -czf ./artifacts/wallet-dapp/wallet-dapp-v$DAPP_VERSION.tar.gz -C {projectRoot}/dist ."
+        ],
+        "parallel": false
+      }
+    }
+  }
 }
