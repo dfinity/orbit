@@ -1,14 +1,11 @@
 import type { AppInitConfig } from '~/types/app.types';
 import { defaultLocale, supportedLocales } from './i18n.config';
-import { isSemanticVersion } from '~/utils/helper.utils';
+import { isSemanticVersion, removeBasePathFromPathname } from '~/utils/helper.utils';
 
 const baseUrl = import.meta.env.BASE_URL || '/';
 
 let versionedBaseUrl = baseUrl;
-const currentPath = location.pathname;
-const parsedPath = currentPath.startsWith(baseUrl)
-  ? currentPath.slice(baseUrl.length)
-  : currentPath;
+const parsedPath = removeBasePathFromPathname(location.pathname, baseUrl);
 const parts = parsedPath.split('/').filter(Boolean);
 
 if (parts.length && isSemanticVersion(parts[0], 'v')) {

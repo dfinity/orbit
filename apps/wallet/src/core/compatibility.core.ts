@@ -5,6 +5,7 @@ import { icAgent } from '~/core/ic-agent.core';
 import logger from '~/core/logger.core';
 import { redirectToKey } from '~/plugins/router.plugin';
 import { isSemanticVersion } from '~/utils/helper.utils';
+import { ApiCompatibilityInfo } from '~build/types/compat.types';
 
 /**
  * Fetch the version of the station API from the canister metadata.
@@ -88,22 +89,7 @@ function redirectToURL(redirectTo: URL): void {
 /**
  * Fetch the compatibility file for the UI, if a version is provided, then fetch the versioned file.
  */
-async function fetchCompatFile(versionPath?: string): Promise<{
-  // The current version of the wallet dapp.
-  version: string;
-  // The compatibility of the wallet with the station API.
-  api: {
-    // The latest version of the station API that the wallet is using.
-    latest: string;
-    // The compatibility versions between the wallet and the station API.
-    compatibility: Record<
-      string,
-      {
-        ui: string[];
-      }
-    >;
-  };
-}> {
+async function fetchCompatFile(versionPath?: string): Promise<ApiCompatibilityInfo> {
   const fileUrl = versionPath
     ? `${appInitConfig.baseUrl}${versionPath}/compat.json`
     : `${appInitConfig.baseUrl}compat.json`;

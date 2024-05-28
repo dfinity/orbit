@@ -3,25 +3,9 @@ import { resolve } from 'path';
 import { Plugin } from 'vite';
 import { STATION_API_VERSION, WALLET_VERSION } from '../core/configs.core';
 import { compareSemanticVersions } from '../utils/sort.utils';
+import { ApiCompatibilityInfo } from '../types/compat.types';
 
-interface ApiCompatibilityFile {
-  // The current version of the wallet dapp.
-  version: string;
-  // The compatibility of the wallet with the station API.
-  api: {
-    // The latest version of the station API that the wallet is using.
-    latest: string;
-    // The compatibility versions between the wallet and the station API.
-    compatibility: Record<
-      string,
-      {
-        ui: string[];
-      }
-    >;
-  };
-}
-
-const loadApiCompatibilityFile = (filePath: string): ApiCompatibilityFile => {
+const loadApiCompatibilityFile = (filePath: string): ApiCompatibilityInfo => {
   if (existsSync(filePath)) {
     return JSON.parse(readFileSync(filePath, 'utf-8'));
   }
@@ -42,7 +26,7 @@ const loadApiCompatibilityFile = (filePath: string): ApiCompatibilityFile => {
         '0.0.2-alpha.0': { ui: [WALLET_VERSION] },
       },
     },
-  } as ApiCompatibilityFile;
+  } as ApiCompatibilityInfo;
 };
 
 export const withApiCompatibilityFile = (

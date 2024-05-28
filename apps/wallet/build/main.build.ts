@@ -142,6 +142,7 @@ export default defineConfig(_ => {
       alias: {
         '~': resolve('src'),
         '~assets': resolve('assets'),
+        '~build': resolve('build'),
       },
     },
   };
