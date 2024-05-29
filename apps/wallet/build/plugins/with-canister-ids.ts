@@ -78,7 +78,8 @@ export const withCanisterIds = (
     name: 'with-canister-ids',
     config(config) {
       const basePath = resolve(process.cwd(), config.root || '.');
-      const icpNetwork = opts.network || process.env.BUILD_MODE || process.env.DFX_NETWORK || 'local';
+      const icpNetwork =
+        opts.network || process.env.BUILD_MODE || process.env.DFX_NETWORK || 'local';
       const dfxConfigDirPath = opts.dfxConfigDirPath
         ? resolve(basePath, opts.dfxConfigDirPath)
         : findDfxConfigBasePath(basePath);
