@@ -1,3 +1,17 @@
+## 0.0.2-alpha.3 (2024-05-29)
+
+
+### 🩹 Fixes
+
+- canbench station build
+
+
+### ❤️  Thank You
+
+- Jan Wendling
+- Kepler Vital
+- mraszyk
+
 ## 0.0.2-alpha.2 (2024-05-17)
 
 
