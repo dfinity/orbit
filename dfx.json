@@ -62,9 +62,6 @@
     "app_wallet": {
       "type": "assets",
       "source": ["apps/wallet/dist/"],
-      "frontend": {
-        "entrypoint": "apps/wallet/dist/index.html"
-      },
       "build": "pnpm --filter 'wallet-dapp' build"
     }
   },

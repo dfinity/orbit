@@ -1,3 +1,19 @@
+## 0.0.2-alpha.4 (2024-05-29)
+
+
+### 🚀 Features
+
+- **wallet:** add versioned path to wallet ui
+
+- **wallet:** assure api compatibility check is resilient to missing file
+
+
+### ❤️  Thank You
+
+- Jan Wendling
+- Kepler Vital
+- mraszyk
+
 ## 0.0.2-alpha.3 (2024-05-17)
 
 ### 🚀 Features

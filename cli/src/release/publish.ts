@@ -3,8 +3,9 @@ import { createCommand } from 'commander';
 import { readFileSync } from 'fs';
 import { fileExists } from 'nx/src/utils/fileutils';
 import { isAbsolute, join } from 'path';
-import { ReleaseDetails } from './types';
+import configuration from '../config';
 import { capitalize, gitTagExists, targetExists } from '../utils';
+import { ReleaseDetails } from './types';
 
 const artifactsRootPath = join(__dirname, '../../../artifacts');
 
@@ -46,7 +47,7 @@ command.action(async options => {
   for (const [project, _] of projectsWithoutReleaseTags) {
     if (targetExists(project, 'create-artifacts')) {
       console.log(`Creating release artifacts for project: ${project}...`);
-      execSync(`npx nx run ${project}:create-artifacts`);
+      execSync(`BUILD_MODE='${configuration.icp.network}' npx nx run ${project}:create-artifacts`);
     }
   }
 

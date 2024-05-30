@@ -8,6 +8,8 @@ export default {
       main: 'ATENÇÃO: Ambiente de teste.',
       info: 'Funcionalidades e dados instáveis.',
     },
+    api_compatibility_error:
+      'Falha ao verificar a compatibilidade da sua carteira, pode encontrar problemas.',
     stations: 'Carteiras',
     confirm: 'Confirmar',
     copied_to_clipboard: 'Texto copiado para a área de transferência.',

@@ -1,5 +1,4 @@
-import { describe } from 'node:test';
-import { expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { StationService } from '~/services/station.service';
 import { mount } from '~/test.utils';
 import AccountRequestPolicySettings from './AccountRequestPolicySettings.vue';

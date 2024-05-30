@@ -27,7 +27,7 @@ const isReauthenticating = ref(false);
 
 function reauthenticate() {
   isReauthenticating.value = true;
-  session.signIn(false).finally(() => {
+  session.signIn().finally(() => {
     isReauthenticating.value = false;
   });
 }

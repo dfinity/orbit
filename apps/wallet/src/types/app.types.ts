@@ -6,6 +6,7 @@ export interface AppInitConfig {
   version: string;
   logLevel: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
   baseUrl: string;
+  versionedBaseUrl: string;
   isProduction: boolean;
   buildMode: string;
   apiGatewayUrl: URL;

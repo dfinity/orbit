@@ -1,7 +1,6 @@
-import { describe } from 'node:test';
 import AccountAccessSettings from './AccountAccessSettings.vue';
 import { mount } from '~/test.utils';
-import { expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Allow } from '~/generated/station/station.did';
 import { StationService } from '~/services/station.service';
 

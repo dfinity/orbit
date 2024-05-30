@@ -1,7 +1,6 @@
-import { describe } from 'node:test';
 import TextLabel from './TextLabel.vue';
 import { mount } from '~/test.utils';
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('TextLabel', () => {
   it('renders the text', () => {
