@@ -206,22 +206,14 @@ impl From<SystemResourceAction> for station_api::SystemResourceActionDTO {
 }
 
 impl From<station_api::ChangeCanisterResourceActionDTO> for ChangeCanisterResourceAction {
-    fn from(action: station_api::ChangeCanisterResourceActionDTO) -> Self {
-        match action {
-            station_api::ChangeCanisterResourceActionDTO::Create => {
-                ChangeCanisterResourceAction::Create
-            }
-        }
+    fn from(_: station_api::ChangeCanisterResourceActionDTO) -> Self {
+        ChangeCanisterResourceAction::Create
     }
 }
 
 impl From<ChangeCanisterResourceAction> for station_api::ChangeCanisterResourceActionDTO {
-    fn from(action: ChangeCanisterResourceAction) -> Self {
-        match action {
-            ChangeCanisterResourceAction::Create => {
-                station_api::ChangeCanisterResourceActionDTO::Create
-            }
-        }
+    fn from(_: ChangeCanisterResourceAction) -> Self {
+        station_api::ChangeCanisterResourceActionDTO::Create
     }
 }
 

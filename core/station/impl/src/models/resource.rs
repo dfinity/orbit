@@ -497,9 +497,7 @@ impl Display for AccountResourceAction {
 impl Display for ChangeCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChangeCanisterResourceAction::Create => {
-                write!(f, "Create")
-            }
+            ChangeCanisterResourceAction::Create => write!(f, "Create"),
         }
     }
 }
