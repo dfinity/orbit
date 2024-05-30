@@ -180,7 +180,7 @@ export const useSessionStore = defineStore('session', {
 
       station.onDisconnected();
     },
-    async signIn(resetOnError = false): Promise<void> {
+    async signIn(opts: { resetOnError?: boolean; redirectOnSignIn?: boolean } = {}): Promise<void> {
       const authService = services().auth;
       const sessionExpirationService = services().sessionExpiration;
 
@@ -188,10 +188,10 @@ export const useSessionStore = defineStore('session', {
         const identity = await authService.login();
 
         sessionExpirationService.notifySignedIn();
-        await this.initializeAuthenticated(identity);
+        await this.initializeAuthenticated(identity, opts.redirectOnSignIn);
       } catch (error) {
         disableWorkers();
-        if (resetOnError) {
+        if (opts.resetOnError) {
           this.reset();
         }
         throw error;
@@ -216,7 +216,7 @@ export const useSessionStore = defineStore('session', {
       redirectToLogin();
     },
 
-    async load(): Promise<void> {
+    async load(redirectOnStationConnected = true): Promise<void> {
       const app = useAppStore();
 
       try {
@@ -249,7 +249,7 @@ export const useSessionStore = defineStore('session', {
         });
 
         if (!sameUser && initialStationId) {
-          return this.connectStation(initialStationId);
+          return this.connectStation(initialStationId, redirectOnStationConnected);
         }
       } catch (err) {
         logger.error(`Failed to load user session`, { err });
@@ -353,7 +353,7 @@ export const useSessionStore = defineStore('session', {
       await this.initializeAuthenticated(maybeIdentity);
     },
 
-    async initializeAuthenticated(newIdentity: Identity) {
+    async initializeAuthenticated(newIdentity: Identity, redirectOnAuthenticated = true) {
       const authService = services().auth;
       icAgent.get().replaceIdentity(newIdentity);
 
@@ -386,12 +386,13 @@ export const useSessionStore = defineStore('session', {
       }
 
       // loads information about the authenticated user
-      await this.load();
+      await this.load(redirectOnAuthenticated);
 
       // if the user was not signed in before, or the user signed in with a different identity
       if (
         this.lastLoginPrincipal !== null &&
-        this.lastLoginPrincipal !== newIdentity.getPrincipal().toText()
+        this.lastLoginPrincipal !== newIdentity.getPrincipal().toText() &&
+        this.lastLoginPrincipal !== Principal.anonymous().toText()
       ) {
         afterLoginRedirect();
       }

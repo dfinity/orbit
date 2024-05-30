@@ -209,3 +209,23 @@ export const transformIdlWithOnlyVerifiedCalls = (
     return service;
   };
 };
+
+// Checks if a string is with the correct format for a semantic version.
+//
+// More information on semantic versioning can be found at: https://semver.org/
+export const isSemanticVersion = (version: string, prefix = ''): boolean => {
+  let versionWithoutPrefix = version;
+  if (version.startsWith(prefix)) {
+    versionWithoutPrefix = version.slice(prefix.length);
+  }
+
+  return /^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$/.test(
+    versionWithoutPrefix,
+  );
+};
+
+export const removeBasePathFromPathname = (pathname: string, basePath: string): string => {
+  const updatedPath = pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname;
+
+  return !updatedPath.startsWith('/') ? `/${updatedPath}` : updatedPath;
+};

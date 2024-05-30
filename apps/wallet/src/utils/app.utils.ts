@@ -52,10 +52,18 @@ export const redirectToLogin = (): void => {
   router.push({ name: defaultLoginRoute });
 };
 
-export const afterLoginRedirect = (): void => {
+export const popRedirectToLocation = (): string | null => {
   const lastRequestedPage = window?.sessionStorage.getItem(redirectToKey);
   if (lastRequestedPage) {
     window?.sessionStorage.removeItem(redirectToKey);
+  }
+
+  return lastRequestedPage;
+};
+
+export const afterLoginRedirect = (): void => {
+  const lastRequestedPage = popRedirectToLocation();
+  if (lastRequestedPage) {
     router.push(lastRequestedPage);
     return;
   }
