@@ -2,21 +2,24 @@ use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         resource::{
-            AccountResourceAction, ChangeCanisterResourceAction, ChangeCanisterResourceTarget,
+            AccountResourceAction, ChangeCanisterResourceAction,
+            ChangeManagedCanisterResourceAction, ChangeManagedCanisterResourceTarget,
             PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
             UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
         AddRequestPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
-        ChangeCanisterOperation, ChangeCanisterOperationInput, ChangeCanisterTarget,
+        CanisterInstallMode, CanisterInstallModeArgs, CanisterReinstallModeArgs,
+        CanisterUpgradeModeArgs, ChangeCanisterOperation, ChangeCanisterOperationInput,
+        ChangeCanisterTarget, ChangeManagedCanisterOperation, ChangeManagedCanisterOperationInput,
         EditAccountOperation, EditAccountOperationInput, EditAddressBookEntryOperation,
         EditPermissionOperation, EditPermissionOperationInput, EditRequestPolicyOperation,
         EditRequestPolicyOperationInput, EditUserGroupOperation, EditUserOperation,
-        EditUserOperationInput, InstallCanisterInput, ManageSystemInfoOperation,
-        ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
-        RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
-        RequestOperation, TransferOperation, User,
+        EditUserOperationInput, ManageSystemInfoOperation, ManageSystemInfoOperationInput,
+        RemoveAddressBookEntryOperation, RemoveRequestPolicyOperation,
+        RemoveRequestPolicyOperationInput, RemoveUserGroupOperation, RequestOperation,
+        TransferOperation, User,
     },
     repositories::{
         AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
@@ -25,8 +28,8 @@ use crate::{
 use orbit_essentials::repository::Repository;
 use station_api::{
     AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
-    ChangeCanisterOperationDTO, ChangeCanisterTargetDTO, EditAccountOperationDTO,
-    EditAddressBookEntryOperationDTO, EditUserOperationDTO, InstallCanisterInputDTO, NetworkDTO,
+    ChangeCanisterOperationDTO, ChangeCanisterTargetDTO, ChangeManagedCanisterOperationDTO,
+    EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditUserOperationDTO, NetworkDTO,
     RemoveAddressBookEntryOperationDTO, RequestOperationDTO, TransferOperationDTO,
 };
 use uuid::Uuid;
@@ -301,32 +304,11 @@ impl From<station_api::EditUserOperationInput> for EditUserOperationInput {
     }
 }
 
-impl From<InstallCanisterInput> for InstallCanisterInputDTO {
-    fn from(value: InstallCanisterInput) -> Self {
-        Self {
-            canister_id: value.canister_id,
-            mode: value.mode,
-        }
-    }
-}
-
-impl From<InstallCanisterInputDTO> for InstallCanisterInput {
-    fn from(value: InstallCanisterInputDTO) -> Self {
-        Self {
-            canister_id: value.canister_id,
-            mode: value.mode,
-        }
-    }
-}
-
 impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
     fn from(value: ChangeCanisterTarget) -> Self {
         match value {
             ChangeCanisterTarget::UpgradeStation => ChangeCanisterTargetDTO::UpgradeStation,
             ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterTargetDTO::UpgradeUpgrader,
-            ChangeCanisterTarget::InstallCanister(input) => {
-                ChangeCanisterTargetDTO::InstallCanister(input.into())
-            }
         }
     }
 }
@@ -336,9 +318,6 @@ impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
         match value {
             ChangeCanisterTargetDTO::UpgradeStation => ChangeCanisterTarget::UpgradeStation,
             ChangeCanisterTargetDTO::UpgradeUpgrader => ChangeCanisterTarget::UpgradeUpgrader,
-            ChangeCanisterTargetDTO::InstallCanister(input) => {
-                ChangeCanisterTarget::InstallCanister(input.into())
-            }
         }
     }
 }
@@ -367,6 +346,73 @@ impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
     fn from(operation: ChangeCanisterOperation) -> ChangeCanisterOperationDTO {
         ChangeCanisterOperationDTO {
             target: operation.input.target.into(),
+            module_checksum: hex::encode(operation.module_checksum),
+            arg_checksum: operation.arg_checksum.map(hex::encode),
+        }
+    }
+}
+
+impl From<station_api::CanisterInstallMode> for CanisterInstallMode {
+    fn from(mode: station_api::CanisterInstallMode) -> Self {
+        match mode {
+            station_api::CanisterInstallMode::Install => {
+                CanisterInstallMode::Install(CanisterInstallModeArgs {})
+            }
+            station_api::CanisterInstallMode::Reinstall => {
+                CanisterInstallMode::Reinstall(CanisterReinstallModeArgs {})
+            }
+            station_api::CanisterInstallMode::Upgrade => {
+                CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {})
+            }
+        }
+    }
+}
+
+impl From<CanisterInstallMode> for station_api::CanisterInstallMode {
+    fn from(mode: CanisterInstallMode) -> Self {
+        match mode {
+            CanisterInstallMode::Install(_) => station_api::CanisterInstallMode::Install,
+            CanisterInstallMode::Reinstall(_) => station_api::CanisterInstallMode::Reinstall,
+            CanisterInstallMode::Upgrade(_) => station_api::CanisterInstallMode::Upgrade,
+        }
+    }
+}
+
+impl From<ChangeManagedCanisterOperationInput>
+    for station_api::ChangeManagedCanisterOperationInput
+{
+    fn from(
+        input: ChangeManagedCanisterOperationInput,
+    ) -> station_api::ChangeManagedCanisterOperationInput {
+        station_api::ChangeManagedCanisterOperationInput {
+            canister_id: input.canister_id,
+            mode: input.mode.into(),
+            module: input.module,
+            arg: input.arg,
+        }
+    }
+}
+
+impl From<station_api::ChangeManagedCanisterOperationInput>
+    for ChangeManagedCanisterOperationInput
+{
+    fn from(
+        input: station_api::ChangeManagedCanisterOperationInput,
+    ) -> ChangeManagedCanisterOperationInput {
+        ChangeManagedCanisterOperationInput {
+            canister_id: input.canister_id,
+            mode: input.mode.into(),
+            module: input.module,
+            arg: input.arg,
+        }
+    }
+}
+
+impl From<ChangeManagedCanisterOperation> for ChangeManagedCanisterOperationDTO {
+    fn from(operation: ChangeManagedCanisterOperation) -> ChangeManagedCanisterOperationDTO {
+        ChangeManagedCanisterOperationDTO {
+            canister_id: operation.input.canister_id,
+            mode: operation.input.mode.into(),
             module_checksum: hex::encode(operation.module_checksum),
             arg_checksum: operation.arg_checksum.map(hex::encode),
         }
@@ -610,6 +656,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::ChangeCanister(operation) => {
                 RequestOperationDTO::ChangeCanister(Box::new(operation.into()))
             }
+            RequestOperation::ChangeManagedCanister(operation) => {
+                RequestOperationDTO::ChangeManagedCanister(Box::new(operation.into()))
+            }
             RequestOperation::EditPermission(operation) => {
                 RequestOperationDTO::EditPermission(Box::new(operation.into()))
             }
@@ -705,20 +754,23 @@ impl RequestOperation {
                     Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
                 ]
             }
-            RequestOperation::ChangeCanister(ChangeCanisterOperation { input, .. }) => {
-                match input.target.clone().into() {
-                    ChangeCanisterResourceTarget::Any => vec![Resource::ChangeCanister(
-                        ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any),
-                    )],
-                    ChangeCanisterResourceTarget::Canister(id) => vec![
-                        Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
-                            ChangeCanisterResourceTarget::Any,
-                        )),
-                        Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
-                            ChangeCanisterResourceTarget::Canister(id),
-                        )),
-                    ],
-                }
+            RequestOperation::ChangeCanister(_) => {
+                vec![Resource::ChangeCanister(
+                    ChangeCanisterResourceAction::Create,
+                )]
+            }
+            RequestOperation::ChangeManagedCanister(ChangeManagedCanisterOperation {
+                input,
+                ..
+            }) => {
+                vec![
+                    Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create(
+                        ChangeManagedCanisterResourceTarget::Any,
+                    )),
+                    Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create(
+                        ChangeManagedCanisterResourceTarget::Canister(input.canister_id),
+                    )),
+                ]
             }
             RequestOperation::EditRequestPolicy(EditRequestPolicyOperation { input }) => {
                 vec![

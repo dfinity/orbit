@@ -5,9 +5,9 @@ use crate::core::validation::{
     EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
 };
 use crate::errors::RecordValidationError;
-use crate::models::resource::ChangeCanisterResourceTarget;
+use crate::models::resource::ChangeManagedCanisterResourceTarget;
 use crate::models::user::User;
-use crate::models::ChangeCanisterOperation;
+use crate::models::ChangeManagedCanisterOperation;
 use crate::repositories::ADDRESS_BOOK_REPOSITORY;
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
@@ -63,7 +63,8 @@ pub enum RequestSpecifier {
     EditAddressBookEntry(ResourceIds),
     RemoveAddressBookEntry(ResourceIds),
     Transfer(ResourceIds),
-    ChangeCanister(ChangeCanisterResourceTarget),
+    ChangeCanister,
+    ChangeManagedCanister(ChangeManagedCanisterResourceTarget),
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIds),
@@ -80,7 +81,8 @@ impl ModelValidator<RecordValidationError> for RequestSpecifier {
             RequestSpecifier::AddAccount
             | RequestSpecifier::AddUser
             | RequestSpecifier::AddAddressBookEntry
-            | RequestSpecifier::ChangeCanister(_)
+            | RequestSpecifier::ChangeCanister
+            | RequestSpecifier::ChangeManagedCanister(_)
             | RequestSpecifier::AddRequestPolicy
             | RequestSpecifier::ManageSystemInfo
             | RequestSpecifier::AddUserGroup => Ok(()),
@@ -127,7 +129,10 @@ impl From<&RequestSpecifier> for RequestOperationType {
             }
             RequestSpecifier::Transfer(_) => RequestOperationType::Transfer,
             RequestSpecifier::EditPermission(_) => RequestOperationType::EditPermission,
-            RequestSpecifier::ChangeCanister(_) => RequestOperationType::ChangeCanister,
+            RequestSpecifier::ChangeCanister => RequestOperationType::ChangeCanister,
+            RequestSpecifier::ChangeManagedCanister(_) => {
+                RequestOperationType::ChangeManagedCanister
+            }
             RequestSpecifier::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestSpecifier::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
             RequestSpecifier::RemoveRequestPolicy(_) => RequestOperationType::RemoveRequestPolicy,
@@ -250,20 +255,19 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
             (RequestOperation::Transfer(params), RequestSpecifier::Transfer(account)) => self
                 .account_matcher
                 .is_match((p.clone(), params.input.from_account_id, account))?,
+            (RequestOperation::ChangeCanister(_), RequestSpecifier::ChangeCanister) => true,
             (
-                RequestOperation::ChangeCanister(ChangeCanisterOperation { input, .. }),
-                RequestSpecifier::ChangeCanister(specifier),
-            ) => {
-                let target: ChangeCanisterResourceTarget = input.target.into();
-                match (target, specifier) {
-                    (_, ChangeCanisterResourceTarget::Any) => true,
-                    (
-                        ChangeCanisterResourceTarget::Canister(target_id),
-                        ChangeCanisterResourceTarget::Canister(specifier_id),
-                    ) => target_id == specifier_id,
-                    _ => false,
+                RequestOperation::ChangeManagedCanister(ChangeManagedCanisterOperation {
+                    input,
+                    ..
+                }),
+                RequestSpecifier::ChangeManagedCanister(specifier),
+            ) => match specifier {
+                ChangeManagedCanisterResourceTarget::Any => true,
+                ChangeManagedCanisterResourceTarget::Canister(target_id) => {
+                    input.canister_id == target_id
                 }
-            }
+            },
             (RequestOperation::AddUserGroup(_), RequestSpecifier::AddUserGroup) => true,
             (
                 RequestOperation::EditPermission(operation),
@@ -306,6 +310,7 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
             | (RequestOperation::EditAddressBookEntry(_), _)
             | (RequestOperation::RemoveAddressBookEntry(_), _)
             | (RequestOperation::ChangeCanister(_), _)
+            | (RequestOperation::ChangeManagedCanister(_), _)
             | (RequestOperation::AddRequestPolicy(_), _)
             | (RequestOperation::EditRequestPolicy(_), _)
             | (RequestOperation::EditPermission(_), _)
@@ -362,7 +367,7 @@ mod tests {
                 UserInvolvedInPolicyRuleForRequestResource, UserMatcher, UserSpecifier,
             },
             request_test_utils::mock_request,
-            resource::{ChangeCanisterResourceTarget, ResourceIds},
+            resource::{ChangeManagedCanisterResourceTarget, ResourceIds},
             AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
             Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
             EditUserOperationInput, Metadata, RequestKey, RequestOperation, TransferOperation,
@@ -537,14 +542,17 @@ mod tests {
         RequestSpecifier::AddAddressBookEntry
             .validate()
             .expect("AddAddressBookEntry should be valid");
-        RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Any)
+        RequestSpecifier::ChangeCanister
             .validate()
             .expect("ChangeCanister should be valid");
-        RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Canister(
+        RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Any)
+            .validate()
+            .expect("ChangeManagedCanister should be valid");
+        RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Canister(
             Principal::management_canister(),
         ))
         .validate()
-        .expect("ChangeCanister should be valid");
+        .expect("ChangeManagedCanister should be valid");
         RequestSpecifier::AddRequestPolicy
             .validate()
             .expect("AddRequestPolicy should be valid");

@@ -150,14 +150,26 @@ export interface ChangeCanisterOperationInput {
   'target' : ChangeCanisterTarget,
   'module' : Uint8Array | number[],
 }
-export type ChangeCanisterResourceAction = {
-    'Create' : ChangeCanisterResourceTarget
-  };
-export type ChangeCanisterResourceTarget = { 'Any' : null } |
-  { 'Canister' : Principal };
+export type ChangeCanisterResourceAction = { 'Create' : null };
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
-  { 'InstallCanister' : InstallCanisterInput } |
   { 'UpgradeStation' : null };
+export interface ChangeManagedCanisterOperation {
+  'mode' : CanisterInstallMode,
+  'canister_id' : Principal,
+  'module_checksum' : Sha256Hash,
+  'arg_checksum' : [] | [Sha256Hash],
+}
+export interface ChangeManagedCanisterOperationInput {
+  'arg' : [] | [Uint8Array | number[]],
+  'mode' : CanisterInstallMode,
+  'canister_id' : Principal,
+  'module' : Uint8Array | number[],
+}
+export type ChangeManagedCanisterResourceAction = {
+    'Create' : ChangeManagedCanisterResourceTarget
+  };
+export type ChangeManagedCanisterResourceTarget = { 'Any' : null } |
+  { 'Canister' : Principal };
 export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
@@ -335,10 +347,6 @@ export interface HttpResponse {
   'headers' : Array<HeaderField>,
   'status_code' : number,
 }
-export interface InstallCanisterInput {
-  'mode' : CanisterInstallMode,
-  'canister_id' : Principal,
-}
 export interface ListAccountTransfersInput {
   'account_id' : UUID,
   'status' : [] | [TransferStatusType],
@@ -440,6 +448,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'Transfer' : [] | [UUID] } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
+  { 'ChangeManagedCanister' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
@@ -617,6 +626,7 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'Transfer' : TransferOperation } |
   { 'EditAccount' : EditAccountOperation } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
+  { 'ChangeManagedCanister' : ChangeManagedCanisterOperation } |
   { 'AddRequestPolicy' : AddRequestPolicyOperation } |
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
   { 'AddAccount' : AddAccountOperation };
@@ -636,6 +646,7 @@ export type RequestOperationInput = {
   { 'Transfer' : TransferOperationInput } |
   { 'EditAccount' : EditAccountOperationInput } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
+  { 'ChangeManagedCanister' : ChangeManagedCanisterOperationInput } |
   { 'AddRequestPolicy' : AddRequestPolicyOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
@@ -653,6 +664,7 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'Transfer' : null } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
+  { 'ChangeManagedCanister' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
@@ -690,12 +702,13 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'RemoveRequestPolicy' : ResourceIds } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
   { 'EditAddressBookEntry' : ResourceIds } |
-  { 'ChangeCanister' : ChangeCanisterResourceTarget } |
+  { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
   { 'ManageSystemInfo' : null } |
   { 'Transfer' : ResourceIds } |
   { 'EditAccount' : ResourceIds } |
   { 'AddAddressBookEntry' : null } |
+  { 'ChangeManagedCanister' : ChangeManagedCanisterResourceTarget } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : ResourceIds } |
   { 'AddAccount' : null };
@@ -721,6 +734,7 @@ export type Resource = { 'Request' : RequestResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
+  { 'ChangeManagedCanister' : ChangeManagedCanisterResourceAction } |
   { 'UserGroup' : ResourceAction } |
   { 'Permission' : PermissionResourceAction } |
   { 'RequestPolicy' : ResourceAction };

@@ -33,7 +33,10 @@ use self::{
     add_request_policy::{AddRequestPolicyRequestCreate, AddRequestPolicyRequestExecute},
     add_user::{AddUserRequestCreate, AddUserRequestExecute},
     add_user_group::{AddUserGroupRequestCreate, AddUserGroupRequestExecute},
-    change_canister::{ChangeCanisterRequestCreate, ChangeCanisterRequestExecute},
+    change_canister::{
+        ChangeCanisterRequestCreate, ChangeCanisterRequestExecute,
+        ChangeManagedCanisterRequestCreate, ChangeManagedCanisterRequestExecute,
+    },
     edit_account::{EditAccountRequestCreate, EditAccountRequestExecute},
     edit_address_book_entry::{
         EditAddressBookEntryRequestCreate, EditAddressBookEntryRequestExecute,
@@ -181,6 +184,12 @@ impl RequestFactory {
                     ChangeCanisterRequestCreate,
                 >(id, requested_by_user, input.clone(), operation.clone())
             }
+            RequestOperationInput::ChangeManagedCanister(operation) => {
+                create_request::<
+                    station_api::ChangeManagedCanisterOperationInput,
+                    ChangeManagedCanisterRequestCreate,
+                >(id, requested_by_user, input.clone(), operation.clone())
+            }
             RequestOperationInput::EditPermission(operation) => {
                 create_request::<
                     station_api::EditPermissionOperationInput,
@@ -252,6 +261,9 @@ impl RequestFactory {
             RequestOperation::ChangeCanister(operation) => Box::new(
                 ChangeCanisterRequestExecute::new(request, operation, Arc::clone(&SYSTEM_SERVICE)),
             ),
+            RequestOperation::ChangeManagedCanister(operation) => {
+                Box::new(ChangeManagedCanisterRequestExecute::new(request, operation))
+            }
             RequestOperation::EditPermission(operation) => {
                 Box::new(EditPermissionRequestExecute::new(
                     request,

@@ -45,7 +45,8 @@ type RequestSpecifier = variant {
   AddAddressBookEntry;
   EditAddressBookEntry : ResourceIds;
   RemoveAddressBookEntry : ResourceIds;
-  ChangeCanister : ChangeCanisterResourceTarget;
+  ChangeCanister;
+  ChangeManagedCanister : ChangeManagedCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
   AddRequestPolicy;
   EditRequestPolicy : ResourceIds;
@@ -539,17 +540,9 @@ type CanisterInstallMode = variant {
     upgrade;
 };
 
-type InstallCanisterInput = record {
-  // The canister to install.
-  canister_id : principal;
-  // The canister installation mode.
-  mode : CanisterInstallMode;
-};
-
 type ChangeCanisterTarget = variant {
   UpgradeStation;
   UpgradeUpgrader;
-  InstallCanister : InstallCanisterInput;
 };
 
 type ChangeCanisterOperationInput = record {
@@ -564,6 +557,28 @@ type ChangeCanisterOperationInput = record {
 type ChangeCanisterOperation = record {
   // The target to change.
   target : ChangeCanisterTarget;
+  // The checksum of the wasm module.
+  module_checksum : Sha256Hash;
+  // The checksum of the arg blob.
+  arg_checksum : opt Sha256Hash;
+};
+
+type ChangeManagedCanisterOperationInput = record {
+  // The canister to install.
+  canister_id : principal;
+  // The canister installation mode.
+  mode : CanisterInstallMode;
+  // The wasm module to install.
+  module : blob;
+  // The initial argument passed to the new wasm module.
+  arg : opt blob;
+};
+
+type ChangeManagedCanisterOperation = record {
+  // The canister to install.
+  canister_id : principal;
+  // The canister installation mode.
+  mode : CanisterInstallMode;
   // The checksum of the wasm module.
   module_checksum : Sha256Hash;
   // The checksum of the arg blob.
@@ -649,6 +664,8 @@ type RequestOperation = variant {
   RemoveUserGroup : RemoveUserGroupOperation;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperation;
+  // An operation for changing a managed canister.
+  ChangeManagedCanister : ChangeManagedCanisterOperation;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperation;
   // An operation for adding a request policy.
@@ -686,6 +703,8 @@ type RequestOperationInput = variant {
   RemoveUserGroup : RemoveUserGroupOperationInput;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperationInput;
+  // An operation for changing a managed canister.
+  ChangeManagedCanister : ChangeManagedCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
   // An operation for adding a request policy.
@@ -723,6 +742,8 @@ type RequestOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
+  // An operation for changing a managed canister.
+  ChangeManagedCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -842,6 +863,8 @@ type ListRequestsOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
+  // An operation for changing a managed canister.
+  ChangeManagedCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -1575,15 +1598,20 @@ type AccountResourceAction = variant {
   Update : ResourceId;
 };
 
-// The target canister of a change canister request.
-type ChangeCanisterResourceTarget = variant {
+// The actions that are available for canister changes.
+type ChangeCanisterResourceAction = variant {
+  Create;
+};
+
+// The target canister of a request to change a managed canister.
+type ChangeManagedCanisterResourceTarget = variant {
   Any;
   Canister : principal;
 };
 
-// The actions that are available for canister changes.
-type ChangeCanisterResourceAction = variant {
-  Create : ChangeCanisterResourceTarget;
+// The actions that are available for managed canister changes.
+type ChangeManagedCanisterResourceAction = variant {
+  Create : ChangeManagedCanisterResourceTarget;
 };
 
 // The actions that are available for requests.
@@ -1619,6 +1647,7 @@ type Resource = variant {
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
+  ChangeManagedCanister : ChangeManagedCanisterResourceAction;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
   System : SystemResourceAction;

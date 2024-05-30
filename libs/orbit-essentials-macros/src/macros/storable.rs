@@ -62,9 +62,6 @@ impl StorableMacro {
                 match args.serializer {
                     SerializerFormat::Candid => expand_candid_impl(&input, size_value),
                     SerializerFormat::Cbor => expand_cbor_impl(&input, size_value),
-                    SerializerFormat::CborOrDefault => {
-                        expand_cbor_or_default_impl(&input, size_value)
-                    }
                 }
             }
             _ => Err(Error::new_spanned(
@@ -197,33 +194,6 @@ fn expand_cbor_impl(
     Ok(expanded)
 }
 
-fn expand_cbor_or_default_impl(
-    input: &DeriveInput,
-    size: Option<u32>,
-) -> Result<proc_macro2::TokenStream, Error> {
-    let object_name = input.ident.clone();
-    let storage_bounds = storage_bounds(size);
-
-    let expanded = quote! {
-        #[derive(serde::Serialize, serde::Deserialize)]
-        #input
-
-        impl orbit_essentials::ic_stable_structures::Storable for #object_name {
-            fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-                std::borrow::Cow::Owned(serde_cbor::to_vec(self).unwrap())
-            }
-
-            fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-                serde_cbor::from_slice(bytes.as_ref()).unwrap_or_default()
-            }
-
-            #storage_bounds
-        }
-    };
-
-    Ok(expanded)
-}
-
 fn storage_bounds(size: Option<u32>) -> proc_macro2::TokenStream {
     match size {
         Some(size) => quote! {
@@ -242,7 +212,6 @@ fn storage_bounds(size: Option<u32>) -> proc_macro2::TokenStream {
 enum SerializerFormat {
     Candid,
     Cbor,
-    CborOrDefault,
 }
 
 impl std::str::FromStr for SerializerFormat {
@@ -252,7 +221,6 @@ impl std::str::FromStr for SerializerFormat {
         match s {
             "candid" => Ok(Self::Candid),
             "cbor" => Ok(Self::Cbor),
-            "cbor_or_default" => Ok(Self::CborOrDefault),
             _ => Err(format!("Unknown serializer format \"{}\"", s)),
         }
     }
@@ -289,41 +257,6 @@ mod tests {
 
                     fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
                         serde_cbor::from_slice(bytes.as_ref()).unwrap()
-                    }
-
-                    const BOUND: orbit_essentials::ic_stable_structures::storable::Bound = orbit_essentials::ic_stable_structures::storable::Bound::Unbounded;
-                }
-            }
-            .to_string()
-        );
-    }
-
-    #[test]
-    fn test_expand_cbor_or_default_impl() {
-        let input: DeriveInput = parse2(quote! {
-            pub struct MyStruct {
-                pub id: u32,
-            }
-        })
-        .unwrap();
-
-        let expanded = expand_cbor_or_default_impl(&input, None).unwrap();
-
-        assert_eq!(
-            expanded.to_string(),
-            quote! {
-                #[derive(serde::Serialize, serde::Deserialize)]
-                pub struct MyStruct {
-                    pub id: u32,
-                }
-
-                impl orbit_essentials::ic_stable_structures::Storable for MyStruct {
-                    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-                        std::borrow::Cow::Owned(serde_cbor::to_vec(self).unwrap())
-                    }
-
-                    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-                        serde_cbor::from_slice(bytes.as_ref()).unwrap_or_default()
                     }
 
                     const BOUND: orbit_essentials::ic_stable_structures::storable::Bound = orbit_essentials::ic_stable_structures::storable::Bound::Unbounded;

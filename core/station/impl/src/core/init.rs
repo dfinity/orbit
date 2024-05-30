@@ -3,9 +3,10 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, ChangeCanisterResourceTarget,
-        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-        ResourceIds, SystemResourceAction, UserResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceAction,
+        ChangeManagedCanisterResourceTarget, PermissionResourceAction, RequestResourceAction,
+        Resource, ResourceAction, ResourceId, ResourceIds, SystemResourceAction,
+        UserResourceAction,
     },
     ADMIN_GROUP_ID,
 };
@@ -142,7 +143,12 @@ lazy_static! {
         // change canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any)),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
+        ),
+        // change managed canister
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create(ChangeManagedCanisterResourceTarget::Any)),
         ),
     ];
 
@@ -228,7 +234,12 @@ lazy_static! {
         ),
         // change canister
         (
-            RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Any),
+            RequestSpecifier::ChangeCanister,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+        ),
+        // change managed canister
+        (
+            RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         // system info

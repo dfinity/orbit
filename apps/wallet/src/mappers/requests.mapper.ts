@@ -506,14 +506,6 @@ const mapRequestToChangeCanisterCsvRow = (request: Request): CsvRow => {
         details: stringify({ args }),
       };
     }
-
-    if (variantIs(request.operation.ChangeCanister.target, 'InstallCanister')) {
-      return {
-        change_target: request.operation.ChangeCanister.target.InstallCanister.canister_id.toText(),
-        wasm_checksum: request.operation.ChangeCanister.module_checksum,
-        details: stringify({ args }),
-      };
-    }
   }
 
   return {};

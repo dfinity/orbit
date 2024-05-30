@@ -49,7 +49,5 @@ const target = computed(() => {
   if (variantIs(props.operation.target, 'UpgradeUpgrader')) {
     return i18n.t('terms.upgrader');
   }
-
-  return props.operation.target.InstallCanister.canister_id.toText();
 });
 </script>

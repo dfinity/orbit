@@ -3,7 +3,8 @@ use crate::{
     core::ic_cdk::api::trap,
     models::{
         resource::{
-            AccountResourceAction, ChangeCanisterResourceAction, ChangeCanisterResourceTarget,
+            AccountResourceAction, ChangeCanisterResourceAction,
+            ChangeManagedCanisterResourceAction, ChangeManagedCanisterResourceTarget,
             PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
             SystemResourceAction, UserResourceAction,
         },
@@ -50,9 +51,9 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::AddUserGroup => Resource::UserGroup(ResourceAction::Create),
             UserPrivilege::ListAddressBookEntries => Resource::AddressBook(ResourceAction::List),
             UserPrivilege::AddAddressBookEntry => Resource::AddressBook(ResourceAction::Create),
-            UserPrivilege::ChangeCanister => Resource::ChangeCanister(
-                ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any),
-            ),
+            UserPrivilege::ChangeCanister => {
+                Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
+            }
             UserPrivilege::ListRequests => Resource::Request(RequestResourceAction::List),
             UserPrivilege::ManageSystemInfo => {
                 Resource::System(SystemResourceAction::ManageSystemInfo)
@@ -201,9 +202,14 @@ impl From<&station_api::CreateRequestInput> for Resource {
                         .as_bytes(),
                 )))
             }
-            RequestOperationInput::ChangeCanister(input) => Resource::ChangeCanister(
-                ChangeCanisterResourceAction::Create(input.target.clone().into()),
-            ),
+            RequestOperationInput::ChangeCanister(_) => {
+                Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
+            }
+            RequestOperationInput::ChangeManagedCanister(input) => {
+                Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create(
+                    ChangeManagedCanisterResourceTarget::Canister(input.canister_id),
+                ))
+            }
             RequestOperationInput::EditPermission(_) => {
                 Resource::Permission(PermissionResourceAction::Update)
             }

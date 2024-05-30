@@ -3,8 +3,9 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction, Resource,
-        ResourceAction, ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceAction,
+        PermissionResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
+        SystemResourceAction, UserResourceAction,
     },
     EvaluatedRequestPolicyRule, EvaluationStatus, Percentage, RequestEvaluationResult,
     RequestPolicy, RequestPolicyCallerPrivileges, RequestPolicyRuleResult,
@@ -244,8 +245,9 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::Transfer(account) => {
                 station_api::RequestSpecifierDTO::Transfer(account.into())
             }
-            RequestSpecifier::ChangeCanister(target) => {
-                station_api::RequestSpecifierDTO::ChangeCanister(target.into())
+            RequestSpecifier::ChangeCanister => station_api::RequestSpecifierDTO::ChangeCanister,
+            RequestSpecifier::ChangeManagedCanister(target) => {
+                station_api::RequestSpecifierDTO::ChangeManagedCanister(target.into())
             }
             RequestSpecifier::EditPermission(policy) => {
                 station_api::RequestSpecifierDTO::EditPermission(policy.into())
@@ -296,8 +298,9 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             station_api::RequestSpecifierDTO::Transfer(transfer_specifier) => {
                 RequestSpecifier::Transfer(transfer_specifier.into())
             }
-            station_api::RequestSpecifierDTO::ChangeCanister(target) => {
-                RequestSpecifier::ChangeCanister(target.into())
+            station_api::RequestSpecifierDTO::ChangeCanister => RequestSpecifier::ChangeCanister,
+            station_api::RequestSpecifierDTO::ChangeManagedCanister(target) => {
+                RequestSpecifier::ChangeManagedCanister(target.into())
             }
             station_api::RequestSpecifierDTO::EditPermission(policy) => {
                 RequestSpecifier::EditPermission(policy.into())
@@ -399,9 +402,14 @@ impl RequestSpecifier {
                     .map(|id| Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(*id))))
                     .collect::<_>(),
             },
-            RequestSpecifier::ChangeCanister(target) => vec![Resource::ChangeCanister(
-                ChangeCanisterResourceAction::Create(target.clone()),
+            RequestSpecifier::ChangeCanister => vec![Resource::ChangeCanister(
+                ChangeCanisterResourceAction::Create,
             )],
+            RequestSpecifier::ChangeManagedCanister(target) => {
+                vec![Resource::ChangeManagedCanister(
+                    ChangeManagedCanisterResourceAction::Create(target.clone()),
+                )]
+            }
             RequestSpecifier::EditPermission(resource_specifier) => match resource_specifier {
                 ResourceSpecifier::Any => {
                     vec![Resource::Permission(PermissionResourceAction::Update)]

@@ -24,6 +24,9 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::EditUserGroup => RequestOperationType::EditUserGroup,
             RequestOperationTypeDTO::RemoveUserGroup => RequestOperationType::RemoveUserGroup,
             RequestOperationTypeDTO::ChangeCanister => RequestOperationType::ChangeCanister,
+            RequestOperationTypeDTO::ChangeManagedCanister => {
+                RequestOperationType::ChangeManagedCanister
+            }
             RequestOperationTypeDTO::EditPermission => RequestOperationType::EditPermission,
             RequestOperationTypeDTO::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestOperationTypeDTO::EditRequestPolicy => RequestOperationType::EditRequestPolicy,
@@ -56,6 +59,9 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::EditUserGroup => RequestOperationTypeDTO::EditUserGroup,
             RequestOperationType::RemoveUserGroup => RequestOperationTypeDTO::RemoveUserGroup,
             RequestOperationType::ChangeCanister => RequestOperationTypeDTO::ChangeCanister,
+            RequestOperationType::ChangeManagedCanister => {
+                RequestOperationTypeDTO::ChangeManagedCanister
+            }
             RequestOperationType::EditPermission => RequestOperationTypeDTO::EditPermission,
             RequestOperationType::AddRequestPolicy => RequestOperationTypeDTO::AddRequestPolicy,
             RequestOperationType::EditRequestPolicy => RequestOperationTypeDTO::EditRequestPolicy,
@@ -84,6 +90,9 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::EditUserGroup(_) => RequestOperationType::EditUserGroup,
             RequestOperation::RemoveUserGroup(_) => RequestOperationType::RemoveUserGroup,
             RequestOperation::ChangeCanister(_) => RequestOperationType::ChangeCanister,
+            RequestOperation::ChangeManagedCanister(_) => {
+                RequestOperationType::ChangeManagedCanister
+            }
             RequestOperation::EditPermission(_) => RequestOperationType::EditPermission,
             RequestOperation::AddRequestPolicy(_) => RequestOperationType::AddRequestPolicy,
             RequestOperation::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
@@ -134,6 +143,10 @@ impl RequestOperation {
             (RequestOperation::ChangeCanister(_), ListRequestsOperationTypeDTO::ChangeCanister) => {
                 true
             }
+            (
+                RequestOperation::ChangeManagedCanister(_),
+                ListRequestsOperationTypeDTO::ChangeManagedCanister,
+            ) => true,
             (RequestOperation::EditPermission(_), ListRequestsOperationTypeDTO::EditPermission) => {
                 true
             }
@@ -200,6 +213,9 @@ impl From<station_api::ListRequestsOperationTypeDTO> for RequestOperationFilterT
             }
             station_api::ListRequestsOperationTypeDTO::ChangeCanister => {
                 RequestOperationFilterType::ChangeCanister
+            }
+            station_api::ListRequestsOperationTypeDTO::ChangeManagedCanister => {
+                RequestOperationFilterType::ChangeManagedCanister
             }
             station_api::ListRequestsOperationTypeDTO::EditPermission => {
                 RequestOperationFilterType::EditPermission

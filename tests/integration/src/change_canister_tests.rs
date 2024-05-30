@@ -7,10 +7,10 @@ use crate::TestEnv;
 use candid::Principal;
 use sha2::{Digest, Sha256};
 use station_api::{
-    AddRequestPolicyOperationInput, CanisterInstallMode, ChangeCanisterOperationInput,
-    ChangeCanisterResourceTargetDTO, ChangeCanisterTargetDTO, EditPermissionOperationInput,
-    InstallCanisterInputDTO, QuorumDTO, RequestApprovalStatusDTO, RequestOperationInput,
-    RequestPolicyRuleDTO, RequestSpecifierDTO, UserSpecifierDTO,
+    AddRequestPolicyOperationInput, CanisterInstallMode, ChangeManagedCanisterOperationInput,
+    ChangeManagedCanisterResourceTargetDTO, EditPermissionOperationInput, QuorumDTO,
+    RequestApprovalStatusDTO, RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
+    UserSpecifierDTO,
 };
 
 #[test]
@@ -48,15 +48,11 @@ fn successful_four_eyes_upgrade() {
     let new_module_hash =
         hex::decode("d7f602df8d1cb581cc5c886a4ff8809793c50627e305ef45f6d770f27e0261cc").unwrap();
 
-    // submit canister upgrade request
-    let install_canister_input = InstallCanisterInputDTO {
-        mode: CanisterInstallMode::Upgrade,
-        canister_id,
-    };
     // submitting canister upgrade request fails due to insufficient permissions to create change canister requests
     let change_canister_operation =
-        RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
-            target: ChangeCanisterTargetDTO::InstallCanister(install_canister_input),
+        RequestOperationInput::ChangeManagedCanister(ChangeManagedCanisterOperationInput {
+            canister_id,
+            mode: CanisterInstallMode::Upgrade,
             module: new_module_bytes,
             arg: None,
         });
@@ -66,14 +62,15 @@ fn successful_four_eyes_upgrade() {
         canister_ids.station,
         change_canister_operation.clone(),
     );
-    assert!(trap_message
-        .contains("Canister trapped explicitly: Unauthorized access to resources: ChangeCanister"));
+    assert!(trap_message.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: ChangeManagedCanister"
+    ));
 
     // allow anyone to create change canister requests
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: station_api::ResourceDTO::ChangeCanister(
-            station_api::ChangeCanisterResourceActionDTO::Create(
-                ChangeCanisterResourceTargetDTO::Canister(canister_id),
+        resource: station_api::ResourceDTO::ChangeManagedCanister(
+            station_api::ChangeManagedCanisterResourceActionDTO::Create(
+                ChangeManagedCanisterResourceTargetDTO::Canister(canister_id),
             ),
         ),
         auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
@@ -91,8 +88,8 @@ fn successful_four_eyes_upgrade() {
     // set four eyes principle for canister changes
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
-            specifier: RequestSpecifierDTO::ChangeCanister(
-                ChangeCanisterResourceTargetDTO::Canister(canister_id),
+            specifier: RequestSpecifierDTO::ChangeManagedCanister(
+                ChangeManagedCanisterResourceTargetDTO::Canister(canister_id),
             ),
             rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
                 approvers: UserSpecifierDTO::Any,
@@ -178,13 +175,10 @@ fn reinstall_canister() {
     assert_eq!(ctr, 2_u32.to_le_bytes());
 
     // submit canister upgrade request
-    let install_canister_input = InstallCanisterInputDTO {
-        mode: CanisterInstallMode::Upgrade,
-        canister_id,
-    };
     let change_canister_operation =
-        RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
-            target: ChangeCanisterTargetDTO::InstallCanister(install_canister_input),
+        RequestOperationInput::ChangeManagedCanister(ChangeManagedCanisterOperationInput {
+            canister_id,
+            mode: CanisterInstallMode::Upgrade,
             module: module_bytes.clone(),
             arg: None,
         });
@@ -205,13 +199,10 @@ fn reinstall_canister() {
     assert_eq!(ctr, 2_u32.to_le_bytes());
 
     // submit canister reinstall request
-    let install_canister_input = InstallCanisterInputDTO {
-        mode: CanisterInstallMode::Reinstall,
-        canister_id,
-    };
     let change_canister_operation =
-        RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
-            target: ChangeCanisterTargetDTO::InstallCanister(install_canister_input),
+        RequestOperationInput::ChangeManagedCanister(ChangeManagedCanisterOperationInput {
+            canister_id,
+            mode: CanisterInstallMode::Reinstall,
             module: module_bytes,
             arg: None,
         });

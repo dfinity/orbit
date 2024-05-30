@@ -1,5 +1,6 @@
 use crate::{
     errors::ChangeCanisterError,
+    models::{CanisterInstallMode, CanisterUpgradeModeArgs},
     services::{SystemService, SYSTEM_SERVICE},
 };
 use candid::CandidType;
@@ -10,7 +11,6 @@ use ic_cdk::api::management_canister::{
 };
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
-use station_api::CanisterInstallMode;
 use std::sync::Arc;
 
 lazy_static! {
@@ -63,7 +63,7 @@ impl ChangeCanisterService {
         let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
         self.install_canister(
             upgrader_canister_id,
-            CanisterInstallMode::Upgrade,
+            CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}),
             module,
             arg,
         )

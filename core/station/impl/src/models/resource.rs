@@ -19,6 +19,7 @@ pub enum Resource {
     Account(AccountResourceAction),
     AddressBook(ResourceAction),
     ChangeCanister(ChangeCanisterResourceAction),
+    ChangeManagedCanister(ChangeManagedCanisterResourceAction),
     Request(RequestResourceAction),
     RequestPolicy(ResourceAction),
     System(SystemResourceAction),
@@ -50,7 +51,10 @@ impl ModelValidator<RecordValidationError> for Resource {
                 }
             },
             Resource::ChangeCanister(action) => match action {
-                ChangeCanisterResourceAction::Create(_) => Ok(()),
+                ChangeCanisterResourceAction::Create => Ok(()),
+            },
+            Resource::ChangeManagedCanister(action) => match action {
+                ChangeManagedCanisterResourceAction::Create(_) => Ok(()),
             },
             Resource::Request(action) => match action {
                 RequestResourceAction::List => Ok(()),
@@ -134,23 +138,23 @@ pub enum SystemResourceAction {
 }
 
 #[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ChangeCanisterResourceAction {
+    Create,
+}
+
+#[storable]
 #[derive(Default, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ChangeCanisterResourceTarget {
+pub enum ChangeManagedCanisterResourceTarget {
     #[default]
     Any,
     Canister(Principal),
 }
 
-#[storable(serializer = "cbor_or_default")]
+#[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ChangeCanisterResourceAction {
-    Create(ChangeCanisterResourceTarget),
-}
-
-impl Default for ChangeCanisterResourceAction {
-    fn default() -> Self {
-        ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::default())
-    }
+pub enum ChangeManagedCanisterResourceAction {
+    Create(ChangeManagedCanisterResourceTarget),
 }
 
 #[storable]
@@ -284,21 +288,36 @@ impl Resource {
                 }
             },
             Resource::ChangeCanister(action) => match action {
-                ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any) => {
+                ChangeCanisterResourceAction::Create => {
                     vec![Resource::ChangeCanister(
-                        ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any),
+                        ChangeCanisterResourceAction::Create,
                     )]
                 }
-                ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Canister(
-                    id,
-                )) => {
+            },
+            Resource::ChangeManagedCanister(action) => match action {
+                ChangeManagedCanisterResourceAction::Create(
+                    ChangeManagedCanisterResourceTarget::Any,
+                ) => {
+                    vec![Resource::ChangeManagedCanister(
+                        ChangeManagedCanisterResourceAction::Create(
+                            ChangeManagedCanisterResourceTarget::Any,
+                        ),
+                    )]
+                }
+                ChangeManagedCanisterResourceAction::Create(
+                    ChangeManagedCanisterResourceTarget::Canister(id),
+                ) => {
                     vec![
-                        Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
-                            ChangeCanisterResourceTarget::Any,
-                        )),
-                        Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
-                            ChangeCanisterResourceTarget::Canister(*id),
-                        )),
+                        Resource::ChangeManagedCanister(
+                            ChangeManagedCanisterResourceAction::Create(
+                                ChangeManagedCanisterResourceTarget::Any,
+                            ),
+                        ),
+                        Resource::ChangeManagedCanister(
+                            ChangeManagedCanisterResourceAction::Create(
+                                ChangeManagedCanisterResourceTarget::Canister(*id),
+                            ),
+                        ),
                     ]
                 }
             },
@@ -430,6 +449,9 @@ impl Display for Resource {
             Resource::Account(action) => write!(f, "Account({})", action),
             Resource::AddressBook(action) => write!(f, "AddressBook({})", action),
             Resource::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
+            Resource::ChangeManagedCanister(action) => {
+                write!(f, "ChangeManagedCanister({})", action)
+            }
             Resource::Request(action) => write!(f, "Request({})", action),
             Resource::RequestPolicy(action) => write!(f, "RequestPolicy({})", action),
             Resource::System(action) => write!(f, "System({})", action),
@@ -472,20 +494,31 @@ impl Display for AccountResourceAction {
     }
 }
 
-impl Display for ChangeCanisterResourceTarget {
+impl Display for ChangeCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChangeCanisterResourceTarget::Any => write!(f, "Any"),
-            ChangeCanisterResourceTarget::Canister(canister_id) => {
+            ChangeCanisterResourceAction::Create => {
+                write!(f, "Create")
+            }
+        }
+    }
+}
+
+impl Display for ChangeManagedCanisterResourceTarget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ChangeManagedCanisterResourceTarget::Any => write!(f, "Any"),
+            ChangeManagedCanisterResourceTarget::Canister(canister_id) => {
                 write!(f, "Canister({})", canister_id)
             }
         }
     }
 }
-impl Display for ChangeCanisterResourceAction {
+
+impl Display for ChangeManagedCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChangeCanisterResourceAction::Create(target) => {
+            ChangeManagedCanisterResourceAction::Create(target) => {
                 write!(f, "Create({})", target)
             }
         }
@@ -538,15 +571,12 @@ mod test {
     use orbit_essentials::model::ModelValidator;
 
     use crate::core::validation::disable_mock_resource_validation;
-    use crate::models::resource::ChangeCanisterResourceTarget;
     use candid::Principal;
-    use ic_stable_structures::Storable;
-    use orbit_essentials::storable;
 
     use super::{
-        AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-        RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-        UserResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceAction,
+        ChangeManagedCanisterResourceTarget, PermissionResourceAction, RequestResourceAction,
+        Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
     };
 
     #[test]
@@ -566,11 +596,12 @@ mod test {
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
-                ChangeCanisterResourceTarget::Any,
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
+            Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create(
+                ChangeManagedCanisterResourceTarget::Any,
             )),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
-                ChangeCanisterResourceTarget::Canister(Principal::management_canister()),
+            Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create(
+                ChangeManagedCanisterResourceTarget::Canister(Principal::management_canister()),
             )),
             Resource::Request(RequestResourceAction::List),
             Resource::Request(RequestResourceAction::Read(ResourceId::Any)),
@@ -626,22 +657,5 @@ mod test {
                 .validate()
                 .expect_err("Non existent resource should be invalid");
         }
-    }
-
-    #[test]
-    fn backwards_compatibility() {
-        #[storable]
-        #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-        pub enum ChangeCanisterResourceActionV0 {
-            Create,
-        }
-
-        let old_action = ChangeCanisterResourceActionV0::Create;
-        let bytes = old_action.to_bytes();
-        let new_action = ChangeCanisterResourceAction::from_bytes(bytes);
-        assert_eq!(
-            new_action,
-            ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any)
-        );
     }
 }
