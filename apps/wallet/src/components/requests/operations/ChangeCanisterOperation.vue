@@ -46,8 +46,6 @@ const target = computed(() => {
     return i18n.t('terms.station');
   }
 
-  if (variantIs(props.operation.target, 'UpgradeUpgrader')) {
-    return i18n.t('terms.upgrader');
-  }
+  return i18n.t('terms.upgrader');
 });
 </script>
