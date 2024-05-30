@@ -16,7 +16,6 @@ pub enum RequestOperationType {
     EditUserGroup = 7,
     RemoveUserGroup = 8,
     ChangeCanister = 9,
-    ChangeManagedCanister = 10,
     EditPermission = 11,
     AddRequestPolicy = 13,
     EditRequestPolicy = 14,
@@ -25,6 +24,7 @@ pub enum RequestOperationType {
     EditAddressBookEntry = 17,
     RemoveAddressBookEntry = 18,
     ManageSystemInfo = 19,
+    ChangeManagedCanister = 20,
 }
 
 impl FromStr for RequestOperationType {
