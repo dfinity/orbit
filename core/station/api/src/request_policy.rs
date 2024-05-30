@@ -1,4 +1,7 @@
-use crate::{resource::ResourceDTO, MetadataDTO, PaginationInput, ResourceIdsDTO, UuidDTO};
+use crate::{
+    resource::ResourceDTO, ChangeCanisterResourceTargetDTO, MetadataDTO, PaginationInput,
+    ResourceIdsDTO, UuidDTO,
+};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -11,7 +14,7 @@ pub enum RequestSpecifierDTO {
     EditAddressBookEntry(ResourceIdsDTO),
     RemoveAddressBookEntry(ResourceIdsDTO),
     Transfer(ResourceIdsDTO),
-    ChangeCanister,
+    ChangeCanister(ChangeCanisterResourceTargetDTO),
     EditPermission(ResourceSpecifierDTO),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIdsDTO),

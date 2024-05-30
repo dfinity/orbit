@@ -3,9 +3,9 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-        RequestResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
-        SystemResourceAction, UserResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ChangeCanisterResourceTarget,
+        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+        ResourceIds, SystemResourceAction, UserResourceAction,
     },
     ADMIN_GROUP_ID,
 };
@@ -142,7 +142,7 @@ lazy_static! {
         // change canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
+            Resource::ChangeCanister(ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any)),
         ),
     ];
 
@@ -228,7 +228,7 @@ lazy_static! {
         ),
         // change canister
         (
-            RequestSpecifier::ChangeCanister,
+            RequestSpecifier::ChangeCanister(ChangeCanisterResourceTarget::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         // system info

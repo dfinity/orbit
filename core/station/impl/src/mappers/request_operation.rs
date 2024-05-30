@@ -2,8 +2,9 @@ use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         resource::{
-            AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-            Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+            AccountResourceAction, ChangeCanisterResourceAction, ChangeCanisterResourceTarget,
+            PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+            UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
@@ -704,10 +705,20 @@ impl RequestOperation {
                     Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
                 ]
             }
-            RequestOperation::ChangeCanister(_) => {
-                vec![Resource::ChangeCanister(
-                    ChangeCanisterResourceAction::Create,
-                )]
+            RequestOperation::ChangeCanister(ChangeCanisterOperation { input, .. }) => {
+                match input.target.clone().into() {
+                    ChangeCanisterResourceTarget::Any => vec![Resource::ChangeCanister(
+                        ChangeCanisterResourceAction::Create(ChangeCanisterResourceTarget::Any),
+                    )],
+                    ChangeCanisterResourceTarget::Canister(id) => vec![
+                        Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
+                            ChangeCanisterResourceTarget::Any,
+                        )),
+                        Resource::ChangeCanister(ChangeCanisterResourceAction::Create(
+                            ChangeCanisterResourceTarget::Canister(id),
+                        )),
+                    ],
+                }
             }
             RequestOperation::EditRequestPolicy(EditRequestPolicyOperation { input }) => {
                 vec![
