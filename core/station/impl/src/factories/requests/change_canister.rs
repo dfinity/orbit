@@ -5,7 +5,7 @@ use crate::{
         ChangeCanisterOperation, ChangeCanisterTarget, ChangeManagedCanisterOperation, Request,
         RequestExecutionPlan, RequestOperation,
     },
-    services::{SystemService, CHANGE_CANISTER_SERVICE},
+    services::{ChangeCanisterService, SystemService},
 };
 use async_trait::async_trait;
 use candid::Encode;
@@ -58,6 +58,7 @@ pub struct ChangeCanisterRequestExecute<'p, 'o> {
     request: &'p Request,
     operation: &'o ChangeCanisterOperation,
     system_service: Arc<SystemService>,
+    change_canister_service: Arc<ChangeCanisterService>,
 }
 
 impl<'p, 'o> ChangeCanisterRequestExecute<'p, 'o> {
@@ -65,11 +66,13 @@ impl<'p, 'o> ChangeCanisterRequestExecute<'p, 'o> {
         request: &'p Request,
         operation: &'o ChangeCanisterOperation,
         system_service: Arc<SystemService>,
+        change_canister_service: Arc<ChangeCanisterService>,
     ) -> Self {
         Self {
             request,
             operation,
             system_service,
+            change_canister_service,
         }
     }
 }
@@ -84,7 +87,8 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
 
                 let default_arg = Encode!(&()).unwrap();
                 let arg = self.operation.input.arg.as_ref().unwrap_or(&default_arg);
-                let out = CHANGE_CANISTER_SERVICE
+                let out = self
+                    .change_canister_service
                     .upgrade_station(&self.operation.input.module, arg)
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
@@ -103,7 +107,7 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
             }
 
             ChangeCanisterTarget::UpgradeUpgrader => {
-                CHANGE_CANISTER_SERVICE
+                self.change_canister_service
                     .upgrade_upgrader(
                         &self.operation.input.module,
                         self.operation.input.arg.clone(),
@@ -164,18 +168,27 @@ impl Create<ChangeManagedCanisterOperationInput> for ChangeManagedCanisterReques
 pub struct ChangeManagedCanisterRequestExecute<'p, 'o> {
     request: &'p Request,
     operation: &'o ChangeManagedCanisterOperation,
+    change_canister_service: Arc<ChangeCanisterService>,
 }
 
 impl<'p, 'o> ChangeManagedCanisterRequestExecute<'p, 'o> {
-    pub fn new(request: &'p Request, operation: &'o ChangeManagedCanisterOperation) -> Self {
-        Self { request, operation }
+    pub fn new(
+        request: &'p Request,
+        operation: &'o ChangeManagedCanisterOperation,
+        change_canister_service: Arc<ChangeCanisterService>,
+    ) -> Self {
+        Self {
+            request,
+            operation,
+            change_canister_service,
+        }
     }
 }
 
 #[async_trait]
 impl Execute for ChangeManagedCanisterRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
-        CHANGE_CANISTER_SERVICE
+        self.change_canister_service
             .install_canister(
                 self.operation.input.canister_id,
                 self.operation.input.mode.clone(),

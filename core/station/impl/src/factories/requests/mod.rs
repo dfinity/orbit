@@ -2,7 +2,10 @@ use crate::{
     core::generate_uuid_v4,
     errors::{RequestError, RequestExecuteError},
     models::{Request, RequestOperation},
-    services::{permission::PERMISSION_SERVICE, REQUEST_POLICY_SERVICE, SYSTEM_SERVICE},
+    services::{
+        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, REQUEST_POLICY_SERVICE,
+        SYSTEM_SERVICE,
+    },
 };
 use async_trait::async_trait;
 use orbit_essentials::types::UUID;
@@ -258,11 +261,20 @@ impl RequestFactory {
             RequestOperation::EditUser(operation) => {
                 Box::new(EditUserRequestExecute::new(request, operation))
             }
-            RequestOperation::ChangeCanister(operation) => Box::new(
-                ChangeCanisterRequestExecute::new(request, operation, Arc::clone(&SYSTEM_SERVICE)),
-            ),
+            RequestOperation::ChangeCanister(operation) => {
+                Box::new(ChangeCanisterRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&SYSTEM_SERVICE),
+                    Arc::clone(&CHANGE_CANISTER_SERVICE),
+                ))
+            }
             RequestOperation::ChangeManagedCanister(operation) => {
-                Box::new(ChangeManagedCanisterRequestExecute::new(request, operation))
+                Box::new(ChangeManagedCanisterRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&CHANGE_CANISTER_SERVICE),
+                ))
             }
             RequestOperation::EditPermission(operation) => {
                 Box::new(EditPermissionRequestExecute::new(
