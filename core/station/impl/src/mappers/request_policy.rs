@@ -407,7 +407,7 @@ impl RequestSpecifier {
             )],
             RequestSpecifier::ChangeManagedCanister(target) => {
                 vec![Resource::ChangeManagedCanister(
-                    ChangeManagedCanisterResourceAction::Create(target.clone()),
+                    ChangeManagedCanisterResourceAction::Change(target.clone()),
                 )]
             }
             RequestSpecifier::EditPermission(resource_specifier) => match resource_specifier {

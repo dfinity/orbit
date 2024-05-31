@@ -54,7 +54,8 @@ impl ModelValidator<RecordValidationError> for Resource {
                 ChangeCanisterResourceAction::Create => Ok(()),
             },
             Resource::ChangeManagedCanister(action) => match action {
-                ChangeManagedCanisterResourceAction::Create(_) => Ok(()),
+                ChangeManagedCanisterResourceAction::Create
+                | ChangeManagedCanisterResourceAction::Change(_) => Ok(()),
             },
             Resource::Request(action) => match action {
                 RequestResourceAction::List => Ok(()),
@@ -154,7 +155,8 @@ pub enum ChangeManagedCanisterResourceTarget {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeManagedCanisterResourceAction {
-    Create(ChangeManagedCanisterResourceTarget),
+    Create,
+    Change(ChangeManagedCanisterResourceTarget),
 }
 
 #[storable]
@@ -295,26 +297,31 @@ impl Resource {
                 }
             },
             Resource::ChangeManagedCanister(action) => match action {
-                ChangeManagedCanisterResourceAction::Create(
+                ChangeManagedCanisterResourceAction::Create => {
+                    vec![Resource::ChangeManagedCanister(
+                        ChangeManagedCanisterResourceAction::Create,
+                    )]
+                }
+                ChangeManagedCanisterResourceAction::Change(
                     ChangeManagedCanisterResourceTarget::Any,
                 ) => {
                     vec![Resource::ChangeManagedCanister(
-                        ChangeManagedCanisterResourceAction::Create(
+                        ChangeManagedCanisterResourceAction::Change(
                             ChangeManagedCanisterResourceTarget::Any,
                         ),
                     )]
                 }
-                ChangeManagedCanisterResourceAction::Create(
+                ChangeManagedCanisterResourceAction::Change(
                     ChangeManagedCanisterResourceTarget::Canister(id),
                 ) => {
                     vec![
                         Resource::ChangeManagedCanister(
-                            ChangeManagedCanisterResourceAction::Create(
+                            ChangeManagedCanisterResourceAction::Change(
                                 ChangeManagedCanisterResourceTarget::Any,
                             ),
                         ),
                         Resource::ChangeManagedCanister(
-                            ChangeManagedCanisterResourceAction::Create(
+                            ChangeManagedCanisterResourceAction::Change(
                                 ChangeManagedCanisterResourceTarget::Canister(*id),
                             ),
                         ),
@@ -516,8 +523,11 @@ impl Display for ChangeManagedCanisterResourceTarget {
 impl Display for ChangeManagedCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ChangeManagedCanisterResourceAction::Create(target) => {
-                write!(f, "Create({})", target)
+            ChangeManagedCanisterResourceAction::Create => {
+                write!(f, "Create")
+            }
+            ChangeManagedCanisterResourceAction::Change(target) => {
+                write!(f, "Change({})", target)
             }
         }
     }
@@ -595,10 +605,11 @@ mod test {
             Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
-            Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create(
+            Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create),
+            Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Change(
                 ChangeManagedCanisterResourceTarget::Any,
             )),
-            Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create(
+            Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Change(
                 ChangeManagedCanisterResourceTarget::Canister(Principal::management_canister()),
             )),
             Resource::Request(RequestResourceAction::List),

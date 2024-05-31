@@ -69,7 +69,7 @@ fn successful_four_eyes_upgrade() {
     // allow anyone to create change canister requests
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
         resource: station_api::ResourceDTO::ChangeManagedCanister(
-            station_api::ChangeManagedCanisterResourceActionDTO::Create(
+            station_api::ChangeManagedCanisterResourceActionDTO::Change(
                 ChangeManagedCanisterResourceTargetDTO::Canister(canister_id),
             ),
         ),

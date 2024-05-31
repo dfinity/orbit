@@ -764,10 +764,10 @@ impl RequestOperation {
                 ..
             }) => {
                 vec![
-                    Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create(
+                    Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Change(
                         ChangeManagedCanisterResourceTarget::Any,
                     )),
-                    Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Create(
+                    Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Change(
                         ChangeManagedCanisterResourceTarget::Canister(input.canister_id),
                     )),
                 ]

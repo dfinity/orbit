@@ -1611,7 +1611,8 @@ type ChangeManagedCanisterResourceTarget = variant {
 
 // The actions that are available for managed canister changes.
 type ChangeManagedCanisterResourceAction = variant {
-  Create : ChangeManagedCanisterResourceTarget;
+  Create;
+  Change : ChangeManagedCanisterResourceTarget;
 };
 
 // The actions that are available for requests.
