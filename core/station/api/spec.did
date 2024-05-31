@@ -1603,6 +1603,11 @@ type ChangeCanisterResourceAction = variant {
   Create;
 };
 
+// The target of a request to create a managed canister.
+type CreateManagedCanisterResourceTarget = variant {
+  Any;
+};
+
 // The target canister of a request to change a managed canister.
 type ChangeManagedCanisterResourceTarget = variant {
   Any;
@@ -1611,7 +1616,7 @@ type ChangeManagedCanisterResourceTarget = variant {
 
 // The actions that are available for managed canister changes.
 type ManagedCanisterResourceAction = variant {
-  Create;
+  Create : CreateManagedCanisterResourceTarget;
   Change : ChangeManagedCanisterResourceTarget;
 };
 

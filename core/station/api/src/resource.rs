@@ -72,6 +72,11 @@ pub enum ChangeCanisterResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum CreateManagedCanisterResourceTargetDTO {
+    Any,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ChangeManagedCanisterResourceTargetDTO {
     Any,
     Canister(Principal),
@@ -79,7 +84,7 @@ pub enum ChangeManagedCanisterResourceTargetDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ManagedCanisterResourceActionDTO {
-    Create,
+    Create(CreateManagedCanisterResourceTargetDTO),
     Change(ChangeManagedCanisterResourceTargetDTO),
 }
 

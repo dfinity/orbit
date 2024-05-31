@@ -145,13 +145,14 @@ pub enum ChangeCanisterResourceAction {
 }
 
 #[storable]
-#[derive(Default, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct CreateManagedCanisterResourceTarget {}
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum CreateManagedCanisterResourceTarget {
+    Any,
+}
 
 #[storable]
-#[derive(Default, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeManagedCanisterResourceTarget {
-    #[default]
     Any,
     Canister(Principal),
 }
@@ -605,7 +606,7 @@ mod test {
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
             Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Create(
-                CreateManagedCanisterResourceTarget {},
+                CreateManagedCanisterResourceTarget::Any,
             )),
             Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Change(
                 ChangeManagedCanisterResourceTarget::Any,
