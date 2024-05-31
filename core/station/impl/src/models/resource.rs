@@ -302,9 +302,11 @@ impl Resource {
                 }
             },
             Resource::ManageCanister(action) => match action {
-                ManagedCanisterResourceAction::Create(target) => {
+                ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any) => {
                     vec![Resource::ManageCanister(
-                        ManagedCanisterResourceAction::Create(target.clone()),
+                        ManagedCanisterResourceAction::Create(
+                            CreateManagedCanisterResourceTarget::Any,
+                        ),
                     )]
                 }
                 ManagedCanisterResourceAction::Change(ChangeManagedCanisterResourceTarget::Any) => {
@@ -456,7 +458,7 @@ impl Display for Resource {
             Resource::AddressBook(action) => write!(f, "AddressBook({})", action),
             Resource::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
             Resource::ManageCanister(action) => {
-                write!(f, "ChangeManagedCanister({})", action)
+                write!(f, "ManageCanister({})", action)
             }
             Resource::Request(action) => write!(f, "Request({})", action),
             Resource::RequestPolicy(action) => write!(f, "RequestPolicy({})", action),
