@@ -1,4 +1,5 @@
 use super::AccountId;
+use candid::Principal;
 use orbit_essentials::storable;
 
 #[storable]
@@ -13,7 +14,7 @@ pub enum RequestOperationFilterType {
     EditUserGroup,
     RemoveUserGroup,
     ChangeCanister,
-    ChangeManagedCanister,
+    ChangeManagedCanister(Option<Principal>),
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,

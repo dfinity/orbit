@@ -6,12 +6,15 @@ use crate::utils::{
 };
 use crate::TestEnv;
 use candid::Principal;
+use orbit_essentials::api::ApiResult;
+use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{
     AddRequestPolicyOperationInput, CanisterInstallMode, ChangeManagedCanisterOperationInput,
-    ChangeManagedCanisterResourceTargetDTO, EditPermissionOperationInput, QuorumDTO,
-    RequestApprovalStatusDTO, RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
-    RequestStatusDTO, UserSpecifierDTO,
+    ChangeManagedCanisterResourceTargetDTO, EditPermissionOperationInput, ListRequestsInput,
+    ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO, RequestApprovalStatusDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, RequestStatusDTO,
+    UserSpecifierDTO,
 };
 
 #[test]
@@ -63,9 +66,8 @@ fn successful_four_eyes_upgrade() {
         canister_ids.station,
         change_canister_operation.clone(),
     );
-    assert!(trap_message.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ChangeManagedCanister"
-    ));
+    assert!(trap_message
+        .contains("Canister trapped explicitly: Unauthorized access to resources: ManageCanister"));
 
     // allow anyone to create change canister requests
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
@@ -185,7 +187,7 @@ fn successful_four_eyes_upgrade() {
 }
 
 #[test]
-fn reinstall_canister() {
+fn upgrade_reinstall_list_test() {
     let TestEnv {
         mut env,
         canister_ids,
@@ -267,4 +269,84 @@ fn reinstall_canister() {
     // stable memory should be reset across reinstall and thus the counter is back at 0
     let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
     assert_eq!(ctr, 0_u32.to_le_bytes());
+
+    // test listing requests for the specified canister ID
+    let list_requests_operation_type =
+        ListRequestsOperationTypeDTO::ChangeManagedCanister(Some(canister_id));
+    let list_requests_input = ListRequestsInput {
+        requester_ids: None,
+        approver_ids: None,
+        statuses: None,
+        operation_types: Some(vec![list_requests_operation_type]),
+        expiration_from_dt: None,
+        expiration_to_dt: None,
+        created_from_dt: None,
+        created_to_dt: None,
+        paginate: None,
+        sort_by: None,
+        only_approvable: false,
+        with_evaluation_results: false,
+    };
+    let res: (ApiResult<ListRequestsResponse>,) = update_candid_as(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "list_requests",
+        (list_requests_input,),
+    )
+    .unwrap();
+    assert_eq!(res.0.unwrap().total, 2);
+
+    // test listing requests for a specified canister ID without any requests
+    let list_requests_operation_type =
+        ListRequestsOperationTypeDTO::ChangeManagedCanister(Some(Principal::management_canister()));
+    let list_requests_input = ListRequestsInput {
+        requester_ids: None,
+        approver_ids: None,
+        statuses: None,
+        operation_types: Some(vec![list_requests_operation_type]),
+        expiration_from_dt: None,
+        expiration_to_dt: None,
+        created_from_dt: None,
+        created_to_dt: None,
+        paginate: None,
+        sort_by: None,
+        only_approvable: false,
+        with_evaluation_results: false,
+    };
+    let res: (ApiResult<ListRequestsResponse>,) = update_candid_as(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "list_requests",
+        (list_requests_input,),
+    )
+    .unwrap();
+    assert_eq!(res.0.unwrap().total, 0);
+
+    // test listing requests for no specified canister ID
+    let list_requests_operation_type = ListRequestsOperationTypeDTO::ChangeManagedCanister(None);
+    let list_requests_input = ListRequestsInput {
+        requester_ids: None,
+        approver_ids: None,
+        statuses: None,
+        operation_types: Some(vec![list_requests_operation_type]),
+        expiration_from_dt: None,
+        expiration_to_dt: None,
+        created_from_dt: None,
+        created_to_dt: None,
+        paginate: None,
+        sort_by: None,
+        only_approvable: false,
+        with_evaluation_results: false,
+    };
+    let res: (ApiResult<ListRequestsResponse>,) = update_candid_as(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "list_requests",
+        (list_requests_input,),
+    )
+    .unwrap();
+    assert_eq!(res.0.unwrap().total, 2);
 }

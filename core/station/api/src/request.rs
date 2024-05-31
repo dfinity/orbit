@@ -15,7 +15,7 @@ use crate::{
     RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
     RequestPolicyRuleDTO, RequestSpecifierDTO, SortDirection, UuidDTO,
 };
-use candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum RequestStatusDTO {
@@ -133,7 +133,7 @@ pub enum ListRequestsOperationTypeDTO {
     EditUserGroup,
     RemoveUserGroup,
     ChangeCanister,
-    ChangeManagedCanister,
+    ChangeManagedCanister(Option<Principal>),
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,

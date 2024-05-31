@@ -144,9 +144,15 @@ impl RequestOperation {
                 true
             }
             (
-                RequestOperation::ChangeManagedCanister(_),
-                ListRequestsOperationTypeDTO::ChangeManagedCanister,
-            ) => true,
+                RequestOperation::ChangeManagedCanister(operation),
+                ListRequestsOperationTypeDTO::ChangeManagedCanister(target),
+            ) => {
+                if let Some(canister_id) = target {
+                    operation.input.canister_id == *canister_id
+                } else {
+                    true
+                }
+            }
             (RequestOperation::EditPermission(_), ListRequestsOperationTypeDTO::EditPermission) => {
                 true
             }
@@ -214,8 +220,8 @@ impl From<station_api::ListRequestsOperationTypeDTO> for RequestOperationFilterT
             station_api::ListRequestsOperationTypeDTO::ChangeCanister => {
                 RequestOperationFilterType::ChangeCanister
             }
-            station_api::ListRequestsOperationTypeDTO::ChangeManagedCanister => {
-                RequestOperationFilterType::ChangeManagedCanister
+            station_api::ListRequestsOperationTypeDTO::ChangeManagedCanister(target) => {
+                RequestOperationFilterType::ChangeManagedCanister(target)
             }
             station_api::ListRequestsOperationTypeDTO::EditPermission => {
                 RequestOperationFilterType::EditPermission
