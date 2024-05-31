@@ -18,6 +18,7 @@ pub enum Resource {
     Account(AccountResourceAction),
     AddressBook(ResourceAction),
     ChangeCanister(ChangeCanisterResourceAction),
+    SetDisasterRecovery(ChangeCanisterResourceAction),
     Request(RequestResourceAction),
     RequestPolicy(ResourceAction),
     System(SystemResourceAction),
@@ -48,9 +49,14 @@ impl ModelValidator<RecordValidationError> for Resource {
                     EnsureAddressBookEntry::resource_id_exists(resource_id)
                 }
             },
-            Resource::ChangeCanister(action) => match action {
-                ChangeCanisterResourceAction::Create => Ok(()),
-            },
+            Resource::SetDisasterRecovery(action) | Resource::ChangeCanister(action) => {
+                match action {
+                    ChangeCanisterResourceAction::Create => Ok(()),
+                }
+            }
+            // Resource::SetDisasterRecovery(action) => match action {
+            //     SetDisasterRecoveryResourceAction::Create => Ok(()),
+            // },
             Resource::Request(action) => match action {
                 RequestResourceAction::List => Ok(()),
                 RequestResourceAction::Read(resource_id) => {
@@ -137,6 +143,12 @@ pub enum SystemResourceAction {
 pub enum ChangeCanisterResourceAction {
     Create,
 }
+
+// #[storable]
+// #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+// pub enum SetDisasterRecoveryResourceAction {
+//     Create,
+// }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -268,13 +280,16 @@ impl Resource {
                     ))]
                 }
             },
-            Resource::ChangeCanister(action) => match action {
-                ChangeCanisterResourceAction::Create => {
-                    vec![Resource::ChangeCanister(
-                        ChangeCanisterResourceAction::Create,
-                    )]
+            Resource::SetDisasterRecovery(action) | Resource::ChangeCanister(action) => {
+                match action {
+                    ChangeCanisterResourceAction::Create => {
+                        vec![Resource::ChangeCanister(
+                            ChangeCanisterResourceAction::Create,
+                        )]
+                    }
                 }
-            },
+            }
+
             Resource::Request(action) => match action {
                 RequestResourceAction::List => {
                     vec![Resource::Request(RequestResourceAction::List)]
@@ -403,6 +418,7 @@ impl Display for Resource {
             Resource::Account(action) => write!(f, "Account({})", action),
             Resource::AddressBook(action) => write!(f, "AddressBook({})", action),
             Resource::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
+            Resource::SetDisasterRecovery(action) => write!(f, "SetDisasterRecovery({})", action),
             Resource::Request(action) => write!(f, "Request({})", action),
             Resource::RequestPolicy(action) => write!(f, "RequestPolicy({})", action),
             Resource::System(action) => write!(f, "System({})", action),
@@ -452,6 +468,14 @@ impl Display for ChangeCanisterResourceAction {
         }
     }
 }
+
+// impl Display for SetDisasterRecoveryResourceAction {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+//         match self {
+//             SetDisasterRecoveryResourceAction::Create => write!(f, "Create"),
+//         }
+//     }
+// }
 
 impl Display for RequestResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

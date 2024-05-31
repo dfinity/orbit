@@ -245,6 +245,9 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
                 station_api::RequestSpecifierDTO::Transfer(account.into())
             }
             RequestSpecifier::ChangeCanister => station_api::RequestSpecifierDTO::ChangeCanister,
+            RequestSpecifier::SetDisasterRecovery => {
+                station_api::RequestSpecifierDTO::SetDisasterRecovery
+            }
             RequestSpecifier::EditPermission(policy) => {
                 station_api::RequestSpecifierDTO::EditPermission(policy.into())
             }
@@ -295,6 +298,9 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
                 RequestSpecifier::Transfer(transfer_specifier.into())
             }
             station_api::RequestSpecifierDTO::ChangeCanister => RequestSpecifier::ChangeCanister,
+            station_api::RequestSpecifierDTO::SetDisasterRecovery => {
+                RequestSpecifier::SetDisasterRecovery
+            }
             station_api::RequestSpecifierDTO::EditPermission(policy) => {
                 RequestSpecifier::EditPermission(policy.into())
             }
@@ -395,9 +401,11 @@ impl RequestSpecifier {
                     .map(|id| Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(*id))))
                     .collect::<_>(),
             },
-            RequestSpecifier::ChangeCanister => vec![Resource::ChangeCanister(
-                ChangeCanisterResourceAction::Create,
-            )],
+            RequestSpecifier::SetDisasterRecovery | RequestSpecifier::ChangeCanister => {
+                vec![Resource::ChangeCanister(
+                    ChangeCanisterResourceAction::Create,
+                )]
+            }
             RequestSpecifier::EditPermission(resource_specifier) => match resource_specifier {
                 ResourceSpecifier::Any => {
                     vec![Resource::Permission(PermissionResourceAction::Update)]

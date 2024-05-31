@@ -7,6 +7,7 @@ pub enum ResourceDTO {
     Account(AccountResourceActionDTO),
     AddressBook(ResourceActionDTO),
     ChangeCanister(ChangeCanisterResourceActionDTO),
+    SetDisasterRecovery(ChangeCanisterResourceActionDTO),
     Request(RequestResourceActionDTO),
     RequestPolicy(ResourceActionDTO),
     System(SystemResourceActionDTO),
@@ -67,6 +68,11 @@ pub enum SystemResourceActionDTO {
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ChangeCanisterResourceActionDTO {
+    Create,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum SetDisasterRecoveryActionDTO {
     Create,
 }
 

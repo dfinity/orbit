@@ -13,6 +13,7 @@ pub enum RequestOperationFilterType {
     EditUserGroup,
     RemoveUserGroup,
     ChangeCanister,
+    SetDisasterRecovery,
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,

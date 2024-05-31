@@ -105,6 +105,7 @@ impl DeployService {
                 name: input.name.clone(),
                 admins,
                 upgrader_wasm_module,
+                quorum: 1,
             }))
             .map_err(|err| DeployError::Failed {
                 reason: err.to_string(),

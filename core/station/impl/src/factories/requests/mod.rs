@@ -25,6 +25,7 @@ mod manage_system_info;
 mod remove_address_book_entry;
 mod remove_request_policy;
 mod remove_user_group;
+mod set_disaster_recovery;
 mod transfer;
 
 use self::{
@@ -181,6 +182,12 @@ impl RequestFactory {
                     ChangeCanisterRequestCreate,
                 >(id, requested_by_user, input.clone(), operation.clone())
             }
+            RequestOperationInput::SetDisasterRecovery(operation) => {
+                create_request::<
+                    station_api::SetDisasterRecoveryOperationInput,
+                    set_disaster_recovery::SetDisasterRecoveryRequestCreate,
+                >(id, requested_by_user, input.clone(), operation.clone())
+            }
             RequestOperationInput::EditPermission(operation) => {
                 create_request::<
                     station_api::EditPermissionOperationInput,
@@ -251,6 +258,13 @@ impl RequestFactory {
             }
             RequestOperation::ChangeCanister(operation) => Box::new(
                 ChangeCanisterRequestExecute::new(request, operation, Arc::clone(&SYSTEM_SERVICE)),
+            ),
+            RequestOperation::SetDisasterRecovery(operation) => Box::new(
+                set_disaster_recovery::SetDisasterRecoveryRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&SYSTEM_SERVICE),
+                ),
             ),
             RequestOperation::EditPermission(operation) => {
                 Box::new(EditPermissionRequestExecute::new(

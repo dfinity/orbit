@@ -12,6 +12,7 @@ pub enum RequestSpecifierDTO {
     RemoveAddressBookEntry(ResourceIdsDTO),
     Transfer(ResourceIdsDTO),
     ChangeCanister,
+    SetDisasterRecovery,
     EditPermission(ResourceSpecifierDTO),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIdsDTO),

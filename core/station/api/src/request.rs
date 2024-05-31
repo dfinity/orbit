@@ -12,7 +12,8 @@ use crate::{
     ManageSystemInfoOperationDTO, ManageSystemInfoOperationInput, PaginationInput,
     RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
     RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
-    RequestPolicyRuleDTO, RequestSpecifierDTO, SortDirection, UuidDTO,
+    RequestPolicyRuleDTO, RequestSpecifierDTO, SetDisasterRecoveryOperationDTO,
+    SetDisasterRecoveryOperationInput, SortDirection, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
@@ -66,6 +67,7 @@ pub enum RequestOperationDTO {
     EditUserGroup(Box<EditUserGroupOperationDTO>),
     RemoveUserGroup(Box<RemoveUserGroupOperationDTO>),
     ChangeCanister(Box<ChangeCanisterOperationDTO>),
+    SetDisasterRecovery(Box<SetDisasterRecoveryOperationDTO>),
     EditPermission(Box<EditPermissionOperationDTO>),
     AddRequestPolicy(Box<AddRequestPolicyOperationDTO>),
     EditRequestPolicy(Box<EditRequestPolicyOperationDTO>),
@@ -87,6 +89,7 @@ pub enum RequestOperationInput {
     EditUserGroup(EditUserGroupOperationInput),
     RemoveUserGroup(RemoveUserGroupOperationInput),
     ChangeCanister(ChangeCanisterOperationInput),
+    SetDisasterRecovery(SetDisasterRecoveryOperationInput),
     EditPermission(EditPermissionOperationInput),
     AddRequestPolicy(AddRequestPolicyOperationInput),
     EditRequestPolicy(EditRequestPolicyOperationInput),
@@ -108,6 +111,7 @@ pub enum RequestOperationTypeDTO {
     EditUserGroup,
     RemoveUserGroup,
     ChangeCanister,
+    SetDisasterRecoveryCommittee,
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,

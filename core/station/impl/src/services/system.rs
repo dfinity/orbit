@@ -9,7 +9,7 @@ use crate::{
     },
     errors::SystemError,
     models::{
-        system::{SystemInfo, SystemState},
+        system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
         ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
     },
     repositories::{RequestRepository, REQUEST_REPOSITORY},
@@ -85,6 +85,13 @@ impl SystemService {
         if let Some(name) = input.name {
             system_info.set_name(name.clone());
         }
+
+        write_system_info(system_info);
+    }
+
+    pub fn set_disaster_recovery_committee(&self, committee: Option<DisasterRecoveryCommittee>) {
+        let mut system_info = self.get_system_info();
+        system_info.set_disaster_recovery_committee(committee);
 
         write_system_info(system_info);
     }
@@ -464,6 +471,7 @@ mod tests {
                     name: "Admin".to_string(),
                     identity: Principal::from_slice(&[1; 29]),
                 }],
+                quorum: 1,
                 upgrader_wasm_module: vec![],
             })
             .await;

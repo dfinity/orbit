@@ -18,9 +18,11 @@ impl From<station_api::ResourceDTO> for Resource {
             }
             station_api::ResourceDTO::UserGroup(action) => Resource::UserGroup(action.into()),
             station_api::ResourceDTO::AddressBook(action) => Resource::AddressBook(action.into()),
-            station_api::ResourceDTO::ChangeCanister(action) => {
+            station_api::ResourceDTO::SetDisasterRecovery(action)
+            | station_api::ResourceDTO::ChangeCanister(action) => {
                 Resource::ChangeCanister(action.into())
             }
+
             station_api::ResourceDTO::Request(action) => Resource::Request(action.into()),
             station_api::ResourceDTO::System(action) => Resource::System(action.into()),
         }
@@ -40,6 +42,9 @@ impl From<Resource> for station_api::ResourceDTO {
             Resource::AddressBook(action) => station_api::ResourceDTO::AddressBook(action.into()),
             Resource::ChangeCanister(action) => {
                 station_api::ResourceDTO::ChangeCanister(action.into())
+            }
+            Resource::SetDisasterRecovery(action) => {
+                station_api::ResourceDTO::SetDisasterRecovery(action.into())
             }
             Resource::Request(action) => station_api::ResourceDTO::Request(action.into()),
             Resource::System(action) => station_api::ResourceDTO::System(action.into()),
@@ -210,6 +215,18 @@ impl From<ChangeCanisterResourceAction> for station_api::ChangeCanisterResourceA
         station_api::ChangeCanisterResourceActionDTO::Create
     }
 }
+
+// impl From<station_api::SetDisasterRecoveryActionDTO> for SetDisasterRecoveryResourceAction {
+//     fn from(_: station_api::SetDisasterRecoveryActionDTO) -> Self {
+//         SetDisasterRecoveryResourceAction::Create
+//     }
+// }
+
+// impl From<SetDisasterRecoveryResourceAction> for station_api::SetDisasterRecoveryActionDTO {
+//     fn from(_: SetDisasterRecoveryResourceAction) -> Self {
+//         station_api::SetDisasterRecoveryActionDTO::Create
+//     }
+// }
 
 impl From<station_api::RequestResourceActionDTO> for RequestResourceAction {
     fn from(dto: station_api::RequestResourceActionDTO) -> Self {

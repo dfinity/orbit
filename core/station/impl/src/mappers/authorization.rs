@@ -201,7 +201,8 @@ impl From<&station_api::CreateRequestInput> for Resource {
                         .as_bytes(),
                 )))
             }
-            RequestOperationInput::ChangeCanister(_) => {
+            RequestOperationInput::SetDisasterRecovery(_)
+            | RequestOperationInput::ChangeCanister(_) => {
                 Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
             RequestOperationInput::EditPermission(_) => {

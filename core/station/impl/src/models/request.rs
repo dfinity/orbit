@@ -128,6 +128,7 @@ fn validate_request_operation_foreign_keys(
 ) -> ModelValidatorResult<RecordValidationError> {
     match operation {
         RequestOperation::ManageSystemInfo(_) => Ok(()),
+
         RequestOperation::Transfer(op) => EnsureAccount::id_exists(&op.input.from_account_id),
         RequestOperation::AddAccount(op) => {
             op.input.read_permission.validate()?;
@@ -228,6 +229,13 @@ fn validate_request_operation_foreign_keys(
         }
         RequestOperation::RemoveRequestPolicy(op) => {
             EnsureRequestPolicy::id_exists(&op.input.policy_id)
+        }
+        RequestOperation::SetDisasterRecovery(op) => {
+            if let Some(committee) = &op.input.committee {
+                EnsureUserGroup::id_exists(&committee.user_group_id)
+            } else {
+                Ok(())
+            }
         }
     }
 }

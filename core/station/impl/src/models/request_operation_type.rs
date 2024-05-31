@@ -24,6 +24,7 @@ pub enum RequestOperationType {
     EditAddressBookEntry = 17,
     RemoveAddressBookEntry = 18,
     ManageSystemInfo = 19,
+    SetDisasterRecoveryCommittee = 20,
 }
 
 impl FromStr for RequestOperationType {
@@ -73,6 +74,9 @@ impl Display for RequestOperationType {
             RequestOperationType::EditRequestPolicy => write!(f, "edit_request_policy"),
             RequestOperationType::RemoveRequestPolicy => write!(f, "remove_request_policy"),
             RequestOperationType::ManageSystemInfo => write!(f, "manage_system_info"),
+            RequestOperationType::SetDisasterRecoveryCommittee => {
+                write!(f, "set_disaster_recovery_committee")
+            }
         }
     }
 }

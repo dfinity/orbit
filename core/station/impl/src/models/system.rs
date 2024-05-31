@@ -8,10 +8,19 @@ use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
 use std::borrow::Cow;
 
+use super::UserGroupId;
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SystemState {
     Uninitialized, // This state is only used between wasm module instantiation and init().
     Initialized(SystemInfo),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct DisasterRecoveryCommittee {
+    pub user_group_id: UserGroupId,
+    pub quorum_percentage: u16,
 }
 
 #[storable(size = SYSTEM_RESERVED_MEMORY_BYTES)]
@@ -27,6 +36,8 @@ pub struct SystemInfo {
     upgrader_canister_id: Option<Principal>,
     /// The upgrader canister wasm module.
     upgrader_wasm_module: Option<Vec<u8>>,
+    /// The disaster recovery committee user group id.
+    disaster_recovery_committee: Option<DisasterRecoveryCommittee>,
 }
 
 impl Default for SystemInfo {
@@ -37,6 +48,7 @@ impl Default for SystemInfo {
             change_canister_request: None,
             upgrader_canister_id: None,
             upgrader_wasm_module: None,
+            disaster_recovery_committee: None,
         }
     }
 }
@@ -107,6 +119,17 @@ impl SystemInfo {
 
     pub fn clear_change_canister_request(&mut self) {
         self.change_canister_request = None;
+    }
+
+    pub fn set_disaster_recovery_committee(
+        &mut self,
+        committee: Option<DisasterRecoveryCommittee>,
+    ) {
+        self.disaster_recovery_committee = committee;
+    }
+
+    pub fn get_disaster_recovery_committee(&self) -> Option<&DisasterRecoveryCommittee> {
+        self.disaster_recovery_committee.as_ref()
     }
 }
 

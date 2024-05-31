@@ -3,8 +3,8 @@ use super::{
     request_policy_rule::{RequestPolicyRule, RequestPolicyRuleInput},
     request_specifier::RequestSpecifier,
     resource::Resource,
-    AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
-    UserGroupId, UserId, UserStatus,
+    AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata,
+    DisasterRecoveryCommittee, MetadataItem, UserGroupId, UserId, UserStatus,
 };
 use crate::models::Metadata;
 use candid::Principal;
@@ -31,6 +31,7 @@ pub enum RequestOperation {
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
     ManageSystemInfo(ManageSystemInfoOperation),
+    SetDisasterRecovery(SetDisasterRecoveryOperation),
 }
 
 impl Display for RequestOperation {
@@ -53,6 +54,7 @@ impl Display for RequestOperation {
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
             RequestOperation::ManageSystemInfo(_) => write!(f, "manage_system_info"),
+            RequestOperation::SetDisasterRecovery(_) => write!(f, "set_disaster_recovery"),
         }
     }
 }
@@ -251,6 +253,18 @@ pub struct ChangeCanisterOperation {
     pub module_checksum: Vec<u8>,
     pub arg_checksum: Option<Vec<u8>>,
     pub input: ChangeCanisterOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SetDisasterRecoveryOperation {
+    pub input: SetDisasterRecoveryOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SetDisasterRecoveryOperationInput {
+    pub committee: Option<DisasterRecoveryCommittee>,
 }
 
 #[storable]

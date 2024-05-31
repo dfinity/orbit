@@ -62,6 +62,7 @@ pub enum RequestSpecifier {
     RemoveAddressBookEntry(ResourceIds),
     Transfer(ResourceIds),
     ChangeCanister,
+    SetDisasterRecovery,
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIds),
@@ -81,6 +82,7 @@ impl ModelValidator<RecordValidationError> for RequestSpecifier {
             | RequestSpecifier::ChangeCanister
             | RequestSpecifier::AddRequestPolicy
             | RequestSpecifier::ManageSystemInfo
+            | RequestSpecifier::SetDisasterRecovery
             | RequestSpecifier::AddUserGroup => Ok(()),
 
             RequestSpecifier::Transfer(resource_ids)
@@ -133,6 +135,9 @@ impl From<&RequestSpecifier> for RequestOperationType {
             RequestSpecifier::EditUserGroup(_) => RequestOperationType::EditUserGroup,
             RequestSpecifier::RemoveUserGroup(_) => RequestOperationType::RemoveUserGroup,
             RequestSpecifier::ManageSystemInfo => RequestOperationType::ManageSystemInfo,
+            RequestSpecifier::SetDisasterRecovery => {
+                RequestOperationType::SetDisasterRecoveryCommittee
+            }
         }
     }
 }
@@ -249,6 +254,9 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
                 .account_matcher
                 .is_match((p.clone(), params.input.from_account_id, account))?,
             (RequestOperation::ChangeCanister(_), RequestSpecifier::ChangeCanister) => true,
+            (RequestOperation::SetDisasterRecovery(_), RequestSpecifier::SetDisasterRecovery) => {
+                true
+            }
             (RequestOperation::AddUserGroup(_), RequestSpecifier::AddUserGroup) => true,
             (
                 RequestOperation::EditPermission(operation),
@@ -291,6 +299,7 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
             | (RequestOperation::EditAddressBookEntry(_), _)
             | (RequestOperation::RemoveAddressBookEntry(_), _)
             | (RequestOperation::ChangeCanister(_), _)
+            | (RequestOperation::SetDisasterRecovery(_), _)
             | (RequestOperation::AddRequestPolicy(_), _)
             | (RequestOperation::EditRequestPolicy(_), _)
             | (RequestOperation::EditPermission(_), _)
