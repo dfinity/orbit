@@ -27,15 +27,16 @@ pub const COUNTER_WAT: &str = r#"
         (import "ic0" "stable_write"
             (func $ic0_stable_write (param $offset i32) (param $src i32) (param $size i32)))
         (func $init
-            (drop (call $ic0_stable_grow (i32.const 1)))
-            (call $msg_reply))
+            (drop (call $ic0_stable_grow (i32.const 1))))
         (func $inc
+            (call $doinc)
+            (call $msg_reply))
+        (func $doinc
             (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
             (i32.store
                 (i32.const 0)
                 (i32.add (i32.load (i32.const 0)) (i32.const 2)))
-            (call $ic0_stable_write (i32.const 0) (i32.const 0) (i32.const 4))
-            (call $msg_reply))
+            (call $ic0_stable_write (i32.const 0) (i32.const 0) (i32.const 4)))
         (func $read
             (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
             (call $msg_reply_data_append
@@ -43,9 +44,10 @@ pub const COUNTER_WAT: &str = r#"
                 (i32.const 4)) ;; length
             (call $msg_reply))
         (memory $memory 1)
+        (export "canister_init" (func $init))
+        (export "canister_post_upgrade" (func $doinc))
         (export "canister_query read" (func $read))
         (export "canister_update inc" (func $inc))
-        (export "canister_update init" (func $init))
     )"#;
 
 pub fn controller_test_id() -> Principal {
@@ -140,12 +142,12 @@ pub fn submit_request_with_expected_trap(
     }
 }
 
-fn try_submit_request(
+pub fn submit_request(
     env: &PocketIc,
     user_id: Principal,
     station_canister_id: CanisterId,
     request_operation_input: RequestOperationInput,
-) -> Result<CreateRequestResponse, ApiErrorDTO> {
+) -> RequestDTO {
     let create_request_input = CreateRequestInput {
         operation: request_operation_input,
         title: None,
@@ -160,18 +162,7 @@ fn try_submit_request(
         (create_request_input,),
     )
     .unwrap();
-    res.0
-}
-
-pub fn submit_request(
-    env: &PocketIc,
-    user_id: Principal,
-    station_canister_id: CanisterId,
-    request_operation_input: RequestOperationInput,
-) -> RequestDTO {
-    try_submit_request(env, user_id, station_canister_id, request_operation_input)
-        .unwrap()
-        .request
+    res.0.unwrap().request
 }
 
 pub fn wait_for_request(

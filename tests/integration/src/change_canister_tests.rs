@@ -1,7 +1,8 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    add_user, canister_status, execute_request, submit_request, submit_request_approval,
-    submit_request_with_expected_trap, update_raw, user_test_id, wait_for_request, COUNTER_WAT,
+    add_user, canister_status, execute_request, get_request, submit_request,
+    submit_request_approval, submit_request_with_expected_trap, update_raw, user_test_id,
+    wait_for_request, COUNTER_WAT,
 };
 use crate::TestEnv;
 use candid::Principal;
@@ -10,7 +11,7 @@ use station_api::{
     AddRequestPolicyOperationInput, CanisterInstallMode, ChangeManagedCanisterOperationInput,
     ChangeManagedCanisterResourceTargetDTO, EditPermissionOperationInput, QuorumDTO,
     RequestApprovalStatusDTO, RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
-    UserSpecifierDTO,
+    RequestStatusDTO, UserSpecifierDTO,
 };
 
 #[test]
@@ -21,11 +22,12 @@ fn successful_four_eyes_upgrade() {
         ..
     } = setup_new_env();
 
-    // create and install the canister to be upgraded by a request
+    // create and install the counter canister
     let canister_id = create_canister(&mut env, canister_ids.station);
-    let module_bytes = vec![0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
-    let module_hash =
-        hex::decode("93a44bbb96c751218e4c00d479e4c14358122a389acca16205b1e4d0dc5f9476").unwrap();
+    let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
+    let mut sha256 = Sha256::new();
+    sha256.update(module_bytes.clone());
+    let module_hash = sha256.finalize().to_vec();
     env.install_canister(
         canister_id,
         module_bytes.clone(),
@@ -33,9 +35,13 @@ fn successful_four_eyes_upgrade() {
         Some(canister_ids.station),
     );
 
-    // check canister status and ensure that the WASM matches the old canister module
+    // check canister status and ensure that the WASM matches the counter canister module
     let status = canister_status(&env, Some(canister_ids.station), canister_id);
     assert_eq!(status.module_hash, Some(module_hash.clone()));
+
+    // the counter should initially be set at 0
+    let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
 
     // create new user identities and add them to the station
     let user_a = user_test_id(0);
@@ -43,17 +49,12 @@ fn successful_four_eyes_upgrade() {
     let user_b = user_test_id(1);
     add_user(&env, user_b, vec![], canister_ids.station);
 
-    // new canister WASM
-    let new_module_bytes = hex::decode("0061736d010000000503010001").unwrap();
-    let new_module_hash =
-        hex::decode("d7f602df8d1cb581cc5c886a4ff8809793c50627e305ef45f6d770f27e0261cc").unwrap();
-
     // submitting canister upgrade request fails due to insufficient permissions to create change canister requests
     let change_canister_operation =
         RequestOperationInput::ChangeManagedCanister(ChangeManagedCanisterOperationInput {
             canister_id,
             mode: CanisterInstallMode::Upgrade,
-            module: new_module_bytes,
+            module: module_bytes.clone(),
             arg: None,
         });
     let trap_message = submit_request_with_expected_trap(
@@ -85,6 +86,33 @@ fn successful_four_eyes_upgrade() {
     )
     .unwrap();
 
+    // now the request to upgrade the counter canister can be successfully submitted
+    let change_canister_operation_request = submit_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        change_canister_operation.clone(),
+    );
+
+    // let the admin user reject the request => the request becomes rejected
+    submit_request_approval(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        change_canister_operation_request.clone(),
+        RequestApprovalStatusDTO::Rejected,
+    );
+    let rejected_request = get_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        change_canister_operation_request,
+    );
+    match rejected_request.status {
+        RequestStatusDTO::Rejected { .. } => (),
+        _ => panic!("Request should have been rejected."),
+    };
+
     // set four eyes principle for canister changes
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
@@ -104,6 +132,7 @@ fn successful_four_eyes_upgrade() {
     )
     .unwrap();
 
+    // submit the request to upgrade the counter canister again
     let change_canister_operation_request = submit_request(
         &env,
         user_a,
@@ -111,14 +140,24 @@ fn successful_four_eyes_upgrade() {
         change_canister_operation,
     );
 
-    // the request should not be completed before the second user approves on it
-    assert!(wait_for_request(
+    // let the admin user reject the request => the request stays open as the second user can also approve it
+    submit_request_approval(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        change_canister_operation_request.clone(),
+        RequestApprovalStatusDTO::Rejected,
+    );
+    let created_request = get_request(
         &env,
         user_a,
         canister_ids.station,
         change_canister_operation_request.clone(),
-    )
-    .is_err());
+    );
+    match created_request.status {
+        RequestStatusDTO::Created => (),
+        _ => panic!("Request should be created."),
+    };
 
     // the second user approves and then the request will eventually become completed
     submit_request_approval(
@@ -136,9 +175,13 @@ fn successful_four_eyes_upgrade() {
     )
     .unwrap();
 
-    // check canister status and ensure that the WASM matches the new canister module
+    // check canister status and ensure that the WASM matches the counter canister module
     let status = canister_status(&env, Some(canister_ids.station), canister_id);
-    assert_eq!(status.module_hash, Some(new_module_hash));
+    assert_eq!(status.module_hash, Some(module_hash.clone()));
+
+    // the counter value should be preserved across upgrade and incremented in post-upgrade hook
+    let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
+    assert_eq!(ctr, 2_u32.to_le_bytes());
 }
 
 #[test]
@@ -149,7 +192,7 @@ fn reinstall_canister() {
         ..
     } = setup_new_env();
 
-    // create and install the canister to be reinstalled by a request
+    // create and install the counter canister
     let canister_id = create_canister(&mut env, canister_ids.station);
     let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
     let mut sha256 = Sha256::new();
@@ -166,8 +209,11 @@ fn reinstall_canister() {
     let status = canister_status(&env, Some(canister_ids.station), canister_id);
     assert_eq!(status.module_hash, Some(module_hash.clone()));
 
-    // initialize stable memory and increment the counter in stable memory
-    update_raw(&env, canister_id, Principal::anonymous(), "init", vec![]).unwrap();
+    // the counter should be initially be set at 0
+    let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+
+    // increment the counter in stable memory
     update_raw(&env, canister_id, Principal::anonymous(), "inc", vec![]).unwrap();
 
     // reading the counter should yield 2 after the increment
@@ -194,9 +240,9 @@ fn reinstall_canister() {
     let status = canister_status(&env, Some(canister_ids.station), canister_id);
     assert_eq!(status.module_hash, Some(module_hash.clone()));
 
-    // the counter value should be preserved across upgrade
+    // the counter value should be preserved across upgrade and incremented in post-upgrade hook
     let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
-    assert_eq!(ctr, 2_u32.to_le_bytes());
+    assert_eq!(ctr, 4_u32.to_le_bytes());
 
     // submit canister reinstall request
     let change_canister_operation =
@@ -218,9 +264,7 @@ fn reinstall_canister() {
     let status = canister_status(&env, Some(canister_ids.station), canister_id);
     assert_eq!(status.module_hash, Some(module_hash));
 
-    // stable memory should be reset now and thus "read" will trap
-    let err = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap_err();
-    assert!(err
-        .description
-        .contains("Canister trapped: stable memory out of bounds"));
+    // stable memory should be reset across reinstall and thus the counter is back at 0
+    let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
 }
