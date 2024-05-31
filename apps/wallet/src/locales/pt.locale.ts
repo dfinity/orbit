@@ -164,6 +164,7 @@ export default {
       address_book_entry: 'Livro de endereços',
       change_canister: 'Atualizações de sistema',
       transfer: 'Transferências',
+      managed_canister: 'Canister gerenciado',
     },
     headers: {
       id: 'ID',

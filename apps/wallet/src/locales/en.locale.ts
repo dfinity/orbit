@@ -183,6 +183,7 @@ export default {
       address_book_entry: 'Address Book',
       change_canister: 'Upgrades',
       transfer: 'Transfers',
+      managed_canister: 'Managed Canisters',
     },
     types: {
       addusergroup: {

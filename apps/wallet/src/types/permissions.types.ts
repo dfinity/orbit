@@ -11,6 +11,7 @@ export enum ResourceTypeEnum {
   System = 'System',
   Request = 'Request',
   AddressBook = 'AddressBook',
+  ManagedCanister = 'ManagedCanister',
 }
 
 export enum ResourceActionEnum {

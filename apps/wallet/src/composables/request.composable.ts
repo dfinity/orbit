@@ -21,33 +21,33 @@ export type AvailableDomain = {
 };
 
 export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
-  const domains: AvailableDomain[] = [];
-  domains.push({
+  const domains: Ref<AvailableDomain[]> = ref([]);
+  domains.value.push({
     id: RequestDomains.All,
     types: [],
   });
 
   if (hasRequiredPrivilege({ anyOf: [Privilege.ListAccounts] })) {
-    domains.push({
+    domains.value.push({
       id: RequestDomains.Accounts,
       types: [{ AddAccount: null }, { EditAccount: null }],
     });
 
-    domains.push({
+    domains.value.push({
       id: RequestDomains.Transfers,
       types: [{ Transfer: [] }],
     });
   }
 
   if (hasRequiredPrivilege({ anyOf: [Privilege.ListUsers] })) {
-    domains.push({
+    domains.value.push({
       id: RequestDomains.Users,
       types: [{ AddUser: null }, { EditUser: null }],
     });
   }
 
   if (hasRequiredPrivilege({ anyOf: [Privilege.ListAddressBookEntries] })) {
-    domains.push({
+    domains.value.push({
       id: RequestDomains.AddressBook,
       types: [
         { AddAddressBookEntry: null },
@@ -57,7 +57,7 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
     });
   }
 
-  domains.push({
+  domains.value.push({
     id: RequestDomains.System,
     types: [
       { EditPermission: null },
@@ -72,7 +72,7 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
     ],
   });
 
-  return ref(domains);
+  return domains;
 };
 
 export type Filters = {

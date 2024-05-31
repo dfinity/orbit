@@ -193,6 +193,7 @@ export default {
       address_book_entry: "Carnet d'Adresses",
       change_canister: 'Mise à Jour',
       transfer: 'Transferts',
+      managed_canister: 'Canister Géré',
     },
     types: {
       addusergroup: {
