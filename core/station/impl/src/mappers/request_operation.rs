@@ -371,9 +371,15 @@ impl From<station_api::CanisterInstallMode> for CanisterInstallMode {
 impl From<CanisterInstallMode> for station_api::CanisterInstallMode {
     fn from(mode: CanisterInstallMode) -> Self {
         match mode {
-            CanisterInstallMode::Install(_) => station_api::CanisterInstallMode::Install,
-            CanisterInstallMode::Reinstall(_) => station_api::CanisterInstallMode::Reinstall,
-            CanisterInstallMode::Upgrade(_) => station_api::CanisterInstallMode::Upgrade,
+            CanisterInstallMode::Install(CanisterInstallModeArgs {}) => {
+                station_api::CanisterInstallMode::Install
+            }
+            CanisterInstallMode::Reinstall(CanisterReinstallModeArgs {}) => {
+                station_api::CanisterInstallMode::Reinstall
+            }
+            CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}) => {
+                station_api::CanisterInstallMode::Upgrade
+            }
         }
     }
 }

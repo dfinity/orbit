@@ -510,6 +510,14 @@ impl Display for ChangeCanisterResourceAction {
     }
 }
 
+impl Display for CreateManagedCanisterResourceTarget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CreateManagedCanisterResourceTarget::Any => write!(f, "Any"),
+        }
+    }
+}
+
 impl Display for ChangeManagedCanisterResourceTarget {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -524,8 +532,8 @@ impl Display for ChangeManagedCanisterResourceTarget {
 impl Display for ManagedCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ManagedCanisterResourceAction::Create(_) => {
-                write!(f, "Create")
+            ManagedCanisterResourceAction::Create(target) => {
+                write!(f, "Create({})", target)
             }
             ManagedCanisterResourceAction::Change(target) => {
                 write!(f, "Change({})", target)
