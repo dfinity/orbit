@@ -3,7 +3,7 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ManagedCanisterResourceAction,
         PermissionResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
         SystemResourceAction, UserResourceAction,
     },
@@ -407,7 +407,7 @@ impl RequestSpecifier {
             )],
             RequestSpecifier::ChangeManagedCanister(target) => {
                 vec![Resource::ChangeManagedCanister(
-                    ChangeManagedCanisterResourceAction::Change(target.clone()),
+                    ManagedCanisterResourceAction::Change(target.clone()),
                 )]
             }
             RequestSpecifier::EditPermission(resource_specifier) => match resource_specifier {

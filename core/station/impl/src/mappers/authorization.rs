@@ -4,7 +4,7 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, ChangeCanisterResourceAction,
-            ChangeManagedCanisterResourceAction, ChangeManagedCanisterResourceTarget,
+            ChangeManagedCanisterResourceTarget, ManagedCanisterResourceAction,
             PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
             SystemResourceAction, UserResourceAction,
         },
@@ -206,7 +206,7 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
             RequestOperationInput::ChangeManagedCanister(input) => {
-                Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Change(
+                Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Change(
                     ChangeManagedCanisterResourceTarget::Canister(input.canister_id),
                 ))
             }

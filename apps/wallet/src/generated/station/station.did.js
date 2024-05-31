@@ -80,8 +80,9 @@ export const idlFactory = ({ IDL }) => {
     'Any' : IDL.Null,
     'Canister' : IDL.Principal,
   });
-  const ChangeManagedCanisterResourceAction = IDL.Variant({
-    'Create' : ChangeManagedCanisterResourceTarget,
+  const ManagedCanisterResourceAction = IDL.Variant({
+    'Create' : IDL.Null,
+    'Change' : ChangeManagedCanisterResourceTarget,
   });
   const PermissionResourceAction = IDL.Variant({
     'Read' : IDL.Null,
@@ -94,7 +95,7 @@ export const idlFactory = ({ IDL }) => {
     'Account' : AccountResourceAction,
     'AddressBook' : ResourceAction,
     'ChangeCanister' : ChangeCanisterResourceAction,
-    'ChangeManagedCanister' : ChangeManagedCanisterResourceAction,
+    'ChangeManagedCanister' : ManagedCanisterResourceAction,
     'UserGroup' : ResourceAction,
     'Permission' : PermissionResourceAction,
     'RequestPolicy' : ResourceAction,

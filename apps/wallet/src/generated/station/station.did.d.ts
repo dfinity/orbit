@@ -165,9 +165,6 @@ export interface ChangeManagedCanisterOperationInput {
   'canister_id' : Principal,
   'module' : Uint8Array | number[],
 }
-export type ChangeManagedCanisterResourceAction = {
-    'Create' : ChangeManagedCanisterResourceTarget
-  };
 export type ChangeManagedCanisterResourceTarget = { 'Any' : null } |
   { 'Canister' : Principal };
 export interface CreateRequestInput {
@@ -496,6 +493,8 @@ export interface ManageSystemInfoOperation {
   'input' : ManageSystemInfoOperationInput,
 }
 export interface ManageSystemInfoOperationInput { 'name' : [] | [string] }
+export type ManagedCanisterResourceAction = { 'Create' : null } |
+  { 'Change' : ChangeManagedCanisterResourceTarget };
 export type MarkNotificationReadResult = { 'Ok' : null } |
   { 'Err' : Error };
 export interface MarkNotificationsReadInput {
@@ -734,7 +733,7 @@ export type Resource = { 'Request' : RequestResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
-  { 'ChangeManagedCanister' : ChangeManagedCanisterResourceAction } |
+  { 'ChangeManagedCanister' : ManagedCanisterResourceAction } |
   { 'UserGroup' : ResourceAction } |
   { 'Permission' : PermissionResourceAction } |
   { 'RequestPolicy' : ResourceAction };

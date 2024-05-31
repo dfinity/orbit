@@ -3,7 +3,7 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, ChangeCanisterResourceAction,
-            ChangeManagedCanisterResourceAction, ChangeManagedCanisterResourceTarget,
+            ChangeManagedCanisterResourceTarget, ManagedCanisterResourceAction,
             PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
             UserResourceAction,
         },
@@ -764,10 +764,10 @@ impl RequestOperation {
                 ..
             }) => {
                 vec![
-                    Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Change(
+                    Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Change(
                         ChangeManagedCanisterResourceTarget::Any,
                     )),
-                    Resource::ChangeManagedCanister(ChangeManagedCanisterResourceAction::Change(
+                    Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Change(
                         ChangeManagedCanisterResourceTarget::Canister(input.canister_id),
                     )),
                 ]

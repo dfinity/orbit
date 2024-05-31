@@ -1610,8 +1610,9 @@ type ChangeManagedCanisterResourceTarget = variant {
 };
 
 // The actions that are available for managed canister changes.
-type ChangeManagedCanisterResourceAction = variant {
-  Create : ChangeManagedCanisterResourceTarget;
+type ManagedCanisterResourceAction = variant {
+  Create;
+  Change : ChangeManagedCanisterResourceTarget;
 };
 
 // The actions that are available for requests.
@@ -1647,7 +1648,7 @@ type Resource = variant {
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
-  ChangeManagedCanister : ChangeManagedCanisterResourceAction;
+  ChangeManagedCanister : ManagedCanisterResourceAction;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
   System : SystemResourceAction;
