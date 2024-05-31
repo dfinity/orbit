@@ -50,6 +50,15 @@ export const idlFactory = ({ IDL }) => {
     'List' : IDL.Null,
     'Read' : ResourceId,
   });
+  const CreateManagedCanisterResourceTarget = IDL.Variant({ 'Any' : IDL.Null });
+  const ChangeManagedCanisterResourceTarget = IDL.Variant({
+    'Any' : IDL.Null,
+    'Canister' : IDL.Principal,
+  });
+  const ManagedCanisterResourceAction = IDL.Variant({
+    'Create' : CreateManagedCanisterResourceTarget,
+    'Change' : ChangeManagedCanisterResourceTarget,
+  });
   const SystemResourceAction = IDL.Variant({
     'ManageSystemInfo' : IDL.Null,
     'SystemInfo' : IDL.Null,
@@ -76,27 +85,18 @@ export const idlFactory = ({ IDL }) => {
     'Update' : ResourceId,
   });
   const ChangeCanisterResourceAction = IDL.Variant({ 'Create' : IDL.Null });
-  const CreateManagedCanisterResourceTarget = IDL.Variant({ 'Any' : IDL.Null });
-  const ChangeManagedCanisterResourceTarget = IDL.Variant({
-    'Any' : IDL.Null,
-    'Canister' : IDL.Principal,
-  });
-  const ManagedCanisterResourceAction = IDL.Variant({
-    'Create' : CreateManagedCanisterResourceTarget,
-    'Change' : ChangeManagedCanisterResourceTarget,
-  });
   const PermissionResourceAction = IDL.Variant({
     'Read' : IDL.Null,
     'Update' : IDL.Null,
   });
   const Resource = IDL.Variant({
     'Request' : RequestResourceAction,
+    'ManageCanister' : ManagedCanisterResourceAction,
     'System' : SystemResourceAction,
     'User' : UserResourceAction,
     'Account' : AccountResourceAction,
     'AddressBook' : ResourceAction,
     'ChangeCanister' : ChangeCanisterResourceAction,
-    'ChangeManagedCanister' : ManagedCanisterResourceAction,
     'UserGroup' : ResourceAction,
     'Permission' : PermissionResourceAction,
     'RequestPolicy' : ResourceAction,

@@ -731,12 +731,12 @@ export type RequestStatusCode = { 'Failed' : null } |
   { 'Created' : null } |
   { 'Completed' : null };
 export type Resource = { 'Request' : RequestResourceAction } |
+  { 'ManageCanister' : ManagedCanisterResourceAction } |
   { 'System' : SystemResourceAction } |
   { 'User' : UserResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
-  { 'ChangeManagedCanister' : ManagedCanisterResourceAction } |
   { 'UserGroup' : ResourceAction } |
   { 'Permission' : PermissionResourceAction } |
   { 'RequestPolicy' : ResourceAction };
