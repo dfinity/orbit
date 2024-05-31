@@ -117,29 +117,25 @@ fn is_request_evaluated(request: RequestDTO) -> bool {
     }
 }
 
-pub fn submit_request_with_expected_trap(
+pub fn submit_request_raw(
     env: &PocketIc,
     user_id: Principal,
     station_canister_id: CanisterId,
     request_operation_input: RequestOperationInput,
-) -> String {
+) -> Result<(Result<CreateRequestResponse, ApiErrorDTO>,), CallError> {
     let create_request_input = CreateRequestInput {
         operation: request_operation_input,
         title: None,
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
     };
-    let res: Result<(Result<CreateRequestResponse, ApiErrorDTO>,), _> = update_candid_as(
+    update_candid_as(
         env,
         station_canister_id,
         user_id,
         "create_request",
         (create_request_input,),
-    );
-    match res.unwrap_err() {
-        CallError::UserError(error) => error.description,
-        CallError::Reject(message) => panic!("Unexpected reject: {}", message),
-    }
+    )
 }
 
 pub fn submit_request(
@@ -148,21 +144,21 @@ pub fn submit_request(
     station_canister_id: CanisterId,
     request_operation_input: RequestOperationInput,
 ) -> RequestDTO {
-    let create_request_input = CreateRequestInput {
-        operation: request_operation_input,
-        title: None,
-        summary: None,
-        execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
-    };
-    let res: (Result<CreateRequestResponse, ApiErrorDTO>,) = update_candid_as(
-        env,
-        station_canister_id,
-        user_id,
-        "create_request",
-        (create_request_input,),
-    )
-    .unwrap();
-    res.0.unwrap().request
+    let res = submit_request_raw(env, user_id, station_canister_id, request_operation_input);
+    res.unwrap().0.unwrap().request
+}
+
+pub fn submit_request_with_expected_trap(
+    env: &PocketIc,
+    user_id: Principal,
+    station_canister_id: CanisterId,
+    request_operation_input: RequestOperationInput,
+) -> String {
+    let res = submit_request_raw(env, user_id, station_canister_id, request_operation_input);
+    match res.unwrap_err() {
+        CallError::UserError(error) => error.description,
+        CallError::Reject(message) => panic!("Unexpected reject: {}", message),
+    }
 }
 
 pub fn wait_for_request(
