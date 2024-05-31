@@ -1653,7 +1653,7 @@ type Resource = variant {
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
-  ManageCanister : ManagedCanisterResourceAction;
+  ManagedCanister : ManagedCanisterResourceAction;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
   System : SystemResourceAction;

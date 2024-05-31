@@ -44,12 +44,6 @@ export const idlFactory = ({ IDL }) => {
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
   const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
-  const UUID = IDL.Text;
-  const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
-  const RequestResourceAction = IDL.Variant({
-    'List' : IDL.Null,
-    'Read' : ResourceId,
-  });
   const CreateManagedCanisterResourceTarget = IDL.Variant({ 'Any' : IDL.Null });
   const ChangeManagedCanisterResourceTarget = IDL.Variant({
     'Any' : IDL.Null,
@@ -58,6 +52,12 @@ export const idlFactory = ({ IDL }) => {
   const ManagedCanisterResourceAction = IDL.Variant({
     'Create' : CreateManagedCanisterResourceTarget,
     'Change' : ChangeManagedCanisterResourceTarget,
+  });
+  const UUID = IDL.Text;
+  const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
+  const RequestResourceAction = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : ResourceId,
   });
   const SystemResourceAction = IDL.Variant({
     'ManageSystemInfo' : IDL.Null,
@@ -90,8 +90,8 @@ export const idlFactory = ({ IDL }) => {
     'Update' : IDL.Null,
   });
   const Resource = IDL.Variant({
+    'ManagedCanister' : ManagedCanisterResourceAction,
     'Request' : RequestResourceAction,
-    'ManageCanister' : ManagedCanisterResourceAction,
     'System' : SystemResourceAction,
     'User' : UserResourceAction,
     'Account' : AccountResourceAction,

@@ -206,7 +206,7 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
             RequestOperationInput::ChangeManagedCanister(input) => {
-                Resource::ManageCanister(ManagedCanisterResourceAction::Change(
+                Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
                     ChangeManagedCanisterResourceTarget::Canister(input.canister_id),
                 ))
             }

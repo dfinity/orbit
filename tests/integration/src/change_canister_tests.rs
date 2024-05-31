@@ -66,12 +66,13 @@ fn successful_four_eyes_upgrade() {
         canister_ids.station,
         change_canister_operation.clone(),
     );
-    assert!(trap_message
-        .contains("Canister trapped explicitly: Unauthorized access to resources: ManageCanister"));
+    assert!(trap_message.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister"
+    ));
 
     // allow anyone to create change canister requests
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: station_api::ResourceDTO::ManageCanister(
+        resource: station_api::ResourceDTO::ManagedCanister(
             station_api::ManagedCanisterResourceActionDTO::Change(
                 ChangeManagedCanisterResourceTargetDTO::Canister(canister_id),
             ),

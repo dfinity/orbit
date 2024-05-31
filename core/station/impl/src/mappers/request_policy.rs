@@ -406,7 +406,7 @@ impl RequestSpecifier {
                 ChangeCanisterResourceAction::Create,
             )],
             RequestSpecifier::ChangeManagedCanister(target) => {
-                vec![Resource::ManageCanister(
+                vec![Resource::ManagedCanister(
                     ManagedCanisterResourceAction::Change(target.clone()),
                 )]
             }

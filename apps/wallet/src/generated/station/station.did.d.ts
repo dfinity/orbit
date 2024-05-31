@@ -730,8 +730,8 @@ export type RequestStatusCode = { 'Failed' : null } |
   { 'Processing' : null } |
   { 'Created' : null } |
   { 'Completed' : null };
-export type Resource = { 'Request' : RequestResourceAction } |
-  { 'ManageCanister' : ManagedCanisterResourceAction } |
+export type Resource = { 'ManagedCanister' : ManagedCanisterResourceAction } |
+  { 'Request' : RequestResourceAction } |
   { 'System' : SystemResourceAction } |
   { 'User' : UserResourceAction } |
   { 'Account' : AccountResourceAction } |
