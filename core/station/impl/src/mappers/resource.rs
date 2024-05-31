@@ -22,8 +22,8 @@ impl From<station_api::ResourceDTO> for Resource {
             station_api::ResourceDTO::ChangeCanister(action) => {
                 Resource::ChangeCanister(action.into())
             }
-            station_api::ResourceDTO::ChangeManagedCanister(action) => {
-                Resource::ChangeManagedCanister(action.into())
+            station_api::ResourceDTO::ManageCanister(action) => {
+                Resource::ManageCanister(action.into())
             }
             station_api::ResourceDTO::Request(action) => Resource::Request(action.into()),
             station_api::ResourceDTO::System(action) => Resource::System(action.into()),
@@ -45,8 +45,8 @@ impl From<Resource> for station_api::ResourceDTO {
             Resource::ChangeCanister(action) => {
                 station_api::ResourceDTO::ChangeCanister(action.into())
             }
-            Resource::ChangeManagedCanister(action) => {
-                station_api::ResourceDTO::ChangeManagedCanister(action.into())
+            Resource::ManageCanister(action) => {
+                station_api::ResourceDTO::ManageCanister(action.into())
             }
             Resource::Request(action) => station_api::ResourceDTO::Request(action.into()),
             Resource::System(action) => station_api::ResourceDTO::System(action.into()),

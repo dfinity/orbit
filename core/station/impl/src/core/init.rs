@@ -148,11 +148,11 @@ lazy_static! {
         // change managed canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any)),
+            Resource::ManageCanister(ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any)),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Change(ChangeManagedCanisterResourceTarget::Any)),
+            Resource::ManageCanister(ManagedCanisterResourceAction::Change(ChangeManagedCanisterResourceTarget::Any)),
         ),
     ];
 

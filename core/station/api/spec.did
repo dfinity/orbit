@@ -1614,7 +1614,7 @@ type ChangeManagedCanisterResourceTarget = variant {
   Canister : principal;
 };
 
-// The actions that are available for managed canister changes.
+// The actions that are available for managed canisters.
 type ManagedCanisterResourceAction = variant {
   Create : CreateManagedCanisterResourceTarget;
   Change : ChangeManagedCanisterResourceTarget;
@@ -1653,7 +1653,7 @@ type Resource = variant {
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
-  ChangeManagedCanister : ManagedCanisterResourceAction;
+  ManageCanister : ManagedCanisterResourceAction;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
   System : SystemResourceAction;
