@@ -76,12 +76,13 @@ export const idlFactory = ({ IDL }) => {
     'Update' : ResourceId,
   });
   const ChangeCanisterResourceAction = IDL.Variant({ 'Create' : IDL.Null });
+  const CreateManagedCanisterResourceTarget = IDL.Variant({ 'Any' : IDL.Null });
   const ChangeManagedCanisterResourceTarget = IDL.Variant({
     'Any' : IDL.Null,
     'Canister' : IDL.Principal,
   });
   const ManagedCanisterResourceAction = IDL.Variant({
-    'Create' : IDL.Null,
+    'Create' : CreateManagedCanisterResourceTarget,
     'Change' : ChangeManagedCanisterResourceTarget,
   });
   const PermissionResourceAction = IDL.Variant({

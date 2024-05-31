@@ -167,6 +167,7 @@ export interface ChangeManagedCanisterOperationInput {
 }
 export type ChangeManagedCanisterResourceTarget = { 'Any' : null } |
   { 'Canister' : Principal };
+export type CreateManagedCanisterResourceTarget = { 'Any' : null };
 export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
@@ -493,7 +494,9 @@ export interface ManageSystemInfoOperation {
   'input' : ManageSystemInfoOperationInput,
 }
 export interface ManageSystemInfoOperationInput { 'name' : [] | [string] }
-export type ManagedCanisterResourceAction = { 'Create' : null } |
+export type ManagedCanisterResourceAction = {
+    'Create' : CreateManagedCanisterResourceTarget
+  } |
   { 'Change' : ChangeManagedCanisterResourceTarget };
 export type MarkNotificationReadResult = { 'Ok' : null } |
   { 'Err' : Error };
