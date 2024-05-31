@@ -6,4 +6,6 @@ pub use user_station::*;
 mod user;
 pub use user::*;
 
+mod registry;
+
 pub mod indexes;
