@@ -446,7 +446,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'Transfer' : [] | [UUID] } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
-  { 'ChangeManagedCanister' : null } |
+  { 'ChangeManagedCanister' : [] | [Principal] } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };

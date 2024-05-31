@@ -579,7 +579,7 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : IDL.Opt(UUID),
     'EditAccount' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
-    'ChangeManagedCanister' : IDL.Null,
+    'ChangeManagedCanister' : IDL.Opt(IDL.Principal),
     'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
     'AddAccount' : IDL.Null,
