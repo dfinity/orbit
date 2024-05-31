@@ -54,7 +54,7 @@ impl ModelValidator<RecordValidationError> for Resource {
                 ChangeCanisterResourceAction::Create => Ok(()),
             },
             Resource::ChangeManagedCanister(action) => match action {
-                ManagedCanisterResourceAction::Create
+                ManagedCanisterResourceAction::Create(_)
                 | ManagedCanisterResourceAction::Change(_) => Ok(()),
             },
             Resource::Request(action) => match action {
@@ -146,6 +146,10 @@ pub enum ChangeCanisterResourceAction {
 
 #[storable]
 #[derive(Default, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CreateManagedCanisterResourceTarget {}
+
+#[storable]
+#[derive(Default, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeManagedCanisterResourceTarget {
     #[default]
     Any,
@@ -155,7 +159,7 @@ pub enum ChangeManagedCanisterResourceTarget {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ManagedCanisterResourceAction {
-    Create,
+    Create(CreateManagedCanisterResourceTarget),
     Change(ChangeManagedCanisterResourceTarget),
 }
 
@@ -297,9 +301,9 @@ impl Resource {
                 }
             },
             Resource::ChangeManagedCanister(action) => match action {
-                ManagedCanisterResourceAction::Create => {
+                ManagedCanisterResourceAction::Create(target) => {
                     vec![Resource::ChangeManagedCanister(
-                        ManagedCanisterResourceAction::Create,
+                        ManagedCanisterResourceAction::Create(target.clone()),
                     )]
                 }
                 ManagedCanisterResourceAction::Change(ChangeManagedCanisterResourceTarget::Any) => {
@@ -517,7 +521,7 @@ impl Display for ChangeManagedCanisterResourceTarget {
 impl Display for ManagedCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ManagedCanisterResourceAction::Create => {
+            ManagedCanisterResourceAction::Create(_) => {
                 write!(f, "Create")
             }
             ManagedCanisterResourceAction::Change(target) => {
@@ -577,8 +581,9 @@ mod test {
 
     use super::{
         AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceTarget,
-        ManagedCanisterResourceAction, PermissionResourceAction, RequestResourceAction, Resource,
-        ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+        CreateManagedCanisterResourceTarget, ManagedCanisterResourceAction,
+        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+        SystemResourceAction, UserResourceAction,
     };
 
     #[test]
@@ -599,7 +604,9 @@ mod test {
             Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
-            Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Create),
+            Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Create(
+                CreateManagedCanisterResourceTarget {},
+            )),
             Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Change(
                 ChangeManagedCanisterResourceTarget::Any,
             )),

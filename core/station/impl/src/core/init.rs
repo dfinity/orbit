@@ -4,8 +4,9 @@ use crate::models::{
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
         AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceTarget,
-        ManagedCanisterResourceAction, PermissionResourceAction, RequestResourceAction, Resource,
-        ResourceAction, ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
+        CreateManagedCanisterResourceTarget, ManagedCanisterResourceAction,
+        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+        ResourceIds, SystemResourceAction, UserResourceAction,
     },
     ADMIN_GROUP_ID,
 };
@@ -147,7 +148,7 @@ lazy_static! {
         // change managed canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Create),
+            Resource::ChangeManagedCanister(ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget {})),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),

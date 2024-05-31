@@ -1,7 +1,8 @@
 use crate::models::resource::{
     AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceTarget,
-    ManagedCanisterResourceAction, PermissionResourceAction, RequestResourceAction, Resource,
-    ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+    CreateManagedCanisterResourceTarget, ManagedCanisterResourceAction, PermissionResourceAction,
+    RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+    UserResourceAction,
 };
 use uuid::Uuid;
 
@@ -251,7 +252,7 @@ impl From<station_api::ManagedCanisterResourceActionDTO> for ManagedCanisterReso
     fn from(action: station_api::ManagedCanisterResourceActionDTO) -> Self {
         match action {
             station_api::ManagedCanisterResourceActionDTO::Create => {
-                ManagedCanisterResourceAction::Create
+                ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget {})
             }
             station_api::ManagedCanisterResourceActionDTO::Change(target) => {
                 ManagedCanisterResourceAction::Change(target.into())
@@ -263,7 +264,7 @@ impl From<station_api::ManagedCanisterResourceActionDTO> for ManagedCanisterReso
 impl From<ManagedCanisterResourceAction> for station_api::ManagedCanisterResourceActionDTO {
     fn from(action: ManagedCanisterResourceAction) -> Self {
         match action {
-            ManagedCanisterResourceAction::Create => {
+            ManagedCanisterResourceAction::Create(_) => {
                 station_api::ManagedCanisterResourceActionDTO::Create
             }
             ManagedCanisterResourceAction::Change(target) => {
