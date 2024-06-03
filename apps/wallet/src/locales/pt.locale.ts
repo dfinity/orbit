@@ -166,6 +166,7 @@ export default {
       change_canister: 'Atualizações de sistema',
       transfer: 'Transferências',
       managed_canister: 'Canister gerenciado',
+      system_info: 'Informações do sistema',
     },
     headers: {
       id: 'ID',

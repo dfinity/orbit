@@ -185,6 +185,7 @@ export default {
       change_canister: 'Upgrades',
       transfer: 'Transfers',
       managed_canister: 'Managed Canisters',
+      system_info: 'System Info',
     },
     types: {
       addusergroup: {

@@ -195,6 +195,7 @@ export default {
       change_canister: 'Mise à Jour',
       transfer: 'Transferts',
       managed_canister: 'Canister Géré',
+      system_info: 'Informations Système',
     },
     types: {
       addusergroup: {
