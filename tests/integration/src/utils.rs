@@ -3,7 +3,7 @@ use candid::Principal;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
-use pocket_ic::{update_candid_as, PocketIc};
+use pocket_ic::{update_candid_as, CallError, PocketIc, UserError, WasmResult};
 use station_api::{
     AddUserOperationInput, ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetRequestInput,
     GetRequestResponse, HealthStatus, MeResponse, RequestApprovalStatusDTO, RequestDTO,
@@ -14,6 +14,41 @@ use station_api::{
 use std::time::Duration;
 
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
+
+pub const COUNTER_WAT: &str = r#"
+    (module
+        (import "ic0" "msg_reply" (func $msg_reply))
+        (import "ic0" "msg_reply_data_append"
+            (func $msg_reply_data_append (param i32 i32)))
+        (import "ic0" "stable_grow"
+            (func $ic0_stable_grow (param $pages i32) (result i32)))
+        (import "ic0" "stable_read"
+            (func $ic0_stable_read (param $dst i32) (param $offset i32) (param $size i32)))
+        (import "ic0" "stable_write"
+            (func $ic0_stable_write (param $offset i32) (param $src i32) (param $size i32)))
+        (func $init
+            (drop (call $ic0_stable_grow (i32.const 1))))
+        (func $inc
+            (call $doinc)
+            (call $msg_reply))
+        (func $doinc
+            (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
+            (i32.store
+                (i32.const 0)
+                (i32.add (i32.load (i32.const 0)) (i32.const 2)))
+            (call $ic0_stable_write (i32.const 0) (i32.const 0) (i32.const 4)))
+        (func $read
+            (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
+            (call $msg_reply_data_append
+                (i32.const 0) ;; the counter from heap[0]
+                (i32.const 4)) ;; length
+            (call $msg_reply))
+        (memory $memory 1)
+        (export "canister_init" (func $init))
+        (export "canister_post_upgrade" (func $doinc))
+        (export "canister_query read" (func $read))
+        (export "canister_update inc" (func $inc))
+    )"#;
 
 pub fn controller_test_id() -> Principal {
     let mut bytes = 0_u64.to_le_bytes().to_vec();
@@ -82,27 +117,48 @@ fn is_request_evaluated(request: RequestDTO) -> bool {
     }
 }
 
-pub fn submit_request(
+pub fn submit_request_raw(
     env: &PocketIc,
     user_id: Principal,
     station_canister_id: CanisterId,
     request_operation_input: RequestOperationInput,
-) -> RequestDTO {
+) -> Result<(Result<CreateRequestResponse, ApiErrorDTO>,), CallError> {
     let create_request_input = CreateRequestInput {
         operation: request_operation_input,
         title: None,
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
     };
-    let res: (Result<CreateRequestResponse, ApiErrorDTO>,) = update_candid_as(
+    update_candid_as(
         env,
         station_canister_id,
         user_id,
         "create_request",
         (create_request_input,),
     )
-    .unwrap();
-    res.0.unwrap().request
+}
+
+pub fn submit_request(
+    env: &PocketIc,
+    user_id: Principal,
+    station_canister_id: CanisterId,
+    request_operation_input: RequestOperationInput,
+) -> RequestDTO {
+    let res = submit_request_raw(env, user_id, station_canister_id, request_operation_input);
+    res.unwrap().0.unwrap().request
+}
+
+pub fn submit_request_with_expected_trap(
+    env: &PocketIc,
+    user_id: Principal,
+    station_canister_id: CanisterId,
+    request_operation_input: RequestOperationInput,
+) -> String {
+    let res = submit_request_raw(env, user_id, station_canister_id, request_operation_input);
+    match res.unwrap_err() {
+        CallError::UserError(error) => error.description,
+        CallError::Reject(message) => panic!("Unexpected reject: {}", message),
+    }
 }
 
 pub fn wait_for_request(
@@ -306,4 +362,18 @@ pub fn advance_time_to_burn_cycles(
     if add_cycles > 0 {
         env.add_cycles(canister_id, add_cycles);
     }
+}
+
+pub fn update_raw(
+    env: &PocketIc,
+    canister_id: CanisterId,
+    sender: Principal,
+    method: &str,
+    payload: Vec<u8>,
+) -> Result<Vec<u8>, UserError> {
+    env.update_call(canister_id, sender, method, payload)
+        .map(|res| match res {
+            WasmResult::Reply(bytes) => bytes,
+            WasmResult::Reject(message) => panic!("Unexpected reject: {}", message),
+        })
 }

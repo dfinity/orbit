@@ -93,7 +93,7 @@
 
 <script lang="ts" setup>
 import { mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
-import { computed, ref } from 'vue';
+import { computed, Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VDataTable, VPagination } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
@@ -128,7 +128,7 @@ const station = useStationStore();
 const pageTitle = computed(() => props.title ?? i18n.t('pages.request_policies.title'));
 const forceReload = ref(false);
 const disableRefresh = ref(false);
-const policies = ref<RequestPolicy[]>([]);
+const policies: Ref<RequestPolicy[]> = ref([]);
 const privileges = ref<RequestPolicyCallerPrivileges[]>([]);
 const pagination = usePagination();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);

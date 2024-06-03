@@ -207,6 +207,8 @@ fn validate_request_operation_foreign_keys(
             EnsureUserGroup::id_exists(&ok.input.user_group_id)
         }
         RequestOperation::ChangeCanister(_) => Ok(()),
+        RequestOperation::ChangeManagedCanister(_) => Ok(()),
+        RequestOperation::CreateManagedCanister(_) => Ok(()),
         RequestOperation::AddRequestPolicy(op) => {
             op.input.specifier.validate()?;
             op.input.rule.validate()?;

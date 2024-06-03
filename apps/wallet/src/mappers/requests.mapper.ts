@@ -66,6 +66,13 @@ export const mapRequestsOperationTypeToGroup = (
     return ListRequestsOperationTypeGroup.SystemInfo;
   }
 
+  if (
+    variantIs(operationType, 'ChangeManagedCanister') ||
+    variantIs(operationType, 'CreateManagedCanister')
+  ) {
+    return ListRequestsOperationTypeGroup.ManagedCanister;
+  }
+
   return unreachable(operationType);
 };
 
@@ -210,6 +217,12 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'ManageSystemInfo')) {
     return RequestOperationEnum.ManageSystemInfo;
   }
+  if (variantIs(operation, 'ChangeManagedCanister')) {
+    return RequestOperationEnum.ChangeManagedCanister;
+  }
+  if (variantIs(operation, 'CreateManagedCanister')) {
+    return RequestOperationEnum.CreateManagedCanister;
+  }
 
   return unreachable(operation);
 };
@@ -267,6 +280,10 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { RemoveUserGroup: null };
   } else if (variantIs(requestOperation, 'ManageSystemInfo')) {
     return { ManageSystemInfo: null };
+  } else if (variantIs(requestOperation, 'ChangeManagedCanister')) {
+    return { ChangeManagedCanister: [] };
+  } else if (variantIs(requestOperation, 'CreateManagedCanister')) {
+    return { CreateManagedCanister: null };
   } else {
     return unreachable(requestOperation);
   }
@@ -502,14 +519,6 @@ const mapRequestToChangeCanisterCsvRow = (request: Request): CsvRow => {
     if (variantIs(request.operation.ChangeCanister.target, 'UpgradeUpgrader')) {
       return {
         change_target: 'upgrader',
-        wasm_checksum: request.operation.ChangeCanister.module_checksum,
-        details: stringify({ args }),
-      };
-    }
-
-    if (variantIs(request.operation.ChangeCanister.target, 'UpgradeCanister')) {
-      return {
-        change_target: request.operation.ChangeCanister.target.UpgradeCanister.toText(),
         wasm_checksum: request.operation.ChangeCanister.module_checksum,
         details: stringify({ args }),
       };

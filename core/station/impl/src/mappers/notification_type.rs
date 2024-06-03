@@ -87,7 +87,9 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::RemoveRequestPolicy(_)
                     | RequestOperation::RemoveUserGroup(_)
                     | RequestOperation::ManageSystemInfo(_)
-                    | RequestOperation::ChangeCanister(_) => None,
+                    | RequestOperation::ChangeCanister(_)
+                    | RequestOperation::ChangeManagedCanister(_)
+                    | RequestOperation::CreateManagedCanister(_) => None,
                 };
 
                 let user_id: Option<[u8; 16]> = match &request.operation {
@@ -107,7 +109,9 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::RemoveUserGroup(_)
                     | RequestOperation::Transfer(_)
                     | RequestOperation::ManageSystemInfo(_)
-                    | RequestOperation::ChangeCanister(_) => None,
+                    | RequestOperation::ChangeCanister(_)
+                    | RequestOperation::ChangeManagedCanister(_)
+                    | RequestOperation::CreateManagedCanister(_) => None,
                 };
 
                 NotificationTypeDTO::RequestCreated(RequestCreatedNotificationDTO {

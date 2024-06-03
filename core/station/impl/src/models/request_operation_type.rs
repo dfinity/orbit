@@ -24,6 +24,8 @@ pub enum RequestOperationType {
     EditAddressBookEntry = 17,
     RemoveAddressBookEntry = 18,
     ManageSystemInfo = 19,
+    ChangeManagedCanister = 20,
+    CreateManagedCanister = 21,
 }
 
 impl FromStr for RequestOperationType {
@@ -43,6 +45,8 @@ impl FromStr for RequestOperationType {
             "edit_user_group" => Ok(RequestOperationType::EditUserGroup),
             "remove_user_group" => Ok(RequestOperationType::RemoveUserGroup),
             "change_canister" => Ok(RequestOperationType::ChangeCanister),
+            "change_managed_canister" => Ok(RequestOperationType::ChangeManagedCanister),
+            "create_managed_canister" => Ok(RequestOperationType::CreateManagedCanister),
             "edit_permission" => Ok(RequestOperationType::EditPermission),
             "add_request_policy" => Ok(RequestOperationType::AddRequestPolicy),
             "edit_request_policy" => Ok(RequestOperationType::EditRequestPolicy),
@@ -68,6 +72,8 @@ impl Display for RequestOperationType {
             RequestOperationType::EditUserGroup => write!(f, "edit_user_group"),
             RequestOperationType::RemoveUserGroup => write!(f, "remove_user_group"),
             RequestOperationType::ChangeCanister => write!(f, "change_canister"),
+            RequestOperationType::ChangeManagedCanister => write!(f, "change_managed_canister"),
+            RequestOperationType::CreateManagedCanister => write!(f, "create_managed_canister"),
             RequestOperationType::EditPermission => write!(f, "edit_permission"),
             RequestOperationType::AddRequestPolicy => write!(f, "add_request_policy"),
             RequestOperationType::EditRequestPolicy => write!(f, "edit_request_policy"),
@@ -162,6 +168,14 @@ mod tests {
         assert_eq!(
             RequestOperationType::from_str("change_canister").unwrap(),
             RequestOperationType::ChangeCanister
+        );
+        assert_eq!(
+            RequestOperationType::from_str("change_managed_canister").unwrap(),
+            RequestOperationType::ChangeManagedCanister
+        );
+        assert_eq!(
+            RequestOperationType::from_str("create_managed_canister").unwrap(),
+            RequestOperationType::CreateManagedCanister
         );
         assert_eq!(
             RequestOperationType::from_str("edit_permission").unwrap(),

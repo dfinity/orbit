@@ -49,7 +49,7 @@ describe('IndividualUserPermissions', () => {
 
     await flushPromises();
 
-    expect(wrapper.find('[data-test-id="access-policy-list"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="permission-list"]').exists()).toBe(true);
   });
 
   it('hides permission list when specific resource is not selected', async () => {
@@ -63,6 +63,6 @@ describe('IndividualUserPermissions', () => {
 
     await flushPromises();
 
-    expect(wrapper.find('[data-test-id="access-policy-list"]').exists()).toBe(false);
+    expect(wrapper.find('[data-test-id="permission-list"]').exists()).toBe(false);
   });
 });

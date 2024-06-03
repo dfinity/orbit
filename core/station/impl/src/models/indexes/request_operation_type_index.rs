@@ -68,6 +68,22 @@ impl Request {
                 operation_type: RequestOperationFilterType::ChangeCanister,
                 request_id: self.id,
             }],
+            RequestOperation::ChangeManagedCanister(operation) => vec![
+                RequestOperationTypeIndex {
+                    operation_type: RequestOperationFilterType::ChangeManagedCanister(None),
+                    request_id: self.id,
+                },
+                RequestOperationTypeIndex {
+                    operation_type: RequestOperationFilterType::ChangeManagedCanister(Some(
+                        operation.input.canister_id,
+                    )),
+                    request_id: self.id,
+                },
+            ],
+            RequestOperation::CreateManagedCanister(_) => vec![RequestOperationTypeIndex {
+                operation_type: RequestOperationFilterType::CreateManagedCanister,
+                request_id: self.id,
+            }],
             RequestOperation::EditPermission(_) => vec![RequestOperationTypeIndex {
                 operation_type: RequestOperationFilterType::EditPermission,
                 request_id: self.id,

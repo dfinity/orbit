@@ -49,7 +49,7 @@
 </template>
 <script lang="ts" setup>
 import { mdiClose } from '@mdi/js';
-import { computed, ref, toRefs } from 'vue';
+import { computed, Ref, ref, toRefs } from 'vue';
 import {
   VBtn,
   VCard,
@@ -96,7 +96,7 @@ const props = toRefs(input);
 const valid = ref(true);
 const loading = ref(false);
 const saving = ref(false);
-const requestPolicy = ref<Partial<RequestPolicy>>({});
+const requestPolicy: Ref<Partial<RequestPolicy>> = ref({});
 const openModel = computed({
   get: () => props.open.value,
   set: value => emit('update:open', value),
