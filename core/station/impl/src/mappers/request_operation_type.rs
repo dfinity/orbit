@@ -27,6 +27,9 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::ChangeManagedCanister => {
                 RequestOperationType::ChangeManagedCanister
             }
+            RequestOperationTypeDTO::CreateManagedCanister => {
+                RequestOperationType::CreateManagedCanister
+            }
             RequestOperationTypeDTO::EditPermission => RequestOperationType::EditPermission,
             RequestOperationTypeDTO::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestOperationTypeDTO::EditRequestPolicy => RequestOperationType::EditRequestPolicy,
@@ -62,6 +65,9 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::ChangeManagedCanister => {
                 RequestOperationTypeDTO::ChangeManagedCanister
             }
+            RequestOperationType::CreateManagedCanister => {
+                RequestOperationTypeDTO::CreateManagedCanister
+            }
             RequestOperationType::EditPermission => RequestOperationTypeDTO::EditPermission,
             RequestOperationType::AddRequestPolicy => RequestOperationTypeDTO::AddRequestPolicy,
             RequestOperationType::EditRequestPolicy => RequestOperationTypeDTO::EditRequestPolicy,
@@ -92,6 +98,9 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::ChangeCanister(_) => RequestOperationType::ChangeCanister,
             RequestOperation::ChangeManagedCanister(_) => {
                 RequestOperationType::ChangeManagedCanister
+            }
+            RequestOperation::CreateManagedCanister(_) => {
+                RequestOperationType::CreateManagedCanister
             }
             RequestOperation::EditPermission(_) => RequestOperationType::EditPermission,
             RequestOperation::AddRequestPolicy(_) => RequestOperationType::AddRequestPolicy,
@@ -153,6 +162,10 @@ impl RequestOperation {
                     true
                 }
             }
+            (
+                RequestOperation::CreateManagedCanister(_),
+                ListRequestsOperationTypeDTO::CreateManagedCanister,
+            ) => true,
             (RequestOperation::EditPermission(_), ListRequestsOperationTypeDTO::EditPermission) => {
                 true
             }
@@ -222,6 +235,9 @@ impl From<station_api::ListRequestsOperationTypeDTO> for RequestOperationFilterT
             }
             station_api::ListRequestsOperationTypeDTO::ChangeManagedCanister(target) => {
                 RequestOperationFilterType::ChangeManagedCanister(target)
+            }
+            station_api::ListRequestsOperationTypeDTO::CreateManagedCanister => {
+                RequestOperationFilterType::CreateManagedCanister
             }
             station_api::ListRequestsOperationTypeDTO::EditPermission => {
                 RequestOperationFilterType::EditPermission

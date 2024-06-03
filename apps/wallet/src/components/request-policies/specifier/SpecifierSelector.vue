@@ -88,6 +88,7 @@ const componentsMap: {
   EditRequestPolicy: UnsupportedSpecifier,
   RemoveRequestPolicy: UnsupportedSpecifier,
   ChangeManagedCanister: UnsupportedSpecifier,
+  CreateManagedCanister: UnsupportedSpecifier,
 };
 
 function isKeyOfRequestSpecifier(key: string): key is keyof RequestSpecifier {
@@ -227,6 +228,9 @@ watch(
         model.value = { [specifier.value]: null };
         break;
       case RequestSpecifierEnum.ChangeManagedCanister:
+        model.value = { [specifier.value]: { Any: null } };
+        break;
+      case RequestSpecifierEnum.CreateManagedCanister:
         model.value = { [specifier.value]: { Any: null } };
         break;
       default:

@@ -47,6 +47,7 @@ type RequestSpecifier = variant {
   RemoveAddressBookEntry : ResourceIds;
   ChangeCanister;
   ChangeManagedCanister : ChangeManagedCanisterResourceTarget;
+  CreateManagedCanister : CreateManagedCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
   AddRequestPolicy;
   EditRequestPolicy : ResourceIds;
@@ -585,6 +586,12 @@ type ChangeManagedCanisterOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
+type CreateManagedCanisterOperationInput = record {};
+
+type CreateManagedCanisterOperation = record {
+  canister_id : opt principal;
+};
+
 type EditPermissionOperationInput = record {
   // The updated resource that this policy will apply to.
   resource : Resource;
@@ -666,6 +673,8 @@ type RequestOperation = variant {
   ChangeCanister : ChangeCanisterOperation;
   // An operation for changing a managed canister.
   ChangeManagedCanister : ChangeManagedCanisterOperation;
+  // An operation for creating a managed canister.
+  CreateManagedCanister : CreateManagedCanisterOperation;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperation;
   // An operation for adding a request policy.
@@ -705,6 +714,8 @@ type RequestOperationInput = variant {
   ChangeCanister : ChangeCanisterOperationInput;
   // An operation for changing a managed canister.
   ChangeManagedCanister : ChangeManagedCanisterOperationInput;
+  // An operation for creating a managed canister.
+  CreateManagedCanister : CreateManagedCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
   // An operation for adding a request policy.
@@ -744,6 +755,8 @@ type RequestOperationType = variant {
   ChangeCanister;
   // An operation for changing a managed canister.
   ChangeManagedCanister;
+  // An operation for creating a managed canister.
+  CreateManagedCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -865,6 +878,8 @@ type ListRequestsOperationType = variant {
   ChangeCanister;
   // An operation for changing a managed canister with an optionally specified canister ID.
   ChangeManagedCanister : opt principal;
+  // An operation for creating a managed canister.
+  CreateManagedCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.

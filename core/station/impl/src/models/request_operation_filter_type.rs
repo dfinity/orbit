@@ -15,6 +15,7 @@ pub enum RequestOperationFilterType {
     RemoveUserGroup,
     ChangeCanister,
     ChangeManagedCanister(Option<Principal>),
+    CreateManagedCanister,
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,

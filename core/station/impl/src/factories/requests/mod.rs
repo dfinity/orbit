@@ -3,8 +3,8 @@ use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{Request, RequestOperation},
     services::{
-        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, REQUEST_POLICY_SERVICE,
-        SYSTEM_SERVICE,
+        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, CREATE_CANISTER_SERVICE,
+        REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
     },
 };
 use async_trait::async_trait;
@@ -18,6 +18,7 @@ mod add_request_policy;
 mod add_user;
 mod add_user_group;
 mod change_canister;
+mod create_canister;
 mod edit_account;
 mod edit_address_book_entry;
 mod edit_permission;
@@ -40,6 +41,7 @@ use self::{
         ChangeCanisterRequestCreate, ChangeCanisterRequestExecute,
         ChangeManagedCanisterRequestCreate, ChangeManagedCanisterRequestExecute,
     },
+    create_canister::{CreateManagedCanisterRequestCreate, CreateManagedCanisterRequestExecute},
     edit_account::{EditAccountRequestCreate, EditAccountRequestExecute},
     edit_address_book_entry::{
         EditAddressBookEntryRequestCreate, EditAddressBookEntryRequestExecute,
@@ -193,6 +195,12 @@ impl RequestFactory {
                     ChangeManagedCanisterRequestCreate,
                 >(id, requested_by_user, input.clone(), operation.clone())
             }
+            RequestOperationInput::CreateManagedCanister(operation) => {
+                create_request::<
+                    station_api::CreateManagedCanisterOperationInput,
+                    CreateManagedCanisterRequestCreate,
+                >(id, requested_by_user, input.clone(), operation.clone())
+            }
             RequestOperationInput::EditPermission(operation) => {
                 create_request::<
                     station_api::EditPermissionOperationInput,
@@ -274,6 +282,13 @@ impl RequestFactory {
                     request,
                     operation,
                     Arc::clone(&CHANGE_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::CreateManagedCanister(operation) => {
+                Box::new(CreateManagedCanisterRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&CREATE_CANISTER_SERVICE),
                 ))
             }
             RequestOperation::EditPermission(operation) => {

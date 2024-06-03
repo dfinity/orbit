@@ -80,6 +80,10 @@ impl Request {
                     request_id: self.id,
                 },
             ],
+            RequestOperation::CreateManagedCanister(_) => vec![RequestOperationTypeIndex {
+                operation_type: RequestOperationFilterType::CreateManagedCanister,
+                request_id: self.id,
+            }],
             RequestOperation::EditPermission(_) => vec![RequestOperationTypeIndex {
                 operation_type: RequestOperationFilterType::EditPermission,
                 request_id: self.id,
