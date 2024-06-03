@@ -2,6 +2,7 @@ import { ComputedRef, Ref, computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
+import { disabledRequestOperations } from '~/configs/requests';
 import { REQUEST_DIALOG_QUERY_PARAM } from '~/core/constants.core';
 import { logger } from '~/core/logger.core';
 import { ListRequestsOperationType, UUID } from '~/generated/station/station.did';
@@ -21,33 +22,33 @@ export type AvailableDomain = {
 };
 
 export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
-  const domains: AvailableDomain[] = [];
-  domains.push({
+  const domains: Ref<AvailableDomain[]> = ref([]);
+  domains.value.push({
     id: RequestDomains.All,
     types: [],
   });
 
   if (hasRequiredPrivilege({ anyOf: [Privilege.ListAccounts] })) {
-    domains.push({
+    domains.value.push({
       id: RequestDomains.Accounts,
       types: [{ AddAccount: null }, { EditAccount: null }],
     });
 
-    domains.push({
+    domains.value.push({
       id: RequestDomains.Transfers,
       types: [{ Transfer: [] }],
     });
   }
 
   if (hasRequiredPrivilege({ anyOf: [Privilege.ListUsers] })) {
-    domains.push({
+    domains.value.push({
       id: RequestDomains.Users,
       types: [{ AddUser: null }, { EditUser: null }],
     });
   }
 
   if (hasRequiredPrivilege({ anyOf: [Privilege.ListAddressBookEntries] })) {
-    domains.push({
+    domains.value.push({
       id: RequestDomains.AddressBook,
       types: [
         { AddAddressBookEntry: null },
@@ -57,7 +58,7 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
     });
   }
 
-  domains.push({
+  domains.value.push({
     id: RequestDomains.System,
     types: [
       { EditPermission: null },
@@ -72,7 +73,7 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
     ],
   });
 
-  return ref(domains);
+  return domains;
 };
 
 export type Filters = {
@@ -196,6 +197,11 @@ export const useAvailableORequestSpecifiers = (): SelectItem[] => {
   const items: SelectItem<string>[] = [];
 
   for (const specifier in RequestSpecifierEnum) {
+    // skip request operations that are not available for the user interface
+    if (disabledRequestOperations.includes(specifier as RequestSpecifierEnum)) {
+      continue;
+    }
+
     items.push({
       value: specifier,
       text: i18n.t(`request_policies.specifier.${specifier.toLowerCase()}`),

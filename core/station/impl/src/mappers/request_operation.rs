@@ -2,13 +2,17 @@ use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         resource::{
-            AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-            Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+            AccountResourceAction, ChangeCanisterResourceAction,
+            ChangeManagedCanisterResourceTarget, ManagedCanisterResourceAction,
+            PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+            UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
         AddRequestPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
-        ChangeCanisterOperation, ChangeCanisterOperationInput, ChangeCanisterTarget,
+        CanisterInstallMode, CanisterInstallModeArgs, CanisterReinstallModeArgs,
+        CanisterUpgradeModeArgs, ChangeCanisterOperation, ChangeCanisterOperationInput,
+        ChangeCanisterTarget, ChangeManagedCanisterOperation, ChangeManagedCanisterOperationInput,
         EditAccountOperation, EditAccountOperationInput, EditAddressBookEntryOperation,
         EditPermissionOperation, EditPermissionOperationInput, EditRequestPolicyOperation,
         EditRequestPolicyOperationInput, EditUserGroupOperation, EditUserOperation,
@@ -24,8 +28,8 @@ use crate::{
 use orbit_essentials::repository::Repository;
 use station_api::{
     AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
-    ChangeCanisterOperationDTO, ChangeCanisterTargetDTO, EditAccountOperationDTO,
-    EditAddressBookEntryOperationDTO, EditUserOperationDTO, NetworkDTO,
+    ChangeCanisterOperationDTO, ChangeCanisterTargetDTO, ChangeManagedCanisterOperationDTO,
+    EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditUserOperationDTO, NetworkDTO,
     RemoveAddressBookEntryOperationDTO, RequestOperationDTO, TransferOperationDTO,
 };
 use uuid::Uuid;
@@ -305,9 +309,6 @@ impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
         match value {
             ChangeCanisterTarget::UpgradeStation => ChangeCanisterTargetDTO::UpgradeStation,
             ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterTargetDTO::UpgradeUpgrader,
-            ChangeCanisterTarget::UpgradeCanister(canister_id) => {
-                ChangeCanisterTargetDTO::UpgradeCanister(canister_id)
-            }
         }
     }
 }
@@ -317,9 +318,6 @@ impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
         match value {
             ChangeCanisterTargetDTO::UpgradeStation => ChangeCanisterTarget::UpgradeStation,
             ChangeCanisterTargetDTO::UpgradeUpgrader => ChangeCanisterTarget::UpgradeUpgrader,
-            ChangeCanisterTargetDTO::UpgradeCanister(canister_id) => {
-                ChangeCanisterTarget::UpgradeCanister(canister_id)
-            }
         }
     }
 }
@@ -348,6 +346,79 @@ impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
     fn from(operation: ChangeCanisterOperation) -> ChangeCanisterOperationDTO {
         ChangeCanisterOperationDTO {
             target: operation.input.target.into(),
+            module_checksum: hex::encode(operation.module_checksum),
+            arg_checksum: operation.arg_checksum.map(hex::encode),
+        }
+    }
+}
+
+impl From<station_api::CanisterInstallMode> for CanisterInstallMode {
+    fn from(mode: station_api::CanisterInstallMode) -> Self {
+        match mode {
+            station_api::CanisterInstallMode::Install => {
+                CanisterInstallMode::Install(CanisterInstallModeArgs {})
+            }
+            station_api::CanisterInstallMode::Reinstall => {
+                CanisterInstallMode::Reinstall(CanisterReinstallModeArgs {})
+            }
+            station_api::CanisterInstallMode::Upgrade => {
+                CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {})
+            }
+        }
+    }
+}
+
+impl From<CanisterInstallMode> for station_api::CanisterInstallMode {
+    fn from(mode: CanisterInstallMode) -> Self {
+        match mode {
+            CanisterInstallMode::Install(CanisterInstallModeArgs {}) => {
+                station_api::CanisterInstallMode::Install
+            }
+            CanisterInstallMode::Reinstall(CanisterReinstallModeArgs {}) => {
+                station_api::CanisterInstallMode::Reinstall
+            }
+            CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}) => {
+                station_api::CanisterInstallMode::Upgrade
+            }
+        }
+    }
+}
+
+impl From<ChangeManagedCanisterOperationInput>
+    for station_api::ChangeManagedCanisterOperationInput
+{
+    fn from(
+        input: ChangeManagedCanisterOperationInput,
+    ) -> station_api::ChangeManagedCanisterOperationInput {
+        station_api::ChangeManagedCanisterOperationInput {
+            canister_id: input.canister_id,
+            mode: input.mode.into(),
+            module: input.module,
+            arg: input.arg,
+        }
+    }
+}
+
+impl From<station_api::ChangeManagedCanisterOperationInput>
+    for ChangeManagedCanisterOperationInput
+{
+    fn from(
+        input: station_api::ChangeManagedCanisterOperationInput,
+    ) -> ChangeManagedCanisterOperationInput {
+        ChangeManagedCanisterOperationInput {
+            canister_id: input.canister_id,
+            mode: input.mode.into(),
+            module: input.module,
+            arg: input.arg,
+        }
+    }
+}
+
+impl From<ChangeManagedCanisterOperation> for ChangeManagedCanisterOperationDTO {
+    fn from(operation: ChangeManagedCanisterOperation) -> ChangeManagedCanisterOperationDTO {
+        ChangeManagedCanisterOperationDTO {
+            canister_id: operation.input.canister_id,
+            mode: operation.input.mode.into(),
             module_checksum: hex::encode(operation.module_checksum),
             arg_checksum: operation.arg_checksum.map(hex::encode),
         }
@@ -591,6 +662,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::ChangeCanister(operation) => {
                 RequestOperationDTO::ChangeCanister(Box::new(operation.into()))
             }
+            RequestOperation::ChangeManagedCanister(operation) => {
+                RequestOperationDTO::ChangeManagedCanister(Box::new(operation.into()))
+            }
             RequestOperation::EditPermission(operation) => {
                 RequestOperationDTO::EditPermission(Box::new(operation.into()))
             }
@@ -690,6 +764,19 @@ impl RequestOperation {
                 vec![Resource::ChangeCanister(
                     ChangeCanisterResourceAction::Create,
                 )]
+            }
+            RequestOperation::ChangeManagedCanister(ChangeManagedCanisterOperation {
+                input,
+                ..
+            }) => {
+                vec![
+                    Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
+                        ChangeManagedCanisterResourceTarget::Any,
+                    )),
+                    Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
+                        ChangeManagedCanisterResourceTarget::Canister(input.canister_id),
+                    )),
+                ]
             }
             RequestOperation::EditRequestPolicy(EditRequestPolicyOperation { input }) => {
                 vec![

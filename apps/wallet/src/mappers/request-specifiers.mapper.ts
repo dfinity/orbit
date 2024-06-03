@@ -71,6 +71,10 @@ export const mapRequestSpecifierToEnum = (specifier: RequestSpecifier): RequestS
     return RequestSpecifierEnum.ManageSystemInfo;
   }
 
+  if (variantIs(specifier, 'ChangeManagedCanister')) {
+    return RequestSpecifierEnum.ChangeManagedCanister;
+  }
+
   return unreachable(specifier);
 };
 

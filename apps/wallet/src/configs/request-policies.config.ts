@@ -34,4 +34,5 @@ export const requestSpecifiersIncludedRules = (): Record<
   [RequestSpecifierEnum.EditAddressBookEntry]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.RemoveAddressBookEntry]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.ManageSystemInfo]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.ChangeManagedCanister]: [...defaultRequestPolicyRules],
 });

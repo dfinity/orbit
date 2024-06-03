@@ -1,3 +1,4 @@
+use candid::Principal;
 use orbit_essentials::storable;
 use orbit_essentials::{model::ModelValidator, types::UUID};
 use std::fmt::{Display, Formatter};
@@ -18,6 +19,7 @@ pub enum Resource {
     Account(AccountResourceAction),
     AddressBook(ResourceAction),
     ChangeCanister(ChangeCanisterResourceAction),
+    ManagedCanister(ManagedCanisterResourceAction),
     Request(RequestResourceAction),
     RequestPolicy(ResourceAction),
     System(SystemResourceAction),
@@ -50,6 +52,10 @@ impl ModelValidator<RecordValidationError> for Resource {
             },
             Resource::ChangeCanister(action) => match action {
                 ChangeCanisterResourceAction::Create => Ok(()),
+            },
+            Resource::ManagedCanister(action) => match action {
+                ManagedCanisterResourceAction::Create(_)
+                | ManagedCanisterResourceAction::Change(_) => Ok(()),
             },
             Resource::Request(action) => match action {
                 RequestResourceAction::List => Ok(()),
@@ -136,6 +142,26 @@ pub enum SystemResourceAction {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeCanisterResourceAction {
     Create,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum CreateManagedCanisterResourceTarget {
+    Any,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ChangeManagedCanisterResourceTarget {
+    Any,
+    Canister(Principal),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ManagedCanisterResourceAction {
+    Create(CreateManagedCanisterResourceTarget),
+    Change(ChangeManagedCanisterResourceTarget),
 }
 
 #[storable]
@@ -275,6 +301,34 @@ impl Resource {
                     )]
                 }
             },
+            Resource::ManagedCanister(action) => match action {
+                ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any) => {
+                    vec![Resource::ManagedCanister(
+                        ManagedCanisterResourceAction::Create(
+                            CreateManagedCanisterResourceTarget::Any,
+                        ),
+                    )]
+                }
+                ManagedCanisterResourceAction::Change(ChangeManagedCanisterResourceTarget::Any) => {
+                    vec![Resource::ManagedCanister(
+                        ManagedCanisterResourceAction::Change(
+                            ChangeManagedCanisterResourceTarget::Any,
+                        ),
+                    )]
+                }
+                ManagedCanisterResourceAction::Change(
+                    ChangeManagedCanisterResourceTarget::Canister(id),
+                ) => {
+                    vec![
+                        Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
+                            ChangeManagedCanisterResourceTarget::Any,
+                        )),
+                        Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
+                            ChangeManagedCanisterResourceTarget::Canister(*id),
+                        )),
+                    ]
+                }
+            },
             Resource::Request(action) => match action {
                 RequestResourceAction::List => {
                     vec![Resource::Request(RequestResourceAction::List)]
@@ -403,6 +457,9 @@ impl Display for Resource {
             Resource::Account(action) => write!(f, "Account({})", action),
             Resource::AddressBook(action) => write!(f, "AddressBook({})", action),
             Resource::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
+            Resource::ManagedCanister(action) => {
+                write!(f, "ManagedCanister({})", action)
+            }
             Resource::Request(action) => write!(f, "Request({})", action),
             Resource::RequestPolicy(action) => write!(f, "RequestPolicy({})", action),
             Resource::System(action) => write!(f, "System({})", action),
@@ -453,6 +510,38 @@ impl Display for ChangeCanisterResourceAction {
     }
 }
 
+impl Display for CreateManagedCanisterResourceTarget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CreateManagedCanisterResourceTarget::Any => write!(f, "Any"),
+        }
+    }
+}
+
+impl Display for ChangeManagedCanisterResourceTarget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ChangeManagedCanisterResourceTarget::Any => write!(f, "Any"),
+            ChangeManagedCanisterResourceTarget::Canister(canister_id) => {
+                write!(f, "Canister({})", canister_id)
+            }
+        }
+    }
+}
+
+impl Display for ManagedCanisterResourceAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ManagedCanisterResourceAction::Create(target) => {
+                write!(f, "Create({})", target)
+            }
+            ManagedCanisterResourceAction::Change(target) => {
+                write!(f, "Change({})", target)
+            }
+        }
+    }
+}
+
 impl Display for RequestResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -499,11 +588,13 @@ mod test {
     use orbit_essentials::model::ModelValidator;
 
     use crate::core::validation::disable_mock_resource_validation;
+    use candid::Principal;
 
     use super::{
-        AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-        RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-        UserResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceTarget,
+        CreateManagedCanisterResourceTarget, ManagedCanisterResourceAction,
+        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+        SystemResourceAction, UserResourceAction,
     };
 
     #[test]
@@ -524,6 +615,15 @@ mod test {
             Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
+            Resource::ManagedCanister(ManagedCanisterResourceAction::Create(
+                CreateManagedCanisterResourceTarget::Any,
+            )),
+            Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
+                ChangeManagedCanisterResourceTarget::Any,
+            )),
+            Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
+                ChangeManagedCanisterResourceTarget::Canister(Principal::management_canister()),
+            )),
             Resource::Request(RequestResourceAction::List),
             Resource::Request(RequestResourceAction::Read(ResourceId::Any)),
             Resource::RequestPolicy(ResourceAction::List),

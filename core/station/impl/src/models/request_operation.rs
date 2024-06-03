@@ -8,6 +8,7 @@ use super::{
 };
 use crate::models::Metadata;
 use candid::Principal;
+use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
 use orbit_essentials::{storable, types::UUID};
 use std::fmt::Display;
 
@@ -27,6 +28,7 @@ pub enum RequestOperation {
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
     ChangeCanister(ChangeCanisterOperation),
+    ChangeManagedCanister(ChangeManagedCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
@@ -49,6 +51,7 @@ impl Display for RequestOperation {
             RequestOperation::EditUserGroup(_) => write!(f, "adit_user_group"),
             RequestOperation::RemoveUserGroup(_) => write!(f, "remove_user_group"),
             RequestOperation::ChangeCanister(_) => write!(f, "change_canister"),
+            RequestOperation::ChangeManagedCanister(_) => write!(f, "change_managed_canister"),
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
@@ -234,7 +237,6 @@ pub struct RemoveUserGroupOperationInput {
 pub enum ChangeCanisterTarget {
     UpgradeStation,
     UpgradeUpgrader,
-    UpgradeCanister(Principal),
 }
 
 #[storable]
@@ -251,6 +253,53 @@ pub struct ChangeCanisterOperation {
     pub module_checksum: Vec<u8>,
     pub arg_checksum: Option<Vec<u8>>,
     pub input: ChangeCanisterOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CanisterInstallModeArgs {}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CanisterReinstallModeArgs {}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CanisterUpgradeModeArgs {}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum CanisterInstallMode {
+    Install(CanisterInstallModeArgs),
+    Reinstall(CanisterReinstallModeArgs),
+    Upgrade(CanisterUpgradeModeArgs),
+}
+
+impl From<CanisterInstallMode> for mgmt::CanisterInstallMode {
+    fn from(mode: CanisterInstallMode) -> Self {
+        match mode {
+            CanisterInstallMode::Install(_) => mgmt::CanisterInstallMode::Install,
+            CanisterInstallMode::Reinstall(_) => mgmt::CanisterInstallMode::Reinstall,
+            CanisterInstallMode::Upgrade(_) => mgmt::CanisterInstallMode::Upgrade(None),
+        }
+    }
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ChangeManagedCanisterOperationInput {
+    pub canister_id: Principal,
+    pub mode: CanisterInstallMode,
+    pub module: Vec<u8>,
+    pub arg: Option<Vec<u8>>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ChangeManagedCanisterOperation {
+    pub module_checksum: Vec<u8>,
+    pub arg_checksum: Option<Vec<u8>>,
+    pub input: ChangeManagedCanisterOperationInput,
 }
 
 #[storable]

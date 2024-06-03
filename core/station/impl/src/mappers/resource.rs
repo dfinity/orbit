@@ -1,5 +1,6 @@
 use crate::models::resource::{
-    AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
+    AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceTarget,
+    CreateManagedCanisterResourceTarget, ManagedCanisterResourceAction, PermissionResourceAction,
     RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
     UserResourceAction,
 };
@@ -21,6 +22,9 @@ impl From<station_api::ResourceDTO> for Resource {
             station_api::ResourceDTO::ChangeCanister(action) => {
                 Resource::ChangeCanister(action.into())
             }
+            station_api::ResourceDTO::ManagedCanister(action) => {
+                Resource::ManagedCanister(action.into())
+            }
             station_api::ResourceDTO::Request(action) => Resource::Request(action.into()),
             station_api::ResourceDTO::System(action) => Resource::System(action.into()),
         }
@@ -40,6 +44,9 @@ impl From<Resource> for station_api::ResourceDTO {
             Resource::AddressBook(action) => station_api::ResourceDTO::AddressBook(action.into()),
             Resource::ChangeCanister(action) => {
                 station_api::ResourceDTO::ChangeCanister(action.into())
+            }
+            Resource::ManagedCanister(action) => {
+                station_api::ResourceDTO::ManagedCanister(action.into())
             }
             Resource::Request(action) => station_api::ResourceDTO::Request(action.into()),
             Resource::System(action) => station_api::ResourceDTO::System(action.into()),
@@ -208,6 +215,86 @@ impl From<station_api::ChangeCanisterResourceActionDTO> for ChangeCanisterResour
 impl From<ChangeCanisterResourceAction> for station_api::ChangeCanisterResourceActionDTO {
     fn from(_: ChangeCanisterResourceAction) -> Self {
         station_api::ChangeCanisterResourceActionDTO::Create
+    }
+}
+
+impl From<station_api::CreateManagedCanisterResourceTargetDTO>
+    for CreateManagedCanisterResourceTarget
+{
+    fn from(action: station_api::CreateManagedCanisterResourceTargetDTO) -> Self {
+        match action {
+            station_api::CreateManagedCanisterResourceTargetDTO::Any => {
+                CreateManagedCanisterResourceTarget::Any
+            }
+        }
+    }
+}
+
+impl From<CreateManagedCanisterResourceTarget>
+    for station_api::CreateManagedCanisterResourceTargetDTO
+{
+    fn from(action: CreateManagedCanisterResourceTarget) -> Self {
+        match action {
+            CreateManagedCanisterResourceTarget::Any => {
+                station_api::CreateManagedCanisterResourceTargetDTO::Any
+            }
+        }
+    }
+}
+
+impl From<station_api::ChangeManagedCanisterResourceTargetDTO>
+    for ChangeManagedCanisterResourceTarget
+{
+    fn from(action: station_api::ChangeManagedCanisterResourceTargetDTO) -> Self {
+        match action {
+            station_api::ChangeManagedCanisterResourceTargetDTO::Any => {
+                ChangeManagedCanisterResourceTarget::Any
+            }
+            station_api::ChangeManagedCanisterResourceTargetDTO::Canister(canister_id) => {
+                ChangeManagedCanisterResourceTarget::Canister(canister_id)
+            }
+        }
+    }
+}
+
+impl From<ChangeManagedCanisterResourceTarget>
+    for station_api::ChangeManagedCanisterResourceTargetDTO
+{
+    fn from(action: ChangeManagedCanisterResourceTarget) -> Self {
+        match action {
+            ChangeManagedCanisterResourceTarget::Any => {
+                station_api::ChangeManagedCanisterResourceTargetDTO::Any
+            }
+            ChangeManagedCanisterResourceTarget::Canister(canister_id) => {
+                station_api::ChangeManagedCanisterResourceTargetDTO::Canister(canister_id)
+            }
+        }
+    }
+}
+
+impl From<station_api::ManagedCanisterResourceActionDTO> for ManagedCanisterResourceAction {
+    fn from(action: station_api::ManagedCanisterResourceActionDTO) -> Self {
+        match action {
+            station_api::ManagedCanisterResourceActionDTO::Create(target) => {
+                ManagedCanisterResourceAction::Create(target.into())
+            }
+            station_api::ManagedCanisterResourceActionDTO::Change(target) => {
+                ManagedCanisterResourceAction::Change(target.into())
+            }
+        }
+    }
+}
+
+impl From<ManagedCanisterResourceAction> for station_api::ManagedCanisterResourceActionDTO {
+    fn from(action: ManagedCanisterResourceAction) -> Self {
+        match action {
+            ManagedCanisterResourceAction::Create(target) => {
+                station_api::ManagedCanisterResourceActionDTO::Create(target.into())
+            }
+            ManagedCanisterResourceAction::Change(target) => {
+                station_api::ManagedCanisterResourceActionDTO::Change(target.into())
+            }
+        }
     }
 }
 

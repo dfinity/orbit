@@ -1,11 +1,12 @@
 use crate::{
     errors::ChangeCanisterError,
+    models::{CanisterInstallMode, CanisterUpgradeModeArgs},
     services::{SystemService, SYSTEM_SERVICE},
 };
 use candid::CandidType;
 use candid::Principal;
 use ic_cdk::api::management_canister::{
-    main::{self as mgmt, CanisterInstallMode, InstallCodeArgument},
+    main::{self as mgmt, InstallCodeArgument},
     provisional::CanisterIdRecord,
 };
 use lazy_static::lazy_static;
@@ -62,7 +63,7 @@ impl ChangeCanisterService {
         let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
         self.install_canister(
             upgrader_canister_id,
-            CanisterInstallMode::Upgrade(None),
+            CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}),
             module,
             arg,
         )
@@ -104,7 +105,7 @@ impl ChangeCanisterService {
         // Install or upgrade canister
         let default_bytes = Encode!(&()).unwrap();
         let install_code_result = mgmt::install_code(InstallCodeArgument {
-            mode,
+            mode: mode.into(),
             canister_id: canister_id.to_owned(),
             wasm_module: module.to_owned(),
             arg: arg.unwrap_or(default_bytes),

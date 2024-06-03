@@ -254,6 +254,7 @@ import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntry
 import RemoveRequestPolicyOperation from './operations/RemoveRequestPolicyOperation.vue';
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
+import UnsupportedOperation from './operations/UnsupportedOperation.vue';
 
 const i18n = useI18n();
 
@@ -290,6 +291,7 @@ const componentsMap: {
   ChangeCanister: ChangeCanisterOperation,
   EditPermission: EditPermissionOperation,
   ManageSystemInfo: ManageSystemInfoOperation,
+  ChangeManagedCanister: UnsupportedOperation,
 };
 
 defineEmits<{

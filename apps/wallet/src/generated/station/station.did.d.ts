@@ -125,6 +125,9 @@ export interface BasicUser {
   'status' : UserStatus,
   'name' : string,
 }
+export type CanisterInstallMode = { 'reinstall' : null } |
+  { 'upgrade' : null } |
+  { 'install' : null };
 export interface Capabilities {
   'name' : string,
   'version' : string,
@@ -149,8 +152,22 @@ export interface ChangeCanisterOperationInput {
 }
 export type ChangeCanisterResourceAction = { 'Create' : null };
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
-  { 'UpgradeCanister' : Principal } |
   { 'UpgradeStation' : null };
+export interface ChangeManagedCanisterOperation {
+  'mode' : CanisterInstallMode,
+  'canister_id' : Principal,
+  'module_checksum' : Sha256Hash,
+  'arg_checksum' : [] | [Sha256Hash],
+}
+export interface ChangeManagedCanisterOperationInput {
+  'arg' : [] | [Uint8Array | number[]],
+  'mode' : CanisterInstallMode,
+  'canister_id' : Principal,
+  'module' : Uint8Array | number[],
+}
+export type ChangeManagedCanisterResourceTarget = { 'Any' : null } |
+  { 'Canister' : Principal };
+export type CreateManagedCanisterResourceTarget = { 'Any' : null };
 export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
@@ -429,6 +446,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'Transfer' : [] | [UUID] } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
+  { 'ChangeManagedCanister' : [] | [Principal] } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
@@ -476,6 +494,10 @@ export interface ManageSystemInfoOperation {
   'input' : ManageSystemInfoOperationInput,
 }
 export interface ManageSystemInfoOperationInput { 'name' : [] | [string] }
+export type ManagedCanisterResourceAction = {
+    'Create' : CreateManagedCanisterResourceTarget
+  } |
+  { 'Change' : ChangeManagedCanisterResourceTarget };
 export type MarkNotificationReadResult = { 'Ok' : null } |
   { 'Err' : Error };
 export interface MarkNotificationsReadInput {
@@ -606,6 +628,7 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'Transfer' : TransferOperation } |
   { 'EditAccount' : EditAccountOperation } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
+  { 'ChangeManagedCanister' : ChangeManagedCanisterOperation } |
   { 'AddRequestPolicy' : AddRequestPolicyOperation } |
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
   { 'AddAccount' : AddAccountOperation };
@@ -625,6 +648,7 @@ export type RequestOperationInput = {
   { 'Transfer' : TransferOperationInput } |
   { 'EditAccount' : EditAccountOperationInput } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
+  { 'ChangeManagedCanister' : ChangeManagedCanisterOperationInput } |
   { 'AddRequestPolicy' : AddRequestPolicyOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
@@ -642,6 +666,7 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'Transfer' : null } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
+  { 'ChangeManagedCanister' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
@@ -685,6 +710,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'Transfer' : ResourceIds } |
   { 'EditAccount' : ResourceIds } |
   { 'AddAddressBookEntry' : null } |
+  { 'ChangeManagedCanister' : ChangeManagedCanisterResourceTarget } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : ResourceIds } |
   { 'AddAccount' : null };
@@ -704,7 +730,8 @@ export type RequestStatusCode = { 'Failed' : null } |
   { 'Processing' : null } |
   { 'Created' : null } |
   { 'Completed' : null };
-export type Resource = { 'Request' : RequestResourceAction } |
+export type Resource = { 'ManagedCanister' : ManagedCanisterResourceAction } |
+  { 'Request' : RequestResourceAction } |
   { 'System' : SystemResourceAction } |
   { 'User' : UserResourceAction } |
   { 'Account' : AccountResourceAction } |

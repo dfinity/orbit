@@ -1,5 +1,5 @@
 use crate::UuidDTO;
-use candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ResourceDTO {
@@ -7,6 +7,7 @@ pub enum ResourceDTO {
     Account(AccountResourceActionDTO),
     AddressBook(ResourceActionDTO),
     ChangeCanister(ChangeCanisterResourceActionDTO),
+    ManagedCanister(ManagedCanisterResourceActionDTO),
     Request(RequestResourceActionDTO),
     RequestPolicy(ResourceActionDTO),
     System(SystemResourceActionDTO),
@@ -68,6 +69,23 @@ pub enum SystemResourceActionDTO {
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum ChangeCanisterResourceActionDTO {
     Create,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum CreateManagedCanisterResourceTargetDTO {
+    Any,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ChangeManagedCanisterResourceTargetDTO {
+    Any,
+    Canister(Principal),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ManagedCanisterResourceActionDTO {
+    Create(CreateManagedCanisterResourceTargetDTO),
+    Change(ChangeManagedCanisterResourceTargetDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

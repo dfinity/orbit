@@ -120,6 +120,7 @@ export default {
     },
   },
   requests: {
+    unsupported_operation: 'Opération non supportée',
     requested_by: 'Demandé par {name}',
     requester_id: 'Identifiant du demand de {id}',
     title_info_message: 'Titre choisis par le demandeur,',
@@ -193,6 +194,8 @@ export default {
       address_book_entry: "Carnet d'Adresses",
       change_canister: 'Mise à Jour',
       transfer: 'Transferts',
+      managed_canister: 'Canister Géré',
+      system_info: 'Informations Système',
     },
     types: {
       addusergroup: {
@@ -768,6 +771,7 @@ export default {
       removeusergroup: "Éffacer un groupe d'usagers",
       addaccount: 'Ajouter un compte',
       managesysteminfo: 'Gérer les informations système',
+      changemanagedcanister: 'Modifier un canister géré',
     },
   },
 };

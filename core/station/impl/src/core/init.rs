@@ -3,9 +3,10 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction,
-        RequestResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
-        SystemResourceAction, UserResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceTarget,
+        CreateManagedCanisterResourceTarget, ManagedCanisterResourceAction,
+        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+        ResourceIds, SystemResourceAction, UserResourceAction,
     },
     ADMIN_GROUP_ID,
 };
@@ -144,6 +145,15 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
         ),
+        // change managed canister
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::ManagedCanister(ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any)),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::ManagedCanister(ManagedCanisterResourceAction::Change(ChangeManagedCanisterResourceTarget::Any)),
+        ),
     ];
 
     pub static ref DEFAULT_REQUEST_POLICIES: Vec<(RequestSpecifier, RequestPolicyRule)> = vec![
@@ -229,6 +239,11 @@ lazy_static! {
         // change canister
         (
             RequestSpecifier::ChangeCanister,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+        ),
+        // change managed canister
+        (
+            RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         // system info
