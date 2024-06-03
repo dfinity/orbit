@@ -145,7 +145,7 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
         ),
-        // change managed canister
+        // create and change managed canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ManagedCanister(ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any)),
@@ -241,7 +241,11 @@ lazy_static! {
             RequestSpecifier::ChangeCanister,
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
-        // change managed canister
+        // create and change managed canister
+        (
+            RequestSpecifier::CreateManagedCanister(CreateManagedCanisterResourceTarget::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+        ),
         (
             RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)

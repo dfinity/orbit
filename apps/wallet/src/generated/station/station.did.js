@@ -168,6 +168,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : ResourceIds,
     'RemoveRequestPolicy' : ResourceIds,
     'RemoveAddressBookEntry' : ResourceIds,
+    'CreateManagedCanister' : CreateManagedCanisterResourceTarget,
     'EditAddressBookEntry' : ResourceIds,
     'ChangeCanister' : IDL.Null,
     'EditUser' : ResourceIds,
@@ -189,6 +190,7 @@ export const idlFactory = ({ IDL }) => {
   const RemoveAddressBookEntryOperationInput = IDL.Record({
     'address_book_entry_id' : UUID,
   });
+  const CreateManagedCanisterOperationInput = IDL.Record({});
   const ChangeAddressBookMetadata = IDL.Variant({
     'OverrideSpecifiedBy' : IDL.Vec(AddressBookMetadata),
     'RemoveKeys' : IDL.Vec(IDL.Text),
@@ -290,6 +292,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : EditRequestPolicyOperationInput,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput,
+    'CreateManagedCanister' : CreateManagedCanisterOperationInput,
     'EditAddressBookEntry' : EditAddressBookEntryOperationInput,
     'ChangeCanister' : ChangeCanisterOperationInput,
     'EditUser' : EditUserOperationInput,
@@ -353,6 +356,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const RemoveAddressBookEntryOperation = IDL.Record({
     'input' : RemoveAddressBookEntryOperationInput,
+  });
+  const CreateManagedCanisterOperation = IDL.Record({
+    'canister_id' : IDL.Opt(IDL.Principal),
   });
   const EditAddressBookEntryOperation = IDL.Record({
     'input' : EditAddressBookEntryOperationInput,
@@ -433,6 +439,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : EditRequestPolicyOperation,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperation,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
+    'CreateManagedCanister' : CreateManagedCanisterOperation,
     'EditAddressBookEntry' : EditAddressBookEntryOperation,
     'ChangeCanister' : ChangeCanisterOperation,
     'EditUser' : EditUserOperation,
@@ -572,6 +579,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
+    'CreateManagedCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
@@ -777,6 +785,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
+    'CreateManagedCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,

@@ -29,6 +29,7 @@ pub enum RequestOperation {
     RemoveUserGroup(RemoveUserGroupOperation),
     ChangeCanister(ChangeCanisterOperation),
     ChangeManagedCanister(ChangeManagedCanisterOperation),
+    CreateManagedCanister(CreateManagedCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
@@ -52,6 +53,7 @@ impl Display for RequestOperation {
             RequestOperation::RemoveUserGroup(_) => write!(f, "remove_user_group"),
             RequestOperation::ChangeCanister(_) => write!(f, "change_canister"),
             RequestOperation::ChangeManagedCanister(_) => write!(f, "change_managed_canister"),
+            RequestOperation::CreateManagedCanister(_) => write!(f, "create_managed_canister"),
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
@@ -300,6 +302,16 @@ pub struct ChangeManagedCanisterOperation {
     pub module_checksum: Vec<u8>,
     pub arg_checksum: Option<Vec<u8>>,
     pub input: ChangeManagedCanisterOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CreateManagedCanisterOperationInput {}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CreateManagedCanisterOperation {
+    pub canister_id: Option<Principal>,
 }
 
 #[storable]

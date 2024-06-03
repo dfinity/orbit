@@ -11,10 +11,11 @@ use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{
     AddRequestPolicyOperationInput, CanisterInstallMode, ChangeManagedCanisterOperationInput,
-    ChangeManagedCanisterResourceTargetDTO, EditPermissionOperationInput, ListRequestsInput,
+    ChangeManagedCanisterResourceTargetDTO, CreateManagedCanisterOperationInput,
+    CreateManagedCanisterResourceTargetDTO, EditPermissionOperationInput, ListRequestsInput,
     ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO, RequestApprovalStatusDTO,
-    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, RequestStatusDTO,
-    UserSpecifierDTO,
+    RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
+    RequestStatusDTO, UserSpecifierDTO,
 };
 
 #[test]
@@ -67,7 +68,7 @@ fn successful_four_eyes_upgrade() {
         change_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister"
+        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister(Change"
     ));
 
     // allow anyone to create change canister requests
@@ -350,4 +351,182 @@ fn upgrade_reinstall_list_test() {
     )
     .unwrap();
     assert_eq!(res.0.unwrap().total, 2);
+}
+
+#[test]
+fn create_managed_canister() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    // create new user identities and add them to the station
+    let user_a = user_test_id(0);
+    add_user(&env, user_a, vec![], canister_ids.station);
+    let user_b = user_test_id(1);
+    add_user(&env, user_b, vec![], canister_ids.station);
+
+    // submitting request to create a managed canister fails due to insufficient permissions to create such requests
+    let create_canister_operation =
+        RequestOperationInput::CreateManagedCanister(CreateManagedCanisterOperationInput {});
+    let trap_message = submit_request_with_expected_trap(
+        &env,
+        user_a,
+        canister_ids.station,
+        create_canister_operation.clone(),
+    );
+    assert!(trap_message.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister(Create"
+    ));
+
+    // allow anyone to create requests to create a managed canister
+    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+        resource: station_api::ResourceDTO::ManagedCanister(
+            station_api::ManagedCanisterResourceActionDTO::Create(
+                CreateManagedCanisterResourceTargetDTO::Any,
+            ),
+        ),
+        auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
+        user_groups: None,
+        users: None,
+    });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        add_permission,
+    )
+    .unwrap();
+
+    // now the request to create a managed canister can be successfully submitted
+    let create_canister_operation_request = submit_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        create_canister_operation.clone(),
+    );
+
+    // let the admin user reject the request => the request becomes rejected
+    submit_request_approval(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        create_canister_operation_request.clone(),
+        RequestApprovalStatusDTO::Rejected,
+    );
+    let rejected_request = get_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        create_canister_operation_request,
+    );
+    match rejected_request.status {
+        RequestStatusDTO::Rejected { .. } => (),
+        _ => panic!("Request should have been rejected."),
+    };
+    match rejected_request.operation {
+        RequestOperationDTO::CreateManagedCanister(operation) => {
+            assert!(operation.canister_id.is_none())
+        }
+        _ => panic!(
+            "Unexpected request operation type: {:?}",
+            rejected_request.operation
+        ),
+    };
+
+    // set four eyes principle for creating managed canisters
+    let add_request_policy =
+        RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
+            specifier: RequestSpecifierDTO::CreateManagedCanister(
+                CreateManagedCanisterResourceTargetDTO::Any,
+            ),
+            rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
+                approvers: UserSpecifierDTO::Any,
+                min_approved: 2,
+            }),
+        });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        add_request_policy,
+    )
+    .unwrap();
+
+    // submit the request to create a managed canister again
+    let create_canister_operation_request = submit_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        create_canister_operation,
+    );
+
+    // let the admin user reject the request => the request stays open as the second user can also approve it
+    submit_request_approval(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        create_canister_operation_request.clone(),
+        RequestApprovalStatusDTO::Rejected,
+    );
+    let created_request = get_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        create_canister_operation_request.clone(),
+    );
+    match created_request.status {
+        RequestStatusDTO::Created => (),
+        _ => panic!("Request should be created."),
+    };
+    match created_request.operation {
+        RequestOperationDTO::CreateManagedCanister(operation) => {
+            assert!(operation.canister_id.is_none())
+        }
+        _ => panic!(
+            "Unexpected request operation type: {:?}",
+            created_request.operation
+        ),
+    };
+
+    // the second user approves and then the request will eventually become completed
+    submit_request_approval(
+        &env,
+        user_b,
+        canister_ids.station,
+        create_canister_operation_request.clone(),
+        RequestApprovalStatusDTO::Approved,
+    );
+    wait_for_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        create_canister_operation_request.clone(),
+    )
+    .unwrap();
+
+    let executed_request = get_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        create_canister_operation_request.clone(),
+    );
+    match executed_request.status {
+        RequestStatusDTO::Completed { .. } => (),
+        _ => panic!("Request should be completed."),
+    };
+    let canister_id = match executed_request.operation {
+        RequestOperationDTO::CreateManagedCanister(operation) => operation.canister_id.unwrap(),
+        _ => panic!(
+            "Unexpected request operation type: {:?}",
+            executed_request.operation
+        ),
+    };
+
+    // top up canister
+    assert_eq!(env.cycle_balance(canister_id), 0);
+    env.add_cycles(canister_id, 100_000_000_000_000);
+
+    // check canister status and ensure that the canister is empty
+    let status = canister_status(&env, Some(canister_ids.station), canister_id);
+    assert_eq!(status.module_hash, None);
 }

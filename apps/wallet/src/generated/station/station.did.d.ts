@@ -167,6 +167,10 @@ export interface ChangeManagedCanisterOperationInput {
 }
 export type ChangeManagedCanisterResourceTarget = { 'Any' : null } |
   { 'Canister' : Principal };
+export interface CreateManagedCanisterOperation {
+  'canister_id' : [] | [Principal],
+}
+export type CreateManagedCanisterOperationInput = {};
 export type CreateManagedCanisterResourceTarget = { 'Any' : null };
 export interface CreateRequestInput {
   'title' : [] | [string],
@@ -439,6 +443,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
   { 'RemoveAddressBookEntry' : null } |
+  { 'CreateManagedCanister' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
@@ -621,6 +626,7 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'EditRequestPolicy' : EditRequestPolicyOperation } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperation } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
+  { 'CreateManagedCanister' : CreateManagedCanisterOperation } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
   { 'ChangeCanister' : ChangeCanisterOperation } |
   { 'EditUser' : EditUserOperation } |
@@ -641,6 +647,7 @@ export type RequestOperationInput = {
   { 'EditRequestPolicy' : EditRequestPolicyOperationInput } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
+  { 'CreateManagedCanister' : CreateManagedCanisterOperationInput } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
   { 'ChangeCanister' : ChangeCanisterOperationInput } |
   { 'EditUser' : EditUserOperationInput } |
@@ -659,6 +666,7 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
   { 'RemoveAddressBookEntry' : null } |
+  { 'CreateManagedCanister' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
@@ -703,6 +711,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'EditRequestPolicy' : ResourceIds } |
   { 'RemoveRequestPolicy' : ResourceIds } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
+  { 'CreateManagedCanister' : CreateManagedCanisterResourceTarget } |
   { 'EditAddressBookEntry' : ResourceIds } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |

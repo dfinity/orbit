@@ -3,9 +3,9 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, ChangeCanisterResourceAction,
-            ChangeManagedCanisterResourceTarget, ManagedCanisterResourceAction,
-            PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-            UserResourceAction,
+            ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
+            ManagedCanisterResourceAction, PermissionResourceAction, Resource, ResourceAction,
+            ResourceId, SystemResourceAction, UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
@@ -13,13 +13,13 @@ use crate::{
         CanisterInstallMode, CanisterInstallModeArgs, CanisterReinstallModeArgs,
         CanisterUpgradeModeArgs, ChangeCanisterOperation, ChangeCanisterOperationInput,
         ChangeCanisterTarget, ChangeManagedCanisterOperation, ChangeManagedCanisterOperationInput,
-        EditAccountOperation, EditAccountOperationInput, EditAddressBookEntryOperation,
-        EditPermissionOperation, EditPermissionOperationInput, EditRequestPolicyOperation,
-        EditRequestPolicyOperationInput, EditUserGroupOperation, EditUserOperation,
-        EditUserOperationInput, ManageSystemInfoOperation, ManageSystemInfoOperationInput,
-        RemoveAddressBookEntryOperation, RemoveRequestPolicyOperation,
-        RemoveRequestPolicyOperationInput, RemoveUserGroupOperation, RequestOperation,
-        TransferOperation, User,
+        CreateManagedCanisterOperation, CreateManagedCanisterOperationInput, EditAccountOperation,
+        EditAccountOperationInput, EditAddressBookEntryOperation, EditPermissionOperation,
+        EditPermissionOperationInput, EditRequestPolicyOperation, EditRequestPolicyOperationInput,
+        EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
+        ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
+        RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
+        RequestOperation, TransferOperation, User,
     },
     repositories::{
         AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
@@ -29,8 +29,9 @@ use orbit_essentials::repository::Repository;
 use station_api::{
     AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
     ChangeCanisterOperationDTO, ChangeCanisterTargetDTO, ChangeManagedCanisterOperationDTO,
-    EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditUserOperationDTO, NetworkDTO,
-    RemoveAddressBookEntryOperationDTO, RequestOperationDTO, TransferOperationDTO,
+    CreateManagedCanisterOperationDTO, EditAccountOperationDTO, EditAddressBookEntryOperationDTO,
+    EditUserOperationDTO, NetworkDTO, RemoveAddressBookEntryOperationDTO, RequestOperationDTO,
+    TransferOperationDTO,
 };
 use uuid::Uuid;
 
@@ -425,6 +426,42 @@ impl From<ChangeManagedCanisterOperation> for ChangeManagedCanisterOperationDTO 
     }
 }
 
+impl From<CreateManagedCanisterOperationInput>
+    for station_api::CreateManagedCanisterOperationInput
+{
+    fn from(
+        _input: CreateManagedCanisterOperationInput,
+    ) -> station_api::CreateManagedCanisterOperationInput {
+        station_api::CreateManagedCanisterOperationInput {}
+    }
+}
+
+impl From<station_api::CreateManagedCanisterOperationInput>
+    for CreateManagedCanisterOperationInput
+{
+    fn from(
+        _input: station_api::CreateManagedCanisterOperationInput,
+    ) -> CreateManagedCanisterOperationInput {
+        CreateManagedCanisterOperationInput {}
+    }
+}
+
+impl From<CreateManagedCanisterOperation> for CreateManagedCanisterOperationDTO {
+    fn from(operation: CreateManagedCanisterOperation) -> CreateManagedCanisterOperationDTO {
+        CreateManagedCanisterOperationDTO {
+            canister_id: operation.canister_id,
+        }
+    }
+}
+
+impl From<CreateManagedCanisterOperationDTO> for CreateManagedCanisterOperation {
+    fn from(operation: CreateManagedCanisterOperationDTO) -> CreateManagedCanisterOperation {
+        CreateManagedCanisterOperation {
+            canister_id: operation.canister_id,
+        }
+    }
+}
+
 impl From<EditPermissionOperationInput> for station_api::EditPermissionOperationInput {
     fn from(input: EditPermissionOperationInput) -> station_api::EditPermissionOperationInput {
         station_api::EditPermissionOperationInput {
@@ -665,6 +702,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::ChangeManagedCanister(operation) => {
                 RequestOperationDTO::ChangeManagedCanister(Box::new(operation.into()))
             }
+            RequestOperation::CreateManagedCanister(operation) => {
+                RequestOperationDTO::CreateManagedCanister(Box::new(operation.into()))
+            }
             RequestOperation::EditPermission(operation) => {
                 RequestOperationDTO::EditPermission(Box::new(operation.into()))
             }
@@ -777,6 +817,11 @@ impl RequestOperation {
                         ChangeManagedCanisterResourceTarget::Canister(input.canister_id),
                     )),
                 ]
+            }
+            RequestOperation::CreateManagedCanister(CreateManagedCanisterOperation { .. }) => {
+                vec![Resource::ManagedCanister(
+                    ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any),
+                )]
             }
             RequestOperation::EditRequestPolicy(EditRequestPolicyOperation { input }) => {
                 vec![
