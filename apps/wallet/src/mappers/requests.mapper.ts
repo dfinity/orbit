@@ -66,7 +66,10 @@ export const mapRequestsOperationTypeToGroup = (
     return ListRequestsOperationTypeGroup.SystemInfo;
   }
 
-  if (variantIs(operationType, 'ChangeManagedCanister')) {
+  if (
+    variantIs(operationType, 'ChangeManagedCanister') ||
+    variantIs(operationType, 'CreateManagedCanister')
+  ) {
     return ListRequestsOperationTypeGroup.ManagedCanister;
   }
 
@@ -217,6 +220,9 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'ChangeManagedCanister')) {
     return RequestOperationEnum.ChangeManagedCanister;
   }
+  if (variantIs(operation, 'CreateManagedCanister')) {
+    return RequestOperationEnum.CreateManagedCanister;
+  }
 
   return unreachable(operation);
 };
@@ -276,6 +282,8 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { ManageSystemInfo: null };
   } else if (variantIs(requestOperation, 'ChangeManagedCanister')) {
     return { ChangeManagedCanister: [] };
+  } else if (variantIs(requestOperation, 'CreateManagedCanister')) {
+    return { CreateManagedCanister: null };
   } else {
     return unreachable(requestOperation);
   }
