@@ -1,6 +1,7 @@
 <template>
   <VAutocomplete
     v-model="selectedAccountId"
+    v-bind="$attrs"
     class="mt-2 px-2"
     name="account_id"
     :label="$t('terms.account')"
@@ -30,22 +31,22 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref, toRefs, watch } from 'vue';
+import { computed, onMounted, Ref, ref, toRefs, watch } from 'vue';
+import { VAutocomplete } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import { useAccountsAutocomplete } from '~/composables/autocomplete.composable';
+import { useResourcesFromAggregatedView } from '~/composables/permissions.composable';
 import { getAccountPermissions } from '~/configs/permissions.config';
 import type {
+  BasicUser,
   Permission,
   PermissionCallerPrivileges,
-  BasicUser,
   Resource,
-  UUID,
   UserGroup,
+  UUID,
 } from '~/generated/station/station.did';
 import { AggregatedResoucePermissions } from '~/types/permissions.types';
 import PermissionList from './PermissionList.vue';
-import { useResourcesFromAggregatedView } from '~/composables/permissions.composable';
-import { VAutocomplete } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{
@@ -66,7 +67,7 @@ const { fetchPolicies } = toRefs(props);
 
 const autocomplete = useAccountsAutocomplete();
 const selectedAccountId = ref<UUID | null>(null);
-const resources = ref<AggregatedResoucePermissions[]>([]);
+const resources: Ref<AggregatedResoucePermissions[]> = ref([]);
 const disableRefresh = ref(false);
 
 onMounted(() => {

@@ -16,11 +16,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeMount, ref } from 'vue';
+import { computed, onBeforeMount, Ref, ref } from 'vue';
 import { VProgressCircular } from 'vuetify/components';
 import PermissionForm from '~/components/permissions/PermissionForm.vue';
 import logger from '~/core/logger.core';
-import { Permission, EditPermissionOperation, Request } from '~/generated/station/station.did';
+import { EditPermissionOperation, Permission, Request } from '~/generated/station/station.did';
 import { fromResourceToResourceEnum } from '~/mappers/permissions.mapper';
 import { useStationStore } from '~/stores/station.store';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
@@ -38,7 +38,7 @@ const props = withDefaults(
 
 const isListMode = computed(() => props.mode === 'list');
 const station = useStationStore();
-const permission = ref<Partial<Permission>>({});
+const permission: Ref<Partial<Permission>> = ref({});
 const loading = ref(false);
 
 const fetchDetails = async () => {

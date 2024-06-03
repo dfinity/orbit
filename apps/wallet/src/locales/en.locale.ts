@@ -110,6 +110,7 @@ export default {
     },
   },
   requests: {
+    unsupported_operation: 'Unsupported operation',
     requested_by: 'Requested by {name}',
     requester_id: 'Requester ID: {id}',
     title_info_message: 'The title set by the requester.',
@@ -759,6 +760,7 @@ export default {
       removeusergroup: 'Remove user group',
       addaccount: 'Add account',
       managesysteminfo: 'Manage system info',
+      changemanagedcanister: 'Change managed canister',
     },
   },
 };
