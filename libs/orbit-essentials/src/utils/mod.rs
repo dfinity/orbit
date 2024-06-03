@@ -18,3 +18,7 @@ pub use string::*;
 /// Number utils.
 mod number;
 pub use number::*;
+
+/// Hash utils.
+mod hash;
+pub use hash::*;

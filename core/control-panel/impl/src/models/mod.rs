@@ -8,4 +8,6 @@ pub use user::*;
 
 mod registry;
 
+mod artifact;
+
 pub mod indexes;
