@@ -14,14 +14,14 @@
   <DataLoader
     v-if="selectedUserGroupId"
     v-slot="{ data, loading }"
-    :load="() => fetchPolicies(useResourcesFromAggregatedView(resources))"
+    :load="() => fetchPermissions(useResourcesFromAggregatedView(resources))"
     :refresh-interval-ms="5000"
     :disable-refresh="disableRefresh"
   >
     <PermissionList
       :loading="loading"
       :resources="resources"
-      :permissions="data ? data.policies : []"
+      :permissions="data ? data.permissions : []"
       :privileges="data ? data.privileges : []"
       :preload-user-groups="data ? data.userGroups : []"
       :preload-users="data ? data.users : []"
@@ -59,20 +59,20 @@ onMounted(() => {
 
 const props = withDefaults(
   defineProps<{
-    fetchPolicies?: (resources: Resource[]) => Promise<{
-      policies: Permission[];
+    fetchPermissions?: (resources: Resource[]) => Promise<{
+      permissions: Permission[];
       userGroups: UserGroup[];
       users: BasicUser[];
       privileges: PermissionCallerPrivileges[];
     }>;
   }>(),
   {
-    fetchPolicies: () =>
-      Promise.resolve({ policies: [], userGroups: [], users: [], privileges: [] }),
+    fetchPermissions: () =>
+      Promise.resolve({ permissions: [], userGroups: [], users: [], privileges: [] }),
   },
 );
 
-const { fetchPolicies } = toRefs(props);
+const { fetchPermissions } = toRefs(props);
 
 const groupList = computed(() => {
   const groups = autocomplete.results.value.map(group => ({
