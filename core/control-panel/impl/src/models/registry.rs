@@ -34,7 +34,7 @@ pub struct RegistryEntry {
     pub name: String,
     /// The tags are used to tag the entry with specific search terms (e.g. "latest", "stable").
     ///
-    /// Tags are grouped with the format `namespace/name` (e.g. "@orbit/station").
+    /// Tags are grouped within the same `namespace/name` (e.g. "@orbit/station").
     pub tags: Vec<String>,
     /// The category is used to associate the entry with a specific category (e.g. "chain-fusion")
     /// across all the entries in the registry.
