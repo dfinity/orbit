@@ -125,9 +125,29 @@ export interface BasicUser {
   'status' : UserStatus,
   'name' : string,
 }
+export interface CanisterIdRecord { 'canister_id' : Principal }
 export type CanisterInstallMode = { 'reinstall' : null } |
   { 'upgrade' : null } |
   { 'install' : null };
+export interface CanisterStatusResponse {
+  'status' : { 'stopped' : null } |
+    { 'stopping' : null } |
+    { 'running' : null },
+  'memory_size' : bigint,
+  'cycles' : bigint,
+  'settings' : DefiniteCanisterSettings,
+  'query_stats' : {
+    'response_payload_bytes_total' : bigint,
+    'num_instructions_total' : bigint,
+    'num_calls_total' : bigint,
+    'request_payload_bytes_total' : bigint,
+  },
+  'idle_cycles_burned_per_day' : bigint,
+  'module_hash' : [] | [Uint8Array | number[]],
+  'reserved_cycles' : bigint,
+}
+export type CanisterStatusResult = { 'Ok' : CanisterStatusResponse } |
+  { 'Err' : Error };
 export interface Capabilities {
   'name' : string,
   'version' : string,
@@ -186,6 +206,13 @@ export type CreateRequestResult = {
     }
   } |
   { 'Err' : Error };
+export interface DefiniteCanisterSettings {
+  'freezing_threshold' : bigint,
+  'controllers' : Array<Principal>,
+  'reserved_cycles_limit' : bigint,
+  'memory_allocation' : bigint,
+  'compute_allocation' : bigint,
+}
 export interface DisplayUser { 'id' : UUID, 'name' : string }
 export interface EditAccountOperation { 'input' : EditAccountOperationInput }
 export interface EditAccountOperationInput {
@@ -500,8 +527,9 @@ export interface ManageSystemInfoOperation {
 }
 export interface ManageSystemInfoOperationInput { 'name' : [] | [string] }
 export type ManagedCanisterResourceAction = {
-    'Create' : CreateManagedCanisterResourceTarget
+    'Read' : ReadManagedCanisterResourceTarget
   } |
+  { 'Create' : CreateManagedCanisterResourceTarget } |
   { 'Change' : ChangeManagedCanisterResourceTarget };
 export type MarkNotificationReadResult = { 'Ok' : null } |
   { 'Err' : Error };
@@ -567,6 +595,8 @@ export interface QuorumPercentage {
   'min_approved' : number,
   'approvers' : UserSpecifier,
 }
+export type ReadManagedCanisterResourceTarget = { 'Any' : null } |
+  { 'Canister' : Principal };
 export interface RemoveAddressBookEntryOperation {
   'input' : RemoveAddressBookEntryOperationInput,
 }
@@ -888,6 +918,7 @@ export type UserSpecifier = { 'Id' : Array<UUID> } |
 export type UserStatus = { 'Inactive' : null } |
   { 'Active' : null };
 export interface _SERVICE {
+  'canister_status' : ActorMethod<[CanisterIdRecord], CanisterStatusResult>,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
   'create_request' : ActorMethod<[CreateRequestInput], CreateRequestResult>,
   'fetch_account_balances' : ActorMethod<

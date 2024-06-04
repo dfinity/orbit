@@ -1629,10 +1629,17 @@ type ChangeManagedCanisterResourceTarget = variant {
   Canister : principal;
 };
 
+// The target canister of a request to read (e.g., fetch status of) a managed canister.
+type ReadManagedCanisterResourceTarget = variant {
+  Any;
+  Canister : principal;
+};
+
 // The actions that are available for managed canisters.
 type ManagedCanisterResourceAction = variant {
   Create : CreateManagedCanisterResourceTarget;
   Change : ChangeManagedCanisterResourceTarget;
+  Read : ReadManagedCanisterResourceTarget;
 };
 
 // The actions that are available for requests.
@@ -1903,6 +1910,39 @@ type HealthStatus = variant {
   Uninitialized;
 };
 
+type CanisterIdRecord = record {
+  canister_id : principal;
+};
+
+type DefiniteCanisterSettings = record {
+    controllers : vec principal;
+    compute_allocation : nat;
+    memory_allocation : nat;
+    freezing_threshold : nat;
+    reserved_cycles_limit : nat;
+};
+
+type CanisterStatusResponse = record {
+    status : variant { running; stopping; stopped };
+    settings : DefiniteCanisterSettings;
+    module_hash : opt blob;
+    memory_size : nat;
+    cycles : nat;
+    reserved_cycles : nat;
+    idle_cycles_burned_per_day : nat;
+    query_stats: record {
+        num_calls_total: nat;
+        num_instructions_total: nat;
+        request_payload_bytes_total: nat;
+        response_payload_bytes_total: nat;
+    };
+};
+
+type CanisterStatusResult = variant {
+  Ok : CanisterStatusResponse;
+  Err : Error;
+};
+
 type HeaderField = record { text; text };
 
 type HttpRequest = record {
@@ -1989,6 +2029,8 @@ service : (opt SystemInstall) -> {
   get_user_group : (input : GetUserGroupInput) -> (GetUserGroupResult) query;
   // List all user groups of the station.
   list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
+  // Get canister status of a canister controlled by the station.
+  canister_status : (input : CanisterIdRecord) -> (CanisterStatusResult);
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
 };
