@@ -490,6 +490,12 @@ mod tests {
         "@{}/test",
         "a".repeat(RegistryEntry::MAX_NAMESPACE_LENGTH + 1)
     ))]
+    #[case::name_contains_invalid_characters(&"test!")]
+    #[case::name_contains_invalid_characters(&"test.1")]
+    #[case::name_contains_invalid_characters(&"test_1")]
+    #[case::name_contains_invalid_characters(&"test@1")]
+    #[case::name_contains_invalid_characters(&"test#1")]
+    #[case::name_contains_invalid_characters(&"test 1")]
     fn invalid_name(#[case] name: &str) {
         let mut entry = create_registry_entry();
         entry.name = name.to_string();
