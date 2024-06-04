@@ -56,6 +56,9 @@ pub use pagination::*;
 mod system;
 pub use system::*;
 
+mod status;
+pub use status::*;
+
 mod change_canister;
 pub use change_canister::*;
 

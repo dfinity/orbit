@@ -1,8 +1,8 @@
 use crate::models::resource::{
     AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceTarget,
     CreateManagedCanisterResourceTarget, ManagedCanisterResourceAction, PermissionResourceAction,
-    RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-    UserResourceAction,
+    ReadManagedCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction, ResourceId,
+    SystemResourceAction, UserResourceAction,
 };
 use uuid::Uuid;
 
@@ -272,6 +272,32 @@ impl From<ChangeManagedCanisterResourceTarget>
     }
 }
 
+impl From<station_api::ReadManagedCanisterResourceTargetDTO> for ReadManagedCanisterResourceTarget {
+    fn from(action: station_api::ReadManagedCanisterResourceTargetDTO) -> Self {
+        match action {
+            station_api::ReadManagedCanisterResourceTargetDTO::Any => {
+                ReadManagedCanisterResourceTarget::Any
+            }
+            station_api::ReadManagedCanisterResourceTargetDTO::Canister(canister_id) => {
+                ReadManagedCanisterResourceTarget::Canister(canister_id)
+            }
+        }
+    }
+}
+
+impl From<ReadManagedCanisterResourceTarget> for station_api::ReadManagedCanisterResourceTargetDTO {
+    fn from(action: ReadManagedCanisterResourceTarget) -> Self {
+        match action {
+            ReadManagedCanisterResourceTarget::Any => {
+                station_api::ReadManagedCanisterResourceTargetDTO::Any
+            }
+            ReadManagedCanisterResourceTarget::Canister(canister_id) => {
+                station_api::ReadManagedCanisterResourceTargetDTO::Canister(canister_id)
+            }
+        }
+    }
+}
+
 impl From<station_api::ManagedCanisterResourceActionDTO> for ManagedCanisterResourceAction {
     fn from(action: station_api::ManagedCanisterResourceActionDTO) -> Self {
         match action {
@@ -280,6 +306,9 @@ impl From<station_api::ManagedCanisterResourceActionDTO> for ManagedCanisterReso
             }
             station_api::ManagedCanisterResourceActionDTO::Change(target) => {
                 ManagedCanisterResourceAction::Change(target.into())
+            }
+            station_api::ManagedCanisterResourceActionDTO::Read(target) => {
+                ManagedCanisterResourceAction::Read(target.into())
             }
         }
     }
@@ -293,6 +322,9 @@ impl From<ManagedCanisterResourceAction> for station_api::ManagedCanisterResourc
             }
             ManagedCanisterResourceAction::Change(target) => {
                 station_api::ManagedCanisterResourceActionDTO::Change(target.into())
+            }
+            ManagedCanisterResourceAction::Read(target) => {
+                station_api::ManagedCanisterResourceActionDTO::Read(target.into())
             }
         }
     }
