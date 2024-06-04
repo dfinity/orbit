@@ -12,6 +12,8 @@ pub type LocalRef<T> = &'static LocalKey<RefCell<T>>;
 pub const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
 pub const USER_IDENTITY_INDEX_MEMORY_ID: MemoryId = MemoryId::new(2);
 pub const USER_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(3);
+pub const ARTIFACT_MEMORY_ID: MemoryId = MemoryId::new(4);
+pub const ARTIFACT_HASH_INDEX_MEMORY_ID: MemoryId = MemoryId::new(5);
 
 thread_local! {
   /// Static configuration of the canister.

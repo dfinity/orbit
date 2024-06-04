@@ -1,6 +1,14 @@
 //! Transport layer that defines the data transfer objects (DTOs) that are used to communicate
 //! with the clients of the control panel.
 
+/// Artifact DTOs.
+mod artifact;
+pub use artifact::*;
+
+/// Common DTOs.
+mod common;
+pub use common::*;
+
 /// User DTOs.
 mod user;
 pub use user::*;
