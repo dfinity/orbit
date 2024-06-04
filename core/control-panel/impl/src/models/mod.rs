@@ -6,8 +6,10 @@ pub use user_station::*;
 mod user;
 pub use user::*;
 
-mod registry;
+mod registry_entry;
+pub use registry_entry::*;
 
 mod artifact;
+pub use artifact::*;
 
 pub mod indexes;

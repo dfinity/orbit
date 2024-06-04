@@ -1,5 +1,6 @@
-use crate::core::ic_cdk::next_time;
+use crate::{core::ic_cdk::next_time, errors::ArtifactError};
 use orbit_essentials::{
+    model::{ModelValidator, ModelValidatorResult},
     storable,
     types::{Timestamp, UUID},
     utils::sha256_hash,
@@ -15,8 +16,6 @@ pub type ArtifactId = UUID;
 pub struct Artifact {
     /// The UUID identifies an artifact.
     id: ArtifactId,
-    /// The artifact byte size.
-    size: u64,
     /// The artifact sha256 hash.
     hash: Vec<u8>,
     /// The artifact itself.
@@ -49,13 +48,11 @@ impl Artifact {
     /// Creates a new artifact with the given options.
     pub fn new_with_opts(artifact: Vec<u8>, opts: ArtifactCreateOpts) -> Self {
         let hash = sha256_hash(&artifact);
-        let size = artifact.len() as u64;
 
         Self {
             id: opts.id,
             artifact,
             hash,
-            size,
             created_at: opts.created_at,
         }
     }
@@ -63,11 +60,6 @@ impl Artifact {
     /// Returns the artifact id.
     pub fn id(&self) -> &ArtifactId {
         &self.id
-    }
-
-    /// Returns the artifact size.
-    pub fn size(&self) -> u64 {
-        self.size
     }
 
     /// Returns the artifact hash.
@@ -86,6 +78,24 @@ impl Artifact {
     }
 }
 
+fn validate_artifact(artifact: &[u8]) -> ModelValidatorResult<ArtifactError> {
+    if artifact.is_empty() {
+        return Err(ArtifactError::ValidationError {
+            info: "Artifact cannot be empty".to_string(),
+        });
+    }
+
+    Ok(())
+}
+
+impl ModelValidator<ArtifactError> for Artifact {
+    fn validate(&self) -> ModelValidatorResult<ArtifactError> {
+        validate_artifact(&self.artifact)?;
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -94,7 +104,6 @@ mod tests {
     fn test_artifact_creation() {
         let artifact = Artifact::new(b"hello world".to_vec());
 
-        assert_eq!(artifact.size(), 11);
         assert_eq!(
             artifact.hash(),
             vec![
@@ -103,5 +112,21 @@ mod tests {
             ]
         );
         assert_eq!(artifact.artifact(), b"hello world");
+    }
+
+    #[test]
+    fn empty_artifact_is_invalid() {
+        let artifact = Artifact::new(b"".to_vec());
+
+        assert_eq!(
+            artifact.hash(),
+            vec![
+                227, 176, 196, 66, 152, 252, 28, 20, 154, 251, 244, 200, 153, 111, 185, 36, 39,
+                174, 65, 228, 100, 155, 147, 76, 164, 149, 153, 27, 120, 82, 184, 85
+            ]
+        );
+        assert_eq!(artifact.artifact(), b"");
+
+        assert!(artifact.validate().is_err());
     }
 }
