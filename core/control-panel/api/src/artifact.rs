@@ -3,7 +3,7 @@ use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct GetArtifactInput {
-    pub artifact_id: String,
+    pub artifact_id: UuidDTO,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

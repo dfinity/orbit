@@ -1,7 +1,10 @@
-use super::indexes::artifact_hash_index::ArtifactHashIndexRepository;
+use super::indexes::artifact_index::ArtifactIndexRepository;
 use crate::{
     core::{with_memory_manager, Memory, ARTIFACT_MEMORY_ID},
-    models::{indexes::artifact_hash_index::ArtifactHashIndexCriteria, Artifact, ArtifactId},
+    models::{
+        indexes::artifact_index::{ArtifactIndexCriteria, ArtifactIndexKind},
+        Artifact, ArtifactId,
+    },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
@@ -25,7 +28,7 @@ lazy_static! {
 /// A repository that enables managing artifacts in stable memory.
 #[derive(Default, Debug)]
 pub struct ArtifactRepository {
-    hash_index: ArtifactHashIndexRepository,
+    indexes: ArtifactIndexRepository,
 }
 
 impl Repository<ArtifactId, Artifact> for ArtifactRepository {
@@ -41,12 +44,12 @@ impl Repository<ArtifactId, Artifact> for ArtifactRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
-            self.hash_index
+            self.indexes
                 .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| vec![prev.to_index_by_hash()]),
-                    current: vec![value.to_index_by_hash()],
+                    previous: prev.clone().map_or(Vec::new(), |prev: Artifact| {
+                        vec![prev.to_index_by_hash(), prev.to_index_by_size()]
+                    }),
+                    current: vec![value.to_index_by_hash(), value.to_index_by_size()],
                 });
 
             prev
@@ -57,11 +60,11 @@ impl Repository<ArtifactId, Artifact> for ArtifactRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
 
-            self.hash_index
+            self.indexes
                 .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| vec![prev.to_index_by_hash()]),
+                    current: prev.clone().map_or(Vec::new(), |prev| {
+                        vec![prev.to_index_by_hash(), prev.to_index_by_size()]
+                    }),
                 });
 
             prev
@@ -76,16 +79,29 @@ impl Repository<ArtifactId, Artifact> for ArtifactRepository {
 impl ArtifactRepository {
     /// Finds an artifact by the given hash.
     pub fn find_by_hash(&self, hash: &[u8]) -> Option<ArtifactId> {
-        let artifacts = self.hash_index.find_by_criteria(ArtifactHashIndexCriteria {
-            hash: hash.to_vec(),
+        let artifacts = self.indexes.find_by_criteria(ArtifactIndexCriteria {
+            from: ArtifactIndexKind::Hash(hash.to_vec()),
+            to: ArtifactIndexKind::Hash(hash.to_vec()),
         });
 
         artifacts.into_iter().next()
+    }
+
+    /// Finds an artifact by the given size.
+    pub fn find_by_size_lte(&self, size: u64) -> Vec<ArtifactId> {
+        let artifacts = self.indexes.find_by_criteria(ArtifactIndexCriteria {
+            from: ArtifactIndexKind::Size(0),
+            to: ArtifactIndexKind::Size(size),
+        });
+
+        artifacts.into_iter().collect()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeSet;
+
     use super::*;
 
     #[test]
@@ -116,6 +132,47 @@ mod tests {
         assert_eq!(
             repository.find_by_hash(artifact.hash()),
             Some(*artifact.id())
+        );
+    }
+
+    #[test]
+    fn test_index_inser_same_uses_same_indexes() {
+        let repository = ArtifactRepository::default();
+        let artifact = Artifact::new(b"hello world".to_vec());
+        let artifact_id = *artifact.id();
+
+        repository.insert(artifact_id, artifact.clone());
+        assert!(!repository.indexes.is_empty());
+
+        let nr_of_indexes = repository.indexes.len();
+
+        repository.insert(artifact_id, artifact.clone());
+
+        assert_eq!(repository.len(), 1);
+        assert_eq!(repository.indexes.len(), nr_of_indexes);
+    }
+
+    #[test]
+    fn test_find_by_size_lte() {
+        let repository = ArtifactRepository::default();
+        let mut expected_artifacts = BTreeSet::new();
+
+        for i in 0..10 {
+            let artifact = Artifact::new(vec![0; i as usize]);
+
+            if i <= 5 {
+                expected_artifacts.insert(*artifact.id());
+            }
+
+            repository.insert(*artifact.id(), artifact.clone());
+        }
+
+        let artifacts = repository.find_by_size_lte(5);
+
+        assert_eq!(artifacts.len(), 6);
+        assert_eq!(
+            artifacts.into_iter().collect::<BTreeSet<_>>(),
+            expected_artifacts
         );
     }
 }

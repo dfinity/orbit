@@ -20,6 +20,12 @@ pub struct Artifact {
     hash: Vec<u8>,
     /// The artifact itself.
     artifact: Vec<u8>,
+    /// Stores the references to the artifact. This is used as a reference counter since there can
+    /// be multiple references to the same artifact if the hash is the same.
+    ///
+    /// The reference counter is incremented when a new reference is created and decremented when a
+    /// reference is removed. When the reference counter reaches zero, the artifact is removed.
+    rc: u32,
     /// The date when the artifact was created.
     created_at: Timestamp,
 }
@@ -51,6 +57,7 @@ impl Artifact {
 
         Self {
             id: opts.id,
+            rc: 1,
             artifact,
             hash,
             created_at: opts.created_at,
@@ -75,6 +82,21 @@ impl Artifact {
     /// Returns the creation timestamp.
     pub fn created_at(&self) -> Timestamp {
         self.created_at
+    }
+
+    /// Returns the reference counter.
+    pub fn rc(&self) -> u32 {
+        self.rc
+    }
+
+    /// Increments the reference counter.
+    pub fn increment_rc(&mut self) {
+        self.rc = self.rc.saturating_add(1);
+    }
+
+    /// Decrements the reference counter.
+    pub fn decrement_rc(&mut self) {
+        self.rc = self.rc.saturating_sub(1);
     }
 }
 
