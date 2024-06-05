@@ -55,7 +55,8 @@ impl ModelValidator<RecordValidationError> for Resource {
             },
             Resource::ManagedCanister(action) => match action {
                 ManagedCanisterResourceAction::Create(_)
-                | ManagedCanisterResourceAction::Change(_) => Ok(()),
+                | ManagedCanisterResourceAction::Change(_)
+                | ManagedCanisterResourceAction::Read(_) => Ok(()),
             },
             Resource::Request(action) => match action {
                 RequestResourceAction::List => Ok(()),
@@ -159,9 +160,17 @@ pub enum ChangeManagedCanisterResourceTarget {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ReadManagedCanisterResourceTarget {
+    Any,
+    Canister(Principal),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ManagedCanisterResourceAction {
     Create(CreateManagedCanisterResourceTarget),
     Change(ChangeManagedCanisterResourceTarget),
+    Read(ReadManagedCanisterResourceTarget),
 }
 
 #[storable]
@@ -325,6 +334,23 @@ impl Resource {
                         )),
                         Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
                             ChangeManagedCanisterResourceTarget::Canister(*id),
+                        )),
+                    ]
+                }
+                ManagedCanisterResourceAction::Read(ReadManagedCanisterResourceTarget::Any) => {
+                    vec![Resource::ManagedCanister(
+                        ManagedCanisterResourceAction::Read(ReadManagedCanisterResourceTarget::Any),
+                    )]
+                }
+                ManagedCanisterResourceAction::Read(
+                    ReadManagedCanisterResourceTarget::Canister(id),
+                ) => {
+                    vec![
+                        Resource::ManagedCanister(ManagedCanisterResourceAction::Read(
+                            ReadManagedCanisterResourceTarget::Any,
+                        )),
+                        Resource::ManagedCanister(ManagedCanisterResourceAction::Read(
+                            ReadManagedCanisterResourceTarget::Canister(*id),
                         )),
                     ]
                 }
@@ -529,6 +555,17 @@ impl Display for ChangeManagedCanisterResourceTarget {
     }
 }
 
+impl Display for ReadManagedCanisterResourceTarget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ReadManagedCanisterResourceTarget::Any => write!(f, "Any"),
+            ReadManagedCanisterResourceTarget::Canister(canister_id) => {
+                write!(f, "Canister({})", canister_id)
+            }
+        }
+    }
+}
+
 impl Display for ManagedCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -537,6 +574,9 @@ impl Display for ManagedCanisterResourceAction {
             }
             ManagedCanisterResourceAction::Change(target) => {
                 write!(f, "Change({})", target)
+            }
+            ManagedCanisterResourceAction::Read(target) => {
+                write!(f, "Read({})", target)
             }
         }
     }
@@ -593,8 +633,8 @@ mod test {
     use super::{
         AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceTarget,
         CreateManagedCanisterResourceTarget, ManagedCanisterResourceAction,
-        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-        SystemResourceAction, UserResourceAction,
+        PermissionResourceAction, ReadManagedCanisterResourceTarget, RequestResourceAction,
+        Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
     };
 
     #[test]
@@ -623,6 +663,12 @@ mod test {
             )),
             Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
                 ChangeManagedCanisterResourceTarget::Canister(Principal::management_canister()),
+            )),
+            Resource::ManagedCanister(ManagedCanisterResourceAction::Read(
+                ReadManagedCanisterResourceTarget::Any,
+            )),
+            Resource::ManagedCanister(ManagedCanisterResourceAction::Read(
+                ReadManagedCanisterResourceTarget::Canister(Principal::management_canister()),
             )),
             Resource::Request(RequestResourceAction::List),
             Resource::Request(RequestResourceAction::Read(ResourceId::Any)),

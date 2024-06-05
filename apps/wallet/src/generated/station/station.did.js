@@ -15,6 +15,42 @@ export const idlFactory = ({ IDL }) => {
     'Upgrade' : SystemUpgrade,
     'Init' : SystemInit,
   });
+  const CanisterStatusInput = IDL.Record({ 'canister_id' : IDL.Principal });
+  const DefiniteCanisterSettings = IDL.Record({
+    'freezing_threshold' : IDL.Nat,
+    'controllers' : IDL.Vec(IDL.Principal),
+    'reserved_cycles_limit' : IDL.Nat,
+    'memory_allocation' : IDL.Nat,
+    'compute_allocation' : IDL.Nat,
+  });
+  const CanisterStatusResponse = IDL.Record({
+    'status' : IDL.Variant({
+      'stopped' : IDL.Null,
+      'stopping' : IDL.Null,
+      'running' : IDL.Null,
+    }),
+    'memory_size' : IDL.Nat,
+    'cycles' : IDL.Nat,
+    'settings' : DefiniteCanisterSettings,
+    'query_stats' : IDL.Record({
+      'response_payload_bytes_total' : IDL.Nat,
+      'num_instructions_total' : IDL.Nat,
+      'num_calls_total' : IDL.Nat,
+      'request_payload_bytes_total' : IDL.Nat,
+    }),
+    'idle_cycles_burned_per_day' : IDL.Nat,
+    'module_hash' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'reserved_cycles' : IDL.Nat,
+  });
+  const Error = IDL.Record({
+    'code' : IDL.Text,
+    'message' : IDL.Opt(IDL.Text),
+    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
+  });
+  const CanisterStatusResult = IDL.Variant({
+    'Ok' : CanisterStatusResponse,
+    'Err' : Error,
+  });
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AssetSymbol = IDL.Text;
   const Asset = IDL.Record({
@@ -29,11 +65,6 @@ export const idlFactory = ({ IDL }) => {
     'version' : IDL.Text,
     'supported_assets' : IDL.Vec(Asset),
   });
-  const Error = IDL.Record({
-    'code' : IDL.Text,
-    'message' : IDL.Opt(IDL.Text),
-    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
-  });
   const CapabilitiesResult = IDL.Variant({
     'Ok' : IDL.Record({ 'capabilities' : Capabilities }),
     'Err' : Error,
@@ -44,12 +75,17 @@ export const idlFactory = ({ IDL }) => {
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
   const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
+  const ReadManagedCanisterResourceTarget = IDL.Variant({
+    'Any' : IDL.Null,
+    'Canister' : IDL.Principal,
+  });
   const CreateManagedCanisterResourceTarget = IDL.Variant({ 'Any' : IDL.Null });
   const ChangeManagedCanisterResourceTarget = IDL.Variant({
     'Any' : IDL.Null,
     'Canister' : IDL.Principal,
   });
   const ManagedCanisterResourceAction = IDL.Variant({
+    'Read' : ReadManagedCanisterResourceTarget,
     'Create' : CreateManagedCanisterResourceTarget,
     'Change' : ChangeManagedCanisterResourceTarget,
   });
@@ -983,6 +1019,11 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   return IDL.Service({
+    'canister_status' : IDL.Func(
+        [CanisterStatusInput],
+        [CanisterStatusResult],
+        [],
+      ),
     'capabilities' : IDL.Func([], [CapabilitiesResult], ['query']),
     'create_request' : IDL.Func(
         [CreateRequestInput],
