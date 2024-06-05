@@ -125,10 +125,10 @@ export interface BasicUser {
   'status' : UserStatus,
   'name' : string,
 }
-export interface CanisterIdRecord { 'canister_id' : Principal }
 export type CanisterInstallMode = { 'reinstall' : null } |
   { 'upgrade' : null } |
   { 'install' : null };
+export interface CanisterStatusInput { 'canister_id' : Principal }
 export interface CanisterStatusResponse {
   'status' : { 'stopped' : null } |
     { 'stopping' : null } |
@@ -918,7 +918,7 @@ export type UserSpecifier = { 'Id' : Array<UUID> } |
 export type UserStatus = { 'Inactive' : null } |
   { 'Active' : null };
 export interface _SERVICE {
-  'canister_status' : ActorMethod<[CanisterIdRecord], CanisterStatusResult>,
+  'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
   'create_request' : ActorMethod<[CreateRequestInput], CreateRequestResult>,
   'fetch_account_balances' : ActorMethod<

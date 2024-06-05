@@ -15,7 +15,7 @@ export const idlFactory = ({ IDL }) => {
     'Upgrade' : SystemUpgrade,
     'Init' : SystemInit,
   });
-  const CanisterIdRecord = IDL.Record({ 'canister_id' : IDL.Principal });
+  const CanisterStatusInput = IDL.Record({ 'canister_id' : IDL.Principal });
   const DefiniteCanisterSettings = IDL.Record({
     'freezing_threshold' : IDL.Nat,
     'controllers' : IDL.Vec(IDL.Principal),
@@ -1020,7 +1020,7 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'canister_status' : IDL.Func(
-        [CanisterIdRecord],
+        [CanisterStatusInput],
         [CanisterStatusResult],
         [],
       ),
