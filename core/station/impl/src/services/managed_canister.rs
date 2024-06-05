@@ -8,16 +8,16 @@ use orbit_essentials::api::ServiceResult;
 use std::sync::Arc;
 
 lazy_static! {
-    pub static ref CREATE_CANISTER_SERVICE: Arc<CreateCanisterService> =
-        Arc::new(CreateCanisterService::default());
+    pub static ref MANAGED_CANISTER_SERVICE: Arc<ManagedCanisterService> =
+        Arc::new(ManagedCanisterService::default());
 }
 
 const CREATE_CANISTER_CYCLES: u128 = 100_000_000_000; // the default fee of 100 B cycles
 
 #[derive(Default, Debug)]
-pub struct CreateCanisterService {}
+pub struct ManagedCanisterService {}
 
-impl CreateCanisterService {
+impl ManagedCanisterService {
     pub async fn create_canister(&self) -> ServiceResult<Principal, ChangeCanisterError> {
         let create_canister_arg = CreateCanisterArgument { settings: None };
 

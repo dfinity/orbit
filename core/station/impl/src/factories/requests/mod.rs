@@ -3,7 +3,7 @@ use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{Request, RequestOperation},
     services::{
-        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, CREATE_CANISTER_SERVICE,
+        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, MANAGED_CANISTER_SERVICE,
         REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
     },
 };
@@ -288,7 +288,7 @@ impl RequestFactory {
                 Box::new(CreateManagedCanisterRequestExecute::new(
                     request,
                     operation,
-                    Arc::clone(&CREATE_CANISTER_SERVICE),
+                    Arc::clone(&MANAGED_CANISTER_SERVICE),
                 ))
             }
             RequestOperation::EditPermission(operation) => {

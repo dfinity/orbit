@@ -3,7 +3,7 @@ use crate::{
     models::resource::{
         ManagedCanisterResourceAction, ReadManagedCanisterResourceTarget, Resource,
     },
-    services::{CreateCanisterService, CREATE_CANISTER_SERVICE},
+    services::{ManagedCanisterService, MANAGED_CANISTER_SERVICE},
 };
 use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse};
 use ic_cdk_macros::update;
@@ -21,16 +21,16 @@ async fn canister_status(input: CanisterIdRecord) -> ApiResult<CanisterStatusRes
 // Controller initialization and implementation.
 lazy_static! {
     static ref CONTROLLER: StatusController =
-        StatusController::new(Arc::clone(&CREATE_CANISTER_SERVICE));
+        StatusController::new(Arc::clone(&MANAGED_CANISTER_SERVICE));
 }
 
 #[derive(Debug, Default)]
 pub struct StatusController {
-    status_service: Arc<CreateCanisterService>,
+    status_service: Arc<ManagedCanisterService>,
 }
 
 impl StatusController {
-    fn new(status_service: Arc<CreateCanisterService>) -> Self {
+    fn new(status_service: Arc<ManagedCanisterService>) -> Self {
         Self { status_service }
     }
 
