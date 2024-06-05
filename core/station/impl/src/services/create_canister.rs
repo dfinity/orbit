@@ -1,6 +1,8 @@
-use crate::errors::ChangeCanisterError;
+use crate::errors::{ChangeCanisterError, StatusError};
 use candid::Principal;
-use ic_cdk::api::management_canister::main::{self as mgmt, CreateCanisterArgument};
+use ic_cdk::api::management_canister::main::{
+    self as mgmt, CanisterIdRecord, CanisterStatusResponse, CreateCanisterArgument,
+};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use std::sync::Arc;
@@ -28,5 +30,23 @@ impl CreateCanisterService {
             .canister_id;
 
         Ok(canister_id)
+    }
+
+    pub async fn canister_status(
+        &self,
+        input: CanisterIdRecord,
+    ) -> ServiceResult<CanisterStatusResponse> {
+        let canister_status_arg = CanisterIdRecord {
+            canister_id: input.canister_id,
+        };
+
+        let canister_status_response = mgmt::canister_status(canister_status_arg)
+            .await
+            .map_err(|(_, err)| StatusError::Failed {
+                reason: err.to_string(),
+            })?
+            .0;
+
+        Ok(canister_status_response)
     }
 }
