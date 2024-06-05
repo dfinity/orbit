@@ -56,11 +56,11 @@ pub use pagination::*;
 mod system;
 pub use system::*;
 
-mod status;
-pub use status::*;
-
 mod change_canister;
 pub use change_canister::*;
+
+mod managed_canister;
+pub use managed_canister::*;
 
 mod request_policy;
 pub use request_policy::*;

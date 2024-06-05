@@ -1,4 +1,4 @@
-use crate::errors::{ChangeCanisterError, StatusError};
+use crate::errors::ManagedCanisterError;
 use candid::Principal;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, CanisterIdRecord, CanisterStatusResponse, CreateCanisterArgument,
@@ -18,12 +18,12 @@ const CREATE_CANISTER_CYCLES: u128 = 100_000_000_000; // the default fee of 100 
 pub struct ManagedCanisterService {}
 
 impl ManagedCanisterService {
-    pub async fn create_canister(&self) -> ServiceResult<Principal, ChangeCanisterError> {
+    pub async fn create_canister(&self) -> ServiceResult<Principal, ManagedCanisterError> {
         let create_canister_arg = CreateCanisterArgument { settings: None };
 
         let canister_id = mgmt::create_canister(create_canister_arg, CREATE_CANISTER_CYCLES)
             .await
-            .map_err(|(_, err)| ChangeCanisterError::Failed {
+            .map_err(|(_, err)| ManagedCanisterError::Failed {
                 reason: err.to_string(),
             })?
             .0
@@ -42,7 +42,7 @@ impl ManagedCanisterService {
 
         let canister_status_response = mgmt::canister_status(canister_status_arg)
             .await
-            .map_err(|(_, err)| StatusError::Failed {
+            .map_err(|(_, err)| ManagedCanisterError::Failed {
                 reason: err.to_string(),
             })?
             .0;
