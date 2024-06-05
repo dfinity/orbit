@@ -5,7 +5,8 @@ use crate::utils::{
     wait_for_request, COUNTER_WAT,
 };
 use crate::TestEnv;
-use candid::Principal;
+use candid::{Encode, Principal};
+use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
@@ -13,9 +14,10 @@ use station_api::{
     AddRequestPolicyOperationInput, CanisterInstallMode, ChangeManagedCanisterOperationInput,
     ChangeManagedCanisterResourceTargetDTO, CreateManagedCanisterOperationInput,
     CreateManagedCanisterResourceTargetDTO, EditPermissionOperationInput, ListRequestsInput,
-    ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO, RequestApprovalStatusDTO,
-    RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
-    RequestStatusDTO, UserSpecifierDTO,
+    ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
+    ReadManagedCanisterResourceTargetDTO, RequestApprovalStatusDTO, RequestOperationDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, RequestStatusDTO,
+    UserSpecifierDTO,
 };
 
 #[test]
@@ -354,14 +356,14 @@ fn upgrade_reinstall_list_test() {
 }
 
 #[test]
-fn create_managed_canister() {
+fn create_managed_canister_and_check_status() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
 
     // create new user identities and add them to the station
     let user_a = user_test_id(0);
-    add_user(&env, user_a, vec![], canister_ids.station);
+    let user_a_dto = add_user(&env, user_a, vec![], canister_ids.station);
     let user_b = user_test_id(1);
     add_user(&env, user_b, vec![], canister_ids.station);
 
@@ -526,7 +528,74 @@ fn create_managed_canister() {
     assert_eq!(env.cycle_balance(canister_id), 0);
     env.add_cycles(canister_id, 100_000_000_000_000);
 
-    // check canister status and ensure that the canister is empty
+    // check canister status on behalf of the station and ensure that the canister is empty
     let status = canister_status(&env, Some(canister_ids.station), canister_id);
     assert_eq!(status.module_hash, None);
+
+    // checking canister status on behalf of the users fails due to insufficient permissions
+    let canister_id_record = CanisterIdRecord { canister_id };
+    let trap_message = update_raw(
+        &env,
+        canister_ids.station,
+        user_a,
+        "canister_status",
+        Encode!(&canister_id_record).unwrap(),
+    )
+    .unwrap_err();
+    assert!(trap_message.description.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister(Read"
+    ));
+    let trap_message = update_raw(
+        &env,
+        canister_ids.station,
+        user_b,
+        "canister_status",
+        Encode!(&canister_id_record).unwrap(),
+    )
+    .unwrap_err();
+    assert!(trap_message.description.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister(Read"
+    ));
+
+    // allow the first user to read the canister status of the managed canister created above
+    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+        resource: station_api::ResourceDTO::ManagedCanister(
+            station_api::ManagedCanisterResourceActionDTO::Read(
+                ReadManagedCanisterResourceTargetDTO::Canister(canister_id),
+            ),
+        ),
+        auth_scope: None,
+        user_groups: None,
+        users: Some(vec![user_a_dto.id.to_string()]),
+    });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        add_permission,
+    )
+    .unwrap();
+
+    // checking canister status on behalf of the first user now succeeds
+    let canister_id_record = CanisterIdRecord { canister_id };
+    let status: (ApiResult<CanisterStatusResponse>,) = update_candid_as(
+        &env,
+        canister_ids.station,
+        user_a,
+        "canister_status",
+        (canister_id_record,),
+    )
+    .unwrap();
+    assert_eq!(status.0.unwrap().module_hash, None);
+    let trap_message = update_raw(
+        &env,
+        canister_ids.station,
+        user_b,
+        "canister_status",
+        Encode!(&canister_id_record).unwrap(),
+    )
+    .unwrap_err();
+    assert!(trap_message.description.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister(Read"
+    ));
 }

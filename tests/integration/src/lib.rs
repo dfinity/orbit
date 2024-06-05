@@ -4,7 +4,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 
 mod address_book;
-mod change_canister_tests;
+mod canister_management_tests;
 mod control_panel_tests;
 mod cycles_monitor_tests;
 mod interfaces;

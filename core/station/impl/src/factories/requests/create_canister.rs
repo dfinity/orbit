@@ -2,7 +2,7 @@ use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{CreateManagedCanisterOperation, Request, RequestExecutionPlan, RequestOperation},
-    services::CreateCanisterService,
+    services::ManagedCanisterService,
 };
 use async_trait::async_trait;
 use orbit_essentials::types::UUID;
@@ -42,14 +42,14 @@ impl Create<CreateManagedCanisterOperationInput> for CreateManagedCanisterReques
 pub struct CreateManagedCanisterRequestExecute<'p, 'o> {
     _request: &'p Request,
     operation: &'o CreateManagedCanisterOperation,
-    create_canister_service: Arc<CreateCanisterService>,
+    create_canister_service: Arc<ManagedCanisterService>,
 }
 
 impl<'p, 'o> CreateManagedCanisterRequestExecute<'p, 'o> {
     pub fn new(
         request: &'p Request,
         operation: &'o CreateManagedCanisterOperation,
-        create_canister_service: Arc<CreateCanisterService>,
+        create_canister_service: Arc<ManagedCanisterService>,
     ) -> Self {
         Self {
             _request: request,
