@@ -1,7 +1,5 @@
 use candid::{CandidType, Deserialize};
 
-pub type TimestampRfc3339 = String;
-
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UploadCanisterModulesInput {
     #[serde(with = "serde_bytes")]

@@ -8,6 +8,9 @@ pub enum ArtifactError {
     /// The registry entry failed validation.
     #[error(r#"The registry entry failed validation due to {info}."#)]
     ValidationError { info: String },
+    /// The artifact was not found.
+    #[error("The artifact with id {id} was not found.")]
+    NotFound { id: String },
 }
 
 impl DetailableError for ArtifactError {
@@ -16,6 +19,10 @@ impl DetailableError for ArtifactError {
         match self {
             ArtifactError::ValidationError { info } => {
                 details.insert("info".to_string(), info.to_string());
+                Some(details)
+            }
+            ArtifactError::NotFound { id } => {
+                details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
         }

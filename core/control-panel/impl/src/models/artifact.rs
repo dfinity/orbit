@@ -1,4 +1,4 @@
-use crate::{core::ic_cdk::next_time, errors::ArtifactError};
+use crate::{core::ic_cdk::next_time, errors::ArtifactError, repositories::ARTIFACT_REPOSITORY};
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     storable,
@@ -20,6 +20,12 @@ pub struct Artifact {
     hash: Vec<u8>,
     /// The artifact itself.
     artifact: Vec<u8>,
+    /// Stores the references to the artifact. This is used as a reference counter since there can
+    /// be multiple references to the same artifact if the hash is the same.
+    ///
+    /// The reference counter is incremented when a new reference is created and decremented when a
+    /// reference is removed. When the reference counter reaches zero, the artifact is removed.
+    rc: u32,
     /// The date when the artifact was created.
     created_at: Timestamp,
 }
@@ -51,6 +57,7 @@ impl Artifact {
 
         Self {
             id: opts.id,
+            rc: 1,
             artifact,
             hash,
             created_at: opts.created_at,
@@ -76,6 +83,21 @@ impl Artifact {
     pub fn created_at(&self) -> Timestamp {
         self.created_at
     }
+
+    /// Returns the reference counter.
+    pub fn rc(&self) -> u32 {
+        self.rc
+    }
+
+    /// Increments the reference counter.
+    pub fn increment_rc(&mut self) {
+        self.rc = self.rc.saturating_add(1);
+    }
+
+    /// Decrements the reference counter.
+    pub fn decrement_rc(&mut self) {
+        self.rc = self.rc.saturating_sub(1);
+    }
 }
 
 fn validate_artifact(artifact: &[u8]) -> ModelValidatorResult<ArtifactError> {
@@ -88,9 +110,24 @@ fn validate_artifact(artifact: &[u8]) -> ModelValidatorResult<ArtifactError> {
     Ok(())
 }
 
+fn validate_unique_hash(self_id: &ArtifactId, hash: &[u8]) -> ModelValidatorResult<ArtifactError> {
+    ARTIFACT_REPOSITORY
+        .find_by_hash(hash)
+        .map_or(Ok(()), |existing_id| {
+            if existing_id != *self_id {
+                return Err(ArtifactError::ValidationError {
+                    info: "Artifact with the same hash already exists".to_string(),
+                });
+            }
+
+            Ok(())
+        })
+}
+
 impl ModelValidator<ArtifactError> for Artifact {
     fn validate(&self) -> ModelValidatorResult<ArtifactError> {
         validate_artifact(&self.artifact)?;
+        validate_unique_hash(self.id(), &self.hash)?;
 
         Ok(())
     }
@@ -99,6 +136,7 @@ impl ModelValidator<ArtifactError> for Artifact {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use orbit_essentials::repository::Repository;
 
     #[test]
     fn test_artifact_creation() {
@@ -128,5 +166,27 @@ mod tests {
         assert_eq!(artifact.artifact(), b"");
 
         assert!(artifact.validate().is_err());
+    }
+
+    #[test]
+    fn artifact_with_same_hash_is_invalid() {
+        let artifact1 = Artifact::new(b"hello world".to_vec());
+
+        ARTIFACT_REPOSITORY.insert(*artifact1.id(), artifact1.clone());
+        let artifact2 = Artifact::new(b"hello world".to_vec());
+
+        assert!(artifact1.validate().is_ok());
+        assert!(artifact2.validate().is_err());
+    }
+
+    #[test]
+    fn artifact_with_different_hash_is_valid() {
+        let artifact1 = Artifact::new(b"hello world".to_vec());
+
+        ARTIFACT_REPOSITORY.insert(*artifact1.id(), artifact1.clone());
+        let artifact2 = Artifact::new(b"hello world!".to_vec());
+
+        assert!(artifact1.validate().is_ok());
+        assert!(artifact2.validate().is_ok());
     }
 }

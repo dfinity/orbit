@@ -1,5 +1,8 @@
 //! Canister services used to handle the necessary business logic for the control panel.
 
+mod artifact;
+pub use artifact::*;
+
 mod user;
 pub use user::*;
 
