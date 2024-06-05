@@ -11,3 +11,9 @@ pub use mapper::*;
 
 mod deploy;
 pub use deploy::*;
+
+mod registry;
+pub use registry::*;
+
+mod artifact;
+pub use artifact::*;
