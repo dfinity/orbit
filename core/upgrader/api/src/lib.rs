@@ -1,5 +1,4 @@
 use candid::{CandidType, Deserialize, Principal};
-use serde::Serialize;
 pub use station_api::{MetadataDTO, UuidDTO};
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
