@@ -41,4 +41,4 @@ if [ $DOWNLOAD_NNS_CANISTERS == "true" ]; then
     ./scripts/download-nns-canister-wasm.sh icp_index ic-icp-index-canister
 fi
 
-cargo test --package integration-tests $TESTNAME -- --test-threads $TEST_THREADS
+cargo test --package integration-tests $TESTNAME -- --test-threads $TEST_THREADS --nocapture

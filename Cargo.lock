@@ -965,6 +965,7 @@ dependencies = [
  "sha2",
  "station-api",
  "upgrader-api",
+ "uuid",
 ]
 
 [[package]]
@@ -2494,6 +2495,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "upgrader-api",
+ "uuid",
 ]
 
 [[package]]
@@ -2501,8 +2503,11 @@ name = "upgrader-api"
 version = "0.0.2-alpha.2"
 dependencies = [
  "candid",
+ "ic-stable-structures",
+ "orbit-essentials",
  "serde",
  "serde_bytes",
+ "station-api",
 ]
 
 [[package]]

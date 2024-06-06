@@ -1,23 +1,97 @@
+// Generic error type added to responses that can fail.
+type Error = record {
+  // Error code, added as a string to allow for custom error codes.
+  code : text;
+  // Error message to be displayed to the user.
+  message : opt text;
+  // Error details to be displayed to the user.
+  details : opt vec record { text; text };
+};
+
 type InitArg = record {
-  target_canister: principal;
+  target_canister : principal;
 };
 
 type UpgradeParams = record {
-  module: blob;
-  arg: blob;
+  module : blob;
+  arg : blob;
 };
 
 type TriggerUpgradeError = variant {
   NotController;
   Unauthorized;
-  UnexpectedError: text;
+  UnexpectedError : text;
+};
+
+type Metadata = record { key : text; value : text };
+
+type Account = record {
+  id : text;
+  decimals : nat32;
+  metadata : vec Metadata;
+  name : text;
+  blockchain : text;
+  address : text;
+  standard : text;
+  symbol : text;
+};
+type AdminUser = record { id : text; name : text; identities : vec principal };
+
+type DisasterRecoveryCommittee = record {
+  users : vec AdminUser;
+  quorum_percentage : nat16;
 };
 
 type TriggerUpgradeResponse = variant {
   Ok;
-  Err: TriggerUpgradeError;
+  Err : TriggerUpgradeError;
 };
 
-service: (InitArg) -> {
-  "trigger_upgrade": (UpgradeParams) -> (TriggerUpgradeResponse);
-}
+type SetDisasterRecoveryResult = variant {
+  Ok;
+  Err : Error;
+};
+
+type IsCommitteeMemberResponse = record {
+  is_committee_member : bool;
+};
+
+type IsCommitteeMemberResult = variant {
+  Ok : IsCommitteeMemberResponse;
+  Err : Error;
+};
+
+type GetDisasterRecoveryAccountsResponse = record {
+  accounts : vec Account;
+};
+
+type GetDisasterRecoveryAccountsResult = variant {
+  Ok : GetDisasterRecoveryAccountsResponse;
+  Err : Error;
+};
+
+type GetDisasterRecoveryCommitteeResponse = record {
+  committee : opt DisasterRecoveryCommittee;
+};
+
+type GetDisasterRecoveryCommitteeResult = variant {
+  Ok : GetDisasterRecoveryCommitteeResponse;
+  Err : Error;
+};
+
+type SetDisasterRecoveryCommitteeInput = record {
+  committee : DisasterRecoveryCommittee;
+};
+
+type SetDisasterRecoveryAccountsInput = record {
+  accounts : vec Account;
+};
+
+service : (InitArg) -> {
+  "trigger_upgrade" : (UpgradeParams) -> (TriggerUpgradeResponse);
+  "set_disaster_recovery_committee" : (SetDisasterRecoveryCommitteeInput) -> (SetDisasterRecoveryResult);
+  "set_disaster_recovery_accounts" : (SetDisasterRecoveryAccountsInput) -> (SetDisasterRecoveryResult);
+  "is_committee_member" : () -> (IsCommitteeMemberResult) query;
+  "get_disaster_recovery_accounts" : () -> (GetDisasterRecoveryAccountsResult) query;
+  "get_disaster_recovery_committee" : () -> (GetDisasterRecoveryCommitteeResult) query;
+};
