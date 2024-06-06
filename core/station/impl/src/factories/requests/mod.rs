@@ -2,7 +2,10 @@ use crate::{
     core::generate_uuid_v4,
     errors::{RequestError, RequestExecuteError},
     models::{Request, RequestOperation},
-    services::{permission::PERMISSION_SERVICE, REQUEST_POLICY_SERVICE, SYSTEM_SERVICE},
+    services::{
+        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, MANAGED_CANISTER_SERVICE,
+        REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
+    },
 };
 use async_trait::async_trait;
 use orbit_essentials::types::UUID;
@@ -15,6 +18,7 @@ mod add_request_policy;
 mod add_user;
 mod add_user_group;
 mod change_canister;
+mod create_canister;
 mod edit_account;
 mod edit_address_book_entry;
 mod edit_permission;
@@ -34,7 +38,11 @@ use self::{
     add_request_policy::{AddRequestPolicyRequestCreate, AddRequestPolicyRequestExecute},
     add_user::{AddUserRequestCreate, AddUserRequestExecute},
     add_user_group::{AddUserGroupRequestCreate, AddUserGroupRequestExecute},
-    change_canister::{ChangeCanisterRequestCreate, ChangeCanisterRequestExecute},
+    change_canister::{
+        ChangeCanisterRequestCreate, ChangeCanisterRequestExecute,
+        ChangeManagedCanisterRequestCreate, ChangeManagedCanisterRequestExecute,
+    },
+    create_canister::{CreateManagedCanisterRequestCreate, CreateManagedCanisterRequestExecute},
     edit_account::{EditAccountRequestCreate, EditAccountRequestExecute},
     edit_address_book_entry::{
         EditAddressBookEntryRequestCreate, EditAddressBookEntryRequestExecute,
@@ -188,6 +196,18 @@ impl RequestFactory {
                     set_disaster_recovery::SetDisasterRecoveryRequestCreate,
                 >(id, requested_by_user, input.clone(), operation.clone())
             }
+            RequestOperationInput::ChangeManagedCanister(operation) => {
+                create_request::<
+                    station_api::ChangeManagedCanisterOperationInput,
+                    ChangeManagedCanisterRequestCreate,
+                >(id, requested_by_user, input.clone(), operation.clone())
+            }
+            RequestOperationInput::CreateManagedCanister(operation) => {
+                create_request::<
+                    station_api::CreateManagedCanisterOperationInput,
+                    CreateManagedCanisterRequestCreate,
+                >(id, requested_by_user, input.clone(), operation.clone())
+            }
             RequestOperationInput::EditPermission(operation) => {
                 create_request::<
                     station_api::EditPermissionOperationInput,
@@ -256,9 +276,6 @@ impl RequestFactory {
             RequestOperation::EditUser(operation) => {
                 Box::new(EditUserRequestExecute::new(request, operation))
             }
-            RequestOperation::ChangeCanister(operation) => Box::new(
-                ChangeCanisterRequestExecute::new(request, operation, Arc::clone(&SYSTEM_SERVICE)),
-            ),
             RequestOperation::SetDisasterRecovery(operation) => Box::new(
                 set_disaster_recovery::SetDisasterRecoveryRequestExecute::new(
                     request,
@@ -266,6 +283,28 @@ impl RequestFactory {
                     Arc::clone(&SYSTEM_SERVICE),
                 ),
             ),
+            RequestOperation::ChangeCanister(operation) => {
+                Box::new(ChangeCanisterRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&SYSTEM_SERVICE),
+                    Arc::clone(&CHANGE_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::ChangeManagedCanister(operation) => {
+                Box::new(ChangeManagedCanisterRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&CHANGE_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::CreateManagedCanister(operation) => {
+                Box::new(CreateManagedCanisterRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&MANAGED_CANISTER_SERVICE),
+                ))
+            }
             RequestOperation::EditPermission(operation) => {
                 Box::new(EditPermissionRequestExecute::new(
                     request,

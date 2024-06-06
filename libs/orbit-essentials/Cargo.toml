@@ -29,8 +29,10 @@ time = { workspace = true, features = ['formatting', 'parsing'] }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ['serde', 'v4'] }
 ic-cdk-timers = { workspace = true }
+sha2 = { workspace = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ['full'] }
 serde = { workspace = true, features = ['derive'] }
 serde_cbor = { workspace = true }
+hex = { workspace = true }

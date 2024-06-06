@@ -5,7 +5,9 @@ use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
     AddAddressBookEntryOperationInput, AddUserGroupOperationDTO, AddUserGroupOperationInput,
     AddUserOperationDTO, AddUserOperationInput, ChangeCanisterOperationDTO,
-    ChangeCanisterOperationInput, DisplayUserDTO, EditAccountOperationDTO,
+    ChangeCanisterOperationInput, ChangeManagedCanisterOperationDTO,
+    ChangeManagedCanisterOperationInput, CreateManagedCanisterOperationDTO,
+    CreateManagedCanisterOperationInput, DisplayUserDTO, EditAccountOperationDTO,
     EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
     EditPermissionOperationDTO, EditPermissionOperationInput, EditUserGroupOperationDTO,
     EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput,
@@ -15,7 +17,7 @@ use crate::{
     RequestPolicyRuleDTO, RequestSpecifierDTO, SetDisasterRecoveryOperationDTO,
     SetDisasterRecoveryOperationInput, SortDirection, UuidDTO,
 };
-use candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub enum RequestStatusDTO {
@@ -68,6 +70,8 @@ pub enum RequestOperationDTO {
     RemoveUserGroup(Box<RemoveUserGroupOperationDTO>),
     ChangeCanister(Box<ChangeCanisterOperationDTO>),
     SetDisasterRecovery(Box<SetDisasterRecoveryOperationDTO>),
+    ChangeManagedCanister(Box<ChangeManagedCanisterOperationDTO>),
+    CreateManagedCanister(Box<CreateManagedCanisterOperationDTO>),
     EditPermission(Box<EditPermissionOperationDTO>),
     AddRequestPolicy(Box<AddRequestPolicyOperationDTO>),
     EditRequestPolicy(Box<EditRequestPolicyOperationDTO>),
@@ -90,6 +94,8 @@ pub enum RequestOperationInput {
     RemoveUserGroup(RemoveUserGroupOperationInput),
     ChangeCanister(ChangeCanisterOperationInput),
     SetDisasterRecovery(SetDisasterRecoveryOperationInput),
+    ChangeManagedCanister(ChangeManagedCanisterOperationInput),
+    CreateManagedCanister(CreateManagedCanisterOperationInput),
     EditPermission(EditPermissionOperationInput),
     AddRequestPolicy(AddRequestPolicyOperationInput),
     EditRequestPolicy(EditRequestPolicyOperationInput),
@@ -112,6 +118,8 @@ pub enum RequestOperationTypeDTO {
     RemoveUserGroup,
     ChangeCanister,
     SetDisasterRecoveryCommittee,
+    ChangeManagedCanister,
+    CreateManagedCanister,
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,
@@ -133,6 +141,8 @@ pub enum ListRequestsOperationTypeDTO {
     EditUserGroup,
     RemoveUserGroup,
     ChangeCanister,
+    ChangeManagedCanister(Option<Principal>),
+    CreateManagedCanister,
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,

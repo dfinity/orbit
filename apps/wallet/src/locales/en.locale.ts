@@ -110,6 +110,7 @@ export default {
     },
   },
   requests: {
+    unsupported_operation: 'Unsupported operation',
     requested_by: 'Requested by {name}',
     requester_id: 'Requester ID: {id}',
     title_info_message: 'The title set by the requester.',
@@ -183,6 +184,8 @@ export default {
       address_book_entry: 'Address Book',
       change_canister: 'Upgrades',
       transfer: 'Transfers',
+      managed_canister: 'Managed Canisters',
+      system_info: 'System Info',
     },
     types: {
       addusergroup: {
@@ -758,6 +761,7 @@ export default {
       removeusergroup: 'Remove user group',
       addaccount: 'Add account',
       managesysteminfo: 'Manage system info',
+      changemanagedcanister: 'Change managed canister',
     },
   },
 };

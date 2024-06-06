@@ -7,6 +7,13 @@ export interface ApiError {
   'message' : [] | [string],
   'details' : [] | [Array<[string, string]>],
 }
+export interface Artifact {
+  'id' : UUID,
+  'hash' : Sha256Hex,
+  'artifact' : Uint8Array | number[],
+  'size' : bigint,
+  'created_at' : TimestampRFC3339,
+}
 export type CanDeployStationResponse = {
     'NotAllowed' : UserSubscriptionStatus
   } |
@@ -24,6 +31,10 @@ export interface DeployStationInput {
   'associate_with_caller' : [] | [{ 'labels' : Array<string> }],
 }
 export type DeployStationResult = { 'Ok' : { 'canister_id' : StationID } } |
+  { 'Err' : ApiError };
+export interface GetArtifactInput { 'artifact_id' : UUID }
+export interface GetArtifactResponse { 'artifact' : Artifact }
+export type GetArtifactResult = { 'Ok' : GetArtifactResponse } |
   { 'Err' : ApiError };
 export type GetUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
@@ -63,6 +74,7 @@ export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
 export type SetUserActiveResult = { 'Ok' : null } |
   { 'Err' : ApiError };
+export type Sha256Hex = string;
 export type StationID = Principal;
 export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
@@ -104,6 +116,7 @@ export interface _SERVICE {
   'can_deploy_station' : ActorMethod<[], CanDeployStationResult>,
   'delete_user' : ActorMethod<[], RemoveUserResult>,
   'deploy_station' : ActorMethod<[DeployStationInput], DeployStationResult>,
+  'get_artifact' : ActorMethod<[GetArtifactInput], GetArtifactResult>,
   'get_user' : ActorMethod<[], GetUserResult>,
   'get_waiting_list' : ActorMethod<[], GetWaitingListResult>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,

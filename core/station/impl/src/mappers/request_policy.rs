@@ -3,8 +3,9 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, PermissionResourceAction, Resource,
-        ResourceAction, ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ManagedCanisterResourceAction,
+        PermissionResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
+        SystemResourceAction, UserResourceAction,
     },
     EvaluatedRequestPolicyRule, EvaluationStatus, Percentage, RequestEvaluationResult,
     RequestPolicy, RequestPolicyCallerPrivileges, RequestPolicyRuleResult,
@@ -248,6 +249,12 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::SetDisasterRecovery => {
                 station_api::RequestSpecifierDTO::SetDisasterRecovery
             }
+            RequestSpecifier::ChangeManagedCanister(target) => {
+                station_api::RequestSpecifierDTO::ChangeManagedCanister(target.into())
+            }
+            RequestSpecifier::CreateManagedCanister(target) => {
+                station_api::RequestSpecifierDTO::CreateManagedCanister(target.into())
+            }
             RequestSpecifier::EditPermission(policy) => {
                 station_api::RequestSpecifierDTO::EditPermission(policy.into())
             }
@@ -300,6 +307,12 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             station_api::RequestSpecifierDTO::ChangeCanister => RequestSpecifier::ChangeCanister,
             station_api::RequestSpecifierDTO::SetDisasterRecovery => {
                 RequestSpecifier::SetDisasterRecovery
+            }
+            station_api::RequestSpecifierDTO::ChangeManagedCanister(target) => {
+                RequestSpecifier::ChangeManagedCanister(target.into())
+            }
+            station_api::RequestSpecifierDTO::CreateManagedCanister(target) => {
+                RequestSpecifier::CreateManagedCanister(target.into())
             }
             station_api::RequestSpecifierDTO::EditPermission(policy) => {
                 RequestSpecifier::EditPermission(policy.into())
@@ -404,6 +417,19 @@ impl RequestSpecifier {
             RequestSpecifier::SetDisasterRecovery | RequestSpecifier::ChangeCanister => {
                 vec![Resource::ChangeCanister(
                     ChangeCanisterResourceAction::Create,
+                )]
+            }
+            RequestSpecifier::ChangeCanister => vec![Resource::ChangeCanister(
+                ChangeCanisterResourceAction::Create,
+            )],
+            RequestSpecifier::ChangeManagedCanister(target) => {
+                vec![Resource::ManagedCanister(
+                    ManagedCanisterResourceAction::Change(target.clone()),
+                )]
+            }
+            RequestSpecifier::CreateManagedCanister(target) => {
+                vec![Resource::ManagedCanister(
+                    ManagedCanisterResourceAction::Create(target.clone()),
                 )]
             }
             RequestSpecifier::EditPermission(resource_specifier) => match resource_specifier {

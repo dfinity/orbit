@@ -45,6 +45,21 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'canister_id' : StationID }),
     'Err' : ApiError,
   });
+  const UUID = IDL.Text;
+  const GetArtifactInput = IDL.Record({ 'artifact_id' : UUID });
+  const Sha256Hex = IDL.Text;
+  const Artifact = IDL.Record({
+    'id' : UUID,
+    'hash' : Sha256Hex,
+    'artifact' : IDL.Vec(IDL.Nat8),
+    'size' : IDL.Nat64,
+    'created_at' : TimestampRFC3339,
+  });
+  const GetArtifactResponse = IDL.Record({ 'artifact' : Artifact });
+  const GetArtifactResult = IDL.Variant({
+    'Ok' : GetArtifactResponse,
+    'Err' : ApiError,
+  });
   const GetUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
@@ -131,6 +146,11 @@ export const idlFactory = ({ IDL }) => {
         [DeployStationInput],
         [DeployStationResult],
         [],
+      ),
+    'get_artifact' : IDL.Func(
+        [GetArtifactInput],
+        [GetArtifactResult],
+        ['query'],
       ),
     'get_user' : IDL.Func([], [GetUserResult], ['query']),
     'get_waiting_list' : IDL.Func([], [GetWaitingListResult], []),

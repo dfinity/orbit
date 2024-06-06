@@ -15,6 +15,42 @@ export const idlFactory = ({ IDL }) => {
     'Upgrade' : SystemUpgrade,
     'Init' : SystemInit,
   });
+  const CanisterStatusInput = IDL.Record({ 'canister_id' : IDL.Principal });
+  const DefiniteCanisterSettings = IDL.Record({
+    'freezing_threshold' : IDL.Nat,
+    'controllers' : IDL.Vec(IDL.Principal),
+    'reserved_cycles_limit' : IDL.Nat,
+    'memory_allocation' : IDL.Nat,
+    'compute_allocation' : IDL.Nat,
+  });
+  const CanisterStatusResponse = IDL.Record({
+    'status' : IDL.Variant({
+      'stopped' : IDL.Null,
+      'stopping' : IDL.Null,
+      'running' : IDL.Null,
+    }),
+    'memory_size' : IDL.Nat,
+    'cycles' : IDL.Nat,
+    'settings' : DefiniteCanisterSettings,
+    'query_stats' : IDL.Record({
+      'response_payload_bytes_total' : IDL.Nat,
+      'num_instructions_total' : IDL.Nat,
+      'num_calls_total' : IDL.Nat,
+      'request_payload_bytes_total' : IDL.Nat,
+    }),
+    'idle_cycles_burned_per_day' : IDL.Nat,
+    'module_hash' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'reserved_cycles' : IDL.Nat,
+  });
+  const Error = IDL.Record({
+    'code' : IDL.Text,
+    'message' : IDL.Opt(IDL.Text),
+    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
+  });
+  const CanisterStatusResult = IDL.Variant({
+    'Ok' : CanisterStatusResponse,
+    'Err' : Error,
+  });
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AssetSymbol = IDL.Text;
   const Asset = IDL.Record({
@@ -29,11 +65,6 @@ export const idlFactory = ({ IDL }) => {
     'version' : IDL.Text,
     'supported_assets' : IDL.Vec(Asset),
   });
-  const Error = IDL.Record({
-    'code' : IDL.Text,
-    'message' : IDL.Opt(IDL.Text),
-    'details' : IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))),
-  });
   const CapabilitiesResult = IDL.Variant({
     'Ok' : IDL.Record({ 'capabilities' : Capabilities }),
     'Err' : Error,
@@ -44,6 +75,20 @@ export const idlFactory = ({ IDL }) => {
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
   const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
+  const ReadManagedCanisterResourceTarget = IDL.Variant({
+    'Any' : IDL.Null,
+    'Canister' : IDL.Principal,
+  });
+  const CreateManagedCanisterResourceTarget = IDL.Variant({ 'Any' : IDL.Null });
+  const ChangeManagedCanisterResourceTarget = IDL.Variant({
+    'Any' : IDL.Null,
+    'Canister' : IDL.Principal,
+  });
+  const ManagedCanisterResourceAction = IDL.Variant({
+    'Read' : ReadManagedCanisterResourceTarget,
+    'Create' : CreateManagedCanisterResourceTarget,
+    'Change' : ChangeManagedCanisterResourceTarget,
+  });
   const UUID = IDL.Text;
   const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
   const RequestResourceAction = IDL.Variant({
@@ -81,6 +126,7 @@ export const idlFactory = ({ IDL }) => {
     'Update' : IDL.Null,
   });
   const Resource = IDL.Variant({
+    'ManagedCanister' : ManagedCanisterResourceAction,
     'Request' : RequestResourceAction,
     'System' : SystemResourceAction,
     'User' : UserResourceAction,
@@ -158,6 +204,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : ResourceIds,
     'RemoveRequestPolicy' : ResourceIds,
     'RemoveAddressBookEntry' : ResourceIds,
+    'CreateManagedCanister' : CreateManagedCanisterResourceTarget,
     'EditAddressBookEntry' : ResourceIds,
     'ChangeCanister' : IDL.Null,
     'EditUser' : ResourceIds,
@@ -165,6 +212,7 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : ResourceIds,
     'EditAccount' : ResourceIds,
     'AddAddressBookEntry' : IDL.Null,
+    'ChangeManagedCanister' : ChangeManagedCanisterResourceTarget,
     'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : ResourceIds,
     'AddAccount' : IDL.Null,
@@ -178,6 +226,7 @@ export const idlFactory = ({ IDL }) => {
   const RemoveAddressBookEntryOperationInput = IDL.Record({
     'address_book_entry_id' : UUID,
   });
+  const CreateManagedCanisterOperationInput = IDL.Record({});
   const ChangeAddressBookMetadata = IDL.Variant({
     'OverrideSpecifiedBy' : IDL.Vec(AddressBookMetadata),
     'RemoveKeys' : IDL.Vec(IDL.Text),
@@ -190,7 +239,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChangeCanisterTarget = IDL.Variant({
     'UpgradeUpgrader' : IDL.Null,
-    'UpgradeCanister' : IDL.Principal,
     'UpgradeStation' : IDL.Null,
   });
   const ChangeCanisterOperationInput = IDL.Record({
@@ -244,6 +292,17 @@ export const idlFactory = ({ IDL }) => {
     'address_owner' : IDL.Text,
     'standard' : IDL.Text,
   });
+  const CanisterInstallMode = IDL.Variant({
+    'reinstall' : IDL.Null,
+    'upgrade' : IDL.Null,
+    'install' : IDL.Null,
+  });
+  const ChangeManagedCanisterOperationInput = IDL.Record({
+    'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'mode' : CanisterInstallMode,
+    'canister_id' : IDL.Principal,
+    'module' : IDL.Vec(IDL.Nat8),
+  });
   const AddRequestPolicyOperationInput = IDL.Record({
     'rule' : RequestPolicyRule,
     'specifier' : RequestSpecifier,
@@ -269,6 +328,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : EditRequestPolicyOperationInput,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput,
+    'CreateManagedCanister' : CreateManagedCanisterOperationInput,
     'EditAddressBookEntry' : EditAddressBookEntryOperationInput,
     'ChangeCanister' : ChangeCanisterOperationInput,
     'EditUser' : EditUserOperationInput,
@@ -276,6 +336,7 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : TransferOperationInput,
     'EditAccount' : EditAccountOperationInput,
     'AddAddressBookEntry' : AddAddressBookEntryOperationInput,
+    'ChangeManagedCanister' : ChangeManagedCanisterOperationInput,
     'AddRequestPolicy' : AddRequestPolicyOperationInput,
     'RemoveUserGroup' : RemoveUserGroupOperationInput,
     'AddAccount' : AddAccountOperationInput,
@@ -332,6 +393,9 @@ export const idlFactory = ({ IDL }) => {
   const RemoveAddressBookEntryOperation = IDL.Record({
     'input' : RemoveAddressBookEntryOperationInput,
   });
+  const CreateManagedCanisterOperation = IDL.Record({
+    'canister_id' : IDL.Opt(IDL.Principal),
+  });
   const EditAddressBookEntryOperation = IDL.Record({
     'input' : EditAddressBookEntryOperationInput,
   });
@@ -386,6 +450,12 @@ export const idlFactory = ({ IDL }) => {
     'address_book_entry' : IDL.Opt(AddressBookEntry),
     'input' : AddAddressBookEntryOperationInput,
   });
+  const ChangeManagedCanisterOperation = IDL.Record({
+    'mode' : CanisterInstallMode,
+    'canister_id' : IDL.Principal,
+    'module_checksum' : Sha256Hash,
+    'arg_checksum' : IDL.Opt(Sha256Hash),
+  });
   const AddRequestPolicyOperation = IDL.Record({
     'input' : AddRequestPolicyOperationInput,
     'policy_id' : IDL.Opt(UUID),
@@ -405,6 +475,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : EditRequestPolicyOperation,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperation,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
+    'CreateManagedCanister' : CreateManagedCanisterOperation,
     'EditAddressBookEntry' : EditAddressBookEntryOperation,
     'ChangeCanister' : ChangeCanisterOperation,
     'EditUser' : EditUserOperation,
@@ -412,6 +483,7 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : TransferOperation,
     'EditAccount' : EditAccountOperation,
     'AddAddressBookEntry' : AddAddressBookEntryOperation,
+    'ChangeManagedCanister' : ChangeManagedCanisterOperation,
     'AddRequestPolicy' : AddRequestPolicyOperation,
     'RemoveUserGroup' : RemoveUserGroupOperation,
     'AddAccount' : AddAccountOperation,
@@ -543,6 +615,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
+    'CreateManagedCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
@@ -550,6 +623,7 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : IDL.Opt(UUID),
     'EditAccount' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
+    'ChangeManagedCanister' : IDL.Opt(IDL.Principal),
     'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
     'AddAccount' : IDL.Null,
@@ -747,6 +821,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
+    'CreateManagedCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
@@ -754,6 +829,7 @@ export const idlFactory = ({ IDL }) => {
     'Transfer' : IDL.Null,
     'EditAccount' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
+    'ChangeManagedCanister' : IDL.Null,
     'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
     'AddAccount' : IDL.Null,
@@ -943,6 +1019,11 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   return IDL.Service({
+    'canister_status' : IDL.Func(
+        [CanisterStatusInput],
+        [CanisterStatusResult],
+        [],
+      ),
     'capabilities' : IDL.Func([], [CapabilitiesResult], ['query']),
     'create_request' : IDL.Func(
         [CreateRequestInput],

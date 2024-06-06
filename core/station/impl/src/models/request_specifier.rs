@@ -5,7 +5,11 @@ use crate::core::validation::{
     EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
 };
 use crate::errors::RecordValidationError;
+use crate::models::resource::{
+    ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
+};
 use crate::models::user::User;
+use crate::models::{ChangeManagedCanisterOperation, CreateManagedCanisterOperation};
 use crate::repositories::ADDRESS_BOOK_REPOSITORY;
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
@@ -63,6 +67,8 @@ pub enum RequestSpecifier {
     Transfer(ResourceIds),
     ChangeCanister,
     SetDisasterRecovery,
+    ChangeManagedCanister(ChangeManagedCanisterResourceTarget),
+    CreateManagedCanister(CreateManagedCanisterResourceTarget),
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIds),
@@ -80,6 +86,8 @@ impl ModelValidator<RecordValidationError> for RequestSpecifier {
             | RequestSpecifier::AddUser
             | RequestSpecifier::AddAddressBookEntry
             | RequestSpecifier::ChangeCanister
+            | RequestSpecifier::ChangeManagedCanister(_)
+            | RequestSpecifier::CreateManagedCanister(_)
             | RequestSpecifier::AddRequestPolicy
             | RequestSpecifier::ManageSystemInfo
             | RequestSpecifier::SetDisasterRecovery
@@ -128,6 +136,12 @@ impl From<&RequestSpecifier> for RequestOperationType {
             RequestSpecifier::Transfer(_) => RequestOperationType::Transfer,
             RequestSpecifier::EditPermission(_) => RequestOperationType::EditPermission,
             RequestSpecifier::ChangeCanister => RequestOperationType::ChangeCanister,
+            RequestSpecifier::ChangeManagedCanister(_) => {
+                RequestOperationType::ChangeManagedCanister
+            }
+            RequestSpecifier::CreateManagedCanister(_) => {
+                RequestOperationType::CreateManagedCanister
+            }
             RequestSpecifier::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestSpecifier::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
             RequestSpecifier::RemoveRequestPolicy(_) => RequestOperationType::RemoveRequestPolicy,
@@ -257,6 +271,24 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
             (RequestOperation::SetDisasterRecovery(_), RequestSpecifier::SetDisasterRecovery) => {
                 true
             }
+            (
+                RequestOperation::ChangeManagedCanister(ChangeManagedCanisterOperation {
+                    input,
+                    ..
+                }),
+                RequestSpecifier::ChangeManagedCanister(specifier),
+            ) => match specifier {
+                ChangeManagedCanisterResourceTarget::Any => true,
+                ChangeManagedCanisterResourceTarget::Canister(target_id) => {
+                    input.canister_id == target_id
+                }
+            },
+            (
+                RequestOperation::CreateManagedCanister(CreateManagedCanisterOperation { .. }),
+                RequestSpecifier::CreateManagedCanister(specifier),
+            ) => match specifier {
+                CreateManagedCanisterResourceTarget::Any => true,
+            },
             (RequestOperation::AddUserGroup(_), RequestSpecifier::AddUserGroup) => true,
             (
                 RequestOperation::EditPermission(operation),
@@ -300,6 +332,8 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
             | (RequestOperation::RemoveAddressBookEntry(_), _)
             | (RequestOperation::ChangeCanister(_), _)
             | (RequestOperation::SetDisasterRecovery(_), _)
+            | (RequestOperation::ChangeManagedCanister(_), _)
+            | (RequestOperation::CreateManagedCanister(_), _)
             | (RequestOperation::AddRequestPolicy(_), _)
             | (RequestOperation::EditRequestPolicy(_), _)
             | (RequestOperation::EditPermission(_), _)
@@ -356,7 +390,10 @@ mod tests {
                 UserInvolvedInPolicyRuleForRequestResource, UserMatcher, UserSpecifier,
             },
             request_test_utils::mock_request,
-            resource::ResourceIds,
+            resource::{
+                ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
+                ResourceIds,
+            },
             AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
             Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
             EditUserOperationInput, Metadata, RequestKey, RequestOperation, TransferOperation,
@@ -365,7 +402,7 @@ mod tests {
         repositories::REQUEST_REPOSITORY,
     };
     use anyhow::{anyhow, Error};
-    use candid::Nat;
+    use candid::{Nat, Principal};
     use orbit_essentials::{model::ModelValidator, repository::Repository};
     use std::sync::Arc;
 
@@ -534,6 +571,17 @@ mod tests {
         RequestSpecifier::ChangeCanister
             .validate()
             .expect("ChangeCanister should be valid");
+        RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Any)
+            .validate()
+            .expect("ChangeManagedCanister should be valid");
+        RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Canister(
+            Principal::management_canister(),
+        ))
+        .validate()
+        .expect("ChangeManagedCanister should be valid");
+        RequestSpecifier::CreateManagedCanister(CreateManagedCanisterResourceTarget::Any)
+            .validate()
+            .expect("CreateManagedCanister should be valid");
         RequestSpecifier::AddRequestPolicy
             .validate()
             .expect("AddRequestPolicy should be valid");

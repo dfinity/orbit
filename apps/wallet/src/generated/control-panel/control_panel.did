@@ -8,6 +8,8 @@ type UUID = text;
 type UserId = UUID;
 // The timestamp type used in the canister.
 type TimestampRFC3339 = text;
+// The sha256 hash.
+type Sha256Hex = text;
 
 // Generic error type added to responses that can fail.
 type ApiError = record {
@@ -275,8 +277,43 @@ type HttpResponse = record {
   body : blob;
 };
 
+// The artifact type.
+type Artifact = record {
+  // The id of the artifact.
+  id : UUID;
+  // The size of the artifact in bytes.
+  size : nat64;
+  // The sha256 hash of the artifact.
+  hash : Sha256Hex;
+  // The blob of the artifact.
+  artifact : blob;
+  // The timestamp when the artifact was created.
+  created_at : TimestampRFC3339;
+};
+
+// The get artifact input.
+type GetArtifactInput = record {
+  // The id of the artifact.
+  artifact_id : UUID;
+};
+
+// The get artifact response.
+type GetArtifactResponse = record {
+  artifact : Artifact;
+};
+
+// The get artifact result.
+type GetArtifactResult = variant {
+  // Successfull operation result.
+  Ok : GetArtifactResponse;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
 // The control panel service definition.
 service : () -> {
+  // Enables the caller to get an artifact by its id.
+  get_artifact : (GetArtifactInput) -> (GetArtifactResult) query;
   // Uploads the canister modules for the station and upgrader canisters.
   upload_canister_modules : (UploadCanisterModulesInput) -> (UploadUploadCanisterModulesInputResult);
   // Set the last active time for the user associated with the caller.

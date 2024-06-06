@@ -309,6 +309,7 @@ dependencies = [
  "canfund",
  "control-panel-api",
  "email_address",
+ "hex",
  "ic-cdk 0.13.2",
  "ic-cdk-macros 0.9.0",
  "ic-cdk-timers",
@@ -966,6 +967,7 @@ dependencies = [
  "station-api",
  "upgrader-api",
  "uuid",
+ "wat",
 ]
 
 [[package]]
@@ -1263,6 +1265,7 @@ dependencies = [
  "candid",
  "convert_case",
  "getrandom",
+ "hex",
  "ic-cdk 0.13.2",
  "ic-cdk-timers",
  "ic-stable-structures",
@@ -1273,6 +1276,7 @@ dependencies = [
  "serde_bytes",
  "serde_cbor",
  "serde_json",
+ "sha2",
  "thiserror",
  "time",
  "tokio",
@@ -2030,7 +2034,7 @@ dependencies = [
 
 [[package]]
 name = "station"
-version = "0.0.2-alpha.2"
+version = "0.0.2-alpha.3"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2635,6 +2639,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af190c94f2773fdb3729c55b007a722abb5384da03bc0986df4c289bf5567e96"
 
 [[package]]
+name = "wasm-encoder"
+version = "0.207.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d996306fb3aeaee0d9157adbe2f670df0236caf19f6728b221e92d0f27b3fe17"
+dependencies = [
+ "leb128",
+]
+
+[[package]]
 name = "wasm-streams"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2645,6 +2658,28 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
+]
+
+[[package]]
+name = "wast"
+version = "207.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0e40be9fd494bfa501309487d2dc0b3f229be6842464ecbdc54eac2679c84c93"
+dependencies = [
+ "bumpalo",
+ "leb128",
+ "memchr",
+ "unicode-width",
+ "wasm-encoder",
+]
+
+[[package]]
+name = "wat"
+version = "1.207.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8eb2b15e2d5f300f5e1209e7dc237f2549edbd4203655b6c6cab5cf180561ee7"
+dependencies = [
+ "wast",
 ]
 
 [[package]]

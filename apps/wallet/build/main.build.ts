@@ -46,7 +46,7 @@ export default defineConfig(_ => {
       withCanisterIds({ isProduction }),
       withApiCompatibilityFile(),
       withVersionedEntrypoint(),
-      withIcAssetsFile(isProduction),
+      withIcAssetsFile(isProduction && MODE !== 'localhost'),
     ],
     build: {
       target: 'es2020',

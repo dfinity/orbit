@@ -1,5 +1,9 @@
 //! Canister controller entrypoints.
 
+/// Artifact entrypoints.
+mod artifact;
+pub use artifact::*;
+
 /// User entrypoints.
 mod user;
 pub use user::*;

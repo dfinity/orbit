@@ -1,5 +1,5 @@
 <template>
-  <VContainer fluid data-test-id="access-policy-list" class="px-3 pt-2">
+  <VContainer fluid data-test-id="permission-list" class="px-3 pt-2">
     <VRow>
       <VCol cols="12" class="px-0 pt-0">
         <VTable density="compact" hover class="elevation-2 rounded">

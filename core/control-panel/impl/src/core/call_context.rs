@@ -3,7 +3,7 @@ use crate::{
         api::{id as self_canister_id, is_controller},
         caller,
     },
-    errors::UserError,
+    errors::{CanisterError, UserError},
     models::User,
     repositories::USER_REPOSITORY,
 };
@@ -55,13 +55,29 @@ impl CallContext {
         self._caller
     }
 
-    /// Checks if the caller is an admin.
-    pub fn is_admin(&self) -> bool {
+    /// Checks if the caller is the current canister.
+    pub fn is_self(&self) -> bool {
         self._caller == self_canister_id()
     }
 
     /// Checks if the caller is a controller.
     pub fn is_controller(&self) -> bool {
         is_controller(&self._caller)
+    }
+
+    /// Checks if the caller is an admin.
+    pub fn is_admin(&self) -> bool {
+        self.is_self() || self.is_controller()
+    }
+
+    /// Checks if the caller is the asset canister.
+    pub fn assert_is_admin(&self, scope: &str) -> Result<(), CanisterError> {
+        if !self.is_admin() {
+            return Err(CanisterError::Forbidden {
+                method: scope.to_string(),
+            });
+        }
+
+        Ok(())
     }
 }
