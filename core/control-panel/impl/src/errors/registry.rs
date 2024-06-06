@@ -8,6 +8,9 @@ pub enum RegistryError {
     /// The registry entry failed validation.
     #[error(r#"The registry entry failed validation due to {info}."#)]
     ValidationError { info: String },
+    /// The registry entry was not found.
+    #[error("The registry entry with id {id} was not found.")]
+    NotFound { id: String },
 }
 
 impl DetailableError for RegistryError {
@@ -16,6 +19,10 @@ impl DetailableError for RegistryError {
         match self {
             RegistryError::ValidationError { info } => {
                 details.insert("info".to_string(), info.to_string());
+                Some(details)
+            }
+            RegistryError::NotFound { id } => {
+                details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
         }

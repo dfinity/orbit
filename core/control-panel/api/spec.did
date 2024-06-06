@@ -21,6 +21,15 @@ type ApiError = record {
   details : opt vec record { text; text };
 };
 
+type PaginationInput = record {
+  // The offset to use for pagination.
+  offset : opt nat64;
+  // The maximum number of items to retrieve.
+  //
+  // If not set, the default limit will be used.
+  limit : opt nat16;
+};
+
 // The user user information.
 type User = record {
   // The identity associated with the user.
@@ -193,19 +202,19 @@ type DeployStationResult = variant {
   Err : ApiError;
 };
 
-/// The successful result of checking if the caller can deploy a station canister.
-/// Returns the remaining number of station canisters the caller can still deploy
-/// or a reason why the caller cannot deploy a station canister
-/// (bad subscription status or exceeded quota).
+// The successful result of checking if the caller can deploy a station canister.
+// Returns the remaining number of station canisters the caller can still deploy
+// or a reason why the caller cannot deploy a station canister
+// (bad subscription status or exceeded quota).
 type CanDeployStationResponse = variant {
   NotAllowed : UserSubscriptionStatus;
   Allowed : nat64;
   QuotaExceeded;
 };
 
-/// The input for deploying a station admin user.
-///
-/// Used to associate a user with a station canister as an admin when initializing the station.
+// The input for deploying a station admin user.
+//
+// Used to associate a user with a station canister as an admin when initializing the station.
 type DeployStationAdminUserInput = record {
   // The username to associate with the station canister as an admin.
   username : text;
@@ -213,7 +222,7 @@ type DeployStationAdminUserInput = record {
   identity : principal;
 };
 
-/// The input for deploying a station canister.
+// The input for deploying a station canister.
 type DeployStationInput = record {
   // The station name to use.
   name : text;
@@ -310,8 +319,228 @@ type GetArtifactResult = variant {
   Err : ApiError;
 };
 
+// A metadata record that contains a key and a value.
+type Metadata = record {
+  key : text;
+  value : text;
+};
+
+// An entry record, which contains information and the value stored in the registry.
+type RegistryEntry = record {
+  // The UUID that identifies the entry in the registry.
+  id : UUID;
+  // The name of the entry, which is used to identify it (e.g. station). Names that start with `@` are considered
+  // to be namespaced, and the namespace is the part of the name that comes before the `/`. Within each namespace
+  // the name should refer to the same type of entry, but many entries can exist with the same name.
+  //
+  // e.g. if the namespace is "@orbit" and the name is "station", then all the entries will refer to a wasm module.
+  //
+  // Restrictions:
+  //
+  // - Names that start with `@` are considered namespaced.
+  // - Names that start with `@` must have a namespace and a name separated by a `/`.
+  // - Names must be between 2 and 48 characters long.
+  // - Namespaces must be between 2 and 32 characters long.
+  // - Names that are not namespaced, are put in the default namespace `@a`.
+  // - Namespaced names must be at most 64 characters long.
+  name : text;
+  // The description of the entry, which is a human-readable description of the entry.
+  //
+  // Restrictions:
+  //
+  // - Descriptions must be between 24 and 512 characters long.
+  description : text;
+  // The tags are used to tag the entry with specific search terms (e.g. "latest", "stable").
+  //
+  // Tags are grouped within the same `namespace/name` (e.g. "@orbit/station").
+  //
+  // Restrictions:
+  //
+  // - Tags must be between 2 and 32 characters long.
+  // - There can be up to 10 tags per entry.
+  tags : vec text;
+  // The category is used to associate the entry with a specific category (e.g. "chain-fusion")
+  // across all the entries in the registry.
+  //
+  // Restrictions:
+  //
+  // - Categories must be between 2 and 32 characters long.
+  // - There can be up to 10 categories per entry.
+  categories : vec text;
+  // The metadata of the entry in the registry.
+  //
+  // This is a key-value map that can be used to store additional information about the entry,
+  // such as the author, license, repository, docs, etc.
+  //
+  // Restrictions:
+  //
+  // - The key must be between 1 and 32 characters long.
+  // - The value must be between 1 and 512 characters long.
+  // - There can be up to 10 metadata entries per entry in the registry.
+  metadata : vec Metadata;
+  // The content of the entry in the registry.
+  value : RegistryEntryValue;
+  // The timestamp when the entry was created.
+  created_at : TimestampRFC3339;
+  // The timestamp when the entry was last updated.
+  updated_at : TimestampRFC3339;
+};
+
+// The registry entry value.
+type RegistryEntryValue = variant {
+  WasmModule : WasmModuleRegistryEntryValue;
+};
+
+// The wasm module registry value, which is the content of the wasm module and its version.
+type WasmModuleRegistryEntryValue = record {
+  // The id of the wasm module that is stored in the artifact repository.
+  wasm_artifact_id : UUID;
+  // The version of the wasm module.
+  //
+  // Restrictions:
+  //
+  // - Versions must be between 1 and 32 characters long.
+  version : text;
+  // The dependencies of the wasm module, which are other wasm modules that this wasm module depends on.
+  //
+  // This registry ids should only reference registry entries that are of type `WasmModule`, others will be ignored.
+  dependencies : vec UUID;
+};
+
+// The search registry filter options.
+type SearchRegistryFilter = variant {
+  // The name of the registry entry to find, if the namespace is not provided the default namespace is used.
+  name : text;
+};
+
+// The input for searching the registry.
+type SearchRegistryInput = record {
+  // Filters are used sequentially to filter the entries in the registry.
+  filter_by : vec SearchRegistryFilter;
+  // The pagination options to use for the search.
+  pagination : opt PaginationInput;
+};
+
+// The search registry response.
+type SearchRegistryResponse = record {
+  // The list of registry entries that match the search criteria.
+  entries : vec RegistryEntry;
+};
+
+// The search registry result.
+type SearchRegistryResult = variant {
+  // Successfull operation result.
+  Ok : SearchRegistryResponse;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The input for getting a registry entry.
+type GetRegistryEntryInput = record {
+  // The id of the registry entry.
+  id : UUID;
+};
+
+// The get registry entry response.
+type GetRegistryEntryResponse = record {
+  // The registry entry that matches the provided id.
+  entry : RegistryEntry;
+};
+
+// The get registry entry result.
+type GetRegistryEntryResult = variant {
+  // Successfull operation result.
+  Ok : GetRegistryEntryResponse;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The registry entry input.
+type RegistryEntryInput = record {
+  // The name of the entry, which is used to identify it (e.g. station).
+  name : text;
+  // The description of the entry, which is a human-readable description of the entry.
+  description : text;
+  // The tags are used to tag the entry with specific search terms (e.g. "latest", "stable").
+  tags : vec text;
+  // The category is used to associate the entry with a specific category (e.g. "chain-fusion")
+  // across all the entries in the registry.
+  categories : vec text;
+  // The metadata of the entry in the registry.
+  metadata : vec Metadata;
+  // The content of the entry in the registry.
+  value : RegistryEntryValueInput;
+};
+
+// The registry entry value input.
+type RegistryEntryValueInput = variant {
+  WasmModule : WasmModuleRegistryEntryValueInput;
+};
+
+// The wasm module registry value input, which is the content of the wasm module and its version.
+type WasmModuleRegistryEntryValueInput = record {
+  // The wasm module that should be stored in the artifact repository.
+  wasm_module : blob;
+  // The version of the wasm module.
+  version : text;
+  // The dependencies of the wasm module, which are other wasm modules that this wasm module depends on.
+  dependencies : vec UUID;
+};
+
+// The input for adding a registry entry.
+type AddRegistryEntryInput = record {
+  entry : RegistryEntryInput;
+};
+
+// The response of adding a registry entry.
+type AddRegistryEntryResponse = record {
+  entry : RegistryEntry;
+};
+
+// The result of adding a registry entry.
+type AddRegistryEntryResult = variant {
+  // Successfull operation result.
+  Ok : AddRegistryEntryResponse;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
+// The input for editing a registry entry.
+type EditRegistryEntryInput = record {
+  // The id of the registry entry.
+  id : UUID;
+  // The updated registry entry.
+  entry : RegistryEntryInput;
+};
+
+// The response of editing a registry entry.
+type EditRegistryEntryResponse = record {
+  entry : RegistryEntry;
+};
+
+// The result of editing a registry entry.
+type EditRegistryEntryResult = variant {
+  // Successfull operation result.
+  Ok : EditRegistryEntryResponse;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
 // The control panel service definition.
 service : () -> {
+  // Add a new entry to the registry.
+  //
+  // The caller must have the necessary permissions to add an entry to the registry.
+  add_registry_entry : (AddRegistryEntryInput) -> (AddRegistryEntryResult);
+  // Edit an existing entry in the registry. 
+  // A registry entry can only be edited if it references the same kind of value.
+  //
+  // The caller must have the necessary permissions to edit an entry in the registry.
+  edit_registry_entry : (EditRegistryEntryInput) -> (EditRegistryEntryResult);
+  // Get the registry entry by its id.
+  get_registry_entry : (GetRegistryEntryInput) -> (GetRegistryEntryResult) query;
+  // Search the registry for entries.
+  search_registry : (SearchRegistryInput) -> (SearchRegistryResult) query;
   // Enables the caller to get an artifact by its id.
   get_artifact : (GetArtifactInput) -> (GetArtifactResult) query;
   // Uploads the canister modules for the station and upgrader canisters.

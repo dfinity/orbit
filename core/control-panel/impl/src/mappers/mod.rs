@@ -9,3 +9,5 @@ pub mod user_station;
 
 mod helper;
 pub use helper::*;
+
+mod registry;
