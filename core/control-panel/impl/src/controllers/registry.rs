@@ -78,9 +78,19 @@ impl RegistryController {
     /// Searches the registry for entries.
     pub async fn search_registry(
         &self,
-        _input: SearchRegistryInput,
+        input: SearchRegistryInput,
     ) -> ApiResult<SearchRegistryResponse> {
-        unimplemented!()
+        let paginated_result = self.registry_service.search(input)?;
+
+        Ok(SearchRegistryResponse {
+            entries: paginated_result
+                .items
+                .into_iter()
+                .map(|entry| entry.into())
+                .collect(),
+            total: paginated_result.total,
+            next_offset: paginated_result.next_offset,
+        })
     }
 
     /// Adds a new registry entry.
@@ -88,9 +98,13 @@ impl RegistryController {
     #[with_middleware(tail = use_canister_call_metric("add_registry_entry", &result))]
     pub async fn add_registry_entry(
         &self,
-        _input: AddRegistryEntryInput,
+        input: AddRegistryEntryInput,
     ) -> ApiResult<AddRegistryEntryResponse> {
-        unimplemented!()
+        let new_entry = self.registry_service.create(input.entry)?;
+
+        Ok(AddRegistryEntryResponse {
+            entry: new_entry.into(),
+        })
     }
 
     /// Edits an existing registry entry.
@@ -98,9 +112,16 @@ impl RegistryController {
     #[with_middleware(tail = use_canister_call_metric("edit_registry_entry", &result))]
     pub async fn edit_registry_entry(
         &self,
-        _input: EditRegistryEntryInput,
+        input: EditRegistryEntryInput,
     ) -> ApiResult<EditRegistryEntryResponse> {
-        unimplemented!()
+        let entry_id = HelperMapper::to_uuid(input.id).expect("Invalid registry entry id");
+        let edited_entry = self
+            .registry_service
+            .edit(entry_id.as_bytes(), input.entry)?;
+
+        Ok(EditRegistryEntryResponse {
+            entry: edited_entry.into(),
+        })
     }
 
     /// Deletes an existing registry entry.
@@ -108,9 +129,14 @@ impl RegistryController {
     #[with_middleware(tail = use_canister_call_metric("delete_registry_entry", &result))]
     pub async fn delete_registry_entry(
         &self,
-        _input: DeleteRegistryEntryInput,
+        input: DeleteRegistryEntryInput,
     ) -> ApiResult<DeleteRegistryEntryResponse> {
-        unimplemented!()
+        let entry_id = HelperMapper::to_uuid(input.id).expect("Invalid registry entry id");
+        let deleted_entry = self.registry_service.delete(entry_id.as_bytes())?;
+
+        Ok(DeleteRegistryEntryResponse {
+            entry: deleted_entry.into(),
+        })
     }
 }
 

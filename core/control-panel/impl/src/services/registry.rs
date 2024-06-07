@@ -5,7 +5,7 @@ use crate::{
         ArtifactRepository, RegistryRepository, ARTIFACT_REPOSITORY, REGISTRY_REPOSITORY,
     },
 };
-use control_panel_api::SearchRegistryInput;
+use control_panel_api::{RegistryEntryInput, SearchRegistryInput};
 use lazy_static::lazy_static;
 use orbit_essentials::{api::ServiceResult, pagination::PaginatedData, repository::Repository};
 use std::sync::Arc;
@@ -48,13 +48,25 @@ impl RegistryService {
         Ok(entry)
     }
 
+    /// Returns all registry entries by the given name, if the name is not namespaced, the default namespace is used.
+    pub fn search(
+        &self,
+        _search: SearchRegistryInput,
+    ) -> ServiceResult<PaginatedData<RegistryEntry>> {
+        unimplemented!()
+    }
+
     /// Creates a new registry entry and returns it.
-    pub fn create(&self) -> ServiceResult<RegistryEntry> {
+    pub fn create(&self, _input: RegistryEntryInput) -> ServiceResult<RegistryEntry> {
         unimplemented!()
     }
 
     /// Updates the registry entry and returns it.
-    pub fn edit(&self, _registry_id: &RegistryEntryId) -> ServiceResult<RegistryEntry> {
+    pub fn edit(
+        &self,
+        _registry_id: &RegistryEntryId,
+        _input: RegistryEntryInput,
+    ) -> ServiceResult<RegistryEntry> {
         unimplemented!()
     }
 
@@ -72,14 +84,5 @@ impl RegistryService {
         self.registry_repository.remove(registry_id);
 
         Ok(registry)
-    }
-
-    /// Returns all registry entries by the given name, if the name is not namespaced,
-    /// the default namespace is used.
-    pub fn search(
-        &self,
-        _search: SearchRegistryInput,
-    ) -> ServiceResult<PaginatedData<RegistryEntry>> {
-        unimplemented!()
     }
 }
