@@ -3,7 +3,7 @@ use crate::{
     core::{with_memory_manager, Memory, REGISTRY_MEMORY_ID},
     models::{
         indexes::registry_index::{RegistryIndexCriteria, RegistryIndexKind},
-        Registry, RegistryId, RegistryValueKind,
+        RegistryEntry, RegistryEntryId, RegistryValueKind,
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -13,7 +13,7 @@ use orbit_essentials::repository::{IndexRepository, Repository};
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
-  static DB: RefCell<StableBTreeMap<RegistryId, Registry, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
+  static DB: RefCell<StableBTreeMap<RegistryEntryId, RegistryEntry, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
       StableBTreeMap::init(memory_manager.get(REGISTRY_MEMORY_ID))
     )
@@ -31,16 +31,16 @@ pub struct RegistryRepository {
     indexes: RegistryIndexRepository,
 }
 
-impl Repository<RegistryId, Registry> for RegistryRepository {
-    fn list(&self) -> Vec<Registry> {
+impl Repository<RegistryEntryId, RegistryEntry> for RegistryRepository {
+    fn list(&self) -> Vec<RegistryEntry> {
         DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
     }
 
-    fn get(&self, key: &RegistryId) -> Option<Registry> {
+    fn get(&self, key: &RegistryEntryId) -> Option<RegistryEntry> {
         DB.with(|m| m.borrow().get(key))
     }
 
-    fn insert(&self, key: RegistryId, value: Registry) -> Option<Registry> {
+    fn insert(&self, key: RegistryEntryId, value: RegistryEntry) -> Option<RegistryEntry> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
@@ -48,7 +48,7 @@ impl Repository<RegistryId, Registry> for RegistryRepository {
                 .refresh_index_on_modification(RefreshIndexMode::List {
                     previous: prev
                         .clone()
-                        .map_or(Vec::new(), |prev: Registry| prev.indexes()),
+                        .map_or(Vec::new(), |prev: RegistryEntry| prev.indexes()),
                     current: value.indexes(),
                 });
 
@@ -56,7 +56,7 @@ impl Repository<RegistryId, Registry> for RegistryRepository {
         })
     }
 
-    fn remove(&self, key: &RegistryId) -> Option<Registry> {
+    fn remove(&self, key: &RegistryEntryId) -> Option<RegistryEntry> {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
 
@@ -76,7 +76,7 @@ impl Repository<RegistryId, Registry> for RegistryRepository {
 
 impl RegistryRepository {
     /// Finds the ids of the registry entries by the given name.
-    pub fn find_ids_by_fullname(&self, name: &str) -> Vec<RegistryId> {
+    pub fn find_ids_by_fullname(&self, name: &str) -> Vec<RegistryEntryId> {
         let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
             from: RegistryIndexKind::Fullname(name.to_string()),
             to: RegistryIndexKind::Fullname(name.to_string()),
@@ -86,7 +86,7 @@ impl RegistryRepository {
     }
 
     /// Finds the registry entries by the given name.
-    pub fn find_by_fullname(&self, name: &str) -> Vec<Registry> {
+    pub fn find_by_fullname(&self, name: &str) -> Vec<RegistryEntry> {
         self.find_ids_by_fullname(name)
             .into_iter()
             .filter_map(|id| self.get(&id))
@@ -94,7 +94,7 @@ impl RegistryRepository {
     }
 
     /// Finds the ids of the registry entries by the given namespace.
-    pub fn find_ids_by_namespace(&self, namespace: &str) -> Vec<RegistryId> {
+    pub fn find_ids_by_namespace(&self, namespace: &str) -> Vec<RegistryEntryId> {
         let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
             from: RegistryIndexKind::Namespace(namespace.to_string()),
             to: RegistryIndexKind::Namespace(namespace.to_string()),
@@ -104,7 +104,7 @@ impl RegistryRepository {
     }
 
     /// Finds the registry entries by the given namespace.
-    pub fn find_by_namespace(&self, namespace: &str) -> Vec<Registry> {
+    pub fn find_by_namespace(&self, namespace: &str) -> Vec<RegistryEntry> {
         self.find_ids_by_namespace(namespace)
             .into_iter()
             .filter_map(|id| self.get(&id))
@@ -112,7 +112,7 @@ impl RegistryRepository {
     }
 
     /// Finds the ids of the registry entries by the given unnamespaced name.
-    pub fn find_ids_by_name(&self, unnamespaced_name: &str) -> Vec<RegistryId> {
+    pub fn find_ids_by_name(&self, unnamespaced_name: &str) -> Vec<RegistryEntryId> {
         let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
             from: RegistryIndexKind::Name(unnamespaced_name.to_string()),
             to: RegistryIndexKind::Name(unnamespaced_name.to_string()),
@@ -122,7 +122,7 @@ impl RegistryRepository {
     }
 
     /// Finds the registry entries by the given unnamespaced name.
-    pub fn find_by_name(&self, unnamespaced_name: &str) -> Vec<Registry> {
+    pub fn find_by_name(&self, unnamespaced_name: &str) -> Vec<RegistryEntry> {
         self.find_ids_by_name(unnamespaced_name)
             .into_iter()
             .filter_map(|id| self.get(&id))
@@ -130,7 +130,7 @@ impl RegistryRepository {
     }
 
     /// Finds the ids of the registry entries by the given category.
-    pub fn find_ids_by_category(&self, category: &str) -> Vec<RegistryId> {
+    pub fn find_ids_by_category(&self, category: &str) -> Vec<RegistryEntryId> {
         let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
             from: RegistryIndexKind::Category(category.to_string()),
             to: RegistryIndexKind::Category(category.to_string()),
@@ -140,7 +140,7 @@ impl RegistryRepository {
     }
 
     /// Finds the registry entries by the given category.
-    pub fn find_by_category(&self, category: &str) -> Vec<Registry> {
+    pub fn find_by_category(&self, category: &str) -> Vec<RegistryEntry> {
         self.find_ids_by_category(category)
             .into_iter()
             .filter_map(|id| self.get(&id))
@@ -148,7 +148,7 @@ impl RegistryRepository {
     }
 
     /// Find by tags the registry entries by the given tag.
-    pub fn find_ids_by_tag(&self, tag: &str) -> Vec<RegistryId> {
+    pub fn find_ids_by_tag(&self, tag: &str) -> Vec<RegistryEntryId> {
         let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
             from: RegistryIndexKind::Tag(tag.to_string()),
             to: RegistryIndexKind::Tag(tag.to_string()),
@@ -158,7 +158,7 @@ impl RegistryRepository {
     }
 
     /// Finds the registry entries by the given tag.
-    pub fn find_by_tag(&self, tag: &str) -> Vec<Registry> {
+    pub fn find_by_tag(&self, tag: &str) -> Vec<RegistryEntry> {
         self.find_ids_by_tag(tag)
             .into_iter()
             .filter_map(|id| self.get(&id))
@@ -166,7 +166,7 @@ impl RegistryRepository {
     }
 
     /// Finds the ids of the registry entries by the given value kind.
-    pub fn find_ids_by_kind(&self, kind: &RegistryValueKind) -> Vec<RegistryId> {
+    pub fn find_ids_by_kind(&self, kind: &RegistryValueKind) -> Vec<RegistryEntryId> {
         let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
             from: RegistryIndexKind::ValueKind(kind.clone()),
             to: RegistryIndexKind::ValueKind(kind.clone()),
@@ -176,7 +176,7 @@ impl RegistryRepository {
     }
 
     /// Finds the registry entries by the given value kind.
-    pub fn find_by_kind(&self, kind: &RegistryValueKind) -> Vec<Registry> {
+    pub fn find_by_kind(&self, kind: &RegistryValueKind) -> Vec<RegistryEntry> {
         self.find_ids_by_kind(kind)
             .into_iter()
             .filter_map(|id| self.get(&id))
@@ -294,7 +294,7 @@ mod tests {
         }
 
         let result = repository
-            .find_by_fullname(format!("@{}/entry-2", Registry::DEFAULT_NAMESPACE).as_str());
+            .find_by_fullname(format!("@{}/entry-2", RegistryEntry::DEFAULT_NAMESPACE).as_str());
 
         assert!(!result.is_empty());
         assert_eq!(result.len(), 1);

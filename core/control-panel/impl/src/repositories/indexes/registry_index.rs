@@ -2,7 +2,7 @@ use crate::{
     core::{with_memory_manager, Memory, REGISTRY_INDEX_MEMORY_ID},
     models::{
         indexes::registry_index::{RegistryIndex, RegistryIndexCriteria},
-        RegistryId,
+        RegistryEntryId,
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -21,7 +21,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct RegistryIndexRepository {}
 
-impl IndexRepository<RegistryIndex, RegistryId> for RegistryIndexRepository {
+impl IndexRepository<RegistryIndex, RegistryEntryId> for RegistryIndexRepository {
     type FindByCriteria = RegistryIndexCriteria;
 
     fn exists(&self, index: &RegistryIndex) -> bool {
@@ -36,21 +36,21 @@ impl IndexRepository<RegistryIndex, RegistryId> for RegistryIndexRepository {
         DB.with(|m| m.borrow_mut().remove(index).is_some())
     }
 
-    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<RegistryId> {
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<RegistryEntryId> {
         DB.with(|db| {
             let start_key = RegistryIndex {
                 index: criteria.from,
-                registry_id: [u8::MIN; 16],
+                registry_entry_id: [u8::MIN; 16],
             };
             let end_key = RegistryIndex {
                 index: criteria.to,
-                registry_id: [u8::MAX; 16],
+                registry_entry_id: [u8::MAX; 16],
             };
 
             db.borrow()
                 .range(start_key..=end_key)
-                .map(|(index, _)| index.registry_id)
-                .collect::<HashSet<RegistryId>>()
+                .map(|(index, _)| index.registry_entry_id)
+                .collect::<HashSet<RegistryEntryId>>()
         })
     }
 }
@@ -76,7 +76,7 @@ mod tests {
         let repository = RegistryIndexRepository::default();
         let index = RegistryIndex {
             index: RegistryIndexKind::Fullname("test".to_string()),
-            registry_id: [1; 16],
+            registry_entry_id: [1; 16],
         };
 
         assert!(!repository.exists(&index));
@@ -94,7 +94,7 @@ mod tests {
         for i in 0..10 {
             repository.insert(RegistryIndex {
                 index: RegistryIndexKind::Name(i.to_string()),
-                registry_id: [i; 16],
+                registry_entry_id: [i; 16],
             });
         }
 
@@ -113,7 +113,7 @@ mod tests {
         for i in 0..10 {
             repository.insert(RegistryIndex {
                 index: RegistryIndexKind::Category(i.to_string()),
-                registry_id: [i; 16],
+                registry_entry_id: [i; 16],
             });
         }
 

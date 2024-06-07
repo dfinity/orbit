@@ -341,7 +341,7 @@ type RegistryEntry = record {
   // - Names that start with `@` must have a namespace and a name separated by a `/`.
   // - Names must be between 2 and 48 characters long.
   // - Namespaces must be between 2 and 32 characters long.
-  // - Names that are not namespaced, are put in the default namespace `@a`.
+  // - Names that are not namespaced, are put in the default namespace `@default`.
   // - Namespaced names must be at most 64 characters long.
   name : text;
   // The description of the entry, which is a human-readable description of the entry.

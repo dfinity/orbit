@@ -1,4 +1,4 @@
-use crate::models::{Registry, RegistryId, RegistryValueKind};
+use crate::models::{RegistryEntry, RegistryEntryId, RegistryValueKind};
 use orbit_essentials::storable;
 
 /// The main index for registry entries.
@@ -8,7 +8,7 @@ pub struct RegistryIndex {
     /// An indexed value of the registry entry.
     pub index: RegistryIndexKind,
     /// The registry entry id, which is a UUID.
-    pub registry_id: RegistryId,
+    pub registry_entry_id: RegistryEntryId,
 }
 
 #[storable]
@@ -28,7 +28,7 @@ pub struct RegistryIndexCriteria {
     pub to: RegistryIndexKind,
 }
 
-impl Registry {
+impl RegistryEntry {
     pub fn to_index_by_fullname(&self) -> RegistryIndex {
         RegistryIndex {
             index: RegistryIndexKind::Fullname(format!(
@@ -36,21 +36,21 @@ impl Registry {
                 self.namespace(),
                 self.unnamespaced_name()
             )),
-            registry_id: self.id,
+            registry_entry_id: self.id,
         }
     }
 
     pub fn to_index_by_namespace(&self) -> RegistryIndex {
         RegistryIndex {
             index: RegistryIndexKind::Namespace(self.namespace().to_string()),
-            registry_id: self.id,
+            registry_entry_id: self.id,
         }
     }
 
     pub fn to_index_by_unnamespaced_name(&self) -> RegistryIndex {
         RegistryIndex {
             index: RegistryIndexKind::Name(self.unnamespaced_name().to_string()),
-            registry_id: self.id,
+            registry_entry_id: self.id,
         }
     }
 
@@ -59,7 +59,7 @@ impl Registry {
             .iter()
             .map(|category| RegistryIndex {
                 index: RegistryIndexKind::Category(category.to_string()),
-                registry_id: self.id,
+                registry_entry_id: self.id,
             })
             .collect()
     }
@@ -69,7 +69,7 @@ impl Registry {
             .iter()
             .map(|tag| RegistryIndex {
                 index: RegistryIndexKind::Tag(tag.to_string()),
-                registry_id: self.id,
+                registry_entry_id: self.id,
             })
             .collect()
     }
@@ -77,7 +77,7 @@ impl Registry {
     pub fn to_index_by_value_kind(&self) -> RegistryIndex {
         RegistryIndex {
             index: RegistryIndexKind::ValueKind(RegistryValueKind::from(&self.value)),
-            registry_id: self.id,
+            registry_entry_id: self.id,
         }
     }
 
@@ -104,14 +104,17 @@ mod tests {
     fn valid_model_serialization() {
         let model: RegistryIndex = RegistryIndex {
             index: RegistryIndexKind::Namespace("test".to_string()),
-            registry_id: [u8::MAX; 16],
+            registry_entry_id: [u8::MAX; 16],
         };
 
         let serialized_model = model.to_bytes();
         let deserialized_model = RegistryIndex::from_bytes(serialized_model);
 
         assert_eq!(model.index, deserialized_model.index);
-        assert_eq!(model.registry_id, deserialized_model.registry_id);
+        assert_eq!(
+            model.registry_entry_id,
+            deserialized_model.registry_entry_id
+        );
     }
 
     #[test]
@@ -125,7 +128,7 @@ mod tests {
             index.index,
             RegistryIndexKind::Namespace(entry.namespace().to_string())
         );
-        assert_eq!(index.registry_id, entry.id);
+        assert_eq!(index.registry_entry_id, entry.id);
     }
 
     #[test]
@@ -139,7 +142,7 @@ mod tests {
             index.index,
             RegistryIndexKind::Name(entry.unnamespaced_name().to_string())
         );
-        assert_eq!(index.registry_id, entry.id);
+        assert_eq!(index.registry_entry_id, entry.id);
     }
 
     #[test]
@@ -153,7 +156,7 @@ mod tests {
                 index[i].index,
                 RegistryIndexKind::Category(category.to_string())
             );
-            assert_eq!(index[i].registry_id, entry.id);
+            assert_eq!(index[i].registry_entry_id, entry.id);
         }
     }
 
@@ -165,7 +168,7 @@ mod tests {
         assert_eq!(index.len(), entry.tags.len());
         for (i, tag) in entry.tags.iter().enumerate() {
             assert_eq!(index[i].index, RegistryIndexKind::Tag(tag.to_string()));
-            assert_eq!(index[i].registry_id, entry.id);
+            assert_eq!(index[i].registry_entry_id, entry.id);
         }
     }
 
@@ -179,7 +182,7 @@ mod tests {
             index.index,
             RegistryIndexKind::Fullname(entry.name.to_string())
         );
-        assert_eq!(index.registry_id, entry.id);
+        assert_eq!(index.registry_entry_id, entry.id);
     }
 
     #[test]
@@ -191,6 +194,6 @@ mod tests {
             index.index,
             RegistryIndexKind::ValueKind(RegistryValueKind::from(&entry.value))
         );
-        assert_eq!(index.registry_id, entry.id);
+        assert_eq!(index.registry_entry_id, entry.id);
     }
 }

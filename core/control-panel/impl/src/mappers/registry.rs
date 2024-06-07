@@ -1,5 +1,5 @@
 use super::HelperMapper;
-use crate::models::{Registry, RegistryValue, RegistryValueKind, WasmModuleRegistryValue};
+use crate::models::{RegistryEntry, RegistryValue, RegistryValueKind, WasmModuleRegistryValue};
 use orbit_essentials::utils::timestamp_to_rfc3339;
 use uuid::Uuid;
 
@@ -35,8 +35,8 @@ impl From<RegistryValue> for control_panel_api::RegistryEntryValueDTO {
     }
 }
 
-impl From<Registry> for control_panel_api::RegistryEntryDTO {
-    fn from(entry: Registry) -> Self {
+impl From<RegistryEntry> for control_panel_api::RegistryEntryDTO {
+    fn from(entry: RegistryEntry) -> Self {
         Self {
             id: Uuid::from_bytes(entry.id).to_string(),
             name: entry.name,

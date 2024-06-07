@@ -12,8 +12,8 @@ use std::collections::BTreeMap;
 /// This value is hardcoded, and it should be updated or moved to a configurable value in the future if needed.
 pub const _UNIQUE_TAGS: [&str; 2] = ["latest", "stable"];
 
-/// The registry id, which is a UUID.
-pub type RegistryId = UUID;
+/// The entry id in the registry, which is a UUID.
+pub type RegistryEntryId = UUID;
 
 /// The registry is a record that is stored in the registry repository.
 ///
@@ -21,9 +21,9 @@ pub type RegistryId = UUID;
 /// the `RegistryValue` enum should be updated to include the new entry type.
 #[storable]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct Registry {
+pub struct RegistryEntry {
     /// The UUID that identifies the entry in the registry.
-    pub id: RegistryId,
+    pub id: RegistryEntryId,
     /// The name of the entry, which is used to identify it (e.g. station). Names that start with `@` are considered
     /// to be namespaced, and the namespace is the part of the name that comes before the `/`. Within each namespace
     /// the name should refer to the same type of entry, but many entries can exist with the same name.
@@ -36,7 +36,7 @@ pub struct Registry {
     /// - Names that start with `@` must have a namespace and a name separated by a `/`.
     /// - Names must be between 2 and 48 characters long.
     /// - Namespaces must be between 2 and 32 characters long.
-    /// - Names that are not namespaced, are put in the default namespace `@a`.
+    /// - Names that are not namespaced, are put in the default namespace `@default`.
     /// - Namespaced names must be at most 64 characters long.
     pub name: String,
     /// The description of the entry, which is a human-readable description of the entry.
@@ -117,10 +117,10 @@ pub struct WasmModuleRegistryValue {
     /// Restrictions:
     ///
     /// - There can be up to 25 dependencies per wasm module.
-    pub dependencies: Vec<RegistryId>,
+    pub dependencies: Vec<RegistryEntryId>,
 }
 
-impl Registry {
+impl RegistryEntry {
     pub const DEFAULT_NAMESPACE: &'static str = "default";
 
     pub const MAX_NAMESPACED_NAME_LENGTH: usize = 64;
@@ -202,7 +202,7 @@ impl WasmModuleRegistryValue {
 }
 
 fn validate_wasm_module_dependencies(
-    dependencies: &[RegistryId],
+    dependencies: &[RegistryEntryId],
 ) -> ModelValidatorResult<RegistryError> {
     if dependencies.len() > WasmModuleRegistryValue::MAX_DEPENDENCIES {
         return Err(RegistryError::ValidationError {
@@ -258,16 +258,16 @@ fn validate_name(name: &str) -> ModelValidatorResult<RegistryError> {
 
             (namespace, name)
         }
-        _ => (Registry::DEFAULT_NAMESPACE, name),
+        _ => (RegistryEntry::DEFAULT_NAMESPACE, name),
     };
 
     let full_name = format!("@{}/{}", namespace, name);
 
-    if full_name.len() > Registry::MAX_NAMESPACED_NAME_LENGTH {
+    if full_name.len() > RegistryEntry::MAX_NAMESPACED_NAME_LENGTH {
         return Err(RegistryError::ValidationError {
             info: format!(
                 "Name length must be at most {}",
-                Registry::MAX_NAMESPACED_NAME_LENGTH
+                RegistryEntry::MAX_NAMESPACED_NAME_LENGTH
             ),
         });
     }
@@ -302,24 +302,26 @@ fn validate_name(name: &str) -> ModelValidatorResult<RegistryError> {
         });
     }
 
-    if (namespace.len() < Registry::MIN_NAMESPACE_LENGTH)
-        || (namespace.len() > Registry::MAX_NAMESPACE_LENGTH)
+    if (namespace.len() < RegistryEntry::MIN_NAMESPACE_LENGTH)
+        || (namespace.len() > RegistryEntry::MAX_NAMESPACE_LENGTH)
     {
         return Err(RegistryError::ValidationError {
             info: format!(
                 "Namespace length must be between {} and {}",
-                Registry::MIN_NAMESPACE_LENGTH,
-                Registry::MAX_NAMESPACE_LENGTH,
+                RegistryEntry::MIN_NAMESPACE_LENGTH,
+                RegistryEntry::MAX_NAMESPACE_LENGTH,
             ),
         });
     }
 
-    if (name.len() < Registry::MIN_NAME_LENGTH) || (name.len() > Registry::MAX_NAME_LENGTH) {
+    if (name.len() < RegistryEntry::MIN_NAME_LENGTH)
+        || (name.len() > RegistryEntry::MAX_NAME_LENGTH)
+    {
         return Err(RegistryError::ValidationError {
             info: format!(
                 "Name length must be between {} and {}",
-                Registry::MIN_NAME_LENGTH,
-                Registry::MAX_NAME_LENGTH,
+                RegistryEntry::MIN_NAME_LENGTH,
+                RegistryEntry::MAX_NAME_LENGTH,
             ),
         });
     }
@@ -328,14 +330,14 @@ fn validate_name(name: &str) -> ModelValidatorResult<RegistryError> {
 }
 
 fn validate_description(description: &str) -> ModelValidatorResult<RegistryError> {
-    if (description.len() < Registry::MIN_DESCRIPTION_LENGTH)
-        || (description.len() > Registry::MAX_DESCRIPTION_LENGTH)
+    if (description.len() < RegistryEntry::MIN_DESCRIPTION_LENGTH)
+        || (description.len() > RegistryEntry::MAX_DESCRIPTION_LENGTH)
     {
         return Err(RegistryError::ValidationError {
             info: format!(
                 "Description length must be between {} and {}",
-                Registry::MIN_DESCRIPTION_LENGTH,
-                Registry::MAX_DESCRIPTION_LENGTH,
+                RegistryEntry::MIN_DESCRIPTION_LENGTH,
+                RegistryEntry::MAX_DESCRIPTION_LENGTH,
             ),
         });
     }
@@ -344,25 +346,25 @@ fn validate_description(description: &str) -> ModelValidatorResult<RegistryError
 }
 
 fn validate_categories(categories: &[String]) -> ModelValidatorResult<RegistryError> {
-    if categories.len() > Registry::MAX_CATEGORIES {
+    if categories.len() > RegistryEntry::MAX_CATEGORIES {
         return Err(RegistryError::ValidationError {
             info: format!(
                 "Too many categories, expected at most {} but got {}",
-                Registry::MAX_CATEGORIES,
+                RegistryEntry::MAX_CATEGORIES,
                 categories.len()
             ),
         });
     }
 
     for category in categories.iter() {
-        if (category.len() < Registry::MIN_CATEGORY_LENGTH)
-            || (category.len() > Registry::MAX_CATEGORY_LENGTH)
+        if (category.len() < RegistryEntry::MIN_CATEGORY_LENGTH)
+            || (category.len() > RegistryEntry::MAX_CATEGORY_LENGTH)
         {
             return Err(RegistryError::ValidationError {
                 info: format!(
                     "Category length must be between {} and {}",
-                    Registry::MIN_CATEGORY_LENGTH,
-                    Registry::MAX_CATEGORY_LENGTH,
+                    RegistryEntry::MIN_CATEGORY_LENGTH,
+                    RegistryEntry::MAX_CATEGORY_LENGTH,
                 ),
             });
         }
@@ -383,23 +385,25 @@ fn validate_categories(categories: &[String]) -> ModelValidatorResult<RegistryEr
 }
 
 fn validate_tags(tags: &[String]) -> ModelValidatorResult<RegistryError> {
-    if tags.len() > Registry::MAX_TAGS {
+    if tags.len() > RegistryEntry::MAX_TAGS {
         return Err(RegistryError::ValidationError {
             info: format!(
                 "Too many tags, expected at most {} but got {}",
-                Registry::MAX_TAGS,
+                RegistryEntry::MAX_TAGS,
                 tags.len()
             ),
         });
     }
 
     for tag in tags.iter() {
-        if (tag.len() < Registry::MIN_TAG_LENGTH) || (tag.len() > Registry::MAX_TAG_LENGTH) {
+        if (tag.len() < RegistryEntry::MIN_TAG_LENGTH)
+            || (tag.len() > RegistryEntry::MAX_TAG_LENGTH)
+        {
             return Err(RegistryError::ValidationError {
                 info: format!(
                     "Tag length must be between {} and {}",
-                    Registry::MIN_TAG_LENGTH,
-                    Registry::MAX_TAG_LENGTH,
+                    RegistryEntry::MIN_TAG_LENGTH,
+                    RegistryEntry::MAX_TAG_LENGTH,
                 ),
             });
         }
@@ -415,37 +419,37 @@ fn validate_tags(tags: &[String]) -> ModelValidatorResult<RegistryError> {
 }
 
 fn validate_metadata(metadata: &BTreeMap<String, String>) -> ModelValidatorResult<RegistryError> {
-    if metadata.len() > Registry::MAX_METADATA_ENTRIES {
+    if metadata.len() > RegistryEntry::MAX_METADATA_ENTRIES {
         return Err(RegistryError::ValidationError {
             info: format!(
                 "Too many metadata entries, expected at most {} but got {}",
-                Registry::MAX_METADATA_ENTRIES,
+                RegistryEntry::MAX_METADATA_ENTRIES,
                 metadata.len()
             ),
         });
     }
 
     for (key, value) in metadata.iter() {
-        if (key.len() < Registry::MIN_METADATA_KEY_LENGTH)
-            || (key.len() > Registry::MAX_METADATA_KEY_LENGTH)
+        if (key.len() < RegistryEntry::MIN_METADATA_KEY_LENGTH)
+            || (key.len() > RegistryEntry::MAX_METADATA_KEY_LENGTH)
         {
             return Err(RegistryError::ValidationError {
                 info: format!(
                     "Metadata key length must be between {} and {}",
-                    Registry::MIN_METADATA_KEY_LENGTH,
-                    Registry::MAX_METADATA_KEY_LENGTH,
+                    RegistryEntry::MIN_METADATA_KEY_LENGTH,
+                    RegistryEntry::MAX_METADATA_KEY_LENGTH,
                 ),
             });
         }
 
-        if (value.len() < Registry::MIN_METADATA_VALUE_LENGTH)
-            || (value.len() > Registry::MAX_METADATA_VALUE_LENGTH)
+        if (value.len() < RegistryEntry::MIN_METADATA_VALUE_LENGTH)
+            || (value.len() > RegistryEntry::MAX_METADATA_VALUE_LENGTH)
         {
             return Err(RegistryError::ValidationError {
                 info: format!(
                     "Metadata value length must be between {} and {}",
-                    Registry::MIN_METADATA_VALUE_LENGTH,
-                    Registry::MAX_METADATA_VALUE_LENGTH,
+                    RegistryEntry::MIN_METADATA_VALUE_LENGTH,
+                    RegistryEntry::MAX_METADATA_VALUE_LENGTH,
                 ),
             });
         }
@@ -467,7 +471,7 @@ fn validate_timestamps(
     Ok(())
 }
 
-impl ModelValidator<RegistryError> for Registry {
+impl ModelValidator<RegistryError> for RegistryEntry {
     fn validate(&self) -> ModelValidatorResult<RegistryError> {
         validate_name(&self.name)?;
         validate_description(&self.description)?;
@@ -489,8 +493,8 @@ pub mod registry_entry_test_utils {
     use super::*;
     use uuid::Uuid;
 
-    pub fn create_registry_entry() -> Registry {
-        Registry {
+    pub fn create_registry_entry() -> RegistryEntry {
+        RegistryEntry {
             id: *Uuid::new_v4().as_bytes(),
             name: Uuid::new_v4().to_string().as_str()[..8].to_string(),
             description: "This is a test entry to the registry.".to_string(),
@@ -525,14 +529,14 @@ mod tests {
     #[case::starts_with_space(&" entry")]
     #[case::ends_with_space(&"entry ")]
     #[case::name_to_small(&"a")]
-    #[case::name_too_big(&"a".repeat(Registry::MAX_NAME_LENGTH + 1))]
+    #[case::name_too_big(&"a".repeat(RegistryEntry::MAX_NAME_LENGTH + 1))]
     #[case::namespaced_name_with_too_short_namespace(&format!(
         "@{}/test",
         "a"
     ))]
     #[case::namespaced_name_with_too_long_namespace(&format!(
         "@{}/test",
-        "a".repeat(Registry::MAX_NAMESPACE_LENGTH + 1)
+        "a".repeat(RegistryEntry::MAX_NAMESPACE_LENGTH + 1)
     ))]
     #[case::name_contains_invalid_characters(&"test!")]
     #[case::name_contains_invalid_characters(&"test.1")]
@@ -549,16 +553,16 @@ mod tests {
 
     #[rstest]
     #[case::common_name(&"test")]
-    #[case::short_name(&"a".repeat(Registry::MIN_NAME_LENGTH))]
-    #[case::long_name(&"a".repeat(Registry::MAX_NAME_LENGTH))]
+    #[case::short_name(&"a".repeat(RegistryEntry::MIN_NAME_LENGTH))]
+    #[case::long_name(&"a".repeat(RegistryEntry::MAX_NAME_LENGTH))]
     #[case::namespaced_name(&"@orbit/test")]
     #[case::namespaced_name_with_long_namespace(&format!(
         "@{}/test",
-        "a".repeat(Registry::MAX_NAMESPACE_LENGTH)
+        "a".repeat(RegistryEntry::MAX_NAMESPACE_LENGTH)
     ))]
     #[case::namespaced_name_with_short_namespace(&format!(
         "@{}/test",
-        "a".repeat(Registry::MIN_NAMESPACE_LENGTH)
+        "a".repeat(RegistryEntry::MIN_NAMESPACE_LENGTH)
     ))]
     fn valid_name(#[case] name: &str) {
         let mut entry = create_registry_entry();
@@ -570,7 +574,7 @@ mod tests {
     #[rstest]
     #[case::empty_description(&"")]
     #[case::description_too_small(&"a")]
-    #[case::description_too_big(&"a".repeat(Registry::MAX_DESCRIPTION_LENGTH + 1))]
+    #[case::description_too_big(&"a".repeat(RegistryEntry::MAX_DESCRIPTION_LENGTH + 1))]
     fn invalid_description(#[case] description: &str) {
         let mut entry = create_registry_entry();
         entry.description = description.to_string();
@@ -580,8 +584,8 @@ mod tests {
 
     #[rstest]
     #[case::common_description(&"This is a test entry to the registry.")]
-    #[case::short_description(&"a".repeat(Registry::MIN_DESCRIPTION_LENGTH))]
-    #[case::long_description(&"a".repeat(Registry::MAX_DESCRIPTION_LENGTH))]
+    #[case::short_description(&"a".repeat(RegistryEntry::MIN_DESCRIPTION_LENGTH))]
+    #[case::long_description(&"a".repeat(RegistryEntry::MAX_DESCRIPTION_LENGTH))]
     fn valid_description(#[case] description: &str) {
         let mut entry = create_registry_entry();
         entry.description = description.to_string();
@@ -590,9 +594,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case::too_many_categories((0..Registry::MAX_CATEGORIES + 1).map(|i| format!("test-{}", i).to_string()).collect())]
+    #[case::too_many_categories((0..RegistryEntry::MAX_CATEGORIES + 1).map(|i| format!("test-{}", i).to_string()).collect())]
     #[case::category_too_small(vec!["a".to_string()])]
-    #[case::category_too_big(vec!["a".repeat(Registry::MAX_CATEGORY_LENGTH + 1)])]
+    #[case::category_too_big(vec!["a".repeat(RegistryEntry::MAX_CATEGORY_LENGTH + 1)])]
     #[case::duplicate_categories(vec!["test".to_string(), "test".to_string()])]
     fn invalid_categories(#[case] categories: Vec<String>) {
         let mut entry = create_registry_entry();
@@ -604,8 +608,8 @@ mod tests {
     #[rstest]
     #[case::no_categories(vec![])]
     #[case::common_categories(vec!["test".to_string()])]
-    #[case::short_categories(vec!["a".repeat(Registry::MIN_CATEGORY_LENGTH)])]
-    #[case::long_categories(vec!["a".repeat(Registry::MAX_CATEGORY_LENGTH)])]
+    #[case::short_categories(vec!["a".repeat(RegistryEntry::MIN_CATEGORY_LENGTH)])]
+    #[case::long_categories(vec!["a".repeat(RegistryEntry::MAX_CATEGORY_LENGTH)])]
     fn valid_categories(#[case] categories: Vec<String>) {
         let mut entry = create_registry_entry();
         entry.categories = categories;
@@ -614,9 +618,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case::too_many_tags((0..Registry::MAX_TAGS + 1).map(|i| i.to_string()).collect())]
+    #[case::too_many_tags((0..RegistryEntry::MAX_TAGS + 1).map(|i| i.to_string()).collect())]
     #[case::tag_too_small(vec!["a".to_string()])]
-    #[case::tag_too_big(vec!["a".repeat(Registry::MAX_TAG_LENGTH + 1)])]
+    #[case::tag_too_big(vec!["a".repeat(RegistryEntry::MAX_TAG_LENGTH + 1)])]
     #[case::duplicate_tags(vec!["test".to_string(), "test".to_string()])]
     fn invalid_tags(#[case] tags: Vec<String>) {
         let mut entry = create_registry_entry();
@@ -628,8 +632,8 @@ mod tests {
     #[rstest]
     #[case::no_tags(vec![])]
     #[case::common_tags(vec!["test".to_string()])]
-    #[case::short_tags(vec!["a".repeat(Registry::MIN_TAG_LENGTH)])]
-    #[case::long_tags(vec!["a".repeat(Registry::MAX_TAG_LENGTH)])]
+    #[case::short_tags(vec!["a".repeat(RegistryEntry::MIN_TAG_LENGTH)])]
+    #[case::long_tags(vec!["a".repeat(RegistryEntry::MAX_TAG_LENGTH)])]
     fn valid_tags(#[case] tags: Vec<String>) {
         let mut entry = create_registry_entry();
         entry.tags = tags;
@@ -639,14 +643,14 @@ mod tests {
 
     #[rstest]
     #[case::too_many_metadata(
-        (0..Registry::MAX_METADATA_ENTRIES + 1)
+        (0..RegistryEntry::MAX_METADATA_ENTRIES + 1)
             .map(|i| (i.to_string(), i.to_string()))
             .collect()
     )]
     #[case::metadata_key_too_small(vec![("".to_string(), "test".to_string())])]
-    #[case::metadata_key_too_big(vec![("a".repeat(Registry::MAX_METADATA_KEY_LENGTH + 1), "test".to_string())])]
+    #[case::metadata_key_too_big(vec![("a".repeat(RegistryEntry::MAX_METADATA_KEY_LENGTH + 1), "test".to_string())])]
     #[case::metadata_value_too_small(vec![("test".to_string(), "".to_string())])]
-    #[case::metadata_value_too_big(vec![("test".to_string(), "a".repeat(Registry::MAX_METADATA_VALUE_LENGTH + 1))])]
+    #[case::metadata_value_too_big(vec![("test".to_string(), "a".repeat(RegistryEntry::MAX_METADATA_VALUE_LENGTH + 1))])]
     fn invalid_metadata(#[case] metadata: Vec<(String, String)>) {
         let mut entry = create_registry_entry();
         entry.metadata = metadata.into_iter().collect();
@@ -662,8 +666,8 @@ mod tests {
     ])]
     #[case::short_metadata(vec![("a".to_string(), "a".to_string())])]
     #[case::long_metadata(vec![(
-        "a".repeat(Registry::MAX_METADATA_KEY_LENGTH),
-        "a".repeat(Registry::MAX_METADATA_VALUE_LENGTH)
+        "a".repeat(RegistryEntry::MAX_METADATA_KEY_LENGTH),
+        "a".repeat(RegistryEntry::MAX_METADATA_VALUE_LENGTH)
     )])]
     fn valid_metadata(#[case] metadata: Vec<(String, String)>) {
         let mut entry = create_registry_entry();
@@ -727,7 +731,7 @@ mod tests {
     #[case::too_many_dependencies(
         (0..WasmModuleRegistryValue::MAX_DEPENDENCIES + 1).map(|_| *Uuid::new_v4().as_bytes()).collect())
     ]
-    fn invalid_dependencies(#[case] dependencies: Vec<RegistryId>) {
+    fn invalid_dependencies(#[case] dependencies: Vec<RegistryEntryId>) {
         let mut entry = create_registry_entry();
         entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
@@ -741,7 +745,7 @@ mod tests {
     #[rstest]
     #[case::no_dependencies(Vec::new())]
     #[case::some_dependencies(vec![*Uuid::new_v4().as_bytes()])]
-    fn valid_dependencies(#[case] dependencies: Vec<RegistryId>) {
+    fn valid_dependencies(#[case] dependencies: Vec<RegistryEntryId>) {
         let mut entry = create_registry_entry();
         entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
@@ -753,9 +757,12 @@ mod tests {
     }
 
     #[rstest]
-    #[case::default_namespace("none", Registry::DEFAULT_NAMESPACE)]
+    #[case::default_namespace("none", RegistryEntry::DEFAULT_NAMESPACE)]
     #[case::namespaced_name("@orbit/test", "orbit")]
-    #[case::invalid_namespace_should_fallback_to_default("@/test", Registry::DEFAULT_NAMESPACE)]
+    #[case::invalid_namespace_should_fallback_to_default(
+        "@/test",
+        RegistryEntry::DEFAULT_NAMESPACE
+    )]
     fn extracts_namespace(#[case] name: &str, #[case] expected_namespace: &str) {
         let mut entry = create_registry_entry();
         entry.name = name.to_string();

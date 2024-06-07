@@ -1,6 +1,6 @@
 use crate::{
     errors::RegistryError,
-    models::{Registry, RegistryId, RegistryValue},
+    models::{RegistryEntry, RegistryEntryId, RegistryValue},
     repositories::{
         ArtifactRepository, RegistryRepository, ARTIFACT_REPOSITORY, REGISTRY_REPOSITORY,
     },
@@ -37,7 +37,7 @@ impl RegistryService {
     }
 
     /// Returns the registry entry by id.
-    pub fn get(&self, registry_id: &RegistryId) -> ServiceResult<Registry> {
+    pub fn get(&self, registry_id: &RegistryEntryId) -> ServiceResult<RegistryEntry> {
         let entry =
             self.registry_repository
                 .get(registry_id)
@@ -49,17 +49,17 @@ impl RegistryService {
     }
 
     /// Creates a new registry entry and returns it.
-    pub fn create(&self) -> ServiceResult<Registry> {
+    pub fn create(&self) -> ServiceResult<RegistryEntry> {
         unimplemented!()
     }
 
     /// Updates the registry entry and returns it.
-    pub fn edit(&self, _registry_id: &RegistryId) -> ServiceResult<Registry> {
+    pub fn edit(&self, _registry_id: &RegistryEntryId) -> ServiceResult<RegistryEntry> {
         unimplemented!()
     }
 
     /// Deletes the registry entry by id.
-    pub fn delete(&self, registry_id: &RegistryId) -> ServiceResult<Registry> {
+    pub fn delete(&self, registry_id: &RegistryEntryId) -> ServiceResult<RegistryEntry> {
         let registry = self.get(registry_id)?;
 
         match &registry.value {
@@ -76,7 +76,10 @@ impl RegistryService {
 
     /// Returns all registry entries by the given name, if the name is not namespaced,
     /// the default namespace is used.
-    pub fn search(&self, _search: SearchRegistryInput) -> ServiceResult<PaginatedData<Registry>> {
+    pub fn search(
+        &self,
+        _search: SearchRegistryInput,
+    ) -> ServiceResult<PaginatedData<RegistryEntry>> {
         unimplemented!()
     }
 }
