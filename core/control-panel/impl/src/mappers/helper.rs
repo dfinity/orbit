@@ -1,5 +1,5 @@
 use crate::errors::MapperError;
-use std::str::FromStr;
+use std::{collections::BTreeMap, str::FromStr};
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
@@ -12,6 +12,21 @@ impl HelperMapper {
         })?;
 
         Ok(uuid)
+    }
+
+    pub fn to_metadata(map: BTreeMap<String, String>) -> Vec<control_panel_api::MetadataDTO> {
+        map.into_iter()
+            .map(|(key, value)| control_panel_api::MetadataDTO { key, value })
+            .collect()
+    }
+
+    pub fn from_metadata(
+        metadata: Vec<control_panel_api::MetadataDTO>,
+    ) -> BTreeMap<String, String> {
+        metadata
+            .into_iter()
+            .map(|metadata| (metadata.key, metadata.value))
+            .collect()
     }
 }
 

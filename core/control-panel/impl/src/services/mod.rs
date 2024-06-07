@@ -14,3 +14,6 @@ pub use canister::*;
 
 mod deploy;
 pub use deploy::*;
+
+mod registry;
+pub use registry::*;

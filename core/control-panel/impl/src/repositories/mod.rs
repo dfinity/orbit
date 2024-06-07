@@ -6,4 +6,7 @@ pub use artifact::*;
 mod user;
 pub use user::*;
 
+mod registry;
+pub use registry::*;
+
 pub mod indexes;

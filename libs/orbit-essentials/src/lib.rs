@@ -15,6 +15,7 @@ pub mod model;
 pub mod repository;
 pub mod timers;
 
+pub mod pagination;
 pub mod types;
 pub mod utils;
 
