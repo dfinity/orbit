@@ -15,3 +15,15 @@ pub struct ApiErrorDTO {
     /// The error details if any.
     pub details: Option<HashMap<String, String>>,
 }
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct MetadataDTO {
+    pub key: String,
+    pub value: String,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct PaginationInput {
+    pub offset: Option<u64>,
+    pub limit: Option<u16>,
+}

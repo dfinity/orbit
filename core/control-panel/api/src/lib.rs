@@ -24,3 +24,7 @@ pub use manage_user::*;
 /// Canister hooks DTOs.
 mod canister;
 pub use canister::*;
+
+/// Registry DTOs.
+mod registry;
+pub use registry::*;

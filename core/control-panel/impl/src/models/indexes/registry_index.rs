@@ -137,7 +137,7 @@ mod tests {
 
         assert_eq!(
             index.index,
-            RegistryIndexKind::Namespace(entry.unnamespaced_name().to_string())
+            RegistryIndexKind::Name(entry.unnamespaced_name().to_string())
         );
         assert_eq!(index.registry_id, entry.id);
     }
@@ -171,10 +171,14 @@ mod tests {
 
     #[test]
     fn valid_to_fullname() {
-        let entry = create_registry_entry();
+        let mut entry = create_registry_entry();
+        entry.name = "@mynamespace/test".to_string();
         let index = entry.to_index_by_fullname();
 
-        assert_eq!(index.index, RegistryIndexKind::Name(entry.name.to_string()));
+        assert_eq!(
+            index.index,
+            RegistryIndexKind::Fullname(entry.name.to_string())
+        );
         assert_eq!(index.registry_id, entry.id);
     }
 

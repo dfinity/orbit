@@ -183,7 +183,7 @@ impl Registry {
             let parts: Vec<&str> = raw_name.split('/').collect();
             namespace = parts[0].trim_start_matches('@');
 
-            if namespace == "" {
+            if namespace.trim().is_empty() {
                 namespace = Self::DEFAULT_NAMESPACE;
             }
 

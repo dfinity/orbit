@@ -383,7 +383,7 @@ type RegistryEntry = record {
   // The timestamp when the entry was created.
   created_at : TimestampRFC3339;
   // The timestamp when the entry was last updated.
-  updated_at : TimestampRFC3339;
+  updated_at : opt TimestampRFC3339;
 };
 
 // The registry entry value.
@@ -408,15 +408,15 @@ type WasmModuleRegistryEntryValue = record {
 };
 
 // The search registry filter options.
-type SearchRegistryFilter = variant {
+type SearchRegistryFilterKind = variant {
   // The name of the registry entry to find, if the namespace is not provided the default namespace is used.
-  name : text;
+  Name : text;
 };
 
 // The input for searching the registry.
 type SearchRegistryInput = record {
-  // Filters are used sequentially to filter the entries in the registry.
-  filter_by : vec SearchRegistryFilter;
+  // Filters are used sequentially and are combined with an AND operation to filter the entries in the registry.
+  filter_by : vec SearchRegistryFilterKind;
   // The pagination options to use for the search.
   pagination : opt PaginationInput;
 };
@@ -425,6 +425,10 @@ type SearchRegistryInput = record {
 type SearchRegistryResponse = record {
   // The list of registry entries that match the search criteria.
   entries : vec RegistryEntry;
+  // The total number of entries that match the search criteria.
+  total : nat64;
+  // The next offset to use for pagination.
+  next_offset : opt nat64;
 };
 
 // The search registry result.
@@ -526,17 +530,39 @@ type EditRegistryEntryResult = variant {
   Err : ApiError;
 };
 
+// The input for deleting a registry entry.
+type DeleteRegistryEntryInput = record {
+  // The id of the registry entry.
+  id : UUID;
+};
+
+// The response of deleting a registry entry.
+type DeleteRegistryEntryResponse = record {
+  // The registry entry that was deleted.
+  entry : RegistryEntry;
+};
+
+// The result of deleting a registry entry.
+type DeleteRegistryEntryResult = variant {
+  // Successfull operation result.
+  Ok : DeleteRegistryEntryResponse;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
 // The control panel service definition.
 service : () -> {
   // Add a new entry to the registry.
   //
   // The caller must have the necessary permissions to add an entry to the registry.
   add_registry_entry : (AddRegistryEntryInput) -> (AddRegistryEntryResult);
-  // Edit an existing entry in the registry. 
+  // Edit an existing entry in the registry.
   // A registry entry can only be edited if it references the same kind of value.
   //
   // The caller must have the necessary permissions to edit an entry in the registry.
   edit_registry_entry : (EditRegistryEntryInput) -> (EditRegistryEntryResult);
+  // Deletes an existing entry from the registry.
+  delete_registry_entry : (DeleteRegistryEntryInput) -> (DeleteRegistryEntryResult);
   // Get the registry entry by its id.
   get_registry_entry : (GetRegistryEntryInput) -> (GetRegistryEntryResult) query;
   // Search the registry for entries.

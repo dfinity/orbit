@@ -68,3 +68,12 @@ where
             .inc();
     });
 }
+
+/// Trap the execution of the canister call if the caller is not an authorized admin
+///
+/// An admin is an identity that is either the canister itself or a controller.
+pub fn use_is_authorized_admin(ctx: &CallContext) {
+    if !ctx.is_admin() {
+        ic_cdk::api::trap("You are not authorized to perform this action");
+    }
+}
