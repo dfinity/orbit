@@ -6,9 +6,12 @@ use super::{
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
     UserGroupId, UserId, UserStatus,
 };
+use crate::core::validation::EnsureExternalCanister;
+use crate::errors::ValidationError;
 use crate::models::Metadata;
 use candid::Principal;
 use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
+use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::{storable, types::UUID};
 use std::fmt::Display;
 
@@ -321,6 +324,14 @@ pub struct CreateManagedCanisterOperation {
 pub struct CanisterMethod {
     pub canister_id: Principal,
     pub method_name: String,
+}
+
+impl ModelValidator<ValidationError> for CanisterMethod {
+    fn validate(&self) -> ModelValidatorResult<ValidationError> {
+        EnsureExternalCanister::ensure_external_canister(self.canister_id)?;
+
+        Ok(())
+    }
 }
 
 #[storable]

@@ -4,7 +4,7 @@ use crate::core::validation::{
     EnsureAccount, EnsureAddressBookEntry, EnsureIdExists, EnsureRequestPolicy,
     EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
 };
-use crate::errors::RecordValidationError;
+use crate::errors::ValidationError;
 use crate::models::resource::ExecutionMethodResourceTarget;
 use crate::models::resource::{
     CallCanisterResourceTarget, ChangeManagedCanisterResourceTarget,
@@ -31,8 +31,8 @@ pub enum UserSpecifier {
     Id(Vec<UUID>),
 }
 
-impl ModelValidator<RecordValidationError> for UserSpecifier {
-    fn validate(&self) -> Result<(), RecordValidationError> {
+impl ModelValidator<ValidationError> for UserSpecifier {
+    fn validate(&self) -> Result<(), ValidationError> {
         match self {
             UserSpecifier::Any => Ok(()),
             UserSpecifier::Group(group_ids) => {
@@ -83,8 +83,8 @@ pub enum RequestSpecifier {
     ManageSystemInfo,
 }
 
-impl ModelValidator<RecordValidationError> for RequestSpecifier {
-    fn validate(&self) -> ModelValidatorResult<RecordValidationError> {
+impl ModelValidator<ValidationError> for RequestSpecifier {
+    fn validate(&self) -> ModelValidatorResult<ValidationError> {
         match self {
             RequestSpecifier::AddAccount
             | RequestSpecifier::AddUser
@@ -92,36 +92,40 @@ impl ModelValidator<RecordValidationError> for RequestSpecifier {
             | RequestSpecifier::ChangeCanister
             | RequestSpecifier::ChangeManagedCanister(_)
             | RequestSpecifier::CreateManagedCanister(_)
-            | RequestSpecifier::CallCanister(_)
             | RequestSpecifier::AddRequestPolicy
             | RequestSpecifier::ManageSystemInfo
-            | RequestSpecifier::AddUserGroup => Ok(()),
+            | RequestSpecifier::AddUserGroup => (),
+
+            RequestSpecifier::CallCanister(target) => {
+                target.validate()?;
+            }
 
             RequestSpecifier::Transfer(resource_ids)
             | RequestSpecifier::EditAccount(resource_ids) => {
-                EnsureAccount::resource_ids_exist(resource_ids)
+                EnsureAccount::resource_ids_exist(resource_ids)?
             }
             RequestSpecifier::EditUser(resource_ids) => {
-                EnsureUser::resource_ids_exist(resource_ids)
+                EnsureUser::resource_ids_exist(resource_ids)?
             }
             RequestSpecifier::RemoveAddressBookEntry(resource_ids)
             | RequestSpecifier::EditAddressBookEntry(resource_ids) => {
-                EnsureAddressBookEntry::resource_ids_exist(resource_ids)
+                EnsureAddressBookEntry::resource_ids_exist(resource_ids)?
             }
             RequestSpecifier::EditPermission(resource_specifier) => match resource_specifier {
-                ResourceSpecifier::Any => Ok(()),
-                ResourceSpecifier::Resource(resource) => resource.validate(),
+                ResourceSpecifier::Any => (),
+                ResourceSpecifier::Resource(resource) => resource.validate()?,
             },
 
             RequestSpecifier::EditRequestPolicy(resource_ids)
             | RequestSpecifier::RemoveRequestPolicy(resource_ids) => {
-                EnsureRequestPolicy::resource_ids_exist(resource_ids)
+                EnsureRequestPolicy::resource_ids_exist(resource_ids)?
             }
             RequestSpecifier::EditUserGroup(resource_ids)
             | RequestSpecifier::RemoveUserGroup(resource_ids) => {
-                EnsureUserGroup::resource_ids_exist(resource_ids)
+                EnsureUserGroup::resource_ids_exist(resource_ids)?
             }
         }
+        Ok(())
     }
 }
 
@@ -605,7 +609,7 @@ mod tests {
             execution_method: ExecutionMethodResourceTarget::Any,
         })
         .validate()
-        .expect("CallCanister should be valid");
+        .expect_err("Management canister in CallCanister should be valid");
         RequestSpecifier::CallCanister(CallCanisterResourceTarget {
             validation_method: ValidationMethodResourceTarget::No,
             execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
@@ -614,7 +618,7 @@ mod tests {
             }),
         })
         .validate()
-        .expect("CallCanister should be valid");
+        .expect_err("Management canister in CallCanister should be valid");
         RequestSpecifier::CallCanister(CallCanisterResourceTarget {
             validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
                 canister_id: Principal::management_canister(),
@@ -626,7 +630,7 @@ mod tests {
             }),
         })
         .validate()
-        .expect("CallCanister should be valid");
+        .expect_err("Management canister in CallCanister should be valid");
         RequestSpecifier::AddRequestPolicy
             .validate()
             .expect("AddRequestPolicy should be valid");
