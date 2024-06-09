@@ -1,6 +1,9 @@
 use candid::Principal;
 use orbit_essentials::storable;
-use orbit_essentials::{model::ModelValidator, types::UUID};
+use orbit_essentials::{
+    model::{ModelValidator, ModelValidatorResult},
+    types::UUID,
+};
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
@@ -27,71 +30,72 @@ pub enum Resource {
     UserGroup(ResourceAction),
 }
 
-impl ModelValidator<RecordValidationError> for Resource {
-    fn validate(&self) -> Result<(), RecordValidationError> {
+impl ModelValidator<ValidationError> for Resource {
+    fn validate(&self) -> Result<(), ValidationError> {
         match self {
             Resource::Permission(action) => match action {
-                PermissionResourceAction::Read | PermissionResourceAction::Update => Ok(()),
+                PermissionResourceAction::Read | PermissionResourceAction::Update => (),
             },
 
             Resource::Account(action) => match action {
-                AccountResourceAction::List | AccountResourceAction::Create => Ok(()),
+                AccountResourceAction::List | AccountResourceAction::Create => (),
                 AccountResourceAction::Transfer(resource_id)
                 | AccountResourceAction::Read(resource_id)
                 | AccountResourceAction::Update(resource_id) => {
-                    EnsureAccount::resource_id_exists(resource_id)
+                    EnsureAccount::resource_id_exists(resource_id)?
                 }
             },
             Resource::AddressBook(action) => match action {
-                ResourceAction::List | ResourceAction::Create => Ok(()),
+                ResourceAction::List | ResourceAction::Create => (),
                 ResourceAction::Read(resource_id)
                 | ResourceAction::Update(resource_id)
                 | ResourceAction::Delete(resource_id) => {
-                    EnsureAddressBookEntry::resource_id_exists(resource_id)
+                    EnsureAddressBookEntry::resource_id_exists(resource_id)?
                 }
             },
             Resource::ChangeCanister(action) => match action {
-                ChangeCanisterResourceAction::Create => Ok(()),
+                ChangeCanisterResourceAction::Create => (),
             },
             Resource::ManagedCanister(action) => match action {
                 ManagedCanisterResourceAction::Create(_)
                 | ManagedCanisterResourceAction::Change(_)
-                | ManagedCanisterResourceAction::Read(_) => Ok(()),
+                | ManagedCanisterResourceAction::Read(_) => (),
             },
             Resource::Request(action) => match action {
-                RequestResourceAction::List => Ok(()),
+                RequestResourceAction::List => (),
                 RequestResourceAction::Read(resource_id) => {
-                    EnsureRequest::resource_id_exists(resource_id)
+                    EnsureRequest::resource_id_exists(resource_id)?
                 }
             },
             Resource::RequestPolicy(action) => match action {
-                ResourceAction::List | ResourceAction::Create => Ok(()),
+                ResourceAction::List | ResourceAction::Create => (),
                 ResourceAction::Read(resource_id)
                 | ResourceAction::Update(resource_id)
                 | ResourceAction::Delete(resource_id) => {
-                    EnsureRequestPolicy::resource_id_exists(resource_id)
+                    EnsureRequestPolicy::resource_id_exists(resource_id)?
                 }
             },
             Resource::System(action) => match action {
                 SystemResourceAction::SystemInfo
                 | SystemResourceAction::Capabilities
-                | SystemResourceAction::ManageSystemInfo => Ok(()),
+                | SystemResourceAction::ManageSystemInfo => (),
             },
             Resource::User(action) => match action {
-                UserResourceAction::List | UserResourceAction::Create => Ok(()),
+                UserResourceAction::List | UserResourceAction::Create => (),
                 UserResourceAction::Read(resource_id) | UserResourceAction::Update(resource_id) => {
-                    EnsureUser::resource_id_exists(resource_id)
+                    EnsureUser::resource_id_exists(resource_id)?
                 }
             },
             Resource::UserGroup(action) => match action {
-                ResourceAction::List | ResourceAction::Create => Ok(()),
+                ResourceAction::List | ResourceAction::Create => (),
                 ResourceAction::Read(resource_id)
                 | ResourceAction::Update(resource_id)
                 | ResourceAction::Delete(resource_id) => {
-                    EnsureUserGroup::resource_id_exists(resource_id)
+                    EnsureUserGroup::resource_id_exists(resource_id)?
                 }
             },
         }
+        Ok(())
     }
 }
 

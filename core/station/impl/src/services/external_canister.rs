@@ -1,3 +1,4 @@
+use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ExternalCanisterError;
 use candid::Principal;
 use ic_cdk::api::management_canister::main::{

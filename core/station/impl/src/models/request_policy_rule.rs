@@ -7,7 +7,7 @@ use super::{
 };
 use crate::{
     core::{ic_cdk::api::print, utils::calculate_minimum_threshold},
-    errors::{MatchError, RecordValidationError},
+    errors::{MatchError, ValidationError},
     repositories::{UserWhereClause, ADDRESS_BOOK_REPOSITORY, USER_REPOSITORY},
     services::ACCOUNT_SERVICE,
 };
@@ -31,8 +31,8 @@ pub enum RequestPolicyRule {
     Not(Box<RequestPolicyRule>),
 }
 
-impl ModelValidator<RecordValidationError> for RequestPolicyRule {
-    fn validate(&self) -> ModelValidatorResult<RecordValidationError> {
+impl ModelValidator<ValidationError> for RequestPolicyRule {
+    fn validate(&self) -> ModelValidatorResult<ValidationError> {
         match self {
             RequestPolicyRule::AutoApproved
             | RequestPolicyRule::AllowListedByMetadata(_)
