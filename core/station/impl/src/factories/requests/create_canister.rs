@@ -14,6 +14,7 @@ pub struct CreateManagedCanisterRequestCreate;
 #[async_trait]
 impl Create<CreateManagedCanisterOperationInput> for CreateManagedCanisterRequestCreate {
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,

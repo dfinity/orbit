@@ -13,6 +13,7 @@ pub struct EditPermissionRequestCreate {}
 #[async_trait]
 impl Create<station_api::EditPermissionOperationInput> for EditPermissionRequestCreate {
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
@@ -94,14 +95,16 @@ mod tests {
         request_input.operation =
             station_api::RequestOperationInput::EditPermission(operation_input.clone());
 
-        let request = EditPermissionRequestCreate::create(
-            request_id,
-            requested_by_user,
-            request_input,
-            operation_input,
-        )
-        .await
-        .unwrap();
+        let creator = Box::new(EditPermissionRequestCreate {});
+        let request = creator
+            .create(
+                request_id,
+                requested_by_user,
+                request_input,
+                operation_input,
+            )
+            .await
+            .unwrap();
 
         assert_eq!(request.id, request_id);
         assert_eq!(request.requested_by, requested_by_user);
@@ -117,14 +120,16 @@ mod tests {
         request_input.operation =
             station_api::RequestOperationInput::EditPermission(operation_input.clone());
 
-        let request = EditPermissionRequestCreate::create(
-            request_id,
-            requested_by_user,
-            request_input,
-            operation_input,
-        )
-        .await
-        .unwrap();
+        let creator = Box::new(EditPermissionRequestCreate {});
+        let request = creator
+            .create(
+                request_id,
+                requested_by_user,
+                request_input,
+                operation_input,
+            )
+            .await
+            .unwrap();
 
         REQUEST_REPOSITORY.insert(request.to_key(), request.to_owned());
 

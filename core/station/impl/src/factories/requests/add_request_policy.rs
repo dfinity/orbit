@@ -14,6 +14,7 @@ pub struct AddRequestPolicyRequestCreate {}
 #[async_trait]
 impl Create<station_api::AddRequestPolicyOperationInput> for AddRequestPolicyRequestCreate {
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
@@ -97,14 +98,16 @@ mod tests {
         request_input.operation =
             station_api::RequestOperationInput::AddRequestPolicy(operation_input.clone());
 
-        let request = AddRequestPolicyRequestCreate::create(
-            request_id,
-            requested_by_user,
-            request_input,
-            operation_input,
-        )
-        .await
-        .unwrap();
+        let creator = Box::new(AddRequestPolicyRequestCreate {});
+        let request = creator
+            .create(
+                request_id,
+                requested_by_user,
+                request_input,
+                operation_input,
+            )
+            .await
+            .unwrap();
 
         assert_eq!(request.id, request_id);
         assert_eq!(request.requested_by, requested_by_user);
@@ -120,14 +123,16 @@ mod tests {
         request_input.operation =
             station_api::RequestOperationInput::AddRequestPolicy(operation_input.clone());
 
-        let request = AddRequestPolicyRequestCreate::create(
-            request_id,
-            requested_by_user,
-            request_input,
-            operation_input,
-        )
-        .await
-        .unwrap();
+        let creator = Box::new(AddRequestPolicyRequestCreate {});
+        let request = creator
+            .create(
+                request_id,
+                requested_by_user,
+                request_input,
+                operation_input,
+            )
+            .await
+            .unwrap();
 
         REQUEST_REPOSITORY.insert(request.to_key(), request.to_owned());
 

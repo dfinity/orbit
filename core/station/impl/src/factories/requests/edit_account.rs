@@ -12,6 +12,7 @@ pub struct EditAccountRequestCreate {}
 #[async_trait]
 impl Create<station_api::EditAccountOperationInput> for EditAccountRequestCreate {
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,

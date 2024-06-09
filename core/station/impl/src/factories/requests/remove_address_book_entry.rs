@@ -18,6 +18,7 @@ impl Create<station_api::RemoveAddressBookEntryOperationInput>
     for RemoveAddressBookEntryRequestCreate
 {
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,

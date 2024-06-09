@@ -17,6 +17,7 @@ pub struct RemoveRequestPolicyRequestCreate {}
 #[async_trait]
 impl Create<station_api::RemoveRequestPolicyOperationInput> for RemoveRequestPolicyRequestCreate {
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
@@ -115,14 +116,16 @@ mod tests {
             .as_bytes();
         REQUEST_POLICY_REPOSITORY.insert(policy.id, policy.to_owned());
 
-        let request = RemoveRequestPolicyRequestCreate::create(
-            request_id,
-            requested_by_user,
-            request_input,
-            operation_input,
-        )
-        .await
-        .unwrap();
+        let creator = Box::new(RemoveRequestPolicyRequestCreate {});
+        let request = creator
+            .create(
+                request_id,
+                requested_by_user,
+                request_input,
+                operation_input,
+            )
+            .await
+            .unwrap();
 
         assert_eq!(request.id, request_id);
         assert_eq!(request.requested_by, requested_by_user);
@@ -145,14 +148,16 @@ mod tests {
             .as_bytes();
         REQUEST_POLICY_REPOSITORY.insert(policy.id, policy.to_owned());
 
-        let request = RemoveRequestPolicyRequestCreate::create(
-            request_id,
-            requested_by_user,
-            request_input,
-            operation_input,
-        )
-        .await
-        .unwrap();
+        let creator = Box::new(RemoveRequestPolicyRequestCreate {});
+        let request = creator
+            .create(
+                request_id,
+                requested_by_user,
+                request_input,
+                operation_input,
+            )
+            .await
+            .unwrap();
 
         REQUEST_REPOSITORY.insert(request.to_key(), request.to_owned());
 
@@ -198,14 +203,16 @@ mod tests {
             .as_bytes();
         REQUEST_POLICY_REPOSITORY.insert(policy.id, policy.to_owned());
 
-        let request = RemoveRequestPolicyRequestCreate::create(
-            request_id,
-            requested_by_user,
-            request_input,
-            operation_input,
-        )
-        .await
-        .unwrap();
+        let creator = Box::new(RemoveRequestPolicyRequestCreate {});
+        let request = creator
+            .create(
+                request_id,
+                requested_by_user,
+                request_input,
+                operation_input,
+            )
+            .await
+            .unwrap();
 
         REQUEST_POLICY_REPOSITORY.remove(&policy.id);
 

@@ -12,6 +12,7 @@ pub struct RemoveUserGroupRequestCreate {}
 #[async_trait]
 impl Create<station_api::RemoveUserGroupOperationInput> for RemoveUserGroupRequestCreate {
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
