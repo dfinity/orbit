@@ -2,15 +2,16 @@ use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         resource::{
-            AccountResourceAction, ChangeCanisterResourceAction,
+            AccountResourceAction, CallCanisterResourceTarget, ChangeCanisterResourceAction,
             ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
-            ManagedCanisterResourceAction, PermissionResourceAction, Resource, ResourceAction,
-            ResourceId, SystemResourceAction, UserResourceAction,
+            ExecutionMethodResourceTarget, ManagedCanisterResourceAction, PermissionResourceAction,
+            Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
         AddRequestPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
-        CanisterInstallMode, CanisterInstallModeArgs, CanisterReinstallModeArgs,
+        CallCanisterOperation, CallCanisterOperationInput, CanisterInstallMode,
+        CanisterInstallModeArgs, CanisterMethod, CanisterReinstallModeArgs,
         CanisterUpgradeModeArgs, ChangeCanisterOperation, ChangeCanisterOperationInput,
         ChangeCanisterTarget, ChangeManagedCanisterOperation, ChangeManagedCanisterOperationInput,
         CreateManagedCanisterOperation, CreateManagedCanisterOperationInput, EditAccountOperation,
@@ -28,10 +29,10 @@ use crate::{
 use orbit_essentials::repository::Repository;
 use station_api::{
     AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
-    ChangeCanisterOperationDTO, ChangeCanisterTargetDTO, ChangeManagedCanisterOperationDTO,
-    CreateManagedCanisterOperationDTO, EditAccountOperationDTO, EditAddressBookEntryOperationDTO,
-    EditUserOperationDTO, NetworkDTO, RemoveAddressBookEntryOperationDTO, RequestOperationDTO,
-    TransferOperationDTO,
+    CallCanisterOperationDTO, CanisterMethodDTO, ChangeCanisterOperationDTO,
+    ChangeCanisterTargetDTO, ChangeManagedCanisterOperationDTO, CreateManagedCanisterOperationDTO,
+    EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditUserOperationDTO, NetworkDTO,
+    RemoveAddressBookEntryOperationDTO, RequestOperationDTO, TransferOperationDTO,
 };
 use uuid::Uuid;
 
@@ -462,6 +463,56 @@ impl From<CreateManagedCanisterOperationDTO> for CreateManagedCanisterOperation 
     }
 }
 
+impl From<CanisterMethod> for CanisterMethodDTO {
+    fn from(canister_method: CanisterMethod) -> CanisterMethodDTO {
+        CanisterMethodDTO {
+            canister_id: canister_method.canister_id,
+            method_name: canister_method.method_name,
+        }
+    }
+}
+
+impl From<CanisterMethodDTO> for CanisterMethod {
+    fn from(canister_method: CanisterMethodDTO) -> CanisterMethod {
+        CanisterMethod {
+            canister_id: canister_method.canister_id,
+            method_name: canister_method.method_name,
+        }
+    }
+}
+
+impl From<CallCanisterOperationInput> for station_api::CallCanisterOperationInput {
+    fn from(input: CallCanisterOperationInput) -> station_api::CallCanisterOperationInput {
+        station_api::CallCanisterOperationInput {
+            validation_method: input.validation_method.map(|m| m.into()),
+            execution_method: input.execution_method.into(),
+            arg: input.arg,
+        }
+    }
+}
+
+impl From<station_api::CallCanisterOperationInput> for CallCanisterOperationInput {
+    fn from(input: station_api::CallCanisterOperationInput) -> CallCanisterOperationInput {
+        CallCanisterOperationInput {
+            validation_method: input.validation_method.map(|m| m.into()),
+            execution_method: input.execution_method.into(),
+            arg: input.arg,
+        }
+    }
+}
+
+impl From<CallCanisterOperation> for CallCanisterOperationDTO {
+    fn from(operation: CallCanisterOperation) -> CallCanisterOperationDTO {
+        CallCanisterOperationDTO {
+            validation_method: operation.input.validation_method.map(|m| m.into()),
+            execution_method: operation.input.execution_method.into(),
+            arg_checksum: hex::encode(&operation.arg_checksum),
+            arg_rendering: operation.arg_rendering,
+            execution_method_reply: operation.execution_method_reply,
+        }
+    }
+}
+
 impl From<EditPermissionOperationInput> for station_api::EditPermissionOperationInput {
     fn from(input: EditPermissionOperationInput) -> station_api::EditPermissionOperationInput {
         station_api::EditPermissionOperationInput {
@@ -705,6 +756,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::CreateManagedCanister(operation) => {
                 RequestOperationDTO::CreateManagedCanister(Box::new(operation.into()))
             }
+            RequestOperation::CallCanister(operation) => {
+                RequestOperationDTO::CallCanister(Box::new(operation.into()))
+            }
             RequestOperation::EditPermission(operation) => {
                 RequestOperationDTO::EditPermission(Box::new(operation.into()))
             }
@@ -822,6 +876,18 @@ impl RequestOperation {
                 vec![Resource::ManagedCanister(
                     ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any),
                 )]
+            }
+            RequestOperation::CallCanister(CallCanisterOperation { input, .. }) => {
+                vec![
+                    Resource::CallCanister(CallCanisterResourceTarget {
+                        validation_method: input.validation_method.clone().into(),
+                        execution_method: ExecutionMethodResourceTarget::Any,
+                    }),
+                    Resource::CallCanister(CallCanisterResourceTarget {
+                        validation_method: input.validation_method.clone().into(),
+                        execution_method: input.execution_method.clone().into(),
+                    }),
+                ]
             }
             RequestOperation::EditRequestPolicy(EditRequestPolicyOperation { input }) => {
                 vec![

@@ -3,11 +3,12 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceTarget,
-        CreateManagedCanisterResourceTarget, ManagedCanisterResourceAction,
-        PermissionResourceAction, ReadManagedCanisterResourceTarget, RequestResourceAction,
-        Resource, ResourceAction, ResourceId, ResourceIds, SystemResourceAction,
-        UserResourceAction,
+        AccountResourceAction, CallCanisterResourceTarget, ChangeCanisterResourceAction,
+        ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
+        ExecutionMethodResourceTarget, ManagedCanisterResourceAction, PermissionResourceAction,
+        ReadManagedCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction,
+        ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
+        ValidationMethodResourceTarget,
     },
     ADMIN_GROUP_ID,
 };
@@ -159,6 +160,14 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ManagedCanister(ManagedCanisterResourceAction::Read(ReadManagedCanisterResourceTarget::Any)),
         ),
+        // call canister
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::CallCanister(CallCanisterResourceTarget {
+              validation_method: ValidationMethodResourceTarget::No,
+              execution_method: ExecutionMethodResourceTarget::Any,
+            }),
+        ),
     ];
 
     pub static ref DEFAULT_REQUEST_POLICIES: Vec<(RequestSpecifier, RequestPolicyRule)> = vec![
@@ -253,6 +262,14 @@ lazy_static! {
         ),
         (
             RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+        ),
+        // call canister
+        (
+            RequestSpecifier::CallCanister(CallCanisterResourceTarget {
+              validation_method: ValidationMethodResourceTarget::No,
+              execution_method: ExecutionMethodResourceTarget::Any,
+            }),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         // system info

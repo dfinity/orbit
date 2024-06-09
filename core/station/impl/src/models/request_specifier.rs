@@ -5,11 +5,15 @@ use crate::core::validation::{
     EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
 };
 use crate::errors::RecordValidationError;
+use crate::models::resource::ExecutionMethodResourceTarget;
 use crate::models::resource::{
-    ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
+    CallCanisterResourceTarget, ChangeManagedCanisterResourceTarget,
+    CreateManagedCanisterResourceTarget,
 };
 use crate::models::user::User;
-use crate::models::{ChangeManagedCanisterOperation, CreateManagedCanisterOperation};
+use crate::models::{
+    CallCanisterOperation, ChangeManagedCanisterOperation, CreateManagedCanisterOperation,
+};
 use crate::repositories::ADDRESS_BOOK_REPOSITORY;
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
@@ -68,6 +72,7 @@ pub enum RequestSpecifier {
     ChangeCanister,
     ChangeManagedCanister(ChangeManagedCanisterResourceTarget),
     CreateManagedCanister(CreateManagedCanisterResourceTarget),
+    CallCanister(CallCanisterResourceTarget),
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIds),
@@ -87,6 +92,7 @@ impl ModelValidator<RecordValidationError> for RequestSpecifier {
             | RequestSpecifier::ChangeCanister
             | RequestSpecifier::ChangeManagedCanister(_)
             | RequestSpecifier::CreateManagedCanister(_)
+            | RequestSpecifier::CallCanister(_)
             | RequestSpecifier::AddRequestPolicy
             | RequestSpecifier::ManageSystemInfo
             | RequestSpecifier::AddUserGroup => Ok(()),
@@ -140,6 +146,7 @@ impl From<&RequestSpecifier> for RequestOperationType {
             RequestSpecifier::CreateManagedCanister(_) => {
                 RequestOperationType::CreateManagedCanister
             }
+            RequestSpecifier::CallCanister(_) => RequestOperationType::CallCanister,
             RequestSpecifier::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestSpecifier::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
             RequestSpecifier::RemoveRequestPolicy(_) => RequestOperationType::RemoveRequestPolicy,
@@ -281,6 +288,15 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
             ) => match specifier {
                 CreateManagedCanisterResourceTarget::Any => true,
             },
+            (
+                RequestOperation::CallCanister(CallCanisterOperation { input, .. }),
+                RequestSpecifier::CallCanister(specifier),
+            ) => match specifier.execution_method {
+                ExecutionMethodResourceTarget::Any => true,
+                ExecutionMethodResourceTarget::ExecutionMethod(canister_method) => {
+                    input.execution_method.canister_id == canister_method.canister_id
+                }
+            },
             (RequestOperation::AddUserGroup(_), RequestSpecifier::AddUserGroup) => true,
             (
                 RequestOperation::EditPermission(operation),
@@ -325,6 +341,7 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
             | (RequestOperation::ChangeCanister(_), _)
             | (RequestOperation::ChangeManagedCanister(_), _)
             | (RequestOperation::CreateManagedCanister(_), _)
+            | (RequestOperation::CallCanister(_), _)
             | (RequestOperation::AddRequestPolicy(_), _)
             | (RequestOperation::EditRequestPolicy(_), _)
             | (RequestOperation::EditPermission(_), _)
@@ -382,13 +399,14 @@ mod tests {
             },
             request_test_utils::mock_request,
             resource::{
-                ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
-                ResourceIds,
+                CallCanisterResourceTarget, ChangeManagedCanisterResourceTarget,
+                CreateManagedCanisterResourceTarget, ExecutionMethodResourceTarget, ResourceIds,
+                ValidationMethodResourceTarget,
             },
             AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
-            Blockchain, EditAccountOperation, EditAccountOperationInput, EditUserOperation,
-            EditUserOperationInput, Metadata, RequestKey, RequestOperation, TransferOperation,
-            TransferOperationInput, UserStatus,
+            Blockchain, CanisterMethod, EditAccountOperation, EditAccountOperationInput,
+            EditUserOperation, EditUserOperationInput, Metadata, RequestKey, RequestOperation,
+            TransferOperation, TransferOperationInput, UserStatus,
         },
         repositories::REQUEST_REPOSITORY,
     };
@@ -573,6 +591,42 @@ mod tests {
         RequestSpecifier::CreateManagedCanister(CreateManagedCanisterResourceTarget::Any)
             .validate()
             .expect("CreateManagedCanister should be valid");
+        RequestSpecifier::CallCanister(CallCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::No,
+            execution_method: ExecutionMethodResourceTarget::Any,
+        })
+        .validate()
+        .expect("CallCanister should be valid");
+        RequestSpecifier::CallCanister(CallCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
+                canister_id: Principal::management_canister(),
+                method_name: "install_code".to_string(),
+            }),
+            execution_method: ExecutionMethodResourceTarget::Any,
+        })
+        .validate()
+        .expect("CallCanister should be valid");
+        RequestSpecifier::CallCanister(CallCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::No,
+            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
+                canister_id: Principal::management_canister(),
+                method_name: "install_code".to_string(),
+            }),
+        })
+        .validate()
+        .expect("CallCanister should be valid");
+        RequestSpecifier::CallCanister(CallCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
+                canister_id: Principal::management_canister(),
+                method_name: "install_code".to_string(),
+            }),
+            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
+                canister_id: Principal::management_canister(),
+                method_name: "install_code".to_string(),
+            }),
+        })
+        .validate()
+        .expect("CallCanister should be valid");
         RequestSpecifier::AddRequestPolicy
             .validate()
             .expect("AddRequestPolicy should be valid");

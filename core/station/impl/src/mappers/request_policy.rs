@@ -252,6 +252,9 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::CreateManagedCanister(target) => {
                 station_api::RequestSpecifierDTO::CreateManagedCanister(target.into())
             }
+            RequestSpecifier::CallCanister(target) => {
+                station_api::RequestSpecifierDTO::CallCanister(target.into())
+            }
             RequestSpecifier::EditPermission(policy) => {
                 station_api::RequestSpecifierDTO::EditPermission(policy.into())
             }
@@ -307,6 +310,9 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             }
             station_api::RequestSpecifierDTO::CreateManagedCanister(target) => {
                 RequestSpecifier::CreateManagedCanister(target.into())
+            }
+            station_api::RequestSpecifierDTO::CallCanister(target) => {
+                RequestSpecifier::CallCanister(target.into())
             }
             station_api::RequestSpecifierDTO::EditPermission(policy) => {
                 RequestSpecifier::EditPermission(policy.into())
@@ -420,6 +426,9 @@ impl RequestSpecifier {
                 vec![Resource::ManagedCanister(
                     ManagedCanisterResourceAction::Create(target.clone()),
                 )]
+            }
+            RequestSpecifier::CallCanister(target) => {
+                vec![Resource::CallCanister(target.clone())]
             }
             RequestSpecifier::EditPermission(resource_specifier) => match resource_specifier {
                 ResourceSpecifier::Any => {

@@ -48,6 +48,7 @@ type RequestSpecifier = variant {
   ChangeCanister;
   ChangeManagedCanister : ChangeManagedCanisterResourceTarget;
   CreateManagedCanister : CreateManagedCanisterResourceTarget;
+  CallCanister : CallCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
   AddRequestPolicy;
   EditRequestPolicy : ResourceIds;
@@ -592,6 +593,50 @@ type CreateManagedCanisterOperation = record {
   canister_id : opt principal;
 };
 
+type CanisterMethod = record {
+  // The canister call.
+  canister_id : principal;
+  // The method to call on the canister.
+  method_name : text;
+};
+
+type CallCanisterOperationInput = record {
+  // The canister method validating the argument blob:
+  //   - on validation success, returns a human-readable rendering of the argument blob
+  //     and then the request becomes `Created`;
+  //   - on validation error, returns a textual diagnostic message
+  //     and then the request becomes `Failed` with the textual diagnostic message as `reason`.
+  // Formally, the return type of the validation method must be
+  // ```
+  // variant {
+  //   Ok : text;
+  //   Err : text;
+  // }
+  // ```
+  // If omitted (`validation_method = null`), no validation of the argument blob is performed
+  // and a human-readable rendering of the argument blob is best-effort.
+  validation_method : opt CanisterMethod;
+  // The canister method that is called after the request becomes `Approved`
+  // passing the validated argument blob.
+  execution_method : CanisterMethod;
+  // The argument blob passed to both the validation and execution method.
+  arg : blob;
+};
+
+type CallCanisterOperation = record {
+  // see `CallCanisterOperationInput`
+  validation_method : opt CanisterMethod;
+  // see `CallCanisterOperationInput`
+  execution_method : CanisterMethod;
+  // The checksum of the argument blob passed to both the validation and execution method.
+  arg_checksum : Sha256Hash;
+  // A human-readable rendering of the argument blob procuded by the validation method.
+  arg_rendering : opt text;
+  // The reply blob produced by a successful call of the execution method,
+  // i.e., when the request is `Completed`.
+  execution_method_reply : opt blob;
+};
+
 type EditPermissionOperationInput = record {
   // The updated resource that this policy will apply to.
   resource : Resource;
@@ -675,6 +720,8 @@ type RequestOperation = variant {
   ChangeManagedCanister : ChangeManagedCanisterOperation;
   // An operation for creating a managed canister.
   CreateManagedCanister : CreateManagedCanisterOperation;
+  // An operation for calling a canister.
+  CallCanister : CallCanisterOperation;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperation;
   // An operation for adding a request policy.
@@ -716,6 +763,8 @@ type RequestOperationInput = variant {
   ChangeManagedCanister : ChangeManagedCanisterOperationInput;
   // An operation for creating a managed canister.
   CreateManagedCanister : CreateManagedCanisterOperationInput;
+  // An operation for calling a canister.
+  CallCanister : CallCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
   // An operation for adding a request policy.
@@ -757,6 +806,8 @@ type RequestOperationType = variant {
   ChangeManagedCanister;
   // An operation for creating a managed canister.
   CreateManagedCanister;
+  // An operation for calling a canister.
+  CallCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -880,6 +931,8 @@ type ListRequestsOperationType = variant {
   ChangeManagedCanister : opt principal;
   // An operation for creating a managed canister.
   CreateManagedCanister;
+  // An operation for calling a canister with an optionally specified canister ID.
+  CallCanister : opt principal;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -1642,6 +1695,24 @@ type ManagedCanisterResourceAction = variant {
   Read : ReadManagedCanisterResourceTarget;
 };
 
+// The validation method targets of a `CallCanister` request.
+type ValidationMethodResourceTarget = variant {
+  No;
+  ValidationMethod : CanisterMethod;
+};
+
+// The execution method targets of a `CallCanister` request.
+type ExecutionMethodResourceTarget = variant {
+  Any;
+  ExecutionMethod : CanisterMethod;
+};
+
+// The validation and execution method targets of a `CallCanister` request.
+type CallCanisterResourceTarget = record {
+  validation_method : ValidationMethodResourceTarget;
+  execution_method : ExecutionMethodResourceTarget;
+};
+
 // The actions that are available for requests.
 type RequestResourceAction = variant {
   List;
@@ -1676,6 +1747,7 @@ type Resource = variant {
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
   ManagedCanister : ManagedCanisterResourceAction;
+  CallCanister : CallCanisterResourceTarget;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
   System : SystemResourceAction;

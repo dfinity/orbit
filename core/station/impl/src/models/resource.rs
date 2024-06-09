@@ -10,6 +10,7 @@ use crate::{
         EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
     },
     errors::RecordValidationError,
+    models::CanisterMethod,
 };
 
 #[storable]
@@ -20,6 +21,7 @@ pub enum Resource {
     AddressBook(ResourceAction),
     ChangeCanister(ChangeCanisterResourceAction),
     ManagedCanister(ManagedCanisterResourceAction),
+    CallCanister(CallCanisterResourceTarget),
     Request(RequestResourceAction),
     RequestPolicy(ResourceAction),
     System(SystemResourceAction),
@@ -58,6 +60,7 @@ impl ModelValidator<RecordValidationError> for Resource {
                 | ManagedCanisterResourceAction::Change(_)
                 | ManagedCanisterResourceAction::Read(_) => Ok(()),
             },
+            Resource::CallCanister(_) => Ok(()),
             Resource::Request(action) => match action {
                 RequestResourceAction::List => Ok(()),
                 RequestResourceAction::Read(resource_id) => {
@@ -171,6 +174,27 @@ pub enum ManagedCanisterResourceAction {
     Create(CreateManagedCanisterResourceTarget),
     Change(ChangeManagedCanisterResourceTarget),
     Read(ReadManagedCanisterResourceTarget),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ValidationMethodResourceTarget {
+    No,
+    ValidationMethod(CanisterMethod),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ExecutionMethodResourceTarget {
+    Any,
+    ExecutionMethod(CanisterMethod),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CallCanisterResourceTarget {
+    pub validation_method: ValidationMethodResourceTarget,
+    pub execution_method: ExecutionMethodResourceTarget,
 }
 
 #[storable]
@@ -355,6 +379,28 @@ impl Resource {
                     ]
                 }
             },
+            Resource::CallCanister(target) => match &target.execution_method {
+                ExecutionMethodResourceTarget::Any => {
+                    vec![Resource::CallCanister(CallCanisterResourceTarget {
+                        validation_method: target.validation_method.clone(),
+                        execution_method: ExecutionMethodResourceTarget::Any,
+                    })]
+                }
+                ExecutionMethodResourceTarget::ExecutionMethod(canister_method) => {
+                    vec![
+                        Resource::CallCanister(CallCanisterResourceTarget {
+                            validation_method: target.validation_method.clone(),
+                            execution_method: ExecutionMethodResourceTarget::Any,
+                        }),
+                        Resource::CallCanister(CallCanisterResourceTarget {
+                            validation_method: target.validation_method.clone(),
+                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                canister_method.clone(),
+                            ),
+                        }),
+                    ]
+                }
+            },
             Resource::Request(action) => match action {
                 RequestResourceAction::List => {
                     vec![Resource::Request(RequestResourceAction::List)]
@@ -486,6 +532,7 @@ impl Display for Resource {
             Resource::ManagedCanister(action) => {
                 write!(f, "ManagedCanister({})", action)
             }
+            Resource::CallCanister(target) => write!(f, "CallCanister({})", target),
             Resource::Request(action) => write!(f, "Request({})", action),
             Resource::RequestPolicy(action) => write!(f, "RequestPolicy({})", action),
             Resource::System(action) => write!(f, "System({})", action),
@@ -579,6 +626,48 @@ impl Display for ManagedCanisterResourceAction {
                 write!(f, "Read({})", target)
             }
         }
+    }
+}
+
+impl Display for CanisterMethod {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "CanisterMethod({},{})",
+            self.canister_id, self.method_name
+        )
+    }
+}
+
+impl Display for ValidationMethodResourceTarget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ValidationMethodResourceTarget::No => write!(f, "NoValidationMethod"),
+            ValidationMethodResourceTarget::ValidationMethod(canister_method) => {
+                write!(f, "ValidationMethod({})", canister_method)
+            }
+        }
+    }
+}
+
+impl Display for ExecutionMethodResourceTarget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ExecutionMethodResourceTarget::Any => write!(f, "AnyExecutionMethod"),
+            ExecutionMethodResourceTarget::ExecutionMethod(canister_method) => {
+                write!(f, "ExecutionMethod({})", canister_method)
+            }
+        }
+    }
+}
+
+impl Display for CallCanisterResourceTarget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "CallCanister({},{})",
+            self.validation_method, self.execution_method
+        )
     }
 }
 

@@ -1,8 +1,12 @@
-use crate::models::resource::{
-    AccountResourceAction, ChangeCanisterResourceAction, ChangeManagedCanisterResourceTarget,
-    CreateManagedCanisterResourceTarget, ManagedCanisterResourceAction, PermissionResourceAction,
-    ReadManagedCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction, ResourceId,
-    SystemResourceAction, UserResourceAction,
+use crate::models::{
+    resource::{
+        AccountResourceAction, CallCanisterResourceTarget, ChangeCanisterResourceAction,
+        ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
+        ExecutionMethodResourceTarget, ManagedCanisterResourceAction, PermissionResourceAction,
+        ReadManagedCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction,
+        ResourceId, SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
+    },
+    CanisterMethod,
 };
 use uuid::Uuid;
 
@@ -25,6 +29,7 @@ impl From<station_api::ResourceDTO> for Resource {
             station_api::ResourceDTO::ManagedCanister(action) => {
                 Resource::ManagedCanister(action.into())
             }
+            station_api::ResourceDTO::CallCanister(target) => Resource::CallCanister(target.into()),
             station_api::ResourceDTO::Request(action) => Resource::Request(action.into()),
             station_api::ResourceDTO::System(action) => Resource::System(action.into()),
         }
@@ -48,6 +53,7 @@ impl From<Resource> for station_api::ResourceDTO {
             Resource::ManagedCanister(action) => {
                 station_api::ResourceDTO::ManagedCanister(action.into())
             }
+            Resource::CallCanister(target) => station_api::ResourceDTO::CallCanister(target.into()),
             Resource::Request(action) => station_api::ResourceDTO::Request(action.into()),
             Resource::System(action) => station_api::ResourceDTO::System(action.into()),
         }
@@ -326,6 +332,97 @@ impl From<ManagedCanisterResourceAction> for station_api::ManagedCanisterResourc
             ManagedCanisterResourceAction::Read(target) => {
                 station_api::ManagedCanisterResourceActionDTO::Read(target.into())
             }
+        }
+    }
+}
+
+impl From<Option<CanisterMethod>> for ValidationMethodResourceTarget {
+    fn from(canister_method: Option<CanisterMethod>) -> ValidationMethodResourceTarget {
+        match canister_method {
+            None => ValidationMethodResourceTarget::No,
+            Some(canister_method) => {
+                ValidationMethodResourceTarget::ValidationMethod(canister_method.clone())
+            }
+        }
+    }
+}
+
+impl From<CanisterMethod> for ExecutionMethodResourceTarget {
+    fn from(canister_method: CanisterMethod) -> ExecutionMethodResourceTarget {
+        ExecutionMethodResourceTarget::ExecutionMethod(canister_method)
+    }
+}
+
+impl From<station_api::ValidationMethodResourceTargetDTO> for ValidationMethodResourceTarget {
+    fn from(target: station_api::ValidationMethodResourceTargetDTO) -> Self {
+        match target {
+            station_api::ValidationMethodResourceTargetDTO::No => {
+                ValidationMethodResourceTarget::No
+            }
+            station_api::ValidationMethodResourceTargetDTO::ValidationMethod(canister_method) => {
+                ValidationMethodResourceTarget::ValidationMethod(canister_method.into())
+            }
+        }
+    }
+}
+
+impl From<ValidationMethodResourceTarget> for station_api::ValidationMethodResourceTargetDTO {
+    fn from(target: ValidationMethodResourceTarget) -> Self {
+        match target {
+            ValidationMethodResourceTarget::No => {
+                station_api::ValidationMethodResourceTargetDTO::No
+            }
+            ValidationMethodResourceTarget::ValidationMethod(canister_method) => {
+                station_api::ValidationMethodResourceTargetDTO::ValidationMethod(
+                    canister_method.into(),
+                )
+            }
+        }
+    }
+}
+
+impl From<station_api::ExecutionMethodResourceTargetDTO> for ExecutionMethodResourceTarget {
+    fn from(target: station_api::ExecutionMethodResourceTargetDTO) -> Self {
+        match target {
+            station_api::ExecutionMethodResourceTargetDTO::Any => {
+                ExecutionMethodResourceTarget::Any
+            }
+            station_api::ExecutionMethodResourceTargetDTO::ExecutionMethod(canister_method) => {
+                ExecutionMethodResourceTarget::ExecutionMethod(canister_method.into())
+            }
+        }
+    }
+}
+
+impl From<ExecutionMethodResourceTarget> for station_api::ExecutionMethodResourceTargetDTO {
+    fn from(target: ExecutionMethodResourceTarget) -> Self {
+        match target {
+            ExecutionMethodResourceTarget::Any => {
+                station_api::ExecutionMethodResourceTargetDTO::Any
+            }
+            ExecutionMethodResourceTarget::ExecutionMethod(canister_method) => {
+                station_api::ExecutionMethodResourceTargetDTO::ExecutionMethod(
+                    canister_method.into(),
+                )
+            }
+        }
+    }
+}
+
+impl From<station_api::CallCanisterResourceTargetDTO> for CallCanisterResourceTarget {
+    fn from(target: station_api::CallCanisterResourceTargetDTO) -> Self {
+        CallCanisterResourceTarget {
+            validation_method: target.validation_method.into(),
+            execution_method: target.execution_method.into(),
+        }
+    }
+}
+
+impl From<CallCanisterResourceTarget> for station_api::CallCanisterResourceTargetDTO {
+    fn from(target: CallCanisterResourceTarget) -> Self {
+        station_api::CallCanisterResourceTargetDTO {
+            validation_method: target.validation_method.into(),
+            execution_method: target.execution_method.into(),
         }
     }
 }

@@ -16,6 +16,7 @@ pub enum RequestOperationFilterType {
     ChangeCanister,
     ChangeManagedCanister(Option<Principal>),
     CreateManagedCanister,
+    CallCanister(Option<Principal>),
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,

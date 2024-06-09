@@ -30,6 +30,7 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::CreateManagedCanister => {
                 RequestOperationType::CreateManagedCanister
             }
+            RequestOperationTypeDTO::CallCanister => RequestOperationType::CallCanister,
             RequestOperationTypeDTO::EditPermission => RequestOperationType::EditPermission,
             RequestOperationTypeDTO::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestOperationTypeDTO::EditRequestPolicy => RequestOperationType::EditRequestPolicy,
@@ -68,6 +69,7 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::CreateManagedCanister => {
                 RequestOperationTypeDTO::CreateManagedCanister
             }
+            RequestOperationType::CallCanister => RequestOperationTypeDTO::CallCanister,
             RequestOperationType::EditPermission => RequestOperationTypeDTO::EditPermission,
             RequestOperationType::AddRequestPolicy => RequestOperationTypeDTO::AddRequestPolicy,
             RequestOperationType::EditRequestPolicy => RequestOperationTypeDTO::EditRequestPolicy,
@@ -102,6 +104,7 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::CreateManagedCanister(_) => {
                 RequestOperationType::CreateManagedCanister
             }
+            RequestOperation::CallCanister(_) => RequestOperationType::CallCanister,
             RequestOperation::EditPermission(_) => RequestOperationType::EditPermission,
             RequestOperation::AddRequestPolicy(_) => RequestOperationType::AddRequestPolicy,
             RequestOperation::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
@@ -166,6 +169,16 @@ impl RequestOperation {
                 RequestOperation::CreateManagedCanister(_),
                 ListRequestsOperationTypeDTO::CreateManagedCanister,
             ) => true,
+            (
+                RequestOperation::CallCanister(operation),
+                ListRequestsOperationTypeDTO::CallCanister(target),
+            ) => {
+                if let Some(canister_id) = target {
+                    operation.input.execution_method.canister_id == *canister_id
+                } else {
+                    true
+                }
+            }
             (RequestOperation::EditPermission(_), ListRequestsOperationTypeDTO::EditPermission) => {
                 true
             }
@@ -238,6 +251,9 @@ impl From<station_api::ListRequestsOperationTypeDTO> for RequestOperationFilterT
             }
             station_api::ListRequestsOperationTypeDTO::CreateManagedCanister => {
                 RequestOperationFilterType::CreateManagedCanister
+            }
+            station_api::ListRequestsOperationTypeDTO::CallCanister(target) => {
+                RequestOperationFilterType::CallCanister(target)
             }
             station_api::ListRequestsOperationTypeDTO::EditPermission => {
                 RequestOperationFilterType::EditPermission

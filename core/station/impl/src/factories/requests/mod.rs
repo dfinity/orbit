@@ -3,7 +3,7 @@ use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{Request, RequestOperation},
     services::{
-        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, MANAGED_CANISTER_SERVICE,
+        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, EXTERNAL_CANISTER_SERVICE,
         REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
     },
 };
@@ -17,6 +17,7 @@ mod add_address_book_entry;
 mod add_request_policy;
 mod add_user;
 mod add_user_group;
+mod call_canister;
 mod change_canister;
 mod create_canister;
 mod edit_account;
@@ -37,6 +38,7 @@ use self::{
     add_request_policy::{AddRequestPolicyRequestCreate, AddRequestPolicyRequestExecute},
     add_user::{AddUserRequestCreate, AddUserRequestExecute},
     add_user_group::{AddUserGroupRequestCreate, AddUserGroupRequestExecute},
+    call_canister::{CallCanisterRequestCreate, CallCanisterRequestExecute},
     change_canister::{
         ChangeCanisterRequestCreate, ChangeCanisterRequestExecute,
         ChangeManagedCanisterRequestCreate, ChangeManagedCanisterRequestExecute,
@@ -201,6 +203,14 @@ impl RequestFactory {
                     CreateManagedCanisterRequestCreate,
                 >(id, requested_by_user, input.clone(), operation.clone())
             }
+            RequestOperationInput::CallCanister(operation) => {
+                create_request::<station_api::CallCanisterOperationInput, CallCanisterRequestCreate>(
+                    id,
+                    requested_by_user,
+                    input.clone(),
+                    operation.clone(),
+                )
+            }
             RequestOperationInput::EditPermission(operation) => {
                 create_request::<
                     station_api::EditPermissionOperationInput,
@@ -288,9 +298,14 @@ impl RequestFactory {
                 Box::new(CreateManagedCanisterRequestExecute::new(
                     request,
                     operation,
-                    Arc::clone(&MANAGED_CANISTER_SERVICE),
+                    Arc::clone(&EXTERNAL_CANISTER_SERVICE),
                 ))
             }
+            RequestOperation::CallCanister(operation) => Box::new(CallCanisterRequestExecute::new(
+                request,
+                operation,
+                Arc::clone(&EXTERNAL_CANISTER_SERVICE),
+            )),
             RequestOperation::EditPermission(operation) => {
                 Box::new(EditPermissionRequestExecute::new(
                     request,

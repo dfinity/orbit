@@ -3,12 +3,12 @@ use crate::{
     core::ic_cdk::api::trap,
     models::{
         resource::{
-            AccountResourceAction, ChangeCanisterResourceAction,
+            AccountResourceAction, CallCanisterResourceTarget, ChangeCanisterResourceAction,
             ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
             ManagedCanisterResourceAction, PermissionResourceAction, RequestResourceAction,
             Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
         },
-        Transfer,
+        CanisterMethod, Transfer,
     },
     repositories::TRANSFER_REPOSITORY,
 };
@@ -213,6 +213,15 @@ impl From<&station_api::CreateRequestInput> for Resource {
             RequestOperationInput::CreateManagedCanister(_) => Resource::ManagedCanister(
                 ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any),
             ),
+            RequestOperationInput::CallCanister(input) => {
+                let validation_method: Option<CanisterMethod> =
+                    input.validation_method.clone().map(|m| m.into());
+                let execution_method: CanisterMethod = input.execution_method.clone().into();
+                Resource::CallCanister(CallCanisterResourceTarget {
+                    validation_method: validation_method.into(),
+                    execution_method: execution_method.into(),
+                })
+            }
             RequestOperationInput::EditPermission(_) => {
                 Resource::Permission(PermissionResourceAction::Update)
             }
