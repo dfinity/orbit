@@ -23,8 +23,9 @@ fn get_account(from_account_id: &UUID) -> Option<Account> {
 
 pub struct TransferRequestCreate {}
 
+#[async_trait]
 impl Create<station_api::TransferOperationInput> for TransferRequestCreate {
-    fn create(
+    async fn create(
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,

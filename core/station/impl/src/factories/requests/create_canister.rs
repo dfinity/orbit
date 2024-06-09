@@ -11,8 +11,9 @@ use std::sync::Arc;
 
 pub struct CreateManagedCanisterRequestCreate;
 
+#[async_trait]
 impl Create<CreateManagedCanisterOperationInput> for CreateManagedCanisterRequestCreate {
-    fn create(
+    async fn create(
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,

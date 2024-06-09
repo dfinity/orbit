@@ -10,8 +10,9 @@ use std::sync::Arc;
 
 pub struct EditPermissionRequestCreate {}
 
+#[async_trait]
 impl Create<station_api::EditPermissionOperationInput> for EditPermissionRequestCreate {
-    fn create(
+    async fn create(
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
@@ -84,8 +85,8 @@ mod tests {
     };
     use orbit_essentials::{model::ModelKey, repository::Repository};
 
-    #[test]
-    fn test_create_request() {
+    #[tokio::test]
+    async fn test_create_request() {
         let request_id = [0u8; 16];
         let requested_by_user = [1u8; 16];
         let operation_input = edit_permission_test_utils::mock_edit_permission_api_input();
@@ -99,6 +100,7 @@ mod tests {
             request_input,
             operation_input,
         )
+        .await
         .unwrap();
 
         assert_eq!(request.id, request_id);
@@ -121,6 +123,7 @@ mod tests {
             request_input,
             operation_input,
         )
+        .await
         .unwrap();
 
         REQUEST_REPOSITORY.insert(request.to_key(), request.to_owned());
