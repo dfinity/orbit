@@ -18,8 +18,9 @@ use std::sync::Arc;
 
 pub struct ChangeCanisterRequestCreate;
 
+#[async_trait]
 impl Create<ChangeCanisterOperationInput> for ChangeCanisterRequestCreate {
-    fn create(
+    async fn create(
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,
@@ -127,8 +128,9 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
 
 pub struct ChangeManagedCanisterRequestCreate;
 
+#[async_trait]
 impl Create<ChangeManagedCanisterOperationInput> for ChangeManagedCanisterRequestCreate {
-    fn create(
+    async fn create(
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,

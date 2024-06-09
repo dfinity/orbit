@@ -13,8 +13,9 @@ use orbit_essentials::types::UUID;
 
 pub struct EditAddressBookEntryRequestCreate {}
 
+#[async_trait]
 impl Create<station_api::EditAddressBookEntryOperationInput> for EditAddressBookEntryRequestCreate {
-    fn create(
+    async fn create(
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
