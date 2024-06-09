@@ -329,6 +329,7 @@ pub struct CallCanisterOperationInput {
     pub validation_method: Option<CanisterMethod>,
     pub execution_method: CanisterMethod,
     pub arg: Vec<u8>,
+    pub execution_method_cycles: Option<u64>,
 }
 
 #[storable]

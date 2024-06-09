@@ -621,6 +621,8 @@ type CallCanisterOperationInput = record {
   execution_method : CanisterMethod;
   // The argument blob passed to both the validation and execution method.
   arg : blob;
+  // The amount of cycles attached to the call of the execution method.
+  execution_method_cycles : opt nat64;
 };
 
 type CallCanisterOperation = record {
@@ -632,6 +634,8 @@ type CallCanisterOperation = record {
   arg_checksum : Sha256Hash;
   // A human-readable rendering of the argument blob procuded by the validation method.
   arg_rendering : opt text;
+  // The amount of cycles attached to the call of the execution method.
+  execution_method_cycles : opt nat64;
   // The reply blob produced by a successful call of the execution method,
   // i.e., when the request is `Completed`.
   execution_method_reply : opt blob;

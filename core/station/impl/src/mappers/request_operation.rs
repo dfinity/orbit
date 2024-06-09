@@ -487,6 +487,7 @@ impl From<CallCanisterOperationInput> for station_api::CallCanisterOperationInpu
             validation_method: input.validation_method.map(|m| m.into()),
             execution_method: input.execution_method.into(),
             arg: input.arg,
+            execution_method_cycles: input.execution_method_cycles,
         }
     }
 }
@@ -497,6 +498,7 @@ impl From<station_api::CallCanisterOperationInput> for CallCanisterOperationInpu
             validation_method: input.validation_method.map(|m| m.into()),
             execution_method: input.execution_method.into(),
             arg: input.arg,
+            execution_method_cycles: input.execution_method_cycles,
         }
     }
 }
@@ -508,6 +510,7 @@ impl From<CallCanisterOperation> for CallCanisterOperationDTO {
             execution_method: operation.input.execution_method.into(),
             arg_checksum: hex::encode(&operation.arg_checksum),
             arg_rendering: operation.arg_rendering,
+            execution_method_cycles: operation.input.execution_method_cycles,
             execution_method_reply: operation.execution_method_reply,
         }
     }

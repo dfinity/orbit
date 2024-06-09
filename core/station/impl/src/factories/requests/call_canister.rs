@@ -32,6 +32,7 @@ impl Create<CallCanisterOperationInput> for CallCanisterRequestCreate {
                         validation_method.canister_id,
                         validation_method.method_name.clone(),
                         operation_input.arg.clone(),
+                        None,
                     )
                     .await
                     .map_err(|err| RequestError::ValidationError {
@@ -110,6 +111,7 @@ impl Execute for CallCanisterRequestExecute<'_, '_> {
                 self.operation.input.execution_method.canister_id,
                 self.operation.input.execution_method.method_name.clone(),
                 self.operation.input.arg.clone(),
+                self.operation.input.execution_method_cycles,
             )
             .await
             .map_err(|err| RequestExecuteError::Failed {

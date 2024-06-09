@@ -56,8 +56,9 @@ impl ExternalCanisterService {
         canister_id: Principal,
         method_name: String,
         arg: Vec<u8>,
+        cycles: Option<u64>,
     ) -> ServiceResult<Vec<u8>, ExternalCanisterError> {
-        call_raw(canister_id, &method_name, arg, 0)
+        call_raw(canister_id, &method_name, arg, cycles.unwrap_or_default())
             .await
             .map_err(|(_, err)| ExternalCanisterError::Failed {
                 reason: err.to_string(),
