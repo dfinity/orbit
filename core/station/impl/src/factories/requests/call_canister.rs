@@ -2,9 +2,10 @@ use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{CallCanisterOperation, Request, RequestExecutionPlan, RequestOperation},
-    services::ExternalCanisterService,
+    services::{ExternalCanisterService, EXTERNAL_CANISTER_SERVICE},
 };
 use async_trait::async_trait;
+use candid::Decode;
 use orbit_essentials::types::UUID;
 use sha2::{Digest, Sha256};
 use station_api::{CallCanisterOperationInput, CreateRequestInput};
@@ -20,6 +21,37 @@ impl Create<CallCanisterOperationInput> for CallCanisterRequestCreate {
         input: CreateRequestInput,
         operation_input: CallCanisterOperationInput,
     ) -> Result<Request, RequestError> {
+        let arg_rendering = match operation_input.validation_method {
+            Some(ref validation_method) => {
+                let rendering_bytes = EXTERNAL_CANISTER_SERVICE
+                    .call_canister(
+                        validation_method.canister_id,
+                        validation_method.method_name.clone(),
+                        operation_input.arg.clone(),
+                    )
+                    .await
+                    .map_err(|err| RequestError::ValidationError {
+                        info: format!(
+                            "failed to call validation canister {}: {}",
+                            validation_method.canister_id, err
+                        ),
+                    })?;
+                let rendering =
+                    Decode!(&rendering_bytes, Result<String, String>).map_err(|err| {
+                        RequestError::ValidationError {
+                            info: format!(
+                                "failed to decode validation canister {} reply: {}",
+                                validation_method.canister_id, err
+                            ),
+                        }
+                    })?;
+                Some(rendering.map_err(|err| RequestError::ValidationError {
+                    info: format!("failed to validate call canister request: {}", err),
+                })?)
+            }
+            None => None,
+        };
+
         let mut hasher = Sha256::new();
         hasher.update(operation_input.arg.clone());
         let arg_checksum = hasher.finalize().to_vec();
@@ -29,7 +61,7 @@ impl Create<CallCanisterOperationInput> for CallCanisterRequestCreate {
             Request::default_expiration_dt_ns(),
             RequestOperation::CallCanister(CallCanisterOperation {
                 arg_checksum,
-                arg_rendering: None,
+                arg_rendering,
                 execution_method_reply: None,
                 input: operation_input.into(),
             }),
