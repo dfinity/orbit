@@ -12,6 +12,7 @@ pub struct ManageSystemInfoRequestCreate {}
 #[async_trait]
 impl Create<station_api::ManageSystemInfoOperationInput> for ManageSystemInfoRequestCreate {
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
@@ -82,14 +83,11 @@ mod tests {
         create_request.operation =
             station_api::RequestOperationInput::ManageSystemInfo(input.clone());
 
-        let request = ManageSystemInfoRequestCreate::create(
-            request_id,
-            requested_by_user,
-            create_request,
-            input,
-        )
-        .await
-        .unwrap();
+        let creator = Box::new(ManageSystemInfoRequestCreate {});
+        let request = creator
+            .create(request_id, requested_by_user, create_request, input)
+            .await
+            .unwrap();
 
         assert_eq!(request.requested_by, requested_by_user);
         assert_eq!(
@@ -117,14 +115,11 @@ mod tests {
         create_request.operation =
             station_api::RequestOperationInput::ManageSystemInfo(input.clone());
 
-        let request = ManageSystemInfoRequestCreate::create(
-            request_id,
-            requested_by_user,
-            create_request,
-            input,
-        )
-        .await
-        .unwrap();
+        let creator = Box::new(ManageSystemInfoRequestCreate {});
+        let request = creator
+            .create(request_id, requested_by_user, create_request, input)
+            .await
+            .unwrap();
 
         let operation = match &request.operation {
             RequestOperation::ManageSystemInfo(operation) => operation,

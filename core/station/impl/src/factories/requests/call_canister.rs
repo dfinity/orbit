@@ -2,7 +2,7 @@ use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{CallCanisterOperation, Request, RequestExecutionPlan, RequestOperation},
-    services::{ExternalCanisterService, EXTERNAL_CANISTER_SERVICE},
+    services::ExternalCanisterService,
 };
 use async_trait::async_trait;
 use candid::Decode;
@@ -11,11 +11,14 @@ use sha2::{Digest, Sha256};
 use station_api::{CallCanisterOperationInput, CreateRequestInput};
 use std::sync::Arc;
 
-pub struct CallCanisterRequestCreate;
+pub struct CallCanisterRequestCreate {
+    pub external_canister_service: Arc<ExternalCanisterService>,
+}
 
 #[async_trait]
 impl Create<CallCanisterOperationInput> for CallCanisterRequestCreate {
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,
@@ -23,7 +26,8 @@ impl Create<CallCanisterOperationInput> for CallCanisterRequestCreate {
     ) -> Result<Request, RequestError> {
         let arg_rendering = match operation_input.validation_method {
             Some(ref validation_method) => {
-                let rendering_bytes = EXTERNAL_CANISTER_SERVICE
+                let rendering_bytes = self
+                    .external_canister_service
                     .call_canister(
                         validation_method.canister_id,
                         validation_method.method_name.clone(),

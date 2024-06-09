@@ -78,22 +78,12 @@ pub trait Execute: Send + Sync {
 pub trait Create<T>: Send + Sync {
     /// Creates a new request for the operation but does not save it.
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,
         operation_input: T,
-    ) -> Result<Request, RequestError>
-    where
-        Self: Sized;
-}
-
-async fn create_request<OperationInput, Creator: Create<OperationInput>>(
-    request_id: UUID,
-    requested_by_user: UUID,
-    input: CreateRequestInput,
-    operation_input: OperationInput,
-) -> Result<Request, RequestError> {
-    Creator::create(request_id, requested_by_user, input, operation_input).await
+    ) -> Result<Request, RequestError>;
 }
 
 #[derive(Debug)]
@@ -107,163 +97,126 @@ impl RequestFactory {
         let id = *generate_uuid_v4().await.as_bytes();
         match &input.operation {
             RequestOperationInput::Transfer(operation) => {
-                create_request::<station_api::TransferOperationInput, TransferRequestCreate>(
-                    id,
-                    requested_by_user,
-                    input.clone(),
-                    operation.clone(),
-                )
-                .await
+                let creator = Box::new(TransferRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::AddAccount(operation) => {
-                create_request::<station_api::AddAccountOperationInput, AddAccountRequestCreate>(
-                    id,
-                    requested_by_user,
-                    input.clone(),
-                    operation.clone(),
-                )
-                .await
+                let creator = Box::new(AddAccountRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::EditAccount(operation) => {
-                create_request::<station_api::EditAccountOperationInput, EditAccountRequestCreate>(
-                    id,
-                    requested_by_user,
-                    input.clone(),
-                    operation.clone(),
-                )
-                .await
+                let creator = Box::new(EditAccountRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::AddAddressBookEntry(operation) => {
-                create_request::<
-                    station_api::AddAddressBookEntryOperationInput,
-                    AddAddressBookEntryRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(AddAddressBookEntryRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::EditAddressBookEntry(operation) => {
-                create_request::<
-                    station_api::EditAddressBookEntryOperationInput,
-                    EditAddressBookEntryRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(EditAddressBookEntryRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::RemoveAddressBookEntry(operation) => {
-                create_request::<
-                    station_api::RemoveAddressBookEntryOperationInput,
-                    RemoveAddressBookEntryRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(RemoveAddressBookEntryRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
-            RequestOperationInput::AddUserGroup(operation) => create_request::<
-                station_api::AddUserGroupOperationInput,
-                AddUserGroupRequestCreate,
-            >(
-                id,
-                requested_by_user,
-                input.clone(),
-                operation.clone(),
-            )
-            .await,
-            RequestOperationInput::EditUserGroup(operation) => create_request::<
-                station_api::EditUserGroupOperationInput,
-                EditUserGroupRequestCreate,
-            >(
-                id,
-                requested_by_user,
-                input.clone(),
-                operation.clone(),
-            )
-            .await,
+            RequestOperationInput::AddUserGroup(operation) => {
+                let creator = Box::new(AddUserGroupRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+            RequestOperationInput::EditUserGroup(operation) => {
+                let creator = Box::new(EditUserGroupRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
             RequestOperationInput::RemoveUserGroup(operation) => {
-                create_request::<
-                    station_api::RemoveUserGroupOperationInput,
-                    RemoveUserGroupRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(RemoveUserGroupRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::AddUser(operation) => {
-                create_request::<station_api::AddUserOperationInput, AddUserRequestCreate>(
-                    id,
-                    requested_by_user,
-                    input.clone(),
-                    operation.clone(),
-                )
-                .await
+                let creator = Box::new(AddUserRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::EditUser(operation) => {
-                create_request::<station_api::EditUserOperationInput, EditUserRequestCreate>(
-                    id,
-                    requested_by_user,
-                    input.clone(),
-                    operation.clone(),
-                )
-                .await
+                let creator = Box::new(EditUserRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::ChangeCanister(operation) => {
-                create_request::<
-                    station_api::ChangeCanisterOperationInput,
-                    ChangeCanisterRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(ChangeCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::ChangeManagedCanister(operation) => {
-                create_request::<
-                    station_api::ChangeManagedCanisterOperationInput,
-                    ChangeManagedCanisterRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(ChangeManagedCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::CreateManagedCanister(operation) => {
-                create_request::<
-                    station_api::CreateManagedCanisterOperationInput,
-                    CreateManagedCanisterRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(CreateManagedCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
-            RequestOperationInput::CallCanister(operation) => create_request::<
-                station_api::CallCanisterOperationInput,
-                CallCanisterRequestCreate,
-            >(
-                id,
-                requested_by_user,
-                input.clone(),
-                operation.clone(),
-            )
-            .await,
+            RequestOperationInput::CallCanister(operation) => {
+                let creator = Box::new(CallCanisterRequestCreate {
+                    external_canister_service: Arc::clone(&EXTERNAL_CANISTER_SERVICE),
+                });
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
             RequestOperationInput::EditPermission(operation) => {
-                create_request::<
-                    station_api::EditPermissionOperationInput,
-                    EditPermissionRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(EditPermissionRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::AddRequestPolicy(operation) => {
-                create_request::<
-                    station_api::AddRequestPolicyOperationInput,
-                    AddRequestPolicyRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(AddRequestPolicyRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::EditRequestPolicy(operation) => {
-                create_request::<
-                    station_api::EditRequestPolicyOperationInput,
-                    EditRequestPolicyRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(EditRequestPolicyRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::RemoveRequestPolicy(operation) => {
-                create_request::<
-                    station_api::RemoveRequestPolicyOperationInput,
-                    RemoveRequestPolicyRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(RemoveRequestPolicyRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::ManageSystemInfo(operation) => {
-                create_request::<
-                    station_api::ManageSystemInfoOperationInput,
-                    manage_system_info::ManageSystemInfoRequestCreate,
-                >(id, requested_by_user, input.clone(), operation.clone())
-                .await
+                let creator = Box::new(manage_system_info::ManageSystemInfoRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
         }
     }

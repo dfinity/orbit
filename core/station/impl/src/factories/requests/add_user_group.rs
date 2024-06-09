@@ -12,6 +12,7 @@ pub struct AddUserGroupRequestCreate {}
 #[async_trait]
 impl Create<station_api::AddUserGroupOperationInput> for AddUserGroupRequestCreate {
     async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
