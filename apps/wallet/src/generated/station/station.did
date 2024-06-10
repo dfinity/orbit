@@ -724,7 +724,7 @@ type RequestOperation = variant {
   ChangeExternalCanister : ChangeExternalCanisterOperation;
   // An operation for creating a external canister.
   CreateExternalCanister : CreateExternalCanisterOperation;
-  // An operation for calling a canister.
+  // An operation for calling an external canister.
   CallExternalCanister : CallExternalCanisterOperation;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperation;
@@ -767,7 +767,7 @@ type RequestOperationInput = variant {
   ChangeExternalCanister : ChangeExternalCanisterOperationInput;
   // An operation for creating a external canister.
   CreateExternalCanister : CreateExternalCanisterOperationInput;
-  // An operation for calling a canister.
+  // An operation for calling an external canister.
   CallExternalCanister : CallExternalCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
@@ -810,7 +810,7 @@ type RequestOperationType = variant {
   ChangeExternalCanister;
   // An operation for creating a external canister.
   CreateExternalCanister;
-  // An operation for calling a canister.
+  // An operation for calling an external canister.
   CallExternalCanister;
   // An operation for editing an permission.
   EditPermission;
@@ -935,7 +935,7 @@ type ListRequestsOperationType = variant {
   ChangeExternalCanister : opt principal;
   // An operation for creating a external canister.
   CreateExternalCanister;
-  // An operation for calling a canister with an optionally specified canister ID.
+  // An operation for calling an external canister with an optionally specified canister ID.
   CallExternalCanister : opt principal;
   // An operation for editing an permission.
   EditPermission;
