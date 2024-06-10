@@ -17,6 +17,10 @@ use crate::{
     services::SYSTEM_SERVICE,
 };
 use candid::Principal;
+#[cfg(not(test))]
+pub use orbit_essentials::cdk as ic_cdk;
+#[cfg(test)]
+pub use orbit_essentials::cdk::mocks as ic_cdk;
 use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use uuid::Uuid;
@@ -188,7 +192,7 @@ impl EnsureExternalCanister {
         principal: Principal,
     ) -> Result<(), ExternalCanisterValidationError> {
         if principal == Principal::management_canister()
-            || principal == ic_cdk::id()
+            || principal == ic_cdk::api::id()
             || principal == SYSTEM_SERVICE.get_upgrader_canister_id()
         {
             return Err(ExternalCanisterValidationError::InvalidExternalCanister { principal });

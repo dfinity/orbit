@@ -397,6 +397,7 @@ mod tests {
 
     use crate::{
         core::validation::disable_mock_resource_validation,
+        core::write_system_info,
         models::{
             permission::Allow,
             request_policy_rule::RequestPolicyRule,
@@ -410,6 +411,7 @@ mod tests {
                 CreateExternalCanisterResourceTarget, ExecutionMethodResourceTarget, ResourceIds,
                 ValidationMethodResourceTarget,
             },
+            system::SystemInfo,
             AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
             Blockchain, CanisterMethod, EditAccountOperation, EditAccountOperationInput,
             EditUserOperation, EditUserOperationInput, Metadata, RequestKey, RequestOperation,
@@ -575,6 +577,10 @@ mod tests {
     fn test_valid_request_specifier() {
         disable_mock_resource_validation();
 
+        // needed to validate call external canister request specifiers
+        let system_info = SystemInfo::new(Principal::management_canister(), Vec::new());
+        write_system_info(system_info);
+
         RequestSpecifier::AddAccount
             .validate()
             .expect("AddAccount should be valid");
@@ -612,7 +618,18 @@ mod tests {
             execution_method: ExecutionMethodResourceTarget::Any,
         })
         .validate()
-        .expect_err("Management canister in CallExternalCanister should be valid");
+        .expect_err("Management canister in CallExternalCanister should be invalid");
+        RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
+                canister_id: Principal::from_slice(&[
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01,
+                ]),
+                method_name: "foo".to_string(),
+            }),
+            execution_method: ExecutionMethodResourceTarget::Any,
+        })
+        .validate()
+        .expect("CallExternalCanister should be valid");
         RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
             validation_method: ValidationMethodResourceTarget::No,
             execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
@@ -621,19 +638,18 @@ mod tests {
             }),
         })
         .validate()
-        .expect_err("Management canister in CallExternalCanister should be valid");
+        .expect_err("Management canister in CallExternalCanister should be invalid");
         RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
-            validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
-                canister_id: Principal::management_canister(),
-                method_name: "install_code".to_string(),
-            }),
+            validation_method: ValidationMethodResourceTarget::No,
             execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
-                canister_id: Principal::management_canister(),
-                method_name: "install_code".to_string(),
+                canister_id: Principal::from_slice(&[
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01,
+                ]),
+                method_name: "foo".to_string(),
             }),
         })
         .validate()
-        .expect_err("Management canister in CallExternalCanister should be valid");
+        .expect("CallExternalCanister should be valid");
         RequestSpecifier::AddRequestPolicy
             .validate()
             .expect("AddRequestPolicy should be valid");
