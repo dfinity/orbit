@@ -6,12 +6,9 @@ use super::{
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
     UserGroupId, UserId, UserStatus,
 };
-use crate::core::validation::EnsureExternalCanister;
-use crate::errors::ValidationError;
 use crate::models::Metadata;
 use candid::Principal;
 use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
-use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::{storable, types::UUID};
 use std::fmt::Display;
 

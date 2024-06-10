@@ -91,10 +91,6 @@ impl ModelValidator<ValidationError> for RequestSpecifier {
             | RequestSpecifier::ManageSystemInfo
             | RequestSpecifier::AddUserGroup => (),
 
-            RequestSpecifier::CallCanister(target) => {
-                target.validate()?;
-            }
-
             RequestSpecifier::Transfer(resource_ids)
             | RequestSpecifier::EditAccount(resource_ids) => {
                 EnsureAccount::resource_ids_exist(resource_ids)?

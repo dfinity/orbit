@@ -1,9 +1,6 @@
 use candid::Principal;
 use orbit_essentials::storable;
-use orbit_essentials::{
-    model::{ModelValidator, ModelValidatorResult},
-    types::UUID,
-};
+use orbit_essentials::{model::ModelValidator, types::UUID};
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
@@ -12,7 +9,7 @@ use crate::{
         EnsureAccount, EnsureAddressBookEntry, EnsureRequest, EnsureRequestPolicy,
         EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
     },
-    errors::RecordValidationError,
+    errors::ValidationError,
 };
 
 #[storable]
