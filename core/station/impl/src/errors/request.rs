@@ -75,7 +75,7 @@ impl From<RecordValidationError> for RequestError {
     fn from(err: RecordValidationError) -> RequestError {
         match err {
             RecordValidationError::NotFound { id, model_name } => RequestError::ValidationError {
-                info: format!("Invalid user specifier: {} {} not found", model_name, id),
+                info: format!("Invalid UUID: {} {} not found", model_name, id),
             },
         }
     }

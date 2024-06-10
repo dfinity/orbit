@@ -28,7 +28,7 @@ impl From<RecordValidationError> for RequestPolicyError {
         match err {
             RecordValidationError::NotFound { id, model_name } => {
                 RequestPolicyError::ValidationError {
-                    info: format!("Invalid user specifier: {} {} not found", model_name, id),
+                    info: format!("Invalid UUID: {} {} not found", model_name, id),
                 }
             }
         }
