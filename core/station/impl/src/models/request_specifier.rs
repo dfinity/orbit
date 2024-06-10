@@ -421,6 +421,8 @@ mod tests {
     };
     use anyhow::{anyhow, Error};
     use candid::{Nat, Principal};
+    use orbit_essentials::cdk::mocks::api::id;
+    use orbit_essentials::cdk::mocks::TEST_CANISTER_ID;
     use orbit_essentials::{model::ModelValidator, repository::Repository};
     use std::sync::Arc;
 
@@ -578,7 +580,13 @@ mod tests {
         disable_mock_resource_validation();
 
         // needed to validate call external canister request specifiers
-        let system_info = SystemInfo::new(Principal::management_canister(), Vec::new());
+        let station_canister_id = TEST_CANISTER_ID;
+        assert_eq!(station_canister_id, id());
+        let upgrader_canister_id =
+            Principal::from_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01]);
+        let external_canister_id =
+            Principal::from_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01]);
+        let system_info = SystemInfo::new(upgrader_canister_id, Vec::new());
         write_system_info(system_info);
 
         RequestSpecifier::AddAccount
@@ -621,9 +629,25 @@ mod tests {
         .expect_err("Management canister in CallExternalCanister should be invalid");
         RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
             validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
-                canister_id: Principal::from_slice(&[
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01,
-                ]),
+                canister_id: station_canister_id,
+                method_name: "foo".to_string(),
+            }),
+            execution_method: ExecutionMethodResourceTarget::Any,
+        })
+        .validate()
+        .expect_err("Station canister in CallExternalCanister should be invalid");
+        RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
+                canister_id: upgrader_canister_id,
+                method_name: "foo".to_string(),
+            }),
+            execution_method: ExecutionMethodResourceTarget::Any,
+        })
+        .validate()
+        .expect_err("Upgrader canister in CallExternalCanister should be invalid");
+        RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
+                canister_id: external_canister_id,
                 method_name: "foo".to_string(),
             }),
             execution_method: ExecutionMethodResourceTarget::Any,
@@ -642,9 +666,25 @@ mod tests {
         RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
             validation_method: ValidationMethodResourceTarget::No,
             execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
-                canister_id: Principal::from_slice(&[
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01,
-                ]),
+                canister_id: station_canister_id,
+                method_name: "foo".to_string(),
+            }),
+        })
+        .validate()
+        .expect_err("Station canister in CallExternalCanister should be invalid");
+        RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::No,
+            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
+                canister_id: upgrader_canister_id,
+                method_name: "foo".to_string(),
+            }),
+        })
+        .validate()
+        .expect_err("Upgrader canister in CallExternalCanister should be invalid");
+        RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::No,
+            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
+                canister_id: external_canister_id,
                 method_name: "foo".to_string(),
             }),
         })
