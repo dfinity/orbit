@@ -3,7 +3,7 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, ManagedCanisterResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ExternalCanisterResourceAction,
         PermissionResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
         SystemResourceAction, UserResourceAction,
     },
@@ -246,11 +246,11 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
                 station_api::RequestSpecifierDTO::Transfer(account.into())
             }
             RequestSpecifier::ChangeCanister => station_api::RequestSpecifierDTO::ChangeCanister,
-            RequestSpecifier::ChangeManagedCanister(target) => {
-                station_api::RequestSpecifierDTO::ChangeManagedCanister(target.into())
+            RequestSpecifier::ChangeExternalCanister(target) => {
+                station_api::RequestSpecifierDTO::ChangeExternalCanister(target.into())
             }
-            RequestSpecifier::CreateManagedCanister(target) => {
-                station_api::RequestSpecifierDTO::CreateManagedCanister(target.into())
+            RequestSpecifier::CreateExternalCanister(target) => {
+                station_api::RequestSpecifierDTO::CreateExternalCanister(target.into())
             }
             RequestSpecifier::CallCanister(target) => {
                 station_api::RequestSpecifierDTO::CallCanister(target.into())
@@ -305,11 +305,11 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
                 RequestSpecifier::Transfer(transfer_specifier.into())
             }
             station_api::RequestSpecifierDTO::ChangeCanister => RequestSpecifier::ChangeCanister,
-            station_api::RequestSpecifierDTO::ChangeManagedCanister(target) => {
-                RequestSpecifier::ChangeManagedCanister(target.into())
+            station_api::RequestSpecifierDTO::ChangeExternalCanister(target) => {
+                RequestSpecifier::ChangeExternalCanister(target.into())
             }
-            station_api::RequestSpecifierDTO::CreateManagedCanister(target) => {
-                RequestSpecifier::CreateManagedCanister(target.into())
+            station_api::RequestSpecifierDTO::CreateExternalCanister(target) => {
+                RequestSpecifier::CreateExternalCanister(target.into())
             }
             station_api::RequestSpecifierDTO::CallCanister(target) => {
                 RequestSpecifier::CallCanister(target.into())
@@ -417,14 +417,14 @@ impl RequestSpecifier {
             RequestSpecifier::ChangeCanister => vec![Resource::ChangeCanister(
                 ChangeCanisterResourceAction::Create,
             )],
-            RequestSpecifier::ChangeManagedCanister(target) => {
-                vec![Resource::ManagedCanister(
-                    ManagedCanisterResourceAction::Change(target.clone()),
+            RequestSpecifier::ChangeExternalCanister(target) => {
+                vec![Resource::ExternalCanister(
+                    ExternalCanisterResourceAction::Change(target.clone()),
                 )]
             }
-            RequestSpecifier::CreateManagedCanister(target) => {
-                vec![Resource::ManagedCanister(
-                    ManagedCanisterResourceAction::Create(target.clone()),
+            RequestSpecifier::CreateExternalCanister(target) => {
+                vec![Resource::ExternalCanister(
+                    ExternalCanisterResourceAction::Create(target.clone()),
                 )]
             }
             RequestSpecifier::CallCanister(target) => {

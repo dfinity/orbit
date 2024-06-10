@@ -46,8 +46,9 @@ type RequestSpecifier = variant {
   EditAddressBookEntry : ResourceIds;
   RemoveAddressBookEntry : ResourceIds;
   ChangeCanister;
-  ChangeManagedCanister : ChangeManagedCanisterResourceTarget;
-  CreateManagedCanister : CreateManagedCanisterResourceTarget;
+  ChangeExternalCanister : ChangeExternalCanisterResourceTarget;
+  CreateExternalCanister : CreateExternalCanisterResourceTarget;
+  CallCanister : CallCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
   AddRequestPolicy;
   EditRequestPolicy : ResourceIds;
@@ -564,7 +565,7 @@ type ChangeCanisterOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
-type ChangeManagedCanisterOperationInput = record {
+type ChangeExternalCanisterOperationInput = record {
   // The canister to install.
   canister_id : principal;
   // The canister installation mode.
@@ -575,7 +576,7 @@ type ChangeManagedCanisterOperationInput = record {
   arg : opt blob;
 };
 
-type ChangeManagedCanisterOperation = record {
+type ChangeExternalCanisterOperation = record {
   // The canister to install.
   canister_id : principal;
   // The canister installation mode.
@@ -586,10 +587,58 @@ type ChangeManagedCanisterOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
-type CreateManagedCanisterOperationInput = record {};
+type CreateExternalCanisterOperationInput = record {};
 
-type CreateManagedCanisterOperation = record {
+type CreateExternalCanisterOperation = record {
   canister_id : opt principal;
+};
+
+type CanisterMethod = record {
+  // The canister call.
+  canister_id : principal;
+  // The method to call on the canister.
+  method_name : text;
+};
+
+type CallCanisterOperationInput = record {
+  // The canister method validating the argument blob:
+  //   - on validation success, returns a human-readable rendering of the argument blob
+  //     and then the request becomes `Created`;
+  //   - on validation error, returns a textual diagnostic message
+  //     and then the request becomes `Failed` with the textual diagnostic message as `reason`.
+  // Formally, the return type of the validation method must be
+  // ```
+  // variant {
+  //   Ok : text;
+  //   Err : text;
+  // }
+  // ```
+  // If omitted (`validation_method = null`), no validation of the argument blob is performed
+  // and a human-readable rendering of the argument blob is best-effort.
+  validation_method : opt CanisterMethod;
+  // The canister method that is called after the request becomes `Approved`
+  // passing the validated argument blob.
+  execution_method : CanisterMethod;
+  // The argument blob passed to both the validation and execution method.
+  arg : blob;
+  // The amount of cycles attached to the call of the execution method.
+  execution_method_cycles : opt nat64;
+};
+
+type CallCanisterOperation = record {
+  // see `CallCanisterOperationInput`
+  validation_method : opt CanisterMethod;
+  // see `CallCanisterOperationInput`
+  execution_method : CanisterMethod;
+  // The checksum of the argument blob passed to both the validation and execution method.
+  arg_checksum : Sha256Hash;
+  // A human-readable rendering of the argument blob procuded by the validation method.
+  arg_rendering : opt text;
+  // The amount of cycles attached to the call of the execution method.
+  execution_method_cycles : opt nat64;
+  // The reply blob produced by a successful call of the execution method,
+  // i.e., when the request is `Completed`.
+  execution_method_reply : opt blob;
 };
 
 type EditPermissionOperationInput = record {
@@ -671,10 +720,12 @@ type RequestOperation = variant {
   RemoveUserGroup : RemoveUserGroupOperation;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperation;
-  // An operation for changing a managed canister.
-  ChangeManagedCanister : ChangeManagedCanisterOperation;
-  // An operation for creating a managed canister.
-  CreateManagedCanister : CreateManagedCanisterOperation;
+  // An operation for changing a external canister.
+  ChangeExternalCanister : ChangeExternalCanisterOperation;
+  // An operation for creating a external canister.
+  CreateExternalCanister : CreateExternalCanisterOperation;
+  // An operation for calling a canister.
+  CallCanister : CallCanisterOperation;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperation;
   // An operation for adding a request policy.
@@ -712,10 +763,12 @@ type RequestOperationInput = variant {
   RemoveUserGroup : RemoveUserGroupOperationInput;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperationInput;
-  // An operation for changing a managed canister.
-  ChangeManagedCanister : ChangeManagedCanisterOperationInput;
-  // An operation for creating a managed canister.
-  CreateManagedCanister : CreateManagedCanisterOperationInput;
+  // An operation for changing a external canister.
+  ChangeExternalCanister : ChangeExternalCanisterOperationInput;
+  // An operation for creating a external canister.
+  CreateExternalCanister : CreateExternalCanisterOperationInput;
+  // An operation for calling a canister.
+  CallCanister : CallCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
   // An operation for adding a request policy.
@@ -753,10 +806,12 @@ type RequestOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
-  // An operation for changing a managed canister.
-  ChangeManagedCanister;
-  // An operation for creating a managed canister.
-  CreateManagedCanister;
+  // An operation for changing a external canister.
+  ChangeExternalCanister;
+  // An operation for creating a external canister.
+  CreateExternalCanister;
+  // An operation for calling a canister.
+  CallCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -876,10 +931,12 @@ type ListRequestsOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
-  // An operation for changing a managed canister with an optionally specified canister ID.
-  ChangeManagedCanister : opt principal;
-  // An operation for creating a managed canister.
-  CreateManagedCanister;
+  // An operation for changing a external canister with an optionally specified canister ID.
+  ChangeExternalCanister : opt principal;
+  // An operation for creating a external canister.
+  CreateExternalCanister;
+  // An operation for calling a canister with an optionally specified canister ID.
+  CallCanister : opt principal;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -1618,28 +1675,46 @@ type ChangeCanisterResourceAction = variant {
   Create;
 };
 
-// The target of a request to create a managed canister.
-type CreateManagedCanisterResourceTarget = variant {
+// The target of a request to create a external canister.
+type CreateExternalCanisterResourceTarget = variant {
   Any;
 };
 
-// The target canister of a request to change a managed canister.
-type ChangeManagedCanisterResourceTarget = variant {
-  Any;
-  Canister : principal;
-};
-
-// The target canister of a request to read (e.g., fetch status of) a managed canister.
-type ReadManagedCanisterResourceTarget = variant {
+// The target canister of a request to change a external canister.
+type ChangeExternalCanisterResourceTarget = variant {
   Any;
   Canister : principal;
 };
 
-// The actions that are available for managed canisters.
-type ManagedCanisterResourceAction = variant {
-  Create : CreateManagedCanisterResourceTarget;
-  Change : ChangeManagedCanisterResourceTarget;
-  Read : ReadManagedCanisterResourceTarget;
+// The target canister of a request to read (e.g., fetch status of) a external canister.
+type ReadExternalCanisterResourceTarget = variant {
+  Any;
+  Canister : principal;
+};
+
+// The actions that are available for external canisters.
+type ExternalCanisterResourceAction = variant {
+  Create : CreateExternalCanisterResourceTarget;
+  Change : ChangeExternalCanisterResourceTarget;
+  Read : ReadExternalCanisterResourceTarget;
+};
+
+// The validation method targets of a `CallCanister` request.
+type ValidationMethodResourceTarget = variant {
+  No;
+  ValidationMethod : CanisterMethod;
+};
+
+// The execution method targets of a `CallCanister` request.
+type ExecutionMethodResourceTarget = variant {
+  Any;
+  ExecutionMethod : CanisterMethod;
+};
+
+// The validation and execution method targets of a `CallCanister` request.
+type CallCanisterResourceTarget = record {
+  validation_method : ValidationMethodResourceTarget;
+  execution_method : ExecutionMethodResourceTarget;
 };
 
 // The actions that are available for requests.
@@ -1675,7 +1750,8 @@ type Resource = variant {
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
-  ManagedCanister : ManagedCanisterResourceAction;
+  ExternalCanister : ExternalCanisterResourceAction;
+  CallCanister : CallCanisterResourceTarget;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
   System : SystemResourceAction;

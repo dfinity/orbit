@@ -68,20 +68,20 @@ impl Request {
                 operation_type: RequestOperationFilterType::ChangeCanister,
                 request_id: self.id,
             }],
-            RequestOperation::ChangeManagedCanister(operation) => vec![
+            RequestOperation::ChangeExternalCanister(operation) => vec![
                 RequestOperationTypeIndex {
-                    operation_type: RequestOperationFilterType::ChangeManagedCanister(None),
+                    operation_type: RequestOperationFilterType::ChangeExternalCanister(None),
                     request_id: self.id,
                 },
                 RequestOperationTypeIndex {
-                    operation_type: RequestOperationFilterType::ChangeManagedCanister(Some(
+                    operation_type: RequestOperationFilterType::ChangeExternalCanister(Some(
                         operation.input.canister_id,
                     )),
                     request_id: self.id,
                 },
             ],
-            RequestOperation::CreateManagedCanister(_) => vec![RequestOperationTypeIndex {
-                operation_type: RequestOperationFilterType::CreateManagedCanister,
+            RequestOperation::CreateExternalCanister(_) => vec![RequestOperationTypeIndex {
+                operation_type: RequestOperationFilterType::CreateExternalCanister,
                 request_id: self.id,
             }],
             RequestOperation::CallCanister(operation) => vec![

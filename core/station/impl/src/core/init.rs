@@ -4,9 +4,9 @@ use crate::models::{
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
         AccountResourceAction, CallCanisterResourceTarget, ChangeCanisterResourceAction,
-        ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
-        ExecutionMethodResourceTarget, ManagedCanisterResourceAction, PermissionResourceAction,
-        ReadManagedCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction,
+        ChangeExternalCanisterResourceTarget, CreateExternalCanisterResourceTarget,
+        ExecutionMethodResourceTarget, ExternalCanisterResourceAction, PermissionResourceAction,
+        ReadExternalCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction,
         ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
         ValidationMethodResourceTarget,
     },
@@ -147,18 +147,18 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
         ),
-        // create, change, and read managed canister
+        // create, change, and read external canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ManagedCanister(ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any)),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Create(CreateExternalCanisterResourceTarget::Any)),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ManagedCanister(ManagedCanisterResourceAction::Change(ChangeManagedCanisterResourceTarget::Any)),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Change(ChangeExternalCanisterResourceTarget::Any)),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ManagedCanister(ManagedCanisterResourceAction::Read(ReadManagedCanisterResourceTarget::Any)),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Any)),
         ),
         // call canister
         (
@@ -255,13 +255,13 @@ lazy_static! {
             RequestSpecifier::ChangeCanister,
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
-        // create and change managed canister
+        // create and change external canister
         (
-            RequestSpecifier::CreateManagedCanister(CreateManagedCanisterResourceTarget::Any),
+            RequestSpecifier::CreateExternalCanister(CreateExternalCanisterResourceTarget::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         (
-            RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Any),
+            RequestSpecifier::ChangeExternalCanister(ChangeExternalCanisterResourceTarget::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         // call canister

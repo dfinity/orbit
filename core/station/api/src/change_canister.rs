@@ -35,7 +35,7 @@ pub struct ChangeCanisterOperationDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ChangeManagedCanisterOperationInput {
+pub struct ChangeExternalCanisterOperationInput {
     pub canister_id: Principal,
     pub mode: CanisterInstallMode,
     #[serde(with = "serde_bytes")]
@@ -45,7 +45,7 @@ pub struct ChangeManagedCanisterOperationInput {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ChangeManagedCanisterOperationDTO {
+pub struct ChangeExternalCanisterOperationDTO {
     pub canister_id: Principal,
     pub mode: CanisterInstallMode,
     pub module_checksum: Sha256HashDTO,

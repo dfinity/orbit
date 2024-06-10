@@ -11,11 +11,11 @@ use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{
-    AddRequestPolicyOperationInput, CanisterInstallMode, ChangeManagedCanisterOperationInput,
-    ChangeManagedCanisterResourceTargetDTO, CreateManagedCanisterOperationInput,
-    CreateManagedCanisterResourceTargetDTO, EditPermissionOperationInput, ListRequestsInput,
+    AddRequestPolicyOperationInput, CanisterInstallMode, ChangeExternalCanisterOperationInput,
+    ChangeExternalCanisterResourceTargetDTO, CreateExternalCanisterOperationInput,
+    CreateExternalCanisterResourceTargetDTO, EditPermissionOperationInput, ListRequestsInput,
     ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
-    ReadManagedCanisterResourceTargetDTO, RequestApprovalStatusDTO, RequestOperationDTO,
+    ReadExternalCanisterResourceTargetDTO, RequestApprovalStatusDTO, RequestOperationDTO,
     RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, RequestStatusDTO,
     UserSpecifierDTO,
 };
@@ -57,7 +57,7 @@ fn successful_four_eyes_upgrade() {
 
     // submitting canister upgrade request fails due to insufficient permissions to create change canister requests
     let change_canister_operation =
-        RequestOperationInput::ChangeManagedCanister(ChangeManagedCanisterOperationInput {
+        RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
             mode: CanisterInstallMode::Upgrade,
             module: module_bytes.clone(),
@@ -70,14 +70,14 @@ fn successful_four_eyes_upgrade() {
         change_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister(Change"
+        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Change"
     ));
 
     // allow anyone to create change canister requests
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: station_api::ResourceDTO::ManagedCanister(
-            station_api::ManagedCanisterResourceActionDTO::Change(
-                ChangeManagedCanisterResourceTargetDTO::Canister(canister_id),
+        resource: station_api::ResourceDTO::ExternalCanister(
+            station_api::ExternalCanisterResourceActionDTO::Change(
+                ChangeExternalCanisterResourceTargetDTO::Canister(canister_id),
             ),
         ),
         auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
@@ -122,8 +122,8 @@ fn successful_four_eyes_upgrade() {
     // set four eyes principle for canister changes
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
-            specifier: RequestSpecifierDTO::ChangeManagedCanister(
-                ChangeManagedCanisterResourceTargetDTO::Canister(canister_id),
+            specifier: RequestSpecifierDTO::ChangeExternalCanister(
+                ChangeExternalCanisterResourceTargetDTO::Canister(canister_id),
             ),
             rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
                 approvers: UserSpecifierDTO::Any,
@@ -228,7 +228,7 @@ fn upgrade_reinstall_list_test() {
 
     // submit canister upgrade request
     let change_canister_operation =
-        RequestOperationInput::ChangeManagedCanister(ChangeManagedCanisterOperationInput {
+        RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
             mode: CanisterInstallMode::Upgrade,
             module: module_bytes.clone(),
@@ -252,7 +252,7 @@ fn upgrade_reinstall_list_test() {
 
     // submit canister reinstall request
     let change_canister_operation =
-        RequestOperationInput::ChangeManagedCanister(ChangeManagedCanisterOperationInput {
+        RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
             mode: CanisterInstallMode::Reinstall,
             module: module_bytes,
@@ -276,7 +276,7 @@ fn upgrade_reinstall_list_test() {
 
     // test listing requests for the specified canister ID
     let list_requests_operation_type =
-        ListRequestsOperationTypeDTO::ChangeManagedCanister(Some(canister_id));
+        ListRequestsOperationTypeDTO::ChangeExternalCanister(Some(canister_id));
     let list_requests_input = ListRequestsInput {
         requester_ids: None,
         approver_ids: None,
@@ -302,8 +302,9 @@ fn upgrade_reinstall_list_test() {
     assert_eq!(res.0.unwrap().total, 2);
 
     // test listing requests for a specified canister ID without any requests
-    let list_requests_operation_type =
-        ListRequestsOperationTypeDTO::ChangeManagedCanister(Some(Principal::management_canister()));
+    let list_requests_operation_type = ListRequestsOperationTypeDTO::ChangeExternalCanister(Some(
+        Principal::management_canister(),
+    ));
     let list_requests_input = ListRequestsInput {
         requester_ids: None,
         approver_ids: None,
@@ -329,7 +330,7 @@ fn upgrade_reinstall_list_test() {
     assert_eq!(res.0.unwrap().total, 0);
 
     // test listing requests for no specified canister ID
-    let list_requests_operation_type = ListRequestsOperationTypeDTO::ChangeManagedCanister(None);
+    let list_requests_operation_type = ListRequestsOperationTypeDTO::ChangeExternalCanister(None);
     let list_requests_input = ListRequestsInput {
         requester_ids: None,
         approver_ids: None,
@@ -356,7 +357,7 @@ fn upgrade_reinstall_list_test() {
 }
 
 #[test]
-fn create_managed_canister_and_check_status() {
+fn create_external_canister_and_check_status() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
@@ -367,9 +368,9 @@ fn create_managed_canister_and_check_status() {
     let user_b = user_test_id(1);
     add_user(&env, user_b, vec![], canister_ids.station);
 
-    // submitting request to create a managed canister fails due to insufficient permissions to create such requests
+    // submitting request to create a external canister fails due to insufficient permissions to create such requests
     let create_canister_operation =
-        RequestOperationInput::CreateManagedCanister(CreateManagedCanisterOperationInput {});
+        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {});
     let trap_message = submit_request_with_expected_trap(
         &env,
         user_a,
@@ -377,14 +378,14 @@ fn create_managed_canister_and_check_status() {
         create_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister(Create"
+        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Create"
     ));
 
-    // allow anyone to create requests to create a managed canister
+    // allow anyone to create requests to create a external canister
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: station_api::ResourceDTO::ManagedCanister(
-            station_api::ManagedCanisterResourceActionDTO::Create(
-                CreateManagedCanisterResourceTargetDTO::Any,
+        resource: station_api::ResourceDTO::ExternalCanister(
+            station_api::ExternalCanisterResourceActionDTO::Create(
+                CreateExternalCanisterResourceTargetDTO::Any,
             ),
         ),
         auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
@@ -399,7 +400,7 @@ fn create_managed_canister_and_check_status() {
     )
     .unwrap();
 
-    // now the request to create a managed canister can be successfully submitted
+    // now the request to create a external canister can be successfully submitted
     let create_canister_operation_request = submit_request(
         &env,
         user_a,
@@ -426,7 +427,7 @@ fn create_managed_canister_and_check_status() {
         _ => panic!("Request should have been rejected."),
     };
     match rejected_request.operation {
-        RequestOperationDTO::CreateManagedCanister(operation) => {
+        RequestOperationDTO::CreateExternalCanister(operation) => {
             assert!(operation.canister_id.is_none())
         }
         _ => panic!(
@@ -435,11 +436,11 @@ fn create_managed_canister_and_check_status() {
         ),
     };
 
-    // set four eyes principle for creating managed canisters
+    // set four eyes principle for creating external canisters
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
-            specifier: RequestSpecifierDTO::CreateManagedCanister(
-                CreateManagedCanisterResourceTargetDTO::Any,
+            specifier: RequestSpecifierDTO::CreateExternalCanister(
+                CreateExternalCanisterResourceTargetDTO::Any,
             ),
             rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
                 approvers: UserSpecifierDTO::Any,
@@ -454,7 +455,7 @@ fn create_managed_canister_and_check_status() {
     )
     .unwrap();
 
-    // submit the request to create a managed canister again
+    // submit the request to create a external canister again
     let create_canister_operation_request = submit_request(
         &env,
         user_a,
@@ -481,7 +482,7 @@ fn create_managed_canister_and_check_status() {
         _ => panic!("Request should be created."),
     };
     match created_request.operation {
-        RequestOperationDTO::CreateManagedCanister(operation) => {
+        RequestOperationDTO::CreateExternalCanister(operation) => {
             assert!(operation.canister_id.is_none())
         }
         _ => panic!(
@@ -517,7 +518,7 @@ fn create_managed_canister_and_check_status() {
         _ => panic!("Request should be completed."),
     };
     let canister_id = match executed_request.operation {
-        RequestOperationDTO::CreateManagedCanister(operation) => operation.canister_id.unwrap(),
+        RequestOperationDTO::CreateExternalCanister(operation) => operation.canister_id.unwrap(),
         _ => panic!(
             "Unexpected request operation type: {:?}",
             executed_request.operation
@@ -543,7 +544,7 @@ fn create_managed_canister_and_check_status() {
     )
     .unwrap_err();
     assert!(trap_message.description.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister(Read"
+        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Read"
     ));
     let trap_message = update_raw(
         &env,
@@ -554,14 +555,14 @@ fn create_managed_canister_and_check_status() {
     )
     .unwrap_err();
     assert!(trap_message.description.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister(Read"
+        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Read"
     ));
 
-    // allow the first user to read the canister status of the managed canister created above
+    // allow the first user to read the canister status of the external canister created above
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: station_api::ResourceDTO::ManagedCanister(
-            station_api::ManagedCanisterResourceActionDTO::Read(
-                ReadManagedCanisterResourceTargetDTO::Canister(canister_id),
+        resource: station_api::ResourceDTO::ExternalCanister(
+            station_api::ExternalCanisterResourceActionDTO::Read(
+                ReadExternalCanisterResourceTargetDTO::Canister(canister_id),
             ),
         ),
         auth_scope: None,
@@ -596,6 +597,6 @@ fn create_managed_canister_and_check_status() {
     )
     .unwrap_err();
     assert!(trap_message.description.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ManagedCanister(Read"
+        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Read"
     ));
 }

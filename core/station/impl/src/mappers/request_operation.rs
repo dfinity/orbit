@@ -3,9 +3,10 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, CallCanisterResourceTarget, ChangeCanisterResourceAction,
-            ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
-            ExecutionMethodResourceTarget, ManagedCanisterResourceAction, PermissionResourceAction,
-            Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+            ChangeExternalCanisterResourceTarget, CreateExternalCanisterResourceTarget,
+            ExecutionMethodResourceTarget, ExternalCanisterResourceAction,
+            PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+            UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
@@ -13,12 +14,13 @@ use crate::{
         CallCanisterOperation, CallCanisterOperationInput, CanisterInstallMode,
         CanisterInstallModeArgs, CanisterMethod, CanisterReinstallModeArgs,
         CanisterUpgradeModeArgs, ChangeCanisterOperation, ChangeCanisterOperationInput,
-        ChangeCanisterTarget, ChangeManagedCanisterOperation, ChangeManagedCanisterOperationInput,
-        CreateManagedCanisterOperation, CreateManagedCanisterOperationInput, EditAccountOperation,
-        EditAccountOperationInput, EditAddressBookEntryOperation, EditPermissionOperation,
-        EditPermissionOperationInput, EditRequestPolicyOperation, EditRequestPolicyOperationInput,
-        EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
-        ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
+        ChangeCanisterTarget, ChangeExternalCanisterOperation,
+        ChangeExternalCanisterOperationInput, CreateExternalCanisterOperation,
+        CreateExternalCanisterOperationInput, EditAccountOperation, EditAccountOperationInput,
+        EditAddressBookEntryOperation, EditPermissionOperation, EditPermissionOperationInput,
+        EditRequestPolicyOperation, EditRequestPolicyOperationInput, EditUserGroupOperation,
+        EditUserOperation, EditUserOperationInput, ManageSystemInfoOperation,
+        ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
         RequestOperation, TransferOperation, User,
     },
@@ -30,9 +32,10 @@ use orbit_essentials::repository::Repository;
 use station_api::{
     AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
     CallCanisterOperationDTO, CanisterMethodDTO, ChangeCanisterOperationDTO,
-    ChangeCanisterTargetDTO, ChangeManagedCanisterOperationDTO, CreateManagedCanisterOperationDTO,
-    EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditUserOperationDTO, NetworkDTO,
-    RemoveAddressBookEntryOperationDTO, RequestOperationDTO, TransferOperationDTO,
+    ChangeCanisterTargetDTO, ChangeExternalCanisterOperationDTO,
+    CreateExternalCanisterOperationDTO, EditAccountOperationDTO, EditAddressBookEntryOperationDTO,
+    EditUserOperationDTO, NetworkDTO, RemoveAddressBookEntryOperationDTO, RequestOperationDTO,
+    TransferOperationDTO,
 };
 use uuid::Uuid;
 
@@ -386,13 +389,13 @@ impl From<CanisterInstallMode> for station_api::CanisterInstallMode {
     }
 }
 
-impl From<ChangeManagedCanisterOperationInput>
-    for station_api::ChangeManagedCanisterOperationInput
+impl From<ChangeExternalCanisterOperationInput>
+    for station_api::ChangeExternalCanisterOperationInput
 {
     fn from(
-        input: ChangeManagedCanisterOperationInput,
-    ) -> station_api::ChangeManagedCanisterOperationInput {
-        station_api::ChangeManagedCanisterOperationInput {
+        input: ChangeExternalCanisterOperationInput,
+    ) -> station_api::ChangeExternalCanisterOperationInput {
+        station_api::ChangeExternalCanisterOperationInput {
             canister_id: input.canister_id,
             mode: input.mode.into(),
             module: input.module,
@@ -401,13 +404,13 @@ impl From<ChangeManagedCanisterOperationInput>
     }
 }
 
-impl From<station_api::ChangeManagedCanisterOperationInput>
-    for ChangeManagedCanisterOperationInput
+impl From<station_api::ChangeExternalCanisterOperationInput>
+    for ChangeExternalCanisterOperationInput
 {
     fn from(
-        input: station_api::ChangeManagedCanisterOperationInput,
-    ) -> ChangeManagedCanisterOperationInput {
-        ChangeManagedCanisterOperationInput {
+        input: station_api::ChangeExternalCanisterOperationInput,
+    ) -> ChangeExternalCanisterOperationInput {
+        ChangeExternalCanisterOperationInput {
             canister_id: input.canister_id,
             mode: input.mode.into(),
             module: input.module,
@@ -416,9 +419,9 @@ impl From<station_api::ChangeManagedCanisterOperationInput>
     }
 }
 
-impl From<ChangeManagedCanisterOperation> for ChangeManagedCanisterOperationDTO {
-    fn from(operation: ChangeManagedCanisterOperation) -> ChangeManagedCanisterOperationDTO {
-        ChangeManagedCanisterOperationDTO {
+impl From<ChangeExternalCanisterOperation> for ChangeExternalCanisterOperationDTO {
+    fn from(operation: ChangeExternalCanisterOperation) -> ChangeExternalCanisterOperationDTO {
+        ChangeExternalCanisterOperationDTO {
             canister_id: operation.input.canister_id,
             mode: operation.input.mode.into(),
             module_checksum: hex::encode(operation.module_checksum),
@@ -427,37 +430,37 @@ impl From<ChangeManagedCanisterOperation> for ChangeManagedCanisterOperationDTO 
     }
 }
 
-impl From<CreateManagedCanisterOperationInput>
-    for station_api::CreateManagedCanisterOperationInput
+impl From<CreateExternalCanisterOperationInput>
+    for station_api::CreateExternalCanisterOperationInput
 {
     fn from(
-        _input: CreateManagedCanisterOperationInput,
-    ) -> station_api::CreateManagedCanisterOperationInput {
-        station_api::CreateManagedCanisterOperationInput {}
+        _input: CreateExternalCanisterOperationInput,
+    ) -> station_api::CreateExternalCanisterOperationInput {
+        station_api::CreateExternalCanisterOperationInput {}
     }
 }
 
-impl From<station_api::CreateManagedCanisterOperationInput>
-    for CreateManagedCanisterOperationInput
+impl From<station_api::CreateExternalCanisterOperationInput>
+    for CreateExternalCanisterOperationInput
 {
     fn from(
-        _input: station_api::CreateManagedCanisterOperationInput,
-    ) -> CreateManagedCanisterOperationInput {
-        CreateManagedCanisterOperationInput {}
+        _input: station_api::CreateExternalCanisterOperationInput,
+    ) -> CreateExternalCanisterOperationInput {
+        CreateExternalCanisterOperationInput {}
     }
 }
 
-impl From<CreateManagedCanisterOperation> for CreateManagedCanisterOperationDTO {
-    fn from(operation: CreateManagedCanisterOperation) -> CreateManagedCanisterOperationDTO {
-        CreateManagedCanisterOperationDTO {
+impl From<CreateExternalCanisterOperation> for CreateExternalCanisterOperationDTO {
+    fn from(operation: CreateExternalCanisterOperation) -> CreateExternalCanisterOperationDTO {
+        CreateExternalCanisterOperationDTO {
             canister_id: operation.canister_id,
         }
     }
 }
 
-impl From<CreateManagedCanisterOperationDTO> for CreateManagedCanisterOperation {
-    fn from(operation: CreateManagedCanisterOperationDTO) -> CreateManagedCanisterOperation {
-        CreateManagedCanisterOperation {
+impl From<CreateExternalCanisterOperationDTO> for CreateExternalCanisterOperation {
+    fn from(operation: CreateExternalCanisterOperationDTO) -> CreateExternalCanisterOperation {
+        CreateExternalCanisterOperation {
             canister_id: operation.canister_id,
         }
     }
@@ -753,11 +756,11 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::ChangeCanister(operation) => {
                 RequestOperationDTO::ChangeCanister(Box::new(operation.into()))
             }
-            RequestOperation::ChangeManagedCanister(operation) => {
-                RequestOperationDTO::ChangeManagedCanister(Box::new(operation.into()))
+            RequestOperation::ChangeExternalCanister(operation) => {
+                RequestOperationDTO::ChangeExternalCanister(Box::new(operation.into()))
             }
-            RequestOperation::CreateManagedCanister(operation) => {
-                RequestOperationDTO::CreateManagedCanister(Box::new(operation.into()))
+            RequestOperation::CreateExternalCanister(operation) => {
+                RequestOperationDTO::CreateExternalCanister(Box::new(operation.into()))
             }
             RequestOperation::CallCanister(operation) => {
                 RequestOperationDTO::CallCanister(Box::new(operation.into()))
@@ -862,22 +865,26 @@ impl RequestOperation {
                     ChangeCanisterResourceAction::Create,
                 )]
             }
-            RequestOperation::ChangeManagedCanister(ChangeManagedCanisterOperation {
+            RequestOperation::ChangeExternalCanister(ChangeExternalCanisterOperation {
                 input,
                 ..
             }) => {
                 vec![
-                    Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
-                        ChangeManagedCanisterResourceTarget::Any,
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                        ChangeExternalCanisterResourceTarget::Any,
                     )),
-                    Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
-                        ChangeManagedCanisterResourceTarget::Canister(input.canister_id),
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                        ChangeExternalCanisterResourceTarget::Canister(input.canister_id),
                     )),
                 ]
             }
-            RequestOperation::CreateManagedCanister(CreateManagedCanisterOperation { .. }) => {
-                vec![Resource::ManagedCanister(
-                    ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any),
+            RequestOperation::CreateExternalCanister(CreateExternalCanisterOperation {
+                ..
+            }) => {
+                vec![Resource::ExternalCanister(
+                    ExternalCanisterResourceAction::Create(
+                        CreateExternalCanisterResourceTarget::Any,
+                    ),
                 )]
             }
             RequestOperation::CallCanister(CallCanisterOperation { input, .. }) => {

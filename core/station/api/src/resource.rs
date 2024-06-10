@@ -7,7 +7,7 @@ pub enum ResourceDTO {
     Account(AccountResourceActionDTO),
     AddressBook(ResourceActionDTO),
     ChangeCanister(ChangeCanisterResourceActionDTO),
-    ManagedCanister(ManagedCanisterResourceActionDTO),
+    ExternalCanister(ExternalCanisterResourceActionDTO),
     CallCanister(CallCanisterResourceTargetDTO),
     Request(RequestResourceActionDTO),
     RequestPolicy(ResourceActionDTO),
@@ -73,27 +73,27 @@ pub enum ChangeCanisterResourceActionDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum CreateManagedCanisterResourceTargetDTO {
+pub enum CreateExternalCanisterResourceTargetDTO {
     Any,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ChangeManagedCanisterResourceTargetDTO {
-    Any,
-    Canister(Principal),
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ReadManagedCanisterResourceTargetDTO {
+pub enum ChangeExternalCanisterResourceTargetDTO {
     Any,
     Canister(Principal),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub enum ManagedCanisterResourceActionDTO {
-    Create(CreateManagedCanisterResourceTargetDTO),
-    Change(ChangeManagedCanisterResourceTargetDTO),
-    Read(ReadManagedCanisterResourceTargetDTO),
+pub enum ReadExternalCanisterResourceTargetDTO {
+    Any,
+    Canister(Principal),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ExternalCanisterResourceActionDTO {
+    Create(CreateExternalCanisterResourceTargetDTO),
+    Change(ChangeExternalCanisterResourceTargetDTO),
+    Read(ReadExternalCanisterResourceTargetDTO),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

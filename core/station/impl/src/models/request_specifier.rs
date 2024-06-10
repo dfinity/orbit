@@ -7,12 +7,12 @@ use crate::core::validation::{
 use crate::errors::ValidationError;
 use crate::models::resource::ExecutionMethodResourceTarget;
 use crate::models::resource::{
-    CallCanisterResourceTarget, ChangeManagedCanisterResourceTarget,
-    CreateManagedCanisterResourceTarget,
+    CallCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
+    CreateExternalCanisterResourceTarget,
 };
 use crate::models::user::User;
 use crate::models::{
-    CallCanisterOperation, ChangeManagedCanisterOperation, CreateManagedCanisterOperation,
+    CallCanisterOperation, ChangeExternalCanisterOperation, CreateExternalCanisterOperation,
 };
 use crate::repositories::ADDRESS_BOOK_REPOSITORY;
 use crate::services::ACCOUNT_SERVICE;
@@ -70,8 +70,8 @@ pub enum RequestSpecifier {
     RemoveAddressBookEntry(ResourceIds),
     Transfer(ResourceIds),
     ChangeCanister,
-    ChangeManagedCanister(ChangeManagedCanisterResourceTarget),
-    CreateManagedCanister(CreateManagedCanisterResourceTarget),
+    ChangeExternalCanister(ChangeExternalCanisterResourceTarget),
+    CreateExternalCanister(CreateExternalCanisterResourceTarget),
     CallCanister(CallCanisterResourceTarget),
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
@@ -90,8 +90,8 @@ impl ModelValidator<ValidationError> for RequestSpecifier {
             | RequestSpecifier::AddUser
             | RequestSpecifier::AddAddressBookEntry
             | RequestSpecifier::ChangeCanister
-            | RequestSpecifier::ChangeManagedCanister(_)
-            | RequestSpecifier::CreateManagedCanister(_)
+            | RequestSpecifier::ChangeExternalCanister(_)
+            | RequestSpecifier::CreateExternalCanister(_)
             | RequestSpecifier::AddRequestPolicy
             | RequestSpecifier::ManageSystemInfo
             | RequestSpecifier::AddUserGroup => (),
@@ -144,11 +144,11 @@ impl From<&RequestSpecifier> for RequestOperationType {
             RequestSpecifier::Transfer(_) => RequestOperationType::Transfer,
             RequestSpecifier::EditPermission(_) => RequestOperationType::EditPermission,
             RequestSpecifier::ChangeCanister => RequestOperationType::ChangeCanister,
-            RequestSpecifier::ChangeManagedCanister(_) => {
-                RequestOperationType::ChangeManagedCanister
+            RequestSpecifier::ChangeExternalCanister(_) => {
+                RequestOperationType::ChangeExternalCanister
             }
-            RequestSpecifier::CreateManagedCanister(_) => {
-                RequestOperationType::CreateManagedCanister
+            RequestSpecifier::CreateExternalCanister(_) => {
+                RequestOperationType::CreateExternalCanister
             }
             RequestSpecifier::CallCanister(_) => RequestOperationType::CallCanister,
             RequestSpecifier::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
@@ -275,22 +275,24 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
                 .is_match((p.clone(), params.input.from_account_id, account))?,
             (RequestOperation::ChangeCanister(_), RequestSpecifier::ChangeCanister) => true,
             (
-                RequestOperation::ChangeManagedCanister(ChangeManagedCanisterOperation {
+                RequestOperation::ChangeExternalCanister(ChangeExternalCanisterOperation {
                     input,
                     ..
                 }),
-                RequestSpecifier::ChangeManagedCanister(specifier),
+                RequestSpecifier::ChangeExternalCanister(specifier),
             ) => match specifier {
-                ChangeManagedCanisterResourceTarget::Any => true,
-                ChangeManagedCanisterResourceTarget::Canister(target_id) => {
+                ChangeExternalCanisterResourceTarget::Any => true,
+                ChangeExternalCanisterResourceTarget::Canister(target_id) => {
                     input.canister_id == target_id
                 }
             },
             (
-                RequestOperation::CreateManagedCanister(CreateManagedCanisterOperation { .. }),
-                RequestSpecifier::CreateManagedCanister(specifier),
+                RequestOperation::CreateExternalCanister(CreateExternalCanisterOperation {
+                    ..
+                }),
+                RequestSpecifier::CreateExternalCanister(specifier),
             ) => match specifier {
-                CreateManagedCanisterResourceTarget::Any => true,
+                CreateExternalCanisterResourceTarget::Any => true,
             },
             (
                 RequestOperation::CallCanister(CallCanisterOperation { input, .. }),
@@ -343,8 +345,8 @@ impl Match<(Request, RequestSpecifier)> for RequestMatcher {
             | (RequestOperation::EditAddressBookEntry(_), _)
             | (RequestOperation::RemoveAddressBookEntry(_), _)
             | (RequestOperation::ChangeCanister(_), _)
-            | (RequestOperation::ChangeManagedCanister(_), _)
-            | (RequestOperation::CreateManagedCanister(_), _)
+            | (RequestOperation::ChangeExternalCanister(_), _)
+            | (RequestOperation::CreateExternalCanister(_), _)
             | (RequestOperation::CallCanister(_), _)
             | (RequestOperation::AddRequestPolicy(_), _)
             | (RequestOperation::EditRequestPolicy(_), _)
@@ -403,8 +405,8 @@ mod tests {
             },
             request_test_utils::mock_request,
             resource::{
-                CallCanisterResourceTarget, ChangeManagedCanisterResourceTarget,
-                CreateManagedCanisterResourceTarget, ExecutionMethodResourceTarget, ResourceIds,
+                CallCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
+                CreateExternalCanisterResourceTarget, ExecutionMethodResourceTarget, ResourceIds,
                 ValidationMethodResourceTarget,
             },
             AddAccountOperation, AddAccountOperationInput, AddUserOperation, AddUserOperationInput,
@@ -584,17 +586,17 @@ mod tests {
         RequestSpecifier::ChangeCanister
             .validate()
             .expect("ChangeCanister should be valid");
-        RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Any)
+        RequestSpecifier::ChangeExternalCanister(ChangeExternalCanisterResourceTarget::Any)
             .validate()
-            .expect("ChangeManagedCanister should be valid");
-        RequestSpecifier::ChangeManagedCanister(ChangeManagedCanisterResourceTarget::Canister(
+            .expect("ChangeExternalCanister should be valid");
+        RequestSpecifier::ChangeExternalCanister(ChangeExternalCanisterResourceTarget::Canister(
             Principal::management_canister(),
         ))
         .validate()
-        .expect("ChangeManagedCanister should be valid");
-        RequestSpecifier::CreateManagedCanister(CreateManagedCanisterResourceTarget::Any)
+        .expect("ChangeExternalCanister should be valid");
+        RequestSpecifier::CreateExternalCanister(CreateExternalCanisterResourceTarget::Any)
             .validate()
-            .expect("CreateManagedCanister should be valid");
+            .expect("CreateExternalCanister should be valid");
         RequestSpecifier::CallCanister(CallCanisterResourceTarget {
             validation_method: ValidationMethodResourceTarget::No,
             execution_method: ExecutionMethodResourceTarget::Any,

@@ -88,8 +88,8 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::RemoveUserGroup(_)
                     | RequestOperation::ManageSystemInfo(_)
                     | RequestOperation::ChangeCanister(_)
-                    | RequestOperation::ChangeManagedCanister(_)
-                    | RequestOperation::CreateManagedCanister(_)
+                    | RequestOperation::ChangeExternalCanister(_)
+                    | RequestOperation::CreateExternalCanister(_)
                     | RequestOperation::CallCanister(_) => None,
                 };
 
@@ -111,8 +111,8 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::Transfer(_)
                     | RequestOperation::ManageSystemInfo(_)
                     | RequestOperation::ChangeCanister(_)
-                    | RequestOperation::ChangeManagedCanister(_)
-                    | RequestOperation::CreateManagedCanister(_)
+                    | RequestOperation::ChangeExternalCanister(_)
+                    | RequestOperation::CreateExternalCanister(_)
                     | RequestOperation::CallCanister(_) => None,
                 };
 

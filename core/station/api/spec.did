@@ -46,8 +46,8 @@ type RequestSpecifier = variant {
   EditAddressBookEntry : ResourceIds;
   RemoveAddressBookEntry : ResourceIds;
   ChangeCanister;
-  ChangeManagedCanister : ChangeManagedCanisterResourceTarget;
-  CreateManagedCanister : CreateManagedCanisterResourceTarget;
+  ChangeExternalCanister : ChangeExternalCanisterResourceTarget;
+  CreateExternalCanister : CreateExternalCanisterResourceTarget;
   CallCanister : CallCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
   AddRequestPolicy;
@@ -565,7 +565,7 @@ type ChangeCanisterOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
-type ChangeManagedCanisterOperationInput = record {
+type ChangeExternalCanisterOperationInput = record {
   // The canister to install.
   canister_id : principal;
   // The canister installation mode.
@@ -576,7 +576,7 @@ type ChangeManagedCanisterOperationInput = record {
   arg : opt blob;
 };
 
-type ChangeManagedCanisterOperation = record {
+type ChangeExternalCanisterOperation = record {
   // The canister to install.
   canister_id : principal;
   // The canister installation mode.
@@ -587,9 +587,9 @@ type ChangeManagedCanisterOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
-type CreateManagedCanisterOperationInput = record {};
+type CreateExternalCanisterOperationInput = record {};
 
-type CreateManagedCanisterOperation = record {
+type CreateExternalCanisterOperation = record {
   canister_id : opt principal;
 };
 
@@ -720,10 +720,10 @@ type RequestOperation = variant {
   RemoveUserGroup : RemoveUserGroupOperation;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperation;
-  // An operation for changing a managed canister.
-  ChangeManagedCanister : ChangeManagedCanisterOperation;
-  // An operation for creating a managed canister.
-  CreateManagedCanister : CreateManagedCanisterOperation;
+  // An operation for changing a external canister.
+  ChangeExternalCanister : ChangeExternalCanisterOperation;
+  // An operation for creating a external canister.
+  CreateExternalCanister : CreateExternalCanisterOperation;
   // An operation for calling a canister.
   CallCanister : CallCanisterOperation;
   // An operation for editing an permission.
@@ -763,10 +763,10 @@ type RequestOperationInput = variant {
   RemoveUserGroup : RemoveUserGroupOperationInput;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperationInput;
-  // An operation for changing a managed canister.
-  ChangeManagedCanister : ChangeManagedCanisterOperationInput;
-  // An operation for creating a managed canister.
-  CreateManagedCanister : CreateManagedCanisterOperationInput;
+  // An operation for changing a external canister.
+  ChangeExternalCanister : ChangeExternalCanisterOperationInput;
+  // An operation for creating a external canister.
+  CreateExternalCanister : CreateExternalCanisterOperationInput;
   // An operation for calling a canister.
   CallCanister : CallCanisterOperationInput;
   // An operation for editing an permission.
@@ -806,10 +806,10 @@ type RequestOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
-  // An operation for changing a managed canister.
-  ChangeManagedCanister;
-  // An operation for creating a managed canister.
-  CreateManagedCanister;
+  // An operation for changing a external canister.
+  ChangeExternalCanister;
+  // An operation for creating a external canister.
+  CreateExternalCanister;
   // An operation for calling a canister.
   CallCanister;
   // An operation for editing an permission.
@@ -931,10 +931,10 @@ type ListRequestsOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
-  // An operation for changing a managed canister with an optionally specified canister ID.
-  ChangeManagedCanister : opt principal;
-  // An operation for creating a managed canister.
-  CreateManagedCanister;
+  // An operation for changing a external canister with an optionally specified canister ID.
+  ChangeExternalCanister : opt principal;
+  // An operation for creating a external canister.
+  CreateExternalCanister;
   // An operation for calling a canister with an optionally specified canister ID.
   CallCanister : opt principal;
   // An operation for editing an permission.
@@ -1675,28 +1675,28 @@ type ChangeCanisterResourceAction = variant {
   Create;
 };
 
-// The target of a request to create a managed canister.
-type CreateManagedCanisterResourceTarget = variant {
+// The target of a request to create a external canister.
+type CreateExternalCanisterResourceTarget = variant {
   Any;
 };
 
-// The target canister of a request to change a managed canister.
-type ChangeManagedCanisterResourceTarget = variant {
-  Any;
-  Canister : principal;
-};
-
-// The target canister of a request to read (e.g., fetch status of) a managed canister.
-type ReadManagedCanisterResourceTarget = variant {
+// The target canister of a request to change a external canister.
+type ChangeExternalCanisterResourceTarget = variant {
   Any;
   Canister : principal;
 };
 
-// The actions that are available for managed canisters.
-type ManagedCanisterResourceAction = variant {
-  Create : CreateManagedCanisterResourceTarget;
-  Change : ChangeManagedCanisterResourceTarget;
-  Read : ReadManagedCanisterResourceTarget;
+// The target canister of a request to read (e.g., fetch status of) a external canister.
+type ReadExternalCanisterResourceTarget = variant {
+  Any;
+  Canister : principal;
+};
+
+// The actions that are available for external canisters.
+type ExternalCanisterResourceAction = variant {
+  Create : CreateExternalCanisterResourceTarget;
+  Change : ChangeExternalCanisterResourceTarget;
+  Read : ReadExternalCanisterResourceTarget;
 };
 
 // The validation method targets of a `CallCanister` request.
@@ -1750,7 +1750,7 @@ type Resource = variant {
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
-  ManagedCanister : ManagedCanisterResourceAction;
+  ExternalCanister : ExternalCanisterResourceAction;
   CallCanister : CallCanisterResourceTarget;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;

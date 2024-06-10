@@ -37,8 +37,8 @@ pub use user_group::*;
 mod change_canister;
 pub use change_canister::*;
 
-mod managed_canister;
-pub use managed_canister::*;
+mod external_canister;
+pub use external_canister::*;
 
 mod call_canister;
 pub use call_canister::*;
