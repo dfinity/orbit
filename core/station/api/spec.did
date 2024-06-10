@@ -594,7 +594,7 @@ type CreateExternalCanisterOperation = record {
 };
 
 type CanisterMethod = record {
-  // The canister call.
+  // The canister to call.
   canister_id : principal;
   // The method to call on the canister.
   method_name : text;

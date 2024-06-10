@@ -594,7 +594,7 @@ type CreateExternalCanisterOperation = record {
 };
 
 type CanisterMethod = record {
-  // The canister call.
+  // The canister to call.
   canister_id : principal;
   // The method to call on the canister.
   method_name : text;
@@ -1696,6 +1696,7 @@ type ReadExternalCanisterResourceTarget = variant {
 type ExternalCanisterResourceAction = variant {
   Create : CreateExternalCanisterResourceTarget;
   Change : ChangeExternalCanisterResourceTarget;
+  Call : CallExternalCanisterResourceTarget;
   Read : ReadExternalCanisterResourceTarget;
 };
 
@@ -1751,7 +1752,6 @@ type Resource = variant {
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
   ExternalCanister : ExternalCanisterResourceAction;
-  CallExternalCanister : CallExternalCanisterResourceTarget;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
   System : SystemResourceAction;

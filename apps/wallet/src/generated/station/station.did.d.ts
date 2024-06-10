@@ -321,8 +321,9 @@ export type EvaluationSummaryReason = { 'AllowList' : null } |
 export type ExecutionMethodResourceTarget = { 'Any' : null } |
   { 'ExecutionMethod' : CanisterMethod };
 export type ExternalCanisterResourceAction = {
-    'Read' : ReadExternalCanisterResourceTarget
+    'Call' : CallExternalCanisterResourceTarget
   } |
+  { 'Read' : ReadExternalCanisterResourceTarget } |
   { 'Create' : CreateExternalCanisterResourceTarget } |
   { 'Change' : ChangeExternalCanisterResourceTarget };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
@@ -806,7 +807,6 @@ export type Resource = { 'Request' : RequestResourceAction } |
   { 'AddressBook' : ResourceAction } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
   { 'UserGroup' : ResourceAction } |
-  { 'CallExternalCanister' : CallExternalCanisterResourceTarget } |
   { 'Permission' : PermissionResourceAction } |
   { 'RequestPolicy' : ResourceAction };
 export type ResourceAction = { 'List' : null } |

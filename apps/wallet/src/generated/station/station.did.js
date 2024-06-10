@@ -92,6 +92,22 @@ export const idlFactory = ({ IDL }) => {
     'Create' : IDL.Null,
     'Update' : ResourceId,
   });
+  const CanisterMethod = IDL.Record({
+    'canister_id' : IDL.Principal,
+    'method_name' : IDL.Text,
+  });
+  const ExecutionMethodResourceTarget = IDL.Variant({
+    'Any' : IDL.Null,
+    'ExecutionMethod' : CanisterMethod,
+  });
+  const ValidationMethodResourceTarget = IDL.Variant({
+    'No' : IDL.Null,
+    'ValidationMethod' : CanisterMethod,
+  });
+  const CallExternalCanisterResourceTarget = IDL.Record({
+    'execution_method' : ExecutionMethodResourceTarget,
+    'validation_method' : ValidationMethodResourceTarget,
+  });
   const ReadExternalCanisterResourceTarget = IDL.Variant({
     'Any' : IDL.Null,
     'Canister' : IDL.Principal,
@@ -104,6 +120,7 @@ export const idlFactory = ({ IDL }) => {
     'Canister' : IDL.Principal,
   });
   const ExternalCanisterResourceAction = IDL.Variant({
+    'Call' : CallExternalCanisterResourceTarget,
     'Read' : ReadExternalCanisterResourceTarget,
     'Create' : CreateExternalCanisterResourceTarget,
     'Change' : ChangeExternalCanisterResourceTarget,
@@ -123,22 +140,6 @@ export const idlFactory = ({ IDL }) => {
     'Update' : ResourceId,
   });
   const ChangeCanisterResourceAction = IDL.Variant({ 'Create' : IDL.Null });
-  const CanisterMethod = IDL.Record({
-    'canister_id' : IDL.Principal,
-    'method_name' : IDL.Text,
-  });
-  const ExecutionMethodResourceTarget = IDL.Variant({
-    'Any' : IDL.Null,
-    'ExecutionMethod' : CanisterMethod,
-  });
-  const ValidationMethodResourceTarget = IDL.Variant({
-    'No' : IDL.Null,
-    'ValidationMethod' : CanisterMethod,
-  });
-  const CallExternalCanisterResourceTarget = IDL.Record({
-    'execution_method' : ExecutionMethodResourceTarget,
-    'validation_method' : ValidationMethodResourceTarget,
-  });
   const PermissionResourceAction = IDL.Variant({
     'Read' : IDL.Null,
     'Update' : IDL.Null,
@@ -152,7 +153,6 @@ export const idlFactory = ({ IDL }) => {
     'AddressBook' : ResourceAction,
     'ChangeCanister' : ChangeCanisterResourceAction,
     'UserGroup' : ResourceAction,
-    'CallExternalCanister' : CallExternalCanisterResourceTarget,
     'Permission' : PermissionResourceAction,
     'RequestPolicy' : ResourceAction,
   });
