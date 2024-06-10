@@ -173,25 +173,25 @@ export interface ChangeCanisterOperationInput {
 export type ChangeCanisterResourceAction = { 'Create' : null };
 export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
   { 'UpgradeStation' : null };
-export interface ChangeManagedCanisterOperation {
+export interface ChangeExternalCanisterOperation {
   'mode' : CanisterInstallMode,
   'canister_id' : Principal,
   'module_checksum' : Sha256Hash,
   'arg_checksum' : [] | [Sha256Hash],
 }
-export interface ChangeManagedCanisterOperationInput {
+export interface ChangeExternalCanisterOperationInput {
   'arg' : [] | [Uint8Array | number[]],
   'mode' : CanisterInstallMode,
   'canister_id' : Principal,
   'module' : Uint8Array | number[],
 }
-export type ChangeManagedCanisterResourceTarget = { 'Any' : null } |
+export type ChangeExternalCanisterResourceTarget = { 'Any' : null } |
   { 'Canister' : Principal };
-export interface CreateManagedCanisterOperation {
+export interface CreateExternalCanisterOperation {
   'canister_id' : [] | [Principal],
 }
-export type CreateManagedCanisterOperationInput = {};
-export type CreateManagedCanisterResourceTarget = { 'Any' : null };
+export type CreateExternalCanisterOperationInput = {};
+export type CreateExternalCanisterResourceTarget = { 'Any' : null };
 export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
@@ -296,6 +296,11 @@ export type EvaluationSummaryReason = { 'AllowList' : null } |
   { 'AllowListMetadata' : null } |
   { 'AutoApproved' : null } |
   { 'ApprovalQuorum' : null };
+export type ExternalCanisterResourceAction = {
+    'Read' : ReadExternalCanisterResourceTarget
+  } |
+  { 'Create' : CreateExternalCanisterResourceTarget } |
+  { 'Change' : ChangeExternalCanisterResourceTarget };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
 export type FetchAccountBalancesResult = {
     'Ok' : { 'balances' : Array<AccountBalance> }
@@ -465,12 +470,13 @@ export interface ListRequestsInput {
 }
 export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
+  { 'ChangeExternalCanister' : [] | [Principal] } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
   { 'RemoveAddressBookEntry' : null } |
-  { 'CreateManagedCanister' : null } |
+  { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
@@ -478,7 +484,6 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'Transfer' : [] | [UUID] } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
-  { 'ChangeManagedCanister' : [] | [Principal] } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
@@ -526,11 +531,6 @@ export interface ManageSystemInfoOperation {
   'input' : ManageSystemInfoOperationInput,
 }
 export interface ManageSystemInfoOperationInput { 'name' : [] | [string] }
-export type ManagedCanisterResourceAction = {
-    'Read' : ReadManagedCanisterResourceTarget
-  } |
-  { 'Create' : CreateManagedCanisterResourceTarget } |
-  { 'Change' : ChangeManagedCanisterResourceTarget };
 export type MarkNotificationReadResult = { 'Ok' : null } |
   { 'Err' : Error };
 export interface MarkNotificationsReadInput {
@@ -595,7 +595,7 @@ export interface QuorumPercentage {
   'min_approved' : number,
   'approvers' : UserSpecifier,
 }
-export type ReadManagedCanisterResourceTarget = { 'Any' : null } |
+export type ReadExternalCanisterResourceTarget = { 'Any' : null } |
   { 'Canister' : Principal };
 export interface RemoveAddressBookEntryOperation {
   'input' : RemoveAddressBookEntryOperationInput,
@@ -651,12 +651,13 @@ export type RequestExecutionSchedule = { 'Immediate' : null } |
   { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
 export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'EditPermission' : EditPermissionOperation } |
+  { 'ChangeExternalCanister' : ChangeExternalCanisterOperation } |
   { 'AddUser' : AddUserOperation } |
   { 'EditUserGroup' : EditUserGroupOperation } |
   { 'EditRequestPolicy' : EditRequestPolicyOperation } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperation } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
-  { 'CreateManagedCanister' : CreateManagedCanisterOperation } |
+  { 'CreateExternalCanister' : CreateExternalCanisterOperation } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
   { 'ChangeCanister' : ChangeCanisterOperation } |
   { 'EditUser' : EditUserOperation } |
@@ -664,7 +665,6 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'Transfer' : TransferOperation } |
   { 'EditAccount' : EditAccountOperation } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
-  { 'ChangeManagedCanister' : ChangeManagedCanisterOperation } |
   { 'AddRequestPolicy' : AddRequestPolicyOperation } |
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
   { 'AddAccount' : AddAccountOperation };
@@ -672,12 +672,13 @@ export type RequestOperationInput = {
     'AddUserGroup' : AddUserGroupOperationInput
   } |
   { 'EditPermission' : EditPermissionOperationInput } |
+  { 'ChangeExternalCanister' : ChangeExternalCanisterOperationInput } |
   { 'AddUser' : AddUserOperationInput } |
   { 'EditUserGroup' : EditUserGroupOperationInput } |
   { 'EditRequestPolicy' : EditRequestPolicyOperationInput } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
-  { 'CreateManagedCanister' : CreateManagedCanisterOperationInput } |
+  { 'CreateExternalCanister' : CreateExternalCanisterOperationInput } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
   { 'ChangeCanister' : ChangeCanisterOperationInput } |
   { 'EditUser' : EditUserOperationInput } |
@@ -685,18 +686,18 @@ export type RequestOperationInput = {
   { 'Transfer' : TransferOperationInput } |
   { 'EditAccount' : EditAccountOperationInput } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
-  { 'ChangeManagedCanister' : ChangeManagedCanisterOperationInput } |
   { 'AddRequestPolicy' : AddRequestPolicyOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
 export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
+  { 'ChangeExternalCanister' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
   { 'RemoveAddressBookEntry' : null } |
-  { 'CreateManagedCanister' : null } |
+  { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
@@ -704,7 +705,6 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'Transfer' : null } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
-  { 'ChangeManagedCanister' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'AddAccount' : null };
@@ -736,12 +736,13 @@ export type RequestResourceAction = { 'List' : null } |
   { 'Read' : ResourceId };
 export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'EditPermission' : ResourceSpecifier } |
+  { 'ChangeExternalCanister' : ChangeExternalCanisterResourceTarget } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : ResourceIds } |
   { 'EditRequestPolicy' : ResourceIds } |
   { 'RemoveRequestPolicy' : ResourceIds } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
-  { 'CreateManagedCanister' : CreateManagedCanisterResourceTarget } |
+  { 'CreateExternalCanister' : CreateExternalCanisterResourceTarget } |
   { 'EditAddressBookEntry' : ResourceIds } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
@@ -749,7 +750,6 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'Transfer' : ResourceIds } |
   { 'EditAccount' : ResourceIds } |
   { 'AddAddressBookEntry' : null } |
-  { 'ChangeManagedCanister' : ChangeManagedCanisterResourceTarget } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : ResourceIds } |
   { 'AddAccount' : null };
@@ -769,10 +769,10 @@ export type RequestStatusCode = { 'Failed' : null } |
   { 'Processing' : null } |
   { 'Created' : null } |
   { 'Completed' : null };
-export type Resource = { 'ManagedCanister' : ManagedCanisterResourceAction } |
-  { 'Request' : RequestResourceAction } |
+export type Resource = { 'Request' : RequestResourceAction } |
   { 'System' : SystemResourceAction } |
   { 'User' : UserResourceAction } |
+  { 'ExternalCanister' : ExternalCanisterResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |

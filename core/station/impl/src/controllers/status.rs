@@ -1,9 +1,9 @@
 use crate::{
     core::middlewares::{authorize, call_context},
     models::resource::{
-        ManagedCanisterResourceAction, ReadManagedCanisterResourceTarget, Resource,
+        ExternalCanisterResourceAction, ReadExternalCanisterResourceTarget, Resource,
     },
-    services::{ManagedCanisterService, MANAGED_CANISTER_SERVICE},
+    services::{ExternalCanisterService, EXTERNAL_CANISTER_SERVICE},
 };
 use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse};
 use ic_cdk_macros::update;
@@ -21,20 +21,20 @@ async fn canister_status(input: CanisterIdRecord) -> ApiResult<CanisterStatusRes
 // Controller initialization and implementation.
 lazy_static! {
     static ref CONTROLLER: StatusController =
-        StatusController::new(Arc::clone(&MANAGED_CANISTER_SERVICE));
+        StatusController::new(Arc::clone(&EXTERNAL_CANISTER_SERVICE));
 }
 
 #[derive(Debug, Default)]
 pub struct StatusController {
-    status_service: Arc<ManagedCanisterService>,
+    status_service: Arc<ExternalCanisterService>,
 }
 
 impl StatusController {
-    fn new(status_service: Arc<ManagedCanisterService>) -> Self {
+    fn new(status_service: Arc<ExternalCanisterService>) -> Self {
         Self { status_service }
     }
 
-    #[with_middleware(guard = authorize(&call_context(), &[Resource::ManagedCanister(ManagedCanisterResourceAction::Read(ReadManagedCanisterResourceTarget::Canister(input.canister_id)))]))]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(input.canister_id)))]))]
     async fn canister_status(&self, input: CanisterIdRecord) -> ApiResult<CanisterStatusResponse> {
         self.status_service.canister_status(input).await
     }

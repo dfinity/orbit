@@ -1,28 +1,30 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{CreateManagedCanisterOperation, Request, RequestExecutionPlan, RequestOperation},
-    services::ManagedCanisterService,
+    models::{CreateExternalCanisterOperation, Request, RequestExecutionPlan, RequestOperation},
+    services::ExternalCanisterService,
 };
 use async_trait::async_trait;
 use orbit_essentials::types::UUID;
-use station_api::{CreateManagedCanisterOperationInput, CreateRequestInput};
+use station_api::{CreateExternalCanisterOperationInput, CreateRequestInput};
 use std::sync::Arc;
 
-pub struct CreateManagedCanisterRequestCreate;
+pub struct CreateExternalCanisterRequestCreate;
 
-impl Create<CreateManagedCanisterOperationInput> for CreateManagedCanisterRequestCreate {
-    fn create(
+#[async_trait]
+impl Create<CreateExternalCanisterOperationInput> for CreateExternalCanisterRequestCreate {
+    async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,
-        _operation_input: CreateManagedCanisterOperationInput,
+        _operation_input: CreateExternalCanisterOperationInput,
     ) -> Result<Request, RequestError> {
         let request = Request::new(
             request_id,
             requested_by_user,
             Request::default_expiration_dt_ns(),
-            RequestOperation::CreateManagedCanister(CreateManagedCanisterOperation {
+            RequestOperation::CreateExternalCanister(CreateExternalCanisterOperation {
                 canister_id: None,
             }),
             input
@@ -31,7 +33,7 @@ impl Create<CreateManagedCanisterOperationInput> for CreateManagedCanisterReques
                 .unwrap_or(RequestExecutionPlan::Immediate),
             input
                 .title
-                .unwrap_or_else(|| "CreateManagedCanister".to_string()),
+                .unwrap_or_else(|| "CreateExternalCanister".to_string()),
             input.summary,
         );
 
@@ -39,17 +41,17 @@ impl Create<CreateManagedCanisterOperationInput> for CreateManagedCanisterReques
     }
 }
 
-pub struct CreateManagedCanisterRequestExecute<'p, 'o> {
+pub struct CreateExternalCanisterRequestExecute<'p, 'o> {
     _request: &'p Request,
-    operation: &'o CreateManagedCanisterOperation,
-    create_canister_service: Arc<ManagedCanisterService>,
+    operation: &'o CreateExternalCanisterOperation,
+    create_canister_service: Arc<ExternalCanisterService>,
 }
 
-impl<'p, 'o> CreateManagedCanisterRequestExecute<'p, 'o> {
+impl<'p, 'o> CreateExternalCanisterRequestExecute<'p, 'o> {
     pub fn new(
         request: &'p Request,
-        operation: &'o CreateManagedCanisterOperation,
-        create_canister_service: Arc<ManagedCanisterService>,
+        operation: &'o CreateExternalCanisterOperation,
+        create_canister_service: Arc<ExternalCanisterService>,
     ) -> Self {
         Self {
             _request: request,
@@ -60,20 +62,20 @@ impl<'p, 'o> CreateManagedCanisterRequestExecute<'p, 'o> {
 }
 
 #[async_trait]
-impl Execute for CreateManagedCanisterRequestExecute<'_, '_> {
+impl Execute for CreateExternalCanisterRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         let canister_id = self
             .create_canister_service
             .create_canister()
             .await
             .map_err(|err| RequestExecuteError::Failed {
-                reason: format!("failed to create managed canister: {}", err),
+                reason: format!("failed to create external canister: {}", err),
             })?;
         let mut create_operation = self.operation.clone();
         create_operation.canister_id = Some(canister_id);
 
         Ok(RequestExecuteStage::Completed(
-            RequestOperation::CreateManagedCanister(create_operation),
+            RequestOperation::CreateExternalCanister(create_operation),
         ))
     }
 }

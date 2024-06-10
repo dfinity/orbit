@@ -1,5 +1,5 @@
 use super::{request_policy_rule::RequestPolicyRule, request_specifier::RequestSpecifier};
-use crate::errors::{MatchError, RecordValidationError, RequestPolicyError};
+use crate::errors::{MatchError, RequestPolicyError};
 use candid::{CandidType, Deserialize};
 use orbit_essentials::storable;
 use orbit_essentials::{
@@ -48,20 +48,8 @@ impl From<MatchError> for EvaluateError {
 
 impl ModelValidator<RequestPolicyError> for RequestPolicy {
     fn validate(&self) -> ModelValidatorResult<RequestPolicyError> {
-        self.specifier.validate().map_err(|err| match err {
-            RecordValidationError::NotFound { id, model_name } => {
-                RequestPolicyError::ValidationError {
-                    info: format!("Invalid user specifier: {} {} not found", model_name, id),
-                }
-            }
-        })?;
-        self.rule.validate().map_err(|err| match err {
-            RecordValidationError::NotFound { id, model_name } => {
-                RequestPolicyError::ValidationError {
-                    info: format!("Invalid request specifier: {} {} not found", model_name, id),
-                }
-            }
-        })?;
+        self.specifier.validate()?;
+        self.rule.validate()?;
         Ok(())
     }
 }
