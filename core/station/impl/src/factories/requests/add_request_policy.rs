@@ -11,8 +11,10 @@ use orbit_essentials::types::UUID;
 
 pub struct AddRequestPolicyRequestCreate {}
 
+#[async_trait]
 impl Create<station_api::AddRequestPolicyOperationInput> for AddRequestPolicyRequestCreate {
-    fn create(
+    async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
@@ -87,8 +89,8 @@ mod tests {
     use crate::{repositories::REQUEST_REPOSITORY, services::REQUEST_POLICY_SERVICE};
     use orbit_essentials::repository::Repository;
 
-    #[test]
-    fn test_create_request() {
+    #[tokio::test]
+    async fn test_create_request() {
         let request_id = [0u8; 16];
         let requested_by_user = [1u8; 16];
         let operation_input = add_request_policy_test_utils::mock_add_request_policy_api_input();
@@ -96,13 +98,16 @@ mod tests {
         request_input.operation =
             station_api::RequestOperationInput::AddRequestPolicy(operation_input.clone());
 
-        let request = AddRequestPolicyRequestCreate::create(
-            request_id,
-            requested_by_user,
-            request_input,
-            operation_input,
-        )
-        .unwrap();
+        let creator = Box::new(AddRequestPolicyRequestCreate {});
+        let request = creator
+            .create(
+                request_id,
+                requested_by_user,
+                request_input,
+                operation_input,
+            )
+            .await
+            .unwrap();
 
         assert_eq!(request.id, request_id);
         assert_eq!(request.requested_by, requested_by_user);
@@ -118,13 +123,16 @@ mod tests {
         request_input.operation =
             station_api::RequestOperationInput::AddRequestPolicy(operation_input.clone());
 
-        let request = AddRequestPolicyRequestCreate::create(
-            request_id,
-            requested_by_user,
-            request_input,
-            operation_input,
-        )
-        .unwrap();
+        let creator = Box::new(AddRequestPolicyRequestCreate {});
+        let request = creator
+            .create(
+                request_id,
+                requested_by_user,
+                request_input,
+                operation_input,
+            )
+            .await
+            .unwrap();
 
         REQUEST_REPOSITORY.insert(request.to_key(), request.to_owned());
 
