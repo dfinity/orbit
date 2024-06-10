@@ -614,7 +614,7 @@ type CallExternalCanisterOperationInput = record {
   // }
   // ```
   // If omitted (`validation_method = null`), no validation of the argument blob is performed
-  // and a human-readable rendering of the argument blob is best-effort.
+  // and no human-readable rendering of the argument blob is provided.
   validation_method : opt CanisterMethod;
   // The canister method that is called after the request becomes `Approved`
   // passing the validated argument blob.
