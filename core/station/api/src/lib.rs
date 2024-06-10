@@ -40,9 +40,6 @@ pub use change_canister::*;
 mod external_canister;
 pub use external_canister::*;
 
-mod call_canister;
-pub use call_canister::*;
-
 mod request_policy;
 pub use request_policy::*;
 
