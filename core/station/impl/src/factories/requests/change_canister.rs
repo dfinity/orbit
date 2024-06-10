@@ -2,7 +2,7 @@ use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{
-        ChangeCanisterOperation, ChangeCanisterTarget, ChangeManagedCanisterOperation, Request,
+        ChangeCanisterOperation, ChangeCanisterTarget, ChangeExternalCanisterOperation, Request,
         RequestExecutionPlan, RequestOperation,
     },
     services::{ChangeCanisterService, SystemService},
@@ -12,7 +12,7 @@ use candid::Encode;
 use orbit_essentials::types::UUID;
 use sha2::{Digest, Sha256};
 use station_api::{
-    ChangeCanisterOperationInput, ChangeManagedCanisterOperationInput, CreateRequestInput,
+    ChangeCanisterOperationInput, ChangeExternalCanisterOperationInput, CreateRequestInput,
 };
 use std::sync::Arc;
 
@@ -127,22 +127,22 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
     }
 }
 
-pub struct ChangeManagedCanisterRequestCreate;
+pub struct ChangeExternalCanisterRequestCreate;
 
 #[async_trait]
-impl Create<ChangeManagedCanisterOperationInput> for ChangeManagedCanisterRequestCreate {
+impl Create<ChangeExternalCanisterOperationInput> for ChangeExternalCanisterRequestCreate {
     async fn create(
         &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,
-        operation_input: ChangeManagedCanisterOperationInput,
+        operation_input: ChangeExternalCanisterOperationInput,
     ) -> Result<Request, RequestError> {
         let request = Request::new(
             request_id,
             requested_by_user,
             Request::default_expiration_dt_ns(),
-            RequestOperation::ChangeManagedCanister(ChangeManagedCanisterOperation {
+            RequestOperation::ChangeExternalCanister(ChangeExternalCanisterOperation {
                 arg_checksum: operation_input.arg.as_ref().map(|arg| {
                     let mut hasher = Sha256::new();
                     hasher.update(arg);
@@ -161,7 +161,7 @@ impl Create<ChangeManagedCanisterOperationInput> for ChangeManagedCanisterReques
                 .unwrap_or(RequestExecutionPlan::Immediate),
             input
                 .title
-                .unwrap_or_else(|| "ChangeManagedCanister".to_string()),
+                .unwrap_or_else(|| "ChangeExternalCanister".to_string()),
             input.summary,
         );
 
@@ -169,16 +169,16 @@ impl Create<ChangeManagedCanisterOperationInput> for ChangeManagedCanisterReques
     }
 }
 
-pub struct ChangeManagedCanisterRequestExecute<'p, 'o> {
+pub struct ChangeExternalCanisterRequestExecute<'p, 'o> {
     request: &'p Request,
-    operation: &'o ChangeManagedCanisterOperation,
+    operation: &'o ChangeExternalCanisterOperation,
     change_canister_service: Arc<ChangeCanisterService>,
 }
 
-impl<'p, 'o> ChangeManagedCanisterRequestExecute<'p, 'o> {
+impl<'p, 'o> ChangeExternalCanisterRequestExecute<'p, 'o> {
     pub fn new(
         request: &'p Request,
-        operation: &'o ChangeManagedCanisterOperation,
+        operation: &'o ChangeExternalCanisterOperation,
         change_canister_service: Arc<ChangeCanisterService>,
     ) -> Self {
         Self {
@@ -190,7 +190,7 @@ impl<'p, 'o> ChangeManagedCanisterRequestExecute<'p, 'o> {
 }
 
 #[async_trait]
-impl Execute for ChangeManagedCanisterRequestExecute<'_, '_> {
+impl Execute for ChangeExternalCanisterRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         self.change_canister_service
             .install_canister(
@@ -202,7 +202,7 @@ impl Execute for ChangeManagedCanisterRequestExecute<'_, '_> {
             .await
             .map_err(|err| RequestExecuteError::Failed {
                 reason: format!(
-                    "failed to install managed canister {}: {}",
+                    "failed to install external canister {}: {}",
                     self.operation.input.canister_id, err
                 ),
             })?;

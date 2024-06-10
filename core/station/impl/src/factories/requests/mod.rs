@@ -39,9 +39,9 @@ use self::{
     add_user_group::{AddUserGroupRequestCreate, AddUserGroupRequestExecute},
     change_canister::{
         ChangeCanisterRequestCreate, ChangeCanisterRequestExecute,
-        ChangeManagedCanisterRequestCreate, ChangeManagedCanisterRequestExecute,
+        ChangeExternalCanisterRequestCreate, ChangeExternalCanisterRequestExecute,
     },
-    create_canister::{CreateManagedCanisterRequestCreate, CreateManagedCanisterRequestExecute},
+    create_canister::{CreateExternalCanisterRequestCreate, CreateExternalCanisterRequestExecute},
     edit_account::{EditAccountRequestCreate, EditAccountRequestExecute},
     edit_address_book_entry::{
         EditAddressBookEntryRequestCreate, EditAddressBookEntryRequestExecute,
@@ -166,14 +166,14 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
-            RequestOperationInput::ChangeManagedCanister(operation) => {
-                let creator = Box::new(ChangeManagedCanisterRequestCreate {});
+            RequestOperationInput::ChangeExternalCanister(operation) => {
+                let creator = Box::new(ChangeExternalCanisterRequestCreate {});
                 creator
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
-            RequestOperationInput::CreateManagedCanister(operation) => {
-                let creator = Box::new(CreateManagedCanisterRequestCreate {});
+            RequestOperationInput::CreateExternalCanister(operation) => {
+                let creator = Box::new(CreateExternalCanisterRequestCreate {});
                 creator
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
@@ -254,15 +254,15 @@ impl RequestFactory {
                     Arc::clone(&CHANGE_CANISTER_SERVICE),
                 ))
             }
-            RequestOperation::ChangeManagedCanister(operation) => {
-                Box::new(ChangeManagedCanisterRequestExecute::new(
+            RequestOperation::ChangeExternalCanister(operation) => {
+                Box::new(ChangeExternalCanisterRequestExecute::new(
                     request,
                     operation,
                     Arc::clone(&CHANGE_CANISTER_SERVICE),
                 ))
             }
-            RequestOperation::CreateManagedCanister(operation) => {
-                Box::new(CreateManagedCanisterRequestExecute::new(
+            RequestOperation::CreateExternalCanister(operation) => {
+                Box::new(CreateExternalCanisterRequestExecute::new(
                     request,
                     operation,
                     Arc::clone(&EXTERNAL_CANISTER_SERVICE),

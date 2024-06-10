@@ -39,8 +39,8 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.AddressBook;
   }
 
-  if (variantIs(resource, 'ManagedCanister')) {
-    return ResourceTypeEnum.ManagedCanister;
+  if (variantIs(resource, 'ExternalCanister')) {
+    return ResourceTypeEnum.ExternalCanister;
   }
 
   return unreachable(resource);

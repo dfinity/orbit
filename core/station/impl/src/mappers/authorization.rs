@@ -4,8 +4,8 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, ChangeCanisterResourceAction,
-            ChangeManagedCanisterResourceTarget, CreateManagedCanisterResourceTarget,
-            ManagedCanisterResourceAction, PermissionResourceAction, RequestResourceAction,
+            ChangeExternalCanisterResourceTarget, CreateExternalCanisterResourceTarget,
+            ExternalCanisterResourceAction, PermissionResourceAction, RequestResourceAction,
             Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
         },
         Transfer,
@@ -205,13 +205,13 @@ impl From<&station_api::CreateRequestInput> for Resource {
             RequestOperationInput::ChangeCanister(_) => {
                 Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
-            RequestOperationInput::ChangeManagedCanister(input) => {
-                Resource::ManagedCanister(ManagedCanisterResourceAction::Change(
-                    ChangeManagedCanisterResourceTarget::Canister(input.canister_id),
+            RequestOperationInput::ChangeExternalCanister(input) => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    ChangeExternalCanisterResourceTarget::Canister(input.canister_id),
                 ))
             }
-            RequestOperationInput::CreateManagedCanister(_) => Resource::ManagedCanister(
-                ManagedCanisterResourceAction::Create(CreateManagedCanisterResourceTarget::Any),
+            RequestOperationInput::CreateExternalCanister(_) => Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Create(CreateExternalCanisterResourceTarget::Any),
             ),
             RequestOperationInput::EditPermission(_) => {
                 Resource::Permission(PermissionResourceAction::Update)
