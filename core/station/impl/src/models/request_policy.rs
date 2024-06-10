@@ -1,8 +1,5 @@
 use super::{request_policy_rule::RequestPolicyRule, request_specifier::RequestSpecifier};
-use crate::errors::{
-    ExternalCanisterValidationError, MatchError, RecordValidationError, RequestPolicyError,
-    ValidationError,
-};
+use crate::errors::{MatchError, RequestPolicyError};
 use candid::{CandidType, Deserialize};
 use orbit_essentials::storable;
 use orbit_essentials::{
@@ -45,39 +42,6 @@ impl From<MatchError> for EvaluateError {
     fn from(value: MatchError) -> Self {
         match value {
             MatchError::UnexpectedError(err) => EvaluateError::UnexpectedError(err),
-        }
-    }
-}
-
-impl From<RecordValidationError> for RequestPolicyError {
-    fn from(err: RecordValidationError) -> RequestPolicyError {
-        match err {
-            RecordValidationError::NotFound { id, model_name } => {
-                RequestPolicyError::ValidationError {
-                    info: format!("Invalid user specifier: {} {} not found", model_name, id),
-                }
-            }
-        }
-    }
-}
-
-impl From<ExternalCanisterValidationError> for RequestPolicyError {
-    fn from(err: ExternalCanisterValidationError) -> RequestPolicyError {
-        match err {
-            ExternalCanisterValidationError::InvalidExternalCanister { principal } => {
-                RequestPolicyError::ValidationError {
-                    info: format!("Invalid external canister {}", principal),
-                }
-            }
-        }
-    }
-}
-
-impl From<ValidationError> for RequestPolicyError {
-    fn from(err: ValidationError) -> RequestPolicyError {
-        match err {
-            ValidationError::RecordValidationError(err) => err.into(),
-            ValidationError::ExternalCanisterValidationError(err) => err.into(),
         }
     }
 }

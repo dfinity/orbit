@@ -1,3 +1,4 @@
+use crate::errors::{ExternalCanisterValidationError, RecordValidationError, ValidationError};
 use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -66,6 +67,37 @@ impl DetailableError for RequestError {
                 Some(details)
             }
             _ => None,
+        }
+    }
+}
+
+impl From<RecordValidationError> for RequestError {
+    fn from(err: RecordValidationError) -> RequestError {
+        match err {
+            RecordValidationError::NotFound { id, model_name } => RequestError::ValidationError {
+                info: format!("Invalid user specifier: {} {} not found", model_name, id),
+            },
+        }
+    }
+}
+
+impl From<ExternalCanisterValidationError> for RequestError {
+    fn from(err: ExternalCanisterValidationError) -> RequestError {
+        match err {
+            ExternalCanisterValidationError::InvalidExternalCanister { principal } => {
+                RequestError::ValidationError {
+                    info: format!("Invalid external canister {}", principal),
+                }
+            }
+        }
+    }
+}
+
+impl From<ValidationError> for RequestError {
+    fn from(err: ValidationError) -> RequestError {
+        match err {
+            ValidationError::RecordValidationError(err) => err.into(),
+            ValidationError::ExternalCanisterValidationError(err) => err.into(),
         }
     }
 }
