@@ -30,7 +30,7 @@ pub use request_policy::*;
 mod change_canister;
 pub use change_canister::*;
 
-mod managed_canister;
-pub use managed_canister::*;
+mod external_canister;
+pub use external_canister::*;
 
 pub mod permission;

@@ -194,7 +194,7 @@ export default {
       address_book_entry: "Carnet d'Adresses",
       change_canister: 'Mise à Jour',
       transfer: 'Transferts',
-      managed_canister: 'Canister Géré',
+      external_canister: 'Canister Géré',
       system_info: 'Informations Système',
     },
     types: {
@@ -771,7 +771,7 @@ export default {
       removeusergroup: "Éffacer un groupe d'usagers",
       addaccount: 'Ajouter un compte',
       managesysteminfo: 'Gérer les informations système',
-      changemanagedcanister: 'Modifier un canister géré',
+      changeexternalcanister: 'Modifier un canister géré',
     },
   },
 };
