@@ -644,7 +644,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 0_u32.to_le_bytes());
     let cycles = env.cycle_balance(validation_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
     let ctr = update_raw(
         &env,
         execution_canister_id,
@@ -655,7 +655,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 0_u32.to_le_bytes());
     let cycles = env.cycle_balance(execution_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
 
     // create new user identities and add them to the station
     let user_a = user_test_id(0);
@@ -700,7 +700,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 0_u32.to_le_bytes());
     let cycles = env.cycle_balance(validation_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
     let ctr = update_raw(
         &env,
         execution_canister_id,
@@ -711,7 +711,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 0_u32.to_le_bytes());
     let cycles = env.cycle_balance(execution_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
 
     // allow anyone to create call external canister requests with a given validation and execution method
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
@@ -769,7 +769,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 2_u32.to_le_bytes());
     let cycles = env.cycle_balance(validation_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
     let ctr = update_raw(
         &env,
         execution_canister_id,
@@ -780,7 +780,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 0_u32.to_le_bytes());
     let cycles = env.cycle_balance(execution_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
 
     // submit a request with no validation method which is illegal given the permissions set so far
     let illegal_call_canister_operation =
@@ -847,7 +847,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 2_u32.to_le_bytes());
     let cycles = env.cycle_balance(validation_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
     let ctr = update_raw(
         &env,
         execution_canister_id,
@@ -858,7 +858,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 0_u32.to_le_bytes());
     let cycles = env.cycle_balance(execution_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
 
     // set four eyes principle (request approval policy) for calling external canisters
     let add_request_policy =
@@ -915,7 +915,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 4_u32.to_le_bytes());
     let cycles = env.cycle_balance(validation_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
     let ctr = update_raw(
         &env,
         execution_canister_id,
@@ -926,7 +926,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 0_u32.to_le_bytes());
     let cycles = env.cycle_balance(execution_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
 
     // let the admin user reject the request => the request stays open as the second user can also approve it
     submit_request_approval(
@@ -958,7 +958,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 4_u32.to_le_bytes());
     let cycles = env.cycle_balance(validation_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
     let ctr = update_raw(
         &env,
         execution_canister_id,
@@ -969,7 +969,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 0_u32.to_le_bytes());
     let cycles = env.cycle_balance(execution_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
 
     // the second user approves and then the request will eventually become completed
     submit_request_approval(
@@ -998,7 +998,7 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 4_u32.to_le_bytes());
     let cycles = env.cycle_balance(validation_canister_id);
-    assert!(95 * T <= cycles && cycles <= 100 * T);
+    assert!((95 * T..=100 * T).contains(&cycles));
     let ctr = update_raw(
         &env,
         execution_canister_id,
@@ -1009,5 +1009,5 @@ fn call_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 2_u32.to_le_bytes());
     let cycles = env.cycle_balance(execution_canister_id);
-    assert!(105 * T <= cycles && cycles <= 110 * T);
+    assert!((105 * T..=110 * T).contains(&cycles));
 }
