@@ -502,7 +502,6 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
-  { 'CallExternalCanister' : [] | [Principal] } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
@@ -511,6 +510,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
+  { 'CallExternalCanister' : [] | [Principal] } |
   { 'AddAccount' : null };
 export type ListRequestsResult = {
     'Ok' : {
@@ -684,7 +684,6 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperation } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
-  { 'CallExternalCanister' : CallExternalCanisterOperation } |
   { 'ChangeCanister' : ChangeCanisterOperation } |
   { 'EditUser' : EditUserOperation } |
   { 'ManageSystemInfo' : ManageSystemInfoOperation } |
@@ -693,6 +692,7 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
   { 'AddRequestPolicy' : AddRequestPolicyOperation } |
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
+  { 'CallExternalCanister' : CallExternalCanisterOperation } |
   { 'AddAccount' : AddAccountOperation };
 export type RequestOperationInput = {
     'AddUserGroup' : AddUserGroupOperationInput
@@ -706,7 +706,6 @@ export type RequestOperationInput = {
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperationInput } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
-  { 'CallExternalCanister' : CallExternalCanisterOperationInput } |
   { 'ChangeCanister' : ChangeCanisterOperationInput } |
   { 'EditUser' : EditUserOperationInput } |
   { 'ManageSystemInfo' : ManageSystemInfoOperationInput } |
@@ -715,6 +714,7 @@ export type RequestOperationInput = {
   { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
   { 'AddRequestPolicy' : AddRequestPolicyOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
+  { 'CallExternalCanister' : CallExternalCanisterOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
 export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
@@ -726,7 +726,6 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
-  { 'CallExternalCanister' : null } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
@@ -735,6 +734,7 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
+  { 'CallExternalCanister' : null } |
   { 'AddAccount' : null };
 export interface RequestPolicy {
   'id' : UUID,
@@ -772,7 +772,6 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
   { 'CreateExternalCanister' : CreateExternalCanisterResourceTarget } |
   { 'EditAddressBookEntry' : ResourceIds } |
-  { 'CallExternalCanister' : CallExternalCanisterResourceTarget } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
   { 'ManageSystemInfo' : null } |
@@ -781,6 +780,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : ResourceIds } |
+  { 'CallExternalCanister' : CallExternalCanisterResourceTarget } |
   { 'AddAccount' : null };
 export type RequestStatus = { 'Failed' : { 'reason' : [] | [string] } } |
   { 'Approved' : null } |
@@ -804,9 +804,9 @@ export type Resource = { 'Request' : RequestResourceAction } |
   { 'ExternalCanister' : ExternalCanisterResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
-  { 'CallExternalCanister' : CallExternalCanisterResourceTarget } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
   { 'UserGroup' : ResourceAction } |
+  { 'CallExternalCanister' : CallExternalCanisterResourceTarget } |
   { 'Permission' : PermissionResourceAction } |
   { 'RequestPolicy' : ResourceAction };
 export type ResourceAction = { 'List' : null } |
