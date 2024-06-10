@@ -5,10 +5,9 @@ use crate::core::validation::{
     EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
 };
 use crate::errors::ValidationError;
-use crate::models::resource::ExecutionMethodResourceTarget;
 use crate::models::resource::{
     CallCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
-    CreateExternalCanisterResourceTarget,
+    CreateExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
 };
 use crate::models::user::User;
 use crate::models::{

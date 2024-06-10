@@ -184,7 +184,7 @@ pub struct EnsureExternalCanister {}
 
 impl EnsureExternalCanister {
     // The management canister, the orbit station, and the upgrader are NOT external canisters.
-    pub fn ensure_external_canister(
+    pub fn is_external_canister(
         principal: Principal,
     ) -> Result<(), ExternalCanisterValidationError> {
         if principal == Principal::management_canister()

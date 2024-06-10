@@ -59,7 +59,7 @@ impl ExternalCanisterService {
         arg: Vec<u8>,
         cycles: Option<u64>,
     ) -> ServiceResult<Vec<u8>, ExternalCanisterError> {
-        EnsureExternalCanister::ensure_external_canister(canister_id)?;
+        EnsureExternalCanister::is_external_canister(canister_id)?;
 
         call_raw(canister_id, &method_name, arg, cycles.unwrap_or_default())
             .await

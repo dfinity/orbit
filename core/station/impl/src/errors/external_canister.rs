@@ -7,9 +7,10 @@ use thiserror::Error;
 /// Container for external canister errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum ExternalCanisterError {
+    /// The external canister operation failed in validation.
     #[error(r#"The principal {principal} is an invalid external canister."#)]
     InvalidExternalCanister { principal: Principal },
-    /// The external canister operation failed.
+    /// The external canister operation failed in execution.
     #[error(r#"The external canister operation failed due to {reason}"#)]
     Failed { reason: String },
 }

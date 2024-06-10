@@ -328,7 +328,7 @@ pub struct CanisterMethod {
 
 impl ModelValidator<ValidationError> for CanisterMethod {
     fn validate(&self) -> ModelValidatorResult<ValidationError> {
-        EnsureExternalCanister::ensure_external_canister(self.canister_id)?;
+        EnsureExternalCanister::is_external_canister(self.canister_id)?;
 
         Ok(())
     }

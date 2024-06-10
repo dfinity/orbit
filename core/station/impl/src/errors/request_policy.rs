@@ -1,3 +1,4 @@
+use crate::errors::{ExternalCanisterValidationError, RecordValidationError, ValidationError};
 use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -18,6 +19,39 @@ impl DetailableError for RequestPolicyError {
                 details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
+        }
+    }
+}
+
+impl From<RecordValidationError> for RequestPolicyError {
+    fn from(err: RecordValidationError) -> RequestPolicyError {
+        match err {
+            RecordValidationError::NotFound { id, model_name } => {
+                RequestPolicyError::ValidationError {
+                    info: format!("Invalid UUID: {} {} not found", model_name, id),
+                }
+            }
+        }
+    }
+}
+
+impl From<ExternalCanisterValidationError> for RequestPolicyError {
+    fn from(err: ExternalCanisterValidationError) -> RequestPolicyError {
+        match err {
+            ExternalCanisterValidationError::InvalidExternalCanister { principal } => {
+                RequestPolicyError::ValidationError {
+                    info: format!("Invalid external canister {}", principal),
+                }
+            }
+        }
+    }
+}
+
+impl From<ValidationError> for RequestPolicyError {
+    fn from(err: ValidationError) -> RequestPolicyError {
+        match err {
+            ValidationError::RecordValidationError(err) => err.into(),
+            ValidationError::ExternalCanisterValidationError(err) => err.into(),
         }
     }
 }
