@@ -1,7 +1,7 @@
 use crate::{
     core::middlewares::{authorize, call_context},
     models::resource::{
-        ManagedCanisterResourceAction, ReadManagedCanisterResourceTarget, Resource,
+        ExternalCanisterResourceAction, ReadExternalCanisterResourceTarget, Resource,
     },
     services::{ExternalCanisterService, EXTERNAL_CANISTER_SERVICE},
 };
@@ -34,7 +34,7 @@ impl StatusController {
         Self { status_service }
     }
 
-    #[with_middleware(guard = authorize(&call_context(), &[Resource::ManagedCanister(ManagedCanisterResourceAction::Read(ReadManagedCanisterResourceTarget::Canister(input.canister_id)))]))]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(input.canister_id)))]))]
     async fn canister_status(&self, input: CanisterIdRecord) -> ApiResult<CanisterStatusResponse> {
         self.status_service.canister_status(input).await
     }

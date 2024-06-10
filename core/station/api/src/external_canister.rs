@@ -1,9 +1,9 @@
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CreateManagedCanisterOperationInput {}
+pub struct CreateExternalCanisterOperationInput {}
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CreateManagedCanisterOperationDTO {
+pub struct CreateExternalCanisterOperationDTO {
     pub canister_id: Option<Principal>,
 }

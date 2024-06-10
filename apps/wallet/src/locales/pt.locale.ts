@@ -165,7 +165,7 @@ export default {
       address_book_entry: 'Livro de endereços',
       change_canister: 'Atualizações de sistema',
       transfer: 'Transferências',
-      managed_canister: 'Canister gerenciado',
+      external_canister: 'Canister gerenciado',
       system_info: 'Informações do sistema',
     },
     headers: {
@@ -767,7 +767,7 @@ export default {
       removeusergroup: 'Remove grupo de usuários',
       addaccount: 'Adicionar conta',
       managesysteminfo: 'Gerir informações do sistema',
-      changemanagedcanister: 'Alterar canister gerenciado',
+      changeexternalcanister: 'Alterar canister gerenciado',
     },
   },
 };
