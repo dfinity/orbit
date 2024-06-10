@@ -18,7 +18,7 @@ pub enum RequestSpecifierDTO {
     ChangeCanister,
     ChangeExternalCanister(ChangeExternalCanisterResourceTargetDTO),
     CreateExternalCanister(CreateExternalCanisterResourceTargetDTO),
-    CallCanister(CallExternalCanisterResourceTargetDTO),
+    CallExternalCanister(CallExternalCanisterResourceTargetDTO),
     EditPermission(ResourceSpecifierDTO),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIdsDTO),

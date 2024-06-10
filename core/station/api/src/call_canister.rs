@@ -9,7 +9,7 @@ pub struct CanisterMethodDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CallCanisterOperationInput {
+pub struct CallExternalCanisterOperationInput {
     pub validation_method: Option<CanisterMethodDTO>,
     pub execution_method: CanisterMethodDTO,
     #[serde(with = "serde_bytes")]
@@ -18,7 +18,7 @@ pub struct CallCanisterOperationInput {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CallCanisterOperationDTO {
+pub struct CallExternalCanisterOperationDTO {
     pub validation_method: Option<CanisterMethodDTO>,
     pub execution_method: CanisterMethodDTO,
     pub arg_checksum: Sha256HashDTO,

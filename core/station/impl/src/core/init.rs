@@ -265,7 +265,7 @@ lazy_static! {
         ),
         // call canister
         (
-            RequestSpecifier::CallCanister(CallExternalCanisterResourceTarget {
+            RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
               validation_method: ValidationMethodResourceTarget::No,
               execution_method: ExecutionMethodResourceTarget::Any,
             }),

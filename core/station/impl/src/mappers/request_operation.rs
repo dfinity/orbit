@@ -11,7 +11,7 @@ use crate::{
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
         AddRequestPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
-        CallCanisterOperation, CallCanisterOperationInput, CanisterInstallMode,
+        CallExternalCanisterOperation, CallExternalCanisterOperationInput, CanisterInstallMode,
         CanisterInstallModeArgs, CanisterMethod, CanisterReinstallModeArgs,
         CanisterUpgradeModeArgs, ChangeCanisterOperation, ChangeCanisterOperationInput,
         ChangeCanisterTarget, ChangeExternalCanisterOperation,
@@ -31,7 +31,7 @@ use crate::{
 use orbit_essentials::repository::Repository;
 use station_api::{
     AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
-    CallCanisterOperationDTO, CanisterMethodDTO, ChangeCanisterOperationDTO,
+    CallExternalCanisterOperationDTO, CanisterMethodDTO, ChangeCanisterOperationDTO,
     ChangeCanisterTargetDTO, ChangeExternalCanisterOperationDTO,
     CreateExternalCanisterOperationDTO, EditAccountOperationDTO, EditAddressBookEntryOperationDTO,
     EditUserOperationDTO, NetworkDTO, RemoveAddressBookEntryOperationDTO, RequestOperationDTO,
@@ -484,9 +484,11 @@ impl From<CanisterMethodDTO> for CanisterMethod {
     }
 }
 
-impl From<CallCanisterOperationInput> for station_api::CallCanisterOperationInput {
-    fn from(input: CallCanisterOperationInput) -> station_api::CallCanisterOperationInput {
-        station_api::CallCanisterOperationInput {
+impl From<CallExternalCanisterOperationInput> for station_api::CallExternalCanisterOperationInput {
+    fn from(
+        input: CallExternalCanisterOperationInput,
+    ) -> station_api::CallExternalCanisterOperationInput {
+        station_api::CallExternalCanisterOperationInput {
             validation_method: input.validation_method.map(|m| m.into()),
             execution_method: input.execution_method.into(),
             arg: input.arg,
@@ -495,9 +497,11 @@ impl From<CallCanisterOperationInput> for station_api::CallCanisterOperationInpu
     }
 }
 
-impl From<station_api::CallCanisterOperationInput> for CallCanisterOperationInput {
-    fn from(input: station_api::CallCanisterOperationInput) -> CallCanisterOperationInput {
-        CallCanisterOperationInput {
+impl From<station_api::CallExternalCanisterOperationInput> for CallExternalCanisterOperationInput {
+    fn from(
+        input: station_api::CallExternalCanisterOperationInput,
+    ) -> CallExternalCanisterOperationInput {
+        CallExternalCanisterOperationInput {
             validation_method: input.validation_method.map(|m| m.into()),
             execution_method: input.execution_method.into(),
             arg: input.arg,
@@ -506,9 +510,9 @@ impl From<station_api::CallCanisterOperationInput> for CallCanisterOperationInpu
     }
 }
 
-impl From<CallCanisterOperation> for CallCanisterOperationDTO {
-    fn from(operation: CallCanisterOperation) -> CallCanisterOperationDTO {
-        CallCanisterOperationDTO {
+impl From<CallExternalCanisterOperation> for CallExternalCanisterOperationDTO {
+    fn from(operation: CallExternalCanisterOperation) -> CallExternalCanisterOperationDTO {
+        CallExternalCanisterOperationDTO {
             validation_method: operation.input.validation_method.map(|m| m.into()),
             execution_method: operation.input.execution_method.into(),
             arg_checksum: hex::encode(&operation.arg_checksum),
@@ -762,8 +766,8 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::CreateExternalCanister(operation) => {
                 RequestOperationDTO::CreateExternalCanister(Box::new(operation.into()))
             }
-            RequestOperation::CallCanister(operation) => {
-                RequestOperationDTO::CallCanister(Box::new(operation.into()))
+            RequestOperation::CallExternalCanister(operation) => {
+                RequestOperationDTO::CallExternalCanister(Box::new(operation.into()))
             }
             RequestOperation::EditPermission(operation) => {
                 RequestOperationDTO::EditPermission(Box::new(operation.into()))
@@ -887,7 +891,9 @@ impl RequestOperation {
                     ),
                 )]
             }
-            RequestOperation::CallCanister(CallCanisterOperation { input, .. }) => {
+            RequestOperation::CallExternalCanister(CallExternalCanisterOperation {
+                input, ..
+            }) => {
                 vec![
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
                         CallExternalCanisterResourceTarget {

@@ -84,13 +84,13 @@ impl Request {
                 operation_type: RequestOperationFilterType::CreateExternalCanister,
                 request_id: self.id,
             }],
-            RequestOperation::CallCanister(operation) => vec![
+            RequestOperation::CallExternalCanister(operation) => vec![
                 RequestOperationTypeIndex {
-                    operation_type: RequestOperationFilterType::CallCanister(None),
+                    operation_type: RequestOperationFilterType::CallExternalCanister(None),
                     request_id: self.id,
                 },
                 RequestOperationTypeIndex {
-                    operation_type: RequestOperationFilterType::CallCanister(Some(
+                    operation_type: RequestOperationFilterType::CallExternalCanister(Some(
                         operation.input.execution_method.canister_id,
                     )),
                     request_id: self.id,

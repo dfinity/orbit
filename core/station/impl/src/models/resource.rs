@@ -717,7 +717,7 @@ impl Display for CallExternalCanisterResourceTarget {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "CallCanister({},{})",
+            "CallExternalCanister({},{})",
             self.validation_method, self.execution_method
         )
     }

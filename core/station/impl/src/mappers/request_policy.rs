@@ -252,8 +252,8 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::CreateExternalCanister(target) => {
                 station_api::RequestSpecifierDTO::CreateExternalCanister(target.into())
             }
-            RequestSpecifier::CallCanister(target) => {
-                station_api::RequestSpecifierDTO::CallCanister(target.into())
+            RequestSpecifier::CallExternalCanister(target) => {
+                station_api::RequestSpecifierDTO::CallExternalCanister(target.into())
             }
             RequestSpecifier::EditPermission(policy) => {
                 station_api::RequestSpecifierDTO::EditPermission(policy.into())
@@ -311,8 +311,8 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             station_api::RequestSpecifierDTO::CreateExternalCanister(target) => {
                 RequestSpecifier::CreateExternalCanister(target.into())
             }
-            station_api::RequestSpecifierDTO::CallCanister(target) => {
-                RequestSpecifier::CallCanister(target.into())
+            station_api::RequestSpecifierDTO::CallExternalCanister(target) => {
+                RequestSpecifier::CallExternalCanister(target.into())
             }
             station_api::RequestSpecifierDTO::EditPermission(policy) => {
                 RequestSpecifier::EditPermission(policy.into())
@@ -427,7 +427,7 @@ impl RequestSpecifier {
                     ExternalCanisterResourceAction::Create(target.clone()),
                 )]
             }
-            RequestSpecifier::CallCanister(target) => {
+            RequestSpecifier::CallExternalCanister(target) => {
                 vec![Resource::ExternalCanister(
                     ExternalCanisterResourceAction::Call(target.clone()),
                 )]

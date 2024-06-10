@@ -33,7 +33,7 @@ pub enum RequestOperation {
     ChangeCanister(ChangeCanisterOperation),
     ChangeExternalCanister(ChangeExternalCanisterOperation),
     CreateExternalCanister(CreateExternalCanisterOperation),
-    CallCanister(CallCanisterOperation),
+    CallExternalCanister(CallExternalCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
@@ -58,7 +58,7 @@ impl Display for RequestOperation {
             RequestOperation::ChangeCanister(_) => write!(f, "change_canister"),
             RequestOperation::ChangeExternalCanister(_) => write!(f, "change_external_canister"),
             RequestOperation::CreateExternalCanister(_) => write!(f, "create_external_canister"),
-            RequestOperation::CallCanister(_) => write!(f, "call_canister"),
+            RequestOperation::CallExternalCanister(_) => write!(f, "call_canister"),
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
@@ -336,7 +336,7 @@ impl ModelValidator<ValidationError> for CanisterMethod {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct CallCanisterOperationInput {
+pub struct CallExternalCanisterOperationInput {
     pub validation_method: Option<CanisterMethod>,
     pub execution_method: CanisterMethod,
     pub arg: Vec<u8>,
@@ -345,8 +345,8 @@ pub struct CallCanisterOperationInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct CallCanisterOperation {
-    pub input: CallCanisterOperationInput,
+pub struct CallExternalCanisterOperation {
+    pub input: CallExternalCanisterOperationInput,
     pub arg_checksum: Vec<u8>,
     pub arg_rendering: Option<String>,
     pub execution_method_reply: Option<Vec<u8>>,

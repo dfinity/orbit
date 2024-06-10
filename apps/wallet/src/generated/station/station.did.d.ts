@@ -125,7 +125,7 @@ export interface BasicUser {
   'status' : UserStatus,
   'name' : string,
 }
-export interface CallCanisterOperation {
+export interface CallExternalCanisterOperation {
   'execution_method' : CanisterMethod,
   'validation_method' : [] | [CanisterMethod],
   'arg_checksum' : Sha256Hash,
@@ -133,7 +133,7 @@ export interface CallCanisterOperation {
   'arg_rendering' : [] | [string],
   'execution_method_reply' : [] | [Uint8Array | number[]],
 }
-export interface CallCanisterOperationInput {
+export interface CallExternalCanisterOperationInput {
   'arg' : Uint8Array | number[],
   'execution_method' : CanisterMethod,
   'validation_method' : [] | [CanisterMethod],
@@ -502,7 +502,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
-  { 'CallCanister' : [] | [Principal] } |
+  { 'CallExternalCanister' : [] | [Principal] } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
@@ -684,7 +684,7 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperation } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
-  { 'CallCanister' : CallCanisterOperation } |
+  { 'CallExternalCanister' : CallExternalCanisterOperation } |
   { 'ChangeCanister' : ChangeCanisterOperation } |
   { 'EditUser' : EditUserOperation } |
   { 'ManageSystemInfo' : ManageSystemInfoOperation } |
@@ -706,7 +706,7 @@ export type RequestOperationInput = {
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperationInput } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
-  { 'CallCanister' : CallCanisterOperationInput } |
+  { 'CallExternalCanister' : CallExternalCanisterOperationInput } |
   { 'ChangeCanister' : ChangeCanisterOperationInput } |
   { 'EditUser' : EditUserOperationInput } |
   { 'ManageSystemInfo' : ManageSystemInfoOperationInput } |
@@ -726,7 +726,7 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
-  { 'CallCanister' : null } |
+  { 'CallExternalCanister' : null } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
@@ -772,7 +772,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
   { 'CreateExternalCanister' : CreateExternalCanisterResourceTarget } |
   { 'EditAddressBookEntry' : ResourceIds } |
-  { 'CallCanister' : CallExternalCanisterResourceTarget } |
+  { 'CallExternalCanister' : CallExternalCanisterResourceTarget } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
   { 'ManageSystemInfo' : null } |
@@ -804,7 +804,7 @@ export type Resource = { 'Request' : RequestResourceAction } |
   { 'ExternalCanister' : ExternalCanisterResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
-  { 'CallCanister' : CallExternalCanisterResourceTarget } |
+  { 'CallExternalCanister' : CallExternalCanisterResourceTarget } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
   { 'UserGroup' : ResourceAction } |
   { 'Permission' : PermissionResourceAction } |

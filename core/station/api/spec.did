@@ -48,7 +48,7 @@ type RequestSpecifier = variant {
   ChangeCanister;
   ChangeExternalCanister : ChangeExternalCanisterResourceTarget;
   CreateExternalCanister : CreateExternalCanisterResourceTarget;
-  CallCanister : CallExternalCanisterResourceTarget;
+  CallExternalCanister : CallExternalCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
   AddRequestPolicy;
   EditRequestPolicy : ResourceIds;
@@ -600,7 +600,7 @@ type CanisterMethod = record {
   method_name : text;
 };
 
-type CallCanisterOperationInput = record {
+type CallExternalCanisterOperationInput = record {
   // The canister method validating the argument blob:
   //   - on validation success, returns a human-readable rendering of the argument blob
   //     and then the request becomes `Created`;
@@ -625,10 +625,10 @@ type CallCanisterOperationInput = record {
   execution_method_cycles : opt nat64;
 };
 
-type CallCanisterOperation = record {
-  // see `CallCanisterOperationInput`
+type CallExternalCanisterOperation = record {
+  // see `CallExternalCanisterOperationInput`
   validation_method : opt CanisterMethod;
-  // see `CallCanisterOperationInput`
+  // see `CallExternalCanisterOperationInput`
   execution_method : CanisterMethod;
   // The checksum of the argument blob passed to both the validation and execution method.
   arg_checksum : Sha256Hash;
@@ -725,7 +725,7 @@ type RequestOperation = variant {
   // An operation for creating a external canister.
   CreateExternalCanister : CreateExternalCanisterOperation;
   // An operation for calling a canister.
-  CallCanister : CallCanisterOperation;
+  CallExternalCanister : CallExternalCanisterOperation;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperation;
   // An operation for adding a request policy.
@@ -768,7 +768,7 @@ type RequestOperationInput = variant {
   // An operation for creating a external canister.
   CreateExternalCanister : CreateExternalCanisterOperationInput;
   // An operation for calling a canister.
-  CallCanister : CallCanisterOperationInput;
+  CallExternalCanister : CallExternalCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
   // An operation for adding a request policy.
@@ -811,7 +811,7 @@ type RequestOperationType = variant {
   // An operation for creating a external canister.
   CreateExternalCanister;
   // An operation for calling a canister.
-  CallCanister;
+  CallExternalCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -936,7 +936,7 @@ type ListRequestsOperationType = variant {
   // An operation for creating a external canister.
   CreateExternalCanister;
   // An operation for calling a canister with an optionally specified canister ID.
-  CallCanister : opt principal;
+  CallExternalCanister : opt principal;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -1699,19 +1699,19 @@ type ExternalCanisterResourceAction = variant {
   Read : ReadExternalCanisterResourceTarget;
 };
 
-// The validation method targets of a `CallCanister` request.
+// The validation method targets of a `CallExternalCanister` request.
 type ValidationMethodResourceTarget = variant {
   No;
   ValidationMethod : CanisterMethod;
 };
 
-// The execution method targets of a `CallCanister` request.
+// The execution method targets of a `CallExternalCanister` request.
 type ExecutionMethodResourceTarget = variant {
   Any;
   ExecutionMethod : CanisterMethod;
 };
 
-// The validation and execution method targets of a `CallCanister` request.
+// The validation and execution method targets of a `CallExternalCanister` request.
 type CallExternalCanisterResourceTarget = record {
   validation_method : ValidationMethodResourceTarget;
   execution_method : ExecutionMethodResourceTarget;
@@ -1751,7 +1751,7 @@ type Resource = variant {
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
   ExternalCanister : ExternalCanisterResourceAction;
-  CallCanister : CallExternalCanisterResourceTarget;
+  CallExternalCanister : CallExternalCanisterResourceTarget;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
   System : SystemResourceAction;

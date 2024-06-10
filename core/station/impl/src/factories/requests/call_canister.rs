@@ -1,28 +1,28 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{CallCanisterOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{CallExternalCanisterOperation, Request, RequestExecutionPlan, RequestOperation},
     services::ExternalCanisterService,
 };
 use async_trait::async_trait;
 use candid::Decode;
 use orbit_essentials::types::UUID;
 use sha2::{Digest, Sha256};
-use station_api::{CallCanisterOperationInput, CreateRequestInput};
+use station_api::{CallExternalCanisterOperationInput, CreateRequestInput};
 use std::sync::Arc;
 
-pub struct CallCanisterRequestCreate {
+pub struct CallExternalCanisterRequestCreate {
     pub external_canister_service: Arc<ExternalCanisterService>,
 }
 
 #[async_trait]
-impl Create<CallCanisterOperationInput> for CallCanisterRequestCreate {
+impl Create<CallExternalCanisterOperationInput> for CallExternalCanisterRequestCreate {
     async fn create(
         &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,
-        operation_input: CallCanisterOperationInput,
+        operation_input: CallExternalCanisterOperationInput,
     ) -> Result<Request, RequestError> {
         let arg_rendering = match operation_input.validation_method {
             Some(ref validation_method) => {
@@ -64,7 +64,7 @@ impl Create<CallCanisterOperationInput> for CallCanisterRequestCreate {
             request_id,
             requested_by_user,
             Request::default_expiration_dt_ns(),
-            RequestOperation::CallCanister(CallCanisterOperation {
+            RequestOperation::CallExternalCanister(CallExternalCanisterOperation {
                 arg_checksum,
                 arg_rendering,
                 execution_method_reply: None,
@@ -74,7 +74,9 @@ impl Create<CallCanisterOperationInput> for CallCanisterRequestCreate {
                 .execution_plan
                 .map(Into::into)
                 .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "CallCanister".to_string()),
+            input
+                .title
+                .unwrap_or_else(|| "CallExternalCanister".to_string()),
             input.summary,
         );
 
@@ -82,16 +84,16 @@ impl Create<CallCanisterOperationInput> for CallCanisterRequestCreate {
     }
 }
 
-pub struct CallCanisterRequestExecute<'p, 'o> {
+pub struct CallExternalCanisterRequestExecute<'p, 'o> {
     _request: &'p Request,
-    operation: &'o CallCanisterOperation,
+    operation: &'o CallExternalCanisterOperation,
     external_canister_service: Arc<ExternalCanisterService>,
 }
 
-impl<'p, 'o> CallCanisterRequestExecute<'p, 'o> {
+impl<'p, 'o> CallExternalCanisterRequestExecute<'p, 'o> {
     pub fn new(
         request: &'p Request,
-        operation: &'o CallCanisterOperation,
+        operation: &'o CallExternalCanisterOperation,
         external_canister_service: Arc<ExternalCanisterService>,
     ) -> Self {
         Self {
@@ -103,7 +105,7 @@ impl<'p, 'o> CallCanisterRequestExecute<'p, 'o> {
 }
 
 #[async_trait]
-impl Execute for CallCanisterRequestExecute<'_, '_> {
+impl Execute for CallExternalCanisterRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         let execution_method_reply = self
             .external_canister_service
@@ -124,7 +126,7 @@ impl Execute for CallCanisterRequestExecute<'_, '_> {
         call_canister_operation.execution_method_reply = Some(execution_method_reply);
 
         Ok(RequestExecuteStage::Completed(
-            RequestOperation::CallCanister(call_canister_operation),
+            RequestOperation::CallExternalCanister(call_canister_operation),
         ))
     }
 }

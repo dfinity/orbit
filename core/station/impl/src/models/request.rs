@@ -208,7 +208,7 @@ fn validate_request_operation_foreign_keys(
         RequestOperation::ChangeCanister(_) => (),
         RequestOperation::ChangeExternalCanister(_) => (),
         RequestOperation::CreateExternalCanister(_) => (),
-        RequestOperation::CallCanister(op) => {
+        RequestOperation::CallExternalCanister(op) => {
             let validation_method_target: ValidationMethodResourceTarget =
                 op.input.validation_method.clone().into();
             validation_method_target.validate()?;

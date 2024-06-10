@@ -214,7 +214,7 @@ impl From<&station_api::CreateRequestInput> for Resource {
             RequestOperationInput::CreateExternalCanister(_) => Resource::ExternalCanister(
                 ExternalCanisterResourceAction::Create(CreateExternalCanisterResourceTarget::Any),
             ),
-            RequestOperationInput::CallCanister(input) => {
+            RequestOperationInput::CallExternalCanister(input) => {
                 let validation_method: Option<CanisterMethod> =
                     input.validation_method.clone().map(|m| m.into());
                 let execution_method: CanisterMethod = input.execution_method.clone().into();

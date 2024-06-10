@@ -38,7 +38,7 @@ use self::{
     add_request_policy::{AddRequestPolicyRequestCreate, AddRequestPolicyRequestExecute},
     add_user::{AddUserRequestCreate, AddUserRequestExecute},
     add_user_group::{AddUserGroupRequestCreate, AddUserGroupRequestExecute},
-    call_canister::{CallCanisterRequestCreate, CallCanisterRequestExecute},
+    call_canister::{CallExternalCanisterRequestCreate, CallExternalCanisterRequestExecute},
     change_canister::{
         ChangeCanisterRequestCreate, ChangeCanisterRequestExecute,
         ChangeExternalCanisterRequestCreate, ChangeExternalCanisterRequestExecute,
@@ -180,8 +180,8 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
-            RequestOperationInput::CallCanister(operation) => {
-                let creator = Box::new(CallCanisterRequestCreate {
+            RequestOperationInput::CallExternalCanister(operation) => {
+                let creator = Box::new(CallExternalCanisterRequestCreate {
                     external_canister_service: Arc::clone(&EXTERNAL_CANISTER_SERVICE),
                 });
                 creator
@@ -278,11 +278,13 @@ impl RequestFactory {
                     Arc::clone(&EXTERNAL_CANISTER_SERVICE),
                 ))
             }
-            RequestOperation::CallCanister(operation) => Box::new(CallCanisterRequestExecute::new(
-                request,
-                operation,
-                Arc::clone(&EXTERNAL_CANISTER_SERVICE),
-            )),
+            RequestOperation::CallExternalCanister(operation) => {
+                Box::new(CallExternalCanisterRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&EXTERNAL_CANISTER_SERVICE),
+                ))
+            }
             RequestOperation::EditPermission(operation) => {
                 Box::new(EditPermissionRequestExecute::new(
                     request,

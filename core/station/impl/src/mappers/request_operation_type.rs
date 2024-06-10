@@ -30,7 +30,9 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::CreateExternalCanister => {
                 RequestOperationType::CreateExternalCanister
             }
-            RequestOperationTypeDTO::CallCanister => RequestOperationType::CallCanister,
+            RequestOperationTypeDTO::CallExternalCanister => {
+                RequestOperationType::CallExternalCanister
+            }
             RequestOperationTypeDTO::EditPermission => RequestOperationType::EditPermission,
             RequestOperationTypeDTO::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestOperationTypeDTO::EditRequestPolicy => RequestOperationType::EditRequestPolicy,
@@ -69,7 +71,9 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::CreateExternalCanister => {
                 RequestOperationTypeDTO::CreateExternalCanister
             }
-            RequestOperationType::CallCanister => RequestOperationTypeDTO::CallCanister,
+            RequestOperationType::CallExternalCanister => {
+                RequestOperationTypeDTO::CallExternalCanister
+            }
             RequestOperationType::EditPermission => RequestOperationTypeDTO::EditPermission,
             RequestOperationType::AddRequestPolicy => RequestOperationTypeDTO::AddRequestPolicy,
             RequestOperationType::EditRequestPolicy => RequestOperationTypeDTO::EditRequestPolicy,
@@ -104,7 +108,7 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::CreateExternalCanister(_) => {
                 RequestOperationType::CreateExternalCanister
             }
-            RequestOperation::CallCanister(_) => RequestOperationType::CallCanister,
+            RequestOperation::CallExternalCanister(_) => RequestOperationType::CallExternalCanister,
             RequestOperation::EditPermission(_) => RequestOperationType::EditPermission,
             RequestOperation::AddRequestPolicy(_) => RequestOperationType::AddRequestPolicy,
             RequestOperation::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
@@ -170,8 +174,8 @@ impl RequestOperation {
                 ListRequestsOperationTypeDTO::CreateExternalCanister,
             ) => true,
             (
-                RequestOperation::CallCanister(operation),
-                ListRequestsOperationTypeDTO::CallCanister(target),
+                RequestOperation::CallExternalCanister(operation),
+                ListRequestsOperationTypeDTO::CallExternalCanister(target),
             ) => {
                 if let Some(canister_id) = target {
                     operation.input.execution_method.canister_id == *canister_id
@@ -252,8 +256,8 @@ impl From<station_api::ListRequestsOperationTypeDTO> for RequestOperationFilterT
             station_api::ListRequestsOperationTypeDTO::CreateExternalCanister => {
                 RequestOperationFilterType::CreateExternalCanister
             }
-            station_api::ListRequestsOperationTypeDTO::CallCanister(target) => {
-                RequestOperationFilterType::CallCanister(target)
+            station_api::ListRequestsOperationTypeDTO::CallExternalCanister(target) => {
+                RequestOperationFilterType::CallExternalCanister(target)
             }
             station_api::ListRequestsOperationTypeDTO::EditPermission => {
                 RequestOperationFilterType::EditPermission
