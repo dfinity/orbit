@@ -2,11 +2,11 @@ use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
         resource::{
-            AccountResourceAction, CallCanisterResourceTarget, ChangeCanisterResourceAction,
-            ChangeExternalCanisterResourceTarget, CreateExternalCanisterResourceTarget,
-            ExecutionMethodResourceTarget, ExternalCanisterResourceAction,
-            PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-            UserResourceAction,
+            AccountResourceAction, CallExternalCanisterResourceTarget,
+            ChangeCanisterResourceAction, ChangeExternalCanisterResourceTarget,
+            CreateExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
+            ExternalCanisterResourceAction, PermissionResourceAction, Resource, ResourceAction,
+            ResourceId, SystemResourceAction, UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
@@ -890,13 +890,13 @@ impl RequestOperation {
             RequestOperation::CallCanister(CallCanisterOperation { input, .. }) => {
                 vec![
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                        CallCanisterResourceTarget {
+                        CallExternalCanisterResourceTarget {
                             validation_method: input.validation_method.clone().into(),
                             execution_method: ExecutionMethodResourceTarget::Any,
                         },
                     )),
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                        CallCanisterResourceTarget {
+                        CallExternalCanisterResourceTarget {
                             validation_method: input.validation_method.clone().into(),
                             execution_method: input.execution_method.clone().into(),
                         },

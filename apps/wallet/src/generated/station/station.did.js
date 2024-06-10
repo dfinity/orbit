@@ -134,7 +134,7 @@ export const idlFactory = ({ IDL }) => {
     'No' : IDL.Null,
     'ValidationMethod' : CanisterMethod,
   });
-  const CallCanisterResourceTarget = IDL.Record({
+  const CallExternalCanisterResourceTarget = IDL.Record({
     'execution_method' : ExecutionMethodResourceTarget,
     'validation_method' : ValidationMethodResourceTarget,
   });
@@ -150,7 +150,7 @@ export const idlFactory = ({ IDL }) => {
     'ExternalCanister' : ExternalCanisterResourceAction,
     'Account' : AccountResourceAction,
     'AddressBook' : ResourceAction,
-    'CallCanister' : CallCanisterResourceTarget,
+    'CallCanister' : CallExternalCanisterResourceTarget,
     'ChangeCanister' : ChangeCanisterResourceAction,
     'UserGroup' : ResourceAction,
     'Permission' : PermissionResourceAction,
@@ -237,7 +237,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAddressBookEntry' : ResourceIds,
     'CreateExternalCanister' : CreateExternalCanisterResourceTarget,
     'EditAddressBookEntry' : ResourceIds,
-    'CallCanister' : CallCanisterResourceTarget,
+    'CallCanister' : CallExternalCanisterResourceTarget,
     'ChangeCanister' : IDL.Null,
     'EditUser' : ResourceIds,
     'ManageSystemInfo' : IDL.Null,

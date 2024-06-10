@@ -3,10 +3,11 @@ use crate::{
     core::ic_cdk::api::trap,
     models::{
         resource::{
-            AccountResourceAction, CallCanisterResourceTarget, ChangeCanisterResourceAction,
-            ChangeExternalCanisterResourceTarget, CreateExternalCanisterResourceTarget,
-            ExternalCanisterResourceAction, PermissionResourceAction, RequestResourceAction,
-            Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+            AccountResourceAction, CallExternalCanisterResourceTarget,
+            ChangeCanisterResourceAction, ChangeExternalCanisterResourceTarget,
+            CreateExternalCanisterResourceTarget, ExternalCanisterResourceAction,
+            PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+            SystemResourceAction, UserResourceAction,
         },
         CanisterMethod, Transfer,
     },
@@ -218,7 +219,7 @@ impl From<&station_api::CreateRequestInput> for Resource {
                     input.validation_method.clone().map(|m| m.into());
                 let execution_method: CanisterMethod = input.execution_method.clone().into();
                 Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                    CallCanisterResourceTarget {
+                    CallExternalCanisterResourceTarget {
                         validation_method: validation_method.into(),
                         execution_method: execution_method.into(),
                     },

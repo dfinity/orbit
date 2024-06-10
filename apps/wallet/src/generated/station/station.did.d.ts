@@ -139,7 +139,7 @@ export interface CallCanisterOperationInput {
   'validation_method' : [] | [CanisterMethod],
   'execution_method_cycles' : [] | [bigint],
 }
-export interface CallCanisterResourceTarget {
+export interface CallExternalCanisterResourceTarget {
   'execution_method' : ExecutionMethodResourceTarget,
   'validation_method' : ValidationMethodResourceTarget,
 }
@@ -772,7 +772,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
   { 'CreateExternalCanister' : CreateExternalCanisterResourceTarget } |
   { 'EditAddressBookEntry' : ResourceIds } |
-  { 'CallCanister' : CallCanisterResourceTarget } |
+  { 'CallCanister' : CallExternalCanisterResourceTarget } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
   { 'ManageSystemInfo' : null } |
@@ -804,7 +804,7 @@ export type Resource = { 'Request' : RequestResourceAction } |
   { 'ExternalCanister' : ExternalCanisterResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
-  { 'CallCanister' : CallCanisterResourceTarget } |
+  { 'CallCanister' : CallExternalCanisterResourceTarget } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
   { 'UserGroup' : ResourceAction } |
   { 'Permission' : PermissionResourceAction } |

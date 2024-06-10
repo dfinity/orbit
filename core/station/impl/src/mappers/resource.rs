@@ -1,6 +1,6 @@
 use crate::models::{
     resource::{
-        AccountResourceAction, CallCanisterResourceTarget, ChangeCanisterResourceAction,
+        AccountResourceAction, CallExternalCanisterResourceTarget, ChangeCanisterResourceAction,
         ChangeExternalCanisterResourceTarget, CreateExternalCanisterResourceTarget,
         ExecutionMethodResourceTarget, ExternalCanisterResourceAction, PermissionResourceAction,
         ReadExternalCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction,
@@ -417,18 +417,22 @@ impl From<ExecutionMethodResourceTarget> for station_api::ExecutionMethodResourc
     }
 }
 
-impl From<station_api::CallCanisterResourceTargetDTO> for CallCanisterResourceTarget {
-    fn from(target: station_api::CallCanisterResourceTargetDTO) -> Self {
-        CallCanisterResourceTarget {
+impl From<station_api::CallExternalCanisterResourceTargetDTO>
+    for CallExternalCanisterResourceTarget
+{
+    fn from(target: station_api::CallExternalCanisterResourceTargetDTO) -> Self {
+        CallExternalCanisterResourceTarget {
             validation_method: target.validation_method.into(),
             execution_method: target.execution_method.into(),
         }
     }
 }
 
-impl From<CallCanisterResourceTarget> for station_api::CallCanisterResourceTargetDTO {
-    fn from(target: CallCanisterResourceTarget) -> Self {
-        station_api::CallCanisterResourceTargetDTO {
+impl From<CallExternalCanisterResourceTarget>
+    for station_api::CallExternalCanisterResourceTargetDTO
+{
+    fn from(target: CallExternalCanisterResourceTarget) -> Self {
+        station_api::CallExternalCanisterResourceTargetDTO {
             validation_method: target.validation_method.into(),
             execution_method: target.execution_method.into(),
         }

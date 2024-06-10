@@ -92,7 +92,7 @@ pub enum ReadExternalCanisterResourceTargetDTO {
 pub enum ExternalCanisterResourceActionDTO {
     Create(CreateExternalCanisterResourceTargetDTO),
     Change(ChangeExternalCanisterResourceTargetDTO),
-    Call(CallCanisterResourceTargetDTO),
+    Call(CallExternalCanisterResourceTargetDTO),
     Read(ReadExternalCanisterResourceTargetDTO),
 }
 
@@ -109,7 +109,7 @@ pub enum ExecutionMethodResourceTargetDTO {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct CallCanisterResourceTargetDTO {
+pub struct CallExternalCanisterResourceTargetDTO {
     pub validation_method: ValidationMethodResourceTargetDTO,
     pub execution_method: ExecutionMethodResourceTargetDTO,
 }

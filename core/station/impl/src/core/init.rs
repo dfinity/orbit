@@ -3,7 +3,7 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, CallCanisterResourceTarget, ChangeCanisterResourceAction,
+        AccountResourceAction, CallExternalCanisterResourceTarget, ChangeCanisterResourceAction,
         ChangeExternalCanisterResourceTarget, CreateExternalCanisterResourceTarget,
         ExecutionMethodResourceTarget, ExternalCanisterResourceAction, PermissionResourceAction,
         ReadExternalCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction,
@@ -158,7 +158,7 @@ lazy_static! {
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(CallCanisterResourceTarget {
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(CallExternalCanisterResourceTarget {
               validation_method: ValidationMethodResourceTarget::No,
               execution_method: ExecutionMethodResourceTarget::Any,
             })),
@@ -265,7 +265,7 @@ lazy_static! {
         ),
         // call canister
         (
-            RequestSpecifier::CallCanister(CallCanisterResourceTarget {
+            RequestSpecifier::CallCanister(CallExternalCanisterResourceTarget {
               validation_method: ValidationMethodResourceTarget::No,
               execution_method: ExecutionMethodResourceTarget::Any,
             }),

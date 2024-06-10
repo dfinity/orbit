@@ -177,7 +177,7 @@ pub enum ExternalCanisterResourceAction {
     Create(CreateExternalCanisterResourceTarget),
     Change(ChangeExternalCanisterResourceTarget),
     Read(ReadExternalCanisterResourceTarget),
-    Call(CallCanisterResourceTarget),
+    Call(CallExternalCanisterResourceTarget),
 }
 
 #[storable]
@@ -218,12 +218,12 @@ impl ModelValidator<ValidationError> for ExecutionMethodResourceTarget {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct CallCanisterResourceTarget {
+pub struct CallExternalCanisterResourceTarget {
     pub validation_method: ValidationMethodResourceTarget,
     pub execution_method: ExecutionMethodResourceTarget,
 }
 
-impl ModelValidator<ValidationError> for CallCanisterResourceTarget {
+impl ModelValidator<ValidationError> for CallExternalCanisterResourceTarget {
     fn validate(&self) -> ModelValidatorResult<ValidationError> {
         self.validation_method.validate()?;
         self.execution_method.validate()?;
@@ -403,22 +403,24 @@ impl Resource {
                 ExternalCanisterResourceAction::Call(target) => match &target.execution_method {
                     ExecutionMethodResourceTarget::Any => {
                         vec![Resource::ExternalCanister(
-                            ExternalCanisterResourceAction::Call(CallCanisterResourceTarget {
-                                validation_method: target.validation_method.clone(),
-                                execution_method: ExecutionMethodResourceTarget::Any,
-                            }),
+                            ExternalCanisterResourceAction::Call(
+                                CallExternalCanisterResourceTarget {
+                                    validation_method: target.validation_method.clone(),
+                                    execution_method: ExecutionMethodResourceTarget::Any,
+                                },
+                            ),
                         )]
                     }
                     ExecutionMethodResourceTarget::ExecutionMethod(canister_method) => {
                         vec![
                             Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                                CallCanisterResourceTarget {
+                                CallExternalCanisterResourceTarget {
                                     validation_method: target.validation_method.clone(),
                                     execution_method: ExecutionMethodResourceTarget::Any,
                                 },
                             )),
                             Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                                CallCanisterResourceTarget {
+                                CallExternalCanisterResourceTarget {
                                     validation_method: target.validation_method.clone(),
                                     execution_method:
                                         ExecutionMethodResourceTarget::ExecutionMethod(
@@ -711,7 +713,7 @@ impl Display for ExecutionMethodResourceTarget {
     }
 }
 
-impl Display for CallCanisterResourceTarget {
+impl Display for CallExternalCanisterResourceTarget {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
