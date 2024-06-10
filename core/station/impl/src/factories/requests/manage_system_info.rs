@@ -9,8 +9,10 @@ use orbit_essentials::types::UUID;
 
 pub struct ManageSystemInfoRequestCreate {}
 
+#[async_trait]
 impl Create<station_api::ManageSystemInfoOperationInput> for ManageSystemInfoRequestCreate {
-    fn create(
+    async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
@@ -71,8 +73,8 @@ mod tests {
     };
     use uuid::Uuid;
 
-    #[test]
-    fn test_create_request() {
+    #[tokio::test]
+    async fn test_create_request() {
         let request_id = *Uuid::new_v4().as_bytes();
         let requested_by_user = *Uuid::new_v4().as_bytes();
         let mut create_request = mock_request_api_operation();
@@ -81,13 +83,11 @@ mod tests {
         create_request.operation =
             station_api::RequestOperationInput::ManageSystemInfo(input.clone());
 
-        let request = ManageSystemInfoRequestCreate::create(
-            request_id,
-            requested_by_user,
-            create_request,
-            input,
-        )
-        .unwrap();
+        let creator = Box::new(ManageSystemInfoRequestCreate {});
+        let request = creator
+            .create(request_id, requested_by_user, create_request, input)
+            .await
+            .unwrap();
 
         assert_eq!(request.requested_by, requested_by_user);
         assert_eq!(
@@ -115,13 +115,11 @@ mod tests {
         create_request.operation =
             station_api::RequestOperationInput::ManageSystemInfo(input.clone());
 
-        let request = ManageSystemInfoRequestCreate::create(
-            request_id,
-            requested_by_user,
-            create_request,
-            input,
-        )
-        .unwrap();
+        let creator = Box::new(ManageSystemInfoRequestCreate {});
+        let request = creator
+            .create(request_id, requested_by_user, create_request, input)
+            .await
+            .unwrap();
 
         let operation = match &request.operation {
             RequestOperation::ManageSystemInfo(operation) => operation,
