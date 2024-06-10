@@ -58,7 +58,7 @@ impl Display for RequestOperation {
             RequestOperation::ChangeCanister(_) => write!(f, "change_canister"),
             RequestOperation::ChangeExternalCanister(_) => write!(f, "change_external_canister"),
             RequestOperation::CreateExternalCanister(_) => write!(f, "create_external_canister"),
-            RequestOperation::CallExternalCanister(_) => write!(f, "call_canister"),
+            RequestOperation::CallExternalCanister(_) => write!(f, "call_external_canister"),
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),

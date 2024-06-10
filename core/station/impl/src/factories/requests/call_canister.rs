@@ -28,7 +28,7 @@ impl Create<CallExternalCanisterOperationInput> for CallExternalCanisterRequestC
             Some(ref validation_method) => {
                 let rendering_bytes = self
                     .external_canister_service
-                    .call_canister(
+                    .call_external_canister(
                         validation_method.canister_id,
                         validation_method.method_name.clone(),
                         operation_input.arg.clone(),
@@ -51,7 +51,7 @@ impl Create<CallExternalCanisterOperationInput> for CallExternalCanisterRequestC
                         }
                     })?;
                 Some(rendering.map_err(|err| RequestError::ValidationError {
-                    info: format!("failed to validate call canister request: {}", err),
+                    info: format!("failed to validate call external canister request: {}", err),
                 })?)
             }
             None => None,
@@ -109,7 +109,7 @@ impl Execute for CallExternalCanisterRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         let execution_method_reply = self
             .external_canister_service
-            .call_canister(
+            .call_external_canister(
                 self.operation.input.execution_method.canister_id,
                 self.operation.input.execution_method.method_name.clone(),
                 self.operation.input.arg.clone(),
@@ -118,15 +118,15 @@ impl Execute for CallExternalCanisterRequestExecute<'_, '_> {
             .await
             .map_err(|err| RequestExecuteError::Failed {
                 reason: format!(
-                    "failed to call canister {}: {}",
+                    "failed to call external canister {}: {}",
                     self.operation.input.execution_method.canister_id, err
                 ),
             })?;
-        let mut call_canister_operation = self.operation.clone();
-        call_canister_operation.execution_method_reply = Some(execution_method_reply);
+        let mut call_external_canister_operation = self.operation.clone();
+        call_external_canister_operation.execution_method_reply = Some(execution_method_reply);
 
         Ok(RequestExecuteStage::Completed(
-            RequestOperation::CallExternalCanister(call_canister_operation),
+            RequestOperation::CallExternalCanister(call_external_canister_operation),
         ))
     }
 }

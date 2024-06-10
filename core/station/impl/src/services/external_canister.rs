@@ -52,7 +52,7 @@ impl ExternalCanisterService {
         Ok(canister_status_response)
     }
 
-    pub async fn call_canister(
+    pub async fn call_external_canister(
         &self,
         canister_id: Principal,
         method_name: String,

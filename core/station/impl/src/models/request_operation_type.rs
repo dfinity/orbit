@@ -48,7 +48,7 @@ impl FromStr for RequestOperationType {
             "change_canister" => Ok(RequestOperationType::ChangeCanister),
             "change_external_canister" => Ok(RequestOperationType::ChangeExternalCanister),
             "create_external_canister" => Ok(RequestOperationType::CreateExternalCanister),
-            "call_canister" => Ok(RequestOperationType::CallExternalCanister),
+            "call_external_canister" => Ok(RequestOperationType::CallExternalCanister),
             "edit_permission" => Ok(RequestOperationType::EditPermission),
             "add_request_policy" => Ok(RequestOperationType::AddRequestPolicy),
             "edit_request_policy" => Ok(RequestOperationType::EditRequestPolicy),
@@ -76,7 +76,7 @@ impl Display for RequestOperationType {
             RequestOperationType::ChangeCanister => write!(f, "change_canister"),
             RequestOperationType::ChangeExternalCanister => write!(f, "change_external_canister"),
             RequestOperationType::CreateExternalCanister => write!(f, "create_external_canister"),
-            RequestOperationType::CallExternalCanister => write!(f, "call_canister"),
+            RequestOperationType::CallExternalCanister => write!(f, "call_external_canister"),
             RequestOperationType::EditPermission => write!(f, "edit_permission"),
             RequestOperationType::AddRequestPolicy => write!(f, "add_request_policy"),
             RequestOperationType::EditRequestPolicy => write!(f, "edit_request_policy"),
@@ -181,7 +181,7 @@ mod tests {
             RequestOperationType::CreateExternalCanister
         );
         assert_eq!(
-            RequestOperationType::from_str("call_canister").unwrap(),
+            RequestOperationType::from_str("call_external_canister").unwrap(),
             RequestOperationType::CallExternalCanister
         );
         assert_eq!(
