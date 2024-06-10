@@ -1,4 +1,4 @@
-use crate::errors::ManagedCanisterError;
+use crate::errors::ExternalCanisterError;
 use candid::Principal;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, CanisterIdRecord, CanisterStatusResponse, CreateCanisterArgument,
@@ -8,22 +8,22 @@ use orbit_essentials::api::ServiceResult;
 use std::sync::Arc;
 
 lazy_static! {
-    pub static ref MANAGED_CANISTER_SERVICE: Arc<ManagedCanisterService> =
-        Arc::new(ManagedCanisterService::default());
+    pub static ref EXTERNAL_CANISTER_SERVICE: Arc<ExternalCanisterService> =
+        Arc::new(ExternalCanisterService::default());
 }
 
 const CREATE_CANISTER_CYCLES: u128 = 100_000_000_000; // the default fee of 100 B cycles
 
 #[derive(Default, Debug)]
-pub struct ManagedCanisterService {}
+pub struct ExternalCanisterService {}
 
-impl ManagedCanisterService {
-    pub async fn create_canister(&self) -> ServiceResult<Principal, ManagedCanisterError> {
+impl ExternalCanisterService {
+    pub async fn create_canister(&self) -> ServiceResult<Principal, ExternalCanisterError> {
         let create_canister_arg = CreateCanisterArgument { settings: None };
 
         let canister_id = mgmt::create_canister(create_canister_arg, CREATE_CANISTER_CYCLES)
             .await
-            .map_err(|(_, err)| ManagedCanisterError::Failed {
+            .map_err(|(_, err)| ExternalCanisterError::Failed {
                 reason: err.to_string(),
             })?
             .0
@@ -42,7 +42,7 @@ impl ManagedCanisterService {
 
         let canister_status_response = mgmt::canister_status(canister_status_arg)
             .await
-            .map_err(|(_, err)| ManagedCanisterError::Failed {
+            .map_err(|(_, err)| ExternalCanisterError::Failed {
                 reason: err.to_string(),
             })?
             .0;
