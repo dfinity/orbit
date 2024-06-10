@@ -17,6 +17,10 @@ pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 
 
 pub const COUNTER_WAT: &str = r#"
     (module
+        (import "ic0" "msg_cycles_available"
+            (func $ic0_msg_cycles_available (result i64)))
+        (import "ic0" "msg_cycles_accept"
+            (func $ic0_msg_cycles_accept (param $pages i64) (result i64)))
         (import "ic0" "msg_reply" (func $msg_reply))
         (import "ic0" "msg_reply_data_append"
             (func $msg_reply_data_append (param i32 i32)))
@@ -30,6 +34,10 @@ pub const COUNTER_WAT: &str = r#"
             (drop (call $ic0_stable_grow (i32.const 1))))
         (func $inc
             (call $doinc)
+            (drop (call $ic0_msg_cycles_accept (call $ic0_msg_cycles_available)))
+            (call $msg_reply_data_append
+                (i32.const 4) ;; the value at heap[4] encoding '(variant {Ok = ""})' in candid
+                (i32.const 15)) ;; length
             (call $msg_reply))
         (func $doinc
             (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
@@ -44,6 +52,7 @@ pub const COUNTER_WAT: &str = r#"
                 (i32.const 4)) ;; length
             (call $msg_reply))
         (memory $memory 1)
+        (data (i32.const 4) "\44\49\44\4c\01\6b\01\bc\8a\01\71\01\00\00\00")
         (export "canister_init" (func $init))
         (export "canister_post_upgrade" (func $doinc))
         (export "canister_query read" (func $read))
