@@ -889,14 +889,18 @@ impl RequestOperation {
             }
             RequestOperation::CallCanister(CallCanisterOperation { input, .. }) => {
                 vec![
-                    Resource::CallCanister(CallCanisterResourceTarget {
-                        validation_method: input.validation_method.clone().into(),
-                        execution_method: ExecutionMethodResourceTarget::Any,
-                    }),
-                    Resource::CallCanister(CallCanisterResourceTarget {
-                        validation_method: input.validation_method.clone().into(),
-                        execution_method: input.execution_method.clone().into(),
-                    }),
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                        CallCanisterResourceTarget {
+                            validation_method: input.validation_method.clone().into(),
+                            execution_method: ExecutionMethodResourceTarget::Any,
+                        },
+                    )),
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                        CallCanisterResourceTarget {
+                            validation_method: input.validation_method.clone().into(),
+                            execution_method: input.execution_method.clone().into(),
+                        },
+                    )),
                 ]
             }
             RequestOperation::EditRequestPolicy(EditRequestPolicyOperation { input }) => {

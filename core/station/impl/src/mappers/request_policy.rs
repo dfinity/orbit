@@ -428,7 +428,9 @@ impl RequestSpecifier {
                 )]
             }
             RequestSpecifier::CallCanister(target) => {
-                vec![Resource::CallCanister(target.clone())]
+                vec![Resource::ExternalCanister(
+                    ExternalCanisterResourceAction::Call(target.clone()),
+                )]
             }
             RequestSpecifier::EditPermission(resource_specifier) => match resource_specifier {
                 ResourceSpecifier::Any => {

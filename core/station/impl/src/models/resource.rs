@@ -24,7 +24,6 @@ pub enum Resource {
     AddressBook(ResourceAction),
     ChangeCanister(ChangeCanisterResourceAction),
     ExternalCanister(ExternalCanisterResourceAction),
-    CallCanister(CallCanisterResourceTarget),
     Request(RequestResourceAction),
     RequestPolicy(ResourceAction),
     System(SystemResourceAction),
@@ -62,8 +61,8 @@ impl ModelValidator<ValidationError> for Resource {
                 ExternalCanisterResourceAction::Create(_)
                 | ExternalCanisterResourceAction::Change(_)
                 | ExternalCanisterResourceAction::Read(_) => (),
+                ExternalCanisterResourceAction::Call(target) => target.validate()?,
             },
-            Resource::CallCanister(target) => target.validate()?,
             Resource::Request(action) => match action {
                 RequestResourceAction::List => (),
                 RequestResourceAction::Read(resource_id) => {
@@ -178,6 +177,7 @@ pub enum ExternalCanisterResourceAction {
     Create(CreateExternalCanisterResourceTarget),
     Change(ChangeExternalCanisterResourceTarget),
     Read(ReadExternalCanisterResourceTarget),
+    Call(CallCanisterResourceTarget),
 }
 
 #[storable]
@@ -400,6 +400,35 @@ impl Resource {
                         )),
                     ]
                 }
+                ExternalCanisterResourceAction::Call(target) => match &target.execution_method {
+                    ExecutionMethodResourceTarget::Any => {
+                        vec![Resource::ExternalCanister(
+                            ExternalCanisterResourceAction::Call(CallCanisterResourceTarget {
+                                validation_method: target.validation_method.clone(),
+                                execution_method: ExecutionMethodResourceTarget::Any,
+                            }),
+                        )]
+                    }
+                    ExecutionMethodResourceTarget::ExecutionMethod(canister_method) => {
+                        vec![
+                            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                                CallCanisterResourceTarget {
+                                    validation_method: target.validation_method.clone(),
+                                    execution_method: ExecutionMethodResourceTarget::Any,
+                                },
+                            )),
+                            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                                CallCanisterResourceTarget {
+                                    validation_method: target.validation_method.clone(),
+                                    execution_method:
+                                        ExecutionMethodResourceTarget::ExecutionMethod(
+                                            canister_method.clone(),
+                                        ),
+                                },
+                            )),
+                        ]
+                    }
+                },
                 ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Any) => {
                     vec![Resource::ExternalCanister(
                         ExternalCanisterResourceAction::Read(
@@ -417,28 +446,6 @@ impl Resource {
                         Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
                             ReadExternalCanisterResourceTarget::Canister(*id),
                         )),
-                    ]
-                }
-            },
-            Resource::CallCanister(target) => match &target.execution_method {
-                ExecutionMethodResourceTarget::Any => {
-                    vec![Resource::CallCanister(CallCanisterResourceTarget {
-                        validation_method: target.validation_method.clone(),
-                        execution_method: ExecutionMethodResourceTarget::Any,
-                    })]
-                }
-                ExecutionMethodResourceTarget::ExecutionMethod(canister_method) => {
-                    vec![
-                        Resource::CallCanister(CallCanisterResourceTarget {
-                            validation_method: target.validation_method.clone(),
-                            execution_method: ExecutionMethodResourceTarget::Any,
-                        }),
-                        Resource::CallCanister(CallCanisterResourceTarget {
-                            validation_method: target.validation_method.clone(),
-                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
-                                canister_method.clone(),
-                            ),
-                        }),
                     ]
                 }
             },
@@ -573,7 +580,6 @@ impl Display for Resource {
             Resource::ExternalCanister(action) => {
                 write!(f, "ExternalCanister({})", action)
             }
-            Resource::CallCanister(target) => write!(f, "CallCanister({})", target),
             Resource::Request(action) => write!(f, "Request({})", action),
             Resource::RequestPolicy(action) => write!(f, "RequestPolicy({})", action),
             Resource::System(action) => write!(f, "System({})", action),
@@ -662,6 +668,9 @@ impl Display for ExternalCanisterResourceAction {
             }
             ExternalCanisterResourceAction::Change(target) => {
                 write!(f, "Change({})", target)
+            }
+            ExternalCanisterResourceAction::Call(target) => {
+                write!(f, "Call({})", target)
             }
             ExternalCanisterResourceAction::Read(target) => {
                 write!(f, "Read({})", target)

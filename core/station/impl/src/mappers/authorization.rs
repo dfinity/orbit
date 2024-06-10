@@ -217,10 +217,12 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 let validation_method: Option<CanisterMethod> =
                     input.validation_method.clone().map(|m| m.into());
                 let execution_method: CanisterMethod = input.execution_method.clone().into();
-                Resource::CallCanister(CallCanisterResourceTarget {
-                    validation_method: validation_method.into(),
-                    execution_method: execution_method.into(),
-                })
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                    CallCanisterResourceTarget {
+                        validation_method: validation_method.into(),
+                        execution_method: execution_method.into(),
+                    },
+                ))
             }
             RequestOperationInput::EditPermission(_) => {
                 Resource::Permission(PermissionResourceAction::Update)

@@ -147,7 +147,7 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
         ),
-        // create, change, and read external canister
+        // create, change, call, and read external canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Create(CreateExternalCanisterResourceTarget::Any)),
@@ -158,15 +158,14 @@ lazy_static! {
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Any)),
-        ),
-        // call canister
-        (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::CallCanister(CallCanisterResourceTarget {
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(CallCanisterResourceTarget {
               validation_method: ValidationMethodResourceTarget::No,
               execution_method: ExecutionMethodResourceTarget::Any,
-            }),
+            })),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Any)),
         ),
     ];
 

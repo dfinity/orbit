@@ -8,7 +8,6 @@ pub enum ResourceDTO {
     AddressBook(ResourceActionDTO),
     ChangeCanister(ChangeCanisterResourceActionDTO),
     ExternalCanister(ExternalCanisterResourceActionDTO),
-    CallCanister(CallCanisterResourceTargetDTO),
     Request(RequestResourceActionDTO),
     RequestPolicy(ResourceActionDTO),
     System(SystemResourceActionDTO),
@@ -93,6 +92,7 @@ pub enum ReadExternalCanisterResourceTargetDTO {
 pub enum ExternalCanisterResourceActionDTO {
     Create(CreateExternalCanisterResourceTargetDTO),
     Change(ChangeExternalCanisterResourceTargetDTO),
+    Call(CallCanisterResourceTargetDTO),
     Read(ReadExternalCanisterResourceTargetDTO),
 }
 

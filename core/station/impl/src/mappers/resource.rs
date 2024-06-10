@@ -29,7 +29,6 @@ impl From<station_api::ResourceDTO> for Resource {
             station_api::ResourceDTO::ExternalCanister(action) => {
                 Resource::ExternalCanister(action.into())
             }
-            station_api::ResourceDTO::CallCanister(target) => Resource::CallCanister(target.into()),
             station_api::ResourceDTO::Request(action) => Resource::Request(action.into()),
             station_api::ResourceDTO::System(action) => Resource::System(action.into()),
         }
@@ -53,7 +52,6 @@ impl From<Resource> for station_api::ResourceDTO {
             Resource::ExternalCanister(action) => {
                 station_api::ResourceDTO::ExternalCanister(action.into())
             }
-            Resource::CallCanister(target) => station_api::ResourceDTO::CallCanister(target.into()),
             Resource::Request(action) => station_api::ResourceDTO::Request(action.into()),
             Resource::System(action) => station_api::ResourceDTO::System(action.into()),
         }
@@ -317,6 +315,9 @@ impl From<station_api::ExternalCanisterResourceActionDTO> for ExternalCanisterRe
             station_api::ExternalCanisterResourceActionDTO::Change(target) => {
                 ExternalCanisterResourceAction::Change(target.into())
             }
+            station_api::ExternalCanisterResourceActionDTO::Call(target) => {
+                ExternalCanisterResourceAction::Call(target.into())
+            }
             station_api::ExternalCanisterResourceActionDTO::Read(target) => {
                 ExternalCanisterResourceAction::Read(target.into())
             }
@@ -332,6 +333,9 @@ impl From<ExternalCanisterResourceAction> for station_api::ExternalCanisterResou
             }
             ExternalCanisterResourceAction::Change(target) => {
                 station_api::ExternalCanisterResourceActionDTO::Change(target.into())
+            }
+            ExternalCanisterResourceAction::Call(target) => {
+                station_api::ExternalCanisterResourceActionDTO::Call(target.into())
             }
             ExternalCanisterResourceAction::Read(target) => {
                 station_api::ExternalCanisterResourceActionDTO::Read(target.into())
