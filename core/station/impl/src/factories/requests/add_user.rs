@@ -9,8 +9,10 @@ use orbit_essentials::types::UUID;
 
 pub struct AddUserRequestCreate {}
 
+#[async_trait]
 impl Create<station_api::AddUserOperationInput> for AddUserRequestCreate {
-    fn create(
+    async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,

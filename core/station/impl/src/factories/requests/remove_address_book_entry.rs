@@ -13,10 +13,12 @@ use orbit_essentials::types::UUID;
 
 pub struct RemoveAddressBookEntryRequestCreate {}
 
+#[async_trait]
 impl Create<station_api::RemoveAddressBookEntryOperationInput>
     for RemoveAddressBookEntryRequestCreate
 {
-    fn create(
+    async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
