@@ -2,7 +2,7 @@
 use clap::{Parser, Subcommand};
 
 pub mod station;
-use station::StationArgs;
+use station::commands::StationArgs;
 
 /// Manages Orbit on the Internet Computer.
 #[derive(Parser, Debug)]
