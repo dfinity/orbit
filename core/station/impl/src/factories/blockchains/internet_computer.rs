@@ -78,7 +78,7 @@ impl InternetComputer {
         }
     }
 
-    fn ledger_canister_id() -> Principal {
+    pub fn ledger_canister_id() -> Principal {
         Principal::from_text(Self::ICP_LEDGER_CANISTER_ID).unwrap()
     }
 

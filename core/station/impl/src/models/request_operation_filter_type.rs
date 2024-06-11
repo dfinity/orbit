@@ -16,6 +16,7 @@ pub enum RequestOperationFilterType {
     ChangeCanister,
     ChangeExternalCanister(Option<Principal>),
     CreateExternalCanister,
+    CallExternalCanister(Option<Principal>),
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,
