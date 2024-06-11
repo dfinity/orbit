@@ -2,15 +2,15 @@ use super::indexes::registry_index::RegistryIndexRepository;
 use crate::{
     core::{with_memory_manager, Memory, REGISTRY_MEMORY_ID},
     models::{
-        indexes::registry_index::{RegistryIndexCriteria, RegistryIndexKind},
+        indexes::registry_index::{RegistryIndex, RegistryIndexCriteria, RegistryIndexKind},
         RegistryEntry, RegistryEntryId, RegistryValueKind,
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::RefreshIndexMode;
 use orbit_essentials::repository::{IndexRepository, Repository};
-use std::{cell::RefCell, sync::Arc};
+use orbit_essentials::repository::{RefreshIndexMode, SelectionFilter};
+use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<RegistryEntryId, RegistryEntry, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -181,6 +181,160 @@ impl RegistryRepository {
             .into_iter()
             .filter_map(|id| self.get(&id))
             .collect()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RegistryWhereClause {
+    pub fullname: Option<String>,
+    pub name: Option<String>,
+    pub namespace: Option<String>,
+    pub categories: Vec<String>,
+    pub tags: Vec<String>,
+    pub kind: Option<RegistryValueKind>,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct FullnameSelectionFilter<'a> {
+    repository: &'a RegistryIndexRepository,
+    fullname: String,
+}
+
+impl<'a> SelectionFilter<'a> for FullnameSelectionFilter<'a> {
+    type IdType = RegistryEntryId;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&RegistryIndex {
+            index: RegistryIndexKind::Fullname(self.fullname.clone()),
+            registry_entry_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository.find_by_criteria(RegistryIndexCriteria {
+            from: RegistryIndexKind::Fullname(self.fullname.clone()),
+            to: RegistryIndexKind::Fullname(self.fullname.clone()),
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct NameSelectionFilter<'a> {
+    repository: &'a RegistryIndexRepository,
+    name: String,
+}
+
+impl<'a> SelectionFilter<'a> for NameSelectionFilter<'a> {
+    type IdType = RegistryEntryId;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&RegistryIndex {
+            index: RegistryIndexKind::Name(self.name.clone()),
+            registry_entry_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository.find_by_criteria(RegistryIndexCriteria {
+            from: RegistryIndexKind::Name(self.name.clone()),
+            to: RegistryIndexKind::Name(self.name.clone()),
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct NamespaceSelectionFilter<'a> {
+    repository: &'a RegistryIndexRepository,
+    namespace: String,
+}
+
+impl<'a> SelectionFilter<'a> for NamespaceSelectionFilter<'a> {
+    type IdType = RegistryEntryId;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&RegistryIndex {
+            index: RegistryIndexKind::Namespace(self.namespace.clone()),
+            registry_entry_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository.find_by_criteria(RegistryIndexCriteria {
+            from: RegistryIndexKind::Namespace(self.namespace.clone()),
+            to: RegistryIndexKind::Namespace(self.namespace.clone()),
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct KindSelectionFilter<'a> {
+    repository: &'a RegistryIndexRepository,
+    kind: RegistryValueKind,
+}
+
+impl<'a> SelectionFilter<'a> for KindSelectionFilter<'a> {
+    type IdType = RegistryEntryId;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&RegistryIndex {
+            index: RegistryIndexKind::ValueKind(self.kind.clone()),
+            registry_entry_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository.find_by_criteria(RegistryIndexCriteria {
+            from: RegistryIndexKind::ValueKind(self.kind.clone()),
+            to: RegistryIndexKind::ValueKind(self.kind.clone()),
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct CategorySelectionFilter<'a> {
+    repository: &'a RegistryIndexRepository,
+    category: String,
+}
+
+impl<'a> SelectionFilter<'a> for CategorySelectionFilter<'a> {
+    type IdType = RegistryEntryId;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&RegistryIndex {
+            index: RegistryIndexKind::Category(self.category.clone()),
+            registry_entry_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository.find_by_criteria(RegistryIndexCriteria {
+            from: RegistryIndexKind::Category(self.category.clone()),
+            to: RegistryIndexKind::Category(self.category.clone()),
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct TagSelectionFilter<'a> {
+    repository: &'a RegistryIndexRepository,
+    tag: String,
+}
+
+impl<'a> SelectionFilter<'a> for TagSelectionFilter<'a> {
+    type IdType = RegistryEntryId;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&RegistryIndex {
+            index: RegistryIndexKind::Tag(self.tag.clone()),
+            registry_entry_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository.find_by_criteria(RegistryIndexCriteria {
+            from: RegistryIndexKind::Tag(self.tag.clone()),
+            to: RegistryIndexKind::Tag(self.tag.clone()),
+        })
     }
 }
 
