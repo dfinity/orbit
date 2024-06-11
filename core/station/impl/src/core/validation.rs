@@ -5,6 +5,7 @@ use std::cell::RefCell;
 
 use crate::{
     errors::{ExternalCanisterValidationError, RecordValidationError},
+    factories::blockchains::InternetComputer,
     models::{
         resource::{Resource, ResourceId, ResourceIds},
         AccountKey, AddressBookEntryKey, RequestKey, UserKey,
@@ -193,6 +194,7 @@ impl EnsureExternalCanister {
     ) -> Result<(), ExternalCanisterValidationError> {
         if principal == Principal::management_canister()
             || principal == ic_cdk::api::id()
+            || principal == InternetComputer::ledger_canister_id()
             || principal == SYSTEM_SERVICE.get_upgrader_canister_id()
         {
             return Err(ExternalCanisterValidationError::InvalidExternalCanister { principal });

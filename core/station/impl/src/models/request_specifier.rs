@@ -586,6 +586,8 @@ mod tests {
             Principal::from_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01]);
         let external_canister_id =
             Principal::from_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x01]);
+        let ledger_canister_id =
+            Principal::from_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x01]);
         let system_info = SystemInfo::new(upgrader_canister_id, Vec::new());
         write_system_info(system_info);
 
@@ -647,6 +649,15 @@ mod tests {
         .expect_err("Upgrader canister in CallExternalCanister should be invalid");
         RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
             validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
+                canister_id: ledger_canister_id,
+                method_name: "foo".to_string(),
+            }),
+            execution_method: ExecutionMethodResourceTarget::Any,
+        })
+        .validate()
+        .expect_err("Ledger canister in CallExternalCanister should be invalid");
+        RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
                 canister_id: external_canister_id,
                 method_name: "foo".to_string(),
             }),
@@ -681,6 +692,15 @@ mod tests {
         })
         .validate()
         .expect_err("Upgrader canister in CallExternalCanister should be invalid");
+        RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
+            validation_method: ValidationMethodResourceTarget::No,
+            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
+                canister_id: ledger_canister_id,
+                method_name: "foo".to_string(),
+            }),
+        })
+        .validate()
+        .expect_err("Ledger canister in CallExternalCanister should be invalid");
         RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
             validation_method: ValidationMethodResourceTarget::No,
             execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
