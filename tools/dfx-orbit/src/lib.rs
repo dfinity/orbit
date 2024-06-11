@@ -1,9 +1,5 @@
 //! Library for interacting with Orbit on the Internet Computer.
 pub mod args;
+pub mod commands;
+pub mod dfx_extension_api;
 pub mod local_config;
-
-pub use args::DfxOrbitArgs;
-
-pub fn main(args: DfxOrbitArgs) {
-    println!("Hello args: {args:?}");
-}

@@ -14,3 +14,7 @@ pub struct StationConfig {
     /// Wallet canister ID.
     pub canister_id: String,
 }
+
+pub fn list_stations() -> Vec<StationConfig> {
+    vec![]
+}
