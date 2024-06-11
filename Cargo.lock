@@ -526,6 +526,8 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "clap",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
