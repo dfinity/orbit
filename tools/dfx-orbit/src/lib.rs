@@ -1,5 +1,5 @@
 //! Library for interacting with Orbit on the Internet Computer.
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 pub mod station;
 use station::StationArgs;
@@ -10,7 +10,14 @@ use station::StationArgs;
 pub struct DfxOrbitArgs {
     /// Manage Orbit stations.
     #[command(subcommand)]
-    field: StationArgs,
+    field: DfxOrbitSubcommands,
+}
+
+#[derive(Debug, Subcommand)]
+#[command(version, about, long_about = None)]
+pub enum DfxOrbitSubcommands {
+    #[command(subcommand)]
+    Station(StationArgs),
 }
 
 pub fn main(args: DfxOrbitArgs) {
