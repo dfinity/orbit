@@ -14,4 +14,3 @@ pub struct StationConfig {
     /// Wallet canister ID.
     pub canister_id: String,
 }
-
