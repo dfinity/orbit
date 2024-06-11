@@ -605,7 +605,8 @@ type CallExternalCanisterOperationInput = record {
   //   - on validation success, returns a human-readable rendering of the argument blob
   //     and then the request becomes `Created`;
   //   - on validation error, returns a textual diagnostic message
-  //     and then the request becomes `Failed` with the textual diagnostic message as `reason`.
+  //     and then the request creation fails with a validation error
+  //     containing the textual diagnostic message.
   // Formally, the return type of the validation method must be
   // ```
   // variant {

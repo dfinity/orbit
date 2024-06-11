@@ -41,15 +41,22 @@ pub const COUNTER_WAT: &str = r#"
             (call $ic0_stable_write (i32.const 0) (i32.const 0) (i32.const 4))
             (drop (call $ic0_msg_cycles_accept (call $ic0_msg_cycles_available)))
             (call $msg_reply_data_append
-                (i32.const 4) ;; the value at heap[4] encoding '(variant {Ok = ""})' in candid
-                (i32.const 15)) ;; length
+                (i32.const 100) ;; the value at heap[100] encoding '(variant {Ok = "good"})' in candid
+                (i32.const 19)) ;; length
+            (call $msg_reply))
+        (func $bad
+            (call $doinc)
+            (drop (call $ic0_msg_cycles_accept (call $ic0_msg_cycles_available)))
+            (call $msg_reply_data_append
+                (i32.const 200) ;; the value at heap[200] encoding '(variant {Err = "bad"})' in candid
+                (i32.const 19)) ;; length
             (call $msg_reply))
         (func $inc
             (call $doinc)
             (drop (call $ic0_msg_cycles_accept (call $ic0_msg_cycles_available)))
             (call $msg_reply_data_append
-                (i32.const 4) ;; the value at heap[4] encoding '(variant {Ok = ""})' in candid
-                (i32.const 15)) ;; length
+                (i32.const 300) ;; the value at heap[300] encoding '(variant {Ok = "valid"})' in candid
+                (i32.const 20)) ;; length
             (call $msg_reply))
         (func $doinc
             (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
@@ -64,12 +71,15 @@ pub const COUNTER_WAT: &str = r#"
                 (i32.const 4)) ;; length
             (call $msg_reply))
         (memory $memory 1)
-        (data (i32.const 4) "\44\49\44\4c\01\6b\01\bc\8a\01\71\01\00\00\00")
+        (data (i32.const 100) "\44\49\44\4c\01\6b\01\bc\8a\01\71\01\00\00\04\67\6f\6f\64")
+        (data (i32.const 200) "\44\49\44\4c\01\6b\01\c5\fe\d2\01\71\01\00\00\03\62\61\64")
+        (data (i32.const 300) "\44\49\44\4c\01\6b\01\bc\8a\01\71\01\00\00\05\76\61\6c\69\64")
         (export "canister_init" (func $init))
         (export "canister_post_upgrade" (func $doinc))
         (export "canister_query read" (func $read))
-        (export "canister_update inc" (func $inc))
         (export "canister_update set" (func $set))
+        (export "canister_update bad" (func $bad))
+        (export "canister_update inc" (func $inc))
     )"#;
 
 pub fn controller_test_id() -> Principal {
