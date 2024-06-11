@@ -1,17 +1,17 @@
 [workspace]
 resolver = "2"
 members = [
-    "tests/integration",
     "core/control-panel/api",
     "core/control-panel/impl",
-    "core/upgrader/api",
-    "core/upgrader/impl",
     "core/station/api",
     "core/station/impl",
+    "core/upgrader/api",
+    "core/upgrader/impl",
     "libs/canfund",
     "libs/orbit-essentials",
     "libs/orbit-essentials-macros",
     "libs/orbit-essentials-macros-tests",
+    "tests/integration",
     "tools/dfx-orbit",
 ]
 
@@ -35,6 +35,7 @@ byteorder = "1.5"
 canbench-rs = "0.1.1"
 candid = "0.10.3"
 candid_parser = "0.1.3"
+clap = "4.5.7"
 convert_case = "0.6"
 futures = "0.3"
 getrandom = { version = "0.2", features = ["custom"] }
