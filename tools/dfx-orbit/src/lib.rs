@@ -1,16 +1,16 @@
 //! Library for interacting with Orbit on the Internet Computer.
 use clap::Parser;
 
-pub mod wallet;
-use wallet::OrbitWalletArgs;
+pub mod station;
+use station::StationArgs;
 
 /// Manages Orbit on the Internet Computer.
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct DfxOrbitArgs {
-    /// Manage Orbit wallets.
+    /// Manage Orbit stations.
     #[command(subcommand)]
-    field: OrbitWalletArgs,
+    field: StationArgs,
 }
 
 pub fn main(args: DfxOrbitArgs) {
