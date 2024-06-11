@@ -1,6 +1,6 @@
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ExternalCanisterError;
-use candid::Principal;
+use candid::{Encode, Principal};
 use ic_cdk::api::call::call_raw;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, CanisterIdRecord, CanisterStatusResponse, CreateCanisterArgument,
@@ -56,15 +56,20 @@ impl ExternalCanisterService {
         &self,
         canister_id: Principal,
         method_name: String,
-        arg: Vec<u8>,
+        arg: Option<Vec<u8>>,
         cycles: Option<u64>,
     ) -> ServiceResult<Vec<u8>, ExternalCanisterError> {
         EnsureExternalCanister::is_external_canister(canister_id)?;
 
-        call_raw(canister_id, &method_name, arg, cycles.unwrap_or_default())
-            .await
-            .map_err(|(_, err)| ExternalCanisterError::Failed {
-                reason: err.to_string(),
-            })
+        call_raw(
+            canister_id,
+            &method_name,
+            arg.unwrap_or(Encode!(&()).unwrap()),
+            cycles.unwrap_or_default(),
+        )
+        .await
+        .map_err(|(_, err)| ExternalCanisterError::Failed {
+            reason: err.to_string(),
+        })
     }
 }

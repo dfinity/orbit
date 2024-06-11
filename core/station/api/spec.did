@@ -620,7 +620,8 @@ type CallExternalCanisterOperationInput = record {
   // passing the validated argument blob.
   execution_method : CanisterMethod;
   // The argument blob passed to both the validation and execution method.
-  arg : blob;
+  // Defaults to the candid encoding of '()' if omitted.
+  arg : opt blob;
   // The amount of cycles attached to the call of the execution method.
   execution_method_cycles : opt nat64;
 };
@@ -631,7 +632,8 @@ type CallExternalCanisterOperation = record {
   // see `CallExternalCanisterOperationInput`
   execution_method : CanisterMethod;
   // The checksum of the argument blob passed to both the validation and execution method.
-  arg_checksum : Sha256Hash;
+  // Defaults to `null` if no argument blob is provided.
+  arg_checksum : opt Sha256Hash;
   // A human-readable rendering of the argument blob procuded by the validation method.
   arg_rendering : opt text;
   // The amount of cycles attached to the call of the execution method.

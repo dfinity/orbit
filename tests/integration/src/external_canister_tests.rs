@@ -670,13 +670,13 @@ fn call_external_canister_test() {
     };
     let execution_method = CanisterMethodDTO {
         canister_id: execution_canister_id,
-        method_name: "inc".to_string(),
+        method_name: "set".to_string(),
     };
     let call_canister_operation =
         RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
             validation_method: Some(validation_method.clone()),
             execution_method: execution_method.clone(),
-            arg: vec![],
+            arg: Some(42_u32.to_le_bytes().to_vec()),
             execution_method_cycles: Some(10_000_000_000_000),
         });
     let trap_message = submit_request_with_expected_trap(
@@ -787,7 +787,7 @@ fn call_external_canister_test() {
         RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
             validation_method: None,
             execution_method: execution_method.clone(),
-            arg: vec![],
+            arg: None,
             execution_method_cycles: None,
         });
     let trap_message = submit_request_with_expected_trap(
@@ -805,7 +805,7 @@ fn call_external_canister_test() {
         RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
             validation_method: Some(execution_method.clone()),
             execution_method: execution_method.clone(),
-            arg: vec![],
+            arg: None,
             execution_method_cycles: None,
         });
     let trap_message = submit_request_with_expected_trap(
@@ -823,7 +823,7 @@ fn call_external_canister_test() {
         RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
             validation_method: Some(validation_method.clone()),
             execution_method: validation_method.clone(),
-            arg: vec![],
+            arg: None,
             execution_method_cycles: None,
         });
     let trap_message = submit_request_with_expected_trap(
@@ -987,7 +987,8 @@ fn call_external_canister_test() {
     )
     .unwrap();
 
-    // the execution method should have been called and the cycles transferred and accepted
+    // the execution method should have been called setting the counter to 42 on the execution canister
+    // and the cycles transferred and accepted
     let ctr = update_raw(
         &env,
         validation_canister_id,
@@ -1007,7 +1008,7 @@ fn call_external_canister_test() {
         vec![],
     )
     .unwrap();
-    assert_eq!(ctr, 2_u32.to_le_bytes());
+    assert_eq!(ctr, 42_u32.to_le_bytes());
     let cycles = env.cycle_balance(execution_canister_id);
     assert!((105 * T..=110 * T).contains(&cycles));
 }

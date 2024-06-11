@@ -57,15 +57,16 @@ impl Create<CallExternalCanisterOperationInput> for CallExternalCanisterRequestC
             None => None,
         };
 
-        let mut hasher = Sha256::new();
-        hasher.update(operation_input.arg.clone());
-        let arg_checksum = hasher.finalize().to_vec();
         let request = Request::new(
             request_id,
             requested_by_user,
             Request::default_expiration_dt_ns(),
             RequestOperation::CallExternalCanister(CallExternalCanisterOperation {
-                arg_checksum,
+                arg_checksum: operation_input.arg.as_ref().map(|arg| {
+                    let mut hasher = Sha256::new();
+                    hasher.update(arg);
+                    hasher.finalize().to_vec()
+                }),
                 arg_rendering,
                 execution_method_reply: None,
                 input: operation_input.into(),

@@ -515,7 +515,7 @@ impl From<CallExternalCanisterOperation> for CallExternalCanisterOperationDTO {
         CallExternalCanisterOperationDTO {
             validation_method: operation.input.validation_method.map(|m| m.into()),
             execution_method: operation.input.execution_method.into(),
-            arg_checksum: hex::encode(&operation.arg_checksum),
+            arg_checksum: operation.arg_checksum.map(hex::encode),
             arg_rendering: operation.arg_rendering,
             execution_method_cycles: operation.input.execution_method_cycles,
             execution_method_reply: operation.execution_method_reply,

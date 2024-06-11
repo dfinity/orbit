@@ -329,7 +329,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const RemoveUserGroupOperationInput = IDL.Record({ 'user_group_id' : UUID });
   const CallExternalCanisterOperationInput = IDL.Record({
-    'arg' : IDL.Vec(IDL.Nat8),
+    'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'execution_method' : CanisterMethod,
     'validation_method' : IDL.Opt(CanisterMethod),
     'execution_method_cycles' : IDL.Opt(IDL.Nat64),
@@ -493,7 +493,7 @@ export const idlFactory = ({ IDL }) => {
   const CallExternalCanisterOperation = IDL.Record({
     'execution_method' : CanisterMethod,
     'validation_method' : IDL.Opt(CanisterMethod),
-    'arg_checksum' : Sha256Hash,
+    'arg_checksum' : IDL.Opt(Sha256Hash),
     'execution_method_cycles' : IDL.Opt(IDL.Nat64),
     'arg_rendering' : IDL.Opt(IDL.Text),
     'execution_method_reply' : IDL.Opt(IDL.Vec(IDL.Nat8)),

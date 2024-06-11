@@ -17,10 +17,14 @@ pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 
 
 pub const COUNTER_WAT: &str = r#"
     (module
+        (import "ic0" "debug_print"
+            (func $debug_print (param i32 i32)))
         (import "ic0" "msg_cycles_available"
             (func $ic0_msg_cycles_available (result i64)))
         (import "ic0" "msg_cycles_accept"
             (func $ic0_msg_cycles_accept (param $pages i64) (result i64)))
+        (import "ic0" "msg_arg_data_copy"
+            (func $msg_arg_data_copy (param i32 i32 i32)))
         (import "ic0" "msg_reply" (func $msg_reply))
         (import "ic0" "msg_reply_data_append"
             (func $msg_reply_data_append (param i32 i32)))
@@ -32,6 +36,14 @@ pub const COUNTER_WAT: &str = r#"
             (func $ic0_stable_write (param $offset i32) (param $src i32) (param $size i32)))
         (func $init
             (drop (call $ic0_stable_grow (i32.const 1))))
+        (func $set
+            (call $msg_arg_data_copy (i32.const 0) (i32.const 0) (i32.const 4))
+            (call $ic0_stable_write (i32.const 0) (i32.const 0) (i32.const 4))
+            (drop (call $ic0_msg_cycles_accept (call $ic0_msg_cycles_available)))
+            (call $msg_reply_data_append
+                (i32.const 4) ;; the value at heap[4] encoding '(variant {Ok = ""})' in candid
+                (i32.const 15)) ;; length
+            (call $msg_reply))
         (func $inc
             (call $doinc)
             (drop (call $ic0_msg_cycles_accept (call $ic0_msg_cycles_available)))
@@ -57,6 +69,7 @@ pub const COUNTER_WAT: &str = r#"
         (export "canister_post_upgrade" (func $doinc))
         (export "canister_query read" (func $read))
         (export "canister_update inc" (func $inc))
+        (export "canister_update set" (func $set))
     )"#;
 
 pub fn controller_test_id() -> Principal {

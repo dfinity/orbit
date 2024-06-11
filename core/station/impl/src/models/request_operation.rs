@@ -339,7 +339,7 @@ impl ModelValidator<ValidationError> for CanisterMethod {
 pub struct CallExternalCanisterOperationInput {
     pub validation_method: Option<CanisterMethod>,
     pub execution_method: CanisterMethod,
-    pub arg: Vec<u8>,
+    pub arg: Option<Vec<u8>>,
     pub execution_method_cycles: Option<u64>,
 }
 
@@ -347,7 +347,7 @@ pub struct CallExternalCanisterOperationInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct CallExternalCanisterOperation {
     pub input: CallExternalCanisterOperationInput,
-    pub arg_checksum: Vec<u8>,
+    pub arg_checksum: Option<Vec<u8>>,
     pub arg_rendering: Option<String>,
     pub execution_method_reply: Option<Vec<u8>>,
 }

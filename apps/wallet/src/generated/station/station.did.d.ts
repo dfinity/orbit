@@ -128,13 +128,13 @@ export interface BasicUser {
 export interface CallExternalCanisterOperation {
   'execution_method' : CanisterMethod,
   'validation_method' : [] | [CanisterMethod],
-  'arg_checksum' : Sha256Hash,
+  'arg_checksum' : [] | [Sha256Hash],
   'execution_method_cycles' : [] | [bigint],
   'arg_rendering' : [] | [string],
   'execution_method_reply' : [] | [Uint8Array | number[]],
 }
 export interface CallExternalCanisterOperationInput {
-  'arg' : Uint8Array | number[],
+  'arg' : [] | [Uint8Array | number[]],
   'execution_method' : CanisterMethod,
   'validation_method' : [] | [CanisterMethod],
   'execution_method_cycles' : [] | [bigint],
