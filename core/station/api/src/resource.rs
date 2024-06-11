@@ -1,4 +1,4 @@
-use crate::UuidDTO;
+use crate::{CanisterMethodDTO, UuidDTO};
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -92,7 +92,26 @@ pub enum ReadExternalCanisterResourceTargetDTO {
 pub enum ExternalCanisterResourceActionDTO {
     Create(CreateExternalCanisterResourceTargetDTO),
     Change(ChangeExternalCanisterResourceTargetDTO),
+    Call(CallExternalCanisterResourceTargetDTO),
     Read(ReadExternalCanisterResourceTargetDTO),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ValidationMethodResourceTargetDTO {
+    No,
+    ValidationMethod(CanisterMethodDTO),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum ExecutionMethodResourceTargetDTO {
+    Any,
+    ExecutionMethod(CanisterMethodDTO),
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct CallExternalCanisterResourceTargetDTO {
+    pub validation_method: ValidationMethodResourceTargetDTO,
+    pub execution_method: ExecutionMethodResourceTargetDTO,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

@@ -17,6 +17,7 @@ mod add_address_book_entry;
 mod add_request_policy;
 mod add_user;
 mod add_user_group;
+mod call_canister;
 mod change_canister;
 mod create_canister;
 mod edit_account;
@@ -37,6 +38,7 @@ use self::{
     add_request_policy::{AddRequestPolicyRequestCreate, AddRequestPolicyRequestExecute},
     add_user::{AddUserRequestCreate, AddUserRequestExecute},
     add_user_group::{AddUserGroupRequestCreate, AddUserGroupRequestExecute},
+    call_canister::{CallExternalCanisterRequestCreate, CallExternalCanisterRequestExecute},
     change_canister::{
         ChangeCanisterRequestCreate, ChangeCanisterRequestExecute,
         ChangeExternalCanisterRequestCreate, ChangeExternalCanisterRequestExecute,
@@ -178,6 +180,14 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
+            RequestOperationInput::CallExternalCanister(operation) => {
+                let creator = Box::new(CallExternalCanisterRequestCreate {
+                    external_canister_service: Arc::clone(&EXTERNAL_CANISTER_SERVICE),
+                });
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
             RequestOperationInput::EditPermission(operation) => {
                 let creator = Box::new(EditPermissionRequestCreate {});
                 creator
@@ -263,6 +273,13 @@ impl RequestFactory {
             }
             RequestOperation::CreateExternalCanister(operation) => {
                 Box::new(CreateExternalCanisterRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&EXTERNAL_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::CallExternalCanister(operation) => {
+                Box::new(CallExternalCanisterRequestExecute::new(
                     request,
                     operation,
                     Arc::clone(&EXTERNAL_CANISTER_SERVICE),

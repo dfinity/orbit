@@ -36,4 +36,5 @@ export const requestSpecifiersIncludedRules = (): Record<
   [RequestSpecifierEnum.ManageSystemInfo]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.ChangeExternalCanister]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.CreateExternalCanister]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.CallExternalCanister]: [...defaultRequestPolicyRules],
 });

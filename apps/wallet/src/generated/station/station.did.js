@@ -92,6 +92,22 @@ export const idlFactory = ({ IDL }) => {
     'Create' : IDL.Null,
     'Update' : ResourceId,
   });
+  const CanisterMethod = IDL.Record({
+    'canister_id' : IDL.Principal,
+    'method_name' : IDL.Text,
+  });
+  const ExecutionMethodResourceTarget = IDL.Variant({
+    'Any' : IDL.Null,
+    'ExecutionMethod' : CanisterMethod,
+  });
+  const ValidationMethodResourceTarget = IDL.Variant({
+    'No' : IDL.Null,
+    'ValidationMethod' : CanisterMethod,
+  });
+  const CallExternalCanisterResourceTarget = IDL.Record({
+    'execution_method' : ExecutionMethodResourceTarget,
+    'validation_method' : ValidationMethodResourceTarget,
+  });
   const ReadExternalCanisterResourceTarget = IDL.Variant({
     'Any' : IDL.Null,
     'Canister' : IDL.Principal,
@@ -104,6 +120,7 @@ export const idlFactory = ({ IDL }) => {
     'Canister' : IDL.Principal,
   });
   const ExternalCanisterResourceAction = IDL.Variant({
+    'Call' : CallExternalCanisterResourceTarget,
     'Read' : ReadExternalCanisterResourceTarget,
     'Create' : CreateExternalCanisterResourceTarget,
     'Change' : ChangeExternalCanisterResourceTarget,
@@ -228,6 +245,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAddressBookEntry' : IDL.Null,
     'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : ResourceIds,
+    'CallExternalCanister' : CallExternalCanisterResourceTarget,
     'AddAccount' : IDL.Null,
   });
   const EditRequestPolicyOperationInput = IDL.Record({
@@ -310,6 +328,12 @@ export const idlFactory = ({ IDL }) => {
     'specifier' : RequestSpecifier,
   });
   const RemoveUserGroupOperationInput = IDL.Record({ 'user_group_id' : UUID });
+  const CallExternalCanisterOperationInput = IDL.Record({
+    'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'execution_method' : CanisterMethod,
+    'validation_method' : IDL.Opt(CanisterMethod),
+    'execution_method_cycles' : IDL.Opt(IDL.Nat64),
+  });
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AddAccountOperationInput = IDL.Record({
     'configs_request_policy' : IDL.Opt(RequestPolicyRule),
@@ -341,6 +365,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAddressBookEntry' : AddAddressBookEntryOperationInput,
     'AddRequestPolicy' : AddRequestPolicyOperationInput,
     'RemoveUserGroup' : RemoveUserGroupOperationInput,
+    'CallExternalCanister' : CallExternalCanisterOperationInput,
     'AddAccount' : AddAccountOperationInput,
   });
   const CreateRequestInput = IDL.Record({
@@ -465,6 +490,14 @@ export const idlFactory = ({ IDL }) => {
   const RemoveUserGroupOperation = IDL.Record({
     'input' : RemoveUserGroupOperationInput,
   });
+  const CallExternalCanisterOperation = IDL.Record({
+    'execution_method' : CanisterMethod,
+    'validation_method' : IDL.Opt(CanisterMethod),
+    'arg_checksum' : IDL.Opt(Sha256Hash),
+    'execution_method_cycles' : IDL.Opt(IDL.Nat64),
+    'arg_rendering' : IDL.Opt(IDL.Text),
+    'execution_method_reply' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
   const AddAccountOperation = IDL.Record({
     'account' : IDL.Opt(Account),
     'input' : AddAccountOperationInput,
@@ -488,6 +521,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAddressBookEntry' : AddAddressBookEntryOperation,
     'AddRequestPolicy' : AddRequestPolicyOperation,
     'RemoveUserGroup' : RemoveUserGroupOperation,
+    'CallExternalCanister' : CallExternalCanisterOperation,
     'AddAccount' : AddAccountOperation,
   });
   const RequestApprovalStatus = IDL.Variant({
@@ -628,6 +662,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAddressBookEntry' : IDL.Null,
     'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
+    'CallExternalCanister' : IDL.Opt(IDL.Principal),
     'AddAccount' : IDL.Null,
   });
   const GetNextApprovableRequestInput = IDL.Record({
@@ -834,6 +869,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAddressBookEntry' : IDL.Null,
     'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
+    'CallExternalCanister' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
   const NotificationType = IDL.Variant({

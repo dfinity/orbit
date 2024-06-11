@@ -3,11 +3,12 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, ChangeExternalCanisterResourceTarget,
-        CreateExternalCanisterResourceTarget, ExternalCanisterResourceAction,
-        PermissionResourceAction, ReadExternalCanisterResourceTarget, RequestResourceAction,
-        Resource, ResourceAction, ResourceId, ResourceIds, SystemResourceAction,
-        UserResourceAction,
+        AccountResourceAction, CallExternalCanisterResourceTarget, ChangeCanisterResourceAction,
+        ChangeExternalCanisterResourceTarget, CreateExternalCanisterResourceTarget,
+        ExecutionMethodResourceTarget, ExternalCanisterResourceAction, PermissionResourceAction,
+        ReadExternalCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction,
+        ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
+        ValidationMethodResourceTarget,
     },
     ADMIN_GROUP_ID,
 };
@@ -146,7 +147,7 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
         ),
-        // create, change, and read external canister
+        // create, change, call, and read external canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Create(CreateExternalCanisterResourceTarget::Any)),
@@ -154,6 +155,13 @@ lazy_static! {
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Change(ChangeExternalCanisterResourceTarget::Any)),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(CallExternalCanisterResourceTarget {
+              validation_method: ValidationMethodResourceTarget::No,
+              execution_method: ExecutionMethodResourceTarget::Any,
+            })),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
@@ -246,13 +254,20 @@ lazy_static! {
             RequestSpecifier::ChangeCanister,
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
-        // create and change external canister
+        // create, change, and call external canister
         (
             RequestSpecifier::CreateExternalCanister(CreateExternalCanisterResourceTarget::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         (
             RequestSpecifier::ChangeExternalCanister(ChangeExternalCanisterResourceTarget::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+        ),
+        (
+            RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
+              validation_method: ValidationMethodResourceTarget::No,
+              execution_method: ExecutionMethodResourceTarget::Any,
+            }),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
         ),
         // system info

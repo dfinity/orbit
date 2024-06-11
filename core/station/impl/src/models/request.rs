@@ -17,6 +17,7 @@ use crate::core::validation::{
     EnsureUserGroup,
 };
 use crate::errors::{EvaluateError, RequestError, ValidationError};
+use crate::models::resource::{ExecutionMethodResourceTarget, ValidationMethodResourceTarget};
 use crate::repositories::USER_REPOSITORY;
 use candid::{CandidType, Deserialize};
 use orbit_essentials::repository::Repository;
@@ -207,6 +208,14 @@ fn validate_request_operation_foreign_keys(
         RequestOperation::ChangeCanister(_) => (),
         RequestOperation::ChangeExternalCanister(_) => (),
         RequestOperation::CreateExternalCanister(_) => (),
+        RequestOperation::CallExternalCanister(op) => {
+            let validation_method_target: ValidationMethodResourceTarget =
+                op.input.validation_method.clone().into();
+            validation_method_target.validate()?;
+            let execution_method_target: ExecutionMethodResourceTarget =
+                op.input.execution_method.clone().into();
+            execution_method_target.validate()?;
+        }
         RequestOperation::AddRequestPolicy(op) => {
             op.input.specifier.validate()?;
             op.input.rule.validate()?;
