@@ -6,12 +6,19 @@ use crate::local_config;
 pub fn main(args: StationArgs) {
     match args {
         StationArgs::Add(add_args) => {
-            todo!("Implement the `add` command for managing stations with args: {add_args:?}.");
+            local_config::add_station(&add_args)
+                .expect("Failed to add station to local dfx config");
         }
         StationArgs::List(_list_args) => {
             let stations = local_config::list_stations();
             let json = serde_json::to_string_pretty(&stations)
                 .expect("Failed to serialize list of stations");
+            println!("{json}");
+        }
+        StationArgs::Show(show_args) => {
+            let station = local_config::station(&show_args.name)
+                .expect("Failed to get station from local dfx config");
+            let json = serde_json::to_string_pretty(&station).expect("Failed to serialize station");
             println!("{json}");
         }
         StationArgs::Remove(remove_args) => {

@@ -1,7 +1,7 @@
 //! Local dfx configuration of Orbit stations.
 use serde::{Deserialize, Serialize};
 
-use crate::dfx_extension_api::DfxExtensionAgent;
+use crate::{args::station::Add, dfx_extension_api::DfxExtensionAgent};
 
 /// Configuration that lives in e.g. ~/.config/dfx/orbit.json
 #[derive(Debug, Serialize, Deserialize)]
@@ -34,11 +34,15 @@ pub fn stations_dir() -> anyhow::Result<cap_std::fs::Dir> {
     Ok(stations_dir)
 }
 /// The file in which the config for a particular station is stored.
+///
+/// If the file does not exist, it will be created.
 pub fn station_file(name: &str) -> anyhow::Result<cap_std::fs::File> {
     let basename = format!("{}.json", name);
     let stations_dir = stations_dir()?;
+    let mut open_options = cap_std::fs::OpenOptions::new();
+    let open_options = open_options.read(true).write(true).create(true);
     let station_file = stations_dir
-        .open(basename)
+        .open_with(basename, open_options)
         .expect("Failed to open station file");
     Ok(station_file)
 }
@@ -70,6 +74,21 @@ pub fn list_stations() -> Vec<String> {
         // Filter out entries that are not valid station configs.
         .filter(|station_name| station(station_name).is_ok())
         .collect()
+}
+
+/// Adds a new Orbit station to the local dfx configuration.
+pub fn add_station(args: &Add) -> anyhow::Result<()> {
+    let Add { name, canister_id } = args;
+    let station = StationConfig {
+        name: name.to_string(),
+        canister_id: canister_id.to_string(),
+    };
+    let station_file = station_file(name)?;
+    if station_file.metadata()?.len() > 0 {
+        anyhow::bail!("Station already exists");
+    }
+    serde_json::to_writer_pretty(station_file, &station).expect("Failed to write station file");
+    Ok(())
 }
 
 /// Gets the local stored dfx configuration for a given station.
