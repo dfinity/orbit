@@ -189,6 +189,9 @@ pub fn set_default_station(name_maybe: Option<String>) -> anyhow::Result<()> {
     extension_config.default_station = name_maybe;
     let dfx_extension_agent = DfxExtensionAgent::new("orbit");
     let common_config_file = dfx_extension_agent.extension_config_file()?;
+    // TODO: Update atomically rather than rewriting.
+    // TODO: Have a dedicated function for doing the update rather than updating the file directly.
+    // Something like with_config_update(|config| { config.default_station = name_maybe; }) that provides the current config and writes the modified config back.
     common_config_file.set_len(0)?;
     serde_json::to_writer_pretty(common_config_file, &extension_config)
         .with_context(|| "Failed to write extension config file as JSON.")?;
