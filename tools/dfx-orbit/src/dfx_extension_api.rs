@@ -1,5 +1,5 @@
 //! Placeholders for the proposed dfx extension API methods.
-use std::{io::Write, process::{Command, Stdio}};
+use std::process::{Command, Stdio};
 
 use anyhow::Context;
 
@@ -69,16 +69,16 @@ impl DfxExtensionAgent {
     pub fn extension_config_file(&self) -> anyhow::Result<cap_std::fs::File> {
         let extension_config_dir = &self.extensions_dir;
         let filename = self.config_file_name();
-            let mut open_options = cap_std::fs::OpenOptions::new();
-            let open_options = open_options.read(true).write(true).create(true);
-            extension_config_dir
-                .open_with(&filename, &open_options)
-                .with_context(|| {
-                    format!(
-                        "Could not create extension config file for extension: {}",
-                        &self.name
-                    )
-                })
+        let mut open_options = cap_std::fs::OpenOptions::new();
+        let open_options = open_options.read(true).write(true).create(true);
+        extension_config_dir
+            .open_with(&filename, &open_options)
+            .with_context(|| {
+                format!(
+                    "Could not create extension config file for extension: {}",
+                    &self.name
+                )
+            })
     }
 
     /// Gets the extension config directory for this extension.
