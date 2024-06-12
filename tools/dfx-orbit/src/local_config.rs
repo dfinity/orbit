@@ -113,6 +113,8 @@ pub fn remove_station(name: &str) -> anyhow::Result<()> {
 }
 
 /// Renames an Orbit station in the local dfx configuration.
+///
+/// If teh station being renamed is the default station, the common config is updated to reflect the new name.
 pub fn rename_station(name: &str, new_name: &str) -> anyhow::Result<()> {
     let dir = stations_dir()?;
     let old_path = station_file_name(name);
@@ -122,7 +124,13 @@ pub fn rename_station(name: &str, new_name: &str) -> anyhow::Result<()> {
             "Failed to rename dfx config file for station {} to {}",
             name, new_name
         )
-    })
+    })?;
+
+    let common_config = common_config()?;
+    if common_config.default_station == Some(name.to_string()) {
+        set_default_station(new_name)?;
+    }
+    Ok(())
 }
 
 /// Gets the common configuration for this dfx extension.
