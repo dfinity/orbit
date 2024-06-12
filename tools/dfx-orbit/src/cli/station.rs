@@ -22,9 +22,8 @@ pub fn main(args: StationArgs) {
             println!("{json}");
         }
         StationArgs::Remove(remove_args) => {
-            todo!(
-                "Implement the `remove` command for managing stations with args: {remove_args:?}."
-            );
+            local_config::remove_station(&remove_args.name)
+                .expect("Failed to remove station from local dfx config");
         }
         StationArgs::Rename(rename_args) => {
             todo!(

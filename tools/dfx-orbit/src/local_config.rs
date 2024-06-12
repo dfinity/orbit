@@ -1,4 +1,5 @@
 //! Local dfx configuration of Orbit stations.
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
 use crate::{args::station::Add, dfx_extension_api::DfxExtensionAgent};
@@ -33,11 +34,16 @@ pub fn stations_dir() -> anyhow::Result<cap_std::fs::Dir> {
         .expect("Failed to open stations dir");
     Ok(stations_dir)
 }
+/// The name of the file in which the config for a given station is stored.
+pub fn station_file_name(name: &str) -> String {
+    format!("{}.json", name)
+}
+
 /// The file in which the config for a particular station is stored.
 ///
 /// If the file does not exist, it will be created.
 pub fn station_file(name: &str) -> anyhow::Result<cap_std::fs::File> {
-    let basename = format!("{}.json", name);
+    let basename = station_file_name(name);
     let stations_dir = stations_dir()?;
     let mut open_options = cap_std::fs::OpenOptions::new();
     let open_options = open_options.read(true).write(true).create(true);
@@ -97,4 +103,12 @@ pub fn station(name: &str) -> anyhow::Result<StationConfig> {
     let station: StationConfig =
         serde_json::from_reader(station_file).expect("Failed to parse station file");
     Ok(station)
+}
+
+/// Removes an Orbit station from the local dfx configuration.
+pub fn remove_station(name: &str) -> anyhow::Result<()> {
+    let dir = stations_dir()?;
+    let path = station_file_name(name);
+    dir.remove_file(path)
+        .with_context(|| format!("Failed to remove dfx config file for station {}", name))
 }
