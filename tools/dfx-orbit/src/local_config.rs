@@ -27,6 +27,7 @@ pub fn stations_dir() -> anyhow::Result<cap_std::fs::Dir> {
     let config_dir = dfx_extension_agent
         .extension_config_dir()
         .expect("Failed to get extension config dir");
+    config_dir.create_dir_all(STATIONS_DIR)?;
     let stations_dir = config_dir
         .open_dir(STATIONS_DIR)
         .expect("Failed to open stations dir");
