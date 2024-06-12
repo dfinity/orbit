@@ -1,4 +1,6 @@
 //! dfx-orbit station management commands.
+use std::fmt::{self, Display, Formatter};
+
 use candid::Principal;
 use clap::{Parser, Subcommand};
 
@@ -36,6 +38,21 @@ pub struct Add {
 /// Lists Orbit station in the local dfx configuration.
 #[derive(Debug, Parser)]
 pub struct List {}
+
+/// Response to a List command.
+#[derive(Debug, serde::Serialize)]
+pub struct ListResponse {
+    /// List of station names.
+    pub stations: Vec<String>,
+}
+impl Display for ListResponse {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        for station in &self.stations {
+            writeln!(f, "{station}")?;
+        }
+        Ok(())
+    }
+}
 
 /// Shows the local configuration for an Orbit station.
 #[derive(Debug, Parser)]
