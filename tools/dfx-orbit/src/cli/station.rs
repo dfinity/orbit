@@ -1,5 +1,5 @@
 //! Implements the dfx extension CLI commands for managing stations.
-use crate::args::station::{StationArgs};
+use crate::args::station::StationArgs;
 
 /// Implements CLI commands for managing Orbit stations.
 pub fn main(args: StationArgs) {
