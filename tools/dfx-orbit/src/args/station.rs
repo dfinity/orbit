@@ -10,6 +10,8 @@ pub enum StationArgs {
     Add(Add),
     /// Lists Orbit stations in the local dfx configuration.
     List(List),
+    /// The default station.
+    Default,
     /// Shows the local configuration for an Orbit station.
     Show(Show),
     /// Renames an Orbit station in the local dfx configuration.

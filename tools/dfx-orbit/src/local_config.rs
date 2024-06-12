@@ -38,7 +38,6 @@ pub fn stations_dir() -> anyhow::Result<cap_std::fs::Dir> {
 pub fn station_file_name(name: &str) -> String {
     format!("{}.json", name)
 }
-
 /// The file in which the config for a particular station is stored.
 ///
 /// If the file does not exist, it will be created.
@@ -124,4 +123,19 @@ pub fn rename_station(name: &str, new_name: &str) -> anyhow::Result<()> {
             name, new_name
         )
     })
+}
+
+/// Gets the common configuration for this dfx extension.
+pub fn common_config() -> anyhow::Result<CommonConfig> {
+    // TODO: Make orbit a const
+    let dfx_extension_agent = DfxExtensionAgent::new("orbit");
+    let common_config_file = dfx_extension_agent.extension_config_file()?;
+    let common_config: CommonConfig = serde_json::from_reader(common_config_file).with_context(||"Failed to parse extension config file as JSON.")?;
+    Ok(common_config)
+}
+
+/// Gets the default Orbit station from the local dfx configuration.
+pub fn default_station_name() -> anyhow::Result<String> {
+    let common_config = common_config()?;
+    Ok(common_config.default_station)
 }
