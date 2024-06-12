@@ -7,6 +7,7 @@ use clap::Subcommand;
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
 pub enum Args {
+    /// CLI subcommands for getting the local dfx configuration for this extension.
     #[command(subcommand)]
     Config(config::Args),
 }

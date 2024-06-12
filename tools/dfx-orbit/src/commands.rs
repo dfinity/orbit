@@ -3,6 +3,7 @@
 use crate::args::{dfx_extension_api, DfxOrbitArgs, DfxOrbitSubcommands};
 use std::io::Read;
 
+/// A command line tool for interacting with Orbit on the Internet Computer.
 pub fn main(args: DfxOrbitArgs) {
     println!("Hello args: {args:?}");
 
@@ -14,7 +15,7 @@ pub fn main(args: DfxOrbitArgs) {
             println!("Hello dfx extension args: {dfx_extension_args:?}");
             match dfx_extension_args {
                 dfx_extension_api::Args::Config(config_args) => match config_args {
-                    dfx_extension_api::config::Args::Dir(_dir_args) => {
+                    dfx_extension_api::config::Args::Dir => {
                         let extension_agent =
                             crate::dfx_extension_api::DfxExtensionAgent::new("orbit");
                         let ans = extension_agent.extension_config_dir();

@@ -6,9 +6,13 @@ use clap::{Parser, Subcommand};
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
 pub enum StationArgs {
+    /// Adds an Orbit station to the local dfx configuration.
     Add(Add),
+    /// Lists Orbit stations in the local dfx configuration.
     List(List),
+    /// Renames an Orbit station in the local dfx configuration.
     Rename(Rename),
+    /// Removes an Orbit station from the local dfx configuration.
     Remove(Remove),
 }
 

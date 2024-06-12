@@ -15,6 +15,7 @@ pub struct StationConfig {
     pub canister_id: String,
 }
 
+/// Lists all Orbit stations in the local dfx configuration.
 pub fn list_stations() -> Vec<StationConfig> {
-    vec![]
+    todo!()
 }

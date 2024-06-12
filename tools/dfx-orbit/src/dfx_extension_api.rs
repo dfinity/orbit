@@ -31,16 +31,21 @@ fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
     }
 }
 
+/// The API through which extensions SHOULD interact with ICP networks and dfx configuration.
 pub struct DfxExtensionAgent {
+    /// The name of the dfx extension.
     name: String,
+    /// The directory where all extension configuration files are stored, including those of other extensions.
     extensions_dir: cap_std::fs::Dir,
 }
 
 impl DfxExtensionAgent {
+    /// Creates a new DfxExtensionAgent for the extension with the given name.
     pub fn new(name: &str) -> Self {
         Self {
             name: name.to_string(),
-            extensions_dir: Self::extensions_dir().unwrap(),
+            extensions_dir: Self::extensions_dir()
+                .expect("Could not get the dfx extensions directory"),
         }
     }
 
@@ -62,17 +67,23 @@ impl DfxExtensionAgent {
         Ok(cap_dir)
     }
 
+    /// Gets the basename of the extension config file.
     fn config_file_name(&self) -> String {
         format!("{}.json", &self.name)
     }
 
+    /// Gets the extension config file for this extension.  If the file does not exist, it will be created.
+    ///
+    /// E.g. `~/.config/dfx/extensions/<extension_name>.json`
+    ///
+    /// Note: The file SHOULD be JSON but this is not enforced.
     pub fn extension_config_file(&self) -> anyhow::Result<cap_std::fs::File> {
         let extension_config_dir = &self.extensions_dir;
         let filename = self.config_file_name();
         let mut open_options = cap_std::fs::OpenOptions::new();
         let open_options = open_options.read(true).write(true).create(true);
         extension_config_dir
-            .open_with(&filename, &open_options)
+            .open_with(filename, open_options)
             .with_context(|| {
                 format!(
                     "Could not create extension config file for extension: {}",
@@ -97,13 +108,9 @@ impl DfxExtensionAgent {
             )
         })
     }
-}
 
-pub mod identity {
-    use super::call_dfx_cli;
-
-    /// The name of the default identity.  This is the identity given by `dfx identity whoami` (if any).
-    pub fn default() -> anyhow::Result<String> {
+    /// The name of the default dfx user identity.  This is the identity given by `dfx identity whoami` (if any).
+    pub fn identity() -> anyhow::Result<String> {
         call_dfx_cli(vec!["identity", "whoami"])
     }
 }
