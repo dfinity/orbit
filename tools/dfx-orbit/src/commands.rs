@@ -23,7 +23,9 @@ pub fn main(args: DfxOrbitArgs) {
                     dfx_extension_api::config::Args::File => {
                         let extension_agent =
                             crate::dfx_extension_api::DfxExtensionAgent::new("orbit");
-                        let mut file = extension_agent.extension_config_file().expect("Could not open file");
+                        let mut file = extension_agent
+                            .extension_config_file()
+                            .expect("Could not open file");
                         let mut ans = String::new();
                         file.read_to_string(&mut ans).expect("Could not read file");
                         // let config: crate::local_config::CommonConfig = serde_json::from_reader(&mut file).unwrap();
