@@ -12,7 +12,8 @@ pub fn main(args: StationArgs) {
         StationArgs::List(_list_args) => {
             let stations = local_config::list_stations();
             let ans = ListResponse { stations };
-            println!("{ans}");
+            // Note: The formatted ans is a sequence of complete lines, so an additional newline, as provided by println, is not needed.
+            print!("{ans}");
         }
         StationArgs::Default => {
             let default_station = local_config::default_station_name()
