@@ -112,3 +112,16 @@ pub fn remove_station(name: &str) -> anyhow::Result<()> {
     dir.remove_file(path)
         .with_context(|| format!("Failed to remove dfx config file for station {}", name))
 }
+
+/// Renames an Orbit station in the local dfx configuration.
+pub fn rename_station(name: &str, new_name: &str) -> anyhow::Result<()> {
+    let dir = stations_dir()?;
+    let old_path = station_file_name(name);
+    let new_path = station_file_name(new_name);
+    dir.rename(old_path, &dir, new_path).with_context(|| {
+        format!(
+            "Failed to rename dfx config file for station {} to {}",
+            name, new_name
+        )
+    })
+}
