@@ -23,7 +23,29 @@ fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
             .trim()
             .to_string())
     } else {
-        Err(anyhow::anyhow!("dfx failed with status: {}", output.status))
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        Err(anyhow::anyhow!("dfx failed with status {}: {stderr}", output.status))
+    }
+}
+
+pub struct DfxExtensionAgent {
+    name: String,
+}
+
+impl DfxExtensionAgent {
+    pub fn new(name: &str) -> Self {
+        Self {
+            name: name.to_string(),
+        }
+    }
+
+    pub fn extension_config_dir(&self) -> anyhow::Result<cap_std::fs::Dir> {
+        let user_config_dir = dfx_core::config::directories::get_user_dfx_config_dir().with_context(|| "Could not find user dfx config dir")?;
+        let extension_config_dir = user_config_dir.join("extensions").join(&self.name);
+        std::fs::create_dir_all(&extension_config_dir).with_context(|| format!("Could not create directory at: {}", extension_config_dir.display()))?;
+        let std_dir = std::fs::File::open(&extension_config_dir).with_context(|| format!("Could not open directory at: {}", extension_config_dir.display()))?;
+        let cap_dir = cap_std::fs::Dir::from_std_file(std_dir);
+        Ok(cap_dir)
     }
 }
 

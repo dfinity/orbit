@@ -1,4 +1,5 @@
 //! Command line interface for `dfx-orbit`.
+pub mod dfx_extension_api;
 pub mod station;
 
 use clap::{Parser, Subcommand};
@@ -10,7 +11,7 @@ use station::StationArgs;
 pub struct DfxOrbitArgs {
     /// Manage Orbit stations.
     #[command(subcommand)]
-    field: DfxOrbitSubcommands,
+    pub command: DfxOrbitSubcommands,
 }
 
 #[derive(Debug, Subcommand)]
@@ -18,4 +19,6 @@ pub struct DfxOrbitArgs {
 pub enum DfxOrbitSubcommands {
     #[command(subcommand)]
     Station(StationArgs),
+    #[command(subcommand)]
+    DfxExtension(dfx_extension_api::Args),
 }
