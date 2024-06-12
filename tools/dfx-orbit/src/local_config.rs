@@ -139,3 +139,17 @@ pub fn common_config() -> anyhow::Result<CommonConfig> {
 pub fn default_station_name() -> anyhow::Result<Option<String>> {
     Ok(common_config()?.default_station)
 }
+
+/// Sets the default Orbit station in the local dfx configuration.
+pub fn set_default_station(name: &str) -> anyhow::Result<()> {
+    // Check if the station exists.
+    station(name)?;
+    // Set the default station.
+    let mut common_config = common_config()?;
+    common_config.default_station = Some(name.to_string());
+    let dfx_extension_agent = DfxExtensionAgent::new("orbit");
+    let common_config_file = dfx_extension_agent.extension_config_file()?;
+    serde_json::to_writer_pretty(common_config_file, &common_config)
+        .with_context(|| "Failed to write extension config file as JSON.")?;
+    Ok(())
+}

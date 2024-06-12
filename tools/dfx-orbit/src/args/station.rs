@@ -12,6 +12,8 @@ pub enum StationArgs {
     List(List),
     /// The default station.
     Default,
+    /// Sets the default station in the local dfx configuration.
+    Use(Use),
     /// Shows the local configuration for an Orbit station.
     Show(Show),
     /// Renames an Orbit station in the local dfx configuration.
@@ -57,6 +59,14 @@ pub struct Rename {
 /// Removes an Orbit station from the local dfx configuration.
 #[derive(Debug, Parser)]
 pub struct Remove {
+    /// Station name.
+    #[structopt(long)]
+    pub name: String,
+}
+
+/// Sets the default station in the local dfx configuration.
+#[derive(Debug, Parser)]
+pub struct Use {
     /// Station name.
     #[structopt(long)]
     pub name: String,
