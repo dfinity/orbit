@@ -107,6 +107,7 @@ pub fn add_station(args: &Add) -> anyhow::Result<()> {
         canister_id: canister_id.to_string(),
     };
     let station_file = create_station_file(name)?;
+    station_file.set_len(0)?;
     serde_json::to_writer_pretty(station_file, &station).expect("Failed to write station file");
 
     if default_station_name()?.is_none() {
@@ -188,6 +189,7 @@ pub fn set_default_station(name_maybe: Option<String>) -> anyhow::Result<()> {
     extension_config.default_station = name_maybe;
     let dfx_extension_agent = DfxExtensionAgent::new("orbit");
     let common_config_file = dfx_extension_agent.extension_config_file()?;
+    common_config_file.set_len(0)?;
     serde_json::to_writer_pretty(common_config_file, &extension_config)
         .with_context(|| "Failed to write extension config file as JSON.")?;
     Ok(())
