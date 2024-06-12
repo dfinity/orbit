@@ -1,5 +1,6 @@
 //! Implementation of the `dfx-orbit` commands.
 pub mod dfx_extension_cli;
+pub mod station;
 
 use crate::args::{DfxOrbitArgs, DfxOrbitSubcommands};
 
@@ -9,10 +10,9 @@ pub fn main(args: DfxOrbitArgs) {
 
     match args.command {
         DfxOrbitSubcommands::Station(station_args) => {
-            println!("Hello station args: {station_args:?}");
+            station::main(station_args);
         }
         DfxOrbitSubcommands::DfxExtension(dfx_extension_args) => {
-            println!("Hello dfx extension args: {dfx_extension_args:?}");
             dfx_extension_cli::main(dfx_extension_args);
         }
     }
