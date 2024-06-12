@@ -137,7 +137,7 @@ pub fn rename_station(name: &str, new_name: &str) -> anyhow::Result<()> {
     })?;
 
     if default_station_name()? == Some(name.to_string()) {
-        set_default_station(Some(name.to_string()))?;
+        set_default_station(Some(new_name.to_string()))?;
     }
     Ok(())
 }

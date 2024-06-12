@@ -37,7 +37,7 @@ pub fn main(args: StationArgs) {
                 .expect("Failed to remove station from local dfx config");
         }
         StationArgs::Rename(rename_args) => {
-            local_config::rename_station(&rename_args.name, &rename_args.new_name)
+            local_config::rename_station(&rename_args.old, &rename_args.new)
                 .expect("Failed to rename station in local dfx config");
         }
     }

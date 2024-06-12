@@ -67,10 +67,10 @@ pub struct Show {
 pub struct Rename {
     /// Station name.
     #[structopt(long)]
-    pub name: String,
+    pub old: String,
     /// New station name.
     #[structopt(long)]
-    pub new_name: String,
+    pub new: String,
 }
 
 /// Removes an Orbit station from the local dfx configuration.
