@@ -6,7 +6,7 @@ use anyhow::Context;
 /// Calls the dfx cli.
 ///
 /// Some methods are implemented as calls to the dfx cli until a library is available.
-fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
+pub fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
     let output = Command::new("dfx")
         .args(args)
         // Tell the OS to record the command's output

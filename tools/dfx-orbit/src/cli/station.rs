@@ -3,7 +3,7 @@ use crate::args::station::{ListResponse, StationArgs};
 use crate::local_config;
 
 /// Implements CLI commands for managing Orbit stations.
-pub fn main(args: StationArgs) {
+pub fn main(args: StationArgs) -> anyhow::Result<()> {
     match args {
         StationArgs::Add(add_args) => {
             local_config::add_station(&add_args)
@@ -41,4 +41,5 @@ pub fn main(args: StationArgs) {
                 .expect("Failed to rename station in local dfx config");
         }
     }
+    Ok(())
 }

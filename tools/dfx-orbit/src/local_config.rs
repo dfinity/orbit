@@ -17,6 +17,7 @@ pub struct StationConfig {
     /// Station name.
     pub name: String,
     /// Wallet canister ID.
+    // TODO: This should be a principal.
     pub canister_id: String,
 }
 
@@ -173,9 +174,18 @@ pub fn extension_config() -> anyhow::Result<ExtensionConfig> {
     }
 }
 
-/// Gets the default Orbit station from the local dfx configuration.
+/// Gets the name of the default Orbit station from the local dfx configuration.
 pub fn default_station_name() -> anyhow::Result<Option<String>> {
     Ok(extension_config()?.default_station)
+}
+
+/// Gets the default Orbit station from the local dfx configuration.
+pub fn default_station() -> anyhow::Result<Option<StationConfig>> {
+    if let Some(name) = default_station_name()? {
+        Ok(Some(station(&name)?))
+    } else {
+        Ok(None)
+    }
 }
 
 /// Sets the default Orbit station in the local dfx configuration.

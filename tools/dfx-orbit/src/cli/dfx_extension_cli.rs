@@ -3,7 +3,7 @@ use crate::args::dfx_extension_api;
 use std::io::Read;
 
 /// Implements CLI commands for getting data from the dfx extension API.
-pub fn main(dfx_extension_args: dfx_extension_api::Args) {
+pub fn main(dfx_extension_args: dfx_extension_api::Args) -> anyhow::Result<()> {
     match dfx_extension_args {
         dfx_extension_api::Args::Config(config_args) => match config_args {
             dfx_extension_api::config::Args::Dir => {
@@ -23,4 +23,5 @@ pub fn main(dfx_extension_args: dfx_extension_api::Args) {
             }
         },
     }
+    Ok(())
 }

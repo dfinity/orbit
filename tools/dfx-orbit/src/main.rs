@@ -6,5 +6,5 @@ use dfx_orbit::{self as lib, args::DfxOrbitArgs};
 
 fn main() {
     let args = DfxOrbitArgs::parse();
-    lib::cli::main(args)
+    lib::cli::main(args).unwrap();
 }
