@@ -16,9 +16,10 @@ pub fn main(args: StationArgs) {
         }
         StationArgs::Default => {
             let default_station = local_config::default_station_name()
-                .expect("Failed to get default station from local dfx config")
-                .unwrap_or_default();
-            println!("{default_station}");
+                .expect("Failed to get default station from local dfx config");
+            if let Some(station) = default_station {
+                println!("{station}");
+            }
         }
         StationArgs::Use(use_args) => {
             local_config::set_default_station(Some(use_args.name))
