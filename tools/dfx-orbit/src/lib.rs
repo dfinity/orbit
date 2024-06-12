@@ -4,6 +4,6 @@
 #![deny(clippy::panic)]
 #![deny(clippy::unwrap_used)]
 pub mod args;
-pub mod commands;
+pub mod cli;
 pub mod dfx_extension_api;
 pub mod local_config;
