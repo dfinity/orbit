@@ -8,7 +8,7 @@ use crate::{args::station::Add, dfx_extension_api::DfxExtensionAgent};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CommonConfig {
     /// Default station name.
-    pub default_station: String,
+    pub default_station: Option<String>,
 }
 
 /// Configuration for a given station that lives in e.g. ~/.config/dfx/orbit/stations/<station_name>.json
@@ -130,12 +130,12 @@ pub fn common_config() -> anyhow::Result<CommonConfig> {
     // TODO: Make orbit a const
     let dfx_extension_agent = DfxExtensionAgent::new("orbit");
     let common_config_file = dfx_extension_agent.extension_config_file()?;
-    let common_config: CommonConfig = serde_json::from_reader(common_config_file).with_context(||"Failed to parse extension config file as JSON.")?;
+    let common_config: CommonConfig = serde_json::from_reader(common_config_file)
+        .with_context(|| "Failed to parse extension config file as JSON.")?;
     Ok(common_config)
 }
 
 /// Gets the default Orbit station from the local dfx configuration.
-pub fn default_station_name() -> anyhow::Result<String> {
-    let common_config = common_config()?;
-    Ok(common_config.default_station)
+pub fn default_station_name() -> anyhow::Result<Option<String>> {
+    Ok(common_config()?.default_station)
 }
