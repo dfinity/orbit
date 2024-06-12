@@ -93,6 +93,11 @@ pub fn add_station(args: &Add) -> anyhow::Result<()> {
         anyhow::bail!("Station already exists");
     }
     serde_json::to_writer_pretty(station_file, &station).expect("Failed to write station file");
+
+    if default_station_name()?.is_none() {
+        set_default_station(Some(name.to_string()))?;
+    }
+
     Ok(())
 }
 
@@ -109,7 +114,12 @@ pub fn remove_station(name: &str) -> anyhow::Result<()> {
     let dir = stations_dir()?;
     let path = station_file_name(name);
     dir.remove_file(path)
-        .with_context(|| format!("Failed to remove dfx config file for station {}", name))
+        .with_context(|| format!("Failed to remove dfx config file for station {}", name))?;
+
+    if default_station_name()? == Some(name.to_string()) {
+        set_default_station(None)?;
+    }
+    Ok(())
 }
 
 /// Renames an Orbit station in the local dfx configuration.
@@ -127,7 +137,7 @@ pub fn rename_station(name: &str, new_name: &str) -> anyhow::Result<()> {
     })?;
 
     if default_station_name()? == Some(name.to_string()) {
-        set_default_station(new_name)?;
+        set_default_station(Some(name.to_string()))?;
     }
     Ok(())
 }
@@ -148,12 +158,14 @@ pub fn default_station_name() -> anyhow::Result<Option<String>> {
 }
 
 /// Sets the default Orbit station in the local dfx configuration.
-pub fn set_default_station(name: &str) -> anyhow::Result<()> {
+pub fn set_default_station(name_maybe: Option<String>) -> anyhow::Result<()> {
     // Check if the station exists.
-    station(name)?;
+    if let Some(name) = &name_maybe {
+        station(name)?;
+    }
     // Set the default station.
     let mut common_config = common_config()?;
-    common_config.default_station = Some(name.to_string());
+    common_config.default_station = name_maybe;
     let dfx_extension_agent = DfxExtensionAgent::new("orbit");
     let common_config_file = dfx_extension_agent.extension_config_file()?;
     serde_json::to_writer_pretty(common_config_file, &common_config)

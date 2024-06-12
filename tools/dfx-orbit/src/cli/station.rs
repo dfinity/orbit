@@ -22,7 +22,7 @@ pub fn main(args: StationArgs) {
             println!("{default_station}");
         }
         StationArgs::Use(use_args) => {
-            local_config::set_default_station(&use_args.name)
+            local_config::set_default_station(Some(use_args.name))
                 .expect("Failed to set default station in local dfx config");
         }
         StationArgs::Show(show_args) => {
