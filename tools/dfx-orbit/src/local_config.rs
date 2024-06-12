@@ -1,13 +1,15 @@
 //! Local dfx configuration of Orbit stations.
+use serde::{Deserialize, Serialize};
 
 /// Configuration that lives in e.g. ~/.config/dfx/orbit.json
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CommonConfig {
     /// Default station name.
     pub default_station: String,
 }
 
 /// Configuration for a given station that lives in e.g. ~/.config/dfx/orbit/stations/<station_name>.json
+#[derive(Debug, Serialize, Deserialize)]
 pub struct StationConfig {
     /// Station name.
     pub name: String,
