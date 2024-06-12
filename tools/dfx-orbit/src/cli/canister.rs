@@ -1,4 +1,5 @@
 //! Implements the dfx extension CLI commands for managing external canisters.
+mod claim;
 
 use crate::args::canister::Args;
 

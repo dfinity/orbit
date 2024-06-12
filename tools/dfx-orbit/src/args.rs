@@ -1,7 +1,7 @@
 //! Command line interface for `dfx-orbit`.
+pub mod canister;
 pub mod dfx_extension_api;
 pub mod station;
-pub mod canister;
 
 use clap::{Parser, Subcommand};
 use station::StationArgs;

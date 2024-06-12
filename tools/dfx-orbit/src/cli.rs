@@ -1,7 +1,7 @@
 //! Implementation of the `dfx-orbit` commands.
+pub mod canister;
 pub mod dfx_extension_cli;
 pub mod station;
-pub mod canister;
 
 use crate::args::{DfxOrbitArgs, DfxOrbitSubcommands};
 
