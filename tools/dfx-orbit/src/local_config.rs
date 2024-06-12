@@ -105,7 +105,7 @@ pub fn add_station(args: &Add) -> anyhow::Result<()> {
 pub fn station(name: &str) -> anyhow::Result<StationConfig> {
     let station_file = station_file(name)?;
     let station: StationConfig =
-        serde_json::from_reader(station_file).expect("Failed to parse station file");
+        serde_json::from_reader(station_file).with_context(|| "Failed to parse station file")?;
     Ok(station)
 }
 
