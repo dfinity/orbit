@@ -24,7 +24,10 @@ fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
             .to_string())
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        Err(anyhow::anyhow!("dfx failed with status {}: {stderr}", output.status))
+        Err(anyhow::anyhow!(
+            "dfx failed with status {}: {stderr}",
+            output.status
+        ))
     }
 }
 
@@ -39,13 +42,53 @@ impl DfxExtensionAgent {
         }
     }
 
-    pub fn extension_config_dir(&self) -> anyhow::Result<cap_std::fs::Dir> {
-        let user_config_dir = dfx_core::config::directories::get_user_dfx_config_dir().with_context(|| "Could not find user dfx config dir")?;
-        let extension_config_dir = user_config_dir.join("extensions").join(&self.name);
-        std::fs::create_dir_all(&extension_config_dir).with_context(|| format!("Could not create directory at: {}", extension_config_dir.display()))?;
-        let std_dir = std::fs::File::open(&extension_config_dir).with_context(|| format!("Could not open directory at: {}", extension_config_dir.display()))?;
+    /// Gets the extensions directory, typically at `~/.config/dfx/extensions`
+    fn extensions_dir() -> anyhow::Result<cap_std::fs::Dir> {
+        let user_config_dir = dfx_core::config::directories::get_user_dfx_config_dir()
+            .with_context(|| "Could not find user dfx config dir")?;
+        let extensions_dir = user_config_dir.join("extensions");
+        std::fs::create_dir_all(&extensions_dir).with_context(|| {
+            format!(
+                "Could not create directory at: {}",
+                extensions_dir.display()
+            )
+        })?;
+        let std_dir = std::fs::File::open(&extensions_dir).with_context(|| {
+            format!(
+                "Could not open directory at: {}",
+                extensions_dir.display()
+            )
+        })?;
         let cap_dir = cap_std::fs::Dir::from_std_file(std_dir);
         Ok(cap_dir)
+    }
+
+    pub fn extension_config_file(&self) -> anyhow::Result<cap_std::fs::File> {
+        let extension_config_dir = self.extension_config_dir()?;
+        let mut open_options = cap_std::fs::OpenOptions::new();
+        let open_options = open_options
+            .write(true)
+            .create(true);
+        extension_config_dir.open_with(format!("{}.json", &self.name), &open_options).with_context(|| {
+            format!(
+                "Could not create extension config file for extension: {}", &self.name
+            )
+        })
+    }
+
+    /// Gets the extension config directory for this extension.
+    pub fn extension_config_dir(&self) -> anyhow::Result<cap_std::fs::Dir> {
+        let extensions_dir = Self::extensions_dir()?;
+        extensions_dir.create_dir_all(&self.name).with_context(|| {
+            format!(
+                "Could not create extension directory for extension: {}", &self.name
+            )
+        })?;
+        extensions_dir.open_dir(&self.name).with_context(|| {
+            format!(
+                "Could not open extension directory for extension: {}", &self.name
+            )
+        })
     }
 }
 

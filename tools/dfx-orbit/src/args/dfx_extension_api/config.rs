@@ -5,6 +5,7 @@ use clap::{Parser, Subcommand};
 #[command(version, about, long_about = None)]
 pub enum Args {
     Dir(Dir),
+    File,
 }
 
 #[derive(Debug, Parser)]

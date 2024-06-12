@@ -1,8 +1,7 @@
 //! Implementation of the `dfx-orbit` commands.
 
-use crate::args::{DfxOrbitArgs, DfxOrbitSubcommands, dfx_extension_api};
-
-
+use crate::args::{dfx_extension_api, DfxOrbitArgs, DfxOrbitSubcommands};
+use std::io::Read;
 
 pub fn main(args: DfxOrbitArgs) {
     println!("Hello args: {args:?}");
@@ -14,15 +13,23 @@ pub fn main(args: DfxOrbitArgs) {
         DfxOrbitSubcommands::DfxExtension(dfx_extension_args) => {
             println!("Hello dfx extension args: {dfx_extension_args:?}");
             match dfx_extension_args {
-                dfx_extension_api::Args::Config(config_args) => {
-                    match config_args {
-                        dfx_extension_api::config::Args::Dir(_dir_args) => {
-                            let extension_agent = crate::dfx_extension_api::DfxExtensionAgent::new("orbit");
-                            let ans = extension_agent.extension_config_dir();
-                            println!("{ans:?}");
-                        }
+                dfx_extension_api::Args::Config(config_args) => match config_args {
+                    dfx_extension_api::config::Args::Dir(_dir_args) => {
+                        let extension_agent =
+                            crate::dfx_extension_api::DfxExtensionAgent::new("orbit");
+                        let ans = extension_agent.extension_config_dir();
+                        println!("{ans:?}");
                     }
-                }
+                    dfx_extension_api::config::Args::File => {
+                        let extension_agent =
+                            crate::dfx_extension_api::DfxExtensionAgent::new("orbit");
+                        let mut file = extension_agent.extension_config_file().expect("Could not open file");
+                        let mut ans = String::new();
+                        file.read_to_string(&mut ans).expect("Could not read file");
+                        // let config: crate::local_config::CommonConfig = serde_json::from_reader(&mut file).unwrap();
+                        println!("{ans:?}");
+                    }
+                },
             }
         }
     }
