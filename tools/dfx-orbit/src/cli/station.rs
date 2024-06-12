@@ -10,7 +10,8 @@ pub fn main(args: StationArgs) {
         }
         StationArgs::List(_list_args) => {
             let stations = local_config::list_stations();
-            let json = serde_json::to_string_pretty(&stations).expect("Failed to serialize list of stations");
+            let json = serde_json::to_string_pretty(&stations)
+                .expect("Failed to serialize list of stations");
             println!("{json}");
         }
         StationArgs::Remove(remove_args) => {
