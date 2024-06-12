@@ -1,6 +1,7 @@
 //! Command line interface for `dfx-orbit`.
 pub mod dfx_extension_api;
 pub mod station;
+pub mod canister;
 
 use clap::{Parser, Subcommand};
 use station::StationArgs;
@@ -21,6 +22,9 @@ pub enum DfxOrbitSubcommands {
     /// Manages Orbit stations.
     #[command(subcommand)]
     Station(StationArgs),
+    /// Manages external canisters with Orbit.
+    #[command(subcommand)]
+    Canister(canister::Args),
     /// Exercises the experimental DFX extension API.
     ///
     /// As the API is brand new and prototypical, this is exposed as a subcommand.  Once stable it can be removed.
