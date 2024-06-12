@@ -40,16 +40,32 @@ pub fn station_file_name(name: &str) -> String {
 }
 /// The file in which the config for a particular station is stored.
 ///
-/// If the file does not exist, it will be created.
+/// If the file does not exist, this will return an error.
 pub fn station_file(name: &str) -> anyhow::Result<cap_std::fs::File> {
+    open_station_file(name, false).with_context(|| {
+        format!("Failed to open station file for station '{name}':  Is the station name correct?")
+    })
+}
+
+/// Creates and returne file in which the config for a particular station is stored.
+///
+/// If the file already exists, this will return an error.
+pub fn create_station_file(name: &str) -> anyhow::Result<cap_std::fs::File> {
+    open_station_file(name, true).with_context(|| {
+        format!("Failed to create station file for station '{name}'.  Does it already exist?")
+    })
+}
+
+/// The file in which the config for a particular station is stored.
+///
+/// Optionally create the file if it does not exist.
+pub fn open_station_file(name: &str, create_new: bool) -> anyhow::Result<cap_std::fs::File> {
     let basename = station_file_name(name);
     let stations_dir = stations_dir()?;
     let mut open_options = cap_std::fs::OpenOptions::new();
-    let open_options = open_options.read(true).write(true).create(true);
-    let station_file = stations_dir
-        .open_with(basename, open_options)
-        .expect("Failed to open station file");
-    Ok(station_file)
+    let open_options = open_options.read(true).write(true).create_new(create_new);
+    let file = stations_dir.open_with(basename, open_options)?;
+    Ok(file)
 }
 
 /// Lists all Orbit stations in the local dfx configuration.
@@ -82,16 +98,15 @@ pub fn list_stations() -> Vec<String> {
 }
 
 /// Adds a new Orbit station to the local dfx configuration.
+///
+/// If there is no default station, the new station is set as the default.
 pub fn add_station(args: &Add) -> anyhow::Result<()> {
     let Add { name, canister_id } = args;
     let station = StationConfig {
         name: name.to_string(),
         canister_id: canister_id.to_string(),
     };
-    let station_file = station_file(name)?;
-    if station_file.metadata()?.len() > 0 {
-        anyhow::bail!("Station already exists");
-    }
+    let station_file = create_station_file(name)?;
     serde_json::to_writer_pretty(station_file, &station).expect("Failed to write station file");
 
     if default_station_name()?.is_none() {
