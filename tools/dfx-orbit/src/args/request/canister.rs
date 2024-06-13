@@ -11,7 +11,7 @@ pub enum Args {
     Change(ChangeExternalCanister),
 }
 
-/// Requests that a canister be installed or updated.
+/// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Parser)]
 pub struct ChangeExternalCanister {
     /// The canister ID to install or update.
@@ -32,7 +32,7 @@ pub struct ChangeExternalCanister {
     arg_file: Option<String>,
 }
 
-/// Canister installation mode corresponding to `dfx canister install --mode XXX`.
+/// Canister installation mode equivalent to `dfx canister install --mode XXX` and `orbit_station_api::CanisterInstallMode`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, ValueEnum)]
 pub enum CanisterInstallMode {
     /// Corresponds to `dfx canister install`
@@ -43,19 +43,34 @@ pub enum CanisterInstallMode {
     Upgrade,
 }
 
-/*
 impl From<ChangeExternalCanister> for orbit_station_api::ChangeExternalCanisterOperationInput {
     fn from(input: ChangeExternalCanister) -> Self {
-        let ChangeExternalCanister{canister_id, mode, wasm, arg, arg_file} = input;
-        let module = std::fs::read(&input.wasm).unwrap();
+        let ChangeExternalCanister {
+            canister_id,
+            mode,
+            wasm,
+            arg,
+            arg_file,
+        } = input;
+        let module = std::fs::read(wasm)
+            .expect("Could not read Wasm file")
+            .to_vec();
         let arg = if let Some(file) = arg_file {
-            Some(std::fs::read(&file).unwrap())
-        } else if let Some(arg) = arg {
-            Some(arg.as_bytes().to_vec())
+            Some(
+                std::fs::read(file)
+                    .expect("Could not read argument file")
+                    .to_vec(),
+            )
         } else {
-            None
+            arg.map(|arg| arg.as_bytes().to_vec())
         };
-        orbit_station_api::ChangeExternalCanisterOperationInput {canister_id, mode, module, arg}
+        let mode = mode.into();
+        orbit_station_api::ChangeExternalCanisterOperationInput {
+            canister_id,
+            mode,
+            module,
+            arg,
+        }
     }
 }
 
@@ -68,4 +83,3 @@ impl From<CanisterInstallMode> for orbit_station_api::CanisterInstallMode {
         }
     }
 }
-    */
