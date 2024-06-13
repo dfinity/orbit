@@ -1,10 +1,10 @@
 //! Implements the dfx extension CLI commands for making requests about canisters.
 
 use crate::args::request::canister::{Args, ChangeExternalCanister};
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 use candid::{CandidType, IDLArgs};
 use orbit_station_api::{CreateRequestInput, RequestOperationInput};
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::Write;
 use tempfile::tempdir;
 
@@ -21,7 +21,12 @@ fn change(args: ChangeExternalCanister) -> anyhow::Result<()> {
     let args = orbit_station_api::ChangeExternalCanisterOperationInput::from(args);
     let args = RequestOperationInput::ChangeExternalCanister(args);
     // TODO: Add title, summary and execution_plan to the CLI.
-    let args = CreateRequestInput{operation: args, title: None, summary: None, execution_plan: None};
+    let args = CreateRequestInput {
+        operation: args,
+        title: None,
+        summary: None,
+        execution_plan: None,
+    };
     let idl_text = serialize_one_to_text(&args)?;
     // The idl text can be too large to pass on gthe command line.  We write it to a file and pass the file name instead.
     let dir = tempdir()?;
@@ -35,14 +40,24 @@ fn change(args: ChangeExternalCanister) -> anyhow::Result<()> {
     let orbit_canister_id = crate::local_config::default_station()?
         .ok_or_else(|| anyhow!("No default station specified"))?
         .canister_id;
-    crate::dfx_extension_api::call_dfx_cli(vec![
+    let command = vec![
         "canister",
         "call",
         &orbit_canister_id,
         "create_request",
         "--argument-file",
         &file_name,
-    ])?; // TODO: Replace with actual API call
+    ];
+    crate::dfx_extension_api::call_dfx_cli(command.clone())
+    .with_context(|| {
+        let saved_filename = "args.idl";
+        fs::rename(file_name, saved_filename).ok();
+        format!(
+            "Failed to call the Orbit canister.  The argument file has been saved as {}.  The command was:\n dfx {}",
+            saved_filename,
+            command.join(" ")
+        )
+    })?; // TODO: Replace with actual API call
     Ok(())
 }
 
