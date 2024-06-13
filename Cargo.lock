@@ -1002,6 +1002,7 @@ dependencies = [
  "dfx-core",
  "serde",
  "serde_json",
+ "station-api",
 ]
 
 [[package]]

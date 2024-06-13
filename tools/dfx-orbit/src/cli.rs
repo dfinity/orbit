@@ -1,6 +1,7 @@
 //! Implementation of the `dfx-orbit` commands.
 pub mod canister;
 pub mod dfx_extension_cli;
+pub mod request;
 pub mod station;
 
 use crate::args::{DfxOrbitArgs, DfxOrbitSubcommands};
@@ -27,5 +28,6 @@ pub fn main(args: DfxOrbitArgs) -> anyhow::Result<()> {
             dfx_extension_cli::main(dfx_extension_args)
         }
         DfxOrbitSubcommands::Canister(canister_args) => canister::main(canister_args),
+        DfxOrbitSubcommands::Request(request_args) => request::main(request_args),
     }
 }
