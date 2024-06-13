@@ -1,6 +1,11 @@
 //! Implements the dfx extension CLI commands for making requests about canisters.
 
 use crate::args::request::canister::{Args, ChangeExternalCanister};
+use anyhow::anyhow;
+use candid::{CandidType, IDLArgs};
+use std::fs::File;
+use std::io::Write;
+use tempfile::tempdir;
 
 /// The main entry point for the `dfx orbit` CLI.
 pub fn main(args: Args) -> anyhow::Result<()> {
@@ -11,7 +16,37 @@ pub fn main(args: Args) -> anyhow::Result<()> {
 
 /// Makes an API call to chnage an external canister.
 fn change(args: ChangeExternalCanister) -> anyhow::Result<()> {
-    let _args = orbit_station_api::ChangeExternalCanisterOperationInput::from(args);
+    // If we can be SURE that the orbit `station_api` types remain in sync with the .did files, we can use these types.
+    let args = orbit_station_api::ChangeExternalCanisterOperationInput::from(args);
+    let idl_text = serialize_one_to_text(&args)?;
+    // The idl text can be too large to pass on gthe command line.  We write it to a file and pass the file name instead.
+    let dir = tempdir()?;
+    let file_path = dir.path().join("args.idl");
+    let file_name = file_path
+        .to_str()
+        .ok_or_else(|| anyhow!("Could not convert path to string"))?;
+    let mut arg_file = File::create(&file_path)?;
+    arg_file.write_all(idl_text.as_bytes())?;
+    arg_file.flush()?;
+    let orbit_canister_id = crate::local_config::default_station()?
+        .ok_or_else(|| anyhow!("No default station specified"))?
+        .canister_id;
+    crate::dfx_extension_api::call_dfx_cli(vec![
+        "canister",
+        "call",
+        &orbit_canister_id,
+        "create_request",
+        "--arg-file",
+        &file_name,
+    ])?; // TODO: Replace with actual API call
+    Ok(())
+}
 
-    todo!()
+/// Serializes a value to a Candid string.
+fn serialize_one_to_text<T: CandidType>(value: &T) -> anyhow::Result<String> {
+    // Afaik there still is no better way of doing this than serializing to binary candid, then convertingh the binary candid to text-type candid.  If true this is really unfortunate.
+    let bytes = candid::encode_one(value)?;
+    let decoded: IDLArgs = IDLArgs::from_bytes(&bytes)?;
+    let text = decoded.to_string();
+    Ok(text)
 }

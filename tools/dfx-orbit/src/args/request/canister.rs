@@ -18,7 +18,7 @@ pub struct ChangeExternalCanister {
     #[clap(short, long)]
     canister_id: Principal,
     /// The installation mode.
-    #[clap(long, value_enum)]
+    #[clap(long, value_enum, rename_all = "kebab-case")]
     mode: CanisterInstallMode,
     /// The path to the Wasm file to install.
     #[clap(short, long)]
@@ -28,7 +28,7 @@ pub struct ChangeExternalCanister {
     arg: Option<String>,
     // TODO: exclusive OR
     /// The path to a file containing the argument to pass to the canister.
-    #[clap(short, long)]
+    #[clap(short = 'f', long)]
     arg_file: Option<String>,
 }
 
