@@ -30,4 +30,6 @@ pub enum DfxOrbitSubcommands {
     /// As the API is brand new and prototypical, this is exposed as a subcommand.  Once stable it can be removed.
     #[command(subcommand)]
     DfxExtension(dfx_extension_api::Args),
+    /// Gets the caller's profile on an Orbit station.
+    Me,
 }
