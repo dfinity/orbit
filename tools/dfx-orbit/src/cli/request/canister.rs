@@ -3,6 +3,7 @@
 use crate::args::request::canister::{Args, ChangeExternalCanister};
 use anyhow::anyhow;
 use candid::{CandidType, IDLArgs};
+use orbit_station_api::{CreateRequestInput, RequestOperationInput};
 use std::fs::File;
 use std::io::Write;
 use tempfile::tempdir;
@@ -18,6 +19,9 @@ pub fn main(args: Args) -> anyhow::Result<()> {
 fn change(args: ChangeExternalCanister) -> anyhow::Result<()> {
     // If we can be SURE that the orbit `station_api` types remain in sync with the .did files, we can use these types.
     let args = orbit_station_api::ChangeExternalCanisterOperationInput::from(args);
+    let args = RequestOperationInput::ChangeExternalCanister(args);
+    // TODO: Add title, summary and execution_plan to the CLI.
+    let args = CreateRequestInput{operation: args, title: None, summary: None, execution_plan: None};
     let idl_text = serialize_one_to_text(&args)?;
     // The idl text can be too large to pass on gthe command line.  We write it to a file and pass the file name instead.
     let dir = tempdir()?;
@@ -36,7 +40,7 @@ fn change(args: ChangeExternalCanister) -> anyhow::Result<()> {
         "call",
         &orbit_canister_id,
         "create_request",
-        "--arg-file",
+        "--argument-file",
         &file_name,
     ])?; // TODO: Replace with actual API call
     Ok(())
