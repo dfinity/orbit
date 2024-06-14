@@ -50,3 +50,13 @@ impl From<RegistryEntry> for control_panel_api::RegistryEntryDTO {
         }
     }
 }
+
+impl From<control_panel_api::RegistryEntryValueKindDTO> for RegistryValueKind {
+    fn from(kind: control_panel_api::RegistryEntryValueKindDTO) -> Self {
+        match kind {
+            control_panel_api::RegistryEntryValueKindDTO::WasmModule => {
+                RegistryValueKind::WasmModule
+            }
+        }
+    }
+}

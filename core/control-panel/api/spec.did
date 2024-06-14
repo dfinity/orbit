@@ -391,6 +391,11 @@ type RegistryEntryValue = variant {
   WasmModule : WasmModuleRegistryEntryValue;
 };
 
+// The registry entry value kind.
+type RegistryEntryValueKind = variant {
+  WasmModule;
+};
+
 // The wasm module registry value, which is the content of the wasm module and its version.
 type WasmModuleRegistryEntryValue = record {
   // The id of the wasm module that is stored in the artifact repository.
@@ -411,6 +416,16 @@ type WasmModuleRegistryEntryValue = record {
 type SearchRegistryFilterKind = variant {
   // The name of the registry entry to find, if the namespace is not provided the default namespace is used.
   Name : text;
+  // The namespace of the registry entry to find.
+  Namespace : text;
+  // The kind of registry entry to find.
+  Kind : RegistryEntryValueKind;
+};
+
+// The registry entry sort options.
+type RegistryEntrySortBy = variant {
+  // Sort by the timestamp when the registry entry was created.
+  CreatedAt;
 };
 
 // The input for searching the registry.

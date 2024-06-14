@@ -27,6 +27,11 @@ pub enum RegistryEntryValueInput {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub enum RegistryEntryValueKindDTO {
+    WasmModule,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct RegistryEntryDTO {
     pub id: UuidDTO,
     pub name: String,
@@ -61,7 +66,9 @@ pub struct GetRegistryEntryResponse {
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum SearchRegistryFilterKindDTO {
+    Namespace(String),
     Name(String),
+    Kind(RegistryEntryValueKindDTO),
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
