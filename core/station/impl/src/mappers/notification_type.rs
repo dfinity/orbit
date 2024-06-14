@@ -89,7 +89,8 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::ManageSystemInfo(_)
                     | RequestOperation::ChangeCanister(_)
                     | RequestOperation::ChangeExternalCanister(_)
-                    | RequestOperation::CreateExternalCanister(_) => None,
+                    | RequestOperation::CreateExternalCanister(_)
+                    | RequestOperation::CallExternalCanister(_) => None,
                 };
 
                 let user_id: Option<[u8; 16]> = match &request.operation {
@@ -111,7 +112,8 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::ManageSystemInfo(_)
                     | RequestOperation::ChangeCanister(_)
                     | RequestOperation::ChangeExternalCanister(_)
-                    | RequestOperation::CreateExternalCanister(_) => None,
+                    | RequestOperation::CreateExternalCanister(_)
+                    | RequestOperation::CallExternalCanister(_) => None,
                 };
 
                 NotificationTypeDTO::RequestCreated(RequestCreatedNotificationDTO {

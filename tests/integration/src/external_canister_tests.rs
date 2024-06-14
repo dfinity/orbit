@@ -1,8 +1,8 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     add_user, canister_status, execute_request, get_request, submit_request,
-    submit_request_approval, submit_request_with_expected_trap, update_raw, user_test_id,
-    wait_for_request, COUNTER_WAT,
+    submit_request_approval, submit_request_raw, submit_request_with_expected_trap, update_raw,
+    user_test_id, wait_for_request, COUNTER_WAT,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -11,13 +11,15 @@ use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{
-    AddRequestPolicyOperationInput, CanisterInstallMode, ChangeExternalCanisterOperationInput,
-    ChangeExternalCanisterResourceTargetDTO, CreateExternalCanisterOperationInput,
-    CreateExternalCanisterResourceTargetDTO, EditPermissionOperationInput, ListRequestsInput,
+    AddRequestPolicyOperationInput, CallExternalCanisterOperationInput,
+    CallExternalCanisterResourceTargetDTO, CanisterInstallMode, CanisterMethodDTO,
+    ChangeExternalCanisterOperationInput, ChangeExternalCanisterResourceTargetDTO,
+    CreateExternalCanisterOperationInput, CreateExternalCanisterResourceTargetDTO,
+    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ListRequestsInput,
     ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
     ReadExternalCanisterResourceTargetDTO, RequestApprovalStatusDTO, RequestOperationDTO,
     RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, RequestStatusDTO,
-    UserSpecifierDTO,
+    UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 
 #[test]
@@ -599,4 +601,515 @@ fn create_external_canister_and_check_status() {
     assert!(trap_message.description.contains(
         "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Read"
     ));
+}
+
+#[test]
+fn call_external_canister_test() {
+    const T: u128 = 1_000_000_000_000;
+
+    let TestEnv {
+        mut env,
+        canister_ids,
+        ..
+    } = setup_new_env();
+
+    // create and install the counter canister (validation)
+    let validation_canister_id = create_canister(&mut env, Principal::anonymous());
+    let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
+    let mut sha256 = Sha256::new();
+    sha256.update(module_bytes.clone());
+    let module_hash = sha256.finalize().to_vec();
+    env.install_canister(validation_canister_id, module_bytes.clone(), vec![], None);
+
+    // create and install the counter canister (execution)
+    let execution_canister_id = create_canister(&mut env, Principal::anonymous());
+    let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
+    env.install_canister(execution_canister_id, module_bytes.clone(), vec![], None);
+
+    // check canister status and ensure that the WASM matches the counter canister module
+    // for both the validation and execution canisters
+    let status = canister_status(&env, None, validation_canister_id);
+    assert_eq!(status.module_hash, Some(module_hash.clone()));
+    let status = canister_status(&env, None, execution_canister_id);
+    assert_eq!(status.module_hash, Some(module_hash.clone()));
+
+    // the counters should initially be set at 0 and the cycles balance between 95T and 100T cycles
+    let ctr = update_raw(
+        &env,
+        validation_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+    let cycles = env.cycle_balance(validation_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+    let ctr = update_raw(
+        &env,
+        execution_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+    let cycles = env.cycle_balance(execution_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+
+    // create new user identities and add them to the station
+    let user_a = user_test_id(0);
+    add_user(&env, user_a, vec![], canister_ids.station);
+    let user_b = user_test_id(1);
+    add_user(&env, user_b, vec![], canister_ids.station);
+
+    // submitting call external canister request fails due to insufficient permissions to create such requests
+    let failing_validation_method = CanisterMethodDTO {
+        canister_id: validation_canister_id,
+        method_name: "bad".to_string(),
+    };
+    let validation_method = CanisterMethodDTO {
+        canister_id: validation_canister_id,
+        method_name: "inc".to_string(),
+    };
+    let execution_method = CanisterMethodDTO {
+        canister_id: execution_canister_id,
+        method_name: "set".to_string(),
+    };
+    let call_canister_operation =
+        RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
+            validation_method: Some(validation_method.clone()),
+            execution_method: execution_method.clone(),
+            arg: Some(42_u32.to_le_bytes().to_vec()),
+            execution_method_cycles: Some(10_000_000_000_000),
+        });
+    let trap_message = submit_request_with_expected_trap(
+        &env,
+        user_a,
+        canister_ids.station,
+        call_canister_operation.clone(),
+    );
+    assert!(trap_message.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Call"
+    ));
+
+    // nothing should have changed so far
+    let ctr = update_raw(
+        &env,
+        validation_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+    let cycles = env.cycle_balance(validation_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+    let ctr = update_raw(
+        &env,
+        execution_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+    let cycles = env.cycle_balance(execution_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+
+    // allow anyone to create call external canister requests with a given validation and execution method
+    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+        resource: station_api::ResourceDTO::ExternalCanister(
+            station_api::ExternalCanisterResourceActionDTO::Call(
+                CallExternalCanisterResourceTargetDTO {
+                    validation_method: ValidationMethodResourceTargetDTO::ValidationMethod(
+                        validation_method.clone(),
+                    ),
+                    execution_method: ExecutionMethodResourceTargetDTO::ExecutionMethod(
+                        execution_method.clone(),
+                    ),
+                },
+            ),
+        ),
+        auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
+        user_groups: None,
+        users: None,
+    });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        add_permission,
+    )
+    .unwrap();
+
+    // also allow anyone to create call external canister requests with a validation method always failing validation
+    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+        resource: station_api::ResourceDTO::ExternalCanister(
+            station_api::ExternalCanisterResourceActionDTO::Call(
+                CallExternalCanisterResourceTargetDTO {
+                    validation_method: ValidationMethodResourceTargetDTO::ValidationMethod(
+                        failing_validation_method.clone(),
+                    ),
+                    execution_method: ExecutionMethodResourceTargetDTO::ExecutionMethod(
+                        execution_method.clone(),
+                    ),
+                },
+            ),
+        ),
+        auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
+        user_groups: None,
+        users: None,
+    });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        add_permission,
+    )
+    .unwrap();
+
+    // now the request to call the counter canister can be successfully submitted
+    // and it is immediately rejected because nobody can actually approve it
+    let call_canister_operation_request = submit_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        call_canister_operation.clone(),
+    );
+    let rejected_request = get_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        call_canister_operation_request,
+    );
+    match rejected_request.status {
+        RequestStatusDTO::Rejected { .. } => (),
+        _ => panic!("Request should have been rejected."),
+    };
+
+    // the validation counter should increase now
+    let ctr = update_raw(
+        &env,
+        validation_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 2_u32.to_le_bytes());
+    let cycles = env.cycle_balance(validation_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+    let ctr = update_raw(
+        &env,
+        execution_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+    let cycles = env.cycle_balance(execution_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+
+    // submit a call external canister request with failing validation
+    let failing_validation_call_canister_operation =
+        RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
+            validation_method: Some(failing_validation_method.clone()),
+            execution_method: execution_method.clone(),
+            arg: Some(42_u32.to_le_bytes().to_vec()),
+            execution_method_cycles: Some(10_000_000_000_000),
+        });
+    let request_error = submit_request_raw(
+        &env,
+        user_a,
+        canister_ids.station,
+        failing_validation_call_canister_operation,
+    )
+    .unwrap()
+    .0
+    .unwrap_err();
+    assert_eq!(
+        request_error.message,
+        Some("The request has failed validation.".to_string())
+    );
+    assert_eq!(
+        *request_error.details.clone().unwrap().get("info").unwrap(),
+        "failed to validate call external canister request: bad".to_string()
+    );
+
+    // the validation counter should increase now since the validation was performed and returned a failure
+    let ctr = update_raw(
+        &env,
+        validation_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 4_u32.to_le_bytes());
+    let cycles = env.cycle_balance(validation_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+    let ctr = update_raw(
+        &env,
+        execution_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+    let cycles = env.cycle_balance(execution_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+
+    // submit a request with no validation method which is illegal given the permissions set so far
+    let illegal_call_canister_operation =
+        RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
+            validation_method: None,
+            execution_method: execution_method.clone(),
+            arg: None,
+            execution_method_cycles: None,
+        });
+    let trap_message = submit_request_with_expected_trap(
+        &env,
+        user_a,
+        canister_ids.station,
+        illegal_call_canister_operation.clone(),
+    );
+    assert!(trap_message.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Call"
+    ));
+
+    // submit a request labeling the execution method as the validation method which is illegal given the permissions set so far
+    let illegal_call_canister_operation =
+        RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
+            validation_method: Some(execution_method.clone()),
+            execution_method: execution_method.clone(),
+            arg: None,
+            execution_method_cycles: None,
+        });
+    let trap_message = submit_request_with_expected_trap(
+        &env,
+        user_a,
+        canister_ids.station,
+        illegal_call_canister_operation.clone(),
+    );
+    assert!(trap_message.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Call"
+    ));
+
+    // submit a request labeling the validation method as the execution method which is illegal given the permissions set so far
+    let illegal_call_canister_operation =
+        RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
+            validation_method: Some(validation_method.clone()),
+            execution_method: validation_method.clone(),
+            arg: None,
+            execution_method_cycles: None,
+        });
+    let trap_message = submit_request_with_expected_trap(
+        &env,
+        user_a,
+        canister_ids.station,
+        illegal_call_canister_operation.clone(),
+    );
+    assert!(trap_message.contains(
+        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Call"
+    ));
+
+    // nothing should have changed
+    let ctr = update_raw(
+        &env,
+        validation_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 4_u32.to_le_bytes());
+    let cycles = env.cycle_balance(validation_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+    let ctr = update_raw(
+        &env,
+        execution_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+    let cycles = env.cycle_balance(execution_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+
+    // set four eyes principle (request approval policy) for calling external canisters
+    let add_request_policy =
+        RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
+            specifier: RequestSpecifierDTO::CallExternalCanister(
+                CallExternalCanisterResourceTargetDTO {
+                    validation_method: ValidationMethodResourceTargetDTO::ValidationMethod(
+                        validation_method,
+                    ),
+                    execution_method: ExecutionMethodResourceTargetDTO::ExecutionMethod(
+                        execution_method,
+                    ),
+                },
+            ),
+            rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
+                approvers: UserSpecifierDTO::Any,
+                min_approved: 2,
+            }),
+        });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        add_request_policy,
+    )
+    .unwrap();
+
+    // submit the request to call the counter canister again
+    let call_canister_operation_request = submit_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        call_canister_operation.clone(),
+    );
+    let created_request = get_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        call_canister_operation_request.clone(),
+    );
+    match created_request.status {
+        RequestStatusDTO::Created => (),
+        _ => panic!("Request should be created."),
+    };
+    let arg_rendering = match created_request.operation {
+        RequestOperationDTO::CallExternalCanister(operation) => operation.arg_rendering,
+        _ => panic!(
+            "Unexpected request operation type: {:?}",
+            created_request.operation
+        ),
+    };
+    assert_eq!(arg_rendering, Some("valid".to_string()));
+
+    // the validation canister counter should increase again now that one more request has been successfully created
+    let ctr = update_raw(
+        &env,
+        validation_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 6_u32.to_le_bytes());
+    let cycles = env.cycle_balance(validation_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+    let ctr = update_raw(
+        &env,
+        execution_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+    let cycles = env.cycle_balance(execution_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+
+    // let the admin user reject the request => the request stays open as the second user can also approve it
+    submit_request_approval(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        call_canister_operation_request.clone(),
+        RequestApprovalStatusDTO::Rejected,
+    );
+    let created_request = get_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        call_canister_operation_request.clone(),
+    );
+    match created_request.status {
+        RequestStatusDTO::Created => (),
+        _ => panic!("Request should be created."),
+    };
+
+    // nothing should have changed
+    let ctr = update_raw(
+        &env,
+        validation_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 6_u32.to_le_bytes());
+    let cycles = env.cycle_balance(validation_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+    let ctr = update_raw(
+        &env,
+        execution_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+    let cycles = env.cycle_balance(execution_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+
+    // the second user approves and then the request will eventually become completed
+    submit_request_approval(
+        &env,
+        user_b,
+        canister_ids.station,
+        call_canister_operation_request.clone(),
+        RequestApprovalStatusDTO::Approved,
+    );
+    let executed_request = wait_for_request(
+        &env,
+        user_a,
+        canister_ids.station,
+        call_canister_operation_request.clone(),
+    )
+    .unwrap();
+
+    // the execution method should have been called setting the counter to 42 on the execution canister
+    // and the cycles transferred and accepted
+    let ctr = update_raw(
+        &env,
+        validation_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 6_u32.to_le_bytes());
+    let cycles = env.cycle_balance(validation_canister_id);
+    assert!((95 * T..=100 * T).contains(&cycles));
+    let ctr = update_raw(
+        &env,
+        execution_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 42_u32.to_le_bytes());
+    let cycles = env.cycle_balance(execution_canister_id);
+    assert!((105 * T..=110 * T).contains(&cycles));
+
+    // check the execution method reply to match the candid encoding of '(variant {Ok = "good"})'
+    let execution_method_reply = match executed_request.operation {
+        RequestOperationDTO::CallExternalCanister(operation) => operation.execution_method_reply,
+        _ => panic!(
+            "Unexpected request operation type: {:?}",
+            executed_request.operation
+        ),
+    };
+    assert_eq!(
+        execution_method_reply,
+        Some(hex::decode("4449444c016b01bc8a017101000004676f6f64").unwrap())
+    );
 }
