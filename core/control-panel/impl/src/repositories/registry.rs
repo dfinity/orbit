@@ -1,4 +1,6 @@
-use super::indexes::registry_index::RegistryIndexRepository;
+use super::indexes::{
+    registry_index::RegistryIndexRepository, registry_sort_index::RegistrySortIndexRepository,
+};
 use crate::{
     core::{with_memory_manager, Memory, REGISTRY_MEMORY_ID},
     models::{
@@ -6,10 +8,17 @@ use crate::{
         RegistryEntry, RegistryEntryId, RegistryValueKind,
     },
 };
+use control_panel_api::RegistryEntrySortBy;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::{IndexRepository, Repository};
-use orbit_essentials::repository::{RefreshIndexMode, SelectionFilter};
+use orbit_essentials::{
+    repository::{IndexRepository, OrSelectionFilter, Repository},
+    types::UUID,
+};
+use orbit_essentials::{
+    repository::{RefreshIndexMode, SelectionFilter, SortDirection, SortingStrategy},
+    types::Timestamp,
+};
 use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
 thread_local! {
@@ -29,6 +38,7 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct RegistryRepository {
     indexes: RegistryIndexRepository,
+    sort_index: RegistrySortIndexRepository,
 }
 
 impl Repository<RegistryEntryId, RegistryEntry> for RegistryRepository {
@@ -52,6 +62,8 @@ impl Repository<RegistryEntryId, RegistryEntry> for RegistryRepository {
                     current: value.indexes(),
                 });
 
+            self.sort_index.insert(key, value.to_sort_index());
+
             prev
         })
     }
@@ -65,6 +77,8 @@ impl Repository<RegistryEntryId, RegistryEntry> for RegistryRepository {
                     current: prev.clone().map_or(Vec::new(), |prev| prev.indexes()),
                 });
 
+            self.sort_index.remove(key);
+
             prev
         })
     }
@@ -75,123 +89,233 @@ impl Repository<RegistryEntryId, RegistryEntry> for RegistryRepository {
 }
 
 impl RegistryRepository {
-    /// Finds the ids of the registry entries by the given name.
-    pub fn find_ids_by_fullname(&self, name: &str) -> Vec<RegistryEntryId> {
-        let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
-            from: RegistryIndexKind::Fullname(name.to_string()),
-            to: RegistryIndexKind::Fullname(name.to_string()),
-        });
+    /// Finds the ids of the registry entries by the given where clause.
+    pub fn find_ids_where(
+        &self,
+        condition: RegistryWhere,
+        sort_by: Option<RegistryEntrySortBy>,
+    ) -> Vec<RegistryEntryId> {
+        let filters = self.build_where_filtering_strategy(condition);
+        let entry_ids = self.find_with_filters(filters);
+        let mut ids = entry_ids.into_iter().collect::<Vec<_>>();
 
-        entries.into_iter().collect()
+        self.sort_ids_with_strategy(&mut ids, &sort_by);
+
+        ids
     }
 
-    /// Finds the registry entries by the given name.
-    pub fn find_by_fullname(&self, name: &str) -> Vec<RegistryEntry> {
-        self.find_ids_by_fullname(name)
-            .into_iter()
-            .filter_map(|id| self.get(&id))
-            .collect()
+    /// Sorts the registry entry IDs based on the provided sort strategy.
+    ///
+    /// If no sort strategy is provided, it defaults to sorting by creation timestamp descending.
+    fn sort_ids_with_strategy(
+        &self,
+        entry_ids: &mut [UUID],
+        sort_by: &Option<RegistryEntrySortBy>,
+    ) {
+        match sort_by {
+            Some(RegistryEntrySortBy::CreatedAt(direction)) => {
+                let sort_strategy = TimestampSortingStrategy {
+                    index: &self.sort_index,
+                    timestamp_type: TimestampType::Creation,
+                    direction: match direction {
+                        control_panel_api::SortDirection::Asc => Some(SortDirection::Ascending),
+                        control_panel_api::SortDirection::Desc => Some(SortDirection::Descending),
+                    },
+                };
+
+                sort_strategy.sort(entry_ids);
+            }
+            None => {
+                // Default sort by creation timestamp descending
+                let sort_strategy = TimestampSortingStrategy {
+                    index: &self.sort_index,
+                    timestamp_type: TimestampType::Creation,
+                    direction: Some(SortDirection::Descending),
+                };
+
+                sort_strategy.sort(entry_ids);
+            }
+        }
     }
 
-    /// Finds the ids of the registry entries by the given namespace.
-    pub fn find_ids_by_namespace(&self, namespace: &str) -> Vec<RegistryEntryId> {
-        let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
-            from: RegistryIndexKind::Namespace(namespace.to_string()),
-            to: RegistryIndexKind::Namespace(namespace.to_string()),
-        });
+    fn build_where_filtering_strategy<'a>(
+        &'a self,
+        condition: RegistryWhere,
+    ) -> Vec<Box<dyn SelectionFilter<'a, IdType = UUID> + 'a>> {
+        let mut filters: Vec<Box<dyn SelectionFilter<IdType = UUID> + 'a>> = Vec::new();
 
-        entries.into_iter().collect()
-    }
+        if let Some(fullname) = condition.fullname {
+            filters.push(Box::new(FullnameSelectionFilter {
+                repository: &self.indexes,
+                fullname,
+            }));
+        }
 
-    /// Finds the registry entries by the given namespace.
-    pub fn find_by_namespace(&self, namespace: &str) -> Vec<RegistryEntry> {
-        self.find_ids_by_namespace(namespace)
-            .into_iter()
-            .filter_map(|id| self.get(&id))
-            .collect()
-    }
+        if let Some(namespace) = condition.namespace {
+            filters.push(Box::new(NamespaceSelectionFilter {
+                repository: &self.indexes,
+                namespace,
+            }));
+        }
 
-    /// Finds the ids of the registry entries by the given unnamespaced name.
-    pub fn find_ids_by_name(&self, unnamespaced_name: &str) -> Vec<RegistryEntryId> {
-        let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
-            from: RegistryIndexKind::Name(unnamespaced_name.to_string()),
-            to: RegistryIndexKind::Name(unnamespaced_name.to_string()),
-        });
+        if let Some(name) = condition.name {
+            filters.push(Box::new(NameSelectionFilter {
+                repository: &self.indexes,
+                name,
+            }));
+        }
 
-        entries.into_iter().collect()
-    }
+        if let Some(kind) = condition.kind {
+            filters.push(Box::new(KindSelectionFilter {
+                repository: &self.indexes,
+                kind,
+            }));
+        }
 
-    /// Finds the registry entries by the given unnamespaced name.
-    pub fn find_by_name(&self, unnamespaced_name: &str) -> Vec<RegistryEntry> {
-        self.find_ids_by_name(unnamespaced_name)
-            .into_iter()
-            .filter_map(|id| self.get(&id))
-            .collect()
-    }
+        if !condition.categories.is_empty() {
+            let includes_categories = Box::new(OrSelectionFilter {
+                filters: condition
+                    .categories
+                    .iter()
+                    .map(|category| {
+                        Box::new(CategorySelectionFilter {
+                            repository: &self.indexes,
+                            category: category.clone(),
+                        }) as Box<dyn SelectionFilter<IdType = UUID>>
+                    })
+                    .collect(),
+            });
 
-    /// Finds the ids of the registry entries by the given category.
-    pub fn find_ids_by_category(&self, category: &str) -> Vec<RegistryEntryId> {
-        let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
-            from: RegistryIndexKind::Category(category.to_string()),
-            to: RegistryIndexKind::Category(category.to_string()),
-        });
+            filters.push(includes_categories);
+        }
 
-        entries.into_iter().collect()
-    }
+        if !condition.tags.is_empty() {
+            let includes_tags = Box::new(OrSelectionFilter {
+                filters: condition
+                    .tags
+                    .iter()
+                    .map(|tag| {
+                        Box::new(TagSelectionFilter {
+                            repository: &self.indexes,
+                            tag: tag.clone(),
+                        }) as Box<dyn SelectionFilter<IdType = UUID>>
+                    })
+                    .collect(),
+            });
 
-    /// Finds the registry entries by the given category.
-    pub fn find_by_category(&self, category: &str) -> Vec<RegistryEntry> {
-        self.find_ids_by_category(category)
-            .into_iter()
-            .filter_map(|id| self.get(&id))
-            .collect()
-    }
+            filters.push(includes_tags);
+        }
 
-    /// Find by tags the registry entries by the given tag.
-    pub fn find_ids_by_tag(&self, tag: &str) -> Vec<RegistryEntryId> {
-        let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
-            from: RegistryIndexKind::Tag(tag.to_string()),
-            to: RegistryIndexKind::Tag(tag.to_string()),
-        });
+        // If no filters are provided, use the default namespace
+        if filters.is_empty() {
+            filters.push(Box::new(NamespaceSelectionFilter {
+                repository: &self.indexes,
+                namespace: RegistryEntry::DEFAULT_NAMESPACE.to_string(),
+            }));
+        }
 
-        entries.into_iter().collect()
-    }
-
-    /// Finds the registry entries by the given tag.
-    pub fn find_by_tag(&self, tag: &str) -> Vec<RegistryEntry> {
-        self.find_ids_by_tag(tag)
-            .into_iter()
-            .filter_map(|id| self.get(&id))
-            .collect()
-    }
-
-    /// Finds the ids of the registry entries by the given value kind.
-    pub fn find_ids_by_kind(&self, kind: &RegistryValueKind) -> Vec<RegistryEntryId> {
-        let entries = self.indexes.find_by_criteria(RegistryIndexCriteria {
-            from: RegistryIndexKind::ValueKind(kind.clone()),
-            to: RegistryIndexKind::ValueKind(kind.clone()),
-        });
-
-        entries.into_iter().collect()
-    }
-
-    /// Finds the registry entries by the given value kind.
-    pub fn find_by_kind(&self, kind: &RegistryValueKind) -> Vec<RegistryEntry> {
-        self.find_ids_by_kind(kind)
-            .into_iter()
-            .filter_map(|id| self.get(&id))
-            .collect()
+        filters
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct RegistryWhereClause {
+enum TimestampType {
+    Creation,
+}
+
+#[derive(Debug, Clone)]
+struct TimestampSortingStrategy<'a> {
+    index: &'a RegistrySortIndexRepository,
+    timestamp_type: TimestampType,
+    direction: Option<SortDirection>,
+}
+
+impl<'a> SortingStrategy<'a> for TimestampSortingStrategy<'a> {
+    type IdType = UUID;
+
+    fn sort(&self, ids: &mut [Self::IdType]) {
+        let direction = self.direction.unwrap_or(SortDirection::Ascending);
+        let mut id_with_timestamps: Vec<(Timestamp, Self::IdType)> = ids
+            .iter()
+            .map(|id| {
+                let timestamp = self
+                    .index
+                    .get(id)
+                    .map(|index| match self.timestamp_type {
+                        TimestampType::Creation => index.created_at,
+                    })
+                    .unwrap_or_default();
+                (timestamp, *id)
+            })
+            .collect();
+
+        id_with_timestamps.sort_by(|a, b| {
+            {
+                let ord = a.0.cmp(&b.0); // Compare timestamps
+                match direction {
+                    SortDirection::Ascending => ord,
+                    SortDirection::Descending => ord.reverse(),
+                }
+            }
+            .then_with(|| a.1.cmp(&b.1)) // Compare IDs if timestamps are equal
+        });
+
+        let sorted_ids: Vec<UUID> = id_with_timestamps.into_iter().map(|(_, id)| id).collect();
+        ids.copy_from_slice(&sorted_ids);
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RegistryWhere {
     pub fullname: Option<String>,
     pub name: Option<String>,
     pub namespace: Option<String>,
     pub categories: Vec<String>,
     pub tags: Vec<String>,
     pub kind: Option<RegistryValueKind>,
+}
+
+impl RegistryWhere {
+    pub fn clause() -> Self {
+        Self {
+            fullname: None,
+            name: None,
+            namespace: None,
+            categories: Vec::new(),
+            tags: Vec::new(),
+            kind: None,
+        }
+    }
+
+    pub fn and_fullname(mut self, fullname: &str) -> Self {
+        self.fullname = Some(fullname.to_string());
+        self
+    }
+
+    pub fn and_namespace(mut self, namespace: &str) -> Self {
+        self.namespace = Some(namespace.to_string());
+        self
+    }
+
+    pub fn and_name(mut self, name: &str) -> Self {
+        self.name = Some(name.to_string());
+        self
+    }
+
+    pub fn and_categories(mut self, categories: Vec<String>) -> Self {
+        self.categories.extend(categories);
+        self
+    }
+
+    pub fn and_tags(mut self, tags: Vec<String>) -> Self {
+        self.tags.extend(tags);
+        self
+    }
+
+    pub fn and_kind(mut self, kind: RegistryValueKind) -> Self {
+        self.kind = Some(kind);
+        self
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -375,17 +499,16 @@ mod tests {
             repository.insert(entry.id, entry);
         }
 
-        let result = repository.find_by_name("entry-2");
+        let result = repository.find_ids_where(RegistryWhere::clause().and_name("entry-2"), None);
 
         assert!(!result.is_empty());
         assert_eq!(result.len(), 1);
 
-        let entry = result.first().unwrap();
+        let entry = repository.get(result.first().unwrap()).unwrap();
 
         assert_eq!(entry.name, "entry-2");
 
-        let result = repository.find_by_name("entry-");
-
+        let result = repository.find_ids_where(RegistryWhere::clause().and_name("entry-"), None);
         assert!(result.is_empty());
     }
 
@@ -400,13 +523,20 @@ mod tests {
             repository.insert(entry.id, entry);
         }
 
-        let result = repository.find_by_namespace("orbit");
+        let result =
+            repository.find_ids_where(RegistryWhere::clause().and_namespace("orbit"), None);
 
         assert!(!result.is_empty());
         assert_eq!(result.len(), 5);
+
+        let result = result
+            .into_iter()
+            .map(|id| repository.get(&id).unwrap())
+            .collect::<Vec<_>>();
+
         assert!(result.iter().any(|entry| entry.name == "@orbit/entry-0"));
 
-        let result = repository.find_by_namespace("orbi");
+        let result = repository.find_ids_where(RegistryWhere::clause().and_namespace("orbi"), None);
 
         assert!(result.is_empty());
     }
@@ -422,16 +552,18 @@ mod tests {
             repository.insert(entry.id, entry);
         }
 
-        let result = repository.find_by_fullname("@orbit/entry-2");
+        let result =
+            repository.find_ids_where(RegistryWhere::clause().and_fullname("@orbit/entry-2"), None);
 
         assert!(!result.is_empty());
         assert_eq!(result.len(), 1);
 
-        let entry = result.first().unwrap();
+        let entry = repository.get(result.first().unwrap()).unwrap();
 
         assert_eq!(entry.name, "@orbit/entry-2");
 
-        let result = repository.find_by_fullname("@orbit/entry-");
+        let result =
+            repository.find_ids_where(RegistryWhere::clause().and_fullname("@orbit/entry-"), None);
 
         assert!(result.is_empty());
     }
@@ -447,13 +579,16 @@ mod tests {
             repository.insert(entry.id, entry);
         }
 
-        let result = repository
-            .find_by_fullname(format!("@{}/entry-2", RegistryEntry::DEFAULT_NAMESPACE).as_str());
+        let result = repository.find_ids_where(
+            RegistryWhere::clause()
+                .and_fullname(format!("@{}/entry-2", RegistryEntry::DEFAULT_NAMESPACE).as_str()),
+            None,
+        );
 
         assert!(!result.is_empty());
         assert_eq!(result.len(), 1);
 
-        let entry = result.first().unwrap();
+        let entry = repository.get(result.first().unwrap()).unwrap();
 
         assert_eq!(entry.name, "entry-2");
     }
@@ -469,17 +604,23 @@ mod tests {
             repository.insert(entry.id, entry);
         }
 
-        let result = repository.find_by_category("category-2");
+        let result = repository.find_ids_where(
+            RegistryWhere::clause().and_categories(vec!["category-2".to_string()]),
+            None,
+        );
 
         assert!(!result.is_empty());
         assert_eq!(result.len(), 1);
 
-        let entry = result.first().unwrap();
+        let entry = repository.get(result.first().unwrap()).unwrap();
 
         assert_eq!(entry.categories.len(), 1);
         assert_eq!(entry.categories.first().unwrap(), "category-2");
 
-        let result = repository.find_by_category("category-");
+        let result = repository.find_ids_where(
+            RegistryWhere::clause().and_categories(vec!["category-".to_string()]),
+            None,
+        );
 
         assert!(result.is_empty());
     }
@@ -495,17 +636,23 @@ mod tests {
             repository.insert(entry.id, entry);
         }
 
-        let result = repository.find_by_tag("tag-2");
+        let result = repository.find_ids_where(
+            RegistryWhere::clause().and_tags(vec!["tag-2".to_string()]),
+            None,
+        );
 
         assert!(!result.is_empty());
         assert_eq!(result.len(), 1);
 
-        let entry = result.first().unwrap();
+        let entry = repository.get(result.first().unwrap()).unwrap();
 
         assert_eq!(entry.tags.len(), 1);
         assert_eq!(entry.tags.first().unwrap(), "tag-2");
 
-        let result = repository.find_by_tag("tag-");
+        let result = repository.find_ids_where(
+            RegistryWhere::clause().and_tags(vec!["tag-".to_string()]),
+            None,
+        );
 
         assert!(result.is_empty());
     }
@@ -521,9 +668,55 @@ mod tests {
             repository.insert(entry.id, entry);
         }
 
-        let result = repository.find_by_kind(&RegistryValueKind::WasmModule);
+        let result = repository.find_ids_where(
+            RegistryWhere::clause().and_kind(RegistryValueKind::WasmModule),
+            None,
+        );
 
         assert!(!result.is_empty());
         assert_eq!(result.len(), 5);
+    }
+
+    #[test]
+    fn sort_search_by_created_dt_asc_and_desc() {
+        let repository = RegistryRepository::default();
+        let mut expected_sorted_ids = Vec::new();
+        for i in 0..5 {
+            let mut entry = create_registry_entry();
+            entry.created_at = i;
+            entry.validate().unwrap();
+
+            expected_sorted_ids.push(entry.id);
+            repository.insert(entry.id, entry);
+        }
+
+        let sorted_result = repository.find_ids_where(
+            RegistryWhere::clause(),
+            Some(RegistryEntrySortBy::CreatedAt(
+                control_panel_api::SortDirection::Asc,
+            )),
+        );
+
+        assert!(!sorted_result.is_empty());
+        assert_eq!(sorted_result.len(), 5);
+
+        assert_eq!(sorted_result, expected_sorted_ids);
+
+        let sorted_result = repository.find_ids_where(
+            RegistryWhere::clause(),
+            Some(RegistryEntrySortBy::CreatedAt(
+                control_panel_api::SortDirection::Desc,
+            )),
+        );
+
+        assert!(!sorted_result.is_empty());
+        assert_eq!(sorted_result.len(), 5);
+
+        // first make sure the ascending order is not equal to the descending order
+        assert_ne!(sorted_result, expected_sorted_ids);
+
+        expected_sorted_ids.reverse();
+
+        assert_eq!(sorted_result, expected_sorted_ids);
     }
 }

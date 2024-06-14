@@ -1,4 +1,4 @@
-use crate::{MetadataDTO, PaginationInput, TimestampRfc3339, UuidDTO};
+use crate::{MetadataDTO, PaginationInput, SortDirection, TimestampRfc3339, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -106,4 +106,9 @@ pub struct DeleteRegistryEntryInput {
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct DeleteRegistryEntryResponse {
     pub entry: RegistryEntryDTO,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum RegistryEntrySortBy {
+    CreatedAt(SortDirection),
 }

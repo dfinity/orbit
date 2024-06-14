@@ -27,3 +27,9 @@ pub struct PaginationInput {
     pub offset: Option<u64>,
     pub limit: Option<u16>,
 }
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub enum SortDirection {
+    Asc,
+    Desc,
+}
