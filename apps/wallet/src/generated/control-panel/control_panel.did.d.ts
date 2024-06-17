@@ -42,7 +42,7 @@ export type DeployStationResult = { 'Ok' : { 'canister_id' : StationID } } |
   { 'Err' : ApiError };
 export interface EditRegistryEntryInput {
   'id' : UUID,
-  'entry' : RegistryEntryInput,
+  'entry' : RegistryEntryUpdateInput,
 }
 export interface EditRegistryEntryResponse { 'entry' : RegistryEntry }
 export type EditRegistryEntryResult = { 'Ok' : EditRegistryEntryResponse } |
@@ -113,15 +113,26 @@ export interface RegistryEntryInput {
   'tags' : Array<string>,
   'description' : string,
 }
+export type RegistryEntrySortBy = { 'CreatedAt' : null };
+export interface RegistryEntryUpdateInput {
+  'categories' : [] | [Array<string>],
+  'value' : [] | [RegistryEntryValueInput],
+  'metadata' : [] | [Array<Metadata>],
+  'tags' : [] | [Array<string>],
+  'description' : [] | [string],
+}
 export type RegistryEntryValue = {
     'WasmModule' : WasmModuleRegistryEntryValue
   };
 export type RegistryEntryValueInput = {
     'WasmModule' : WasmModuleRegistryEntryValueInput
   };
+export type RegistryEntryValueKind = { 'WasmModule' : null };
 export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
-export type SearchRegistryFilterKind = { 'Name' : string };
+export type SearchRegistryFilterKind = { 'Kind' : RegistryEntryValueKind } |
+  { 'Name' : string } |
+  { 'Namespace' : string };
 export interface SearchRegistryInput {
   'pagination' : [] | [PaginationInput],
   'filter_by' : Array<SearchRegistryFilterKind>,
@@ -173,15 +184,19 @@ export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
   { 'Approved' : null } |
   { 'Denylisted' : null } |
   { 'Pending' : null };
+export interface WasmModuleRegistryEntryDependency {
+  'name' : string,
+  'version' : string,
+}
 export interface WasmModuleRegistryEntryValue {
   'version' : string,
-  'dependencies' : Array<UUID>,
+  'dependencies' : Array<WasmModuleRegistryEntryDependency>,
   'wasm_artifact_id' : UUID,
 }
 export interface WasmModuleRegistryEntryValueInput {
   'wasm_module' : Uint8Array | number[],
   'version' : string,
-  'dependencies' : Array<UUID>,
+  'dependencies' : Array<WasmModuleRegistryEntryDependency>,
 }
 export interface _SERVICE {
   'add_registry_entry' : ActorMethod<

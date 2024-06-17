@@ -158,17 +158,17 @@ impl RegistryRepository {
             }));
         }
 
-        if let Some(name) = condition.name {
-            filters.push(Box::new(NameSelectionFilter {
-                repository: &self.indexes,
-                name,
-            }));
-        }
-
         if let Some(kind) = condition.kind {
             filters.push(Box::new(KindSelectionFilter {
                 repository: &self.indexes,
                 kind,
+            }));
+        }
+
+        if let Some(version) = condition.version {
+            filters.push(Box::new(VersionSelectionFilter {
+                repository: &self.indexes,
+                version,
             }));
         }
 
@@ -272,6 +272,7 @@ pub struct RegistryWhere {
     pub namespace: Option<String>,
     pub categories: Vec<String>,
     pub tags: Vec<String>,
+    pub version: Option<String>,
     pub kind: Option<RegistryValueKind>,
 }
 
@@ -283,6 +284,7 @@ impl RegistryWhere {
             namespace: None,
             categories: Vec::new(),
             tags: Vec::new(),
+            version: None,
             kind: None,
         }
     }
@@ -312,6 +314,11 @@ impl RegistryWhere {
         self
     }
 
+    pub fn and_version(mut self, version: &str) -> Self {
+        self.version = Some(version.to_string());
+        self
+    }
+
     pub fn and_kind(mut self, kind: RegistryValueKind) -> Self {
         self.kind = Some(kind);
         self
@@ -338,30 +345,6 @@ impl<'a> SelectionFilter<'a> for FullnameSelectionFilter<'a> {
         self.repository.find_by_criteria(RegistryIndexCriteria {
             from: RegistryIndexKind::Fullname(self.fullname.clone()),
             to: RegistryIndexKind::Fullname(self.fullname.clone()),
-        })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct NameSelectionFilter<'a> {
-    repository: &'a RegistryIndexRepository,
-    name: String,
-}
-
-impl<'a> SelectionFilter<'a> for NameSelectionFilter<'a> {
-    type IdType = RegistryEntryId;
-
-    fn matches(&self, id: &Self::IdType) -> bool {
-        self.repository.exists(&RegistryIndex {
-            index: RegistryIndexKind::Name(self.name.clone()),
-            registry_entry_id: *id,
-        })
-    }
-
-    fn select(&self) -> HashSet<Self::IdType> {
-        self.repository.find_by_criteria(RegistryIndexCriteria {
-            from: RegistryIndexKind::Name(self.name.clone()),
-            to: RegistryIndexKind::Name(self.name.clone()),
         })
     }
 }
@@ -462,13 +445,41 @@ impl<'a> SelectionFilter<'a> for TagSelectionFilter<'a> {
     }
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct VersionSelectionFilter<'a> {
+    repository: &'a RegistryIndexRepository,
+    version: String,
+}
+
+impl<'a> SelectionFilter<'a> for VersionSelectionFilter<'a> {
+    type IdType = RegistryEntryId;
+
+    fn matches(&self, id: &Self::IdType) -> bool {
+        self.repository.exists(&RegistryIndex {
+            index: RegistryIndexKind::Version(self.version.clone()),
+            registry_entry_id: *id,
+        })
+    }
+
+    fn select(&self) -> HashSet<Self::IdType> {
+        self.repository.find_by_criteria(RegistryIndexCriteria {
+            from: RegistryIndexKind::Version(self.version.clone()),
+            to: RegistryIndexKind::Version(self.version.clone()),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::registry_entry_test_utils::{
-        create_registry_entry, create_wasm_module_registry_entry_value,
+    use crate::models::{
+        registry_entry_test_utils::{
+            create_registry_entry, create_wasm_module_registry_entry_value,
+        },
+        RegistryValue, WasmModuleRegistryValue,
     };
     use orbit_essentials::model::ModelValidator;
+    use uuid::Uuid;
 
     #[test]
     fn check_crud_operations() {
@@ -486,30 +497,6 @@ mod tests {
         assert!(repository.get(&entry.id).is_none());
 
         assert_eq!(repository.len(), 0);
-    }
-
-    #[test]
-    fn test_find_by_name() {
-        let repository = RegistryRepository::default();
-        for i in 0..10 {
-            let mut entry = create_registry_entry();
-            entry.name = format!("entry-{}", i);
-            entry.validate().unwrap();
-
-            repository.insert(entry.id, entry);
-        }
-
-        let result = repository.find_ids_where(RegistryWhere::clause().and_name("entry-2"), None);
-
-        assert!(!result.is_empty());
-        assert_eq!(result.len(), 1);
-
-        let entry = repository.get(result.first().unwrap()).unwrap();
-
-        assert_eq!(entry.name, "entry-2");
-
-        let result = repository.find_ids_where(RegistryWhere::clause().and_name("entry-"), None);
-        assert!(result.is_empty());
     }
 
     #[test]
@@ -679,6 +666,53 @@ mod tests {
 
         assert!(!result.is_empty());
         assert_eq!(result.len(), 5);
+    }
+
+    #[test]
+    fn test_find_by_version() {
+        let repository = RegistryRepository::default();
+        for i in 0..5 {
+            let mut entry = create_registry_entry();
+            entry.namespace = "orbit".to_string();
+            entry.name = "station".to_string();
+            entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+                wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+                version: format!("1.0.{}", i),
+                dependencies: Vec::new(),
+            });
+            entry.validate().unwrap();
+
+            repository.insert(entry.id, entry);
+        }
+
+        let result = repository.find_ids_where(
+            RegistryWhere::clause()
+                .and_fullname("@orbit/station")
+                .and_kind(RegistryValueKind::WasmModule)
+                .and_version("1.0.2"),
+            None,
+        );
+
+        assert!(!result.is_empty());
+        assert_eq!(result.len(), 1);
+
+        let entry = repository.get(result.first().unwrap()).unwrap();
+
+        match entry.value {
+            RegistryValue::WasmModule(ref value) => {
+                assert_eq!(value.version, "1.0.2");
+            }
+        }
+
+        let result = repository.find_ids_where(
+            RegistryWhere::clause()
+                .and_fullname("@orbit/station")
+                .and_kind(RegistryValueKind::WasmModule)
+                .and_version("1.0"),
+            None,
+        );
+
+        assert!(result.is_empty());
     }
 
     #[test]

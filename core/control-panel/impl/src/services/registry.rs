@@ -1,16 +1,17 @@
 use crate::{
     errors::RegistryError,
     mappers::RegistryMapper,
-    models::{RegistryEntry, RegistryEntryId, RegistryValue},
-    repositories::{
-        ArtifactRepository, RegistryRepository, RegistryWhere, ARTIFACT_REPOSITORY,
-        REGISTRY_REPOSITORY,
-    },
+    models::{RegistryEntry, RegistryEntryId, RegistryValue, WasmModuleRegistryValue, LATEST_TAG},
+    repositories::{RegistryRepository, RegistryWhere, REGISTRY_REPOSITORY},
+    services::{ArtifactService, ARTIFACT_SERVICE},
 };
-use control_panel_api::{RegistryEntryInput, SearchRegistryFilterKindDTO, SearchRegistryInput};
+use control_panel_api::{
+    RegistryEntryInput, RegistryEntryUpdateInput, SearchRegistryFilterKindDTO, SearchRegistryInput,
+};
 use lazy_static::lazy_static;
 use orbit_essentials::{
     api::ServiceResult,
+    model::ModelValidator,
     pagination::{paginated_items, PaginatedData, PaginatedItemsArgs},
     repository::Repository,
 };
@@ -20,7 +21,7 @@ use uuid::Uuid;
 lazy_static! {
     pub static ref REGISTRY_SERVICE: Arc<RegistryService> = Arc::new(RegistryService::new(
         Arc::clone(&REGISTRY_REPOSITORY),
-        Arc::clone(&ARTIFACT_REPOSITORY)
+        Arc::clone(&ARTIFACT_SERVICE)
     ));
 }
 
@@ -28,7 +29,7 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct RegistryService {
     registry_repository: Arc<RegistryRepository>,
-    artifact_repository: Arc<ArtifactRepository>,
+    artifact_service: Arc<ArtifactService>,
 }
 
 impl RegistryService {
@@ -37,11 +38,11 @@ impl RegistryService {
 
     pub fn new(
         registry_repository: Arc<RegistryRepository>,
-        artifact_repository: Arc<ArtifactRepository>,
+        artifact_service: Arc<ArtifactService>,
     ) -> Self {
         Self {
             registry_repository,
-            artifact_repository,
+            artifact_service,
         }
     }
 
@@ -74,7 +75,12 @@ impl RegistryService {
                 SearchRegistryFilterKindDTO::Name(name) => {
                     let fullname = match name.starts_with(RegistryEntry::NAMESPACE_PREFIX) {
                         true => name,
-                        false => format!("@{}/{}", RegistryEntry::DEFAULT_NAMESPACE, name),
+                        false => format!(
+                            "{}{}/{}",
+                            RegistryEntry::NAMESPACE_PREFIX,
+                            RegistryEntry::DEFAULT_NAMESPACE,
+                            name
+                        ),
                     };
 
                     where_clause = where_clause.to_owned().and_fullname(&fullname);
@@ -113,16 +119,85 @@ impl RegistryService {
 
         RegistryMapper::fill_from_create_input(&mut entry, &input);
 
-        unimplemented!()
+        match &input.value {
+            control_panel_api::RegistryEntryValueInput::WasmModule(module) => {
+                let artifact_id = self.artifact_service.create(module.wasm_module.clone())?;
+
+                entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+                    wasm_artifact_id: artifact_id,
+                    version: module.version.clone(),
+                    dependencies: module
+                        .dependencies
+                        .iter()
+                        .map(|dep| dep.clone().into())
+                        .collect(),
+                });
+            }
+        };
+
+        // There can only be one latest entry, so we need to remove the latest tag from the previous entry if it exists.
+        if entry.tags.contains(&LATEST_TAG.to_string()) {
+            let previous_latest = self.registry_repository.find_ids_where(
+                RegistryWhere::clause()
+                    .and_fullname(&entry.fullname())
+                    .and_tags(vec![LATEST_TAG.to_string()]),
+                None,
+            );
+
+            previous_latest
+                .iter()
+                .filter_map(|id| self.get(id).ok())
+                .for_each(|mut e| {
+                    e.tags.retain(|t| t != LATEST_TAG);
+                    self.registry_repository.insert(e.id, e);
+                });
+        }
+
+        entry.validate()?;
+
+        self.registry_repository.insert(entry.id, entry.clone());
+
+        Ok(entry)
     }
 
     /// Updates the registry entry and returns it.
     pub fn edit(
         &self,
-        _registry_id: &RegistryEntryId,
-        _input: RegistryEntryInput,
+        registry_id: &RegistryEntryId,
+        input: RegistryEntryUpdateInput,
     ) -> ServiceResult<RegistryEntry> {
-        unimplemented!()
+        let mut entry = self.get(registry_id)?;
+
+        RegistryMapper::fill_from_update_input(&mut entry, &input);
+
+        match (&input.value, &entry.value) {
+            (
+                Some(control_panel_api::RegistryEntryValueInput::WasmModule(module)),
+                RegistryValue::WasmModule(current_module),
+            ) => {
+                self.artifact_service
+                    .remove_by_id(&current_module.wasm_artifact_id)?;
+
+                let artifact_id = self.artifact_service.create(module.wasm_module.clone())?;
+
+                entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+                    wasm_artifact_id: artifact_id,
+                    version: module.version.clone(),
+                    dependencies: module
+                        .dependencies
+                        .iter()
+                        .map(|dep| dep.clone().into())
+                        .collect(),
+                });
+            }
+            (None, _) => (),
+        };
+
+        entry.validate()?;
+
+        self.registry_repository.insert(entry.id, entry.clone());
+
+        Ok(entry)
     }
 
     /// Deletes the registry entry by id.
@@ -131,8 +206,8 @@ impl RegistryService {
 
         match &registry.value {
             RegistryValue::WasmModule(wasm_module) => {
-                self.artifact_repository
-                    .remove(&wasm_module.wasm_artifact_id);
+                self.artifact_service
+                    .remove_by_id(&wasm_module.wasm_artifact_id)?;
             }
         };
 
@@ -259,5 +334,131 @@ mod tests {
 
         assert_eq!(result.total, 10);
         assert_eq!(result.items.len(), 10);
+    }
+
+    #[test]
+    fn test_duplicate_entry() {
+        let mut entry = create_registry_entry();
+        entry.name = "module".to_string();
+        entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+            wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+            version: "1.0.0".to_string(),
+            dependencies: Vec::new(),
+        });
+
+        REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
+
+        let input = RegistryEntryInput {
+            name: entry.fullname(),
+            description: "This is a test description for the module.".to_string(),
+            tags: Vec::new(),
+            categories: Vec::new(),
+            metadata: Default::default(),
+            value: control_panel_api::RegistryEntryValueInput::WasmModule(
+                control_panel_api::WasmModuleRegistryEntryValueInput {
+                    version: "1.0.0".to_string(),
+                    wasm_module: [0, 1, 3].to_vec(),
+                    dependencies: Vec::new(),
+                },
+            ),
+        };
+
+        let result = REGISTRY_SERVICE.create(input);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_latest_tag() {
+        let mut entry = create_registry_entry();
+        entry.name = "module".to_string();
+        entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+            wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+            version: "1.0.0".to_string(),
+            dependencies: Vec::new(),
+        });
+        entry.tags = vec![LATEST_TAG.to_string()];
+
+        REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
+
+        let input = RegistryEntryInput {
+            name: entry.fullname(),
+            description: "This is a demo description for the module.".to_string(),
+            tags: vec![LATEST_TAG.to_string()],
+            categories: Vec::new(),
+            metadata: Default::default(),
+            value: control_panel_api::RegistryEntryValueInput::WasmModule(
+                control_panel_api::WasmModuleRegistryEntryValueInput {
+                    version: "1.0.1".to_string(),
+                    wasm_module: [0, 1, 3].to_vec(),
+                    dependencies: Vec::new(),
+                },
+            ),
+        };
+
+        let result = REGISTRY_SERVICE.create(input).unwrap();
+
+        assert_eq!(result.tags, vec![LATEST_TAG.to_string()]);
+
+        let latest = REGISTRY_REPOSITORY.find_ids_where(
+            RegistryWhere::clause()
+                .and_fullname(&entry.fullname())
+                .and_tags(vec![LATEST_TAG.to_string()]),
+            None,
+        );
+
+        assert_eq!(latest.len(), 1);
+        assert_eq!(latest[0], result.id);
+    }
+
+    #[test]
+    fn test_correctly_edits_entry() {
+        let create_input = RegistryEntryInput {
+            name: "module".to_string(),
+            description: "This is a test description for the module.".to_string(),
+            tags: Vec::new(),
+            categories: Vec::new(),
+            metadata: Default::default(),
+            value: control_panel_api::RegistryEntryValueInput::WasmModule(
+                control_panel_api::WasmModuleRegistryEntryValueInput {
+                    version: "1.0.0".to_string(),
+                    wasm_module: [0, 1].to_vec(),
+                    dependencies: Vec::new(),
+                },
+            ),
+        };
+
+        let entry = REGISTRY_SERVICE.create(create_input).unwrap();
+
+        let input = RegistryEntryUpdateInput {
+            description: Some("This is a test description for the module.".to_string()),
+            tags: Some(vec!["tag".to_string()]),
+            categories: Some(vec!["category".to_string()]),
+            metadata: Some(Default::default()),
+            value: Some(control_panel_api::RegistryEntryValueInput::WasmModule(
+                control_panel_api::WasmModuleRegistryEntryValueInput {
+                    version: "1.0.1".to_string(),
+                    wasm_module: [0, 1, 3].to_vec(),
+                    dependencies: Vec::new(),
+                },
+            )),
+        };
+
+        let result = REGISTRY_SERVICE.edit(&entry.id, input).unwrap();
+
+        assert_eq!(
+            result.description,
+            "This is a test description for the module."
+        );
+        assert_eq!(result.tags, vec!["tag".to_string()]);
+        assert_eq!(result.categories, vec!["category".to_string()]);
+        assert_eq!(result.metadata, Default::default());
+
+        match result.value {
+            RegistryValue::WasmModule(wasm_module) => {
+                assert_eq!(wasm_module.version, "1.0.1");
+                assert_eq!(wasm_module.dependencies.len(), 0);
+            }
+        }
     }
 }

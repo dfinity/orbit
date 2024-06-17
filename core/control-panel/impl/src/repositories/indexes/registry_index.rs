@@ -89,18 +89,18 @@ mod tests {
     }
 
     #[test]
-    fn test_find_by_name() {
+    fn test_find_by_namespace() {
         let repository = RegistryIndexRepository::default();
         for i in 0..10 {
             repository.insert(RegistryIndex {
-                index: RegistryIndexKind::Name(i.to_string()),
+                index: RegistryIndexKind::Namespace(format!("ns-{}", i)),
                 registry_entry_id: [i; 16],
             });
         }
 
         let result = repository.find_by_criteria(RegistryIndexCriteria {
-            from: RegistryIndexKind::Name("0".to_string()),
-            to: RegistryIndexKind::Name("2".to_string()),
+            from: RegistryIndexKind::Namespace("ns-0".to_string()),
+            to: RegistryIndexKind::Namespace("ns-2".to_string()),
         });
 
         assert!(!result.is_empty());

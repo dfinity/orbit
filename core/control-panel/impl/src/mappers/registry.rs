@@ -14,7 +14,10 @@ impl RegistryMapper {
         entry: &mut RegistryEntry,
         input: &control_panel_api::RegistryEntryInput,
     ) {
-        entry.name = input.name.to_string();
+        let (namespace, name) = RegistryEntry::parse_namespace_and_name(&input.name);
+
+        entry.namespace = namespace;
+        entry.name = name;
         entry.description = input.description.to_string();
         entry.tags = input.tags.clone();
         entry.categories = input.categories.clone();
@@ -33,6 +36,27 @@ impl RegistryMapper {
                         .collect(),
                 });
             }
+        }
+    }
+
+    pub fn fill_from_update_input(
+        entry: &mut RegistryEntry,
+        input: &control_panel_api::RegistryEntryUpdateInput,
+    ) {
+        if let Some(description) = &input.description {
+            entry.description = description.to_string();
+        }
+
+        if let Some(tags) = &input.tags {
+            entry.tags = tags.clone();
+        }
+
+        if let Some(categories) = &input.categories {
+            entry.categories = categories.clone();
+        }
+
+        if let Some(metadata) = &input.metadata {
+            entry.metadata = HelperMapper::from_metadata(metadata.clone());
         }
     }
 }
@@ -85,6 +109,16 @@ impl From<control_panel_api::RegistryEntryValueKindDTO> for RegistryValueKind {
     fn from(kind: control_panel_api::RegistryEntryValueKindDTO) -> Self {
         match kind {
             control_panel_api::RegistryEntryValueKindDTO::WasmModule => {
+                RegistryValueKind::WasmModule
+            }
+        }
+    }
+}
+
+impl From<control_panel_api::RegistryEntryValueInput> for RegistryValueKind {
+    fn from(input: control_panel_api::RegistryEntryValueInput) -> Self {
+        match input {
+            control_panel_api::RegistryEntryValueInput::WasmModule(_) => {
                 RegistryValueKind::WasmModule
             }
         }

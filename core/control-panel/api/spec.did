@@ -498,6 +498,21 @@ type RegistryEntryInput = record {
   value : RegistryEntryValueInput;
 };
 
+// The registry entry update input.
+type RegistryEntryUpdateInput = record {
+  // The description of the entry, which is a human-readable description of the entry.
+  description : opt text;
+  // The tags are used to tag the entry with specific search terms (e.g. "latest", "stable").
+  tags : opt vec text;
+  // The category is used to associate the entry with a specific category (e.g. "chain-fusion")
+  // across all the entries in the registry.
+  categories : opt vec text;
+  // The metadata of the entry in the registry.
+  metadata : opt vec Metadata;
+  // The content of the entry in the registry.
+  value : opt RegistryEntryValueInput;
+};
+
 // The registry entry value input.
 type RegistryEntryValueInput = variant {
   WasmModule : WasmModuleRegistryEntryValueInput;
@@ -536,7 +551,7 @@ type EditRegistryEntryInput = record {
   // The id of the registry entry.
   id : UUID;
   // The updated registry entry.
-  entry : RegistryEntryInput;
+  entry : RegistryEntryUpdateInput;
 };
 
 // The response of editing a registry entry.

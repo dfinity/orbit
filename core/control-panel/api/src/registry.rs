@@ -61,6 +61,15 @@ pub struct RegistryEntryInput {
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct RegistryEntryUpdateInput {
+    pub description: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub categories: Option<Vec<String>>,
+    pub metadata: Option<Vec<MetadataDTO>>,
+    pub value: Option<RegistryEntryValueInput>,
+}
+
+#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct GetRegistryEntryInput {
     pub id: UuidDTO,
 }
@@ -103,7 +112,7 @@ pub struct AddRegistryEntryResponse {
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct EditRegistryEntryInput {
     pub id: UuidDTO,
-    pub entry: RegistryEntryInput,
+    pub entry: RegistryEntryUpdateInput,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

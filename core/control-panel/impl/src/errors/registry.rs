@@ -8,9 +8,12 @@ pub enum RegistryError {
     /// The registry entry failed validation.
     #[error(r#"The registry entry failed validation due to {info}."#)]
     ValidationError { info: String },
-    /// The registry entry is a duplicate.
-    #[error("The registry entry is a duplicate of {id}.")]
-    Duplicate { id: String },
+    /// Updates to the registry entry must keep the same type.
+    #[error("Updates to the registry entry must use a value of {kind}.")]
+    UpdateKindMismatch {
+        /// The current type of the registry entry.
+        kind: String,
+    },
     /// The registry entry was not found.
     #[error("The registry entry with id {id} was not found.")]
     NotFound { id: String },
@@ -28,8 +31,8 @@ impl DetailableError for RegistryError {
                 details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
-            RegistryError::Duplicate { id } => {
-                details.insert("id".to_string(), id.to_string());
+            RegistryError::UpdateKindMismatch { kind } => {
+                details.insert("kind".to_string(), kind.to_string());
                 Some(details)
             }
         }

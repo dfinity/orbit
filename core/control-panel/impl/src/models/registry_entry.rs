@@ -1,17 +1,16 @@
 use super::artifact::ArtifactId;
+use crate::repositories::{RegistryWhere, REGISTRY_REPOSITORY};
 use crate::{core::ic_cdk::next_time, errors::RegistryError};
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
+use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
+use std::fmt::Display;
 use uuid::Uuid;
 
-/// When adding tags to registry entries, if the tag is in this list then it is unique across all the
-/// entries of the same namespace and name. If the tag exists in other entries, then it will be removed from
-/// older entries.
-///
-/// This value is hardcoded, and it should be updated or moved to a configurable value in the future if needed.
-pub const _UNIQUE_TAGS: [&str; 2] = ["latest", "stable"];
+/// The latest tag, which is used to tag the latest version of the entry if applicable.
+pub const LATEST_TAG: &str = "latest";
 
 /// The entry id in the registry, which is a UUID.
 pub type RegistryEntryId = UUID;
@@ -128,6 +127,14 @@ pub struct WasmModuleRegistryEntryDependency {
     pub version: String,
 }
 
+impl Display for RegistryValueKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RegistryValueKind::WasmModule => write!(f, "WasmModule"),
+        }
+    }
+}
+
 impl Default for RegistryEntry {
     fn default() -> Self {
         Self::new()
@@ -187,6 +194,30 @@ impl RegistryEntry {
     pub fn fullname(&self) -> String {
         format!("{}{}/{}", Self::NAMESPACE_PREFIX, self.namespace, self.name)
     }
+
+    /// Parses the provided raw name into a namespace and a name.
+    ///
+    /// The returned tuple contains the namespace and the name in this order.
+    pub fn parse_namespace_and_name(raw_name: &str) -> (String, String) {
+        if raw_name.starts_with(Self::NAMESPACE_PREFIX) && raw_name.contains('/') {
+            let raw_name = &raw_name.trim_start_matches(Self::NAMESPACE_PREFIX);
+            let mut parts = raw_name.split('/');
+
+            if let Some(namespace) = parts.next() {
+                if let Some(name) = parts.next() {
+                    return (namespace.to_string(), name.to_string());
+                }
+            }
+        }
+
+        (Self::DEFAULT_NAMESPACE.to_string(), raw_name.to_string())
+    }
+
+    pub fn to_kind(&self) -> RegistryValueKind {
+        match &self.value {
+            RegistryValue::WasmModule(_) => RegistryValueKind::WasmModule,
+        }
+    }
 }
 
 impl WasmModuleRegistryValue {
@@ -194,22 +225,6 @@ impl WasmModuleRegistryValue {
     pub const MAX_VERSION_LENGTH: usize = 32;
 
     pub const MAX_DEPENDENCIES: usize = 25;
-}
-
-fn validate_wasm_module_dependencies(
-    dependencies: &[WasmModuleRegistryEntryDependency],
-) -> ModelValidatorResult<RegistryError> {
-    if dependencies.len() > WasmModuleRegistryValue::MAX_DEPENDENCIES {
-        return Err(RegistryError::ValidationError {
-            info: format!(
-                "Too many dependencies, expected at most {} but got {}",
-                WasmModuleRegistryValue::MAX_DEPENDENCIES,
-                dependencies.len()
-            ),
-        });
-    }
-
-    Ok(())
 }
 
 fn validate_wasm_module_version(version: &str) -> ModelValidatorResult<RegistryError> {
@@ -228,9 +243,134 @@ fn validate_wasm_module_version(version: &str) -> ModelValidatorResult<RegistryE
     Ok(())
 }
 
+fn validate_uniqueness(entry: &RegistryEntry) -> ModelValidatorResult<RegistryError> {
+    match &entry.value {
+        RegistryValue::WasmModule(value) => {
+            let mut ids = REGISTRY_REPOSITORY.find_ids_where(
+                RegistryWhere::clause()
+                    .and_fullname(&entry.fullname())
+                    .and_version(&value.version),
+                None,
+            );
+
+            ids.retain(|id| id != &entry.id);
+
+            if !ids.is_empty() {
+                return Err(RegistryError::ValidationError {
+                    info: format!(
+                        "The entry is a duplicate of {}",
+                        Uuid::from_bytes(ids[0]).hyphenated()
+                    ),
+                });
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_is_of_same_kind(entry: &RegistryEntry) -> ModelValidatorResult<RegistryError> {
+    let entries_of_kind = REGISTRY_REPOSITORY.find_ids_where(
+        RegistryWhere::clause()
+            .and_fullname(&entry.fullname())
+            .and_kind(entry.to_kind()),
+        None,
+    );
+
+    let all_entries = REGISTRY_REPOSITORY.find_ids_where(
+        RegistryWhere::clause().and_fullname(&entry.fullname()),
+        None,
+    );
+
+    if entries_of_kind.len() != all_entries.len() {
+        return Err(RegistryError::UpdateKindMismatch {
+            kind: entry.to_kind().to_string(),
+        });
+    }
+
+    Ok(())
+}
+
+/// Performs a depth-first search to check for circular dependencies in the entry.
+///
+/// The function returns an error if a circular dependency is detected.
+fn dfs_check_entry_dependencies(
+    entry: &RegistryEntry,
+    visited: &mut HashSet<RegistryEntryId>,
+) -> ModelValidatorResult<RegistryError> {
+    if visited.contains(&entry.id) {
+        return Err(RegistryError::ValidationError {
+            info: "Circular dependency detected".to_string(),
+        });
+    }
+
+    visited.insert(entry.id);
+
+    match &entry.value {
+        RegistryValue::WasmModule(value) => {
+            for dependency in value.dependencies.iter() {
+                let found = REGISTRY_REPOSITORY.find_ids_where(
+                    RegistryWhere::clause()
+                        .and_fullname(&dependency.name)
+                        .and_version(&dependency.version)
+                        .and_kind(RegistryValueKind::WasmModule),
+                    None,
+                );
+
+                if found.is_empty() {
+                    // The dependency is not found in the registry and can be ignored.
+                    continue;
+                }
+
+                if let Some(dependency_entry) = REGISTRY_REPOSITORY.get(&found[0]) {
+                    dfs_check_entry_dependencies(&dependency_entry, visited)?;
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn validate_dependencies(entry: &RegistryEntry) -> ModelValidatorResult<RegistryError> {
+    match &entry.value {
+        RegistryValue::WasmModule(value) => {
+            if value.dependencies.len() > WasmModuleRegistryValue::MAX_DEPENDENCIES {
+                return Err(RegistryError::ValidationError {
+                    info: format!(
+                        "Too many dependencies, expected at most {} but got {}",
+                        WasmModuleRegistryValue::MAX_DEPENDENCIES,
+                        value.dependencies.len()
+                    ),
+                });
+            }
+
+            for dependency in value.dependencies.iter() {
+                let found = REGISTRY_REPOSITORY.find_ids_where(
+                    RegistryWhere::clause()
+                        .and_fullname(&dependency.name)
+                        .and_version(&dependency.version)
+                        .and_kind(RegistryValueKind::WasmModule),
+                    None,
+                );
+
+                if found.is_empty() {
+                    return Err(RegistryError::ValidationError {
+                        info: format!("The dependency {} is not valid", dependency.name),
+                    });
+                }
+            }
+        }
+    }
+
+    // Check for circular dependencies
+    dfs_check_entry_dependencies(entry, &mut HashSet::new())?;
+
+    Ok(())
+}
+
 impl ModelValidator<RegistryError> for WasmModuleRegistryValue {
     fn validate(&self) -> ModelValidatorResult<RegistryError> {
-        validate_wasm_module_dependencies(&self.dependencies)?;
         validate_wasm_module_version(&self.version)?;
 
         Ok(())
@@ -463,6 +603,10 @@ impl ModelValidator<RegistryError> for RegistryEntry {
             RegistryValue::WasmModule(value) => value.validate(),
         }?;
 
+        validate_uniqueness(self)?;
+        validate_is_of_same_kind(self)?;
+        validate_dependencies(self)?;
+
         Ok(())
     }
 }
@@ -499,6 +643,7 @@ pub mod registry_entry_test_utils {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use orbit_essentials::repository::Repository;
     use registry_entry_test_utils::create_registry_entry;
     use rstest::rstest;
     use uuid::Uuid;
@@ -742,16 +887,124 @@ mod tests {
     #[case::no_dependencies(Vec::new())]
     #[case::some_dependencies(vec![("test".to_string(), "1.0.0".to_string())])]
     fn valid_dependencies(#[case] dependencies: Vec<(String, String)>) {
+        for (name, version) in dependencies.iter() {
+            let mut entry = create_registry_entry();
+            entry.namespace = RegistryEntry::DEFAULT_NAMESPACE.to_string();
+            entry.name = name.to_string();
+            entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+                wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+                version: version.to_string(),
+                dependencies: Vec::new(),
+            });
+
+            REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
+        }
+
         let mut entry = create_registry_entry();
         entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
             version: "1.0.0".to_string(),
             dependencies: dependencies
                 .into_iter()
-                .map(|(name, version)| WasmModuleRegistryEntryDependency { name, version })
+                .map(|(name, version)| WasmModuleRegistryEntryDependency {
+                    name: format!("@{}/{}", RegistryEntry::DEFAULT_NAMESPACE, name),
+                    version,
+                })
                 .collect(),
         });
 
         entry.validate().unwrap();
+    }
+
+    #[test]
+    fn parse_namespace_and_name() {
+        let (namespace, name) = RegistryEntry::parse_namespace_and_name("@orbit/station");
+
+        assert_eq!(namespace, "orbit");
+        assert_eq!(name, "station");
+    }
+
+    #[test]
+    fn parse_namespace_and_name_with_default_namespace() {
+        let (namespace, name) = RegistryEntry::parse_namespace_and_name("station");
+
+        assert_eq!(namespace, "default");
+        assert_eq!(name, "station");
+    }
+
+    #[test]
+    fn detects_circular_dependencies() {
+        let mut sub_package = create_registry_entry();
+        sub_package.name = "sub-package".to_string();
+
+        let mut package = create_registry_entry();
+        package.name = "package".to_string();
+
+        sub_package.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+            wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+            version: "1.0.0".to_string(),
+            dependencies: vec![WasmModuleRegistryEntryDependency {
+                name: package.fullname(),
+                version: "1.0.0".to_string(),
+            }],
+        });
+
+        package.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+            wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+            version: "1.0.0".to_string(),
+            dependencies: vec![WasmModuleRegistryEntryDependency {
+                name: sub_package.fullname(),
+                version: "1.0.0".to_string(),
+            }],
+        });
+
+        REGISTRY_REPOSITORY.insert(sub_package.id, sub_package.clone());
+        REGISTRY_REPOSITORY.insert(package.id, package.clone());
+
+        let result = validate_dependencies(&package);
+
+        assert!(result.unwrap_err().to_string().contains("dependency"));
+    }
+
+    #[test]
+    fn correctly_checks_dependencies() {
+        let mut sub_sub_package = create_registry_entry();
+        sub_sub_package.name = "sub-sub-package".to_string();
+
+        let mut sub_package = create_registry_entry();
+        sub_package.name = "sub-package".to_string();
+
+        let mut package = create_registry_entry();
+        package.name = "package".to_string();
+
+        sub_sub_package.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+            wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+            version: "1.0.0".to_string(),
+            dependencies: Vec::new(),
+        });
+
+        sub_package.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+            wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+            version: "1.0.0".to_string(),
+            dependencies: vec![WasmModuleRegistryEntryDependency {
+                name: sub_sub_package.fullname(),
+                version: "1.0.0".to_string(),
+            }],
+        });
+
+        package.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+            wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+            version: "1.0.0".to_string(),
+            dependencies: vec![WasmModuleRegistryEntryDependency {
+                name: sub_package.fullname(),
+                version: "1.0.0".to_string(),
+            }],
+        });
+
+        REGISTRY_REPOSITORY.insert(sub_sub_package.id, sub_sub_package.clone());
+        REGISTRY_REPOSITORY.insert(sub_package.id, sub_package.clone());
+        REGISTRY_REPOSITORY.insert(package.id, package.clone());
+
+        validate_dependencies(&package).unwrap();
     }
 }

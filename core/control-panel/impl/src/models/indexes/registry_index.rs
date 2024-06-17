@@ -1,4 +1,4 @@
-use crate::models::{RegistryEntry, RegistryEntryId, RegistryValueKind};
+use crate::models::{RegistryEntry, RegistryEntryId, RegistryValue, RegistryValueKind};
 use orbit_essentials::storable;
 
 /// The main index for registry entries.
@@ -14,20 +14,12 @@ pub struct RegistryIndex {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum RegistryIndexKind {
+    ValueKind(RegistryValueKind),
     Fullname(String),
     Namespace(String),
-    Name(String),
     Category(String),
     Tag(String),
-    ValueKind(RegistryValueKind),
-    FullnameAndVersion(RegistryIndexFullnameAndVersion),
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct RegistryIndexFullnameAndVersion {
-    pub fullname: String,
-    pub version: String,
+    Version(String),
 }
 
 #[derive(Clone, Debug)]
@@ -47,13 +39,6 @@ impl RegistryEntry {
     pub fn to_index_by_namespace(&self) -> RegistryIndex {
         RegistryIndex {
             index: RegistryIndexKind::Namespace(self.namespace.to_string()),
-            registry_entry_id: self.id,
-        }
-    }
-
-    pub fn to_index_by_name(&self) -> RegistryIndex {
-        RegistryIndex {
-            index: RegistryIndexKind::Name(self.name.to_string()),
             registry_entry_id: self.id,
         }
     }
@@ -78,6 +63,15 @@ impl RegistryEntry {
             .collect()
     }
 
+    pub fn to_index_by_version(&self) -> Option<RegistryIndex> {
+        match &self.value {
+            RegistryValue::WasmModule(module) => Some(RegistryIndex {
+                index: RegistryIndexKind::Version(module.version.to_string()),
+                registry_entry_id: self.id,
+            }),
+        }
+    }
+
     pub fn to_index_by_value_kind(&self) -> RegistryIndex {
         RegistryIndex {
             index: RegistryIndexKind::ValueKind(RegistryValueKind::from(&self.value)),
@@ -89,10 +83,13 @@ impl RegistryEntry {
     pub fn indexes(&self) -> Vec<RegistryIndex> {
         let mut indexes = vec![self.to_index_by_fullname()];
         indexes.push(self.to_index_by_namespace());
-        indexes.push(self.to_index_by_name());
         indexes.extend(self.to_index_by_categories());
         indexes.extend(self.to_index_by_tags());
         indexes.push(self.to_index_by_value_kind());
+
+        if let Some(index) = self.to_index_by_version() {
+            indexes.push(index);
+        }
 
         indexes
     }
@@ -129,17 +126,6 @@ mod tests {
         let index = entry.to_index_by_namespace();
 
         assert_eq!(index.index, RegistryIndexKind::Namespace(entry.namespace));
-        assert_eq!(index.registry_entry_id, entry.id);
-    }
-
-    #[test]
-    fn valid_to_name() {
-        let mut entry = create_registry_entry();
-        entry.name = "test".to_string();
-
-        let index = entry.to_index_by_name();
-
-        assert_eq!(index.index, RegistryIndexKind::Name(entry.name));
         assert_eq!(index.registry_entry_id, entry.id);
     }
 
