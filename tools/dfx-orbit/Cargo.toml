@@ -19,5 +19,10 @@ serde_json.workspace = true
 cap-std.workspace = true
 dfx-core.workspace = true
 tempfile.workspace = true
+ic-agent.workspace = true
+slog.workspace = true
+slog-term.workspace = true
+slog-async.workspace = true
+tokio.workspace = true
 
 orbit-station-api = { path = "../../core/station/api", package = "station-api" }

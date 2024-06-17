@@ -1,7 +1,13 @@
 //! Placeholders for the proposed dfx extension API methods.
-use std::process::{Command, Stdio};
+use std::{
+    process::{Command, Stdio},
+    str::FromStr,
+};
 
 use anyhow::Context;
+use candid::Principal;
+use dfx_core::interface::dfx::DfxInterface;
+use ic_agent::Agent;
 
 /// Calls the dfx cli.
 ///
@@ -37,6 +43,8 @@ pub struct DfxExtensionAgent {
     name: String,
     /// The directory where all extension configuration files are stored, including those of other extensions.
     extensions_dir: cap_std::fs::Dir,
+    /// The dfx interface.
+    dfx_interface: Option<DfxInterface>,
 }
 
 impl DfxExtensionAgent {
@@ -46,6 +54,7 @@ impl DfxExtensionAgent {
             name: name.to_string(),
             extensions_dir: Self::extensions_dir()
                 .expect("Could not get the dfx extensions directory"),
+            dfx_interface: None,
         }
     }
 
@@ -112,5 +121,29 @@ impl DfxExtensionAgent {
     /// The name of the default dfx user identity.  This is the identity given by `dfx identity whoami` (if any).
     pub fn identity() -> anyhow::Result<String> {
         call_dfx_cli(vec!["identity", "whoami"])
+    }
+
+    /// Gets the dfx interface
+    pub async fn dfx_interface(&mut self) -> anyhow::Result<&DfxInterface> {
+        if self.dfx_interface.is_none() {
+            self.dfx_interface = Some(DfxInterface::builder().build().await?);
+        }
+        Ok(self
+            .dfx_interface
+            .as_ref()
+            .expect("Failed to get dfx interface"))
+    }
+
+    /// Gets the dfx agent.
+    pub async fn agent(&mut self) -> anyhow::Result<&Agent> {
+        Ok(self.dfx_interface().await?.agent())
+    }
+
+    /// Gets a canister ID
+    // TODO: Pass network.
+    pub fn canister_id(&self, canister_name: &str) -> anyhow::Result<Principal> {
+        let id = call_dfx_cli(vec!["canister", "id", canister_name])
+            .with_context(|| format!("Failed to look up canister '{canister_name}'"))?;
+        Principal::from_str(&id).with_context(|| format!("Could not parse canister ID: {}", id))
     }
 }

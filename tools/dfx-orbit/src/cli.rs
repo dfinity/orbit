@@ -8,7 +8,7 @@ use crate::args::{DfxOrbitArgs, DfxOrbitSubcommands};
 use anyhow::anyhow;
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
-pub fn main(args: DfxOrbitArgs) -> anyhow::Result<()> {
+pub async fn main(args: DfxOrbitArgs) -> anyhow::Result<()> {
     match args.command {
         DfxOrbitSubcommands::Me => {
             let station_principal = &crate::local_config::default_station()?
@@ -28,6 +28,6 @@ pub fn main(args: DfxOrbitArgs) -> anyhow::Result<()> {
             dfx_extension_cli::main(dfx_extension_args)
         }
         DfxOrbitSubcommands::Canister(canister_args) => canister::main(canister_args),
-        DfxOrbitSubcommands::Request(request_args) => request::main(request_args),
+        DfxOrbitSubcommands::Request(request_args) => request::main(request_args).await,
     }
 }
