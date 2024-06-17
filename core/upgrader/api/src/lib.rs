@@ -88,3 +88,19 @@ pub struct SetDisasterRecoveryCommitteeInput {
 pub struct SetDisasterRecoveryAccountsInput {
     pub accounts: Vec<Account>,
 }
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum InstallMode {
+    Upgrade,
+    Reinstall,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct RequestDisasterRecoveryInput {
+    #[serde(with = "serde_bytes")]
+    pub module: Vec<u8>,
+    #[serde(with = "serde_bytes")]
+    pub arg: Vec<u8>,
+
+    pub install_mode: InstallMode,
+}

@@ -6,7 +6,6 @@ use ic_cdk::api::management_canister::main::{
 };
 use mockall::automock;
 use std::sync::Arc;
-use upgrader_api::UpgradeParams;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpgradeError {
@@ -16,6 +15,12 @@ pub enum UpgradeError {
     Unauthorized,
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
+}
+
+pub struct UpgradeParams {
+    pub module: Vec<u8>,
+    pub arg: Vec<u8>,
+    pub install_mode: CanisterInstallMode,
 }
 
 #[automock]
@@ -43,7 +48,7 @@ impl Upgrade for Upgrader {
             .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
         mgmt::install_code(InstallCodeArgument {
-            mode: CanisterInstallMode::Upgrade(None),
+            mode: ps.install_mode,
             canister_id: id.0,
             wasm_module: ps.module,
             arg: ps.arg,

@@ -1,21 +1,90 @@
-use std::cell::RefCell;
-
 use candid::Principal;
-use ic_stable_structures::memory_manager::MemoryId;
-use orbit_essentials::{storable, types::UUID};
-use upgrader_api::MetadataDTO;
+use orbit_essentials::{
+    storable,
+    types::{Timestamp, UUID},
+};
 use uuid::Uuid;
 
-use crate::{helper::HelperMapper, StableValue, MEMORY_ID_DISASTER_RECOVERY_ID, MEMORY_MANAGER};
+use crate::utils::HelperMapper;
 
-thread_local! {
+#[storable]
+#[derive(Clone, Debug)]
+pub enum InstallMode {
+    /// Upgrade the wasm module.
+    Upgrade,
+    /// Reinstall the wasm module.
+    Reinstall,
+}
 
-    static STORAGE: RefCell<StableValue<DisasterRecovery>> = RefCell::new(
-        StableValue::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(MEMORY_ID_DISASTER_RECOVERY_ID))),
-        )
-    );
+impl From<upgrader_api::InstallMode> for InstallMode {
+    fn from(value: upgrader_api::InstallMode) -> Self {
+        match value {
+            upgrader_api::InstallMode::Upgrade => InstallMode::Upgrade,
+            upgrader_api::InstallMode::Reinstall => InstallMode::Reinstall,
+        }
+    }
+}
 
+impl From<InstallMode> for upgrader_api::InstallMode {
+    fn from(value: InstallMode) -> Self {
+        match value {
+            InstallMode::Upgrade => upgrader_api::InstallMode::Upgrade,
+            InstallMode::Reinstall => upgrader_api::InstallMode::Reinstall,
+        }
+    }
+}
+
+#[storable]
+#[derive(Clone, Debug)]
+pub struct StationRecoveryRequest {
+    /// The user ID of the station.
+    pub user_id: UUID,
+    /// The wasm module to be installed.
+    pub wasm_module: Vec<u8>,
+    /// The SHA-256 hash of the wasm module.
+    pub wasm_sha256: Vec<u8>,
+    /// The install mode: upgrade or reinstall.
+    pub install_mode: InstallMode,
+    /// The install arguments.
+    pub arg: Vec<u8>,
+    /// Time in nanoseconds since the UNIX epoch when the request was submitted.
+    pub submitted_at: Timestamp,
+}
+
+#[storable]
+#[derive(Clone, Debug)]
+pub enum RecoveryEvaluationResult {
+    /// There are active recovery requests, but there is no quorum yet.
+    Unmet,
+    /// There is a consensus on the recovery requests.
+    Met(StationRecoveryRequest),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq)]
+pub enum RecoveryStatus {
+    /// There are no active recovery requests.
+    Idle,
+    /// There are active recovery requests, but there is no quorum yet.
+    Unmet,
+    /// There is a consensus on the recovery requests.
+    InProgress,
+}
+
+#[storable]
+#[derive(Clone, Debug)]
+pub struct RecoveryFailure {
+    /// The reason for the recovery failure.
+    pub reason: String,
+}
+
+#[storable]
+#[derive(Clone, Debug)]
+pub enum RecoveryResult {
+    /// The recovery request was successful.
+    Success,
+    /// The recovery request failed.
+    Failure(RecoveryFailure),
 }
 
 #[storable]
@@ -55,7 +124,7 @@ pub struct Metadata {
 }
 
 impl From<upgrader_api::MetadataDTO> for Metadata {
-    fn from(value: MetadataDTO) -> Self {
+    fn from(value: upgrader_api::MetadataDTO) -> Self {
         Metadata {
             key: value.key,
             value: value.value,
@@ -165,40 +234,24 @@ impl From<Account> for upgrader_api::Account {
 }
 
 #[storable]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct DisasterRecovery {
     pub accounts: Vec<Account>,
     pub committee: Option<DisasterRecoveryCommittee>,
+
+    pub recovery_requests: Vec<StationRecoveryRequest>,
+    pub recovery_status: RecoveryStatus,
+    pub last_recovery_result: Option<RecoveryResult>,
 }
 
-impl DisasterRecovery {
-    pub fn get() -> DisasterRecovery {
-        STORAGE.with(|storage| storage.borrow().get(&()).unwrap_or_default())
-    }
-
-    fn set(value: DisasterRecovery) {
-        STORAGE.with(|storage| storage.borrow_mut().insert((), value));
-    }
-
-    pub fn set_committee(committee: DisasterRecoveryCommittee) {
-        let mut value = Self::get();
-        value.committee = Some(committee);
-
-        Self::set(value);
-    }
-
-    pub fn set_accounts(accounts: Vec<Account>) {
-        let mut value = Self::get();
-        value.accounts = accounts;
-        Self::set(value);
-    }
-
-    pub fn is_committee_member(principal: &Principal) -> bool {
-        Self::get().committee.as_ref().map_or(false, |committee| {
-            committee
-                .users
-                .iter()
-                .any(|user| user.identities.contains(principal))
-        })
+impl Default for DisasterRecovery {
+    fn default() -> Self {
+        DisasterRecovery {
+            accounts: vec![],
+            committee: None,
+            recovery_requests: vec![],
+            recovery_status: RecoveryStatus::Idle,
+            last_recovery_result: None,
+        }
     }
 }

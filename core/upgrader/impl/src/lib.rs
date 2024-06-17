@@ -3,29 +3,27 @@ use crate::upgrade::{
     WithStop,
 };
 use candid::Principal;
-use disaster_recovery::DisasterRecovery;
-use ic_cdk::{init, query, update};
+use ic_cdk::{api::management_canister::main::CanisterInstallMode, init, update};
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     DefaultMemoryImpl, StableBTreeMap,
 };
 use lazy_static::lazy_static;
-use orbit_essentials::{
-    api::{ApiError, ApiResult},
-    cdk::{api::is_controller, caller},
-    storable,
-};
+use orbit_essentials::{api::ApiError, storable};
 use std::{cell::RefCell, sync::Arc, thread::LocalKey};
-use upgrade::UpgradeError;
-use upgrader_api::{
-    GetDisasterRecoveryAccountsResponse, GetDisasterRecoveryCommitteeResponse, InitArg,
-    IsCommitteeMemberResponse, TriggerUpgradeError, UpgradeParams,
-};
+use upgrade::{UpgradeError, UpgradeParams};
+use upgrader_api::{InitArg, TriggerUpgradeError};
 
-mod disaster_recovery;
-mod hash;
-mod helper;
-mod upgrade;
+#[cfg(not(test))]
+pub use orbit_essentials::cdk as upgrader_ic_cdk;
+#[cfg(test)]
+pub use orbit_essentials::cdk::mocks as upgrader_ic_cdk;
+
+pub mod controllers;
+pub mod model;
+pub mod services;
+pub mod upgrade;
+pub mod utils;
 
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 type StableMap<K, V> = StableBTreeMap<K, V, Memory>;
@@ -96,84 +94,24 @@ lazy_static! {
 }
 
 #[update]
-async fn trigger_upgrade(params: UpgradeParams) -> Result<(), TriggerUpgradeError> {
-    UPGRADER.upgrade(params).await.map_err(|err| match err {
+async fn trigger_upgrade(params: upgrader_api::UpgradeParams) -> Result<(), TriggerUpgradeError> {
+    let input: UpgradeParams = UpgradeParams {
+        module: params.module,
+        arg: params.arg,
+        install_mode: CanisterInstallMode::Upgrade(None),
+    };
+    UPGRADER.upgrade(input).await.map_err(|err| match err {
         UpgradeError::NotController => TriggerUpgradeError::NotController,
         UpgradeError::Unauthorized => TriggerUpgradeError::Unauthorized,
         UpgradeError::UnexpectedError(err) => TriggerUpgradeError::UnexpectedError(err.to_string()),
     })
 }
 
-#[update]
-async fn set_disaster_recovery_committee(
-    input: upgrader_api::SetDisasterRecoveryCommitteeInput,
-) -> ApiResult {
-    let caller = caller();
-    if !is_controller(&caller) {
-        Err(UpgraderApiError::NotController)?
-    } else {
-        DisasterRecovery::set_committee(input.committee.into());
-        Ok(())
-    }
-}
-
-#[update]
-async fn set_disaster_recovery_accounts(
-    input: upgrader_api::SetDisasterRecoveryAccountsInput,
-) -> ApiResult {
-    let caller = caller();
-    if !is_controller(&caller) {
-        Err(UpgraderApiError::NotController)?
-    } else {
-        DisasterRecovery::set_accounts(input.accounts.into_iter().map(Into::into).collect());
-        Ok(())
-    }
-}
-
-#[query]
-async fn is_committee_member() -> ApiResult<IsCommitteeMemberResponse> {
-    let caller = ic_cdk::caller();
-
-    if caller == Principal::anonymous() {
-        Err(UpgraderApiError::Unauthorized)?
-    } else {
-        Ok(IsCommitteeMemberResponse {
-            is_committee_member: DisasterRecovery::is_committee_member(&caller),
-        })
-    }
-}
-
-#[query]
-async fn get_disaster_recovery_accounts() -> ApiResult<GetDisasterRecoveryAccountsResponse> {
-    let caller = caller();
-    if !is_controller(&caller) {
-        Err(UpgraderApiError::NotController)?
-    } else {
-        Ok(GetDisasterRecoveryAccountsResponse {
-            accounts: DisasterRecovery::get()
-                .accounts
-                .into_iter()
-                .map(Into::into)
-                .collect(),
-        })
-    }
-}
-
-#[query]
-async fn get_disaster_recovery_committee() -> ApiResult<GetDisasterRecoveryCommitteeResponse> {
-    let caller = caller();
-    if !is_controller(&caller) {
-        Err(UpgraderApiError::NotController)?
-    } else {
-        Ok(GetDisasterRecoveryCommitteeResponse {
-            committee: DisasterRecovery::get().committee.map(Into::into),
-        })
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use orbit_essentials::api::ApiResult;
+    use upgrader_api::*;
 
     #[test]
     fn check_candid_interface() {
