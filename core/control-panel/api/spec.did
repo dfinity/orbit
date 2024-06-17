@@ -342,7 +342,6 @@ type RegistryEntry = record {
   // - Names must be between 2 and 48 characters long.
   // - Namespaces must be between 2 and 32 characters long.
   // - Names that are not namespaced, are put in the default namespace `@default`.
-  // - Namespaced names must be at most 64 characters long.
   name : text;
   // The description of the entry, which is a human-readable description of the entry.
   //
@@ -396,6 +395,14 @@ type RegistryEntryValueKind = variant {
   WasmModule;
 };
 
+// The dependency of a wasm module.
+type WasmModuleRegistryEntryDependency = record {
+  // The name of the dependency.
+  name : text;
+  // The version of the wasm module.
+  version : text;
+};
+
 // The wasm module registry value, which is the content of the wasm module and its version.
 type WasmModuleRegistryEntryValue = record {
   // The id of the wasm module that is stored in the artifact repository.
@@ -409,7 +416,7 @@ type WasmModuleRegistryEntryValue = record {
   // The dependencies of the wasm module, which are other wasm modules that this wasm module depends on.
   //
   // This registry ids should only reference registry entries that are of type `WasmModule`, others will be ignored.
-  dependencies : vec UUID;
+  dependencies : vec WasmModuleRegistryEntryDependency;
 };
 
 // The search registry filter options.
@@ -503,7 +510,7 @@ type WasmModuleRegistryEntryValueInput = record {
   // The version of the wasm module.
   version : text;
   // The dependencies of the wasm module, which are other wasm modules that this wasm module depends on.
-  dependencies : vec UUID;
+  dependencies : vec WasmModuleRegistryEntryDependency;
 };
 
 // The input for adding a registry entry.

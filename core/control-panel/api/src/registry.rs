@@ -1,11 +1,17 @@
 use crate::{MetadataDTO, PaginationInput, SortDirection, TimestampRfc3339, UuidDTO};
 use candid::{CandidType, Deserialize};
 
+#[derive(CandidType, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct WasmModuleRegistryEntryDependencyDTO {
+    pub name: String,
+    pub version: String,
+}
+
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct WasmModuleRegistryEntryValueDTO {
     pub wasm_artifact_id: UuidDTO,
     pub version: String,
-    pub dependencies: Vec<UuidDTO>,
+    pub dependencies: Vec<WasmModuleRegistryEntryDependencyDTO>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
@@ -13,7 +19,7 @@ pub struct WasmModuleRegistryEntryValueInput {
     #[serde(with = "serde_bytes")]
     pub wasm_module: Vec<u8>,
     pub version: String,
-    pub dependencies: Vec<UuidDTO>,
+    pub dependencies: Vec<WasmModuleRegistryEntryDependencyDTO>,
 }
 
 #[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]

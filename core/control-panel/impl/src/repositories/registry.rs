@@ -517,7 +517,8 @@ mod tests {
         let repository = RegistryRepository::default();
         for i in 0..5 {
             let mut entry = create_registry_entry();
-            entry.name = format!("@orbit/entry-{}", i);
+            entry.namespace = "orbit".to_string();
+            entry.name = format!("entry-{}", i);
             entry.validate().unwrap();
 
             repository.insert(entry.id, entry);
@@ -534,7 +535,7 @@ mod tests {
             .map(|id| repository.get(&id).unwrap())
             .collect::<Vec<_>>();
 
-        assert!(result.iter().any(|entry| entry.name == "@orbit/entry-0"));
+        assert!(result.iter().any(|entry| entry.name == "entry-0"));
 
         let result = repository.find_ids_where(RegistryWhere::clause().and_namespace("orbi"), None);
 
@@ -546,7 +547,8 @@ mod tests {
         let repository = RegistryRepository::default();
         for i in 0..5 {
             let mut entry = create_registry_entry();
-            entry.name = format!("@orbit/entry-{}", i);
+            entry.namespace = "orbit".to_string();
+            entry.name = format!("entry-{}", i);
             entry.validate().unwrap();
 
             repository.insert(entry.id, entry);
@@ -560,7 +562,8 @@ mod tests {
 
         let entry = repository.get(result.first().unwrap()).unwrap();
 
-        assert_eq!(entry.name, "@orbit/entry-2");
+        assert_eq!(entry.namespace, "orbit");
+        assert_eq!(entry.name, "entry-2");
 
         let result =
             repository.find_ids_where(RegistryWhere::clause().and_fullname("@orbit/entry-"), None);
@@ -573,6 +576,7 @@ mod tests {
         let repository = RegistryRepository::default();
         for i in 0..5 {
             let mut entry = create_registry_entry();
+            entry.namespace = RegistryEntry::DEFAULT_NAMESPACE.to_string();
             entry.name = format!("entry-{}", i);
             entry.validate().unwrap();
 

@@ -1,5 +1,6 @@
 use crate::{
     errors::RegistryError,
+    mappers::RegistryMapper,
     models::{RegistryEntry, RegistryEntryId, RegistryValue},
     repositories::{
         ArtifactRepository, RegistryRepository, RegistryWhere, ARTIFACT_REPOSITORY,
@@ -67,12 +68,16 @@ impl RegistryService {
             .filter_by
             .into_iter()
             .for_each(|filter| match filter {
-                SearchRegistryFilterKindDTO::Name(name) => {
-                    let fullname = RegistryEntry::format_fullname(&name);
-                    where_clause = where_clause.to_owned().and_fullname(&fullname);
-                }
                 SearchRegistryFilterKindDTO::Namespace(namespace) => {
                     where_clause = where_clause.to_owned().and_namespace(&namespace);
+                }
+                SearchRegistryFilterKindDTO::Name(name) => {
+                    let fullname = match name.starts_with(RegistryEntry::NAMESPACE_PREFIX) {
+                        true => name,
+                        false => format!("@{}/{}", RegistryEntry::DEFAULT_NAMESPACE, name),
+                    };
+
+                    where_clause = where_clause.to_owned().and_fullname(&fullname);
                 }
                 SearchRegistryFilterKindDTO::Kind(kind) => {
                     where_clause = where_clause.to_owned().and_kind(kind.into());
@@ -103,7 +108,11 @@ impl RegistryService {
     }
 
     /// Creates a new registry entry and returns it.
-    pub fn create(&self, _input: RegistryEntryInput) -> ServiceResult<RegistryEntry> {
+    pub fn create(&self, input: RegistryEntryInput) -> ServiceResult<RegistryEntry> {
+        let mut entry = RegistryEntry::new();
+
+        RegistryMapper::fill_from_create_input(&mut entry, &input);
+
         unimplemented!()
     }
 
@@ -161,7 +170,8 @@ mod tests {
     fn test_search_by_name_and_kind_is_some() {
         for i in 0..10 {
             let mut entry = create_registry_entry();
-            entry.name = format!("@orbit/module-{}", i);
+            entry.namespace = "orbit".to_string();
+            entry.name = format!("module-{}", i);
 
             REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
         }
@@ -178,7 +188,8 @@ mod tests {
 
         assert_eq!(result.total, 1);
         assert_eq!(result.items.len(), 1);
-        assert_eq!(result.items[0].name, "@orbit/module-2");
+        assert_eq!(result.items[0].namespace, "orbit");
+        assert_eq!(result.items[0].name, "module-2");
     }
 
     #[test]
@@ -201,7 +212,8 @@ mod tests {
     fn test_search_by_namespace_and_kind_is_some() {
         for i in 0..10 {
             let mut entry = create_registry_entry();
-            entry.name = format!("@test/module-{}", i);
+            entry.namespace = "test".to_string();
+            entry.name = format!("module-{}", i);
 
             REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
         }
@@ -224,7 +236,8 @@ mod tests {
     fn test_find_many_entries_with_same_name() {
         for i in 0..10 {
             let mut entry = create_registry_entry();
-            entry.name = "@test/module".to_string();
+            entry.namespace = "test".to_string();
+            entry.name = "module".to_string();
             entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
                 wasm_artifact_id: *Uuid::new_v4().as_bytes(),
                 version: format!("1.0.{}", i),

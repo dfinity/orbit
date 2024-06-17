@@ -1,7 +1,41 @@
 use super::HelperMapper;
-use crate::models::{RegistryEntry, RegistryValue, RegistryValueKind, WasmModuleRegistryValue};
+use crate::models::{
+    RegistryEntry, RegistryValue, RegistryValueKind, WasmModuleRegistryEntryDependency,
+    WasmModuleRegistryValue,
+};
 use orbit_essentials::utils::timestamp_to_rfc3339;
 use uuid::Uuid;
+
+#[derive(Debug, Clone)]
+pub struct RegistryMapper {}
+
+impl RegistryMapper {
+    pub fn fill_from_create_input(
+        entry: &mut RegistryEntry,
+        input: &control_panel_api::RegistryEntryInput,
+    ) {
+        entry.name = input.name.to_string();
+        entry.description = input.description.to_string();
+        entry.tags = input.tags.clone();
+        entry.categories = input.categories.clone();
+        entry.metadata = HelperMapper::from_metadata(input.metadata.clone());
+
+        match &input.value {
+            control_panel_api::RegistryEntryValueInput::WasmModule(wasm_module) => {
+                entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+                    // a placeholder uuid that will be replaced later
+                    wasm_artifact_id: [0; 16],
+                    version: wasm_module.version.clone(),
+                    dependencies: wasm_module
+                        .dependencies
+                        .iter()
+                        .map(|dep| dep.clone().into())
+                        .collect(),
+                });
+            }
+        }
+    }
+}
 
 impl From<&RegistryValue> for RegistryValueKind {
     fn from(value: &RegistryValue) -> Self {
@@ -16,11 +50,7 @@ impl From<WasmModuleRegistryValue> for control_panel_api::WasmModuleRegistryEntr
         Self {
             wasm_artifact_id: Uuid::from_bytes(value.wasm_artifact_id).to_string(),
             version: value.version,
-            dependencies: value
-                .dependencies
-                .into_iter()
-                .map(|dependency_id| Uuid::from_bytes(dependency_id).to_string())
-                .collect(),
+            dependencies: value.dependencies.into_iter().map(Into::into).collect(),
         }
     }
 }
@@ -39,7 +69,7 @@ impl From<RegistryEntry> for control_panel_api::RegistryEntryDTO {
     fn from(entry: RegistryEntry) -> Self {
         Self {
             id: Uuid::from_bytes(entry.id).to_string(),
-            name: entry.name,
+            name: entry.fullname(),
             description: entry.description,
             tags: entry.tags,
             categories: entry.categories,
@@ -57,6 +87,28 @@ impl From<control_panel_api::RegistryEntryValueKindDTO> for RegistryValueKind {
             control_panel_api::RegistryEntryValueKindDTO::WasmModule => {
                 RegistryValueKind::WasmModule
             }
+        }
+    }
+}
+
+impl From<control_panel_api::WasmModuleRegistryEntryDependencyDTO>
+    for WasmModuleRegistryEntryDependency
+{
+    fn from(dependency: control_panel_api::WasmModuleRegistryEntryDependencyDTO) -> Self {
+        Self {
+            name: dependency.name,
+            version: dependency.version,
+        }
+    }
+}
+
+impl From<WasmModuleRegistryEntryDependency>
+    for control_panel_api::WasmModuleRegistryEntryDependencyDTO
+{
+    fn from(value: WasmModuleRegistryEntryDependency) -> Self {
+        Self {
+            name: value.name,
+            version: value.version,
         }
     }
 }

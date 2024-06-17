@@ -1,9 +1,10 @@
 use super::artifact::ArtifactId;
-use crate::errors::RegistryError;
+use crate::{core::ic_cdk::next_time, errors::RegistryError};
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
 use std::collections::BTreeMap;
+use uuid::Uuid;
 
 /// When adding tags to registry entries, if the tag is in this list then it is unique across all the
 /// entries of the same namespace and name. If the tag exists in other entries, then it will be removed from
@@ -24,20 +25,22 @@ pub type RegistryEntryId = UUID;
 pub struct RegistryEntry {
     /// The UUID that identifies the entry in the registry.
     pub id: RegistryEntryId,
-    /// The name of the entry, which is used to identify it (e.g. station). Names that start with `@` are considered
-    /// to be namespaced, and the namespace is the part of the name that comes before the `/`. Within each namespace
+    /// The namespace of the entry.
+    ///
+    /// Restrictions:
+    ///
+    /// - Namespaces must be between 2 and 32 characters long.
+    /// - Namespaces can only contain lowercase letters, numbers, and hyphens.
+    pub namespace: String,
+    /// The name of the entry, which is used to identify it (e.g. station). Within each namespace
     /// the name should refer to the same type of entry, but many entries can exist with the same name.
     ///
     /// e.g. if the namespace is "@orbit" and the name is "station", then all the entries will refer to a wasm module.
     ///
     /// Restrictions:
     ///
-    /// - Names that start with `@` are considered namespaced.
-    /// - Names that start with `@` must have a namespace and a name separated by a `/`.
     /// - Names must be between 2 and 48 characters long.
-    /// - Namespaces must be between 2 and 32 characters long.
-    /// - Names that are not namespaced, are put in the default namespace `@default`.
-    /// - Namespaced names must be at most 64 characters long.
+    /// - Names that are not namespaced, are put in the default namespace `default`.
     pub name: String,
     /// The description of the entry, which is a human-readable description of the entry.
     ///
@@ -112,18 +115,28 @@ pub struct WasmModuleRegistryValue {
     pub version: String,
     /// The dependencies of the wasm module, which are other wasm modules that this wasm module depends on.
     ///
-    /// This registry ids should only reference registry entries that are of type `WasmModule`, others will be ignored.
-    ///
     /// Restrictions:
     ///
     /// - There can be up to 25 dependencies per wasm module.
-    pub dependencies: Vec<RegistryEntryId>,
+    pub dependencies: Vec<WasmModuleRegistryEntryDependency>,
+}
+
+#[storable]
+#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd)]
+pub struct WasmModuleRegistryEntryDependency {
+    pub name: String,
+    pub version: String,
+}
+
+impl Default for RegistryEntry {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl RegistryEntry {
+    pub const NAMESPACE_PREFIX: &'static str = "@";
     pub const DEFAULT_NAMESPACE: &'static str = "default";
-
-    pub const MAX_NAMESPACED_NAME_LENGTH: usize = 64;
 
     pub const MIN_NAMESPACE_LENGTH: usize = 2;
     pub const MAX_NAMESPACE_LENGTH: usize = 32;
@@ -148,49 +161,31 @@ impl RegistryEntry {
     pub const MIN_TAG_LENGTH: usize = 2;
     pub const MAX_TAG_LENGTH: usize = 32;
 
-    /// Returns the namespace of the entry, which is the part of the name that comes before the `/`
-    /// in namespaced names.
-    pub fn namespace(&self) -> &str {
-        if validate_name(&self.name).is_err() {
-            return Self::DEFAULT_NAMESPACE;
+    /// Creates a new registry entry with a random id and default values.
+    ///
+    /// The value of the entry is a wasm module with a random id and default values.
+    pub fn new() -> Self {
+        Self {
+            id: *Uuid::new_v4().as_bytes(),
+            namespace: Self::DEFAULT_NAMESPACE.to_string(),
+            name: Default::default(),
+            description: Default::default(),
+            tags: Default::default(),
+            categories: Default::default(),
+            value: RegistryValue::WasmModule(WasmModuleRegistryValue {
+                wasm_artifact_id: [0; 16],
+                version: Default::default(),
+                dependencies: Default::default(),
+            }),
+            metadata: Default::default(),
+            created_at: next_time(),
+            updated_at: None,
         }
-
-        if self.name.starts_with('@') && self.name.contains('/') {
-            let parts: Vec<&str> = self.name.split('/').collect();
-            return parts[0].trim_start_matches('@');
-        }
-
-        Self::DEFAULT_NAMESPACE
     }
 
-    /// Returns the unnamespaced name of the entry, which is the part of the name that comes after the `/`
-    /// in namespaced names.
-    pub fn unnamespaced_name(&self) -> &str {
-        if self.name.starts_with('@') && self.name.contains('/') && !self.name.ends_with('/') {
-            let parts: Vec<&str> = self.name.split('/').collect();
-            return parts[1];
-        }
-
-        &self.name
-    }
-
-    /// Formats the full name of the entry, which is the namespace and the name separated by a `/`.
-    pub fn format_fullname(raw_name: &str) -> String {
-        let mut namespace = Self::DEFAULT_NAMESPACE;
-        let mut name = raw_name;
-
-        if raw_name.starts_with('@') && raw_name.contains('/') && !raw_name.ends_with('/') {
-            let parts: Vec<&str> = raw_name.split('/').collect();
-            namespace = parts[0].trim_start_matches('@');
-
-            if namespace.trim().is_empty() {
-                namespace = Self::DEFAULT_NAMESPACE;
-            }
-
-            name = parts[1];
-        }
-
-        format!("@{}/{}", namespace, name)
+    /// Returns the full name of the entry, which is the namespace and the name separated by a `/`.
+    pub fn fullname(&self) -> String {
+        format!("{}{}/{}", Self::NAMESPACE_PREFIX, self.namespace, self.name)
     }
 }
 
@@ -202,7 +197,7 @@ impl WasmModuleRegistryValue {
 }
 
 fn validate_wasm_module_dependencies(
-    dependencies: &[RegistryEntryId],
+    dependencies: &[WasmModuleRegistryEntryDependency],
 ) -> ModelValidatorResult<RegistryError> {
     if dependencies.len() > WasmModuleRegistryValue::MAX_DEPENDENCIES {
         return Err(RegistryError::ValidationError {
@@ -242,75 +237,32 @@ impl ModelValidator<RegistryError> for WasmModuleRegistryValue {
     }
 }
 
+fn validate_chars(field: &str, content: &str) -> ModelValidatorResult<RegistryError> {
+    if !content
+        .chars()
+        .all(|c| c.is_ascii_lowercase() || c.is_numeric() || c == '-')
+    {
+        return Err(RegistryError::ValidationError {
+            info: format!(
+                "{} can only contain lowercase letters, numbers, and hyphens",
+                field
+            ),
+        });
+    }
+
+    if content.starts_with('-') || content.ends_with('-') {
+        return Err(RegistryError::ValidationError {
+            info: format!("{} cannot start or end with a hyphen", field),
+        });
+    }
+
+    Ok(())
+}
+
 fn validate_name(name: &str) -> ModelValidatorResult<RegistryError> {
-    let (namespace, name) = match name.starts_with('@') {
-        true => {
-            let parts: Vec<&str> = name.split('/').collect();
-            if parts.len() != 2 {
-                return Err(RegistryError::ValidationError {
-                    info: "Namespaced names must have a namespace and a name separated by a `/`"
-                        .to_string(),
-                });
-            }
-
-            let namespace = parts[0].trim_start_matches('@');
-            let name: &str = parts[1];
-
-            (namespace, name)
-        }
-        _ => (RegistryEntry::DEFAULT_NAMESPACE, name),
-    };
-
-    let full_name = format!("@{}/{}", namespace, name);
-
-    if full_name.len() > RegistryEntry::MAX_NAMESPACED_NAME_LENGTH {
+    if name.is_empty() {
         return Err(RegistryError::ValidationError {
-            info: format!(
-                "Name length must be at most {}",
-                RegistryEntry::MAX_NAMESPACED_NAME_LENGTH
-            ),
-        });
-    }
-
-    if !namespace
-        .chars()
-        .all(|c| c.is_ascii_lowercase() || c.is_numeric() || c == '-')
-    {
-        return Err(RegistryError::ValidationError {
-            info: "Namespace can only contain lowercase letters, numbers, and hyphens".to_string(),
-        });
-    }
-
-    if namespace.ends_with('-') {
-        return Err(RegistryError::ValidationError {
-            info: "Namespace cannot end with a hyphen".to_string(),
-        });
-    }
-
-    if !name
-        .chars()
-        .all(|c| c.is_ascii_lowercase() || c.is_numeric() || c == '-')
-    {
-        return Err(RegistryError::ValidationError {
-            info: "Name can only contain lowercase letters, numbers, and hyphens".to_string(),
-        });
-    }
-
-    if name.ends_with('-') {
-        return Err(RegistryError::ValidationError {
-            info: "Name cannot end with a hyphen".to_string(),
-        });
-    }
-
-    if (namespace.len() < RegistryEntry::MIN_NAMESPACE_LENGTH)
-        || (namespace.len() > RegistryEntry::MAX_NAMESPACE_LENGTH)
-    {
-        return Err(RegistryError::ValidationError {
-            info: format!(
-                "Namespace length must be between {} and {}",
-                RegistryEntry::MIN_NAMESPACE_LENGTH,
-                RegistryEntry::MAX_NAMESPACE_LENGTH,
-            ),
+            info: "Name cannot be empty".to_string(),
         });
     }
 
@@ -325,6 +277,32 @@ fn validate_name(name: &str) -> ModelValidatorResult<RegistryError> {
             ),
         });
     }
+
+    validate_chars("Name", name)?;
+
+    Ok(())
+}
+
+fn validate_namespace(namespace: &str) -> ModelValidatorResult<RegistryError> {
+    if namespace.is_empty() {
+        return Err(RegistryError::ValidationError {
+            info: "Namespace cannot be empty".to_string(),
+        });
+    }
+
+    if (namespace.len() < RegistryEntry::MIN_NAMESPACE_LENGTH)
+        || (namespace.len() > RegistryEntry::MAX_NAMESPACE_LENGTH)
+    {
+        return Err(RegistryError::ValidationError {
+            info: format!(
+                "Namespace length must be between {} and {}",
+                RegistryEntry::MIN_NAME_LENGTH,
+                RegistryEntry::MAX_NAME_LENGTH,
+            ),
+        });
+    }
+
+    validate_chars("Namespace", namespace)?;
 
     Ok(())
 }
@@ -473,6 +451,7 @@ fn validate_timestamps(
 
 impl ModelValidator<RegistryError> for RegistryEntry {
     fn validate(&self) -> ModelValidatorResult<RegistryError> {
+        validate_namespace(&self.namespace)?;
         validate_name(&self.name)?;
         validate_description(&self.description)?;
         validate_categories(&self.categories)?;
@@ -496,6 +475,7 @@ pub mod registry_entry_test_utils {
     pub fn create_registry_entry() -> RegistryEntry {
         RegistryEntry {
             id: *Uuid::new_v4().as_bytes(),
+            namespace: RegistryEntry::DEFAULT_NAMESPACE.to_string(),
             name: Uuid::new_v4().to_string().as_str()[..8].to_string(),
             description: "This is a test entry to the registry.".to_string(),
             tags: Vec::new(),
@@ -524,20 +504,41 @@ mod tests {
     use uuid::Uuid;
 
     #[rstest]
+    #[case::empty_namespace(&"")]
+    #[case::empty_namespace_with_space(&" ")]
+    #[case::starts_with_space(&" orbit")]
+    #[case::ends_with_space(&"orbit ")]
+    #[case::namespace_to_small(&"a")]
+    #[case::namespace_too_big(&"a".repeat(RegistryEntry::MAX_NAMESPACE_LENGTH + 1))]
+    #[case::namespace_contains_invalid_characters(&"orbit!")]
+    #[case::namespace_contains_invalid_characters(&"orbit.1")]
+    #[case::namespace_contains_invalid_characters(&"orbit_1")]
+    #[case::namespace_ends_with_hyphen(&"orbit-")]
+    fn invalid_namespace(#[case] namespace: &str) {
+        let mut entry = create_registry_entry();
+        entry.namespace = namespace.to_string();
+
+        assert!(validate_namespace(&entry.namespace).is_err());
+    }
+
+    #[rstest]
+    #[case::common_namespace(&"orbit")]
+    #[case::short_namespace(&"a".repeat(RegistryEntry::MIN_NAMESPACE_LENGTH))]
+    #[case::long_namespace(&"a".repeat(RegistryEntry::MAX_NAMESPACE_LENGTH))]
+    fn valid_namespace(#[case] namespace: &str) {
+        let mut entry = create_registry_entry();
+        entry.namespace = namespace.to_string();
+
+        validate_namespace(&entry.namespace).unwrap();
+    }
+
+    #[rstest]
     #[case::empty_name(&"")]
     #[case::empty_name_with_space(&" ")]
     #[case::starts_with_space(&" entry")]
     #[case::ends_with_space(&"entry ")]
     #[case::name_to_small(&"a")]
     #[case::name_too_big(&"a".repeat(RegistryEntry::MAX_NAME_LENGTH + 1))]
-    #[case::namespaced_name_with_too_short_namespace(&format!(
-        "@{}/test",
-        "a"
-    ))]
-    #[case::namespaced_name_with_too_long_namespace(&format!(
-        "@{}/test",
-        "a".repeat(RegistryEntry::MAX_NAMESPACE_LENGTH + 1)
-    ))]
     #[case::name_contains_invalid_characters(&"test!")]
     #[case::name_contains_invalid_characters(&"test.1")]
     #[case::name_contains_invalid_characters(&"test_1")]
@@ -555,15 +556,6 @@ mod tests {
     #[case::common_name(&"test")]
     #[case::short_name(&"a".repeat(RegistryEntry::MIN_NAME_LENGTH))]
     #[case::long_name(&"a".repeat(RegistryEntry::MAX_NAME_LENGTH))]
-    #[case::namespaced_name(&"@orbit/test")]
-    #[case::namespaced_name_with_long_namespace(&format!(
-        "@{}/test",
-        "a".repeat(RegistryEntry::MAX_NAMESPACE_LENGTH)
-    ))]
-    #[case::namespaced_name_with_short_namespace(&format!(
-        "@{}/test",
-        "a".repeat(RegistryEntry::MIN_NAMESPACE_LENGTH)
-    ))]
     fn valid_name(#[case] name: &str) {
         let mut entry = create_registry_entry();
         entry.name = name.to_string();
@@ -727,11 +719,15 @@ mod tests {
         entry.validate().unwrap();
     }
 
-    #[rstest]
-    #[case::too_many_dependencies(
-        (0..WasmModuleRegistryValue::MAX_DEPENDENCIES + 1).map(|_| *Uuid::new_v4().as_bytes()).collect())
-    ]
-    fn invalid_dependencies(#[case] dependencies: Vec<RegistryEntryId>) {
+    #[test]
+    fn invalid_dependencies() {
+        let dependencies = (0..WasmModuleRegistryValue::MAX_DEPENDENCIES + 1)
+            .map(|i| WasmModuleRegistryEntryDependency {
+                name: i.to_string(),
+                version: format!("1.0.{}", i),
+            })
+            .collect();
+
         let mut entry = create_registry_entry();
         entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
@@ -744,39 +740,18 @@ mod tests {
 
     #[rstest]
     #[case::no_dependencies(Vec::new())]
-    #[case::some_dependencies(vec![*Uuid::new_v4().as_bytes()])]
-    fn valid_dependencies(#[case] dependencies: Vec<RegistryEntryId>) {
+    #[case::some_dependencies(vec![("test".to_string(), "1.0.0".to_string())])]
+    fn valid_dependencies(#[case] dependencies: Vec<(String, String)>) {
         let mut entry = create_registry_entry();
         entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
             version: "1.0.0".to_string(),
-            dependencies,
+            dependencies: dependencies
+                .into_iter()
+                .map(|(name, version)| WasmModuleRegistryEntryDependency { name, version })
+                .collect(),
         });
 
         entry.validate().unwrap();
-    }
-
-    #[rstest]
-    #[case::default_namespace("none", RegistryEntry::DEFAULT_NAMESPACE)]
-    #[case::namespaced_name("@orbit/test", "orbit")]
-    #[case::invalid_namespace_should_fallback_to_default(
-        "@/test",
-        RegistryEntry::DEFAULT_NAMESPACE
-    )]
-    fn extracts_namespace(#[case] name: &str, #[case] expected_namespace: &str) {
-        let mut entry = create_registry_entry();
-        entry.name = name.to_string();
-
-        assert_eq!(entry.namespace(), expected_namespace);
-    }
-
-    #[rstest]
-    #[case::no_namespace("none", "none")]
-    #[case::namespaced_name("@orbit/test", "test")]
-    fn extracts_unnamespaced_name(#[case] name: &str, #[case] expected_unnamespaced_name: &str) {
-        let mut entry = create_registry_entry();
-        entry.name = name.to_string();
-
-        assert_eq!(entry.unnamespaced_name(), expected_unnamespaced_name);
     }
 }

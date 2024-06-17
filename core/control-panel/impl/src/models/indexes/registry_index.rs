@@ -20,6 +20,14 @@ pub enum RegistryIndexKind {
     Category(String),
     Tag(String),
     ValueKind(RegistryValueKind),
+    FullnameAndVersion(RegistryIndexFullnameAndVersion),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RegistryIndexFullnameAndVersion {
+    pub fullname: String,
+    pub version: String,
 }
 
 #[derive(Clone, Debug)]
@@ -31,25 +39,21 @@ pub struct RegistryIndexCriteria {
 impl RegistryEntry {
     pub fn to_index_by_fullname(&self) -> RegistryIndex {
         RegistryIndex {
-            index: RegistryIndexKind::Fullname(format!(
-                "@{}/{}",
-                self.namespace(),
-                self.unnamespaced_name()
-            )),
+            index: RegistryIndexKind::Fullname(self.fullname()),
             registry_entry_id: self.id,
         }
     }
 
     pub fn to_index_by_namespace(&self) -> RegistryIndex {
         RegistryIndex {
-            index: RegistryIndexKind::Namespace(self.namespace().to_string()),
+            index: RegistryIndexKind::Namespace(self.namespace.to_string()),
             registry_entry_id: self.id,
         }
     }
 
-    pub fn to_index_by_unnamespaced_name(&self) -> RegistryIndex {
+    pub fn to_index_by_name(&self) -> RegistryIndex {
         RegistryIndex {
-            index: RegistryIndexKind::Name(self.unnamespaced_name().to_string()),
+            index: RegistryIndexKind::Name(self.name.to_string()),
             registry_entry_id: self.id,
         }
     }
@@ -85,7 +89,7 @@ impl RegistryEntry {
     pub fn indexes(&self) -> Vec<RegistryIndex> {
         let mut indexes = vec![self.to_index_by_fullname()];
         indexes.push(self.to_index_by_namespace());
-        indexes.push(self.to_index_by_unnamespaced_name());
+        indexes.push(self.to_index_by_name());
         indexes.extend(self.to_index_by_categories());
         indexes.extend(self.to_index_by_tags());
         indexes.push(self.to_index_by_value_kind());
@@ -120,28 +124,22 @@ mod tests {
     #[test]
     fn valid_to_namespace() {
         let mut entry = create_registry_entry();
-        entry.name = "@mynamespace/test".to_string();
+        entry.namespace = "mynamespace".to_string();
 
         let index = entry.to_index_by_namespace();
 
-        assert_eq!(
-            index.index,
-            RegistryIndexKind::Namespace(entry.namespace().to_string())
-        );
+        assert_eq!(index.index, RegistryIndexKind::Namespace(entry.namespace));
         assert_eq!(index.registry_entry_id, entry.id);
     }
 
     #[test]
-    fn valid_to_unnamespaced_name() {
+    fn valid_to_name() {
         let mut entry = create_registry_entry();
-        entry.name = "@mynamespace/test".to_string();
+        entry.name = "test".to_string();
 
-        let index = entry.to_index_by_unnamespaced_name();
+        let index = entry.to_index_by_name();
 
-        assert_eq!(
-            index.index,
-            RegistryIndexKind::Name(entry.unnamespaced_name().to_string())
-        );
+        assert_eq!(index.index, RegistryIndexKind::Name(entry.name));
         assert_eq!(index.registry_entry_id, entry.id);
     }
 
@@ -175,12 +173,13 @@ mod tests {
     #[test]
     fn valid_to_fullname() {
         let mut entry = create_registry_entry();
-        entry.name = "@mynamespace/test".to_string();
+        entry.namespace = "mynamespace".to_string();
+        entry.name = "test".to_string();
         let index = entry.to_index_by_fullname();
 
         assert_eq!(
             index.index,
-            RegistryIndexKind::Fullname(entry.name.to_string())
+            RegistryIndexKind::Fullname(entry.fullname().to_string())
         );
         assert_eq!(index.registry_entry_id, entry.id);
     }
