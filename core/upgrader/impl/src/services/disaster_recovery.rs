@@ -201,7 +201,10 @@ impl DisasterRecoveryService {
             result: None,
         };
 
-        let _ = installer.stop(station_canister_id).await;
+        // only stop for upgrade
+        if request.install_mode == InstallMode::Upgrade {
+            let _ = installer.stop(station_canister_id).await;
+        }
 
         match installer
             .install(
@@ -209,6 +212,7 @@ impl DisasterRecoveryService {
                 request.wasm_module,
                 request.arg,
                 match request.install_mode {
+                    InstallMode::Install => CanisterInstallMode::Install,
                     InstallMode::Upgrade => CanisterInstallMode::Upgrade(None),
                     InstallMode::Reinstall => CanisterInstallMode::Reinstall,
                 },
@@ -223,7 +227,10 @@ impl DisasterRecoveryService {
             }
         }
 
-        let _ = installer.start(station_canister_id).await;
+        // only start for upgrade
+        if request.install_mode == InstallMode::Upgrade {
+            let _ = installer.start(station_canister_id).await;
+        }
     }
 
     pub fn request_recovery(

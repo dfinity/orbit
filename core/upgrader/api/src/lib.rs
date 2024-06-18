@@ -91,7 +91,11 @@ pub struct SetDisasterRecoveryAccountsInput {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum InstallMode {
+    /// Install the module.
+    Install,
+    /// Upgrade the module.
     Upgrade,
+    /// Reinstall the module.
     Reinstall,
 }
 

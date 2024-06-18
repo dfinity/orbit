@@ -8,8 +8,10 @@ use uuid::Uuid;
 use crate::utils::HelperMapper;
 
 #[storable]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum InstallMode {
+    /// Install the wasm module.
+    Install,
     /// Upgrade the wasm module.
     Upgrade,
     /// Reinstall the wasm module.
@@ -19,6 +21,7 @@ pub enum InstallMode {
 impl From<upgrader_api::InstallMode> for InstallMode {
     fn from(value: upgrader_api::InstallMode) -> Self {
         match value {
+            upgrader_api::InstallMode::Install => InstallMode::Install,
             upgrader_api::InstallMode::Upgrade => InstallMode::Upgrade,
             upgrader_api::InstallMode::Reinstall => InstallMode::Reinstall,
         }
@@ -28,6 +31,7 @@ impl From<upgrader_api::InstallMode> for InstallMode {
 impl From<InstallMode> for upgrader_api::InstallMode {
     fn from(value: InstallMode) -> Self {
         match value {
+            InstallMode::Install => upgrader_api::InstallMode::Install,
             InstallMode::Upgrade => upgrader_api::InstallMode::Upgrade,
             InstallMode::Reinstall => upgrader_api::InstallMode::Reinstall,
         }
