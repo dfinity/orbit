@@ -14,7 +14,9 @@ pub enum Args {
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Parser)]
 pub struct ChangeExternalCanister {
+    // TODO: Poll, waiting for the request to be accepted.
     /// The canister ID to install or update.
+    // TODO: Canister by name
     #[clap(short, long)]
     canister_id: Principal,
     /// The installation mode.
