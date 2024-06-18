@@ -6,6 +6,8 @@ use clap::Subcommand;
 use orbit_station_api::{CreateRequestInput, RequestOperationInput};
 
 /// Request canister changes.
+///
+/// TODO: Add flags for --title, --summary, and --execution-plan.
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
 pub enum Args {
@@ -29,6 +31,7 @@ impl From<Args> for RequestOperationInput {
 impl From<Args> for CreateRequestInput {
     fn from(args: Args) -> Self {
         let operation = RequestOperationInput::from(args);
+        // TODO: Get title, summary, and execution_plan from args.
         CreateRequestInput {
             operation,
             title: None,
