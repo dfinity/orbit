@@ -11,15 +11,7 @@ use tempfile::tempdir;
 /// The main entry point for the `dfx orbit` CLI.
 pub async fn main(args: Args) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
     // Converts the CLI arg type into the equivalent Orbit API type.
-    let args = orbit_station_api::RequestOperationInput::from(args);
-    // TODO: Add title, summary and execution_plan to the CLI.
-    // TODO: Mopve this conversion to the cli types module.
-    let args = CreateRequestInput {
-        operation: args,
-        title: None,
-        summary: None,
-        execution_plan: None,
-    };
+    let args = CreateRequestInput::from(args);
     let idl_text = serialize_one_to_text(&args)?;
     // The idl text can be too large to pass on gthe command line.  We write it to a file and pass the file name instead.
     let dir = tempdir()?;

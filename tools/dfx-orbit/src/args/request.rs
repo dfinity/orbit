@@ -3,7 +3,7 @@ pub mod canister;
 pub mod permission;
 
 use clap::Subcommand;
-use orbit_station_api::RequestOperationInput;
+use orbit_station_api::{CreateRequestInput, RequestOperationInput};
 
 /// Request canister changes.
 #[derive(Debug, Subcommand)]
@@ -22,6 +22,18 @@ impl From<Args> for RequestOperationInput {
         match args {
             Args::Canister(canister_args) => RequestOperationInput::from(canister_args),
             Args::Permission(_permission_args) => unimplemented!(), //RequestOperationInput::from(permission_args),
+        }
+    }
+}
+
+impl From<Args> for CreateRequestInput {
+    fn from(args: Args) -> Self {
+        let operation = RequestOperationInput::from(args);
+        CreateRequestInput {
+            operation,
+            title: None,
+            summary: None,
+            execution_plan: None,
         }
     }
 }
