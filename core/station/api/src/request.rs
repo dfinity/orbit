@@ -18,7 +18,7 @@ use crate::{
 };
 use candid::{CandidType, Deserialize, Principal};
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum RequestStatusDTO {
     Created,
     Approved,
@@ -30,7 +30,7 @@ pub enum RequestStatusDTO {
     Failed { reason: Option<String> },
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RequestStatusCodeDTO {
     Created = 0,
     Approved = 1,
@@ -42,19 +42,19 @@ pub enum RequestStatusCodeDTO {
     Failed = 7,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum RequestApprovalStatusDTO {
     Approved,
     Rejected,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum RequestExecutionScheduleDTO {
     Immediate,
     Scheduled { execution_time: TimestampRfc3339 },
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum RequestOperationDTO {
     Transfer(Box<TransferOperationDTO>),
     AddAccount(Box<AddAccountOperationDTO>),
@@ -78,7 +78,7 @@ pub enum RequestOperationDTO {
     ManageSystemInfo(Box<ManageSystemInfoOperationDTO>),
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum RequestOperationInput {
     Transfer(TransferOperationInput),
     AddAccount(AddAccountOperationInput),
@@ -102,7 +102,7 @@ pub enum RequestOperationInput {
     ManageSystemInfo(ManageSystemInfoOperationInput),
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum RequestOperationTypeDTO {
     Transfer,
     AddAccount,
@@ -126,7 +126,7 @@ pub enum RequestOperationTypeDTO {
     ManageSystemInfo,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ListRequestsOperationTypeDTO {
     Transfer(Option<UuidDTO>),
     AddAccount,
@@ -150,7 +150,7 @@ pub enum ListRequestsOperationTypeDTO {
     ManageSystemInfo,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestApprovalDTO {
     pub approver_id: UuidDTO,
     pub status: RequestApprovalStatusDTO,
@@ -158,7 +158,7 @@ pub struct RequestApprovalDTO {
     pub decided_at: TimestampRfc3339,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestDTO {
     pub id: UuidDTO,
     pub title: String,
@@ -172,13 +172,13 @@ pub struct RequestDTO {
     pub execution_plan: RequestExecutionScheduleDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestCallerPrivilegesDTO {
     pub id: UuidDTO,
     pub can_approve: bool,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestAdditionalInfoDTO {
     pub id: UuidDTO,
     pub requester_name: String,
@@ -186,7 +186,7 @@ pub struct RequestAdditionalInfoDTO {
     pub evaluation_result: Option<RequestEvaluationResultDTO>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct CreateRequestInput {
     pub operation: RequestOperationInput,
     pub title: Option<String>,
@@ -194,40 +194,40 @@ pub struct CreateRequestInput {
     pub execution_plan: Option<RequestExecutionScheduleDTO>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct SubmitRequestApprovalInput {
     pub decision: RequestApprovalStatusDTO,
     pub request_id: UuidDTO,
     pub reason: Option<String>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct SubmitRequestApprovalResponse {
     pub request: RequestDTO,
     pub privileges: RequestCallerPrivilegesDTO,
     pub additional_info: RequestAdditionalInfoDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetRequestInput {
     pub request_id: UuidDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetRequestResponse {
     pub request: RequestDTO,
     pub privileges: RequestCallerPrivilegesDTO,
     pub additional_info: RequestAdditionalInfoDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ListRequestsSortBy {
     CreatedAt(SortDirection),
     ExpirationDt(SortDirection),
     LastModificationDt(SortDirection),
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ListRequestsInput {
     pub requester_ids: Option<Vec<UuidDTO>>,
     pub approver_ids: Option<Vec<UuidDTO>>,
@@ -243,7 +243,7 @@ pub struct ListRequestsInput {
     pub with_evaluation_results: bool,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ListRequestsResponse {
     pub requests: Vec<RequestDTO>,
     pub next_offset: Option<u64>,
@@ -252,7 +252,7 @@ pub struct ListRequestsResponse {
     pub additional_info: Vec<RequestAdditionalInfoDTO>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetNextApprovableRequestInput {
     pub excluded_request_ids: Vec<UuidDTO>,
     pub operation_types: Option<Vec<ListRequestsOperationTypeDTO>>,
@@ -260,43 +260,43 @@ pub struct GetNextApprovableRequestInput {
 
 pub type GetNextApprovableRequestResponse = Option<GetRequestResponse>;
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct CreateRequestResponse {
     pub request: RequestDTO,
     pub privileges: RequestCallerPrivilegesDTO,
     pub additional_info: RequestAdditionalInfoDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AddRequestPolicyOperationInput {
     pub specifier: RequestSpecifierDTO,
     pub rule: RequestPolicyRuleDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AddRequestPolicyOperationDTO {
     pub policy_id: Option<UuidDTO>,
     pub input: AddRequestPolicyOperationInput,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct EditRequestPolicyOperationInput {
     pub policy_id: UuidDTO,
     pub specifier: Option<RequestSpecifierDTO>,
     pub rule: Option<RequestPolicyRuleDTO>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct EditRequestPolicyOperationDTO {
     pub input: EditRequestPolicyOperationInput,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RemoveRequestPolicyOperationInput {
     pub policy_id: UuidDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RemoveRequestPolicyOperationDTO {
     pub input: RemoveRequestPolicyOperationInput,
 }

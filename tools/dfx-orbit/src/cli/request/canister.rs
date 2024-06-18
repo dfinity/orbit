@@ -3,7 +3,9 @@
 use crate::args::request::canister::{Args, ChangeExternalCanister};
 use anyhow::anyhow;
 use candid::{CandidType, IDLArgs, Principal};
-use orbit_station_api::{CreateRequestInput, RequestOperationInput};
+use orbit_station_api::{
+    ApiErrorDTO, CreateRequestInput, CreateRequestResponse, RequestOperationInput,
+};
 use std::fs::File;
 use std::io::Write;
 use tempfile::tempdir;
@@ -41,11 +43,13 @@ async fn change(args: ChangeExternalCanister) -> anyhow::Result<()> {
     let mut extension_agent = crate::dfx_extension_api::DfxExtensionAgent::new("orbit");
     let agent = extension_agent.agent().await?;
     let canister_id = Principal::from_text(&orbit_canister_id)?;
-    agent
+    let bytes = agent
         .update(&canister_id, "create_request")
         .with_arg(candid::encode_one(args)?)
         .call_and_wait()
         .await?;
+    let ans: Result<CreateRequestResponse, ApiErrorDTO> = candid::decode_one(&bytes)?;
+    println!("{}", serde_json::to_string_pretty(&ans)?);
     Ok(())
 }
 
