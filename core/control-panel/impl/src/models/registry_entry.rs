@@ -209,7 +209,7 @@ impl WasmModuleRegistryValue {
     pub const MAX_DEPENDENCIES: usize = 25;
 }
 
-fn validate_module_version(version: &str) -> ModelValidatorResult<RegistryError> {
+fn validate_wasm_module_version(version: &str) -> ModelValidatorResult<RegistryError> {
     if (version.len() < WasmModuleRegistryValue::MIN_VERSION_LENGTH)
         || (version.len() > WasmModuleRegistryValue::MAX_VERSION_LENGTH)
     {
@@ -334,7 +334,7 @@ fn validate_dependencies(entry: &RegistryEntry) -> ModelValidatorResult<Registry
             }
 
             for dependency in value.dependencies.iter() {
-                validate_module_version(&dependency.version)?;
+                validate_wasm_module_version(&dependency.version)?;
 
                 let found = REGISTRY_REPOSITORY.find_ids_where(
                     RegistryWhere::clause()
@@ -361,7 +361,7 @@ fn validate_dependencies(entry: &RegistryEntry) -> ModelValidatorResult<Registry
 
 impl ModelValidator<RegistryError> for WasmModuleRegistryValue {
     fn validate(&self) -> ModelValidatorResult<RegistryError> {
-        validate_module_version(&self.version)?;
+        validate_wasm_module_version(&self.version)?;
 
         Ok(())
     }
