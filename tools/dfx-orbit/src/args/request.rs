@@ -1,4 +1,4 @@
-//! Makes requests to Orbit.
+//! Defines the command line arguments for `dfx-orbit request`.  These correspond to Orbit station `create_request` API calls.
 pub mod canister;
 pub mod permission;
 
