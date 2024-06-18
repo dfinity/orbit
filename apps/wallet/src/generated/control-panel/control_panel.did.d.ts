@@ -87,6 +87,17 @@ export type ManageUserStationsInput = { 'Add' : Array<UserStation> } |
 export type ManageUserStationsResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface Metadata { 'key' : string, 'value' : string }
+export interface NextWasmModuleVersionInput {
+  'name' : string,
+  'current_version' : string,
+}
+export interface NextWasmModuleVersionResponse {
+  'entry' : [] | [RegistryEntry],
+}
+export type NextWasmModuleVersionResult = {
+    'Ok' : NextWasmModuleVersionResponse
+  } |
+  { 'Err' : ApiError };
 export interface PaginationInput {
   'offset' : [] | [bigint],
   'limit' : [] | [number],
@@ -113,7 +124,8 @@ export interface RegistryEntryInput {
   'tags' : Array<string>,
   'description' : string,
 }
-export type RegistryEntrySortBy = { 'CreatedAt' : null };
+export type RegistryEntrySortBy = { 'Version' : SortDirection } |
+  { 'CreatedAt' : SortDirection };
 export interface RegistryEntryUpdateInput {
   'categories' : [] | [Array<string>],
   'value' : [] | [RegistryEntryValueInput],
@@ -134,6 +146,7 @@ export type SearchRegistryFilterKind = { 'Kind' : RegistryEntryValueKind } |
   { 'Name' : string } |
   { 'Namespace' : string };
 export interface SearchRegistryInput {
+  'sort_by' : [] | [RegistryEntrySortBy],
   'pagination' : [] | [PaginationInput],
   'filter_by' : Array<SearchRegistryFilterKind>,
 }
@@ -147,6 +160,8 @@ export type SearchRegistryResult = { 'Ok' : SearchRegistryResponse } |
 export type SetUserActiveResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export type Sha256Hex = string;
+export type SortDirection = { 'Asc' : null } |
+  { 'Desc' : null };
 export type StationID = Principal;
 export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
@@ -229,6 +244,10 @@ export interface _SERVICE {
   'manage_user_stations' : ActorMethod<
     [ManageUserStationsInput],
     ManageUserStationsResult
+  >,
+  'next_wasm_module_version' : ActorMethod<
+    [NextWasmModuleVersionInput],
+    NextWasmModuleVersionResult
   >,
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
   'search_registry' : ActorMethod<[SearchRegistryInput], SearchRegistryResult>,

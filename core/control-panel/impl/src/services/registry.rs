@@ -1,12 +1,16 @@
 use crate::{
     errors::RegistryError,
-    mappers::RegistryMapper,
-    models::{RegistryEntry, RegistryEntryId, RegistryValue, WasmModuleRegistryValue, LATEST_TAG},
+    mappers::{HelperMapper, RegistryMapper},
+    models::{
+        RegistryEntry, RegistryEntryId, RegistryValue, RegistryValueKind, WasmModuleRegistryValue,
+        LATEST_TAG,
+    },
     repositories::{RegistryRepository, RegistryWhere, REGISTRY_REPOSITORY},
     services::{ArtifactService, ARTIFACT_SERVICE},
 };
 use control_panel_api::{
-    RegistryEntryInput, RegistryEntryUpdateInput, SearchRegistryFilterKindDTO, SearchRegistryInput,
+    RegistryEntryInput, RegistryEntrySortBy, RegistryEntryUpdateInput, SearchRegistryFilterKindDTO,
+    SearchRegistryInput, SortDirection,
 };
 use lazy_static::lazy_static;
 use orbit_essentials::{
@@ -90,7 +94,9 @@ impl RegistryService {
                 }
             });
 
-        let entry_ids = self.registry_repository.find_ids_where(where_clause, None);
+        let entry_ids = self
+            .registry_repository
+            .find_ids_where(where_clause, search.sort_by);
         let paginated_ids = paginated_items(PaginatedItemsArgs {
             offset: search.pagination.to_owned().and_then(|p| p.offset),
             limit: search.pagination.and_then(|p| p.limit),
@@ -248,6 +254,62 @@ impl RegistryService {
 
         Ok(registry)
     }
+
+    /// Finds the next version of the registry entry by name and the current version.
+    ///
+    /// If there is no next version, `None` is returned.
+    pub fn find_next_wasm_module_version(
+        &self,
+        name: &str,
+        current_version: &str,
+    ) -> ServiceResult<Option<RegistryEntry>> {
+        let fullname = match name.starts_with(RegistryEntry::NAMESPACE_PREFIX) {
+            true => name.to_string(),
+            false => format!(
+                "{}{}/{}",
+                RegistryEntry::NAMESPACE_PREFIX,
+                RegistryEntry::DEFAULT_NAMESPACE,
+                name
+            ),
+        };
+
+        let results = self.registry_repository.find_ids_where(
+            RegistryWhere::clause()
+                .and_fullname(&fullname)
+                .and_kind(RegistryValueKind::WasmModule),
+            Some(RegistryEntrySortBy::Version(SortDirection::Asc)),
+        );
+
+        let mut entries = results
+            .iter()
+            .filter_map(|id| self.get(id).ok())
+            .collect::<Vec<RegistryEntry>>();
+
+        if entries.is_empty() {
+            return Err(RegistryError::WasmModuleNotFound {
+                name: fullname.to_string(),
+            })?;
+        }
+
+        entries.retain(|entry| match &entry.value {
+            RegistryValue::WasmModule(wasm_module) => wasm_module.version != current_version,
+        });
+
+        let current_version = HelperMapper::to_semver(current_version);
+
+        for entry in entries {
+            match &entry.value {
+                RegistryValue::WasmModule(wasm_module) => {
+                    let new_version = HelperMapper::to_semver(&wasm_module.version);
+                    if new_version > current_version {
+                        return Ok(Some(entry));
+                    }
+                }
+            }
+        }
+
+        Ok(None)
+    }
 }
 
 #[cfg(test)]
@@ -265,6 +327,7 @@ mod tests {
                 SearchRegistryFilterKindDTO::Name("test".to_string()),
                 SearchRegistryFilterKindDTO::Kind(RegistryEntryValueKindDTO::WasmModule),
             ],
+            sort_by: None,
             pagination: None,
         };
 
@@ -289,6 +352,7 @@ mod tests {
                 SearchRegistryFilterKindDTO::Name("@orbit/module-2".to_string()),
                 SearchRegistryFilterKindDTO::Kind(RegistryEntryValueKindDTO::WasmModule),
             ],
+            sort_by: None,
             pagination: None,
         };
 
@@ -307,6 +371,7 @@ mod tests {
                 SearchRegistryFilterKindDTO::Namespace("test".to_string()),
                 SearchRegistryFilterKindDTO::Kind(RegistryEntryValueKindDTO::WasmModule),
             ],
+            sort_by: None,
             pagination: None,
         };
 
@@ -331,6 +396,7 @@ mod tests {
                 SearchRegistryFilterKindDTO::Namespace("test".to_string()),
                 SearchRegistryFilterKindDTO::Kind(RegistryEntryValueKindDTO::WasmModule),
             ],
+            sort_by: None,
             pagination: None,
         };
 
@@ -360,6 +426,7 @@ mod tests {
                 SearchRegistryFilterKindDTO::Name("@test/module".to_string()),
                 SearchRegistryFilterKindDTO::Kind(RegistryEntryValueKindDTO::WasmModule),
             ],
+            sort_by: None,
             pagination: None,
         };
 
@@ -493,5 +560,60 @@ mod tests {
                 assert_eq!(wasm_module.dependencies.len(), 0);
             }
         }
+    }
+
+    #[test]
+    fn should_find_next_wasm_module_version() {
+        for i in 0..10 {
+            let mut entry = create_registry_entry();
+            entry.name = "module".to_string();
+            entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+                wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+                version: format!("1.0.{}", i),
+                dependencies: Vec::new(),
+            });
+
+            REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
+        }
+
+        let next = REGISTRY_SERVICE
+            .find_next_wasm_module_version("module", "1.0.3")
+            .unwrap();
+
+        assert!(next.is_some());
+
+        match next.unwrap().value {
+            RegistryValue::WasmModule(wasm_module) => {
+                assert_eq!(wasm_module.version, "1.0.4");
+            }
+        }
+    }
+
+    #[test]
+    fn should_return_none_if_already_latest_version() {
+        for i in 0..10 {
+            let mut entry = create_registry_entry();
+            entry.name = "module".to_string();
+            entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
+                wasm_artifact_id: *Uuid::new_v4().as_bytes(),
+                version: format!("1.0.{}", i),
+                dependencies: Vec::new(),
+            });
+
+            REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
+        }
+
+        let next = REGISTRY_SERVICE
+            .find_next_wasm_module_version("module", "1.0.9")
+            .unwrap();
+
+        assert!(next.is_none());
+    }
+
+    #[test]
+    fn should_fail_if_wasm_module_not_found() {
+        let result = REGISTRY_SERVICE.find_next_wasm_module_version("module", "1.0.0");
+
+        assert!(result.is_err());
     }
 }

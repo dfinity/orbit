@@ -6,7 +6,8 @@ use crate::{
 use control_panel_api::{
     AddRegistryEntryInput, AddRegistryEntryResponse, DeleteRegistryEntryInput,
     DeleteRegistryEntryResponse, EditRegistryEntryInput, EditRegistryEntryResponse,
-    GetRegistryEntryInput, GetRegistryEntryResponse, SearchRegistryInput, SearchRegistryResponse,
+    GetRegistryEntryInput, GetRegistryEntryResponse, NextWasmModuleVersionInput,
+    NextWasmModuleVersionResponse, SearchRegistryInput, SearchRegistryResponse,
 };
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
@@ -22,6 +23,13 @@ async fn get_registry_entry(input: GetRegistryEntryInput) -> ApiResult<GetRegist
 #[query(name = "search_registry")]
 async fn search_registry(input: SearchRegistryInput) -> ApiResult<SearchRegistryResponse> {
     CONTROLLER.search_registry(input).await
+}
+
+#[query(name = "next_wasm_module_version")]
+async fn next_wasm_module_version(
+    input: NextWasmModuleVersionInput,
+) -> ApiResult<NextWasmModuleVersionResponse> {
+    CONTROLLER.next_wasm_module_version(input).await
 }
 
 #[update(name = "add_registry_entry")]
@@ -72,6 +80,20 @@ impl RegistryController {
 
         Ok(GetRegistryEntryResponse {
             entry: entry.into(),
+        })
+    }
+
+    /// Returns the next wasm module for the given wasm module name and current version, if any.
+    pub async fn next_wasm_module_version(
+        &self,
+        input: NextWasmModuleVersionInput,
+    ) -> ApiResult<NextWasmModuleVersionResponse> {
+        let entry = self
+            .registry_service
+            .find_next_wasm_module_version(&input.name, &input.current_version)?;
+
+        Ok(NextWasmModuleVersionResponse {
+            entry: entry.map(|e| e.into()),
         })
     }
 

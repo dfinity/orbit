@@ -1,4 +1,4 @@
-use crate::models::RegistryEntry;
+use crate::models::{RegistryEntry, RegistryValue};
 use orbit_essentials::{storable, types::Timestamp};
 
 /// The main index for registry entries.
@@ -9,6 +9,8 @@ pub struct RegistrySortIndex {
     pub created_at: Timestamp,
     /// The registry entry's last modification timestamp.
     pub modified_at: Option<Timestamp>,
+    /// Version of the registry entry.
+    pub version: Option<String>,
 }
 
 impl RegistryEntry {
@@ -16,6 +18,9 @@ impl RegistryEntry {
         RegistrySortIndex {
             created_at: self.created_at,
             modified_at: self.updated_at,
+            version: match self.value.clone() {
+                RegistryValue::WasmModule(value) => Some(value.version),
+            },
         }
     }
 }
@@ -31,6 +36,7 @@ mod tests {
         let model = RegistrySortIndex {
             created_at: 1,
             modified_at: Some(2),
+            version: Some("1.0.0".to_string()),
         };
 
         let serialized_model = model.to_bytes();
@@ -38,6 +44,7 @@ mod tests {
 
         assert_eq!(model.created_at, deserialized_model.created_at);
         assert_eq!(model.modified_at, deserialized_model.modified_at);
+        assert_eq!(model.version, deserialized_model.version);
     }
 
     #[test]
@@ -51,7 +58,8 @@ mod tests {
             index,
             RegistrySortIndex {
                 created_at: entry.created_at,
-                modified_at: entry.updated_at
+                modified_at: entry.updated_at,
+                version: Some("1.0.0".to_string())
             }
         );
     }

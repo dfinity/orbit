@@ -429,16 +429,25 @@ type SearchRegistryFilterKind = variant {
   Kind : RegistryEntryValueKind;
 };
 
+type SortDirection = variant {
+  Asc;
+  Desc;
+};
+
 // The registry entry sort options.
 type RegistryEntrySortBy = variant {
   // Sort by the timestamp when the registry entry was created.
-  CreatedAt;
+  CreatedAt : SortDirection;
+  // Sort by the version of the registry entry, if applicable.
+  Version : SortDirection;
 };
 
 // The input for searching the registry.
 type SearchRegistryInput = record {
   // Filters are used sequentially and are combined with an AND operation to filter the entries in the registry.
   filter_by : vec SearchRegistryFilterKind;
+  // Sort the entries in the registry.
+  sort_by : opt RegistryEntrySortBy;
   // The pagination options to use for the search.
   pagination : opt PaginationInput;
 };
@@ -587,8 +596,34 @@ type DeleteRegistryEntryResult = variant {
   Err : ApiError;
 };
 
+// The input for finding the next wasm module version.
+type NextWasmModuleVersionInput = record {
+  // The name of the registry entry.
+  name : text;
+  // The current version of the registry entry.
+  current_version : text;
+};
+
+// The response of finding the next wasm module version.
+type NextWasmModuleVersionResponse = record {
+  // The registry entry that is the next version of the provided entry.
+  entry : opt RegistryEntry;
+};
+
+// The result of finding the next wasm module version.
+type NextWasmModuleVersionResult = variant {
+  // Successfull operation result.
+  Ok : NextWasmModuleVersionResponse;
+  // The error that occurred during the operation.
+  Err : ApiError;
+};
+
 // The control panel service definition.
 service : () -> {
+  // Find the next wasm module version for the provided module name and current version.
+  //
+  // If no next version is found, the result will be `None`.
+  next_wasm_module_version : (NextWasmModuleVersionInput) -> (NextWasmModuleVersionResult) query;
   // Add a new entry to the registry.
   //
   // The caller must have the necessary permissions to add an entry to the registry.
