@@ -257,7 +257,11 @@ impl<'a> SortingStrategy<'a> for TimestampSortingStrategy<'a> {
                     SortDirection::Descending => ord.reverse(),
                 }
             }
-            .then_with(|| a.1.cmp(&b.1)) // Compare IDs if timestamps are equal
+            .then_with(|| match direction {
+                // Compare IDs if timestamps are equal
+                SortDirection::Ascending => a.1.cmp(&b.1),
+                SortDirection::Descending => b.1.cmp(&a.1),
+            })
         });
 
         let sorted_ids: Vec<UUID> = id_with_timestamps.into_iter().map(|(_, id)| id).collect();
