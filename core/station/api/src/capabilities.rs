@@ -1,7 +1,7 @@
 use crate::MetadataDTO;
 use candid::{CandidType, Deserialize};
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct AssetDTO {
     /// The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
     pub blockchain: String,
@@ -19,7 +19,7 @@ pub struct AssetDTO {
 }
 
 /// The capabilities of the canister.
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct CapabilitiesDTO {
     /// The name of the canister.
     pub name: String,
@@ -29,7 +29,7 @@ pub struct CapabilitiesDTO {
     pub supported_assets: Vec<AssetDTO>,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct CapabilitiesResponse {
     pub capabilities: CapabilitiesDTO,
 }

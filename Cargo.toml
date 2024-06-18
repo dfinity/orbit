@@ -1,17 +1,17 @@
 [workspace]
 resolver = "2"
 members = [
-    "tests/integration",
     "core/control-panel/api",
     "core/control-panel/impl",
-    "core/upgrader/api",
-    "core/upgrader/impl",
     "core/station/api",
     "core/station/impl",
+    "core/upgrader/api",
+    "core/upgrader/impl",
     "libs/canfund",
     "libs/orbit-essentials",
     "libs/orbit-essentials-macros",
     "libs/orbit-essentials-macros-tests",
+    "tests/integration",
 ]
 
 [workspace.package]
