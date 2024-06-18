@@ -664,7 +664,7 @@ mod tests {
     #[case::empty_name_with_space(&" ")]
     #[case::starts_with_space(&" entry")]
     #[case::ends_with_space(&"entry ")]
-    #[case::name_to_small(&"a")]
+    #[case::name_too_small(&"a")]
     #[case::name_too_big(&"a".repeat(RegistryEntry::MAX_NAME_LENGTH + 1))]
     #[case::name_contains_invalid_characters(&"test!")]
     #[case::name_contains_invalid_characters(&"test.1")]
