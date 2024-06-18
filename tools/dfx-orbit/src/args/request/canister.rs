@@ -1,4 +1,4 @@
-//! Makes requests to Orbit.
+//! Makes requests to do things to canisters.  Such as update the Wasm, deploy frontend assets or make API calls to them.
 
 use candid::Principal;
 use clap::{Parser, Subcommand, ValueEnum};
@@ -14,7 +14,9 @@ pub enum Args {
 impl From<Args> for orbit_station_api::RequestOperationInput {
     fn from(args: Args) -> Self {
         match args {
-            Args::Change(_change_args) => unimplemented!(), //orbit_station_api::ChangeExternalCanisterOperationInput::(change_args.into()),
+            Args::Change(change_args) => {
+                orbit_station_api::RequestOperationInput::ChangeExternalCanister(change_args.into())
+            }
         }
     }
 }
