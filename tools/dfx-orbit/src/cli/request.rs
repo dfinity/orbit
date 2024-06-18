@@ -1,4 +1,4 @@
-//! Implements the dfx extension CLI commands for making requests.
+//! Implements `dfx request` commands.  These correspond to Orbit station `create_request` API calls.
 
 use crate::args::request::Args;
 use anyhow::anyhow;
