@@ -19,7 +19,7 @@ impl RegistryEntry {
             created_at: self.created_at,
             modified_at: self.updated_at,
             version: match self.value.clone() {
-                RegistryValue::WasmModule(value) => Some(value.version.clone()),
+                RegistryValue::WasmModule(value) => Some(value.version),
             },
         }
     }
