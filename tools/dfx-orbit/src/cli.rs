@@ -28,6 +28,10 @@ pub async fn main(args: DfxOrbitArgs) -> anyhow::Result<()> {
             dfx_extension_cli::main(dfx_extension_args)
         }
         DfxOrbitSubcommands::Canister(canister_args) => canister::main(canister_args),
-        DfxOrbitSubcommands::Request(request_args) => request::main(request_args).await,
+        DfxOrbitSubcommands::Request(request_args) => match request::main(request_args).await {
+            Ok(Ok(_response)) => Ok(()),
+            Ok(Err(e)) => Err(anyhow!("Error response from the station: {e:?}")),
+            Err(e) => Err(e),
+        },
     }
 }

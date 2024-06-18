@@ -11,14 +11,16 @@ use std::io::Write;
 use tempfile::tempdir;
 
 /// The main entry point for the `dfx orbit` CLI.
-pub async fn main(args: Args) -> anyhow::Result<()> {
+pub async fn main(args: Args) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
     match args {
         Args::Change(change_args) => change(change_args).await,
     }
 }
 
 /// Makes an API call to chnage an external canister.
-async fn change(args: ChangeExternalCanister) -> anyhow::Result<()> {
+async fn change(
+    args: ChangeExternalCanister,
+) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
     // If we can be SURE that the orbit `station_api` types remain in sync with the .did files, we can use these types.
     let args = orbit_station_api::ChangeExternalCanisterOperationInput::from(args);
     let args = RequestOperationInput::ChangeExternalCanister(args);
@@ -50,7 +52,7 @@ async fn change(args: ChangeExternalCanister) -> anyhow::Result<()> {
         .await?;
     let ans: Result<CreateRequestResponse, ApiErrorDTO> = candid::decode_one(&bytes)?;
     println!("{ans:#?}");
-    Ok(())
+    Ok(ans)
 }
 
 /// Serializes a value to a Candid string.
