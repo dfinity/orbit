@@ -1,12 +1,12 @@
 use crate::{Sha256HashDTO, TimestampRfc3339, UuidDTO};
 use candid::{CandidType, Deserialize};
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct GetArtifactInput {
     pub artifact_id: UuidDTO,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct ArtifactDTO {
     pub id: UuidDTO,
     pub size: u64,
@@ -16,7 +16,7 @@ pub struct ArtifactDTO {
     pub created_at: TimestampRfc3339,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct GetArtifactResponse {
     pub artifact: ArtifactDTO,
 }

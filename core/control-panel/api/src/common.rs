@@ -6,7 +6,7 @@ pub type UuidDTO = String;
 pub type Sha256HashDTO = String;
 
 /// Generic error type used for calls.
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, Deserialize, serde::Serialize, Clone, Debug)]
 pub struct ApiErrorDTO {
     /// The error code uppercased and underscored (e.g. `INVALID_ARGUMENT`).
     pub code: String,
@@ -16,19 +16,19 @@ pub struct ApiErrorDTO {
     pub details: Option<HashMap<String, String>>,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct MetadataDTO {
     pub key: String,
     pub value: String,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct PaginationInput {
     pub offset: Option<u64>,
     pub limit: Option<u16>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, Deserialize, serde::Serialize, Debug, Clone)]
 pub enum SortDirection {
     Asc,
     Desc,

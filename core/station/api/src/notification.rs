@@ -8,13 +8,13 @@ pub const REQUEST_CREATED_NOTIFICATION_TYPE: &str = "request-created";
 pub const REQUEST_FAILED_NOTIFICATION_TYPE: &str = "request-failed";
 pub const REQUEST_REJECTED_NOTIFICATION_TYPE: &str = "request-rejected";
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum NotificationStatusDTO {
     Sent,
     Read,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum NotificationTypeDTO {
     SystemMessage,
     RequestCreated(RequestCreatedNotificationDTO),
@@ -22,7 +22,7 @@ pub enum NotificationTypeDTO {
     RequestRejected(RequestRejectedNotificationDTO),
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestCreatedNotificationDTO {
     pub request_id: UuidDTO,
     pub operation_type: RequestOperationTypeDTO,
@@ -30,21 +30,21 @@ pub struct RequestCreatedNotificationDTO {
     pub user_id: Option<UuidDTO>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestFailedNotificationDTO {
     pub request_id: UuidDTO,
     pub operation_type: RequestOperationTypeDTO,
     pub reason: Option<String>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestRejectedNotificationDTO {
     pub request_id: UuidDTO,
     pub operation_type: RequestOperationTypeDTO,
     pub reasons: Option<Vec<EvaluationSummaryReasonDTO>>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum NotificationTypeInput {
     SystemMessage,
     RequestCreated,
@@ -63,7 +63,7 @@ impl Display for NotificationTypeInput {
     }
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct NotificationDTO {
     pub id: UuidDTO,
     pub status: NotificationStatusDTO,
@@ -74,7 +74,7 @@ pub struct NotificationDTO {
     pub created_at: TimestampRfc3339,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ListNotificationsInput {
     pub status: Option<NotificationStatusDTO>,
     pub notification_type: Option<NotificationTypeInput>,
@@ -82,12 +82,12 @@ pub struct ListNotificationsInput {
     pub to_dt: Option<TimestampRfc3339>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ListNotificationsResponse {
     pub notifications: Vec<NotificationDTO>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct MarkNotificationsReadInput {
     pub notification_ids: Vec<UuidDTO>,
     pub read: bool,

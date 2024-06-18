@@ -1,6 +1,6 @@
 use candid::{CandidType, Deserialize};
 
-#[derive(CandidType, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UploadCanisterModulesInput {
     #[serde(with = "serde_bytes")]
     pub upgrader_wasm_module: Vec<u8>,
