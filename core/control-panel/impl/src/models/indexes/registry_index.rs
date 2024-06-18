@@ -1,4 +1,4 @@
-use crate::models::{RegistryEntry, RegistryEntryId, RegistryValueKind};
+use crate::models::{RegistryEntry, RegistryEntryId, RegistryValue, RegistryValueKind};
 use orbit_essentials::storable;
 
 /// The main index for registry entries.
@@ -14,12 +14,12 @@ pub struct RegistryIndex {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum RegistryIndexKind {
+    ValueKind(RegistryValueKind),
     Fullname(String),
     Namespace(String),
-    Name(String),
     Category(String),
     Tag(String),
-    ValueKind(RegistryValueKind),
+    Version(String),
 }
 
 #[derive(Clone, Debug)]
@@ -31,25 +31,14 @@ pub struct RegistryIndexCriteria {
 impl RegistryEntry {
     pub fn to_index_by_fullname(&self) -> RegistryIndex {
         RegistryIndex {
-            index: RegistryIndexKind::Fullname(format!(
-                "@{}/{}",
-                self.namespace(),
-                self.unnamespaced_name()
-            )),
+            index: RegistryIndexKind::Fullname(self.fullname()),
             registry_entry_id: self.id,
         }
     }
 
     pub fn to_index_by_namespace(&self) -> RegistryIndex {
         RegistryIndex {
-            index: RegistryIndexKind::Namespace(self.namespace().to_string()),
-            registry_entry_id: self.id,
-        }
-    }
-
-    pub fn to_index_by_unnamespaced_name(&self) -> RegistryIndex {
-        RegistryIndex {
-            index: RegistryIndexKind::Name(self.unnamespaced_name().to_string()),
+            index: RegistryIndexKind::Namespace(self.namespace.to_string()),
             registry_entry_id: self.id,
         }
     }
@@ -74,6 +63,15 @@ impl RegistryEntry {
             .collect()
     }
 
+    pub fn to_index_by_version(&self) -> Option<RegistryIndex> {
+        match &self.value {
+            RegistryValue::WasmModule(module) => Some(RegistryIndex {
+                index: RegistryIndexKind::Version(module.version.to_string()),
+                registry_entry_id: self.id,
+            }),
+        }
+    }
+
     pub fn to_index_by_value_kind(&self) -> RegistryIndex {
         RegistryIndex {
             index: RegistryIndexKind::ValueKind(RegistryValueKind::from(&self.value)),
@@ -85,10 +83,13 @@ impl RegistryEntry {
     pub fn indexes(&self) -> Vec<RegistryIndex> {
         let mut indexes = vec![self.to_index_by_fullname()];
         indexes.push(self.to_index_by_namespace());
-        indexes.push(self.to_index_by_unnamespaced_name());
         indexes.extend(self.to_index_by_categories());
         indexes.extend(self.to_index_by_tags());
         indexes.push(self.to_index_by_value_kind());
+
+        if let Some(index) = self.to_index_by_version() {
+            indexes.push(index);
+        }
 
         indexes
     }
@@ -120,28 +121,11 @@ mod tests {
     #[test]
     fn valid_to_namespace() {
         let mut entry = create_registry_entry();
-        entry.name = "@mynamespace/test".to_string();
+        entry.namespace = "mynamespace".to_string();
 
         let index = entry.to_index_by_namespace();
 
-        assert_eq!(
-            index.index,
-            RegistryIndexKind::Namespace(entry.namespace().to_string())
-        );
-        assert_eq!(index.registry_entry_id, entry.id);
-    }
-
-    #[test]
-    fn valid_to_unnamespaced_name() {
-        let mut entry = create_registry_entry();
-        entry.name = "@mynamespace/test".to_string();
-
-        let index = entry.to_index_by_unnamespaced_name();
-
-        assert_eq!(
-            index.index,
-            RegistryIndexKind::Name(entry.unnamespaced_name().to_string())
-        );
+        assert_eq!(index.index, RegistryIndexKind::Namespace(entry.namespace));
         assert_eq!(index.registry_entry_id, entry.id);
     }
 
@@ -175,12 +159,13 @@ mod tests {
     #[test]
     fn valid_to_fullname() {
         let mut entry = create_registry_entry();
-        entry.name = "@mynamespace/test".to_string();
+        entry.namespace = "mynamespace".to_string();
+        entry.name = "test".to_string();
         let index = entry.to_index_by_fullname();
 
         assert_eq!(
             index.index,
-            RegistryIndexKind::Fullname(entry.name.to_string())
+            RegistryIndexKind::Fullname(entry.fullname().to_string())
         );
         assert_eq!(index.registry_entry_id, entry.id);
     }

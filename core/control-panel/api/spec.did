@@ -342,7 +342,6 @@ type RegistryEntry = record {
   // - Names must be between 2 and 48 characters long.
   // - Namespaces must be between 2 and 32 characters long.
   // - Names that are not namespaced, are put in the default namespace `@default`.
-  // - Namespaced names must be at most 64 characters long.
   name : text;
   // The description of the entry, which is a human-readable description of the entry.
   //
@@ -391,6 +390,19 @@ type RegistryEntryValue = variant {
   WasmModule : WasmModuleRegistryEntryValue;
 };
 
+// The registry entry value kind.
+type RegistryEntryValueKind = variant {
+  WasmModule;
+};
+
+// The dependency of a wasm module.
+type WasmModuleRegistryEntryDependency = record {
+  // The name of the dependency.
+  name : text;
+  // The version of the wasm module.
+  version : text;
+};
+
 // The wasm module registry value, which is the content of the wasm module and its version.
 type WasmModuleRegistryEntryValue = record {
   // The id of the wasm module that is stored in the artifact repository.
@@ -404,13 +416,23 @@ type WasmModuleRegistryEntryValue = record {
   // The dependencies of the wasm module, which are other wasm modules that this wasm module depends on.
   //
   // This registry ids should only reference registry entries that are of type `WasmModule`, others will be ignored.
-  dependencies : vec UUID;
+  dependencies : vec WasmModuleRegistryEntryDependency;
 };
 
 // The search registry filter options.
 type SearchRegistryFilterKind = variant {
   // The name of the registry entry to find, if the namespace is not provided the default namespace is used.
   Name : text;
+  // The namespace of the registry entry to find.
+  Namespace : text;
+  // The kind of registry entry to find.
+  Kind : RegistryEntryValueKind;
+};
+
+// The registry entry sort options.
+type RegistryEntrySortBy = variant {
+  // Sort by the timestamp when the registry entry was created.
+  CreatedAt;
 };
 
 // The input for searching the registry.
@@ -476,6 +498,21 @@ type RegistryEntryInput = record {
   value : RegistryEntryValueInput;
 };
 
+// The registry entry update input.
+type RegistryEntryUpdateInput = record {
+  // The description of the entry, which is a human-readable description of the entry.
+  description : opt text;
+  // The tags are used to tag the entry with specific search terms (e.g. "latest", "stable").
+  tags : opt vec text;
+  // The category is used to associate the entry with a specific category (e.g. "chain-fusion")
+  // across all the entries in the registry.
+  categories : opt vec text;
+  // The metadata of the entry in the registry.
+  metadata : opt vec Metadata;
+  // The content of the entry in the registry.
+  value : opt RegistryEntryValueInput;
+};
+
 // The registry entry value input.
 type RegistryEntryValueInput = variant {
   WasmModule : WasmModuleRegistryEntryValueInput;
@@ -488,7 +525,7 @@ type WasmModuleRegistryEntryValueInput = record {
   // The version of the wasm module.
   version : text;
   // The dependencies of the wasm module, which are other wasm modules that this wasm module depends on.
-  dependencies : vec UUID;
+  dependencies : vec WasmModuleRegistryEntryDependency;
 };
 
 // The input for adding a registry entry.
@@ -514,7 +551,7 @@ type EditRegistryEntryInput = record {
   // The id of the registry entry.
   id : UUID;
   // The updated registry entry.
-  entry : RegistryEntryInput;
+  entry : RegistryEntryUpdateInput;
 };
 
 // The response of editing a registry entry.
