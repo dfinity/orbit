@@ -1,8 +1,5 @@
 //! Implements the dfx extension CLI commands for making requests.
 
-pub mod canister;
-pub mod permission;
-
 use crate::args::request::Args;
 use anyhow::anyhow;
 use candid::{CandidType, IDLArgs, Principal};
