@@ -87,6 +87,26 @@ type SetDisasterRecoveryAccountsInput = record {
   accounts : vec Account;
 };
 
+type RequestDisasterRecoveryInput = record {
+  module : blob;
+  arg : blob;
+  install_mode : InstallMode;
+};
+
+type InstallMode = variant {
+  /// Install the wasm module.
+  Install;
+  /// Upgrade the wasm module.
+  Upgrade;
+  /// Reinstall the wasm module.
+  Reinstall;
+};
+
+type RequestDisasterRecoveryResult = variant {
+  Ok;
+  Err : Error;
+};
+
 service : (InitArg) -> {
   "trigger_upgrade" : (UpgradeParams) -> (TriggerUpgradeResponse);
   "set_disaster_recovery_committee" : (SetDisasterRecoveryCommitteeInput) -> (SetDisasterRecoveryResult);
@@ -94,4 +114,5 @@ service : (InitArg) -> {
   "is_committee_member" : () -> (IsCommitteeMemberResult) query;
   "get_disaster_recovery_accounts" : () -> (GetDisasterRecoveryAccountsResult) query;
   "get_disaster_recovery_committee" : () -> (GetDisasterRecoveryCommitteeResult) query;
+  "request_disaster_recovery" : (RequestDisasterRecoveryInput) -> (RequestDisasterRecoveryResult);
 };
