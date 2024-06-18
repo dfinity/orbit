@@ -418,8 +418,8 @@ fn validate_namespace(namespace: &str) -> ModelValidatorResult<RegistryError> {
         return Err(RegistryError::ValidationError {
             info: format!(
                 "Namespace length must be between {} and {}",
-                RegistryEntry::MIN_NAME_LENGTH,
-                RegistryEntry::MAX_NAME_LENGTH,
+                RegistryEntry::MIN_NAMESPACE_LENGTH,
+                RegistryEntry::MAX_NAMESPACE_LENGTH,
             ),
         });
     }
