@@ -596,34 +596,34 @@ type DeleteRegistryEntryResult = variant {
   Err : ApiError;
 };
 
-// The input for finding the next module version.
-type NextModuleVersionInput = record {
+// The input for finding the next wasm module version.
+type NextWasmModuleVersionInput = record {
   // The name of the registry entry.
   name : text;
   // The current version of the registry entry.
   current_version : text;
 };
 
-// The response of finding the next module version.
-type NextModuleVersionResponse = record {
+// The response of finding the next wasm module version.
+type NextWasmModuleVersionResponse = record {
   // The registry entry that is the next version of the provided entry.
   entry : opt RegistryEntry;
 };
 
-// The result of finding the next module version.
-type NextModuleVersionResult = variant {
+// The result of finding the next wasm module version.
+type NextWasmModuleVersionResult = variant {
   // Successfull operation result.
-  Ok : NextModuleVersionResponse;
+  Ok : NextWasmModuleVersionResponse;
   // The error that occurred during the operation.
   Err : ApiError;
 };
 
 // The control panel service definition.
 service : () -> {
-  // Find the next module version for the provided module name and current version.
+  // Find the next wasm module version for the provided module name and current version.
   //
   // If no next version is found, the result will be `None`.
-  next_module_version : (NextModuleVersionInput) -> (NextModuleVersionResult) query;
+  next_wasm_module_version : (NextWasmModuleVersionInput) -> (NextWasmModuleVersionResult) query;
   // Add a new entry to the registry.
   //
   // The caller must have the necessary permissions to add an entry to the registry.

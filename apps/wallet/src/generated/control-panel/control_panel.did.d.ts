@@ -87,12 +87,16 @@ export type ManageUserStationsInput = { 'Add' : Array<UserStation> } |
 export type ManageUserStationsResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface Metadata { 'key' : string, 'value' : string }
-export interface NextModuleVersionInput {
+export interface NextWasmModuleVersionInput {
   'name' : string,
   'current_version' : string,
 }
-export interface NextModuleVersionResponse { 'entry' : [] | [RegistryEntry] }
-export type NextModuleVersionResult = { 'Ok' : NextModuleVersionResponse } |
+export interface NextWasmModuleVersionResponse {
+  'entry' : [] | [RegistryEntry],
+}
+export type NextWasmModuleVersionResult = {
+    'Ok' : NextWasmModuleVersionResponse
+  } |
   { 'Err' : ApiError };
 export interface PaginationInput {
   'offset' : [] | [bigint],
@@ -241,9 +245,9 @@ export interface _SERVICE {
     [ManageUserStationsInput],
     ManageUserStationsResult
   >,
-  'next_module_version' : ActorMethod<
-    [NextModuleVersionInput],
-    NextModuleVersionResult
+  'next_wasm_module_version' : ActorMethod<
+    [NextWasmModuleVersionInput],
+    NextWasmModuleVersionResult
   >,
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
   'search_registry' : ActorMethod<[SearchRegistryInput], SearchRegistryResult>,

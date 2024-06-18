@@ -184,15 +184,15 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Null,
     'Err' : ApiError,
   });
-  const NextModuleVersionInput = IDL.Record({
+  const NextWasmModuleVersionInput = IDL.Record({
     'name' : IDL.Text,
     'current_version' : IDL.Text,
   });
-  const NextModuleVersionResponse = IDL.Record({
+  const NextWasmModuleVersionResponse = IDL.Record({
     'entry' : IDL.Opt(RegistryEntry),
   });
-  const NextModuleVersionResult = IDL.Variant({
-    'Ok' : NextModuleVersionResponse,
+  const NextWasmModuleVersionResult = IDL.Variant({
+    'Ok' : NextWasmModuleVersionResponse,
     'Err' : ApiError,
   });
   const RegisterUserInput = IDL.Record({ 'station' : IDL.Opt(UserStation) });
@@ -299,9 +299,9 @@ export const idlFactory = ({ IDL }) => {
         [ManageUserStationsResult],
         [],
       ),
-    'next_module_version' : IDL.Func(
-        [NextModuleVersionInput],
-        [NextModuleVersionResult],
+    'next_wasm_module_version' : IDL.Func(
+        [NextWasmModuleVersionInput],
+        [NextWasmModuleVersionResult],
         ['query'],
       ),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),

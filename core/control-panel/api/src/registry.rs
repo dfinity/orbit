@@ -138,12 +138,12 @@ pub enum RegistryEntrySortBy {
 }
 
 #[derive(CandidType, Deserialize, serde::Serialize, Clone, Debug, Eq, PartialEq)]
-pub struct NextModuleVersionInput {
+pub struct NextWasmModuleVersionInput {
     pub name: String,
     pub current_version: String,
 }
 
 #[derive(CandidType, Deserialize, serde::Serialize, Clone, Debug, Eq, PartialEq)]
-pub struct NextModuleVersionResponse {
+pub struct NextWasmModuleVersionResponse {
     pub entry: Option<RegistryEntryDTO>,
 }

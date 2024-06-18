@@ -258,7 +258,7 @@ impl RegistryService {
     /// Finds the next version of the registry entry by name and the current version.
     ///
     /// If there is no next version, `None` is returned.
-    pub fn find_next_version(
+    pub fn find_next_wasm_module_version(
         &self,
         name: &str,
         current_version: &str,
@@ -563,7 +563,7 @@ mod tests {
     }
 
     #[test]
-    fn should_find_next_version() {
+    fn should_find_next_wasm_module_version() {
         for i in 0..10 {
             let mut entry = create_registry_entry();
             entry.name = "module".to_string();
@@ -577,7 +577,7 @@ mod tests {
         }
 
         let next = REGISTRY_SERVICE
-            .find_next_version("module", "1.0.3")
+            .find_next_wasm_module_version("module", "1.0.3")
             .unwrap();
 
         assert!(next.is_some());
@@ -604,15 +604,15 @@ mod tests {
         }
 
         let next = REGISTRY_SERVICE
-            .find_next_version("module", "1.0.9")
+            .find_next_wasm_module_version("module", "1.0.9")
             .unwrap();
 
         assert!(next.is_none());
     }
 
     #[test]
-    fn should_fail_if_package_not_found() {
-        let result = REGISTRY_SERVICE.find_next_version("module", "1.0.0");
+    fn should_fail_if_wasm_module_not_found() {
+        let result = REGISTRY_SERVICE.find_next_wasm_module_version("module", "1.0.0");
 
         assert!(result.is_err());
     }
