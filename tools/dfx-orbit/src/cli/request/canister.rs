@@ -49,7 +49,7 @@ async fn change(args: ChangeExternalCanister) -> anyhow::Result<()> {
         .call_and_wait()
         .await?;
     let ans: Result<CreateRequestResponse, ApiErrorDTO> = candid::decode_one(&bytes)?;
-    println!("{}", serde_json::to_string_pretty(&ans)?);
+    println!("{ans:#?}");
     Ok(())
 }
 
