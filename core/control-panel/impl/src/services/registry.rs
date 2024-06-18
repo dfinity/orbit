@@ -135,25 +135,18 @@ impl RegistryService {
             }
         };
 
-        // There can only be one latest entry, so we need to remove the latest tag from the previous entry if it exists.
-        if entry.tags.contains(&LATEST_TAG.to_string()) {
-            let previous_latest = self.registry_repository.find_ids_where(
-                RegistryWhere::clause()
-                    .and_fullname(&entry.fullname())
-                    .and_tags(vec![LATEST_TAG.to_string()]),
-                None,
-            );
+        if let Err(err) = entry.validate() {
+            match &entry.value {
+                RegistryValue::WasmModule(wasm_module) => {
+                    self.artifact_service
+                        .remove_by_id(&wasm_module.wasm_artifact_id)?;
+                }
+            };
 
-            previous_latest
-                .iter()
-                .filter_map(|id| self.get(id).ok())
-                .for_each(|mut e| {
-                    e.tags.retain(|t| t != LATEST_TAG);
-                    self.registry_repository.insert(e.id, e);
-                });
+            Err(err)?
         }
 
-        entry.validate()?;
+        self.apply_single_latest_tag_across_entries(&entry);
 
         self.registry_repository.insert(entry.id, entry.clone());
 
@@ -170,13 +163,15 @@ impl RegistryService {
 
         RegistryMapper::fill_from_update_input(&mut entry, &input);
 
+        let mut previous_artifact_id = None;
+        let mut new_artifact_id = None;
+
         match (&input.value, &entry.value) {
             (
                 Some(control_panel_api::RegistryEntryValueInput::WasmModule(module)),
                 RegistryValue::WasmModule(current_module),
             ) => {
-                self.artifact_service
-                    .remove_by_id(&current_module.wasm_artifact_id)?;
+                previous_artifact_id = Some(current_module.wasm_artifact_id);
 
                 let artifact_id = self.artifact_service.create(module.wasm_module.clone())?;
 
@@ -189,15 +184,53 @@ impl RegistryService {
                         .map(|dep| dep.clone().into())
                         .collect(),
                 });
+
+                new_artifact_id = Some(artifact_id);
             }
             (None, _) => (),
         };
 
-        entry.validate()?;
+        if let Err(err) = entry.validate() {
+            // Makes sure to remove the new artifact if the entry is invalid to avoid orphaned artifacts.
+            if let Some(artifact_id) = new_artifact_id {
+                self.artifact_service.remove_by_id(&artifact_id)?;
+            }
+
+            Err(err)?
+        }
+
+        // Remove the previous artifact if the new one is different.
+        if let Some(artifact_id) = previous_artifact_id {
+            self.artifact_service.remove_by_id(&artifact_id)?;
+        }
+
+        self.apply_single_latest_tag_across_entries(&entry);
 
         self.registry_repository.insert(entry.id, entry.clone());
 
         Ok(entry)
+    }
+
+    /// Applies the latest tag to the entry and removes it from the previous latest entry if it exists.
+    fn apply_single_latest_tag_across_entries(&self, entry: &RegistryEntry) {
+        if entry.tags.contains(&LATEST_TAG.to_string()) {
+            let previous_latest = self.registry_repository.find_ids_where(
+                RegistryWhere::clause()
+                    .and_fullname(&entry.fullname())
+                    .and_tags(vec![LATEST_TAG.to_string()]),
+                None,
+            );
+
+            previous_latest
+                .iter()
+                .filter_map(|id| self.get(id).ok())
+                .for_each(|mut e| {
+                    if entry.id != e.id {
+                        e.tags.retain(|t| t != LATEST_TAG);
+                        self.registry_repository.insert(e.id, e);
+                    }
+                });
+        }
     }
 
     /// Deletes the registry entry by id.
