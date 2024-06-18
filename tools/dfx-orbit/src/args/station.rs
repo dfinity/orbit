@@ -33,6 +33,9 @@ pub struct Add {
     /// Wallet canister ID.
     #[structopt(long)]
     pub canister_id: Principal,
+    /// The dfx network name.
+    #[structopt(long)]
+    pub network: String,
 }
 
 /// Lists Orbit station in the local dfx configuration.

@@ -19,6 +19,8 @@ pub struct StationConfig {
     /// Wallet canister ID.
     // TODO: This should be a principal.
     pub canister_id: String,
+    /// The dfx network name.
+    pub network: String,
 }
 
 /// The directoy in the orbit dfx config directory where stations are stored.
@@ -102,10 +104,15 @@ pub fn list_stations() -> Vec<String> {
 ///
 /// If there is no default station, the new station is set as the default.
 pub fn add_station(args: &Add) -> anyhow::Result<()> {
-    let Add { name, canister_id } = args;
+    let Add {
+        name,
+        canister_id,
+        network,
+    } = args;
     let station = StationConfig {
         name: name.to_string(),
         canister_id: canister_id.to_string(),
+        network: network.to_string(),
     };
     let station_file = create_station_file(name)?;
     station_file.set_len(0)?;
