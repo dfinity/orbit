@@ -11,8 +11,8 @@ use upgrader_api::{
 };
 
 use crate::{
+    errors::UpgraderApiError,
     services::{DisasterRecoveryService, DISASTER_RECOVERY_SERVICE},
-    UpgraderApiError,
 };
 
 // Controller initialization and implementation.
@@ -75,8 +75,7 @@ impl DisasterRecoveryController {
             Err(UpgraderApiError::NotController)?
         } else {
             self.disaster_recovery_service
-                .set_committee(input.committee.into());
-            Ok(())
+                .set_committee(input.committee.into())
         }
     }
 
@@ -90,8 +89,7 @@ impl DisasterRecoveryController {
             Err(UpgraderApiError::NotController)?
         } else {
             self.disaster_recovery_service
-                .set_accounts(input.accounts.into_iter().map(Into::into).collect());
-            Ok(())
+                .set_accounts(input.accounts.into_iter().map(Into::into).collect())
         }
     }
 

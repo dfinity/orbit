@@ -9,7 +9,7 @@ use ic_stable_structures::{
     DefaultMemoryImpl, StableBTreeMap,
 };
 use lazy_static::lazy_static;
-use orbit_essentials::{api::ApiError, storable};
+use orbit_essentials::storable;
 use std::{cell::RefCell, sync::Arc, thread::LocalKey};
 use upgrade::{UpgradeError, UpgradeParams};
 use upgrader_api::{InitArg, TriggerUpgradeError};
@@ -20,6 +20,7 @@ pub use orbit_essentials::cdk as upgrader_ic_cdk;
 pub use orbit_essentials::cdk::mocks as upgrader_ic_cdk;
 
 pub mod controllers;
+pub mod errors;
 pub mod model;
 pub mod services;
 pub mod upgrade;
@@ -32,28 +33,6 @@ type LocalRef<T> = &'static LocalKey<RefCell<T>>;
 
 const MEMORY_ID_TARGET_CANISTER_ID: u8 = 0;
 const MEMORY_ID_DISASTER_RECOVERY_ID: u8 = 1;
-
-enum UpgraderApiError {
-    NotController,
-    Unauthorized,
-}
-
-impl From<UpgraderApiError> for ApiError {
-    fn from(err: UpgraderApiError) -> Self {
-        match err {
-            UpgraderApiError::NotController => ApiError {
-                code: "NOT_CONTROLLER".to_owned(),
-                message: Some("Caller is not the controller.".to_owned()),
-                details: None,
-            },
-            UpgraderApiError::Unauthorized => ApiError {
-                code: "UNAUTHORIZED".to_owned(),
-                message: Some("Caller is not authorized.".to_owned()),
-                details: None,
-            },
-        }
-    }
-}
 
 thread_local! {
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =

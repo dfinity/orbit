@@ -1,11 +1,14 @@
 use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
-use crate::upgrader_ic_cdk::{api::time, spawn};
+use crate::{
+    errors::UpgraderApiError,
+    upgrader_ic_cdk::{api::time, spawn},
+};
 use candid::Principal;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_stable_structures::memory_manager::MemoryId;
 use lazy_static::lazy_static;
-use orbit_essentials::utils::sha256_hash;
+use orbit_essentials::{api::ServiceResult, utils::sha256_hash};
 
 use crate::{
     model::{
@@ -77,17 +80,28 @@ pub struct DisasterRecoveryService {
 }
 
 impl DisasterRecoveryService {
-    pub fn set_committee(&self, committee: DisasterRecoveryCommittee) {
+    pub fn set_committee(&self, committee: DisasterRecoveryCommittee) -> ServiceResult {
         let mut value = self.storage.get();
+
+        if value.recovery_status == RecoveryStatus::InProgress {
+            return Err(UpgraderApiError::DisasterRecoveryInProgress.into());
+        }
+
         value.committee = Some(committee);
 
         self.storage.set(value);
+
+        Ok(())
     }
 
-    pub fn set_accounts(&self, accounts: Vec<Account>) {
+    pub fn set_accounts(&self, accounts: Vec<Account>) -> ServiceResult {
         let mut value = self.storage.get();
+        if value.recovery_status == RecoveryStatus::InProgress {
+            return Err(UpgraderApiError::DisasterRecoveryInProgress.into());
+        }
         value.accounts = accounts;
         self.storage.set(value);
+        Ok(())
     }
 
     pub fn is_committee_member(&self, principal: &Principal) -> bool {
@@ -258,14 +272,14 @@ impl DisasterRecoveryService {
 
 #[cfg(test)]
 mod test {
+    use super::DISASTER_RECOVERY_SERVICE;
+    use async_trait::async_trait;
+    use candid::Principal;
+    use ic_cdk::api::management_canister::main::CanisterInstallMode;
     use std::{
         panic::{set_hook, take_hook},
         sync::{atomic::AtomicI32, Arc},
     };
-
-    use async_trait::async_trait;
-    use candid::Principal;
-    use ic_cdk::api::management_canister::main::CanisterInstallMode;
 
     use crate::{
         model::{
@@ -376,7 +390,8 @@ mod test {
                 },
             ],
             quorum_percentage: 51,
-        });
+        })
+        .expect("Failed to set committee");
 
         // non committee member
         dr.request_recovery(
@@ -594,5 +609,38 @@ mod test {
             storage.get().recovery_status,
             RecoveryStatus::Idle
         ));
+    }
+
+    #[tokio::test]
+    async fn test_sync_committee_during_recovery() {
+        let storage: DisasterRecoveryStorage = Default::default();
+
+        let mut value = storage.get();
+        value.recovery_status = RecoveryStatus::InProgress;
+        storage.set(value);
+
+        let error = DISASTER_RECOVERY_SERVICE
+            .set_committee(crate::model::DisasterRecoveryCommittee {
+                users: vec![],
+                quorum_percentage: 100,
+            })
+            .expect_err("Setting committee during recovery should fail");
+
+        assert_eq!(error.code, "DISASTER_RECOVERY_IN_PROGRESS".to_string(),);
+    }
+
+    #[tokio::test]
+    async fn test_sync_accounts_during_recovery() {
+        let storage: DisasterRecoveryStorage = Default::default();
+
+        let mut value = storage.get();
+        value.recovery_status = RecoveryStatus::InProgress;
+        storage.set(value);
+
+        let error = DISASTER_RECOVERY_SERVICE
+            .set_accounts(vec![])
+            .expect_err("Setting committee during recovery should fail");
+
+        assert_eq!(error.code, "DISASTER_RECOVERY_IN_PROGRESS".to_string(),);
     }
 }
