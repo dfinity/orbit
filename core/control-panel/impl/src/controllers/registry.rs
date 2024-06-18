@@ -6,7 +6,8 @@ use crate::{
 use control_panel_api::{
     AddRegistryEntryInput, AddRegistryEntryResponse, DeleteRegistryEntryInput,
     DeleteRegistryEntryResponse, EditRegistryEntryInput, EditRegistryEntryResponse,
-    GetRegistryEntryInput, GetRegistryEntryResponse, SearchRegistryInput, SearchRegistryResponse,
+    GetRegistryEntryInput, GetRegistryEntryResponse, NextModuleVersionInput,
+    NextModuleVersionResponse, SearchRegistryInput, SearchRegistryResponse,
 };
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
@@ -22,6 +23,13 @@ async fn get_registry_entry(input: GetRegistryEntryInput) -> ApiResult<GetRegist
 #[query(name = "search_registry")]
 async fn search_registry(input: SearchRegistryInput) -> ApiResult<SearchRegistryResponse> {
     CONTROLLER.search_registry(input).await
+}
+
+#[query(name = "next_module_version")]
+async fn next_module_version(
+    input: NextModuleVersionInput,
+) -> ApiResult<NextModuleVersionResponse> {
+    CONTROLLER.next_module_version(input).await
 }
 
 #[update(name = "add_registry_entry")]
@@ -72,6 +80,20 @@ impl RegistryController {
 
         Ok(GetRegistryEntryResponse {
             entry: entry.into(),
+        })
+    }
+
+    /// Returns the next package version for the given package name and current version, if any.
+    pub async fn next_module_version(
+        &self,
+        input: NextModuleVersionInput,
+    ) -> ApiResult<NextModuleVersionResponse> {
+        let entry = self
+            .registry_service
+            .find_next_version(&input.name, &input.current_version)?;
+
+        Ok(NextModuleVersionResponse {
+            entry: entry.map(|e| e.into()),
         })
     }
 

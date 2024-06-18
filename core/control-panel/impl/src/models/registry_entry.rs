@@ -209,7 +209,7 @@ impl WasmModuleRegistryValue {
     pub const MAX_DEPENDENCIES: usize = 25;
 }
 
-fn validate_wasm_module_version(version: &str) -> ModelValidatorResult<RegistryError> {
+fn validate_module_version(version: &str) -> ModelValidatorResult<RegistryError> {
     if (version.len() < WasmModuleRegistryValue::MIN_VERSION_LENGTH)
         || (version.len() > WasmModuleRegistryValue::MAX_VERSION_LENGTH)
     {
@@ -219,6 +219,12 @@ fn validate_wasm_module_version(version: &str) -> ModelValidatorResult<RegistryE
                 WasmModuleRegistryValue::MIN_VERSION_LENGTH,
                 WasmModuleRegistryValue::MAX_VERSION_LENGTH,
             ),
+        });
+    }
+
+    if let Err(e) = semver::Version::parse(version) {
+        return Err(RegistryError::ValidationError {
+            info: format!("Invalid semver: {}", e),
         });
     }
 
@@ -328,6 +334,8 @@ fn validate_dependencies(entry: &RegistryEntry) -> ModelValidatorResult<Registry
             }
 
             for dependency in value.dependencies.iter() {
+                validate_module_version(&dependency.version)?;
+
                 let found = REGISTRY_REPOSITORY.find_ids_where(
                     RegistryWhere::clause()
                         .and_fullname(&dependency.name)
@@ -353,7 +361,7 @@ fn validate_dependencies(entry: &RegistryEntry) -> ModelValidatorResult<Registry
 
 impl ModelValidator<RegistryError> for WasmModuleRegistryValue {
     fn validate(&self) -> ModelValidatorResult<RegistryError> {
-        validate_wasm_module_version(&self.version)?;
+        validate_module_version(&self.version)?;
 
         Ok(())
     }
@@ -833,8 +841,8 @@ mod tests {
 
     #[rstest]
     #[case::common_version(&"1.0.0")]
-    #[case::short_version(&"1")]
-    #[case::long_version(&"1".repeat(WasmModuleRegistryValue::MAX_VERSION_LENGTH))]
+    #[case::rc_version(&"1.0.0-rc.1")]
+    #[case::alpha(&"1.0.0-alpha.1")]
     fn valid_version(#[case] version: &str) {
         let mut entry = create_registry_entry();
         entry.value = RegistryValue::WasmModule(WasmModuleRegistryValue {

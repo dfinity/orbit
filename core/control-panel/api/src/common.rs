@@ -28,7 +28,7 @@ pub struct PaginationInput {
     pub limit: Option<u16>,
 }
 
-#[derive(CandidType, Deserialize, serde::Serialize, Debug, Clone)]
+#[derive(CandidType, Deserialize, serde::Serialize, Debug, Clone, Eq, PartialEq)]
 pub enum SortDirection {
     Asc,
     Desc,

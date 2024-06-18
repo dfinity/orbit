@@ -184,10 +184,26 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Null,
     'Err' : ApiError,
   });
+  const NextModuleVersionInput = IDL.Record({
+    'name' : IDL.Text,
+    'current_version' : IDL.Text,
+  });
+  const NextModuleVersionResponse = IDL.Record({
+    'entry' : IDL.Opt(RegistryEntry),
+  });
+  const NextModuleVersionResult = IDL.Variant({
+    'Ok' : NextModuleVersionResponse,
+    'Err' : ApiError,
+  });
   const RegisterUserInput = IDL.Record({ 'station' : IDL.Opt(UserStation) });
   const RegisterUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
+  });
+  const SortDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
+  const RegistryEntrySortBy = IDL.Variant({
+    'Version' : SortDirection,
+    'CreatedAt' : SortDirection,
   });
   const PaginationInput = IDL.Record({
     'offset' : IDL.Opt(IDL.Nat64),
@@ -200,6 +216,7 @@ export const idlFactory = ({ IDL }) => {
     'Namespace' : IDL.Text,
   });
   const SearchRegistryInput = IDL.Record({
+    'sort_by' : IDL.Opt(RegistryEntrySortBy),
     'pagination' : IDL.Opt(PaginationInput),
     'filter_by' : IDL.Vec(SearchRegistryFilterKind),
   });
@@ -281,6 +298,11 @@ export const idlFactory = ({ IDL }) => {
         [ManageUserStationsInput],
         [ManageUserStationsResult],
         [],
+      ),
+    'next_module_version' : IDL.Func(
+        [NextModuleVersionInput],
+        [NextModuleVersionResult],
+        ['query'],
       ),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
     'search_registry' : IDL.Func(

@@ -3,6 +3,7 @@ use super::indexes::{
 };
 use crate::{
     core::{with_memory_manager, Memory, REGISTRY_MEMORY_ID},
+    mappers::HelperMapper,
     models::{
         indexes::registry_index::{RegistryIndex, RegistryIndexCriteria, RegistryIndexKind},
         RegistryEntry, RegistryEntryId, RegistryValueKind,
@@ -120,6 +121,17 @@ impl RegistryRepository {
                     direction: match direction {
                         control_panel_api::SortDirection::Asc => Some(SortDirection::Ascending),
                         control_panel_api::SortDirection::Desc => Some(SortDirection::Descending),
+                    },
+                };
+
+                sort_strategy.sort(entry_ids);
+            }
+            Some(RegistryEntrySortBy::Version(direction)) => {
+                let sort_strategy = VersionSortingStrategy {
+                    index: &self.sort_index,
+                    direction: match direction {
+                        control_panel_api::SortDirection::Asc => SortDirection::Ascending,
+                        control_panel_api::SortDirection::Desc => SortDirection::Descending,
                     },
                 };
 
@@ -265,6 +277,51 @@ impl<'a> SortingStrategy<'a> for TimestampSortingStrategy<'a> {
         });
 
         let sorted_ids: Vec<UUID> = id_with_timestamps.into_iter().map(|(_, id)| id).collect();
+        ids.copy_from_slice(&sorted_ids);
+    }
+}
+
+#[derive(Debug, Clone)]
+struct VersionSortingStrategy<'a> {
+    index: &'a RegistrySortIndexRepository,
+    direction: SortDirection,
+}
+
+impl<'a> SortingStrategy<'a> for VersionSortingStrategy<'a> {
+    type IdType = UUID;
+
+    fn sort(&self, ids: &mut [Self::IdType]) {
+        let mut id_with_versions: Vec<(semver::Version, Self::IdType)> = ids
+            .iter()
+            .map(|id| {
+                let version = self
+                    .index
+                    .get(id)
+                    .map(|index| match &index.version {
+                        Some(version) => HelperMapper::to_semver(version),
+                        None => semver::Version::new(0, 0, 0),
+                    })
+                    .unwrap_or(semver::Version::new(0, 0, 0));
+                (version, *id)
+            })
+            .collect();
+
+        id_with_versions.sort_by(|a, b| {
+            {
+                let ord = a.0.cmp(&b.0); // Compare versions
+                match self.direction {
+                    SortDirection::Ascending => ord,
+                    SortDirection::Descending => ord.reverse(),
+                }
+            }
+            .then_with(|| match self.direction {
+                // Compare IDs if versions are equal
+                SortDirection::Ascending => a.1.cmp(&b.1),
+                SortDirection::Descending => b.1.cmp(&a.1),
+            })
+        });
+
+        let sorted_ids: Vec<UUID> = id_with_versions.into_iter().map(|(_, id)| id).collect();
         ids.copy_from_slice(&sorted_ids);
     }
 }

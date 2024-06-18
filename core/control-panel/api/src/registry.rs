@@ -89,6 +89,7 @@ pub enum SearchRegistryFilterKindDTO {
 #[derive(CandidType, Deserialize, serde::Serialize, Clone, Debug, Eq, PartialEq)]
 pub struct SearchRegistryInput {
     pub filter_by: Vec<SearchRegistryFilterKindDTO>,
+    pub sort_by: Option<RegistryEntrySortBy>,
     pub pagination: Option<PaginationInput>,
 }
 
@@ -130,7 +131,19 @@ pub struct DeleteRegistryEntryResponse {
     pub entry: RegistryEntryDTO,
 }
 
-#[derive(CandidType, Deserialize, serde::Serialize, Debug, Clone)]
+#[derive(CandidType, Deserialize, serde::Serialize, Debug, Clone, Eq, PartialEq)]
 pub enum RegistryEntrySortBy {
     CreatedAt(SortDirection),
+    Version(SortDirection),
+}
+
+#[derive(CandidType, Deserialize, serde::Serialize, Clone, Debug, Eq, PartialEq)]
+pub struct NextModuleVersionInput {
+    pub name: String,
+    pub current_version: String,
+}
+
+#[derive(CandidType, Deserialize, serde::Serialize, Clone, Debug, Eq, PartialEq)]
+pub struct NextModuleVersionResponse {
+    pub entry: Option<RegistryEntryDTO>,
 }

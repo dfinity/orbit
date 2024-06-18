@@ -17,6 +17,9 @@ pub enum RegistryError {
     /// The registry entry was not found.
     #[error("The registry entry with id {id} was not found.")]
     NotFound { id: String },
+    /// Package with name not found.
+    #[error("Package with name {name} not found.")]
+    PackageNotFound { name: String },
 }
 
 impl DetailableError for RegistryError {
@@ -33,6 +36,10 @@ impl DetailableError for RegistryError {
             }
             RegistryError::UpdateKindMismatch { kind } => {
                 details.insert("kind".to_string(), kind.to_string());
+                Some(details)
+            }
+            RegistryError::PackageNotFound { name } => {
+                details.insert("name".to_string(), name.to_string());
                 Some(details)
             }
         }
