@@ -1,5 +1,6 @@
 //! Makes requests to Orbit.
 pub mod canister;
+pub mod permission;
 
 use clap::Subcommand;
 
@@ -10,4 +11,7 @@ pub enum Args {
     /// Request changes to a canister.
     #[command(subcommand)]
     Canister(canister::Args),
+    /// Request changes to a canister.
+    #[command(subcommand)]
+    Permission(permission::Args),
 }
