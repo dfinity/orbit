@@ -635,7 +635,7 @@ mod tests {
     #[case::empty_namespace_with_space(&" ")]
     #[case::starts_with_space(&" orbit")]
     #[case::ends_with_space(&"orbit ")]
-    #[case::namespace_to_small(&"a")]
+    #[case::namespace_too_small(&"a")]
     #[case::namespace_too_big(&"a".repeat(RegistryEntry::MAX_NAMESPACE_LENGTH + 1))]
     #[case::namespace_contains_invalid_characters(&"orbit!")]
     #[case::namespace_contains_invalid_characters(&"orbit.1")]
