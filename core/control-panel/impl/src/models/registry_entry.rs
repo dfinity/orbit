@@ -195,24 +195,6 @@ impl RegistryEntry {
         format!("{}{}/{}", Self::NAMESPACE_PREFIX, self.namespace, self.name)
     }
 
-    /// Parses the provided raw name into a namespace and a name.
-    ///
-    /// The returned tuple contains the namespace and the name in this order.
-    pub fn parse_namespace_and_name(raw_name: &str) -> (String, String) {
-        if raw_name.starts_with(Self::NAMESPACE_PREFIX) && raw_name.contains('/') {
-            let raw_name = &raw_name.trim_start_matches(Self::NAMESPACE_PREFIX);
-            let mut parts = raw_name.split('/');
-
-            if let Some(namespace) = parts.next() {
-                if let Some(name) = parts.next() {
-                    return (namespace.to_string(), name.to_string());
-                }
-            }
-        }
-
-        (Self::DEFAULT_NAMESPACE.to_string(), raw_name.to_string())
-    }
-
     pub fn to_kind(&self) -> RegistryValueKind {
         match &self.value {
             RegistryValue::WasmModule(_) => RegistryValueKind::WasmModule,
@@ -914,22 +896,6 @@ mod tests {
         });
 
         entry.validate().unwrap();
-    }
-
-    #[test]
-    fn parse_namespace_and_name() {
-        let (namespace, name) = RegistryEntry::parse_namespace_and_name("@orbit/station");
-
-        assert_eq!(namespace, "orbit");
-        assert_eq!(name, "station");
-    }
-
-    #[test]
-    fn parse_namespace_and_name_with_default_namespace() {
-        let (namespace, name) = RegistryEntry::parse_namespace_and_name("station");
-
-        assert_eq!(namespace, "default");
-        assert_eq!(name, "station");
     }
 
     #[test]

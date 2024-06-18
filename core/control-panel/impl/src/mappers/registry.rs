@@ -14,7 +14,25 @@ impl RegistryMapper {
         entry: &mut RegistryEntry,
         input: &control_panel_api::RegistryEntryInput,
     ) {
-        let (namespace, name) = RegistryEntry::parse_namespace_and_name(&input.name);
+        // If the name starts with the namespace prefix and contains a slash, we assume that the
+        // namespace is part of the name and extract it.
+        //
+        // The validation of the format is done at a later point when entry.validate() is called before saving.
+        let mut name = input.name.clone();
+        let mut namespace = RegistryEntry::DEFAULT_NAMESPACE.to_string();
+        if name.starts_with(RegistryEntry::NAMESPACE_PREFIX) && name.contains('/') {
+            let cloned_name = name.clone();
+            let name_without_prefix =
+                cloned_name.trim_start_matches(RegistryEntry::NAMESPACE_PREFIX);
+            let mut parts = name_without_prefix.split('/');
+
+            if let Some(found_namespace) = parts.next() {
+                if let Some(found_name) = parts.next() {
+                    name = found_name.to_string();
+                    namespace = found_namespace.to_string();
+                }
+            }
+        }
 
         entry.namespace = namespace;
         entry.name = name;
@@ -144,5 +162,59 @@ impl From<WasmModuleRegistryEntryDependency>
             name: value.name,
             version: value.version,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::registry_entry_test_utils::create_registry_entry;
+
+    #[test]
+    fn test_create_from_input_finds_namespace() {
+        let mut entry = create_registry_entry();
+        let input = control_panel_api::RegistryEntryInput {
+            name: "@ns1/test".to_string(),
+            description: "desc".to_string(),
+            tags: vec![],
+            categories: vec![],
+            metadata: Default::default(),
+            value: control_panel_api::RegistryEntryValueInput::WasmModule(
+                control_panel_api::WasmModuleRegistryEntryValueInput {
+                    version: "1.0.0".to_string(),
+                    dependencies: vec![],
+                    wasm_module: vec![],
+                },
+            ),
+        };
+
+        RegistryMapper::fill_from_create_input(&mut entry, &input);
+
+        assert_eq!(entry.namespace, "ns1");
+        assert_eq!(entry.name, "test");
+    }
+
+    #[test]
+    fn test_create_from_input_uses_default_namespace_when_none_provided() {
+        let mut entry = create_registry_entry();
+        let input = control_panel_api::RegistryEntryInput {
+            name: "test".to_string(),
+            description: "desc".to_string(),
+            tags: vec![],
+            categories: vec![],
+            metadata: Default::default(),
+            value: control_panel_api::RegistryEntryValueInput::WasmModule(
+                control_panel_api::WasmModuleRegistryEntryValueInput {
+                    version: "1.0.0".to_string(),
+                    dependencies: vec![],
+                    wasm_module: vec![],
+                },
+            ),
+        };
+
+        RegistryMapper::fill_from_create_input(&mut entry, &input);
+
+        assert_eq!(entry.namespace, RegistryEntry::DEFAULT_NAMESPACE);
+        assert_eq!(entry.name, "test");
     }
 }
