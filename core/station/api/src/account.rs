@@ -3,14 +3,14 @@ use crate::{
 };
 use candid::{CandidType, Deserialize};
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AccountCallerPrivilegesDTO {
     pub id: UuidDTO,
     pub can_transfer: bool,
     pub can_edit: bool,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AccountDTO {
     pub id: UuidDTO,
     pub name: String,
@@ -26,7 +26,7 @@ pub struct AccountDTO {
     pub last_modification_timestamp: String,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct EditAccountOperationInput {
     pub account_id: UuidDTO,
     pub name: Option<String>,
@@ -37,12 +37,12 @@ pub struct EditAccountOperationInput {
     pub transfer_request_policy: Option<RequestPolicyRuleInput>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct EditAccountOperationDTO {
     pub input: EditAccountOperationInput,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AddAccountOperationInput {
     pub name: String,
     pub blockchain: String,
@@ -55,29 +55,29 @@ pub struct AddAccountOperationInput {
     pub transfer_request_policy: Option<RequestPolicyRuleDTO>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AddAccountOperationDTO {
     pub account: Option<AccountDTO>,
     pub input: AddAccountOperationInput,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetAccountInput {
     pub account_id: UuidDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetAccountResponse {
     pub account: AccountDTO,
     pub privileges: AccountCallerPrivilegesDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct FetchAccountBalancesInput {
     pub account_ids: Vec<String>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AccountBalanceDTO {
     pub account_id: String,
     pub balance: candid::Nat,
@@ -85,25 +85,25 @@ pub struct AccountBalanceDTO {
     pub last_update_timestamp: String,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AccountBalanceInfoDTO {
     pub balance: candid::Nat,
     pub decimals: u32,
     pub last_update_timestamp: String,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct FetchAccountBalancesResponse {
     pub balances: Vec<AccountBalanceDTO>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ListAccountsInput {
     pub search_term: Option<String>,
     pub paginate: Option<PaginationInput>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ListAccountsResponse {
     pub accounts: Vec<AccountDTO>,
     pub next_offset: Option<u64>,
