@@ -118,6 +118,19 @@ pub fn add_station(args: &Add) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Gets the local stored dfx configuration for a given station, or the default station if none is specified.
+pub fn station_or_default(name: Option<&str>) -> anyhow::Result<StationConfig> {
+    if let Some(name) = name {
+        station(name)
+    } else {
+        let name = default_station()
+            .with_context(|| "Station not specified and failed to get default.")?
+            .with_context(|| "Station not specified and no default station set.")?
+            .name;
+        station(&name)
+    }
+}
+
 /// Gets the local stored dfx configuration for a given station.
 pub fn station(name: &str) -> anyhow::Result<StationConfig> {
     let station_file = station_file(name)?;

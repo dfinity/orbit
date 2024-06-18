@@ -27,7 +27,7 @@ pub fn main(args: StationArgs) -> anyhow::Result<()> {
                 .expect("Failed to set default station in local dfx config");
         }
         StationArgs::Show(show_args) => {
-            let station = local_config::station(&show_args.name)
+            let station = local_config::station_or_default(show_args.name.as_deref())
                 .expect("Failed to get station from local dfx config");
             let json = serde_json::to_string_pretty(&station).expect("Failed to serialize station");
             println!("{json}");

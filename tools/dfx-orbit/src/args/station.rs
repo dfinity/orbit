@@ -59,7 +59,7 @@ impl Display for ListResponse {
 pub struct Show {
     /// Station name.
     #[structopt(long)]
-    pub name: String,
+    pub name: Option<String>,
 }
 
 /// Renames an Orbit station in the local dfx configuration.
