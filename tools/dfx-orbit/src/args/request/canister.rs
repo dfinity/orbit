@@ -11,6 +11,14 @@ pub enum Args {
     Change(ChangeExternalCanister),
 }
 
+impl From<Args> for orbit_station_api::RequestOperationInput {
+    fn from(args: Args) -> Self {
+        match args {
+            Args::Change(_change_args) => unimplemented!(), //orbit_station_api::ChangeExternalCanisterOperationInput::(change_args.into()),
+        }
+    }
+}
+
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Parser)]
 pub struct ChangeExternalCanister {
