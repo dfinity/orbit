@@ -286,7 +286,7 @@ impl RegistryService {
             .collect::<Vec<RegistryEntry>>();
 
         if entries.is_empty() {
-            return Err(RegistryError::PackageNotFound {
+            return Err(RegistryError::WasmModuleNotFound {
                 name: fullname.to_string(),
             })?;
         }
