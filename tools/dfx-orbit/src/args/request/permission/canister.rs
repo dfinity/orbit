@@ -28,6 +28,7 @@ impl CreateRequestArgs for Args {
 #[derive(Debug, Parser)]
 pub struct ChangeCanister {
     /// Canister name or ID.
+    // TODO: If a canister is not specified, require --all.
     #[structopt(long)]
     pub canister: Option<String>,
 }
