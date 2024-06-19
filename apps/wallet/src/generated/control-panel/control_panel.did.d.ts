@@ -42,7 +42,7 @@ export type DeployStationResult = { 'Ok' : { 'canister_id' : StationID } } |
   { 'Err' : ApiError };
 export interface EditRegistryEntryInput {
   'id' : UUID,
-  'entry' : RegistryEntryInput,
+  'entry' : RegistryEntryUpdateInput,
 }
 export interface EditRegistryEntryResponse { 'entry' : RegistryEntry }
 export type EditRegistryEntryResult = { 'Ok' : EditRegistryEntryResponse } |
@@ -87,6 +87,17 @@ export type ManageUserStationsInput = { 'Add' : Array<UserStation> } |
 export type ManageUserStationsResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface Metadata { 'key' : string, 'value' : string }
+export interface NextWasmModuleVersionInput {
+  'name' : string,
+  'current_version' : string,
+}
+export interface NextWasmModuleVersionResponse {
+  'entry' : [] | [RegistryEntry],
+}
+export type NextWasmModuleVersionResult = {
+    'Ok' : NextWasmModuleVersionResponse
+  } |
+  { 'Err' : ApiError };
 export interface PaginationInput {
   'offset' : [] | [bigint],
   'limit' : [] | [number],
@@ -113,16 +124,29 @@ export interface RegistryEntryInput {
   'tags' : Array<string>,
   'description' : string,
 }
+export type RegistryEntrySortBy = { 'Version' : SortDirection } |
+  { 'CreatedAt' : SortDirection };
+export interface RegistryEntryUpdateInput {
+  'categories' : [] | [Array<string>],
+  'value' : [] | [RegistryEntryValueInput],
+  'metadata' : [] | [Array<Metadata>],
+  'tags' : [] | [Array<string>],
+  'description' : [] | [string],
+}
 export type RegistryEntryValue = {
     'WasmModule' : WasmModuleRegistryEntryValue
   };
 export type RegistryEntryValueInput = {
     'WasmModule' : WasmModuleRegistryEntryValueInput
   };
+export type RegistryEntryValueKind = { 'WasmModule' : null };
 export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
-export type SearchRegistryFilterKind = { 'Name' : string };
+export type SearchRegistryFilterKind = { 'Kind' : RegistryEntryValueKind } |
+  { 'Name' : string } |
+  { 'Namespace' : string };
 export interface SearchRegistryInput {
+  'sort_by' : [] | [RegistryEntrySortBy],
   'pagination' : [] | [PaginationInput],
   'filter_by' : Array<SearchRegistryFilterKind>,
 }
@@ -136,6 +160,8 @@ export type SearchRegistryResult = { 'Ok' : SearchRegistryResponse } |
 export type SetUserActiveResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export type Sha256Hex = string;
+export type SortDirection = { 'Asc' : null } |
+  { 'Desc' : null };
 export type StationID = Principal;
 export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
@@ -173,15 +199,19 @@ export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
   { 'Approved' : null } |
   { 'Denylisted' : null } |
   { 'Pending' : null };
+export interface WasmModuleRegistryEntryDependency {
+  'name' : string,
+  'version' : string,
+}
 export interface WasmModuleRegistryEntryValue {
   'version' : string,
-  'dependencies' : Array<UUID>,
+  'dependencies' : Array<WasmModuleRegistryEntryDependency>,
   'wasm_artifact_id' : UUID,
 }
 export interface WasmModuleRegistryEntryValueInput {
   'wasm_module' : Uint8Array | number[],
   'version' : string,
-  'dependencies' : Array<UUID>,
+  'dependencies' : Array<WasmModuleRegistryEntryDependency>,
 }
 export interface _SERVICE {
   'add_registry_entry' : ActorMethod<
@@ -214,6 +244,10 @@ export interface _SERVICE {
   'manage_user_stations' : ActorMethod<
     [ManageUserStationsInput],
     ManageUserStationsResult
+  >,
+  'next_wasm_module_version' : ActorMethod<
+    [NextWasmModuleVersionInput],
+    NextWasmModuleVersionResult
   >,
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
   'search_registry' : ActorMethod<[SearchRegistryInput], SearchRegistryResult>,

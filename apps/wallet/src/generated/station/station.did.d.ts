@@ -125,9 +125,31 @@ export interface BasicUser {
   'status' : UserStatus,
   'name' : string,
 }
+export interface CallExternalCanisterOperation {
+  'execution_method' : CanisterMethod,
+  'validation_method' : [] | [CanisterMethod],
+  'arg_checksum' : [] | [Sha256Hash],
+  'execution_method_cycles' : [] | [bigint],
+  'arg_rendering' : [] | [string],
+  'execution_method_reply' : [] | [Uint8Array | number[]],
+}
+export interface CallExternalCanisterOperationInput {
+  'arg' : [] | [Uint8Array | number[]],
+  'execution_method' : CanisterMethod,
+  'validation_method' : [] | [CanisterMethod],
+  'execution_method_cycles' : [] | [bigint],
+}
+export interface CallExternalCanisterResourceTarget {
+  'execution_method' : ExecutionMethodResourceTarget,
+  'validation_method' : ValidationMethodResourceTarget,
+}
 export type CanisterInstallMode = { 'reinstall' : null } |
   { 'upgrade' : null } |
   { 'install' : null };
+export interface CanisterMethod {
+  'canister_id' : Principal,
+  'method_name' : string,
+}
 export interface CanisterStatusInput { 'canister_id' : Principal }
 export interface CanisterStatusResponse {
   'status' : { 'stopped' : null } |
@@ -296,9 +318,12 @@ export type EvaluationSummaryReason = { 'AllowList' : null } |
   { 'AllowListMetadata' : null } |
   { 'AutoApproved' : null } |
   { 'ApprovalQuorum' : null };
+export type ExecutionMethodResourceTarget = { 'Any' : null } |
+  { 'ExecutionMethod' : CanisterMethod };
 export type ExternalCanisterResourceAction = {
-    'Read' : ReadExternalCanisterResourceTarget
+    'Call' : CallExternalCanisterResourceTarget
   } |
+  { 'Read' : ReadExternalCanisterResourceTarget } |
   { 'Create' : CreateExternalCanisterResourceTarget } |
   { 'Change' : ChangeExternalCanisterResourceTarget };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
@@ -486,6 +511,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
+  { 'CallExternalCanister' : [] | [Principal] } |
   { 'AddAccount' : null };
 export type ListRequestsResult = {
     'Ok' : {
@@ -667,6 +693,7 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
   { 'AddRequestPolicy' : AddRequestPolicyOperation } |
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
+  { 'CallExternalCanister' : CallExternalCanisterOperation } |
   { 'AddAccount' : AddAccountOperation };
 export type RequestOperationInput = {
     'AddUserGroup' : AddUserGroupOperationInput
@@ -688,6 +715,7 @@ export type RequestOperationInput = {
   { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
   { 'AddRequestPolicy' : AddRequestPolicyOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
+  { 'CallExternalCanister' : CallExternalCanisterOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
 export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
@@ -707,6 +735,7 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
+  { 'CallExternalCanister' : null } |
   { 'AddAccount' : null };
 export interface RequestPolicy {
   'id' : UUID,
@@ -752,6 +781,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : ResourceIds } |
+  { 'CallExternalCanister' : CallExternalCanisterResourceTarget } |
   { 'AddAccount' : null };
 export type RequestStatus = { 'Failed' : { 'reason' : [] | [string] } } |
   { 'Approved' : null } |
@@ -917,6 +947,8 @@ export type UserSpecifier = { 'Id' : Array<UUID> } |
   { 'Group' : Array<UUID> };
 export type UserStatus = { 'Inactive' : null } |
   { 'Active' : null };
+export type ValidationMethodResourceTarget = { 'No' : null } |
+  { 'ValidationMethod' : CanisterMethod };
 export interface _SERVICE {
   'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,

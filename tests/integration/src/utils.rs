@@ -17,6 +17,14 @@ pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 
 
 pub const COUNTER_WAT: &str = r#"
     (module
+        (import "ic0" "debug_print"
+            (func $debug_print (param i32 i32)))
+        (import "ic0" "msg_cycles_available"
+            (func $ic0_msg_cycles_available (result i64)))
+        (import "ic0" "msg_cycles_accept"
+            (func $ic0_msg_cycles_accept (param $pages i64) (result i64)))
+        (import "ic0" "msg_arg_data_copy"
+            (func $msg_arg_data_copy (param i32 i32 i32)))
         (import "ic0" "msg_reply" (func $msg_reply))
         (import "ic0" "msg_reply_data_append"
             (func $msg_reply_data_append (param i32 i32)))
@@ -28,8 +36,27 @@ pub const COUNTER_WAT: &str = r#"
             (func $ic0_stable_write (param $offset i32) (param $src i32) (param $size i32)))
         (func $init
             (drop (call $ic0_stable_grow (i32.const 1))))
+        (func $set
+            (call $msg_arg_data_copy (i32.const 0) (i32.const 0) (i32.const 4))
+            (call $ic0_stable_write (i32.const 0) (i32.const 0) (i32.const 4))
+            (drop (call $ic0_msg_cycles_accept (call $ic0_msg_cycles_available)))
+            (call $msg_reply_data_append
+                (i32.const 100) ;; the value at heap[100] encoding '(variant {Ok = "good"})' in candid
+                (i32.const 19)) ;; length
+            (call $msg_reply))
+        (func $bad
+            (call $doinc)
+            (drop (call $ic0_msg_cycles_accept (call $ic0_msg_cycles_available)))
+            (call $msg_reply_data_append
+                (i32.const 200) ;; the value at heap[200] encoding '(variant {Err = "bad"})' in candid
+                (i32.const 19)) ;; length
+            (call $msg_reply))
         (func $inc
             (call $doinc)
+            (drop (call $ic0_msg_cycles_accept (call $ic0_msg_cycles_available)))
+            (call $msg_reply_data_append
+                (i32.const 300) ;; the value at heap[300] encoding '(variant {Ok = "valid"})' in candid
+                (i32.const 20)) ;; length
             (call $msg_reply))
         (func $doinc
             (call $ic0_stable_read (i32.const 0) (i32.const 0) (i32.const 4))
@@ -44,9 +71,14 @@ pub const COUNTER_WAT: &str = r#"
                 (i32.const 4)) ;; length
             (call $msg_reply))
         (memory $memory 1)
+        (data (i32.const 100) "\44\49\44\4c\01\6b\01\bc\8a\01\71\01\00\00\04\67\6f\6f\64")
+        (data (i32.const 200) "\44\49\44\4c\01\6b\01\c5\fe\d2\01\71\01\00\00\03\62\61\64")
+        (data (i32.const 300) "\44\49\44\4c\01\6b\01\bc\8a\01\71\01\00\00\05\76\61\6c\69\64")
         (export "canister_init" (func $init))
         (export "canister_post_upgrade" (func $doinc))
         (export "canister_query read" (func $read))
+        (export "canister_update set" (func $set))
+        (export "canister_update bad" (func $bad))
         (export "canister_update inc" (func $inc))
     )"#;
 

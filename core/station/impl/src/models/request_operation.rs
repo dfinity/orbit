@@ -6,9 +6,12 @@ use super::{
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
     UserGroupId, UserId, UserStatus,
 };
+use crate::core::validation::EnsureExternalCanister;
+use crate::errors::ValidationError;
 use crate::models::Metadata;
 use candid::Principal;
 use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
+use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::{storable, types::UUID};
 use std::fmt::Display;
 
@@ -30,6 +33,7 @@ pub enum RequestOperation {
     ChangeCanister(ChangeCanisterOperation),
     ChangeExternalCanister(ChangeExternalCanisterOperation),
     CreateExternalCanister(CreateExternalCanisterOperation),
+    CallExternalCanister(CallExternalCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
@@ -54,6 +58,7 @@ impl Display for RequestOperation {
             RequestOperation::ChangeCanister(_) => write!(f, "change_canister"),
             RequestOperation::ChangeExternalCanister(_) => write!(f, "change_external_canister"),
             RequestOperation::CreateExternalCanister(_) => write!(f, "create_external_canister"),
+            RequestOperation::CallExternalCanister(_) => write!(f, "call_external_canister"),
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
@@ -312,6 +317,39 @@ pub struct CreateExternalCanisterOperationInput {}
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct CreateExternalCanisterOperation {
     pub canister_id: Option<Principal>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CanisterMethod {
+    pub canister_id: Principal,
+    pub method_name: String,
+}
+
+impl ModelValidator<ValidationError> for CanisterMethod {
+    fn validate(&self) -> ModelValidatorResult<ValidationError> {
+        EnsureExternalCanister::is_external_canister(self.canister_id)?;
+
+        Ok(())
+    }
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CallExternalCanisterOperationInput {
+    pub validation_method: Option<CanisterMethod>,
+    pub execution_method: CanisterMethod,
+    pub arg: Option<Vec<u8>>,
+    pub execution_method_cycles: Option<u64>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CallExternalCanisterOperation {
+    pub input: CallExternalCanisterOperationInput,
+    pub arg_checksum: Option<Vec<u8>>,
+    pub arg_rendering: Option<String>,
+    pub execution_method_reply: Option<Vec<u8>>,
 }
 
 #[storable]

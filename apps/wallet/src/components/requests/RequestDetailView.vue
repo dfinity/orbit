@@ -293,6 +293,7 @@ const componentsMap: {
   ManageSystemInfo: ManageSystemInfoOperation,
   ChangeExternalCanister: UnsupportedOperation,
   CreateExternalCanister: UnsupportedOperation,
+  CallExternalCanister: UnsupportedOperation,
 };
 
 defineEmits<{

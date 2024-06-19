@@ -79,6 +79,10 @@ export const mapRequestSpecifierToEnum = (specifier: RequestSpecifier): RequestS
     return RequestSpecifierEnum.CreateExternalCanister;
   }
 
+  if (variantIs(specifier, 'CallExternalCanister')) {
+    return RequestSpecifierEnum.CallExternalCanister;
+  }
+
   return unreachable(specifier);
 };
 
