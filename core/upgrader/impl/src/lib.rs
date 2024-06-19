@@ -32,7 +32,9 @@ type StableValue<T> = StableMap<(), T>;
 type LocalRef<T> = &'static LocalKey<RefCell<T>>;
 
 const MEMORY_ID_TARGET_CANISTER_ID: u8 = 0;
-const MEMORY_ID_DISASTER_RECOVERY_ID: u8 = 1;
+const MEMORY_ID_DISASTER_RECOVERY: u8 = 1;
+const MEMORY_ID_LOG_INDEX: u8 = 2;
+const MEMORY_ID_LOG_DATA: u8 = 3;
 
 thread_local! {
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =

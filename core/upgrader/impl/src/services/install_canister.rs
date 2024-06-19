@@ -1,13 +1,15 @@
+use std::sync::Arc;
+
 use async_trait::async_trait;
 use candid::Principal;
-use ic_cdk::api::management_canister::main::{
-    self as mgmt, CanisterIdRecord, CanisterInstallMode, InstallCodeArgument,
-};
+use ic_cdk::api::management_canister::main::{self as mgmt, CanisterIdRecord, InstallCodeArgument};
 use lazy_static::lazy_static;
 
+use crate::model::InstallMode;
+
 lazy_static! {
-    pub static ref INSTALL_CANISTER: StationDisasterRecoveryInstall =
-        StationDisasterRecoveryInstall {};
+    pub static ref INSTALL_CANISTER: Arc<StationDisasterRecoveryInstall> =
+        Arc::new(StationDisasterRecoveryInstall::default());
 }
 
 #[async_trait]
@@ -21,11 +23,11 @@ pub trait InstallCanister: Send + Sync {
         canister_id: Principal,
         wasm_module: Vec<u8>,
         arg: Vec<u8>,
-        mode: CanisterInstallMode,
+        mode: InstallMode,
     ) -> Result<(), String>;
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct StationDisasterRecoveryInstall {}
 
 #[async_trait]
@@ -35,10 +37,10 @@ impl InstallCanister for StationDisasterRecoveryInstall {
         canister_id: Principal,
         wasm_module: Vec<u8>,
         arg: Vec<u8>,
-        mode: CanisterInstallMode,
+        mode: InstallMode,
     ) -> Result<(), String> {
         mgmt::install_code(InstallCodeArgument {
-            mode,
+            mode: mode.into(),
             canister_id,
             wasm_module,
             arg,
@@ -47,13 +49,7 @@ impl InstallCanister for StationDisasterRecoveryInstall {
         .map_err(|(code, err)| {
             format!(
                 "failed to {} canister: \"{}\", rejection code: {}",
-                match mode {
-                    CanisterInstallMode::Install => "Install",
-                    CanisterInstallMode::Reinstall => "Reinstall",
-                    CanisterInstallMode::Upgrade(_) => "Upgrade",
-                },
-                err,
-                code as i32
+                mode, err, code as i32
             )
         })
     }

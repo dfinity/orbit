@@ -1,4 +1,7 @@
+use std::fmt::Display;
+
 use candid::Principal;
+use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use orbit_essentials::{
     storable,
     types::{Timestamp, UUID},
@@ -8,7 +11,7 @@ use uuid::Uuid;
 use crate::utils::HelperMapper;
 
 #[storable]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum InstallMode {
     /// Install the wasm module.
     Install,
@@ -16,6 +19,16 @@ pub enum InstallMode {
     Upgrade,
     /// Reinstall the wasm module.
     Reinstall,
+}
+
+impl Display for InstallMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            InstallMode::Install => write!(f, "Install"),
+            InstallMode::Reinstall => write!(f, "Reinstall"),
+            InstallMode::Upgrade => write!(f, "Upgrade"),
+        }
+    }
 }
 
 impl From<upgrader_api::InstallMode> for InstallMode {
@@ -38,6 +51,16 @@ impl From<InstallMode> for upgrader_api::InstallMode {
     }
 }
 
+impl From<InstallMode> for CanisterInstallMode {
+    fn from(val: InstallMode) -> Self {
+        match val {
+            InstallMode::Install => CanisterInstallMode::Install,
+            InstallMode::Upgrade => CanisterInstallMode::Upgrade(None),
+            InstallMode::Reinstall => CanisterInstallMode::Reinstall,
+        }
+    }
+}
+
 #[storable]
 #[derive(Clone, Debug)]
 pub struct StationRecoveryRequest {
@@ -51,6 +74,8 @@ pub struct StationRecoveryRequest {
     pub install_mode: InstallMode,
     /// The install arguments.
     pub arg: Vec<u8>,
+    /// The SHA-256 hash of the install arguments.
+    pub arg_sha256: Vec<u8>,
     /// Time in nanoseconds since the UNIX epoch when the request was submitted.
     pub submitted_at: Timestamp,
 }
@@ -154,6 +179,12 @@ pub struct AdminUser {
     pub name: String,
     /// The identities associated with the user.
     pub identities: Vec<Principal>,
+}
+
+impl AdminUser {
+    pub fn to_summary(&self) -> String {
+        format!("{}[{}]", self.name, Uuid::from_bytes(self.id).hyphenated())
+    }
 }
 
 impl From<upgrader_api::AdminUser> for AdminUser {

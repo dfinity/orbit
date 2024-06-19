@@ -1,4 +1,8 @@
-use crate::{LocalRef, StableValue, StorablePrincipal};
+use crate::{
+    model::{LogEntryType, UpgradeResultLog},
+    services::LOGGER_SERVICE,
+    LocalRef, StableValue, StorablePrincipal,
+};
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use ic_cdk::api::management_canister::main::{
@@ -164,17 +168,10 @@ impl<T: Upgrade> Upgrade for WithLogs<T> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
         let out = self.0.upgrade(ps).await;
 
-        let status = match &out {
-            Ok(_) => "ok".to_string(),
-            Err(err) => err.to_string(),
-        };
-
-        ic_cdk::println!(
-            "action = {}, status = {}, error = {:?}",
-            self.1,
-            status,
-            out.as_ref().err()
-        );
+        LOGGER_SERVICE.log(LogEntryType::UpgradeResult(match &out {
+            Ok(_) => UpgradeResultLog::Success,
+            Err(err) => UpgradeResultLog::Failure(err.to_string()),
+        }));
 
         out
     }

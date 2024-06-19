@@ -2495,6 +2495,7 @@ dependencies = [
  "orbit-essentials",
  "serde",
  "serde_cbor",
+ "serde_json",
  "sha2",
  "thiserror",
  "tokio",
