@@ -4,12 +4,13 @@ use anyhow::anyhow;
 use crate::{args::canister::Claim, dfx_extension_api, local_config};
 
 /// Puts a canister controlled by the user under Orbit control.
+// TODO: Need to be able to specify which Orbit to use, e.g. as a global flag.
+// TODO: Implement this without calling the `dfx` executable.
 pub fn exec(args: Claim) -> anyhow::Result<()> {
     let Claim {
         canister,
         exclusive,
     } = args;
-    // TODO: Need to be able to specify which Orbit to use, e.g. as a global flag.
     let orbit_principal = &local_config::default_station()?
         .ok_or_else(|| anyhow!("No default station specified"))?
         .canister_id;

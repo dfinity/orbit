@@ -1,4 +1,4 @@
-//! dfx-orbit station management commands.
+//! `dfx` does not have an extension API, yet.  So imagine one existed and create a polyfill.  This is it.
 pub mod config;
 
 use clap::Subcommand;

@@ -1,4 +1,4 @@
-//! Implements the dfx extension CLI commands for managing external canisters.
+//! Implements the `dfx-orbit canister *` CLI commands.
 mod claim;
 
 use crate::args::canister::Args;
