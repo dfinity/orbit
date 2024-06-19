@@ -3,7 +3,7 @@ pub mod canister;
 pub mod permission;
 
 use clap::Subcommand;
-use orbit_station_api::{CreateRequestInput, RequestOperationInput};
+use orbit_station_api::CreateRequestInput;
 
 use crate::orbit_station_agent::StationAgent;
 
@@ -41,28 +41,6 @@ impl CreateRequestArgs for Args {
             Args::Permission(permission_args) => {
                 permission_args.into_create_request_input(station_agent)
             }
-        }
-    }
-}
-
-impl From<Args> for RequestOperationInput {
-    fn from(args: Args) -> Self {
-        match args {
-            Args::Canister(canister_args) => RequestOperationInput::from(canister_args),
-            Args::Permission(permission_args) => RequestOperationInput::from(permission_args),
-        }
-    }
-}
-
-impl From<Args> for CreateRequestInput {
-    fn from(args: Args) -> Self {
-        let operation = RequestOperationInput::from(args);
-        // TODO: Get title, summary, and execution_plan from args.
-        CreateRequestInput {
-            operation,
-            title: None,
-            summary: None,
-            execution_plan: None,
         }
     }
 }
