@@ -38,31 +38,36 @@ impl CreateRequestArgs for ChangeCanister {
         self,
         station_agent: &StationAgent,
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
-        if let Some(canister_name_or_id) = self.canister {
-            let canister_id = station_agent.canister_id(&canister_name_or_id)?;
-            let resource = orbit_station_api::ResourceDTO::ExternalCanister(
-                orbit_station_api::ExternalCanisterResourceActionDTO::Change(
+        let canisters: anyhow::Result<orbit_station_api::ChangeExternalCanisterResourceTargetDTO> =
+            if let Some(canister_name_or_id) = self.canister {
+                let canister_id = station_agent.canister_id(&canister_name_or_id)?;
+                Ok(
                     orbit_station_api::ChangeExternalCanisterResourceTargetDTO::Canister(
                         canister_id,
                     ),
-                ),
-            );
-            Ok(orbit_station_api::CreateRequestInput {
-                operation: orbit_station_api::RequestOperationInput::EditPermission(
-                    orbit_station_api::EditPermissionOperationInput {
-                        resource,
-                        auth_scope: None,
-                        users: None,
-                        user_groups: None,
-                    },
-                ),
-                title: None,
-                summary: None,
-                execution_plan: None,
-            })
-        } else {
-            unimplemented!("Need to implement granting access to all canisters.")
-        }
+                )
+            } else {
+                Ok(orbit_station_api::ChangeExternalCanisterResourceTargetDTO::Any)
+            };
+
+        let resource = orbit_station_api::ResourceDTO::ExternalCanister(
+            orbit_station_api::ExternalCanisterResourceActionDTO::Change(canisters?),
+        );
+
+        let operation = orbit_station_api::RequestOperationInput::EditPermission(
+            orbit_station_api::EditPermissionOperationInput {
+                resource,
+                auth_scope: None,
+                users: None,
+                user_groups: None,
+            },
+        );
+        Ok(orbit_station_api::CreateRequestInput {
+            operation,
+            title: None,
+            summary: None,
+            execution_plan: None,
+        })
     }
 }
 
