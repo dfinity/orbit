@@ -141,9 +141,19 @@ impl DfxExtensionAgent {
 
     /// Gets a canister ID
     // TODO: This is a bad API as the two names can be swapped and it will still compile.
-    pub fn canister_id(&self, canister_name: &str, network_name: &str) -> anyhow::Result<Principal> {
-        let id = call_dfx_cli(vec!["canister", "id", "--network", network_name, canister_name])
-            .with_context(|| format!("Failed to look up canister '{canister_name}'"))?;
+    pub fn canister_id(
+        &self,
+        canister_name: &str,
+        network_name: &str,
+    ) -> anyhow::Result<Principal> {
+        let id = call_dfx_cli(vec![
+            "canister",
+            "id",
+            "--network",
+            network_name,
+            canister_name,
+        ])
+        .with_context(|| format!("Failed to look up canister '{canister_name}'"))?;
         Principal::from_str(&id).with_context(|| format!("Could not parse canister ID: {}", id))
     }
 }

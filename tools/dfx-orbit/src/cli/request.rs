@@ -11,8 +11,8 @@ use tempfile::tempdir;
 /// The main entry point for the `dfx orbit` CLI.
 pub async fn main(args: Args) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
     // Converts the CLI arg type into the equivalent Orbit API type.
-    let mut extension_agent = crate::dfx_extension_api::DfxExtensionAgent::new("orbit");
-    let ic_agent = extension_agent.agent().await?;
+    let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
+    let ic_agent = station_agent.dfx.agent().await?;
     let args = CreateRequestInput::from(args);
     let idl_text = serialize_one_to_text(&args)?;
     // The idl text can be too large to pass on the command line.  We write it to a file and pass the file name instead.
