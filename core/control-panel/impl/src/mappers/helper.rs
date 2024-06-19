@@ -1,3 +1,4 @@
+use crate::core::ic_cdk::api::print;
 use crate::errors::MapperError;
 use std::{collections::BTreeMap, str::FromStr};
 use uuid::Uuid;
@@ -27,6 +28,22 @@ impl HelperMapper {
             .into_iter()
             .map(|metadata| (metadata.key, metadata.value))
             .collect()
+    }
+
+    /// Converts a semver string to a semver version object.
+    ///
+    /// If the string is not a valid semver version, it will return 0.0.0 as a fallback.
+    pub fn to_semver(version_text: &str) -> semver::Version {
+        if let Ok(version) = semver::Version::parse(version_text) {
+            return version;
+        }
+
+        print(format!(
+            "Failed to parse semver {}, fallback to 0.0.0",
+            version_text
+        ));
+
+        semver::Version::new(0, 0, 0)
     }
 }
 

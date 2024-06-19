@@ -1,9 +1,12 @@
 export const idlFactory = ({ IDL }) => {
-  const UUID = IDL.Text;
+  const WasmModuleRegistryEntryDependency = IDL.Record({
+    'name' : IDL.Text,
+    'version' : IDL.Text,
+  });
   const WasmModuleRegistryEntryValueInput = IDL.Record({
     'wasm_module' : IDL.Vec(IDL.Nat8),
     'version' : IDL.Text,
-    'dependencies' : IDL.Vec(UUID),
+    'dependencies' : IDL.Vec(WasmModuleRegistryEntryDependency),
   });
   const RegistryEntryValueInput = IDL.Variant({
     'WasmModule' : WasmModuleRegistryEntryValueInput,
@@ -18,10 +21,11 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
   });
   const AddRegistryEntryInput = IDL.Record({ 'entry' : RegistryEntryInput });
+  const UUID = IDL.Text;
   const TimestampRFC3339 = IDL.Text;
   const WasmModuleRegistryEntryValue = IDL.Record({
     'version' : IDL.Text,
-    'dependencies' : IDL.Vec(UUID),
+    'dependencies' : IDL.Vec(WasmModuleRegistryEntryDependency),
     'wasm_artifact_id' : UUID,
   });
   const RegistryEntryValue = IDL.Variant({
@@ -94,9 +98,16 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'canister_id' : StationID }),
     'Err' : ApiError,
   });
+  const RegistryEntryUpdateInput = IDL.Record({
+    'categories' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'value' : IDL.Opt(RegistryEntryValueInput),
+    'metadata' : IDL.Opt(IDL.Vec(Metadata)),
+    'tags' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'description' : IDL.Opt(IDL.Text),
+  });
   const EditRegistryEntryInput = IDL.Record({
     'id' : UUID,
-    'entry' : RegistryEntryInput,
+    'entry' : RegistryEntryUpdateInput,
   });
   const EditRegistryEntryResponse = IDL.Record({ 'entry' : RegistryEntry });
   const EditRegistryEntryResult = IDL.Variant({
@@ -173,17 +184,39 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Null,
     'Err' : ApiError,
   });
+  const NextWasmModuleVersionInput = IDL.Record({
+    'name' : IDL.Text,
+    'current_version' : IDL.Text,
+  });
+  const NextWasmModuleVersionResponse = IDL.Record({
+    'entry' : IDL.Opt(RegistryEntry),
+  });
+  const NextWasmModuleVersionResult = IDL.Variant({
+    'Ok' : NextWasmModuleVersionResponse,
+    'Err' : ApiError,
+  });
   const RegisterUserInput = IDL.Record({ 'station' : IDL.Opt(UserStation) });
   const RegisterUserResult = IDL.Variant({
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
+  const SortDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
+  const RegistryEntrySortBy = IDL.Variant({
+    'Version' : SortDirection,
+    'CreatedAt' : SortDirection,
+  });
   const PaginationInput = IDL.Record({
     'offset' : IDL.Opt(IDL.Nat64),
     'limit' : IDL.Opt(IDL.Nat16),
   });
-  const SearchRegistryFilterKind = IDL.Variant({ 'Name' : IDL.Text });
+  const RegistryEntryValueKind = IDL.Variant({ 'WasmModule' : IDL.Null });
+  const SearchRegistryFilterKind = IDL.Variant({
+    'Kind' : RegistryEntryValueKind,
+    'Name' : IDL.Text,
+    'Namespace' : IDL.Text,
+  });
   const SearchRegistryInput = IDL.Record({
+    'sort_by' : IDL.Opt(RegistryEntrySortBy),
     'pagination' : IDL.Opt(PaginationInput),
     'filter_by' : IDL.Vec(SearchRegistryFilterKind),
   });
@@ -265,6 +298,11 @@ export const idlFactory = ({ IDL }) => {
         [ManageUserStationsInput],
         [ManageUserStationsResult],
         [],
+      ),
+    'next_wasm_module_version' : IDL.Func(
+        [NextWasmModuleVersionInput],
+        [NextWasmModuleVersionResult],
+        ['query'],
       ),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
     'search_registry' : IDL.Func(

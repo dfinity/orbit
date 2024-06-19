@@ -21,12 +21,21 @@ pub use mocks::*;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod mocks {
     use candid::Principal;
+    use std::cell::RefCell;
 
     pub const TEST_CANISTER_ID: Principal = Principal::from_slice(&[u8::MAX; 29]);
     pub const TEST_CONTROLLER_ID: Principal = Principal::from_slice(&[u8::MAX - 1; 29]);
 
+    thread_local! {
+        static CALLER_ID : RefCell<Principal> = const { RefCell::new(Principal::anonymous()) };
+    }
+
+    pub fn set_caller(principal: Principal) {
+        CALLER_ID.with(|c| *c.borrow_mut() = principal);
+    }
+
     pub fn caller() -> Principal {
-        Principal::anonymous()
+        CALLER_ID.with(|c| *c.borrow())
     }
 
     pub fn spawn<F: 'static + std::future::Future<Output = ()>>(_future: F) {
