@@ -38,7 +38,9 @@ impl CreateRequestArgs for Args {
     ) -> anyhow::Result<CreateRequestInput> {
         match self {
             Args::Canister(canister_args) => canister_args.into_create_request_input(station_agent),
-            Args::Permission(_permission_args) => todo!(), // permission_args.into_create_request_input(station_agent),
+            Args::Permission(permission_args) => {
+                permission_args.into_create_request_input(station_agent)
+            }
         }
     }
 }

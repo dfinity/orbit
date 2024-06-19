@@ -2,6 +2,8 @@
 use candid::Principal;
 use clap::{Parser, Subcommand};
 
+use crate::{args::request::CreateRequestArgs, orbit_station_agent::StationAgent};
+
 /// Request canister changes.
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
@@ -10,12 +12,58 @@ pub enum Args {
     Change(ChangeCanister),
 }
 
+impl CreateRequestArgs for Args {
+    /// Converts the CLI arg type into the equivalent Orbit API type.
+    fn into_create_request_input(
+        self,
+        station_agent: &StationAgent,
+    ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
+        match self {
+            Args::Change(change_args) => change_args.into_create_request_input(station_agent),
+        }
+    }
+}
+
 /// Requests the privilige of proposing canister upgrades.
 #[derive(Debug, Parser)]
 pub struct ChangeCanister {
     /// Canister name or ID.
     #[structopt(long)]
     pub canister: Option<String>,
+}
+
+impl CreateRequestArgs for ChangeCanister {
+    /// Converts the CLI arg type into the equivalent Orbit API type.
+    fn into_create_request_input(
+        self,
+        station_agent: &StationAgent,
+    ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
+        if let Some(canister_name_or_id) = self.canister {
+            let canister_id = station_agent.canister_id(&canister_name_or_id)?;
+            let resource = orbit_station_api::ResourceDTO::ExternalCanister(
+                orbit_station_api::ExternalCanisterResourceActionDTO::Change(
+                    orbit_station_api::ChangeExternalCanisterResourceTargetDTO::Canister(
+                        canister_id,
+                    ),
+                ),
+            );
+            Ok(orbit_station_api::CreateRequestInput {
+                operation: orbit_station_api::RequestOperationInput::EditPermission(
+                    orbit_station_api::EditPermissionOperationInput {
+                        resource,
+                        auth_scope: None,
+                        users: None,
+                        user_groups: None,
+                    },
+                ),
+                title: None,
+                summary: None,
+                execution_plan: None,
+            })
+        } else {
+            unimplemented!("Need to implement granting access to all canisters.")
+        }
+    }
 }
 
 impl TryFrom<Args> for orbit_station_api::RequestOperationInput {
