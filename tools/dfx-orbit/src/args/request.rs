@@ -25,11 +25,17 @@ pub enum Args {
 /// Converts the CLI arg type into the equivalent Orbit API type.
 pub trait CreateRequestArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    fn into_create_request_input(self, station_agent: &StationAgent) -> CreateRequestInput;
+    fn into_create_request_input(
+        self,
+        station_agent: &StationAgent,
+    ) -> anyhow::Result<CreateRequestInput>;
 }
 
 impl CreateRequestArgs for Args {
-    fn into_create_request_input(self, station_agent: &StationAgent) -> CreateRequestInput {
+    fn into_create_request_input(
+        self,
+        station_agent: &StationAgent,
+    ) -> anyhow::Result<CreateRequestInput> {
         match self {
             Args::Canister(canister_args) => canister_args.into_create_request_input(station_agent),
             Args::Permission(_permission_args) => todo!(), // permission_args.into_create_request_input(station_agent),

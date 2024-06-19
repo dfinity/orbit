@@ -18,7 +18,7 @@ impl CreateRequestArgs for Args {
     fn into_create_request_input(
         self,
         station_agent: &StationAgent,
-    ) -> orbit_station_api::CreateRequestInput {
+    ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
         match self {
             Args::Change(change_args) => change_args.into_create_request_input(station_agent),
         }
@@ -63,7 +63,7 @@ impl CreateRequestArgs for ChangeExternalCanister {
     fn into_create_request_input(
         self,
         _station_agent: &StationAgent,
-    ) -> orbit_station_api::CreateRequestInput {
+    ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
         let ChangeExternalCanister {
             canister_id,
             mode,
@@ -93,12 +93,12 @@ impl CreateRequestArgs for ChangeExternalCanister {
             }
         };
         let operation = orbit_station_api::RequestOperationInput::ChangeExternalCanister(operation);
-        orbit_station_api::CreateRequestInput {
+        Ok(orbit_station_api::CreateRequestInput {
             operation,
             title: None,
             summary: None,
             execution_plan: None,
-        }
+        })
     }
 }
 
