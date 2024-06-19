@@ -42,7 +42,7 @@ pub struct ChangeExternalCanister {
     /// The canister ID to install or update.
     // TODO: Canister by name
     #[clap(short, long)]
-    canister_id: Principal,
+    canister: String,
     /// The installation mode.
     #[clap(long, value_enum, rename_all = "kebab-case")]
     mode: CanisterInstallMode,
@@ -62,15 +62,16 @@ impl CreateRequestArgs for ChangeExternalCanister {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     fn into_create_request_input(
         self,
-        _station_agent: &StationAgent,
+        station_agent: &StationAgent,
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
         let ChangeExternalCanister {
-            canister_id,
+            canister,
             mode,
             wasm,
             arg,
             arg_file,
         } = self;
+        let canister_id = station_agent.canister_id(&canister)?;
         let operation = {
             let module = std::fs::read(wasm)
                 .expect("Could not read Wasm file")
@@ -116,12 +117,13 @@ pub enum CanisterInstallMode {
 impl From<ChangeExternalCanister> for orbit_station_api::ChangeExternalCanisterOperationInput {
     fn from(input: ChangeExternalCanister) -> Self {
         let ChangeExternalCanister {
-            canister_id,
+            canister,
             mode,
             wasm,
             arg,
             arg_file,
         } = input;
+        let canister_id = Principal::from_text(canister).expect("Invalid canister ID");
         let module = std::fs::read(wasm)
             .expect("Could not read Wasm file")
             .to_vec();
