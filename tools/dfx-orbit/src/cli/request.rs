@@ -1,9 +1,9 @@
 //! Implements `dfx request` commands.  These correspond to Orbit station `create_request` API calls.
 
-use crate::args::request::Args;
+use crate::args::request::{Args, CreateRequestArgs};
 use anyhow::anyhow;
 use candid::{CandidType, IDLArgs, Principal};
-use orbit_station_api::{ApiErrorDTO, CreateRequestInput, CreateRequestResponse};
+use orbit_station_api::{ApiErrorDTO, CreateRequestResponse};
 use std::fs::File;
 use std::io::Write;
 use tempfile::tempdir;
@@ -12,8 +12,8 @@ use tempfile::tempdir;
 pub async fn main(args: Args) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
     // Converts the CLI arg type into the equivalent Orbit API type.
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
+    let args = args.into_create_request_input(&station_agent)?;
     let ic_agent = station_agent.dfx.agent().await?;
-    let args = CreateRequestInput::from(args);
     let idl_text = serialize_one_to_text(&args)?;
     // The idl text can be too large to pass on the command line.  We write it to a file and pass the file name instead.
     let dir = tempdir()?;
