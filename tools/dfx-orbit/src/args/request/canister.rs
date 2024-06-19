@@ -1,5 +1,7 @@
 //! Makes requests to do things to canisters.  Such as update the Wasm, deploy frontend assets or make API calls to them.
 
+use super::CreateRequestArgs;
+use crate::orbit_station_agent::StationAgent;
 use candid::Principal;
 use clap::{Parser, Subcommand, ValueEnum};
 
@@ -9,6 +11,18 @@ use clap::{Parser, Subcommand, ValueEnum};
 pub enum Args {
     /// Request to update the canister.
     Change(ChangeExternalCanister),
+}
+
+impl CreateRequestArgs for Args {
+    /// Converts the CLI arg type into the equivalent Orbit API type.
+    fn into_create_request_input(
+        self,
+        station_agent: &StationAgent,
+    ) -> orbit_station_api::CreateRequestInput {
+        match self {
+            Args::Change(change_args) => change_args.into_create_request_input(station_agent),
+        }
+    }
 }
 
 impl From<Args> for orbit_station_api::RequestOperationInput {
@@ -42,6 +56,50 @@ pub struct ChangeExternalCanister {
     /// The path to a file containing the argument to pass to the canister.
     #[clap(short = 'f', long)]
     arg_file: Option<String>,
+}
+
+impl CreateRequestArgs for ChangeExternalCanister {
+    /// Converts the CLI arg type into the equivalent Orbit API type.
+    fn into_create_request_input(
+        self,
+        _station_agent: &StationAgent,
+    ) -> orbit_station_api::CreateRequestInput {
+        let ChangeExternalCanister {
+            canister_id,
+            mode,
+            wasm,
+            arg,
+            arg_file,
+        } = self;
+        let operation = {
+            let module = std::fs::read(wasm)
+                .expect("Could not read Wasm file")
+                .to_vec();
+            let arg = if let Some(file) = arg_file {
+                Some(
+                    std::fs::read(file)
+                        .expect("Could not read argument file")
+                        .to_vec(),
+                )
+            } else {
+                arg.map(|arg| arg.as_bytes().to_vec())
+            };
+            let mode = mode.into();
+            orbit_station_api::ChangeExternalCanisterOperationInput {
+                canister_id,
+                mode,
+                module,
+                arg,
+            }
+        };
+        let operation = orbit_station_api::RequestOperationInput::ChangeExternalCanister(operation);
+        orbit_station_api::CreateRequestInput {
+            operation,
+            title: None,
+            summary: None,
+            execution_plan: None,
+        }
+    }
 }
 
 /// Canister installation mode equivalent to `dfx canister install --mode XXX` and `orbit_station_api::CanisterInstallMode`.

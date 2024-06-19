@@ -5,6 +5,8 @@ pub mod permission;
 use clap::Subcommand;
 use orbit_station_api::{CreateRequestInput, RequestOperationInput};
 
+use crate::orbit_station_agent::StationAgent;
+
 /// Request canister changes.
 ///
 // TODO: Add flags for --title, --summary, and --execution-plan.
@@ -18,6 +20,21 @@ pub enum Args {
     /// Request changes to a canister.
     #[command(subcommand)]
     Permission(permission::Args),
+}
+
+/// Converts the CLI arg type into the equivalent Orbit API type.
+pub trait CreateRequestArgs {
+    /// Converts the CLI arg type into the equivalent Orbit API type.
+    fn into_create_request_input(self, station_agent: &StationAgent) -> CreateRequestInput;
+}
+
+impl CreateRequestArgs for Args {
+    fn into_create_request_input(self, station_agent: &StationAgent) -> CreateRequestInput {
+        match self {
+            Args::Canister(canister_args) => canister_args.into_create_request_input(station_agent),
+            Args::Permission(_permission_args) => todo!(), // permission_args.into_create_request_input(station_agent),
+        }
+    }
 }
 
 impl From<Args> for RequestOperationInput {
