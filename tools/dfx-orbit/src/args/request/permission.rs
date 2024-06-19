@@ -27,11 +27,3 @@ impl CreateRequestArgs for Args {
         }
     }
 }
-
-impl From<Args> for orbit_station_api::RequestOperationInput {
-    fn from(args: Args) -> Self {
-        match args {
-            Args::Canister(change_args) => change_args.try_into().expect("TODO: bubble this up"),
-        }
-    }
-}

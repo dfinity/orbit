@@ -2,7 +2,6 @@
 
 use super::CreateRequestArgs;
 use crate::orbit_station_agent::StationAgent;
-use candid::Principal;
 use clap::{Parser, Subcommand, ValueEnum};
 
 /// Request canister changes.
@@ -21,16 +20,6 @@ impl CreateRequestArgs for Args {
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
         match self {
             Args::Change(change_args) => change_args.into_create_request_input(station_agent),
-        }
-    }
-}
-
-impl From<Args> for orbit_station_api::RequestOperationInput {
-    fn from(args: Args) -> Self {
-        match args {
-            Args::Change(change_args) => {
-                orbit_station_api::RequestOperationInput::ChangeExternalCanister(change_args.into())
-            }
         }
     }
 }
@@ -112,38 +101,6 @@ pub enum CanisterInstallMode {
     Reinstall,
     /// Corresponds to `dfx canister upgrade`
     Upgrade,
-}
-
-impl From<ChangeExternalCanister> for orbit_station_api::ChangeExternalCanisterOperationInput {
-    fn from(input: ChangeExternalCanister) -> Self {
-        let ChangeExternalCanister {
-            canister,
-            mode,
-            wasm,
-            arg,
-            arg_file,
-        } = input;
-        let canister_id = Principal::from_text(canister).expect("Invalid canister ID");
-        let module = std::fs::read(wasm)
-            .expect("Could not read Wasm file")
-            .to_vec();
-        let arg = if let Some(file) = arg_file {
-            Some(
-                std::fs::read(file)
-                    .expect("Could not read argument file")
-                    .to_vec(),
-            )
-        } else {
-            arg.map(|arg| arg.as_bytes().to_vec())
-        };
-        let mode = mode.into();
-        orbit_station_api::ChangeExternalCanisterOperationInput {
-            canister_id,
-            mode,
-            module,
-            arg,
-        }
-    }
 }
 
 impl From<CanisterInstallMode> for orbit_station_api::CanisterInstallMode {
