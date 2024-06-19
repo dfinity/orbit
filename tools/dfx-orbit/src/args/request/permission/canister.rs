@@ -40,12 +40,9 @@ impl CreateRequestArgs for ChangeCanister {
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
         let canisters: anyhow::Result<orbit_station_api::ChangeExternalCanisterResourceTargetDTO> =
             if let Some(canister_name_or_id) = self.canister {
-                let canister_id = station_agent.canister_id(&canister_name_or_id)?;
-                Ok(
-                    orbit_station_api::ChangeExternalCanisterResourceTargetDTO::Canister(
-                        canister_id,
-                    ),
-                )
+                station_agent
+                    .canister_id(&canister_name_or_id)
+                    .map(orbit_station_api::ChangeExternalCanisterResourceTargetDTO::Canister)
             } else {
                 Ok(orbit_station_api::ChangeExternalCanisterResourceTargetDTO::Any)
             };
