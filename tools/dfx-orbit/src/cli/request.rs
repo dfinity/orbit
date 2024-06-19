@@ -9,7 +9,7 @@ use std::io::Write;
 use tempfile::tempdir;
 
 /// The main entry point for the `dfx orbit` CLI.
-pub async fn main(args: Args) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
+pub async fn exec(args: Args) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
     // Converts the CLI arg type into the equivalent Orbit API type.
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
     let args = args.into_create_request_input(&station_agent)?;

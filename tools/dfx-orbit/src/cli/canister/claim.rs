@@ -4,7 +4,7 @@ use anyhow::anyhow;
 use crate::{args::canister::Claim, dfx_extension_api, local_config};
 
 /// Puts a canister controlled by the user under Orbit control.
-pub fn main(args: Claim) -> anyhow::Result<()> {
+pub fn exec(args: Claim) -> anyhow::Result<()> {
     let Claim {
         canister,
         exclusive,

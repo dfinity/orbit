@@ -8,7 +8,7 @@ use crate::args::{DfxOrbitArgs, DfxOrbitSubcommands};
 use anyhow::anyhow;
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
-pub async fn main(args: DfxOrbitArgs) -> anyhow::Result<()> {
+pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
     match args.command {
         DfxOrbitSubcommands::Me => {
             let station_principal = &crate::local_config::default_station()?
@@ -23,12 +23,12 @@ pub async fn main(args: DfxOrbitArgs) -> anyhow::Result<()> {
             print!("{ans}");
             Ok(())
         }
-        DfxOrbitSubcommands::Station(station_args) => station::main(station_args),
+        DfxOrbitSubcommands::Station(station_args) => station::exec(station_args),
         DfxOrbitSubcommands::DfxExtension(dfx_extension_args) => {
-            dfx_extension_cli::main(dfx_extension_args)
+            dfx_extension_cli::exec(dfx_extension_args)
         }
-        DfxOrbitSubcommands::Canister(canister_args) => canister::main(canister_args),
-        DfxOrbitSubcommands::Request(request_args) => match request::main(request_args).await {
+        DfxOrbitSubcommands::Canister(canister_args) => canister::exec(canister_args),
+        DfxOrbitSubcommands::Request(request_args) => match request::exec(request_args).await {
             Ok(Ok(_response)) => Ok(()),
             Ok(Err(e)) => Err(anyhow!("Error response from the station: {e:?}")),
             Err(e) => Err(e),

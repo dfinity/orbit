@@ -9,6 +9,6 @@ fn main() {
     let args = DfxOrbitArgs::parse();
     let runtime = Runtime::new().expect("Unable to create a runtime");
     runtime.block_on(async {
-        lib::cli::main(args).await.unwrap();
+        lib::cli::exec(args).await.unwrap();
     });
 }
