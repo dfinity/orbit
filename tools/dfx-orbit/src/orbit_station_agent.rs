@@ -29,4 +29,10 @@ impl StationAgent {
         let network = &self.station.network;
         self.dfx.canister_id(canister_name, network)
     }
+
+    /// Makes a canister update call on the network used by the station.
+    pub async fn update(&mut self) {
+        let _agent = self.dfx.agent();
+        todo!()
+    }
 }

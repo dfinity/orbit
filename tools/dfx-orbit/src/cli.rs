@@ -27,7 +27,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
         DfxOrbitSubcommands::DfxExtension(dfx_extension_args) => {
             dfx_extension_cli::exec(dfx_extension_args)
         }
-        DfxOrbitSubcommands::Canister(canister_args) => canister::exec(canister_args),
+        DfxOrbitSubcommands::Canister(canister_args) => canister::exec(canister_args).await,
         DfxOrbitSubcommands::Request(request_args) => match request::exec(request_args).await {
             Ok(Ok(_response)) => Ok(()),
             Ok(Err(e)) => Err(anyhow!("Error response from the station: {e:?}")),
