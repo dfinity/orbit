@@ -32,7 +32,11 @@ impl StationAgent {
     }
 
     /// Makes a canister update call on the network used by the station.
-    pub async fn update(&mut self, canister_id: &Principal, method_name: &str) -> anyhow::Result<UpdateBuilder> {
+    pub async fn update(
+        &mut self,
+        canister_id: &Principal,
+        method_name: &str,
+    ) -> anyhow::Result<UpdateBuilder> {
         Ok(self.dfx.agent().await?.update(canister_id, method_name))
     }
 }
