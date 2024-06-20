@@ -8,6 +8,7 @@ use anyhow::Context;
 use candid::Principal;
 use dfx_core::interface::dfx::DfxInterface;
 use ic_agent::Agent;
+use slog::{o, Drain, Logger};
 
 /// Calls the dfx cli.
 ///
@@ -43,19 +44,34 @@ pub struct DfxExtensionAgent {
     name: String,
     /// The directory where all extension configuration files are stored, including those of other extensions.
     extensions_dir: cap_std::fs::Dir,
-    /// The dfx interface.
+    /// An interface including an ic-agent.
     dfx_interface: Option<DfxInterface>,
+    /// A logger; some public `sdk` repository methods require a specific type of logger so this is a compatible logger.
+    logger: Logger,
 }
 
 impl DfxExtensionAgent {
     /// Creates a new DfxExtensionAgent for the extension with the given name.
     pub fn new(name: &str) -> Self {
+        let logger = {
+            let decorator = slog_term::TermDecorator::new().build();
+            let drain = slog_term::FullFormat::new(decorator).build().fuse();
+            let drain = slog_async::Async::new(drain).build().fuse();
+
+            slog::Logger::root(drain, o!())
+        };
         Self {
             name: name.to_string(),
             extensions_dir: Self::extensions_dir()
                 .expect("Could not get the dfx extensions directory"),
             dfx_interface: None,
+            logger,
         }
+    }
+
+    /// A logger; some public `sdk` repository methods require a specific type of logger so this is a compatible logger.
+    pub fn logger(&self) -> &Logger {
+        &self.logger
     }
 
     /// Gets the extensions directory, typically at `~/.config/dfx/extensions`
