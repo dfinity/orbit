@@ -22,6 +22,8 @@ use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
 use std::sync::Arc;
 use uuid::Uuid;
 
+use super::DISASTER_RECOVERY_SERVICE;
+
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> =
         Arc::new(SystemService::new(Arc::clone(&REQUEST_REPOSITORY)));
@@ -92,8 +94,17 @@ impl SystemService {
     pub fn set_disaster_recovery_committee(&self, committee: Option<DisasterRecoveryCommittee>) {
         let mut system_info = self.get_system_info();
         system_info.set_disaster_recovery_committee(committee);
-
         write_system_info(system_info);
+
+        // syncs the committee and account to the upgrader
+        crate::core::ic_cdk::spawn(async {
+            if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_committee().await {
+                crate::core::ic_cdk::api::print(format!("Failed to sync committee: {}", error,));
+            }
+            if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts().await {
+                crate::core::ic_cdk::api::print(format!("Failed to sync accounts: {}", error,));
+            }
+        });
     }
 
     #[cfg(not(target_arch = "wasm32"))]

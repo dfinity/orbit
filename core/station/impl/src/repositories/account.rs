@@ -1,10 +1,14 @@
 use super::indexes::name_to_account_id_index::NameToAccountIdIndexRepository;
 use crate::{
-    core::{metrics::ACCOUNT_METRICS, with_memory_manager, Memory, ACCOUNT_MEMORY_ID},
+    core::{
+        metrics::ACCOUNT_METRICS, observer::Observer, with_memory_manager, Memory,
+        ACCOUNT_MEMORY_ID,
+    },
     models::{
         indexes::name_to_account_id_index::NameToAccountIdIndexCriteria, Account, AccountId,
         AccountKey,
     },
+    services::disaster_recovery_observes_insert_account,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
@@ -27,9 +31,22 @@ lazy_static! {
 }
 
 /// A repository that enables managing accounts in stable memory.
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct AccountRepository {
     name_index: NameToAccountIdIndexRepository,
+    change_observer: Observer<(Account, Option<Account>)>,
+}
+
+impl Default for AccountRepository {
+    fn default() -> Self {
+        let mut change_observer = Observer::default();
+        disaster_recovery_observes_insert_account(&mut change_observer);
+
+        Self {
+            change_observer,
+            name_index: NameToAccountIdIndexRepository::default(),
+        }
+    }
 }
 
 impl Repository<AccountKey, Account> for AccountRepository {
@@ -58,7 +75,10 @@ impl Repository<AccountKey, Account> for AccountRepository {
                     current: Some(value.to_index_by_name()),
                 });
 
-            prev
+            let args = (value, prev);
+            self.change_observer.notify(&args);
+
+            args.1
         })
     }
 
@@ -120,6 +140,13 @@ impl AccountRepository {
             })
             .into_iter()
             .next()
+    }
+
+    pub fn with_empty_observers() -> Self {
+        Self {
+            change_observer: Observer::default(),
+            ..Default::default()
+        }
     }
 }
 
