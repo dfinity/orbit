@@ -1,5 +1,5 @@
 use crate::upgrader_ic_cdk::api::time;
-use orbit_essentials::{storable, types::Timestamp};
+use orbit_essentials::{storable, types::Timestamp, utils::timestamp_to_rfc3339};
 use serde::Serialize;
 
 use super::{Account, AdminUser, DisasterRecoveryCommittee, RecoveryResult};
@@ -49,6 +49,7 @@ pub enum LogEntryType {
     UpgradeResult(UpgradeResultLog),
 }
 
+#[derive(Debug)]
 #[storable]
 pub struct LogEntry {
     pub time: Timestamp,
@@ -82,7 +83,7 @@ impl LogEntryType {
                 data.committee.quorum_percentage
             ),
             LogEntryType::SetAccounts(data) => {
-                format!("Set {} disaster recovery accounts", data.accounts.len())
+                format!("Set {} disaster recovery account(s)", data.accounts.len())
             }
             LogEntryType::RequestDisasterRecovery(data) => format!(
                 "{} requested disaster recovery with wasm hash {} and arg hash {}",
@@ -130,5 +131,16 @@ impl LogEntry {
             message: entry_type.to_message(),
             data_json: entry_type.to_json_string()?,
         })
+    }
+}
+
+impl From<LogEntry> for upgrader_api::LogEntry {
+    fn from(value: LogEntry) -> Self {
+        upgrader_api::LogEntry {
+            time: timestamp_to_rfc3339(&value.time),
+            entry_type: value.entry_type,
+            message: value.message,
+            data_json: value.data_json,
+        }
     }
 }

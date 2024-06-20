@@ -1,4 +1,5 @@
 use candid::{CandidType, Deserialize, Principal};
+use station_api::TimestampRfc3339;
 pub use station_api::{MetadataDTO, UuidDTO};
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
@@ -107,4 +108,30 @@ pub struct RequestDisasterRecoveryInput {
     pub arg: Vec<u8>,
 
     pub install_mode: InstallMode,
+}
+
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct PaginationInput {
+    pub offset: Option<u64>,
+    pub limit: Option<u64>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct GetLogsInput {
+    pub pagination: Option<PaginationInput>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct LogEntry {
+    pub time: TimestampRfc3339,
+    pub entry_type: String,
+    pub message: String,
+    pub data_json: String,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct GetLogsResponse {
+    pub logs: Vec<LogEntry>,
+    pub next_offset: Option<u64>,
+    pub total: u64,
 }

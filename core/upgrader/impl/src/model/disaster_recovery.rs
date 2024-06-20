@@ -290,3 +290,58 @@ impl Default for DisasterRecovery {
         }
     }
 }
+
+#[cfg(test)]
+pub mod test {
+    use candid::Principal;
+
+    use super::{Account, AdminUser, DisasterRecoveryCommittee};
+
+    pub fn mock_committee() -> DisasterRecoveryCommittee {
+        DisasterRecoveryCommittee {
+            users: vec![
+                AdminUser {
+                    id: [1; 16],
+                    name: "admin_user_1".to_owned(),
+                    identities: vec![Principal::from_slice(&[1; 29])],
+                },
+                AdminUser {
+                    id: [2; 16],
+                    name: "admin_user_2".to_owned(),
+                    identities: vec![Principal::from_slice(&[2; 29])],
+                },
+                AdminUser {
+                    id: [3; 16],
+                    name: "admin_user_3".to_owned(),
+                    identities: vec![Principal::from_slice(&[3; 29])],
+                },
+            ],
+            quorum_percentage: 51,
+        }
+    }
+
+    pub fn mock_accounts() -> Vec<Account> {
+        vec![
+            Account {
+                id: [1; 16],
+                blockchain: "icp".to_owned(),
+                address: "0x1234".to_owned(),
+                standard: "native".to_owned(),
+                symbol: "ICP".to_owned(),
+                decimals: 8,
+                name: "Main Account".to_owned(),
+                metadata: vec![],
+            },
+            Account {
+                id: [2; 16],
+                blockchain: "eth".to_owned(),
+                address: "0x5678".to_owned(),
+                standard: "erc20".to_owned(),
+                symbol: "ETH".to_owned(),
+                decimals: 18,
+                name: "Secondary Account".to_owned(),
+                metadata: vec![],
+            },
+        ]
+    }
+}

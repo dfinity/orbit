@@ -38,11 +38,12 @@ thread_local! {
 }
 
 lazy_static! {
-    pub static ref DISASTER_RECOVERY_SERVICE: DisasterRecoveryService = DisasterRecoveryService {
-        installer: INSTALL_CANISTER.clone(),
-        storage: Default::default(),
-        logger: LOGGER_SERVICE.clone()
-    };
+    pub static ref DISASTER_RECOVERY_SERVICE: Arc<DisasterRecoveryService> =
+        Arc::new(DisasterRecoveryService {
+            installer: INSTALL_CANISTER.clone(),
+            storage: Default::default(),
+            logger: LOGGER_SERVICE.clone()
+        });
 }
 
 pub struct DisasterRecoveryReleaser {
@@ -329,7 +330,8 @@ mod test {
 
     use crate::{
         model::{
-            AdminUser, InstallMode, RecoveryEvaluationResult, RecoveryResult, RecoveryStatus,
+            test::{mock_accounts, mock_committee},
+            InstallMode, RecoveryEvaluationResult, RecoveryResult, RecoveryStatus,
             StationRecoveryRequest,
         },
         services::{
@@ -420,27 +422,8 @@ mod test {
             logger: Default::default(),
         };
 
-        dr.set_committee(crate::model::DisasterRecoveryCommittee {
-            users: vec![
-                AdminUser {
-                    id: [1; 16],
-                    name: "admin_user_1".to_owned(),
-                    identities: vec![Principal::from_slice(&[1; 29])],
-                },
-                AdminUser {
-                    id: [2; 16],
-                    name: "admin_user_2".to_owned(),
-                    identities: vec![Principal::from_slice(&[2; 29])],
-                },
-                AdminUser {
-                    id: [3; 16],
-                    name: "admin_user_3".to_owned(),
-                    identities: vec![Principal::from_slice(&[3; 29])],
-                },
-            ],
-            quorum_percentage: 51,
-        })
-        .expect("Failed to set committee");
+        dr.set_committee(mock_committee())
+            .expect("Failed to set committee");
 
         // non committee member
         dr.request_recovery(
@@ -679,10 +662,7 @@ mod test {
         storage.set(value);
 
         let error = DISASTER_RECOVERY_SERVICE
-            .set_committee(crate::model::DisasterRecoveryCommittee {
-                users: vec![],
-                quorum_percentage: 100,
-            })
+            .set_committee(mock_committee())
             .expect_err("Setting committee during recovery should fail");
 
         assert_eq!(error.code, "DISASTER_RECOVERY_IN_PROGRESS".to_string(),);
@@ -697,7 +677,7 @@ mod test {
         storage.set(value);
 
         let error = DISASTER_RECOVERY_SERVICE
-            .set_accounts(vec![])
+            .set_accounts(mock_accounts())
             .expect_err("Setting committee during recovery should fail");
 
         assert_eq!(error.code, "DISASTER_RECOVERY_IN_PROGRESS".to_string(),);

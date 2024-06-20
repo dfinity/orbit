@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use candid::Principal;
 use ic_cdk::{query, update};
 use lazy_static::lazy_static;
@@ -17,8 +19,9 @@ use crate::{
 
 // Controller initialization and implementation.
 lazy_static! {
-    static ref CONTROLLER: DisasterRecoveryController =
-        DisasterRecoveryController::new(DISASTER_RECOVERY_SERVICE.clone());
+    static ref CONTROLLER: Arc<DisasterRecoveryController> = Arc::new(DisasterRecoveryController {
+        disaster_recovery_service: DISASTER_RECOVERY_SERVICE.clone()
+    });
 }
 
 #[update]
@@ -56,16 +59,10 @@ async fn get_disaster_recovery_committee() -> ApiResult<GetDisasterRecoveryCommi
 }
 
 pub struct DisasterRecoveryController {
-    disaster_recovery_service: DisasterRecoveryService,
+    disaster_recovery_service: Arc<DisasterRecoveryService>,
 }
 
 impl DisasterRecoveryController {
-    pub fn new(disaster_recovery_service: DisasterRecoveryService) -> Self {
-        Self {
-            disaster_recovery_service,
-        }
-    }
-
     async fn set_disaster_recovery_committee(
         &self,
         input: upgrader_api::SetDisasterRecoveryCommitteeInput,
