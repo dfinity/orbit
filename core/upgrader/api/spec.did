@@ -107,6 +107,33 @@ type RequestDisasterRecoveryResult = variant {
   Err : Error;
 };
 
+type GetLogsInputPagination = record {
+  offset : opt nat64;
+  limit : opt nat64;
+};
+
+type GetLogsInput = record {
+  pagination : opt GetLogsInputPagination;
+};
+
+type LogEntry = record {
+  time : text;
+  entry_type : text;
+  message : text;
+  data_json : text;
+};
+
+type GetLogsResponse = record {
+  logs : vec LogEntry;
+  total : nat64;
+  next_offset : opt nat64;
+};
+
+type GetLogsResult = variant {
+  Ok : GetLogsResponse;
+  Err : Error;
+};
+
 service : (InitArg) -> {
   "trigger_upgrade" : (UpgradeParams) -> (TriggerUpgradeResponse);
   "set_disaster_recovery_committee" : (SetDisasterRecoveryCommitteeInput) -> (SetDisasterRecoveryResult);
@@ -115,4 +142,5 @@ service : (InitArg) -> {
   "get_disaster_recovery_accounts" : () -> (GetDisasterRecoveryAccountsResult) query;
   "get_disaster_recovery_committee" : () -> (GetDisasterRecoveryCommitteeResult) query;
   "request_disaster_recovery" : (RequestDisasterRecoveryInput) -> (RequestDisasterRecoveryResult);
+  "get_logs" : (GetLogsInput) -> (GetLogsResult) query;
 };
