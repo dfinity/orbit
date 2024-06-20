@@ -50,6 +50,7 @@ ic-cdk-macros = "0.9"
 ic-cdk-timers = "0.7.0"
 ic-ledger-types = "0.10.0"
 ic-stable-structures = "0.6.4"
+ic-utils =  { git = "https://github.com/dfinity/agent-rs.git", rev = "8273d321e9a09fd8373bd4e38b0676ec6ad9c260" }
 lazy_static = "1.4.0"
 mockall = "0.12.1"
 num-bigint = "0.4"
