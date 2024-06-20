@@ -291,8 +291,9 @@ const componentsMap: {
   ChangeCanister: ChangeCanisterOperation,
   EditPermission: EditPermissionOperation,
   ManageSystemInfo: ManageSystemInfoOperation,
-  ChangeManagedCanister: UnsupportedOperation,
-  CreateManagedCanister: UnsupportedOperation,
+  ChangeExternalCanister: UnsupportedOperation,
+  CreateExternalCanister: UnsupportedOperation,
+  CallExternalCanister: UnsupportedOperation,
 };
 
 defineEmits<{

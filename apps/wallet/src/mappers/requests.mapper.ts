@@ -67,10 +67,11 @@ export const mapRequestsOperationTypeToGroup = (
   }
 
   if (
-    variantIs(operationType, 'ChangeManagedCanister') ||
-    variantIs(operationType, 'CreateManagedCanister')
+    variantIs(operationType, 'ChangeExternalCanister') ||
+    variantIs(operationType, 'CreateExternalCanister') ||
+    variantIs(operationType, 'CallExternalCanister')
   ) {
-    return ListRequestsOperationTypeGroup.ManagedCanister;
+    return ListRequestsOperationTypeGroup.ExternalCanister;
   }
 
   return unreachable(operationType);
@@ -217,11 +218,14 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'ManageSystemInfo')) {
     return RequestOperationEnum.ManageSystemInfo;
   }
-  if (variantIs(operation, 'ChangeManagedCanister')) {
-    return RequestOperationEnum.ChangeManagedCanister;
+  if (variantIs(operation, 'ChangeExternalCanister')) {
+    return RequestOperationEnum.ChangeExternalCanister;
   }
-  if (variantIs(operation, 'CreateManagedCanister')) {
-    return RequestOperationEnum.CreateManagedCanister;
+  if (variantIs(operation, 'CreateExternalCanister')) {
+    return RequestOperationEnum.CreateExternalCanister;
+  }
+  if (variantIs(operation, 'CallExternalCanister')) {
+    return RequestOperationEnum.CallExternalCanister;
   }
 
   return unreachable(operation);
@@ -280,10 +284,12 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { RemoveUserGroup: null };
   } else if (variantIs(requestOperation, 'ManageSystemInfo')) {
     return { ManageSystemInfo: null };
-  } else if (variantIs(requestOperation, 'ChangeManagedCanister')) {
-    return { ChangeManagedCanister: [] };
-  } else if (variantIs(requestOperation, 'CreateManagedCanister')) {
-    return { CreateManagedCanister: null };
+  } else if (variantIs(requestOperation, 'ChangeExternalCanister')) {
+    return { ChangeExternalCanister: [] };
+  } else if (variantIs(requestOperation, 'CreateExternalCanister')) {
+    return { CreateExternalCanister: null };
+  } else if (variantIs(requestOperation, 'CallExternalCanister')) {
+    return { CallExternalCanister: [] };
   } else {
     return unreachable(requestOperation);
   }

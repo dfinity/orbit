@@ -2,7 +2,7 @@ use candid::{CandidType, Deserialize, Principal};
 use station_api::TimestampRfc3339;
 pub use station_api::{MetadataDTO, UuidDTO};
 
-#[derive(Clone, Debug, CandidType, Deserialize, PartialEq)]
+#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize, PartialEq)]
 pub struct UpgradeParams {
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
@@ -10,12 +10,12 @@ pub struct UpgradeParams {
     pub arg: Vec<u8>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]
 pub struct InitArg {
     pub target_canister: Principal,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]
 pub enum TriggerUpgradeError {
     NotController,
     Unauthorized,
@@ -134,4 +134,10 @@ pub struct GetLogsResponse {
     pub logs: Vec<LogEntry>,
     pub next_offset: Option<u64>,
     pub total: u64,
+}
+
+#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]
+pub enum TriggerUpgradeResponse {
+    Ok,
+    Err(TriggerUpgradeError),
 }

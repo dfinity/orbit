@@ -3,7 +3,7 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, ManagedCanisterResourceAction,
+        AccountResourceAction, ChangeCanisterResourceAction, ExternalCanisterResourceAction,
         PermissionResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
         SystemResourceAction, UserResourceAction,
     },
@@ -249,11 +249,14 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::SetDisasterRecovery => {
                 station_api::RequestSpecifierDTO::SetDisasterRecovery
             }
-            RequestSpecifier::ChangeManagedCanister(target) => {
-                station_api::RequestSpecifierDTO::ChangeManagedCanister(target.into())
+            RequestSpecifier::ChangeExternalCanister(target) => {
+                station_api::RequestSpecifierDTO::ChangeExternalCanister(target.into())
             }
-            RequestSpecifier::CreateManagedCanister(target) => {
-                station_api::RequestSpecifierDTO::CreateManagedCanister(target.into())
+            RequestSpecifier::CreateExternalCanister(target) => {
+                station_api::RequestSpecifierDTO::CreateExternalCanister(target.into())
+            }
+            RequestSpecifier::CallExternalCanister(target) => {
+                station_api::RequestSpecifierDTO::CallExternalCanister(target.into())
             }
             RequestSpecifier::EditPermission(policy) => {
                 station_api::RequestSpecifierDTO::EditPermission(policy.into())
@@ -308,11 +311,14 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             station_api::RequestSpecifierDTO::SetDisasterRecovery => {
                 RequestSpecifier::SetDisasterRecovery
             }
-            station_api::RequestSpecifierDTO::ChangeManagedCanister(target) => {
-                RequestSpecifier::ChangeManagedCanister(target.into())
+            station_api::RequestSpecifierDTO::ChangeExternalCanister(target) => {
+                RequestSpecifier::ChangeExternalCanister(target.into())
             }
-            station_api::RequestSpecifierDTO::CreateManagedCanister(target) => {
-                RequestSpecifier::CreateManagedCanister(target.into())
+            station_api::RequestSpecifierDTO::CreateExternalCanister(target) => {
+                RequestSpecifier::CreateExternalCanister(target.into())
+            }
+            station_api::RequestSpecifierDTO::CallExternalCanister(target) => {
+                RequestSpecifier::CallExternalCanister(target.into())
             }
             station_api::RequestSpecifierDTO::EditPermission(policy) => {
                 RequestSpecifier::EditPermission(policy.into())
@@ -419,14 +425,19 @@ impl RequestSpecifier {
                     ChangeCanisterResourceAction::Create,
                 )]
             }
-            RequestSpecifier::ChangeManagedCanister(target) => {
-                vec![Resource::ManagedCanister(
-                    ManagedCanisterResourceAction::Change(target.clone()),
+            RequestSpecifier::ChangeExternalCanister(target) => {
+                vec![Resource::ExternalCanister(
+                    ExternalCanisterResourceAction::Change(target.clone()),
                 )]
             }
-            RequestSpecifier::CreateManagedCanister(target) => {
-                vec![Resource::ManagedCanister(
-                    ManagedCanisterResourceAction::Create(target.clone()),
+            RequestSpecifier::CreateExternalCanister(target) => {
+                vec![Resource::ExternalCanister(
+                    ExternalCanisterResourceAction::Create(target.clone()),
+                )]
+            }
+            RequestSpecifier::CallExternalCanister(target) => {
+                vec![Resource::ExternalCanister(
+                    ExternalCanisterResourceAction::Call(target.clone()),
                 )]
             }
             RequestSpecifier::EditPermission(resource_specifier) => match resource_specifier {

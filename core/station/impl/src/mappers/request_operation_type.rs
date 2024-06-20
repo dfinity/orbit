@@ -24,11 +24,14 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::EditUserGroup => RequestOperationType::EditUserGroup,
             RequestOperationTypeDTO::RemoveUserGroup => RequestOperationType::RemoveUserGroup,
             RequestOperationTypeDTO::ChangeCanister => RequestOperationType::ChangeCanister,
-            RequestOperationTypeDTO::ChangeManagedCanister => {
-                RequestOperationType::ChangeManagedCanister
+            RequestOperationTypeDTO::ChangeExternalCanister => {
+                RequestOperationType::ChangeExternalCanister
             }
-            RequestOperationTypeDTO::CreateManagedCanister => {
-                RequestOperationType::CreateManagedCanister
+            RequestOperationTypeDTO::CreateExternalCanister => {
+                RequestOperationType::CreateExternalCanister
+            }
+            RequestOperationTypeDTO::CallExternalCanister => {
+                RequestOperationType::CallExternalCanister
             }
             RequestOperationTypeDTO::EditPermission => RequestOperationType::EditPermission,
             RequestOperationTypeDTO::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
@@ -65,11 +68,14 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::EditUserGroup => RequestOperationTypeDTO::EditUserGroup,
             RequestOperationType::RemoveUserGroup => RequestOperationTypeDTO::RemoveUserGroup,
             RequestOperationType::ChangeCanister => RequestOperationTypeDTO::ChangeCanister,
-            RequestOperationType::ChangeManagedCanister => {
-                RequestOperationTypeDTO::ChangeManagedCanister
+            RequestOperationType::ChangeExternalCanister => {
+                RequestOperationTypeDTO::ChangeExternalCanister
             }
-            RequestOperationType::CreateManagedCanister => {
-                RequestOperationTypeDTO::CreateManagedCanister
+            RequestOperationType::CreateExternalCanister => {
+                RequestOperationTypeDTO::CreateExternalCanister
+            }
+            RequestOperationType::CallExternalCanister => {
+                RequestOperationTypeDTO::CallExternalCanister
             }
             RequestOperationType::EditPermission => RequestOperationTypeDTO::EditPermission,
             RequestOperationType::AddRequestPolicy => RequestOperationTypeDTO::AddRequestPolicy,
@@ -102,12 +108,13 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::EditUserGroup(_) => RequestOperationType::EditUserGroup,
             RequestOperation::RemoveUserGroup(_) => RequestOperationType::RemoveUserGroup,
             RequestOperation::ChangeCanister(_) => RequestOperationType::ChangeCanister,
-            RequestOperation::ChangeManagedCanister(_) => {
-                RequestOperationType::ChangeManagedCanister
+            RequestOperation::ChangeExternalCanister(_) => {
+                RequestOperationType::ChangeExternalCanister
             }
-            RequestOperation::CreateManagedCanister(_) => {
-                RequestOperationType::CreateManagedCanister
+            RequestOperation::CreateExternalCanister(_) => {
+                RequestOperationType::CreateExternalCanister
             }
+            RequestOperation::CallExternalCanister(_) => RequestOperationType::CallExternalCanister,
             RequestOperation::EditPermission(_) => RequestOperationType::EditPermission,
             RequestOperation::AddRequestPolicy(_) => RequestOperationType::AddRequestPolicy,
             RequestOperation::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
@@ -162,8 +169,8 @@ impl RequestOperation {
                 true
             }
             (
-                RequestOperation::ChangeManagedCanister(operation),
-                ListRequestsOperationTypeDTO::ChangeManagedCanister(target),
+                RequestOperation::ChangeExternalCanister(operation),
+                ListRequestsOperationTypeDTO::ChangeExternalCanister(target),
             ) => {
                 if let Some(canister_id) = target {
                     operation.input.canister_id == *canister_id
@@ -172,9 +179,19 @@ impl RequestOperation {
                 }
             }
             (
-                RequestOperation::CreateManagedCanister(_),
-                ListRequestsOperationTypeDTO::CreateManagedCanister,
+                RequestOperation::CreateExternalCanister(_),
+                ListRequestsOperationTypeDTO::CreateExternalCanister,
             ) => true,
+            (
+                RequestOperation::CallExternalCanister(operation),
+                ListRequestsOperationTypeDTO::CallExternalCanister(target),
+            ) => {
+                if let Some(canister_id) = target {
+                    operation.input.execution_method.canister_id == *canister_id
+                } else {
+                    true
+                }
+            }
             (RequestOperation::EditPermission(_), ListRequestsOperationTypeDTO::EditPermission) => {
                 true
             }
@@ -242,11 +259,14 @@ impl From<station_api::ListRequestsOperationTypeDTO> for RequestOperationFilterT
             station_api::ListRequestsOperationTypeDTO::ChangeCanister => {
                 RequestOperationFilterType::ChangeCanister
             }
-            station_api::ListRequestsOperationTypeDTO::ChangeManagedCanister(target) => {
-                RequestOperationFilterType::ChangeManagedCanister(target)
+            station_api::ListRequestsOperationTypeDTO::ChangeExternalCanister(target) => {
+                RequestOperationFilterType::ChangeExternalCanister(target)
             }
-            station_api::ListRequestsOperationTypeDTO::CreateManagedCanister => {
-                RequestOperationFilterType::CreateManagedCanister
+            station_api::ListRequestsOperationTypeDTO::CreateExternalCanister => {
+                RequestOperationFilterType::CreateExternalCanister
+            }
+            station_api::ListRequestsOperationTypeDTO::CallExternalCanister(target) => {
+                RequestOperationFilterType::CallExternalCanister(target)
             }
             station_api::ListRequestsOperationTypeDTO::EditPermission => {
                 RequestOperationFilterType::EditPermission

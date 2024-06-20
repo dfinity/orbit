@@ -7,7 +7,7 @@ use orbit_essentials::storable;
 pub struct ArtifactIndex {
     /// An indexed value of the artifact.
     pub index: ArtifactIndexKind,
-    /// The user id, which is a UUID.
+    /// The artifact id, which is a UUID.
     pub artifact_id: ArtifactId,
 }
 
@@ -37,6 +37,11 @@ impl Artifact {
             index: ArtifactIndexKind::Size(self.artifact().len() as u64),
             artifact_id: *self.id(),
         }
+    }
+
+    /// Converts the artifact to a list of indexes for searching.
+    pub fn indexes(&self) -> Vec<ArtifactIndex> {
+        vec![self.to_index_by_hash(), self.to_index_by_size()]
     }
 }
 

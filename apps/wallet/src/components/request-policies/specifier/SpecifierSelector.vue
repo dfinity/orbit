@@ -87,8 +87,9 @@ const componentsMap: {
   EditPermission: UnsupportedSpecifier,
   EditRequestPolicy: UnsupportedSpecifier,
   RemoveRequestPolicy: UnsupportedSpecifier,
-  ChangeManagedCanister: UnsupportedSpecifier,
-  CreateManagedCanister: UnsupportedSpecifier,
+  ChangeExternalCanister: UnsupportedSpecifier,
+  CreateExternalCanister: UnsupportedSpecifier,
+  CallExternalCanister: UnsupportedSpecifier,
 };
 
 function isKeyOfRequestSpecifier(key: string): key is keyof RequestSpecifier {
@@ -227,11 +228,16 @@ watch(
       case RequestSpecifierEnum.ManageSystemInfo:
         model.value = { [specifier.value]: null };
         break;
-      case RequestSpecifierEnum.ChangeManagedCanister:
+      case RequestSpecifierEnum.ChangeExternalCanister:
         model.value = { [specifier.value]: { Any: null } };
         break;
-      case RequestSpecifierEnum.CreateManagedCanister:
+      case RequestSpecifierEnum.CreateExternalCanister:
         model.value = { [specifier.value]: { Any: null } };
+        break;
+      case RequestSpecifierEnum.CallExternalCanister:
+        model.value = {
+          [specifier.value]: { validation_method: { No: null }, execution_method: { Any: null } },
+        };
         break;
       default:
         unreachable(specifier.value);

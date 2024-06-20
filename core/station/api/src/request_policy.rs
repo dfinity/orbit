@@ -1,10 +1,11 @@
 use crate::{
-    resource::ResourceDTO, ChangeManagedCanisterResourceTargetDTO,
-    CreateManagedCanisterResourceTargetDTO, MetadataDTO, PaginationInput, ResourceIdsDTO, UuidDTO,
+    resource::ResourceDTO, CallExternalCanisterResourceTargetDTO,
+    ChangeExternalCanisterResourceTargetDTO, CreateExternalCanisterResourceTargetDTO, MetadataDTO,
+    PaginationInput, ResourceIdsDTO, UuidDTO,
 };
 use candid::{CandidType, Deserialize};
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum RequestSpecifierDTO {
     AddAccount,
     AddUser,
@@ -16,8 +17,9 @@ pub enum RequestSpecifierDTO {
     Transfer(ResourceIdsDTO),
     ChangeCanister,
     SetDisasterRecovery,
-    ChangeManagedCanister(ChangeManagedCanisterResourceTargetDTO),
-    CreateManagedCanister(CreateManagedCanisterResourceTargetDTO),
+    ChangeExternalCanister(ChangeExternalCanisterResourceTargetDTO),
+    CreateExternalCanister(CreateExternalCanisterResourceTargetDTO),
+    CallExternalCanister(CallExternalCanisterResourceTargetDTO),
     EditPermission(ResourceSpecifierDTO),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIdsDTO),
@@ -28,45 +30,45 @@ pub enum RequestSpecifierDTO {
     ManageSystemInfo,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum UserSpecifierDTO {
     Any,
     Group(Vec<UuidDTO>),
     Id(Vec<UuidDTO>),
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ResourceSpecifierDTO {
     Any,
     Resource(ResourceDTO),
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct QuorumPercentageDTO {
     pub approvers: UserSpecifierDTO,
     pub min_approved: u16,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct QuorumDTO {
     pub approvers: UserSpecifierDTO,
     pub min_approved: u16,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum RequestPolicyRuleInput {
     Remove,
     Set(RequestPolicyRuleDTO),
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum EvaluationStatusDTO {
     Approved,
     Rejected,
     Pending,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum RequestPolicyRuleDTO {
     AutoApproved,
     QuorumPercentage(QuorumPercentageDTO),
@@ -78,7 +80,7 @@ pub enum RequestPolicyRuleDTO {
     Not(Box<RequestPolicyRuleDTO>),
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum EvaluatedRequestPolicyRuleDTO {
     AutoApproved,
     QuorumPercentage {
@@ -100,13 +102,13 @@ pub enum EvaluatedRequestPolicyRuleDTO {
     Not(Box<RequestPolicyRuleResultDTO>),
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestPolicyRuleResultDTO {
     pub status: EvaluationStatusDTO,
     pub evaluated_rule: EvaluatedRequestPolicyRuleDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub enum EvaluationSummaryReasonDTO {
     ApprovalQuorum,
     AllowList,
@@ -114,7 +116,7 @@ pub enum EvaluationSummaryReasonDTO {
     AutoApproved,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestEvaluationResultDTO {
     pub request_id: UuidDTO,
     pub status: EvaluationStatusDTO,
@@ -122,26 +124,26 @@ pub struct RequestEvaluationResultDTO {
     pub result_reasons: Option<Vec<EvaluationSummaryReasonDTO>>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestPolicyCallerPrivilegesDTO {
     pub id: UuidDTO,
     pub can_edit: bool,
     pub can_delete: bool,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestPolicyDTO {
     pub id: UuidDTO,
     pub specifier: RequestSpecifierDTO,
     pub rule: RequestPolicyRuleDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetRequestPolicyInput {
     pub id: UuidDTO,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetRequestPolicyResponse {
     pub policy: RequestPolicyDTO,
     pub privileges: RequestPolicyCallerPrivilegesDTO,
@@ -149,7 +151,7 @@ pub struct GetRequestPolicyResponse {
 
 pub type ListRequestPoliciesInput = PaginationInput;
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ListRequestPoliciesResponse {
     pub policies: Vec<RequestPolicyDTO>,
     pub next_offset: Option<u64>,

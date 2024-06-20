@@ -16,6 +16,10 @@ pub use canister::*;
 mod station;
 pub use station::*;
 
+/// Registry entrypoints.
+mod registry;
+pub use registry::*;
+
 /// HTTP entrypoints.
 mod http;
 pub use http::*;

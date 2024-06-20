@@ -16,7 +16,8 @@ use crate::core::validation::{
     EnsureAccount, EnsureAddressBookEntry, EnsureIdExists, EnsureRequestPolicy, EnsureUser,
     EnsureUserGroup,
 };
-use crate::errors::{EvaluateError, RecordValidationError, RequestError};
+use crate::errors::{EvaluateError, RequestError, ValidationError};
+use crate::models::resource::{ExecutionMethodResourceTarget, ValidationMethodResourceTarget};
 use crate::repositories::USER_REPOSITORY;
 use candid::{CandidType, Deserialize};
 use orbit_essentials::repository::Repository;
@@ -125,11 +126,12 @@ fn validate_requested_by(requested_by: &UserId) -> ModelValidatorResult<RequestE
 
 fn validate_request_operation_foreign_keys(
     operation: &RequestOperation,
-) -> ModelValidatorResult<RecordValidationError> {
+) -> ModelValidatorResult<ValidationError> {
     match operation {
-        RequestOperation::ManageSystemInfo(_) => Ok(()),
-
-        RequestOperation::Transfer(op) => EnsureAccount::id_exists(&op.input.from_account_id),
+        RequestOperation::ManageSystemInfo(_) => (),
+        RequestOperation::Transfer(op) => {
+            EnsureAccount::id_exists(&op.input.from_account_id)?;
+        }
         RequestOperation::AddAccount(op) => {
             op.input.read_permission.validate()?;
             op.input.configs_permission.validate()?;
@@ -142,8 +144,6 @@ fn validate_request_operation_foreign_keys(
             if let Some(policy_rule) = &op.input.configs_request_policy {
                 policy_rule.validate()?;
             }
-
-            Ok(())
         }
         RequestOperation::EditAccount(op) => {
             EnsureAccount::id_exists(&op.input.account_id)?;
@@ -169,25 +169,23 @@ fn validate_request_operation_foreign_keys(
             {
                 policy_rule.validate()?;
             }
-
-            Ok(())
         }
-        RequestOperation::AddAddressBookEntry(_) => Ok(()),
+        RequestOperation::AddAddressBookEntry(_) => (),
         RequestOperation::EditAddressBookEntry(op) => {
-            EnsureAddressBookEntry::id_exists(&op.input.address_book_entry_id)
+            EnsureAddressBookEntry::id_exists(&op.input.address_book_entry_id)?;
         }
         RequestOperation::RemoveAddressBookEntry(op) => {
-            EnsureAddressBookEntry::id_exists(&op.input.address_book_entry_id)
+            EnsureAddressBookEntry::id_exists(&op.input.address_book_entry_id)?;
         }
-        RequestOperation::AddUser(op) => EnsureUserGroup::id_list_exists(&op.input.groups),
+        RequestOperation::AddUser(op) => {
+            EnsureUserGroup::id_list_exists(&op.input.groups)?;
+        }
         RequestOperation::EditUser(op) => {
             EnsureUser::id_exists(&op.input.user_id)?;
 
             if let Some(group_ids) = &op.input.groups {
                 EnsureUserGroup::id_list_exists(group_ids)?;
             }
-
-            Ok(())
         }
         RequestOperation::EditPermission(op) => {
             op.input.resource.validate()?;
@@ -199,22 +197,28 @@ fn validate_request_operation_foreign_keys(
             if let Some(group_ids) = &op.input.user_groups {
                 EnsureUserGroup::id_list_exists(group_ids)?;
             }
-
-            Ok(())
         }
-        RequestOperation::AddUserGroup(_) => Ok(()),
-        RequestOperation::EditUserGroup(op) => EnsureUserGroup::id_exists(&op.input.user_group_id),
+        RequestOperation::AddUserGroup(_) => (),
+        RequestOperation::EditUserGroup(op) => {
+            EnsureUserGroup::id_exists(&op.input.user_group_id)?;
+        }
         RequestOperation::RemoveUserGroup(ok) => {
-            EnsureUserGroup::id_exists(&ok.input.user_group_id)
+            EnsureUserGroup::id_exists(&ok.input.user_group_id)?;
         }
-        RequestOperation::ChangeCanister(_) => Ok(()),
-        RequestOperation::ChangeManagedCanister(_) => Ok(()),
-        RequestOperation::CreateManagedCanister(_) => Ok(()),
+        RequestOperation::ChangeCanister(_) => (),
+        RequestOperation::ChangeExternalCanister(_) => (),
+        RequestOperation::CreateExternalCanister(_) => (),
+        RequestOperation::CallExternalCanister(op) => {
+            let validation_method_target: ValidationMethodResourceTarget =
+                op.input.validation_method.clone().into();
+            validation_method_target.validate()?;
+            let execution_method_target: ExecutionMethodResourceTarget =
+                op.input.execution_method.clone().into();
+            execution_method_target.validate()?;
+        }
         RequestOperation::AddRequestPolicy(op) => {
             op.input.specifier.validate()?;
             op.input.rule.validate()?;
-
-            Ok(())
         }
         RequestOperation::EditRequestPolicy(op) => {
             EnsureRequestPolicy::id_exists(&op.input.policy_id)?;
@@ -226,20 +230,17 @@ fn validate_request_operation_foreign_keys(
             if let Some(policy_rule) = &op.input.rule {
                 policy_rule.validate()?;
             }
-
-            Ok(())
         }
         RequestOperation::RemoveRequestPolicy(op) => {
-            EnsureRequestPolicy::id_exists(&op.input.policy_id)
+            EnsureRequestPolicy::id_exists(&op.input.policy_id)?;
         }
         RequestOperation::SetDisasterRecovery(op) => {
             if let Some(committee) = &op.input.committee {
-                EnsureUserGroup::id_exists(&committee.user_group_id)
-            } else {
-                Ok(())
+                EnsureUserGroup::id_exists(&committee.user_group_id)?;
             }
         }
     }
+    Ok(())
 }
 
 impl ModelValidator<RequestError> for Request {
@@ -248,14 +249,7 @@ impl ModelValidator<RequestError> for Request {
         validate_summary(&self.summary)?;
         validate_requested_by(&self.requested_by)?;
 
-        validate_request_operation_foreign_keys(&self.operation).map_err(|err| match err {
-            RecordValidationError::NotFound { model_name, id } => RequestError::ValidationError {
-                info: format!(
-                    "Invalid request operation: {} {} does not exist",
-                    model_name, id
-                ),
-            },
-        })?;
+        validate_request_operation_foreign_keys(&self.operation)?;
 
         Ok(())
     }

@@ -1,7 +1,7 @@
 use super::TimestampRfc3339;
 use candid::{CandidType, Deserialize, Principal};
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct SystemInfoDTO {
     pub name: String,
     pub version: String,
@@ -11,28 +11,28 @@ pub struct SystemInfoDTO {
     pub raw_rand_successful: bool,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ManageSystemInfoOperationDTO {
     pub input: ManageSystemInfoOperationInput,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ManageSystemInfoOperationInput {
     pub name: Option<String>,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct SystemInfoResponse {
     pub system: SystemInfoDTO,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct AdminInitInput {
     pub name: String,
     pub identity: Principal,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct SystemInit {
     /// The station name.
     pub name: String,
@@ -45,18 +45,18 @@ pub struct SystemInit {
     pub upgrader_wasm_module: Vec<u8>,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct SystemUpgrade {
     pub name: Option<String>,
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub enum SystemInstall {
     Init(SystemInit),
     Upgrade(SystemUpgrade),
 }
 
-#[derive(CandidType, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum HealthStatus {
     Healthy,
     Uninitialized,

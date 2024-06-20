@@ -72,22 +72,34 @@ impl Request {
                 operation_type: RequestOperationFilterType::SetDisasterRecovery,
                 request_id: self.id,
             }],
-            RequestOperation::ChangeManagedCanister(operation) => vec![
+            RequestOperation::ChangeExternalCanister(operation) => vec![
                 RequestOperationTypeIndex {
-                    operation_type: RequestOperationFilterType::ChangeManagedCanister(None),
+                    operation_type: RequestOperationFilterType::ChangeExternalCanister(None),
                     request_id: self.id,
                 },
                 RequestOperationTypeIndex {
-                    operation_type: RequestOperationFilterType::ChangeManagedCanister(Some(
+                    operation_type: RequestOperationFilterType::ChangeExternalCanister(Some(
                         operation.input.canister_id,
                     )),
                     request_id: self.id,
                 },
             ],
-            RequestOperation::CreateManagedCanister(_) => vec![RequestOperationTypeIndex {
-                operation_type: RequestOperationFilterType::CreateManagedCanister,
+            RequestOperation::CreateExternalCanister(_) => vec![RequestOperationTypeIndex {
+                operation_type: RequestOperationFilterType::CreateExternalCanister,
                 request_id: self.id,
             }],
+            RequestOperation::CallExternalCanister(operation) => vec![
+                RequestOperationTypeIndex {
+                    operation_type: RequestOperationFilterType::CallExternalCanister(None),
+                    request_id: self.id,
+                },
+                RequestOperationTypeIndex {
+                    operation_type: RequestOperationFilterType::CallExternalCanister(Some(
+                        operation.input.execution_method.canister_id,
+                    )),
+                    request_id: self.id,
+                },
+            ],
             RequestOperation::EditPermission(_) => vec![RequestOperationTypeIndex {
                 operation_type: RequestOperationFilterType::EditPermission,
                 request_id: self.id,

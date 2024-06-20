@@ -14,6 +14,9 @@ pub const USER_IDENTITY_INDEX_MEMORY_ID: MemoryId = MemoryId::new(2);
 pub const USER_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(3);
 pub const ARTIFACT_MEMORY_ID: MemoryId = MemoryId::new(4);
 pub const ARTIFACT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(5);
+pub const REGISTRY_MEMORY_ID: MemoryId = MemoryId::new(6);
+pub const REGISTRY_INDEX_MEMORY_ID: MemoryId = MemoryId::new(7);
+pub const REGISTRY_SORT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(8);
 
 thread_local! {
   /// Static configuration of the canister.

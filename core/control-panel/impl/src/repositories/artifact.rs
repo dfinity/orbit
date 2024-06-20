@@ -46,10 +46,10 @@ impl Repository<ArtifactId, Artifact> for ArtifactRepository {
 
             self.indexes
                 .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev.clone().map_or(Vec::new(), |prev: Artifact| {
-                        vec![prev.to_index_by_hash(), prev.to_index_by_size()]
-                    }),
-                    current: vec![value.to_index_by_hash(), value.to_index_by_size()],
+                    previous: prev
+                        .clone()
+                        .map_or(Vec::new(), |prev: Artifact| prev.indexes()),
+                    current: value.indexes(),
                 });
 
             prev
@@ -62,9 +62,7 @@ impl Repository<ArtifactId, Artifact> for ArtifactRepository {
 
             self.indexes
                 .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev.clone().map_or(Vec::new(), |prev| {
-                        vec![prev.to_index_by_hash(), prev.to_index_by_size()]
-                    }),
+                    current: prev.clone().map_or(Vec::new(), |prev| prev.indexes()),
                 });
 
             prev

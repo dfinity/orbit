@@ -4,7 +4,8 @@ use std::sync::Arc;
 use std::cell::RefCell;
 
 use crate::{
-    errors::RecordValidationError,
+    errors::{ExternalCanisterValidationError, RecordValidationError},
+    factories::blockchains::InternetComputer,
     models::{
         resource::{Resource, ResourceId, ResourceIds},
         AccountKey, AddressBookEntryKey, RequestKey, UserKey,
@@ -14,7 +15,13 @@ use crate::{
         ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, REQUEST_REPOSITORY, USER_GROUP_REPOSITORY,
         USER_REPOSITORY,
     },
+    services::SYSTEM_SERVICE,
 };
+use candid::Principal;
+#[cfg(not(test))]
+pub use orbit_essentials::cdk as ic_cdk;
+#[cfg(test)]
+pub use orbit_essentials::cdk::mocks as ic_cdk;
 use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use uuid::Uuid;
@@ -175,5 +182,24 @@ impl EnsureIdExists<Resource> for EnsurePermission {
                 id: key.to_string(),
             },
         )
+    }
+}
+
+pub struct EnsureExternalCanister {}
+
+impl EnsureExternalCanister {
+    // The management canister, the orbit station, and the upgrader are NOT external canisters.
+    pub fn is_external_canister(
+        principal: Principal,
+    ) -> Result<(), ExternalCanisterValidationError> {
+        if principal == Principal::management_canister()
+            || principal == ic_cdk::api::id()
+            || principal == InternetComputer::ledger_canister_id()
+            || principal == SYSTEM_SERVICE.get_upgrader_canister_id()
+        {
+            return Err(ExternalCanisterValidationError::InvalidExternalCanister { principal });
+        }
+
+        Ok(())
     }
 }

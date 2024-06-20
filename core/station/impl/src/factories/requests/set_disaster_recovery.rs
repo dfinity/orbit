@@ -11,8 +11,10 @@ use std::sync::Arc;
 
 pub struct SetDisasterRecoveryRequestCreate;
 
+#[async_trait]
 impl Create<SetDisasterRecoveryOperationInput> for SetDisasterRecoveryRequestCreate {
-    fn create(
+    async fn create(
+        &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,

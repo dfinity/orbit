@@ -2,6 +2,10 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export interface AddRegistryEntryInput { 'entry' : RegistryEntryInput }
+export interface AddRegistryEntryResponse { 'entry' : RegistryEntry }
+export type AddRegistryEntryResult = { 'Ok' : AddRegistryEntryResponse } |
+  { 'Err' : ApiError };
 export interface ApiError {
   'code' : string,
   'message' : [] | [string],
@@ -21,6 +25,10 @@ export type CanDeployStationResponse = {
   { 'QuotaExceeded' : null };
 export type CanDeployStationResult = { 'Ok' : CanDeployStationResponse } |
   { 'Err' : ApiError };
+export interface DeleteRegistryEntryInput { 'id' : UUID }
+export interface DeleteRegistryEntryResponse { 'entry' : RegistryEntry }
+export type DeleteRegistryEntryResult = { 'Ok' : DeleteRegistryEntryResponse } |
+  { 'Err' : ApiError };
 export interface DeployStationAdminUserInput {
   'username' : string,
   'identity' : Principal,
@@ -32,9 +40,20 @@ export interface DeployStationInput {
 }
 export type DeployStationResult = { 'Ok' : { 'canister_id' : StationID } } |
   { 'Err' : ApiError };
+export interface EditRegistryEntryInput {
+  'id' : UUID,
+  'entry' : RegistryEntryUpdateInput,
+}
+export interface EditRegistryEntryResponse { 'entry' : RegistryEntry }
+export type EditRegistryEntryResult = { 'Ok' : EditRegistryEntryResponse } |
+  { 'Err' : ApiError };
 export interface GetArtifactInput { 'artifact_id' : UUID }
 export interface GetArtifactResponse { 'artifact' : Artifact }
 export type GetArtifactResult = { 'Ok' : GetArtifactResponse } |
+  { 'Err' : ApiError };
+export interface GetRegistryEntryInput { 'id' : UUID }
+export interface GetRegistryEntryResponse { 'entry' : RegistryEntry }
+export type GetRegistryEntryResult = { 'Ok' : GetRegistryEntryResponse } |
   { 'Err' : ApiError };
 export type GetUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
@@ -67,14 +86,82 @@ export type ManageUserStationsInput = { 'Add' : Array<UserStation> } |
   { 'Update' : Array<{ 'station' : UserStation, 'index' : [] | [bigint] }> };
 export type ManageUserStationsResult = { 'Ok' : null } |
   { 'Err' : ApiError };
+export interface Metadata { 'key' : string, 'value' : string }
+export interface NextWasmModuleVersionInput {
+  'name' : string,
+  'current_version' : string,
+}
+export interface NextWasmModuleVersionResponse {
+  'entry' : [] | [RegistryEntry],
+}
+export type NextWasmModuleVersionResult = {
+    'Ok' : NextWasmModuleVersionResponse
+  } |
+  { 'Err' : ApiError };
+export interface PaginationInput {
+  'offset' : [] | [bigint],
+  'limit' : [] | [number],
+}
 export interface RegisterUserInput { 'station' : [] | [UserStation] }
 export type RegisterUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
+export interface RegistryEntry {
+  'id' : UUID,
+  'categories' : Array<string>,
+  'updated_at' : [] | [TimestampRFC3339],
+  'value' : RegistryEntryValue,
+  'metadata' : Array<Metadata>,
+  'name' : string,
+  'tags' : Array<string>,
+  'description' : string,
+  'created_at' : TimestampRFC3339,
+}
+export interface RegistryEntryInput {
+  'categories' : Array<string>,
+  'value' : RegistryEntryValueInput,
+  'metadata' : Array<Metadata>,
+  'name' : string,
+  'tags' : Array<string>,
+  'description' : string,
+}
+export type RegistryEntrySortBy = { 'Version' : SortDirection } |
+  { 'CreatedAt' : SortDirection };
+export interface RegistryEntryUpdateInput {
+  'categories' : [] | [Array<string>],
+  'value' : [] | [RegistryEntryValueInput],
+  'metadata' : [] | [Array<Metadata>],
+  'tags' : [] | [Array<string>],
+  'description' : [] | [string],
+}
+export type RegistryEntryValue = {
+    'WasmModule' : WasmModuleRegistryEntryValue
+  };
+export type RegistryEntryValueInput = {
+    'WasmModule' : WasmModuleRegistryEntryValueInput
+  };
+export type RegistryEntryValueKind = { 'WasmModule' : null };
 export type RemoveUserResult = { 'Ok' : { 'user' : User } } |
+  { 'Err' : ApiError };
+export type SearchRegistryFilterKind = { 'Kind' : RegistryEntryValueKind } |
+  { 'Name' : string } |
+  { 'Namespace' : string };
+export interface SearchRegistryInput {
+  'sort_by' : [] | [RegistryEntrySortBy],
+  'pagination' : [] | [PaginationInput],
+  'filter_by' : Array<SearchRegistryFilterKind>,
+}
+export interface SearchRegistryResponse {
+  'total' : bigint,
+  'entries' : Array<RegistryEntry>,
+  'next_offset' : [] | [bigint],
+}
+export type SearchRegistryResult = { 'Ok' : SearchRegistryResponse } |
   { 'Err' : ApiError };
 export type SetUserActiveResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export type Sha256Hex = string;
+export type SortDirection = { 'Asc' : null } |
+  { 'Desc' : null };
 export type StationID = Principal;
 export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
@@ -112,11 +199,41 @@ export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
   { 'Approved' : null } |
   { 'Denylisted' : null } |
   { 'Pending' : null };
+export interface WasmModuleRegistryEntryDependency {
+  'name' : string,
+  'version' : string,
+}
+export interface WasmModuleRegistryEntryValue {
+  'version' : string,
+  'dependencies' : Array<WasmModuleRegistryEntryDependency>,
+  'wasm_artifact_id' : UUID,
+}
+export interface WasmModuleRegistryEntryValueInput {
+  'wasm_module' : Uint8Array | number[],
+  'version' : string,
+  'dependencies' : Array<WasmModuleRegistryEntryDependency>,
+}
 export interface _SERVICE {
+  'add_registry_entry' : ActorMethod<
+    [AddRegistryEntryInput],
+    AddRegistryEntryResult
+  >,
   'can_deploy_station' : ActorMethod<[], CanDeployStationResult>,
+  'delete_registry_entry' : ActorMethod<
+    [DeleteRegistryEntryInput],
+    DeleteRegistryEntryResult
+  >,
   'delete_user' : ActorMethod<[], RemoveUserResult>,
   'deploy_station' : ActorMethod<[DeployStationInput], DeployStationResult>,
+  'edit_registry_entry' : ActorMethod<
+    [EditRegistryEntryInput],
+    EditRegistryEntryResult
+  >,
   'get_artifact' : ActorMethod<[GetArtifactInput], GetArtifactResult>,
+  'get_registry_entry' : ActorMethod<
+    [GetRegistryEntryInput],
+    GetRegistryEntryResult
+  >,
   'get_user' : ActorMethod<[], GetUserResult>,
   'get_waiting_list' : ActorMethod<[], GetWaitingListResult>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
@@ -128,7 +245,12 @@ export interface _SERVICE {
     [ManageUserStationsInput],
     ManageUserStationsResult
   >,
+  'next_wasm_module_version' : ActorMethod<
+    [NextWasmModuleVersionInput],
+    NextWasmModuleVersionResult
+  >,
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
+  'search_registry' : ActorMethod<[SearchRegistryInput], SearchRegistryResult>,
   'set_user_active' : ActorMethod<[], SetUserActiveResult>,
   'subscribe_to_waiting_list' : ActorMethod<
     [string],

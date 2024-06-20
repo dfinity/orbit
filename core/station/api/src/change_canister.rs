@@ -2,7 +2,7 @@ use candid::{CandidType, Deserialize, Principal};
 
 use crate::Sha256HashDTO;
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum CanisterInstallMode {
     #[serde(rename = "install")]
     Install = 1,
@@ -12,13 +12,13 @@ pub enum CanisterInstallMode {
     Upgrade = 3,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ChangeCanisterTargetDTO {
     UpgradeStation,
     UpgradeUpgrader,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ChangeCanisterOperationInput {
     pub target: ChangeCanisterTargetDTO,
     #[serde(with = "serde_bytes")]
@@ -27,15 +27,15 @@ pub struct ChangeCanisterOperationInput {
     pub arg: Option<Vec<u8>>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ChangeCanisterOperationDTO {
     pub target: ChangeCanisterTargetDTO,
     pub module_checksum: Sha256HashDTO,
     pub arg_checksum: Option<Sha256HashDTO>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ChangeManagedCanisterOperationInput {
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ChangeExternalCanisterOperationInput {
     pub canister_id: Principal,
     pub mode: CanisterInstallMode,
     #[serde(with = "serde_bytes")]
@@ -44,8 +44,8 @@ pub struct ChangeManagedCanisterOperationInput {
     pub arg: Option<Vec<u8>>,
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct ChangeManagedCanisterOperationDTO {
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ChangeExternalCanisterOperationDTO {
     pub canister_id: Principal,
     pub mode: CanisterInstallMode,
     pub module_checksum: Sha256HashDTO,

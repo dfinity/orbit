@@ -1,0 +1,35 @@
+use crate::Sha256HashDTO;
+use candid::{CandidType, Deserialize, Principal};
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CreateExternalCanisterOperationInput {}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CreateExternalCanisterOperationDTO {
+    pub canister_id: Option<Principal>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CanisterMethodDTO {
+    pub canister_id: Principal,
+    pub method_name: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CallExternalCanisterOperationInput {
+    pub validation_method: Option<CanisterMethodDTO>,
+    pub execution_method: CanisterMethodDTO,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
+    pub arg: Option<Vec<u8>>,
+    pub execution_method_cycles: Option<u64>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CallExternalCanisterOperationDTO {
+    pub validation_method: Option<CanisterMethodDTO>,
+    pub execution_method: CanisterMethodDTO,
+    pub arg_checksum: Option<Sha256HashDTO>,
+    pub arg_rendering: Option<String>,
+    pub execution_method_cycles: Option<u64>,
+    pub execution_method_reply: Option<Vec<u8>>,
+}

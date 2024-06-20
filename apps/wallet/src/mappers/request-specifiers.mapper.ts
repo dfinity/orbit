@@ -71,12 +71,16 @@ export const mapRequestSpecifierToEnum = (specifier: RequestSpecifier): RequestS
     return RequestSpecifierEnum.ManageSystemInfo;
   }
 
-  if (variantIs(specifier, 'ChangeManagedCanister')) {
-    return RequestSpecifierEnum.ChangeManagedCanister;
+  if (variantIs(specifier, 'ChangeExternalCanister')) {
+    return RequestSpecifierEnum.ChangeExternalCanister;
   }
 
-  if (variantIs(specifier, 'CreateManagedCanister')) {
-    return RequestSpecifierEnum.CreateManagedCanister;
+  if (variantIs(specifier, 'CreateExternalCanister')) {
+    return RequestSpecifierEnum.CreateExternalCanister;
+  }
+
+  if (variantIs(specifier, 'CallExternalCanister')) {
+    return RequestSpecifierEnum.CallExternalCanister;
   }
 
   return unreachable(specifier);

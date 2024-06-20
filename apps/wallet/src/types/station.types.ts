@@ -102,8 +102,9 @@ export enum RequestSpecifierEnum {
   RemoveUserGroup = 'RemoveUserGroup',
   AddAccount = 'AddAccount',
   ManageSystemInfo = 'ManageSystemInfo',
-  ChangeManagedCanister = 'ChangeManagedCanister',
-  CreateManagedCanister = 'CreateManagedCanister',
+  ChangeExternalCanister = 'ChangeExternalCanister',
+  CreateExternalCanister = 'CreateExternalCanister',
+  CallExternalCanister = 'CallExternalCanister',
 }
 
 export enum RequestPolicyRuleEnum {
@@ -159,6 +160,7 @@ export enum RequestOperationEnum {
   ChangeCanister = 'ChangeCanister',
   Transfer = 'Transfer',
   ManageSystemInfo = 'ManageSystemInfo',
-  ChangeManagedCanister = 'ChangeManagedCanister',
-  CreateManagedCanister = 'CreateManagedCanister',
+  ChangeExternalCanister = 'ChangeExternalCanister',
+  CreateExternalCanister = 'CreateExternalCanister',
+  CallExternalCanister = 'CallExternalCanister',
 }

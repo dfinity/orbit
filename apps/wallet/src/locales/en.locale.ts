@@ -184,7 +184,7 @@ export default {
       address_book_entry: 'Address Book',
       change_canister: 'Upgrades',
       transfer: 'Transfers',
-      managed_canister: 'Managed Canisters',
+      external_canister: 'External Canisters',
       system_info: 'System Info',
     },
     types: {
@@ -761,7 +761,7 @@ export default {
       removeusergroup: 'Remove user group',
       addaccount: 'Add account',
       managesysteminfo: 'Manage system info',
-      changemanagedcanister: 'Change managed canister',
+      changeexternalcanister: 'Change external canister',
     },
   },
 };
