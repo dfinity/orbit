@@ -1,6 +1,7 @@
 //! A dfx and IC agent for communicating with an Orbit station.
 
 use candid::Principal;
+use ic_agent::agent::UpdateBuilder;
 
 use crate::{
     dfx_extension_api::DfxExtensionAgent,
@@ -31,8 +32,7 @@ impl StationAgent {
     }
 
     /// Makes a canister update call on the network used by the station.
-    pub async fn update(&mut self) {
-        let _agent = self.dfx.agent();
-        todo!()
+    pub async fn update(&mut self, canister_id: &Principal, method_name: &str) -> anyhow::Result<UpdateBuilder> {
+        Ok(self.dfx.agent().await?.update(canister_id, method_name))
     }
 }
