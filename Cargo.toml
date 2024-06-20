@@ -44,6 +44,7 @@ getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
 # The ic-agent matches the one sed by bthe 
 ic-agent = { git = "https://github.com/dfinity/agent-rs.git", rev = "8273d321e9a09fd8373bd4e38b0676ec6ad9c260" }
+ic-asset = { git = "https://github.com/dfinity/sdk.git", rev = "66f2b87e94f2fde67f64ba8e38ee2ea9047a909e" }
 ic-cdk = "0.13.2"
 ic-cdk-macros = "0.9"
 ic-cdk-timers = "0.7.0"

@@ -19,6 +19,7 @@ serde_json.workspace = true
 cap-std.workspace = true
 dfx-core.workspace = true
 ic-agent.workspace = true
+ic-asset.workspace = true
 slog.workspace = true
 slog-term.workspace = true
 slog-async.workspace = true
