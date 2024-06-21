@@ -1,5 +1,7 @@
-use crate::setup::{get_canister_wasm, setup_new_env, setup_new_env_with_config, SetupConfig};
-use crate::utils::{controller_test_id, user_test_id};
+use crate::setup::{
+    get_canister_wasm, setup_new_env, setup_new_env_with_config, SetupConfig, WALLET_ADMIN_USER,
+};
+use crate::utils::{controller_test_id, user_test_id, NNS_ROOT_CANISTER_ID};
 use crate::TestEnv;
 use candid::Principal;
 use control_panel_api::{
@@ -10,7 +12,7 @@ use control_panel_api::{
 use control_panel_api::{ListUserStationsResponse, UploadCanisterModulesInput};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
-use station_api::HealthStatus;
+use station_api::{HealthStatus, SystemInfoResponse};
 
 #[test]
 fn register_user_successful() {
@@ -52,6 +54,74 @@ fn register_user_successful() {
     .unwrap();
     let main_station_dto = res.0.unwrap().stations[0].clone();
     assert_eq!(main_station_dto.canister_id, canister_ids.station);
+}
+
+#[test]
+fn no_station_fallback_controller() {
+    let config = SetupConfig {
+        fallback_controller: None,
+        ..SetupConfig::default()
+    };
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env_with_config(config);
+
+    // we deployed the station without a fallback controller,
+    // i.e., the upgrader canister is the only controller of the station
+    // first get the upgrader canister ID
+    let res: (ApiResult<SystemInfoResponse>,) = update_candid_as(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "system_info",
+        (),
+    )
+    .unwrap();
+    let upgrader_canister_id = res.0.unwrap().system.upgrader_id;
+    // now get the canister status from the management canister on behalf of the upgrader canister
+    // (note that only controllers can invoke the canister status management canister method)
+    let canister_status = env
+        .canister_status(canister_ids.station, Some(upgrader_canister_id))
+        .unwrap();
+    // assert that the set of controllers is equal to {upgrader_canister_id}
+    let station_controllers = canister_status.settings.controllers;
+    assert_eq!(station_controllers, vec![upgrader_canister_id]);
+}
+
+#[test]
+fn station_fallback_controller() {
+    let fallback_controller = WALLET_ADMIN_USER;
+    let config = SetupConfig {
+        fallback_controller: Some(fallback_controller),
+        ..SetupConfig::default()
+    };
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env_with_config(config);
+
+    // we deploy the station with the wallet admin user being a fallback controller,
+    // i.e., the station's controllers are the upgrader canister and the fallback controller,
+    // first get the upgrader canister ID
+    let res: (ApiResult<SystemInfoResponse>,) = update_candid_as(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "system_info",
+        (),
+    )
+    .unwrap();
+    let upgrader_canister_id = res.0.unwrap().system.upgrader_id;
+    // now get the canister status from the management canister on behalf of the upgrader canister
+    // (note that only controllers can invoke the canister status management canister method)
+    let canister_status = env
+        .canister_status(canister_ids.station, Some(upgrader_canister_id))
+        .unwrap();
+    // assert that the set of controllers is equal to {upgrader_canister_id, fallback_controller}
+    let station_controllers = canister_status.settings.controllers;
+    assert_eq!(station_controllers.len(), 2);
+    assert!(station_controllers.contains(&upgrader_canister_id));
+    assert!(station_controllers.contains(&fallback_controller));
+    assert_ne!(upgrader_canister_id, fallback_controller);
 }
 
 #[test]
@@ -214,6 +284,24 @@ fn deploy_user_station() {
     .unwrap();
     let health_status = res.0;
     assert_eq!(health_status, HealthStatus::Healthy);
+
+    // the control panel should set the newly deployed station's controllers
+    // to be the upgrader canister and the NNS root canister;
+    // first get the upgrader canister ID
+    let res: (ApiResult<SystemInfoResponse>,) =
+        update_candid_as(&env, newly_created_user_station, user_id, "system_info", ()).unwrap();
+    let upgrader_canister_id = res.0.unwrap().system.upgrader_id;
+    // now get the canister status from the management canister on behalf of the upgrader canister
+    // (note that only controllers can invoke the canister status management canister method)
+    let canister_status = env
+        .canister_status(newly_created_user_station, Some(upgrader_canister_id))
+        .unwrap();
+    // assert that the set of controllers is equal to {upgrader_canister_id, NNS_ROOT_CANISTER_ID}
+    let station_controllers = canister_status.settings.controllers;
+    assert_eq!(station_controllers.len(), 2);
+    assert!(station_controllers.contains(&upgrader_canister_id));
+    assert!(station_controllers.contains(&NNS_ROOT_CANISTER_ID));
+    assert_ne!(upgrader_canister_id, NNS_ROOT_CANISTER_ID);
 }
 
 #[test]
@@ -332,6 +420,7 @@ fn no_upload_canister_modules() {
         ..
     } = setup_new_env_with_config(SetupConfig {
         upload_canister_modules: false,
+        fallback_controller: None,
     });
 
     let user_id = user_test_id(0);

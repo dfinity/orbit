@@ -135,7 +135,6 @@ impl SystemService {
             mut system_info: SystemInfo,
         ) -> Result<(), String> {
             use crate::core::ic_cdk::api::id as self_canister_id;
-            use crate::core::NNS_ROOT_CANISTER_ID;
 
             // registers the default canister configurations such as policies and user groups.
             print("Adding initial canister configurations");
@@ -143,20 +142,24 @@ impl SystemService {
 
             print("Deploying upgrader canister");
             let canister_id = self_canister_id();
+            let mut upgrader_controllers = vec![canister_id];
+            if let Some(fallback_controller) = init.fallback_controller {
+                upgrader_controllers.push(fallback_controller);
+            }
             let upgrader_canister_id = install_canister_handlers::deploy_upgrader(
                 init.upgrader_wasm_module,
-                vec![canister_id, NNS_ROOT_CANISTER_ID],
+                upgrader_controllers,
             )
             .await?;
             system_info.set_upgrader_canister_id(upgrader_canister_id);
 
             // sets the upgrader as a controller of the station canister
             print("Updating canister settings to set the upgrader as the controller");
-            install_canister_handlers::set_controllers(vec![
-                upgrader_canister_id,
-                NNS_ROOT_CANISTER_ID,
-            ])
-            .await?;
+            let mut station_controllers = vec![upgrader_canister_id];
+            if let Some(fallback_controller) = init.fallback_controller {
+                station_controllers.push(fallback_controller);
+            }
+            install_canister_handlers::set_controllers(station_controllers).await?;
 
             if SYSTEM_SERVICE.is_healthy() {
                 print("canister reports healthy already before its initialization has finished!");
@@ -465,6 +468,7 @@ mod tests {
                     identity: Principal::from_slice(&[1; 29]),
                 }],
                 upgrader_wasm_module: vec![],
+                fallback_controller: None,
             })
             .await;
 

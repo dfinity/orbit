@@ -42,19 +42,3 @@ pub const ACCOUNT_BALANCE_FRESHNESS_IN_MS: u64 = 3000;
 
 /// The initial cycles balance to use when creating the upgrader canister.
 pub const INITIAL_UPGRADER_CYCLES: u128 = 250_000_000_000;
-
-/// The NNS Root canister id added to station and upgrader canisters as a recovery method.
-pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::str::FromStr;
-
-    #[test]
-    fn nns_root_canister_id_match_string_representation() {
-        let nns_text_canister_id = Principal::from_str("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
-
-        assert_eq!(NNS_ROOT_CANISTER_ID, nns_text_canister_id);
-    }
-}

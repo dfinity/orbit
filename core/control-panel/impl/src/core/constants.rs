@@ -38,3 +38,19 @@ pub const ONE_WEEK_NS: u64 = 7 * ONE_DAY_NS;
 
 /// The nanoseconds equivalent of 30 days.
 pub const ONE_MONTH_NS: u64 = 30 * ONE_DAY_NS;
+
+/// The NNS Root canister id added to station and upgrader canisters as a recovery method.
+pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::str::FromStr;
+
+    #[test]
+    fn nns_root_canister_id_match_string_representation() {
+        let nns_text_canister_id = Principal::from_str("r7inp-6aaaa-aaaaa-aaabq-cai").unwrap();
+
+        assert_eq!(NNS_ROOT_CANISTER_ID, nns_text_canister_id);
+    }
+}
