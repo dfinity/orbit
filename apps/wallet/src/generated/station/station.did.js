@@ -668,6 +668,7 @@ export const idlFactory = ({ IDL }) => {
     'ChangeExternalCanister' : IDL.Opt(IDL.Principal),
     'AddUser' : IDL.Null,
     'EditUserGroup' : IDL.Null,
+    'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,

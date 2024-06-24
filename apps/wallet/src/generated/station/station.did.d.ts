@@ -502,6 +502,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'ChangeExternalCanister' : [] | [Principal] } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
+  { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
   { 'RemoveAddressBookEntry' : null } |

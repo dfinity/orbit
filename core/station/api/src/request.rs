@@ -152,6 +152,7 @@ pub enum ListRequestsOperationTypeDTO {
     EditRequestPolicy,
     RemoveRequestPolicy,
     ManageSystemInfo,
+    SetDisasterRecovery,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

@@ -972,6 +972,8 @@ type ListRequestsOperationType = variant {
   RemoveRequestPolicy;
   // An operation for managing system info.
   ManageSystemInfo;
+  // An operation for setting disaster recovery config.
+  SetDisasterRecovery;
 };
 
 // The direction to use for sorting.

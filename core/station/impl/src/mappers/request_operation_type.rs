@@ -283,6 +283,9 @@ impl From<station_api::ListRequestsOperationTypeDTO> for RequestOperationFilterT
             station_api::ListRequestsOperationTypeDTO::ManageSystemInfo => {
                 RequestOperationFilterType::ManageSystemInfo
             }
+            station_api::ListRequestsOperationTypeDTO::SetDisasterRecovery => {
+                RequestOperationFilterType::SetDisasterRecovery
+            }
         }
     }
 }
