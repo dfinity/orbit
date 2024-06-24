@@ -516,7 +516,6 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'CallExternalCanister' : [] | [Principal] } |
-  { 'SetDisasterRecovery' : null } |
   { 'AddAccount' : null };
 export type ListRequestsResult = {
     'Ok' : {
