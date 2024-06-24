@@ -8,6 +8,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
+    'fallback_controller' : IDL.Opt(IDL.Principal),
     'admins' : IDL.Vec(AdminInitInput),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
   });
@@ -1171,6 +1172,7 @@ export const init = ({ IDL }) => {
   });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
+    'fallback_controller' : IDL.Opt(IDL.Principal),
     'admins' : IDL.Vec(AdminInitInput),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
   });

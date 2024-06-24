@@ -1,3 +1,30 @@
+## 0.0.2-alpha.3 (2024-06-24)
+
+
+### 🚀 Features
+
+- **control-panel:** add registry schema to the control-panel
+
+- **control-panel:** add artifact api
+
+- **control-panel:** add registry api interface and repository
+
+- **station:** add CallExternalCanister request type
+
+- **control-panel:** add registry api implementation
+
+- **control-panel:** add find next module version
+
+- **station:** optional fallback controller
+
+
+### ❤️  Thank You
+
+- Jan Wendling
+- Kepler Vital
+- Max
+- mraszyk
+
 ## 0.0.2-alpha.2 (2024-05-17)
 
 

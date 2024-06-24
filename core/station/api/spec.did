@@ -1998,6 +1998,8 @@ type SystemInit = record {
   quorum : nat16;
   // The wasm module of the station upgrader canister.
   upgrader_wasm_module : blob;
+  // An optional additional controller of the station and upgrader canisters.
+  fallback_controller : opt principal;
 };
 
 // The upgrade configuration for the canister.

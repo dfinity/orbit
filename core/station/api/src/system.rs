@@ -43,6 +43,7 @@ pub struct SystemInit {
     /// The upgrader canister wasm module.
     #[serde(with = "serde_bytes")]
     pub upgrader_wasm_module: Vec<u8>,
+    pub fallback_controller: Option<Principal>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]

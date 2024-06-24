@@ -59,7 +59,7 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.3"
     },
     "canfund": {
       "currentVersion": "0.0.2-alpha.2",
@@ -82,7 +82,7 @@
     "control-panel": {
       "currentVersion": "0.0.2-alpha.2",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.3"
     },
     "control-panel-api": {
       "currentVersion": "0.0.2-alpha.2",
@@ -100,7 +100,7 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.3"
     },
     "upgrader": {
       "currentVersion": "0.0.2-alpha.2",
@@ -108,9 +108,9 @@
       "newVersion": null
     },
     "station": {
-      "currentVersion": "0.0.2-alpha.2",
+      "currentVersion": "0.0.2-alpha.3",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.3"
+      "newVersion": "0.0.2-alpha.4"
     },
     "upgrader-api": {
       "currentVersion": "0.0.2-alpha.2",
@@ -134,7 +134,7 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.3"
     },
     "station-api": {
       "currentVersion": "0.0.2-alpha.2",
@@ -158,30 +158,70 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.3"
     },
     "wallet-dapp": {
-      "currentVersion": "0.0.2-alpha.3",
+      "currentVersion": "0.0.2-alpha.4",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.4"
+      "newVersion": "0.0.2-alpha.5"
     }
   },
   "changes": {
-    "station": {
+    "orbit-essentials": {
       "releaseVersion": {
         "rawVersion": "0.0.2-alpha.3",
-        "gitTag": "@orbit/station-v0.0.2-alpha.3",
+        "gitTag": "@orbit/orbit-essentials-v0.0.2-alpha.3",
         "isPrerelease": true
       },
-      "contents": "## 0.0.2-alpha.3 (2024-05-29)\n\n\n### 🩹 Fixes\n\n- canbench station build\n\n\n### ❤️  Thank You\n\n- Jan Wendling\n- Kepler Vital\n- mraszyk"
+      "contents": "## 0.0.2-alpha.3 (2024-06-24)\n\n\n### 🚀 Features\n\n- **control-panel:** add registry schema to the control-panel\n\n- **control-panel:** add registry api interface and repository\n\n- **control-panel:** add registry api implementation\n\n\n### ❤️  Thank You\n\n- Jan Wendling\n- Kepler Vital\n- Max\n- mraszyk"
+    },
+    "control-panel": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.3",
+        "gitTag": "@orbit/control-panel-v0.0.2-alpha.3",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.3 (2024-06-24)\n\n\n### 🚀 Features\n\n- **control-panel:** add registry schema to the control-panel\n\n- **control-panel:** add artifact api\n\n- **control-panel:** add registry api interface and repository\n\n- **station:** add CallExternalCanister request type\n\n- **control-panel:** add registry api implementation\n\n- **control-panel:** add find next module version\n\n- **station:** optional fallback controller\n\n\n### ❤️  Thank You\n\n- Jan Wendling\n- Kepler Vital\n- Max\n- mraszyk"
+    },
+    "control-panel-api": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.3",
+        "gitTag": "@orbit/control-panel-api-v0.0.2-alpha.3",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.3 (2024-06-24)\n\n\n### 🚀 Features\n\n- **control-panel:** add artifact api\n\n- **control-panel:** add registry api interface and repository\n\n- **api:** Add the serde::Serialize trait to API types\n\n- **control-panel:** add registry api implementation\n\n- **control-panel:** add find next module version\n\n\n### ❤️  Thank You\n\n- Jan Wendling\n- Kepler Vital\n- Max\n- mraszyk"
+    },
+    "station": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.4",
+        "gitTag": "@orbit/station-v0.0.2-alpha.4",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.4 (2024-06-24)\n\n\n### 🚀 Features\n\n- **station:** introduce ChangeManagedCanister request type\n\n- **station:** add CreateManagedCanister request type\n\n- **station:** add canister_status endpoint\n\n- **station:** add CallExternalCanister request type\n\n- **station:** optional fallback controller\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Max\n- mraszyk"
+    },
+    "upgrader-api": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.3",
+        "gitTag": "@orbit/upgrader-api-v0.0.2-alpha.3",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.3 (2024-06-24)\n\n\n### 🚀 Features\n\n- **api:** Add the serde::Serialize trait to API types\n\n\n### ❤️  Thank You\n\n- Jan Wendling\n- Kepler Vital\n- Max\n- mraszyk"
+    },
+    "station-api": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.3",
+        "gitTag": "@orbit/station-api-v0.0.2-alpha.3",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.3 (2024-06-24)\n\n\n### 🚀 Features\n\n- **station:** introduce ChangeManagedCanister request type\n\n- **station:** add CreateManagedCanister request type\n\n- **station:** add canister_status endpoint\n\n- **station:** add CallExternalCanister request type\n\n- **api:** Add the serde::Serialize trait to API types\n\n- **station:** optional fallback controller\n\n\n### ❤️  Thank You\n\n- Jan Wendling\n- Kepler Vital\n- Max\n- mraszyk"
     },
     "wallet-dapp": {
       "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.4",
-        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.4",
+        "rawVersion": "0.0.2-alpha.5",
+        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.5",
         "isPrerelease": true
       },
-      "contents": "## 0.0.2-alpha.4 (2024-05-29)\n\n\n### 🚀 Features\n\n- **wallet:** add versioned path to wallet ui\n\n- **wallet:** assure api compatibility check is resilient to missing file\n\n\n### ❤️  Thank You\n\n- Jan Wendling\n- Kepler Vital\n- mraszyk"
+      "contents": "## 0.0.2-alpha.5 (2024-06-24)\n\n\n### 🚀 Features\n\n- **station:** introduce ChangeManagedCanister request type\n\n- **station:** add CreateManagedCanister request type\n\n- **station:** add canister_status endpoint\n\n- **control-panel:** add artifact api\n\n- **control-panel:** add registry api interface and repository\n\n- **station:** add CallExternalCanister request type\n\n- **control-panel:** add registry api implementation\n\n- **control-panel:** add find next module version\n\n- **station:** optional fallback controller\n\n\n### 🩹 Fixes\n\n- **wallet:** permission page shows individual resource section\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Max\n- mraszyk"
     }
   }
 }
