@@ -544,6 +544,7 @@ export type ListUserGroupsResult = {
   } |
   { 'Err' : Error };
 export interface ListUsersInput {
+  'groups' : [] | [Array<UUID>],
   'statuses' : [] | [Array<UserStatus>],
   'paginate' : [] | [PaginationInput],
   'search_term' : [] | [string],
@@ -867,7 +868,7 @@ export interface SystemInit {
   'fallback_controller' : [] | [Principal],
   'admins' : Array<AdminInitInput>,
   'upgrader_wasm_module' : Uint8Array | number[],
-  'quorum' : number,
+  'quorum' : [] | [number],
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
   { 'Init' : SystemInit };

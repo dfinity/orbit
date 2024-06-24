@@ -1624,6 +1624,8 @@ type ListUsersInput = record {
   search_term : opt text;
   // The statuses to use for filtering the users.
   statuses : opt vec UserStatus;
+  // The groups to use for filtering the users.
+  groups : opt vec UUID;
   // The pagination parameters.
   paginate : opt PaginationInput;
 };
@@ -1995,7 +1997,7 @@ type SystemInit = record {
   // The list of admin principals to be associated with the station.
   admins : vec AdminInitInput;
   // Quorum of admins for initial policies.
-  quorum : nat16;
+  quorum : opt nat16;
   // The wasm module of the station upgrader canister.
   upgrader_wasm_module : blob;
   // An optional additional controller of the station and upgrader canisters.

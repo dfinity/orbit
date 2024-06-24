@@ -11,7 +11,7 @@ export const idlFactory = ({ IDL }) => {
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'admins' : IDL.Vec(AdminInitInput),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
-    'quorum' : IDL.Nat16,
+    'quorum' : IDL.Opt(IDL.Nat16),
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,
@@ -1008,6 +1008,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const ListUsersInput = IDL.Record({
+    'groups' : IDL.Opt(IDL.Vec(UUID)),
     'statuses' : IDL.Opt(IDL.Vec(UserStatus)),
     'paginate' : IDL.Opt(PaginationInput),
     'search_term' : IDL.Opt(IDL.Text),
@@ -1194,7 +1195,7 @@ export const init = ({ IDL }) => {
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'admins' : IDL.Vec(AdminInitInput),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
-    'quorum' : IDL.Nat16,
+    'quorum' : IDL.Opt(IDL.Nat16),
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,
