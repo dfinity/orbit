@@ -1,3 +1,28 @@
+## 0.0.2-alpha.3 (2024-06-24)
+
+
+### 🚀 Features
+
+- **station:** introduce ChangeManagedCanister request type
+
+- **station:** add CreateManagedCanister request type
+
+- **station:** add canister_status endpoint
+
+- **station:** add CallExternalCanister request type
+
+- **api:** Add the serde::Serialize trait to API types
+
+- **station:** optional fallback controller
+
+
+### ❤️  Thank You
+
+- Jan Wendling
+- Kepler Vital
+- Max
+- mraszyk
+
 ## 0.0.2-alpha.2 (2024-05-17)
 
 

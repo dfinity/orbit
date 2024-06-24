@@ -1,3 +1,25 @@
+## 0.0.2-alpha.4 (2024-06-24)
+
+
+### 🚀 Features
+
+- **station:** introduce ChangeManagedCanister request type
+
+- **station:** add CreateManagedCanister request type
+
+- **station:** add canister_status endpoint
+
+- **station:** add CallExternalCanister request type
+
+- **station:** optional fallback controller
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Max
+- mraszyk
+
 ## 0.0.2-alpha.3 (2024-05-29)
 
 
