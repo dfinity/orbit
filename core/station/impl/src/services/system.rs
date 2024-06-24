@@ -91,19 +91,14 @@ impl SystemService {
         write_system_info(system_info);
     }
 
-    pub fn set_disaster_recovery_committee(&self, committee: Option<DisasterRecoveryCommittee>) {
-        let mut system_info = self.get_system_info();
+    pub fn set_disaster_recovery_committee(committee: Option<DisasterRecoveryCommittee>) {
+        let mut system_info = read_system_info();
         system_info.set_disaster_recovery_committee(committee);
         write_system_info(system_info);
 
         // syncs the committee and account to the upgrader
         crate::core::ic_cdk::spawn(async {
-            if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_committee().await {
-                crate::core::ic_cdk::api::print(format!("Failed to sync committee: {}", error,));
-            }
-            if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts().await {
-                crate::core::ic_cdk::api::print(format!("Failed to sync accounts: {}", error,));
-            }
+            DISASTER_RECOVERY_SERVICE.sync_all().await;
         });
     }
 
@@ -179,7 +174,17 @@ impl SystemService {
             if SYSTEM_SERVICE.is_healthy() {
                 print("canister reports healthy already before its initialization has finished!");
             }
+
             install_canister_post_process_finish(system_info);
+
+            SystemService::set_disaster_recovery_committee(Some(DisasterRecoveryCommittee {
+                quorum: init.quorum.unwrap_or(1),
+                user_group_id: *crate::models::ADMIN_GROUP_ID,
+            }));
+
+            crate::core::ic_cdk::spawn(async {
+                DISASTER_RECOVERY_SERVICE.sync_all().await;
+            });
 
             Ok(())
         }
@@ -482,7 +487,7 @@ mod tests {
                     name: "Admin".to_string(),
                     identity: Principal::from_slice(&[1; 29]),
                 }],
-                quorum: 1,
+                quorum: Some(1),
                 upgrader_wasm_module: vec![],
             })
             .await;

@@ -39,7 +39,7 @@ type AdminUser = record { id : text; name : text; identities : vec principal };
 
 type DisasterRecoveryCommittee = record {
   users : vec AdminUser;
-  quorum_percentage : nat16;
+  quorum : nat16;
 };
 
 type TriggerUpgradeResponse = variant {
@@ -134,6 +134,41 @@ type GetLogsResult = variant {
   Err : Error;
 };
 
+type StationRecoveryRequest = record {
+  user_id : text;
+  wasm_sha256 : blob;
+  install_mode : InstallMode;
+  arg : blob;
+  submitted_at : text;
+};
+
+type RecoveryStatus = variant {
+  Idle;
+  InProgress;
+};
+
+type RecoveryFailure = record {
+  reason : text;
+};
+
+type RecoveryResult = variant {
+  Success;
+  Failure : RecoveryFailure;
+};
+
+type GetDisasterRecoveryStateResponse = record {
+  committee : opt DisasterRecoveryCommittee;
+  accounts : vec Account;
+  recovery_requests : vec StationRecoveryRequest;
+  recovery_status : RecoveryStatus;
+  last_recovery_result : opt RecoveryResult;
+};
+
+type GetDisasterRecoveryStateResult = variant {
+  Ok : GetDisasterRecoveryStateResponse;
+  Err : Error;
+};
+
 service : (InitArg) -> {
   "trigger_upgrade" : (UpgradeParams) -> (TriggerUpgradeResponse);
   "set_disaster_recovery_committee" : (SetDisasterRecoveryCommitteeInput) -> (SetDisasterRecoveryResult);
@@ -141,6 +176,7 @@ service : (InitArg) -> {
   "is_committee_member" : () -> (IsCommitteeMemberResult) query;
   "get_disaster_recovery_accounts" : () -> (GetDisasterRecoveryAccountsResult) query;
   "get_disaster_recovery_committee" : () -> (GetDisasterRecoveryCommitteeResult) query;
+  "get_disaster_recovery_state" : () -> (GetDisasterRecoveryStateResult) query;
   "request_disaster_recovery" : (RequestDisasterRecoveryInput) -> (RequestDisasterRecoveryResult);
   "get_logs" : (GetLogsInput) -> (GetLogsResult) query;
 };

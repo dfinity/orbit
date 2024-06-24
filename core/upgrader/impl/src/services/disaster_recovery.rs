@@ -128,6 +128,18 @@ impl DisasterRecoveryService {
         Ok(())
     }
 
+    pub fn get_accounts(&self) -> Vec<Account> {
+        self.storage.get().accounts
+    }
+
+    pub fn get_committee(&self) -> Option<DisasterRecoveryCommittee> {
+        self.storage.get().committee
+    }
+
+    pub fn get_state(&self) -> DisasterRecovery {
+        self.storage.get()
+    }
+
     pub fn is_committee_member(&self, principal: &Principal) -> bool {
         self.storage
             .get()
@@ -160,9 +172,6 @@ impl DisasterRecoveryService {
         let Some(committee) = storage.committee.as_ref() else {
             return RecoveryEvaluationResult::Unmet;
         };
-        let quorum = committee.quorum_percentage as f64 / 100.0;
-        let total_users = committee.users.len() as f64;
-        let min_users = f64::ceil(total_users * quorum) as usize;
 
         // Remove expired requests
         storage.recovery_requests.retain(|request| {
@@ -180,7 +189,7 @@ impl DisasterRecoveryService {
 
             *entry += 1;
 
-            if *entry >= min_users {
+            if *entry as u16 >= committee.quorum {
                 let result = request.clone();
 
                 storage.recovery_requests.clear();

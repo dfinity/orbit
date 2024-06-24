@@ -7,10 +7,6 @@ use orbit_essentials::{
     api::ApiResult,
     cdk::{api::is_controller, caller},
 };
-use upgrader_api::{
-    GetDisasterRecoveryAccountsResponse, GetDisasterRecoveryCommitteeResponse,
-    IsCommitteeMemberResponse,
-};
 
 use crate::{
     errors::UpgraderApiError,
@@ -25,37 +21,44 @@ lazy_static! {
 }
 
 #[update]
-async fn set_disaster_recovery_committee(
+fn set_disaster_recovery_committee(
     input: upgrader_api::SetDisasterRecoveryCommitteeInput,
 ) -> ApiResult {
-    CONTROLLER.set_disaster_recovery_committee(input).await
+    CONTROLLER.set_disaster_recovery_committee(input)
 }
 
 #[update]
-async fn set_disaster_recovery_accounts(
+fn set_disaster_recovery_accounts(
     input: upgrader_api::SetDisasterRecoveryAccountsInput,
 ) -> ApiResult {
-    CONTROLLER.set_disaster_recovery_accounts(input).await
+    CONTROLLER.set_disaster_recovery_accounts(input)
 }
 
 #[update]
-async fn request_disaster_recovery(input: upgrader_api::RequestDisasterRecoveryInput) -> ApiResult {
-    CONTROLLER.request_disaster_recovery(input).await
+fn request_disaster_recovery(input: upgrader_api::RequestDisasterRecoveryInput) -> ApiResult {
+    CONTROLLER.request_disaster_recovery(input)
 }
 
 #[query]
-async fn is_committee_member() -> ApiResult<IsCommitteeMemberResponse> {
-    CONTROLLER.is_committee_member().await
+fn is_committee_member() -> ApiResult<upgrader_api::IsCommitteeMemberResponse> {
+    CONTROLLER.is_committee_member()
 }
 
 #[query]
-async fn get_disaster_recovery_accounts() -> ApiResult<GetDisasterRecoveryAccountsResponse> {
-    CONTROLLER.get_disaster_recovery_accounts().await
+fn get_disaster_recovery_accounts() -> ApiResult<upgrader_api::GetDisasterRecoveryAccountsResponse>
+{
+    CONTROLLER.get_disaster_recovery_accounts()
 }
 
 #[query]
-async fn get_disaster_recovery_committee() -> ApiResult<GetDisasterRecoveryCommitteeResponse> {
-    CONTROLLER.get_disaster_recovery_committee().await
+fn get_disaster_recovery_committee() -> ApiResult<upgrader_api::GetDisasterRecoveryCommitteeResponse>
+{
+    CONTROLLER.get_disaster_recovery_committee()
+}
+
+#[query]
+fn get_disaster_recovery_state() -> ApiResult<upgrader_api::GetDisasterRecoveryStateResponse> {
+    CONTROLLER.get_disaster_recovery_state()
 }
 
 pub struct DisasterRecoveryController {
@@ -63,7 +66,7 @@ pub struct DisasterRecoveryController {
 }
 
 impl DisasterRecoveryController {
-    async fn set_disaster_recovery_committee(
+    fn set_disaster_recovery_committee(
         &self,
         input: upgrader_api::SetDisasterRecoveryCommitteeInput,
     ) -> ApiResult {
@@ -76,7 +79,7 @@ impl DisasterRecoveryController {
         }
     }
 
-    async fn set_disaster_recovery_accounts(
+    fn set_disaster_recovery_accounts(
         &self,
 
         input: upgrader_api::SetDisasterRecoveryAccountsInput,
@@ -90,7 +93,7 @@ impl DisasterRecoveryController {
         }
     }
 
-    async fn request_disaster_recovery(
+    fn request_disaster_recovery(
         &self,
 
         input: upgrader_api::RequestDisasterRecoveryInput,
@@ -108,31 +111,29 @@ impl DisasterRecoveryController {
         }
     }
 
-    async fn is_committee_member(&self) -> ApiResult<IsCommitteeMemberResponse> {
+    fn is_committee_member(&self) -> ApiResult<upgrader_api::IsCommitteeMemberResponse> {
         let caller = ic_cdk::caller();
 
         if caller == Principal::anonymous() {
             Err(UpgraderApiError::Unauthorized)?
         } else {
-            Ok(IsCommitteeMemberResponse {
+            Ok(upgrader_api::IsCommitteeMemberResponse {
                 is_committee_member: self.disaster_recovery_service.is_committee_member(&caller),
             })
         }
     }
 
-    async fn get_disaster_recovery_accounts(
+    fn get_disaster_recovery_accounts(
         &self,
-    ) -> ApiResult<GetDisasterRecoveryAccountsResponse> {
+    ) -> ApiResult<upgrader_api::GetDisasterRecoveryAccountsResponse> {
         let caller = caller();
         if !is_controller(&caller) {
             Err(UpgraderApiError::NotController)?
         } else {
-            Ok(GetDisasterRecoveryAccountsResponse {
+            Ok(upgrader_api::GetDisasterRecoveryAccountsResponse {
                 accounts: self
                     .disaster_recovery_service
-                    .storage
-                    .get()
-                    .accounts
+                    .get_accounts()
                     .into_iter()
                     .map(Into::into)
                     .collect(),
@@ -140,21 +141,30 @@ impl DisasterRecoveryController {
         }
     }
 
-    async fn get_disaster_recovery_committee(
+    fn get_disaster_recovery_committee(
         &self,
-    ) -> ApiResult<GetDisasterRecoveryCommitteeResponse> {
+    ) -> ApiResult<upgrader_api::GetDisasterRecoveryCommitteeResponse> {
         let caller = caller();
         if !is_controller(&caller) {
             Err(UpgraderApiError::NotController)?
         } else {
-            Ok(GetDisasterRecoveryCommitteeResponse {
+            Ok(upgrader_api::GetDisasterRecoveryCommitteeResponse {
                 committee: self
                     .disaster_recovery_service
-                    .storage
-                    .get()
-                    .committee
+                    .get_committee()
                     .map(Into::into),
             })
+        }
+    }
+
+    fn get_disaster_recovery_state(
+        &self,
+    ) -> ApiResult<upgrader_api::GetDisasterRecoveryStateResponse> {
+        let caller = caller();
+        if !is_controller(&caller) {
+            Err(UpgraderApiError::NotController)?
+        } else {
+            Ok(self.disaster_recovery_service.get_state().into())
         }
     }
 }

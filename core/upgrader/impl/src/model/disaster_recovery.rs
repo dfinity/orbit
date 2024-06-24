@@ -5,6 +5,7 @@ use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use orbit_essentials::{
     storable,
     types::{Timestamp, UUID},
+    utils::timestamp_to_rfc3339,
 };
 use uuid::Uuid;
 
@@ -80,6 +81,18 @@ pub struct StationRecoveryRequest {
     pub submitted_at: Timestamp,
 }
 
+impl From<StationRecoveryRequest> for upgrader_api::StationRecoveryRequest {
+    fn from(value: StationRecoveryRequest) -> Self {
+        upgrader_api::StationRecoveryRequest {
+            user_id: Uuid::from_bytes(value.user_id).hyphenated().to_string(),
+            wasm_sha256: value.wasm_sha256,
+            install_mode: upgrader_api::InstallMode::from(value.install_mode),
+            arg: value.arg,
+            submitted_at: timestamp_to_rfc3339(&value.submitted_at),
+        }
+    }
+}
+
 #[storable]
 #[derive(Clone, Debug)]
 pub enum RecoveryEvaluationResult {
@@ -94,10 +107,17 @@ pub enum RecoveryEvaluationResult {
 pub enum RecoveryStatus {
     /// There are no active recovery requests.
     Idle,
-    /// There are active recovery requests, but there is no quorum yet.
-    Unmet,
     /// There is a consensus on the recovery requests.
     InProgress,
+}
+
+impl From<RecoveryStatus> for upgrader_api::RecoveryStatus {
+    fn from(value: RecoveryStatus) -> Self {
+        match value {
+            RecoveryStatus::Idle => upgrader_api::RecoveryStatus::Idle,
+            RecoveryStatus::InProgress => upgrader_api::RecoveryStatus::InProgress,
+        }
+    }
 }
 
 #[storable]
@@ -116,18 +136,31 @@ pub enum RecoveryResult {
     Failure(RecoveryFailure),
 }
 
+impl From<RecoveryResult> for upgrader_api::RecoveryResult {
+    fn from(value: RecoveryResult) -> Self {
+        match value {
+            RecoveryResult::Success => upgrader_api::RecoveryResult::Success,
+            RecoveryResult::Failure(failure) => {
+                upgrader_api::RecoveryResult::Failure(upgrader_api::RecoveryFailure {
+                    reason: failure.reason,
+                })
+            }
+        }
+    }
+}
+
 #[storable]
 #[derive(Clone, Debug)]
 pub struct DisasterRecoveryCommittee {
     pub users: Vec<AdminUser>,
-    pub quorum_percentage: u16,
+    pub quorum: u16,
 }
 
 impl From<upgrader_api::DisasterRecoveryCommittee> for DisasterRecoveryCommittee {
     fn from(value: upgrader_api::DisasterRecoveryCommittee) -> Self {
         DisasterRecoveryCommittee {
             users: value.users.into_iter().map(AdminUser::from).collect(),
-            quorum_percentage: value.quorum_percentage,
+            quorum: value.quorum,
         }
     }
 }
@@ -140,7 +173,7 @@ impl From<DisasterRecoveryCommittee> for upgrader_api::DisasterRecoveryCommittee
                 .into_iter()
                 .map(upgrader_api::AdminUser::from)
                 .collect(),
-            quorum_percentage: value.quorum_percentage,
+            quorum: value.quorum,
         }
     }
 }
@@ -291,6 +324,28 @@ impl Default for DisasterRecovery {
     }
 }
 
+impl From<DisasterRecovery> for upgrader_api::GetDisasterRecoveryStateResponse {
+    fn from(value: DisasterRecovery) -> Self {
+        upgrader_api::GetDisasterRecoveryStateResponse {
+            accounts: value
+                .accounts
+                .into_iter()
+                .map(upgrader_api::Account::from)
+                .collect(),
+            committee: value
+                .committee
+                .map(upgrader_api::DisasterRecoveryCommittee::from),
+            recovery_requests: value
+                .recovery_requests
+                .into_iter()
+                .map(upgrader_api::StationRecoveryRequest::from)
+                .collect(),
+            recovery_status: value.recovery_status.into(),
+            last_recovery_result: value.last_recovery_result.map(|r| r.into()),
+        }
+    }
+}
+
 #[cfg(test)]
 pub mod test {
     use candid::Principal;
@@ -316,7 +371,7 @@ pub mod test {
                     identities: vec![Principal::from_slice(&[3; 29])],
                 },
             ],
-            quorum_percentage: 51,
+            quorum: 2,
         }
     }
 

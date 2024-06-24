@@ -266,11 +266,7 @@ impl RequestFactory {
                 Box::new(EditUserRequestExecute::new(request, operation))
             }
             RequestOperation::SetDisasterRecovery(operation) => Box::new(
-                set_disaster_recovery::SetDisasterRecoveryRequestExecute::new(
-                    request,
-                    operation,
-                    Arc::clone(&SYSTEM_SERVICE),
-                ),
+                set_disaster_recovery::SetDisasterRecoveryRequestExecute::new(request, operation),
             ),
             RequestOperation::ChangeCanister(operation) => {
                 Box::new(ChangeCanisterRequestExecute::new(

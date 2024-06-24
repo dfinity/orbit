@@ -570,7 +570,7 @@ type DisasterRecoveryCommittee = record {
   // The user group id of the committee.
   user_group_id : UUID;
   // The quorum percentage required for the committee to approve a disaster recovery operation.
-  quorum_percentage : nat16;
+  quorum : nat16;
 };
 
 type SetDisasterRecoveryOperationInput = record {

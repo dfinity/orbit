@@ -3,7 +3,7 @@ use candid::Principal;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
-use pocket_ic::{update_candid_as, CallError, PocketIc, UserError, WasmResult};
+use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
 use station_api::{
     AddUserOperationInput, ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetRequestInput,
     GetRequestResponse, HealthStatus, MeResponse, RequestApprovalStatusDTO, RequestDTO,
@@ -12,6 +12,7 @@ use station_api::{
     UserDTO, UserStatusDTO,
 };
 use std::time::Duration;
+use upgrader_api::GetDisasterRecoveryStateResponse;
 
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 
@@ -408,4 +409,21 @@ pub fn update_raw(
             WasmResult::Reply(bytes) => bytes,
             WasmResult::Reject(message) => panic!("Unexpected reject: {}", message),
         })
+}
+
+pub fn get_upgrader_disaster_recovery(
+    env: &PocketIc,
+    upgrader_id: &Principal,
+    station_canister_id: &Principal,
+) -> upgrader_api::GetDisasterRecoveryStateResponse {
+    let res: (ApiResult<GetDisasterRecoveryStateResponse>,) = query_candid_as(
+        env,
+        upgrader_id.to_owned(),
+        station_canister_id.to_owned(),
+        "get_disaster_recovery_state",
+        ((),),
+    )
+    .expect("Failed query call to get disaster recovery state");
+
+    res.0.expect("Failed to get disaster recovery state")
 }

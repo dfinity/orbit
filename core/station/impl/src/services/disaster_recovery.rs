@@ -64,7 +64,7 @@ impl DisasterRecoveryService {
     pub async fn sync_committee(&self) -> ServiceResult<()> {
         let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
 
-        let (users, quorum_percentage) = self
+        let (users, quorum) = self
             .system_service
             .get_system_info()
             .get_disaster_recovery_committee()
@@ -72,7 +72,7 @@ impl DisasterRecoveryService {
                 (
                     self.user_service
                         .get_active_users_in_groups(&[committee.user_group_id]),
-                    committee.quorum_percentage,
+                    committee.quorum,
                 )
             })
             .unwrap_or_default();
@@ -90,7 +90,7 @@ impl DisasterRecoveryService {
                             identities: user.identities.clone(),
                         })
                         .collect(),
-                    quorum_percentage,
+                    quorum,
                 },
             },),
         )
@@ -101,10 +101,24 @@ impl DisasterRecoveryService {
 
         Ok(())
     }
+
+    pub async fn sync_all(&self) {
+        if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_committee().await {
+            crate::core::ic_cdk::api::print(format!("Failed to sync committee: {}", error,));
+        }
+        if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts().await {
+            crate::core::ic_cdk::api::print(format!("Failed to sync accounts: {}", error,));
+        }
+    }
 }
 
 pub fn disaster_recovery_observes_insert_user(observer: &mut Observer<(User, Option<User>)>) {
     observer.add_listener(Box::new(|(user, prev)| {
+        if !SYSTEM_SERVICE.is_healthy() {
+            // Skip syncing committee during system init
+            return;
+        }
+
         if let Some(committee) = SYSTEM_SERVICE
             .get_system_info()
             .get_disaster_recovery_committee()
@@ -139,6 +153,11 @@ pub fn disaster_recovery_observes_insert_user(observer: &mut Observer<(User, Opt
 
 pub fn disaster_recovery_observes_remove_user(observer: &mut Observer<User>) {
     observer.add_listener(Box::new(|prev_user| {
+        if !SYSTEM_SERVICE.is_healthy() {
+            // Skip syncing committee during system init
+            return;
+        }
+
         if let Some(committee) = SYSTEM_SERVICE
             .get_system_info()
             .get_disaster_recovery_committee()
@@ -166,6 +185,11 @@ pub fn disaster_recovery_observes_insert_account(
     observer: &mut Observer<(Account, Option<Account>)>,
 ) {
     observer.add_listener(Box::new(|(_account, _prev)| {
+        if !SYSTEM_SERVICE.is_healthy() {
+            // Skip syncing accounts during system init
+            return;
+        }
+
         crate::core::ic_cdk::spawn(async {
             if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts().await {
                 crate::core::ic_cdk::api::print(format!("Failed to sync accounts: {}", error,));

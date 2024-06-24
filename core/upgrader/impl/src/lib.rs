@@ -92,7 +92,6 @@ async fn trigger_upgrade(params: upgrader_api::UpgradeParams) -> Result<(), Trig
 mod tests {
     use super::*;
     use orbit_essentials::api::ApiResult;
-    use upgrader_api::*;
 
     #[test]
     fn check_candid_interface() {

@@ -7,7 +7,6 @@ use crate::{
 use async_trait::async_trait;
 use orbit_essentials::types::UUID;
 use station_api::{CreateRequestInput, SetDisasterRecoveryOperationInput};
-use std::sync::Arc;
 
 pub struct SetDisasterRecoveryRequestCreate;
 
@@ -45,28 +44,18 @@ impl Create<SetDisasterRecoveryOperationInput> for SetDisasterRecoveryRequestCre
 pub struct SetDisasterRecoveryRequestExecute<'p, 'o> {
     request: &'p Request,
     operation: &'o SetDisasterRecoveryOperation,
-    system_service: Arc<SystemService>,
 }
 
 impl<'p, 'o> SetDisasterRecoveryRequestExecute<'p, 'o> {
-    pub fn new(
-        request: &'p Request,
-        operation: &'o SetDisasterRecoveryOperation,
-        system_service: Arc<SystemService>,
-    ) -> Self {
-        Self {
-            request,
-            operation,
-            system_service,
-        }
+    pub fn new(request: &'p Request, operation: &'o SetDisasterRecoveryOperation) -> Self {
+        Self { request, operation }
     }
 }
 
 #[async_trait]
 impl Execute for SetDisasterRecoveryRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
-        self.system_service
-            .set_disaster_recovery_committee(self.operation.input.committee.clone());
+        SystemService::set_disaster_recovery_committee(self.operation.input.committee.clone());
 
         Ok(RequestExecuteStage::Completed(
             self.request.operation.clone(),

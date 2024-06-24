@@ -34,8 +34,10 @@ pub struct AdminUser {
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct DisasterRecoveryCommittee {
+    /// The users that are able to request disaster recovery.
     pub users: Vec<AdminUser>,
-    pub quorum_percentage: u16,
+    /// The quorum required to approve a disaster recovery request.
+    pub quorum: u16,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -140,4 +142,50 @@ pub struct GetLogsResponse {
 pub enum TriggerUpgradeResponse {
     Ok,
     Err(TriggerUpgradeError),
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct StationRecoveryRequest {
+    /// The user ID of the station.
+    pub user_id: UuidDTO,
+    /// The SHA-256 hash of the wasm module.
+    pub wasm_sha256: Vec<u8>,
+    /// The install mode: upgrade or reinstall.
+    pub install_mode: InstallMode,
+    /// The install arguments.
+    pub arg: Vec<u8>,
+    /// Time in nanoseconds since the UNIX epoch when the request was submitted.
+    pub submitted_at: TimestampRfc3339,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum RecoveryStatus {
+    /// There are no active recovery requests.
+    Idle,
+    /// There is a consensus on the recovery requests.
+    InProgress,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct RecoveryFailure {
+    /// The reason for the recovery failure.
+    pub reason: String,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum RecoveryResult {
+    /// The recovery request was successful.
+    Success,
+    /// The recovery request failed.
+    Failure(RecoveryFailure),
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct GetDisasterRecoveryStateResponse {
+    pub committee: Option<DisasterRecoveryCommittee>,
+    pub accounts: Vec<Account>,
+
+    pub recovery_requests: Vec<StationRecoveryRequest>,
+    pub recovery_status: RecoveryStatus,
+    pub last_recovery_result: Option<RecoveryResult>,
 }
