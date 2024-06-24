@@ -1,6 +1,6 @@
 use super::{UserService, UserStationService};
 use crate::{
-    core::{canister_config, CallContext, INITIAL_STATION_CYCLES},
+    core::{canister_config, CallContext, INITIAL_STATION_CYCLES, NNS_ROOT_CANISTER_ID},
     errors::{DeployError, UserError},
     models::{CanDeployStation, UserStation},
     services::{USER_SERVICE, USER_STATION_SERVICE},
@@ -105,6 +105,7 @@ impl DeployService {
                 name: input.name.clone(),
                 admins,
                 upgrader_wasm_module,
+                fallback_controller: Some(NNS_ROOT_CANISTER_ID),
             }))
             .map_err(|err| DeployError::Failed {
                 reason: err.to_string(),

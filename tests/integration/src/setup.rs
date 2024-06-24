@@ -1,7 +1,7 @@
 use crate::interfaces::{
     NnsIndexCanisterInitPayload, NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload,
 };
-use crate::utils::{controller_test_id, minter_test_id, set_controllers};
+use crate::utils::{controller_test_id, minter_test_id, set_controllers, NNS_ROOT_CANISTER_ID};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use control_panel_api::UploadCanisterModulesInput;
@@ -22,12 +22,14 @@ pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
 #[derive(Clone)]
 pub struct SetupConfig {
     pub upload_canister_modules: bool,
+    pub fallback_controller: Option<Principal>,
 }
 
 impl Default for SetupConfig {
     fn default() -> Self {
         Self {
             upload_canister_modules: true,
+            fallback_controller: Some(NNS_ROOT_CANISTER_ID),
         }
     }
 }
@@ -170,6 +172,7 @@ fn install_canisters(
             name: "station-admin".to_string(),
         }],
         upgrader_wasm_module: upgrader_wasm,
+        fallback_controller: config.fallback_controller,
     });
     env.install_canister(
         station,
