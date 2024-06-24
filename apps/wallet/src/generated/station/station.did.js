@@ -11,6 +11,7 @@ export const idlFactory = ({ IDL }) => {
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'admins' : IDL.Vec(AdminInitInput),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
+    'quorum' : IDL.Nat16,
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,
@@ -126,6 +127,9 @@ export const idlFactory = ({ IDL }) => {
     'Create' : CreateExternalCanisterResourceTarget,
     'Change' : ChangeExternalCanisterResourceTarget,
   });
+  const SetDisasterRecoveryResourceAction = IDL.Variant({
+    'Create' : IDL.Null,
+  });
   const AccountResourceAction = IDL.Variant({
     'List' : IDL.Null,
     'Read' : ResourceId,
@@ -150,6 +154,7 @@ export const idlFactory = ({ IDL }) => {
     'System' : SystemResourceAction,
     'User' : UserResourceAction,
     'ExternalCanister' : ExternalCanisterResourceAction,
+    'SetDisasterRecovery' : SetDisasterRecoveryResourceAction,
     'Account' : AccountResourceAction,
     'AddressBook' : ResourceAction,
     'ChangeCanister' : ChangeCanisterResourceAction,
@@ -193,6 +198,13 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'user_group_id' : UUID,
   });
+  const DisasterRecoveryCommittee = IDL.Record({
+    'user_group_id' : UUID,
+    'quorum' : IDL.Nat16,
+  });
+  const SetDisasterRecoveryOperationInput = IDL.Record({
+    'committee' : IDL.Opt(DisasterRecoveryCommittee),
+  });
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -233,6 +245,7 @@ export const idlFactory = ({ IDL }) => {
     'ChangeExternalCanister' : ChangeExternalCanisterResourceTarget,
     'AddUser' : IDL.Null,
     'EditUserGroup' : ResourceIds,
+    'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : ResourceIds,
     'RemoveRequestPolicy' : ResourceIds,
     'RemoveAddressBookEntry' : ResourceIds,
@@ -353,6 +366,7 @@ export const idlFactory = ({ IDL }) => {
     'ChangeExternalCanister' : ChangeExternalCanisterOperationInput,
     'AddUser' : AddUserOperationInput,
     'EditUserGroup' : EditUserGroupOperationInput,
+    'SetDisasterRecovery' : SetDisasterRecoveryOperationInput,
     'EditRequestPolicy' : EditRequestPolicyOperationInput,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput,
@@ -418,6 +432,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditUserGroupOperation = IDL.Record({
     'input' : EditUserGroupOperationInput,
+  });
+  const SetDisasterRecoveryOperation = IDL.Record({
+    'committee' : IDL.Opt(DisasterRecoveryCommittee),
   });
   const EditRequestPolicyOperation = IDL.Record({
     'input' : EditRequestPolicyOperationInput,
@@ -509,6 +526,7 @@ export const idlFactory = ({ IDL }) => {
     'ChangeExternalCanister' : ChangeExternalCanisterOperation,
     'AddUser' : AddUserOperation,
     'EditUserGroup' : EditUserGroupOperation,
+    'SetDisasterRecovery' : SetDisasterRecoveryOperation,
     'EditRequestPolicy' : EditRequestPolicyOperation,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperation,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
@@ -862,6 +880,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAddressBookEntry' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
+    'SetDisasterRecoveryCommittee' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
@@ -1175,6 +1194,7 @@ export const init = ({ IDL }) => {
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'admins' : IDL.Vec(AdminInitInput),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
+    'quorum' : IDL.Nat16,
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,
