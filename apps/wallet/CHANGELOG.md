@@ -1,3 +1,38 @@
+## 0.0.2-alpha.5 (2024-06-24)
+
+
+### 🚀 Features
+
+- **station:** introduce ChangeManagedCanister request type
+
+- **station:** add CreateManagedCanister request type
+
+- **station:** add canister_status endpoint
+
+- **control-panel:** add artifact api
+
+- **control-panel:** add registry api interface and repository
+
+- **station:** add CallExternalCanister request type
+
+- **control-panel:** add registry api implementation
+
+- **control-panel:** add find next module version
+
+- **station:** optional fallback controller
+
+
+### 🩹 Fixes
+
+- **wallet:** permission page shows individual resource section
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Max
+- mraszyk
+
 ## 0.0.2-alpha.4 (2024-05-29)
 
 
