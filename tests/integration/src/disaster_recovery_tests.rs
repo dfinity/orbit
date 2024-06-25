@@ -583,6 +583,10 @@ fn test_disaster_recovery_upgrade() {
     env.tick();
     env.tick();
     env.tick();
+    env.tick();
+    env.tick();
+    env.tick();
+    env.tick();
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
 
