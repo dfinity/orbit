@@ -144,7 +144,9 @@ type StationRecoveryRequest = record {
 
 type RecoveryStatus = variant {
   Idle;
-  InProgress;
+  InProgress : record {
+    since : text;
+  };
 };
 
 type RecoveryFailure = record {

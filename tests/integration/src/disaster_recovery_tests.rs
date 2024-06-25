@@ -1,13 +1,17 @@
-use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
+use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    execute_request, get_core_canister_health_status, get_system_info,
-    get_upgrader_disaster_recovery, get_user,
+    add_user, execute_request, get_core_canister_health_status, get_system_info,
+    get_upgrader_disaster_recovery, get_user, set_disaster_recovery, user_test_id,
 };
 use crate::TestEnv;
-use candid::Principal;
+use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
+use orbit_essentials::utils::sha256_hash;
 use pocket_ic::{query_candid_as, update_candid_as};
-use station_api::{AddAccountOperationInput, AllowDTO, HealthStatus, RequestOperationInput};
+use station_api::{
+    AddAccountOperationInput, AllowDTO, DisasterRecoveryCommitteeDTO, HealthStatus,
+    RequestOperationInput, SetDisasterRecoveryOperationInput,
+};
 use upgrader_api::{
     Account, AdminUser, DisasterRecoveryCommittee, GetDisasterRecoveryAccountsResponse,
     GetDisasterRecoveryCommitteeResponse, SetDisasterRecoveryAccountsInput,
@@ -234,3 +238,197 @@ fn auto_syncs_on_account_creation() {
     assert_eq!(state.accounts.len(), 1);
     assert_eq!(state.accounts[0].name, "admin");
 }
+
+/*
+- create 2 more admin users
+- create 1 user that is not part of the disaster recovery committee
+- set disaster recovery committee with quorum of 2
+- submit disaster recovery request with 1st user - assert it does not pass yet
+- submit non-matching disaster recovery request with 2nd user - assert it does not pass yet still
+- submit matching disaster recovery request with 4th user - assert it does not pass yet still
+- submit matching disaster recovery request with 3rd user - assert it passes
+- assert station is reinstalled with the new wasm
+- assert disaster recovery requests are cleared
+*/
+#[test]
+fn test_disaster_recovery_flow() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+
+    let admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
+
+    let user2_identity = user_test_id(1);
+    add_user(
+        &env,
+        user2_identity,
+        admin_user.groups.iter().map(|g| g.id.clone()).collect(),
+        canister_ids.station,
+    );
+
+    let user3_identity = user_test_id(2);
+    add_user(
+        &env,
+        user3_identity,
+        admin_user.groups.iter().map(|g| g.id.clone()).collect(),
+        canister_ids.station,
+    );
+
+    // user 4 can't set disaster recovery committee
+    let user4_identity = user_test_id(3);
+    add_user(&env, user4_identity, vec![], canister_ids.station);
+
+    set_disaster_recovery(
+        &env,
+        canister_ids.station,
+        SetDisasterRecoveryOperationInput {
+            committee: Some(DisasterRecoveryCommitteeDTO {
+                quorum: 2,
+                user_group_id: admin_user.groups[0].id.clone(),
+            }),
+        },
+    );
+
+    let new_wasm_module = get_canister_wasm("upgrader");
+    let old_wasm_hash = env
+        .canister_status(canister_ids.station, Some(upgrader_id))
+        .expect("Failed to get canister status")
+        .module_hash
+        .expect("No module hash found");
+
+    // install the upgrader wasm for the station as a test
+    let good_request = upgrader_api::RequestDisasterRecoveryInput {
+        module: new_wasm_module.clone(),
+        arg: Encode!(&upgrader_api::InitArg {
+            target_canister: canister_ids.station
+        })
+        .unwrap(),
+        install_mode: upgrader_api::InstallMode::Reinstall,
+    };
+
+    let bad_request = upgrader_api::RequestDisasterRecoveryInput {
+        module: new_wasm_module.clone(),
+        arg: vec![1, 2, 3],
+        install_mode: upgrader_api::InstallMode::Reinstall,
+    };
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "request_disaster_recovery",
+        (good_request.clone(),),
+    )
+    .expect("Failed update call to request disaster recovery");
+    res.0.expect("Failed to request disaster recovery");
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::Idle
+    ));
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        user2_identity,
+        "request_disaster_recovery",
+        (bad_request.clone(),),
+    )
+    .expect("Failed update call to request disaster recovery");
+    res.0.expect("Failed to request disaster recovery");
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::Idle
+    ));
+
+    assert!(dr_status.last_recovery_result.is_none());
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        user4_identity,
+        "request_disaster_recovery",
+        (good_request.clone(),),
+    )
+    .expect("Failed update call to request disaster recovery");
+    res.0
+        .expect_err("User 4 should not be able to request disaster recovery");
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::Idle
+    ));
+
+    assert!(dr_status.last_recovery_result.is_none());
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        user3_identity,
+        "request_disaster_recovery",
+        (good_request.clone(),),
+    )
+    .expect("Failed update call to request disaster recovery");
+    res.0.expect("Failed to request disaster recovery");
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::InProgress { .. }
+    ));
+
+    env.tick();
+    env.tick();
+    env.tick();
+    env.tick();
+    env.tick();
+    env.tick();
+    env.tick();
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::Idle
+    ));
+
+    assert!(matches!(
+        dr_status.last_recovery_result,
+        Some(upgrader_api::RecoveryResult::Success)
+    ));
+
+    let new_wasm_hash = env
+        .canister_status(canister_ids.station, Some(upgrader_id))
+        .expect("Failed to get canister status")
+        .module_hash
+        .expect("No module hash found");
+
+    assert_ne!(old_wasm_hash, new_wasm_hash);
+
+    assert_eq!(new_wasm_hash, sha256_hash(&new_wasm_module));
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+
+    assert!(dr_status.recovery_requests.is_empty());
+}
+
+#[test]
+fn test_disaster_recovery_in_progress() {}
+
+#[test]
+fn test_disaster_recovery_in_progress_expired() {}
+
+#[test]
+fn test_disaster_recovery_install() {}
+
+#[test]
+fn test_disaster_recovery_upgrade() {}
+
+#[test]
+fn test_disaster_recovery_failing() {}

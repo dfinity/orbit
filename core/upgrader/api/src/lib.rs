@@ -163,7 +163,7 @@ pub enum RecoveryStatus {
     /// There are no active recovery requests.
     Idle,
     /// There is a consensus on the recovery requests.
-    InProgress,
+    InProgress { since: TimestampRfc3339 },
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

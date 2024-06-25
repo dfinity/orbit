@@ -3,8 +3,8 @@ use std::{cell::RefCell, collections::HashMap, sync::Arc};
 use crate::{
     errors::UpgraderApiError,
     model::{
-        DisasterRecoveryResultLog, DisasterRecoveryStartLog, LogEntryType,
-        RequestDisasterRecoveryLog, SetAccountsLog, SetCommitteeLog,
+        DisasterRecoveryInProgressLog, DisasterRecoveryResultLog, DisasterRecoveryStartLog,
+        LogEntryType, RequestDisasterRecoveryLog, SetAccountsLog, SetCommitteeLog,
     },
     services::LOGGER_SERVICE,
     upgrader_ic_cdk::{api::time, spawn},
@@ -26,6 +26,7 @@ use crate::{
 use super::{InstallCanister, LoggerService, INSTALL_CANISTER};
 
 pub const DISASTER_RECOVERY_REQUEST_EXPIRATION_NS: u64 = 60 * 60 * 24 * 7 * 1_000_000_000; // 1 week
+pub const DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS: u64 = 60 * 60 * 1_000_000_000; // 1 hour
 
 thread_local! {
 
@@ -100,8 +101,19 @@ impl DisasterRecoveryService {
     pub fn set_committee(&self, committee: DisasterRecoveryCommittee) -> ServiceResult {
         let mut value = self.storage.get();
 
-        if value.recovery_status == RecoveryStatus::InProgress {
-            return Err(UpgraderApiError::DisasterRecoveryInProgress.into());
+        if let RecoveryStatus::InProgress { since } = &value.recovery_status {
+            let log = DisasterRecoveryInProgressLog {
+                operation: "set_committee".to_owned(),
+            };
+            if since + DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS > time() {
+                self.logger
+                    .log(LogEntryType::DisasterRecoveryInProgress(log));
+                return Err(UpgraderApiError::DisasterRecoveryInProgress.into());
+            }
+
+            self.logger
+                .log(LogEntryType::DisasterRecoveryInProgressExpired(log));
+            value.recovery_status = RecoveryStatus::Idle;
         }
 
         value.committee = Some(committee.clone());
@@ -116,9 +128,22 @@ impl DisasterRecoveryService {
 
     pub fn set_accounts(&self, accounts: Vec<Account>) -> ServiceResult {
         let mut value = self.storage.get();
-        if value.recovery_status == RecoveryStatus::InProgress {
-            return Err(UpgraderApiError::DisasterRecoveryInProgress.into());
+
+        if let RecoveryStatus::InProgress { since } = &value.recovery_status {
+            let log = DisasterRecoveryInProgressLog {
+                operation: "set_accounts".to_owned(),
+            };
+            if since + DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS > time() {
+                self.logger
+                    .log(LogEntryType::DisasterRecoveryInProgress(log));
+                return Err(UpgraderApiError::DisasterRecoveryInProgress.into());
+            }
+
+            self.logger
+                .log(LogEntryType::DisasterRecoveryInProgressExpired(log));
+            value.recovery_status = RecoveryStatus::Idle;
         }
+
         value.accounts = accounts.clone();
         self.storage.set(value);
 
@@ -219,10 +244,18 @@ impl DisasterRecoveryService {
             },
         ));
 
-        if value.recovery_status != RecoveryStatus::Idle {
-            // Another recovery is already in progress
-            ic_cdk::println!("Recovery not possible because it's already in progress.");
-            return;
+        if let RecoveryStatus::InProgress { since } = &value.recovery_status {
+            let log = DisasterRecoveryInProgressLog {
+                operation: "do_recovery".to_owned(),
+            };
+
+            if since + DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS > time() {
+                logger.log(LogEntryType::DisasterRecoveryInProgress(log));
+                return;
+            }
+
+            logger.log(LogEntryType::DisasterRecoveryInProgressExpired(log));
+            value.recovery_status = RecoveryStatus::Idle;
         }
 
         let Some(station_canister_id) =
@@ -235,7 +268,7 @@ impl DisasterRecoveryService {
             return;
         };
 
-        value.recovery_status = RecoveryStatus::InProgress;
+        value.recovery_status = RecoveryStatus::InProgress { since: time() };
         storage.set(value);
 
         let mut releaser = DisasterRecoveryReleaser {
@@ -521,7 +554,10 @@ mod test {
         let installer = Arc::new(TestInstaller {
             on_install_cb: Some(Box::new(|| {
                 let storage: DisasterRecoveryStorage = Default::default();
-                assert!(storage.get().recovery_status == RecoveryStatus::InProgress);
+                assert!(matches!(
+                    storage.get().recovery_status,
+                    RecoveryStatus::InProgress { .. }
+                ));
             })),
             ..Default::default()
         });
@@ -552,7 +588,9 @@ mod test {
         ));
 
         let mut value = storage.get();
-        value.recovery_status = RecoveryStatus::InProgress;
+        value.recovery_status = RecoveryStatus::InProgress {
+            since: crate::upgrader_ic_cdk::api::time(),
+        };
         storage.set(value);
 
         installer.clear_test_counters();
@@ -667,7 +705,9 @@ mod test {
         let storage: DisasterRecoveryStorage = Default::default();
 
         let mut value = storage.get();
-        value.recovery_status = RecoveryStatus::InProgress;
+        value.recovery_status = RecoveryStatus::InProgress {
+            since: crate::upgrader_ic_cdk::api::time(),
+        };
         storage.set(value);
 
         let error = DISASTER_RECOVERY_SERVICE
@@ -682,7 +722,9 @@ mod test {
         let storage: DisasterRecoveryStorage = Default::default();
 
         let mut value = storage.get();
-        value.recovery_status = RecoveryStatus::InProgress;
+        value.recovery_status = RecoveryStatus::InProgress {
+            since: crate::upgrader_ic_cdk::api::time(),
+        };
         storage.set(value);
 
         let error = DISASTER_RECOVERY_SERVICE

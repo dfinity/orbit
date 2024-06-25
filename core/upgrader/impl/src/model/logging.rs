@@ -40,6 +40,11 @@ pub struct DisasterRecoveryResultLog {
     pub result: RecoveryResult,
 }
 
+#[derive(Serialize)]
+pub struct DisasterRecoveryInProgressLog {
+    pub operation: String,
+}
+
 pub enum LogEntryType {
     SetCommittee(SetCommitteeLog),
     SetAccounts(SetAccountsLog),
@@ -47,6 +52,8 @@ pub enum LogEntryType {
     DisasterRecoveryStart(DisasterRecoveryStartLog),
     DisasterRecoveryResult(DisasterRecoveryResultLog),
     UpgradeResult(UpgradeResultLog),
+    DisasterRecoveryInProgress(DisasterRecoveryInProgressLog),
+    DisasterRecoveryInProgressExpired(DisasterRecoveryInProgressLog),
 }
 
 #[derive(Debug)]
@@ -67,6 +74,12 @@ impl LogEntryType {
             LogEntryType::DisasterRecoveryStart(_) => "disaster_recovery_start".to_owned(),
             LogEntryType::DisasterRecoveryResult(_) => "disaster_recovery_result".to_owned(),
             LogEntryType::UpgradeResult(_) => "upgrade_result".to_owned(),
+            LogEntryType::DisasterRecoveryInProgress(_) => {
+                "disaster_recovery_in_progress".to_owned()
+            }
+            LogEntryType::DisasterRecoveryInProgressExpired(_) => {
+                "disaster_recovery_in_progress_expired".to_owned()
+            }
         }
     }
 
@@ -107,6 +120,18 @@ impl LogEntryType {
                 UpgradeResultLog::Success => "Upgrade succeeded".to_owned(),
                 UpgradeResultLog::Failure(ref reason) => format!("Upgrade failed: {}", reason),
             },
+            LogEntryType::DisasterRecoveryInProgress(data) => {
+                format!(
+                    "Disaster recovery in progress, rejecting operation {}",
+                    data.operation
+                )
+            }
+            LogEntryType::DisasterRecoveryInProgressExpired(data) => {
+                format!(
+                    "Disaster recovery in-progress expired before operation {}",
+                    data.operation
+                )
+            }
         }
     }
 
@@ -118,6 +143,8 @@ impl LogEntryType {
             LogEntryType::DisasterRecoveryStart(data) => serde_json::to_string(data),
             LogEntryType::DisasterRecoveryResult(data) => serde_json::to_string(data),
             LogEntryType::UpgradeResult(data) => serde_json::to_string(data),
+            LogEntryType::DisasterRecoveryInProgress(data) => serde_json::to_string(data),
+            LogEntryType::DisasterRecoveryInProgressExpired(data) => serde_json::to_string(data),
         }
         .map_err(|err| format!("Failed to serialize log entry: {}", err))
     }

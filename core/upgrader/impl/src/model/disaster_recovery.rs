@@ -108,14 +108,16 @@ pub enum RecoveryStatus {
     /// There are no active recovery requests.
     Idle,
     /// There is a consensus on the recovery requests.
-    InProgress,
+    InProgress { since: Timestamp },
 }
 
 impl From<RecoveryStatus> for upgrader_api::RecoveryStatus {
     fn from(value: RecoveryStatus) -> Self {
         match value {
             RecoveryStatus::Idle => upgrader_api::RecoveryStatus::Idle,
-            RecoveryStatus::InProgress => upgrader_api::RecoveryStatus::InProgress,
+            RecoveryStatus::InProgress { since } => upgrader_api::RecoveryStatus::InProgress {
+                since: timestamp_to_rfc3339(&since),
+            },
         }
     }
 }
