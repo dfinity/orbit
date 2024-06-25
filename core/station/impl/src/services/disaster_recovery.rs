@@ -197,6 +197,3 @@ pub fn disaster_recovery_observes_insert_account(
         });
     }));
 }
-
-#[cfg(test)]
-mod test {}

@@ -29,7 +29,7 @@ lazy_static! {
         Arc::new(SystemService::new(Arc::clone(&REQUEST_REPOSITORY)));
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct SystemService {
     request_repository: Arc<RequestRepository>,
 }
