@@ -1,7 +1,10 @@
-use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
+use crate::setup::{
+    get_canister_wasm, setup_new_env, setup_new_env_with_config, WALLET_ADMIN_USER,
+};
 use crate::utils::{
-    add_user, execute_request, get_core_canister_health_status, get_system_info,
-    get_upgrader_disaster_recovery, get_user, set_disaster_recovery, user_test_id,
+    add_user, advance_time_to_burn_cycles, execute_request, get_core_canister_health_status,
+    get_system_info, get_upgrader_disaster_recovery, get_upgrader_logs, get_user,
+    set_disaster_recovery, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -10,7 +13,8 @@ use orbit_essentials::utils::sha256_hash;
 use pocket_ic::{query_candid_as, update_candid_as};
 use station_api::{
     AddAccountOperationInput, AllowDTO, DisasterRecoveryCommitteeDTO, HealthStatus,
-    RequestOperationInput, SetDisasterRecoveryOperationInput,
+    RequestOperationInput, SetDisasterRecoveryOperationInput, SystemInit, SystemInstall,
+    SystemUpgrade,
 };
 use upgrader_api::{
     Account, AdminUser, DisasterRecoveryCommittee, GetDisasterRecoveryAccountsResponse,
@@ -419,16 +423,225 @@ fn test_disaster_recovery_flow() {
 }
 
 #[test]
-fn test_disaster_recovery_in_progress() {}
+fn test_disaster_recovery_in_progress() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+
+    let new_wasm_module = get_canister_wasm("upgrader");
+
+    // install the upgrader wasm for the station as a test
+    let good_request = upgrader_api::RequestDisasterRecoveryInput {
+        module: new_wasm_module.clone(),
+        arg: Encode!(&upgrader_api::InitArg {
+            target_canister: canister_ids.station
+        })
+        .unwrap(),
+        install_mode: upgrader_api::InstallMode::Reinstall,
+    };
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "request_disaster_recovery",
+        (good_request.clone(),),
+    )
+    .expect("Failed update call to request disaster recovery");
+    res.0.expect("Failed to request disaster recovery");
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::InProgress { .. }
+    ));
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "request_disaster_recovery",
+        (good_request.clone(),),
+    )
+    .expect("Failed update call to request disaster recovery");
+    res.0.expect("Failed to request disaster recovery");
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::InProgress { .. }
+    ));
+
+    let logs_result = get_upgrader_logs(&env, &upgrader_id, &WALLET_ADMIN_USER);
+
+    // assert that the 2nd request is not processed because the first one is still in progress
+    assert_eq!(
+        logs_result.logs.first().expect("No logs found").entry_type,
+        "disaster_recovery_in_progress".to_owned()
+    );
+}
+
+// Test disaster recovery Install canister by waiting for the station to run out cycles and then doing DR Install
+#[test]
+fn test_disaster_recovery_install() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env_with_config(crate::setup::SetupConfig {
+        start_cycles: Some(1_000_000_000_000),
+        ..Default::default()
+    });
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+
+    // top the upgrader up so that it wont run out of cycles
+    env.add_cycles(upgrader_id, 100_000_000_000_000);
+
+    // stop the upgrader canister to prevent topping up the station
+    env.stop_canister(upgrader_id, Some(NNS_ROOT_CANISTER_ID))
+        .expect("Failed to stop canister");
+
+    // burn all cycles in the station
+    advance_time_to_burn_cycles(&env, NNS_ROOT_CANISTER_ID, canister_ids.station, 0);
+
+    // start the upgrader canister
+    env.start_canister(upgrader_id, Some(NNS_ROOT_CANISTER_ID))
+        .expect("Failed to start canister");
+
+    env.tick();
+
+    env.add_cycles(canister_ids.station, 3_000_000_000_000);
+
+    // the station should be wiped by now
+    assert!(env
+        .canister_status(canister_ids.station, Some(upgrader_id))
+        .expect("Failed to get canister status")
+        .module_hash
+        .is_none());
+
+    // install the upgrader wasm for the station as a test
+    let good_request = upgrader_api::RequestDisasterRecoveryInput {
+        module: get_canister_wasm("upgrader"),
+        arg: Encode!(&upgrader_api::InitArg {
+            target_canister: canister_ids.station
+        })
+        .unwrap(),
+        install_mode: upgrader_api::InstallMode::Install,
+    };
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "request_disaster_recovery",
+        (good_request.clone(),),
+    )
+    .expect("Failed update call to request disaster recovery");
+    res.0.expect("Failed to request disaster recovery");
+
+    env.tick();
+    env.tick();
+    env.tick();
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+
+    assert!(matches!(
+        dr_status.last_recovery_result,
+        Some(upgrader_api::RecoveryResult::Success)
+    ));
+}
 
 #[test]
-fn test_disaster_recovery_in_progress_expired() {}
+fn test_disaster_recovery_upgrade() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+
+    let station_init_arg = SystemInstall::Upgrade(SystemUpgrade { name: None });
+    let good_request = upgrader_api::RequestDisasterRecoveryInput {
+        module: get_canister_wasm("station"),
+        arg: Encode!(&station_init_arg).unwrap(),
+        install_mode: upgrader_api::InstallMode::Upgrade,
+    };
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "request_disaster_recovery",
+        (good_request.clone(),),
+    )
+    .expect("Failed update call to request disaster recovery");
+    res.0.expect("Failed to request disaster recovery");
+
+    env.tick();
+    env.tick();
+    env.tick();
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+
+    assert!(matches!(
+        dr_status.last_recovery_result,
+        Some(upgrader_api::RecoveryResult::Success)
+    ));
+}
 
 #[test]
-fn test_disaster_recovery_install() {}
+fn test_disaster_recovery_failing() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
 
-#[test]
-fn test_disaster_recovery_upgrade() {}
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
 
-#[test]
-fn test_disaster_recovery_failing() {}
+    // intentionally bad arg to fail Upgrade
+    let arg = SystemInstall::Init(SystemInit {
+        fallback_controller: None,
+        quorum: None,
+        upgrader_wasm_module: vec![],
+        name: "Station".to_string(),
+        admins: vec![],
+    });
+
+    // install with intentionally bad arg to fail
+    let good_request = upgrader_api::RequestDisasterRecoveryInput {
+        module: get_canister_wasm("station"),
+        arg: Encode!(&arg).unwrap(),
+        install_mode: upgrader_api::InstallMode::Upgrade,
+    };
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "request_disaster_recovery",
+        (good_request.clone(),),
+    )
+    .expect("Failed update call to request disaster recovery");
+    res.0.expect("Failed to request disaster recovery");
+
+    env.tick();
+    env.tick();
+    env.tick();
+    env.tick();
+    env.tick();
+    env.tick();
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::Idle
+    ));
+    assert!(matches!(
+        dr_status.last_recovery_result,
+        Some(upgrader_api::RecoveryResult::Failure(_))
+    ));
+}

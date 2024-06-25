@@ -279,7 +279,9 @@ impl DisasterRecoveryService {
 
         // only stop for upgrade
         if request.install_mode == InstallMode::Upgrade {
-            let _ = installer.stop(station_canister_id).await;
+            if let Err(err) = installer.stop(station_canister_id).await {
+                ic_cdk::print(err);
+            }
         }
 
         match installer
@@ -301,7 +303,9 @@ impl DisasterRecoveryService {
 
         // only start for upgrade
         if request.install_mode == InstallMode::Upgrade {
-            let _ = installer.start(station_canister_id).await;
+            if let Err(err) = installer.start(station_canister_id).await {
+                ic_cdk::print(err);
+            }
         }
     }
 

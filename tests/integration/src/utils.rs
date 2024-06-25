@@ -12,7 +12,7 @@ use station_api::{
     SubmitRequestApprovalResponse, SystemInfoDTO, SystemInfoResponse, UserDTO, UserStatusDTO,
 };
 use std::time::Duration;
-use upgrader_api::GetDisasterRecoveryStateResponse;
+use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
 
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 
@@ -383,8 +383,11 @@ pub fn advance_time_to_burn_cycles(
     env.advance_time(burn_duration);
     env.tick();
 
-    // restart the canister
-    env.start_canister(canister_id, Some(sender)).unwrap();
+    if target_cycles > 0 {
+        // restart the canister if it has some cycles remaining
+        env.start_canister(canister_id, Some(sender)).unwrap();
+    }
+
     // need at least 2 ticks
     env.tick();
     env.tick();
@@ -446,4 +449,21 @@ pub fn set_disaster_recovery(
         RequestOperationDTO::SetDisasterRecovery(response) => *response,
         _ => panic!("invalid request operation"),
     }
+}
+
+pub fn get_upgrader_logs(
+    env: &PocketIc,
+    upgrader_id: &Principal,
+    sender: &Principal,
+) -> GetLogsResponse {
+    let res: (ApiResult<GetLogsResponse>,) = query_candid_as(
+        env,
+        upgrader_id.to_owned(),
+        *sender,
+        "get_logs",
+        (GetLogsInput { pagination: None },),
+    )
+    .expect("Failed query call to get disaster recovery logs");
+
+    res.0.expect("Failed to get disaster recovery logs")
 }
