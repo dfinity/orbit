@@ -1,11 +1,11 @@
-//! Arguments for updating an external canister Wasm.
+//! Arguments for `dfx orbit canister change`.
 
 use crate::{args::request::CreateRequestArgs, orbit_station_agent::StationAgent};
 use clap::{Parser, ValueEnum};
 
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Parser)]
-pub struct ChangeExternalCanister {
+pub struct Args {
     // TODO: Poll, waiting for the request to be accepted.
     /// The canister ID to install or update.
     // TODO: Canister by name
@@ -26,13 +26,13 @@ pub struct ChangeExternalCanister {
     arg_file: Option<String>,
 }
 
-impl CreateRequestArgs for ChangeExternalCanister {
+impl CreateRequestArgs for Args {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     fn into_create_request_input(
         self,
         station_agent: &StationAgent,
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
-        let ChangeExternalCanister {
+        let Args {
             canister,
             mode,
             wasm,

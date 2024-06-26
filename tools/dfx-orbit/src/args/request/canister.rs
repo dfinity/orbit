@@ -1,5 +1,6 @@
-//! Makes requests to do things to canisters.  Such as update the Wasm, deploy frontend assets or make API calls to them.
+//! CLI arguments for `dfx-orbit canister`.
 
+pub mod call;
 pub mod change;
 
 use super::CreateRequestArgs;
@@ -11,7 +12,9 @@ use clap::Subcommand;
 #[command(version, about, long_about = None)]
 pub enum Args {
     /// Request to update the canister.
-    Change(change::ChangeExternalCanister),
+    Change(change::Args),
+    /// Request to call a canister method.
+    Call(call::Args),
 }
 
 impl CreateRequestArgs for Args {
@@ -22,6 +25,7 @@ impl CreateRequestArgs for Args {
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
         match self {
             Args::Change(change_args) => change_args.into_create_request_input(station_agent),
+            Args::Call(call_args) => call_args.into_create_request_input(station_agent),
         }
     }
 }
