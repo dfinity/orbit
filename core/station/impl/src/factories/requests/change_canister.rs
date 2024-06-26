@@ -5,7 +5,7 @@ use crate::{
         ChangeCanisterOperation, ChangeCanisterTarget, ChangeExternalCanisterOperation, Request,
         RequestExecutionPlan, RequestOperation,
     },
-    services::{ChangeCanisterService, SystemService},
+    services::{ChangeCanisterService, DisasterRecoveryService, SystemService},
 };
 use async_trait::async_trait;
 use candid::Encode;
@@ -61,6 +61,7 @@ pub struct ChangeCanisterRequestExecute<'p, 'o> {
     operation: &'o ChangeCanisterOperation,
     system_service: Arc<SystemService>,
     change_canister_service: Arc<ChangeCanisterService>,
+    disaster_recovery_service: Arc<DisasterRecoveryService>,
 }
 
 impl<'p, 'o> ChangeCanisterRequestExecute<'p, 'o> {
@@ -69,12 +70,14 @@ impl<'p, 'o> ChangeCanisterRequestExecute<'p, 'o> {
         operation: &'o ChangeCanisterOperation,
         system_service: Arc<SystemService>,
         change_canister_service: Arc<ChangeCanisterService>,
+        disaster_recovery_service: Arc<DisasterRecoveryService>,
     ) -> Self {
         Self {
             request,
             operation,
             system_service,
             change_canister_service,
+            disaster_recovery_service,
         }
     }
 }
@@ -118,6 +121,12 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
                     .map_err(|err| RequestExecuteError::Failed {
                         reason: format!("failed to upgrade upgrader: {}", err),
                     })?;
+
+                // The upgrader might have just gained the ability to perform disaster recovery, so sync it now.
+                let disaster_recovery_service = Arc::clone(&self.disaster_recovery_service);
+                crate::core::ic_cdk::spawn(async {
+                    disaster_recovery_service.sync_all().await;
+                });
 
                 Ok(RequestExecuteStage::Completed(
                     self.request.operation.clone(),
