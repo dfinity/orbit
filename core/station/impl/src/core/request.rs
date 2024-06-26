@@ -6,9 +6,7 @@ use crate::{
             EvaluateRequestPolicyRule, RequestEvaluationResult, RequestPolicyRule,
             RequestPolicyRuleResult,
         },
-        request_specifier::{
-            Match, RequestSpecifier, UserInvolvedInPolicyRuleForRequestResource, UserSpecifier,
-        },
+        request_specifier::{Match, UserInvolvedInPolicyRuleForRequestResource, UserSpecifier},
         EvaluationStatus, Request, RequestId, RequestStatusCode, User, UserId, UserStatus,
     },
     repositories::{
@@ -20,19 +18,16 @@ use orbit_essentials::{repository::Repository, types::UUID};
 use std::{collections::HashSet, sync::Arc};
 
 pub struct RequestEvaluator {
-    pub request_matcher: Arc<dyn Match<(Request, RequestSpecifier)>>,
     pub policy_rule_evaluator: Arc<dyn EvaluateRequestPolicyRule<RequestPolicyRuleResult>>,
     pub request: Request,
 }
 
 impl RequestEvaluator {
     pub fn new(
-        request_matcher: Arc<dyn Match<(Request, RequestSpecifier)>>,
         policy_rule_evaluator: Arc<dyn EvaluateRequestPolicyRule<RequestPolicyRuleResult>>,
         request: Request,
     ) -> Self {
         Self {
-            request_matcher,
             policy_rule_evaluator,
             request,
         }
@@ -111,7 +106,6 @@ pub struct PossibleApprovers {
 ///
 /// The possible approvers are the users that match the request's policies.
 pub struct RequestPossibleApproversFinder<'p> {
-    pub request_matcher: Arc<dyn Match<(Request, RequestSpecifier)>>,
     pub possible_approvers_policy_rule_evaluator: Arc<
         dyn EvaluateRequestPolicyRule<
             PossibleApprovers,
@@ -124,7 +118,6 @@ pub struct RequestPossibleApproversFinder<'p> {
 
 impl<'p> RequestPossibleApproversFinder<'p> {
     pub fn new(
-        request_matcher: Arc<dyn Match<(Request, RequestSpecifier)>>,
         possible_approvers_policy_rule_evaluator: Arc<
             dyn EvaluateRequestPolicyRule<
                 PossibleApprovers,
@@ -135,7 +128,6 @@ impl<'p> RequestPossibleApproversFinder<'p> {
         request: &'p Request,
     ) -> Self {
         Self {
-            request_matcher,
             possible_approvers_policy_rule_evaluator,
             request,
         }
@@ -146,16 +138,13 @@ impl Evaluate<HashSet<UUID>> for RequestPossibleApproversFinder<'_> {
     fn evaluate(&self) -> Result<HashSet<UUID>, EvaluateError> {
         let mut possible_approvers = HashSet::new();
         let mut matching_groups = HashSet::new();
-        let mut matching_policies = Vec::new();
-        for policy in REQUEST_POLICY_REPOSITORY.list() {
-            if self
-                .request_matcher
-                .is_match((self.request.to_owned(), policy.specifier.to_owned()))
-                .context("failed to match request")?
-            {
-                matching_policies.push(policy.to_owned());
-            }
-        }
+        let matching_policies = self
+            .request
+            .operation
+            .to_resources()
+            .iter()
+            .flat_map(|resource| REQUEST_POLICY_REPOSITORY.find_by_resource(resource.to_owned()))
+            .collect::<Vec<_>>();
 
         for policy in matching_policies {
             let result = self.possible_approvers_policy_rule_evaluator.evaluate((
@@ -411,13 +400,12 @@ mod tests {
     use super::*;
     use crate::{
         core::{
-            evaluation::{REQUEST_MATCHER, REQUEST_POLICY_RULE_EVALUATOR},
-            middlewares::call_context,
-            set_mock_caller,
+            evaluation::REQUEST_POLICY_RULE_EVALUATOR, middlewares::call_context, set_mock_caller,
         },
         models::{
             request_approval_test_utils::{mock_approved_with_user, mock_rejected_with_user},
             request_policy_test_utils::mock_request_policy,
+            request_specifier::RequestSpecifier,
             request_test_utils::mock_request,
             resource::ResourceIds,
             user_test_utils::{self, mock_user},
@@ -444,7 +432,6 @@ mod tests {
 
         let evaluator = RequestEvaluator {
             request: request.to_owned(),
-            request_matcher: REQUEST_MATCHER.to_owned(),
             policy_rule_evaluator: REQUEST_POLICY_RULE_EVALUATOR.to_owned(),
         };
 
@@ -477,7 +464,6 @@ mod tests {
 
         let evaluator = RequestEvaluator {
             request: request.to_owned(),
-            request_matcher: REQUEST_MATCHER.to_owned(),
             policy_rule_evaluator: REQUEST_POLICY_RULE_EVALUATOR.to_owned(),
         };
 
@@ -511,7 +497,6 @@ mod tests {
 
         let evaluator = RequestEvaluator {
             request: request.to_owned(),
-            request_matcher: REQUEST_MATCHER.to_owned(),
             policy_rule_evaluator: REQUEST_POLICY_RULE_EVALUATOR.to_owned(),
         };
 
@@ -548,7 +533,6 @@ mod tests {
 
         let evaluator = RequestEvaluator {
             request: request.to_owned(),
-            request_matcher: REQUEST_MATCHER.to_owned(),
             policy_rule_evaluator: REQUEST_POLICY_RULE_EVALUATOR.to_owned(),
         };
 
@@ -582,7 +566,6 @@ mod tests {
 
         let evaluator = RequestEvaluator {
             request: request.to_owned(),
-            request_matcher: REQUEST_MATCHER.to_owned(),
             policy_rule_evaluator: REQUEST_POLICY_RULE_EVALUATOR.to_owned(),
         };
 
@@ -615,7 +598,6 @@ mod tests {
 
         let evaluator = RequestEvaluator {
             request: request.to_owned(),
-            request_matcher: REQUEST_MATCHER.to_owned(),
             policy_rule_evaluator: REQUEST_POLICY_RULE_EVALUATOR.to_owned(),
         };
 

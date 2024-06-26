@@ -4,8 +4,8 @@ use super::{
     RequestStatus, UserId, UserKey,
 };
 use crate::core::evaluation::{
-    Evaluate, REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR, REQUEST_MATCHER,
-    REQUEST_POLICY_RULE_EVALUATOR, REQUEST_POSSIBLE_APPROVERS_REQUEST_POLICY_RULE_EVALUATOR,
+    Evaluate, REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR, REQUEST_POLICY_RULE_EVALUATOR,
+    REQUEST_POSSIBLE_APPROVERS_REQUEST_POLICY_RULE_EVALUATOR,
 };
 use crate::core::ic_cdk::api::print;
 use crate::core::ic_cdk::next_time;
@@ -343,7 +343,6 @@ impl Request {
         if self.status == RequestStatus::Created {
             let evaluator = RequestEvaluator {
                 request: self.to_owned(),
-                request_matcher: REQUEST_MATCHER.to_owned(),
                 policy_rule_evaluator: REQUEST_POLICY_RULE_EVALUATOR.to_owned(),
             };
 
@@ -364,7 +363,6 @@ impl Request {
     pub async fn find_all_possible_approvers(&self) -> Result<HashSet<UUID>, EvaluateError> {
         let evaluator = RequestPossibleApproversFinder {
             request: self,
-            request_matcher: REQUEST_MATCHER.to_owned(),
             possible_approvers_policy_rule_evaluator:
                 REQUEST_POSSIBLE_APPROVERS_REQUEST_POLICY_RULE_EVALUATOR.to_owned(),
         };
