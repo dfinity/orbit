@@ -40,8 +40,8 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
                 RequestOperationType::RemoveRequestPolicy
             }
             RequestOperationTypeDTO::ManageSystemInfo => RequestOperationType::ManageSystemInfo,
-            RequestOperationTypeDTO::SetDisasterRecoveryCommittee => {
-                RequestOperationType::SetDisasterRecoveryCommittee
+            RequestOperationTypeDTO::SetDisasterRecovery => {
+                RequestOperationType::SetDisasterRecovery
             }
         }
     }
@@ -84,8 +84,8 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
                 RequestOperationTypeDTO::RemoveRequestPolicy
             }
             RequestOperationType::ManageSystemInfo => RequestOperationTypeDTO::ManageSystemInfo,
-            RequestOperationType::SetDisasterRecoveryCommittee => {
-                RequestOperationTypeDTO::SetDisasterRecoveryCommittee
+            RequestOperationType::SetDisasterRecovery => {
+                RequestOperationTypeDTO::SetDisasterRecovery
             }
         }
     }
@@ -120,9 +120,7 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
             RequestOperation::RemoveRequestPolicy(_) => RequestOperationType::RemoveRequestPolicy,
             RequestOperation::ManageSystemInfo(_) => RequestOperationType::ManageSystemInfo,
-            RequestOperation::SetDisasterRecovery(_) => {
-                RequestOperationType::SetDisasterRecoveryCommittee
-            }
+            RequestOperation::SetDisasterRecovery(_) => RequestOperationType::SetDisasterRecovery,
         }
     }
 }

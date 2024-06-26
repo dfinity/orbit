@@ -119,7 +119,7 @@ pub enum RequestOperationTypeDTO {
     EditUserGroup,
     RemoveUserGroup,
     ChangeCanister,
-    SetDisasterRecoveryCommittee,
+    SetDisasterRecovery,
     ChangeExternalCanister,
     CreateExternalCanister,
     CallExternalCanister,

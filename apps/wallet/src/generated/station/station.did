@@ -830,7 +830,7 @@ type RequestOperationType = variant {
   // An operation for changing a canister.
   ChangeCanister;
   // An operation for setting disaster recovery for a canister.
-  SetDisasterRecoveryCommittee;
+  SetDisasterRecovery;
   // An operation for changing a external canister.
   ChangeExternalCanister;
   // An operation for creating a external canister.
@@ -1704,11 +1704,6 @@ type ChangeCanisterResourceAction = variant {
   Create;
 };
 
-// The actions that are available for setting disaster recovery.
-type SetDisasterRecoveryResourceAction = variant {
-  Create;
-};
-
 // The target of a request to create a external canister.
 type CreateExternalCanisterResourceTarget = variant {
   Any;
@@ -1785,7 +1780,6 @@ type Resource = variant {
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
   ChangeCanister : ChangeCanisterResourceAction;
-  SetDisasterRecovery : SetDisasterRecoveryResourceAction;
   ExternalCanister : ExternalCanisterResourceAction;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;

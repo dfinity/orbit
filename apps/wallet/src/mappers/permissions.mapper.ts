@@ -43,10 +43,6 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.ExternalCanister;
   }
 
-  if (variantIs(resource, 'SetDisasterRecovery')) {
-    return ResourceTypeEnum.SetDisasterRecovery;
-  }
-
   return unreachable(resource);
 };
 

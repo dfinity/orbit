@@ -23,8 +23,7 @@ impl From<station_api::ResourceDTO> for Resource {
             }
             station_api::ResourceDTO::UserGroup(action) => Resource::UserGroup(action.into()),
             station_api::ResourceDTO::AddressBook(action) => Resource::AddressBook(action.into()),
-            station_api::ResourceDTO::SetDisasterRecovery(action)
-            | station_api::ResourceDTO::ChangeCanister(action) => {
+            station_api::ResourceDTO::ChangeCanister(action) => {
                 Resource::ChangeCanister(action.into())
             }
             station_api::ResourceDTO::ExternalCanister(action) => {
@@ -49,9 +48,6 @@ impl From<Resource> for station_api::ResourceDTO {
             Resource::AddressBook(action) => station_api::ResourceDTO::AddressBook(action.into()),
             Resource::ChangeCanister(action) => {
                 station_api::ResourceDTO::ChangeCanister(action.into())
-            }
-            Resource::SetDisasterRecovery(action) => {
-                station_api::ResourceDTO::SetDisasterRecovery(action.into())
             }
             Resource::ExternalCanister(action) => {
                 station_api::ResourceDTO::ExternalCanister(action.into())

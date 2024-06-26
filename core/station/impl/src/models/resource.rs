@@ -23,7 +23,6 @@ pub enum Resource {
     Account(AccountResourceAction),
     AddressBook(ResourceAction),
     ChangeCanister(ChangeCanisterResourceAction),
-    SetDisasterRecovery(ChangeCanisterResourceAction),
     ExternalCanister(ExternalCanisterResourceAction),
     Request(RequestResourceAction),
     RequestPolicy(ResourceAction),
@@ -55,11 +54,9 @@ impl ModelValidator<ValidationError> for Resource {
                     EnsureAddressBookEntry::resource_id_exists(resource_id)?
                 }
             },
-            Resource::SetDisasterRecovery(action) | Resource::ChangeCanister(action) => {
-                match action {
-                    ChangeCanisterResourceAction::Create => (),
-                }
-            }
+            Resource::ChangeCanister(action) => match action {
+                ChangeCanisterResourceAction::Create => (),
+            },
             Resource::ExternalCanister(action) => match action {
                 ExternalCanisterResourceAction::Create(_)
                 | ExternalCanisterResourceAction::Change(_)
@@ -153,12 +150,6 @@ pub enum SystemResourceAction {
 pub enum ChangeCanisterResourceAction {
     Create,
 }
-
-// #[storable]
-// #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-// pub enum SetDisasterRecoveryResourceAction {
-//     Create,
-// }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -371,15 +362,13 @@ impl Resource {
                     ))]
                 }
             },
-            Resource::SetDisasterRecovery(action) | Resource::ChangeCanister(action) => {
-                match action {
-                    ChangeCanisterResourceAction::Create => {
-                        vec![Resource::ChangeCanister(
-                            ChangeCanisterResourceAction::Create,
-                        )]
-                    }
+            Resource::ChangeCanister(action) => match action {
+                ChangeCanisterResourceAction::Create => {
+                    vec![Resource::ChangeCanister(
+                        ChangeCanisterResourceAction::Create,
+                    )]
                 }
-            }
+            },
             Resource::ExternalCanister(action) => match action {
                 ExternalCanisterResourceAction::Create(
                     CreateExternalCanisterResourceTarget::Any,
@@ -590,7 +579,6 @@ impl Display for Resource {
             Resource::Account(action) => write!(f, "Account({})", action),
             Resource::AddressBook(action) => write!(f, "AddressBook({})", action),
             Resource::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
-            Resource::SetDisasterRecovery(action) => write!(f, "SetDisasterRecovery({})", action),
             Resource::ExternalCanister(action) => {
                 write!(f, "ExternalCanister({})", action)
             }

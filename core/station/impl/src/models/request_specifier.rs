@@ -159,9 +159,7 @@ impl From<&RequestSpecifier> for RequestOperationType {
             RequestSpecifier::EditUserGroup(_) => RequestOperationType::EditUserGroup,
             RequestSpecifier::RemoveUserGroup(_) => RequestOperationType::RemoveUserGroup,
             RequestSpecifier::ManageSystemInfo => RequestOperationType::ManageSystemInfo,
-            RequestSpecifier::SetDisasterRecovery => {
-                RequestOperationType::SetDisasterRecoveryCommittee
-            }
+            RequestSpecifier::SetDisasterRecovery => RequestOperationType::SetDisasterRecovery,
         }
     }
 }

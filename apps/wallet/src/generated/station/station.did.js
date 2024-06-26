@@ -127,9 +127,6 @@ export const idlFactory = ({ IDL }) => {
     'Create' : CreateExternalCanisterResourceTarget,
     'Change' : ChangeExternalCanisterResourceTarget,
   });
-  const SetDisasterRecoveryResourceAction = IDL.Variant({
-    'Create' : IDL.Null,
-  });
   const AccountResourceAction = IDL.Variant({
     'List' : IDL.Null,
     'Read' : ResourceId,
@@ -154,7 +151,6 @@ export const idlFactory = ({ IDL }) => {
     'System' : SystemResourceAction,
     'User' : UserResourceAction,
     'ExternalCanister' : ExternalCanisterResourceAction,
-    'SetDisasterRecovery' : SetDisasterRecoveryResourceAction,
     'Account' : AccountResourceAction,
     'AddressBook' : ResourceAction,
     'ChangeCanister' : ChangeCanisterResourceAction,
@@ -876,12 +872,12 @@ export const idlFactory = ({ IDL }) => {
     'ChangeExternalCanister' : IDL.Null,
     'AddUser' : IDL.Null,
     'EditUserGroup' : IDL.Null,
+    'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
-    'SetDisasterRecoveryCommittee' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,

@@ -730,12 +730,12 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'ChangeExternalCanister' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
+  { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
-  { 'SetDisasterRecoveryCommittee' : null } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
@@ -813,7 +813,6 @@ export type Resource = { 'Request' : RequestResourceAction } |
   { 'System' : SystemResourceAction } |
   { 'User' : UserResourceAction } |
   { 'ExternalCanister' : ExternalCanisterResourceAction } |
-  { 'SetDisasterRecovery' : SetDisasterRecoveryResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
   { 'ChangeCanister' : ChangeCanisterResourceAction } |
@@ -837,7 +836,6 @@ export interface SetDisasterRecoveryOperation {
 export interface SetDisasterRecoveryOperationInput {
   'committee' : [] | [DisasterRecoveryCommittee],
 }
-export type SetDisasterRecoveryResourceAction = { 'Create' : null };
 export type Sha256Hash = string;
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
