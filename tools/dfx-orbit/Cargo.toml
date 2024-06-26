@@ -20,6 +20,7 @@ cap-std.workspace = true
 dfx-core.workspace = true
 ic-agent.workspace = true
 ic-asset.workspace = true
+ic-certified-assets.workspace = true
 ic-utils.workspace = true
 slog.workspace = true
 slog-term.workspace = true

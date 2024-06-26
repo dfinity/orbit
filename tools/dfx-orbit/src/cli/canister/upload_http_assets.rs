@@ -1,5 +1,9 @@
 //! Implements the `dfx-orbit canister upload-http-assets` CLI command.
+use ic_asset::canister_api::{
+    methods::batch::compute_evidence, types::batch_upload::common::ComputeEvidenceArguments,
+};
 use ic_utils::canister::CanisterBuilder;
+use slog::info;
 use std::{collections::HashMap, path::PathBuf};
 use walkdir::WalkDir;
 
@@ -15,6 +19,7 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
     let canister_id = station_agent.canister_id(&canister)?;
     let logger = station_agent.dfx.logger().clone();
+    // Upload assets
     let canister_agent = CanisterBuilder::new()
         .with_agent(station_agent.dfx.agent().await?)
         .with_canister_id(canister_id)
@@ -22,6 +27,20 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     let assets = assets_as_hash_map(&path);
     let batch_id = ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
     println!("Proposed batch_id: {}", batch_id);
+    // Wait for the evidence to be computed.
+    // This part is stolen from ic_asset::sync::prepare_sync_for_proposal.  Unfortunately the relevant functions are private.
+
+    let compute_evidence_arg = ComputeEvidenceArguments {
+        batch_id: batch_id.clone(),
+        max_iterations: Some(97), // 75% of max(130) = 97.5
+    };
+    info!(logger, "Computing evidence.");
+    let evidence = loop {
+        if let Some(evidence) = compute_evidence(&canister_agent, &compute_evidence_arg).await? {
+            break evidence;
+        }
+    };
+    println!("Evidence computed: {:#?}", evidence);
     Ok(())
 }
 
