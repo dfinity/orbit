@@ -50,8 +50,10 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
             break evidence;
         }
     };
-    println!("Local evidence: {local_evidence}");
-    println!("Canister computed evidence: {evidence:?}");
+    println!("Proposed batch_id: {}", batch_id);
+    println!("Local evidence: \"{}\"", escape_hex_string(&local_evidence));
+    println!("Canister computed evidence: {}", blob_from_bytes(&evidence));
+    // TODO: The local evidence doesn't match the canister evidence.
 
     // Maybe compute evidence locally and then compare?
     Ok(())
@@ -92,4 +94,26 @@ fn assets_as_hash_map(asset_dir: &str) -> HashMap<String, PathBuf> {
             (http_path, asset_path)
         })
         .collect()
+}
+
+/// Converts a hex string into one escaped as in a candid blob.
+fn escape_hex_string(s: &str) -> String {
+    let mut ans = String::with_capacity(s.len() + s.len() / 2);
+    for chunk in s.chars().collect::<Vec<_>>()[..].chunks(2) {
+        ans.push('\\');
+        for char in chunk {
+            ans.push(*char);
+        }
+    }
+    ans
+}
+
+/// Converts a byte array into one escaped as a candid blob
+fn blob_from_bytes(bytes: &[u8]) -> String {
+    let mut ans = String::with_capacity(bytes.len() + bytes.len() / 2);
+    for byte in bytes {
+        ans.push('\\');
+        ans.push_str(&format!("{:02x}", byte));
+    }
+    ans
 }
