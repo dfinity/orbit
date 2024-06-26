@@ -124,7 +124,7 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
 
                 // The upgrader might have just gained the ability to perform disaster recovery, so sync it now.
                 let disaster_recovery_service = Arc::clone(&self.disaster_recovery_service);
-                crate::core::ic_cdk::spawn(async {
+                crate::core::ic_cdk::spawn(async move {
                     disaster_recovery_service.sync_all().await;
                 });
 

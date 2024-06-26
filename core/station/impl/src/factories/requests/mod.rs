@@ -3,8 +3,8 @@ use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{Request, RequestOperation},
     services::{
-        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, EXTERNAL_CANISTER_SERVICE,
-        REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
+        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, DISASTER_RECOVERY_SERVICE,
+        EXTERNAL_CANISTER_SERVICE, REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
     },
 };
 use async_trait::async_trait;
@@ -274,6 +274,7 @@ impl RequestFactory {
                     operation,
                     Arc::clone(&SYSTEM_SERVICE),
                     Arc::clone(&CHANGE_CANISTER_SERVICE),
+                    Arc::clone(&DISASTER_RECOVERY_SERVICE),
                 ))
             }
             RequestOperation::ChangeExternalCanister(operation) => {
