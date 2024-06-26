@@ -53,12 +53,11 @@ fn assets_as_hash_map(asset_dir: &str) -> HashMap<String, PathBuf> {
             let relative_path = asset_path.strip_prefix(asset_dir).expect(
                 "Internal error: list_assets should have returned only files in the asset_dir",
             );
-            let key = relative_path
-                .file_name()
-                .expect("Internal error: File has no name") // TODO: This can probably be eliminated by the filter_map above.
-                .to_string_lossy()
-                .to_string();
-            (key, asset_path)
+            let http_path = format!(
+                "/{relative_path}",
+                relative_path = relative_path.to_string_lossy()
+            );
+            (http_path, asset_path)
         })
         .collect()
 }
