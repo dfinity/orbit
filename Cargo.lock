@@ -1065,6 +1065,7 @@ dependencies = [
  "slog-term",
  "station-api",
  "tokio",
+ "walkdir",
 ]
 
 [[package]]

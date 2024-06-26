@@ -27,3 +27,4 @@ slog-async.workspace = true
 tokio.workspace = true
 
 orbit-station-api = { path = "../../core/station/api", package = "station-api" }
+walkdir = "2.5.0"
