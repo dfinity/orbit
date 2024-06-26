@@ -4,7 +4,7 @@ use ic_asset::canister_api::{
 };
 use ic_utils::canister::CanisterBuilder;
 use slog::info;
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::HashMap, path::{Path, PathBuf}};
 use walkdir::WalkDir;
 
 use crate::args::canister::UploadHttpAssets as Args;
@@ -16,6 +16,10 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
         path,
         verbose: _verbose,
     } = args;
+    // The path is needed in various forms.  If dirs is plural, maybe we should accept multiple dirs?
+    let dir: PathBuf = PathBuf::from(&path);
+    let dirs: Vec<&Path> = vec![dir.as_path()];
+
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
     let canister_id = station_agent.canister_id(&canister)?;
     let logger = station_agent.dfx.logger().clone();
@@ -27,6 +31,8 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     let assets = assets_as_hash_map(&path);
     let batch_id = ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
     println!("Proposed batch_id: {}", batch_id);
+    // Compute evidence locally:
+    let _local_evidence = ic_asset::compute_evidence(&canister_agent, &dirs, &logger).await?;
     // Wait for the canister to compute the evidence:
     // This part is stolen from ic_asset::sync::prepare_sync_for_proposal.  Unfortunately the relevant functions are private.
     // The docs explicitly include waiting for the evidence so this should really be made easier!  See: https://github.com/dfinity/sdk/blob/2509e81e11e71dce4045c679686c952809525470/docs/design/asset-canister-interface.md?plain=1#L85
@@ -40,7 +46,7 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
         if let Some(evidence) = compute_evidence(&canister_agent, &compute_evidence_arg).await? {
             break evidence;
         }
-    };    
+    };
     println!("Canister computed evidence: {evidence:?}");
 
     // Maybe compute evidence locally and then compare?
