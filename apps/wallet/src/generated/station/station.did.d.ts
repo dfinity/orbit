@@ -237,7 +237,7 @@ export interface DefiniteCanisterSettings {
 }
 export interface DisasterRecoveryCommittee {
   'user_group_id' : UUID,
-  'quorum' : number,
+  'quorum_percentage' : number,
 }
 export interface DisplayUser { 'id' : UUID, 'name' : string }
 export interface EditAccountOperation { 'input' : EditAccountOperationInput }
@@ -867,7 +867,7 @@ export interface SystemInit {
   'fallback_controller' : [] | [Principal],
   'admins' : Array<AdminInitInput>,
   'upgrader_wasm_module' : Uint8Array | number[],
-  'quorum' : [] | [number],
+  'quorum_percentage' : [] | [number],
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
   { 'Init' : SystemInit };

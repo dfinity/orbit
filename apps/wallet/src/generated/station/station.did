@@ -1993,7 +1993,7 @@ type SystemInit = record {
   // The list of admin principals to be associated with the station.
   admins : vec AdminInitInput;
   // Quorum of admins for initial policies.
-  quorum : opt nat16;
+  quorum_percentage : opt nat16;
   // The wasm module of the station upgrader canister.
   upgrader_wasm_module : blob;
   // An optional additional controller of the station and upgrader canisters.

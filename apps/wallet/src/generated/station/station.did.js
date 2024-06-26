@@ -11,7 +11,7 @@ export const idlFactory = ({ IDL }) => {
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'admins' : IDL.Vec(AdminInitInput),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
-    'quorum' : IDL.Opt(IDL.Nat16),
+    'quorum_percentage' : IDL.Opt(IDL.Nat16),
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,
@@ -196,7 +196,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const DisasterRecoveryCommittee = IDL.Record({
     'user_group_id' : UUID,
-    'quorum' : IDL.Nat16,
+    'quorum_percentage' : IDL.Nat16,
   });
   const SetDisasterRecoveryOperationInput = IDL.Record({
     'committee' : IDL.Opt(DisasterRecoveryCommittee),
@@ -1192,7 +1192,7 @@ export const init = ({ IDL }) => {
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'admins' : IDL.Vec(AdminInitInput),
     'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
-    'quorum' : IDL.Opt(IDL.Nat16),
+    'quorum_percentage' : IDL.Opt(IDL.Nat16),
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,
