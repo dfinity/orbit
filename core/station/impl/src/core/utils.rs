@@ -113,6 +113,11 @@ pub(crate) fn format_unique_string(text: &str) -> String {
     deunicode::deunicode(text).to_lowercase().replace(' ', "")
 }
 
+pub fn get_quorum_from_quorum_percentage(user_count: usize, quorum_percentage: u16) -> u16 {
+    (f64::ceil(user_count as f64 * quorum_percentage as f64 / 100.0) as u16)
+        .clamp(1, user_count as u16)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -202,5 +207,16 @@ mod tests {
         assert_eq!(format_unique_string("Hello, World!"), "hello,world!");
         assert_eq!(format_unique_string("Hello,  World!"), "hello,world!");
         assert_eq!(format_unique_string("Hello, World! "), "hello,world!");
+    }
+
+    #[test]
+    fn test_admin_quorum() {
+        assert_eq!(get_quorum_from_quorum_percentage(1, 51), 1);
+        assert_eq!(get_quorum_from_quorum_percentage(2, 51), 2);
+        assert_eq!(get_quorum_from_quorum_percentage(2, 50), 1);
+        assert_eq!(get_quorum_from_quorum_percentage(3, 50), 2);
+        assert_eq!(get_quorum_from_quorum_percentage(100, 51), 51);
+        assert_eq!(get_quorum_from_quorum_percentage(5, 200), 5);
+        assert_eq!(get_quorum_from_quorum_percentage(5, 0), 1);
     }
 }

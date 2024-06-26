@@ -153,7 +153,7 @@ impl SystemService {
 
             // registers the default canister configurations such as policies and user groups.
             print("Adding initial canister configurations");
-            install_canister_handlers::init_post_process().await?;
+            install_canister_handlers::init_post_process(&init).await?;
 
             print("Deploying upgrader canister");
             let canister_id = self_canister_id();
@@ -354,7 +354,8 @@ mod init_canister_sync_handlers {
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{id as self_canister_id, print};
-    use crate::core::init::{DEFAULT_PERMISSIONS, DEFAULT_REQUEST_POLICIES};
+    use crate::core::init::{default_policies, DEFAULT_PERMISSIONS};
+    use crate::core::utils::get_quorum_from_quorum_percentage;
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::models::{AddRequestPolicyOperationInput, EditPermissionOperationInput};
     use crate::services::permission::PERMISSION_SERVICE;
@@ -364,6 +365,7 @@ mod install_canister_handlers {
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
     use canfund::FundManager;
     use ic_cdk::api::management_canister::main::{self as mgmt};
+    use station_api::SystemInit;
     use std::cell::RefCell;
     use std::sync::Arc;
 
@@ -374,9 +376,16 @@ mod install_canister_handlers {
     }
 
     /// Registers the default configurations for the canister.
-    pub async fn init_post_process() -> Result<(), String> {
+    pub async fn init_post_process(init: &SystemInit) -> Result<(), String> {
+        let admin_quorum = get_quorum_from_quorum_percentage(
+            init.admins.len(),
+            init.quorum_percentage.unwrap_or(DEFAULT_QUORUM_PERCENTAGE),
+        );
+
+        let policies_to_create = default_policies(admin_quorum);
+
         // adds the default request policies which sets safe defaults for the canister
-        for policy in DEFAULT_REQUEST_POLICIES.iter() {
+        for policy in policies_to_create.iter() {
             REQUEST_POLICY_SERVICE
                 .add_request_policy(AddRequestPolicyOperationInput {
                     specifier: policy.0.to_owned(),
