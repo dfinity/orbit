@@ -1,5 +1,5 @@
 //! Implements the `dfx-orbit canister upload-http-assets` CLI command.
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use ic_utils::canister::CanisterBuilder;
 use walkdir::WalkDir;
@@ -11,21 +11,18 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     let Args {
         canister,
         path,
-        verbose,
+        verbose: _verbose,
     } = args;
-    if verbose {
-        println!("Uploading assets to canister: {}", canister);
-        for asset in list_assets(&path){
-            println!("Uploading asset: {}", asset.display());
-        }
-    }
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
     let canister_id = station_agent.canister_id(&canister)?;
-    let _canister_agent = CanisterBuilder::new()
+    let logger = station_agent.dfx.logger().clone();
+    let canister_agent = CanisterBuilder::new()
         .with_agent(station_agent.dfx.agent().await?)
         .with_canister_id(canister_id)
         .build()?;
-    todo!("Still need to upload the assets")
+    let assets = assets_as_hash_map(&path);
+    ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
+    Ok(())
 }
 
 /// Lists all the files at the given path.
@@ -43,5 +40,25 @@ fn list_assets(path: &str) -> Vec<PathBuf> {
         .filter_map(|e| e.ok())
         .filter(|entry| entry.file_type().is_file())
         .map(|entry| entry.into_path())
+        .collect()
+}
+
+/// A hash map of all assets.
+///
+/// Note: Given that ordering in a HashMap is not deterministic, is this really the best API?
+fn assets_as_hash_map(asset_dir: &str) -> HashMap<String, PathBuf> {
+    list_assets(asset_dir)
+        .into_iter()
+        .map(|asset_path| {
+            let relative_path = asset_path.strip_prefix(asset_dir).expect(
+                "Internal error: list_assets should have returned only files in the asset_dir",
+            );
+            let key = relative_path
+                .file_name()
+                .expect("Internal error: File has no name") // TODO: This can probably be eliminated by the filter_map above.
+                .to_string_lossy()
+                .to_string();
+            (key, asset_path)
+        })
         .collect()
 }
