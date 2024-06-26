@@ -5,7 +5,7 @@ use anyhow::anyhow;
 use candid::Principal;
 use orbit_station_api::{ApiErrorDTO, CreateRequestResponse};
 
-/// The main entry point for the `dfx orbit` CLI.
+/// The main entry point for the `dfx orbit request` CLI.
 pub async fn exec(args: Args) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
     // Converts the CLI arg type into the equivalent Orbit API type.
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;

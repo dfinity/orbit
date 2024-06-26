@@ -56,6 +56,8 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     // TODO: The local evidence doesn't match the canister evidence.
 
     // Maybe compute evidence locally and then compare?
+
+    // TODO: Get Orbit to make the API call to commit the changes.
     Ok(())
 }
 
