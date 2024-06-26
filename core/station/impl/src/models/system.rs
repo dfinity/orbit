@@ -20,7 +20,7 @@ pub enum SystemState {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct DisasterRecoveryCommittee {
     pub user_group_id: UserGroupId,
-    pub quorum: u16,
+    pub quorum_percentage: u16,
 }
 
 #[storable(size = SYSTEM_RESERVED_MEMORY_BYTES)]

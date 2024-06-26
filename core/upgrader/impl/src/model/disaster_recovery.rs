@@ -155,14 +155,14 @@ impl From<RecoveryResult> for upgrader_api::RecoveryResult {
 #[derive(Clone, Debug)]
 pub struct DisasterRecoveryCommittee {
     pub users: Vec<AdminUser>,
-    pub quorum: u16,
+    pub quorum_percentage: u16,
 }
 
 impl From<upgrader_api::DisasterRecoveryCommittee> for DisasterRecoveryCommittee {
     fn from(value: upgrader_api::DisasterRecoveryCommittee) -> Self {
         DisasterRecoveryCommittee {
             users: value.users.into_iter().map(AdminUser::from).collect(),
-            quorum: value.quorum,
+            quorum_percentage: value.quorum_percentage,
         }
     }
 }
@@ -175,7 +175,7 @@ impl From<DisasterRecoveryCommittee> for upgrader_api::DisasterRecoveryCommittee
                 .into_iter()
                 .map(upgrader_api::AdminUser::from)
                 .collect(),
-            quorum: value.quorum,
+            quorum_percentage: value.quorum_percentage,
         }
     }
 }
@@ -373,7 +373,7 @@ pub mod test {
                     identities: vec![Principal::from_slice(&[3; 29])],
                 },
             ],
-            quorum: 2,
+            quorum_percentage: 51,
         }
     }
 

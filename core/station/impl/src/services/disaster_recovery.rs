@@ -64,7 +64,7 @@ impl DisasterRecoveryService {
     pub async fn sync_committee(&self) -> ServiceResult<()> {
         let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
 
-        let (users, quorum) = self
+        let (users, quorum_percentage) = self
             .system_service
             .get_system_info()
             .get_disaster_recovery_committee()
@@ -72,7 +72,7 @@ impl DisasterRecoveryService {
                 (
                     self.user_service
                         .get_active_users_in_groups(&[committee.user_group_id]),
-                    committee.quorum,
+                    committee.quorum_percentage,
                 )
             })
             .unwrap_or_default();
@@ -90,7 +90,7 @@ impl DisasterRecoveryService {
                             identities: user.identities.clone(),
                         })
                         .collect(),
-                    quorum,
+                    quorum_percentage,
                 },
             },),
         )

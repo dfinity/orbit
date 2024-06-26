@@ -24,6 +24,8 @@ use uuid::Uuid;
 
 use super::DISASTER_RECOVERY_SERVICE;
 
+pub const DEFAULT_QUORUM_PERCENTAGE: u16 = 51;
+
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> =
         Arc::new(SystemService::new(Arc::clone(&REQUEST_REPOSITORY)));
@@ -181,7 +183,7 @@ impl SystemService {
             install_canister_post_process_finish(system_info);
 
             SystemService::set_disaster_recovery_committee(Some(DisasterRecoveryCommittee {
-                quorum: init.quorum.unwrap_or(1),
+                quorum_percentage: init.quorum_percentage.unwrap_or(DEFAULT_QUORUM_PERCENTAGE),
                 user_group_id: *crate::models::ADMIN_GROUP_ID,
             }));
 
@@ -365,6 +367,8 @@ mod install_canister_handlers {
     use std::cell::RefCell;
     use std::sync::Arc;
 
+    use super::DEFAULT_QUORUM_PERCENTAGE;
+
     thread_local! {
         pub static FUND_MANAGER: RefCell<FundManager> = RefCell::new(FundManager::new());
     }
@@ -490,7 +494,7 @@ mod tests {
                     name: "Admin".to_string(),
                     identity: Principal::from_slice(&[1; 29]),
                 }],
-                quorum: Some(1),
+                quorum_percentage: Some(51),
                 upgrader_wasm_module: vec![],
                 fallback_controller: None,
             })

@@ -38,8 +38,8 @@ pub struct SystemInit {
     pub name: String,
     /// The initial admins.
     pub admins: Vec<AdminInitInput>,
-    /// The number of admin approvals required in initial policies. Defaults to `floor(admins.len()/2) + 1`.
-    pub quorum: Option<u16>,
+    /// The percentage of admin approvals required in initial policies.
+    pub quorum_percentage: Option<u16>,
     /// The upgrader canister wasm module.
     #[serde(with = "serde_bytes")]
     pub upgrader_wasm_module: Vec<u8>,

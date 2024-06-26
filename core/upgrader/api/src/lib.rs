@@ -37,7 +37,7 @@ pub struct DisasterRecoveryCommittee {
     /// The users that are able to request disaster recovery.
     pub users: Vec<AdminUser>,
     /// The quorum required to approve a disaster recovery request.
-    pub quorum: u16,
+    pub quorum_percentage: u16,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

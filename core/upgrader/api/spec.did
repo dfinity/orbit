@@ -39,7 +39,7 @@ type AdminUser = record { id : text; name : text; identities : vec principal };
 
 type DisasterRecoveryCommittee = record {
   users : vec AdminUser;
-  quorum : nat16;
+  quorum_percentage : nat16;
 };
 
 type TriggerUpgradeResponse = variant {

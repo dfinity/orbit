@@ -6,7 +6,7 @@ use crate::UuidDTO;
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 pub struct DisasterRecoveryCommitteeDTO {
     pub user_group_id: UuidDTO,
-    pub quorum: u16,
+    pub quorum_percentage: u16,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]

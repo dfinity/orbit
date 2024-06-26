@@ -190,7 +190,7 @@ fn install_canisters(
             identity: WALLET_ADMIN_USER,
             name: "station-admin".to_string(),
         }],
-        quorum: Some(1),
+        quorum_percentage: Some(51),
         upgrader_wasm_module: upgrader_wasm,
         fallback_controller: config.fallback_controller,
     });

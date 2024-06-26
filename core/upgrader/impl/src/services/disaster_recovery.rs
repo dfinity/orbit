@@ -208,13 +208,17 @@ impl DisasterRecoveryService {
 
         let mut submissions: HashMap<(Vec<u8>, Vec<u8>), usize> = Default::default();
 
+        let quorum = committee.quorum_percentage as f64 / 100.0;
+        let total_users = committee.users.len() as f64;
+        let min_users = f64::ceil(total_users * quorum) as usize;
+
         for request in storage.recovery_requests.iter() {
             let key = (request.wasm_sha256.clone(), request.arg.clone());
             let entry = submissions.entry(key).or_insert(0);
 
             *entry += 1;
 
-            if *entry as u16 >= committee.quorum {
+            if *entry >= min_users {
                 let result = request.clone();
 
                 storage.recovery_requests.clear();
