@@ -33,4 +33,7 @@ pub struct UploadHttpAssets {
     /// The path to the assets to upload.
     #[structopt(long)]
     pub path: String,
+    /// Provide a running commentary.
+    #[arg(short, long, default_value_t = false)]
+    pub verbose: bool,
 }

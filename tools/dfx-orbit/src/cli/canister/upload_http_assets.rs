@@ -8,7 +8,11 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     let Args {
         canister,
         path: _path,
+        verbose,
     } = args;
+    if verbose {
+        println!("Uploading assets to canister: {}", canister);
+    }
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
     let canister_id = station_agent.canister_id(&canister)?;
     let _canister_agent = CanisterBuilder::new()
