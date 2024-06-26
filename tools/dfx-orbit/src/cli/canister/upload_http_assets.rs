@@ -1,7 +1,6 @@
 //! Implements the `dfx-orbit canister upload-http-assets` CLI command.
-use std::{collections::HashMap, path::PathBuf};
-
 use ic_utils::canister::CanisterBuilder;
+use std::{collections::HashMap, path::PathBuf};
 use walkdir::WalkDir;
 
 use crate::args::canister::UploadHttpAssets as Args;
@@ -21,7 +20,8 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
         .with_canister_id(canister_id)
         .build()?;
     let assets = assets_as_hash_map(&path);
-    ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
+    let batch_id = ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
+    println!("Proposed batch_id: {}", batch_id);
     Ok(())
 }
 
