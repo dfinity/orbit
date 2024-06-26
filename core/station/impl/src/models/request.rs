@@ -292,7 +292,6 @@ impl Request {
         let validator = RequestApprovalRightsEvaluator {
             request_id: self.id,
             approver_id: *user_id,
-            request_matcher: REQUEST_MATCHER.to_owned(),
             approval_rights_evaluator: REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR.clone(),
         };
 

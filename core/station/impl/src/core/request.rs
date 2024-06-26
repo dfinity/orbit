@@ -288,7 +288,6 @@ impl
 /// - There are matching policies for the request and the user is a part of the group that is allowed to approve
 /// - The user has not already approved on the request
 pub struct RequestApprovalRightsEvaluator {
-    pub request_matcher: Arc<dyn Match<(Request, RequestSpecifier)>>,
     pub approval_rights_evaluator: Arc<ApprovalRightsEvaluate>,
     pub approver_id: UserId,
     pub request_id: RequestId,
@@ -302,13 +301,11 @@ pub type ApprovalRightsEvaluate = dyn EvaluateRequestPolicyRule<
 
 impl RequestApprovalRightsEvaluator {
     pub fn new(
-        request_matcher: Arc<dyn Match<(Request, RequestSpecifier)>>,
         approval_rights_evaluator: Arc<ApprovalRightsEvaluate>,
         approver_id: UserId,
         request_id: RequestId,
     ) -> Self {
         Self {
-            request_matcher,
             approval_rights_evaluator,
             approver_id,
             request_id,
