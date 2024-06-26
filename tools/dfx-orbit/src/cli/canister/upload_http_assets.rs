@@ -4,7 +4,10 @@ use ic_asset::canister_api::{
 };
 use ic_utils::canister::CanisterBuilder;
 use slog::info;
-use std::{collections::HashMap, path::{Path, PathBuf}};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+};
 use walkdir::WalkDir;
 
 use crate::args::canister::UploadHttpAssets as Args;
@@ -32,7 +35,7 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     let batch_id = ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
     println!("Proposed batch_id: {}", batch_id);
     // Compute evidence locally:
-    let _local_evidence = ic_asset::compute_evidence(&canister_agent, &dirs, &logger).await?;
+    let local_evidence = ic_asset::compute_evidence(&canister_agent, &dirs, &logger).await?;
     // Wait for the canister to compute the evidence:
     // This part is stolen from ic_asset::sync::prepare_sync_for_proposal.  Unfortunately the relevant functions are private.
     // The docs explicitly include waiting for the evidence so this should really be made easier!  See: https://github.com/dfinity/sdk/blob/2509e81e11e71dce4045c679686c952809525470/docs/design/asset-canister-interface.md?plain=1#L85
@@ -47,6 +50,7 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
             break evidence;
         }
     };
+    println!("Local evidence: {local_evidence}");
     println!("Canister computed evidence: {evidence:?}");
 
     // Maybe compute evidence locally and then compare?
