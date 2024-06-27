@@ -574,10 +574,12 @@ type DisasterRecoveryCommittee = record {
 };
 
 type SetDisasterRecoveryOperationInput = record {
+  // The disaster recovery committee.
   committee : opt DisasterRecoveryCommittee;
 };
 
 type SetDisasterRecoveryOperation = record {
+  // The disaster recovery committee.
   committee : opt DisasterRecoveryCommittee;
 };
 
