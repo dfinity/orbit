@@ -86,14 +86,14 @@ impl LogEntryType {
     pub fn to_message(&self) -> String {
         match self {
             LogEntryType::SetCommittee(data) => format!(
-                "Set committee of {}, with quorum of {}%",
+                "Set committee of {}, with quorum of {}",
                 data.committee
                     .users
                     .iter()
                     .map(|u| u.to_summary())
                     .collect::<Vec<_>>()
                     .join(", "),
-                data.committee.quorum_percentage
+                data.committee.quorum
             ),
             LogEntryType::SetAccounts(data) => {
                 format!("Set {} disaster recovery account(s)", data.accounts.len())

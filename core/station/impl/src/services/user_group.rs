@@ -164,7 +164,7 @@ mod test {
         system_info.set_disaster_recovery_committee(Some(
             crate::models::DisasterRecoveryCommittee {
                 user_group_id: user_group.id,
-                quorum_percentage: 51,
+                quorum: 1,
             },
         ));
 

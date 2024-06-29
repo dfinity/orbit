@@ -361,7 +361,7 @@ impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
 impl From<station_api::DisasterRecoveryCommitteeDTO> for DisasterRecoveryCommittee {
     fn from(value: station_api::DisasterRecoveryCommitteeDTO) -> Self {
         DisasterRecoveryCommittee {
-            quorum_percentage: value.quorum_percentage,
+            quorum: value.quorum,
             user_group_id: *HelperMapper::to_uuid(value.user_group_id)
                 .expect("Invalid user group id")
                 .as_bytes(),
@@ -388,7 +388,7 @@ impl From<station_api::CanisterInstallMode> for CanisterInstallMode {
 impl From<DisasterRecoveryCommittee> for station_api::DisasterRecoveryCommitteeDTO {
     fn from(value: DisasterRecoveryCommittee) -> Self {
         station_api::DisasterRecoveryCommitteeDTO {
-            quorum_percentage: value.quorum_percentage,
+            quorum: value.quorum,
             user_group_id: Uuid::from_bytes(value.user_group_id)
                 .hyphenated()
                 .to_string(),

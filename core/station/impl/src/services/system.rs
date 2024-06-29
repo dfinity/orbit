@@ -24,8 +24,6 @@ use uuid::Uuid;
 
 use super::DISASTER_RECOVERY_SERVICE;
 
-pub const DEFAULT_QUORUM_PERCENTAGE: u16 = 51;
-
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> =
         Arc::new(SystemService::new(Arc::clone(&REQUEST_REPOSITORY)));
@@ -182,8 +180,12 @@ impl SystemService {
 
             install_canister_post_process_finish(system_info);
 
+            let admin_count = u16::try_from(init.admins.len()).unwrap_or(u16::MAX);
             SystemService::set_disaster_recovery_committee(Some(DisasterRecoveryCommittee {
-                quorum_percentage: init.quorum_percentage.unwrap_or(DEFAULT_QUORUM_PERCENTAGE),
+                quorum: init
+                    .quorum
+                    .unwrap_or(admin_count / 2 + 1)
+                    .clamp(1, admin_count),
                 user_group_id: *crate::models::ADMIN_GROUP_ID,
             }));
 
@@ -355,7 +357,6 @@ mod init_canister_sync_handlers {
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{id as self_canister_id, print};
     use crate::core::init::{default_policies, DEFAULT_PERMISSIONS};
-    use crate::core::utils::get_quorum_from_quorum_percentage;
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::models::{AddRequestPolicyOperationInput, EditPermissionOperationInput};
     use crate::services::permission::PERMISSION_SERVICE;
@@ -369,18 +370,18 @@ mod install_canister_handlers {
     use std::cell::RefCell;
     use std::sync::Arc;
 
-    use super::DEFAULT_QUORUM_PERCENTAGE;
-
     thread_local! {
         pub static FUND_MANAGER: RefCell<FundManager> = RefCell::new(FundManager::new());
     }
 
     /// Registers the default configurations for the canister.
     pub async fn init_post_process(init: &SystemInit) -> Result<(), String> {
-        let admin_quorum = get_quorum_from_quorum_percentage(
-            init.admins.len(),
-            init.quorum_percentage.unwrap_or(DEFAULT_QUORUM_PERCENTAGE),
-        );
+        let admin_count = u16::try_from(init.admins.len()).unwrap_or(u16::MAX);
+
+        let admin_quorum = init
+            .quorum
+            .unwrap_or(admin_count / 2 + 1)
+            .clamp(1, admin_count);
 
         let policies_to_create = default_policies(admin_quorum);
 
@@ -503,7 +504,7 @@ mod tests {
                     name: "Admin".to_string(),
                     identity: Principal::from_slice(&[1; 29]),
                 }],
-                quorum_percentage: Some(51),
+                quorum: Some(1),
                 upgrader_wasm_module: vec![],
                 fallback_controller: None,
             })

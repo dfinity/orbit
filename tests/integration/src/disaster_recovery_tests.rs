@@ -39,7 +39,7 @@ fn successful_disaster_recovery_sync() {
 
     let args: SetDisasterRecoveryCommitteeInput = SetDisasterRecoveryCommitteeInput {
         committee: DisasterRecoveryCommittee {
-            quorum_percentage: 50,
+            quorum: 1,
             users: vec![
                 AdminUser {
                     id: Uuid::new_v4().hyphenated().to_string(),
@@ -96,7 +96,7 @@ fn successful_disaster_recovery_sync() {
 
     let admins = maybe_admins.expect("No committee found");
 
-    assert_eq!(admins.quorum_percentage, 50);
+    assert_eq!(admins.quorum, 1);
     assert_eq!(admins.users.len(), 2);
     assert_eq!(admins.users[0].name, "user_1");
     assert_eq!(admins.users[1].name, "user_2");
@@ -188,7 +188,7 @@ fn auto_syncs_users_after_deploy() {
 
     let committee = state.committee.expect("No committee found");
 
-    assert_eq!(committee.quorum_percentage, 51);
+    assert_eq!(committee.quorum, 1);
     assert_eq!(committee.users.len(), 1);
     assert_eq!(committee.users[0].name, "station-admin");
 
@@ -290,7 +290,7 @@ fn test_disaster_recovery_flow() {
         canister_ids.station,
         SetDisasterRecoveryOperationInput {
             committee: Some(DisasterRecoveryCommitteeDTO {
-                quorum_percentage: 51,
+                quorum: 2,
                 user_group_id: admin_user.groups[0].id.clone(),
             }),
         },
@@ -608,7 +608,7 @@ fn test_disaster_recovery_failing() {
     // intentionally bad arg to fail Upgrade
     let arg = SystemInstall::Init(SystemInit {
         fallback_controller: None,
-        quorum_percentage: None,
+        quorum: None,
         upgrader_wasm_module: vec![],
         name: "Station".to_string(),
         admins: vec![],

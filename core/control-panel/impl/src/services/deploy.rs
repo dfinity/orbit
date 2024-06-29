@@ -105,7 +105,7 @@ impl DeployService {
                 name: input.name.clone(),
                 admins,
                 upgrader_wasm_module,
-                quorum_percentage: Some(51),
+                quorum: Some(1),
                 fallback_controller: Some(NNS_ROOT_CANISTER_ID),
             }))
             .map_err(|err| DeployError::Failed {

@@ -50,7 +50,7 @@ type DisasterRecoveryCommittee = record {
   // The list of users that are part of the committee.
   users : vec AdminUser;
   // The percentage of users that need to agree to perform an upgrade.
-  quorum_percentage : nat16;
+  quorum : nat16;
 };
 
 // Response to a successful trigger_upgrade query.
@@ -111,7 +111,7 @@ type SetDisasterRecoveryAccountsInput = record {
 };
 
 // Request to trigger disaster recovery. Requests are stored in the Upgrader
-// canister, and when at least `quorum_percentage` of the committee members
+// canister, and when at least `quorum` of the committee members
 // agree on the exact module, args, and install mode, the request is processed.
 // Requests older than 1 week will be discarded.
 type RequestDisasterRecoveryInput = record {
