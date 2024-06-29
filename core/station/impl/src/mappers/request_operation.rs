@@ -358,8 +358,6 @@ impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
     }
 }
 
-// ---
-
 impl From<station_api::DisasterRecoveryCommitteeDTO> for DisasterRecoveryCommittee {
     fn from(value: station_api::DisasterRecoveryCommitteeDTO) -> Self {
         DisasterRecoveryCommittee {
