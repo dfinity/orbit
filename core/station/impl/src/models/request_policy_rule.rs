@@ -297,6 +297,7 @@ impl RequestPolicyRuleEvaluator {
                 USER_REPOSITORY
                     .find_where(UserWhereClause {
                         statuses: Some(vec![UserStatus::Active]),
+                        groups: None,
                         search_term: None,
                     })
                     .iter()

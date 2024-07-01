@@ -3,8 +3,8 @@ use super::{
     request_policy_rule::{RequestPolicyRule, RequestPolicyRuleInput},
     request_specifier::RequestSpecifier,
     resource::Resource,
-    AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata, MetadataItem,
-    UserGroupId, UserId, UserStatus,
+    AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata,
+    DisasterRecoveryCommittee, MetadataItem, UserGroupId, UserId, UserStatus,
 };
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ValidationError;
@@ -38,6 +38,7 @@ pub enum RequestOperation {
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
     ManageSystemInfo(ManageSystemInfoOperation),
+    SetDisasterRecovery(SetDisasterRecoveryOperation),
 }
 
 impl Display for RequestOperation {
@@ -63,6 +64,7 @@ impl Display for RequestOperation {
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
             RequestOperation::ManageSystemInfo(_) => write!(f, "manage_system_info"),
+            RequestOperation::SetDisasterRecovery(_) => write!(f, "set_disaster_recovery"),
         }
     }
 }
@@ -264,6 +266,12 @@ pub struct ChangeCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SetDisasterRecoveryOperation {
+    pub input: SetDisasterRecoveryOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct CanisterInstallModeArgs {}
 
 #[storable]
@@ -290,6 +298,12 @@ impl From<CanisterInstallMode> for mgmt::CanisterInstallMode {
             CanisterInstallMode::Upgrade(_) => mgmt::CanisterInstallMode::Upgrade(None),
         }
     }
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SetDisasterRecoveryOperationInput {
+    pub committee: Option<DisasterRecoveryCommittee>,
 }
 
 #[storable]

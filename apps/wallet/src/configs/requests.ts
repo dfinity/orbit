@@ -4,4 +4,5 @@ export const disabledRequestOperations = [
   RequestSpecifierEnum.ChangeExternalCanister,
   RequestSpecifierEnum.CreateExternalCanister,
   RequestSpecifierEnum.CallExternalCanister,
+  RequestSpecifierEnum.SetDisasterRecovery,
 ];

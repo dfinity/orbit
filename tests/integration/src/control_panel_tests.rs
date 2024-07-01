@@ -421,6 +421,7 @@ fn no_upload_canister_modules() {
     } = setup_new_env_with_config(SetupConfig {
         upload_canister_modules: false,
         fallback_controller: None,
+        start_cycles: None,
     });
 
     let user_id = user_test_id(0);

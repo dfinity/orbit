@@ -3,12 +3,13 @@ use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{Request, RequestOperation},
     services::{
-        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, EXTERNAL_CANISTER_SERVICE,
-        REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
+        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, DISASTER_RECOVERY_SERVICE,
+        EXTERNAL_CANISTER_SERVICE, REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
     },
 };
 use async_trait::async_trait;
 use orbit_essentials::types::UUID;
+use set_disaster_recovery::SetDisasterRecoveryRequestCreate;
 use station_api::{CreateRequestInput, RequestOperationInput};
 use std::sync::Arc;
 
@@ -30,6 +31,7 @@ mod manage_system_info;
 mod remove_address_book_entry;
 mod remove_request_policy;
 mod remove_user_group;
+mod set_disaster_recovery;
 mod transfer;
 
 use self::{
@@ -168,6 +170,13 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
+            RequestOperationInput::SetDisasterRecovery(operation) => {
+                let creator = Box::new(SetDisasterRecoveryRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+
             RequestOperationInput::ChangeExternalCanister(operation) => {
                 let creator = Box::new(ChangeExternalCanisterRequestCreate {});
                 creator
@@ -256,12 +265,16 @@ impl RequestFactory {
             RequestOperation::EditUser(operation) => {
                 Box::new(EditUserRequestExecute::new(request, operation))
             }
+            RequestOperation::SetDisasterRecovery(operation) => Box::new(
+                set_disaster_recovery::SetDisasterRecoveryRequestExecute::new(request, operation),
+            ),
             RequestOperation::ChangeCanister(operation) => {
                 Box::new(ChangeCanisterRequestExecute::new(
                     request,
                     operation,
                     Arc::clone(&SYSTEM_SERVICE),
                     Arc::clone(&CHANGE_CANISTER_SERVICE),
+                    Arc::clone(&DISASTER_RECOVERY_SERVICE),
                 ))
             }
             RequestOperation::ChangeExternalCanister(operation) => {

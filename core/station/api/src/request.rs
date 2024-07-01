@@ -14,7 +14,8 @@ use crate::{
     ManageSystemInfoOperationDTO, ManageSystemInfoOperationInput, PaginationInput,
     RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
     RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
-    RequestPolicyRuleDTO, RequestSpecifierDTO, SortDirection, UuidDTO,
+    RequestPolicyRuleDTO, RequestSpecifierDTO, SetDisasterRecoveryOperationDTO,
+    SetDisasterRecoveryOperationInput, SortDirection, UuidDTO,
 };
 use candid::{CandidType, Deserialize, Principal};
 
@@ -68,6 +69,7 @@ pub enum RequestOperationDTO {
     EditUserGroup(Box<EditUserGroupOperationDTO>),
     RemoveUserGroup(Box<RemoveUserGroupOperationDTO>),
     ChangeCanister(Box<ChangeCanisterOperationDTO>),
+    SetDisasterRecovery(Box<SetDisasterRecoveryOperationDTO>),
     ChangeExternalCanister(Box<ChangeExternalCanisterOperationDTO>),
     CreateExternalCanister(Box<CreateExternalCanisterOperationDTO>),
     CallExternalCanister(Box<CallExternalCanisterOperationDTO>),
@@ -92,6 +94,7 @@ pub enum RequestOperationInput {
     EditUserGroup(EditUserGroupOperationInput),
     RemoveUserGroup(RemoveUserGroupOperationInput),
     ChangeCanister(ChangeCanisterOperationInput),
+    SetDisasterRecovery(SetDisasterRecoveryOperationInput),
     ChangeExternalCanister(ChangeExternalCanisterOperationInput),
     CreateExternalCanister(CreateExternalCanisterOperationInput),
     CallExternalCanister(CallExternalCanisterOperationInput),
@@ -116,6 +119,7 @@ pub enum RequestOperationTypeDTO {
     EditUserGroup,
     RemoveUserGroup,
     ChangeCanister,
+    SetDisasterRecovery,
     ChangeExternalCanister,
     CreateExternalCanister,
     CallExternalCanister,
@@ -148,6 +152,7 @@ pub enum ListRequestsOperationTypeDTO {
     EditRequestPolicy,
     RemoveRequestPolicy,
     ManageSystemInfo,
+    SetDisasterRecovery,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

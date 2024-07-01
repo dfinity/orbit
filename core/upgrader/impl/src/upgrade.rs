@@ -1,4 +1,8 @@
-use crate::{LocalRef, StableValue, StorablePrincipal};
+use crate::{
+    model::{LogEntryType, UpgradeResultLog},
+    services::LOGGER_SERVICE,
+    LocalRef, StableValue, StorablePrincipal,
+};
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use ic_cdk::api::management_canister::main::{
@@ -6,7 +10,6 @@ use ic_cdk::api::management_canister::main::{
 };
 use mockall::automock;
 use std::sync::Arc;
-use upgrader_api::UpgradeParams;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpgradeError {
@@ -16,6 +19,12 @@ pub enum UpgradeError {
     Unauthorized,
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
+}
+
+pub struct UpgradeParams {
+    pub module: Vec<u8>,
+    pub arg: Vec<u8>,
+    pub install_mode: CanisterInstallMode,
 }
 
 #[automock]
@@ -43,7 +52,7 @@ impl Upgrade for Upgrader {
             .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
         mgmt::install_code(InstallCodeArgument {
-            mode: CanisterInstallMode::Upgrade(None),
+            mode: ps.install_mode,
             canister_id: id.0,
             wasm_module: ps.module,
             arg: ps.arg,
@@ -159,17 +168,10 @@ impl<T: Upgrade> Upgrade for WithLogs<T> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
         let out = self.0.upgrade(ps).await;
 
-        let status = match &out {
-            Ok(_) => "ok".to_string(),
-            Err(err) => err.to_string(),
-        };
-
-        ic_cdk::println!(
-            "action = {}, status = {}, error = {:?}",
-            self.1,
-            status,
-            out.as_ref().err()
-        );
+        LOGGER_SERVICE.log(LogEntryType::UpgradeResult(match &out {
+            Ok(_) => UpgradeResultLog::Success,
+            Err(err) => UpgradeResultLog::Failure(err.to_string()),
+        }));
 
         out
     }

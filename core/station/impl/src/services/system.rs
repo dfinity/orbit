@@ -9,7 +9,7 @@ use crate::{
     },
     errors::SystemError,
     models::{
-        system::{SystemInfo, SystemState},
+        system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
         ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
     },
     repositories::{RequestRepository, REQUEST_REPOSITORY},
@@ -22,12 +22,14 @@ use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
 use std::sync::Arc;
 use uuid::Uuid;
 
+use super::DISASTER_RECOVERY_SERVICE;
+
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> =
         Arc::new(SystemService::new(Arc::clone(&REQUEST_REPOSITORY)));
 }
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct SystemService {
     request_repository: Arc<RequestRepository>,
 }
@@ -89,6 +91,17 @@ impl SystemService {
         write_system_info(system_info);
     }
 
+    pub fn set_disaster_recovery_committee(committee: Option<DisasterRecoveryCommittee>) {
+        let mut system_info = read_system_info();
+        system_info.set_disaster_recovery_committee(committee);
+        write_system_info(system_info);
+
+        // syncs the committee and account to the upgrader
+        crate::core::ic_cdk::spawn(async {
+            DISASTER_RECOVERY_SERVICE.sync_all().await;
+        });
+    }
+
     #[cfg(not(target_arch = "wasm32"))]
     fn install_canister_post_process(&self, _system_info: SystemInfo, _install: SystemInstall) {}
 
@@ -138,7 +151,7 @@ impl SystemService {
 
             // registers the default canister configurations such as policies and user groups.
             print("Adding initial canister configurations");
-            install_canister_handlers::init_post_process().await?;
+            install_canister_handlers::init_post_process(&init).await?;
 
             print("Deploying upgrader canister");
             let canister_id = self_canister_id();
@@ -164,7 +177,21 @@ impl SystemService {
             if SYSTEM_SERVICE.is_healthy() {
                 print("canister reports healthy already before its initialization has finished!");
             }
+
             install_canister_post_process_finish(system_info);
+
+            let admin_count = u16::try_from(init.admins.len()).unwrap_or(u16::MAX);
+            SystemService::set_disaster_recovery_committee(Some(DisasterRecoveryCommittee {
+                quorum: init
+                    .quorum
+                    .unwrap_or(admin_count / 2 + 1)
+                    .clamp(1, admin_count),
+                user_group_id: *crate::models::ADMIN_GROUP_ID,
+            }));
+
+            crate::core::ic_cdk::spawn(async {
+                DISASTER_RECOVERY_SERVICE.sync_all().await;
+            });
 
             Ok(())
         }
@@ -329,7 +356,7 @@ mod init_canister_sync_handlers {
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{id as self_canister_id, print};
-    use crate::core::init::{DEFAULT_PERMISSIONS, DEFAULT_REQUEST_POLICIES};
+    use crate::core::init::{default_policies, DEFAULT_PERMISSIONS};
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::models::{AddRequestPolicyOperationInput, EditPermissionOperationInput};
     use crate::services::permission::PERMISSION_SERVICE;
@@ -339,6 +366,7 @@ mod install_canister_handlers {
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
     use canfund::FundManager;
     use ic_cdk::api::management_canister::main::{self as mgmt};
+    use station_api::SystemInit;
     use std::cell::RefCell;
     use std::sync::Arc;
 
@@ -347,9 +375,18 @@ mod install_canister_handlers {
     }
 
     /// Registers the default configurations for the canister.
-    pub async fn init_post_process() -> Result<(), String> {
+    pub async fn init_post_process(init: &SystemInit) -> Result<(), String> {
+        let admin_count = u16::try_from(init.admins.len()).unwrap_or(u16::MAX);
+
+        let admin_quorum = init
+            .quorum
+            .unwrap_or(admin_count / 2 + 1)
+            .clamp(1, admin_count);
+
+        let policies_to_create = default_policies(admin_quorum);
+
         // adds the default request policies which sets safe defaults for the canister
-        for policy in DEFAULT_REQUEST_POLICIES.iter() {
+        for policy in policies_to_create.iter() {
             REQUEST_POLICY_SERVICE
                 .add_request_policy(AddRequestPolicyOperationInput {
                     specifier: policy.0.to_owned(),
@@ -467,6 +504,7 @@ mod tests {
                     name: "Admin".to_string(),
                     identity: Principal::from_slice(&[1; 29]),
                 }],
+                quorum: Some(1),
                 upgrader_wasm_module: vec![],
                 fallback_controller: None,
             })

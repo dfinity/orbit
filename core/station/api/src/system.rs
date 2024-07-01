@@ -34,8 +34,13 @@ pub struct AdminInitInput {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct SystemInit {
+    /// The station name.
     pub name: String,
+    /// The initial admins.
     pub admins: Vec<AdminInitInput>,
+    /// The quorum of admin approvals required in initial policies.
+    pub quorum: Option<u16>,
+    /// The upgrader canister wasm module.
     #[serde(with = "serde_bytes")]
     pub upgrader_wasm_module: Vec<u8>,
     pub fallback_controller: Option<Principal>,

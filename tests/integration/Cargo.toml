@@ -16,6 +16,7 @@ num-bigint = { workspace = true }
 pocket-ic = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true, features = ['derive'] }
+uuid = { workspace = true }
 control-panel-api = { path = '../../core/control-panel/api', version = '0.0.2-alpha.3' }
 upgrader-api = { path = '../../core/upgrader/api', version = '0.0.2-alpha.3' }
 station-api = { path = '../../core/station/api', version = '0.0.2-alpha.3' }
