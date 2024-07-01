@@ -569,7 +569,7 @@ type ChangeCanisterOperation = record {
 type DisasterRecoveryCommittee = record {
   // The user group id of the committee.
   user_group_id : UUID;
-  // The quorum percentage required for the committee to approve a disaster recovery operation.
+  // The quorum required for the committee to approve a disaster recovery operation.
   quorum : nat16;
 };
 
