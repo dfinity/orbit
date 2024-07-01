@@ -16,13 +16,14 @@ use crate::{
         CanisterUpgradeModeArgs, ChangeCanisterOperation, ChangeCanisterOperationInput,
         ChangeCanisterTarget, ChangeExternalCanisterOperation,
         ChangeExternalCanisterOperationInput, CreateExternalCanisterOperation,
-        CreateExternalCanisterOperationInput, EditAccountOperation, EditAccountOperationInput,
-        EditAddressBookEntryOperation, EditPermissionOperation, EditPermissionOperationInput,
-        EditRequestPolicyOperation, EditRequestPolicyOperationInput, EditUserGroupOperation,
-        EditUserOperation, EditUserOperationInput, ManageSystemInfoOperation,
-        ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
+        CreateExternalCanisterOperationInput, DisasterRecoveryCommittee, EditAccountOperation,
+        EditAccountOperationInput, EditAddressBookEntryOperation, EditPermissionOperation,
+        EditPermissionOperationInput, EditRequestPolicyOperation, EditRequestPolicyOperationInput,
+        EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
+        ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
-        RequestOperation, TransferOperation, User,
+        RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
+        TransferOperation, User,
     },
     repositories::{
         AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
@@ -357,6 +358,17 @@ impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
     }
 }
 
+impl From<station_api::DisasterRecoveryCommitteeDTO> for DisasterRecoveryCommittee {
+    fn from(value: station_api::DisasterRecoveryCommitteeDTO) -> Self {
+        DisasterRecoveryCommittee {
+            quorum: value.quorum,
+            user_group_id: *HelperMapper::to_uuid(value.user_group_id)
+                .expect("Invalid user group id")
+                .as_bytes(),
+        }
+    }
+}
+
 impl From<station_api::CanisterInstallMode> for CanisterInstallMode {
     fn from(mode: station_api::CanisterInstallMode) -> Self {
         match mode {
@@ -369,6 +381,17 @@ impl From<station_api::CanisterInstallMode> for CanisterInstallMode {
             station_api::CanisterInstallMode::Upgrade => {
                 CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {})
             }
+        }
+    }
+}
+
+impl From<DisasterRecoveryCommittee> for station_api::DisasterRecoveryCommitteeDTO {
+    fn from(value: DisasterRecoveryCommittee) -> Self {
+        station_api::DisasterRecoveryCommitteeDTO {
+            quorum: value.quorum,
+            user_group_id: Uuid::from_bytes(value.user_group_id)
+                .hyphenated()
+                .to_string(),
         }
     }
 }
@@ -388,6 +411,27 @@ impl From<CanisterInstallMode> for station_api::CanisterInstallMode {
         }
     }
 }
+
+impl From<station_api::SetDisasterRecoveryOperationInput> for SetDisasterRecoveryOperationInput {
+    fn from(
+        input: station_api::SetDisasterRecoveryOperationInput,
+    ) -> SetDisasterRecoveryOperationInput {
+        SetDisasterRecoveryOperationInput {
+            committee: input.committee.map(|committee| committee.into()),
+        }
+    }
+}
+impl From<SetDisasterRecoveryOperation> for station_api::SetDisasterRecoveryOperationDTO {
+    fn from(
+        operation: SetDisasterRecoveryOperation,
+    ) -> station_api::SetDisasterRecoveryOperationDTO {
+        station_api::SetDisasterRecoveryOperationDTO {
+            committee: operation.input.committee.map(|committee| committee.into()),
+        }
+    }
+}
+
+// ---
 
 impl From<ChangeExternalCanisterOperationInput>
     for station_api::ChangeExternalCanisterOperationInput
@@ -760,6 +804,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::ChangeCanister(operation) => {
                 RequestOperationDTO::ChangeCanister(Box::new(operation.into()))
             }
+            RequestOperation::SetDisasterRecovery(operation) => {
+                RequestOperationDTO::SetDisasterRecovery(Box::new(operation.into()))
+            }
             RequestOperation::ChangeExternalCanister(operation) => {
                 RequestOperationDTO::ChangeExternalCanister(Box::new(operation.into()))
             }
@@ -864,7 +911,7 @@ impl RequestOperation {
                     Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
                 ]
             }
-            RequestOperation::ChangeCanister(_) => {
+            RequestOperation::SetDisasterRecovery(_) | RequestOperation::ChangeCanister(_) => {
                 vec![Resource::ChangeCanister(
                     ChangeCanisterResourceAction::Create,
                 )]

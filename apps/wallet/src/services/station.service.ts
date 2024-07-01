@@ -317,11 +317,13 @@ export class StationService {
       offset,
       searchTerm,
       statuses,
+      groups,
     }: {
       limit?: number;
       offset?: number;
       searchTerm?: string;
       statuses?: UserStatus[];
+      groups?: UUID[];
     } = {},
     verifiedCall = false,
   ): Promise<ExtractOk<ListUsersResult>> {
@@ -338,6 +340,7 @@ export class StationService {
           : [],
       statuses: statuses ? [statuses] : [],
       search_term: searchTerm ? [searchTerm] : [],
+      groups: groups ? [groups] : [],
     });
 
     if (variantIs(result, 'Err')) {

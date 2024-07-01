@@ -34,3 +34,6 @@ mod external_canister;
 pub use external_canister::*;
 
 pub mod permission;
+
+mod disaster_recovery;
+pub use disaster_recovery::*;

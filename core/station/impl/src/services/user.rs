@@ -5,11 +5,11 @@ use crate::{
         CallContext,
     },
     errors::UserError,
-    mappers::{authorization::USER_PRIVILEGES, UserMapper},
+    mappers::{authorization::USER_PRIVILEGES, HelperMapper, UserMapper},
     models::{
         resource::{Resource, ResourceId, UserResourceAction},
-        AddUserOperationInput, EditUserOperationInput, User, UserCallerPrivileges, UserId,
-        ADMIN_GROUP_ID,
+        AddUserOperationInput, EditUserOperationInput, User, UserCallerPrivileges, UserGroupId,
+        UserId, UserStatus, ADMIN_GROUP_ID,
     },
     repositories::{UserRepository, UserWhereClause},
 };
@@ -137,6 +137,15 @@ impl UserService {
         Ok(user)
     }
 
+    /// Returns the list of active users in the given groups.
+    pub fn get_active_users_in_groups(&self, group_ids: &[UserGroupId]) -> Vec<User> {
+        self.user_repository.find_where(UserWhereClause {
+            search_term: None,
+            groups: Some(group_ids.to_vec()),
+            statuses: Some(vec![UserStatus::Active]),
+        })
+    }
+
     /// Returns the list of users from the given pagination parameters.
     ///
     /// The default limit is 100 and the maximum limit is 1000.
@@ -147,6 +156,16 @@ impl UserService {
     ) -> ServiceResult<PaginatedData<User>> {
         let mut users = self.user_repository.find_where(UserWhereClause {
             search_term: input.search_term,
+            groups: input.groups.map(|groups| {
+                groups
+                    .into_iter()
+                    .filter_map(|group_id| {
+                        HelperMapper::to_uuid(group_id)
+                            .map(|id| id.as_bytes().to_owned())
+                            .ok()
+                    })
+                    .collect()
+            }),
             statuses: input
                 .statuses
                 .map(|statuses| statuses.into_iter().map(Into::into).collect()),
@@ -514,6 +533,7 @@ mod tests {
         let input = ListUsersInput {
             search_term: None,
             statuses: None,
+            groups: None,
             paginate: Some(PaginationInput {
                 offset: Some(10),
                 limit: Some(30),

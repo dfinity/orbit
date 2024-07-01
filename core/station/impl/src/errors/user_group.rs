@@ -28,6 +28,11 @@ pub enum UserGroupError {
         /// The user group id.
         id: String,
     },
+    #[error("Cannot delete the user group marked as the disaster recovery committee.")]
+    CannotDeleteDisasterRecoveryCommittee {
+        /// The user group id.
+        id: String,
+    },
 }
 
 impl DetailableError for UserGroupError {
@@ -47,6 +52,10 @@ impl DetailableError for UserGroupError {
                 Some(details)
             }
             UserGroupError::NotFound { id } => {
+                details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
+            UserGroupError::CannotDeleteDisasterRecoveryCommittee { id } => {
                 details.insert("id".to_string(), id.to_string());
                 Some(details)
             }

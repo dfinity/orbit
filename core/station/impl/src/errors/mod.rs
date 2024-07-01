@@ -67,3 +67,6 @@ pub use request_policy::*;
 
 mod validation;
 pub use validation::*;
+
+mod disaster_recovery;
+pub use disaster_recovery::*;

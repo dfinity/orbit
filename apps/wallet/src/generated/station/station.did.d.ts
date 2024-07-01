@@ -235,6 +235,10 @@ export interface DefiniteCanisterSettings {
   'memory_allocation' : bigint,
   'compute_allocation' : bigint,
 }
+export interface DisasterRecoveryCommittee {
+  'user_group_id' : UUID,
+  'quorum' : number,
+}
 export interface DisplayUser { 'id' : UUID, 'name' : string }
 export interface EditAccountOperation { 'input' : EditAccountOperationInput }
 export interface EditAccountOperationInput {
@@ -498,6 +502,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'ChangeExternalCanister' : [] | [Principal] } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
+  { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
   { 'RemoveAddressBookEntry' : null } |
@@ -540,6 +545,7 @@ export type ListUserGroupsResult = {
   } |
   { 'Err' : Error };
 export interface ListUsersInput {
+  'groups' : [] | [Array<UUID>],
   'statuses' : [] | [Array<UserStatus>],
   'paginate' : [] | [PaginationInput],
   'search_term' : [] | [string],
@@ -680,6 +686,7 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperation } |
   { 'AddUser' : AddUserOperation } |
   { 'EditUserGroup' : EditUserGroupOperation } |
+  { 'SetDisasterRecovery' : SetDisasterRecoveryOperation } |
   { 'EditRequestPolicy' : EditRequestPolicyOperation } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperation } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
@@ -702,6 +709,7 @@ export type RequestOperationInput = {
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperationInput } |
   { 'AddUser' : AddUserOperationInput } |
   { 'EditUserGroup' : EditUserGroupOperationInput } |
+  { 'SetDisasterRecovery' : SetDisasterRecoveryOperationInput } |
   { 'EditRequestPolicy' : EditRequestPolicyOperationInput } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
@@ -722,6 +730,7 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'ChangeExternalCanister' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
+  { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
   { 'RemoveAddressBookEntry' : null } |
@@ -768,6 +777,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterResourceTarget } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : ResourceIds } |
+  { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : ResourceIds } |
   { 'RemoveRequestPolicy' : ResourceIds } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
@@ -820,6 +830,12 @@ export type ResourceIds = { 'Any' : null } |
   { 'Ids' : Array<UUID> };
 export type ResourceSpecifier = { 'Any' : null } |
   { 'Resource' : Resource };
+export interface SetDisasterRecoveryOperation {
+  'committee' : [] | [DisasterRecoveryCommittee],
+}
+export interface SetDisasterRecoveryOperationInput {
+  'committee' : [] | [DisasterRecoveryCommittee],
+}
 export type Sha256Hash = string;
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
@@ -851,6 +867,7 @@ export interface SystemInit {
   'fallback_controller' : [] | [Principal],
   'admins' : Array<AdminInitInput>,
   'upgrader_wasm_module' : Uint8Array | number[],
+  'quorum' : [] | [number],
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
   { 'Init' : SystemInit };

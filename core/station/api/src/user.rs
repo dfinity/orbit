@@ -80,6 +80,7 @@ pub struct EditUserOperationDTO {
 pub struct ListUsersInput {
     pub search_term: Option<String>,
     pub statuses: Option<Vec<UserStatusDTO>>,
+    pub groups: Option<Vec<UuidDTO>>,
     pub paginate: Option<PaginationInput>,
 }
 

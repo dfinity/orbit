@@ -7,8 +7,7 @@ use crate::{
     models::{
         request_policy_rule::RequestPolicyRuleEvaluator,
         request_specifier::{
-            AccountMatcher, AddressBookMetadataMatcher, CommonIdMatcher, RequestMatcher,
-            UserMatcher,
+            AccountMatcher, AddressBookMetadataMatcher, CommonIdMatcher, UserMatcher,
         },
     },
 };
@@ -21,12 +20,6 @@ lazy_static! {
     pub static ref REQUEST_USER_MATCHER: Arc<UserMatcher> = Arc::new(UserMatcher);
     pub static ref REQUEST_ADDRESS_BOOK_METADATA_MATCHER: Arc<AddressBookMetadataMatcher> = Arc::new(AddressBookMetadataMatcher);
     pub static ref REQUEST_COMMON_ID_MATCHER: Arc<CommonIdMatcher> = Arc::new(CommonIdMatcher);
-    pub static ref REQUEST_MATCHER: Arc<RequestMatcher> = Arc::new(RequestMatcher {
-        account_matcher: REQUEST_ACCOUNT_MATCHER.clone(),
-        user_matcher: REQUEST_USER_MATCHER.clone(),
-        common_id_matcher: REQUEST_COMMON_ID_MATCHER.clone(),
-
-    });
     pub static ref REQUEST_POSSIBLE_APPROVERS_REQUEST_POLICY_RULE_EVALUATOR: Arc<RequestPossibleApproversRequestPolicyRuleEvaluator> = Arc::new(RequestPossibleApproversRequestPolicyRuleEvaluator);
     pub static ref REQUEST_POLICY_RULE_EVALUATOR: Arc<RequestPolicyRuleEvaluator> = Arc::new(RequestPolicyRuleEvaluator {
         user_matcher: REQUEST_USER_MATCHER.clone(),

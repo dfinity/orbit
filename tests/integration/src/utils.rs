@@ -3,15 +3,16 @@ use candid::Principal;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
-use pocket_ic::{update_candid_as, CallError, PocketIc, UserError, WasmResult};
+use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
 use station_api::{
     AddUserOperationInput, ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetRequestInput,
     GetRequestResponse, HealthStatus, MeResponse, RequestApprovalStatusDTO, RequestDTO,
     RequestExecutionScheduleDTO, RequestOperationDTO, RequestOperationInput, RequestStatusDTO,
-    SubmitRequestApprovalInput, SubmitRequestApprovalResponse, SystemInfoDTO, SystemInfoResponse,
-    UserDTO, UserStatusDTO,
+    SetDisasterRecoveryOperationDTO, SetDisasterRecoveryOperationInput, SubmitRequestApprovalInput,
+    SubmitRequestApprovalResponse, SystemInfoDTO, SystemInfoResponse, UserDTO, UserStatusDTO,
 };
 use std::time::Duration;
+use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
 
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 
@@ -292,13 +293,13 @@ pub fn get_system_info(
 
 pub fn add_user(
     env: &PocketIc,
-    user_id: Principal,
+    identity: Principal,
     group_ids: Vec<String>,
     station_canister_id: Principal,
 ) -> UserDTO {
     let add_user = RequestOperationInput::AddUser(AddUserOperationInput {
-        name: user_id.to_text().to_string(),
-        identities: vec![user_id],
+        name: identity.to_text().to_string(),
+        identities: vec![identity],
         groups: group_ids,
         status: UserStatusDTO::Active,
     });
@@ -382,8 +383,11 @@ pub fn advance_time_to_burn_cycles(
     env.advance_time(burn_duration);
     env.tick();
 
-    // restart the canister
-    env.start_canister(canister_id, Some(sender)).unwrap();
+    if target_cycles > 0 {
+        // restart the canister if it has some cycles remaining
+        env.start_canister(canister_id, Some(sender)).unwrap();
+    }
+
     // need at least 2 ticks
     env.tick();
     env.tick();
@@ -408,4 +412,58 @@ pub fn update_raw(
             WasmResult::Reply(bytes) => bytes,
             WasmResult::Reject(message) => panic!("Unexpected reject: {}", message),
         })
+}
+
+pub fn get_upgrader_disaster_recovery(
+    env: &PocketIc,
+    upgrader_id: &Principal,
+    station_canister_id: &Principal,
+) -> upgrader_api::GetDisasterRecoveryStateResponse {
+    let res: (ApiResult<GetDisasterRecoveryStateResponse>,) = query_candid_as(
+        env,
+        upgrader_id.to_owned(),
+        station_canister_id.to_owned(),
+        "get_disaster_recovery_state",
+        ((),),
+    )
+    .expect("Failed query call to get disaster recovery state");
+
+    res.0.expect("Failed to get disaster recovery state")
+}
+
+pub fn set_disaster_recovery(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    input: SetDisasterRecoveryOperationInput,
+) -> SetDisasterRecoveryOperationDTO {
+    let request = RequestOperationInput::SetDisasterRecovery(input);
+    let request_response = submit_request(env, WALLET_ADMIN_USER, station_canister_id, request);
+    let new_request = wait_for_request(
+        env,
+        WALLET_ADMIN_USER,
+        station_canister_id,
+        request_response,
+    )
+    .unwrap();
+    match new_request.operation {
+        RequestOperationDTO::SetDisasterRecovery(response) => *response,
+        _ => panic!("invalid request operation"),
+    }
+}
+
+pub fn get_upgrader_logs(
+    env: &PocketIc,
+    upgrader_id: &Principal,
+    sender: &Principal,
+) -> GetLogsResponse {
+    let res: (ApiResult<GetLogsResponse>,) = query_candid_as(
+        env,
+        upgrader_id.to_owned(),
+        *sender,
+        "get_logs",
+        (GetLogsInput { pagination: None },),
+    )
+    .expect("Failed query call to get disaster recovery logs");
+
+    res.0.expect("Failed to get disaster recovery logs")
 }
