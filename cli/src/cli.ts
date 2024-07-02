@@ -1,6 +1,7 @@
 import { program } from 'commander';
 import { version } from '../package.json';
 import release from './release';
+import registry from './registry';
 
 program
   .storeOptionsAsProperties(false)
@@ -12,6 +13,7 @@ program
   .action(() => console.log(__dirname));
 
 program.addCommand(release);
+program.addCommand(registry);
 
 program
   .parseAsync()

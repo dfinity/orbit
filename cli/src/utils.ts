@@ -1,4 +1,5 @@
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
+import { readFile } from 'fs/promises';
 
 // Parse a string of arguments separated by a separator and return an array of strings.
 export const parseArgsListSplitByComma = (arg?: string): string[] => {
@@ -35,4 +36,47 @@ export const targetExists = (project: string, target: string): boolean => {
     .trim();
 
   return output === project;
+};
+
+export const execAsync = (command: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    exec(command, (error, stdout) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(stdout);
+      }
+    });
+  });
+};
+
+export const cargoProjectVersion = (projectName: string): string => {
+  return execSync(
+    `cargo metadata --format-version 1 | jq -r '.packages[] | select(.name == "${projectName}") | .version'`,
+  )
+    .toString()
+    .trim();
+};
+
+export const readFileIntoUint8Array = async (filePath: string): Promise<Uint8Array> => {
+  const buffer = await readFile(filePath);
+  const uint8Array = new Uint8Array(buffer);
+
+  return uint8Array;
+};
+
+export const toBlobString = (buffer: Uint8Array): string => {
+  return Array.from(buffer)
+    .map(byte => `\\${byte.toString(16).padStart(2, '0')}`)
+    .join('');
+};
+
+export const assertReplicaIsHealthy = async (network: string): Promise<void> => {
+  const ping: { replica_health_status?: string } = JSON.parse(
+    await execAsync(`dfx ping '${network}'`),
+  );
+
+  if (ping.replica_health_status?.toLowerCase() !== 'healthy') {
+    throw new Error('The replica is not healthy.');
+  }
 };
