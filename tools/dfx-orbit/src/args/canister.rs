@@ -9,7 +9,7 @@ use std::fmt::Debug;
 pub enum Args {
     /// Puts a canister controlled by the user under Orbit control.
     Claim(Claim),
-    /// Uplods assets to an HTTP asset canister.
+    /// Uploads assets to an HTTP asset canister and requests that the assets be used.
     UploadHttpAssets(UploadHttpAssets),
 }
 
