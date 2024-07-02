@@ -20,6 +20,9 @@ pub struct Args {
     // #[clap(short, long)]
     // r#type: Option<CandidFormat>,
     // TODO: Read argument from a file
+    /// Specifies the amount of cycles to send on the call.
+    #[clap(short, long)]
+    with_cycles: Option<u64>,
 }
 
 impl CreateRequestArgs for Args {
@@ -31,6 +34,7 @@ impl CreateRequestArgs for Args {
         let Args {
             canister,
             method_name,
+            with_cycles,
         } = self;
         let canister_id = station_agent.canister_id(&canister)?;
         let operation = orbit_station_api::RequestOperationInput::CallExternalCanister(
@@ -41,7 +45,7 @@ impl CreateRequestArgs for Args {
                     method_name,
                 },
                 arg: None,
-                execution_method_cycles: None, // TODO: Add this to the CLI
+                execution_method_cycles: with_cycles,
             },
         );
         Ok(orbit_station_api::CreateRequestInput {
