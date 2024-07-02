@@ -2,6 +2,7 @@
 pub mod canister;
 pub mod dfx_extension_api;
 pub mod request;
+pub mod review;
 pub mod station;
 
 use clap::{Parser, Subcommand};
@@ -29,6 +30,9 @@ pub enum DfxOrbitSubcommands {
     /// Make requests to Orbit
     #[command(subcommand)]
     Request(request::Args),
+    /// View and decide on requests.
+    #[command(subcommand)]
+    Review(review::Args),
     /// Exercises the experimental DFX extension API.
     ///
     /// As the API is brand new and prototypical, this is exposed as a subcommand.  Once stable it can be removed.

@@ -2,6 +2,7 @@
 pub mod canister;
 pub mod dfx_extension_cli;
 pub mod request;
+pub mod review;
 pub mod station;
 
 use crate::args::{DfxOrbitArgs, DfxOrbitSubcommands};
@@ -33,5 +34,6 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             Ok(Err(e)) => Err(anyhow!("Error response from the station: {e:?}")),
             Err(e) => Err(e),
         },
+        DfxOrbitSubcommands::Review(review_args) => review::exec(review_args).await,
     }
 }
