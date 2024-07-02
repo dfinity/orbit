@@ -13,7 +13,7 @@ pub async fn exec(args: Args) -> anyhow::Result<Result<CreateRequestResponse, Ap
     let ic_agent = station_agent.dfx.agent().await?;
     let orbit_canister_id = crate::local_config::default_station()?
         .ok_or_else(|| anyhow!("No default station specified"))?
-        .canister_id;
+        .station_id;
 
     let canister_id = Principal::from_text(&orbit_canister_id)?;
     let bytes = ic_agent

@@ -18,7 +18,7 @@ pub struct StationConfig {
     pub name: String,
     /// Wallet canister ID.
     // TODO: This should be a principal.
-    pub canister_id: String,
+    pub station_id: String,
     /// The dfx network name.
     pub network: String,
     /// The Orbit user interface URL.
@@ -109,13 +109,13 @@ pub fn list_stations() -> Vec<String> {
 pub fn add_station(args: &Add) -> anyhow::Result<()> {
     let Add {
         name,
-        canister_id,
+        station_id,
         network,
         url,
     } = args;
     let station = StationConfig {
         name: name.to_string(),
-        canister_id: canister_id.to_string(),
+        station_id: station_id.to_string(),
         network: network.to_string(),
         url: url.to_string(),
     };

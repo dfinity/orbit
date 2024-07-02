@@ -13,7 +13,7 @@ pub fn exec(args: Claim) -> anyhow::Result<()> {
     } = args;
     let orbit_principal = &local_config::default_station()?
         .ok_or_else(|| anyhow!("No default station specified"))?
-        .canister_id;
+        .station_id;
     let claim_type = if exclusive {
         "--set-controller"
     } else {

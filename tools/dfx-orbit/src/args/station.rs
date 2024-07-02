@@ -30,9 +30,9 @@ pub struct Add {
     /// Wallet name.
     #[structopt(long)]
     pub name: String,
-    /// Wallet canister ID.
+    /// Station canister ID, called "Wallet ID" in the Orbit UI.
     #[structopt(long)]
-    pub canister_id: Principal,
+    pub station_id: Principal,
     /// The dfx network name.
     #[structopt(long)]
     pub network: String,
