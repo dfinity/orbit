@@ -22,6 +22,7 @@ pub struct StationConfig {
     /// The dfx network name.
     pub network: String,
     /// The Orbit user interface URL.
+    // TODO: This would be better as URL.  That requires serde to be implemented for URL.  Consider: https://docs.rs/url_serde/latest/url_serde/
     pub url: String,
 }
 
