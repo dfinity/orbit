@@ -36,6 +36,9 @@ pub struct Add {
     /// The dfx network name.
     #[structopt(long)]
     pub network: String,
+    /// The Obit user interface URL.
+    #[structopt(long)]
+    pub url: String,
 }
 
 /// Lists Orbit station in the local dfx configuration.

@@ -21,6 +21,8 @@ pub struct StationConfig {
     pub canister_id: String,
     /// The dfx network name.
     pub network: String,
+    /// The Orbit user interface URL.
+    pub url: String,
 }
 
 /// The directoy in the orbit dfx config directory where stations are stored.
@@ -108,11 +110,13 @@ pub fn add_station(args: &Add) -> anyhow::Result<()> {
         name,
         canister_id,
         network,
+        url,
     } = args;
     let station = StationConfig {
         name: name.to_string(),
         canister_id: canister_id.to_string(),
         network: network.to_string(),
+        url: url.to_string(),
     };
     let station_file = create_station_file(name)?;
     station_file.set_len(0)?;
