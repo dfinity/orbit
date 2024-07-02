@@ -1120,6 +1120,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "candid",
+ "candid_parser",
  "cap-std",
  "clap",
  "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?tag=0.20.2-beta.0)",
