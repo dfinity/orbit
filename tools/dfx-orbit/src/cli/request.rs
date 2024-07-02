@@ -27,6 +27,7 @@ pub async fn exec(args: Args) -> anyhow::Result<Result<CreateRequestResponse, Ap
         let request_url = station_agent.request_url(request_id);
         println!("Created request: {request_id}");
         println!("Request URL: {request_url}");
+        println!("To view the request, run: dfx-orbit review id {request_id}");
     } else {
         println!("{ans:#?}");
     }
