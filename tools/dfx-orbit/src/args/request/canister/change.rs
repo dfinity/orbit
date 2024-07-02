@@ -7,8 +7,7 @@ use clap::{Parser, ValueEnum};
 #[derive(Debug, Parser)]
 pub struct Args {
     // TODO: Poll, waiting for the request to be accepted.
-    /// The canister ID to install or update.
-    // TODO: Canister by name
+    /// The canister name or ID.
     #[clap(short, long)]
     canister: String,
     /// The installation mode.
