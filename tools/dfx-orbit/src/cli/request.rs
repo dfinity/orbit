@@ -16,12 +16,12 @@ pub async fn exec(args: Args) -> anyhow::Result<Result<CreateRequestResponse, Ap
         .station_id;
 
     let canister_id = Principal::from_text(&orbit_canister_id)?;
-    let bytes = ic_agent
+    let response_bytes = ic_agent
         .update(&canister_id, "create_request")
         .with_arg(candid::encode_one(args)?)
         .call_and_wait()
         .await?;
-    let ans: Result<CreateRequestResponse, ApiErrorDTO> = candid::decode_one(&bytes)?;
+    let ans: Result<CreateRequestResponse, ApiErrorDTO> = candid::decode_one(&response_bytes)?;
     if let Ok(response) = &ans {
         let request_id = &response.request.id;
         let request_url = station_agent.request_url(request_id);
