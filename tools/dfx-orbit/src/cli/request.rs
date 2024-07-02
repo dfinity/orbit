@@ -22,6 +22,13 @@ pub async fn exec(args: Args) -> anyhow::Result<Result<CreateRequestResponse, Ap
         .call_and_wait()
         .await?;
     let ans: Result<CreateRequestResponse, ApiErrorDTO> = candid::decode_one(&bytes)?;
-    println!("{ans:#?}");
+    if let Ok(response) = &ans {
+        let request_id = &response.request.id;
+        let request_url = station_agent.request_url(request_id);
+        println!("Created request: {request_id}");
+        println!("Request URL: {request_url}");
+    } else {
+        println!("{ans:#?}");
+    }
     Ok(ans)
 }

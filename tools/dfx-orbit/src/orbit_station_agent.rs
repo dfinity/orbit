@@ -39,4 +39,12 @@ impl StationAgent {
     ) -> anyhow::Result<UpdateBuilder> {
         Ok(self.dfx.agent().await?.update(canister_id, method_name))
     }
+
+    /// The URL for a request in the Orbit UI.
+    pub fn request_url(&self, request_id: &str) -> String {
+        format!(
+            "{}/en/settings/requests?reqid={}",
+            self.station.url, request_id
+        )
+    }
 }
