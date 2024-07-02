@@ -106,6 +106,7 @@ pub fn list_stations() -> Vec<String> {
 /// Adds a new Orbit station to the local dfx configuration.
 ///
 /// If there is no default station, the new station is set as the default.
+// TODO: Check that the URL works & is the root URL.
 pub fn add_station(args: &Add) -> anyhow::Result<()> {
     let Add {
         name,
