@@ -35,30 +35,34 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     let batch_id = ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
     println!("Proposed batch_id: {}", batch_id);
     // Compute evidence locally:
-    let local_evidence = ic_asset::compute_evidence(&canister_agent, &dirs, &logger).await?;
-    let local_evidence_blob = escape_hex_string(&local_evidence);
-
+    let local_evidence = {
+        let local_evidence = ic_asset::compute_evidence(&canister_agent, &dirs, &logger).await?;
+        escape_hex_string(&local_evidence)
+    };
     // Wait for the canister to compute the evidence:
-    // This part is stolen from ic_asset::sync::prepare_sync_for_proposal.  Unfortunately the relevant functions are private.
-    // The docs explicitly include waiting for the evidence so this should really be made easier!  See: https://github.com/dfinity/sdk/blob/2509e81e11e71dce4045c679686c952809525470/docs/design/asset-canister-interface.md?plain=1#L85
-    let compute_evidence_arg = ComputeEvidenceArguments {
-        batch_id: batch_id.clone(),
-        max_iterations: Some(97), // 75% of max(130) = 97.5
+    let canister_evidence = {
+        // This part is stolen from ic_asset::sync::prepare_sync_for_proposal.  Unfortunately the relevant functions are private.
+        // The docs explicitly include waiting for the evidence so this should really be made easier!  See: https://github.com/dfinity/sdk/blob/2509e81e11e71dce4045c679686c952809525470/docs/design/asset-canister-interface.md?plain=1#L85
+        let compute_evidence_arg = ComputeEvidenceArguments {
+            batch_id: batch_id.clone(),
+            max_iterations: Some(97), // 75% of max(130) = 97.5
+        };
+        info!(logger, "Computing evidence.");
+        let canister_evidence = loop {
+            if let Some(evidence) = compute_evidence(&canister_agent, &compute_evidence_arg).await?
+            {
+                break evidence;
+            }
+        };
+        blob_from_bytes(&canister_evidence)
     };
-    info!(logger, "Computing evidence.");
-    let canister_evidence = loop {
-        if let Some(evidence) = compute_evidence(&canister_agent, &compute_evidence_arg).await? {
-            break evidence;
-        }
-    };
-    let canister_evidence_blob = blob_from_bytes(&canister_evidence);
 
     println!(r#"Proposed batch_id: {batch_id}"#);
-    println!(r#"Local evidence: "{local_evidence_blob}""#);
-    println!(r#"Canister computed evidence: {canister_evidence_blob}"#);
+    println!(r#"Local evidence: "{local_evidence}""#);
+    println!(r#"Canister computed evidence: {canister_evidence}"#);
     println!(r#"Assets have been uploaded.  For the changes to take effect, run:"#);
     println!(
-        r#"dfx-orbit request canister call {canister} commit_proposed_batch '(record {{ batch_id = {batch_id} : nat; evidence = blob "{canister_evidence_blob}" }})'"#
+        r#"dfx-orbit request canister call {canister} commit_proposed_batch '(record {{ batch_id = {batch_id} : nat; evidence = blob "{canister_evidence}" }})'"#
     );
     // TODO: The local evidence doesn't match the canister evidence.
 
