@@ -85,3 +85,49 @@ Suppose that you have built a new Wasm and put a copy at `./MY-CANISTER.wasm.gz`
 ```
 dfx-orbit request canister change wasm --canister MY_CANISTER --mode upgrade --wasm ./MY-CANISTER.wasm.gz
 ```
+
+## Upload assets to a canister
+We will assume that Orbit is a controller of the asset canister.  If not, please adapt the following commands by using `dfx canister call` instead of `dfx-orbit request canister call`.
+
+### Authorize the developer to upload assets
+Note: Uploaded assets are not published.  They are only prepared for release.
+```
+developer_principal="$(dfx identity get-principal)"
+dfx-orbit request canister call frontend grant_permission "
+(
+  record {
+    permission = variant { Prepare };
+    to_principal = principal \"$developer_principal\";
+  },
+)
+"
+```
+
+### Authorize the orbit station to commit assets
+Note: Committing uploaded assets causes them to be published on the asset canister web site.
+```
+station_principal="$(dfx-orbit station show | jq -r .station_id)"
+dfx-orbit request canister call frontend grant_permission "
+(
+  record {
+    permission = variant { Commit };
+    to_principal = principal \"$station_principal\";
+  },
+)
+"
+```
+
+### Upload assets
+A developer may upload one or more directories of HTTP assets with:
+```
+dfx-orbit canister upload-http-assets --canister CANISTER_NAME --source SOME_DIR/ --source OTHER_DIR/
+```
+The developer may now request that the assets be published.  The command for this is printed at the end of the upload command.  Example:
+```
+...
+Jul 03 09:36:42.148 INFO Computing evidence.
+Proposed batch_id: 5
+Assets have been uploaded.  For the changes to take effect, run:
+dfx-orbit request canister call frontend commit_proposed_batch '(record { batch_id = 5 : nat; evidence = blob "\e3\b0\c4\42\98\fc\1c\14\9a\fb\f4\c8\99\6f\b9\24\27\ae\41\e4\64\9b\93\4c\a4\95\99\1b\78\52\b8\55" })'
+```
+Once the request has been approved, the changes will take effect.
