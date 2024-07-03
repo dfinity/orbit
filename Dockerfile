@@ -19,18 +19,24 @@ ENV PATH=$CARGO_HOME/bin:$PATH
 ENV PATH=$FNM_DIR/bin:$PATH
 # Install Rust and the Node.js version manager
 COPY rust-toolchain.toml .
-COPY .nvmrc .
 RUN curl -fsSL https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path && \
     curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir $FNM_DIR/bin --skip-shell
 # Add the fnm env var envaluation to the bashrc to enable it in bash by default
 RUN echo "eval \"$(fnm env)\"" >> $HOME/.bashrc
-# Install the correct version of Node.js and the dependencies
-COPY . .
+# Add expected node version file and root package.json with expected pnpm version
+COPY .nvmrc .
+COPY package.json .
+# Install the node version specified in the version file
 RUN eval "$(fnm env)" && \
     fnm install && \
     fnm use && \
     corepack enable && \
-    pnpm install
+    fnm alias default production
+# Install the monorepo dependencies
+COPY . .
+RUN eval "$(fnm env)" && \
+    fnm use && \ 
+    pnpm install --frozen-lockfile
 
 # Build the Orbit Upgrader Canister
 FROM builder as build_upgrader
