@@ -9,7 +9,7 @@
         "commands": [
           "mkdir -p ./artifacts/wallet-dapp",
           "pnpm --filter wallet-dapp run build",
-          "tar -czf ./artifacts/wallet-dapp/wallet-dapp.tar.gz -C {projectRoot}/dist .",
+          "TAR_CMD=$(command -v gtar >/dev/null 2>&1 && echo gtar || echo tar) && $TAR_CMD -cvf ./artifacts/wallet-dapp/wallet-dapp.tar.gz --mtime='2021-05-07 17:00Z' --sort=name --owner=0 --group=0 --numeric-owner --format=gnu --exclude .last_build_id -C {projectRoot}/dist .",
           "sha256sum ./artifacts/wallet-dapp/wallet-dapp.tar.gz | awk '{ print $1 }' > ./artifacts/wallet-dapp/wallet-dapp.tar.gz.sha256"
         ],
         "parallel": false

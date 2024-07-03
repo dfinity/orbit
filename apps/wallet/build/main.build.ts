@@ -136,7 +136,6 @@ export default defineConfig(_ => {
       'import.meta.env.APP_BUILD_MODE': JSON.stringify(mode),
       'import.meta.env.APP_BUILD_VERSION': JSON.stringify(process.env.npm_package_version),
       'import.meta.env.APP_BUILD_HASH': JSON.stringify(commitHash),
-      'import.meta.env.APP_BUILD_DATE': JSON.stringify(new Date().toISOString()),
     },
     resolve: {
       alias: {
