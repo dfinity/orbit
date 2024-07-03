@@ -102,6 +102,10 @@ dfx-orbit request canister call frontend grant_permission "
 )
 "
 ```
+When the request has been approved, check the list of principals permitted to prepare assets:
+```
+dfx canister call frontend list_permitted '(record { permission = variant { Prepare } })'
+```
 
 ### Authorize the orbit station to commit assets
 Note: Committing uploaded assets causes them to be published on the asset canister web site.
@@ -115,6 +119,10 @@ dfx-orbit request canister call frontend grant_permission "
   },
 )
 "
+```
+When the request has been approved, check the list of principals permitted to commit assets:
+```
+dfx canister call frontend list_permitted '(record { permission = variant { Commit } })'
 ```
 
 ### Upload assets
