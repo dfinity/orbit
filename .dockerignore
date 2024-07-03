@@ -1,0 +1,9 @@
+Dockerfile
+node_modules
+docs
+dist
+target
+out
+**/*.wasm
+**/*.wasm.gz
+artifacts
