@@ -29,9 +29,6 @@ function help() {
 
 Helper script to facilitate the building of the canisters in the Orbit project in a reproducible way.
 
-Optionally the `GH_COMMIT` environment variable can be set to a specific commit hash to build the canisters 
-at that specific commit.
-
 NOTE: This requires a working Docker installation.
 EOF
 }
