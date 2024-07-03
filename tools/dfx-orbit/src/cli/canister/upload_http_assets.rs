@@ -19,9 +19,13 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
         source,
         verbose: _verbose,
     } = args;
-    // The path is needed in various forms.  If dirs is plural, maybe we should accept multiple dirs?
-    let dir: PathBuf = PathBuf::from(&source);
-    let dirs: Vec<&Path> = vec![dir.as_path()];
+    // The path is needed in various forms.
+    let source_pathbufs: Vec<PathBuf> =
+        source.iter().map(|source| PathBuf::from(&source)).collect();
+    let source_paths: Vec<&Path> = source_pathbufs
+        .iter()
+        .map(|pathbuf| pathbuf.as_path())
+        .collect();
 
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
     let canister_id = station_agent.canister_id(&canister)?;
@@ -36,7 +40,8 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     println!("Proposed batch_id: {}", batch_id);
     // Compute evidence locally:
     let local_evidence = {
-        let local_evidence = ic_asset::compute_evidence(&canister_agent, &dirs, &logger).await?;
+        let local_evidence =
+            ic_asset::compute_evidence(&canister_agent, &source_paths, &logger).await?;
         escape_hex_string(&local_evidence)
     };
     // Wait for the canister to compute evidence:
@@ -91,18 +96,20 @@ fn list_assets(path: &str) -> Vec<PathBuf> {
 /// A hash map of all assets.
 ///
 /// Note: Given that ordering in a HashMap is not deterministic, is this really the best API?
-fn assets_as_hash_map(asset_dir: &str) -> HashMap<String, PathBuf> {
-    list_assets(asset_dir)
-        .into_iter()
-        .map(|asset_path| {
-            let relative_path = asset_path.strip_prefix(asset_dir).expect(
-                "Internal error: list_assets should have returned only files in the asset_dir",
-            );
-            let http_path = format!(
-                "/{relative_path}",
-                relative_path = relative_path.to_string_lossy()
-            );
-            (http_path, asset_path)
+fn assets_as_hash_map(asset_dirs: &[String]) -> HashMap<String, PathBuf> {
+    asset_dirs
+        .iter()
+        .flat_map(|asset_dir| {
+            list_assets(asset_dir).into_iter().map(move |asset_path| {
+                let relative_path = asset_path.strip_prefix(asset_dir).expect(
+                    "Internal error: list_assets should have returned only files in the asset_dir",
+                );
+                let http_path = format!(
+                    "/{relative_path}",
+                    relative_path = relative_path.to_string_lossy()
+                );
+                (http_path, asset_path)
+            })
         })
         .collect()
 }

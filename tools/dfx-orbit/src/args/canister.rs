@@ -32,7 +32,7 @@ pub struct UploadHttpAssets {
     pub canister: String,
     /// A directory of assets to upload.
     #[structopt(long)]
-    pub source: String,
+    pub source: Vec<String>,
     /// Provide a running commentary.
     #[arg(short, long, default_value_t = false)]
     pub verbose: bool,
