@@ -3,7 +3,7 @@ use ic_asset::canister_api::{
     methods::batch::compute_evidence, types::batch_upload::common::ComputeEvidenceArguments,
 };
 use ic_utils::canister::CanisterBuilder;
-use slog::info;
+use slog::{info, warn};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -12,7 +12,7 @@ use walkdir::WalkDir;
 
 use crate::args::canister::UploadHttpAssets as Args;
 
-/// The main entry point for the `dfx orbit` CLI.
+/// The main entry point for the `dfx orbit canister upload-http-assets` CLI.
 pub async fn exec(args: Args) -> anyhow::Result<()> {
     let Args {
         canister,
@@ -26,7 +26,7 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
     let canister_id = station_agent.canister_id(&canister)?;
     let logger = station_agent.dfx.logger().clone();
-    // Upload assets
+    // Upload assets:
     let canister_agent = CanisterBuilder::new()
         .with_agent(station_agent.dfx.agent().await?)
         .with_canister_id(canister_id)
@@ -39,7 +39,7 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
         let local_evidence = ic_asset::compute_evidence(&canister_agent, &dirs, &logger).await?;
         escape_hex_string(&local_evidence)
     };
-    // Wait for the canister to compute the evidence:
+    // Wait for the canister to compute evidence:
     let canister_evidence = {
         // This part is stolen from ic_asset::sync::prepare_sync_for_proposal.  Unfortunately the relevant functions are private.
         // The docs explicitly include waiting for the evidence so this should really be made easier!  See: https://github.com/dfinity/sdk/blob/2509e81e11e71dce4045c679686c952809525470/docs/design/asset-canister-interface.md?plain=1#L85
@@ -58,17 +58,15 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
     };
 
     println!(r#"Proposed batch_id: {batch_id}"#);
-    println!(r#"Local evidence: "{local_evidence}""#);
-    println!(r#"Canister computed evidence: {canister_evidence}"#);
+    if local_evidence == canister_evidence {
+        info!(logger, "Local evidence matches canister evidence.");
+    } else {
+        warn!(logger, "Local evidence does not match canister evidence:\n  local:    {local_evidence}\n  canister:{canister_evidence}");
+    }
     println!(r#"Assets have been uploaded.  For the changes to take effect, run:"#);
     println!(
         r#"dfx-orbit request canister call {canister} commit_proposed_batch '(record {{ batch_id = {batch_id} : nat; evidence = blob "{canister_evidence}" }})'"#
     );
-    // TODO: The local evidence doesn't match the canister evidence.
-
-    // Maybe compute evidence locally and then compare?
-
-    // TODO: Get Orbit to make the API call to commit the changes.
     Ok(())
 }
 
