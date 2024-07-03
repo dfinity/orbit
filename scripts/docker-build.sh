@@ -2,29 +2,6 @@
 set -eEuo pipefail
 
 #############################################
-# INIT & TEARDOWN                           #
-#############################################
-
-GH_COMMIT=${GH_COMMIT:-}
-GH_INITIAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
-function init() {
-  if [[ -z $GH_COMMIT ]]; then
-    echo "INFO: GH_COMMIT is not set, building the latest commit"
-  else
-    echo "INFO: Building the commit $GH_COMMIT"
-    git checkout $GH_COMMIT
-  fi
-}
-
-function teardown() {
-  if [[ -n $GH_COMMIT ]]; then
-    echo "INFO: Restoring the initial branch $GH_INITIAL_BRANCH"
-    git checkout $GH_INITIAL_BRANCH
-  fi
-}
-
-#############################################
 # USAGE                                     #
 #############################################
 
@@ -42,6 +19,7 @@ Options:
   --control-panel builds the control panel canister
   --station builds the station canister
   --upgrader builds the upgrader canister
+
   -h, --help prints this help message
 EOF
 }
@@ -115,8 +93,6 @@ if [[ $# -eq 0 ]]; then
   exit 0
 fi
 
-init
-
 while [[ $# -gt 0 ]]; do
   case "$1" in
   -h | --help)
@@ -149,5 +125,3 @@ while [[ $# -gt 0 ]]; do
     ;;
   esac
 done
-
-teardown
