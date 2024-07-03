@@ -74,7 +74,7 @@ Add Orbit as a controller while keeping existing controllers:
 This will allow you to propose upgrades to `MY_CANISTER`:
 
 ```
-dfx-orbit request permission canister change --canister MY_CANISTER
+dfx-orbit request permission canister change wasm --canister MY_CANISTER
 ```
 This will create an Orbit request.  Once approved you will be able to propose canister upgrades.
 
@@ -83,5 +83,5 @@ This will create an Orbit request.  Once approved you will be able to propose ca
 ### Upgrade a canister
 Suppose that you have built a new Wasm and put a copy at `./MY-CANISTER.wasm.gz`.  To upgrade your canister to the new Wasm:
 ```
-dfx-orbit request canister change --canister MY_CANISTER --mode upgrade --wasm ./MY-CANISTER.wasm.gz
+dfx-orbit request canister change wasm --canister MY_CANISTER --mode upgrade --wasm ./MY-CANISTER.wasm.gz
 ```

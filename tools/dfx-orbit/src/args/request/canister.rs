@@ -12,6 +12,7 @@ use clap::Subcommand;
 #[command(version, about, long_about = None)]
 pub enum Args {
     /// Request to update the canister.
+    #[command(subcommand)]
     Change(change::Args),
     /// Request to call a canister method.
     Call(call::Args),
