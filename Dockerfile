@@ -1,5 +1,5 @@
 # Operating system with basic tools
-FROM --platform=linux/amd64 ubuntu:20.04 as base
+FROM --platform=linux/amd64 ubuntu@sha256:bbf3d1baa208b7649d1d0264ef7d522e1dc0deeeaaf6085bf8e4618867f03494 as base
 SHELL ["bash", "-c"]
 ENV TZ=UTC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
