@@ -30,9 +30,9 @@ pub struct UploadHttpAssets {
     /// The canister name or `canister_id`.
     #[structopt(long)]
     pub canister: String,
-    /// The path to the assets to upload.
+    /// A directory of assets to upload.
     #[structopt(long)]
-    pub path: String,
+    pub source: String,
     /// Provide a running commentary.
     #[arg(short, long, default_value_t = false)]
     pub verbose: bool,

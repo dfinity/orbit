@@ -16,11 +16,11 @@ use crate::args::canister::UploadHttpAssets as Args;
 pub async fn exec(args: Args) -> anyhow::Result<()> {
     let Args {
         canister,
-        path,
+        source,
         verbose: _verbose,
     } = args;
     // The path is needed in various forms.  If dirs is plural, maybe we should accept multiple dirs?
-    let dir: PathBuf = PathBuf::from(&path);
+    let dir: PathBuf = PathBuf::from(&source);
     let dirs: Vec<&Path> = vec![dir.as_path()];
 
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
@@ -31,7 +31,7 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
         .with_agent(station_agent.dfx.agent().await?)
         .with_canister_id(canister_id)
         .build()?;
-    let assets = assets_as_hash_map(&path);
+    let assets = assets_as_hash_map(&source);
     let batch_id = ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
     println!("Proposed batch_id: {}", batch_id);
     // Compute evidence locally:
