@@ -9,7 +9,8 @@
         "commands": [
           "mkdir -p ./artifacts/wallet-dapp",
           "pnpm --filter wallet-dapp run build",
-          "DAPP_VERSION=$(node -p \"require('./{projectRoot}/package.json').version\") && tar -czf ./artifacts/wallet-dapp/wallet-dapp-v$DAPP_VERSION.tar.gz -C {projectRoot}/dist ."
+          "tar -czf ./artifacts/wallet-dapp/wallet-dapp.tar.gz -C {projectRoot}/dist .",
+          "sha256sum ./artifacts/wallet-dapp/wallet-dapp.tar.gz | awk '{ print $1 }' > ./artifacts/wallet-dapp/wallet-dapp.tar.gz.sha256"
         ],
         "parallel": false
       }

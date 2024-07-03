@@ -2,6 +2,12 @@
 set -eEuo pipefail
 
 #############################################
+# VARIABLES                                 #
+#############################################
+
+GH_COMMIT=${GH_COMMIT:-main}
+
+#############################################
 # USAGE                                     #
 #############################################
 
@@ -16,10 +22,10 @@ Usage:
   $0
 
 Options:
-  --all builds all the canisters
   --control-panel builds the control panel canister
   --station builds the station canister
   --upgrader builds the upgrader canister
+  -h, --help prints this help message
 EOF
 }
 
@@ -27,6 +33,9 @@ function help() {
   cat <<EOF
 
 Helper script to facilitate the building of the canisters in the Orbit project in a reproducible way.
+
+Optionally the `GH_COMMIT` environment variable can be set to a specific commit hash to build the canisters 
+at that specific commit.
 
 NOTE: This requires a working Docker installation.
 EOF
@@ -45,20 +54,38 @@ function exec_function() {
 # FEATURES                                  #
 #############################################
 
-function build_all() {
-  docker build -t orbit-all --target build_all .
+function build_canister() {
+  local canister_name=$1
+  local target=$2
+
+  # Build the canister
+  docker build -t orbit-$canister_name --target $target .
+
+  # Create a container to extract the generated artifacts
+  docker create --name orbit-$canister_name-container orbit-$canister_name
+
+  # Copy the generated artifacts to the host
+  docker cp orbit-$canister_name-container:/code/artifacts/$canister_name ./artifacts
+
+  # Remove the container
+  docker rm orbit-$canister_name-container
+
+  # Remove the image
+  docker rmi orbit-$canister_name --force
+
+  echo "The $canister_name canister artifacts have been copied to the host"
 }
 
 function build_control_panel() {
-  docker build -t orbit-control-panel --target build_control_panel .
+  build_canister control-panel build_control_panel
 }
 
 function build_station() {
-  docker build -t orbit-station --target build_station .
+  build_canister station build_station
 }
 
 function build_upgrader() {
-  docker build -t orbit-upgrader --target build_upgrader .
+  build_canister upgrader build_upgrader
 }
 
 #############################################
@@ -78,11 +105,6 @@ while [[ $# -gt 0 ]]; do
     usage
     help
     exit 0
-    ;;
-  --all)
-    shift
-    exec_function build_all
-    echo
     ;;
   --control-panel)
     shift
