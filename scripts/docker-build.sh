@@ -19,6 +19,7 @@ Options:
   --control-panel builds the control panel canister
   --station builds the station canister
   --upgrader builds the upgrader canister
+  --wallet-dapp builds the wallet frontend assets
 
   -h, --help prints this help message
 EOF
@@ -46,38 +47,42 @@ function exec_function() {
 # FEATURES                                  #
 #############################################
 
-function build_canister() {
-  local canister_name=$1
+function deterministic_build() {
+  local project_name=$1
   local target=$2
 
   # Build the canister
-  docker build -t orbit-$canister_name --target $target .
+  docker build -t orbit-$project_name --target $target .
 
   # Create a container to extract the generated artifacts
-  docker create --name orbit-$canister_name-container orbit-$canister_name
+  docker create --name orbit-$project_name-container orbit-$project_name
 
   # Copy the generated artifacts to the host
-  docker cp orbit-$canister_name-container:/code/artifacts/$canister_name ./artifacts
+  docker cp orbit-$project_name-container:/code/artifacts/$project_name ./artifacts
 
   # Remove the container
-  docker rm orbit-$canister_name-container
+  docker rm orbit-$project_name-container
 
   # Remove the image
-  docker rmi orbit-$canister_name --force
+  docker rmi orbit-$project_name --force
 
-  echo "The $canister_name canister artifacts have been copied to the host"
+  echo "The $project_name project artifacts have been copied to the host"
 }
 
 function build_control_panel() {
-  build_canister control-panel build_control_panel
+  deterministic_build control-panel build_control_panel
 }
 
 function build_station() {
-  build_canister station build_station
+  deterministic_build station build_station
 }
 
 function build_upgrader() {
-  build_canister upgrader build_upgrader
+  deterministic_build upgrader build_upgrader
+}
+
+function build_wallet_dapp() {
+  deterministic_build wallet-dapp build_wallet_dapp
 }
 
 #############################################
@@ -111,6 +116,11 @@ while [[ $# -gt 0 ]]; do
   --upgrader)
     shift
     exec_function build_upgrader
+    echo
+    ;;
+  --wallet-dapp)
+    shift
+    exec_function build_wallet_dapp
     echo
     ;;
   *)

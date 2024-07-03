@@ -64,3 +64,12 @@ LABEL io.icp.artifactType="canister" \
 RUN eval "$(fnm env)" && \
     fnm use && \
     BUILD_MODE=production npx nx run control-panel:create-artifacts
+
+# Build the Orbit Wallet Frontend Assets
+FROM builder as build_wallet_dapp
+WORKDIR /code
+LABEL io.icp.artifactType="canister" \
+      io.icp.artifactName="wallet-dapp"
+RUN eval "$(fnm env)" && \
+    fnm use && \
+    BUILD_MODE=production npx nx run wallet-dapp:create-artifacts
