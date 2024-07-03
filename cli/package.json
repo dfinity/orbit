@@ -6,7 +6,7 @@
   },
   "main": "cli.js",
   "scripts": {
-    "build": "pnpm generate-types && tsc",
+    "build": "tsc",
     "start": "node dist/cli.js",
     "expose": "pnpm link --global",
     "generate-types": "didc bind --target ts ../core/control-panel/api/spec.did > ./src/generated/control_panel.d.ts"
