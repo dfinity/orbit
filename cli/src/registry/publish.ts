@@ -5,7 +5,13 @@ import { writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { AddRegistryEntryResult, EditRegistryEntryResult } from '../generated/control_panel';
-import { cargoProjectVersion, execAsync, readFileIntoUint8Array, toBlobString } from '../utils';
+import {
+  assertReplicaIsHealthy,
+  cargoProjectVersion,
+  execAsync,
+  readFileIntoUint8Array,
+  toBlobString,
+} from '../utils';
 import {
   Application,
   applicationToRegistryEntryMap,
@@ -32,16 +38,21 @@ interface Package {
   dependencies: PackageDedependency[];
 }
 
-const getAppRegistryEntry = async (app: Application, network: string): Promise<Package> => {
+const getAppRegistryEntry = async (
+  app: Application,
+  network: string,
+  shouldBuildArtifacts: boolean,
+): Promise<Package> => {
   const upgraderVersion = cargoProjectVersion(Application.Upgrader);
-  console.log(`Creating release artifacts for project: upgrader...`);
-  execSync(`BUILD_MODE='${network}' npx nx run upgrader:create-artifacts`);
 
   switch (app) {
     case Application.Station: {
       const stationVersion = cargoProjectVersion(Application.Station);
-      console.log(`Creating release artifacts for project: station...`);
-      execSync(`BUILD_MODE='${network}' npx nx run station:create-artifacts`);
+
+      if (shouldBuildArtifacts) {
+        console.log(`Creating release artifacts for project: station...`);
+        execSync(`BUILD_MODE='${network}' npx nx run station:create-artifacts`);
+      }
 
       return {
         name: applicationToRegistryEntryMap.station,
@@ -62,7 +73,12 @@ const getAppRegistryEntry = async (app: Application, network: string): Promise<P
         },
       };
     }
-    case Application.Upgrader:
+    case Application.Upgrader: {
+      if (shouldBuildArtifacts) {
+        console.log(`Creating release artifacts for project: upgrader...`);
+        execSync(`BUILD_MODE='${network}' npx nx run upgrader:create-artifacts`);
+      }
+
       return {
         name: applicationToRegistryEntryMap.upgrader,
         description: 'Securely handles upgrades and disaster recovery for the Orbit Station.',
@@ -75,6 +91,9 @@ const getAppRegistryEntry = async (app: Application, network: string): Promise<P
           url: 'https://github.com/dfinity/orbit',
         },
       };
+    }
+    default:
+      throw new Error(`Unsupported application: ${app}`);
   }
 };
 
@@ -92,6 +111,11 @@ command
     '-i, --identity <TYPE>',
     'The identity to use for the registry operations. Defaults to `default`.',
     'default',
+  )
+  .option(
+    '-b, --build',
+    'Whether to build the release artifacts before publishing. Defaults to `false`.',
+    false,
   )
   .requiredOption(
     '-a, --app <VALUE>',
@@ -111,21 +135,23 @@ const saveArgumentInTempFile = async (argument: string): Promise<string> => {
 };
 
 command.action(async options => {
-  const ping: { replica_health_status?: string } = JSON.parse(
-    await execAsync(`dfx ping '${options.network}'`),
-  );
+  assertReplicaIsHealthy(options.network);
 
-  if (ping.replica_health_status?.toLowerCase() !== 'healthy') {
-    throw new Error('The replica is not healthy.');
-  }
+  // Determine whether to build the release artifacts before publishing. This is `false` by default since
+  // artifacts are expected to be built before with a deterministic build.
+  const shouldBuildArtifacts = options.build;
 
   // Prepare the registry entries for the application and its dependencies to be added.
   console.log(`Preparing registry entries for ${options.app} and its dependencies...`);
-  const app = await getAppRegistryEntry(options.app, options.network);
+  const app = await getAppRegistryEntry(options.app, options.network, shouldBuildArtifacts);
   const registryEntries: Package[] = [];
   for (const dependency of app.dependencies) {
     registryEntries.push(
-      await getAppRegistryEntry(registryEntryToApplicationMap[dependency.name], options.network),
+      await getAppRegistryEntry(
+        registryEntryToApplicationMap[dependency.name],
+        options.network,
+        shouldBuildArtifacts,
+      ),
     );
   }
   registryEntries.push(app);

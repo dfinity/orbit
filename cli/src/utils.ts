@@ -1,5 +1,6 @@
 import { exec, execSync } from 'child_process';
 import { readFile } from 'fs/promises';
+import { promisify } from 'util';
 
 // Parse a string of arguments separated by a separator and return an array of strings.
 export const parseArgsListSplitByComma = (arg?: string): string[] => {
@@ -38,16 +39,8 @@ export const targetExists = (project: string, target: string): boolean => {
   return output === project;
 };
 
-export const execAsync = (command: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    exec(command, (error, stdout) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(stdout);
-      }
-    });
-  });
+export const execAsync = async (command: string): Promise<string> => {
+  return promisify(exec)(command).then(({ stdout }) => stdout);
 };
 
 export const cargoProjectVersion = (projectName: string): string => {
