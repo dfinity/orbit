@@ -67,6 +67,35 @@ Tell the command line tool where to find the orbit station:
 
 TODO: The Oisy canister ID is also called the wallet ID and the station ID.  Consistent nomenclature that doesn't conflict with established terminology would be nice.
 
+### Grant permission to make requests
+You can check which permissions you have with:
+```
+dfx-orbit me | jq .Ok.privileges
+```
+Initially you are likely to have only permission to see your own profile:
+```
+[
+  "Capabilities"
+]
+```
+
+Without permission to make requests, `request permission` commands, like this meaningless request to update a non-existent canister, will fail with `Unauthorized access to resources: Permission(Update)`.
+```
+dfx-orbit request permission canister change --canister tmlz3-yjbfg-j2wfb-745ni-omr52-4tga6-rbk3r-wjryr-l3xk7-oziho-wae
+```
+
+In the UI the permission that needs to be granted is:
+
+| Permission      | [Name in UI](https://orbitwallet.io/en/settings/user-groups/permissions)      | Privilige | Used for |
+| --- | --- | --- | -- |
+| `Request(List)` | Request/List | `ListRequests`  | `dfx-orbit review next` |
+
+TODO: It  would be nice to be able to link directly to a permission.  E.g. this could open the permissions page and focus on one specific permission: https://orbitwallet.io/en/settings/user-groups/permissions#Request/List
+
+
+## Make canister calls with Orbit
+
+
 ## Control a canister with Orbit
 
 ### Grant Orbit control of the canister
