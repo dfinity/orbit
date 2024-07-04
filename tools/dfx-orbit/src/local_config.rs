@@ -161,17 +161,12 @@ pub fn remove_station(name: &str) -> anyhow::Result<()> {
 ///
 /// If the station being renamed is the default station, the default is updated to reflect the new name.
 pub fn rename_station(name: &str, new_name: &str) -> anyhow::Result<()> {
-    let dir = stations_dir()?;
-    let old_path = station_file_name(name);
-    let new_path = station_file_name(new_name);
-    dir.rename(old_path, &dir, new_path).with_context(|| {
-        format!(
-            "Failed to rename dfx config file for station {} to {}",
-            name, new_name
-        )
-    })?;
-
-    if default_station_name()? == Some(name.to_string()) {
+    let default_station_name = default_station_name()?;
+    let mut station = station(name)?;
+    station.name = new_name.to_string();
+    add_station(station)?;
+    remove_station(name)?;
+    if default_station_name == Some(name.to_string()) {
         set_default_station(Some(new_name.to_string()))?;
     }
     Ok(())
