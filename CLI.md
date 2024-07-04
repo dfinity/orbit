@@ -42,7 +42,7 @@ Tell the command line tool where to find the orbit station:
 * Copy the wallet ID
 * Store the station details locally.  If your wallet is called `shiny` and is running locally, the command is:
   ```
-  dfx-orbit station add --name shiny --canister-id "$WALLET_ID" --network local
+  dfx-orbit station add --name shiny --station-id "$WALLET_ID" --network local
   ```
 * Verify that the station is in your list of stations:
   ```
@@ -56,6 +56,8 @@ Tell the command line tool where to find the orbit station:
   ```
   dfx-orbit me
   ```
+
+TODO: The Oisy canister ID is also called the wallet ID and the station ID.  Consistent nomenclature that doesn't conflict with established terminology would be nice.
 
 ## Control a canister with Orbit
 
