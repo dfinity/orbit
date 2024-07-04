@@ -430,6 +430,15 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
     let station_wasm_module = get_canister_wasm("station");
     let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
     let upgrader_id = system_info.upgrader_id;
+    let initial_fallback_controller = Principal::from_slice(&[50; 29]);
+    let fallback_controller = Principal::from_slice(&[99; 29]);
+
+    env.set_controllers(
+        canister_ids.station,
+        Some(upgrader_id),
+        vec![initial_fallback_controller, upgrader_id],
+    )
+    .expect("Unexpected failed to set controllers of the station canister");
 
     // 2. perform the disaster recovery request with the station wasm and using the same upgrader id
     let res: (ApiResult<()>,) = update_candid_as(
@@ -446,7 +455,7 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
                     name: "updated-admin-name".to_string(),
                 }],
                 quorum: None,
-                fallback_controller: None,
+                fallback_controller: Some(fallback_controller),
                 upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
             }))
             .unwrap(),
@@ -464,7 +473,7 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
     ));
 
     // Advance the necessary consensus rounds to complete the disaster recovery
-    for _ in 0..7 {
+    for _ in 0..9 {
         env.tick();
     }
 
@@ -495,6 +504,28 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
 
     let admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
     assert_eq!(admin_user.name, "updated-admin-name");
+
+    // 5. assert that the fallback controller is updated
+    let updated_controllers = env
+        .canister_status(canister_ids.station, Some(upgrader_id))
+        .expect("Failed to get canister status")
+        .settings
+        .controllers;
+
+    assert_eq!(updated_controllers.len(), 2);
+    assert!(updated_controllers.contains(&fallback_controller));
+    assert!(updated_controllers.contains(&upgrader_id));
+
+    // 6. check that the upgrader has the new fallback controller
+    let upgrader_controllers = env
+        .canister_status(upgrader_id, Some(canister_ids.station))
+        .expect("Failed to get canister status")
+        .settings
+        .controllers;
+
+    assert_eq!(upgrader_controllers.len(), 2);
+    assert!(upgrader_controllers.contains(&fallback_controller));
+    assert!(upgrader_controllers.contains(&canister_ids.station));
 }
 
 #[test]
@@ -614,12 +645,13 @@ fn test_disaster_recovery_install() {
         "request_disaster_recovery",
         (good_request.clone(),),
     )
-    .expect("Failed update call to request disaster recovery");
-    res.0.expect("Failed to request disaster recovery");
+    .expect("Unexpected failed update call to request disaster recovery");
+    res.0
+        .expect("Unexpected failed to request disaster recovery");
 
-    env.tick();
-    env.tick();
-    env.tick();
+    for _ in 0..6 {
+        env.tick();
+    }
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
 

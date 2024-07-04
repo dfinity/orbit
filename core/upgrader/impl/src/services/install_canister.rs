@@ -3,7 +3,7 @@ use async_trait::async_trait;
 use candid::Principal;
 use ic_cdk::api::management_canister::main::{self as mgmt, CanisterIdRecord, InstallCodeArgument};
 use lazy_static::lazy_static;
-use std::sync::Arc;
+use std::{collections::BTreeSet, sync::Arc};
 
 lazy_static! {
     pub static ref INSTALL_CANISTER: Arc<StationDisasterRecoveryInstall> =
@@ -40,10 +40,29 @@ impl InstallCanister for StationDisasterRecoveryInstall {
         // For install and reinstall, we need to make the station self controlled.
         match mode {
             InstallMode::Install | InstallMode::Reinstall => {
+                // Get the current controllers and add the station to it. We preserve the existing controllers
+                // during this step to avoid losing control in case of a failed install.
+                let (info,) = mgmt::canister_info(mgmt::CanisterInfoRequest {
+                    canister_id,
+                    num_requested_changes: None,
+                })
+                .await
+                .map_err(|(code, err)| {
+                    format!(
+                        "failed to get canister info for canister: \"{}\", rejection code: {}",
+                        err, code as i32
+                    )
+                })?;
+
+                let mut controllers = BTreeSet::new();
+                controllers.extend(info.controllers.iter().cloned());
+                controllers.insert(canister_id);
+                controllers.insert(ic_cdk::id());
+
                 mgmt::update_settings(mgmt::UpdateSettingsArgument {
                     canister_id,
                     settings: mgmt::CanisterSettings {
-                        controllers: Some(vec![canister_id, ic_cdk::id()]),
+                        controllers: Some(controllers.into_iter().collect()),
                         ..Default::default()
                     },
                 })
