@@ -74,10 +74,7 @@ Assume that you have a canister called `MY_CANISTER` in `dfx`.  You may also ref
 
 Add Orbit as a controller while keeping existing controllers:
 ```
-(
-  orbit_station="$(dfx-orbit station show | jq -r .canister_id)"
-  dfx canister update-settings --add-controller "$orbit_station" MY_CANISTER
-)
+dfx-orbit canister claim MY_CANISTER
 ```
 
 ### Register yourself as a developer for your canister

@@ -19,9 +19,14 @@ pub fn exec(args: Claim) -> anyhow::Result<()> {
     } else {
         "--add-controller"
     };
+    let network = local_config::default_station()?
+        .ok_or_else(|| anyhow!("No default station specified"))?
+        .network;
     dfx_extension_api::call_dfx_cli(vec![
         "canister",
         "update-settings",
+        "--network",
+        &network,
         claim_type,
         orbit_principal,
         &canister,

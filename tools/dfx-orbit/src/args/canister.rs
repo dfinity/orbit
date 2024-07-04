@@ -17,7 +17,6 @@ pub enum Args {
 #[derive(Debug, Parser)]
 pub struct Claim {
     /// The canister name or `canister_id`.
-    #[structopt(long)]
     pub canister: String,
     /// Make Orbit the exclusive controller of the canister.
     #[clap(long, short, action)]
