@@ -5,15 +5,17 @@ use orbit_station_api::{ApiErrorDTO, CreateRequestResponse};
 
 /// The main entry point for the `dfx orbit request` CLI.
 pub async fn exec(args: Args) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
-    // Converts the CLI arg type into the equivalent Orbit API type.
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
+    // Converts the CLI arg type into the equivalent Orbit API type.
     let args = args.into_create_request_input(&station_agent)?;
+    // Makes an update call to the station.
     let response_bytes = station_agent
         .update_orbit("create_request")
         .await?
         .with_arg(candid::encode_one(args)?)
         .call_and_wait()
         .await?;
+    // Decodes the response from the station.
     let ans: Result<CreateRequestResponse, ApiErrorDTO> = candid::decode_one(&response_bytes)?;
     if let Ok(response) = &ans {
         let request_id = &response.request.id;
