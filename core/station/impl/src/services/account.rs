@@ -120,7 +120,11 @@ impl AccountService {
     }
 
     /// Creates a new account.
-    pub async fn create_account(&self, input: AddAccountOperationInput) -> ServiceResult<Account> {
+    pub async fn create_account(
+        &self,
+        input: AddAccountOperationInput,
+        with_account_id: Option<UUID>,
+    ) -> ServiceResult<Account> {
         if self
             .account_repository
             .find_account_id_by_name(&input.name)
@@ -129,8 +133,16 @@ impl AccountService {
             Err(AccountError::AccountNameAlreadyExists)?
         }
 
-        let uuid = generate_uuid_v4().await;
+        let uuid = match with_account_id {
+            Some(id) => Uuid::from_bytes(id),
+            None => generate_uuid_v4().await,
+        };
         let key = Account::key(*uuid.as_bytes());
+        if self.account_repository.get(&key).is_some() {
+            Err(AccountError::ValidationError {
+                info: format!("Account with id {} already exists", uuid.hyphenated()),
+            })?
+        }
         let blockchain_api =
             BlockchainApiFactory::build(&input.blockchain.clone(), &input.standard.clone())?;
         let mut new_account =
@@ -468,7 +480,7 @@ mod tests {
             },
         };
 
-        let result = ctx.service.create_account(operation.input).await;
+        let result = ctx.service.create_account(operation.input, None).await;
 
         assert!(result.is_ok());
     }
@@ -499,7 +511,7 @@ mod tests {
             },
         };
 
-        let result = ctx.service.create_account(operation.input).await;
+        let result = ctx.service.create_account(operation.input, None).await;
 
         assert!(result.is_err());
     }
@@ -522,51 +534,70 @@ mod tests {
             transfer_request_policy: Some(RequestPolicyRule::AutoApproved),
         };
 
-        assert!(ctx.service.create_account(base_input.clone()).await.is_ok());
+        assert!(ctx
+            .service
+            .create_account(base_input.clone(), None)
+            .await
+            .is_ok());
 
         ctx.service
-            .create_account(AddAccountOperationInput {
-                read_permission: Allow::users(vec![[5; 16]]),
-                ..base_input.clone()
-            })
+            .create_account(
+                AddAccountOperationInput {
+                    read_permission: Allow::users(vec![[5; 16]]),
+                    ..base_input.clone()
+                },
+                None,
+            )
             .await
             .expect_err("read_permission should be invalid");
 
         ctx.service
-            .create_account(AddAccountOperationInput {
-                configs_permission: Allow::users(vec![[5; 16]]),
-                ..base_input.clone()
-            })
+            .create_account(
+                AddAccountOperationInput {
+                    configs_permission: Allow::users(vec![[5; 16]]),
+                    ..base_input.clone()
+                },
+                None,
+            )
             .await
             .expect_err("configs_permission should be invalid");
 
         ctx.service
-            .create_account(AddAccountOperationInput {
-                transfer_permission: Allow::users(vec![[5; 16]]),
-                ..base_input.clone()
-            })
+            .create_account(
+                AddAccountOperationInput {
+                    transfer_permission: Allow::users(vec![[5; 16]]),
+                    ..base_input.clone()
+                },
+                None,
+            )
             .await
             .expect_err("transfer_permission should be invalid");
 
         ctx.service
-            .create_account(AddAccountOperationInput {
-                configs_request_policy: Some(RequestPolicyRule::Quorum(
-                    UserSpecifier::Id(vec![[5; 16]]),
-                    1,
-                )),
-                ..base_input.clone()
-            })
+            .create_account(
+                AddAccountOperationInput {
+                    configs_request_policy: Some(RequestPolicyRule::Quorum(
+                        UserSpecifier::Id(vec![[5; 16]]),
+                        1,
+                    )),
+                    ..base_input.clone()
+                },
+                None,
+            )
             .await
             .expect_err("configs_request_policy should be invalid");
 
         ctx.service
-            .create_account(AddAccountOperationInput {
-                transfer_request_policy: Some(RequestPolicyRule::Quorum(
-                    UserSpecifier::Id(vec![[5; 16]]),
-                    1,
-                )),
-                ..base_input.clone()
-            })
+            .create_account(
+                AddAccountOperationInput {
+                    transfer_request_policy: Some(RequestPolicyRule::Quorum(
+                        UserSpecifier::Id(vec![[5; 16]]),
+                        1,
+                    )),
+                    ..base_input.clone()
+                },
+                None,
+            )
             .await
             .expect_err("transfer_request_policy should be invalid");
     }
@@ -641,7 +672,7 @@ mod tests {
             },
         };
 
-        let result = ctx.service.create_account(operation.input).await;
+        let result = ctx.service.create_account(operation.input, None).await;
 
         assert!(result.is_err());
     }

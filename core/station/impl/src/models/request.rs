@@ -430,17 +430,20 @@ mod tests {
 
         let account_service = AccountService::default();
         let account = account_service
-            .create_account(AddAccountOperationInput {
-                name: "a".to_owned(),
-                blockchain: crate::models::Blockchain::InternetComputer,
-                standard: crate::models::BlockchainStandard::Native,
-                metadata: Metadata::default(),
-                read_permission: Allow::default(),
-                configs_permission: Allow::default(),
-                transfer_permission: Allow::default(),
-                configs_request_policy: None,
-                transfer_request_policy: None,
-            })
+            .create_account(
+                AddAccountOperationInput {
+                    name: "a".to_owned(),
+                    blockchain: crate::models::Blockchain::InternetComputer,
+                    standard: crate::models::BlockchainStandard::Native,
+                    metadata: Metadata::default(),
+                    read_permission: Allow::default(),
+                    configs_permission: Allow::default(),
+                    transfer_permission: Allow::default(),
+                    configs_request_policy: None,
+                    transfer_request_policy: None,
+                },
+                None,
+            )
             .await
             .expect("Failed to create account");
 

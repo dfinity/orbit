@@ -557,16 +557,16 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
 
     assert_eq!(existing_accounts.len(), initial_accounts.len());
 
-    fn assert_expected_approval_quorum(policy: &Option<RequestPolicyRuleDTO>, admin_id: String) {
+    fn assert_expected_approval_quorum(policy: &Option<RequestPolicyRuleDTO>, group_id: String) {
         let policy = policy.as_ref().expect("No policy found");
 
         match policy {
             RequestPolicyRuleDTO::Quorum(quorum) => {
                 assert_eq!(quorum.min_approved, 1);
                 match &quorum.approvers {
-                    station_api::UserSpecifierDTO::Id(approvers) => {
-                        assert_eq!(approvers.len(), 1);
-                        assert_eq!(approvers[0], admin_id);
+                    station_api::UserSpecifierDTO::Group(groups) => {
+                        assert_eq!(groups.len(), 1);
+                        assert_eq!(groups[0], group_id);
                     }
                     _ => {
                         panic!("Unexpected approvers found");
@@ -579,6 +579,9 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
         }
     }
 
+    assert_eq!(admin_user.groups.len(), 1);
+    let admin_user_group = admin_user.groups.first().expect("No user group found");
+
     for (id, (name, address)) in initial_accounts {
         let account = existing_accounts
             .iter()
@@ -588,8 +591,14 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
         assert_eq!(account.name, name);
         assert_eq!(account.address, address);
 
-        assert_expected_approval_quorum(&account.transfer_request_policy, admin_user.id.clone());
-        assert_expected_approval_quorum(&account.configs_request_policy, admin_user.id.clone());
+        assert_expected_approval_quorum(
+            &account.transfer_request_policy,
+            admin_user_group.id.clone(),
+        );
+        assert_expected_approval_quorum(
+            &account.configs_request_policy,
+            admin_user_group.id.clone(),
+        );
     }
 }
 
