@@ -36,7 +36,7 @@ impl StationAgent {
     ///
     /// # Example
     /// ```
-    /// let response_bytes = station_agent.update_canister(&canister_id, "method_name")
+    /// let response_bytes = station_agent.update_canister(&canister_id, "method_name").await
     ///         .with_arg(candid::encode_one(args)?)
     ///         .call_and_wait()
     ///         .await?;
@@ -53,7 +53,7 @@ impl StationAgent {
     ///
     /// # Example
     /// ```
-    /// let response_bytes = station_agent.update_canister("mycanister", "method_name")
+    /// let response_bytes = station_agent.update_canister("mycanister", "method_name").await
     ///         .with_arg(candid::encode_one(args)?)
     ///         .call_and_wait()
     ///         .await?;
@@ -68,6 +68,14 @@ impl StationAgent {
     }
 
     /// Makes an update call to the station.
+    ///
+    /// # Example
+    /// ```
+    /// let response_bytes = station_agent.update_canister("mycanister", "method_name").await
+    ///         .with_arg(candid::encode_one(args)?)
+    ///         .call_and_wait()
+    ///         .await?;
+    /// ```
     pub async fn update_orbit(&mut self, method_name: &str) -> anyhow::Result<UpdateBuilder> {
         let orbit_canister_id = crate::local_config::default_station()?
             .ok_or_else(|| anyhow!("No default station specified"))?

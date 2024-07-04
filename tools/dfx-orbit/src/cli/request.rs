@@ -1,8 +1,6 @@
 //! Implements `dfx request` commands.  These correspond to Orbit station `create_request` API calls.
 
 use crate::args::request::{Args, CreateRequestArgs};
-use anyhow::anyhow;
-use candid::Principal;
 use orbit_station_api::{ApiErrorDTO, CreateRequestResponse};
 
 /// The main entry point for the `dfx orbit request` CLI.
@@ -10,14 +8,9 @@ pub async fn exec(args: Args) -> anyhow::Result<Result<CreateRequestResponse, Ap
     // Converts the CLI arg type into the equivalent Orbit API type.
     let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
     let args = args.into_create_request_input(&station_agent)?;
-    let ic_agent = station_agent.dfx.agent().await?;
-    let orbit_canister_id = crate::local_config::default_station()?
-        .ok_or_else(|| anyhow!("No default station specified"))?
-        .station_id;
-
-    let canister_id = Principal::from_text(&orbit_canister_id)?;
-    let response_bytes = ic_agent
-        .update(&canister_id, "create_request")
+    let response_bytes = station_agent
+        .update_orbit("create_request")
+        .await?
         .with_arg(candid::encode_one(args)?)
         .call_and_wait()
         .await?;
