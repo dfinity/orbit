@@ -2,7 +2,7 @@
 [package]
 name = 'station-api'
 include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.3'
+version = '0.0.2-alpha.4'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
