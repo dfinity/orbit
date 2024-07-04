@@ -1,11 +1,9 @@
-use std::sync::Arc;
-
+use crate::model::InstallMode;
 use async_trait::async_trait;
 use candid::Principal;
 use ic_cdk::api::management_canister::main::{self as mgmt, CanisterIdRecord, InstallCodeArgument};
 use lazy_static::lazy_static;
-
-use crate::model::InstallMode;
+use std::sync::Arc;
 
 lazy_static! {
     pub static ref INSTALL_CANISTER: Arc<StationDisasterRecoveryInstall> =
@@ -39,6 +37,29 @@ impl InstallCanister for StationDisasterRecoveryInstall {
         arg: Vec<u8>,
         mode: InstallMode,
     ) -> Result<(), String> {
+        // For install and reinstall, we need to make the station self controlled.
+        match mode {
+            InstallMode::Install | InstallMode::Reinstall => {
+                mgmt::update_settings(mgmt::UpdateSettingsArgument {
+                    canister_id: canister_id.clone(),
+                    settings: mgmt::CanisterSettings {
+                        controllers: Some(vec![canister_id, ic_cdk::id()]),
+                        ..Default::default()
+                    },
+                })
+                .await
+                .map_err(|(code, err)| {
+                    format!(
+                        "failed to update settings for canister: \"{}\", rejection code: {}",
+                        err, code as i32
+                    )
+                })?;
+            }
+            InstallMode::Upgrade => {
+                // For upgrade, there are no controller changes needed.
+            }
+        }
+
         mgmt::install_code(InstallCodeArgument {
             mode: mode.into(),
             canister_id,

@@ -865,8 +865,8 @@ export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
 export interface SystemInit {
   'name' : string,
   'fallback_controller' : [] | [Principal],
+  'upgrader' : SystemUpgraderInput,
   'admins' : Array<AdminInitInput>,
-  'upgrader_wasm_module' : Uint8Array | number[],
   'quorum' : [] | [number],
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
@@ -875,6 +875,8 @@ export type SystemResourceAction = { 'ManageSystemInfo' : null } |
   { 'SystemInfo' : null } |
   { 'Capabilities' : null };
 export interface SystemUpgrade { 'name' : [] | [string] }
+export type SystemUpgraderInput = { 'Id' : Principal } |
+  { 'WasmModule' : Uint8Array | number[] };
 export type TimestampRFC3339 = string;
 export interface Transfer {
   'id' : UUID,

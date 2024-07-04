@@ -153,17 +153,15 @@ impl SystemService {
             print("Adding initial canister configurations");
             install_canister_handlers::init_post_process(&init).await?;
 
-            print("Deploying upgrader canister");
+            print("Init upgrader canister");
             let canister_id = self_canister_id();
             let mut upgrader_controllers = vec![canister_id];
             if let Some(fallback_controller) = init.fallback_controller {
                 upgrader_controllers.push(fallback_controller);
             }
-            let upgrader_canister_id = install_canister_handlers::deploy_upgrader(
-                init.upgrader_wasm_module,
-                upgrader_controllers,
-            )
-            .await?;
+            let upgrader_canister_id =
+                install_canister_handlers::init_upgrader(init.upgrader, upgrader_controllers)
+                    .await?;
             system_info.set_upgrader_canister_id(upgrader_canister_id);
 
             // sets the upgrader as a controller of the station canister
@@ -413,8 +411,32 @@ mod install_canister_handlers {
         Ok(())
     }
 
+    pub async fn init_upgrader(
+        input: station_api::SystemUpgraderInput,
+        controllers: Vec<Principal>,
+    ) -> Result<Principal, String> {
+        match input {
+            station_api::SystemUpgraderInput::Id(upgrader_id) => {
+                mgmt::update_settings(mgmt::UpdateSettingsArgument {
+                    canister_id: upgrader_id,
+                    settings: mgmt::CanisterSettings {
+                        controllers: Some(controllers),
+                        ..Default::default()
+                    },
+                })
+                .await
+                .map_err(|e| format!("Failed to set upgrader controller: {:?}", e))?;
+
+                Ok(upgrader_id)
+            }
+            station_api::SystemUpgraderInput::WasmModule(upgrader_wasm_module) => {
+                deploy_upgrader(upgrader_wasm_module, controllers).await
+            }
+        }
+    }
+
     /// Deploys the station upgrader canister and sets the station as the controller of the upgrader.
-    pub async fn deploy_upgrader(
+    async fn deploy_upgrader(
         upgrader_wasm_module: Vec<u8>,
         controllers: Vec<Principal>,
     ) -> Result<Principal, String> {
@@ -505,7 +527,7 @@ mod tests {
                     identity: Principal::from_slice(&[1; 29]),
                 }],
                 quorum: Some(1),
-                upgrader_wasm_module: vec![],
+                upgrader: station_api::SystemUpgraderInput::WasmModule(vec![]),
                 fallback_controller: None,
             })
             .await;
