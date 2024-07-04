@@ -2,6 +2,9 @@ name: 'Deterministic builds'
 
 on:
   workflow_dispatch: null
+  push:
+    branches:
+      - '**/release**'
 
 jobs:
   build-station:
