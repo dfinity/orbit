@@ -79,13 +79,12 @@ Initially you are likely to have only permission to see your own profile:
 ]
 ```
 
-Without permission to make and view requests, you will not be able to do much.  The following permissions are recommended for anyone entitled to make requests:
+Without permission to make and view requests, you will not be able to do much.  It is recommended to make a `Developer` group with the following permissions:
 
-In the UI the permission that needs to be granted is:
-
-| Privilege      | [Name in UI](https://orbitwallet.io/en/settings/user-groups/permissions)      | Name in error messages | Used for |
+| [Name in UI](https://orbitwallet.io/en/settings/user-groups/permissions) | Privilege in `dfx-orbit me` | Name in error messages | Used for |
 | --- | --- | --- | -- |
-| `ListRequests` | Request/List | `Request(List)`  | `dfx-orbit review list` |
+| Request/List | `ListRequests` | `Request(List)`  | `dfx-orbit review list` |
+| Request/Read | Not Shown | `Request(Read(Id`  | `dfx-orbit review id REQUEST_ID` |
 
 TODO: It  would be nice to be able to link directly to a permission.  E.g. this could open the permissions page and focus on one specific permission: https://orbitwallet.io/en/settings/user-groups/permissions#Request/List
 
