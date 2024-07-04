@@ -238,7 +238,9 @@ impl SystemService {
         }
 
         if input.admins.len() > u16::MAX as usize {
-            return Err(SystemError::TooManyAdminsSpecified)?;
+            return Err(SystemError::TooManyAdminsSpecified {
+                max: u16::MAX as usize,
+            })?;
         }
 
         // adds the default admin group
@@ -651,21 +653,13 @@ mod tests {
 
     #[test]
     fn test_initial_quorum_is_custom() {
-        assert_eq!(calc_initial_quorum(1, Some(1)), 1);
-        assert_eq!(calc_initial_quorum(2, Some(2)), 2);
-        assert_eq!(calc_initial_quorum(3, Some(2)), 2);
-        assert_eq!(calc_initial_quorum(4, Some(3)), 3);
-        assert_eq!(calc_initial_quorum(5, Some(3)), 3);
-        assert_eq!(calc_initial_quorum(6, Some(4)), 4);
-        assert_eq!(calc_initial_quorum(7, Some(4)), 4);
-        assert_eq!(calc_initial_quorum(8, Some(5)), 5);
-        assert_eq!(calc_initial_quorum(9, Some(5)), 5);
-        assert_eq!(calc_initial_quorum(10, Some(6)), 6);
-        assert_eq!(calc_initial_quorum(11, Some(6)), 6);
-        assert_eq!(calc_initial_quorum(12, Some(7)), 7);
-        assert_eq!(calc_initial_quorum(13, Some(7)), 7);
-        assert_eq!(calc_initial_quorum(14, Some(8)), 8);
-        assert_eq!(calc_initial_quorum(15, Some(8)), 8);
-        assert_eq!(calc_initial_quorum(16, Some(9)), 9);
+        // smaller than the number of admins
+        assert_eq!(calc_initial_quorum(4, Some(1)), 1);
+        // half of the number of admins
+        assert_eq!(calc_initial_quorum(4, Some(2)), 2);
+        // equal to the number of admins
+        assert_eq!(calc_initial_quorum(4, Some(4)), 4);
+        // larger than the number of admins
+        assert_eq!(calc_initial_quorum(4, Some(5)), 4);
     }
 }
