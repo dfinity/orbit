@@ -139,10 +139,15 @@ impl DfxExtensionAgent {
         call_dfx_cli(vec!["identity", "whoami"])
     }
 
-    /// Gets the dfx interface
+    /// Gets the dfx_core interface
     pub async fn dfx_interface(&mut self) -> anyhow::Result<&DfxInterface> {
         if self.dfx_interface.is_none() {
-            self.dfx_interface = Some(DfxInterface::builder().build().await?);
+            let interface_builder = DfxInterface::builder().with_network_named("local");
+            let interface = interface_builder.build().await?;
+            if !interface.network_descriptor().is_ic {
+                interface.agent().fetch_root_key().await?;
+            }
+            self.dfx_interface = Some(interface);
         }
         Ok(self
             .dfx_interface
