@@ -442,7 +442,7 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
             arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                 name: "Station".to_string(),
                 admins: vec![station_api::AdminInitInput {
-                    identity: WALLET_ADMIN_USER.clone(),
+                    identity: WALLET_ADMIN_USER,
                     name: "updated-admin-name".to_string(),
                 }],
                 quorum: None,

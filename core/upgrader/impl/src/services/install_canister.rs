@@ -41,7 +41,7 @@ impl InstallCanister for StationDisasterRecoveryInstall {
         match mode {
             InstallMode::Install | InstallMode::Reinstall => {
                 mgmt::update_settings(mgmt::UpdateSettingsArgument {
-                    canister_id: canister_id.clone(),
+                    canister_id,
                     settings: mgmt::CanisterSettings {
                         controllers: Some(vec![canister_id, ic_cdk::id()]),
                         ..Default::default()
