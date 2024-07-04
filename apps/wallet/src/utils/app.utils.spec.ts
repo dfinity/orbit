@@ -12,7 +12,7 @@ describe('BlockchainAddress', () => {
         BlockchainType.InternetComputer,
         BlockchainStandard.Native,
       ),
-    ).toBeTruthy();
+    ).toBe(true);
   });
 
   it('ICP Ledger account identifiers should be transformed to lowercase', () => {
