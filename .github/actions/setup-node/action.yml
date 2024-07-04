@@ -5,24 +5,25 @@ runs:
   using: 'composite'
   steps:
     - name: 'Install Node.js'
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version-file: .nvmrc
         registry-url: 'https://registry.npmjs.org'
     - name: 'Install pnpm'
       id: pnpm-install
-      uses: pnpm/action-setup@v2
+      uses: pnpm/action-setup@v4
       with:
         run_install: false
     - name: 'Get pnpm store directory'
       id: pnpm-cache
       shell: bash
       run: |
-        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
     - name: 'Setup pnpm cache'
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
-        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        path: ${{ env.STORE_PATH }}
+        # To evict the cache, bump the key prefix from v1 to v2
+        key: v1-${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
-          ${{ runner.os }}-pnpm-store
+          v1-${{ runner.os }}-pnpm-store-

@@ -5,6 +5,7 @@ import { i18n } from '~/plugins/i18n.plugin';
 import { redirectToKey, router } from '~/plugins/router.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
+import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 
 export const copyToClipboard = (
   args: {
@@ -92,4 +93,19 @@ export const registerBeforeUnloadConfirmation = (): void => {
 
 export const unregisterBeforeUnloadConfirmation = (): void => {
   window.removeEventListener('beforeunload', beforeUnloadCallback);
+};
+
+export const isCaseInsensitiveBlockchainAddress = (
+  blockchain: string,
+  standard: string,
+): boolean => {
+  return blockchain === BlockchainType.InternetComputer && standard === BlockchainStandard.Native;
+};
+
+export const maybeTransformBlockchainAddress = (
+  blockchain: string,
+  standard: string,
+  address: string,
+): string => {
+  return isCaseInsensitiveBlockchainAddress(blockchain, standard) ? address.toLowerCase() : address;
 };
