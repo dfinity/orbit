@@ -172,7 +172,7 @@ impl SystemService {
             install_canister_handlers::set_controllers(station_controllers).await?;
 
             // calculates the initial quorum based on the number of admins and the provided quorum
-            let admin_count = u16::try_from(init.admins.len()).unwrap_or(u16::MAX);
+            let admin_count = init.admins.len() as u16;
             let quorum = calc_initial_quorum(admin_count, init.quorum);
 
             // if provided, creates the initial accounts
@@ -235,6 +235,10 @@ impl SystemService {
 
         if input.admins.is_empty() {
             return Err(SystemError::NoAdminsSpecified)?;
+        }
+
+        if input.admins.len() > u16::MAX as usize {
+            return Err(SystemError::TooManyAdminsSpecified)?;
         }
 
         // adds the default admin group
@@ -395,10 +399,7 @@ mod install_canister_handlers {
 
     /// Registers the default configurations for the canister.
     pub async fn init_post_process(init: &SystemInit) -> Result<(), String> {
-        let admin_quorum = super::calc_initial_quorum(
-            u16::try_from(init.admins.len()).unwrap_or(u16::MAX),
-            init.quorum,
-        );
+        let admin_quorum = super::calc_initial_quorum(init.admins.len() as u16, init.quorum);
 
         let policies_to_create = default_policies(admin_quorum);
 

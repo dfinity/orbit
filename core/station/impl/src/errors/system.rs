@@ -10,6 +10,8 @@ pub enum SystemError {
     InitFailed { reason: String },
     #[error(r#"The canister needs at least one admin"#)]
     NoAdminsSpecified,
+    #[error(r#"There are too many admins defined, max is 255."#)]
+    TooManyAdminsSpecified,
 }
 
 impl DetailableError for SystemError {

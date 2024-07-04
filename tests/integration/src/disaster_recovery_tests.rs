@@ -458,7 +458,10 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
             },
             transfer_request_policy: Some(RequestPolicyRuleDTO::AutoApproved),
             configs_request_policy: Some(RequestPolicyRuleDTO::AutoApproved),
-            metadata: vec![],
+            metadata: vec![station_api::MetadataDTO {
+                key: "key".to_string(),
+                value: "value".to_string(),
+            }],
         };
 
         let request = execute_request(
@@ -504,10 +507,20 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
             module: station_wasm_module.clone(),
             arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                 name: "Station".to_string(),
-                admins: vec![station_api::AdminInitInput {
-                    identity: WALLET_ADMIN_USER,
-                    name: "updated-admin-name".to_string(),
-                }],
+                admins: vec![
+                    station_api::AdminInitInput {
+                        identity: WALLET_ADMIN_USER,
+                        name: "updated-admin-name".to_string(),
+                    },
+                    station_api::AdminInitInput {
+                        identity: Principal::from_slice(&[95; 29]),
+                        name: "another-admin".to_string(),
+                    },
+                    station_api::AdminInitInput {
+                        identity: Principal::from_slice(&[97; 29]),
+                        name: "yet-another-admin".to_string(),
+                    }
+                ],
                 quorum: None,
                 fallback_controller: None,
                 upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
@@ -564,7 +577,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
 
         match policy {
             RequestPolicyRuleDTO::Quorum(quorum) => {
-                assert_eq!(quorum.min_approved, 1);
+                assert_eq!(quorum.min_approved, 2);
                 match &quorum.approvers {
                     station_api::UserSpecifierDTO::Group(groups) => {
                         assert_eq!(groups.len(), 1);
@@ -603,6 +616,11 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
 
         assert_eq!(account.name, name);
         assert_eq!(account.address, address);
+
+        account.metadata.iter().for_each(|m| {
+            assert_eq!(m.key, "key");
+            assert_eq!(m.value, "value");
+        });
 
         assert_expected_account_permissions(
             &get_account_read_permission(
