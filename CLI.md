@@ -42,7 +42,7 @@ Tell the command line tool where to find the orbit station:
 * Copy the wallet ID
 * Store the station details locally.  If your wallet is called `shiny` and is running locally, the command is:
   ```
-  dfx-orbit station add --name shiny --station-id "$WALLET_ID" --network local
+  dfx-orbit station add --name shiny --station-id "$WALLET_ID" --network local --url https://orbitwallet.io
   ```
 * Verify that the station is in your list of stations:
   ```
@@ -51,6 +51,10 @@ Tell the command line tool where to find the orbit station:
 * If you have multiple stations, set this as your default:
   ```
   dfx-orbit station use --name shiny
+  ```
+* In the orbit web UI, create a user with your local dfx principal:
+  ```
+  dfx identity get-principal
   ```
 * Verify that you can get your profile on the Orbit station:
   ```
