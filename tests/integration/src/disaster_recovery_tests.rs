@@ -2,9 +2,10 @@ use crate::setup::{
     get_canister_wasm, setup_new_env, setup_new_env_with_config, WALLET_ADMIN_USER,
 };
 use crate::utils::{
-    add_user, advance_time_to_burn_cycles, execute_request, get_core_canister_health_status,
-    get_system_info, get_upgrader_disaster_recovery, get_upgrader_logs, get_user,
-    set_disaster_recovery, user_test_id, NNS_ROOT_CANISTER_ID,
+    add_user, advance_time_to_burn_cycles, execute_request, get_account_read_permission,
+    get_account_transfer_permission, get_account_update_permission,
+    get_core_canister_health_status, get_system_info, get_upgrader_disaster_recovery,
+    get_upgrader_logs, get_user, set_disaster_recovery, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -580,6 +581,17 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
         }
     }
 
+    fn assert_expected_account_permissions(allow: &AllowDTO, group_id: String) {
+        assert_eq!(allow.users.len(), 0);
+        assert_eq!(allow.user_groups.len(), 1);
+        assert_eq!(allow.user_groups[0], group_id);
+
+        if let station_api::AuthScopeDTO::Restricted = allow.auth_scope {
+        } else {
+            panic!("Unexpected auth scope found");
+        }
+    }
+
     assert_eq!(admin_user.groups.len(), 1);
     let admin_user_group = admin_user.groups.first().expect("No user group found");
 
@@ -591,6 +603,36 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
 
         assert_eq!(account.name, name);
         assert_eq!(account.address, address);
+
+        assert_expected_account_permissions(
+            &get_account_read_permission(
+                &env,
+                WALLET_ADMIN_USER,
+                canister_ids.station,
+                account.id.clone(),
+            ),
+            admin_user_group.id.clone(),
+        );
+
+        assert_expected_account_permissions(
+            &get_account_update_permission(
+                &env,
+                WALLET_ADMIN_USER,
+                canister_ids.station,
+                account.id.clone(),
+            ),
+            admin_user_group.id.clone(),
+        );
+
+        assert_expected_account_permissions(
+            &get_account_transfer_permission(
+                &env,
+                WALLET_ADMIN_USER,
+                canister_ids.station,
+                account.id.clone(),
+            ),
+            admin_user_group.id.clone(),
+        );
 
         assert_expected_approval_quorum(
             &account.transfer_request_policy,

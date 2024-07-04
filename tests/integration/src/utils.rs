@@ -5,11 +5,12 @@ use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
 use station_api::{
-    AddUserOperationInput, ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetRequestInput,
-    GetRequestResponse, HealthStatus, MeResponse, RequestApprovalStatusDTO, RequestDTO,
-    RequestExecutionScheduleDTO, RequestOperationDTO, RequestOperationInput, RequestStatusDTO,
-    SetDisasterRecoveryOperationDTO, SetDisasterRecoveryOperationInput, SubmitRequestApprovalInput,
-    SubmitRequestApprovalResponse, SystemInfoDTO, SystemInfoResponse, UserDTO, UserStatusDTO,
+    AddUserOperationInput, AllowDTO, ApiErrorDTO, CreateRequestInput, CreateRequestResponse,
+    GetPermissionResponse, GetRequestInput, GetRequestResponse, HealthStatus, MeResponse,
+    RequestApprovalStatusDTO, RequestDTO, RequestExecutionScheduleDTO, RequestOperationDTO,
+    RequestOperationInput, RequestStatusDTO, ResourceIdDTO, SetDisasterRecoveryOperationDTO,
+    SetDisasterRecoveryOperationInput, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
+    SystemInfoDTO, SystemInfoResponse, UserDTO, UserStatusDTO,
 };
 use std::time::Duration;
 use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
@@ -466,4 +467,79 @@ pub fn get_upgrader_logs(
     .expect("Failed query call to get disaster recovery logs");
 
     res.0.expect("Failed to get disaster recovery logs")
+}
+
+pub fn get_account_read_permission(
+    env: &PocketIc,
+    sender: Principal,
+    station_canister_id: Principal,
+    account_id: String,
+) -> AllowDTO {
+    let res: (ApiResult<GetPermissionResponse>,) = update_candid_as(
+        env,
+        station_canister_id,
+        sender,
+        "get_permission",
+        (station_api::GetPermissionInput {
+            resource: station_api::ResourceDTO::Account(
+                station_api::AccountResourceActionDTO::Read(ResourceIdDTO::Id(account_id)),
+            ),
+        },),
+    )
+    .expect("Failed to get account read permission");
+
+    res.0
+        .expect("Failed to get account read permission")
+        .permission
+        .allow
+}
+
+pub fn get_account_update_permission(
+    env: &PocketIc,
+    sender: Principal,
+    station_canister_id: Principal,
+    account_id: String,
+) -> AllowDTO {
+    let res: (ApiResult<GetPermissionResponse>,) = update_candid_as(
+        env,
+        station_canister_id,
+        sender,
+        "get_permission",
+        (station_api::GetPermissionInput {
+            resource: station_api::ResourceDTO::Account(
+                station_api::AccountResourceActionDTO::Update(ResourceIdDTO::Id(account_id)),
+            ),
+        },),
+    )
+    .expect("Failed to get account update permission");
+
+    res.0
+        .expect("Failed to get account update permission")
+        .permission
+        .allow
+}
+
+pub fn get_account_transfer_permission(
+    env: &PocketIc,
+    sender: Principal,
+    station_canister_id: Principal,
+    account_id: String,
+) -> AllowDTO {
+    let res: (ApiResult<GetPermissionResponse>,) = update_candid_as(
+        env,
+        station_canister_id,
+        sender,
+        "get_permission",
+        (station_api::GetPermissionInput {
+            resource: station_api::ResourceDTO::Account(
+                station_api::AccountResourceActionDTO::Transfer(ResourceIdDTO::Id(account_id)),
+            ),
+        },),
+    )
+    .expect("Failed to get account transfer permission");
+
+    res.0
+        .expect("Failed to get account transfer permission")
+        .permission
+        .allow
 }

@@ -1994,7 +1994,7 @@ type SystemUpgraderInput = variant {
   WasmModule : blob;
 };
 
-// The initial accounts to create when initializing the canister for the first time.
+// The initial accounts to create when initializing the canister for the first time, e.g., after disaster recovery.
 type InitAccountInput = record {
   // The UUID of the account, if not provided a new UUID will be generated.
   id : opt UUID;
