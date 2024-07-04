@@ -135,24 +135,6 @@
 import { mdiAlertCircle, mdiCashFast, mdiClose, mdiDownload, mdiTable } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import logger from '~/core/logger.core';
-import { Account, Transfer, TransferOperationInput } from '~/generated/station/station.did';
-import { ChainApiFactory } from '~/services/chains';
-import { useAppStore } from '~/stores/app.store';
-import { useStationStore } from '~/stores/station.store';
-import { CsvTable } from '~/types/app.types';
-import { downloadCsv, readFileAsCsvTable } from '~/utils/file.utils';
-import { requiredRule } from '~/utils/form.utils';
-import {
-  amountToBigInt,
-  arrayBatchMaker,
-  assertAndReturn,
-  formatBalance,
-} from '~/utils/helper.utils';
-import {
-  registerBeforeUnloadConfirmation,
-  unregisterBeforeUnloadConfirmation,
-} from '~/utils/app.utils';
 import {
   VBtn,
   VCard,
@@ -168,6 +150,25 @@ import {
   VToolbar,
   VToolbarTitle,
 } from 'vuetify/components';
+import logger from '~/core/logger.core';
+import { Account, Transfer, TransferOperationInput } from '~/generated/station/station.did';
+import { ChainApiFactory } from '~/services/chains';
+import { useAppStore } from '~/stores/app.store';
+import { useStationStore } from '~/stores/station.store';
+import { CsvTable } from '~/types/app.types';
+import {
+  maybeTransformBlockchainAddress,
+  registerBeforeUnloadConfirmation,
+  unregisterBeforeUnloadConfirmation,
+} from '~/utils/app.utils';
+import { downloadCsv, readFileAsCsvTable } from '~/utils/file.utils';
+import { requiredRule } from '~/utils/form.utils';
+import {
+  amountToBigInt,
+  arrayBatchMaker,
+  assertAndReturn,
+  formatBalance,
+} from '~/utils/helper.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -358,7 +359,11 @@ const startBatchTransfer = async (): Promise<void> => {
           transfer: {
             from_account_id: props.account.id,
             amount: assertAndReturn(row.transfer.amount, 'amount'),
-            to: assertAndReturn(row.transfer.to, 'to'),
+            to: maybeTransformBlockchainAddress(
+              props.account.blockchain,
+              props.account.standard,
+              assertAndReturn(row.transfer.to, 'to'),
+            ),
             network: [],
             fee: [],
             metadata: [],
