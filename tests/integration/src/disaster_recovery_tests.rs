@@ -576,7 +576,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                 }
             }
             _ => {
-                panic!("Unexpected transfer policy found");
+                panic!("Unexpected request policy found");
             }
         }
     }

@@ -173,7 +173,7 @@ impl SystemService {
 
             // calculates the initial quorum based on the number of admins and the provided quorum
             let admin_count = u16::try_from(init.admins.len()).unwrap_or(u16::MAX);
-            let quorum = install_canister_handlers::calc_initial_quorum(admin_count, init.quorum);
+            let quorum = calc_initial_quorum(admin_count, init.quorum);
 
             // if provided, creates the initial accounts
             if let Some(accounts) = init.accounts {
@@ -356,6 +356,13 @@ mod init_canister_sync_handlers {
     }
 }
 
+// Calculates the initial quorum based on the number of admins and the provided quorum, if not provided
+// the quorum is set to the majority of the admins.
+#[cfg(any(target_arch = "wasm32", test))]
+pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
+    quorum.unwrap_or(admin_count / 2 + 1).clamp(1, admin_count)
+}
+
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{id as self_canister_id, print};
@@ -386,15 +393,9 @@ mod install_canister_handlers {
         pub static FUND_MANAGER: RefCell<FundManager> = RefCell::new(FundManager::new());
     }
 
-    // Calculates the initial quorum based on the number of admins and the provided quorum, if not provided
-    // the quorum is set to the majority of the admins.
-    pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
-        quorum.unwrap_or(admin_count / 2 + 1).clamp(1, admin_count)
-    }
-
     /// Registers the default configurations for the canister.
     pub async fn init_post_process(init: &SystemInit) -> Result<(), String> {
-        let admin_quorum = self::calc_initial_quorum(
+        let admin_quorum = super::calc_initial_quorum(
             u16::try_from(init.admins.len()).unwrap_or(u16::MAX),
             init.quorum,
         );
@@ -625,5 +626,45 @@ mod tests {
         let system_info = read_system_info();
 
         assert!(system_info.get_change_canister_request().is_none());
+    }
+
+    #[test]
+    fn test_initial_quorum_is_majority() {
+        assert_eq!(calc_initial_quorum(1, None), 1);
+        assert_eq!(calc_initial_quorum(2, None), 2);
+        assert_eq!(calc_initial_quorum(3, None), 2);
+        assert_eq!(calc_initial_quorum(4, None), 3);
+        assert_eq!(calc_initial_quorum(5, None), 3);
+        assert_eq!(calc_initial_quorum(6, None), 4);
+        assert_eq!(calc_initial_quorum(7, None), 4);
+        assert_eq!(calc_initial_quorum(8, None), 5);
+        assert_eq!(calc_initial_quorum(9, None), 5);
+        assert_eq!(calc_initial_quorum(10, None), 6);
+        assert_eq!(calc_initial_quorum(11, None), 6);
+        assert_eq!(calc_initial_quorum(12, None), 7);
+        assert_eq!(calc_initial_quorum(13, None), 7);
+        assert_eq!(calc_initial_quorum(14, None), 8);
+        assert_eq!(calc_initial_quorum(15, None), 8);
+        assert_eq!(calc_initial_quorum(16, None), 9);
+    }
+
+    #[test]
+    fn test_initial_quorum_is_custom() {
+        assert_eq!(calc_initial_quorum(1, Some(1)), 1);
+        assert_eq!(calc_initial_quorum(2, Some(2)), 2);
+        assert_eq!(calc_initial_quorum(3, Some(2)), 2);
+        assert_eq!(calc_initial_quorum(4, Some(3)), 3);
+        assert_eq!(calc_initial_quorum(5, Some(3)), 3);
+        assert_eq!(calc_initial_quorum(6, Some(4)), 4);
+        assert_eq!(calc_initial_quorum(7, Some(4)), 4);
+        assert_eq!(calc_initial_quorum(8, Some(5)), 5);
+        assert_eq!(calc_initial_quorum(9, Some(5)), 5);
+        assert_eq!(calc_initial_quorum(10, Some(6)), 6);
+        assert_eq!(calc_initial_quorum(11, Some(6)), 6);
+        assert_eq!(calc_initial_quorum(12, Some(7)), 7);
+        assert_eq!(calc_initial_quorum(13, Some(7)), 7);
+        assert_eq!(calc_initial_quorum(14, Some(8)), 8);
+        assert_eq!(calc_initial_quorum(15, Some(8)), 8);
+        assert_eq!(calc_initial_quorum(16, Some(9)), 9);
     }
 }

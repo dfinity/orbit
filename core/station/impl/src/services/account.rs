@@ -610,7 +610,7 @@ mod tests {
         ctx.repository.insert(account.to_key(), account.clone());
 
         let input = AddAccountOperationInput {
-            name: "foo".to_string(),
+            name: "foo2".to_string(),
             blockchain: Blockchain::InternetComputer,
             standard: BlockchainStandard::Native,
             metadata: Metadata::default(),
@@ -624,6 +624,10 @@ mod tests {
         let result = ctx.service.create_account(input, Some(account.id)).await;
 
         assert!(result.is_err());
+        assert!(result.unwrap_err().to_json_string().contains(&format!(
+            "Account with id {} already exists",
+            Uuid::from_bytes(account.id).hyphenated()
+        )));
     }
 
     #[tokio::test]
