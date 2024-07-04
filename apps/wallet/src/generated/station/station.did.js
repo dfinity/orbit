@@ -2,6 +2,10 @@ export const idlFactory = ({ IDL }) => {
   const RequestPolicyRule = IDL.Rec();
   const RequestPolicyRuleResult = IDL.Rec();
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
+  const SystemUpgraderInput = IDL.Variant({
+    'Id' : IDL.Principal,
+    'WasmModule' : IDL.Vec(IDL.Nat8),
+  });
   const AdminInitInput = IDL.Record({
     'name' : IDL.Text,
     'identity' : IDL.Principal,
@@ -9,8 +13,8 @@ export const idlFactory = ({ IDL }) => {
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
     'fallback_controller' : IDL.Opt(IDL.Principal),
+    'upgrader' : SystemUpgraderInput,
     'admins' : IDL.Vec(AdminInitInput),
-    'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
     'quorum' : IDL.Opt(IDL.Nat16),
   });
   const SystemInstall = IDL.Variant({
@@ -1183,6 +1187,10 @@ export const idlFactory = ({ IDL }) => {
 };
 export const init = ({ IDL }) => {
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
+  const SystemUpgraderInput = IDL.Variant({
+    'Id' : IDL.Principal,
+    'WasmModule' : IDL.Vec(IDL.Nat8),
+  });
   const AdminInitInput = IDL.Record({
     'name' : IDL.Text,
     'identity' : IDL.Principal,
@@ -1190,8 +1198,8 @@ export const init = ({ IDL }) => {
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
     'fallback_controller' : IDL.Opt(IDL.Principal),
+    'upgrader' : SystemUpgraderInput,
     'admins' : IDL.Vec(AdminInitInput),
-    'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
     'quorum' : IDL.Opt(IDL.Nat16),
   });
   const SystemInstall = IDL.Variant({

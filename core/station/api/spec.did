@@ -1986,6 +1986,14 @@ type AdminInitInput = record {
   identity : principal;
 };
 
+// An input type for configuring the upgrader canister.
+type SystemUpgraderInput = variant {
+  // An existing upgrader canister.
+  Id : principal;
+  // Creates and deploys a new canister.
+  WasmModule : blob;
+};
+
 // The init configuration for the canister.
 //
 // Only used when installing the canister for the first time.
@@ -1996,8 +2004,8 @@ type SystemInit = record {
   admins : vec AdminInitInput;
   // Quorum of admins for initial policies.
   quorum : opt nat16;
-  // The wasm module of the station upgrader canister.
-  upgrader_wasm_module : blob;
+  // The upgrader configuration.
+  upgrader : SystemUpgraderInput;
   // An optional additional controller of the station and upgrader canisters.
   fallback_controller : opt principal;
 };

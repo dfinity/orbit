@@ -104,7 +104,7 @@ impl DeployService {
             arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                 name: input.name.clone(),
                 admins,
-                upgrader_wasm_module,
+                upgrader: station_api::SystemUpgraderInput::WasmModule(upgrader_wasm_module),
                 quorum: Some(1),
                 fallback_controller: Some(NNS_ROOT_CANISTER_ID),
             }))

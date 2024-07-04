@@ -388,13 +388,9 @@ fn test_disaster_recovery_flow() {
         upgrader_api::RecoveryStatus::InProgress { .. }
     ));
 
-    env.tick();
-    env.tick();
-    env.tick();
-    env.tick();
-    env.tick();
-    env.tick();
-    env.tick();
+    for _ in 0..7 {
+        env.tick();
+    }
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
     assert!(matches!(
@@ -420,6 +416,116 @@ fn test_disaster_recovery_flow() {
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
 
     assert!(dr_status.recovery_requests.is_empty());
+}
+
+// The goal of this test is not to check if the committee is set correctly, but to check that when the station is
+// reinstalled, the upgrader canister is not recreated.
+#[test]
+fn test_disaster_recovery_flow_reuses_same_upgrader() {
+    // 1. setup the environment with one admin user
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let station_wasm_module = get_canister_wasm("station");
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+    let initial_fallback_controller = Principal::from_slice(&[50; 29]);
+    let fallback_controller = Principal::from_slice(&[99; 29]);
+
+    env.set_controllers(
+        canister_ids.station,
+        Some(upgrader_id),
+        vec![initial_fallback_controller, upgrader_id],
+    )
+    .expect("Unexpected failed to set controllers of the station canister");
+
+    // 2. perform the disaster recovery request with the station wasm and using the same upgrader id
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "request_disaster_recovery",
+        (upgrader_api::RequestDisasterRecoveryInput {
+            module: station_wasm_module.clone(),
+            arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
+                name: "Station".to_string(),
+                admins: vec![station_api::AdminInitInput {
+                    identity: WALLET_ADMIN_USER,
+                    name: "updated-admin-name".to_string(),
+                }],
+                quorum: None,
+                fallback_controller: Some(fallback_controller),
+                upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
+            }))
+            .unwrap(),
+            install_mode: upgrader_api::InstallMode::Reinstall,
+        },),
+    )
+    .expect("Unexpected failed update call to request disaster recovery");
+    res.0
+        .expect("Unexpected failed to request disaster recovery");
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::InProgress { .. }
+    ));
+
+    // Advance the necessary consensus rounds to complete the disaster recovery
+    for _ in 0..9 {
+        env.tick();
+    }
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::Idle
+    ));
+
+    assert!(matches!(
+        dr_status.last_recovery_result,
+        Some(upgrader_api::RecoveryResult::Success)
+    ));
+
+    // 3. assert that the upgrader id is the same as the one used in the disaster recovery request
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+
+    assert_eq!(system_info.upgrader_id, upgrader_id);
+
+    // 4. assert that the station is reinstalled with the same wasm and the user has the new updated name
+    let new_wasm_hash = env
+        .canister_status(canister_ids.station, Some(upgrader_id))
+        .expect("Failed to get canister status")
+        .module_hash
+        .expect("No module hash found");
+
+    assert_eq!(new_wasm_hash, sha256_hash(&station_wasm_module));
+
+    let admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
+    assert_eq!(admin_user.name, "updated-admin-name");
+
+    // 5. assert that the fallback controller is updated
+    let updated_controllers = env
+        .canister_status(canister_ids.station, Some(upgrader_id))
+        .expect("Failed to get canister status")
+        .settings
+        .controllers;
+
+    assert_eq!(updated_controllers.len(), 2);
+    assert!(updated_controllers.contains(&fallback_controller));
+    assert!(updated_controllers.contains(&upgrader_id));
+
+    // 6. check that the upgrader has the new fallback controller
+    let upgrader_controllers = env
+        .canister_status(upgrader_id, Some(canister_ids.station))
+        .expect("Failed to get canister status")
+        .settings
+        .controllers;
+
+    assert_eq!(upgrader_controllers.len(), 2);
+    assert!(upgrader_controllers.contains(&fallback_controller));
+    assert!(upgrader_controllers.contains(&canister_ids.station));
 }
 
 #[test]
@@ -539,12 +645,13 @@ fn test_disaster_recovery_install() {
         "request_disaster_recovery",
         (good_request.clone(),),
     )
-    .expect("Failed update call to request disaster recovery");
-    res.0.expect("Failed to request disaster recovery");
+    .expect("Unexpected failed update call to request disaster recovery");
+    res.0
+        .expect("Unexpected failed to request disaster recovery");
 
-    env.tick();
-    env.tick();
-    env.tick();
+    for _ in 0..6 {
+        env.tick();
+    }
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
 
@@ -609,7 +716,7 @@ fn test_disaster_recovery_failing() {
     let arg = SystemInstall::Init(SystemInit {
         fallback_controller: None,
         quorum: None,
-        upgrader_wasm_module: vec![],
+        upgrader: station_api::SystemUpgraderInput::WasmModule(vec![]),
         name: "Station".to_string(),
         admins: vec![],
     });
