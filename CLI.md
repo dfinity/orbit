@@ -90,6 +90,13 @@ TODO: It  would be nice to be able to link directly to a permission.  E.g. this 
 
 
 ## Make canister calls with Orbit
+Instead of using `dfx canister call CANISTER METHOD ARGUMENTS` use `dfx-orbit request canister call CANISTER METHOD ARGUMENTS`.
+
+For example, asset canisters have the methods `list_authorized` and `list_permitted`.  You should be able to make these canister calls directly or via Orbit:
+```
+dfx canister call frontend list_authorized
+dfx-orbit request canister call frontend list_authorized
+```
 
 
 ## Control a canister with Orbit
@@ -111,7 +118,8 @@ Verify that Orbit has been added as a controller:
 dfx canister info MY_CANISTER --network MY_CANISTER_NETWORK
 ```
 
-### Register yourself as a developer for your canister
+### Upgrade canisters
+#### Request permission to make upgrade requests
 This will allow you to propose upgrades to `MY_CANISTER`:
 
 ```
@@ -121,16 +129,16 @@ This will create an Orbit request.  Once approved you will be able to propose ca
 
 > :warning: **The Orbit GUI does not currently show this proposal unless you enter the proposal URL directly, under /en/settings/requests?reqid=THE_ID**
 
-### Upgrade a canister
+#### Request a canister upgrade
 Suppose that you have built a new Wasm and put a copy at `./MY-CANISTER.wasm.gz`.  To upgrade your canister to the new Wasm:
 ```
 dfx-orbit request canister change wasm --canister MY_CANISTER --mode upgrade --wasm ./MY-CANISTER.wasm.gz
 ```
 
-## Upload assets to a canister
+### Upload assets to a canister
 We will assume that Orbit is a controller of the asset canister.  If not, please adapt the following commands by using `dfx canister call` instead of `dfx-orbit request canister call`.
 
-### Authorize the developer to upload assets
+#### Authorize the developer to upload assets
 Note: Uploaded assets are not published.  They are only prepared for release.
 ```
 developer_principal="$(dfx identity get-principal)"
@@ -148,7 +156,7 @@ When the request has been approved, check the list of principals permitted to pr
 dfx canister call frontend list_permitted '(record { permission = variant { Prepare } })'
 ```
 
-### Authorize the orbit station to commit assets
+#### Authorize the orbit station to commit assets
 Note: Committing uploaded assets causes them to be published on the asset canister web site.
 ```
 station_principal="$(dfx-orbit station show | jq -r .station_id)"
@@ -166,7 +174,7 @@ When the request has been approved, check the list of principals permitted to co
 dfx canister call frontend list_permitted '(record { permission = variant { Commit } })'
 ```
 
-### Upload assets
+#### Request an asset update
 A developer may upload one or more directories of HTTP assets with:
 ```
 dfx-orbit canister upload-http-assets --canister CANISTER_NAME --source SOME_DIR/ --source OTHER_DIR/
