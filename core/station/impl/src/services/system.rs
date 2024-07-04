@@ -1,3 +1,4 @@
+use super::DISASTER_RECOVERY_SERVICE;
 use crate::{
     core::{
         ic_cdk::{
@@ -21,8 +22,6 @@ use orbit_essentials::repository::Repository;
 use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
 use std::sync::Arc;
 use uuid::Uuid;
-
-use super::DISASTER_RECOVERY_SERVICE;
 
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> =
@@ -172,18 +171,24 @@ impl SystemService {
             }
             install_canister_handlers::set_controllers(station_controllers).await?;
 
+            // calculates the initial quorum based on the number of admins and the provided quorum
+            let admin_count = init.admins.len() as u16;
+            let quorum = calc_initial_quorum(admin_count, init.quorum);
+
+            // if provided, creates the initial accounts
+            if let Some(accounts) = init.accounts {
+                print("Adding initial accounts");
+                install_canister_handlers::set_initial_accounts(accounts, quorum).await?;
+            }
+
             if SYSTEM_SERVICE.is_healthy() {
                 print("canister reports healthy already before its initialization has finished!");
             }
 
             install_canister_post_process_finish(system_info);
 
-            let admin_count = u16::try_from(init.admins.len()).unwrap_or(u16::MAX);
             SystemService::set_disaster_recovery_committee(Some(DisasterRecoveryCommittee {
-                quorum: init
-                    .quorum
-                    .unwrap_or(admin_count / 2 + 1)
-                    .clamp(1, admin_count),
+                quorum,
                 user_group_id: *crate::models::ADMIN_GROUP_ID,
             }));
 
@@ -230,6 +235,12 @@ impl SystemService {
 
         if input.admins.is_empty() {
             return Err(SystemError::NoAdminsSpecified)?;
+        }
+
+        if input.admins.len() > u16::MAX as usize {
+            return Err(SystemError::TooManyAdminsSpecified {
+                max: u16::MAX as usize,
+            })?;
         }
 
         // adds the default admin group
@@ -351,20 +362,36 @@ mod init_canister_sync_handlers {
     }
 }
 
+// Calculates the initial quorum based on the number of admins and the provided quorum, if not provided
+// the quorum is set to the majority of the admins.
+#[cfg(any(target_arch = "wasm32", test))]
+pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
+    quorum.unwrap_or(admin_count / 2 + 1).clamp(1, admin_count)
+}
+
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::{id as self_canister_id, print};
     use crate::core::init::{default_policies, DEFAULT_PERMISSIONS};
     use crate::core::INITIAL_UPGRADER_CYCLES;
-    use crate::models::{AddRequestPolicyOperationInput, EditPermissionOperationInput};
+    use crate::mappers::blockchain::BlockchainMapper;
+    use crate::mappers::HelperMapper;
+    use crate::models::permission::Allow;
+    use crate::models::request_specifier::UserSpecifier;
+    use crate::models::{
+        AddAccountOperationInput, AddRequestPolicyOperationInput, EditPermissionOperationInput,
+        RequestPolicyRule, ADMIN_GROUP_ID,
+    };
     use crate::services::permission::PERMISSION_SERVICE;
+    use crate::services::ACCOUNT_SERVICE;
     use crate::services::REQUEST_POLICY_SERVICE;
     use candid::{Encode, Principal};
     use canfund::fetch::cycles::FetchCyclesBalanceFromCanisterStatus;
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
     use canfund::FundManager;
     use ic_cdk::api::management_canister::main::{self as mgmt};
-    use station_api::SystemInit;
+    use orbit_essentials::types::UUID;
+    use station_api::{InitAccountInput, SystemInit};
     use std::cell::RefCell;
     use std::sync::Arc;
 
@@ -374,12 +401,7 @@ mod install_canister_handlers {
 
     /// Registers the default configurations for the canister.
     pub async fn init_post_process(init: &SystemInit) -> Result<(), String> {
-        let admin_count = u16::try_from(init.admins.len()).unwrap_or(u16::MAX);
-
-        let admin_quorum = init
-            .quorum
-            .unwrap_or(admin_count / 2 + 1)
-            .clamp(1, admin_count);
+        let admin_quorum = super::calc_initial_quorum(init.admins.len() as u16, init.quorum);
 
         let policies_to_create = default_policies(admin_quorum);
 
@@ -406,6 +428,53 @@ mod install_canister_handlers {
                 })
                 .await
                 .map_err(|e| format!("Failed to add default permission: {:?}", e))?;
+        }
+
+        Ok(())
+    }
+
+    // Registers the initial accounts of the canister during the canister initialization.
+    pub async fn set_initial_accounts(
+        accounts: Vec<InitAccountInput>,
+        quorum: u16,
+    ) -> Result<(), String> {
+        let add_accounts = accounts
+            .into_iter()
+            .map(|account| {
+                let input = AddAccountOperationInput {
+                    name: account.name,
+                    blockchain: BlockchainMapper::to_blockchain(account.blockchain.clone())
+                        .expect("Invalid blockchain"),
+                    standard: BlockchainMapper::to_blockchain_standard(account.standard)
+                        .expect("Invalid blockchain standard"),
+                    metadata: account.metadata.into(),
+                    transfer_request_policy: Some(RequestPolicyRule::Quorum(
+                        UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                        quorum,
+                    )),
+                    configs_request_policy: Some(RequestPolicyRule::Quorum(
+                        UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                        quorum,
+                    )),
+                    read_permission: Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+                    configs_permission: Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+                    transfer_permission: Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+                };
+
+                (
+                    input,
+                    account
+                        .id
+                        .map(|id| *HelperMapper::to_uuid(id).expect("Invalid UUID").as_bytes()),
+                )
+            })
+            .collect::<Vec<(AddAccountOperationInput, Option<UUID>)>>();
+
+        for (new_account, with_account_id) in add_accounts {
+            ACCOUNT_SERVICE
+                .create_account(new_account, with_account_id)
+                .await
+                .map_err(|e| format!("Failed to add account: {:?}", e))?;
         }
 
         Ok(())
@@ -529,6 +598,7 @@ mod tests {
                 quorum: Some(1),
                 upgrader: station_api::SystemUpgraderInput::WasmModule(vec![]),
                 fallback_controller: None,
+                accounts: None,
             })
             .await;
 
@@ -559,5 +629,37 @@ mod tests {
         let system_info = read_system_info();
 
         assert!(system_info.get_change_canister_request().is_none());
+    }
+
+    #[test]
+    fn test_initial_quorum_is_majority() {
+        assert_eq!(calc_initial_quorum(1, None), 1);
+        assert_eq!(calc_initial_quorum(2, None), 2);
+        assert_eq!(calc_initial_quorum(3, None), 2);
+        assert_eq!(calc_initial_quorum(4, None), 3);
+        assert_eq!(calc_initial_quorum(5, None), 3);
+        assert_eq!(calc_initial_quorum(6, None), 4);
+        assert_eq!(calc_initial_quorum(7, None), 4);
+        assert_eq!(calc_initial_quorum(8, None), 5);
+        assert_eq!(calc_initial_quorum(9, None), 5);
+        assert_eq!(calc_initial_quorum(10, None), 6);
+        assert_eq!(calc_initial_quorum(11, None), 6);
+        assert_eq!(calc_initial_quorum(12, None), 7);
+        assert_eq!(calc_initial_quorum(13, None), 7);
+        assert_eq!(calc_initial_quorum(14, None), 8);
+        assert_eq!(calc_initial_quorum(15, None), 8);
+        assert_eq!(calc_initial_quorum(16, None), 9);
+    }
+
+    #[test]
+    fn test_initial_quorum_is_custom() {
+        // smaller than the number of admins
+        assert_eq!(calc_initial_quorum(4, Some(1)), 1);
+        // half of the number of admins
+        assert_eq!(calc_initial_quorum(4, Some(2)), 2);
+        // equal to the number of admins
+        assert_eq!(calc_initial_quorum(4, Some(4)), 4);
+        // larger than the number of admins
+        assert_eq!(calc_initial_quorum(4, Some(5)), 4);
     }
 }
