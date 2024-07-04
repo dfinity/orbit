@@ -57,6 +57,9 @@ function deterministic_build() {
   # Create a container to extract the generated artifacts
   docker create --name orbit-$project_name-container orbit-$project_name
 
+  # Ensure the artifacts directory exists
+  mkdir -p ./artifacts/$project_name
+
   # Copy the generated artifacts to the host
   docker cp orbit-$project_name-container:/code/artifacts/$project_name/. ./artifacts/$project_name/
 
