@@ -7,9 +7,20 @@ on:
       - '**/release**'
 
 jobs:
-  build-station:
+  deterministic-build:
     name: 'build-station:optional'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - project: control-panel
+            artifact: control_panel.wasm.gz
+          - project: station
+            artifact: station.wasm.gz
+          - project: upgrader
+            artifact: upgrader.wasm.gz
+          - project: wallet-dapp
+            artifact: wallet-dapp.tar.gz
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -17,53 +28,7 @@ jobs:
         timeout-minutes: 12
       - name: 'Deterministic build'
         run: |
-          ./scripts/docker-build.sh --station
+          ./scripts/docker-build.sh --${{ matrix.project }}
       - name: 'Built hash'
         run: |
-          BUILD_HASH=$(cat ./artifacts/station/station.wasm.gz.sha256)
-          echo "built hash: $BUILD_HASH"
-  build-upgrader:
-    name: 'build-upgrader:optional'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - uses: docker-practice/actions-setup-docker@master
-        timeout-minutes: 12
-      - name: 'Deterministic build'
-        run: |
-          ./scripts/docker-build.sh --upgrader
-      - name: 'Built hash'
-        run: |
-          BUILD_HASH=$(cat ./artifacts/upgrader/upgrader.wasm.gz.sha256)
-          echo "built hash: $BUILD_HASH"
-  build-control-panel:
-    name: 'build-control-panel:optional'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - uses: docker-practice/actions-setup-docker@master
-        timeout-minutes: 12
-      - name: 'Deterministic build'
-        run: |
-          ./scripts/docker-build.sh --control-panel
-      - name: 'Built hash'
-        run: |
-          BUILD_HASH=$(cat ./artifacts/control-panel/control_panel.wasm.gz.sha256)
-          echo "built hash: $BUILD_HASH"
-  build-wallet-dapp:
-    name: 'build-wallet-dapp:optional'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - uses: docker-practice/actions-setup-docker@master
-        timeout-minutes: 12
-      - name: 'Deterministic build'
-        run: |
-          ./scripts/docker-build.sh --wallet-dapp
-      - name: 'Built hash'
-        run: |
-          BUILD_HASH=$(cat ./artifacts/wallet-dapp/wallet_dapp.wasm.gz.sha256)
-          echo "built hash: $BUILD_HASH"
+          cat artifacts/${{ matrix.artifact }}.sha256
