@@ -28,7 +28,6 @@ pub enum StationArgs {
 #[derive(Debug, Parser)]
 pub struct Add {
     /// Wallet name.
-    #[structopt(long)]
     pub name: String,
     /// Station canister ID, called "Wallet ID" in the Orbit UI.
     #[structopt(long)]
@@ -91,6 +90,5 @@ pub struct Remove {
 #[derive(Debug, Parser)]
 pub struct Use {
     /// Station name.
-    #[structopt(long)]
     pub name: String,
 }

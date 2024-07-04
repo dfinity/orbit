@@ -1,6 +1,7 @@
 //! Implementation of the `dfx-orbit` commands.
 pub mod canister;
 pub mod dfx_extension_cli;
+pub mod me;
 pub mod request;
 pub mod review;
 pub mod station;
@@ -11,19 +12,7 @@ use anyhow::anyhow;
 /// A command line tool for interacting with Orbit on the Internet Computer.
 pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
     match args.command {
-        DfxOrbitSubcommands::Me => {
-            let station_principal = &crate::local_config::default_station()?
-                .ok_or_else(|| anyhow!("No default station specified"))?
-                .station_id;
-            let ans = crate::dfx_extension_api::call_dfx_cli(vec![
-                "canister",
-                "call",
-                station_principal,
-                "me",
-            ])?;
-            print!("{ans}");
-            Ok(())
-        }
+        DfxOrbitSubcommands::Me => me::exec().await,
         DfxOrbitSubcommands::Station(station_args) => station::exec(station_args),
         DfxOrbitSubcommands::DfxExtension(dfx_extension_args) => {
             dfx_extension_cli::exec(dfx_extension_args)
