@@ -72,9 +72,18 @@ TODO: The Oisy canister ID is also called the wallet ID and the station ID.  Con
 ### Grant Orbit control of the canister
 Assume that you have a canister called `MY_CANISTER` in `dfx`.  You may also refer to your canister by canister ID.
 
-Add Orbit as a controller while keeping existing controllers:
+Check the current controllers of the canister:
+```
+dfx canister info MY_CANISTER --network MY_CANISTER_NETWORK
+```
+
+Add Orbit as a controller of the canister:
 ```
 dfx-orbit canister claim MY_CANISTER
+```
+Verify that Orbit has been added as a controller:
+```
+dfx canister info MY_CANISTER --network MY_CANISTER_NETWORK
 ```
 
 ### Register yourself as a developer for your canister
