@@ -79,16 +79,13 @@ Initially you are likely to have only permission to see your own profile:
 ]
 ```
 
-Without permission to make requests, `request permission` commands, like this meaningless request to update a non-existent canister, will fail with `Unauthorized access to resources: Permission(Update)`.
-```
-dfx-orbit request permission canister change --canister tmlz3-yjbfg-j2wfb-745ni-omr52-4tga6-rbk3r-wjryr-l3xk7-oziho-wae
-```
+Without permission to make and view requests, you will not be able to do much.  The following permissions are recommended for anyone entitled to make requests:
 
 In the UI the permission that needs to be granted is:
 
-| Permission      | [Name in UI](https://orbitwallet.io/en/settings/user-groups/permissions)      | Privilige | Used for |
+| Privilege      | [Name in UI](https://orbitwallet.io/en/settings/user-groups/permissions)      | Name in error messages | Used for |
 | --- | --- | --- | -- |
-| `Request(List)` | Request/List | `ListRequests`  | `dfx-orbit review next` |
+| `ListRequests` | Request/List | `Request(List)`  | `dfx-orbit review list` |
 
 TODO: It  would be nice to be able to link directly to a permission.  E.g. this could open the permissions page and focus on one specific permission: https://orbitwallet.io/en/settings/user-groups/permissions#Request/List
 
