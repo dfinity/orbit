@@ -147,7 +147,6 @@ impl DfxExtensionAgent {
             let network_name = local_config::station_or_default(None)
                 .with_context(|| "Failed to get station")?
                 .network;
-            println!("Network name: {}", network_name);
             let interface_builder = DfxInterface::builder().with_network_named(&network_name);
             let interface = interface_builder.build().await?;
             if !interface.network_descriptor().is_ic {
