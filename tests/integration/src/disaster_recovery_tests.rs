@@ -477,16 +477,17 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                 newly_added_account.id,
                 (newly_added_account.name, newly_added_account.address),
             );
+        } else {
+            panic!("Unexpected request operation found");
         }
     }
 
     // 3. perform a reinstall disaster recovery request
     let init_accounts_input = initial_accounts
-        .clone()
-        .into_iter()
+        .iter()
         .map(|(id, (name, _))| station_api::InitAccountInput {
-            id: Some(id),
-            name,
+            id: Some(id.to_string()),
+            name: name.to_string(),
             blockchain: "icp".to_string(),
             standard: "native".to_string(),
             metadata: vec![],
