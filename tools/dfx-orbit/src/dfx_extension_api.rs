@@ -10,6 +10,8 @@ use dfx_core::interface::dfx::DfxInterface;
 use ic_agent::Agent;
 use slog::{o, Drain, Logger};
 
+use crate::local_config;
+
 /// Calls the dfx cli.
 ///
 /// Some methods are implemented as calls to the dfx cli until a library is available.
@@ -142,7 +144,11 @@ impl DfxExtensionAgent {
     /// Gets the dfx_core interface
     pub async fn dfx_interface(&mut self) -> anyhow::Result<&DfxInterface> {
         if self.dfx_interface.is_none() {
-            let interface_builder = DfxInterface::builder().with_network_named("local");
+            let network_name = local_config::station_or_default(None)
+                .with_context(|| "Failed to get station")?
+                .network;
+            println!("Network name: {}", network_name);
+            let interface_builder = DfxInterface::builder().with_network_named(&network_name);
             let interface = interface_builder.build().await?;
             if !interface.network_descriptor().is_ic {
                 interface.agent().fetch_root_key().await?;
