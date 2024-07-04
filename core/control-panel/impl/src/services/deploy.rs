@@ -107,6 +107,7 @@ impl DeployService {
                 upgrader: station_api::SystemUpgraderInput::WasmModule(upgrader_wasm_module),
                 quorum: Some(1),
                 fallback_controller: Some(NNS_ROOT_CANISTER_ID),
+                accounts: None,
             }))
             .map_err(|err| DeployError::Failed {
                 reason: err.to_string(),

@@ -13,9 +13,10 @@ use orbit_essentials::utils::sha256_hash;
 use pocket_ic::{query_candid_as, update_candid_as};
 use station_api::{
     AddAccountOperationInput, AllowDTO, DisasterRecoveryCommitteeDTO, HealthStatus,
-    RequestOperationInput, SetDisasterRecoveryOperationInput, SystemInit, SystemInstall,
-    SystemUpgrade,
+    ListAccountsResponse, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    SetDisasterRecoveryOperationInput, SystemInit, SystemInstall, SystemUpgrade,
 };
+use std::collections::BTreeMap;
 use upgrader_api::{
     Account, AdminUser, DisasterRecoveryCommittee, GetDisasterRecoveryAccountsResponse,
     GetDisasterRecoveryCommitteeResponse, SetDisasterRecoveryAccountsInput,
@@ -419,6 +420,180 @@ fn test_disaster_recovery_flow() {
 }
 
 // The goal of this test is not to check if the committee is set correctly, but to check that when the station is
+// reinstalled, the accounts are also recreated with the same addresses.
+#[test]
+fn test_disaster_recovery_flow_recreates_same_accounts() {
+    // 1. setup the environment with one admin user
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let station_wasm_module = get_canister_wasm("station");
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+    let admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
+
+    // 2. create 3 accounts with the same admin user and no approval required
+    let mut initial_accounts = BTreeMap::new();
+    for account_nr in 0..3 {
+        let create_account_args = AddAccountOperationInput {
+            name: format!("account-{}", account_nr),
+            blockchain: "icp".to_string(),
+            standard: "native".to_string(),
+            read_permission: AllowDTO {
+                auth_scope: station_api::AuthScopeDTO::Restricted,
+                user_groups: vec![],
+                users: vec![admin_user.id.clone()],
+            },
+            configs_permission: AllowDTO {
+                auth_scope: station_api::AuthScopeDTO::Restricted,
+                user_groups: vec![],
+                users: vec![admin_user.id.clone()],
+            },
+            transfer_permission: AllowDTO {
+                auth_scope: station_api::AuthScopeDTO::Restricted,
+                user_groups: vec![],
+                users: vec![admin_user.id.clone()],
+            },
+            transfer_request_policy: Some(RequestPolicyRuleDTO::AutoApproved),
+            configs_request_policy: Some(RequestPolicyRuleDTO::AutoApproved),
+            metadata: vec![],
+        };
+
+        let request = execute_request(
+            &env,
+            WALLET_ADMIN_USER,
+            canister_ids.station,
+            RequestOperationInput::AddAccount(create_account_args),
+        )
+        .expect("Unexpected failed to create account");
+
+        if let RequestOperationDTO::AddAccount(operation) = request.operation {
+            let newly_added_account = operation
+                .account
+                .expect("Unexpected new account not available");
+
+            initial_accounts.insert(
+                newly_added_account.id,
+                (newly_added_account.name, newly_added_account.address),
+            );
+        }
+    }
+
+    // 3. perform a reinstall disaster recovery request
+    let init_accounts_input = initial_accounts
+        .clone()
+        .into_iter()
+        .map(|(id, (name, _))| station_api::InitAccountInput {
+            id: Some(id),
+            name,
+            blockchain: "icp".to_string(),
+            standard: "native".to_string(),
+            metadata: vec![],
+        })
+        .collect();
+
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "request_disaster_recovery",
+        (upgrader_api::RequestDisasterRecoveryInput {
+            module: station_wasm_module.clone(),
+            arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
+                name: "Station".to_string(),
+                admins: vec![station_api::AdminInitInput {
+                    identity: WALLET_ADMIN_USER,
+                    name: "updated-admin-name".to_string(),
+                }],
+                quorum: None,
+                fallback_controller: None,
+                upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
+                accounts: Some(init_accounts_input),
+            }))
+            .unwrap(),
+            install_mode: upgrader_api::InstallMode::Reinstall,
+        },),
+    )
+    .expect("Unexpected failed update call to request disaster recovery");
+    res.0
+        .expect("Unexpected failed to request disaster recovery");
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::InProgress { .. }
+    ));
+
+    // Advance the necessary consensus rounds to complete the disaster recovery
+    for _ in 0..9 {
+        env.tick();
+    }
+
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    assert!(matches!(
+        dr_status.recovery_status,
+        upgrader_api::RecoveryStatus::Idle
+    ));
+
+    assert!(matches!(
+        dr_status.last_recovery_result,
+        Some(upgrader_api::RecoveryResult::Success)
+    ));
+
+    // 4. assert that the station is reinstalled with the same accounts and the apporoval policies are set correctly
+    let res: (ApiResult<ListAccountsResponse>,) = update_candid_as(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "list_accounts",
+        (station_api::ListAccountsInput {
+            search_term: None,
+            paginate: None,
+        },),
+    )
+    .expect("Unexpected failed update call to list accounts");
+    let existing_accounts = res.0.expect("Unexpected failed to list accounts").accounts;
+
+    assert_eq!(existing_accounts.len(), initial_accounts.len());
+
+    fn assert_expected_approval_quorum(policy: &Option<RequestPolicyRuleDTO>, admin_id: String) {
+        let policy = policy.as_ref().expect("No policy found");
+
+        match policy {
+            RequestPolicyRuleDTO::Quorum(quorum) => {
+                assert_eq!(quorum.min_approved, 1);
+                match &quorum.approvers {
+                    station_api::UserSpecifierDTO::Id(approvers) => {
+                        assert_eq!(approvers.len(), 1);
+                        assert_eq!(approvers[0], admin_id);
+                    }
+                    _ => {
+                        panic!("Unexpected approvers found");
+                    }
+                }
+            }
+            _ => {
+                panic!("Unexpected transfer policy found");
+            }
+        }
+    }
+
+    for (id, (name, address)) in initial_accounts {
+        let account = existing_accounts
+            .iter()
+            .find(|a| a.id == id)
+            .expect("Unexpected account not found");
+
+        assert_eq!(account.name, name);
+        assert_eq!(account.address, address);
+
+        assert_expected_approval_quorum(&account.transfer_request_policy, admin_user.id.clone());
+        assert_expected_approval_quorum(&account.configs_request_policy, admin_user.id.clone());
+    }
+}
+
+// The goal of this test is not to check if the committee is set correctly, but to check that when the station is
 // reinstalled, the upgrader canister is not recreated.
 #[test]
 fn test_disaster_recovery_flow_reuses_same_upgrader() {
@@ -457,6 +632,7 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
                 quorum: None,
                 fallback_controller: Some(fallback_controller),
                 upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
+                accounts: None,
             }))
             .unwrap(),
             install_mode: upgrader_api::InstallMode::Reinstall,
@@ -719,6 +895,7 @@ fn test_disaster_recovery_failing() {
         upgrader: station_api::SystemUpgraderInput::WasmModule(vec![]),
         name: "Station".to_string(),
         admins: vec![],
+        accounts: None,
     });
 
     // install with intentionally bad arg to fail

@@ -529,6 +529,7 @@ mod tests {
                 quorum: Some(1),
                 upgrader: station_api::SystemUpgraderInput::WasmModule(vec![]),
                 fallback_controller: None,
+                accounts: None,
             })
             .await;
 

@@ -6,6 +6,15 @@ export const idlFactory = ({ IDL }) => {
     'Id' : IDL.Principal,
     'WasmModule' : IDL.Vec(IDL.Nat8),
   });
+  const UUID = IDL.Text;
+  const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const InitAccountInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'metadata' : IDL.Vec(AccountMetadata),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'standard' : IDL.Text,
+  });
   const AdminInitInput = IDL.Record({
     'name' : IDL.Text,
     'identity' : IDL.Principal,
@@ -14,6 +23,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
+    'accounts' : IDL.Opt(IDL.Vec(InitAccountInput)),
     'admins' : IDL.Vec(AdminInitInput),
     'quorum' : IDL.Opt(IDL.Nat16),
   });
@@ -81,7 +91,6 @@ export const idlFactory = ({ IDL }) => {
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
   });
   const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
-  const UUID = IDL.Text;
   const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
   const RequestResourceAction = IDL.Variant({
     'List' : IDL.Null,
@@ -348,7 +357,6 @@ export const idlFactory = ({ IDL }) => {
     'validation_method' : IDL.Opt(CanisterMethod),
     'execution_method_cycles' : IDL.Opt(IDL.Nat64),
   });
-  const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AddAccountOperationInput = IDL.Record({
     'configs_request_policy' : IDL.Opt(RequestPolicyRule),
     'read_permission' : Allow,
@@ -1191,6 +1199,15 @@ export const init = ({ IDL }) => {
     'Id' : IDL.Principal,
     'WasmModule' : IDL.Vec(IDL.Nat8),
   });
+  const UUID = IDL.Text;
+  const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const InitAccountInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'metadata' : IDL.Vec(AccountMetadata),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'standard' : IDL.Text,
+  });
   const AdminInitInput = IDL.Record({
     'name' : IDL.Text,
     'identity' : IDL.Principal,
@@ -1199,6 +1216,7 @@ export const init = ({ IDL }) => {
     'name' : IDL.Text,
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
+    'accounts' : IDL.Opt(IDL.Vec(InitAccountInput)),
     'admins' : IDL.Vec(AdminInitInput),
     'quorum' : IDL.Opt(IDL.Nat16),
   });

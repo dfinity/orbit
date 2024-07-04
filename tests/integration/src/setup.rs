@@ -193,6 +193,7 @@ fn install_canisters(
         quorum: Some(1),
         upgrader: station_api::SystemUpgraderInput::WasmModule(upgrader_wasm),
         fallback_controller: config.fallback_controller,
+        accounts: None,
     });
     env.install_canister(
         station,

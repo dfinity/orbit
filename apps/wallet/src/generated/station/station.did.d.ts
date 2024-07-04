@@ -410,6 +410,13 @@ export interface HttpResponse {
   'headers' : Array<HeaderField>,
   'status_code' : number,
 }
+export interface InitAccountInput {
+  'id' : [] | [UUID],
+  'metadata' : Array<AccountMetadata>,
+  'name' : string,
+  'blockchain' : string,
+  'standard' : string,
+}
 export interface ListAccountTransfersInput {
   'account_id' : UUID,
   'status' : [] | [TransferStatusType],
@@ -866,6 +873,7 @@ export interface SystemInit {
   'name' : string,
   'fallback_controller' : [] | [Principal],
   'upgrader' : SystemUpgraderInput,
+  'accounts' : [] | [Array<InitAccountInput>],
   'admins' : Array<AdminInitInput>,
   'quorum' : [] | [number],
 }
