@@ -2,7 +2,7 @@
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::{args::station::Add, dfx_extension_api::DfxExtensionAgent};
+use crate::dfx_extension_api::DfxExtensionAgent;
 
 /// Configuration that lives in e.g. ~/.config/dfx/orbit.json
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -107,25 +107,17 @@ pub fn list_stations() -> Vec<String> {
 ///
 /// If there is no default station, the new station is set as the default.
 // TODO: Check that the URL works & is the root URL.
-pub fn add_station(args: &Add) -> anyhow::Result<()> {
-    let Add {
-        name,
-        station_id,
-        network,
-        url,
-    } = args;
-    let station = StationConfig {
-        name: name.to_string(),
-        station_id: station_id.to_string(),
-        network: network.to_string(),
-        url: url.to_string(),
-    };
-    let station_file = create_station_file(name)?;
+pub fn add_station<T>(args: T) -> anyhow::Result<()>
+where
+    T: Into<StationConfig>,
+{
+    let station: StationConfig = args.into();
+    let station_file = create_station_file(&station.name)?;
     station_file.set_len(0)?;
     serde_json::to_writer_pretty(station_file, &station).expect("Failed to write station file");
 
     if default_station_name()?.is_none() {
-        set_default_station(Some(name.to_string()))?;
+        set_default_station(Some(station.name.to_owned()))?;
     }
 
     Ok(())

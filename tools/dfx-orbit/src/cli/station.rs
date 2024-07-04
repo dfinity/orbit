@@ -6,8 +6,7 @@ use crate::local_config;
 pub fn exec(args: StationArgs) -> anyhow::Result<()> {
     match args {
         StationArgs::Add(add_args) => {
-            local_config::add_station(&add_args)
-                .expect("Failed to add station to local dfx config");
+            local_config::add_station(add_args).expect("Failed to add station to local dfx config");
         }
         StationArgs::List(_list_args) => {
             let stations = local_config::list_stations();

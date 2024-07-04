@@ -4,6 +4,8 @@ use std::fmt::{self, Display, Formatter};
 use candid::Principal;
 use clap::{Parser, Subcommand};
 
+use crate::local_config::StationConfig;
+
 /// Station management commands.
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
@@ -38,6 +40,17 @@ pub struct Add {
     /// The Obit user interface URL.
     #[structopt(long)]
     pub url: String,
+}
+
+impl From<Add> for StationConfig {
+    fn from(add: Add) -> Self {
+        Self {
+            name: add.name,
+            station_id: add.station_id.to_text(),
+            network: add.network,
+            url: add.url,
+        }
+    }
 }
 
 /// Lists Orbit station in the local dfx configuration.
