@@ -603,6 +603,30 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn add_account_with_same_id_should_fail() {
+        let ctx = setup();
+        let account = mock_account();
+
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let input = AddAccountOperationInput {
+            name: "foo".to_string(),
+            blockchain: Blockchain::InternetComputer,
+            standard: BlockchainStandard::Native,
+            metadata: Metadata::default(),
+            read_permission: Allow::users(vec![ctx.caller_user.id]),
+            configs_permission: Allow::users(vec![ctx.caller_user.id]),
+            transfer_permission: Allow::users(vec![ctx.caller_user.id]),
+            configs_request_policy: Some(RequestPolicyRule::AutoApproved),
+            transfer_request_policy: Some(RequestPolicyRule::AutoApproved),
+        };
+
+        let result = ctx.service.create_account(input, Some(account.id)).await;
+
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
     async fn edit_account() {
         let ctx = setup();
         let account = mock_account();
