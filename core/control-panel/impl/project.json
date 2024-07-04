@@ -9,7 +9,8 @@
         "commands": [
           "mkdir -p ./artifacts/control-panel",
           "./scripts/generate-wasm.sh control-panel",
-          "mv ./wasms/control_panel.wasm.gz ./artifacts/control-panel/control_panel.wasm.gz"
+          "mv ./wasms/control_panel.wasm.gz ./artifacts/control-panel/control_panel.wasm.gz",
+          "sha256sum ./artifacts/control-panel/control_panel.wasm.gz | awk '{ print $1 }' > ./artifacts/control-panel/control_panel.wasm.gz.sha256"
         ],
         "parallel": false
       }
