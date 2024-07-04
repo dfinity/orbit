@@ -1,5 +1,6 @@
 //! A dfx and IC agent for communicating with an Orbit station.
 
+use anyhow::anyhow;
 use candid::Principal;
 use ic_agent::agent::UpdateBuilder;
 
@@ -31,13 +32,52 @@ impl StationAgent {
         self.dfx.canister_id(canister_name, network)
     }
 
-    /// Makes a canister update call on the network used by the station.
-    pub async fn update(
+    /// Builds a canister update call on the network used by the station.
+    ///
+    /// # Example
+    /// ```
+    /// let response_bytes = station_agent.update_canister(&canister_id, "method_name")
+    ///         .with_arg(candid::encode_one(args)?)
+    ///         .call_and_wait()
+    ///         .await?;
+    /// ```
+    pub async fn update_canister_id(
         &mut self,
         canister_id: &Principal,
         method_name: &str,
     ) -> anyhow::Result<UpdateBuilder> {
         Ok(self.dfx.agent().await?.update(canister_id, method_name))
+    }
+
+    /// Builds a canister update call to a named canister on the network used by the station.
+    ///
+    /// # Example
+    /// ```
+    /// let response_bytes = station_agent.update_canister("mycanister", "method_name")
+    ///         .with_arg(candid::encode_one(args)?)
+    ///         .call_and_wait()
+    ///         .await?;
+    /// ```
+    pub async fn update_canister(
+        &mut self,
+        canister: &str,
+        method_name: &str,
+    ) -> anyhow::Result<UpdateBuilder> {
+        let canister_id = self.canister_id(canister)?;
+        Ok(self.dfx.agent().await?.update(&canister_id, method_name))
+    }
+
+    /// Makes an update call to the station.
+    pub async fn update_orbit(&mut self, method_name: &str) -> anyhow::Result<UpdateBuilder> {
+        let orbit_canister_id = crate::local_config::default_station()?
+            .ok_or_else(|| anyhow!("No default station specified"))?
+            .station_id;
+        let orbit_canister_id = Principal::from_text(&orbit_canister_id)?;
+        Ok(self
+            .dfx
+            .agent()
+            .await?
+            .update(&orbit_canister_id, method_name))
     }
 
     /// The URL for a request in the Orbit UI.
