@@ -8,7 +8,7 @@ on:
 
 jobs:
   deterministic-build:
-    name: 'build-station:optional'
+    name: 'deterministic-build:optional'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -31,4 +31,4 @@ jobs:
           ./scripts/docker-build.sh --${{ matrix.project }}
       - name: 'Built hash'
         run: |
-          cat artifacts/${{ matrix.artifact }}.sha256
+          cat artifacts/${{ matrix.project }}/${{ matrix.artifact }}.sha256

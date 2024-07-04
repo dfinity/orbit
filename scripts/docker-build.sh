@@ -58,7 +58,7 @@ function deterministic_build() {
   docker create --name orbit-$project_name-container orbit-$project_name
 
   # Copy the generated artifacts to the host
-  docker cp orbit-$project_name-container:/code/artifacts/$project_name ./artifacts
+  docker cp orbit-$project_name-container:/code/artifacts/$project_name/. ./artifacts/$project_name/
 
   # Remove the container
   docker rm orbit-$project_name-container
