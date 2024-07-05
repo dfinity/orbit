@@ -2,9 +2,22 @@ name: 'Deterministic builds'
 
 on:
   workflow_dispatch: null
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+      - labeled
+  merge_group:
+    types: [checks_requested]
+    branches:
+      - main
   push:
     branches:
       - '**/release**'
+      - '**/build**'
+      - main
 
 jobs:
   deterministic-build:
