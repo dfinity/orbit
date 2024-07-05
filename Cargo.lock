@@ -302,7 +302,7 @@ dependencies = [
 
 [[package]]
 name = "control-panel"
-version = "0.0.2-alpha.3"
+version = "0.0.2-alpha.4"
 dependencies = [
  "candid",
  "candid_parser",
@@ -2039,7 +2039,7 @@ dependencies = [
 
 [[package]]
 name = "station"
-version = "0.0.2-alpha.4"
+version = "0.0.2-alpha.5"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2072,7 +2072,7 @@ dependencies = [
 
 [[package]]
 name = "station-api"
-version = "0.0.2-alpha.3"
+version = "0.0.2-alpha.4"
 dependencies = [
  "candid",
  "orbit-essentials",
@@ -2485,7 +2485,7 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "upgrader"
-version = "0.0.2-alpha.2"
+version = "0.0.2-alpha.3"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2510,7 +2510,7 @@ dependencies = [
 
 [[package]]
 name = "upgrader-api"
-version = "0.0.2-alpha.3"
+version = "0.0.2-alpha.4"
 dependencies = [
  "candid",
  "ic-stable-structures",

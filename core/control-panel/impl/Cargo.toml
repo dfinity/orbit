@@ -2,7 +2,7 @@
 [package]
 name = 'control-panel'
 include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.3'
+version = '0.0.2-alpha.4'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -29,7 +29,7 @@ serde_cbor = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ['serde', 'v4'] }
 control-panel-api = { path = '../api', version = '0.0.2-alpha.3' }
-station-api = { path = '../../station/api', version = '0.0.2-alpha.3' }
+station-api = { path = '../../station/api', version = '0.0.2-alpha.4' }
 semver = { workspace = true }
 email_address = '0.2.4'
 

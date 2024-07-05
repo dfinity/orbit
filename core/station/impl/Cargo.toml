@@ -2,7 +2,7 @@
 [package]
 name = 'station'
 include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.4'
+version = '0.0.2-alpha.5'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -39,8 +39,8 @@ serde_cbor = { workspace = true }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ['v4'] }
-station-api = { path = '../api', version = '0.0.2-alpha.3' }
-upgrader-api = { path = '../../upgrader/api', version = '0.0.2-alpha.3' }
+station-api = { path = '../api', version = '0.0.2-alpha.4' }
+upgrader-api = { path = '../../upgrader/api', version = '0.0.2-alpha.4' }
 
 [dev-dependencies]
 candid_parser = { workspace = true }
