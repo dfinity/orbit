@@ -153,7 +153,7 @@ fn successful_monitors_stations_and_tops_up() {
         CallError::Reject(message) => panic!("Unexpected reject: {}", message),
     };
     assert!(user_error.description.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: System(SystemInfo)"
+        "Canister called `ic0.trap` with message: Unauthorized access to resources: System(SystemInfo)"
     ));
 
     let upgrader_id = get_system_info(&env, user_id, newly_created_user_station).upgrader_id;

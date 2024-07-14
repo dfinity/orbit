@@ -72,7 +72,7 @@ fn successful_four_eyes_upgrade() {
         change_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Change"
+        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Change"
     ));
 
     // allow anyone to create change canister requests
@@ -380,7 +380,7 @@ fn create_external_canister_and_check_status() {
         create_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Create"
+        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Create"
     ));
 
     // allow anyone to create requests to create a external canister
@@ -546,7 +546,7 @@ fn create_external_canister_and_check_status() {
     )
     .unwrap_err();
     assert!(trap_message.description.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Read"
+        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Read"
     ));
     let trap_message = update_raw(
         &env,
@@ -557,7 +557,7 @@ fn create_external_canister_and_check_status() {
     )
     .unwrap_err();
     assert!(trap_message.description.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Read"
+        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Read"
     ));
 
     // allow the first user to read the canister status of the external canister created above
@@ -599,7 +599,7 @@ fn create_external_canister_and_check_status() {
     )
     .unwrap_err();
     assert!(trap_message.description.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Read"
+        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Read"
     ));
 }
 
@@ -690,7 +690,7 @@ fn call_external_canister_test() {
         call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
     ));
 
     // nothing should have changed so far
@@ -877,7 +877,7 @@ fn call_external_canister_test() {
         illegal_call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
     ));
 
     // submit a request labeling the execution method as the validation method which is illegal given the permissions set so far
@@ -895,7 +895,7 @@ fn call_external_canister_test() {
         illegal_call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
     ));
 
     // submit a request labeling the validation method as the execution method which is illegal given the permissions set so far
@@ -913,7 +913,7 @@ fn call_external_canister_test() {
         illegal_call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister trapped explicitly: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
     ));
 
     // nothing should have changed
