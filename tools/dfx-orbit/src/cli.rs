@@ -1,6 +1,5 @@
 //! Implementation of the `dfx-orbit` commands.
 pub mod canister;
-pub mod dfx_extension_cli;
 pub mod me;
 pub mod request;
 pub mod review;
@@ -14,9 +13,6 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
     match args.command {
         DfxOrbitSubcommands::Me => me::exec().await,
         DfxOrbitSubcommands::Station(station_args) => station::exec(station_args),
-        DfxOrbitSubcommands::DfxExtension(dfx_extension_args) => {
-            dfx_extension_cli::exec(dfx_extension_args)
-        }
         DfxOrbitSubcommands::Canister(canister_args) => canister::exec(canister_args).await,
         DfxOrbitSubcommands::Request(request_args) => match request::exec(request_args).await {
             Ok(Ok(_response)) => Ok(()),
