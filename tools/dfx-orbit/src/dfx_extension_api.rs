@@ -24,7 +24,7 @@ pub fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
         // Execute the command, wait for it to complete, then capture the output
         .output()
         // Blow up if the OS was unable to start the program
-        .with_context(|| "Failed to call dfx.  Is the dfx cli installed?")?;
+        .with_context(|| "Failed to call dfx. Is the dfx cli installed?")?;
 
     if output.status.success() {
         Ok(String::from_utf8(output.stdout)
