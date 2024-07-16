@@ -6,11 +6,11 @@ pub mod next;
 use crate::{args::review::Args, StationAgent};
 
 impl StationAgent {
-    pub async fn review(&mut self, args: Args) -> anyhow::Result<()> {
+    pub(crate) async fn review(&mut self, args: Args) -> anyhow::Result<()> {
         match args {
-            Args::List(list_args) => list::exec(list_args).await,
-            Args::Next(_) => self.review_next().await,
-            Args::Id(id_args) => self.review_id(id_args.request_id).await,
+            Args::List(args) => self.review_list(args.into()).await,
+            Args::Next(args) => self.review_next(args.into()).await,
+            Args::Id(args) => self.review_id(args.into()).await,
         }
     }
 }

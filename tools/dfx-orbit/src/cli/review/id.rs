@@ -5,9 +5,7 @@ use candid::Principal;
 use orbit_station_api::{ApiErrorDTO, GetRequestInput, GetRequestResponse};
 
 impl StationAgent {
-    pub async fn review_id(&mut self, request_id: String) -> anyhow::Result<()> {
-        let args = GetRequestInput { request_id };
-
+    pub async fn review_id(&mut self, args: GetRequestInput) -> anyhow::Result<()> {
         let ic_agent = self.dfx.agent().await?;
 
         // The station canister ID to which we will make the API call.

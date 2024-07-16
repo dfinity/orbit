@@ -7,12 +7,7 @@ use orbit_station_api::{
 };
 
 impl StationAgent {
-    pub async fn review_next(&mut self) -> anyhow::Result<()> {
-        let args = GetNextApprovableRequestInput {
-            excluded_request_ids: vec![],
-            operation_types: None,
-        };
-
+    pub async fn review_next(&mut self, args: GetNextApprovableRequestInput) -> anyhow::Result<()> {
         let ic_agent = self.dfx.agent().await?;
 
         // The station canister ID to which we will make the API call.
