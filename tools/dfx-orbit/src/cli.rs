@@ -9,7 +9,7 @@ use crate::{
     args::{DfxOrbitArgs, DfxOrbitSubcommands},
     StationAgent,
 };
-use anyhow::anyhow;
+use anyhow::{anyhow, Context};
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
 pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
@@ -22,7 +22,15 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
     let mut station_agent = StationAgent::new()?;
 
     match args.command {
-        DfxOrbitSubcommands::Me => station_agent.me().await,
+        DfxOrbitSubcommands::Me => {
+            let ans = station_agent.me().await?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&ans)
+                    .with_context(|| "Failed to serialize response as JSON")?
+            );
+            Ok(())
+        }
         DfxOrbitSubcommands::Canister(canister_args) => canister::exec(canister_args).await,
         DfxOrbitSubcommands::Request(request_args) => match request::exec(request_args).await {
             Ok(Ok(_response)) => Ok(()),
