@@ -19,10 +19,10 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
         return Ok(());
     };
 
-    let mut _station_agent = StationAgent::new()?;
+    let mut station_agent = StationAgent::new()?;
 
     match args.command {
-        DfxOrbitSubcommands::Me => me::exec().await,
+        DfxOrbitSubcommands::Me => station_agent.me().await,
         DfxOrbitSubcommands::Canister(canister_args) => canister::exec(canister_args).await,
         DfxOrbitSubcommands::Request(request_args) => match request::exec(request_args).await {
             Ok(Ok(_response)) => Ok(()),
