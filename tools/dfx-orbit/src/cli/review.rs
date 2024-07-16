@@ -7,22 +7,20 @@ use crate::{args::review::ReviewArgs, StationAgent};
 
 impl StationAgent {
     pub(crate) async fn review(&mut self, args: ReviewArgs) -> anyhow::Result<()> {
-        match args {
+        let result_json = match args {
             ReviewArgs::List(args) => {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&self.review_list(args.into()).await?)?
-                );
-                Ok(())
+                serde_json::to_string_pretty(&self.review_list(args.into()).await?)?
             }
-            ReviewArgs::Next(args) => self.review_next(args.into()).await,
+            ReviewArgs::Next(args) => {
+                serde_json::to_string_pretty(&self.review_next(args.into()).await?)?
+            }
             ReviewArgs::Id(args) => {
-                println!(
-                    "{}",
-                    serde_json::to_string_pretty(&self.review_id(args.into()).await?)?
-                );
-                Ok(())
+                serde_json::to_string_pretty(&self.review_id(args.into()).await?)?
             }
-        }
+        };
+
+        println!("{}", result_json);
+
+        Ok(())
     }
 }

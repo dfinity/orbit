@@ -18,13 +18,11 @@ impl StationAgent {
 
         let response_bytes: Vec<u8> = ic_agent
             .update(&canister_id, "get_request")
-            .with_arg(candid::encode_one(args).with_context(|| "failed to encode candid")?)
+            .with_arg(candid::encode_one(args)?)
             .call_and_wait()
-            .await
-            .with_context(|| "failed to call the station")?;
+            .await?;
 
-        let ans = candid::decode_one::<Result<GetRequestResponse, ApiErrorDTO>>(&response_bytes)
-            .with_context(|| "failed to decode candid")?;
+        let ans = candid::decode_one::<Result<GetRequestResponse, ApiErrorDTO>>(&response_bytes)?;
 
         println!("{ans:#?}");
         Ok(ans?)
