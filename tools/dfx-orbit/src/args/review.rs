@@ -14,5 +14,5 @@ pub enum Args {
     /// Review the next request.
     Next(next::Args),
     /// Review a specific request.
-    Id(id::Args),
+    Id(id::ReviewIdArgs),
 }

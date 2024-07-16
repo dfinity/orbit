@@ -29,7 +29,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             Ok(Err(e)) => Err(anyhow!("Error response from the station: {e:?}")),
             Err(e) => Err(e),
         },
-        DfxOrbitSubcommands::Review(review_args) => review::exec(review_args).await,
+        DfxOrbitSubcommands::Review(review_args) => station_agent.review(review_args).await,
         _ => unreachable!(),
     }
 }

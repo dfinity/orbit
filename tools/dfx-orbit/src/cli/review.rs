@@ -3,13 +3,14 @@ pub mod id;
 pub mod list;
 pub mod next;
 
-use crate::args::review::Args;
+use crate::{args::review::Args, StationAgent};
 
-/// The main entry point for the `dfx orbit review` CLI.
-pub async fn exec(args: Args) -> anyhow::Result<()> {
-    match args {
-        Args::Id(id_args) => id::exec(id_args).await,
-        Args::List(list_args) => list::exec(list_args).await,
-        Args::Next(next_args) => next::exec(next_args).await,
+impl StationAgent {
+    pub async fn review(&mut self, args: Args) -> anyhow::Result<()> {
+        match args {
+            Args::List(list_args) => list::exec(list_args).await,
+            Args::Next(next_args) => next::exec(next_args).await,
+            Args::Id(id_args) => self.review_id(id_args.request_id).await,
+        }
     }
 }
