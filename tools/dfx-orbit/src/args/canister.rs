@@ -6,16 +6,16 @@ use std::fmt::Debug;
 /// Station management commands.
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
-pub enum Args {
+pub enum CanisterArgs {
     /// Puts a canister controlled by the user under Orbit control.
-    Claim(Claim),
+    Claim(CanisterClaimArgs),
     /// Uploads assets to an HTTP asset canister and requests that the assets be used.
-    UploadHttpAssets(UploadHttpAssets),
+    UploadHttpAssets(UploadAssetsArgs),
 }
 
 /// Puts a canister controlled by the user under Orbit control.
 #[derive(Debug, Parser)]
-pub struct Claim {
+pub struct CanisterClaimArgs {
     /// The canister name or `canister_id`.
     pub canister: String,
     /// Make Orbit the exclusive controller of the canister.
@@ -25,7 +25,7 @@ pub struct Claim {
 
 /// Uploads assets to an HTTP asset canister.
 #[derive(Debug, Parser)]
-pub struct UploadHttpAssets {
+pub struct UploadAssetsArgs {
     /// The canister name or `canister_id`.
     #[structopt(long)]
     pub canister: String,

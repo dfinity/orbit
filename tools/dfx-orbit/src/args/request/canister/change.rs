@@ -3,23 +3,27 @@ pub mod wasm;
 
 use crate::{args::request::CreateRequestArgs, StationAgent};
 use clap::Subcommand;
+use orbit_station_api::CreateRequestInput;
+use wasm::RequestCanisterChangeWasmArgs;
 
 /// Request permission.
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
-pub enum Args {
+pub enum RequestCanisterChangeArgs {
     /// Request changes to the canister Wasm.
-    Wasm(wasm::Args),
+    Wasm(RequestCanisterChangeWasmArgs),
 }
 
-impl CreateRequestArgs for Args {
+impl CreateRequestArgs for RequestCanisterChangeArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     fn into_create_request_input(
         self,
         station_agent: &StationAgent,
-    ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
+    ) -> anyhow::Result<CreateRequestInput> {
         match self {
-            Args::Wasm(wasm_args) => wasm_args.into_create_request_input(station_agent),
+            RequestCanisterChangeArgs::Wasm(wasm_args) => {
+                wasm_args.into_create_request_input(station_agent)
+            }
         }
     }
 }

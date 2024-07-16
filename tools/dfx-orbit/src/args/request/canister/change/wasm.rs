@@ -4,7 +4,7 @@ use clap::{Parser, ValueEnum};
 
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Parser)]
-pub struct Args {
+pub struct RequestCanisterChangeWasmArgs {
     // TODO: Poll, waiting for the request to be accepted.
     /// The canister name or ID.
     #[clap(short, long)]
@@ -24,13 +24,13 @@ pub struct Args {
     arg_file: Option<String>,
 }
 
-impl CreateRequestArgs for Args {
+impl CreateRequestArgs for RequestCanisterChangeWasmArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     fn into_create_request_input(
         self,
         station_agent: &StationAgent,
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
-        let Args {
+        let RequestCanisterChangeWasmArgs {
             canister,
             mode,
             wasm,

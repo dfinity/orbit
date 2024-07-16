@@ -3,6 +3,7 @@ pub mod change;
 
 use crate::{args::request::CreateRequestArgs, StationAgent};
 use clap::Subcommand;
+use orbit_station_api::CreateRequestInput;
 
 /// Request canister changes.
 #[derive(Debug, Subcommand)]
@@ -17,7 +18,7 @@ impl CreateRequestArgs for Args {
     fn into_create_request_input(
         self,
         station_agent: &StationAgent,
-    ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
+    ) -> anyhow::Result<CreateRequestInput> {
         match self {
             Args::Change(change_args) => change_args.into_create_request_input(station_agent),
         }

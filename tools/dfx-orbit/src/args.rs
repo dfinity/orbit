@@ -4,7 +4,10 @@ pub mod request;
 pub mod review;
 pub mod station;
 
+use canister::CanisterArgs;
 use clap::{Parser, Subcommand};
+use request::RequestArgs;
+use review::ReviewArgs;
 use station::StationArgs;
 
 /// Manages Orbit on the Internet Computer.
@@ -25,13 +28,13 @@ pub enum DfxOrbitSubcommands {
     Station(StationArgs),
     /// Manages external canisters with Orbit.
     #[command(subcommand)]
-    Canister(canister::Args),
+    Canister(CanisterArgs),
     /// Make requests to Orbit
     #[command(subcommand)]
-    Request(request::Args),
+    Request(RequestArgs),
     /// View and decide on requests.
     #[command(subcommand)]
-    Review(review::Args),
+    Review(ReviewArgs),
     /// Gets the caller's profile on an Orbit station.
     Me,
 }

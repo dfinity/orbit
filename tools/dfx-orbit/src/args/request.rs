@@ -3,8 +3,10 @@ pub mod canister;
 pub mod permission;
 
 use crate::StationAgent;
+use canister::RequestCanisterArgs;
 use clap::Subcommand;
 use orbit_station_api::CreateRequestInput;
+use permission::RequestPermissionArgs;
 
 /// Request canister changes.
 ///
@@ -12,13 +14,13 @@ use orbit_station_api::CreateRequestInput;
 // Note: I have looked at the docs and the anwer for how to do this really doesn't jump out at me.  Google foo failed as well.  Maybe the sdk repo has some examples.
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
-pub enum Args {
+pub enum RequestArgs {
     /// Request changes to a canister.
     #[command(subcommand)]
-    Canister(canister::Args),
+    Canister(RequestCanisterArgs),
     /// Request permissions.
     #[command(subcommand)]
-    Permission(permission::Args),
+    Permission(RequestPermissionArgs),
 }
 
 /// Converts the CLI arg type into the equivalent Orbit API type.
@@ -30,14 +32,16 @@ pub trait CreateRequestArgs {
     ) -> anyhow::Result<CreateRequestInput>;
 }
 
-impl CreateRequestArgs for Args {
+impl CreateRequestArgs for RequestArgs {
     fn into_create_request_input(
         self,
         station_agent: &StationAgent,
     ) -> anyhow::Result<CreateRequestInput> {
         match self {
-            Args::Canister(canister_args) => canister_args.into_create_request_input(station_agent),
-            Args::Permission(permission_args) => {
+            RequestArgs::Canister(canister_args) => {
+                canister_args.into_create_request_input(station_agent)
+            }
+            RequestArgs::Permission(permission_args) => {
                 permission_args.into_create_request_input(station_agent)
             }
         }

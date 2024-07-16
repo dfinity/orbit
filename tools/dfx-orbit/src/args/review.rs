@@ -4,15 +4,18 @@ pub mod list;
 pub mod next;
 
 use clap::Subcommand;
+use id::ReviewIdArgs;
+use list::ReviewListArgs;
+use next::ReviewNextArgs;
 
 /// Station management commands.
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
-pub enum Args {
+pub enum ReviewArgs {
     /// List requests
-    List(list::ReviewListArgs),
+    List(ReviewListArgs),
     /// Review the next request.
-    Next(next::ReviewNextArgs),
+    Next(ReviewNextArgs),
     /// Review a specific request.
-    Id(id::ReviewIdArgs),
+    Id(ReviewIdArgs),
 }

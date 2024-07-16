@@ -1,5 +1,5 @@
 //! Implements the `dfx-orbit canister upload-http-assets` CLI command.
-use crate::{args::canister::UploadHttpAssets as Args, StationAgent};
+use crate::{args::canister::UploadAssetsArgs as Args, StationAgent};
 use ic_asset::canister_api::{
     methods::batch::compute_evidence, types::batch_upload::common::ComputeEvidenceArguments,
 };

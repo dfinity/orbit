@@ -1,6 +1,10 @@
 //! Arguments for `dfx-orbit request permission canister change`.
 use crate::{args::request::CreateRequestArgs, StationAgent};
 use clap::Parser;
+use orbit_station_api::{
+    ChangeExternalCanisterResourceTargetDTO, CreateRequestInput, EditPermissionOperationInput,
+    ExternalCanisterResourceActionDTO, RequestOperationInput, ResourceDTO,
+};
 
 /// Requests the privilige of proposing canister upgrades.
 #[derive(Debug, Parser)]
@@ -16,29 +20,26 @@ impl CreateRequestArgs for Args {
     fn into_create_request_input(
         self,
         station_agent: &StationAgent,
-    ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
-        let canisters: anyhow::Result<orbit_station_api::ChangeExternalCanisterResourceTargetDTO> =
+    ) -> anyhow::Result<CreateRequestInput> {
+        let canisters: anyhow::Result<ChangeExternalCanisterResourceTargetDTO> =
             if let Some(canister_name_or_id) = self.canister {
                 station_agent
                     .canister_id(&canister_name_or_id)
-                    .map(orbit_station_api::ChangeExternalCanisterResourceTargetDTO::Canister)
+                    .map(ChangeExternalCanisterResourceTargetDTO::Canister)
             } else {
-                Ok(orbit_station_api::ChangeExternalCanisterResourceTargetDTO::Any)
+                Ok(ChangeExternalCanisterResourceTargetDTO::Any)
             };
 
-        let resource = orbit_station_api::ResourceDTO::ExternalCanister(
-            orbit_station_api::ExternalCanisterResourceActionDTO::Change(canisters?),
-        );
+        let resource =
+            ResourceDTO::ExternalCanister(ExternalCanisterResourceActionDTO::Change(canisters?));
 
-        let operation = orbit_station_api::RequestOperationInput::EditPermission(
-            orbit_station_api::EditPermissionOperationInput {
-                resource,
-                auth_scope: None,
-                users: None,
-                user_groups: None,
-            },
-        );
-        Ok(orbit_station_api::CreateRequestInput {
+        let operation = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+            resource,
+            auth_scope: None,
+            users: None,
+            user_groups: None,
+        });
+        Ok(CreateRequestInput {
             operation,
             title: None,
             summary: None,

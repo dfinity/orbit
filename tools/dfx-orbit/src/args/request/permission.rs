@@ -10,7 +10,7 @@ use clap::Subcommand;
 /// Request permission.
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
-pub enum Args {
+pub enum RequestPermissionArgs {
     /// Request permission to create requests.
     #[command(subcommand)]
     Permission(permission::Args),
@@ -19,15 +19,17 @@ pub enum Args {
     Canister(canister::Args),
 }
 
-impl CreateRequestArgs for Args {
+impl CreateRequestArgs for RequestPermissionArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     fn into_create_request_input(
         self,
         station_agent: &StationAgent,
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
         match self {
-            Args::Canister(canister_args) => canister_args.into_create_request_input(station_agent),
-            Args::Permission(permission_args) => {
+            RequestPermissionArgs::Canister(canister_args) => {
+                canister_args.into_create_request_input(station_agent)
+            }
+            RequestPermissionArgs::Permission(permission_args) => {
                 permission_args.into_create_request_input(station_agent)
             }
         }

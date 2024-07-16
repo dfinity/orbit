@@ -1,7 +1,10 @@
 //! Arguments for `dfx-orbit request permission permission update`.
 use crate::{args::request::CreateRequestArgs, StationAgent};
 use clap::Parser;
-use orbit_station_api::PermissionResourceActionDTO;
+use orbit_station_api::{
+    CreateRequestInput, EditPermissionOperationInput, PermissionResourceActionDTO,
+    RequestOperationInput, ResourceDTO,
+};
 
 /// Requests the privilige of proposing canister upgrades.
 #[derive(Debug, Parser)]
@@ -19,23 +22,19 @@ impl CreateRequestArgs for Args {
     fn into_create_request_input(
         self,
         _station_agent: &StationAgent,
-    ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
+    ) -> anyhow::Result<CreateRequestInput> {
         let Args {
             user: users,
             group: user_groups,
         } = self;
 
-        let operation = orbit_station_api::RequestOperationInput::EditPermission(
-            orbit_station_api::EditPermissionOperationInput {
-                resource: orbit_station_api::ResourceDTO::Permission(
-                    PermissionResourceActionDTO::Update,
-                ),
-                auth_scope: None,
-                users: Some(users),
-                user_groups: Some(user_groups),
-            },
-        );
-        Ok(orbit_station_api::CreateRequestInput {
+        let operation = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+            resource: ResourceDTO::Permission(PermissionResourceActionDTO::Update),
+            auth_scope: None,
+            users: Some(users),
+            user_groups: Some(user_groups),
+        });
+        Ok(CreateRequestInput {
             operation,
             title: None,
             summary: None,

@@ -7,7 +7,7 @@ use orbit_station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO};
 
 /// Requests that a call be made to a canister.
 #[derive(Debug, Parser)]
-pub struct Args {
+pub struct RequestCanisterCallArgs {
     /// The canister name or ID.
     canister: String,
     /// The name of the method to call.
@@ -24,13 +24,13 @@ pub struct Args {
     with_cycles: Option<u64>,
 }
 
-impl CreateRequestArgs for Args {
+impl CreateRequestArgs for RequestCanisterCallArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     fn into_create_request_input(
         self,
         station_agent: &StationAgent,
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
-        let Args {
+        let RequestCanisterCallArgs {
             canister,
             method_name,
             with_cycles,

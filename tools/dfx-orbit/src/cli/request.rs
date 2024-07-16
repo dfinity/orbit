@@ -1,13 +1,13 @@
 //! Implements `dfx request` commands.  These correspond to Orbit station `create_request` API calls.
 
 use crate::{
-    args::request::{Args, CreateRequestArgs},
+    args::request::{CreateRequestArgs, RequestArgs},
     StationAgent,
 };
 use orbit_station_api::{ApiErrorDTO, CreateRequestResponse};
 
 /// The main entry point for the `dfx orbit request` CLI.
-pub async fn exec(args: Args) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
+pub async fn exec(args: RequestArgs) -> anyhow::Result<Result<CreateRequestResponse, ApiErrorDTO>> {
     let mut station_agent = StationAgent::new()?;
     // Converts the CLI arg type into the equivalent Orbit API type.
     let args = args.into_create_request_input(&station_agent)?;
