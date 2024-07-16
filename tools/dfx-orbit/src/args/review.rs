@@ -10,9 +10,9 @@ use clap::Subcommand;
 #[command(version, about, long_about = None)]
 pub enum Args {
     /// List requests
-    List(list::Args),
+    List(list::ReviewListArgs),
     /// Review the next request.
-    Next(next::Args),
+    Next(next::ReviewNextArgs),
     /// Review a specific request.
     Id(id::ReviewIdArgs),
 }

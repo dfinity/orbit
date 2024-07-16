@@ -1,13 +1,14 @@
 //! CLI arguments for `dfx-orbit review next`.
 
 use clap::Parser;
+use orbit_station_api::GetNextApprovableRequestInput;
 
 /// Reviews the next request.
 #[derive(Debug, Parser)]
-pub struct Args {}
+pub struct ReviewNextArgs {}
 
-impl From<Args> for orbit_station_api::GetNextApprovableRequestInput {
-    fn from(_: Args) -> Self {
+impl From<ReviewNextArgs> for GetNextApprovableRequestInput {
+    fn from(_: ReviewNextArgs) -> Self {
         Self {
             excluded_request_ids: vec![],
             operation_types: None,

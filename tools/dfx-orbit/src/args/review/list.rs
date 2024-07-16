@@ -1,18 +1,19 @@
 //! CLI arguments for `dfx-orbit review list`.
 
 use clap::Parser;
+use orbit_station_api::ListRequestsInput;
 
 /// Reviews the next request.
 #[derive(Debug, Parser)]
-pub struct Args {
+pub struct ReviewListArgs {
     /// Show only approvable requests.
     #[clap(short, long)]
     pub only_approvable: bool,
 }
 
-impl From<Args> for orbit_station_api::ListRequestsInput {
-    fn from(args: Args) -> Self {
-        let Args { only_approvable } = args;
+impl From<ReviewListArgs> for ListRequestsInput {
+    fn from(args: ReviewListArgs) -> Self {
+        let ReviewListArgs { only_approvable } = args;
         Self {
             requester_ids: None,
             approver_ids: None,
