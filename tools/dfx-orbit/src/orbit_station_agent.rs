@@ -1,14 +1,12 @@
 //! A dfx and IC agent for communicating with an Orbit station.
 
-use anyhow::anyhow;
-use candid::Principal;
-use ic_agent::agent::UpdateBuilder;
-
 use crate::{
     dfx_extension_api::DfxExtensionAgent,
     local_config::{self},
     StationAgent,
 };
+use candid::Principal;
+use ic_agent::agent::UpdateBuilder;
 
 impl StationAgent {
     /// Creates a new agent for communicating with the default station.
@@ -70,10 +68,8 @@ impl StationAgent {
     ///         .await?;
     /// ```
     pub async fn update_orbit(&mut self, method_name: &str) -> anyhow::Result<UpdateBuilder> {
-        let orbit_canister_id = crate::local_config::default_station()?
-            .ok_or_else(|| anyhow!("No default station specified"))?
-            .station_id;
-        let orbit_canister_id = Principal::from_text(&orbit_canister_id)?;
+        let orbit_canister_id = &self.station.station_id;
+        let orbit_canister_id = Principal::from_text(orbit_canister_id)?;
         Ok(self
             .dfx
             .agent()
