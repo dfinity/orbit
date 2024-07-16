@@ -1,15 +1,14 @@
 //! Implements `dfx review id XXXX` command.  This corresponds to Orbit station `get_request` API call.
 
+use crate::{args::review::id::Args, StationAgent};
 use anyhow::anyhow;
 use candid::Principal;
 use orbit_station_api::{ApiErrorDTO, GetRequestInput, GetRequestResponse};
 
-use crate::args::review::id::Args;
-
 /// The main entry point for the `dfx orbit review next` CLI.
 pub async fn exec(args: Args) -> anyhow::Result<()> {
     let args = GetRequestInput::from(args);
-    let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
+    let mut station_agent = StationAgent::new()?;
     let ic_agent = station_agent.dfx.agent().await?;
     // The station canister ID to which we will make the API call.
     let orbit_canister_id = crate::local_config::default_station()?

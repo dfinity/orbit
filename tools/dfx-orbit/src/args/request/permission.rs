@@ -3,11 +3,9 @@ pub mod canister;
 #[allow(clippy::module_inception)]
 pub mod permission;
 
-use clap::Subcommand;
-
-use crate::orbit_station_agent::StationAgent;
-
 use super::CreateRequestArgs;
+use crate::StationAgent;
+use clap::Subcommand;
 
 /// Request permission.
 #[derive(Debug, Subcommand)]

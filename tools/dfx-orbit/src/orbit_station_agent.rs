@@ -6,16 +6,9 @@ use ic_agent::agent::UpdateBuilder;
 
 use crate::{
     dfx_extension_api::DfxExtensionAgent,
-    local_config::{self, StationConfig},
+    local_config::{self},
+    StationAgent,
 };
-
-/// A dfx agent for communicating with a specific station.
-pub struct StationAgent {
-    /// The station to communicate with.
-    pub station: StationConfig,
-    /// The dfx agent.
-    pub dfx: DfxExtensionAgent,
-}
 
 impl StationAgent {
     /// Creates a new agent for communicating with the default station.

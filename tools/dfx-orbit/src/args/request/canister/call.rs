@@ -1,10 +1,9 @@
 //! CLI arguments for `dfx-orbit canister call`.
 
+use crate::{args::request::CreateRequestArgs, StationAgent};
 use anyhow::Context;
 use clap::Parser;
 use orbit_station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO};
-
-use crate::{args::request::CreateRequestArgs, orbit_station_agent::StationAgent};
 
 /// Requests that a call be made to a canister.
 #[derive(Debug, Parser)]

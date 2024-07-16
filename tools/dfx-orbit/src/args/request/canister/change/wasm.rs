@@ -1,5 +1,5 @@
 //! Arguments for `dfx orbit canister change wasm`.
-use crate::{args::request::CreateRequestArgs, orbit_station_agent::StationAgent};
+use crate::{args::request::CreateRequestArgs, StationAgent};
 use clap::{Parser, ValueEnum};
 
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.

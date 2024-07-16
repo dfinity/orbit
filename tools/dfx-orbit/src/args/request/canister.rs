@@ -4,7 +4,7 @@ pub mod call;
 pub mod change;
 
 use super::CreateRequestArgs;
-use crate::orbit_station_agent::StationAgent;
+use crate::StationAgent;
 use clap::Subcommand;
 
 /// Request canister changes.

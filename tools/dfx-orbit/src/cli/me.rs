@@ -1,12 +1,13 @@
 //! Implementation of the `dfx-orbit me` command.
 
+use crate::StationAgent;
 use anyhow::Context;
 use candid::encode_args;
 use orbit_station_api::{ApiErrorDTO, MeResponse};
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
 pub async fn exec() -> anyhow::Result<()> {
-    let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
+    let mut station_agent = StationAgent::new()?;
     let ans = station_agent
         .update_orbit("me")
         .await?

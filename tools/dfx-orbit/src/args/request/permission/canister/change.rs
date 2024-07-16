@@ -1,7 +1,6 @@
 //! Arguments for `dfx-orbit request permission canister change`.
+use crate::{args::request::CreateRequestArgs, StationAgent};
 use clap::Parser;
-
-use crate::{args::request::CreateRequestArgs, orbit_station_agent::StationAgent};
 
 /// Requests the privilige of proposing canister upgrades.
 #[derive(Debug, Parser)]

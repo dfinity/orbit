@@ -2,10 +2,9 @@
 pub mod canister;
 pub mod permission;
 
+use crate::StationAgent;
 use clap::Subcommand;
 use orbit_station_api::CreateRequestInput;
-
-use crate::orbit_station_agent::StationAgent;
 
 /// Request canister changes.
 ///

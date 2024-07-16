@@ -1,17 +1,16 @@
 //! Implements `dfx review next` command.  These correspond to Orbit station `get_next_approvable_request` API call.
 
+use crate::{args::review::next::Args, StationAgent};
 use anyhow::anyhow;
 use candid::Principal;
 use orbit_station_api::{
     ApiErrorDTO, GetNextApprovableRequestInput, GetNextApprovableRequestResponse,
 };
 
-use crate::args::review::next::Args;
-
 /// The main entry point for the `dfx orbit review next` CLI.
 pub async fn exec(args: Args) -> anyhow::Result<()> {
     let args = GetNextApprovableRequestInput::from(args);
-    let mut station_agent = crate::orbit_station_agent::StationAgent::new()?;
+    let mut station_agent = StationAgent::new()?;
     let ic_agent = station_agent.dfx.agent().await?;
     // The station canister ID to which we will make the API call.
     let orbit_canister_id = crate::local_config::default_station()?

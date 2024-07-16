@@ -1,9 +1,8 @@
 //! Arguments for `dfx orbit canister change`.
 pub mod wasm;
 
+use crate::{args::request::CreateRequestArgs, StationAgent};
 use clap::Subcommand;
-
-use crate::{args::request::CreateRequestArgs, orbit_station_agent::StationAgent};
 
 /// Request permission.
 #[derive(Debug, Subcommand)]
