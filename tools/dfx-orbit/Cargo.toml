@@ -26,6 +26,7 @@ ic-utils.workspace = true
 slog.workspace = true
 slog-term.workspace = true
 slog-async.workspace = true
+thiserror.workspace = true
 tokio.workspace = true
 
 orbit-station-api = { path = "../../core/station/api", package = "station-api" }

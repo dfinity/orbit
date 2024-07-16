@@ -2,7 +2,7 @@
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::dfx_extension_api::DfxExtensionAgent;
+use crate::{dfx_extension_api::DfxExtensionAgent, error::StationAgentResult};
 
 /// Configuration that lives in e.g. ~/.config/dfx/orbit.json
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -29,11 +29,9 @@ pub struct StationConfig {
 /// The directoy in the orbit dfx config directory where stations are stored.
 pub const STATIONS_DIR: &str = "stations";
 /// The directory in the orbit dfx config directory where stations are recorded.
-pub fn stations_dir() -> anyhow::Result<cap_std::fs::Dir> {
+pub fn stations_dir() -> StationAgentResult<cap_std::fs::Dir> {
     let dfx_extension_agent = DfxExtensionAgent::new("orbit");
-    let config_dir = dfx_extension_agent
-        .extension_config_dir()
-        .expect("Failed to get extension config dir");
+    let config_dir = dfx_extension_agent.extension_config_dir()?;
     config_dir.create_dir_all(STATIONS_DIR)?;
     let stations_dir = config_dir
         .open_dir(STATIONS_DIR)
@@ -65,7 +63,7 @@ pub fn create_station_file(name: &str) -> anyhow::Result<cap_std::fs::File> {
 /// The file in which the config for a particular station is stored.
 ///
 /// Optionally create the file if it does not exist.
-pub fn open_station_file(name: &str, create_new: bool) -> anyhow::Result<cap_std::fs::File> {
+pub fn open_station_file(name: &str, create_new: bool) -> StationAgentResult<cap_std::fs::File> {
     let basename = station_file_name(name);
     let stations_dir = stations_dir()?;
     let mut open_options = cap_std::fs::OpenOptions::new();

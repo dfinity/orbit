@@ -7,6 +7,7 @@
 pub mod args;
 pub mod cli;
 pub mod dfx_extension_api;
+pub mod error;
 pub mod local_config;
 pub mod orbit_station_agent;
 

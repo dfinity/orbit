@@ -1,21 +1,24 @@
 //! Placeholders for the proposed dfx extension API methods.
-use std::{
-    process::{Command, Stdio},
-    str::FromStr,
+use crate::{
+    error::{StationAgentError, StationAgentResult},
+    local_config,
 };
-
 use anyhow::Context;
 use candid::Principal;
 use dfx_core::interface::dfx::DfxInterface;
 use ic_agent::Agent;
 use slog::{o, Drain, Logger};
-
-use crate::local_config;
+use std::{
+    process::{Command, Stdio},
+    str::FromStr,
+};
 
 /// Calls the dfx cli.
 ///
 /// Some methods are implemented as calls to the dfx cli until a library is available.
-pub fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
+pub fn call_dfx_cli(args: Vec<&str>) -> StationAgentResult<String> {
+    let arguments = args.iter().cloned().collect::<String>();
+
     let output = Command::new("dfx")
         .args(args)
         // Tell the OS to record the command's output
@@ -24,19 +27,25 @@ pub fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
         // Execute the command, wait for it to complete, then capture the output
         .output()
         // Blow up if the OS was unable to start the program
-        .with_context(|| "Failed to call dfx. Is the dfx cli installed?")?;
+        .map_err(|_| {
+            StationAgentError::Other(String::from(
+                "Failed to call dfx. Is the dfx cli installed?",
+            ))
+        })?;
 
     if output.status.success() {
         Ok(String::from_utf8(output.stdout)
-            .context("Failed to parse dfx output as UTF-8")?
+            .map_err(|_| {
+                StationAgentError::Other(String::from("Failed to parse dfx output as UTF-8"))
+            })?
             .trim()
             .to_string())
     } else {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        Err(anyhow::anyhow!(
-            "dfx failed with status {}: {stderr}",
-            output.status
-        ))
+        Err(StationAgentError::DfxCallError {
+            arguments,
+            stderr: stderr.into(),
+        })
     }
 }
 
@@ -77,19 +86,11 @@ impl DfxExtensionAgent {
     }
 
     /// Gets the extensions directory, typically at `~/.config/dfx/extensions`
-    fn extensions_dir() -> anyhow::Result<cap_std::fs::Dir> {
-        let user_config_dir = dfx_core::config::directories::get_user_dfx_config_dir()
-            .with_context(|| "Could not find user dfx config dir")?;
+    fn extensions_dir() -> StationAgentResult<cap_std::fs::Dir> {
+        let user_config_dir = dfx_core::config::directories::get_user_dfx_config_dir()?;
         let extensions_dir = user_config_dir.join("extensions");
-        std::fs::create_dir_all(&extensions_dir).with_context(|| {
-            format!(
-                "Could not create directory at: {}",
-                extensions_dir.display()
-            )
-        })?;
-        let std_dir = std::fs::File::open(&extensions_dir).with_context(|| {
-            format!("Could not open directory at: {}", extensions_dir.display())
-        })?;
+        std::fs::create_dir_all(&extensions_dir)?;
+        let std_dir = std::fs::File::open(&extensions_dir)?;
         let cap_dir = cap_std::fs::Dir::from_std_file(std_dir);
         Ok(cap_dir)
     }
@@ -104,40 +105,23 @@ impl DfxExtensionAgent {
     /// E.g. `~/.config/dfx/extensions/<extension_name>.json`
     ///
     /// Note: The file SHOULD be JSON but this is not enforced.
-    pub fn extension_config_file(&self) -> anyhow::Result<cap_std::fs::File> {
+    pub fn extension_config_file(&self) -> StationAgentResult<cap_std::fs::File> {
         let extension_config_dir = &self.extensions_dir;
         let filename = self.config_file_name();
         let mut open_options = cap_std::fs::OpenOptions::new();
         let open_options = open_options.read(true).write(true).create(true);
-        extension_config_dir
-            .open_with(filename, open_options)
-            .with_context(|| {
-                format!(
-                    "Could not create extension config file for extension: {}",
-                    &self.name
-                )
-            })
+        Ok(extension_config_dir.open_with(filename, open_options)?)
     }
 
     /// Gets the extension config directory for this extension.
-    pub fn extension_config_dir(&self) -> anyhow::Result<cap_std::fs::Dir> {
+    pub fn extension_config_dir(&self) -> StationAgentResult<cap_std::fs::Dir> {
         let extensions_dir = &self.extensions_dir;
-        extensions_dir.create_dir_all(&self.name).with_context(|| {
-            format!(
-                "Could not create extension directory for extension: {}",
-                &self.name
-            )
-        })?;
-        extensions_dir.open_dir(&self.name).with_context(|| {
-            format!(
-                "Could not open extension directory for extension: {}",
-                &self.name
-            )
-        })
+        extensions_dir.create_dir_all(&self.name)?;
+        Ok(extensions_dir.open_dir(&self.name)?)
     }
 
     /// The name of the default dfx user identity.  This is the identity given by `dfx identity whoami` (if any).
-    pub fn identity() -> anyhow::Result<String> {
+    pub fn identity() -> StationAgentResult<String> {
         call_dfx_cli(vec!["identity", "whoami"])
     }
 
