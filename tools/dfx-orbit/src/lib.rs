@@ -13,6 +13,8 @@ pub mod orbit_station_agent;
 use dfx_extension_api::DfxExtensionAgent;
 use local_config::StationConfig;
 
+// TODO: AgentAPI: Do not print youself, instead use actual API inputs and outputs
+
 /// The name of the Orbit dfx extension.
 pub const ORBIT_EXTENSION_NAME: &str = "orbit";
 
