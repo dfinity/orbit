@@ -11,6 +11,11 @@ use crate::{
         Account, AccountId, Blockchain, BlockchainStandard, Metadata, Transfer, METADATA_MEMO_KEY,
     },
 };
+use alloy::{
+    consensus::SignableTransaction,
+    primitives::{Address, TxKind},
+    signers::k256::ecdsa::{self, VerifyingKey},
+};
 use async_trait::async_trait;
 use byteorder::{BigEndian, ByteOrder};
 use candid::Principal;
@@ -39,6 +44,7 @@ use ic_cdk::api::management_canister::ecdsa::{
 #[derive(Debug)]
 pub struct Ethereum {
     station_canister_id: Principal,
+    chain: alloy_chains::Chain,
 }
 
 pub enum EthereumNetwork {
@@ -50,6 +56,7 @@ impl Ethereum {
     pub fn create() -> Self {
         Self {
             station_canister_id: station_canister_self_id(),
+            chain: alloy_chains::Chain::sepolia(),
         }
     }
 }
@@ -57,10 +64,11 @@ impl Ethereum {
 #[async_trait]
 impl BlockchainApi for Ethereum {
     async fn generate_address(&self, account: &Account) -> BlockchainApiResult<String> {
-        // TODO: check what we should use as a Principal
-        let account_principal = Principal::from_slice(&account.id);
-        let public_key = ecdsa_pubkey_of(&account_principal).await;
-        Ok(format!("0x{}", hex::encode(&public_key)))
+        let public_key = ecdsa_pubkey_of(&account).await;
+
+        let address = get_address_from_public_key(&public_key);
+
+        Ok(format!("0x{}", hex::encode(&address)))
     }
 
     async fn balance(&self, account: &Account) -> BlockchainApiResult<BigUint> {
@@ -87,32 +95,100 @@ impl BlockchainApi for Ethereum {
 
     async fn submit_transaction(
         &self,
-        _account: &Account,
+        account: &Account,
         _transfer: &Transfer,
     ) -> BlockchainApiResult<BlockchainTransactionSubmitted> {
+        let nonce = 0u64;
+        let gas_limit = 100000u128;
+        let max_fee_per_gas = 100u128;
+        let max_priority_fee_per_gas = 100u128;
+
+        let transaction = alloy::consensus::TxEip1559 {
+            chain_id: self.chain.id(),
+            nonce,
+            gas_limit,
+            max_fee_per_gas,
+            max_priority_fee_per_gas,
+            to: TxKind::Call(
+                Address::from_str(&_transfer.to_address)
+                    .expect("failed to parse the destination address"),
+            ),
+            value: alloy::primitives::U256::from_be_slice(&_transfer.amount.0.to_bytes_be()),
+            access_list: alloy::eips::eip2930::AccessList::default(),
+            input: alloy::primitives::Bytes::default(),
+        };
+
+        let encoded_tx = transaction.signature_hash();
+
+        let (signed_tx,) = sign_with_ecdsa(SignWithEcdsaArgument {
+            message_hash: encoded_tx.to_vec(),
+            derivation_path: principal_to_derivation_path(&account),
+            key_id: get_key_id(),
+        })
+        .await
+        .expect("Failed to sign transaction");
+
         Ok(BlockchainTransactionSubmitted {
-            details: vec![
-                (
-                    TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY.to_string(),
-                    "0".to_string(),
-                ),
-                (
-                    TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY.to_string(),
-                    "0x1234".to_string(),
-                ),
-            ],
+            details: vec![(
+                "transaction signature".to_string(),
+                format!("0x{}", hex::encode(&signed_tx.signature)),
+            )],
         })
     }
 }
 
-fn principal_to_derivation_path(p: &Principal) -> Vec<Vec<u8>> {
-    const SCHEMA: u8 = 1;
-
-    vec![vec![SCHEMA], p.as_slice().to_vec()]
+/// Returns the public key and a message signature for the specified principal.
+async fn pubkey_and_signature(caller: &Account, message_hash: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+    // Fetch the pubkey and the signature concurrently to reduce latency.
+    let (pubkey, response) = futures::join!(
+        ecdsa_pubkey_of(caller),
+        sign_with_ecdsa(SignWithEcdsaArgument {
+            message_hash,
+            derivation_path: principal_to_derivation_path(caller),
+            key_id: get_key_id(),
+        })
+    );
+    (
+        pubkey,
+        response.expect("failed to sign the message").0.signature,
+    )
 }
 
-/// Computes a signature for an [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) transaction.
-// #[update(guard = "caller_is_not_anonymous")]
+async fn ecdsa_pubkey_of(account: &Account) -> Vec<u8> {
+    let (key,) = ecdsa_public_key(EcdsaPublicKeyArgument {
+        canister_id: None,
+        derivation_path: principal_to_derivation_path(&account),
+        key_id: get_key_id(),
+    })
+    .await
+    .expect("failed to get public key");
+    key.public_key
+}
+
+fn get_address_from_public_key(public_key: &[u8]) -> Address {
+    let verifying_key = ecdsa::VerifyingKey::from_sec1_bytes(&public_key)
+        .expect("Failed to create VerifyingKey from public key bytes");
+    alloy::signers::utils::public_key_to_address(&verifying_key)
+}
+
+fn get_key_id() -> EcdsaKeyId {
+    // TODO: check what we should use as a name
+    let name: String = "dfx_test_key".to_string();
+
+    EcdsaKeyId {
+        curve: EcdsaCurve::Secp256k1,
+        name,
+    }
+}
+
+fn principal_to_derivation_path(account: &Account) -> Vec<Vec<u8>> {
+    let account_principal = Principal::from_slice(&account.id);
+    const SCHEMA: u8 = 1;
+    vec![vec![SCHEMA], account_principal.as_slice().to_vec()]
+}
+
+// /// Computes a signature for an [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) transaction.
+// // #[update(guard = "caller_is_not_anonymous")]
 // async fn sign_transaction(req: SignRequest) -> String {
 //     use ethers_core::types::transaction::eip1559::Eip1559TransactionRequest;
 //     use ethers_core::types::Signature;
@@ -158,41 +234,3 @@ fn principal_to_derivation_path(p: &Principal) -> Vec<Vec<u8>> {
 
 //     format!("0x{}", hex::encode(&signed_tx_bytes))
 // }
-
-/// Returns the public key and a message signature for the specified principal.
-async fn pubkey_and_signature(caller: &Principal, message_hash: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
-    // Fetch the pubkey and the signature concurrently to reduce latency.
-    let (pubkey, response) = futures::join!(
-        ecdsa_pubkey_of(caller),
-        sign_with_ecdsa(SignWithEcdsaArgument {
-            message_hash,
-            derivation_path: principal_to_derivation_path(caller),
-            key_id: get_key_id(),
-        })
-    );
-    (
-        pubkey,
-        response.expect("failed to sign the message").0.signature,
-    )
-}
-
-async fn ecdsa_pubkey_of(principal: &Principal) -> Vec<u8> {
-    let (key,) = ecdsa_public_key(EcdsaPublicKeyArgument {
-        canister_id: None,
-        derivation_path: principal_to_derivation_path(principal),
-        key_id: get_key_id(),
-    })
-    .await
-    .expect("failed to get public key");
-    key.public_key
-}
-
-fn get_key_id() -> EcdsaKeyId {
-    // TODO: check what we should use as a name
-    let name: String = "sample-key-name".to_string();
-
-    EcdsaKeyId {
-        curve: EcdsaCurve::Secp256k1,
-        name,
-    }
-}
