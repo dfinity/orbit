@@ -10,7 +10,7 @@
   },
   "engines": {
     "node": "^20",
-    "pnpm": "^8",
+    "pnpm": "^9",
     "npm": "please use pnpm",
     "yarn": "please use pnpm"
   },
@@ -32,6 +32,7 @@
     "@mdi/font": "7.4.47",
     "@mdi/js": "7.4.47",
     "buffer": "6.0.3",
+    "ethers": "^6.13.1",
     "pinia": "2.1.7",
     "pino": "9.1.0",
     "validator": "13.12.0",

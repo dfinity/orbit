@@ -60,8 +60,16 @@ To play, make sure you
 ## 1. setting up the environment
 
 ```sh
-dfx start —clean —host 127.0.0.1:4943 —background
-./orbit —init
+dfx start --clean --host 127.0.0.1:4943 --background
+./orbit --init
+```
+
+### 1b. Running the frontend
+
+```sh
+cd apps/wallet
+nvm use
+pnpm dev
 ```
 
 ## 2. stopping the environment
@@ -73,7 +81,7 @@ dfx stop
 ## 3. resume and make some backend changes
 
 ```sh
-dfx start —host 127.0.0.1:4943 —background
+dfx start --host 127.0.0.1:4943 --background
 ./scripts/generate-wasm.sh station
 upload the wasm from the ./wasms folder in the /settings/system page of the orbit wallet
 ```

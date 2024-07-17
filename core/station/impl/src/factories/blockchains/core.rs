@@ -1,4 +1,6 @@
+use super::Ethereum;
 use super::InternetComputer;
+
 use crate::{
     errors::FactoryError,
     models::{Account, Blockchain, BlockchainStandard, Metadata, Transfer},
@@ -86,6 +88,8 @@ impl BlockchainApiFactory {
             (Blockchain::InternetComputer, BlockchainStandard::Native) => {
                 Ok(Box::new(InternetComputer::create()))
             }
+            (Blockchain::Ethereum, BlockchainStandard::Native) => Ok(Box::new(Ethereum::create())),
+            // TODO: implement Bitcoin here
             (blockchain, standard) => Err(FactoryError::UnsupportedBlockchainAccount {
                 blockchain: blockchain.to_string(),
                 standard: standard.to_string(),
