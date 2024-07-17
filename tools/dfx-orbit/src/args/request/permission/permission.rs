@@ -1,32 +1,82 @@
 //! Arguments for `dfx-orbit request permission permission`.
-pub mod read;
-pub mod update;
 
 use crate::{args::request::CreateRequestArgs, StationAgent};
-use clap::Subcommand;
-use orbit_station_api::CreateRequestInput;
+use clap::Parser;
+use orbit_station_api::{
+    CreateRequestInput, EditPermissionOperationInput, PermissionResourceActionDTO,
+    RequestOperationInput, ResourceDTO,
+};
 
-/// Request canister changes.
-///
-// TODO: Add flags for --title, --summary, and --execution-plan.
-// Note: I have looked at the docs and the anwer for how to do this really doesn't jump out at me.  Google foo failed as well.  Maybe the sdk repo has some examples.
-#[derive(Debug, Subcommand)]
-#[command(version, about, long_about = None)]
-pub enum Args {
-    /// Request permission to update permissions.
-    Update(update::Args),
-    /// Request permission to read permissions.
-    Read(read::Args),
+/// Requests the privilige of proposing canister upgrades.
+#[derive(Debug, Parser)]
+pub struct RequestPermissionUpdatePermissionsArgs {
+    /// A users that should be permitted to change permissions.  WARNING: Any user that is not listed will lose the ability to change permissions.
+    #[structopt(long)]
+    pub user: Vec<String>,
+    /// A groups that should be permitted to change permissions.  WARNING: Any group that is not listed will lose the ability to change permissions.
+    #[structopt(long)]
+    pub group: Vec<String>,
 }
 
-impl CreateRequestArgs for Args {
+impl CreateRequestArgs for RequestPermissionUpdatePermissionsArgs {
+    /// Converts the CLI arg type into the equivalent Orbit API type.
     fn into_create_request_input(
         self,
-        station_agent: &StationAgent,
+        _station_agent: &StationAgent,
     ) -> anyhow::Result<CreateRequestInput> {
-        match self {
-            Args::Read(read_args) => read_args.into_create_request_input(station_agent),
-            Args::Update(update_args) => update_args.into_create_request_input(station_agent),
-        }
+        let RequestPermissionUpdatePermissionsArgs {
+            user: users,
+            group: user_groups,
+        } = self;
+
+        let operation = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+            resource: ResourceDTO::Permission(PermissionResourceActionDTO::Update),
+            auth_scope: None,
+            users: Some(users),
+            user_groups: Some(user_groups),
+        });
+        Ok(CreateRequestInput {
+            operation,
+            title: None,
+            summary: None,
+            execution_plan: None,
+        })
+    }
+}
+
+/// Requests the privilige of proposing canister upgrades.
+#[derive(Debug, Parser)]
+pub struct RequestPermissionReadPermissionsArgs {
+    /// A users that should be permitted to change permissions.  WARNING: Any user that is not listed will lose the ability to change permissions.
+    #[structopt(long)]
+    pub user: Vec<String>,
+    /// A groups that should be permitted to change permissions.  WARNING: Any group that is not listed will lose the ability to change permissions.
+    #[structopt(long)]
+    pub group: Vec<String>,
+}
+
+impl CreateRequestArgs for RequestPermissionReadPermissionsArgs {
+    /// Converts the CLI arg type into the equivalent Orbit API type.
+    fn into_create_request_input(
+        self,
+        _station_agent: &StationAgent,
+    ) -> anyhow::Result<CreateRequestInput> {
+        let RequestPermissionReadPermissionsArgs {
+            user: users,
+            group: user_groups,
+        } = self;
+
+        let operation = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+            resource: ResourceDTO::Permission(PermissionResourceActionDTO::Read),
+            auth_scope: None,
+            users: Some(users),
+            user_groups: Some(user_groups),
+        });
+        Ok(CreateRequestInput {
+            operation,
+            title: None,
+            summary: None,
+            execution_plan: None,
+        })
     }
 }

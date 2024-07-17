@@ -7,15 +7,16 @@ use super::CreateRequestArgs;
 use crate::StationAgent;
 use canister::RequestPermissionUpdateCanisterArgs;
 use clap::Subcommand;
+use permission::{RequestPermissionReadPermissionsArgs, RequestPermissionUpdatePermissionsArgs};
 
 /// Request permission.
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
 pub enum RequestPermissionArgs {
-    // TODO: Move these up a level to reduce nesting
-    /// Request permission to create requests.
-    #[command(subcommand)]
-    Permission(permission::Args),
+    /// Request permission to read permission(s)
+    ReadPermissions(RequestPermissionReadPermissionsArgs),
+    /// Request permission to update permission(s)
+    UpdatePermissions(RequestPermissionUpdatePermissionsArgs),
     /// Request permission to update canister(s)
     UpdateCanister(RequestPermissionUpdateCanisterArgs),
 }
@@ -30,7 +31,10 @@ impl CreateRequestArgs for RequestPermissionArgs {
             RequestPermissionArgs::UpdateCanister(canister_args) => {
                 canister_args.into_create_request_input(station_agent)
             }
-            RequestPermissionArgs::Permission(permission_args) => {
+            RequestPermissionArgs::ReadPermissions(permission_args) => {
+                permission_args.into_create_request_input(station_agent)
+            }
+            RequestPermissionArgs::UpdatePermissions(permission_args) => {
                 permission_args.into_create_request_input(station_agent)
             }
         }
