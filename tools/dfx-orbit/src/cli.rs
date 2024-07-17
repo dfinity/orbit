@@ -6,7 +6,10 @@ pub mod review;
 pub mod station;
 
 use crate::{
-    args::{request::CreateRequestArgs, review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
+    args::{
+        canister::CanisterArgs, request::CreateRequestArgs, review::ReviewArgs, DfxOrbitArgs,
+        DfxOrbitSubcommands,
+    },
     StationAgent,
 };
 
@@ -26,7 +29,19 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             println!("{}", serde_json::to_string_pretty(&ans)?);
             Ok(())
         }
-        DfxOrbitSubcommands::Canister(canister_args) => canister::exec(canister_args).await,
+        DfxOrbitSubcommands::Canister(canister_args) => {
+            match canister_args {
+                CanisterArgs::Claim(claim_args) => {
+                    station_agent
+                        .claim_canister(claim_args.canister, claim_args.exclusive)
+                        .await?;
+                }
+                CanisterArgs::UploadHttpAssets(upload_http_assets_args) => {
+                    canister::upload_http_assets::exec(upload_http_assets_args).await?;
+                }
+            }
+            Ok(())
+        }
         DfxOrbitSubcommands::Request(request_args) => {
             let response = station_agent
                 .request(request_args.into_create_request_input(&station_agent)?)
