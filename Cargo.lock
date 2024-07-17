@@ -2345,6 +2345,7 @@ dependencies = [
  "candid",
  "candid_parser",
  "control-panel-api",
+ "dfx-orbit",
  "hex",
  "ic-cdk 0.13.2",
  "ic-ledger-types",
@@ -2355,6 +2356,7 @@ dependencies = [
  "serde",
  "sha2 0.10.8",
  "station-api",
+ "tokio",
  "upgrader-api",
  "wat",
 ]

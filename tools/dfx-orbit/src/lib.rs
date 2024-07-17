@@ -11,18 +11,15 @@ pub mod error;
 pub mod local_config;
 pub mod orbit_station_agent;
 
-use dfx_extension_api::DfxExtensionAgent;
+use dfx_extension_api::OrbitExtensionAgent;
 use local_config::StationConfig;
 
 // TODO: AgentAPI: Do not print youself, instead use actual API inputs and outputs
-
-/// The name of the Orbit dfx extension.
-pub const ORBIT_EXTENSION_NAME: &str = "orbit";
 
 /// A dfx agent for communicating with a specific station.
 pub struct StationAgent {
     /// The station to communicate with.
     pub station: StationConfig,
     /// The dfx agent.
-    pub dfx: DfxExtensionAgent,
+    pub dfx: OrbitExtensionAgent,
 }

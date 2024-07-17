@@ -1,5 +1,7 @@
 //! Placeholders for the proposed dfx extension API methods.
 use std::{
+    env::temp_dir,
+    path::PathBuf,
     process::{Command, Stdio},
     str::FromStr,
 };
@@ -11,6 +13,9 @@ use ic_agent::Agent;
 use slog::{o, Drain, Logger};
 
 use crate::local_config;
+
+/// The name of the Orbit dfx extension.
+const ORBIT_EXTENSION_NAME: &str = "orbit";
 
 /// Calls the dfx cli.
 ///
@@ -41,9 +46,7 @@ pub fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
 }
 
 /// The API through which extensions SHOULD interact with ICP networks and dfx configuration.
-pub struct DfxExtensionAgent {
-    /// The name of the dfx extension.
-    name: String,
+pub struct OrbitExtensionAgent {
     /// The directory where all extension configuration files are stored, including those of other extensions.
     extensions_dir: cap_std::fs::Dir,
     /// An interface including an ic-agent.
@@ -52,9 +55,21 @@ pub struct DfxExtensionAgent {
     logger: Logger,
 }
 
-impl DfxExtensionAgent {
+impl OrbitExtensionAgent {
     /// Creates a new DfxExtensionAgent for the extension with the given name.
-    pub fn new(name: &str) -> Self {
+    pub fn new() -> anyhow::Result<Self> {
+        let dir =
+            Self::extensions_dir().with_context(|| "Could not get the dfx extensions directory")?;
+        Ok(Self::new_from_dir(dir))
+    }
+
+    pub fn new_tmp() -> anyhow::Result<Self> {
+        let dir =
+            Self::tmp_extensions_dir().with_context(|| "Failed to initialize tmp directry")?;
+        Ok(Self::new_from_dir(dir))
+    }
+
+    fn new_from_dir(extensions_dir: cap_std::fs::Dir) -> Self {
         let logger = {
             let decorator = slog_term::TermDecorator::new().build();
             let drain = slog_term::FullFormat::new(decorator).build().fuse();
@@ -63,9 +78,7 @@ impl DfxExtensionAgent {
             slog::Logger::root(drain, o!())
         };
         Self {
-            name: name.to_string(),
-            extensions_dir: Self::extensions_dir()
-                .expect("Could not get the dfx extensions directory"),
+            extensions_dir,
             dfx_interface: None,
             logger,
         }
@@ -80,7 +93,16 @@ impl DfxExtensionAgent {
     fn extensions_dir() -> anyhow::Result<cap_std::fs::Dir> {
         let user_config_dir = dfx_core::config::directories::get_user_dfx_config_dir()
             .with_context(|| "Could not find user dfx config dir")?;
-        let extensions_dir = user_config_dir.join("extensions");
+        Self::init_extensions_dir(user_config_dir)
+    }
+
+    fn tmp_extensions_dir() -> anyhow::Result<cap_std::fs::Dir> {
+        let dir = temp_dir();
+        Self::init_extensions_dir(dir)
+    }
+
+    fn init_extensions_dir(path: PathBuf) -> anyhow::Result<cap_std::fs::Dir> {
+        let extensions_dir = path.join("extensions");
         std::fs::create_dir_all(&extensions_dir).with_context(|| {
             format!(
                 "Could not create directory at: {}",
@@ -96,7 +118,7 @@ impl DfxExtensionAgent {
 
     /// Gets the basename of the extension config file.
     fn config_file_name(&self) -> String {
-        format!("{}.json", &self.name)
+        format!("{}.json", ORBIT_EXTENSION_NAME)
     }
 
     /// Gets the extension config file for this extension.  If the file does not exist, it will be created.
@@ -114,7 +136,7 @@ impl DfxExtensionAgent {
             .with_context(|| {
                 format!(
                     "Could not create extension config file for extension: {}",
-                    &self.name
+                    ORBIT_EXTENSION_NAME
                 )
             })
     }
@@ -122,18 +144,22 @@ impl DfxExtensionAgent {
     /// Gets the extension config directory for this extension.
     pub fn extension_config_dir(&self) -> anyhow::Result<cap_std::fs::Dir> {
         let extensions_dir = &self.extensions_dir;
-        extensions_dir.create_dir_all(&self.name).with_context(|| {
-            format!(
-                "Could not create extension directory for extension: {}",
-                &self.name
-            )
-        })?;
-        extensions_dir.open_dir(&self.name).with_context(|| {
-            format!(
-                "Could not open extension directory for extension: {}",
-                &self.name
-            )
-        })
+        extensions_dir
+            .create_dir_all(ORBIT_EXTENSION_NAME)
+            .with_context(|| {
+                format!(
+                    "Could not create extension directory for extension: {}",
+                    ORBIT_EXTENSION_NAME
+                )
+            })?;
+        extensions_dir
+            .open_dir(ORBIT_EXTENSION_NAME)
+            .with_context(|| {
+                format!(
+                    "Could not open extension directory for extension: {}",
+                    ORBIT_EXTENSION_NAME
+                )
+            })
     }
 
     /// The name of the default dfx user identity.  This is the identity given by `dfx identity whoami` (if any).

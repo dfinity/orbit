@@ -2,7 +2,7 @@
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::dfx_extension_api::DfxExtensionAgent;
+use crate::dfx_extension_api::OrbitExtensionAgent;
 
 /// Configuration that lives in e.g. ~/.config/dfx/orbit.json
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -30,7 +30,7 @@ pub struct StationConfig {
 pub const STATIONS_DIR: &str = "stations";
 /// The directory in the orbit dfx config directory where stations are recorded.
 pub fn stations_dir() -> anyhow::Result<cap_std::fs::Dir> {
-    let dfx_extension_agent = DfxExtensionAgent::new("orbit");
+    let dfx_extension_agent = OrbitExtensionAgent::new()?;
     let config_dir = dfx_extension_agent
         .extension_config_dir()
         .expect("Failed to get extension config dir");
@@ -177,7 +177,7 @@ pub fn rename_station(name: &str, new_name: &str) -> anyhow::Result<()> {
 /// If the config does not exist or is empty, default values are assumed.
 pub fn extension_config() -> anyhow::Result<ExtensionConfig> {
     // TODO: Make orbit a const
-    let dfx_extension_agent = DfxExtensionAgent::new("orbit");
+    let dfx_extension_agent = OrbitExtensionAgent::new()?;
     let common_config_file = dfx_extension_agent.extension_config_file()?;
     if common_config_file.metadata()?.len() == 0 {
         Ok(ExtensionConfig::default())
@@ -210,7 +210,7 @@ pub fn set_default_station(name_maybe: Option<String>) -> anyhow::Result<()> {
     // Set the default station.
     let mut extension_config = extension_config()?;
     extension_config.default_station = name_maybe;
-    let dfx_extension_agent = DfxExtensionAgent::new("orbit");
+    let dfx_extension_agent = OrbitExtensionAgent::new()?;
     let common_config_file = dfx_extension_agent.extension_config_file()?;
     // TODO: Update atomically rather than rewriting.
     // TODO: Have a dedicated function for doing the update rather than updating the file directly.
