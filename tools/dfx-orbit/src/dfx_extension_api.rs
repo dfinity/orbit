@@ -12,8 +12,6 @@ use dfx_core::interface::dfx::DfxInterface;
 use ic_agent::Agent;
 use slog::{o, Drain, Logger};
 
-use crate::local_config;
-
 /// The name of the Orbit dfx extension.
 const ORBIT_EXTENSION_NAME: &str = "orbit";
 
@@ -170,7 +168,8 @@ impl OrbitExtensionAgent {
     /// Gets the dfx_core interface
     pub async fn dfx_interface(&mut self) -> anyhow::Result<&DfxInterface> {
         if self.dfx_interface.is_none() {
-            let network_name = local_config::station_or_default(None)
+            let network_name = self
+                .station_or_default(None)
                 .with_context(|| "Failed to get station")?
                 .network;
             let interface_builder = DfxInterface::builder().with_network_named(&network_name);

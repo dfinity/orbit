@@ -1,20 +1,19 @@
 //! A dfx and IC agent for communicating with an Orbit station.
 
-use crate::{
-    dfx_extension_api::OrbitExtensionAgent,
-    local_config::{self},
-    StationAgent,
-};
+use crate::{dfx_extension_api::OrbitExtensionAgent, StationAgent};
 use candid::Principal;
 use ic_agent::agent::UpdateBuilder;
 
 impl StationAgent {
     /// Creates a new agent for communicating with the default station.
-    pub fn new() -> anyhow::Result<Self> {
-        let dfx = OrbitExtensionAgent::new()?;
-        let station = local_config::default_station()?
+    pub fn new(agent: OrbitExtensionAgent) -> anyhow::Result<Self> {
+        let station = agent
+            .default_station()?
             .ok_or_else(|| anyhow::format_err!("No default station specified"))?;
-        Ok(Self { station, dfx })
+        Ok(Self {
+            station,
+            dfx: agent,
+        })
     }
 
     /// Gets the ID of a given canister name.  If the name is already an ID, it is returned as is.

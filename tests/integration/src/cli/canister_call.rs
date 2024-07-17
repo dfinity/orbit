@@ -1,11 +1,9 @@
-use candid::Principal;
-use dfx_orbit::StationAgent;
-
 use crate::{
     setup::{create_canister, setup_new_env},
     utils::{add_user, update_raw, user_test_id, COUNTER_WAT},
     TestEnv,
 };
+use candid::Principal;
 
 /// Test a canister call through orbit using the station agent
 #[test]
@@ -37,7 +35,7 @@ fn canister_call() {
     add_user(&env, user_b, vec![], canister_ids.station);
 
     // TODO: set up the station agent
-    StationAgent::new().unwrap();
+    //StationAgent::new().unwrap();
 
     todo!()
 }

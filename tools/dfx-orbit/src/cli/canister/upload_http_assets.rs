@@ -1,5 +1,7 @@
 //! Implements the `dfx-orbit canister upload-http-assets` CLI command.
-use crate::{args::canister::UploadAssetsArgs as Args, StationAgent};
+use crate::{
+    args::canister::UploadAssetsArgs as Args, dfx_extension_api::OrbitExtensionAgent, StationAgent,
+};
 use ic_asset::canister_api::{
     methods::batch::compute_evidence, types::batch_upload::common::ComputeEvidenceArguments,
 };
@@ -26,7 +28,7 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
         .map(|pathbuf| pathbuf.as_path())
         .collect();
 
-    let mut station_agent = StationAgent::new()?;
+    let mut station_agent = StationAgent::new(OrbitExtensionAgent::new()?)?;
     let canister_id = station_agent.canister_id(&canister)?;
     let logger = station_agent.dfx.logger().clone();
     // Upload assets:

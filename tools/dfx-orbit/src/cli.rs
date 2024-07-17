@@ -10,18 +10,21 @@ use crate::{
         canister::CanisterArgs, request::CreateRequestArgs, review::ReviewArgs, DfxOrbitArgs,
         DfxOrbitSubcommands,
     },
+    dfx_extension_api::OrbitExtensionAgent,
     StationAgent,
 };
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
 pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
-    // We don't need to instanciate a StationAgent to execute this command
+    let orbit_agent = OrbitExtensionAgent::new()?;
+
+    // We don't need to instanciate a StationAgent to execute this command directly on the orbit agent
     if let DfxOrbitSubcommands::Station(station_args) = args.command {
-        station::exec(station_args)?;
+        station::exec(orbit_agent, station_args)?;
         return Ok(());
     };
 
-    let mut station_agent = StationAgent::new()?;
+    let mut station_agent = StationAgent::new(orbit_agent)?;
 
     match args.command {
         DfxOrbitSubcommands::Me => {
