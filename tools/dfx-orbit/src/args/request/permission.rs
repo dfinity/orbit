@@ -5,6 +5,7 @@ pub mod permission;
 
 use super::CreateRequestArgs;
 use crate::StationAgent;
+use canister::RequestPermissionUpdateCanisterArgs;
 use clap::Subcommand;
 
 /// Request permission.
@@ -15,9 +16,8 @@ pub enum RequestPermissionArgs {
     /// Request permission to create requests.
     #[command(subcommand)]
     Permission(permission::Args),
-    /// Request changes to canister permissions.
-    #[command(subcommand)]
-    Canister(canister::Args),
+    /// Request permission to update canister(s)
+    UpdateCanister(RequestPermissionUpdateCanisterArgs),
 }
 
 impl CreateRequestArgs for RequestPermissionArgs {
@@ -27,7 +27,7 @@ impl CreateRequestArgs for RequestPermissionArgs {
         station_agent: &StationAgent,
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
         match self {
-            RequestPermissionArgs::Canister(canister_args) => {
+            RequestPermissionArgs::UpdateCanister(canister_args) => {
                 canister_args.into_create_request_input(station_agent)
             }
             RequestPermissionArgs::Permission(permission_args) => {
