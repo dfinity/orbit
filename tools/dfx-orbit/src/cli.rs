@@ -6,7 +6,7 @@ pub mod review;
 pub mod station;
 
 use crate::{
-    args::{request::CreateRequestArgs, DfxOrbitArgs, DfxOrbitSubcommands},
+    args::{request::CreateRequestArgs, review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
     StationAgent,
 };
 
@@ -38,7 +38,21 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             println!("To view the request, run: dfx-orbit review id {request_id}");
             Ok(())
         }
-        DfxOrbitSubcommands::Review(review_args) => station_agent.review(review_args).await,
+        DfxOrbitSubcommands::Review(review_args) => {
+            let result_json = match review_args {
+                ReviewArgs::List(args) => {
+                    serde_json::to_string_pretty(&station_agent.review_list(args.into()).await?)?
+                }
+                ReviewArgs::Next(args) => {
+                    serde_json::to_string_pretty(&station_agent.review_next(args.into()).await?)?
+                }
+                ReviewArgs::Id(args) => {
+                    serde_json::to_string_pretty(&station_agent.review_id(args.into()).await?)?
+                }
+            };
+            println!("{}", result_json);
+            Ok(())
+        }
         _ => unreachable!(),
     }
 }

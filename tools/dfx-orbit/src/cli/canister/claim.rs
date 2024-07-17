@@ -1,7 +1,6 @@
 //! Command to put a canister under Orbit control.
-use anyhow::anyhow;
-
 use crate::{args::canister::CanisterClaimArgs, dfx_extension_api, local_config};
+use anyhow::anyhow;
 
 /// Puts a canister controlled by the user under Orbit control.
 // TODO: Need to be able to specify which Orbit to use, e.g. as a global flag.
