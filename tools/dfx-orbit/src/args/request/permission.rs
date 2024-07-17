@@ -11,6 +11,7 @@ use clap::Subcommand;
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
 pub enum RequestPermissionArgs {
+    // TODO: Move these up a level to reduce nesting
     /// Request permission to create requests.
     #[command(subcommand)]
     Permission(permission::Args),

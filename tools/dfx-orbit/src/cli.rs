@@ -6,10 +6,9 @@ pub mod review;
 pub mod station;
 
 use crate::{
-    args::{DfxOrbitArgs, DfxOrbitSubcommands},
+    args::{request::CreateRequestArgs, DfxOrbitArgs, DfxOrbitSubcommands},
     StationAgent,
 };
-use anyhow::anyhow;
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
 pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
@@ -28,11 +27,17 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             Ok(())
         }
         DfxOrbitSubcommands::Canister(canister_args) => canister::exec(canister_args).await,
-        DfxOrbitSubcommands::Request(request_args) => match request::exec(request_args).await {
-            Ok(Ok(_response)) => Ok(()),
-            Ok(Err(e)) => Err(anyhow!("Error response from the station: {e:?}")),
-            Err(e) => Err(e),
-        },
+        DfxOrbitSubcommands::Request(request_args) => {
+            let response = station_agent
+                .request(request_args.into_create_request_input(&station_agent)?)
+                .await?;
+            let request_id = &response.request.id;
+            let request_url = station_agent.request_url(request_id);
+            println!("Created request: {request_id}");
+            println!("Request URL: {request_url}");
+            println!("To view the request, run: dfx-orbit review id {request_id}");
+            Ok(())
+        }
         DfxOrbitSubcommands::Review(review_args) => station_agent.review(review_args).await,
         _ => unreachable!(),
     }

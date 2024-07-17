@@ -16,6 +16,7 @@ impl StationAgent {
         let canister_id = Principal::from_text(&self.station.station_id)
             .with_context(|| "failed to parse principal")?;
 
+        // TODO: User more astraction function, such as `call_station`
         let response_bytes: Vec<u8> = ic_agent
             .update(&canister_id, "get_request")
             .with_arg(candid::encode_one(args)?)
@@ -24,7 +25,6 @@ impl StationAgent {
 
         let ans = candid::decode_one::<Result<GetRequestResponse, ApiErrorDTO>>(&response_bytes)?;
 
-        println!("{ans:#?}");
         Ok(ans?)
     }
 }

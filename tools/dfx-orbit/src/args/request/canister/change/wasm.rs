@@ -1,6 +1,9 @@
 //! Arguments for `dfx orbit canister change wasm`.
 use crate::{args::request::CreateRequestArgs, StationAgent};
 use clap::{Parser, ValueEnum};
+use orbit_station_api::{
+    ChangeExternalCanisterOperationInput, CreateRequestInput, RequestOperationInput,
+};
 
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Parser)]
@@ -29,7 +32,7 @@ impl CreateRequestArgs for RequestCanisterChangeWasmArgs {
     fn into_create_request_input(
         self,
         station_agent: &StationAgent,
-    ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
+    ) -> anyhow::Result<CreateRequestInput> {
         let RequestCanisterChangeWasmArgs {
             canister,
             mode,
@@ -52,15 +55,15 @@ impl CreateRequestArgs for RequestCanisterChangeWasmArgs {
                 arg.map(|arg| arg.as_bytes().to_vec())
             };
             let mode = mode.into();
-            orbit_station_api::ChangeExternalCanisterOperationInput {
+            ChangeExternalCanisterOperationInput {
                 canister_id,
                 mode,
                 module,
                 arg,
             }
         };
-        let operation = orbit_station_api::RequestOperationInput::ChangeExternalCanister(operation);
-        Ok(orbit_station_api::CreateRequestInput {
+        let operation = RequestOperationInput::ChangeExternalCanister(operation);
+        Ok(CreateRequestInput {
             operation,
             title: None,
             summary: None,

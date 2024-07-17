@@ -67,9 +67,9 @@ impl StationAgent {
     ///         .call_and_wait()
     ///         .await?;
     /// ```
+    // TODO: Wrap in a higher level function that also does the candid parsing
     pub async fn update_orbit(&mut self, method_name: &str) -> anyhow::Result<UpdateBuilder> {
-        let orbit_canister_id = &self.station.station_id;
-        let orbit_canister_id = Principal::from_text(orbit_canister_id)?;
+        let orbit_canister_id = Principal::from_text(&self.station.station_id)?;
         Ok(self
             .dfx
             .agent()

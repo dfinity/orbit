@@ -167,6 +167,7 @@ impl DfxExtensionAgent {
 
     /// Gets a canister ID
     // TODO: This is a bad API as the two names can be swapped and it will still compile.
+    // TODO: Do this without shelling out, using dfx-core only
     pub fn canister_id(
         &self,
         canister_name: &str,
