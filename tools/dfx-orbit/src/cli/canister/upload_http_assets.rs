@@ -28,12 +28,12 @@ pub async fn exec(args: Args) -> anyhow::Result<()> {
         .map(|pathbuf| pathbuf.as_path())
         .collect();
 
-    let mut station_agent = StationAgent::new(OrbitExtensionAgent::new()?)?;
+    let station_agent = StationAgent::new(OrbitExtensionAgent::new()?).await?;
     let canister_id = station_agent.canister_id(&canister)?;
     let logger = station_agent.dfx.logger().clone();
     // Upload assets:
     let canister_agent = CanisterBuilder::new()
-        .with_agent(station_agent.dfx.agent().await?)
+        .with_agent(station_agent.agent())
         .with_canister_id(canister_id)
         .build()?;
     let assets = assets_as_hash_map(&source);

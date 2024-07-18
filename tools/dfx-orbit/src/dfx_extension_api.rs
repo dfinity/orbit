@@ -9,7 +9,6 @@ use std::{
 use anyhow::Context;
 use candid::Principal;
 use dfx_core::interface::dfx::DfxInterface;
-use ic_agent::Agent;
 use slog::{o, Drain, Logger};
 
 /// The name of the Orbit dfx extension.
@@ -47,8 +46,6 @@ pub fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
 pub struct OrbitExtensionAgent {
     /// The directory where all extension configuration files are stored, including those of other extensions.
     extensions_dir: cap_std::fs::Dir,
-    /// An interface including an ic-agent.
-    dfx_interface: Option<DfxInterface>,
     /// A logger; some public `sdk` repository methods require a specific type of logger so this is a compatible logger.
     logger: Logger,
 }
@@ -77,7 +74,6 @@ impl OrbitExtensionAgent {
         };
         Self {
             extensions_dir,
-            dfx_interface: None,
             logger,
         }
     }
@@ -124,7 +120,7 @@ impl OrbitExtensionAgent {
     /// E.g. `~/.config/dfx/extensions/<extension_name>.json`
     ///
     /// Note: The file SHOULD be JSON but this is not enforced.
-    pub fn extension_config_file(&self) -> anyhow::Result<cap_std::fs::File> {
+    pub(crate) fn extension_config_file(&self) -> anyhow::Result<cap_std::fs::File> {
         let extension_config_dir = &self.extensions_dir;
         let filename = self.config_file_name();
         let mut open_options = cap_std::fs::OpenOptions::new();
@@ -140,7 +136,7 @@ impl OrbitExtensionAgent {
     }
 
     /// Gets the extension config directory for this extension.
-    pub fn extension_config_dir(&self) -> anyhow::Result<cap_std::fs::Dir> {
+    pub(crate) fn extension_config_dir(&self) -> anyhow::Result<cap_std::fs::Dir> {
         let extensions_dir = &self.extensions_dir;
         extensions_dir
             .create_dir_all(ORBIT_EXTENSION_NAME)
@@ -166,34 +162,23 @@ impl OrbitExtensionAgent {
     }
 
     /// Gets the dfx_core interface
-    pub async fn dfx_interface(&mut self) -> anyhow::Result<&DfxInterface> {
-        if self.dfx_interface.is_none() {
-            let network_name = self
-                .station_or_default(None)
-                .with_context(|| "Failed to get station")?
-                .network;
-            let interface_builder = DfxInterface::builder().with_network_named(&network_name);
-            let interface = interface_builder.build().await?;
-            if !interface.network_descriptor().is_ic {
-                interface.agent().fetch_root_key().await?;
-            }
-            self.dfx_interface = Some(interface);
+    pub async fn dfx_interface(&mut self) -> anyhow::Result<DfxInterface> {
+        let network_name = self
+            .station_or_default(None)
+            .with_context(|| "Failed to get station")?
+            .network;
+        let interface_builder = DfxInterface::builder().with_network_named(&network_name);
+        let interface = interface_builder.build().await?;
+        if !interface.network_descriptor().is_ic {
+            interface.agent().fetch_root_key().await?;
         }
-        Ok(self
-            .dfx_interface
-            .as_ref()
-            .expect("Failed to get dfx interface"))
-    }
-
-    /// Gets the dfx agent.
-    pub async fn agent(&mut self) -> anyhow::Result<&Agent> {
-        Ok(self.dfx_interface().await?.agent())
+        Ok(interface)
     }
 
     /// Gets a canister ID
     // TODO: This is a bad API as the two names can be swapped and it will still compile.
     // TODO: Do this without shelling out, using dfx-core only
-    pub fn canister_id(
+    pub(crate) fn canister_id(
         &self,
         canister_name: &str,
         network_name: &str,

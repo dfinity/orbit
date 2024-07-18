@@ -12,7 +12,7 @@ impl StationAgent {
         &mut self,
         args: GetNextApprovableRequestInput,
     ) -> StationAgentResult<GetNextApprovableRequestResponse> {
-        let ic_agent = self.dfx.agent().await?;
+        let ic_agent = self.agent();
 
         // The station canister ID to which we will make the API call.
         let canister_id = Principal::from_text(&self.station.station_id)

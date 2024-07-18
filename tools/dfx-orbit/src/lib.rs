@@ -11,6 +11,7 @@ pub mod error;
 pub mod local_config;
 pub mod orbit_station_agent;
 
+use dfx_core::DfxInterface;
 use dfx_extension_api::OrbitExtensionAgent;
 use local_config::StationConfig;
 
@@ -22,4 +23,6 @@ pub struct StationAgent {
     pub station: StationConfig,
     /// The dfx agent.
     pub dfx: OrbitExtensionAgent,
+    // The dfx interface
+    pub interface: DfxInterface,
 }

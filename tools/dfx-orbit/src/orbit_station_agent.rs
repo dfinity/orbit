@@ -2,17 +2,20 @@
 
 use crate::{dfx_extension_api::OrbitExtensionAgent, StationAgent};
 use candid::Principal;
-use ic_agent::agent::UpdateBuilder;
+use ic_agent::{agent::UpdateBuilder, Agent};
 
 impl StationAgent {
     /// Creates a new agent for communicating with the default station.
-    pub fn new(agent: OrbitExtensionAgent) -> anyhow::Result<Self> {
+    pub async fn new(mut agent: OrbitExtensionAgent) -> anyhow::Result<Self> {
         let station = agent
             .default_station()?
             .ok_or_else(|| anyhow::format_err!("No default station specified"))?;
+        let interface = agent.dfx_interface().await?;
+
         Ok(Self {
             station,
             dfx: agent,
+            interface,
         })
     }
 
@@ -36,7 +39,7 @@ impl StationAgent {
         canister_id: &Principal,
         method_name: &str,
     ) -> anyhow::Result<UpdateBuilder> {
-        Ok(self.dfx.agent().await?.update(canister_id, method_name))
+        Ok(self.agent().update(canister_id, method_name))
     }
 
     /// Builds a canister update call to a named canister on the network used by the station.
@@ -48,13 +51,13 @@ impl StationAgent {
     ///         .call_and_wait()
     ///         .await?;
     /// ```
-    pub async fn update_canister(
+    pub fn update_canister(
         &mut self,
         canister: &str,
         method_name: &str,
     ) -> anyhow::Result<UpdateBuilder> {
         let canister_id = self.canister_id(canister)?;
-        Ok(self.dfx.agent().await?.update(&canister_id, method_name))
+        Ok(self.agent().update(&canister_id, method_name))
     }
 
     /// Makes an update call to the station.
@@ -69,11 +72,7 @@ impl StationAgent {
     // TODO: Wrap in a higher level function that also does the candid parsing
     pub async fn update_orbit(&mut self, method_name: &str) -> anyhow::Result<UpdateBuilder> {
         let orbit_canister_id = Principal::from_text(&self.station.station_id)?;
-        Ok(self
-            .dfx
-            .agent()
-            .await?
-            .update(&orbit_canister_id, method_name))
+        Ok(self.agent().update(&orbit_canister_id, method_name))
     }
 
     /// The URL for a request in the Orbit UI.
@@ -82,5 +81,10 @@ impl StationAgent {
             "{}/en/settings/requests?reqid={}",
             self.station.url, request_id
         )
+    }
+
+    /// Gets the dfx agent.
+    pub fn agent(&self) -> &Agent {
+        self.interface.agent()
     }
 }

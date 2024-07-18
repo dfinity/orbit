@@ -24,7 +24,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
         return Ok(());
     };
 
-    let mut station_agent = StationAgent::new(orbit_agent)?;
+    let mut station_agent = StationAgent::new(orbit_agent).await?;
 
     match args.command {
         DfxOrbitSubcommands::Me => {
