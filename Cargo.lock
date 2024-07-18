@@ -1134,6 +1134,7 @@ dependencies = [
  "slog-async",
  "slog-term",
  "station-api",
+ "tempfile",
  "thiserror",
  "tokio",
  "walkdir",

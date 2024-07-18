@@ -13,7 +13,7 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 static POCKET_IC_BIN: &str = "./pocket-ic";
 
@@ -63,7 +63,7 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
         .with_nns_subnet()
         .with_application_subnet()
         .build();
-    env.set_time(SystemTime::now());
+    env.set_time(SystemTime::now() - Duration::from_secs(24 * 60 * 60));
     let controller = controller_test_id();
     let minter = minter_test_id();
     let canister_ids = install_canisters(&mut env, config, controller, minter);

@@ -1,15 +1,14 @@
 //! Placeholders for the proposed dfx extension API methods.
-use std::{
-    env::temp_dir,
-    path::PathBuf,
-    process::{Command, Stdio},
-    str::FromStr,
-};
-
 use anyhow::Context;
 use candid::Principal;
 use dfx_core::interface::dfx::DfxInterface;
 use slog::{o, Drain, Logger};
+use std::{
+    path::PathBuf,
+    process::{Command, Stdio},
+    str::FromStr,
+};
+use tempfile::tempdir;
 
 /// The name of the Orbit dfx extension.
 const ORBIT_EXTENSION_NAME: &str = "orbit";
@@ -91,8 +90,10 @@ impl OrbitExtensionAgent {
     }
 
     fn tmp_extensions_dir() -> anyhow::Result<cap_std::fs::Dir> {
-        let dir = temp_dir();
-        Self::init_extensions_dir(dir)
+        // TODO: Come up with a way that cleans up the tempdir after it goes out of scope
+        let dir = tempdir()?;
+        dbg!(&dir);
+        Self::init_extensions_dir(dir.into_path())
     }
 
     fn init_extensions_dir(path: PathBuf) -> anyhow::Result<cap_std::fs::Dir> {
@@ -107,6 +108,7 @@ impl OrbitExtensionAgent {
             format!("Could not open directory at: {}", extensions_dir.display())
         })?;
         let cap_dir = cap_std::fs::Dir::from_std_file(std_dir);
+        dbg!(&cap_dir);
         Ok(cap_dir)
     }
 
@@ -167,7 +169,9 @@ impl OrbitExtensionAgent {
             .station_or_default(None)
             .with_context(|| "Failed to get station")?
             .network;
-        let interface_builder = DfxInterface::builder().with_network_named(&network_name);
+        let interface_builder = DfxInterface::builder()
+            .with_force_fetch_root_key_insecure_non_mainnet_only()
+            .with_network_named(&network_name);
         let interface = interface_builder.build().await?;
         if !interface.network_descriptor().is_ic {
             interface.agent().fetch_root_key().await?;

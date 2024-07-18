@@ -208,8 +208,7 @@ impl OrbitExtensionAgent {
         // Set the default station.
         let mut extension_config = self.extension_config()?;
         extension_config.default_station = name_maybe;
-        let dfx_extension_agent = OrbitExtensionAgent::new()?;
-        let common_config_file = dfx_extension_agent.extension_config_file()?;
+        let common_config_file = self.extension_config_file()?;
         // TODO: Update atomically rather than rewriting.
         // TODO: Have a dedicated function for doing the update rather than updating the file directly.
         // Something like with_config_update(|config| { config.default_station = name_maybe; }) that provides the current config and writes the modified config back.

@@ -30,6 +30,7 @@ thiserror.workspace = true
 tokio.workspace = true
 
 orbit-station-api = { path = "../../core/station/api", package = "station-api" }
+tempfile = "3.10"
 walkdir = "2.5.0"
 
 [lib]
