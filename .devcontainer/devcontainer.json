@@ -1,0 +1,19 @@
+{
+    "name": "Rust, DFX, and Node.js Development Container",
+    "image": "mcr.microsoft.com/vscode/devcontainers/rust:latest",
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "lts"
+        }
+    },
+    "postCreateCommand": "curl https://sh.rustup.rs -sSf | sh -s -- -y && DFXVM_INIT_YES=true sh -ci \"$(curl -fsSL https://internetcomputer.org/install.sh)\" && dfxvm install 0.19.0 && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "rust-lang.rust-analyzer",
+                "dfinity-foundation.vscode-motoko"
+            ]
+        }
+    },
+    "remoteUser": "vscode"
+}
