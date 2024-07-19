@@ -37,7 +37,6 @@ where
 
     // Create a temporary directory and change to it
     let tmp_dir = tempdir().unwrap();
-    dbg!(tmp_dir.path());
     std::env::set_current_dir(tmp_dir.path()).unwrap();
     std::env::set_var(DFX_ROOT, tmp_dir.path());
 

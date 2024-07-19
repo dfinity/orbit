@@ -2,19 +2,19 @@ use crate::{
     cli::{dfx_orbit_test, setup_agent, TEST_PRINCIPAL},
     setup::{create_canister, setup_new_env, WALLET_ADMIN_USER},
     utils::{
-        add_user, add_user_with_name, execute_request, submit_request, submit_request_approval,
-        update_raw, user_test_id, wait_for_request, COUNTER_WAT,
+        add_user, add_user_with_name, execute_request, submit_request_approval, update_raw,
+        user_test_id, wait_for_request, COUNTER_WAT,
     },
     TestEnv,
 };
 use candid::Principal;
 use station_api::{
     AddRequestPolicyOperationInput, AuthScopeDTO, CallExternalCanisterOperationInput,
-    CallExternalCanisterResourceTargetDTO, CanisterMethodDTO,
-    ChangeExternalCanisterResourceTargetDTO, CreateRequestInput, EditPermissionOperationInput,
-    ExecutionMethodResourceTargetDTO, ExternalCanisterResourceActionDTO, QuorumDTO,
-    RequestApprovalStatusDTO, RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
-    ResourceDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
+    CallExternalCanisterResourceTargetDTO, CanisterMethodDTO, CreateRequestInput,
+    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO,
+    ExternalCanisterResourceActionDTO, QuorumDTO, RequestApprovalStatusDTO, RequestOperationInput,
+    RequestPolicyRuleDTO, RequestSpecifierDTO, ResourceDTO, UserSpecifierDTO,
+    ValidationMethodResourceTargetDTO,
 };
 
 /// Test a canister call through orbit using the station agent
@@ -75,8 +75,11 @@ fn canister_call() {
     // set four eyes principle for canister changes
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
-            specifier: RequestSpecifierDTO::ChangeExternalCanister(
-                ChangeExternalCanisterResourceTargetDTO::Canister(canister_id),
+            specifier: RequestSpecifierDTO::CallExternalCanister(
+                CallExternalCanisterResourceTargetDTO {
+                    validation_method: ValidationMethodResourceTargetDTO::No,
+                    execution_method: ExecutionMethodResourceTargetDTO::Any,
+                },
             ),
             rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
                 approvers: UserSpecifierDTO::Any,
@@ -97,7 +100,7 @@ fn canister_call() {
                 validation_method: None,
                 execution_method: CanisterMethodDTO {
                     canister_id,
-                    method_name: String::from("zet"),
+                    method_name: String::from("set"),
                 },
                 arg: Some(42_u32.to_le_bytes().to_vec()),
                 execution_method_cycles: None,
@@ -127,18 +130,17 @@ fn canister_call() {
     assert_eq!(ctr, 0_u32.to_le_bytes());
 
     // The other user approves the request
-    // submit_request_approval(
-    //     &env,
-    //     other_user,
-    //     canister_ids.station,
-    //     request.clone(),
-    //     RequestApprovalStatusDTO::Approved,
-    // );
+    submit_request_approval(
+        &env,
+        other_user,
+        canister_ids.station,
+        request.clone(),
+        RequestApprovalStatusDTO::Approved,
+    );
     wait_for_request(&env, other_user, canister_ids.station, request).unwrap();
 
     let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
-    assert_eq!(ctr, 1_u32.to_le_bytes());
-    todo!()
+    assert_eq!(ctr, 42_u32.to_le_bytes());
 }
 
 // TODO: Test with insufficient permissions

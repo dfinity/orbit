@@ -109,7 +109,6 @@ impl OrbitExtensionAgent {
             format!("Could not open directory at: {}", extensions_dir.display())
         })?;
         let cap_dir = cap_std::fs::Dir::from_std_file(std_dir);
-        dbg!(&cap_dir);
         Ok(cap_dir)
     }
 
