@@ -1,6 +1,10 @@
 {
   "__ref_dfx": "dfx.json reference: https://internetcomputer.org/docs/current/references/dfx-json-reference/",
   "canisters": {
+    "evm_rpc": {
+      "type": "pull",
+      "id": "7hfb6-caaaa-aaaar-qadga-cai"
+    },
     "icp_ledger": {
       "type": "custom",
       "candid": "https://raw.githubusercontent.com/dfinity/ic/d87954601e4b22972899e9957e800406a0a6b929/rs/rosetta-api/icp_ledger/ledger.did",

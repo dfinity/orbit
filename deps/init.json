@@ -1,0 +1,8 @@
+{
+  "canisters": {
+    "7hfb6-caaaa-aaaar-qadga-cai": {
+      "arg_str": "(record { nodesInSubnet = 28 })",
+      "arg_raw": "4449444c016c01f3db8bed067901001c000000"
+    }
+  }
+}

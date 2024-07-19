@@ -1,40 +1,26 @@
 use super::{
     BlockchainApi, BlockchainApiResult, BlockchainTransactionFee, BlockchainTransactionSubmitted,
-    TRANSACTION_SUBMITTED_DETAILS_BLOCK_HEIGHT_KEY,
     TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY,
 };
 use crate::{
-    core::ic_cdk::api::{id as station_canister_self_id, print},
-    errors::BlockchainApiError,
-    mappers::HelperMapper,
-    models::{
-        Account, AccountId, Blockchain, BlockchainStandard, Metadata, Transfer, METADATA_MEMO_KEY,
-    },
+    core::ic_cdk::api::print,
+    models::{Account, Metadata, Transfer},
 };
 use alloy::{
     consensus::SignableTransaction,
-    primitives::{Address, TxKind},
-    signers::k256::ecdsa::{self, VerifyingKey},
+    eips::eip2718::Encodable2718,
+    primitives::{hex, Address, TxKind},
+    signers::k256::ecdsa,
 };
 use async_trait::async_trait;
-use byteorder::{BigEndian, ByteOrder};
 use candid::Principal;
-use ic_ledger_types::{
-    account_balance, query_blocks, transfer, AccountBalanceArgs, AccountIdentifier, GetBlocksArgs,
-    Memo, QueryBlocksResponse, Subaccount, Timestamp, Tokens, Transaction, TransferArgs,
-    TransferError as LedgerTransferError, DEFAULT_FEE,
+use evm_rpc_canister_types::{
+    EthSepoliaService, MultiSendRawTransactionResult, RpcServices, SendRawTransactionResult,
+    SendRawTransactionStatus, EVM_RPC,
 };
+use maplit::hashmap;
 use num_bigint::BigUint;
-use orbit_essentials::{
-    api::ApiError,
-    cdk::{self},
-};
-use sha2::{Digest, Sha256};
-use std::{
-    fmt::{Display, Formatter},
-    str::FromStr,
-};
-use uuid::Uuid;
+use std::str::FromStr;
 
 use ic_cdk::api::management_canister::ecdsa::{
     ecdsa_public_key, sign_with_ecdsa, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgument,
@@ -43,7 +29,6 @@ use ic_cdk::api::management_canister::ecdsa::{
 
 #[derive(Debug)]
 pub struct Ethereum {
-    station_canister_id: Principal,
     chain: alloy_chains::Chain,
 }
 
@@ -55,7 +40,6 @@ pub enum EthereumNetwork {
 impl Ethereum {
     pub fn create() -> Self {
         Self {
-            station_canister_id: station_canister_self_id(),
             chain: alloy_chains::Chain::sepolia(),
         }
     }
@@ -64,15 +48,12 @@ impl Ethereum {
 #[async_trait]
 impl BlockchainApi for Ethereum {
     async fn generate_address(&self, account: &Account) -> BlockchainApiResult<String> {
-        let public_key = ecdsa_pubkey_of(&account).await;
-
-        let address = get_address_from_public_key(&public_key);
-
-        Ok(format!("0x{}", hex::encode(&address)))
+        let address = get_address_from_account(account).await;
+        Ok(address)
     }
 
     async fn balance(&self, account: &Account) -> BlockchainApiResult<BigUint> {
-        Ok(BigUint::from(0u32))
+        Ok(BigUint::from(123u32))
     }
 
     async fn decimals(&self, account: &Account) -> BlockchainApiResult<u32> {
@@ -90,7 +71,7 @@ impl BlockchainApi for Ethereum {
     }
 
     fn default_network(&self) -> String {
-        "mainnet".to_string()
+        alloy_chains::Chain::mainnet().to_string()
     }
 
     async fn submit_transaction(
@@ -100,7 +81,7 @@ impl BlockchainApi for Ethereum {
     ) -> BlockchainApiResult<BlockchainTransactionSubmitted> {
         let nonce = 0u64;
         let gas_limit = 100000u128;
-        let max_fee_per_gas = 100u128;
+        let max_fee_per_gas: u128 = 40 * 10u128.pow(9); // gwei
         let max_priority_fee_per_gas = 100u128;
 
         let transaction = alloy::consensus::TxEip1559 {
@@ -118,40 +99,54 @@ impl BlockchainApi for Ethereum {
             input: alloy::primitives::Bytes::default(),
         };
 
-        let encoded_tx = transaction.signature_hash();
+        let signature = {
+            let tx_signature_hash = transaction.signature_hash().to_vec();
+            let (signature,) = sign_with_ecdsa(SignWithEcdsaArgument {
+                message_hash: tx_signature_hash.clone(),
+                derivation_path: principal_to_derivation_path(&account),
+                key_id: get_key_id(),
+            })
+            .await
+            .expect("failed to sign transaction");
 
-        let (signed_tx,) = sign_with_ecdsa(SignWithEcdsaArgument {
-            message_hash: encoded_tx.to_vec(),
-            derivation_path: principal_to_derivation_path(&account),
-            key_id: get_key_id(),
-        })
-        .await
-        .expect("Failed to sign transaction");
+            let sig_bytes = signature.signature.as_slice();
+            let public_key = ecdsa_pubkey_of(&account).await;
+            let parity = y_parity(&tx_signature_hash, sig_bytes, &public_key);
+            alloy::signers::Signature::from_bytes_and_parity(sig_bytes, parity)
+                .expect("failed to decode signature")
+        };
+
+        {
+            // TODO: just to test the recovery. Remove this when done.
+            let test_recovered_address = signature
+                .recover_address_from_prehash(&transaction.signature_hash())
+                .expect("failed to recover address");
+            let account_address = get_address_from_account(&account).await;
+            print(format!(
+                "test_recovered_address: {} {:?} {:?}",
+                hex::encode_prefixed(test_recovered_address).to_lowercase()
+                    == account_address.to_lowercase(),
+                hex::encode_prefixed(test_recovered_address),
+                account_address
+            ));
+        }
+
+        print(format!("signature: {:?}", signature));
+        let tx_signed = transaction.into_signed(signature);
+        let tx_envelope: alloy::consensus::TxEnvelope = tx_signed.into();
+        let tx_encoded = tx_envelope.encoded_2718();
+        print(format!("tx_encoded: {:?}", tx_encoded));
+
+        let sent_tx_hash = send_raw_transaction(&self.chain, &tx_encoded).await;
+        print(format!("sent_tx_hash: {:?}", sent_tx_hash));
 
         Ok(BlockchainTransactionSubmitted {
             details: vec![(
-                "transaction signature".to_string(),
-                format!("0x{}", hex::encode(&signed_tx.signature)),
+                TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY.to_owned(),
+                sent_tx_hash,
             )],
         })
     }
-}
-
-/// Returns the public key and a message signature for the specified principal.
-async fn pubkey_and_signature(caller: &Account, message_hash: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
-    // Fetch the pubkey and the signature concurrently to reduce latency.
-    let (pubkey, response) = futures::join!(
-        ecdsa_pubkey_of(caller),
-        sign_with_ecdsa(SignWithEcdsaArgument {
-            message_hash,
-            derivation_path: principal_to_derivation_path(caller),
-            key_id: get_key_id(),
-        })
-    );
-    (
-        pubkey,
-        response.expect("failed to sign the message").0.signature,
-    )
 }
 
 async fn ecdsa_pubkey_of(account: &Account) -> Vec<u8> {
@@ -163,6 +158,12 @@ async fn ecdsa_pubkey_of(account: &Account) -> Vec<u8> {
     .await
     .expect("failed to get public key");
     key.public_key
+}
+
+async fn get_address_from_account(account: &Account) -> String {
+    let public_key = ecdsa_pubkey_of(&account).await;
+    let address = get_address_from_public_key(&public_key);
+    hex::encode_prefixed(&address)
 }
 
 fn get_address_from_public_key(public_key: &[u8]) -> Address {
@@ -187,50 +188,67 @@ fn principal_to_derivation_path(account: &Account) -> Vec<Vec<u8>> {
     vec![vec![SCHEMA], account_principal.as_slice().to_vec()]
 }
 
-// /// Computes a signature for an [EIP-1559](https://eips.ethereum.org/EIPS/eip-1559) transaction.
-// // #[update(guard = "caller_is_not_anonymous")]
-// async fn sign_transaction(req: SignRequest) -> String {
-//     use ethers_core::types::transaction::eip1559::Eip1559TransactionRequest;
-//     use ethers_core::types::Signature;
+pub async fn send_raw_transaction(chain: &alloy_chains::Chain, raw_tx: &[u8]) -> String {
+    let config = None;
+    print(format!("getting services for chain: {:?}", chain));
+    let services = hashmap! {
+        alloy_chains::Chain::sepolia().id() => RpcServices::EthSepolia(Some(vec![EthSepoliaService::Alchemy])),
+        // alloy_chains::Chain::mainnet().id() => RpcServices::EthMainnet(None), // TODO: support mainnet
+    }.remove(&chain.id()).expect("chain not supported");
 
-//     const EIP1559_TX_ID: u8 = 2;
+    print(format!("got services"));
 
-//     let caller = ic_cdk::caller();
+    let cycles = 1000000000;
 
-//     let data = req.data.as_ref().map(|s| decode_hex(s));
+    let raw_tx_hex = hex::encode_prefixed(raw_tx);
+    print(format!("send_tx: raw_tx_hex: {:?}", raw_tx_hex));
+    let send_result = EVM_RPC
+        .eth_send_raw_transaction(services, config, raw_tx_hex, cycles)
+        .await;
+    print(format!("send_tx: send_result: {:?}", send_result));
+    let status = match send_result {
+        Ok((res,)) => match res {
+            MultiSendRawTransactionResult::Consistent(status) => match status {
+                SendRawTransactionResult::Ok(status) => status,
+                SendRawTransactionResult::Err(e) => {
+                    ic_cdk::trap(format!("Error: {:?}", e).as_str());
+                }
+            },
+            MultiSendRawTransactionResult::Inconsistent(_) => {
+                ic_cdk::trap("Status is inconsistent");
+            }
+        },
+        Err(e) => ic_cdk::trap(format!("Error: {:?}", e).as_str()),
+    };
+    print(format!("send_tx: status: {:?}", status));
+    let tx_hash = match status {
+        SendRawTransactionStatus::Ok(status) => status,
+        error => {
+            ic_cdk::trap(format!("Error: {:?}", error).as_str());
+        }
+    };
+    print(format!("send_tx: tx_hash: {:?}", tx_hash));
+    tx_hash.expect("tx hash is none")
+}
 
-//     let tx = Eip1559TransactionRequest {
-//         chain_id: Some(nat_to_u64(&req.chain_id)),
-//         from: None,
-//         to: Some(
-//             Address::from_str(&req.to)
-//                 .expect("failed to parse the destination address")
-//                 .into(),
-//         ),
-//         gas: Some(nat_to_u256(&req.gas)),
-//         value: Some(nat_to_u256(&req.value)),
-//         nonce: Some(nat_to_u256(&req.nonce)),
-//         data,
-//         access_list: AccessList::default(),
-//         max_priority_fee_per_gas: Some(nat_to_u256(&req.max_priority_fee_per_gas)),
-//         max_fee_per_gas: Some(nat_to_u256(&req.max_fee_per_gas)),
-//     };
+/// Computes the parity bit allowing to recover the public key from the signature.
+fn y_parity(prehash: &[u8], sig: &[u8], pubkey: &[u8]) -> u64 {
+    use alloy::signers::k256::ecdsa::{RecoveryId, Signature, VerifyingKey};
 
-//     let mut unsigned_tx_bytes = tx.rlp().to_vec();
-//     unsigned_tx_bytes.insert(0, EIP1559_TX_ID);
+    let orig_key = VerifyingKey::from_sec1_bytes(pubkey).expect("failed to parse the pubkey");
+    let signature = Signature::try_from(sig).unwrap();
+    for parity in [0u8, 1] {
+        let recid = RecoveryId::try_from(parity).unwrap();
+        let recovered_key = VerifyingKey::recover_from_prehash(prehash, &signature, recid)
+            .expect("failed to recover key");
+        if recovered_key == orig_key {
+            return u64::from(parity);
+        }
+    }
 
-//     let txhash = keccak256(&unsigned_tx_bytes);
-
-//     let (pubkey, signature) = pubkey_and_signature(&caller, txhash.to_vec()).await;
-
-//     let signature = Signature {
-//         v: y_parity(&txhash, &signature, &pubkey),
-//         r: U256::from_big_endian(&signature[0..32]),
-//         s: U256::from_big_endian(&signature[32..64]),
-//     };
-
-//     let mut signed_tx_bytes = tx.rlp_signed(&signature).to_vec();
-//     signed_tx_bytes.insert(0, EIP1559_TX_ID);
-
-//     format!("0x{}", hex::encode(&signed_tx_bytes))
-// }
+    panic!(
+        "failed to recover the parity bit from a signature; sig: {}, pubkey: {}",
+        hex::encode_prefixed(sig),
+        hex::encode_prefixed(pubkey)
+    )
+}
