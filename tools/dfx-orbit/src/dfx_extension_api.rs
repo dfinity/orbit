@@ -170,9 +170,7 @@ impl OrbitExtensionAgent {
             .station_or_default(None)
             .with_context(|| "Failed to get station")?
             .network;
-        let interface_builder = DfxInterface::builder()
-            .with_force_fetch_root_key_insecure_non_mainnet_only()
-            .with_network_named(&network_name);
+        let interface_builder = DfxInterface::builder().with_network_named(&network_name);
         let interface = interface_builder.build().await?;
         if !interface.network_descriptor().is_ic {
             interface.agent().fetch_root_key().await?;
