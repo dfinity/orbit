@@ -1,7 +1,7 @@
-use crate::{args::request::CreateRequestArgs, StationAgent};
+use crate::StationAgent;
 use clap::Parser;
 use orbit_station_api::{
-    ChangeExternalCanisterResourceTargetDTO, CreateRequestInput, EditPermissionOperationInput,
+    ChangeExternalCanisterResourceTargetDTO, EditPermissionOperationInput,
     ExternalCanisterResourceActionDTO, RequestOperationInput, ResourceDTO,
 };
 
@@ -14,35 +14,31 @@ pub struct RequestPermissionUpdateCanisterArgs {
     pub canister: Option<String>,
 }
 
-impl CreateRequestArgs for RequestPermissionUpdateCanisterArgs {
+impl RequestPermissionUpdateCanisterArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    fn into_create_request_input(
+    pub(crate) fn into_create_request_input(
         self,
         station_agent: &StationAgent,
-    ) -> anyhow::Result<CreateRequestInput> {
-        let canisters: anyhow::Result<ChangeExternalCanisterResourceTargetDTO> =
+    ) -> anyhow::Result<RequestOperationInput> {
+        let canisters: ChangeExternalCanisterResourceTargetDTO =
             if let Some(canister_name_or_id) = self.canister {
                 station_agent
                     .canister_id(&canister_name_or_id)
-                    .map(ChangeExternalCanisterResourceTargetDTO::Canister)
+                    .map(ChangeExternalCanisterResourceTargetDTO::Canister)?
             } else {
-                Ok(ChangeExternalCanisterResourceTargetDTO::Any)
+                ChangeExternalCanisterResourceTargetDTO::Any
             };
 
         let resource =
-            ResourceDTO::ExternalCanister(ExternalCanisterResourceActionDTO::Change(canisters?));
+            ResourceDTO::ExternalCanister(ExternalCanisterResourceActionDTO::Change(canisters));
 
-        let operation = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-            resource,
-            auth_scope: None,
-            users: None,
-            user_groups: None,
-        });
-        Ok(CreateRequestInput {
-            operation,
-            title: None,
-            summary: None,
-            execution_plan: None,
-        })
+        Ok(RequestOperationInput::EditPermission(
+            EditPermissionOperationInput {
+                resource,
+                auth_scope: None,
+                users: None,
+                user_groups: None,
+            },
+        ))
     }
 }

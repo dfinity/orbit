@@ -28,22 +28,19 @@ impl CreateRequestArgs for RequestPermissionArgs {
         self,
         station_agent: &StationAgent,
     ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
-        match self {
+        let operation = match self {
             RequestPermissionArgs::UpdateCanister(canister_args) => {
-                canister_args.into_create_request_input(station_agent)
+                canister_args.into_create_request_input(station_agent)?
             }
-            RequestPermissionArgs::ReadPermissions(permission_args) => Ok(CreateRequestInput {
-                operation: permission_args.into(),
-                title: None,
-                summary: None,
-                execution_plan: None,
-            }),
-            RequestPermissionArgs::UpdatePermissions(permission_args) => Ok(CreateRequestInput {
-                operation: permission_args.into(),
-                title: None,
-                summary: None,
-                execution_plan: None,
-            }),
-        }
+            RequestPermissionArgs::ReadPermissions(permission_args) => permission_args.into(),
+            RequestPermissionArgs::UpdatePermissions(permission_args) => permission_args.into(),
+        };
+
+        Ok(CreateRequestInput {
+            operation,
+            title: None,
+            summary: None,
+            execution_plan: None,
+        })
     }
 }
