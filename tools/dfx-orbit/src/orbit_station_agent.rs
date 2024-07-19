@@ -1,8 +1,9 @@
 //! A dfx and IC agent for communicating with an Orbit station.
 
-use crate::{dfx_extension_api::OrbitExtensionAgent, StationAgent};
-use candid::Principal;
+use crate::{dfx_extension_api::OrbitExtensionAgent, error::StationAgentResult, StationAgent};
+use candid::{CandidType, Principal};
 use ic_agent::{agent::UpdateBuilder, Agent};
+use orbit_station_api::ApiErrorDTO;
 
 impl StationAgent {
     /// Creates a new agent for communicating with the default station.
@@ -69,10 +70,34 @@ impl StationAgent {
     ///         .call_and_wait()
     ///         .await?;
     /// ```
-    // TODO: Wrap in a higher level function that also does the candid parsing
     pub async fn update_orbit(&mut self, method_name: &str) -> anyhow::Result<UpdateBuilder> {
         let orbit_canister_id = Principal::from_text(&self.station.station_id)?;
         Ok(self.agent().update(&orbit_canister_id, method_name))
+    }
+
+    /// Makes an update call to the station.
+    ///
+    /// This version integrates candid encoding / decoding
+    pub async fn update_orbit_typed<Req, Res>(
+        &mut self,
+        method_name: &str,
+        request: Req,
+    ) -> StationAgentResult<Res>
+    where
+        Req: CandidType,
+        Res: CandidType + for<'a> candid::Deserialize<'a>,
+    {
+        let encoded_request = candid::encode_one(request)?;
+
+        let response_bytes = self
+            .update_orbit(method_name)
+            .await?
+            .with_arg(encoded_request)
+            .call_and_wait()
+            .await?;
+        let ans: Result<Res, ApiErrorDTO> = candid::decode_one(&response_bytes)?;
+
+        Ok(ans?)
     }
 
     /// The URL for a request in the Orbit UI.

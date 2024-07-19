@@ -13,6 +13,7 @@ use crate::{
     dfx_extension_api::OrbitExtensionAgent,
     StationAgent,
 };
+use anyhow::bail;
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
 pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
@@ -65,6 +66,10 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
                     serde_json::to_string_pretty(&station_agent.review_next(args.into()).await?)?
                 }
                 ReviewArgs::Id(args) => {
+                    if args.approve.is_some() || args.reject.is_some() {
+                        bail!("Approving or rejecting is currently unimplemented");
+                    }
+
                     serde_json::to_string_pretty(&station_agent.review_id(args.into()).await?)?
                 }
             };
