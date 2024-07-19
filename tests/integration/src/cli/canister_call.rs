@@ -1,11 +1,10 @@
 use crate::{
-    cli::{setup_agent, start_pocket_ic},
+    cli::{dfx_orbit_test, setup_agent},
     setup::{create_canister, setup_new_env},
     utils::{add_user, update_raw, user_test_id, COUNTER_WAT},
     TestEnv,
 };
 use candid::Principal;
-use tokio::runtime::Runtime;
 
 /// Test a canister call through orbit using the station agent
 #[test]
@@ -36,14 +35,11 @@ fn canister_call() {
     let user_b = user_test_id(1);
     add_user(&env, user_b, vec![], canister_ids.station);
 
-    start_pocket_ic(&mut env);
-
-    dbg!("Alive");
-
-    let runtime = Runtime::new().unwrap();
-    runtime.block_on(async {
+    dfx_orbit_test(&mut env, async {
         setup_agent(canister_ids.station).await;
 
-        todo!()
+        //
     });
+
+    todo!()
 }

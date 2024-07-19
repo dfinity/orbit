@@ -7,6 +7,7 @@ edition = '2021'
 [dependencies]
 candid = { workspace = true }
 candid_parser = { workspace = true }
+dfx-orbit = { path = "../../tools/dfx-orbit" }
 hex = { workspace = true }
 orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alpha.2' }
 ic-cdk = { workspace = true }
@@ -16,11 +17,9 @@ num-bigint = { workspace = true }
 pocket-ic = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true, features = ['derive'] }
+tempfile = "3.10"
 tokio.workspace = true
 control-panel-api = { path = '../../core/control-panel/api', version = '0.0.2-alpha.2' }
 upgrader-api = { path = '../../core/upgrader/api', version = '0.0.2-alpha.2' }
 station-api = { path = '../../core/station/api', version = '0.0.2-alpha.2' }
 wat = { workspace = true }
-
-[dev-dependencies]
-dfx-orbit = { path = "../../tools/dfx-orbit" }

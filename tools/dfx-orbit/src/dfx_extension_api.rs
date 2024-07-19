@@ -86,6 +86,7 @@ impl OrbitExtensionAgent {
     fn extensions_dir() -> anyhow::Result<cap_std::fs::Dir> {
         let user_config_dir = dfx_core::config::directories::get_user_dfx_config_dir()
             .with_context(|| "Could not find user dfx config dir")?;
+        dbg!(&user_config_dir);
         Self::init_extensions_dir(user_config_dir)
     }
 
