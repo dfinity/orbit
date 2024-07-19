@@ -27,9 +27,9 @@ const IDENTITY_JSON: &str = "
   \"default\": \"default\"
 }";
 
-fn dfx_orbit_test<F>(env: &mut PocketIc, test_func: F)
+fn dfx_orbit_test<F>(env: &mut PocketIc, test_func: F) -> F::Output
 where
-    F: Future<Output = ()>,
+    F: Future,
 {
     // Store current dir and DFX_CONFIG_ROOT
     let current_dir = std::env::current_dir().unwrap();
@@ -47,7 +47,7 @@ where
     env.make_live(Some(POCKET_IC_PORT));
 
     let runtime = Runtime::new().unwrap();
-    runtime.block_on(test_func);
+    let result = runtime.block_on(test_func);
 
     // Stop the live environment
     env.make_deterministic();
@@ -55,8 +55,12 @@ where
     // Restore current dir and DFX_CONFIG_ROOT
     std::env::set_current_dir(current_dir).unwrap();
     current_config_root.map(|root| std::env::set_var(DFX_ROOT, root));
+
+    result
 }
 
+/// Setup default identity at `dfx_root`, such that we can load the identity and use it for
+/// tests
 fn setup_identity(dfx_root: &Path) {
     let conf_path = dfx_root.join(".config").join("dfx");
     let default_id_path = conf_path.join("identity").join("default");
@@ -66,6 +70,7 @@ fn setup_identity(dfx_root: &Path) {
     std::fs::write(default_id_path.join("identity.pem"), TEST_KEY).unwrap();
 }
 
+/// Setup the station agent for the test
 async fn setup_agent(station_id: Principal) -> StationAgent {
     let orbit_agent = OrbitExtensionAgent::new().unwrap();
     orbit_agent
@@ -79,3 +84,7 @@ async fn setup_agent(station_id: Principal) -> StationAgent {
 
     StationAgent::new(orbit_agent).await.unwrap()
 }
+
+// TODO: Test canister update
+// TODO: Test reviewing and approval through StationAgent
+// TODO: Test asset upload, checking and approval
