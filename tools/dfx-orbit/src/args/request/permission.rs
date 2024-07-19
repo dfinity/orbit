@@ -7,6 +7,7 @@ use super::CreateRequestArgs;
 use crate::StationAgent;
 use canister::RequestPermissionUpdateCanisterArgs;
 use clap::Subcommand;
+use orbit_station_api::CreateRequestInput;
 use permission::{RequestPermissionReadPermissionsArgs, RequestPermissionUpdatePermissionsArgs};
 
 /// Request permission.
@@ -31,12 +32,18 @@ impl CreateRequestArgs for RequestPermissionArgs {
             RequestPermissionArgs::UpdateCanister(canister_args) => {
                 canister_args.into_create_request_input(station_agent)
             }
-            RequestPermissionArgs::ReadPermissions(permission_args) => {
-                permission_args.into_create_request_input(station_agent)
-            }
-            RequestPermissionArgs::UpdatePermissions(permission_args) => {
-                permission_args.into_create_request_input(station_agent)
-            }
+            RequestPermissionArgs::ReadPermissions(permission_args) => Ok(CreateRequestInput {
+                operation: permission_args.into(),
+                title: None,
+                summary: None,
+                execution_plan: None,
+            }),
+            RequestPermissionArgs::UpdatePermissions(permission_args) => Ok(CreateRequestInput {
+                operation: permission_args.into(),
+                title: None,
+                summary: None,
+                execution_plan: None,
+            }),
         }
     }
 }

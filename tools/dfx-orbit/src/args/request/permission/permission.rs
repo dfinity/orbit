@@ -1,10 +1,8 @@
 //! Arguments for `dfx-orbit request permission permission`.
 
-use crate::{args::request::CreateRequestArgs, StationAgent};
 use clap::Parser;
 use orbit_station_api::{
-    CreateRequestInput, EditPermissionOperationInput, PermissionResourceActionDTO,
-    RequestOperationInput, ResourceDTO,
+    EditPermissionOperationInput, PermissionResourceActionDTO, RequestOperationInput, ResourceDTO,
 };
 
 /// Requests the privilige of proposing canister upgrades.
@@ -18,28 +16,13 @@ pub struct RequestPermissionUpdatePermissionsArgs {
     pub group: Vec<String>,
 }
 
-impl CreateRequestArgs for RequestPermissionUpdatePermissionsArgs {
-    /// Converts the CLI arg type into the equivalent Orbit API type.
-    fn into_create_request_input(
-        self,
-        _station_agent: &StationAgent,
-    ) -> anyhow::Result<CreateRequestInput> {
-        let RequestPermissionUpdatePermissionsArgs {
-            user: users,
-            group: user_groups,
-        } = self;
-
-        let operation = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+impl From<RequestPermissionUpdatePermissionsArgs> for RequestOperationInput {
+    fn from(value: RequestPermissionUpdatePermissionsArgs) -> Self {
+        RequestOperationInput::EditPermission(EditPermissionOperationInput {
             resource: ResourceDTO::Permission(PermissionResourceActionDTO::Update),
             auth_scope: None,
-            users: Some(users),
-            user_groups: Some(user_groups),
-        });
-        Ok(CreateRequestInput {
-            operation,
-            title: None,
-            summary: None,
-            execution_plan: None,
+            users: Some(value.user),
+            user_groups: Some(value.group),
         })
     }
 }
@@ -55,28 +38,13 @@ pub struct RequestPermissionReadPermissionsArgs {
     pub group: Vec<String>,
 }
 
-impl CreateRequestArgs for RequestPermissionReadPermissionsArgs {
-    /// Converts the CLI arg type into the equivalent Orbit API type.
-    fn into_create_request_input(
-        self,
-        _station_agent: &StationAgent,
-    ) -> anyhow::Result<CreateRequestInput> {
-        let RequestPermissionReadPermissionsArgs {
-            user: users,
-            group: user_groups,
-        } = self;
-
-        let operation = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+impl From<RequestPermissionReadPermissionsArgs> for RequestOperationInput {
+    fn from(value: RequestPermissionReadPermissionsArgs) -> Self {
+        RequestOperationInput::EditPermission(EditPermissionOperationInput {
             resource: ResourceDTO::Permission(PermissionResourceActionDTO::Read),
             auth_scope: None,
-            users: Some(users),
-            user_groups: Some(user_groups),
-        });
-        Ok(CreateRequestInput {
-            operation,
-            title: None,
-            summary: None,
-            execution_plan: None,
+            users: Some(value.user),
+            user_groups: Some(value.group),
         })
     }
 }
