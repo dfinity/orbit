@@ -14,7 +14,7 @@ const POCKET_IC_PORT: u16 = 4943;
 const DFX_ROOT: &str = "DFX_CONFIG_ROOT";
 
 //TODO: Generate these on the fly during tests
-//const TEST_PRINCIPAL: &str = "m4cdf-2jslu-ubcta-5c3e2-wfw77-rgplv-t5hro-otcp5-mnalj-c7du7-iqe";
+const TEST_PRINCIPAL: &str = "m4cdf-2jslu-ubcta-5c3e2-wfw77-rgplv-t5hro-otcp5-mnalj-c7du7-iqe";
 const TEST_KEY: &str = "
 -----BEGIN EC PRIVATE KEY-----
 MHQCAQEEIDcHb4eKisFoFBFDFFVm8O1fyMsfRYZLnRzPKHguq/xnoAcGBSuBBAAK
