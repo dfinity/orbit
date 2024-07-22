@@ -16,6 +16,7 @@ CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
 CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
 CANISTER_ID_UI="werw6-ayaaa-aaaaa-774aa-cai"
 CANISTER_ID_WALLET="wkt3w-3iaaa-aaaaa-774ba-cai"
+CANISTER_ID_RPC="7hfb6-caaaa-aaaar-qadga-cai"
 
 #############################################
 # USAGE                                     #
@@ -223,6 +224,11 @@ function approve_waiting_list() {
   dfx canister call control_panel update_waiting_list "record { users = vec { principal \"$principal\" }; new_status = variant {Approved} }"
 }
 
+function setup_deps() {
+  dfx deps pull
+  dfx deps deploy
+}
+
 #############################################
 # SCRIPT OPTIONS                            #
 #############################################
@@ -259,6 +265,7 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_internet_identity
     exec_function setup_control_panel
     exec_function setup_app_wallet
+    exec_function setup_deps
     echo
     ;;
   --init-icp-ledger)
@@ -289,6 +296,7 @@ while [[ $# -gt 0 ]]; do
     shift
     exec_function setup_devenv
     exec_function setup_app_wallet
+    exec_function setup_deps
     echo
     ;;
   --candid-generate)
