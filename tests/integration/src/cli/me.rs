@@ -1,11 +1,10 @@
 use crate::{
-    cli::{dfx_orbit_test, setup_agent, TEST_PRINCIPAL},
+    cli::{dfx_orbit_test, setup_agent, setup_dfx_user},
     setup::setup_new_env,
-    utils::add_user_with_name,
     TestEnv,
 };
-use candid::Principal;
 
+/// Test that the [`StationAgent::me`] method works and returns the correct data.
 #[test]
 fn me() {
     let TestEnv {
@@ -14,14 +13,7 @@ fn me() {
         ..
     } = setup_new_env();
 
-    let dfx_user = Principal::from_text(TEST_PRINCIPAL).unwrap();
-    let dfx_user_id = add_user_with_name(
-        &env,
-        String::from("dfx_user"),
-        dfx_user,
-        vec![],
-        canister_ids.station,
-    );
+    let (_, dfx_user) = setup_dfx_user(&env, &canister_ids);
 
     let response = dfx_orbit_test(&mut env, async {
         // Setup the station agent
@@ -32,5 +24,5 @@ fn me() {
         response
     });
 
-    assert_eq!(response.me.id, dfx_user_id.id);
+    assert_eq!(response.me.id, dfx_user.id);
 }

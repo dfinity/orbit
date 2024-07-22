@@ -5,25 +5,29 @@ use dfx_orbit::{
 use pocket_ic::PocketIc;
 use rand::Rng;
 use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
+use station_api::UserDTO;
 use std::{
     cell::RefCell,
     future::Future,
     hash::{DefaultHasher, Hash, Hasher},
     path::Path,
+    sync::Mutex,
 };
 use tempfile::tempdir;
 use tokio::runtime::Runtime;
 
 use crate::{
     setup::create_canister,
-    utils::{update_raw, COUNTER_WAT},
+    utils::{add_user_with_name, update_raw, COUNTER_WAT},
     CanisterIds,
 };
 
 mod canister_call;
 mod me;
+mod review;
 
 thread_local! {static PORT: RefCell<u16> = RefCell::new(4943);}
+static AGENT_MUTEX: Mutex<()> = Mutex::new(());
 
 const DFX_ROOT: &str = "DFX_CONFIG_ROOT";
 
@@ -45,6 +49,12 @@ fn dfx_orbit_test<F>(env: &mut PocketIc, test_func: F) -> F::Output
 where
     F: Future,
 {
+    // NOTE: While DFX_CONFIG_ROOT can only be set with the help of an env variable
+    // this section of the test can not run in parallel.
+    // Therefore we run this part of the test in a critical section, while the setup test
+    // can run in parllel. Hopefully we will be able to fix this in the future.
+    let _crit = AGENT_MUTEX.lock().unwrap();
+
     // Store current dir and DFX_CONFIG_ROOT
     let current_dir = std::env::current_dir().unwrap();
     let current_config_root = std::env::var(DFX_ROOT).ok();
@@ -83,6 +93,7 @@ where
     // Start the live environment
     env.make_live(Some(port));
 
+    // Execute the test function in an asynchronous runtime
     let runtime = Runtime::new().unwrap();
     let result = runtime.block_on(test_func);
 
@@ -146,6 +157,20 @@ async fn setup_agent(station_id: Principal) -> StationAgent {
         .unwrap();
 
     StationAgent::new(orbit_agent).await.unwrap()
+}
+
+/// Create the dfx user's identities and add them to the station
+fn setup_dfx_user(env: &PocketIc, canister_ids: &CanisterIds) -> (Principal, UserDTO) {
+    let dfx_principal = Principal::from_text(TEST_PRINCIPAL).unwrap();
+    let dfx_user = add_user_with_name(
+        env,
+        String::from("dfx_user"),
+        dfx_principal,
+        vec![],
+        canister_ids.station,
+    );
+
+    (dfx_principal, dfx_user)
 }
 
 fn setup_counter_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> Principal {
