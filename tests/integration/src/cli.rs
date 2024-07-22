@@ -3,7 +3,14 @@ use dfx_orbit::{
     dfx_extension_api::OrbitExtensionAgent, local_config::StationConfig, StationAgent,
 };
 use pocket_ic::PocketIc;
-use std::{cell::RefCell, future::Future, path::Path};
+use rand::Rng;
+use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
+use std::{
+    cell::RefCell,
+    future::Future,
+    hash::{DefaultHasher, Hash, Hasher},
+    path::Path,
+};
 use tempfile::tempdir;
 use tokio::runtime::Runtime;
 
@@ -18,8 +25,6 @@ mod me;
 
 thread_local! {static PORT: RefCell<u16> = RefCell::new(4943);}
 
-// TODO: We need to be able to set the port dynamically in order to support parallel execution
-//const POCKET_IC_PORT: u16 = 4943;
 const DFX_ROOT: &str = "DFX_CONFIG_ROOT";
 
 //TODO: Generate these on the fly during tests
@@ -49,8 +54,26 @@ where
     std::env::set_current_dir(tmp_dir.path()).unwrap();
     std::env::set_var(DFX_ROOT, tmp_dir.path());
 
+    // Pick a random port for the test.
+    // If multiple dfx-orbit tests are run in parallel, they would get mixed up, if they ended
+    // up using the same port. We pick a random port between 10_000 and 20_000 based on the name
+    // of the current thread.
+    // The dfx.json file is set up accordingly later in the test
     let port = PORT.with(|port| {
-        *port.borrow_mut() = 4943;
+        // When 'RUST_TEST_THREADS=1', all tests run in the same thread and that thread will
+        // be unnamed. This is not a problem, since in that case we don't get a port collision
+        let thread = std::thread::current();
+        let name = thread.name().unwrap_or("test_thread");
+
+        let mut hasher = DefaultHasher::new();
+        name.hash(&mut hasher);
+        let seed = hasher.finish();
+
+        let mut rng = ChaCha8Rng::seed_from_u64(seed);
+        let value: u16 = rng.gen_range(10_000..20_000);
+
+        // Set and also return the port
+        *port.borrow_mut() = value;
         port.borrow().clone()
     });
 

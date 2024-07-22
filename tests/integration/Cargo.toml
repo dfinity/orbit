@@ -15,6 +15,8 @@ ic-ledger-types = { workspace = true }
 lazy_static = { workspace = true }
 num-bigint = { workspace = true }
 pocket-ic = { workspace = true }
+rand = { workspace = true }
+rand_chacha = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true, features = ['derive'] }
 tempfile = "3.10"

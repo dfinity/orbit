@@ -2354,6 +2354,8 @@ dependencies = [
  "num-bigint 0.4.5",
  "orbit-essentials",
  "pocket-ic",
+ "rand",
+ "rand_chacha",
  "serde",
  "sha2 0.10.8",
  "station-api",
