@@ -1,9 +1,9 @@
 use crate::{
-    cli::{dfx_orbit_test, setup_agent, TEST_PRINCIPAL},
-    setup::{create_canister, setup_new_env, WALLET_ADMIN_USER},
+    cli::{dfx_orbit_test, setup_agent, setup_counter_canister, TEST_PRINCIPAL},
+    setup::{setup_new_env, WALLET_ADMIN_USER},
     utils::{
         add_user, add_user_with_name, execute_request, submit_request_approval, update_raw,
-        user_test_id, wait_for_request, COUNTER_WAT,
+        user_test_id, wait_for_request,
     },
     TestEnv,
 };
@@ -26,19 +26,7 @@ fn canister_call() {
         ..
     } = setup_new_env();
 
-    // create and install the counter canister
-    let canister_id = create_canister(&mut env, canister_ids.station);
-    let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
-    env.install_canister(
-        canister_id,
-        module_bytes.clone(),
-        vec![],
-        Some(canister_ids.station),
-    );
-
-    // the counter should initially be set at 0
-    let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
-    assert_eq!(ctr, 0_u32.to_le_bytes());
+    let canister_id = setup_counter_canister(&mut env, &canister_ids);
 
     // create new user identities and add them to the station
     let dfx_user = Principal::from_text(TEST_PRINCIPAL).unwrap();

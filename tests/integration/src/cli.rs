@@ -7,6 +7,12 @@ use std::{future::Future, path::Path};
 use tempfile::tempdir;
 use tokio::runtime::Runtime;
 
+use crate::{
+    setup::create_canister,
+    utils::{update_raw, COUNTER_WAT},
+    CanisterIds,
+};
+
 mod canister_call;
 mod me;
 
@@ -77,12 +83,29 @@ async fn setup_agent(station_id: Principal) -> StationAgent {
         .add_station(StationConfig {
             name: String::from("Test"),
             station_id: station_id.to_text(),
-            network: String::from("local"),
+            network: String::from("test"),
             url: format!("http://localhost:{}", POCKET_IC_PORT),
         })
         .unwrap();
 
     StationAgent::new(orbit_agent).await.unwrap()
+}
+
+fn setup_counter_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> Principal {
+    // create and install the counter canister
+    let canister_id = create_canister(env, canister_ids.station);
+    let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
+    env.install_canister(
+        canister_id,
+        module_bytes.clone(),
+        vec![],
+        Some(canister_ids.station),
+    );
+
+    // the counter should initially be set at 0
+    let ctr = update_raw(&*env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+    canister_id
 }
 
 // TODO: Test canister update
