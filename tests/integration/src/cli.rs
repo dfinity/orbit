@@ -8,6 +8,7 @@ use tempfile::tempdir;
 use tokio::runtime::Runtime;
 
 mod canister_call;
+mod me;
 
 // TODO: We need to be able to set the port dynamically in order to support parallel execution
 const POCKET_IC_PORT: u16 = 4943;
