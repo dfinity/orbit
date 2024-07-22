@@ -3,7 +3,7 @@ use dfx_orbit::{
     dfx_extension_api::OrbitExtensionAgent, local_config::StationConfig, StationAgent,
 };
 use pocket_ic::PocketIc;
-use std::{future::Future, path::Path};
+use std::{cell::RefCell, future::Future, path::Path};
 use tempfile::tempdir;
 use tokio::runtime::Runtime;
 
@@ -16,8 +16,10 @@ use crate::{
 mod canister_call;
 mod me;
 
+thread_local! {static PORT: RefCell<u16> = RefCell::new(4943);}
+
 // TODO: We need to be able to set the port dynamically in order to support parallel execution
-const POCKET_IC_PORT: u16 = 4943;
+//const POCKET_IC_PORT: u16 = 4943;
 const DFX_ROOT: &str = "DFX_CONFIG_ROOT";
 
 //TODO: Generate these on the fly during tests
@@ -47,10 +49,16 @@ where
     std::env::set_current_dir(tmp_dir.path()).unwrap();
     std::env::set_var(DFX_ROOT, tmp_dir.path());
 
+    let port = PORT.with(|port| {
+        *port.borrow_mut() = 4943;
+        port.borrow().clone()
+    });
+
+    setup_test_dfx_json(tmp_dir.path());
     setup_identity(tmp_dir.path());
 
     // Start the live environment
-    env.make_live(Some(POCKET_IC_PORT));
+    env.make_live(Some(port));
 
     let runtime = Runtime::new().unwrap();
     let result = runtime.block_on(test_func);
@@ -76,15 +84,41 @@ fn setup_identity(dfx_root: &Path) {
     std::fs::write(default_id_path.join("identity.pem"), TEST_KEY).unwrap();
 }
 
+fn setup_test_dfx_json(dfx_root: &Path) {
+    let port = PORT.with(|port| port.borrow().clone());
+    let dfx_json = test_dfx_json_from_template(port);
+
+    dbg!(&dfx_json);
+
+    std::fs::write(dfx_root.join("dfx.json"), dfx_json).unwrap();
+}
+
+fn test_dfx_json_from_template(port: u16) -> String {
+    format!(
+        "{{
+            \"networks\": {{
+                \"test\": {{
+                    \"providers\": [
+                        \"http://localhost:{port}\"
+                    ],
+                    \"type\": \"persistent\"
+                }}
+            }}
+        }}"
+    )
+}
+
 /// Setup the station agent for the test
 async fn setup_agent(station_id: Principal) -> StationAgent {
+    let port = PORT.with(|port| port.borrow().clone());
+
     let orbit_agent = OrbitExtensionAgent::new().unwrap();
     orbit_agent
         .add_station(StationConfig {
             name: String::from("Test"),
             station_id: station_id.to_text(),
             network: String::from("test"),
-            url: format!("http://localhost:{}", POCKET_IC_PORT),
+            url: format!("http://localhost:{}", port),
         })
         .unwrap();
 
