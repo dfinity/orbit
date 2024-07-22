@@ -9,14 +9,14 @@ use crate::{
 use alloy::{
     consensus::SignableTransaction,
     eips::eip2718::Encodable2718,
-    primitives::{hex, Address, TxKind},
+    primitives::{hex, Address, TxKind, U256},
     signers::k256::ecdsa,
 };
 use async_trait::async_trait;
 use candid::Principal;
 use evm_rpc_canister_types::{
-    EthSepoliaService, MultiSendRawTransactionResult, RpcServices, SendRawTransactionResult,
-    SendRawTransactionStatus, EVM_RPC,
+    EthSepoliaService, MultiSendRawTransactionResult, RpcService, RpcServices,
+    SendRawTransactionResult, SendRawTransactionStatus, EVM_RPC,
 };
 use maplit::hashmap;
 use num_bigint::BigUint;
@@ -53,10 +53,12 @@ impl BlockchainApi for Ethereum {
     }
 
     async fn balance(&self, account: &Account) -> BlockchainApiResult<BigUint> {
-        Ok(BigUint::from(123u32))
+        let address = get_address_from_account(account).await;
+        let balance = eth_get_balance(&self.chain, &address).await;
+        Ok(BigUint::from_bytes_be(&balance.to_be_bytes_vec()))
     }
 
-    async fn decimals(&self, account: &Account) -> BlockchainApiResult<u32> {
+    async fn decimals(&self, _account: &Account) -> BlockchainApiResult<u32> {
         Ok(18)
     }
 
@@ -137,7 +139,7 @@ impl BlockchainApi for Ethereum {
         let tx_encoded = tx_envelope.encoded_2718();
         print(format!("tx_encoded: {:?}", tx_encoded));
 
-        let sent_tx_hash = send_raw_transaction(&self.chain, &tx_encoded).await;
+        let sent_tx_hash = eth_send_raw_transaction(&self.chain, &tx_encoded).await;
         print(format!("sent_tx_hash: {:?}", sent_tx_hash));
 
         Ok(BlockchainTransactionSubmitted {
@@ -188,24 +190,16 @@ fn principal_to_derivation_path(account: &Account) -> Vec<Vec<u8>> {
     vec![vec![SCHEMA], account_principal.as_slice().to_vec()]
 }
 
-pub async fn send_raw_transaction(chain: &alloy_chains::Chain, raw_tx: &[u8]) -> String {
+pub async fn eth_send_raw_transaction(chain: &alloy_chains::Chain, raw_tx: &[u8]) -> String {
     let config = None;
-    print(format!("getting services for chain: {:?}", chain));
-    let services = hashmap! {
-        alloy_chains::Chain::sepolia().id() => RpcServices::EthSepolia(Some(vec![EthSepoliaService::Alchemy])),
-        // alloy_chains::Chain::mainnet().id() => RpcServices::EthMainnet(None), // TODO: support mainnet
-    }.remove(&chain.id()).expect("chain not supported");
-
-    print(format!("got services"));
+    let services = get_evm_services(chain);
 
     let cycles = 1000000000;
 
     let raw_tx_hex = hex::encode_prefixed(raw_tx);
-    print(format!("send_tx: raw_tx_hex: {:?}", raw_tx_hex));
     let send_result = EVM_RPC
-        .eth_send_raw_transaction(services, config, raw_tx_hex, cycles)
+        .eth_send_raw_transaction(services.1, config, raw_tx_hex, cycles)
         .await;
-    print(format!("send_tx: send_result: {:?}", send_result));
     let status = match send_result {
         Ok((res,)) => match res {
             MultiSendRawTransactionResult::Consistent(status) => match status {
@@ -229,6 +223,53 @@ pub async fn send_raw_transaction(chain: &alloy_chains::Chain, raw_tx: &[u8]) ->
     };
     print(format!("send_tx: tx_hash: {:?}", tx_hash));
     tx_hash.expect("tx hash is none")
+}
+
+async fn eth_get_balance(chain: &alloy_chains::Chain, address: &str) -> U256 {
+    let services = get_evm_services(chain);
+    let cycles = 1000000000;
+    let evm_rpc_request = serde_json::json!({
+        "method": "eth_getBalance",
+        "params": [address, "latest"],
+        "id": rand::random::<u64>(),
+        "jsonrpc": "2.0",
+    })
+    .to_string();
+
+    let (result,) = EVM_RPC
+        .request(services.0, evm_rpc_request, 1000_u64, cycles)
+        .await
+        .expect("failed to get balance");
+
+    let unwrapped_result = match result {
+        evm_rpc_canister_types::RequestResult::Ok(res) => res,
+        evm_rpc_canister_types::RequestResult::Err(e) => {
+            ic_cdk::trap(format!("Error: {:?}", e).as_str())
+        }
+    };
+    let deserialized = serde_json::from_str::<serde_json::Value>(&unwrapped_result)
+        .expect("failed to deserialize get balance response");
+    let balance_hex = deserialized["result"]
+        .as_str()
+        .expect("balance result is not a string");
+
+    let balance = U256::from_str(balance_hex).expect("failed to decode balance hex");
+
+    balance
+}
+
+fn get_evm_services(chain: &alloy_chains::Chain) -> (RpcService, RpcServices) {
+    // TODO: we are returning single and multiple services for now because different functions expect either one or multiple services
+    let services = hashmap! {
+        alloy_chains::Chain::sepolia().id() => (
+            RpcService::EthSepolia(EthSepoliaService::Alchemy),
+            RpcServices::EthSepolia(Some(vec![EthSepoliaService::Alchemy])),
+        ),
+        // alloy_chains::Chain::mainnet().id() => RpcServices::EthMainnet(None), // TODO: support mainnet
+    }
+    .remove(&chain.id())
+    .expect("chain not supported");
+    services
 }
 
 /// Computes the parity bit allowing to recover the public key from the signature.

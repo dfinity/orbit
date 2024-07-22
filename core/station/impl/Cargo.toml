@@ -41,10 +41,17 @@ thiserror = { workspace = true }
 uuid = { workspace = true, features = ['v4'] }
 station-api = { path = '../api', version = '0.0.2-alpha.3' }
 upgrader-api = { path = '../../upgrader/api', version = '0.0.2-alpha.3' }
-alloy = { version = "0.2.0", features = ["signers", "k256", "consensus", "eips"] }
+alloy = { version = "0.2.0", features = [
+    "signers",
+    "k256",
+    "consensus",
+    "eips",
+] }
 alloy-chains = "0.1.23"
 evm-rpc-canister-types = "1.0.0"
 maplit = "1.0.2"
+serde_json = { workspace = true }
+rand = "0.8.5"
 
 [dev-dependencies]
 candid_parser = { workspace = true }
