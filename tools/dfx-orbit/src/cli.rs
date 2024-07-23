@@ -1,9 +1,10 @@
 //! Implementation of the `dfx-orbit` commands.
-pub mod canister;
-pub mod me;
-pub mod request;
-pub mod review;
-pub mod station;
+mod canister;
+mod me;
+mod request;
+mod review;
+mod station;
+mod submit;
 
 use crate::{
     args::{
@@ -13,7 +14,6 @@ use crate::{
     dfx_extension_api::OrbitExtensionAgent,
     StationAgent,
 };
-use anyhow::bail;
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
 pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
@@ -57,25 +57,39 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             println!("To view the request, run: dfx-orbit review id {request_id}");
             Ok(())
         }
-        DfxOrbitSubcommands::Review(review_args) => {
-            let result_json = match review_args {
-                ReviewArgs::List(args) => {
+        DfxOrbitSubcommands::Review(review_args) => match review_args {
+            ReviewArgs::List(args) => {
+                println!(
+                    "{}",
                     serde_json::to_string_pretty(&station_agent.review_list(args.into()).await?)?
-                }
-                ReviewArgs::Next(args) => {
-                    serde_json::to_string_pretty(&station_agent.review_next(args.into()).await?)?
-                }
-                ReviewArgs::Id(args) => {
-                    if args.approve.is_some() || args.reject.is_some() {
-                        bail!("Approving or rejecting is currently unimplemented");
-                    }
+                );
 
-                    serde_json::to_string_pretty(&station_agent.review_id(args.into()).await?)?
-                }
-            };
-            println!("{}", result_json);
-            Ok(())
-        }
+                Ok(())
+            }
+            ReviewArgs::Next(args) => {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&station_agent.review_next(args.into()).await?)?
+                );
+
+                Ok(())
+            }
+            ReviewArgs::Id(args) => {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(
+                        &station_agent.review_id(args.clone().into()).await?
+                    )?
+                );
+
+                // TODO: Reaffirm user consent before progressing with submitting
+                if let Ok(submit) = args.try_into() {
+                    station_agent.submit(submit).await?;
+                };
+
+                Ok(())
+            }
+        },
         _ => unreachable!(),
     }
 }

@@ -8,6 +8,7 @@ use tokio::runtime::Runtime;
 
 fn main() {
     let args = DfxOrbitArgs::parse();
+    dbg!(&args);
     let runtime = Runtime::new().expect("Unable to create a runtime");
     runtime.block_on(async {
         if let Err(err) = lib::cli::exec(args).await {
