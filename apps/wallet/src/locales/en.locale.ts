@@ -39,7 +39,7 @@ export default {
       'Use with caution. The identity will be able to login as the user and perform actions on their behalf.',
     export_csv: 'Export CSV',
     params_parse_error: 'Failed to parse parameters, please try again.',
-    submit_upgrade: 'Submit upgrade',
+    software_update: 'Software Update',
     canister_upgrade_target: 'Upgrade Target',
     canister_wasm_module: 'Canister Wasm Module',
     canister_upgrade_args_input: 'Upgrade arguments (optional)',
@@ -78,6 +78,8 @@ export default {
     account_dialog_request_policy_transfer_hint:
       'The policy that needs to be approved to transfer funds.',
     request_policy_rule_builder_no_rule: 'No rule specified.',
+    advanced_software_update_warning:
+      'Use with caution. This is an advanced feature for updating the wallet.',
   },
   alpha_warning: {
     version: 'This is an alpha version.',
@@ -389,6 +391,8 @@ export default {
     summary: 'Summary',
     overriden: 'Overriden',
     metadata: 'Metadata',
+    automated: 'Automated',
+    advanced: 'Advanced',
     wasm: 'Wasm',
     arg: 'Arg',
     access: 'Access',
@@ -425,6 +429,7 @@ export default {
     requests: 'Requests',
     cancel: 'Cancel',
     checksum: 'Checksum',
+    module_checksum: 'Module Checksum',
     rejected: 'Rejected',
     edit: 'Edit',
     destination_address: 'Destination address',

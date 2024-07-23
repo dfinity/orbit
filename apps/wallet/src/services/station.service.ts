@@ -794,11 +794,14 @@ export class StationService {
     return result.Ok.request;
   }
 
-  async changeCanister(input: ChangeCanisterOperationInput): Promise<Request> {
+  async changeCanister(
+    input: ChangeCanisterOperationInput,
+    opts: { comment?: string } = {},
+  ): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
-      summary: [],
+      summary: opts.comment ? [opts.comment] : [],
       operation: { ChangeCanister: input },
     });
 

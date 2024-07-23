@@ -40,7 +40,7 @@ export default {
       "Attention. Ce identité pourra acceder avec les permissions de l'utilisateur et prendre des actions en son nom.",
     export_csv: 'Exporter en CSV',
     params_parse_error: "Échec d'interpretation des paramètres, veuillez essayer de nouveau.",
-    submit_upgrade: 'Soumettre une mise à jour',
+    software_update: 'Mise à jour logicielle',
     canister_upgrade_target: 'Cible de mise à jour',
     canister_wasm_module: 'Wasm Module du Canister',
     canister_upgrade_args_input: 'Paramètres de la mise à jour (optionnel)',
@@ -80,6 +80,8 @@ export default {
     account_dialog_request_policy_transfer_hint:
       'La politique qui doit être approuvée pour transférer des fonds.',
     request_policy_rule_builder_no_rule: 'Pas de critères',
+    advanced_software_update_warning:
+      "À utiliser avec précaution. Il s'agit d'une fonctionnalité avancée pour mettre à jour le portefeuille.",
   },
   alpha_warning: {
     version: 'Ceci est une version alpha.',
@@ -401,6 +403,8 @@ export default {
     target: 'Cible',
     previous: 'Précédent',
     next: 'Suivant',
+    automated: 'Automatisé',
+    advanced: 'Avancé',
     back: 'Retour',
     permissions: 'Permissions',
     approval_policies: "Politiques d'approbation",
@@ -430,6 +434,7 @@ export default {
     see_all: 'Voir Tout',
     cancel: 'Annuler',
     checksum: 'Checksum',
+    module_checksum: 'Checksum du Module',
     rejected: 'Rejetté',
     edit: 'Modifier',
     destination_address: 'Adresse de destination',
