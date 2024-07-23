@@ -36,7 +36,7 @@ fn canister_call() {
     permit_call_operation(&env, &canister_ids);
     set_four_eyes_on_call(&env, &canister_ids);
 
-    let request_counter_canister_inc = CreateRequestInput {
+    let request_counter_canister_set = CreateRequestInput {
         operation: RequestOperationInput::CallExternalCanister(
             CallExternalCanisterOperationInput {
                 validation_method: None,
@@ -59,7 +59,7 @@ fn canister_call() {
 
         // Call the counter canister
         let request = station_agent
-            .request(request_counter_canister_inc.clone())
+            .request(request_counter_canister_set.clone())
             .await
             .unwrap();
 

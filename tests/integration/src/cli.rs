@@ -121,9 +121,6 @@ fn setup_identity(dfx_root: &Path) {
 fn setup_test_dfx_json(dfx_root: &Path) {
     let port = PORT.with(|port| port.borrow().clone());
     let dfx_json = test_dfx_json_from_template(port);
-
-    dbg!(&dfx_json);
-
     std::fs::write(dfx_root.join("dfx.json"), dfx_json).unwrap();
 }
 
