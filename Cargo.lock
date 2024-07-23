@@ -1419,8 +1419,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pocket-ic"
-version = "3.1.0"
-source = "git+http://github.com/dfinity/ic?rev=bb2387f174b2509dd7b75a9ba2d6db5ea33ec0d6#bb2387f174b2509dd7b75a9ba2d6db5ea33ec0d6"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "629f46b7ab8a8d2fee02220ef8e99ae552c7e220117efa1ce0882ff09c8fb038"
 dependencies = [
  "base64 0.13.1",
  "candid",
