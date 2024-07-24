@@ -1,4 +1,5 @@
 //! Implementation of the `dfx-orbit` commands.
+mod assets;
 mod canister;
 mod me;
 mod request;
@@ -41,7 +42,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
                         .await?;
                 }
                 CanisterArgs::UploadHttpAssets(upload_http_assets_args) => {
-                    canister::upload_http_assets::exec(upload_http_assets_args).await?;
+                    assets::exec(upload_http_assets_args).await?;
                 }
             }
             Ok(())

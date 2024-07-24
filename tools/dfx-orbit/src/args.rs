@@ -1,9 +1,11 @@
 //! Command line interface for `dfx-orbit`.
+pub mod assets;
 pub mod canister;
 pub mod request;
 pub mod review;
 pub mod station;
 
+use assets::AssetsArgs;
 use canister::CanisterArgs;
 use clap::{Parser, Subcommand};
 use request::RequestArgs;
@@ -23,10 +25,10 @@ pub struct DfxOrbitArgs {
 #[derive(Debug, Subcommand)]
 #[command(version, about, long_about = None)]
 pub enum DfxOrbitSubcommands {
-    /// Manages Orbit stations.
+    /// Manage Orbit stations.
     #[command(subcommand)]
     Station(StationArgs),
-    /// Manages external canisters with Orbit.
+    /// Manage external canisters with Orbit.
     #[command(subcommand)]
     Canister(CanisterArgs),
     /// Make requests to Orbit
@@ -35,6 +37,8 @@ pub enum DfxOrbitSubcommands {
     /// View and decide on requests.
     #[command(subcommand)]
     Review(ReviewArgs),
+    /// Manage assets stored in an asset canister through Orbit
+    Assets(AssetsArgs),
     /// Gets the caller's profile on an Orbit station.
     Me,
 }
