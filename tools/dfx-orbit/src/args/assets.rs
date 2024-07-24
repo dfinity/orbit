@@ -9,11 +9,11 @@ pub struct AssetsArgs {
     canister: Option<String>,
 
     #[command(subcommand)]
-    action: AssetsActionArgs,
+    action: AssetsArgsAction,
 }
 
 #[derive(Debug, Clone, Subcommand)]
-pub enum AssetsActionArgs {
+pub enum AssetsArgsAction {
     /// Upload assets to an asset canister
     Upload(AssetsUploadArgs),
 }

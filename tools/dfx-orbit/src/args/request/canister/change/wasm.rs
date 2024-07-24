@@ -19,11 +19,10 @@ pub struct RequestCanisterChangeWasmArgs {
     #[clap(short, long)]
     wasm: String,
     /// The argument to pass to the canister.
-    #[clap(short, long)]
+    #[clap(short, long, conflicts_with = "arg_file")]
     arg: Option<String>,
-    // TODO: exclusive OR
     /// The path to a file containing the argument to pass to the canister.
-    #[clap(short = 'f', long)]
+    #[clap(short = 'f', long, conflicts_with = "arg")]
     arg_file: Option<String>,
 }
 
