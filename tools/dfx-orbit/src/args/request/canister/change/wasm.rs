@@ -6,7 +6,7 @@ use orbit_station_api::{
 };
 
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterChangeWasmArgs {
     // TODO: Poll, waiting for the request to be accepted.
     /// The canister name or ID.

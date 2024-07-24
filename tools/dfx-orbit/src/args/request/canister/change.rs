@@ -7,7 +7,7 @@ use orbit_station_api::CreateRequestInput;
 use wasm::RequestCanisterChangeWasmArgs;
 
 /// Request permission.
-#[derive(Debug, Subcommand)]
+#[derive(Debug, Clone, Subcommand)]
 #[command(version, about, long_about = None)]
 pub enum RequestCanisterChangeArgs {
     /// Request changes to the canister Wasm.

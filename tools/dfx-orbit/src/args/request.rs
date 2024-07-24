@@ -12,7 +12,8 @@ use permission::RequestPermissionArgs;
 ///
 // TODO: Add flags for --title, --summary, and --execution-plan.
 // Note: I have looked at the docs and the anwer for how to do this really doesn't jump out at me.  Google foo failed as well.  Maybe the sdk repo has some examples.
-#[derive(Debug, Subcommand)]
+
+#[derive(Debug, Clone, Subcommand)]
 #[command(version, about, long_about = None)]
 pub enum RequestArgs {
     /// Request changes to a canister.

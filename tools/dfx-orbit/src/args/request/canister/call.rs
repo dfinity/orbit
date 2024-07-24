@@ -6,7 +6,7 @@ use clap::Parser;
 use orbit_station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO};
 
 /// Requests that a call be made to a canister.
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterCallArgs {
     /// The canister name or ID.
     canister: String,

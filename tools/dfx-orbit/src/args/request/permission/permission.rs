@@ -6,7 +6,7 @@ use orbit_station_api::{
 };
 
 /// Requests the privilige of proposing canister upgrades.
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct RequestPermissionUpdatePermissionsArgs {
     /// A users that should be permitted to change permissions.  WARNING: Any user that is not listed will lose the ability to change permissions.
     #[structopt(long)]
@@ -28,7 +28,7 @@ impl From<RequestPermissionUpdatePermissionsArgs> for RequestOperationInput {
 }
 
 /// Requests the privilige of proposing canister upgrades.
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct RequestPermissionReadPermissionsArgs {
     /// A users that should be permitted to change permissions.  WARNING: Any user that is not listed will lose the ability to change permissions.
     #[structopt(long)]

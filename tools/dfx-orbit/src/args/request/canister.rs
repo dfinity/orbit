@@ -11,7 +11,7 @@ use clap::Subcommand;
 use orbit_station_api::CreateRequestInput;
 
 /// Request canister changes.
-#[derive(Debug, Subcommand)]
+#[derive(Debug, Clone, Subcommand)]
 #[command(version, about, long_about = None)]
 pub enum RequestCanisterArgs {
     /// Request to update the canister.

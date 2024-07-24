@@ -6,7 +6,7 @@ use orbit_station_api::{
 };
 
 /// Requests the privilige of proposing canister upgrades.
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct RequestPermissionUpdateCanisterArgs {
     /// Canister name or ID.
     // TODO: If a canister is not specified, require --all.
