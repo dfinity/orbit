@@ -24,7 +24,6 @@ import { LoadableItem } from '~/types/helper.types';
 import { computedStationName, isApiError, popRedirectToLocation } from '~/utils/app.utils';
 import { arrayBatchMaker, removeBasePathFromPathname, variantIs } from '~/utils/helper.utils';
 import { accountsWorker, startWorkers, stopWorkers } from '~/workers';
-import { compareSemanticVersions } from '~build/utils/sort.utils';
 
 export enum ConnectionStatus {
   Disconnected = 'disconnected',
@@ -419,16 +418,7 @@ export const useStationStore = defineStore('station', {
         this.versionManagement.nextStationVersion = registryEntry.value.WasmModule.version;
         for (const dependency of registryEntry.value.WasmModule.dependencies) {
           if (dependency.name === '@orbit/upgrader' && dependency.version !== upgraderVersion) {
-            // if the current upgrader version is lower than the dependency version, we need to
-            // upgrade the upgrader first
-            const sortedVersions = [upgraderVersion, dependency.version].sort(
-              compareSemanticVersions('newest'),
-            );
-
-            if (sortedVersions[0] !== upgraderVersion) {
-              this.versionManagement.nextUpgraderVersion = dependency.version;
-              break;
-            }
+            this.versionManagement.nextUpgraderVersion = dependency.version;
             break;
           }
         }
