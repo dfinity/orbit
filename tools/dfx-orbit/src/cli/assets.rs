@@ -1,7 +1,5 @@
 //! Implements the `dfx-orbit canister upload-http-assets` CLI command.
-use crate::{
-    args::canister::UploadAssetsArgs as Args, dfx_extension_api::OrbitExtensionAgent, StationAgent,
-};
+use crate::{args::canister::UploadAssetsArgs as Args, StationAgent};
 use ic_asset::canister_api::{
     methods::batch::compute_evidence, types::batch_upload::common::ComputeEvidenceArguments,
 };
@@ -12,68 +10,70 @@ use std::{
     path::{Path, PathBuf},
 };
 use walkdir::WalkDir;
+impl StationAgent {
+    /// The main entry point for the `dfx orbit canister upload-http-assets` CLI.
+    pub async fn upload(&mut self, args: Args) -> anyhow::Result<()> {
+        let Args {
+            canister,
+            source,
+            verbose: _verbose,
+        } = args;
+        // The path is needed in various forms.
+        let source_pathbufs: Vec<PathBuf> =
+            source.iter().map(|source| PathBuf::from(&source)).collect();
+        let source_paths: Vec<&Path> = source_pathbufs
+            .iter()
+            .map(|pathbuf| pathbuf.as_path())
+            .collect();
 
-/// The main entry point for the `dfx orbit canister upload-http-assets` CLI.
-pub async fn exec(args: Args) -> anyhow::Result<()> {
-    let Args {
-        canister,
-        source,
-        verbose: _verbose,
-    } = args;
-    // The path is needed in various forms.
-    let source_pathbufs: Vec<PathBuf> =
-        source.iter().map(|source| PathBuf::from(&source)).collect();
-    let source_paths: Vec<&Path> = source_pathbufs
-        .iter()
-        .map(|pathbuf| pathbuf.as_path())
-        .collect();
+        let canister_id = self.canister_id(&canister)?;
+        let logger = self.dfx.logger().clone();
 
-    let station_agent = StationAgent::new(OrbitExtensionAgent::new()?).await?;
-    let canister_id = station_agent.canister_id(&canister)?;
-    let logger = station_agent.dfx.logger().clone();
-    // Upload assets:
-    let canister_agent = CanisterBuilder::new()
-        .with_agent(station_agent.agent())
-        .with_canister_id(canister_id)
-        .build()?;
-    let assets = assets_as_hash_map(&source);
-    let batch_id = ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
-    println!("Proposed batch_id: {}", batch_id);
-    // Compute evidence locally:
-    let local_evidence = {
-        let local_evidence =
-            ic_asset::compute_evidence(&canister_agent, &source_paths, &logger).await?;
-        escape_hex_string(&local_evidence)
-    };
-    // Wait for the canister to compute evidence:
-    let canister_evidence = {
-        // This part is stolen from ic_asset::sync::prepare_sync_for_proposal.  Unfortunately the relevant functions are private.
-        // The docs explicitly include waiting for the evidence so this should really be made easier!  See: https://github.com/dfinity/sdk/blob/2509e81e11e71dce4045c679686c952809525470/docs/design/asset-canister-interface.md?plain=1#L85
-        let compute_evidence_arg = ComputeEvidenceArguments {
-            batch_id: batch_id.clone(),
-            max_iterations: Some(97), // 75% of max(130) = 97.5
+        // Upload assets:
+        let canister_agent = CanisterBuilder::new()
+            .with_agent(self.agent())
+            .with_canister_id(canister_id)
+            .build()?;
+        let assets = assets_as_hash_map(&source);
+        let batch_id = ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
+        println!("Proposed batch_id: {}", batch_id);
+        // Compute evidence locally:
+        let local_evidence = {
+            let local_evidence =
+                ic_asset::compute_evidence(&canister_agent, source_paths.as_ref(), &logger).await?;
+            escape_hex_string(&local_evidence)
         };
-        info!(logger, "Computing evidence.");
-        let canister_evidence = loop {
-            if let Some(evidence) = compute_evidence(&canister_agent, &compute_evidence_arg).await?
-            {
-                break evidence;
-            }
+        // Wait for the canister to compute evidence:
+        let canister_evidence = {
+            // This part is stolen from ic_asset::sync::prepare_sync_for_proposal.  Unfortunately the relevant functions are private.
+            // The docs explicitly include waiting for the evidence so this should really be made easier!  See: https://github.com/dfinity/sdk/blob/2509e81e11e71dce4045c679686c952809525470/docs/design/asset-canister-interface.md?plain=1#L85
+            let compute_evidence_arg = ComputeEvidenceArguments {
+                batch_id: batch_id.clone(),
+                max_iterations: Some(97), // 75% of max(130) = 97.5
+            };
+            info!(logger, "Computing evidence.");
+            let canister_evidence = loop {
+                if let Some(evidence) =
+                    compute_evidence(&canister_agent, &compute_evidence_arg).await?
+                {
+                    break evidence;
+                }
+            };
+            blob_from_bytes(&canister_evidence)
         };
-        blob_from_bytes(&canister_evidence)
-    };
 
-    println!(r#"Proposed batch_id: {batch_id}"#);
-    if local_evidence == canister_evidence {
-        info!(logger, "Local evidence matches canister evidence.");
-    } else {
-        warn!(logger, "Local evidence does not match canister evidence:\n  local:    {local_evidence}\n  canister:{canister_evidence}");
+        println!(r#"Proposed batch_id: {batch_id}"#);
+        if local_evidence == canister_evidence {
+            info!(logger, "Local evidence matches canister evidence.");
+        } else {
+            warn!(logger, "Local evidence does not match canister evidence:\n  local:    {local_evidence}\n  canister:{canister_evidence}");
+        }
+        println!(r#"Assets have been uploaded.  For the changes to take effect, run:"#);
+        println!(
+            r#"dfx-orbit request canister call {canister} commit_proposed_batch '(record {{ batch_id = {batch_id} : nat; evidence = blob "{canister_evidence}" }})'"#
+        );
+        Ok(())
     }
-    println!(r#"Assets have been uploaded.  For the changes to take effect, run:"#);
-    println!(
-        r#"dfx-orbit request canister call {canister} commit_proposed_batch '(record {{ batch_id = {batch_id} : nat; evidence = blob "{canister_evidence}" }})'"#
-    );
-    Ok(())
 }
 
 /// Lists all the files at the given path.
