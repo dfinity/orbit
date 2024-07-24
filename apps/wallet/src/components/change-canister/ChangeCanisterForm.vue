@@ -3,6 +3,8 @@
     <RegistryUpdateMode
       v-if="props.mode === ChangeCanisterFormMode.Registry"
       v-model="modelValue"
+      @valid="emit('valid', $event)"
+      @loading="emit('loading', $event)"
     />
     <AdvancedUpdateMode
       v-else-if="props.mode === ChangeCanisterFormMode.Advanced"
@@ -32,13 +34,14 @@ const form = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
 const props = withDefaults(defineProps<ChangeCanisterFormProps>(), {
-  valid: true,
+  valid: false,
   mode: ChangeCanisterFormMode.Registry,
 });
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: ChangeCanisterFormProps['modelValue']): void;
   (event: 'valid', payload: boolean): void;
+  (event: 'loading', payload: boolean): void;
   (event: 'submit', payload: ChangeCanisterFormProps['modelValue']): void;
 }>();
 

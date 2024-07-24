@@ -16,6 +16,7 @@
     :prepend-icon="mdiComment"
     variant="filled"
     density="comfortable"
+    auto-grow
   />
 </template>
 

@@ -82,6 +82,17 @@ export default {
     request_policy_rule_builder_no_rule: 'Pas de critères',
     advanced_software_update_warning:
       "À utiliser avec précaution. Il s'agit d'une fonctionnalité avancée pour mettre à jour le portefeuille.",
+    check_updates_btn: 'Vérifier les mises à jour',
+    update_recommended_latest:
+      'Il est recommandé de garder votre logiciel à jour pour garantir la meilleure expérience.',
+    update_already_latest_version: 'Vous êtes déjà à la dernière version.',
+    checking_for_updates: 'Vérification des mises à jour ...',
+    update_available: 'Une nouvelle version est disponible.',
+    update_automated_comment: {
+      summary: '{name} sera mis à jour vers la version {version}.',
+      verify_instructions:
+        'Pour vérifier la mise à jour, ouvrez le terminal et suivez les instructions ci-dessous:',
+    },
   },
   alpha_warning: {
     version: 'Ceci est une version alpha.',

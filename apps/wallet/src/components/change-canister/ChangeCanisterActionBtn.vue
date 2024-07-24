@@ -20,6 +20,7 @@
         :model-value="elem.value.modelValue as ChangeCanisterFormProps['modelValue']"
         @update:model-value="elem.value.modelValue = $event"
         @valid="elem.value.valid = $event"
+        @loading="formLoading = $event"
         @submit="goToConfirmation(elem.value.modelValue)"
       />
 
@@ -27,10 +28,12 @@
         v-if="screen === ChangeCanisterScreen.Confirm"
         :wasm-module-checksum="wasmChecksum"
         :comment="elem.value.modelValue.comment"
-        @update:comment="elem.value.modelValue = {
-          ...elem.value.modelValue,
-          comment: $event,
-        }"
+        @update:comment="
+          elem.value.modelValue = {
+            ...elem.value.modelValue,
+            comment: $event,
+          }
+        "
       />
     </template>
     <template #actions="{ submit, loading: saving, model: elem }">
@@ -50,32 +53,47 @@
         }}
       </VBtn>
       <VSpacer />
-      <VBtn
-        v-if="screen === ChangeCanisterScreen.Form"
-        :loading="saving"
-        :disabled="!elem.value.valid"
-        color="primary"
-        variant="flat"
-        @click="goToConfirmation(elem.value.modelValue)"
-      >
-        {{ $t('terms.continue') }}
-      </VBtn>
-      <VBtn
-        v-if="screen === ChangeCanisterScreen.Confirm"
-        :loading="saving"
-        :disabled="saving"
-        color="primary"
-        variant="flat"
-        @click="submit"
-      >
-        {{ $t('terms.submit') }}
-      </VBtn>
+      <div class="d-flex align-md-center justify-end flex-column-reverse flex-md-row ga-2">
+        <VBtn
+          v-if="
+            screen === ChangeCanisterScreen.Form && formMode === ChangeCanisterFormMode.Registry
+          "
+          :disabled="station.versionManagement.loading || formLoading"
+          color="primary"
+          variant="text"
+          :append-icon="mdiRefresh"
+          size="small"
+          @click="station.checkVersionUpdates"
+        >
+          {{ $t('app.check_updates_btn') }}
+        </VBtn>
+        <VBtn
+          v-if="screen === ChangeCanisterScreen.Form"
+          :loading="saving"
+          :disabled="!elem.value.valid"
+          color="primary"
+          variant="flat"
+          @click="goToConfirmation(elem.value.modelValue)"
+        >
+          {{ $t('terms.continue') }}
+        </VBtn>
+        <VBtn
+          v-else-if="screen === ChangeCanisterScreen.Confirm"
+          :loading="saving"
+          :disabled="saving"
+          color="primary"
+          variant="flat"
+          @click="submit"
+        >
+          {{ $t('terms.submit') }}
+        </VBtn>
+      </div>
     </template>
   </ActionBtn>
 </template>
 
 <script lang="ts" setup>
-import { mdiCloudDownload, mdiWrenchCog } from '@mdi/js';
+import { mdiCloudDownload, mdiRefresh, mdiWrenchCog } from '@mdi/js';
 import { ref } from 'vue';
 import { VBtn } from 'vuetify/components';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
@@ -106,7 +124,7 @@ const toggleFormMode = () => {
       : ChangeCanisterFormMode.Advanced;
 };
 const wasmChecksum = ref<string>('');
-
+const formLoading = ref(false);
 const goToConfirmation = async (model: ChangeCanisterFormProps['modelValue']): Promise<void> => {
   const wasmModule = assertAndReturn(model.wasmModule, 'model.wasmModule is required');
   wasmChecksum.value = await arrayBufferToHashHex(wasmModule);

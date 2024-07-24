@@ -40,7 +40,7 @@ import { computed, ref, watch } from 'vue';
 import { VAlert, VFileInput, VSelect, VTextarea } from 'vuetify/components';
 import { ChangeCanisterFormValue } from '~/components/change-canister/change-canister.types';
 import {
-  useDefaultUpgradFormValue,
+  useDefaultUpgradeFormValue,
   useUpgradeTargets,
 } from '~/composables/change-canister.composable';
 import logger from '~/core/logger.core';
@@ -112,7 +112,7 @@ watch(
         break;
       default:
         wasmModuleFile.value = [];
-        modelValue.value = useDefaultUpgradFormValue();
+        modelValue.value = useDefaultUpgradeFormValue();
         break;
     }
   },

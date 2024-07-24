@@ -80,6 +80,17 @@ export default {
     request_policy_rule_builder_no_rule: 'No rule specified.',
     advanced_software_update_warning:
       'Use with caution. This is an advanced feature for updating the wallet.',
+    check_updates_btn: 'Check for updates',
+    update_recommended_latest:
+      "It's recommended to keep your software up to date to ensure the best experience.",
+    update_already_latest_version: 'You are already in the latest version.',
+    checking_for_updates: 'Checking for updates ...',
+    update_available: 'There is a new version available.',
+    update_automated_comment: {
+      summary: 'The {name} will be updated to version {version}.',
+      verify_instructions:
+        'To verify the update, open the terminal and follow the instructions bellow:',
+    },
   },
   alpha_warning: {
     version: 'This is an alpha version.',

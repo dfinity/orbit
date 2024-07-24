@@ -81,6 +81,17 @@ export default {
     request_policy_rule_builder_no_rule: 'Nenhum critério definido.',
     advanced_software_update_warning:
       'Use com cuidado. Esta é uma funcionalidade avançada para atualizar a carteira.',
+    check_updates_btn: 'Verificar atualizações',
+    update_recommended_latest:
+      'Recomenda-se manter o seu software atualizado para garantir a melhor experiência.',
+    update_already_latest_version: 'Você já está na última versão.',
+    checking_for_updates: 'Verificando atualizações ...',
+    update_available: 'Uma nova versão está disponível.',
+    update_automated_comment: {
+      summary: '{name} será atualizado para a versão {version}.',
+      verify_instructions:
+        'Para verificar a atualização, abra o terminal e siga as instruções abaixo:',
+    },
   },
   alpha_warning: {
     version: 'Esta é uma versão alfa.',

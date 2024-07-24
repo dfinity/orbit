@@ -51,6 +51,7 @@ import {
   RemoveUserGroupOperationInput,
   Request,
   SubmitRequestApprovalInput,
+  SystemInfoResult,
   Transfer,
   TransferListItem,
   TransferOperationInput,
@@ -359,6 +360,17 @@ export class StationService {
     }
 
     return result.Ok.capabilities;
+  }
+
+  async systemInfo(verifiedCall = false): Promise<ExtractOk<SystemInfoResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.system_info();
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
   }
 
   async listNotifications(

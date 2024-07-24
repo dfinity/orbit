@@ -229,3 +229,17 @@ export const removeBasePathFromPathname = (pathname: string, basePath: string): 
 
   return !updatedPath.startsWith('/') ? `/${updatedPath}` : updatedPath;
 };
+
+export const toArrayBuffer = (input: Uint8Array | number[]): ArrayBuffer => {
+  let uint8Array;
+
+  if (input instanceof Uint8Array) {
+    uint8Array = input;
+  } else if (Array.isArray(input)) {
+    uint8Array = new Uint8Array(input);
+  } else {
+    throw new TypeError('Input must be a number[] or Uint8Array');
+  }
+
+  return uint8Array.buffer;
+};

@@ -21,7 +21,7 @@ export const useUpgradeTargets = (): ComputedRef<{
   }));
 };
 
-export const useDefaultUpgradFormValue = (): ChangeCanisterFormValue => ({
+export const useDefaultUpgradeFormValue = (): ChangeCanisterFormValue => ({
   target: undefined,
   wasmModule: undefined,
   wasmInitArg: undefined,
@@ -29,6 +29,6 @@ export const useDefaultUpgradFormValue = (): ChangeCanisterFormValue => ({
 });
 
 export const useDefaultUpgradeModel = () => ({
-  modelValue: useDefaultUpgradFormValue(),
+  modelValue: useDefaultUpgradeFormValue(),
   valid: false,
 });
