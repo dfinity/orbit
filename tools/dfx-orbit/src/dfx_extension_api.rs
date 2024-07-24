@@ -8,7 +8,6 @@ use std::{
     process::{Command, Stdio},
     str::FromStr,
 };
-use tempfile::tempdir;
 
 /// The name of the Orbit dfx extension.
 const ORBIT_EXTENSION_NAME: &str = "orbit";
@@ -57,12 +56,6 @@ impl OrbitExtensionAgent {
         Ok(Self::new_from_dir(dir))
     }
 
-    pub fn new_tmp() -> anyhow::Result<Self> {
-        let dir =
-            Self::tmp_extensions_dir().with_context(|| "Failed to initialize tmp directry")?;
-        Ok(Self::new_from_dir(dir))
-    }
-
     fn new_from_dir(extensions_dir: cap_std::fs::Dir) -> Self {
         let logger = {
             let decorator = slog_term::TermDecorator::new().build();
@@ -88,13 +81,6 @@ impl OrbitExtensionAgent {
             .with_context(|| "Could not find user dfx config dir")?;
         dbg!(&user_config_dir);
         Self::init_extensions_dir(user_config_dir)
-    }
-
-    fn tmp_extensions_dir() -> anyhow::Result<cap_std::fs::Dir> {
-        // TODO: Come up with a way that cleans up the tempdir after it goes out of scope
-        let dir = tempdir()?;
-        dbg!(&dir);
-        Self::init_extensions_dir(dir.into_path())
     }
 
     fn init_extensions_dir(path: PathBuf) -> anyhow::Result<cap_std::fs::Dir> {

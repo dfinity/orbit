@@ -15,8 +15,6 @@ use dfx_core::DfxInterface;
 use dfx_extension_api::OrbitExtensionAgent;
 use local_config::StationConfig;
 
-// TODO: AgentAPI: Do not print youself, instead use actual API inputs and outputs
-
 /// A dfx agent for communicating with a specific station.
 pub struct StationAgent {
     /// The station to communicate with.
