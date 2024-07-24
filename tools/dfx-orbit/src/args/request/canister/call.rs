@@ -1,9 +1,11 @@
 //! CLI arguments for `dfx-orbit canister call`.
 
-use crate::{args::request::CreateRequestArgs, StationAgent};
+use crate::StationAgent;
 use anyhow::Context;
 use clap::Parser;
-use orbit_station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO};
+use orbit_station_api::{
+    CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput,
+};
 
 /// Requests that a call be made to a canister.
 #[derive(Debug, Clone, Parser)]
@@ -24,12 +26,12 @@ pub struct RequestCanisterCallArgs {
     with_cycles: Option<u64>,
 }
 
-impl CreateRequestArgs for RequestCanisterCallArgs {
+impl RequestCanisterCallArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    fn into_create_request_input(
+    pub(crate) fn into_create_request_input(
         self,
         station_agent: &StationAgent,
-    ) -> anyhow::Result<orbit_station_api::CreateRequestInput> {
+    ) -> anyhow::Result<RequestOperationInput> {
         let RequestCanisterCallArgs {
             canister,
             method_name,
@@ -47,7 +49,7 @@ impl CreateRequestArgs for RequestCanisterCallArgs {
         } else {
             None
         };
-        let operation = orbit_station_api::RequestOperationInput::CallExternalCanister(
+        Ok(RequestOperationInput::CallExternalCanister(
             CallExternalCanisterOperationInput {
                 validation_method: None,
                 execution_method: CanisterMethodDTO {
@@ -57,12 +59,6 @@ impl CreateRequestArgs for RequestCanisterCallArgs {
                 arg,
                 execution_method_cycles: with_cycles,
             },
-        );
-        Ok(orbit_station_api::CreateRequestInput {
-            operation,
-            title: None,
-            summary: None,
-            execution_plan: None,
-        })
+        ))
     }
 }

@@ -3,12 +3,11 @@
 pub mod call;
 pub mod change;
 
-use super::CreateRequestArgs;
 use crate::StationAgent;
 use call::RequestCanisterCallArgs;
 use change::RequestCanisterChangeArgs;
 use clap::Subcommand;
-use orbit_station_api::CreateRequestInput;
+use orbit_station_api::RequestOperationInput;
 
 /// Request canister changes.
 #[derive(Debug, Clone, Subcommand)]
@@ -21,12 +20,12 @@ pub enum RequestCanisterArgs {
     Call(RequestCanisterCallArgs),
 }
 
-impl CreateRequestArgs for RequestCanisterArgs {
+impl RequestCanisterArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    fn into_create_request_input(
+    pub(crate) fn into_create_request_input(
         self,
         station_agent: &StationAgent,
-    ) -> anyhow::Result<CreateRequestInput> {
+    ) -> anyhow::Result<RequestOperationInput> {
         match self {
             RequestCanisterArgs::Change(change_args) => {
                 change_args.into_create_request_input(station_agent)

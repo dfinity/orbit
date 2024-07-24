@@ -32,7 +32,6 @@ pub enum DfxOrbitSubcommands {
     #[command(subcommand)]
     Canister(CanisterArgs),
     /// Make requests to Orbit
-    #[command(subcommand)]
     Request(RequestArgs),
     /// View and decide on requests.
     #[command(subcommand)]

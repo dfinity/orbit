@@ -8,10 +8,7 @@ mod station;
 mod submit;
 
 use crate::{
-    args::{
-        canister::CanisterArgs, request::CreateRequestArgs, review::ReviewArgs, DfxOrbitArgs,
-        DfxOrbitSubcommands,
-    },
+    args::{canister::CanisterArgs, review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
     dfx_extension_api::OrbitExtensionAgent,
     StationAgent,
 };

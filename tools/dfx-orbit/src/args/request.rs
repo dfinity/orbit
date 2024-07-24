@@ -4,7 +4,7 @@ pub mod permission;
 
 use crate::StationAgent;
 use canister::RequestCanisterArgs;
-use clap::Subcommand;
+use clap::{Parser, Subcommand};
 use orbit_station_api::CreateRequestInput;
 use permission::RequestPermissionArgs;
 
@@ -13,9 +13,16 @@ use permission::RequestPermissionArgs;
 // TODO: Add flags for --title, --summary, and --execution-plan.
 // Note: I have looked at the docs and the anwer for how to do this really doesn't jump out at me.  Google foo failed as well.  Maybe the sdk repo has some examples.
 
+#[derive(Debug, Clone, Parser)]
+#[command(version, about, long_about = None)]
+pub struct RequestArgs {
+    #[command(subcommand)]
+    action: RequestArgsActions,
+}
+
 #[derive(Debug, Clone, Subcommand)]
 #[command(version, about, long_about = None)]
-pub enum RequestArgs {
+pub enum RequestArgsActions {
     /// Request changes to a canister.
     #[command(subcommand)]
     Canister(RequestCanisterArgs),
@@ -33,18 +40,25 @@ pub trait CreateRequestArgs {
     ) -> anyhow::Result<CreateRequestInput>;
 }
 
-impl CreateRequestArgs for RequestArgs {
-    fn into_create_request_input(
+impl RequestArgs {
+    pub(crate) fn into_create_request_input(
         self,
         station_agent: &StationAgent,
     ) -> anyhow::Result<CreateRequestInput> {
-        match self {
-            RequestArgs::Canister(canister_args) => {
-                canister_args.into_create_request_input(station_agent)
+        let operation = match self.action {
+            RequestArgsActions::Canister(canister_args) => {
+                canister_args.into_create_request_input(station_agent)?
             }
-            RequestArgs::Permission(permission_args) => {
-                permission_args.into_create_request_input(station_agent)
+            RequestArgsActions::Permission(permission_args) => {
+                permission_args.into_create_request_input(station_agent)?
             }
-        }
+        };
+
+        Ok(CreateRequestInput {
+            operation,
+            title: None,
+            summary: None,
+            execution_plan: None,
+        })
     }
 }
