@@ -39,7 +39,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
                         .await?;
                 }
                 CanisterArgs::UploadHttpAssets(upload_http_assets_args) => {
-                    station_agent.upload(upload_http_assets_args).await?;
+                    station_agent.upload_assets(upload_http_assets_args).await?;
                 }
             }
             Ok(())

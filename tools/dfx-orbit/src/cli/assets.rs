@@ -12,7 +12,7 @@ use std::{
 use walkdir::WalkDir;
 impl StationAgent {
     /// The main entry point for the `dfx orbit canister upload-http-assets` CLI.
-    pub async fn upload(&mut self, args: Args) -> anyhow::Result<()> {
+    pub async fn upload_assets(&mut self, args: Args) -> anyhow::Result<()> {
         let Args {
             canister,
             source,
