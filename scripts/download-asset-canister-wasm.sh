@@ -11,7 +11,7 @@ echo "Downloading asset canister"
 mkdir -p wasms
 cd wasms
 
-HTTP_CODE=$(curl -so assetstorage.wasm.gz https://github.com/dfinity/sdk/blob/master/src/distributed/assetstorage.wasm.gz --write-out "%{http_code}")
+HTTP_CODE=$(curl -L -so assetstorage.wasm.gz https://github.com/dfinity/sdk/raw/master/src/distributed/assetstorage.wasm.gz --write-out "%{http_code}")
 
 if [[ ${HTTP_CODE} -ne 200 ]] ; then
     echo "Failed to download wasm. Response code: ${HTTP_CODE}"
