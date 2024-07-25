@@ -1129,6 +1129,7 @@ dependencies = [
  "ic-certified-assets",
  "ic-utils",
  "serde",
+ "serde_bytes",
  "serde_json",
  "slog",
  "slog-async",

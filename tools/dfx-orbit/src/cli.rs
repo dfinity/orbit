@@ -7,6 +7,7 @@ mod review;
 mod station;
 mod submit;
 
+pub use crate::cli::assets::AssetUploadRequest;
 use crate::{
     args::{canister::CanisterArgs, review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
     dfx_extension_api::OrbitExtensionAgent,
