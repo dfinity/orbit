@@ -1,11 +1,13 @@
-use dfx_orbit::args::canister::UploadAssetsArgs;
+use dfx_orbit::{args::canister::UploadAssetsArgs, StationAgent};
 use rand::{thread_rng, Rng};
+use station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tempfile::tempdir;
 
 use crate::{
     cli::{dfx_orbit_test, setup_agent, setup_dfx_user},
-    setup::{create_canister, get_canister_wasm, setup_new_env},
+    setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER},
+    utils::execute_request,
     TestEnv,
 };
 
@@ -17,7 +19,7 @@ fn assets_update() {
         ..
     } = setup_new_env();
 
-    let (_dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
+    let (dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
 
     // Install the assets canister under orbit control
     let asset_canister = create_canister(&mut env, canister_ids.station);
@@ -29,7 +31,26 @@ fn assets_update() {
         Some(canister_ids.station),
     );
 
-    // TODO: As admin: Setup the correct permissions for the dfx user
+    // As admin: Setup the correct permissions for the dfx user
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        station_api::RequestOperationInput::CallExternalCanister(
+            CallExternalCanisterOperationInput {
+                validation_method: None,
+                execution_method: CanisterMethodDTO {
+                    canister_id: asset_canister,
+                    method_name: String::from("grant_permission"),
+                },
+                arg: Some(
+                    StationAgent::get_request_prepare_permission_payload(dfx_principal).unwrap(),
+                ),
+                execution_method_cycles: None,
+            },
+        ),
+    )
+    .unwrap();
 
     // Setup a tmpdir, and store two assets in it
     // We generate the assets dyniamically, since we want to make sure we are not
