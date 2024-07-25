@@ -1,3 +1,8 @@
+use crate::{
+    setup::create_canister,
+    utils::{add_user_with_name, update_raw, COUNTER_WAT},
+    CanisterIds,
+};
 use candid::Principal;
 use dfx_orbit::{
     dfx_extension_api::OrbitExtensionAgent, local_config::StationConfig, StationAgent,
@@ -16,12 +21,7 @@ use std::{
 use tempfile::tempdir;
 use tokio::runtime::Runtime;
 
-use crate::{
-    setup::create_canister,
-    utils::{add_user_with_name, update_raw, COUNTER_WAT},
-    CanisterIds,
-};
-
+mod assets;
 mod canister_call;
 mod me;
 mod review;
