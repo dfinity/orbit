@@ -187,6 +187,26 @@ fn setup_counter_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> Pri
     canister_id
 }
 
+async fn fetch_asset(canister_id: Principal, path: &str) -> Vec<u8> {
+    let port = PORT.with(|port| port.borrow().clone());
+    let local_url = format!("http://localhost:{}{}", port, path);
+    let referer = format!(
+        "http://localhost:{}?canisterId={}",
+        port,
+        canister_id.to_string()
+    );
+    dbg!(&local_url, &referer);
+
+    reqwest::Client::new()
+        .get(local_url)
+        .header("Referer", referer)
+        .send()
+        .await
+        .unwrap()
+        .bytes()
+        .await
+        .unwrap()
+        .into()
+}
+
 // TODO: Test canister update
-// TODO: Test reviewing and approval through StationAgent
-// TODO: Test asset upload, checking and approval

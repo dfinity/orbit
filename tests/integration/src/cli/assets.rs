@@ -7,11 +7,14 @@ use station_api::{
     ExecutionMethodResourceTargetDTO, RequestOperationInput, RequestPolicyRuleDTO,
     RequestSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tempfile::tempdir;
 
 use crate::{
-    cli::{canister_call::permit_call_operation, dfx_orbit_test, setup_agent, setup_dfx_user},
+    cli::{
+        canister_call::permit_call_operation, dfx_orbit_test, fetch_asset, setup_agent,
+        setup_dfx_user,
+    },
     setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER},
     utils::execute_request,
     CanisterIds, TestEnv,
@@ -74,14 +77,14 @@ fn assets_update() {
     let asset_b = format!("This is a random number: {}", thread_rng().gen::<u64>());
 
     std::fs::create_dir_all(asset_dir.path().join("subdir")).unwrap();
-    std::fs::write(asset_dir.path().join("system_time"), asset_a).unwrap();
+    std::fs::write(asset_dir.path().join("system_time"), &asset_a).unwrap();
     std::fs::write(
         asset_dir.path().join("subdir").join("random_number"),
-        asset_b,
+        &asset_b,
     )
     .unwrap();
 
-    let _response = dfx_orbit_test(&mut env, async {
+    dfx_orbit_test(&mut env, async {
         // Setup the station agent
         let mut station_agent = setup_agent(canister_ids.station).await;
 
@@ -95,8 +98,8 @@ fn assets_update() {
             .await
             .unwrap();
 
-        // TODO: As dfx user: Request commitment of the batch
-        let result = station_agent
+        //  As dfx user: Request commitment of the batch
+        let _result = station_agent
             .request(CreateRequestInput {
                 operation: station_api::RequestOperationInput::CallExternalCanister(
                     CallExternalCanisterOperationInput {
@@ -117,12 +120,17 @@ fn assets_update() {
             })
             .await
             .unwrap();
+        tokio::time::sleep(Duration::from_secs(1)).await;
 
-        dbg!(&result);
-        // TODO: As anon: Check that the new files are being served by the asset canister
+        // Check that the new files are being served by the asset canister
+        let req = fetch_asset(asset_canister, "/system_time").await;
+        let test_asset_a = String::from_utf8_lossy(&req);
+        assert_eq!(asset_a, test_asset_a);
+
+        let req = fetch_asset(asset_canister, "/subdir/random_number").await;
+        let test_asset_b = String::from_utf8_lossy(&req);
+        assert_eq!(asset_b, test_asset_b);
     });
-
-    todo!()
 }
 
 /// Set four eyes principle for canister calls

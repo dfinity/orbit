@@ -17,6 +17,7 @@ num-bigint = { workspace = true }
 pocket-ic = { workspace = true }
 rand = { workspace = true }
 rand_chacha = { workspace = true }
+reqwest = { version = "0.12", default-features = false }
 sha2 = { workspace = true }
 serde = { workspace = true, features = ['derive'] }
 tempfile = "3.10"
