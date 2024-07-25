@@ -383,10 +383,11 @@ export const useStationStore = defineStore('station', {
     },
     async checkVersionUpdates(): Promise<void> {
       if (
+        // if the user does not have the privilege to change the canister, we do not need to check for updates
         !this.privileges.some(privilege => variantIs(privilege, 'ChangeCanister')) ||
+        // disables checking for updates if it's already ongoing
         this.versionManagement.loading
       ) {
-        // if the user does not have the privilege to change the canister, we do not need to check for updates
         return;
       }
 
