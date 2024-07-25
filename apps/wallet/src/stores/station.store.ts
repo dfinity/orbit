@@ -382,7 +382,10 @@ export const useStationStore = defineStore('station', {
       return upgraderVersion;
     },
     async checkVersionUpdates(): Promise<void> {
-      if (!this.privileges.some(privilege => variantIs(privilege, 'ChangeCanister'))) {
+      if (
+        !this.privileges.some(privilege => variantIs(privilege, 'ChangeCanister')) ||
+        this.versionManagement.loading
+      ) {
         // if the user does not have the privilege to change the canister, we do not need to check for updates
         return;
       }
