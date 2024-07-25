@@ -11,7 +11,7 @@
 
   <VTextarea
     v-model="comment"
-    name="arg"
+    name="comment"
     :label="$t(`requests.comment_optional`)"
     :prepend-icon="mdiComment"
     variant="filled"

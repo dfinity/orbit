@@ -3,16 +3,18 @@
     {{ $t('app.update_recommended_latest') }}
   </VAlert>
 
-  <p v-if="checkingForUpdates" class="text-h6 py-3">
+  <p v-if="checkingForUpdates" class="text-h6 py-3" data-test-id="loading-screen">
     <VProgressCircular indeterminate color="primary" class="mb-1 mr-2" :size="20" :width="2" />
     {{ $t('app.checking_for_updates') }}
   </p>
 
-  <p v-else-if="!isUpdateAvailable" class="text-h6 py-3">
+  <p v-else-if="!isUpdateAvailable" class="text-h6 py-3" data-test-id="latest-screen">
     {{ $t('app.update_already_latest_version') }}
   </p>
 
-  <p v-else class="text-h6 py-3">{{ $t('app.update_available') }}</p>
+  <p v-else class="text-h6 py-3" data-test-id="update-available-screen">
+    {{ $t('app.update_available') }}
+  </p>
 </template>
 
 <script lang="ts" setup>
