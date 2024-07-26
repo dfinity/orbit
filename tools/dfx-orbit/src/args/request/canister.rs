@@ -5,18 +5,24 @@ pub mod change;
 
 use crate::StationAgent;
 use call::RequestCanisterCallArgs;
-use change::RequestCanisterChangeArgs;
-use clap::Subcommand;
+use change::RequestCanisterInstallArgs;
+use clap::{Parser, Subcommand};
 use orbit_station_api::RequestOperationInput;
 
-/// Request canister changes.
+/// Request canister operations through Orbit
+#[derive(Debug, Clone, Parser)]
+pub struct RequestCanisterArgs {
+    /// The operation to request
+    #[command(subcommand)]
+    action: RequestCanisterActionArgs,
+}
+
 #[derive(Debug, Clone, Subcommand)]
 #[command(version, about, long_about = None)]
-pub enum RequestCanisterArgs {
-    /// Request to update the canister.
-    #[command(subcommand)]
-    Change(RequestCanisterChangeArgs),
-    /// Request to call a canister method.
+pub enum RequestCanisterActionArgs {
+    /// Request to upgrade the canister wasm
+    Install(RequestCanisterInstallArgs),
+    /// Request to call a canister method
     Call(RequestCanisterCallArgs),
 }
 
@@ -26,11 +32,21 @@ impl RequestCanisterArgs {
         self,
         station_agent: &StationAgent,
     ) -> anyhow::Result<RequestOperationInput> {
+        self.action.into_create_request_input(station_agent)
+    }
+}
+
+impl RequestCanisterActionArgs {
+    /// Converts the CLI arg type into the equivalent Orbit API type.
+    pub(crate) fn into_create_request_input(
+        self,
+        station_agent: &StationAgent,
+    ) -> anyhow::Result<RequestOperationInput> {
         match self {
-            RequestCanisterArgs::Change(change_args) => {
+            RequestCanisterActionArgs::Install(change_args) => {
                 change_args.into_create_request_input(station_agent)
             }
-            RequestCanisterArgs::Call(call_args) => {
+            RequestCanisterActionArgs::Call(call_args) => {
                 call_args.into_create_request_input(station_agent)
             }
         }

@@ -23,10 +23,9 @@ pub struct RequestArgs {
 #[derive(Debug, Clone, Subcommand)]
 #[command(version, about, long_about = None)]
 pub enum RequestArgsActions {
-    /// Request changes to a canister.
-    #[command(subcommand)]
+    /// Request canister operations through Orbit
     Canister(RequestCanisterArgs),
-    /// Request permissions.
+    /// Request permissions
     #[command(subcommand)]
     Permission(RequestPermissionArgs),
 }
