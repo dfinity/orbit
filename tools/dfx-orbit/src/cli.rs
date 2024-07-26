@@ -9,7 +9,10 @@ mod submit;
 
 pub use crate::cli::assets::AssetUploadRequest;
 use crate::{
-    args::{canister::CanisterArgs, review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
+    args::{
+        assets::AssetArgsAction, canister::CanisterArgs, review::ReviewArgs, DfxOrbitArgs,
+        DfxOrbitSubcommands,
+    },
     dfx_extension_api::OrbitExtensionAgent,
     StationAgent,
 };
@@ -38,9 +41,6 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
                     station_agent
                         .claim_canister(claim_args.canister, claim_args.exclusive)
                         .await?;
-                }
-                CanisterArgs::UploadHttpAssets(upload_http_assets_args) => {
-                    station_agent.upload_assets(upload_http_assets_args).await?;
                 }
             }
             Ok(())
@@ -89,6 +89,18 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
                 Ok(())
             }
         },
+        DfxOrbitSubcommands::Asset(asset_args) => {
+            match asset_args.action {
+                AssetArgsAction::Upload(upload_args) => {
+                    station_agent
+                        .upload_assets(asset_args.canister, upload_args.files)
+                        .await?;
+                }
+            }
+
+            Ok(())
+            //
+        }
         _ => unreachable!(),
     }
 }

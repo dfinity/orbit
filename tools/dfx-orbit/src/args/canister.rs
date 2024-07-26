@@ -9,8 +9,6 @@ use std::fmt::Debug;
 pub enum CanisterArgs {
     /// Puts a canister controlled by the user under Orbit control.
     Claim(CanisterClaimArgs),
-    /// Uploads assets to an HTTP asset canister and requests that the assets be used.
-    UploadHttpAssets(UploadAssetsArgs),
 }
 
 /// Puts a canister controlled by the user under Orbit control.
@@ -21,18 +19,4 @@ pub struct CanisterClaimArgs {
     /// Make Orbit the exclusive controller of the canister.
     #[clap(long, short, action)]
     pub exclusive: bool,
-}
-
-/// Uploads assets to an HTTP asset canister.
-#[derive(Debug, Parser)]
-pub struct UploadAssetsArgs {
-    /// The canister name or `canister_id`.
-    #[structopt(long)]
-    pub canister: String,
-    /// A directory of assets to upload.
-    #[structopt(long)]
-    pub source: Vec<String>,
-    /// Provide a running commentary.
-    #[arg(short, long, default_value_t = false)]
-    pub verbose: bool,
 }

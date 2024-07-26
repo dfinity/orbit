@@ -5,7 +5,7 @@ pub mod request;
 pub mod review;
 pub mod station;
 
-use assets::AssetsArgs;
+use assets::AssetArgs;
 use canister::CanisterArgs;
 use clap::{Parser, Subcommand};
 use request::RequestArgs;
@@ -13,6 +13,8 @@ use review::ReviewArgs;
 use station::StationArgs;
 
 /// Manages Orbit on the Internet Computer.
+// TODO: Specify --station to not use the default station
+// TODO: Better version information
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct DfxOrbitArgs {
@@ -37,7 +39,7 @@ pub enum DfxOrbitSubcommands {
     #[command(subcommand)]
     Review(ReviewArgs),
     /// Manage assets stored in an asset canister through Orbit
-    Assets(AssetsArgs),
+    Asset(AssetArgs),
     /// Gets the caller's profile on an Orbit station.
     Me,
 }

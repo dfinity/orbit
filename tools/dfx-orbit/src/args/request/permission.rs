@@ -4,7 +4,7 @@ pub mod canister;
 pub mod permission;
 
 use crate::StationAgent;
-use canister::RequestPermissionUpdateCanisterArgs;
+use canister::RequestPermissionUpgradeCanisterArgs;
 use clap::Subcommand;
 use orbit_station_api::RequestOperationInput;
 use permission::{RequestPermissionReadPermissionsArgs, RequestPermissionUpdatePermissionsArgs};
@@ -17,8 +17,8 @@ pub enum RequestPermissionArgs {
     ReadPermissions(RequestPermissionReadPermissionsArgs),
     /// Request permission to update permission(s)
     UpdatePermissions(RequestPermissionUpdatePermissionsArgs),
-    /// Request permission to update canister(s)
-    UpdateCanister(RequestPermissionUpdateCanisterArgs),
+    /// Requests the permisson to propose canister upgrades
+    UpgradeCanister(RequestPermissionUpgradeCanisterArgs),
 }
 
 impl RequestPermissionArgs {
@@ -28,7 +28,7 @@ impl RequestPermissionArgs {
         station_agent: &StationAgent,
     ) -> anyhow::Result<RequestOperationInput> {
         let operation = match self {
-            RequestPermissionArgs::UpdateCanister(canister_args) => {
+            RequestPermissionArgs::UpgradeCanister(canister_args) => {
                 canister_args.into_create_request_input(station_agent)?
             }
             RequestPermissionArgs::ReadPermissions(permission_args) => permission_args.into(),

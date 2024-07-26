@@ -211,7 +211,7 @@ dfx canister call frontend list_permitted '(record { permission = variant { Comm
 A developer may upload one or more directories of HTTP assets with:
 
 ```
-dfx-orbit canister upload-http-assets --canister CANISTER_NAME --source SOME_DIR/ --source OTHER_DIR/
+dfx-orbit asset CANISTER_NAME upload SOME_DIR/ OTHER_DIR/ ..
 ```
 
 The developer may now request that the assets be published. The command for this is printed at the end of the upload command. Example:

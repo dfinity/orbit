@@ -5,16 +5,15 @@ use orbit_station_api::{
     ExternalCanisterResourceActionDTO, RequestOperationInput, ResourceDTO,
 };
 
-/// Requests the privilige of proposing canister upgrades.
+/// Requests the permisson to propose canister upgrades.
 #[derive(Debug, Clone, Parser)]
-pub struct RequestPermissionUpdateCanisterArgs {
-    /// Canister name or ID.
+pub struct RequestPermissionUpgradeCanisterArgs {
+    /// Canister name or ID. If none specified, this will request all
     // TODO: If a canister is not specified, require --all.
-    #[structopt(long)]
     pub canister: Option<String>,
 }
 
-impl RequestPermissionUpdateCanisterArgs {
+impl RequestPermissionUpgradeCanisterArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     pub(crate) fn into_create_request_input(
         self,

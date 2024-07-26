@@ -2,7 +2,7 @@
 
 mod util;
 
-use crate::{args::canister::UploadAssetsArgs as Args, StationAgent};
+use crate::StationAgent;
 use candid::{Nat, Principal};
 use ic_asset::canister_api::{
     methods::batch::compute_evidence, types::batch_upload::common::ComputeEvidenceArguments,
@@ -28,15 +28,14 @@ pub struct AssetUploadRequest {
 // TODO: Use StationAgentResult instead of anyhow result
 impl StationAgent {
     /// The main entry point for the `dfx orbit canister upload-http-assets` CLI.
-    pub async fn upload_assets(&mut self, args: Args) -> anyhow::Result<AssetUploadRequest> {
-        let Args {
-            canister,
-            source,
-            verbose: _verbose,
-        } = args;
+    pub async fn upload_assets(
+        &mut self,
+        canister: String,
+        files: Vec<String>,
+    ) -> anyhow::Result<AssetUploadRequest> {
         // The path is needed in various forms.
         let source_pathbufs: Vec<PathBuf> =
-            source.iter().map(|source| PathBuf::from(&source)).collect();
+            files.iter().map(|source| PathBuf::from(&source)).collect();
         let source_paths: Vec<&Path> = source_pathbufs
             .iter()
             .map(|pathbuf| pathbuf.as_path())
@@ -50,7 +49,7 @@ impl StationAgent {
             .with_agent(self.agent())
             .with_canister_id(canister_id)
             .build()?;
-        let assets = assets_as_hash_map(&source);
+        let assets = assets_as_hash_map(&files);
         let batch_id = ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
         println!("Proposed batch_id: {}", batch_id);
         // Compute evidence locally:

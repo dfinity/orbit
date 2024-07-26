@@ -1,4 +1,4 @@
-use dfx_orbit::{args::canister::UploadAssetsArgs, StationAgent};
+use dfx_orbit::StationAgent;
 use pocket_ic::PocketIc;
 use rand::{thread_rng, Rng};
 use station_api::{
@@ -90,11 +90,10 @@ fn assets_update() {
 
         // As dfx user: Request to upload new files to the asset canister
         let upload_request = station_agent
-            .upload_assets(UploadAssetsArgs {
-                canister: asset_canister.to_string(),
-                source: vec![asset_dir.path().to_str().unwrap().to_string()],
-                verbose: false,
-            })
+            .upload_assets(
+                asset_canister.to_string(),
+                vec![asset_dir.path().to_str().unwrap().to_string()],
+            )
             .await
             .unwrap();
 

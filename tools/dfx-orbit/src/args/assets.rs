@@ -3,17 +3,17 @@ use clap::{Parser, Subcommand};
 /// Station management commands.
 #[derive(Debug, Clone, Parser)]
 #[command(version, about, long_about = None)]
-pub struct AssetsArgs {
+pub struct AssetArgs {
     /// The name of the asset canister targeted by this action
-    #[clap(long, default_missing_value = "None")]
-    canister: Option<String>,
+    #[clap(long)]
+    pub(crate) canister: String,
 
     #[command(subcommand)]
-    action: AssetsArgsAction,
+    pub(crate) action: AssetArgsAction,
 }
 
 #[derive(Debug, Clone, Subcommand)]
-pub enum AssetsArgsAction {
+pub enum AssetArgsAction {
     /// Upload assets to an asset canister
     Upload(AssetsUploadArgs),
 }
@@ -21,6 +21,6 @@ pub enum AssetsArgsAction {
 #[derive(Debug, Clone, Parser)]
 pub struct AssetsUploadArgs {
     /// The source directories to upload (multiple values possible)
-    #[clap(long, num_args = 1..)]
-    source: Vec<String>,
+    #[clap(num_args = 1..)]
+    pub(crate) files: Vec<String>,
 }
