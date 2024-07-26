@@ -1,12 +1,12 @@
 //! CLI arguments for `dfx-orbit canister`.
 
 pub mod call;
-pub mod change;
+pub mod install;
 
 use crate::StationAgent;
 use call::RequestCanisterCallArgs;
-use change::RequestCanisterInstallArgs;
 use clap::{Parser, Subcommand};
+use install::RequestCanisterInstallArgs;
 use orbit_station_api::RequestOperationInput;
 
 /// Request canister operations through Orbit

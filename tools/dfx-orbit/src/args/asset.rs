@@ -15,11 +15,11 @@ pub struct AssetArgs {
 #[derive(Debug, Clone, Subcommand)]
 pub enum AssetArgsAction {
     /// Upload assets to an asset canister
-    Upload(AssetsUploadArgs),
+    Upload(AssetUploadArgs),
 }
 
 #[derive(Debug, Clone, Parser)]
-pub struct AssetsUploadArgs {
+pub struct AssetUploadArgs {
     /// The source directories to upload (multiple values possible)
     #[clap(num_args = 1..)]
     pub(crate) files: Vec<String>,

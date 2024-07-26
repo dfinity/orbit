@@ -1,5 +1,5 @@
 //! Implementation of the `dfx-orbit` commands.
-mod assets;
+mod asset;
 mod canister;
 mod me;
 mod request;
@@ -7,10 +7,10 @@ mod review;
 mod station;
 mod submit;
 
-pub use crate::cli::assets::AssetUploadRequest;
+pub use crate::cli::asset::AssetUploadRequest;
 use crate::{
     args::{
-        assets::AssetArgsAction, canister::CanisterArgs, review::ReviewArgs, DfxOrbitArgs,
+        asset::AssetArgsAction, canister::CanisterArgs, review::ReviewArgs, DfxOrbitArgs,
         DfxOrbitSubcommands,
     },
     dfx_extension_api::OrbitExtensionAgent,

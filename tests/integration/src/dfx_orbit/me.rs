@@ -1,5 +1,5 @@
 use crate::{
-    cli::{dfx_orbit_test, setup_agent, setup_dfx_user},
+    dfx_orbit::{dfx_orbit_test, setup_agent, setup_dfx_user},
     setup::setup_new_env,
     TestEnv,
 };

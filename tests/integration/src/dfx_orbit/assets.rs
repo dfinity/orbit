@@ -11,7 +11,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tempfile::tempdir;
 
 use crate::{
-    cli::{
+    dfx_orbit::{
         canister_call::permit_call_operation, dfx_orbit_test, fetch_asset, setup_agent,
         setup_dfx_user,
     },

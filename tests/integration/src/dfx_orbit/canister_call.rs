@@ -1,5 +1,5 @@
 use crate::{
-    cli::{dfx_orbit_test, setup_agent, setup_counter_canister, setup_dfx_user},
+    dfx_orbit::{dfx_orbit_test, setup_agent, setup_counter_canister, setup_dfx_user},
     setup::{setup_new_env, WALLET_ADMIN_USER},
     utils::{
         add_user, execute_request, submit_request_approval, update_raw, user_test_id,

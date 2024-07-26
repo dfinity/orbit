@@ -8,7 +8,7 @@ use station_api::{
 };
 
 use crate::{
-    cli::{
+    dfx_orbit::{
         canister_call::{permit_call_operation, set_four_eyes_on_call},
         dfx_orbit_test, setup_agent, setup_counter_canister, TEST_PRINCIPAL,
     },

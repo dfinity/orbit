@@ -1,11 +1,11 @@
 //! Command line interface for `dfx-orbit`.
-pub mod assets;
+pub mod asset;
 pub mod canister;
 pub mod request;
 pub mod review;
 pub mod station;
 
-use assets::AssetArgs;
+use asset::AssetArgs;
 use canister::CanisterArgs;
 use clap::{Parser, Subcommand};
 use request::RequestArgs;
