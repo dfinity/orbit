@@ -1,4 +1,4 @@
-use crate::StationAgent;
+use crate::DfxOrbit;
 use clap::Parser;
 use orbit_station_api::{
     ChangeExternalCanisterResourceTargetDTO, EditPermissionOperationInput,
@@ -17,11 +17,11 @@ impl RequestPermissionUpgradeCanisterArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     pub(crate) fn into_create_request_input(
         self,
-        station_agent: &StationAgent,
+        dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         let canisters: ChangeExternalCanisterResourceTargetDTO =
             if let Some(canister_name_or_id) = self.canister {
-                station_agent
+                dfx_orbit
                     .canister_id(&canister_name_or_id)
                     .map(ChangeExternalCanisterResourceTargetDTO::Canister)?
             } else {

@@ -5,7 +5,7 @@ use orbit_station_api::{
     CanisterInstallMode, ChangeExternalCanisterOperationInput, RequestOperationInput,
 };
 
-use crate::StationAgent;
+use crate::DfxOrbit;
 
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Clone, Parser)]
@@ -31,7 +31,7 @@ impl RequestCanisterInstallArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     pub(crate) fn into_create_request_input(
         self,
-        station_agent: &StationAgent,
+        dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         let RequestCanisterInstallArgs {
             canister,
@@ -40,7 +40,7 @@ impl RequestCanisterInstallArgs {
             arg,
             arg_file,
         } = self;
-        let canister_id = station_agent.canister_id(&canister)?;
+        let canister_id = dfx_orbit.canister_id(&canister)?;
 
         let operation = {
             let module = std::fs::read(wasm)

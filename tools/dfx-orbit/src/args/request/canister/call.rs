@@ -1,6 +1,6 @@
 //! CLI arguments for `dfx-orbit canister call`.
 
-use crate::StationAgent;
+use crate::DfxOrbit;
 use anyhow::Context;
 use clap::Parser;
 use orbit_station_api::{
@@ -30,7 +30,7 @@ impl RequestCanisterCallArgs {
     /// Converts the CLI arg stype into the equivalent Orbit API type.
     pub(crate) fn into_create_request_input(
         self,
-        station_agent: &StationAgent,
+        dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         let RequestCanisterCallArgs {
             canister,
@@ -38,7 +38,7 @@ impl RequestCanisterCallArgs {
             with_cycles,
             argument,
         } = self;
-        let canister_id = station_agent.canister_id(&canister)?;
+        let canister_id = dfx_orbit.canister_id(&canister)?;
 
         // TODO: It would be really nice to be able to use `blob_from_arguments(..)` here, as in dfx, to geta ll the nice things such as help composing the argument.
         let arg = if let Some(argument) = argument {

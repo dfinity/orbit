@@ -3,7 +3,7 @@
 pub mod call;
 pub mod install;
 
-use crate::StationAgent;
+use crate::DfxOrbit;
 use call::RequestCanisterCallArgs;
 use clap::{Parser, Subcommand};
 use install::RequestCanisterInstallArgs;
@@ -30,9 +30,9 @@ impl RequestCanisterArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     pub(crate) fn into_create_request_input(
         self,
-        station_agent: &StationAgent,
+        dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
-        self.action.into_create_request_input(station_agent)
+        self.action.into_create_request_input(dfx_orbit)
     }
 }
 
@@ -40,14 +40,14 @@ impl RequestCanisterActionArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
     pub(crate) fn into_create_request_input(
         self,
-        station_agent: &StationAgent,
+        dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         match self {
             RequestCanisterActionArgs::Install(change_args) => {
-                change_args.into_create_request_input(station_agent)
+                change_args.into_create_request_input(dfx_orbit)
             }
             RequestCanisterActionArgs::Call(call_args) => {
-                call_args.into_create_request_input(station_agent)
+                call_args.into_create_request_input(dfx_orbit)
             }
         }
     }

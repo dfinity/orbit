@@ -12,7 +12,7 @@ use tempfile::tempdir;
 
 use crate::{
     dfx_orbit::{
-        canister_call::permit_call_operation, dfx_orbit_test, fetch_asset, setup_agent,
+        canister_call::permit_call_operation, dfx_orbit_test, fetch_asset, setup_dfx_orbit,
         setup_dfx_user,
     },
     setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER},
@@ -86,10 +86,10 @@ fn assets_update() {
 
     dfx_orbit_test(&mut env, async {
         // Setup the station agent
-        let mut station_agent = setup_agent(canister_ids.station).await;
+        let mut dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
         // As dfx user: Request to upload new files to the asset canister
-        let upload_request = station_agent
+        let upload_request = dfx_orbit
             .upload_assets(
                 asset_canister.to_string(),
                 vec![asset_dir.path().to_str().unwrap().to_string()],
@@ -98,7 +98,8 @@ fn assets_update() {
             .unwrap();
 
         //  As dfx user: Request commitment of the batch
-        let _result = station_agent
+        let _result = dfx_orbit
+            .station
             .request(CreateRequestInput {
                 operation: station_api::RequestOperationInput::CallExternalCanister(
                     CallExternalCanisterOperationInput {

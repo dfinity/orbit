@@ -2,7 +2,7 @@
 
 mod util;
 
-use crate::StationAgent;
+use crate::DfxOrbit;
 use candid::{Nat, Principal};
 use ic_asset::canister_api::{
     methods::batch::compute_evidence, types::batch_upload::common::ComputeEvidenceArguments,
@@ -26,7 +26,7 @@ pub struct AssetUploadRequest {
 }
 
 // TODO: Use StationAgentResult instead of anyhow result
-impl StationAgent {
+impl DfxOrbit {
     /// The main entry point for the `dfx orbit canister upload-http-assets` CLI.
     pub async fn upload_assets(
         &mut self,
@@ -46,7 +46,7 @@ impl StationAgent {
 
         // Upload assets:
         let canister_agent = CanisterBuilder::new()
-            .with_agent(self.agent())
+            .with_agent(self.interface.agent())
             .with_canister_id(canister_id)
             .build()?;
         let assets = assets_as_hash_map(&files);
@@ -88,7 +88,7 @@ impl StationAgent {
         );
 
         let upload_request = AssetUploadRequest {
-            station_principal: Principal::from_text(&self.station.station_id).unwrap(),
+            station_principal: Principal::from_text(&self.station.config.station_id).unwrap(),
             asset_canister_principal: canister_id,
             batch_id,
             evidence: canister_evidence_bytes,

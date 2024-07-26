@@ -7,8 +7,8 @@ impl StationAgent {
         canister: String,
         exclusive: bool,
     ) -> StationAgentResult<()> {
-        let station_id = &self.station.station_id;
-        let network = &self.station.network;
+        let station_id = &self.config.station_id;
+        let network = &self.config.network;
 
         let claim_type = if exclusive {
             "--set-controller"

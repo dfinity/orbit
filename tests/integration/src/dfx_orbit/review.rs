@@ -10,7 +10,7 @@ use station_api::{
 use crate::{
     dfx_orbit::{
         canister_call::{permit_call_operation, set_four_eyes_on_call},
-        dfx_orbit_test, setup_agent, setup_counter_canister, TEST_PRINCIPAL,
+        dfx_orbit_test, setup_counter_canister, setup_dfx_orbit, TEST_PRINCIPAL,
     },
     setup::{setup_new_env, WALLET_ADMIN_USER},
     utils::{
@@ -73,9 +73,10 @@ fn review() {
 
     dfx_orbit_test(&mut env, async {
         // Setup the station agent
-        let mut station_agent = setup_agent(canister_ids.station).await;
+        let mut dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
-        let list_request_response = station_agent
+        let list_request_response = dfx_orbit
+            .station
             .review_list(ListRequestsInput {
                 requester_ids: None,
                 approver_ids: None,
@@ -98,7 +99,8 @@ fn review() {
         assert_eq!(list_request_response.requests[0].id, submitted_request.id);
 
         // Check that this id also matches the values returned from review_next and review_id
-        let next_request = station_agent
+        let next_request = dfx_orbit
+            .station
             .review_next(GetNextApprovableRequestInput {
                 excluded_request_ids: vec![],
                 operation_types: Some(vec![ListRequestsOperationTypeDTO::CallExternalCanister(
@@ -109,7 +111,8 @@ fn review() {
             .unwrap()
             .unwrap();
 
-        let id_request = station_agent
+        let id_request = dfx_orbit
+            .station
             .review_id(GetRequestInput {
                 request_id: submitted_request.id.clone(),
             })
@@ -119,7 +122,8 @@ fn review() {
         assert_eq!(next_request.request.id, id_request.request.id);
 
         // Approve the request
-        let _response = station_agent
+        let _response = dfx_orbit
+            .station
             .submit(SubmitRequestApprovalInput {
                 decision: RequestApprovalStatusDTO::Approved,
                 request_id: submitted_request.id,

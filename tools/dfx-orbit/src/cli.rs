@@ -14,7 +14,7 @@ use crate::{
         DfxOrbitSubcommands,
     },
     dfx_extension_api::OrbitExtensionAgent,
-    StationAgent,
+    DfxOrbit,
 };
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
@@ -27,18 +27,19 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
         return Ok(());
     };
 
-    let mut station_agent = StationAgent::new(orbit_agent).await?;
+    let mut dfx_orbit = DfxOrbit::new(orbit_agent).await?;
 
     match args.command {
         DfxOrbitSubcommands::Me => {
-            let ans = station_agent.me().await?;
+            let ans = dfx_orbit.station.me().await?;
             println!("{}", serde_json::to_string_pretty(&ans)?);
             Ok(())
         }
         DfxOrbitSubcommands::Canister(canister_args) => {
             match canister_args {
                 CanisterArgs::Claim(claim_args) => {
-                    station_agent
+                    dfx_orbit
+                        .station
                         .claim_canister(claim_args.canister, claim_args.exclusive)
                         .await?;
                 }
@@ -46,11 +47,12 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             Ok(())
         }
         DfxOrbitSubcommands::Request(request_args) => {
-            let response = station_agent
-                .request(request_args.into_create_request_input(&station_agent)?)
+            let response = dfx_orbit
+                .station
+                .request(request_args.into_create_request_input(&dfx_orbit)?)
                 .await?;
             let request_id = &response.request.id;
-            let request_url = station_agent.request_url(request_id);
+            let request_url = dfx_orbit.station.request_url(request_id);
             println!("Created request: {request_id}");
             println!("Request URL: {request_url}");
             println!("To view the request, run: dfx-orbit review id {request_id}");
@@ -60,7 +62,9 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             ReviewArgs::List(args) => {
                 println!(
                     "{}",
-                    serde_json::to_string_pretty(&station_agent.review_list(args.into()).await?)?
+                    serde_json::to_string_pretty(
+                        &dfx_orbit.station.review_list(args.into()).await?
+                    )?
                 );
 
                 Ok(())
@@ -68,7 +72,9 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             ReviewArgs::Next(args) => {
                 println!(
                     "{}",
-                    serde_json::to_string_pretty(&station_agent.review_next(args.into()).await?)?
+                    serde_json::to_string_pretty(
+                        &dfx_orbit.station.review_next(args.into()).await?
+                    )?
                 );
 
                 Ok(())
@@ -77,13 +83,13 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
                 println!(
                     "{}",
                     serde_json::to_string_pretty(
-                        &station_agent.review_id(args.clone().into()).await?
+                        &dfx_orbit.station.review_id(args.clone().into()).await?
                     )?
                 );
 
                 // TODO: Reaffirm user consent before progressing with submitting
                 if let Ok(submit) = args.try_into() {
-                    station_agent.submit(submit).await?;
+                    dfx_orbit.station.submit(submit).await?;
                 };
 
                 Ok(())
@@ -92,7 +98,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
         DfxOrbitSubcommands::Asset(asset_args) => {
             match asset_args.action {
                 AssetArgsAction::Upload(upload_args) => {
-                    station_agent
+                    dfx_orbit
                         .upload_assets(asset_args.canister, upload_args.files)
                         .await?;
                 }

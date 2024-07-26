@@ -4,9 +4,7 @@ use crate::{
     CanisterIds,
 };
 use candid::Principal;
-use dfx_orbit::{
-    dfx_extension_api::OrbitExtensionAgent, local_config::StationConfig, StationAgent,
-};
+use dfx_orbit::{dfx_extension_api::OrbitExtensionAgent, local_config::StationConfig, DfxOrbit};
 use pocket_ic::PocketIc;
 use rand::Rng;
 use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
@@ -140,7 +138,7 @@ fn test_dfx_json_from_template(port: u16) -> String {
 }
 
 /// Setup the station agent for the test
-async fn setup_agent(station_id: Principal) -> StationAgent {
+async fn setup_dfx_orbit(station_id: Principal) -> DfxOrbit {
     let port = PORT.with(|port| port.borrow().clone());
 
     let orbit_agent = OrbitExtensionAgent::new().unwrap();
@@ -153,7 +151,7 @@ async fn setup_agent(station_id: Principal) -> StationAgent {
         })
         .unwrap();
 
-    StationAgent::new(orbit_agent).await.unwrap()
+    DfxOrbit::new(orbit_agent).await.unwrap()
 }
 
 /// Create the dfx user's identities and add them to the station
