@@ -4,12 +4,15 @@
 
 use clap::Parser;
 use dfx_orbit::{self as lib, args::DfxOrbitArgs};
-use tokio::runtime::Runtime;
+use tokio::runtime::Builder;
 
 fn main() {
     let args = DfxOrbitArgs::parse();
     dbg!(&args);
-    let runtime = Runtime::new().expect("Unable to create a runtime");
+    let runtime = Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("Unable to create a runtime");
     runtime.block_on(async {
         if let Err(err) = lib::cli::exec(args).await {
             println!("Failed to execute command: {}", err)
