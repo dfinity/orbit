@@ -86,9 +86,9 @@
       "newVersion": null
     },
     "control-panel": {
-      "currentVersion": "0.0.2-alpha.3",
+      "currentVersion": "0.0.2-alpha.4",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.4"
+      "newVersion": null
     },
     "control-panel-api": {
       "currentVersion": "0.0.2-alpha.3",
@@ -109,17 +109,17 @@
       "newVersion": null
     },
     "upgrader": {
-      "currentVersion": "0.0.2-alpha.2",
+      "currentVersion": "0.0.2-alpha.3",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.3"
+      "newVersion": null
     },
     "station": {
-      "currentVersion": "0.0.2-alpha.4",
+      "currentVersion": "0.0.2-alpha.5",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.5"
+      "newVersion": null
     },
     "upgrader-api": {
-      "currentVersion": "0.0.2-alpha.3",
+      "currentVersion": "0.0.2-alpha.4",
       "dependentProjects": [
         {
           "source": "upgrader",
@@ -140,10 +140,10 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": "0.0.2-alpha.4"
+      "newVersion": null
     },
     "station-api": {
-      "currentVersion": "0.0.2-alpha.3",
+      "currentVersion": "0.0.2-alpha.4",
       "dependentProjects": [
         {
           "source": "control-panel",
@@ -170,62 +170,22 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": "0.0.2-alpha.4"
+      "newVersion": null
     },
     "wallet-dapp": {
-      "currentVersion": "0.0.2-alpha.5",
+      "currentVersion": "0.0.2-alpha.6",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.6"
+      "newVersion": "0.0.2-alpha.7"
     }
   },
   "changes": {
-    "control-panel": {
-      "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.4",
-        "gitTag": "@orbit/control-panel-v0.0.2-alpha.4",
-        "isPrerelease": true
-      },
-      "contents": "## 0.0.2-alpha.4 (2024-07-04)\n\n\n### 🚀 Features\n\n- **station:** disaster recovery MVP\n\n- **upgrader:** disaster recovery flow reuses the same upgrader canister\n\n- **upgrader:** disaster recovery recreates accounts\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Max\n- olaszakos"
-    },
-    "upgrader": {
-      "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.3",
-        "gitTag": "@orbit/upgrader-v0.0.2-alpha.3",
-        "isPrerelease": true
-      },
-      "contents": "## 0.0.2-alpha.3 (2024-07-04)\n\n\n### 🚀 Features\n\n- **station:** disaster recovery MVP\n\n- **upgrader:** disaster recovery flow reuses the same upgrader canister\n\n\n### ❤️  Thank You\n\n- Jan Wendling\n- Kepler Vital\n- Max\n- mraszyk\n- olaszakos"
-    },
-    "station": {
-      "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.5",
-        "gitTag": "@orbit/station-v0.0.2-alpha.5",
-        "isPrerelease": true
-      },
-      "contents": "## 0.0.2-alpha.5 (2024-07-04)\n\n\n### 🚀 Features\n\n- **station:** disaster recovery MVP\n\n- **upgrader:** disaster recovery flow reuses the same upgrader canister\n\n- **upgrader:** disaster recovery recreates accounts\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Max\n- olaszakos"
-    },
-    "upgrader-api": {
-      "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.4",
-        "gitTag": "@orbit/upgrader-api-v0.0.2-alpha.4",
-        "isPrerelease": true
-      },
-      "contents": "## 0.0.2-alpha.4 (2024-07-04)\n\n\n### 🚀 Features\n\n- **station:** disaster recovery MVP\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Max\n- olaszakos"
-    },
-    "station-api": {
-      "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.4",
-        "gitTag": "@orbit/station-api-v0.0.2-alpha.4",
-        "isPrerelease": true
-      },
-      "contents": "## 0.0.2-alpha.4 (2024-07-04)\n\n\n### 🚀 Features\n\n- **station:** disaster recovery MVP\n\n- **upgrader:** disaster recovery flow reuses the same upgrader canister\n\n- **upgrader:** disaster recovery recreates accounts\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Max\n- olaszakos"
-    },
     "wallet-dapp": {
       "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.6",
-        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.6",
+        "rawVersion": "0.0.2-alpha.7",
+        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.7",
         "isPrerelease": true
       },
-      "contents": "## 0.0.2-alpha.6 (2024-07-04)\n\n\n### 🚀 Features\n\n- **station:** disaster recovery MVP\n\n- **wallet:** Always lowercase ICP Ledger addresses\n\n- **upgrader:** disaster recovery flow reuses the same upgrader canister\n\n- **upgrader:** disaster recovery recreates accounts\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Max\n- olaszakos"
+      "contents": "## 0.0.2-alpha.7 (2024-07-29)\n\n\n### 🚀 Features\n\n- **wallet:** remove unsafe-eval csp by bumping the agent\n\n- **wallet:** add advanced and automated mode to upgrades\n\n- **wallet:** prompt the user to update if new version available\n\n\n### ❤️  Thank You\n\n- Kepler Vital"
     }
   }
 }
