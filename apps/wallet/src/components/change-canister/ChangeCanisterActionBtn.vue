@@ -161,27 +161,24 @@ const goToConfirmation = async (model: ChangeCanisterFormProps['modelValue']): P
 
 const submitUpgrade = async (model: ChangeCanisterFormProps['modelValue']): Promise<Request> => {
   const fileBuffer = assertAndReturn(model.wasmModule, 'model.wasmModule is required');
+  const res = await station.service.changeCanister(
+    {
+      arg:
+        model.wasmInitArg && model.wasmInitArg.length > 0
+          ? [new Uint8Array(hexStringToArrayBuffer(model.wasmInitArg))]
+          : [],
+      module: new Uint8Array(fileBuffer),
+      target: assertAndReturn(model.target, 'model.target is required'),
+    },
+    {
+      comment: model.comment,
+    },
+  );
 
-  return station.service
-    .changeCanister(
-      {
-        arg:
-          model.wasmInitArg && model.wasmInitArg.length > 0
-            ? [new Uint8Array(hexStringToArrayBuffer(model.wasmInitArg))]
-            : [],
-        module: new Uint8Array(fileBuffer),
-        target: assertAndReturn(model.target, 'model.target is required'),
-      },
-      {
-        comment: model.comment,
-      },
-    )
-    .then(res => {
-      // Refresh the version update status after the upgrade
-      station.checkVersionUpdates();
+  // Refresh the version update status after the upgrade
+  station.checkVersionUpdates();
 
-      return res;
-    });
+  return res;
 };
 
 const emit = defineEmits<{

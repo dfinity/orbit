@@ -439,7 +439,7 @@ export const useStationStore = defineStore('station', {
 
         // check if there is an existing request to update the canister, if so, we store the request id
         // to avoid prompting the user to update again if they have already requested an update
-        this.service
+        const result = await this.service
           .listRequests({
             limit: 1,
             types: [{ ChangeCanister: null }],
@@ -450,16 +450,15 @@ export const useStationStore = defineStore('station', {
               { Created: null },
             ],
           })
-          .then(result => {
-            this.versionManagement.updateRequested = result.requests.length
-              ? result.requests[0].id
-              : undefined;
-          })
+          // if there is an error, we prevent it from being thrown to avoid breaking the entire
+          // new version check flow
           .catch(err => {
             logger.error(`Failed to check if a request to update already exists`, { err });
 
-            this.versionManagement.updateRequested = undefined;
+            return { requests: [] };
           });
+
+        this.versionManagement.updateRequested = result.requests?.[0]?.id;
       } catch (err) {
         logger.error(`Failed to check version updates`, { err });
         this.versionManagement = {
