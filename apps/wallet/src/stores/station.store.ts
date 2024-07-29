@@ -1,9 +1,10 @@
 import { Principal } from '@dfinity/principal';
 import { defineStore } from 'pinia';
 import { appInitConfig } from '~/configs/init.config';
-import { createCompatibilityLayer } from '~/core/compatibility.core';
+import { createCompatibilityLayer, fetchCanisterVersion } from '~/core/compatibility.core';
 import { STATION_ID_QUERY_PARAM } from '~/core/constants.core';
 import { InvalidStationError, UnregisteredUserError } from '~/core/errors.core';
+import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
 import {
   Asset,
@@ -21,7 +22,7 @@ import { useAppStore } from '~/stores/app.store';
 import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 import { LoadableItem } from '~/types/helper.types';
 import { computedStationName, isApiError, popRedirectToLocation } from '~/utils/app.utils';
-import { arrayBatchMaker, removeBasePathFromPathname } from '~/utils/helper.utils';
+import { arrayBatchMaker, removeBasePathFromPathname, variantIs } from '~/utils/helper.utils';
 import { accountsWorker, startWorkers, stopWorkers } from '~/workers';
 
 export enum ConnectionStatus {
@@ -53,6 +54,13 @@ export interface StationStoreState {
   notifications: {
     loading: boolean;
     items: LoadableItem<Notification>[];
+  };
+  versionManagement: {
+    loading: boolean;
+    stationVersion?: string;
+    upgraderVersion?: string;
+    nextStationVersion?: string;
+    nextUpgraderVersion?: string;
   };
 }
 
@@ -116,6 +124,13 @@ const initialStoreState = (): StationStoreState => {
       loading: false,
       items: [],
     },
+    versionManagement: {
+      loading: false,
+      nextStationVersion: undefined,
+      nextUpgraderVersion: undefined,
+      stationVersion: undefined,
+      upgraderVersion: undefined,
+    },
   };
 };
 
@@ -155,6 +170,7 @@ export const useStationStore = defineStore('station', {
       this.notifications = initialState.notifications;
       this.user = initialState.user;
       this.privileges = initialState.privileges;
+      this.versionManagement = initialState.versionManagement;
 
       stopWorkers();
     },
@@ -276,6 +292,9 @@ export const useStationStore = defineStore('station', {
         this.canisterId = stationId.toText();
         this.loading = false;
         app.disableBackgroundPolling = false;
+
+        // async check for version updates after the station is connected
+        this.checkVersionUpdates();
       }
 
       return this.connectionStatus;
@@ -346,6 +365,72 @@ export const useStationStore = defineStore('station', {
           accountIds,
         },
       });
+    },
+    async loadStationVersion(): Promise<string> {
+      const stationVersion = await fetchCanisterVersion(icAgent.get(), this.stationId);
+
+      this.versionManagement.stationVersion = stationVersion;
+
+      return stationVersion;
+    },
+    async loadUpgraderVersion(): Promise<string> {
+      const { system } = await services().station.systemInfo();
+      const upgraderVersion = await fetchCanisterVersion(icAgent.get(), system.upgrader_id);
+
+      this.versionManagement.upgraderVersion = upgraderVersion;
+
+      return upgraderVersion;
+    },
+    async checkVersionUpdates(): Promise<void> {
+      if (
+        // if the user does not have the privilege to change the canister, we do not need to check for updates
+        !this.privileges.some(privilege => variantIs(privilege, 'ChangeCanister')) ||
+        // disables checking for updates if it's already ongoing
+        this.versionManagement.loading
+      ) {
+        return;
+      }
+
+      try {
+        const controlPanel = services().controlPanel;
+        this.versionManagement = {
+          ...initialStoreState().versionManagement,
+          loading: true,
+        };
+
+        const [stationVersion, upgraderVersion] = await Promise.all([
+          this.loadStationVersion(),
+          this.loadUpgraderVersion(),
+        ]);
+
+        const registryEntry = await controlPanel.findNextModuleVersion({
+          name: '@orbit/station',
+          currentVersion: stationVersion,
+        });
+
+        if (!registryEntry) {
+          this.versionManagement.nextStationVersion = undefined;
+          this.versionManagement.nextUpgraderVersion = undefined;
+
+          return;
+        }
+
+        if (!variantIs(registryEntry.value, 'WasmModule')) {
+          throw new Error(`Invalid next version response, expected WasmModule`);
+        }
+
+        this.versionManagement.nextStationVersion = registryEntry.value.WasmModule.version;
+        for (const dependency of registryEntry.value.WasmModule.dependencies) {
+          if (dependency.name === '@orbit/upgrader' && dependency.version !== upgraderVersion) {
+            this.versionManagement.nextUpgraderVersion = dependency.version;
+            break;
+          }
+        }
+      } catch (err) {
+        logger.error(`Failed to check version updates`, { err });
+      } finally {
+        this.versionManagement.loading = false;
+      }
     },
   },
 });

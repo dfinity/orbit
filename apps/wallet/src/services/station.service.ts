@@ -51,6 +51,7 @@ import {
   RemoveUserGroupOperationInput,
   Request,
   SubmitRequestApprovalInput,
+  SystemInfoResult,
   Transfer,
   TransferListItem,
   TransferOperationInput,
@@ -359,6 +360,17 @@ export class StationService {
     }
 
     return result.Ok.capabilities;
+  }
+
+  async systemInfo(verifiedCall = false): Promise<ExtractOk<SystemInfoResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.system_info();
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
   }
 
   async listNotifications(
@@ -794,11 +806,14 @@ export class StationService {
     return result.Ok.request;
   }
 
-  async changeCanister(input: ChangeCanisterOperationInput): Promise<Request> {
+  async changeCanister(
+    input: ChangeCanisterOperationInput,
+    opts: { comment?: string } = {},
+  ): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
-      summary: [],
+      summary: opts.comment ? [opts.comment] : [],
       operation: { ChangeCanister: input },
     });
 

@@ -3,6 +3,7 @@ import {
   isSemanticVersion,
   removeBasePathFromPathname,
   throttle,
+  toArrayBuffer,
   transformIdlWithOnlyVerifiedCalls,
   variantIs,
 } from './helper.utils';
@@ -138,6 +139,26 @@ describe('Url utils', () => {
       const basePath = '';
 
       expect(removeBasePathFromPathname(pathname, basePath)).toBe('/pathname');
+    });
+  });
+});
+
+describe('ArrayBuffer utils', () => {
+  describe('toArrayBuffer', () => {
+    it('converts a Uint8Array to an ArrayBuffer', () => {
+      const input = new Uint8Array([1, 2, 3, 4, 5]);
+      const output = toArrayBuffer(input);
+
+      expect(output).toBeInstanceOf(ArrayBuffer);
+      expect(new Uint8Array(output)).toEqual(input);
+    });
+
+    it('converts a number[] to an ArrayBuffer', () => {
+      const input = [1, 2, 3, 4, 5];
+      const output = toArrayBuffer(input);
+
+      expect(output).toBeInstanceOf(ArrayBuffer);
+      expect(new Uint8Array(output)).toEqual(new Uint8Array(input));
     });
   });
 });

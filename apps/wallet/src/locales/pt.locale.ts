@@ -39,7 +39,7 @@ export default {
       'Utilize com cuidado. A identidade poderá aceder à sua conta e executar ações em seu nome.',
     export_csv: 'Exportar CSV',
     params_parse_error: 'Erro ao analisar os parâmetros, por favor, tente novamente.',
-    submit_upgrade: 'Submeter atualização',
+    software_update: 'Atualização de software',
     canister_upgrade_target: 'Canister de destino',
     canister_wasm_module: 'Módulo WASM do canister',
     canister_upgrade_args_input: 'Argumentos de atualização do canister (opcional)',
@@ -79,6 +79,19 @@ export default {
     account_dialog_request_policy_transfer_hint:
       'A política que precisa ser aprovada para transferir fundos.',
     request_policy_rule_builder_no_rule: 'Nenhum critério definido.',
+    advanced_software_update_warning:
+      'Use com cuidado. Esta é uma funcionalidade avançada para atualizar a carteira.',
+    check_updates_btn: 'Verificar atualizações',
+    update_recommended_latest:
+      'Recomenda-se manter o seu software atualizado para garantir a melhor experiência.',
+    update_already_latest_version: 'Você já está na última versão.',
+    checking_for_updates: 'Verificando atualizações ...',
+    update_available: 'Uma nova versão está disponível.',
+    update_automated_comment: {
+      summary: '{name} será atualizado para a versão {version}.',
+      verify_instructions:
+        'Para verificar a atualização, abra o terminal e siga as instruções abaixo:',
+    },
   },
   alpha_warning: {
     version: 'Esta é uma versão alfa.',
@@ -407,6 +420,8 @@ export default {
     approval_policies: 'Políticas de Aprovação',
     upgrader: 'Atualizador',
     resource: 'Recurso',
+    automated: 'Automatizado',
+    advanced: 'Avançado',
     submit: 'Submeter',
     save: 'Salvar',
     type: 'Tipo',
@@ -427,6 +442,7 @@ export default {
     blockchain: 'Blockchain',
     address_owner: 'Proprietário do endereço',
     checksum: 'Checksum',
+    module_checksum: 'Checksum do módulo',
     reject: 'Rejeitar',
     metadata: 'Metadados',
     none: 'Nenhum',
