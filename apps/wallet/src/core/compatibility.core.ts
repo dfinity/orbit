@@ -1,4 +1,4 @@
-import { Certificate, HttpAgent } from '@dfinity/agent';
+import { Certificate, HttpAgent, LookupStatus } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { appInitConfig } from '~/configs/init.config';
 import { icAgent } from '~/core/ic-agent.core';
@@ -36,12 +36,16 @@ export async function fetchCanisterVersion(
 
   const version = certificate.lookup(versionPath);
 
-  if (!version) {
+  if (version.status !== LookupStatus.Found) {
     throw new Error('Version not found');
   }
 
+  if (!(version.value instanceof ArrayBuffer)) {
+    throw new Error('Version value is not an ArrayBuffer');
+  }
+
   const decoder = new TextDecoder();
-  const decodedVersion = decoder.decode(version);
+  const decodedVersion = decoder.decode(version.value);
 
   if (!isSemanticVersion(decodedVersion)) {
     throw new Error(
