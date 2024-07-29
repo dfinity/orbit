@@ -1,3 +1,19 @@
+## 0.0.2-alpha.7 (2024-07-29)
+
+
+### 🚀 Features
+
+- **wallet:** remove unsafe-eval csp by bumping the agent
+
+- **wallet:** add advanced and automated mode to upgrades
+
+- **wallet:** prompt the user to update if new version available
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+
 ## 0.0.2-alpha.6 (2024-07-04)
 
 
