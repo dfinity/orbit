@@ -88,7 +88,7 @@ impl DfxOrbit {
         );
 
         let upload_request = AssetUploadRequest {
-            station_principal: Principal::from_text(&self.station.config.station_id).unwrap(),
+            station_principal: self.station.config.station_id,
             asset_canister_principal: canister_id,
             batch_id,
             evidence: canister_evidence_bytes,

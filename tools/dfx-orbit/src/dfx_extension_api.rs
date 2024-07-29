@@ -144,11 +144,6 @@ impl OrbitExtensionAgent {
             })
     }
 
-    /// The name of the default dfx user identity.  This is the identity given by `dfx identity whoami` (if any).
-    pub fn identity() -> anyhow::Result<String> {
-        call_dfx_cli(vec!["identity", "whoami"])
-    }
-
     /// Gets the dfx_core interface
     pub async fn dfx_interface(&mut self) -> anyhow::Result<DfxInterface> {
         let network_name = self

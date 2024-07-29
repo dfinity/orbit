@@ -1,29 +1,13 @@
 //! Local dfx configuration of Orbit stations.
+use crate::{dfx_extension_api::OrbitExtensionAgent, station_agent::StationConfig};
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-
-use crate::dfx_extension_api::OrbitExtensionAgent;
 
 /// Configuration that lives in e.g. ~/.config/dfx/orbit.json
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct ExtensionConfig {
     /// Default station name.
     pub default_station: Option<String>,
-}
-
-/// Configuration for a given station that lives in e.g. ~/.config/dfx/orbit/stations/<station_name>.json
-#[derive(Debug, Serialize, Deserialize)]
-pub struct StationConfig {
-    /// Station name.
-    pub name: String,
-    /// Wallet canister ID.
-    // TODO: This should be a principal.
-    pub station_id: String,
-    /// The dfx network name.
-    pub network: String,
-    /// The Orbit user interface URL.
-    // TODO: This would be better as URL.  That requires serde to be implemented for URL.  Consider: https://docs.rs/url_serde/latest/url_serde/
-    pub url: String,
 }
 
 /// The directoy in the orbit dfx config directory where stations are stored.

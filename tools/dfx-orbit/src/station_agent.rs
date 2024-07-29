@@ -1,8 +1,7 @@
 //! A dfx and IC agent for communicating with an Orbit station.
 
-use crate::local_config::StationConfig;
-pub use crate::station_agent::error::StationAgentResult;
-use candid::{CandidType, Principal};
+pub use crate::station_agent::{config::StationConfig, error::StationAgentResult};
+use candid::CandidType;
 use ic_agent::{agent::UpdateBuilder, Agent};
 use orbit_station_api::{
     ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetNextApprovableRequestInput,
@@ -10,6 +9,7 @@ use orbit_station_api::{
     ListRequestsResponse, MeResponse, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
 };
 
+mod config;
 mod error;
 
 /// A dfx agent for communicating with a specific station.
@@ -82,9 +82,8 @@ impl StationAgent {
     //     Ok(self.agent().update(&canister_id, method_name))
     // }
 
-    async fn update_orbit(&mut self, method_name: &str) -> anyhow::Result<UpdateBuilder> {
-        let orbit_canister_id = Principal::from_text(&self.config.station_id)?;
-        Ok(self.agent.update(&orbit_canister_id, method_name))
+    async fn update_orbit(&mut self, method_name: &str) -> UpdateBuilder {
+        self.agent.update(&self.config.station_id, method_name)
     }
 
     /// Makes an update call to the station.
@@ -103,7 +102,7 @@ impl StationAgent {
 
         let response_bytes = self
             .update_orbit(method_name)
-            .await?
+            .await
             .with_arg(encoded_request)
             .call_and_wait()
             .await?;

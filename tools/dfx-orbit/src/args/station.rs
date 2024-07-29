@@ -1,10 +1,8 @@
 //! dfx-orbit station management commands.
-use std::fmt::{self, Display, Formatter};
-
+use crate::station_agent::StationConfig;
 use candid::Principal;
 use clap::{Parser, Subcommand};
-
-use crate::local_config::StationConfig;
+use std::fmt::{self, Display, Formatter};
 
 /// Station management commands.
 #[derive(Debug, Subcommand)]
@@ -46,7 +44,7 @@ impl From<Add> for StationConfig {
     fn from(add: Add) -> Self {
         Self {
             name: add.name,
-            station_id: add.station_id.to_text(),
+            station_id: add.station_id,
             network: add.network,
             url: add.url,
         }

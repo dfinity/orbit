@@ -4,7 +4,7 @@ use crate::{
     CanisterIds,
 };
 use candid::Principal;
-use dfx_orbit::{dfx_extension_api::OrbitExtensionAgent, local_config::StationConfig, DfxOrbit};
+use dfx_orbit::{dfx_extension_api::OrbitExtensionAgent, station_agent::StationConfig, DfxOrbit};
 use pocket_ic::PocketIc;
 use rand::Rng;
 use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
@@ -145,7 +145,7 @@ async fn setup_dfx_orbit(station_id: Principal) -> DfxOrbit {
     orbit_agent
         .add_station(StationConfig {
             name: String::from("Test"),
-            station_id: station_id.to_text(),
+            station_id,
             network: String::from("test"),
             url: format!("http://localhost:{}", port),
         })
