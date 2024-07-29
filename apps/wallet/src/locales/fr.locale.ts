@@ -501,6 +501,7 @@ export default {
     value: 'Valeur',
     close: 'Fermer',
     general: 'Général',
+    update: 'Mettre à jour',
     add: 'Ajouter',
     remove: 'Enlever',
     failed: 'Erreur',

@@ -496,6 +496,7 @@ export default {
     value: 'Value',
     close: 'Close',
     general: 'General',
+    update: 'Update',
     add: 'Add',
     remove: 'Remove',
     failed: 'Failed',
