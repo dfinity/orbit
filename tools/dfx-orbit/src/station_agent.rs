@@ -3,7 +3,11 @@
 use crate::{error::StationAgentResult, local_config::StationConfig};
 use candid::{CandidType, Principal};
 use ic_agent::{agent::UpdateBuilder, Agent};
-use orbit_station_api::ApiErrorDTO;
+use orbit_station_api::{
+    ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetNextApprovableRequestInput,
+    GetNextApprovableRequestResponse, GetRequestInput, GetRequestResponse, ListRequestsInput,
+    ListRequestsResponse, MeResponse, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
+};
 
 /// A dfx agent for communicating with a specific station.
 pub struct StationAgent {
@@ -17,13 +21,54 @@ impl StationAgent {
         Self { config, agent }
     }
 
-    pub async fn update_canister_id(
+    pub async fn request(
         &mut self,
-        canister_id: &Principal,
-        method_name: &str,
-    ) -> anyhow::Result<UpdateBuilder> {
-        Ok(self.agent.update(canister_id, method_name))
+        input: CreateRequestInput,
+    ) -> StationAgentResult<CreateRequestResponse> {
+        self.update_orbit_typed("create_request", input).await
     }
+
+    pub async fn submit(
+        &mut self,
+        args: SubmitRequestApprovalInput,
+    ) -> StationAgentResult<SubmitRequestApprovalResponse> {
+        self.update_orbit_typed("submit_request_approval", args)
+            .await
+    }
+
+    pub async fn me(&mut self) -> StationAgentResult<MeResponse> {
+        self.update_orbit_typed("me", ()).await
+    }
+
+    pub async fn review_id(
+        &mut self,
+        args: GetRequestInput,
+    ) -> StationAgentResult<GetRequestResponse> {
+        self.update_orbit_typed("get_request", args).await
+    }
+
+    pub async fn review_list(
+        &mut self,
+        args: ListRequestsInput,
+    ) -> StationAgentResult<ListRequestsResponse> {
+        self.update_orbit_typed("list_requests", args).await
+    }
+
+    pub async fn review_next(
+        &mut self,
+        args: GetNextApprovableRequestInput,
+    ) -> StationAgentResult<GetNextApprovableRequestResponse> {
+        self.update_orbit_typed("get_next_approvable_request", args)
+            .await
+    }
+
+    // async fn update_canister_id(
+    //     &mut self,
+    //     canister_id: &Principal,
+    //     method_name: &str,
+    // ) -> anyhow::Result<UpdateBuilder> {
+    //     Ok(self.agent.update(canister_id, method_name))
+    // }
 
     // pub fn update_canister(
     //     &mut self,
@@ -42,7 +87,7 @@ impl StationAgent {
     /// Makes an update call to the station.
     ///
     /// This version integrates candid encoding / decoding
-    pub async fn update_orbit_typed<Req, Res>(
+    async fn update_orbit_typed<Req, Res>(
         &mut self,
         method_name: &str,
         request: Req,

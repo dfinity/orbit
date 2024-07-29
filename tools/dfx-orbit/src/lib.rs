@@ -9,12 +9,12 @@ pub mod cli;
 pub mod dfx_extension_api;
 pub mod error;
 pub mod local_config;
-pub mod orbit_station_agent;
+pub mod station_agent;
 
 use candid::Principal;
 use dfx_core::DfxInterface;
 use dfx_extension_api::OrbitExtensionAgent;
-pub use orbit_station_agent::StationAgent;
+pub use station_agent::StationAgent;
 
 pub struct DfxOrbit {
     // The station agent that handles communication with the station
