@@ -1,12 +1,10 @@
 //! Command line interface for `dfx-orbit`.
 pub mod asset;
-pub mod canister;
 pub mod request;
 pub mod review;
 pub mod station;
 
 use asset::AssetArgs;
-use canister::CanisterArgs;
 use clap::{Parser, Subcommand};
 use request::RequestArgs;
 use review::ReviewArgs;
@@ -30,9 +28,6 @@ pub enum DfxOrbitSubcommands {
     /// Manage Orbit stations.
     #[command(subcommand)]
     Station(StationArgs),
-    /// Manage external canisters with Orbit.
-    #[command(subcommand)]
-    Canister(CanisterArgs),
     /// Make requests to Orbit
     Request(RequestArgs),
     /// View and decide on requests.

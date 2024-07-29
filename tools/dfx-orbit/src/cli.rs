@@ -1,6 +1,5 @@
 //! Implementation of the `dfx-orbit` commands.
 mod asset;
-mod canister;
 mod me;
 mod request;
 mod review;
@@ -9,10 +8,7 @@ mod submit;
 
 pub use crate::cli::asset::AssetUploadRequest;
 use crate::{
-    args::{
-        asset::AssetArgsAction, canister::CanisterArgs, review::ReviewArgs, DfxOrbitArgs,
-        DfxOrbitSubcommands,
-    },
+    args::{asset::AssetArgsAction, review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
     dfx_extension_api::OrbitExtensionAgent,
     DfxOrbit,
 };
@@ -33,17 +29,6 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
         DfxOrbitSubcommands::Me => {
             let ans = dfx_orbit.station.me().await?;
             println!("{}", serde_json::to_string_pretty(&ans)?);
-            Ok(())
-        }
-        DfxOrbitSubcommands::Canister(canister_args) => {
-            match canister_args {
-                CanisterArgs::Claim(claim_args) => {
-                    dfx_orbit
-                        .station
-                        .claim_canister(claim_args.canister, claim_args.exclusive)
-                        .await?;
-                }
-            }
             Ok(())
         }
         DfxOrbitSubcommands::Request(request_args) => {
