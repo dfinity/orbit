@@ -4,10 +4,6 @@ use clap::{Parser, Subcommand};
 #[derive(Debug, Clone, Parser)]
 #[command(version, about, long_about = None)]
 pub struct AssetArgs {
-    /// The name of the asset canister targeted by this action
-    #[clap(long)]
-    pub(crate) canister: String,
-
     #[command(subcommand)]
     pub(crate) action: AssetArgsAction,
 }
@@ -20,6 +16,9 @@ pub enum AssetArgsAction {
 
 #[derive(Debug, Clone, Parser)]
 pub struct AssetUploadArgs {
+    /// The name of the asset canister targeted by this action
+    pub(crate) canister: String,
+
     /// The source directories to upload (multiple values possible)
     #[clap(num_args = 1..)]
     pub(crate) files: Vec<String>,

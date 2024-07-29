@@ -80,7 +80,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             match asset_args.action {
                 AssetArgsAction::Upload(upload_args) => {
                     dfx_orbit
-                        .upload_assets(asset_args.canister, upload_args.files)
+                        .upload_assets(upload_args.canister, upload_args.files)
                         .await?;
                 }
             }

@@ -9,13 +9,19 @@ use orbit_station_api::CreateRequestInput;
 use permission::RequestPermissionArgs;
 
 /// Request canister changes.
-///
-// TODO: Add flags for --title, --summary, and --execution-plan.
-// Note: I have looked at the docs and the anwer for how to do this really doesn't jump out at me.  Google foo failed as well.  Maybe the sdk repo has some examples.
-
 #[derive(Debug, Clone, Parser)]
 #[command(version, about, long_about = None)]
 pub struct RequestArgs {
+    /// Title of the request
+    #[clap(long)]
+    title: Option<String>,
+
+    /// Summary of the request
+    #[clap(long)]
+    summary: Option<String>,
+
+    // TODO: Summary file as an alternative to summary
+    // TODO: Execution plan
     #[command(subcommand)]
     action: RequestArgsActions,
 }
@@ -55,8 +61,8 @@ impl RequestArgs {
 
         Ok(CreateRequestInput {
             operation,
-            title: None,
-            summary: None,
+            title: self.title,
+            summary: self.summary,
             execution_plan: None,
         })
     }

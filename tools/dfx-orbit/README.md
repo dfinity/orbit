@@ -9,7 +9,17 @@ It is designed to work alongside `dfx` to allow a `dfx`-like workflow to manage 
 
 Build the tool:
 
-> TODO: Add installation instructions to install from git directly using `cargo install`
+Currently, there are two ways of installing `dfx-orbit`:
+
+#### Standalone install
+
+To get the most recent version of `dfx-orbit` without manually cloning the entire repository, run
+
+```
+cargo install -f --git https://github.com/dfinity/orbit.git --bin dfx-orbit
+```
+
+#### Install from the repository
 
 ```
 $ cargo build -p dfx-orbit
@@ -211,7 +221,7 @@ dfx canister call frontend list_permitted '(record { permission = variant { Comm
 A developer may upload one or more directories of HTTP assets with:
 
 ```
-dfx-orbit asset CANISTER_NAME upload SOME_DIR/ OTHER_DIR/ ..
+dfx-orbit asset upload CANISTER_NAME SOME_DIR/ OTHER_DIR/
 ```
 
 The developer may now request that the assets be published. The command for this is printed at the end of the upload command. Example:
