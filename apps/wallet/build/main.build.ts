@@ -10,11 +10,11 @@ import {
   STATION_API_VERSION,
   SUPPORTED_LOCALES,
 } from './core/configs.core';
+import { withCanisterIds } from './plugins/with-canister-ids';
 import { withApiCompatibilityFile } from './plugins/with-compatibility-file.plugin';
 import { withIcAssetsFile } from './plugins/with-ic-assets.plugin';
 import { withVersionedEntrypoint } from './plugins/with-versioned-entrypoint.plugin';
 import { getCommitHash } from './utils/git.utils';
-import { withCanisterIds } from './plugins/with-canister-ids';
 
 // https://vitejs.dev/config/
 export default defineConfig(_ => {
@@ -136,6 +136,13 @@ export default defineConfig(_ => {
       'import.meta.env.APP_BUILD_MODE': JSON.stringify(mode),
       'import.meta.env.APP_BUILD_VERSION': JSON.stringify(process.env.npm_package_version),
       'import.meta.env.APP_BUILD_HASH': JSON.stringify(commitHash),
+      // This enables the JIT compilation for the vue-i18n plugin as specified in their documentation
+      // https://vue-i18n.intlify.dev/guide/advanced/optimization#jit-compilation, it is required to skip
+      // the compilation of the locales at runtime which needs unsafe-eval to be enabled in the CSP.
+      //
+      // Version 10 which is still in beta has this feature enabled by default, once it is stable we can bump and
+      // remove this define.
+      __INTLIFY_JIT_COMPILATION__: true,
     },
     resolve: {
       alias: {
