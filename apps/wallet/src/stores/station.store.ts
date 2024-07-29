@@ -57,6 +57,7 @@ export interface StationStoreState {
   };
   versionManagement: {
     loading: boolean;
+    updateRequested?: string;
     stationVersion?: string;
     upgraderVersion?: string;
     nextStationVersion?: string;
@@ -126,6 +127,7 @@ const initialStoreState = (): StationStoreState => {
     },
     versionManagement: {
       loading: false,
+      updateRequested: undefined,
       nextStationVersion: undefined,
       nextUpgraderVersion: undefined,
       stationVersion: undefined,
@@ -159,6 +161,11 @@ export const useStationStore = defineStore('station', {
     },
     name(state): string {
       return computedStationName({ canisterId: Principal.fromText(state.canisterId) });
+    },
+    hasNewVersion(): boolean {
+      return !!(
+        this.versionManagement.nextStationVersion || this.versionManagement.nextUpgraderVersion
+      );
     },
   },
   actions: {
@@ -374,7 +381,7 @@ export const useStationStore = defineStore('station', {
       return stationVersion;
     },
     async loadUpgraderVersion(): Promise<string> {
-      const { system } = await services().station.systemInfo();
+      const { system } = await this.service.systemInfo();
       const upgraderVersion = await fetchCanisterVersion(icAgent.get(), system.upgrader_id);
 
       this.versionManagement.upgraderVersion = upgraderVersion;
@@ -394,7 +401,7 @@ export const useStationStore = defineStore('station', {
       try {
         const controlPanel = services().controlPanel;
         this.versionManagement = {
-          ...initialStoreState().versionManagement,
+          ...this.versionManagement,
           loading: true,
         };
 
@@ -419,15 +426,46 @@ export const useStationStore = defineStore('station', {
           throw new Error(`Invalid next version response, expected WasmModule`);
         }
 
+        let nextUpgraderVersion: string | undefined;
         this.versionManagement.nextStationVersion = registryEntry.value.WasmModule.version;
         for (const dependency of registryEntry.value.WasmModule.dependencies) {
           if (dependency.name === '@orbit/upgrader' && dependency.version !== upgraderVersion) {
-            this.versionManagement.nextUpgraderVersion = dependency.version;
+            nextUpgraderVersion = dependency.version;
             break;
           }
         }
+
+        this.versionManagement.nextUpgraderVersion = nextUpgraderVersion;
+
+        // check if there is an existing request to update the canister, if so, we store the request id
+        // to avoid prompting the user to update again if they have already requested an update
+        this.service
+          .listRequests({
+            limit: 1,
+            types: [{ ChangeCanister: null }],
+            statuses: [
+              { Approved: null },
+              { Processing: null },
+              { Scheduled: null },
+              { Created: null },
+            ],
+          })
+          .then(result => {
+            this.versionManagement.updateRequested = result.requests.length
+              ? result.requests[0].id
+              : undefined;
+          })
+          .catch(err => {
+            logger.error(`Failed to check if a request to update already exists`, { err });
+
+            this.versionManagement.updateRequested = undefined;
+          });
       } catch (err) {
         logger.error(`Failed to check version updates`, { err });
+        this.versionManagement = {
+          ...initialStoreState().versionManagement,
+          loading: this.versionManagement.loading,
+        };
       } finally {
         this.versionManagement.loading = false;
       }

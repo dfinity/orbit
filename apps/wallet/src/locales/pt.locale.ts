@@ -506,6 +506,7 @@ export default {
     close: 'Fechar',
     transfer: 'Transferência',
     general: 'Geral',
+    update: 'Atualizar',
     time: 'Horário',
     add: 'Adicionar',
     remove: 'Remover',

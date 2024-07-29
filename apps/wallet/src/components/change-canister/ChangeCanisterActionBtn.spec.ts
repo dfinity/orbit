@@ -19,4 +19,46 @@ describe('ChangeCanisterActionBtn', () => {
 
     expect(wrapper.emitted('editing')).toBeTruthy();
   });
+
+  it('highlight mode on mobile shows no text', async () => {
+    const wrapper = mount(
+      ChangeCanisterActionBtn,
+      {
+        props: {
+          mode: 'highlight',
+        },
+      },
+      {
+        initialPiniaState: {
+          app: {
+            isMobile: true,
+          },
+        },
+      },
+    );
+
+    const btn = wrapper.find('[data-test-id="submit-upgrade-btn"]');
+    expect(btn.text()).toBe('');
+  });
+
+  it('highlight mode on desktop shows text', async () => {
+    const wrapper = mount(
+      ChangeCanisterActionBtn,
+      {
+        props: {
+          mode: 'highlight',
+        },
+      },
+      {
+        initialPiniaState: {
+          app: {
+            isMobile: false,
+          },
+        },
+      },
+    );
+
+    const btn = wrapper.find('[data-test-id="submit-upgrade-btn"]');
+    expect(btn.text().length > 0).toBe(true);
+  });
 });

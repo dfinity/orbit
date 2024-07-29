@@ -1,11 +1,15 @@
 <template>
   <ActionBtn
     v-model="upgradeModel"
-    :text="$t('app.software_update')"
+    :text="btnText"
     :title="$t('app.software_update')"
     size="default"
-    variant="outlined"
+    :variant="!isMobileHighlight ? 'outlined' : 'text'"
     density="comfortable"
+    :icon="isMobileHighlight ? mdiCloudDownload : false"
+    :append-icon="isHighlightedAction && !isMobileHighlight ? mdiCloudDownload : undefined"
+    :color="isHighlightedAction ? 'warning' : undefined"
+    :rounded="isHighlightedAction ? true : undefined"
     :submit="form => submitUpgrade(form.modelValue as ChangeCanisterFormProps['modelValue'])"
     data-test-id="submit-upgrade-btn"
     @opened="emit('editing', true)"
@@ -94,7 +98,7 @@
 
 <script lang="ts" setup>
 import { mdiCloudDownload, mdiRefresh, mdiWrenchCog } from '@mdi/js';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { VBtn } from 'vuetify/components';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import ChangeCanisterForm, {
@@ -111,6 +115,29 @@ import { arrayBufferToHashHex, hexStringToArrayBuffer } from '~/utils/crypto.uti
 import { assertAndReturn } from '~/utils/helper.utils';
 import { ChangeCanisterFormMode, ChangeCanisterScreen } from './change-canister.types';
 import ChangeCanisterConfirmationScreen from './ChangeCanisterConfirmationScreen.vue';
+import { useAppStore } from '~/stores/app.store';
+import { useI18n } from 'vue-i18n';
+
+const props = withDefaults(
+  defineProps<{
+    mode?: 'default' | 'highlight';
+  }>(),
+  {
+    mode: 'default',
+  },
+);
+
+const i18n = useI18n();
+const app = useAppStore();
+const isHighlightedAction = computed(() => props.mode === 'highlight');
+const isMobileHighlight = computed(() => isHighlightedAction.value && app.isMobile);
+const btnText = computed(() => {
+  if (isMobileHighlight.value) {
+    return undefined;
+  }
+
+  return isHighlightedAction.value ? i18n.t('terms.update') : i18n.t('app.software_update');
+});
 
 const station = useStationStore();
 const upgradeModel = ref<ChangeCanisterFormProps>(useDefaultUpgradeModel());
@@ -135,19 +162,26 @@ const goToConfirmation = async (model: ChangeCanisterFormProps['modelValue']): P
 const submitUpgrade = async (model: ChangeCanisterFormProps['modelValue']): Promise<Request> => {
   const fileBuffer = assertAndReturn(model.wasmModule, 'model.wasmModule is required');
 
-  return station.service.changeCanister(
-    {
-      arg:
-        model.wasmInitArg && model.wasmInitArg.length > 0
-          ? [new Uint8Array(hexStringToArrayBuffer(model.wasmInitArg))]
-          : [],
-      module: new Uint8Array(fileBuffer),
-      target: assertAndReturn(model.target, 'model.target is required'),
-    },
-    {
-      comment: model.comment,
-    },
-  );
+  return station.service
+    .changeCanister(
+      {
+        arg:
+          model.wasmInitArg && model.wasmInitArg.length > 0
+            ? [new Uint8Array(hexStringToArrayBuffer(model.wasmInitArg))]
+            : [],
+        module: new Uint8Array(fileBuffer),
+        target: assertAndReturn(model.target, 'model.target is required'),
+      },
+      {
+        comment: model.comment,
+      },
+    )
+    .then(res => {
+      // Refresh the version update status after the upgrade
+      station.checkVersionUpdates();
+
+      return res;
+    });
 };
 
 const emit = defineEmits<{
