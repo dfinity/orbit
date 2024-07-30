@@ -1,44 +1,11 @@
 //! Placeholders for the proposed dfx extension API methods.
 use anyhow::Context;
-use candid::Principal;
 use dfx_core::interface::dfx::DfxInterface;
 use slog::{o, Drain, Logger};
-use std::{
-    path::PathBuf,
-    process::{Command, Stdio},
-    str::FromStr,
-};
+use std::path::PathBuf;
 
 /// The name of the Orbit dfx extension.
 const ORBIT_EXTENSION_NAME: &str = "orbit";
-
-/// Calls the dfx cli.
-///
-/// Some methods are implemented as calls to the dfx cli until a library is available.
-pub fn call_dfx_cli(args: Vec<&str>) -> anyhow::Result<String> {
-    let output = Command::new("dfx")
-        .args(args)
-        // Tell the OS to record the command's output
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        // Execute the command, wait for it to complete, then capture the output
-        .output()
-        // Blow up if the OS was unable to start the program
-        .with_context(|| "Failed to call dfx. Is the dfx cli installed?")?;
-
-    if output.status.success() {
-        Ok(String::from_utf8(output.stdout)
-            .context("Failed to parse dfx output as UTF-8")?
-            .trim()
-            .to_string())
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        Err(anyhow::anyhow!(
-            "dfx failed with status {}: {stderr}",
-            output.status
-        ))
-    }
-}
 
 /// The API through which extensions SHOULD interact with ICP networks and dfx configuration.
 pub struct OrbitExtensionAgent {
@@ -156,24 +123,5 @@ impl OrbitExtensionAgent {
             interface.agent().fetch_root_key().await?;
         }
         Ok(interface)
-    }
-
-    /// Gets a canister ID
-    // TODO: This is a bad API as the two names can be swapped and it will still compile.
-    // TODO: Do this without shelling out, using dfx-core only
-    pub(crate) fn canister_id(
-        &self,
-        canister_name: &str,
-        network_name: &str,
-    ) -> anyhow::Result<Principal> {
-        let id = call_dfx_cli(vec![
-            "canister",
-            "id",
-            "--network",
-            network_name,
-            canister_name,
-        ])
-        .with_context(|| format!("Failed to look up canister '{canister_name}'"))?;
-        Principal::from_str(&id).with_context(|| format!("Could not parse canister ID: {}", id))
     }
 }

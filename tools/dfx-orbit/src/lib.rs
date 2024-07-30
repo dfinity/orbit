@@ -11,7 +11,7 @@ pub mod local_config;
 pub mod station_agent;
 
 use candid::Principal;
-use dfx_core::DfxInterface;
+use dfx_core::{config::model::canister_id_store::CanisterIdStore, DfxInterface};
 use dfx_extension_api::OrbitExtensionAgent;
 pub use station_agent::StationAgent;
 
@@ -41,7 +41,15 @@ impl DfxOrbit {
 
     /// Gets the ID of a given canister name.  If the name is already an ID, it is returned as is.
     pub fn canister_id(&self, canister_name: &str) -> anyhow::Result<Principal> {
-        let network = &self.station.config.network;
-        self.dfx.canister_id(canister_name, network)
+        let canister_id_store = CanisterIdStore::new(
+            self.dfx.logger(),
+            self.interface.network_descriptor(),
+            self.interface.config(),
+        )?;
+
+        let canister_id = Principal::from_text(canister_name)
+            .or_else(|_| canister_id_store.get(canister_name))?;
+
+        Ok(canister_id)
     }
 }
