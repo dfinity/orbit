@@ -20,9 +20,9 @@ export const hasRequiredSession = (
       return session.data.selected.hasAccess;
     case RequiredSessionState.Any:
       return true;
+    default:
+      return unreachable(requiredSessionState);
   }
-
-  unreachable(requiredSessionState);
 };
 
 export const hasRequiredPrivilege = (
@@ -34,6 +34,7 @@ export const hasRequiredPrivilege = (
   station = useStationStore(),
 ): boolean => {
   const userPrivileges = new Set<string>();
+
   station.privileges.forEach(userPrivilege => {
     const privelegeId = Object.keys(userPrivilege)?.[0];
     if (privelegeId) {

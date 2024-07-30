@@ -56,11 +56,22 @@
             <template #bottom>
               <!-- This removes the bottom pagination since we want to display all the results -->
             </template>
+            <template #item.name="{ item: userGroup }">
+              {{ userGroup.name }}
+
+              <VTooltip v-if="userGroup.id == committeeUserGroup" location="bottom">
+                <template #activator="{ props: tooltipProps }">
+                  <VIcon :icon="mdiFireStation" class="ml-2 pb-1" v-bind="tooltipProps"></VIcon>
+                </template>
+                {{ $t('pages.user_groups.disaster_recovery_group_tooltip') }}
+              </VTooltip>
+            </template>
             <template #item.actions="{ item: userGroup }">
               <div class="text-right">
                 <ActionBtn
                   v-if="hasDeletePrivilege(userGroup.id)"
                   v-model="userGroup.id"
+                  :disabled="userGroup.id == committeeUserGroup"
                   :icon="mdiTrashCanOutline"
                   :submit="id => station.service.removeUserGroup({ user_group_id: id })"
                   @failed="useOnFailedOperation"
@@ -93,10 +104,10 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
-import { computed, ref } from 'vue';
+import { mdiEye, mdiFireStation, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { VBtn, VDataTable, VPagination } from 'vuetify/components';
+import { VBtn, VDataTable, VIcon, VPagination, VTooltip } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
@@ -112,14 +123,17 @@ import {
 } from '~/composables/notifications.composable';
 import { Routes } from '~/configs/routes.config';
 import { UUID, UserGroup, UserGroupCallerPrivileges } from '~/generated/station/station.did';
+import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
 import { RequestDomains } from '~/types/station.types';
+import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import { throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const i18n = useI18n();
+const app = useAppStore();
 const pageTitle = computed(() => props.title || i18n.t('pages.user_groups.title'));
 const station = useStationStore();
 const userGroups = ref<UserGroup[]>([]);
@@ -133,6 +147,8 @@ const headers = ref<TableHeader[]>([
   { title: i18n.t('terms.user_group'), key: 'name', headerProps },
   { title: '', key: 'actions', headerProps },
 ]);
+
+const committeeUserGroup = ref<UUID | undefined>();
 
 const hasEditPrivilege = (id: UUID): boolean =>
   privileges.value.find(p => p.id === id)?.can_edit ?? false;
@@ -161,4 +177,15 @@ const fetchList = useFetchList(
     getTotal: res => Number(res.total),
   },
 );
+
+onMounted(async () => {
+  if (hasRequiredPrivilege({ anyOf: [Privilege.SystemInfo] })) {
+    try {
+      const systemInfo = (await station.service.systemInfo()).system;
+      committeeUserGroup.value = systemInfo.disaster_recovery[0]?.committee.user_group_id;
+    } catch (e: unknown) {
+      app.sendErrorNotification(e);
+    }
+  }
+});
 </script>

@@ -1,5 +1,9 @@
-use crate::models::system::SystemInfo;
-use orbit_essentials::utils::{raw_rand_successful, timestamp_to_rfc3339};
+use crate::{models::system::SystemInfo, repositories::USER_GROUP_REPOSITORY};
+use orbit_essentials::{
+    repository::Repository,
+    utils::{raw_rand_successful, timestamp_to_rfc3339},
+};
+use station_api::DisasterRecoveryDTO;
 
 impl SystemInfo {
     pub fn to_dto(&self, cycles: &u64, version: &str) -> station_api::SystemInfoDTO {
@@ -10,6 +14,14 @@ impl SystemInfo {
             cycles: *cycles,
             version: version.to_string(),
             raw_rand_successful: raw_rand_successful(),
+            disaster_recovery: self.get_disaster_recovery_committee().map(|dr| {
+                DisasterRecoveryDTO {
+                    committee: dr.clone().into(),
+                    user_group_name: USER_GROUP_REPOSITORY
+                        .get(&dr.user_group_id)
+                        .map(|g| g.name.clone()),
+                }
+            }),
         }
     }
 }
