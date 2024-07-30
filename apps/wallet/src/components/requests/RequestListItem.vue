@@ -96,6 +96,7 @@ const componentsMap: {
   ChangeExternalCanister: UnsupportedOperation,
   CreateExternalCanister: UnsupportedOperation,
   CallExternalCanister: UnsupportedOperation,
+  ConfigureExternalCanister: UnsupportedOperation,
   SetDisasterRecovery: UnsupportedOperation,
 };
 

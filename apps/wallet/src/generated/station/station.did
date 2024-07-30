@@ -605,7 +605,63 @@ type ChangeExternalCanisterOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
-type CreateExternalCanisterOperationInput = record {};
+type CreateExternalCanisterOperationInput = record {
+  // By default, the canister id is created by the system.
+  //
+  // If provided, the canister must exist.
+  existing_canister_id : opt principal;
+  // The initial cycles to allocate to the canister.
+  //
+  // Ignored if the canister already exists.
+  initial_cycles : opt nat64;
+  // The name of the external canister.
+  name : text;
+  // The description of the external canister.
+  description : opt text;
+  // The labels of the external canister.
+  labels : opt vec text;
+  // What operations are allowed on the canister.
+  permissions : ExternalCanisterPermissionsInput;
+  // The request policies for the canister.
+  request_policies : ExternalCanisterRequestPoliciesInput;
+};
+
+type ConfigureExternalCanisterSettingsInput = record {
+  name : opt text;
+  // The description of the external canister.
+  description : opt text;
+  // The labels of the external canister.
+  labels : opt vec text;
+  // What operations are allowed on the canister.
+  permissions : opt ExternalCanisterPermissionsInput;
+  // The request policies for the canister.
+  request_policies : opt ExternalCanisterRequestPoliciesInput;
+};
+
+// The input type for configuring an external canister in the station.
+type ConfigureExternalCanisterOperationKind = variant {
+  // The settings to configure for the external canister.
+  Settings : ConfigureExternalCanisterSettingsInput;
+  // The cycles to top up the canister with.
+  TopUp : nat64;
+  // Remove the canister from the Station only.
+  SoftDelete;
+  // Remove the canister from the Station and the IC.
+  //
+  // Caution: This operation is irreversible.
+  Delete;
+  // The Internet Computer canister settings to configure for the external canister.
+  NativeSettings : DefiniteCanisterSettings;
+};
+
+type ConfigureExternalCanisterOperationInput = record {
+  // The canister to update.
+  canister_id : principal;
+  // The kind of operation to perform.
+  operation : ConfigureExternalCanisterOperationKind;
+};
+
+type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
 
 type CreateExternalCanisterOperation = record {
   canister_id : opt principal;
@@ -747,6 +803,8 @@ type RequestOperation = variant {
   ChangeExternalCanister : ChangeExternalCanisterOperation;
   // An operation for creating a external canister.
   CreateExternalCanister : CreateExternalCanisterOperation;
+  // An operation for configuring an external canister.
+  ConfigureExternalCanister : ConfigureExternalCanisterOperation;
   // An operation for calling an external canister.
   CallExternalCanister : CallExternalCanisterOperation;
   // An operation for editing an permission.
@@ -792,6 +850,8 @@ type RequestOperationInput = variant {
   ChangeExternalCanister : ChangeExternalCanisterOperationInput;
   // An operation for creating a external canister.
   CreateExternalCanister : CreateExternalCanisterOperationInput;
+  // An operation for configuring an external canister.
+  ConfigureExternalCanister : ConfigureExternalCanisterOperationInput;
   // An operation for calling an external canister.
   CallExternalCanister : CallExternalCanisterOperationInput;
   // An operation for editing an permission.
@@ -835,6 +895,8 @@ type RequestOperationType = variant {
   SetDisasterRecovery;
   // An operation for changing a external canister.
   ChangeExternalCanister;
+  // An operation for creating a external canister.
+  ConfigureExternalCanister;
   // An operation for creating a external canister.
   CreateExternalCanister;
   // An operation for calling an external canister.
@@ -960,6 +1022,8 @@ type ListRequestsOperationType = variant {
   ChangeCanister;
   // An operation for changing a external canister with an optionally specified canister ID.
   ChangeExternalCanister : opt principal;
+  // An operation for configuring an external canister.
+  ConfigureExternalCanister : opt principal;
   // An operation for creating a external canister.
   CreateExternalCanister;
   // An operation for calling an external canister with an optionally specified canister ID.
@@ -1725,6 +1789,7 @@ type ReadExternalCanisterResourceTarget = variant {
 
 // The actions that are available for external canisters.
 type ExternalCanisterResourceAction = variant {
+  List;
   Create : CreateExternalCanisterResourceTarget;
   Change : ChangeExternalCanisterResourceTarget;
   Call : CallExternalCanisterResourceTarget;
@@ -1966,6 +2031,8 @@ type UserPrivilege = variant {
   AddAddressBookEntry;
   ChangeCanister;
   ListRequests;
+  CreateExternalCanister;
+  ListExternalCanisters;
 };
 
 type MeResult = variant {
@@ -2073,6 +2140,169 @@ type CanisterStatusResponse = record {
   };
 };
 
+// The permission for making calls to a specific or any external canister method.
+type ExternalCanisterCallPermission = record {
+  // Allowed users and user groups for the operation.
+  allow : Allow;
+  // The validation method that is used to validate the request and
+  // render the argument.
+  validation_method : ValidationMethodResourceTarget;
+  // The execution method that the caller can use,
+  // if `*` is used the caller can use any method.
+  execution_method : text;
+};
+
+// The request policy rule for the canister call operation.
+type ExternalCanisterCallRequestPolicyRule = record {
+  // The request policy rule for the canister call operation.
+  rule : RequestPolicyRule;
+  // The validation method that is used to match the policy against
+  // the permission of the resource.
+  validation_method : ValidationMethodResourceTarget;
+  // The method name that the rule is for,
+  // if `*` is used the rule applies to all methods.
+  execution_method : text;
+};
+
+// The permissions set for the external canister.
+type ExternalCanisterPermissions = record {
+  // Who can read information about the canister (e.g. canister status),
+  // changes to this permission can be made by the `change` permission.
+  read : Allow;
+  // Who can make changes to the canister, includes:
+  // - changing the permissions
+  // - install operations
+  change : Allow;
+  // The permissions for the calling methods on the canister.
+  calls : vec ExternalCanisterCallPermission;
+};
+
+// The input type for setting the permissions for the external canister.
+type ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
+
+// The request policy rules for the external canister.
+type ExternalCanisterRequestPolicies = record {
+  // The request policy rule for the canister change operation.
+  change : opt RequestPolicyRule;
+  // The request policy rules for the calling methods on the canister.
+  calls : vec ExternalCanisterCallRequestPolicyRule;
+};
+
+// The input type for setting the request policies for the external canister.
+type ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPolicies;
+
+// An external canister that the station can interact with.
+type ExternalCanister = record {
+  // The id of the resource in the station.
+  id : UUID;
+  // The principal id of the canister.
+  canister_id : principal;
+  // The name of the canister.
+  name : text;
+  // A description that can be used to describe the canister.
+  description : opt text;
+  // The labels that can be used to categorize the canister.
+  labels : vec text;
+  // The permissions that are set for who can interact with the canister.
+  permissions : ExternalCanisterPermissions;
+  // The request policies that are associated with the canister.
+  request_policies : ExternalCanisterRequestPolicies;
+  // The time at which the canister was created.
+  created_at : TimestampRFC3339;
+  // The time at which the canister was last modified, if available.
+  modified_at : opt TimestampRFC3339;
+};
+
+// Input type for getting a external canister.
+type GetExternalCanisterInput = record {
+  // The principal id of the external canister.
+  canister_id : principal;
+};
+
+// The caller privileges for the external canister methods.
+type ExternalCanisterCallerMethodsPrivileges = record {
+  // The validation method that is used to validate the request and
+  // render the argument.
+  validation_method : ValidationMethodResourceTarget;
+  // The method that the caller can call on the external canister.
+  //
+  // The `*` method name is used to represent that the caller can
+  // call any method on the canister.
+  execution_method : text;
+};
+
+// The caller privileges for the external canister.
+type ExternalCanisterCallerPrivileges = record {
+  // The external canister retource id.
+  id : UUID;
+  // Wether or not the caller can edit the external canister.
+  can_change : bool;
+  // The list of methods that the caller can call on the external canister.
+  can_call : vec ExternalCanisterCallerMethodsPrivileges;
+};
+
+type GetExternalCanisterResult = variant {
+  Ok : record {
+    // The external canister that was retrieved.
+    canister : ExternalCanister;
+    // The caller privileges for the external canister.
+    privileges : ExternalCanisterCallerPrivileges;
+  };
+  Err : Error;
+};
+
+// Input type for listing external canisters with the given filters.
+type ListExternalCanistersInput = record {
+  // The principal id of the external canister to search for.
+  canister_ids : opt vec principal;
+  // The labels to use for filtering the external canisters.
+  labels : opt vec text;
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
+// Result type for listing external canisters.
+type ListExternalCanistersResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of external canisters.
+    canisters : vec ExternalCanister;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of external canisters.
+    total : nat64;
+    // The caller privileges for the external canisters.
+    privileges : vec ExternalCanisterCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// The input type for getting the available filters for the external canisters.
+type GetExternalCanisterFiltersInput = record {
+  // Include the names of the external canisters in the result.
+  with_name : opt record {
+    // The prefix to use for filtering the names.
+    //
+    // If the prefix is not provided, any name will be returned.
+    prefix : opt text;
+  };
+  // Include the labels of the external canisters in the result.
+  with_labels : opt bool;
+};
+
+// The result type for the filtering of external canisters.
+type GetExternalCanisterFiltersResult = variant {
+  Ok : record {
+    // The list of names that are used by the external canisters 
+    // and their canister id.
+    names : opt vec record { name : text; canister_id : principal };
+    // The list of labels that are used by the external canisters.
+    labels : opt vec text;
+  };
+  Err : Error;
+};
+
 type CanisterStatusResult = variant {
   Ok : CanisterStatusResponse;
   Err : Error;
@@ -2112,6 +2342,12 @@ service : (opt SystemInstall) -> {
   list_notifications : (input : ListNotificationsInput) -> (ListNotificationsResult) query;
   // Mark the notifications as read.
   mark_notifications_read : (input : MarkNotificationsReadInput) -> (MarkNotificationReadResult);
+  // Get the external canister by its canister id.
+  get_external_canister : (input : GetExternalCanisterInput) -> (GetExternalCanisterResult) query;
+  // List all external canisters that the caller has access to.
+  list_external_canisters : (input : ListExternalCanistersInput) -> (ListExternalCanistersResult) query;
+  // Get the available filters for the external canisters.
+  get_external_canister_filters : (input : GetExternalCanisterFiltersInput) -> (GetExternalCanisterFiltersResult) query;
   // Get a account by id.
   //
   // If the caller does not have access to the account, an error will be returned.
