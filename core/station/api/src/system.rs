@@ -1,4 +1,4 @@
-use crate::{MetadataDTO, UuidDTO};
+use crate::{DisasterRecoveryCommitteeDTO, MetadataDTO, UuidDTO};
 
 use super::TimestampRfc3339;
 use candid::{CandidType, Deserialize, Principal};
@@ -11,6 +11,13 @@ pub struct SystemInfoDTO {
     pub cycles: u64,
     pub last_upgrade_timestamp: TimestampRfc3339,
     pub raw_rand_successful: bool,
+    pub disaster_recovery: Option<DisasterRecoveryDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct DisasterRecoveryDTO {
+    pub committee: DisasterRecoveryCommitteeDTO,
+    pub user_group_name: Option<String>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

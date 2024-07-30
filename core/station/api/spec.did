@@ -1590,6 +1590,16 @@ type SystemInfo = record {
   last_upgrade_timestamp : TimestampRFC3339;
   // Did the canister successfully fetched randomness from the management canister.
   raw_rand_successful : bool;
+  // The disaster recovery configuration.
+  disaster_recovery : opt DisasterRecovery;
+};
+
+// The disaster recovery committee extended with the user group name.
+type DisasterRecovery = record {
+  // The disaster recovery committee.
+  committee : DisasterRecoveryCommittee;
+  // The name of the disaster recovery committee user group.
+  user_group_name : opt text;
 };
 
 // Result type for getting the canister system information.

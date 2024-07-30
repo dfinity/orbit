@@ -7,40 +7,38 @@
       <PageBody>
         <VContainer class="pa-0" fluid>
           <VRow>
+            <VCol cols="12" md="4">
+              <StationInfoCard />
+            </VCol>
             <AuthCheck :privileges="[Privilege.ListRequests]">
-              <template #default>
-                <VCol cols="12" md="4">
-                  <StationInfoCard />
-                </VCol>
-                <VCol cols="12" md="8">
-                  <RecentRequests
-                    :title="$t(`app.station_upgrades_card_title`)"
-                    :types="[{ ChangeCanister: null }, { ManageSystemInfo: null }]"
-                  >
-                    <template #top-actions>
-                      <AuthCheck :privileges="[Privilege.ChangeCanister]">
-                        <ChangeCanisterActionBtn />
-                      </AuthCheck>
-                      <VBtn
-                        variant="elevated"
-                        color="secondary"
-                        size="small"
-                        :to="{
-                          name: Routes.Requests,
-                          query: { group_by: RequestDomains.System },
-                        }"
-                      >
-                        {{ $t('terms.see_all') }}
-                      </VBtn>
-                    </template>
-                  </RecentRequests>
-                </VCol>
-              </template>
-              <template #unauthorized>
-                <VCol cols="12" md="4">
-                  <StationInfoCard />
-                </VCol>
-              </template>
+              <VCol cols="12" md="8">
+                <RecentRequests
+                  :title="$t(`app.station_upgrades_card_title`)"
+                  :types="[{ ChangeCanister: null }, { ManageSystemInfo: null }]"
+                >
+                  <template #top-actions>
+                    <AuthCheck :privileges="[Privilege.ChangeCanister]">
+                      <ChangeCanisterActionBtn />
+                    </AuthCheck>
+                    <VBtn
+                      variant="elevated"
+                      color="secondary"
+                      size="small"
+                      :to="{
+                        name: Routes.Requests,
+                        query: { group_by: RequestDomains.System },
+                      }"
+                    >
+                      {{ $t('terms.see_all') }}
+                    </VBtn>
+                  </template>
+                </RecentRequests>
+              </VCol>
+            </AuthCheck>
+            <AuthCheck :privileges="[Privilege.SystemInfo]">
+              <VCol cols="12" md="4">
+                <DisasterRecoveryCard />
+              </VCol>
             </AuthCheck>
           </VRow>
         </VContainer>
@@ -59,6 +57,7 @@ import ChangeCanisterActionBtn from '~/components/change-canister/ChangeCanister
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
+import DisasterRecoveryCard from '~/components/settings/DisasterRecoveryCard.vue';
 import StationInfoCard from '~/components/settings/StationInfoCard.vue';
 import { Routes } from '~/configs/routes.config';
 import { PageProps } from '~/types/app.types';
