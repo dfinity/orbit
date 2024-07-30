@@ -23,6 +23,18 @@
           </VListItemTitle>
           <VListItemSubtitle>
             {{ systemInfo.disaster_recovery[0].committee.user_group_id }}
+
+            <VBtn
+              size="x-small"
+              variant="text"
+              :icon="mdiContentCopy"
+              @click="
+                copyToClipboard({
+                  textToCopy: systemInfo.disaster_recovery[0].committee.user_group_id,
+                  sendNotification: true,
+                })
+              "
+            />
           </VListItemSubtitle>
         </VListItem>
         <VListItem class="px-0">
@@ -105,6 +117,8 @@ import ActionBtn from '../buttons/ActionBtn.vue';
 import DisasterRecoveryForm, { DisasterRecoveryModel } from './DisasterRecoveryForm.vue';
 import AuthCheck from '../AuthCheck.vue';
 import { Privilege } from '~/types/auth.types';
+import { mdiContentCopy } from '@mdi/js';
+import { copyToClipboard } from '~/utils/app.utils';
 
 const loading = ref(true);
 const error = ref<boolean>(false);
