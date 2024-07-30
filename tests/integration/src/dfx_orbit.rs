@@ -100,7 +100,9 @@ where
 
     // Restore current dir and DFX_CONFIG_ROOT
     std::env::set_current_dir(current_dir).unwrap();
-    if let Some(root) = current_config_root { std::env::set_var(DFX_ROOT, root) }
+    if let Some(root) = current_config_root {
+        std::env::set_var(DFX_ROOT, root)
+    }
 
     result
 }
@@ -188,11 +190,7 @@ fn setup_counter_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> Pri
 async fn fetch_asset(canister_id: Principal, path: &str) -> Vec<u8> {
     let port = PORT.with(|port| *port.borrow());
     let local_url = format!("http://localhost:{}{}", port, path);
-    let referer = format!(
-        "http://localhost:{}?canisterId={}",
-        port,
-        canister_id
-    );
+    let referer = format!("http://localhost:{}?canisterId={}", port, canister_id);
     dbg!(&local_url, &referer);
 
     reqwest::Client::new()
