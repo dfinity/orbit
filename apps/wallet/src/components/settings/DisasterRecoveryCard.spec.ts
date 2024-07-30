@@ -1,6 +1,6 @@
 import { flushPromises } from '@vue/test-utils';
 import { describe, expect, it, vi } from 'vitest';
-import { VBtn, VCard, VOverlay } from 'vuetify/components';
+import { VCard, VOverlay } from 'vuetify/components';
 import { SystemInfoResult } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
 import { mount } from '~/test.utils';
@@ -64,7 +64,7 @@ describe('DisasterRecoveryCard', () => {
     expect(wrapper.text()).toContain('000-001');
 
     // no privilege by default
-    expect(wrapper.findComponent(VBtn).exists()).toBe(false);
+    expect(wrapper.find('[data-test-id="configure-dr-btn"]').exists()).toBe(false);
   });
 
   it('shows the a button to configure DR if the user has privilege', async () => {
@@ -99,7 +99,7 @@ describe('DisasterRecoveryCard', () => {
 
     await flushPromises();
 
-    expect(wrapper.findComponent(VBtn).exists()).toBe(true);
+    expect(wrapper.find('[data-test-id="configure-dr-btn"]').exists()).toBe(true);
 
     vi.restoreAllMocks();
   });
@@ -130,7 +130,7 @@ describe('DisasterRecoveryCard', () => {
 
     await flushPromises();
 
-    await wrapper.findComponent(VBtn).trigger('click');
+    await wrapper.find('[data-test-id="configure-dr-btn"]').trigger('click');
 
     const form = wrapper.findComponent(VOverlay).findComponent(VCard);
     await form.find('input[name="quorum"]').setValue('1');
