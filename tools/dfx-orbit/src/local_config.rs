@@ -89,7 +89,6 @@ impl OrbitExtensionAgent {
     /// Adds a new Orbit station to the local dfx configuration.
     ///
     /// If there is no default station, the new station is set as the default.
-    // TODO: Check that the URL works & is the root URL.
     pub fn add_station<T>(&self, args: T) -> anyhow::Result<()>
     where
         T: Into<StationConfig>,
@@ -193,7 +192,6 @@ impl OrbitExtensionAgent {
         let mut extension_config = self.extension_config()?;
         extension_config.default_station = name_maybe;
         let common_config_file = self.extension_config_file()?;
-        // TODO: Have a dedicated function for doing the update rather than updating the file directly.
         // Something like with_config_update(|config| { config.default_station = name_maybe; }) that provides the current config and writes the modified config back.
         common_config_file.set_len(0)?;
         serde_json::to_writer_pretty(common_config_file, &extension_config)

@@ -39,7 +39,6 @@ impl DfxOrbit {
         })
     }
 
-    // TODO: Remove and put this into the upper struct
     /// Gets the ID of a given canister name.  If the name is already an ID, it is returned as is.
     pub fn canister_id(&self, canister_name: &str) -> anyhow::Result<Principal> {
         let network = &self.station.config.network;

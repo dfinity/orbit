@@ -13,6 +13,7 @@ use station::StationArgs;
 /// Manages Orbit on the Internet Computer.
 // TODO: Specify --station to not use the default station
 // TODO: Better version information
+// TODO: -v flag
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct DfxOrbitArgs {

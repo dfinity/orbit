@@ -7,7 +7,6 @@ pub struct StationConfig {
     /// Station name.
     pub name: String,
     /// Wallet canister ID.
-    // TODO: This should be a principal.
     pub station_id: Principal,
     /// The dfx network name.
     pub network: String,
