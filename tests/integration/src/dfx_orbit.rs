@@ -57,6 +57,11 @@ where
     let current_dir = std::env::current_dir().unwrap();
     let current_config_root = std::env::var(DFX_ROOT).ok();
 
+    // There might be other (non dfx-orbit) tests running in parallel.
+    // If we change the current_dir, these tests might no longer be able to find the ic-pocket binary
+    // We set the env var for IC pocket here, such that they still can find it.
+    std::env::set_var("POCKET_IC_BIN", &current_dir);
+
     // Create a temporary directory and change to it
     let tmp_dir = tempdir().unwrap();
     std::env::set_current_dir(tmp_dir.path()).unwrap();
