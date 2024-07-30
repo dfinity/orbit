@@ -17,7 +17,7 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 16] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 18] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
     UserPrivilege::ManageSystemInfo,
@@ -34,6 +34,8 @@ pub const USER_PRIVILEGES: [UserPrivilege; 16] = [
     UserPrivilege::AddAddressBookEntry,
     UserPrivilege::ChangeCanister,
     UserPrivilege::ListRequests,
+    UserPrivilege::CreateExternalCanister,
+    UserPrivilege::ListExternalCanisters,
 ];
 
 impl From<UserPrivilege> for Resource {
@@ -58,6 +60,12 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::ListRequests => Resource::Request(RequestResourceAction::List),
             UserPrivilege::ManageSystemInfo => {
                 Resource::System(SystemResourceAction::ManageSystemInfo)
+            }
+            UserPrivilege::CreateExternalCanister => Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Create(CreateExternalCanisterResourceTarget::Any),
+            ),
+            UserPrivilege::ListExternalCanisters => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::List)
             }
         }
     }
@@ -208,6 +216,12 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
             }
             RequestOperationInput::ChangeExternalCanister(input) => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    ChangeExternalCanisterResourceTarget::Canister(input.canister_id),
+                ))
+            }
+            // Configuration of external canisters share the same `Change` action privilege
+            RequestOperationInput::ConfigureExternalCanister(input) => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
                     ChangeExternalCanisterResourceTarget::Canister(input.canister_id),
                 ))

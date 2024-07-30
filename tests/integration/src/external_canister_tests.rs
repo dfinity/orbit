@@ -11,11 +11,12 @@ use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{
-    AddRequestPolicyOperationInput, CallExternalCanisterOperationInput,
+    AddRequestPolicyOperationInput, AllowDTO, CallExternalCanisterOperationInput,
     CallExternalCanisterResourceTargetDTO, CanisterInstallMode, CanisterMethodDTO,
     ChangeExternalCanisterOperationInput, ChangeExternalCanisterResourceTargetDTO,
     CreateExternalCanisterOperationInput, CreateExternalCanisterResourceTargetDTO,
-    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ListRequestsInput,
+    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO,
+    ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput, ListRequestsInput,
     ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
     ReadExternalCanisterResourceTargetDTO, RequestApprovalStatusDTO, RequestOperationDTO,
     RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, RequestStatusDTO,
@@ -372,7 +373,30 @@ fn create_external_canister_and_check_status() {
 
     // submitting request to create a external canister fails due to insufficient permissions to create such requests
     let create_canister_operation =
-        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {});
+        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
+            existing_canister_id: None,
+            initial_cycles: None,
+            name: "test".to_string(),
+            description: None,
+            labels: None,
+            permissions: ExternalCanisterPermissionsInput {
+                calls: vec![],
+                read: AllowDTO {
+                    auth_scope: station_api::AuthScopeDTO::Authenticated,
+                    user_groups: vec![],
+                    users: vec![],
+                },
+                change: AllowDTO {
+                    auth_scope: station_api::AuthScopeDTO::Authenticated,
+                    user_groups: vec![],
+                    users: vec![],
+                },
+            },
+            request_policies: ExternalCanisterRequestPoliciesInput {
+                change: None,
+                calls: vec![],
+            },
+        });
     let trap_message = submit_request_with_expected_trap(
         &env,
         user_a,

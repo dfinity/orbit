@@ -309,6 +309,9 @@ impl From<ReadExternalCanisterResourceTarget>
 impl From<station_api::ExternalCanisterResourceActionDTO> for ExternalCanisterResourceAction {
     fn from(action: station_api::ExternalCanisterResourceActionDTO) -> Self {
         match action {
+            station_api::ExternalCanisterResourceActionDTO::List => {
+                ExternalCanisterResourceAction::List
+            }
             station_api::ExternalCanisterResourceActionDTO::Create(target) => {
                 ExternalCanisterResourceAction::Create(target.into())
             }
@@ -328,6 +331,9 @@ impl From<station_api::ExternalCanisterResourceActionDTO> for ExternalCanisterRe
 impl From<ExternalCanisterResourceAction> for station_api::ExternalCanisterResourceActionDTO {
     fn from(action: ExternalCanisterResourceAction) -> Self {
         match action {
+            ExternalCanisterResourceAction::List => {
+                station_api::ExternalCanisterResourceActionDTO::List
+            }
             ExternalCanisterResourceAction::Create(target) => {
                 station_api::ExternalCanisterResourceActionDTO::Create(target.into())
             }

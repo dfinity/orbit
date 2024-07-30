@@ -2,7 +2,7 @@ use super::{
     permission::{Allow, AuthScope},
     request_policy_rule::{RequestPolicyRule, RequestPolicyRuleInput},
     request_specifier::RequestSpecifier,
-    resource::Resource,
+    resource::{Resource, ValidationMethodResourceTarget},
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata,
     DisasterRecoveryCommittee, MetadataItem, UserGroupId, UserId, UserStatus,
 };
@@ -325,7 +325,46 @@ pub struct ChangeExternalCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct CreateExternalCanisterOperationInput {}
+pub struct ExternalCanisterCallPermission {
+    pub allow: Allow,
+    pub validation_method: ValidationMethodResourceTarget,
+    pub execution_method: String,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterPermissionsInput {
+    pub read: Allow,
+    pub change: Allow,
+    pub calls: Vec<ExternalCanisterCallPermission>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallRequestPolicyRuleInput {
+    pub rule: RequestPolicyRule,
+    pub validation_method: ValidationMethodResourceTarget,
+    pub execution_method: String,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterRequestPoliciesInput {
+    pub change: Option<RequestPolicyRule>,
+    pub calls: Vec<ExternalCanisterCallRequestPolicyRuleInput>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CreateExternalCanisterOperationInput {
+    pub existing_canister_id: Option<Principal>,
+    pub initial_cycles: Option<u64>,
+    pub name: String,
+    pub description: Option<String>,
+    pub labels: Option<Vec<String>>,
+    pub permissions: ExternalCanisterPermissionsInput,
+    pub request_policies: ExternalCanisterRequestPoliciesInput,
+}
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

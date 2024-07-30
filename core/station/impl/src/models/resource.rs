@@ -58,7 +58,8 @@ impl ModelValidator<ValidationError> for Resource {
                 ChangeCanisterResourceAction::Create => (),
             },
             Resource::ExternalCanister(action) => match action {
-                ExternalCanisterResourceAction::Create(_)
+                ExternalCanisterResourceAction::List
+                | ExternalCanisterResourceAction::Create(_)
                 | ExternalCanisterResourceAction::Change(_)
                 | ExternalCanisterResourceAction::Read(_) => (),
                 ExternalCanisterResourceAction::Call(target) => target.validate()?,
@@ -174,6 +175,7 @@ pub enum ReadExternalCanisterResourceTarget {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ExternalCanisterResourceAction {
+    List,
     Create(CreateExternalCanisterResourceTarget),
     Change(ChangeExternalCanisterResourceTarget),
     Read(ReadExternalCanisterResourceTarget),
@@ -370,6 +372,11 @@ impl Resource {
                 }
             },
             Resource::ExternalCanister(action) => match action {
+                ExternalCanisterResourceAction::List => {
+                    vec![Resource::ExternalCanister(
+                        ExternalCanisterResourceAction::List,
+                    )]
+                }
                 ExternalCanisterResourceAction::Create(
                     CreateExternalCanisterResourceTarget::Any,
                 ) => {
@@ -665,6 +672,7 @@ impl Display for ReadExternalCanisterResourceTarget {
 impl Display for ExternalCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            ExternalCanisterResourceAction::List => write!(f, "List"),
             ExternalCanisterResourceAction::Create(target) => {
                 write!(f, "Create({})", target)
             }

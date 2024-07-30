@@ -609,7 +609,7 @@ type CreateExternalCanisterOperationInput = record {
   // By default, the canister id is created by the system.
   //
   // If provided, the canister must exist.
-  existing : opt principal;
+  existing_canister_id : opt principal;
   // The initial cycles to allocate to the canister.
   //
   // Ignored if the canister already exists.
@@ -2149,7 +2149,7 @@ type ExternalCanisterCallPermission = record {
   validation_method : ValidationMethodResourceTarget;
   // The execution method that the caller can use,
   // if `*` is used the caller can use any method.
-  method_name : text;
+  execution_method : text;
 };
 
 // The request policy rule for the canister call operation.
@@ -2161,7 +2161,7 @@ type ExternalCanisterCallRequestPolicyRule = record {
   validation_method : ValidationMethodResourceTarget;
   // The method name that the rule is for,
   // if `*` is used the rule applies to all methods.
-  method_name : text;
+  execution_method : text;
 };
 
 // The permissions set for the external canister.
@@ -2206,7 +2206,7 @@ type ExternalCanister = record {
   // The permissions that are set for who can interact with the canister.
   permissions : ExternalCanisterPermissions;
   // The request policies that are associated with the canister.
-  request_policies : vec ExternalCanisterRequestPolicies;
+  request_policies : ExternalCanisterRequestPolicies;
   // The time at which the canister was created.
   created_at : TimestampRFC3339;
   // The time at which the canister was last modified, if available.
@@ -2214,18 +2214,16 @@ type ExternalCanister = record {
 };
 
 // Input type for getting a external canister.
-type GetExternalCanisterInput = variant {
-  // The resource id of the external canister.
-  Id : UUID;
+type GetExternalCanisterInput = record {
   // The principal id of the external canister.
-  CanisterId : principal;
+  canister_id : principal;
 };
 
 // The caller privileges for the external canister methods.
 type ExternalCanisterCallerMethodsPrivileges = record {
   // The validation method that is used to validate the request and
   // render the argument.
-  validation_method : opt CanisterMethod;
+  validation_method : ValidationMethodResourceTarget;
   // The method that the caller can call on the external canister.
   //
   // The `*` method name is used to represent that the caller can
@@ -2239,8 +2237,6 @@ type ExternalCanisterCallerPrivileges = record {
   id : UUID;
   // Wether or not the caller can edit the external canister.
   can_change : bool;
-  // Wether or not the caller can read the external canister.
-  can_read : bool;
   // The list of methods that the caller can call on the external canister.
   can_call : vec ExternalCanisterCallerMethodsPrivileges;
 };
@@ -2257,8 +2253,6 @@ type GetExternalCanisterResult = variant {
 
 // Input type for listing external canisters with the given filters.
 type ListExternalCanistersInput = record {
-  // The name of the external canister to search for.
-  name : opt text;
   // The principal id of the external canister to search for.
   canister_ids : opt vec principal;
   // The labels to use for filtering the external canisters.
@@ -2300,8 +2294,9 @@ type GetExternalCanisterFiltersInput = record {
 // The result type for the filtering of external canisters.
 type GetExternalCanisterFiltersResult = variant {
   Ok : record {
-    // The list of names that are used by the external canisters.
-    names : opt vec text;
+    // The list of names that are used by the external canisters 
+    // and their canister id.
+    names : opt vec record { name : text; canister_id : principal };
     // The list of labels that are used by the external canisters.
     labels : opt vec text;
   };
@@ -2347,7 +2342,7 @@ service : (opt SystemInstall) -> {
   list_notifications : (input : ListNotificationsInput) -> (ListNotificationsResult) query;
   // Mark the notifications as read.
   mark_notifications_read : (input : MarkNotificationsReadInput) -> (MarkNotificationReadResult);
-  // Get the external canister by its resource id or canister id.
+  // Get the external canister by its canister id.
   get_external_canister : (input : GetExternalCanisterInput) -> (GetExternalCanisterResult) query;
   // List all external canisters that the caller has access to.
   list_external_canisters : (input : ListExternalCanistersInput) -> (ListExternalCanistersResult) query;
