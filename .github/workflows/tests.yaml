@@ -132,6 +132,12 @@ jobs:
           ./scripts/run-integration-tests.sh 2> logs.txt
           grep "rng succesfully initialized" logs.txt
           ! grep "canister reports healthy already before its initialization has finished" logs.txt
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs
+          path: logs.txt
+          retention-days: 5
   deployment-test:
     name: 'deployment-test:required'
     runs-on: ubuntu-latest
