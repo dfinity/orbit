@@ -14,6 +14,7 @@ pub enum RequestOperationFilterType {
     EditUserGroup,
     RemoveUserGroup,
     ChangeCanister,
+    SetDisasterRecovery,
     ChangeExternalCanister(Option<Principal>),
     CreateExternalCanister,
     CallExternalCanister(Option<Principal>),

@@ -1,5 +1,5 @@
 use super::{
-    evaluation::{Evaluate, REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR, REQUEST_MATCHER},
+    evaluation::{Evaluate, REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR},
     request::RequestApprovalRightsEvaluator,
     CallContext,
 };
@@ -73,7 +73,6 @@ fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
             }
 
             let validator = RequestApprovalRightsEvaluator::new(
-                REQUEST_MATCHER.to_owned(),
                 REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR.clone(),
                 user.id,
                 *request_id,

@@ -4,15 +4,18 @@ use super::indexes::{
     user_status_group_index::UserStatusGroupIndexRepository,
 };
 use crate::{
-    core::{metrics::USER_METRICS, with_memory_manager, Memory, USER_MEMORY_ID},
+    core::{
+        metrics::USER_METRICS, observer::Observer, with_memory_manager, Memory, USER_MEMORY_ID,
+    },
     models::{
         indexes::{
             name_to_user_id_index::NameToUserIdIndexCriteria,
             user_identity_index::UserIdentityIndexCriteria,
             user_status_group_index::UserStatusGroupIndexCriteria,
         },
-        User, UserId, UserKey, UserStatus,
+        User, UserGroupId, UserId, UserKey, UserStatus,
     },
+    services::{disaster_recovery_observes_insert_user, disaster_recovery_observes_remove_user},
 };
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -34,11 +37,31 @@ lazy_static! {
 }
 
 /// A repository that enables managing users in stable memory.
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct UserRepository {
     identity_index: UserIdentityIndexRepository,
     group_status_index: UserStatusGroupIndexRepository,
     name_index: NameToUserIdIndexRepository,
+    change_observer: Observer<(User, Option<User>)>,
+    remove_observer: Observer<User>,
+}
+
+impl Default for UserRepository {
+    fn default() -> Self {
+        let mut change_observer = Observer::default();
+        disaster_recovery_observes_insert_user(&mut change_observer);
+
+        let mut remove_observer = Observer::default();
+        disaster_recovery_observes_remove_user(&mut remove_observer);
+
+        Self {
+            change_observer,
+            remove_observer,
+            identity_index: UserIdentityIndexRepository::default(),
+            group_status_index: UserStatusGroupIndexRepository::default(),
+            name_index: NameToUserIdIndexRepository::default(),
+        }
+    }
 }
 
 impl Repository<UserKey, User> for UserRepository {
@@ -81,7 +104,10 @@ impl Repository<UserKey, User> for UserRepository {
                     current: Some(value.to_index_by_name()),
                 });
 
-            prev
+            let args = (value, prev);
+            self.change_observer.notify(&args);
+
+            args.1
         })
     }
 
@@ -114,6 +140,10 @@ impl Repository<UserKey, User> for UserRepository {
                 .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
                     current: prev.clone().map(|prev| prev.to_index_by_name()),
                 });
+
+            if let Some(prev) = &prev {
+                self.remove_observer.notify(prev);
+            }
 
             prev
         })
@@ -189,9 +219,21 @@ impl UserRepository {
             users.retain(|user| statuses.contains(&user.status));
         }
 
+        if let Some(groups) = filters.groups {
+            users.retain(|user| user.groups.iter().any(|group| groups.contains(group)));
+        }
+
         users.sort();
 
         users
+    }
+
+    pub fn with_empty_observers() -> Self {
+        Self {
+            change_observer: Observer::default(),
+            remove_observer: Observer::default(),
+            ..Default::default()
+        }
     }
 }
 
@@ -199,6 +241,7 @@ impl UserRepository {
 pub struct UserWhereClause {
     pub search_term: Option<String>,
     pub statuses: Option<Vec<UserStatus>>,
+    pub groups: Option<Vec<UserGroupId>>,
 }
 
 #[cfg(test)]

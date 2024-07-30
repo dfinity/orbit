@@ -7,6 +7,7 @@ mod address_book;
 mod control_panel_tests;
 mod cycles_monitor_tests;
 mod dfx_orbit;
+mod disaster_recovery_tests;
 mod external_canister_tests;
 mod interfaces;
 mod register_tests;

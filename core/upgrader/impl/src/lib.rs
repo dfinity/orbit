@@ -1,12 +1,9 @@
-use crate::{
-    hash::{Hash, Sha256Hasher},
-    upgrade::{
-        CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithStart,
-        WithStop,
-    },
+use crate::upgrade::{
+    CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithStart,
+    WithStop,
 };
 use candid::Principal;
-use ic_cdk::{init, update};
+use ic_cdk::{api::management_canister::main::CanisterInstallMode, init, update};
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     DefaultMemoryImpl, StableBTreeMap,
@@ -14,11 +11,20 @@ use ic_stable_structures::{
 use lazy_static::lazy_static;
 use orbit_essentials::storable;
 use std::{cell::RefCell, sync::Arc, thread::LocalKey};
-use upgrade::UpgradeError;
-use upgrader_api::{InitArg, TriggerUpgradeError, TriggerUpgradeResponse, UpgradeParams};
+use upgrade::{UpgradeError, UpgradeParams};
+use upgrader_api::{InitArg, TriggerUpgradeError};
 
-mod hash;
-mod upgrade;
+#[cfg(not(test))]
+pub use orbit_essentials::cdk as upgrader_ic_cdk;
+#[cfg(test)]
+pub use orbit_essentials::cdk::mocks as upgrader_ic_cdk;
+
+pub mod controllers;
+pub mod errors;
+pub mod model;
+pub mod services;
+pub mod upgrade;
+pub mod utils;
 
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 type StableMap<K, V> = StableBTreeMap<K, V, Memory>;
@@ -26,6 +32,9 @@ type StableValue<T> = StableMap<(), T>;
 type LocalRef<T> = &'static LocalKey<RefCell<T>>;
 
 const MEMORY_ID_TARGET_CANISTER_ID: u8 = 0;
+const MEMORY_ID_DISASTER_RECOVERY: u8 = 1;
+const MEMORY_ID_LOG_INDEX: u8 = 2;
+const MEMORY_ID_LOG_DATA: u8 = 3;
 
 thread_local! {
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
@@ -51,13 +60,6 @@ fn init_fn(InitArg { target_canister }: InitArg) {
     });
 }
 
-thread_local! {
-    static HASHER: RefCell<Box<dyn Hash>> = RefCell::new({
-        let h = Sha256Hasher;
-        Box::new(h)
-    });
-}
-
 lazy_static! {
     static ref UPGRADER: Box<dyn Upgrade> = {
         let u = Upgrader::new(&TARGET_CANISTER_ID);
@@ -73,22 +75,23 @@ lazy_static! {
 }
 
 #[update]
-async fn trigger_upgrade(params: UpgradeParams) -> TriggerUpgradeResponse {
-    match UPGRADER.upgrade(params).await {
-        Ok(()) => TriggerUpgradeResponse::Ok,
-        Err(err) => TriggerUpgradeResponse::Err(match err {
-            UpgradeError::NotController => TriggerUpgradeError::NotController,
-            UpgradeError::Unauthorized => TriggerUpgradeError::Unauthorized,
-            UpgradeError::UnexpectedError(err) => {
-                TriggerUpgradeError::UnexpectedError(err.to_string())
-            }
-        }),
-    }
+async fn trigger_upgrade(params: upgrader_api::UpgradeParams) -> Result<(), TriggerUpgradeError> {
+    let input: UpgradeParams = UpgradeParams {
+        module: params.module,
+        arg: params.arg,
+        install_mode: CanisterInstallMode::Upgrade(None),
+    };
+    UPGRADER.upgrade(input).await.map_err(|err| match err {
+        UpgradeError::NotController => TriggerUpgradeError::NotController,
+        UpgradeError::Unauthorized => TriggerUpgradeError::Unauthorized,
+        UpgradeError::UnexpectedError(err) => TriggerUpgradeError::UnexpectedError(err.to_string()),
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use orbit_essentials::api::ApiResult;
 
     #[test]
     fn check_candid_interface() {

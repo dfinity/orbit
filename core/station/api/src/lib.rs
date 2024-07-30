@@ -48,3 +48,6 @@ pub use permission::*;
 
 mod resource;
 pub use resource::*;
+
+mod disaster_recovery;
+pub use disaster_recovery::*;

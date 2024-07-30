@@ -40,7 +40,7 @@ export default {
       "Attention. Ce identité pourra acceder avec les permissions de l'utilisateur et prendre des actions en son nom.",
     export_csv: 'Exporter en CSV',
     params_parse_error: "Échec d'interpretation des paramètres, veuillez essayer de nouveau.",
-    submit_upgrade: 'Soumettre une mise à jour',
+    software_update: 'Mise à jour logicielle',
     canister_upgrade_target: 'Cible de mise à jour',
     canister_wasm_module: 'Wasm Module du Canister',
     canister_upgrade_args_input: 'Paramètres de la mise à jour (optionnel)',
@@ -80,6 +80,19 @@ export default {
     account_dialog_request_policy_transfer_hint:
       'La politique qui doit être approuvée pour transférer des fonds.',
     request_policy_rule_builder_no_rule: 'Pas de critères',
+    advanced_software_update_warning:
+      "À utiliser avec précaution. Il s'agit d'une fonctionnalité avancée pour mettre à jour le portefeuille.",
+    check_updates_btn: 'Vérifier les mises à jour',
+    update_recommended_latest:
+      'Il est recommandé de garder votre logiciel à jour pour garantir la meilleure expérience.',
+    update_already_latest_version: 'Vous êtes déjà à la dernière version.',
+    checking_for_updates: 'Vérification des mises à jour ...',
+    update_available: 'Une nouvelle version est disponible.',
+    update_automated_comment: {
+      summary: '{name} sera mis à jour vers la version {version}.',
+      verify_instructions:
+        'Pour vérifier la mise à jour, ouvrez le terminal et suivez les instructions ci-dessous:',
+    },
   },
   alpha_warning: {
     version: 'Ceci est une version alpha.',
@@ -401,6 +414,8 @@ export default {
     target: 'Cible',
     previous: 'Précédent',
     next: 'Suivant',
+    automated: 'Automatisé',
+    advanced: 'Avancé',
     back: 'Retour',
     permissions: 'Permissions',
     approval_policies: "Politiques d'approbation",
@@ -430,6 +445,7 @@ export default {
     see_all: 'Voir Tout',
     cancel: 'Annuler',
     checksum: 'Checksum',
+    module_checksum: 'Checksum du Module',
     rejected: 'Rejetté',
     edit: 'Modifier',
     destination_address: 'Adresse de destination',
@@ -485,6 +501,7 @@ export default {
     value: 'Valeur',
     close: 'Fermer',
     general: 'Général',
+    update: 'Mettre à jour',
     add: 'Ajouter',
     remove: 'Enlever',
     failed: 'Erreur',

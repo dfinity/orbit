@@ -9,7 +9,6 @@ interface ImportMetaEnv {
   readonly APP_BUILD_MODE: string;
   readonly APP_BUILD_VERSION: string;
   readonly APP_BUILD_HASH: string;
-  readonly APP_BUILD_DATE: string;
   readonly APP_SUPPORTED_LOCALES: string;
   readonly APP_LOG_LEVEL: 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'silent';
   readonly APP_CANISTER_ID_APP_WALLET: string;

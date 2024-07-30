@@ -2,7 +2,7 @@
 [package]
 name = 'orbit-essentials'
 include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.2'
+version = '0.0.2-alpha.3'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true

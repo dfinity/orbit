@@ -1,0 +1,47 @@
+name: 'Deterministic builds'
+
+on:
+  workflow_dispatch: null
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+      - labeled
+  merge_group:
+    types: [checks_requested]
+    branches:
+      - main
+  push:
+    branches:
+      - '**/release**'
+      - '**/build**'
+      - main
+
+jobs:
+  deterministic-build:
+    name: 'deterministic-build:optional'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - project: control-panel
+            artifact: control_panel.wasm.gz
+          - project: station
+            artifact: station.wasm.gz
+          - project: upgrader
+            artifact: upgrader.wasm.gz
+          - project: wallet-dapp
+            artifact: wallet-dapp.tar.gz
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - uses: docker-practice/actions-setup-docker@master
+        timeout-minutes: 12
+      - name: 'Deterministic build'
+        run: |
+          ./scripts/docker-build.sh --${{ matrix.project }}
+      - name: 'Built hash'
+        run: |
+          cat artifacts/${{ matrix.project }}/${{ matrix.artifact }}.sha256

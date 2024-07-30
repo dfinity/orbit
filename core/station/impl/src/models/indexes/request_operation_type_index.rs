@@ -68,6 +68,10 @@ impl Request {
                 operation_type: RequestOperationFilterType::ChangeCanister,
                 request_id: self.id,
             }],
+            RequestOperation::SetDisasterRecovery(_) => vec![RequestOperationTypeIndex {
+                operation_type: RequestOperationFilterType::SetDisasterRecovery,
+                request_id: self.id,
+            }],
             RequestOperation::ChangeExternalCanister(operation) => vec![
                 RequestOperationTypeIndex {
                     operation_type: RequestOperationFilterType::ChangeExternalCanister(None),

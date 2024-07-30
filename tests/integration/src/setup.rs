@@ -1,7 +1,7 @@
 use crate::interfaces::{
     NnsIndexCanisterInitPayload, NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload,
 };
-use crate::utils::{controller_test_id, minter_test_id, set_controllers};
+use crate::utils::{controller_test_id, minter_test_id, set_controllers, NNS_ROOT_CANISTER_ID};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use control_panel_api::UploadCanisterModulesInput;
@@ -18,16 +18,21 @@ use std::time::{Duration, SystemTime};
 static POCKET_IC_BIN: &str = "./pocket-ic";
 
 pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
+pub static CANISTER_INITIAL_CYCLES: u128 = 100_000_000_000_000;
 
 #[derive(Clone)]
 pub struct SetupConfig {
     pub upload_canister_modules: bool,
+    pub fallback_controller: Option<Principal>,
+    pub start_cycles: Option<u128>,
 }
 
 impl Default for SetupConfig {
     fn default() -> Self {
         Self {
             upload_canister_modules: true,
+            fallback_controller: Some(NNS_ROOT_CANISTER_ID),
+            start_cycles: None,
         }
     }
 }
@@ -77,8 +82,16 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
 }
 
 pub fn create_canister(env: &mut PocketIc, controller: Principal) -> Principal {
+    create_canister_with_cycles(env, controller, CANISTER_INITIAL_CYCLES)
+}
+
+pub fn create_canister_with_cycles(
+    env: &mut PocketIc,
+    controller: Principal,
+    cycles: u128,
+) -> Principal {
     let canister_id = env.create_canister_with_settings(Some(controller), None);
-    env.add_cycles(canister_id, 100_000_000_000_000_u128);
+    env.add_cycles(canister_id, cycles);
     canister_id
 }
 
@@ -134,8 +147,16 @@ fn install_canisters(
         Some(controller),
     );
 
-    let control_panel = create_canister(env, controller);
-    let station = create_canister(env, controller);
+    let control_panel = create_canister_with_cycles(
+        env,
+        controller,
+        config.start_cycles.unwrap_or(CANISTER_INITIAL_CYCLES),
+    );
+    let station = create_canister_with_cycles(
+        env,
+        controller,
+        config.start_cycles.unwrap_or(CANISTER_INITIAL_CYCLES),
+    );
 
     set_controllers(env, Some(controller), station, vec![controller, station]);
 
@@ -169,7 +190,10 @@ fn install_canisters(
             identity: WALLET_ADMIN_USER,
             name: "station-admin".to_string(),
         }],
-        upgrader_wasm_module: upgrader_wasm,
+        quorum: Some(1),
+        upgrader: station_api::SystemUpgraderInput::WasmModule(upgrader_wasm),
+        fallback_controller: config.fallback_controller,
+        accounts: None,
     });
     env.install_canister(
         station,

@@ -90,6 +90,7 @@ const componentsMap: {
   ChangeExternalCanister: UnsupportedSpecifier,
   CreateExternalCanister: UnsupportedSpecifier,
   CallExternalCanister: UnsupportedSpecifier,
+  SetDisasterRecovery: UnsupportedSpecifier,
 };
 
 function isKeyOfRequestSpecifier(key: string): key is keyof RequestSpecifier {
@@ -238,6 +239,9 @@ watch(
         model.value = {
           [specifier.value]: { validation_method: { No: null }, execution_method: { Any: null } },
         };
+        break;
+      case RequestSpecifierEnum.SetDisasterRecovery:
+        model.value = { [specifier.value]: null };
         break;
       default:
         unreachable(specifier.value);

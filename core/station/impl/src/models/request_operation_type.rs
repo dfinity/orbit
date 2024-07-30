@@ -27,6 +27,7 @@ pub enum RequestOperationType {
     ChangeExternalCanister = 20,
     CreateExternalCanister = 21,
     CallExternalCanister = 22,
+    SetDisasterRecovery = 23,
 }
 
 impl FromStr for RequestOperationType {
@@ -82,6 +83,9 @@ impl Display for RequestOperationType {
             RequestOperationType::EditRequestPolicy => write!(f, "edit_request_policy"),
             RequestOperationType::RemoveRequestPolicy => write!(f, "remove_request_policy"),
             RequestOperationType::ManageSystemInfo => write!(f, "manage_system_info"),
+            RequestOperationType::SetDisasterRecovery => {
+                write!(f, "set_disaster_recovery_committee")
+            }
         }
     }
 }

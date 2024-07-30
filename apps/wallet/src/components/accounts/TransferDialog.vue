@@ -91,6 +91,7 @@ import {
 import logger from '~/core/logger.core';
 import { Account, Request, Transfer, UUID } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
+import { maybeTransformBlockchainAddress } from '~/utils/app.utils';
 import { assertAndReturn } from '~/utils/helper.utils';
 import TransferForm from './TransferForm.vue';
 
@@ -173,7 +174,11 @@ const save = async (): Promise<void> => {
       {
         from_account_id: assertAndReturn(transfer.value.from_account_id, 'from_account_id'),
         amount: assertAndReturn(transfer.value.amount, 'amount'),
-        to: assertAndReturn(transfer.value.to, 'to'),
+        to: maybeTransformBlockchainAddress(
+          props.account.value.blockchain,
+          props.account.value.standard,
+          assertAndReturn(transfer.value.to, 'to'),
+        ),
         fee: transfer.value.fee ? [transfer.value.fee] : [],
         metadata: transfer.value.metadata ?? [],
         network: transfer.value.network ? [transfer.value.network] : [],

@@ -773,20 +773,23 @@ mod tests {
         let account_owners = vec![ctx.caller_user.id, transfer_requester_user.id];
         let account = ctx
             .account_service
-            .create_account(AddAccountOperationInput {
-                name: "foo".to_string(),
-                blockchain: Blockchain::InternetComputer,
-                standard: BlockchainStandard::Native,
-                metadata: Metadata::default(),
-                transfer_request_policy: Some(RequestPolicyRule::QuorumPercentage(
-                    UserSpecifier::Id(vec![ctx.caller_user.id, transfer_requester_user.id]),
-                    Percentage(100),
-                )),
-                configs_request_policy: Some(RequestPolicyRule::AutoApproved),
-                read_permission: Allow::users(account_owners.clone()),
-                configs_permission: Allow::users(account_owners.clone()),
-                transfer_permission: Allow::users(account_owners.clone()),
-            })
+            .create_account(
+                AddAccountOperationInput {
+                    name: "foo".to_string(),
+                    blockchain: Blockchain::InternetComputer,
+                    standard: BlockchainStandard::Native,
+                    metadata: Metadata::default(),
+                    transfer_request_policy: Some(RequestPolicyRule::QuorumPercentage(
+                        UserSpecifier::Id(vec![ctx.caller_user.id, transfer_requester_user.id]),
+                        Percentage(100),
+                    )),
+                    configs_request_policy: Some(RequestPolicyRule::AutoApproved),
+                    read_permission: Allow::users(account_owners.clone()),
+                    configs_permission: Allow::users(account_owners.clone()),
+                    transfer_permission: Allow::users(account_owners.clone()),
+                },
+                None,
+            )
             .await
             .expect("Failed to create account");
 

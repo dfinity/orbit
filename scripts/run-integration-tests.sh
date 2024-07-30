@@ -30,7 +30,7 @@ fi
 
 cd tests/integration
 echo "PocketIC download starting"
-curl -sLO https://github.com/dfinity/pocketic/releases/download/4.0.0/pocket-ic-x86_64-$PLATFORM.gz || exit 1
+curl -sLO https://github.com/dfinity/pocketic/releases/download/5.0.0/pocket-ic-x86_64-$PLATFORM.gz || exit 1
 gzip -df pocket-ic-x86_64-$PLATFORM.gz
 mv pocket-ic-x86_64-$PLATFORM pocket-ic
 chmod +x pocket-ic
@@ -46,5 +46,4 @@ if [ $DOWNLOAD_ASSET_CANISTER == "true" ]; then
     ./scripts/download-asset-canister-wasm.sh
 fi
 
-
-cargo test --package integration-tests $TESTNAME -- --test-threads $TEST_THREADS
+cargo test --package integration-tests $TESTNAME -- --test-threads $TEST_THREADS --nocapture

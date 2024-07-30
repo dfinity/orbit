@@ -14,7 +14,7 @@
       "newVersion": null
     },
     "orbit-essentials": {
-      "currentVersion": "0.0.2-alpha.2",
+      "currentVersion": "0.0.2-alpha.3",
       "dependentProjects": [
         {
           "source": "orbit-essentials-macros-tests",
@@ -53,6 +53,12 @@
           "dependencyCollection": "dependencies"
         },
         {
+          "source": "upgrader-api",
+          "target": "orbit-essentials",
+          "type": "static",
+          "dependencyCollection": "dependencies"
+        },
+        {
           "source": "station-api",
           "target": "orbit-essentials",
           "type": "static",
@@ -80,12 +86,12 @@
       "newVersion": null
     },
     "control-panel": {
-      "currentVersion": "0.0.2-alpha.2",
+      "currentVersion": "0.0.2-alpha.4",
       "dependentProjects": [],
       "newVersion": null
     },
     "control-panel-api": {
-      "currentVersion": "0.0.2-alpha.2",
+      "currentVersion": "0.0.2-alpha.3",
       "dependentProjects": [
         {
           "source": "control-panel",
@@ -103,17 +109,17 @@
       "newVersion": null
     },
     "upgrader": {
-      "currentVersion": "0.0.2-alpha.2",
+      "currentVersion": "0.0.2-alpha.3",
       "dependentProjects": [],
       "newVersion": null
     },
     "station": {
-      "currentVersion": "0.0.2-alpha.2",
+      "currentVersion": "0.0.2-alpha.5",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.3"
+      "newVersion": null
     },
     "upgrader-api": {
-      "currentVersion": "0.0.2-alpha.2",
+      "currentVersion": "0.0.2-alpha.4",
       "dependentProjects": [
         {
           "source": "upgrader",
@@ -137,7 +143,7 @@
       "newVersion": null
     },
     "station-api": {
-      "currentVersion": "0.0.2-alpha.2",
+      "currentVersion": "0.0.2-alpha.4",
       "dependentProjects": [
         {
           "source": "control-panel",
@@ -156,32 +162,30 @@
           "target": "station-api",
           "type": "static",
           "dependencyCollection": "dependencies"
+        },
+        {
+          "source": "upgrader-api",
+          "target": "station-api",
+          "type": "static",
+          "dependencyCollection": "dependencies"
         }
       ],
       "newVersion": null
     },
     "wallet-dapp": {
-      "currentVersion": "0.0.2-alpha.3",
+      "currentVersion": "0.0.2-alpha.6",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.4"
+      "newVersion": "0.0.2-alpha.7"
     }
   },
   "changes": {
-    "station": {
-      "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.3",
-        "gitTag": "@orbit/station-v0.0.2-alpha.3",
-        "isPrerelease": true
-      },
-      "contents": "## 0.0.2-alpha.3 (2024-05-29)\n\n\n### 🩹 Fixes\n\n- canbench station build\n\n\n### ❤️  Thank You\n\n- Jan Wendling\n- Kepler Vital\n- mraszyk"
-    },
     "wallet-dapp": {
       "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.4",
-        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.4",
+        "rawVersion": "0.0.2-alpha.7",
+        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.7",
         "isPrerelease": true
       },
-      "contents": "## 0.0.2-alpha.4 (2024-05-29)\n\n\n### 🚀 Features\n\n- **wallet:** add versioned path to wallet ui\n\n- **wallet:** assure api compatibility check is resilient to missing file\n\n\n### ❤️  Thank You\n\n- Jan Wendling\n- Kepler Vital\n- mraszyk"
+      "contents": "## 0.0.2-alpha.7 (2024-07-29)\n\n\n### 🚀 Features\n\n- **wallet:** remove unsafe-eval csp by bumping the agent\n\n- **wallet:** add advanced and automated mode to upgrades\n\n- **wallet:** prompt the user to update if new version available\n\n\n### ❤️  Thank You\n\n- Kepler Vital"
     }
   }
 }

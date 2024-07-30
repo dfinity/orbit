@@ -47,7 +47,7 @@ command.action(async options => {
   for (const [project, _] of projectsWithoutReleaseTags) {
     if (targetExists(project, 'create-artifacts')) {
       console.log(`Creating release artifacts for project: ${project}...`);
-      execSync(`BUILD_MODE='${configuration.icp.network}' npx nx run ${project}:create-artifacts`);
+      execSync(`BUILD_MODE='${configuration.icp.network}' ./scripts/docker-build.sh --${project}`);
     }
   }
 
