@@ -260,6 +260,10 @@ export interface DefiniteCanisterSettings {
   'memory_allocation' : bigint,
   'compute_allocation' : bigint,
 }
+export interface DisasterRecovery {
+  'user_group_name' : [] | [string],
+  'committee' : DisasterRecoveryCommittee,
+}
 export interface DisasterRecoveryCommittee {
   'user_group_id' : UUID,
   'quorum' : number,
@@ -964,6 +968,7 @@ export type SubmitRequestApprovalResult = {
   } |
   { 'Err' : Error };
 export interface SystemInfo {
+  'disaster_recovery' : [] | [DisasterRecovery],
   'name' : string,
   'last_upgrade_timestamp' : TimestampRFC3339,
   'raw_rand_successful' : boolean,

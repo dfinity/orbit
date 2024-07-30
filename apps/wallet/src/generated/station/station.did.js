@@ -1188,7 +1188,12 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
+  const DisasterRecovery = IDL.Record({
+    'user_group_name' : IDL.Opt(IDL.Text),
+    'committee' : DisasterRecoveryCommittee,
+  });
   const SystemInfo = IDL.Record({
+    'disaster_recovery' : IDL.Opt(DisasterRecovery),
     'name' : IDL.Text,
     'last_upgrade_timestamp' : TimestampRFC3339,
     'raw_rand_successful' : IDL.Bool,

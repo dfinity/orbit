@@ -19,6 +19,9 @@ export default {
     station_info_card_edit_hint: 'Modifiez vos préférences et paramètres pour ce portefeuille.',
     station_info_card_remove_btn: 'Retirer le portefeuille',
     station_info_card_remove_btn_confirm: 'Êtes-vous sûrs de vouloir retirer ce portefeuille?',
+    disaster_recovery_card_title: 'Sauvegarde',
+    disaster_recovery_not_configured: 'Sauvegarde non configurée.',
+    disaster_recovery_dialog_title: 'Configurer la sauvegarde',
     manage_associated_station: 'Gerer le portefeuille associé',
     manage_associated_station_hint:
       "Ces paramètres s'appliquent à votre utilisateur uniquement et non pas au portefeuille.",
@@ -395,6 +398,8 @@ export default {
     add_station_list_item: 'Ajouter un portefeuille',
   },
   terms: {
+    change: 'Changement',
+    quorum: 'Quorum',
     deposits: 'Deports',
     station: 'Portefeuille',
     all_done: 'Tout terminé',
@@ -527,6 +532,7 @@ export default {
     unconfirmed: 'non confirmé',
     main: 'Principal',
     user_group: "Groupe d'Usagers",
+    user_group_id: 'ID du Groupe d Usagers',
     user_groups: "Groupes d'Usagers",
     all: 'Tout',
     subset: 'sous-ensemble',
@@ -620,6 +626,8 @@ export default {
         "Erreur du chargement des groupes d'usagers, veuillez essayer de nouveau.",
       btn_edit_title: "Modifier le groupe d'usagers",
       create_new_group_title: "Ajouter un nouveau groupe d'usagers",
+      disaster_recovery_group_tooltip:
+        'Les membres de ce groupe peuvent effectuer une récupération après sinistre.',
     },
     add_station: {
       initialization_title: 'Bienvenue! Comment aimeriez-vous rejoindre Orbit?',
