@@ -196,7 +196,6 @@ async fn fetch_asset(canister_id: Principal, path: &str) -> Vec<u8> {
     let port = PORT.with(|port| *port.borrow());
     let local_url = format!("http://localhost:{}{}", port, path);
     let referer = format!("http://localhost:{}?canisterId={}", port, canister_id);
-    dbg!(&local_url, &referer);
 
     reqwest::Client::new()
         .get(local_url)

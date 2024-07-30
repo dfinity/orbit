@@ -131,8 +131,6 @@ fn review() {
             })
             .await
             .unwrap();
-
-        dbg!(&_response);
     });
 
     wait_for_request(
