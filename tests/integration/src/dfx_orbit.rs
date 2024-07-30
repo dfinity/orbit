@@ -96,7 +96,7 @@ where
     let result = runtime.block_on(test_func);
 
     // Stop the live environment
-    env.make_deterministic();
+    env.stop_live();
 
     // Restore current dir and DFX_CONFIG_ROOT
     std::env::set_current_dir(current_dir).unwrap();

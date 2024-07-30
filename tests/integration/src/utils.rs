@@ -300,8 +300,8 @@ pub fn add_user(
 ) -> UserDTO {
     add_user_with_name(
         env,
-        user_id.to_text().to_string(),
-        user_id,
+        identity.to_text().to_string(),
+        identity,
         group_ids,
         station_canister_id,
     )
