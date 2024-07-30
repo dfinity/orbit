@@ -24,7 +24,7 @@ mod canister_call;
 mod me;
 mod review;
 
-thread_local! {static PORT: RefCell<u16> = RefCell::new(4943);}
+thread_local! {static PORT: RefCell<u16> = const { RefCell::new(4943) };}
 static AGENT_MUTEX: Mutex<()> = Mutex::new(());
 
 const DFX_ROOT: &str = "DFX_CONFIG_ROOT";
@@ -82,7 +82,7 @@ where
 
         // Set and also return the port
         *port.borrow_mut() = value;
-        port.borrow().clone()
+        *port.borrow()
     });
 
     setup_test_dfx_json(tmp_dir.path());
@@ -100,7 +100,7 @@ where
 
     // Restore current dir and DFX_CONFIG_ROOT
     std::env::set_current_dir(current_dir).unwrap();
-    current_config_root.map(|root| std::env::set_var(DFX_ROOT, root));
+    if let Some(root) = current_config_root { std::env::set_var(DFX_ROOT, root) }
 
     result
 }
@@ -117,7 +117,7 @@ fn setup_identity(dfx_root: &Path) {
 }
 
 fn setup_test_dfx_json(dfx_root: &Path) {
-    let port = PORT.with(|port| port.borrow().clone());
+    let port = PORT.with(|port| *port.borrow());
     let dfx_json = test_dfx_json_from_template(port);
     std::fs::write(dfx_root.join("dfx.json"), dfx_json).unwrap();
 }
@@ -139,7 +139,7 @@ fn test_dfx_json_from_template(port: u16) -> String {
 
 /// Setup the station agent for the test
 async fn setup_dfx_orbit(station_id: Principal) -> DfxOrbit {
-    let port = PORT.with(|port| port.borrow().clone());
+    let port = PORT.with(|port| *port.borrow());
 
     let orbit_agent = OrbitExtensionAgent::new().unwrap();
     orbit_agent
@@ -186,12 +186,12 @@ fn setup_counter_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> Pri
 }
 
 async fn fetch_asset(canister_id: Principal, path: &str) -> Vec<u8> {
-    let port = PORT.with(|port| port.borrow().clone());
+    let port = PORT.with(|port| *port.borrow());
     let local_url = format!("http://localhost:{}{}", port, path);
     let referer = format!(
         "http://localhost:{}?canisterId={}",
         port,
-        canister_id.to_string()
+        canister_id
     );
     dbg!(&local_url, &referer);
 

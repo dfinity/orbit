@@ -20,8 +20,7 @@ fn me() {
         let mut dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
         // Call the counter canister
-        let response = dfx_orbit.station.me().await.unwrap();
-        response
+        dfx_orbit.station.me().await.unwrap()
     });
 
     assert_eq!(response.me.id, dfx_user.id);
