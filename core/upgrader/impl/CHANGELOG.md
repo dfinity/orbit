@@ -1,3 +1,21 @@
+## 0.0.2-alpha.3 (2024-07-04)
+
+
+### 🚀 Features
+
+- **station:** disaster recovery MVP
+
+- **upgrader:** disaster recovery flow reuses the same upgrader canister
+
+
+### ❤️  Thank You
+
+- Jan Wendling
+- Kepler Vital
+- Max
+- mraszyk
+- olaszakos
+
 ## 0.0.2-alpha.2 (2024-05-17)
 
 

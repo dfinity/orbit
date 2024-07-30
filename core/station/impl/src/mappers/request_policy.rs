@@ -246,6 +246,9 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
                 station_api::RequestSpecifierDTO::Transfer(account.into())
             }
             RequestSpecifier::ChangeCanister => station_api::RequestSpecifierDTO::ChangeCanister,
+            RequestSpecifier::SetDisasterRecovery => {
+                station_api::RequestSpecifierDTO::SetDisasterRecovery
+            }
             RequestSpecifier::ChangeExternalCanister(target) => {
                 station_api::RequestSpecifierDTO::ChangeExternalCanister(target.into())
             }
@@ -305,6 +308,9 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
                 RequestSpecifier::Transfer(transfer_specifier.into())
             }
             station_api::RequestSpecifierDTO::ChangeCanister => RequestSpecifier::ChangeCanister,
+            station_api::RequestSpecifierDTO::SetDisasterRecovery => {
+                RequestSpecifier::SetDisasterRecovery
+            }
             station_api::RequestSpecifierDTO::ChangeExternalCanister(target) => {
                 RequestSpecifier::ChangeExternalCanister(target.into())
             }
@@ -414,9 +420,11 @@ impl RequestSpecifier {
                     .map(|id| Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(*id))))
                     .collect::<_>(),
             },
-            RequestSpecifier::ChangeCanister => vec![Resource::ChangeCanister(
-                ChangeCanisterResourceAction::Create,
-            )],
+            RequestSpecifier::SetDisasterRecovery | RequestSpecifier::ChangeCanister => {
+                vec![Resource::ChangeCanister(
+                    ChangeCanisterResourceAction::Create,
+                )]
+            }
             RequestSpecifier::ChangeExternalCanister(target) => {
                 vec![Resource::ExternalCanister(
                     ExternalCanisterResourceAction::Change(target.clone()),

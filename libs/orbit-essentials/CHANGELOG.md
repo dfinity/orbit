@@ -1,3 +1,22 @@
+## 0.0.2-alpha.3 (2024-06-24)
+
+
+### 🚀 Features
+
+- **control-panel:** add registry schema to the control-panel
+
+- **control-panel:** add registry api interface and repository
+
+- **control-panel:** add registry api implementation
+
+
+### ❤️  Thank You
+
+- Jan Wendling
+- Kepler Vital
+- Max
+- mraszyk
+
 ## 0.0.2-alpha.2 (2024-05-17)
 
 

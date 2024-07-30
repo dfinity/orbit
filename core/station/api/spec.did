@@ -46,6 +46,7 @@ type RequestSpecifier = variant {
   EditAddressBookEntry : ResourceIds;
   RemoveAddressBookEntry : ResourceIds;
   ChangeCanister;
+  SetDisasterRecovery;
   ChangeExternalCanister : ChangeExternalCanisterResourceTarget;
   CreateExternalCanister : CreateExternalCanisterResourceTarget;
   CallExternalCanister : CallExternalCanisterResourceTarget;
@@ -537,9 +538,9 @@ type RemoveUserGroupOperation = record {
 };
 
 type CanisterInstallMode = variant {
-    install;
-    reinstall;
-    upgrade;
+  install;
+  reinstall;
+  upgrade;
 };
 
 type ChangeCanisterTarget = variant {
@@ -563,6 +564,23 @@ type ChangeCanisterOperation = record {
   module_checksum : Sha256Hash;
   // The checksum of the arg blob.
   arg_checksum : opt Sha256Hash;
+};
+
+type DisasterRecoveryCommittee = record {
+  // The user group id of the committee.
+  user_group_id : UUID;
+  // The quorum required for the committee to approve a disaster recovery operation.
+  quorum : nat16;
+};
+
+type SetDisasterRecoveryOperationInput = record {
+  // The disaster recovery committee.
+  committee : opt DisasterRecoveryCommittee;
+};
+
+type SetDisasterRecoveryOperation = record {
+  // The disaster recovery committee.
+  committee : opt DisasterRecoveryCommittee;
 };
 
 type ChangeExternalCanisterOperationInput = record {
@@ -723,6 +741,8 @@ type RequestOperation = variant {
   RemoveUserGroup : RemoveUserGroupOperation;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperation;
+  // An operation for setting disaster recovery.
+  SetDisasterRecovery : SetDisasterRecoveryOperation;
   // An operation for changing a external canister.
   ChangeExternalCanister : ChangeExternalCanisterOperation;
   // An operation for creating a external canister.
@@ -766,6 +786,8 @@ type RequestOperationInput = variant {
   RemoveUserGroup : RemoveUserGroupOperationInput;
   // An operation for changing a canister.
   ChangeCanister : ChangeCanisterOperationInput;
+  // An operation for setting disaster recovery.
+  SetDisasterRecovery : SetDisasterRecoveryOperationInput;
   // An operation for changing a external canister.
   ChangeExternalCanister : ChangeExternalCanisterOperationInput;
   // An operation for creating a external canister.
@@ -809,6 +831,8 @@ type RequestOperationType = variant {
   RemoveUserGroup;
   // An operation for changing a canister.
   ChangeCanister;
+  // An operation for setting disaster recovery for a canister.
+  SetDisasterRecovery;
   // An operation for changing a external canister.
   ChangeExternalCanister;
   // An operation for creating a external canister.
@@ -950,6 +974,8 @@ type ListRequestsOperationType = variant {
   RemoveRequestPolicy;
   // An operation for managing system info.
   ManageSystemInfo;
+  // An operation for setting disaster recovery config.
+  SetDisasterRecovery;
 };
 
 // The direction to use for sorting.
@@ -1602,6 +1628,8 @@ type ListUsersInput = record {
   search_term : opt text;
   // The statuses to use for filtering the users.
   statuses : opt vec UserStatus;
+  // The groups to use for filtering the users.
+  groups : opt vec UUID;
   // The pagination parameters.
   paginate : opt PaginationInput;
 };
@@ -1958,6 +1986,28 @@ type AdminInitInput = record {
   identity : principal;
 };
 
+// An input type for configuring the upgrader canister.
+type SystemUpgraderInput = variant {
+  // An existing upgrader canister.
+  Id : principal;
+  // Creates and deploys a new canister.
+  WasmModule : blob;
+};
+
+// The initial accounts to create when initializing the canister for the first time, e.g., after disaster recovery.
+type InitAccountInput = record {
+  // The UUID of the account, if not provided a new UUID will be generated.
+  id : opt UUID;
+  // A friendly name for the account (e.g. "My Account").
+  name : text;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The asset standard for this account (e.g. `native`, `erc20`, etc.).
+  standard : text;
+  // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
+  metadata : vec AccountMetadata;
+};
+
 // The init configuration for the canister.
 //
 // Only used when installing the canister for the first time.
@@ -1966,8 +2016,14 @@ type SystemInit = record {
   name : text;
   // The list of admin principals to be associated with the station.
   admins : vec AdminInitInput;
-  // The wasm module of the station upgrader canister.
-  upgrader_wasm_module : blob;
+  // Quorum of admins for initial policies.
+  quorum : opt nat16;
+  // The upgrader configuration.
+  upgrader : SystemUpgraderInput;
+  // An optional additional controller of the station and upgrader canisters.
+  fallback_controller : opt principal;
+  // Optional initial accounts to create.
+  accounts : opt vec InitAccountInput;
 };
 
 // The upgrade configuration for the canister.
@@ -1994,27 +2050,27 @@ type CanisterStatusInput = record {
 };
 
 type DefiniteCanisterSettings = record {
-    controllers : vec principal;
-    compute_allocation : nat;
-    memory_allocation : nat;
-    freezing_threshold : nat;
-    reserved_cycles_limit : nat;
+  controllers : vec principal;
+  compute_allocation : nat;
+  memory_allocation : nat;
+  freezing_threshold : nat;
+  reserved_cycles_limit : nat;
 };
 
 type CanisterStatusResponse = record {
-    status : variant { running; stopping; stopped };
-    settings : DefiniteCanisterSettings;
-    module_hash : opt blob;
-    memory_size : nat;
-    cycles : nat;
-    reserved_cycles : nat;
-    idle_cycles_burned_per_day : nat;
-    query_stats: record {
-        num_calls_total: nat;
-        num_instructions_total: nat;
-        request_payload_bytes_total: nat;
-        response_payload_bytes_total: nat;
-    };
+  status : variant { running; stopping; stopped };
+  settings : DefiniteCanisterSettings;
+  module_hash : opt blob;
+  memory_size : nat;
+  cycles : nat;
+  reserved_cycles : nat;
+  idle_cycles_burned_per_day : nat;
+  query_stats : record {
+    num_calls_total : nat;
+    num_instructions_total : nat;
+    request_payload_bytes_total : nat;
+    response_payload_bytes_total : nat;
+  };
 };
 
 type CanisterStatusResult = variant {

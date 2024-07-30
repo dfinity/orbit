@@ -50,7 +50,10 @@ export const mapRequestsOperationTypeToGroup = (
     return ListRequestsOperationTypeGroup.Permission;
   }
 
-  if (variantIs(operationType, 'ChangeCanister')) {
+  if (
+    variantIs(operationType, 'ChangeCanister') ||
+    variantIs(operationType, 'SetDisasterRecovery')
+  ) {
     return ListRequestsOperationTypeGroup.ChangeCanister;
   }
 
@@ -227,6 +230,9 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'CallExternalCanister')) {
     return RequestOperationEnum.CallExternalCanister;
   }
+  if (variantIs(operation, 'SetDisasterRecovery')) {
+    return RequestOperationEnum.SetDisasterRecovery;
+  }
 
   return unreachable(operation);
 };
@@ -290,6 +296,8 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { CreateExternalCanister: null };
   } else if (variantIs(requestOperation, 'CallExternalCanister')) {
     return { CallExternalCanister: [] };
+  } else if (variantIs(requestOperation, 'SetDisasterRecovery')) {
+    return { SetDisasterRecovery: null };
   } else {
     return unreachable(requestOperation);
   }

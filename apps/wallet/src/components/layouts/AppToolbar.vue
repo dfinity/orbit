@@ -6,7 +6,7 @@
       </slot>
     </div>
     <VSpacer />
-    <div class="d-flex ga-0 ga-md-2 align-center">
+    <div class="d-flex ga-0 ga-md-1 align-center">
       <slot name="actions">
         <VBtn
           v-if="props.themeSelector"
@@ -16,6 +16,7 @@
         <LanguageSelector v-if="props.languageSelector" />
         <NotificationsPanelToggle v-if="session.isAuthenticated" :variant="props.variant" />
         <UserAvatarSelector v-if="session.isAuthenticated" :variant="props.variant" />
+        <ChangeCanisterActionBtn v-if="showUpdateBtn" mode="highlight" class="mr-1" />
         <VBtn
           v-if="props.expandableSidebar"
           density="compact"
@@ -37,6 +38,9 @@ import NotificationsPanelToggle from '~/components/notifications/NotificationsPa
 import UserAvatarSelector from '~/components/UserAvatarSelector.vue';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
+import { useStationStore } from '~/stores/station.store';
+import ChangeCanisterActionBtn from '../change-canister/ChangeCanisterActionBtn.vue';
+import { variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -61,6 +65,7 @@ const props = withDefaults(
 
 const session = useSessionStore();
 const app = useAppStore();
+const station = useStationStore();
 
 const showLogo = computed(() => {
   if (props.logo !== undefined) {
@@ -71,4 +76,11 @@ const showLogo = computed(() => {
 });
 
 const bgColor = computed(() => (props.bgColor !== undefined ? props.bgColor : ''));
+const showUpdateBtn = computed(
+  () =>
+    session.isAuthenticated &&
+    station.hasNewVersion &&
+    !station.versionManagement.updateRequested &&
+    station.privileges.some(p => variantIs(p, 'ChangeCanister')),
+);
 </script>

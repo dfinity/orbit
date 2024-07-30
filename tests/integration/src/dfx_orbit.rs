@@ -17,7 +17,7 @@ use std::{
     sync::Mutex,
 };
 use tempfile::tempdir;
-use tokio::runtime::Runtime;
+use tokio::runtime::Builder;
 
 mod assets;
 mod canister_call;
@@ -92,11 +92,11 @@ where
     env.make_live(Some(port));
 
     // Execute the test function in an asynchronous runtime
-    let runtime = Runtime::new().unwrap();
+    let runtime = Builder::new_current_thread().enable_all().build().unwrap();
     let result = runtime.block_on(test_func);
 
     // Stop the live environment
-    env.make_deterministic();
+    env.stop_live();
 
     // Restore current dir and DFX_CONFIG_ROOT
     std::env::set_current_dir(current_dir).unwrap();

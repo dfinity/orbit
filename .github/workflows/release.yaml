@@ -17,6 +17,15 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+      - uses: docker-practice/actions-setup-docker@master
+        timeout-minutes: 12
+      # Helps with debugging
+      - name: Show versions
+        run: |
+          echo bash --version
+          bash --version
+          echo docker --version
+          docker --version
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Install Dependencies'

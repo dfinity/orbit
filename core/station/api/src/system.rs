@@ -1,3 +1,5 @@
+use crate::{MetadataDTO, UuidDTO};
+
 use super::TimestampRfc3339;
 use candid::{CandidType, Deserialize, Principal};
 
@@ -33,11 +35,34 @@ pub struct AdminInitInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
-pub struct SystemInit {
+pub enum SystemUpgraderInput {
+    Id(Principal),
+    WasmModule(#[serde(with = "serde_bytes")] Vec<u8>),
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct InitAccountInput {
+    pub id: Option<UuidDTO>,
     pub name: String,
+    pub blockchain: String,
+    pub standard: String,
+    pub metadata: Vec<MetadataDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct SystemInit {
+    /// The station name.
+    pub name: String,
+    /// The initial admins.
     pub admins: Vec<AdminInitInput>,
-    #[serde(with = "serde_bytes")]
-    pub upgrader_wasm_module: Vec<u8>,
+    /// The quorum of admin approvals required in initial policies.
+    pub quorum: Option<u16>,
+    /// The upgrader configuration.
+    pub upgrader: SystemUpgraderInput,
+    /// Optional fallback controller for the station and upgrader canisters.
+    pub fallback_controller: Option<Principal>,
+    /// Optionally set the initial accounts.
+    pub accounts: Option<Vec<InitAccountInput>>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]

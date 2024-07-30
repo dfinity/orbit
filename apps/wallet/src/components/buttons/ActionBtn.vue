@@ -19,6 +19,7 @@
       }"
     />
     <span v-if="props.text">{{ props.text }}</span>
+    <VIcon v-if="props.appendIcon" :icon="props.appendIcon" class="ml-1" />
   </VBtn>
 
   <VDialog
@@ -92,6 +93,7 @@ const props = withDefaults(
   defineProps<{
     text?: string;
     icon?: string | boolean;
+    appendIcon?: string;
     size?: 'x-small' | 'small' | 'default' | 'large' | 'x-large';
     variant?: 'text' | 'flat' | 'elevated' | 'tonal' | 'outlined' | 'plain';
     density?: 'comfortable' | 'default' | 'compact';
@@ -113,6 +115,7 @@ const props = withDefaults(
   {
     text: undefined,
     icon: false,
+    appendIcon: undefined,
     size: 'small',
     variant: 'flat',
     color: 'default',

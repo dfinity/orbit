@@ -1,3 +1,4 @@
+use super::SystemService;
 use crate::core::authorization::Authorization;
 use crate::core::ic_cdk::next_time;
 use crate::core::utils::{
@@ -26,7 +27,8 @@ lazy_static! {
 
 #[derive(Default, Debug)]
 pub struct UserGroupService {
-    user_group_repository: UserGroupRepository,
+    system_service: Arc<SystemService>,
+    user_group_repository: Arc<UserGroupRepository>,
 }
 
 impl UserGroupService {
@@ -122,8 +124,58 @@ impl UserGroupService {
     pub async fn remove(&self, id: &UUID) -> ServiceResult<()> {
         let user_group = self.get(id)?;
 
+        let system_info = self.system_service.get_system_info();
+
+        if let Some(committee) = system_info.get_disaster_recovery_committee() {
+            if committee.user_group_id == user_group.id {
+                return Err(UserGroupError::CannotDeleteDisasterRecoveryCommittee {
+                    id: Uuid::from_bytes(user_group.id).hyphenated().to_string(),
+                }
+                .into());
+            }
+        }
+
         self.user_group_repository.remove(&user_group.id);
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        core::write_system_info,
+        models::{AddUserGroupOperationInput, SystemInfo},
+    };
+
+    use super::USER_GROUP_SERVICE;
+
+    #[tokio::test]
+    async fn test_deleting_disaster_recovery_committee_user_group() {
+        let user_group = USER_GROUP_SERVICE
+            .create(AddUserGroupOperationInput {
+                name: "Test".to_string(),
+            })
+            .await
+            .expect("Failed to create user group");
+
+        let mut system_info = SystemInfo::default();
+
+        system_info.set_disaster_recovery_committee(Some(
+            crate::models::DisasterRecoveryCommittee {
+                user_group_id: user_group.id,
+                quorum: 1,
+            },
+        ));
+
+        write_system_info(system_info);
+
+        let result = USER_GROUP_SERVICE.remove(&user_group.id).await;
+
+        assert!(result.is_err());
+
+        let error = result.unwrap_err();
+
+        assert_eq!(error.code, "CANNOT_DELETE_DISASTER_RECOVERY_COMMITTEE");
     }
 }

@@ -1,4 +1,4 @@
-import { Certificate, HttpAgent } from '@dfinity/agent';
+import { Certificate, HttpAgent, LookupStatus } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { appInitConfig } from '~/configs/init.config';
 import { icAgent } from '~/core/ic-agent.core';
@@ -8,37 +8,44 @@ import { isSemanticVersion } from '~/utils/helper.utils';
 import { ApiCompatibilityInfo } from '~build/types/compat.types';
 
 /**
- * Fetch the version of the station API from the canister metadata.
+ * Fetch the version of the canister from the metadata.
  *
  * This call is verified with the state tree certificate.
  */
-async function fetchStationApiVersion(agent: HttpAgent, stationId: Principal): Promise<string> {
+export async function fetchCanisterVersion(
+  agent: HttpAgent,
+  canisterId: Principal,
+): Promise<string> {
   const encoder = new TextEncoder();
   const versionPath: ArrayBuffer[] = [
     encoder.encode('canister'),
-    stationId.toUint8Array(),
+    canisterId.toUint8Array(),
     encoder.encode('metadata'),
     encoder.encode('app:version'),
   ];
 
-  const state = await agent.readState(stationId, {
+  const state = await agent.readState(canisterId, {
     paths: [versionPath],
   });
 
   const certificate = await Certificate.create({
-    canisterId: stationId,
+    canisterId,
     certificate: state.certificate,
     rootKey: agent.rootKey,
   });
 
   const version = certificate.lookup(versionPath);
 
-  if (!version) {
+  if (version.status !== LookupStatus.Found) {
     throw new Error('Version not found');
   }
 
+  if (!(version.value instanceof ArrayBuffer)) {
+    throw new Error('Version value is not an ArrayBuffer');
+  }
+
   const decoder = new TextDecoder();
-  const decodedVersion = decoder.decode(version);
+  const decodedVersion = decoder.decode(version.value);
 
   if (!isSemanticVersion(decodedVersion)) {
     throw new Error(
@@ -123,7 +130,7 @@ export const createCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
   return {
     redirectToURL: (url: URL) => redirectToURL(url),
     fetchCompatFile: (versionPath?: string) => fetchCompatFile(versionPath),
-    fetchStationApiVersion: (stationId: Principal) => fetchStationApiVersion(agent, stationId),
+    fetchStationApiVersion: (stationId: Principal) => fetchCanisterVersion(agent, stationId),
     async checkCompatibility(
       stationId: Principal,
       opts: { redirectIfIncompatible?: boolean } = {},

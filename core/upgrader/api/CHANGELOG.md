@@ -1,3 +1,32 @@
+## 0.0.2-alpha.4 (2024-07-04)
+
+
+### 🚀 Features
+
+- **station:** disaster recovery MVP
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Max
+- olaszakos
+
+## 0.0.2-alpha.3 (2024-06-24)
+
+
+### 🚀 Features
+
+- **api:** Add the serde::Serialize trait to API types
+
+
+### ❤️  Thank You
+
+- Jan Wendling
+- Kepler Vital
+- Max
+- mraszyk
+
 ## 0.0.2-alpha.2 (2024-05-17)
 
 

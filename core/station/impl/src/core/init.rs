@@ -169,111 +169,93 @@ lazy_static! {
         ),
     ];
 
-    pub static ref DEFAULT_REQUEST_POLICIES: Vec<(RequestSpecifier, RequestPolicyRule)> = vec![
+}
+
+pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPolicyRule)> {
+    vec![
         // accounts
         (
             RequestSpecifier::AddAccount,
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         // users
         (
             RequestSpecifier::AddUser,
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
             RequestSpecifier::EditUser(ResourceIds::Any),
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         // address book
         (
             RequestSpecifier::AddAddressBookEntry,
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
             RequestSpecifier::EditAddressBookEntry(ResourceIds::Any),
-            RequestPolicyRule::Quorum(
-                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                1
-            )
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
             RequestSpecifier::RemoveAddressBookEntry(ResourceIds::Any),
-            RequestPolicyRule::Quorum(
-                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                1
-            )
-
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         // permissions
         (
             RequestSpecifier::EditPermission(ResourceSpecifier::Any),
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         // request policies
         (
             RequestSpecifier::AddRequestPolicy,
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
             RequestSpecifier::EditRequestPolicy(ResourceIds::Any),
-            RequestPolicyRule::Quorum(
-                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                1
-            )
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
             RequestSpecifier::RemoveRequestPolicy(ResourceIds::Any),
-            RequestPolicyRule::Quorum(
-                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                1
-            )
-
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         // user groups
         (
             RequestSpecifier::AddUserGroup,
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
             RequestSpecifier::EditUserGroup(ResourceIds::Any),
-            RequestPolicyRule::Quorum(
-                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                1
-            )
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
             RequestSpecifier::RemoveUserGroup(ResourceIds::Any),
-            RequestPolicyRule::Quorum(
-                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                1
-            )
-
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         // change canister
         (
             RequestSpecifier::ChangeCanister,
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         // create, change, and call external canister
         (
             RequestSpecifier::CreateExternalCanister(CreateExternalCanisterResourceTarget::Any),
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
             RequestSpecifier::ChangeExternalCanister(ChangeExternalCanisterResourceTarget::Any),
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
             RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
-              validation_method: ValidationMethodResourceTarget::No,
-              execution_method: ExecutionMethodResourceTarget::Any,
+                validation_method: ValidationMethodResourceTarget::No,
+                execution_method: ExecutionMethodResourceTarget::Any,
             }),
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         // system info
         (
             RequestSpecifier::ManageSystemInfo,
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), 1)
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
-    ];
+    ]
 }

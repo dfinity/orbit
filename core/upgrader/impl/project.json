@@ -9,7 +9,8 @@
         "commands": [
           "mkdir -p ./artifacts/upgrader",
           "./scripts/generate-wasm.sh upgrader",
-          "mv ./wasms/upgrader.wasm.gz ./artifacts/upgrader/upgrader.wasm.gz"
+          "mv ./wasms/upgrader.wasm.gz ./artifacts/upgrader/upgrader.wasm.gz",
+          "sha256sum ./artifacts/upgrader/upgrader.wasm.gz | awk '{ print $1 }' > ./artifacts/upgrader/upgrader.wasm.gz.sha256"
         ],
         "parallel": false
       }

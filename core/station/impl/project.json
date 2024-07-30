@@ -9,7 +9,8 @@
         "commands": [
           "mkdir -p ./artifacts/station",
           "./scripts/generate-wasm.sh station",
-          "mv ./wasms/station.wasm.gz ./artifacts/station/station.wasm.gz"
+          "mv ./wasms/station.wasm.gz ./artifacts/station/station.wasm.gz",
+          "sha256sum ./artifacts/station/station.wasm.gz | awk '{ print $1 }' > ./artifacts/station/station.wasm.gz.sha256"
         ],
         "parallel": false
       }
