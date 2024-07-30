@@ -129,7 +129,9 @@ jobs:
           path: tests/integration/wasms
       - name: Run integration tests
         run: |
-          ./scripts/run-integration-tests.sh
+          ./scripts/run-integration-tests.sh | tee logs.txt
+          grep "rng succesfully initialized" logs.txt
+          ! grep "canister reports healthy already before its initialization has finished" logs.txt
   deployment-test:
     name: 'deployment-test:required'
     runs-on: ubuntu-latest
