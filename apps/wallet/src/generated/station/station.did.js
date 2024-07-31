@@ -325,14 +325,23 @@ export const idlFactory = ({ IDL }) => {
   const RemoveAddressBookEntryOperationInput = IDL.Record({
     'address_book_entry_id' : UUID,
   });
-  const CreateExternalCanisterOperationInput = IDL.Record({
+  const CreateExternalCanisterOperationKindAddExisting = IDL.Record({
+    'canister_id' : IDL.Principal,
+  });
+  const CreateExternalCanisterOperationKindCreateNew = IDL.Record({
     'initial_cycles' : IDL.Opt(IDL.Nat64),
+  });
+  const CreateExternalCanisterOperationKind = IDL.Variant({
+    'AddExisting' : CreateExternalCanisterOperationKindAddExisting,
+    'CreateNew' : CreateExternalCanisterOperationKindCreateNew,
+  });
+  const CreateExternalCanisterOperationInput = IDL.Record({
     'permissions' : ExternalCanisterPermissionsInput,
+    'kind' : CreateExternalCanisterOperationKind,
     'name' : IDL.Text,
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'description' : IDL.Opt(IDL.Text),
     'request_policies' : ExternalCanisterRequestPoliciesInput,
-    'existing_canister_id' : IDL.Opt(IDL.Principal),
   });
   const ChangeAddressBookMetadata = IDL.Variant({
     'OverrideSpecifiedBy' : IDL.Vec(AddressBookMetadata),

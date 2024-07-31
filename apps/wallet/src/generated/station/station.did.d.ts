@@ -230,13 +230,22 @@ export interface CreateExternalCanisterOperation {
   'canister_id' : [] | [Principal],
 }
 export interface CreateExternalCanisterOperationInput {
-  'initial_cycles' : [] | [bigint],
   'permissions' : ExternalCanisterPermissionsInput,
+  'kind' : CreateExternalCanisterOperationKind,
   'name' : string,
   'labels' : [] | [Array<string>],
   'description' : [] | [string],
   'request_policies' : ExternalCanisterRequestPoliciesInput,
-  'existing_canister_id' : [] | [Principal],
+}
+export type CreateExternalCanisterOperationKind = {
+    'AddExisting' : CreateExternalCanisterOperationKindAddExisting
+  } |
+  { 'CreateNew' : CreateExternalCanisterOperationKindCreateNew };
+export interface CreateExternalCanisterOperationKindAddExisting {
+  'canister_id' : Principal,
+}
+export interface CreateExternalCanisterOperationKindCreateNew {
+  'initial_cycles' : [] | [bigint],
 }
 export type CreateExternalCanisterResourceTarget = { 'Any' : null };
 export interface CreateRequestInput {
