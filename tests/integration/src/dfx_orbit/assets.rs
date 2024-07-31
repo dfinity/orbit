@@ -8,7 +8,7 @@ use station_api::{
     RequestSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tempfile::tempdir;
+use tempfile::Builder;
 
 use crate::{
     dfx_orbit::{
@@ -66,7 +66,10 @@ fn assets_update() {
     // Setup a tmpdir, and store two assets in it
     // We generate the assets dyniamically, since we want to make sure we are not
     // fetching old assets
-    let asset_dir = tempdir().unwrap();
+    // NOTE: Currently, the local asset computation skips hidden files while the
+    // remote version does not. This creates an issue if we just used tempdir(), as that
+    // uses `.` prefix.
+    let asset_dir = Builder::new().prefix("asset").tempdir().unwrap();
     let asset_a = format!(
         "This is the current time: {}",
         SystemTime::now()
