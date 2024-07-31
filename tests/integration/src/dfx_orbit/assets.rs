@@ -120,6 +120,10 @@ fn assets_update() {
             })
             .await
             .unwrap();
+
+        // NOTE: We need to wait until the certified state becomes available.
+        // Since we are in live mode, we can not simply advance pocketIC by some
+        // ticks, but actially need to wait.
         tokio::time::sleep(Duration::from_secs(1)).await;
 
         // Check that the new files are being served by the asset canister

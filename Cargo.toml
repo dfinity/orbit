@@ -62,6 +62,7 @@ prometheus = "0.13.3"
 quote = "1.0"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
+reqwest = { version = "0.12", default-features = false }
 rstest = "0.18.2"
 serde = "1.0.188"
 serde_bytes = "0.11"
@@ -72,6 +73,7 @@ slog = "2.5.2"
 slog-async = "2.4.0"
 slog-term = "2.9.0"
 syn = { version = "2.0", features = ["extra-traits", "full"] }
+tempfile = "3.10"
 thiserror = "1.0.48"
 time = { version = "0.3", features = ["formatting", "parsing"] }
 tokio = { version = "1.33.0" }

@@ -65,23 +65,6 @@ impl StationAgent {
             .await
     }
 
-    // async fn update_canister_id(
-    //     &mut self,
-    //     canister_id: &Principal,
-    //     method_name: &str,
-    // ) -> anyhow::Result<UpdateBuilder> {
-    //     Ok(self.agent.update(canister_id, method_name))
-    // }
-
-    // pub fn update_canister(
-    //     &mut self,
-    //     canister: &str,
-    //     method_name: &str,
-    // ) -> anyhow::Result<UpdateBuilder> {
-    //     let canister_id = self.canister_id(canister)?;
-    //     Ok(self.agent().update(&canister_id, method_name))
-    // }
-
     async fn update_orbit(&mut self, method_name: &str) -> UpdateBuilder {
         self.agent.update(&self.config.station_id, method_name)
     }

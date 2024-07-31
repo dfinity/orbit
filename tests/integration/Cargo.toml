@@ -17,10 +17,10 @@ num-bigint = { workspace = true }
 pocket-ic = { workspace = true }
 rand = { workspace = true }
 rand_chacha = { workspace = true }
-reqwest = { version = "0.12", default-features = false }
+reqwest = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true, features = ['derive'] }
-tempfile = "3.10"
+tempfile = { workspace = true }
 tokio.workspace = true
 uuid = { workspace = true }
 control-panel-api = { path = '../../core/control-panel/api', version = '0.0.2-alpha.3' }

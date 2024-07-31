@@ -68,6 +68,12 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
         .with_nns_subnet()
         .with_application_subnet()
         .build();
+
+    // If we set the time to SystemTime::now, and then progress pocketIC a couple ticks
+    // and then enter live mode, we would crash the deterministic state machine, as the
+    // live mode would set the time back to the current time.
+    // Therefore, if we want to use live mode, we need to start the tests with the time
+    // set to the past.
     env.set_time(SystemTime::now() - Duration::from_secs(24 * 60 * 60));
     let controller = controller_test_id();
     let minter = minter_test_id();
