@@ -26,4 +26,5 @@ pub enum RequestOperationFilterType {
     EditAddressBookEntry,
     RemoveAddressBookEntry,
     ManageSystemInfo,
+    ConfigureExternalCanister(Option<Principal>),
 }

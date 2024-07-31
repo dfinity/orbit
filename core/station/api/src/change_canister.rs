@@ -1,4 +1,4 @@
-use candid::{CandidType, Deserialize, Principal};
+use candid::{CandidType, Deserialize};
 
 use crate::Sha256HashDTO;
 
@@ -30,24 +30,6 @@ pub struct ChangeCanisterOperationInput {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ChangeCanisterOperationDTO {
     pub target: ChangeCanisterTargetDTO,
-    pub module_checksum: Sha256HashDTO,
-    pub arg_checksum: Option<Sha256HashDTO>,
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct ChangeExternalCanisterOperationInput {
-    pub canister_id: Principal,
-    pub mode: CanisterInstallMode,
-    #[serde(with = "serde_bytes")]
-    pub module: Vec<u8>,
-    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
-    pub arg: Option<Vec<u8>>,
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct ChangeExternalCanisterOperationDTO {
-    pub canister_id: Principal,
-    pub mode: CanisterInstallMode,
     pub module_checksum: Sha256HashDTO,
     pub arg_checksum: Option<Sha256HashDTO>,
 }

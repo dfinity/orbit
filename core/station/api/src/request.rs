@@ -7,6 +7,7 @@ use crate::{
     AddUserOperationDTO, AddUserOperationInput, CallExternalCanisterOperationDTO,
     CallExternalCanisterOperationInput, ChangeCanisterOperationDTO, ChangeCanisterOperationInput,
     ChangeExternalCanisterOperationDTO, ChangeExternalCanisterOperationInput,
+    ConfigureExternalCanisterOperationDTO, ConfigureExternalCanisterOperationInput,
     CreateExternalCanisterOperationDTO, CreateExternalCanisterOperationInput, DisplayUserDTO,
     EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
     EditPermissionOperationDTO, EditPermissionOperationInput, EditUserGroupOperationDTO,
@@ -72,6 +73,7 @@ pub enum RequestOperationDTO {
     SetDisasterRecovery(Box<SetDisasterRecoveryOperationDTO>),
     ChangeExternalCanister(Box<ChangeExternalCanisterOperationDTO>),
     CreateExternalCanister(Box<CreateExternalCanisterOperationDTO>),
+    ConfigureExternalCanister(Box<ConfigureExternalCanisterOperationDTO>),
     CallExternalCanister(Box<CallExternalCanisterOperationDTO>),
     EditPermission(Box<EditPermissionOperationDTO>),
     AddRequestPolicy(Box<AddRequestPolicyOperationDTO>),
@@ -97,6 +99,7 @@ pub enum RequestOperationInput {
     SetDisasterRecovery(SetDisasterRecoveryOperationInput),
     ChangeExternalCanister(ChangeExternalCanisterOperationInput),
     CreateExternalCanister(CreateExternalCanisterOperationInput),
+    ConfigureExternalCanister(ConfigureExternalCanisterOperationInput),
     CallExternalCanister(CallExternalCanisterOperationInput),
     EditPermission(EditPermissionOperationInput),
     AddRequestPolicy(AddRequestPolicyOperationInput),
@@ -128,6 +131,7 @@ pub enum RequestOperationTypeDTO {
     EditRequestPolicy,
     RemoveRequestPolicy,
     ManageSystemInfo,
+    ConfigureExternalCanister,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -153,6 +157,7 @@ pub enum ListRequestsOperationTypeDTO {
     RemoveRequestPolicy,
     ManageSystemInfo,
     SetDisasterRecovery,
+    ConfigureExternalCanister(Option<Principal>),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

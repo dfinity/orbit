@@ -90,6 +90,7 @@ pub enum ReadExternalCanisterResourceTargetDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ExternalCanisterResourceActionDTO {
+    List,
     Create(CreateExternalCanisterResourceTargetDTO),
     Change(ChangeExternalCanisterResourceTargetDTO),
     Call(CallExternalCanisterResourceTargetDTO),

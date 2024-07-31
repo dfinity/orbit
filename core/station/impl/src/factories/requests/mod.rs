@@ -176,12 +176,14 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
-
             RequestOperationInput::ChangeExternalCanister(operation) => {
                 let creator = Box::new(ChangeExternalCanisterRequestCreate {});
                 creator
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
+            }
+            RequestOperationInput::ConfigureExternalCanister(_operation) => {
+                unimplemented!("ConfigureExternalCanister operation is not implemented yet.")
             }
             RequestOperationInput::CreateExternalCanister(operation) => {
                 let creator = Box::new(CreateExternalCanisterRequestCreate {});
