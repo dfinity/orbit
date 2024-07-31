@@ -19,6 +19,9 @@ export default {
     station_info_card_edit_hint: 'Edite suas preferências e configurações para esta carteira.',
     station_info_card_remove_btn: 'Remover carteira',
     station_info_card_remove_btn_confirm: 'Tem a certeza que pretende remover esta carteira?',
+    disaster_recovery_card_title: 'Recuperação de desastres',
+    disaster_recovery_not_configured: 'Recuperação de desastres não configurada.',
+    disaster_recovery_dialog_title: 'Configurar recuperação de desastres',
     manage_associated_station: 'Gerenciar carteira associada',
     manage_associated_station_hint:
       'Qualquer modificação apenas serão aplicadas a sua conta de usuário.',
@@ -392,6 +395,8 @@ export default {
     add_station_list_item: 'Adicionar carteira',
   },
   terms: {
+    change: 'Alterar',
+    quorum: 'Quórum',
     deposits: 'Depósitos',
     station: 'Carteira',
     all_done: 'Tudo pronto',
@@ -524,6 +529,7 @@ export default {
     unconfirmed: 'Não confirmado',
     main: 'Principal',
     user_group: 'Grupo de usuário',
+    user_group_id: 'ID do grupo de usuário',
     user_groups: 'Grupos de usuários',
     all: 'Todos',
     subset: 'Subconjunto',
@@ -608,6 +614,8 @@ export default {
         'Erro ao carregar os grupos de usuários, por favor, tente novamente.',
       btn_edit_title: 'Editar grupo de usuários',
       create_new_group_title: 'Criar novo grupo de usuários',
+      disaster_recovery_group_tooltip:
+        'Membros deste grupo podem realizar a recuperação de desastres.',
     },
     users: {
       title: 'Usuários',

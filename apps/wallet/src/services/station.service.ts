@@ -11,6 +11,7 @@ import {
   Capabilities,
   ChangeCanisterOperationInput,
   CreateRequestInput,
+  DisasterRecoveryCommittee,
   EditAccountOperationInput,
   EditAddressBookEntryOperationInput,
   EditPermissionOperationInput,
@@ -752,6 +753,27 @@ export class StationService {
       title: [],
       summary: [],
       operation: { ManageSystemInfo: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async createSetDisasterRecoveryCommitteeRequest(
+    input: DisasterRecoveryCommittee,
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        SetDisasterRecovery: {
+          committee: [input],
+        },
+      },
     });
 
     if (variantIs(result, 'Err')) {
