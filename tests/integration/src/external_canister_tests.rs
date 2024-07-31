@@ -14,7 +14,8 @@ use station_api::{
     AddRequestPolicyOperationInput, AllowDTO, CallExternalCanisterOperationInput,
     CallExternalCanisterResourceTargetDTO, CanisterInstallMode, CanisterMethodDTO,
     ChangeExternalCanisterOperationInput, ChangeExternalCanisterResourceTargetDTO,
-    CreateExternalCanisterOperationInput, CreateExternalCanisterResourceTargetDTO,
+    CreateExternalCanisterOperationInput, CreateExternalCanisterOperationKindCreateNewDTO,
+    CreateExternalCanisterOperationKindDTO, CreateExternalCanisterResourceTargetDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO,
     ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput, ListRequestsInput,
     ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
@@ -374,8 +375,11 @@ fn create_external_canister_and_check_status() {
     // submitting request to create a external canister fails due to insufficient permissions to create such requests
     let create_canister_operation =
         RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
-            existing_canister_id: None,
-            initial_cycles: None,
+            kind: CreateExternalCanisterOperationKindDTO::CreateNew(
+                CreateExternalCanisterOperationKindCreateNewDTO {
+                    initial_cycles: None,
+                },
+            ),
             name: "test".to_string(),
             description: None,
             labels: None,

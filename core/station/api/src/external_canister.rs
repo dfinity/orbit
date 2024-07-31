@@ -24,9 +24,24 @@ pub struct DefiniteCanisterSettingsInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct CreateExternalCanisterOperationInput {
-    pub existing_canister_id: Option<Principal>,
+pub struct CreateExternalCanisterOperationKindCreateNewDTO {
     pub initial_cycles: Option<u64>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CreateExternalCanisterOperationKindAddExistingDTO {
+    pub canister_id: Principal,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum CreateExternalCanisterOperationKindDTO {
+    CreateNew(CreateExternalCanisterOperationKindCreateNewDTO),
+    AddExisting(CreateExternalCanisterOperationKindAddExistingDTO),
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CreateExternalCanisterOperationInput {
+    pub kind: CreateExternalCanisterOperationKindDTO,
     pub name: String,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,

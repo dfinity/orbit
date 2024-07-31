@@ -356,9 +356,27 @@ pub struct ExternalCanisterRequestPoliciesInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct CreateExternalCanisterOperationInput {
-    pub existing_canister_id: Option<Principal>,
+pub struct CreateExternalCanisterOperationKindCreateNew {
     pub initial_cycles: Option<u64>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CreateExternalCanisterOperationKindAddExisting {
+    pub canister_id: Principal,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum CreateExternalCanisterOperationKind {
+    CreateNew(CreateExternalCanisterOperationKindCreateNew),
+    AddExisting(CreateExternalCanisterOperationKindAddExisting),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CreateExternalCanisterOperationInput {
+    pub kind: CreateExternalCanisterOperationKind,
     pub name: String,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
