@@ -8,7 +8,7 @@ pub type StationAgentResult<T> = Result<T, StationAgentError>;
 pub enum StationAgentError {
     #[error("The station API returned an error: {:?}", 0)]
     Api(ApiErrorDTO),
-    #[error("Failed to parse canid: {0}")]
+    #[error("Failed to parse candid: {0}")]
     CandidParser(#[from] candid::Error),
     #[error("Error in the IC agent: {0}")]
     Agent(#[from] AgentError),
