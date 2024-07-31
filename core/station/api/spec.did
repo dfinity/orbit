@@ -605,15 +605,29 @@ type ChangeExternalCanisterOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
-type CreateExternalCanisterOperationInput = record {
-  // By default, the canister id is created by the system.
-  //
-  // If provided, the canister must exist.
-  existing_canister_id : opt principal;
+type CreateExternalCanisterOperationKindCreateNew = record {
   // The initial cycles to allocate to the canister.
   //
-  // Ignored if the canister already exists.
+  // If not set, only the minimal amount of cycles required to create the
+  // canister will be allocated.
   initial_cycles : opt nat64;
+};
+
+type CreateExternalCanisterOperationKindAddExisting = record {
+  // The canister id to use.
+  canister_id : principal;
+};
+
+type CreateExternalCanisterOperationKind = variant {
+  // A new canister is created.
+  CreateNew : CreateExternalCanisterOperationKindCreateNew;
+  // An existing canister is added to the station.
+  AddExisting : CreateExternalCanisterOperationKindAddExisting;
+};
+
+type CreateExternalCanisterOperationInput = record {
+  // The kind of create operation to perform.
+  kind : CreateExternalCanisterOperationKind;
   // The name of the external canister.
   name : text;
   // The description of the external canister.
@@ -2304,7 +2318,7 @@ type GetExternalCanisterFiltersInput = record {
 // The result type for the filtering of external canisters.
 type GetExternalCanisterFiltersResult = variant {
   Ok : record {
-    // The list of names that are used by the external canisters 
+    // The list of names that are used by the external canisters
     // and their canister id.
     names : opt vec record { name : text; canister_id : principal };
     // The list of labels that are used by the external canisters.
