@@ -3,7 +3,7 @@ use super::{
     TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY,
 };
 use crate::{
-    core::ic_cdk::api::print,
+    errors::BlockchainApiError,
     models::{Account, Metadata, Transfer},
 };
 use alloy::{
@@ -18,7 +18,6 @@ use evm_rpc_canister_types::{
     EthSepoliaService, MultiSendRawTransactionResult, RpcService, RpcServices,
     SendRawTransactionResult, SendRawTransactionStatus, EVM_RPC,
 };
-use maplit::hashmap;
 use num_bigint::BigUint;
 use std::str::FromStr;
 
@@ -48,13 +47,12 @@ impl Ethereum {
 #[async_trait]
 impl BlockchainApi for Ethereum {
     async fn generate_address(&self, account: &Account) -> BlockchainApiResult<String> {
-        let address = get_address_from_account(account).await;
+        let address = get_address_from_account(account).await?;
         Ok(address)
     }
 
     async fn balance(&self, account: &Account) -> BlockchainApiResult<BigUint> {
-        let address = get_address_from_account(account).await;
-        let balance = eth_get_balance(&self.chain, &address).await;
+        let balance = eth_get_balance(&self.chain, &account.address).await?;
         Ok(BigUint::from_bytes_be(&balance.to_be_bytes_vec()))
     }
 
@@ -79,7 +77,7 @@ impl BlockchainApi for Ethereum {
     async fn submit_transaction(
         &self,
         account: &Account,
-        _transfer: &Transfer,
+        transfer: &Transfer,
     ) -> BlockchainApiResult<BlockchainTransactionSubmitted> {
         let nonce = 0u64;
         let gas_limit = 100000u128;
@@ -92,11 +90,13 @@ impl BlockchainApi for Ethereum {
             gas_limit,
             max_fee_per_gas,
             max_priority_fee_per_gas,
-            to: TxKind::Call(
-                Address::from_str(&_transfer.to_address)
-                    .expect("failed to parse the destination address"),
-            ),
-            value: alloy::primitives::U256::from_be_slice(&_transfer.amount.0.to_bytes_be()),
+            to: TxKind::Call(Address::from_str(&transfer.to_address).map_err(|error| {
+                BlockchainApiError::InvalidToAddress {
+                    address: transfer.to_address.clone(),
+                    error: error.to_string(),
+                }
+            })?),
+            value: alloy::primitives::U256::from_be_slice(&transfer.amount.0.to_bytes_be()),
             access_list: alloy::eips::eip2930::AccessList::default(),
             input: alloy::primitives::Bytes::default(),
         };
@@ -109,38 +109,25 @@ impl BlockchainApi for Ethereum {
                 key_id: get_key_id(),
             })
             .await
-            .expect("failed to sign transaction");
+            .map_err(|error| BlockchainApiError::TransactionSubmitFailed {
+                info: format!("Failed to sign transaction: {:?}", error),
+            })?;
 
             let sig_bytes = signature.signature.as_slice();
-            let public_key = ecdsa_pubkey_of(&account).await;
-            let parity = y_parity(&tx_signature_hash, sig_bytes, &public_key);
-            alloy::signers::Signature::from_bytes_and_parity(sig_bytes, parity)
-                .expect("failed to decode signature")
+            let public_key = ecdsa_pubkey_of(&account).await?;
+            let parity = y_parity(&tx_signature_hash, sig_bytes, &public_key)?;
+            alloy::signers::Signature::from_bytes_and_parity(sig_bytes, parity).map_err(
+                |error| BlockchainApiError::TransactionSubmitFailed {
+                    info: error.to_string(),
+                },
+            )?
         };
 
-        {
-            // TODO: just to test the recovery. Remove this when done.
-            let test_recovered_address = signature
-                .recover_address_from_prehash(&transaction.signature_hash())
-                .expect("failed to recover address");
-            let account_address = get_address_from_account(&account).await;
-            print(format!(
-                "test_recovered_address: {} {:?} {:?}",
-                hex::encode_prefixed(test_recovered_address).to_lowercase()
-                    == account_address.to_lowercase(),
-                hex::encode_prefixed(test_recovered_address),
-                account_address
-            ));
-        }
-
-        print(format!("signature: {:?}", signature));
         let tx_signed = transaction.into_signed(signature);
         let tx_envelope: alloy::consensus::TxEnvelope = tx_signed.into();
         let tx_encoded = tx_envelope.encoded_2718();
-        print(format!("tx_encoded: {:?}", tx_encoded));
 
-        let sent_tx_hash = eth_send_raw_transaction(&self.chain, &tx_encoded).await;
-        print(format!("sent_tx_hash: {:?}", sent_tx_hash));
+        let sent_tx_hash = eth_send_raw_transaction(&self.chain, &tx_encoded).await?;
 
         Ok(BlockchainTransactionSubmitted {
             details: vec![(
@@ -151,27 +138,35 @@ impl BlockchainApi for Ethereum {
     }
 }
 
-async fn ecdsa_pubkey_of(account: &Account) -> Vec<u8> {
+async fn ecdsa_pubkey_of(account: &Account) -> Result<Vec<u8>, BlockchainApiError> {
     let (key,) = ecdsa_public_key(EcdsaPublicKeyArgument {
         canister_id: None,
         derivation_path: principal_to_derivation_path(&account),
         key_id: get_key_id(),
     })
     .await
-    .expect("failed to get public key");
-    key.public_key
+    .map_err(|e| BlockchainApiError::BlockchainNetworkError {
+        info: format!("Failed to get public key: {:?}", e),
+    })?;
+    Ok(key.public_key)
 }
 
-async fn get_address_from_account(account: &Account) -> String {
-    let public_key = ecdsa_pubkey_of(&account).await;
-    let address = get_address_from_public_key(&public_key);
-    hex::encode_prefixed(&address)
+async fn get_address_from_account(account: &Account) -> Result<String, BlockchainApiError> {
+    let public_key = ecdsa_pubkey_of(&account).await?;
+    let address = get_address_from_public_key(&public_key)?;
+    Ok(hex::encode_prefixed(&address))
 }
 
-fn get_address_from_public_key(public_key: &[u8]) -> Address {
-    let verifying_key = ecdsa::VerifyingKey::from_sec1_bytes(&public_key)
-        .expect("Failed to create VerifyingKey from public key bytes");
-    alloy::signers::utils::public_key_to_address(&verifying_key)
+fn get_address_from_public_key(public_key: &[u8]) -> Result<Address, BlockchainApiError> {
+    let verifying_key = ecdsa::VerifyingKey::from_sec1_bytes(&public_key).map_err(|e| {
+        BlockchainApiError::BlockchainNetworkError {
+            info: format!(
+                "Failed to create VerifyingKey from public key bytes: {:?}",
+                e
+            ),
+        }
+    })?;
+    Ok(alloy::signers::utils::public_key_to_address(&verifying_key))
 }
 
 fn get_key_id() -> EcdsaKeyId {
@@ -190,9 +185,12 @@ fn principal_to_derivation_path(account: &Account) -> Vec<Vec<u8>> {
     vec![vec![SCHEMA], account_principal.as_slice().to_vec()]
 }
 
-pub async fn eth_send_raw_transaction(chain: &alloy_chains::Chain, raw_tx: &[u8]) -> String {
+pub async fn eth_send_raw_transaction(
+    chain: &alloy_chains::Chain,
+    raw_tx: &[u8],
+) -> Result<String, BlockchainApiError> {
     let config = None;
-    let services = get_evm_services(chain);
+    let services = get_evm_services(chain)?;
 
     let cycles = 1000000000;
 
@@ -205,28 +203,31 @@ pub async fn eth_send_raw_transaction(chain: &alloy_chains::Chain, raw_tx: &[u8]
             MultiSendRawTransactionResult::Consistent(status) => match status {
                 SendRawTransactionResult::Ok(status) => status,
                 SendRawTransactionResult::Err(e) => {
-                    ic_cdk::trap(format!("Error: {:?}", e).as_str());
+                    crate::core::ic_cdk::api::trap(format!("Error: {:?}", e).as_str());
                 }
             },
             MultiSendRawTransactionResult::Inconsistent(_) => {
-                ic_cdk::trap("Status is inconsistent");
+                crate::core::ic_cdk::api::trap("Status is inconsistent");
             }
         },
-        Err(e) => ic_cdk::trap(format!("Error: {:?}", e).as_str()),
+        Err(e) => crate::core::ic_cdk::api::trap(format!("Error: {:?}", e).as_str()),
     };
-    print(format!("send_tx: status: {:?}", status));
     let tx_hash = match status {
         SendRawTransactionStatus::Ok(status) => status,
         error => {
-            ic_cdk::trap(format!("Error: {:?}", error).as_str());
+            crate::core::ic_cdk::api::trap(format!("Error: {:?}", error).as_str());
         }
     };
-    print(format!("send_tx: tx_hash: {:?}", tx_hash));
-    tx_hash.expect("tx hash is none")
+    tx_hash.ok_or(BlockchainApiError::TransactionSubmitFailed {
+        info: "RPC did not return tx hash ".to_owned(),
+    })
 }
 
-async fn eth_get_balance(chain: &alloy_chains::Chain, address: &str) -> U256 {
-    let services = get_evm_services(chain);
+async fn eth_get_balance(
+    chain: &alloy_chains::Chain,
+    address: &str,
+) -> Result<U256, BlockchainApiError> {
+    let services = get_evm_services(chain)?;
     let cycles = 1000000000;
     let evm_rpc_request = serde_json::json!({
         "method": "eth_getBalance",
@@ -239,57 +240,90 @@ async fn eth_get_balance(chain: &alloy_chains::Chain, address: &str) -> U256 {
     let (result,) = EVM_RPC
         .request(services.0, evm_rpc_request, 1000_u64, cycles)
         .await
-        .expect("failed to get balance");
+        .map_err(|_e| BlockchainApiError::FetchBalanceFailed {
+            account_id: address.to_owned(),
+        })?;
 
     let unwrapped_result = match result {
         evm_rpc_canister_types::RequestResult::Ok(res) => res,
         evm_rpc_canister_types::RequestResult::Err(e) => {
-            ic_cdk::trap(format!("Error: {:?}", e).as_str())
+            crate::core::ic_cdk::api::trap(format!("Error: {:?}", e).as_str())
         }
     };
-    let deserialized = serde_json::from_str::<serde_json::Value>(&unwrapped_result)
-        .expect("failed to deserialize get balance response");
-    let balance_hex = deserialized["result"]
-        .as_str()
-        .expect("balance result is not a string");
+    let deserialized =
+        serde_json::from_str::<serde_json::Value>(&unwrapped_result).map_err(|_e| {
+            BlockchainApiError::FetchBalanceFailed {
+                account_id: address.to_owned(),
+            }
+        })?;
+    let balance_hex =
+        deserialized["result"]
+            .as_str()
+            .ok_or(BlockchainApiError::FetchBalanceFailed {
+                account_id: address.to_owned(),
+            })?;
 
-    let balance = U256::from_str(balance_hex).expect("failed to decode balance hex");
+    let balance =
+        U256::from_str(balance_hex).map_err(|_e| BlockchainApiError::FetchBalanceFailed {
+            account_id: address.to_owned(),
+        })?;
 
-    balance
+    Ok(balance)
 }
 
-fn get_evm_services(chain: &alloy_chains::Chain) -> (RpcService, RpcServices) {
+fn get_evm_services(
+    chain: &alloy_chains::Chain,
+) -> Result<(RpcService, RpcServices), BlockchainApiError> {
     // TODO: we are returning single and multiple services for now because different functions expect either one or multiple services
-    let services = hashmap! {
-        alloy_chains::Chain::sepolia().id() => (
+    let services = if chain.id() == alloy_chains::Chain::sepolia().id() {
+        (
             RpcService::EthSepolia(EthSepoliaService::Alchemy),
             RpcServices::EthSepolia(Some(vec![EthSepoliaService::Alchemy])),
-        ),
-        // alloy_chains::Chain::mainnet().id() => RpcServices::EthMainnet(None), // TODO: support mainnet
-    }
-    .remove(&chain.id())
-    .expect("chain not supported");
-    services
+        )
+        // } else if chain.id() == alloy_chains::Chain::mainnet().id() {
+        //     (RpcService::EthMainnet(EthMainnetService::Alchemy), RpcServices::EthMainnet(Some(vec![EthMainnetService::Alchemy]))) // TODO: support mainnet
+        // }
+    } else {
+        return Err(BlockchainApiError::BlockchainNetworkError {
+            info: format!("Chain {} is not supported", chain.id()),
+        });
+    };
+    Ok(services)
 }
 
 /// Computes the parity bit allowing to recover the public key from the signature.
-fn y_parity(prehash: &[u8], sig: &[u8], pubkey: &[u8]) -> u64 {
+fn y_parity(prehash: &[u8], sig: &[u8], pubkey: &[u8]) -> Result<u64, BlockchainApiError> {
     use alloy::signers::k256::ecdsa::{RecoveryId, Signature, VerifyingKey};
 
-    let orig_key = VerifyingKey::from_sec1_bytes(pubkey).expect("failed to parse the pubkey");
-    let signature = Signature::try_from(sig).unwrap();
+    let orig_key = VerifyingKey::from_sec1_bytes(pubkey).map_err(|e| {
+        BlockchainApiError::TransactionSubmitFailed {
+            info: e.to_string(),
+        }
+    })?;
+    let signature =
+        Signature::try_from(sig).map_err(|e| BlockchainApiError::TransactionSubmitFailed {
+            info: e.to_string(),
+        })?;
     for parity in [0u8, 1] {
-        let recid = RecoveryId::try_from(parity).unwrap();
+        let recid = RecoveryId::try_from(parity).map_err(|e| {
+            BlockchainApiError::TransactionSubmitFailed {
+                info: e.to_string(),
+            }
+        })?;
         let recovered_key = VerifyingKey::recover_from_prehash(prehash, &signature, recid)
-            .expect("failed to recover key");
+            .map_err(|e| BlockchainApiError::TransactionSubmitFailed {
+                info: e.to_string(),
+            })?;
         if recovered_key == orig_key {
-            return u64::from(parity);
+            return Ok(u64::from(parity));
         }
     }
 
-    panic!(
-        "failed to recover the parity bit from a signature; sig: {}, pubkey: {}",
-        hex::encode_prefixed(sig),
-        hex::encode_prefixed(pubkey)
-    )
+    Err(BlockchainApiError::TransactionSubmitFailed {
+        info: format!(
+            "failed to recover the parity bit from a signature; sig: {}, pubkey: {}",
+            hex::encode_prefixed(sig),
+            hex::encode_prefixed(pubkey)
+        ),
+    })
 }

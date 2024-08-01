@@ -53,7 +53,7 @@ To play, make sure you
 
 - run pnpm dev AFTER all the rest
 - you approve your identity, i.e. `./orbit --approve-waiting-list [user-id]`
-- you get some cash, `dfx ledger transfer --memo 1 [account-id] --icp 1250`
+- you get some tokens, `dfx ledger transfer --memo 1 [account-id] --icp 1250`
 
 ## To "almost hot reload"
 

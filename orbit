@@ -16,7 +16,7 @@ CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
 CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
 CANISTER_ID_UI="werw6-ayaaa-aaaaa-774aa-cai"
 CANISTER_ID_WALLET="wkt3w-3iaaa-aaaaa-774ba-cai"
-CANISTER_ID_RPC="7hfb6-caaaa-aaaar-qadga-cai"
+CANISTER_ID_EVM_RPC="7hfb6-caaaa-aaaar-qadga-cai"
 
 #############################################
 # USAGE                                     #
