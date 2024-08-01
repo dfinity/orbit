@@ -185,6 +185,9 @@ fn principal_to_derivation_path(account: &Account) -> Vec<Vec<u8>> {
     vec![vec![SCHEMA], account_principal.as_slice().to_vec()]
 }
 
+/// Submits a raw EVM transaction to the specified EVM chain.
+/// Performs a JSON-RPC call `eth_sendRawTransaction` to the EVM RPC provider.
+/// The transaction is a hex-encoded string of the signed transaction.
 pub async fn eth_send_raw_transaction(
     chain: &alloy_chains::Chain,
     raw_tx: &[u8],
@@ -223,6 +226,8 @@ pub async fn eth_send_raw_transaction(
     })
 }
 
+/// Returns the balance of the given EVM address on the given EVM chain.
+/// Performs a JSON-RPC call to the EVM RPC provider.
 async fn eth_get_balance(
     chain: &alloy_chains::Chain,
     address: &str,
@@ -271,6 +276,8 @@ async fn eth_get_balance(
     Ok(balance)
 }
 
+/// Returns the RPC provider services for the given chain.
+/// The services are provided by ICP and are connected to one or more EVM RPC providers. E.g., Alchemy, Infura, etc.
 fn get_evm_services(
     chain: &alloy_chains::Chain,
 ) -> Result<(RpcService, RpcServices), BlockchainApiError> {
