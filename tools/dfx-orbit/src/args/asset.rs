@@ -1,3 +1,4 @@
+use candid::Nat;
 use clap::{Parser, Subcommand};
 
 /// Station management commands.
@@ -13,7 +14,7 @@ pub enum AssetArgsAction {
     /// Upload assets to an asset canister
     Upload(AssetUploadArgs),
     /// Compute local evidence
-    ComputeEvidence(AssetComputerEvidenceArgs),
+    ComputeEvidence(AssetComputeEvidenceArgs),
     /// Commit assets previously uploaded to an assed canister
     Commit(AssetCommitArgs),
     /// Check an asset upload request
@@ -39,7 +40,9 @@ pub struct AssetUploadArgs {
 }
 
 #[derive(Debug, Clone, Parser)]
-pub struct AssetComputerEvidenceArgs {
+pub struct AssetComputeEvidenceArgs {
+    /// The name of the asset canister targeted by this action
+    pub(crate) canister: String,
     /// The source directories to compute evidence from (multiple values possible)
     #[clap(num_args = 1..)]
     pub(crate) files: Vec<String>,
@@ -47,10 +50,20 @@ pub struct AssetComputerEvidenceArgs {
 
 #[derive(Debug, Clone, Parser)]
 pub struct AssetCommitArgs {
-    // TODO:
+    /// The name of the asset canister targeted by this action
+    pub(crate) canister: String,
+
+    /// The batch ID to commit to
+    pub(crate) batch_id: Nat,
+
+    /// The evidence (as hex string) to commit to
+    pub(crate) evidence: String,
 }
 #[derive(Debug, Clone, Parser)]
 pub struct AssetCheckArgs {
+    /// The name of the asset canister targeted by this action
+    pub(crate) canister: String,
+
     /// The ID of the request to commit the assets
     pub(crate) request_id: String,
 
@@ -60,5 +73,5 @@ pub struct AssetCheckArgs {
 
     /// Automatically approve the request, if the request evidence matches the local evidence
     #[clap(long)]
-    auto_approve: bool,
+    try_approve: bool,
 }

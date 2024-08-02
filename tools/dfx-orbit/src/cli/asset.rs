@@ -4,8 +4,6 @@ mod evidence;
 mod upload;
 mod util;
 
-use std::path::{Path, PathBuf};
-
 use crate::{
     args::asset::{AssetArgs, AssetArgsAction},
     DfxOrbit,
@@ -13,6 +11,7 @@ use crate::{
 use candid::Principal;
 use ic_utils::Canister;
 use slog::Logger;
+use std::path::{Path, PathBuf};
 
 pub struct AssetAgent<'agent> {
     canister_agent: Canister<'agent>,
@@ -23,19 +22,13 @@ impl DfxOrbit {
     pub async fn exec_asset(&mut self, args: AssetArgs) -> anyhow::Result<()> {
         match args.action {
             AssetArgsAction::Upload(upload_args) => {
-                let source_pathbufs: Vec<PathBuf> = upload_args
-                    .files
-                    .iter()
-                    .map(|source| PathBuf::from(&source))
-                    .collect();
-                let source_paths: Vec<&Path> = source_pathbufs
-                    .iter()
-                    .map(|pathbuf| pathbuf.as_path())
-                    .collect();
+                let pathbufs = as_path_bufs(upload_args.files);
+                let paths = as_paths(&pathbufs);
 
-                let canister_id = self.canister_id(&upload_args.canister)?;
+                let canister_name = upload_args.canister;
+                let canister_id = self.canister_id(&canister_name)?;
                 let (batch_id, evidence) = self
-                    .upload(canister_id, &source_paths, upload_args.ignore_evidence)
+                    .upload(canister_id, &paths, upload_args.ignore_evidence)
                     .await?;
 
                 if !upload_args.skip_commit {
@@ -45,7 +38,7 @@ impl DfxOrbit {
                     let request_id = result.request.id;
 
                     println!("Created request to commit batches. To verify the batch against local files, run:");
-                    println!("dfx-orbit asset check {request_id}");
+                    println!("dfx-orbit asset check {canister_name} {request_id} [FILES]");
                 } else {
                     let evidence = hex::encode(&evidence);
                     println!("Prepared the batches. To commit, run:");
@@ -54,7 +47,17 @@ impl DfxOrbit {
                 Ok(())
             }
             AssetArgsAction::Commit(_) => todo!(),
-            AssetArgsAction::ComputeEvidence(_) => todo!(),
+            AssetArgsAction::ComputeEvidence(compute_args) => {
+                let pathbufs = as_path_bufs(compute_args.files);
+                let paths = as_paths(&pathbufs);
+
+                let canister_id = self.canister_id(&compute_args.canister)?;
+                let asset_agent = self.asset_agent(canister_id)?;
+
+                let evidence = asset_agent.compute_evidence(&paths).await?;
+                println!("{evidence}");
+                Ok(())
+            }
             AssetArgsAction::Check(_) => todo!(),
         }
     }
@@ -65,4 +68,12 @@ impl DfxOrbit {
             logger: self.logger.clone(),
         })
     }
+}
+
+fn as_path_bufs(paths: Vec<String>) -> Vec<PathBuf> {
+    paths.iter().map(|source| PathBuf::from(&source)).collect()
+}
+
+fn as_paths(paths: &Vec<PathBuf>) -> Vec<&Path> {
+    paths.iter().map(|pathbuf| pathbuf.as_path()).collect()
 }
