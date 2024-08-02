@@ -3,9 +3,9 @@ use pocket_ic::PocketIc;
 use rand::{thread_rng, Rng};
 use station_api::{
     AddRequestPolicyOperationInput, CallExternalCanisterOperationInput,
-    CallExternalCanisterResourceTargetDTO, CanisterMethodDTO, CreateRequestInput,
-    ExecutionMethodResourceTargetDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, ValidationMethodResourceTargetDTO,
+    CallExternalCanisterResourceTargetDTO, CanisterMethodDTO, ExecutionMethodResourceTargetDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
+    ValidationMethodResourceTargetDTO,
 };
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tempfile::Builder;
@@ -89,38 +89,15 @@ fn assets_update() {
 
     dfx_orbit_test(&mut env, async {
         // Setup the station agent
-        let mut dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
+        let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
         // As dfx user: Request to upload new files to the asset canister
-        let upload_request = dfx_orbit
-            .upload_assets(
-                asset_canister.to_string(),
-                vec![asset_dir.path().to_str().unwrap().to_string()],
-            )
+        let (batch_id, evidence) = dfx_orbit
+            .upload(asset_canister, &[asset_dir.path()], false)
             .await
             .unwrap();
-
-        //  As dfx user: Request commitment of the batch
-        let _result = dfx_orbit
-            .station
-            .request(CreateRequestInput {
-                operation: station_api::RequestOperationInput::CallExternalCanister(
-                    CallExternalCanisterOperationInput {
-                        validation_method: None,
-                        execution_method: CanisterMethodDTO {
-                            canister_id: asset_canister,
-                            method_name: String::from("commit_proposed_batch"),
-                        },
-                        arg: Some(
-                            AssetAgent::commit_proposed_batch_payload(upload_request).unwrap(),
-                        ),
-                        execution_method_cycles: None,
-                    },
-                ),
-                title: None,
-                summary: None,
-                execution_plan: None,
-            })
+        dfx_orbit
+            .request_commit_batch(asset_canister, batch_id, evidence)
             .await
             .unwrap();
 

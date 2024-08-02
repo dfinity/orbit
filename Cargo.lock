@@ -1120,7 +1120,7 @@ dependencies = [
 [[package]]
 name = "dfx-core"
 version = "0.0.1"
-source = "git+https://github.com/dfinity/sdk.git?branch=leon/upload_and_propose#8e1ca2dbb5e146400d73c19f9cbbc876d20643c2"
+source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -1184,7 +1184,6 @@ dependencies = [
  "station-api",
  "thiserror",
  "tokio",
- "walkdir",
 ]
 
 [[package]]
@@ -2016,13 +2015,13 @@ dependencies = [
 [[package]]
 name = "ic-asset"
 version = "0.20.0"
-source = "git+https://github.com/dfinity/sdk.git?branch=leon/upload_and_propose#8e1ca2dbb5e146400d73c19f9cbbc876d20643c2"
+source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
 dependencies = [
  "backoff",
  "brotli",
  "candid",
  "derivative",
- "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?branch=leon/upload_and_propose)",
+ "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845)",
  "flate2",
  "futures",
  "futures-intrusive",
@@ -2173,7 +2172,7 @@ dependencies = [
 [[package]]
 name = "ic-certified-assets"
 version = "0.2.5"
-source = "git+https://github.com/dfinity/sdk.git?branch=leon/upload_and_propose#8e1ca2dbb5e146400d73c19f9cbbc876d20643c2"
+source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
 dependencies = [
  "base64 0.13.1",
  "candid",

@@ -1,5 +1,6 @@
 use super::AssetAgent;
 use crate::DfxOrbit;
+use anyhow::bail;
 use candid::{Nat, Principal};
 use ic_certified_assets::types::CommitProposedBatchArguments;
 use orbit_station_api::{
@@ -7,15 +8,37 @@ use orbit_station_api::{
     CreateRequestResponse, RequestOperationInput,
 };
 use serde_bytes::ByteBuf;
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
-use walkdir::WalkDir;
+use slog::{info, warn};
+use std::path::Path;
 
 impl DfxOrbit {
-    pub async fn upload(&self) -> anyhow::Result<()> {
-        todo!()
+    pub async fn upload(
+        &self,
+        canister_id: Principal,
+        sources: &[&Path],
+        ignore_evidence: bool,
+    ) -> anyhow::Result<(Nat, ByteBuf)> {
+        let asset_agent = self.asset_agent(canister_id)?;
+        let (batch_id, evidence) = asset_agent.upload_assets(sources).await?;
+
+        let remote_evidence = hex::encode(&evidence);
+        let local_evidence = asset_agent.compute_evidence(sources).await?;
+
+        if !ignore_evidence {
+            if local_evidence != remote_evidence {
+                warn!(
+                    self.logger,
+                    "Local evidence does not match remotely calculated evidence"
+                );
+                warn!(self.logger, "Local:  {local_evidence}");
+                warn!(self.logger, "Remote: {remote_evidence}");
+                bail!("Evidence did not match!");
+            } else {
+                info!(self.logger, "Local and remote evidence match!");
+            }
+        }
+
+        Ok((batch_id, evidence))
     }
 
     pub async fn request_commit_batch(
@@ -52,45 +75,10 @@ impl DfxOrbit {
 }
 
 impl AssetAgent<'_> {
-    pub async fn upload_assets(&self, sources: &[&Path]) -> anyhow::Result<Nat> {
-        let assets = assets_as_hash_map(sources);
-        Ok(ic_asset::upload_and_propose(&self.canister_agent, assets, &self.logger).await?)
+    pub async fn upload_assets(&self, sources: &[&Path]) -> anyhow::Result<(Nat, ByteBuf)> {
+        Ok(
+            ic_asset::prepare_sync_for_proposal(&self.canister_agent, sources, &self.logger)
+                .await?,
+        )
     }
-}
-
-/// A hash map of all assets.
-fn assets_as_hash_map(asset_dirs: &[&Path]) -> HashMap<String, PathBuf> {
-    asset_dirs
-        .iter()
-        .flat_map(|asset_dir| {
-            list_assets(asset_dir).into_iter().map(move |asset_path| {
-                let relative_path = asset_path.strip_prefix(asset_dir).expect(
-                    "Internal error: list_assets should have returned only files in the asset_dir",
-                );
-                let http_path = format!(
-                    "/{relative_path}",
-                    relative_path = relative_path.to_string_lossy()
-                );
-                (http_path, asset_path)
-            })
-        })
-        .collect()
-}
-
-/// Lists all the files at the given path.
-///
-/// - Links are followed.
-/// - Only files are returned.
-/// - The files are sorted by name.
-/// - Any files that cannot be read are ignored.
-/// - The path includes the prefix.
-fn list_assets(path: &Path) -> Vec<PathBuf> {
-    WalkDir::new(path)
-        .sort_by_file_name()
-        .follow_links(true)
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|entry| entry.file_type().is_file())
-        .map(|entry| entry.into_path())
-        .collect()
 }

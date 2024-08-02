@@ -2,9 +2,8 @@
 pub(crate) mod asset;
 pub(crate) mod station;
 
-pub use crate::cli::asset::AssetUploadRequest;
 use crate::{
-    args::{asset::AssetArgsAction, review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
+    args::{review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
     dfx_extension_api::OrbitExtensionAgent,
     DfxOrbit,
 };
@@ -77,16 +76,8 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             }
         },
         DfxOrbitSubcommands::Asset(asset_args) => {
-            match asset_args.action {
-                AssetArgsAction::Upload(upload_args) => {
-                    dfx_orbit
-                        .upload_assets(upload_args.canister, upload_args.files)
-                        .await?;
-                }
-            }
-
+            dfx_orbit.exec_asset(asset_args).await?;
             Ok(())
-            //
         }
         _ => unreachable!(),
     }
