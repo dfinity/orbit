@@ -6,10 +6,16 @@ mod util;
 
 use crate::DfxOrbit;
 use candid::{Nat, Principal};
+use ic_utils::Canister;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use slog::{info, warn};
+use slog::{info, warn, Logger};
 use std::path::{Path, PathBuf};
+
+pub struct AssetAgent<'agent> {
+    canister_agent: Canister<'agent>,
+    logger: Logger,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssetUploadRequest {
@@ -19,7 +25,6 @@ pub struct AssetUploadRequest {
     evidence: ByteBuf,
 }
 
-// TODO: Use StationAgentResult instead of anyhow result
 impl DfxOrbit {
     /// The main entry point for the `dfx orbit canister upload-http-assets` CLI.
     pub async fn upload_assets(
@@ -36,22 +41,20 @@ impl DfxOrbit {
             .collect();
 
         let canister_id = self.canister_id(&canister)?;
+        let asset_agent = self.asset_agent(canister_id)?;
         let logger = self.logger.clone();
 
         // Upload assets:
-        let batch_id = self
-            .upload_assets_actual(canister_id, &source_paths)
-            .await?;
+        let batch_id = asset_agent.upload_assets(&source_paths).await?;
         info!(self.logger, "Proposed batch_id: {}", batch_id);
         // Compute evidence locally:
-        let local_evidence = self.compute_evidence(canister_id, &source_paths).await?;
+        let local_evidence = asset_agent.compute_evidence(&source_paths).await?;
         let local_evidence = escape_hex_string(&local_evidence);
         // Wait for the canister to compute evidence:
 
-        let canister_evidence_bytes = self.request_evidence(canister_id, batch_id.clone()).await?;
+        let canister_evidence_bytes = asset_agent.request_evidence(batch_id.clone()).await?;
         let canister_evidence = blob_from_bytes(&canister_evidence_bytes);
 
-        // TODO: Move this out of the agent into the tool
         println!(r#"Proposed batch_id: {batch_id}"#);
         if local_evidence == canister_evidence {
             info!(logger, "Local evidence matches canister evidence.");
@@ -71,6 +74,13 @@ impl DfxOrbit {
         };
 
         Ok(upload_request)
+    }
+
+    pub fn asset_agent(&self, canister_id: Principal) -> anyhow::Result<AssetAgent> {
+        Ok(AssetAgent {
+            canister_agent: self.canister_agent(canister_id)?,
+            logger: self.logger.clone(),
+        })
     }
 }
 

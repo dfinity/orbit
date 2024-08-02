@@ -1,25 +1,22 @@
+use super::AssetAgent;
+use crate::DfxOrbit;
+use candid::Nat;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
 };
-
-use candid::{Nat, Principal};
 use walkdir::WalkDir;
 
-use crate::DfxOrbit;
-
 impl DfxOrbit {
-    pub async fn upload_assets_actual(
-        &self,
-        canister_id: Principal,
-        sources: &[&Path],
-    ) -> anyhow::Result<Nat> {
-        let canister_agent = self.canister_agent(canister_id)?;
-        let assets = assets_as_hash_map(sources);
-        Ok(ic_asset::upload_and_propose(&canister_agent, assets, &self.logger).await?)
-    }
-
+    // TODO: Move the entire upload asset function here
     // TODO: Implement request_upload_commit
+}
+
+impl AssetAgent<'_> {
+    pub async fn upload_assets(&self, sources: &[&Path]) -> anyhow::Result<Nat> {
+        let assets = assets_as_hash_map(sources);
+        Ok(ic_asset::upload_and_propose(&self.canister_agent, assets, &self.logger).await?)
+    }
 }
 
 /// A hash map of all assets.
