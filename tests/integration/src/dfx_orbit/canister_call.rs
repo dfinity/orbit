@@ -55,7 +55,7 @@ fn canister_call() {
 
     let request = dfx_orbit_test(&mut env, async {
         // Setup the station agent
-        let mut dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
+        let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
         // Call the counter canister
         let request = dfx_orbit

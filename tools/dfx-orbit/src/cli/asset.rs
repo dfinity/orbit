@@ -26,7 +26,6 @@ pub struct AssetUploadRequest {
 }
 
 impl DfxOrbit {
-    /// The main entry point for the `dfx orbit canister upload-http-assets` CLI.
     pub async fn upload_assets(
         &mut self,
         canister: String,
