@@ -4,6 +4,7 @@ use ic_asset::canister_api::{
     methods::batch::compute_evidence, types::batch_upload::common::ComputeEvidenceArguments,
 };
 use serde_bytes::ByteBuf;
+use slog::{info, warn};
 use std::path::Path;
 
 impl AssetAgent<'_> {
@@ -28,5 +29,21 @@ impl AssetAgent<'_> {
         Ok(ic_asset::compute_evidence(&self.canister_agent, sources, &self.logger).await?)
     }
 
-    // TODO: check_evidence method
+    pub async fn check_evidence(&self, batch_id: Nat, sources: &[&Path]) -> anyhow::Result<bool> {
+        let local_evidence = self.compute_evidence(sources).await?;
+        let remote_evidence = hex::encode(&self.request_evidence(batch_id).await?);
+
+        if local_evidence != remote_evidence {
+            warn!(
+                self.logger,
+                "Local evidence does not match remotely calculated evidence"
+            );
+            warn!(self.logger, "Local:  {local_evidence}");
+            warn!(self.logger, "Remote: {remote_evidence}");
+            Ok(false)
+        } else {
+            info!(self.logger, "Local and remote evidence match");
+            Ok(true)
+        }
+    }
 }
