@@ -1170,6 +1170,7 @@ dependencies = [
  "cap-std",
  "clap",
  "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?tag=0.22.0)",
+ "hex",
  "ic-agent",
  "ic-asset",
  "ic-certified-assets",

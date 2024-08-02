@@ -1,4 +1,4 @@
-use dfx_orbit::StationAgent;
+use dfx_orbit::AssetAgent;
 use pocket_ic::PocketIc;
 use rand::{thread_rng, Rng};
 use station_api::{
@@ -52,7 +52,7 @@ fn assets_update() {
                     canister_id: asset_canister,
                     method_name: String::from("grant_permission"),
                 },
-                arg: Some(StationAgent::request_prepare_permission_payload(dfx_principal).unwrap()),
+                arg: Some(AssetAgent::request_prepare_permission_payload(dfx_principal).unwrap()),
                 execution_method_cycles: None,
             },
         ),
@@ -112,7 +112,7 @@ fn assets_update() {
                             method_name: String::from("commit_proposed_batch"),
                         },
                         arg: Some(
-                            StationAgent::commit_proposed_batch_payload(upload_request).unwrap(),
+                            AssetAgent::commit_proposed_batch_payload(upload_request).unwrap(),
                         ),
                         execution_method_cycles: None,
                     },

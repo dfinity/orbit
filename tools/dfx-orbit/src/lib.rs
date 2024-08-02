@@ -15,8 +15,9 @@ use dfx_core::{config::model::canister_id_store::CanisterIdStore, DfxInterface};
 use dfx_extension_api::OrbitExtensionAgent;
 use ic_utils::{canister::CanisterBuilder, Canister};
 use slog::{o, Drain, Logger};
-pub use station_agent::StationAgent;
 
+pub use cli::asset::AssetAgent;
+pub use station_agent::StationAgent;
 pub struct DfxOrbit {
     // The station agent that handles communication with the station
     pub station: StationAgent,

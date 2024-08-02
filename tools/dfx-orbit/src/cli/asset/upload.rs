@@ -1,6 +1,12 @@
 use super::AssetAgent;
 use crate::DfxOrbit;
-use candid::Nat;
+use candid::{Nat, Principal};
+use ic_certified_assets::types::CommitProposedBatchArguments;
+use orbit_station_api::{
+    CallExternalCanisterOperationInput, CanisterMethodDTO, CreateRequestInput,
+    CreateRequestResponse, RequestOperationInput,
+};
+use serde_bytes::ByteBuf;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -8,8 +14,41 @@ use std::{
 use walkdir::WalkDir;
 
 impl DfxOrbit {
-    // TODO: Move the entire upload asset function here
-    // TODO: Implement request_upload_commit
+    pub async fn upload(&self) -> anyhow::Result<()> {
+        todo!()
+    }
+
+    pub async fn request_commit_batch(
+        &self,
+        canister_id: Principal,
+        batch_id: Nat,
+        evidence: ByteBuf,
+    ) -> anyhow::Result<CreateRequestResponse> {
+        let args = CommitProposedBatchArguments { batch_id, evidence };
+        let arg = candid::encode_one(args)?;
+
+        let response = self
+            .station
+            .request(CreateRequestInput {
+                operation: RequestOperationInput::CallExternalCanister(
+                    CallExternalCanisterOperationInput {
+                        validation_method: None,
+                        execution_method: CanisterMethodDTO {
+                            canister_id,
+                            method_name: String::from("commit_proposed_batch"),
+                        },
+                        arg: Some(arg),
+                        execution_method_cycles: None,
+                    },
+                ),
+                title: None,
+                summary: None,
+                execution_plan: None,
+            })
+            .await?;
+
+        Ok(response)
+    }
 }
 
 impl AssetAgent<'_> {

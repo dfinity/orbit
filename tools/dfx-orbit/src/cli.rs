@@ -1,6 +1,6 @@
 //! Implementation of the `dfx-orbit` commands.
-mod asset;
-mod station;
+pub(crate) mod asset;
+pub(crate) mod station;
 
 pub use crate::cli::asset::AssetUploadRequest;
 use crate::{
