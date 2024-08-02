@@ -42,7 +42,7 @@ impl DfxOrbit {
             .collect();
 
         let canister_id = self.canister_id(&canister)?;
-        let logger = self.dfx.logger().clone();
+        let logger = self.logger.clone();
 
         // Upload assets:
         let canister_agent = CanisterBuilder::new()
