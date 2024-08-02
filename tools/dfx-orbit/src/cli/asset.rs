@@ -6,16 +6,10 @@ mod util;
 
 use crate::DfxOrbit;
 use candid::{Nat, Principal};
-
-use ic_utils::canister::CanisterBuilder;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use slog::{info, warn};
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
-use walkdir::WalkDir;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AssetUploadRequest {
@@ -45,13 +39,10 @@ impl DfxOrbit {
         let logger = self.logger.clone();
 
         // Upload assets:
-        let canister_agent = CanisterBuilder::new()
-            .with_agent(self.interface.agent())
-            .with_canister_id(canister_id)
-            .build()?;
-        let assets = assets_as_hash_map(&files);
-        let batch_id = ic_asset::upload_and_propose(&canister_agent, assets, &logger).await?;
-        println!("Proposed batch_id: {}", batch_id);
+        let batch_id = self
+            .upload_assets_actual(canister_id, &source_paths)
+            .await?;
+        info!(self.logger, "Proposed batch_id: {}", batch_id);
         // Compute evidence locally:
         let local_evidence = self.compute_evidence(canister_id, &source_paths).await?;
         let local_evidence = escape_hex_string(&local_evidence);
@@ -81,48 +72,6 @@ impl DfxOrbit {
 
         Ok(upload_request)
     }
-}
-
-// TODO: Implement request_upload_commit
-
-// TODO: Move all these funtions to util
-/// Lists all the files at the given path.
-///
-/// - Links are followed.
-/// - Only files are returned.
-/// - The files are sorted by name.
-/// - Any files that cannot be read are ignored.
-/// - The path includes the prefix.
-fn list_assets(path: &str) -> Vec<PathBuf> {
-    WalkDir::new(path)
-        .sort_by_file_name()
-        .follow_links(true)
-        .into_iter()
-        .filter_map(|e| e.ok())
-        .filter(|entry| entry.file_type().is_file())
-        .map(|entry| entry.into_path())
-        .collect()
-}
-
-/// A hash map of all assets.
-///
-/// Note: Given that ordering in a HashMap is not deterministic, is this really the best API?
-fn assets_as_hash_map(asset_dirs: &[String]) -> HashMap<String, PathBuf> {
-    asset_dirs
-        .iter()
-        .flat_map(|asset_dir| {
-            list_assets(asset_dir).into_iter().map(move |asset_path| {
-                let relative_path = asset_path.strip_prefix(asset_dir).expect(
-                    "Internal error: list_assets should have returned only files in the asset_dir",
-                );
-                let http_path = format!(
-                    "/{relative_path}",
-                    relative_path = relative_path.to_string_lossy()
-                );
-                (http_path, asset_path)
-            })
-        })
-        .collect()
 }
 
 /// Converts a hex string into one escaped as in a candid blob.
