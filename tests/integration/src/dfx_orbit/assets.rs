@@ -96,8 +96,25 @@ fn assets_upload() {
             .upload(asset_canister, &[asset_dir.path()], false)
             .await
             .unwrap();
+        let response = dfx_orbit
+            .request_commit_batch(
+                asset_canister,
+                batch_id.clone(),
+                evidence.clone(),
+                None,
+                None,
+            )
+            .await
+            .unwrap();
+
+        // Check whether the request passes the asset check
         dfx_orbit
-            .request_commit_batch(asset_canister, batch_id, evidence, None, None)
+            .check_evidence(
+                asset_canister,
+                response.request.id,
+                batch_id,
+                hex::encode(evidence),
+            )
             .await
             .unwrap();
 

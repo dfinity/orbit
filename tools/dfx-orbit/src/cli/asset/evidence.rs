@@ -44,9 +44,9 @@ impl DfxOrbit {
                 canister_id
             );
         }
-        if &method_name != "propose_commit_batch" {
+        if &method_name != "commit_proposed_batch" {
             bail!(
-                "Method name if the request is not \"request_commit_batch\", but instead \"{}\"",
+                "Method name if the request is not \"commit_proposed_batch\", but instead \"{}\"",
                 method_name
             );
         }
