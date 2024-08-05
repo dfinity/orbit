@@ -11,12 +11,28 @@ pub struct AssetArgs {
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum AssetArgsAction {
+    /// Request to grant this user Prepare permission for the asset canister
+    RequestPreparePermission(AssetReqeustPreparePermissionArgs),
     /// Upload assets to an asset canister
     Upload(AssetUploadArgs),
     /// Compute local evidence
     ComputeEvidence(AssetComputeEvidenceArgs),
     /// Check an asset upload request
     Check(AssetCheckArgs),
+}
+
+#[derive(Debug, Clone, Parser)]
+pub struct AssetReqeustPreparePermissionArgs {
+    /// The name of the asset canister targeted by this action
+    pub(crate) canister: String,
+
+    /// The title of the request to grant Prepare permission
+    #[clap(long)]
+    pub(crate) title: Option<String>,
+
+    /// The summary of the request to grant Prepare permission
+    #[clap(long)]
+    pub(crate) summary: Option<String>,
 }
 
 #[derive(Debug, Clone, Parser)]

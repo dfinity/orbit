@@ -22,6 +22,15 @@ pub struct AssetAgent<'agent> {
 impl DfxOrbit {
     pub async fn exec_asset(&mut self, args: AssetArgs) -> anyhow::Result<()> {
         match args.action {
+            AssetArgsAction::RequestPreparePermission(args) => {
+                let canister_id = self.canister_id(&args.canister)?;
+                let request = self
+                    .request_prepare_permission(canister_id, args.title, args.summary)
+                    .await?;
+                self.print_create_request_info(&request);
+
+                Ok(())
+            }
             AssetArgsAction::Upload(args) => {
                 let pathbufs = as_path_bufs(&args.files);
                 let paths = as_paths(&pathbufs);

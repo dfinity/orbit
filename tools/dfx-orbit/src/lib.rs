@@ -14,6 +14,7 @@ use candid::Principal;
 use dfx_core::{config::model::canister_id_store::CanisterIdStore, DfxInterface};
 use dfx_extension_api::OrbitExtensionAgent;
 use ic_utils::{canister::CanisterBuilder, Canister};
+use orbit_station_api::CreateRequestResponse;
 use slog::{o, Drain, Logger};
 
 pub use cli::asset::AssetAgent;
@@ -65,8 +66,7 @@ impl DfxOrbit {
     }
 
     pub fn own_principal(&self) -> anyhow::Result<Principal> {
-        self
-            .interface
+        self.interface
             .identity()
             .sender()
             .map_err(anyhow::Error::msg)
@@ -77,5 +77,13 @@ impl DfxOrbit {
             .with_agent(self.interface.agent())
             .with_canister_id(canister_id)
             .build()?)
+    }
+
+    pub fn print_create_request_info(&self, response: &CreateRequestResponse) {
+        let request_id = &response.request.id;
+        let request_url = self.station.request_url(request_id);
+        println!("Created request: {request_id}");
+        println!("Request URL: {request_url}");
+        println!("To view the request, run: dfx-orbit review id {request_id}");
     }
 }

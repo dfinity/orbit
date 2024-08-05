@@ -29,15 +29,12 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             Ok(())
         }
         DfxOrbitSubcommands::Request(request_args) => {
-            let response = dfx_orbit
+            let request = dfx_orbit
                 .station
                 .request(request_args.into_create_request_input(&dfx_orbit)?)
                 .await?;
-            let request_id = &response.request.id;
-            let request_url = dfx_orbit.station.request_url(request_id);
-            println!("Created request: {request_id}");
-            println!("Request URL: {request_url}");
-            println!("To view the request, run: dfx-orbit review id {request_id}");
+            dfx_orbit.print_create_request_info(&request);
+
             Ok(())
         }
         DfxOrbitSubcommands::Review(review_args) => match review_args {

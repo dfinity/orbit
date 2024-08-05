@@ -180,43 +180,21 @@ If not, please transfer the control of the canister to the orbit station.
 Note: Uploaded assets are not published. They are only prepared for release.
 
 ```
-developer_principal="$(dfx identity get-principal)"
-dfx-orbit request canister call frontend grant_permission "
-(
-  record {
-    permission = variant { Prepare };
-    to_principal = principal \"$developer_principal\";
-  },
-)
-"
+dfx-orbit asset request-prepare-permission frontend
 ```
 
-When the request has been approved, check the list of principals permitted to prepare assets:
+In case you want to verify, whether you have the `Prepare` permission on the asset canister,
+run:
 
 ```
 dfx canister call frontend list_permitted '(record { permission = variant { Prepare } })'
 ```
 
-#### Authorize the orbit station to commit assets
-
-Note: Committing uploaded assets causes them to be published on the asset canister web site.
-
-```
-station_principal="$(dfx-orbit station show | jq -r .station_id)"
-dfx-orbit request canister call frontend grant_permission "
-(
-  record {
-    permission = variant { Commit };
-    to_principal = principal \"$station_principal\";
-  },
-)
-"
-```
-
-When the request has been approved, check the list of principals permitted to commit assets:
+and check whether your principal is among the ones listed.
+You can optain your own principal via:
 
 ```
-dfx canister call frontend list_permitted '(record { permission = variant { Commit } })'
+dfx identity get-principal
 ```
 
 #### Request an asset update
