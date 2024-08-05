@@ -64,6 +64,14 @@ impl DfxOrbit {
         Ok(canister_id)
     }
 
+    pub fn own_principal(&self) -> anyhow::Result<Principal> {
+        self
+            .interface
+            .identity()
+            .sender()
+            .map_err(anyhow::Error::msg)
+    }
+
     pub fn canister_agent(&self, canister_id: Principal) -> anyhow::Result<Canister> {
         Ok(CanisterBuilder::new()
             .with_agent(self.interface.agent())

@@ -100,10 +100,10 @@ impl DfxOrbit {
     }
 }
 
-fn as_path_bufs(paths: &Vec<String>) -> Vec<PathBuf> {
+fn as_path_bufs(paths: &[String]) -> Vec<PathBuf> {
     paths.iter().map(|source| PathBuf::from(&source)).collect()
 }
 
-fn as_paths(paths: &Vec<PathBuf>) -> Vec<&Path> {
+fn as_paths(paths: &[PathBuf]) -> Vec<&Path> {
     paths.iter().map(|pathbuf| pathbuf.as_path()).collect()
 }

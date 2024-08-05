@@ -1,11 +1,9 @@
-use dfx_orbit::AssetAgent;
 use pocket_ic::PocketIc;
 use rand::{thread_rng, Rng};
 use station_api::{
-    AddRequestPolicyOperationInput, CallExternalCanisterOperationInput,
-    CallExternalCanisterResourceTargetDTO, CanisterMethodDTO, ExecutionMethodResourceTargetDTO,
-    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
-    ValidationMethodResourceTargetDTO,
+    AddRequestPolicyOperationInput, CallExternalCanisterResourceTargetDTO,
+    ExecutionMethodResourceTargetDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    RequestSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tempfile::Builder;
@@ -28,7 +26,7 @@ fn assets_upload() {
         ..
     } = setup_new_env();
 
-    let (dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
+    let (_dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
 
     // Install the assets canister under orbit control
     let asset_canister = create_canister(&mut env, canister_ids.station);
@@ -39,25 +37,6 @@ fn assets_upload() {
         candid::encode_args(()).unwrap(),
         Some(canister_ids.station),
     );
-
-    // As admin: Setup the prepare permission in the asset canister for the dfx user
-    execute_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        station_api::RequestOperationInput::CallExternalCanister(
-            CallExternalCanisterOperationInput {
-                validation_method: None,
-                execution_method: CanisterMethodDTO {
-                    canister_id: asset_canister,
-                    method_name: String::from("grant_permission"),
-                },
-                arg: Some(AssetAgent::request_prepare_permission_payload(dfx_principal).unwrap()),
-                execution_method_cycles: None,
-            },
-        ),
-    )
-    .unwrap();
 
     // As admin: Grant the user the call permission, set auto-approval for external calls
     permit_call_operation(&env, &canister_ids);
@@ -90,6 +69,12 @@ fn assets_upload() {
     dfx_orbit_test(&mut env, async {
         // Setup the station agent
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
+
+        // As dfx user: Request to have Prepare permission for asset_canister
+        let _response = dfx_orbit
+            .request_prepare_permission(asset_canister, None, None)
+            .await
+            .unwrap();
 
         // As dfx user: Request to upload new files to the asset canister
         let (batch_id, evidence) = dfx_orbit
