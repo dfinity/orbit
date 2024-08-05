@@ -5,9 +5,15 @@ It is designed to work alongside `dfx` to allow a `dfx`-like workflow to manage 
 
 ## Getting started
 
-### Installation
+### Prequisites
 
-Build the tool:
+This guide assumes, that the user has setup and is acqainted with the following tools:
+
+- A fairly recent rust toolchain. This tool is known to work on linux using rust `1.79.0`.
+- A working `dfx` development setup.
+- An internet identity and an Orbit account with the correct permissions.
+
+### Installation
 
 Currently, there are two ways of installing `dfx-orbit`:
 
@@ -19,19 +25,22 @@ To get the most recent version of `dfx-orbit` without manually cloning the entir
 cargo install -f --git https://github.com/dfinity/orbit.git --bin dfx-orbit
 ```
 
-#### Install from the repository
+#### Clone and install from the repository
+
+This version is potentially more useful, if you want to make patches or use a specific branch.
 
 ```
-$ cargo build -p dfx-orbit
+git clone https://github.com/dfinity/orbit.git
+cargo install -f --path tools/dfx-orbit/
 ```
 
 Verify that the tool works:
 
 ```
-$ ./target/debug/dfx-orbit --version
+$ dfx-orbit --version
 dfx-orbit 0.1.0
 
-$ ./target/debug/dfx-orbit --help
+$ dfx-orbit --help
 Command line tool for interacting with the Orbit digital asset manager on the ICP blockchain.
 
 Usage: dfx-orbit <COMMAND>
@@ -41,12 +50,7 @@ Commands:
 ...
 ```
 
-Add `dfx-orbit` to your `PATH`.
-
 ### Connect to Orbit
-
-> **NOTE**: This assumes that you already have a `dfx` setup working.
-> If you need to set up a new identity, have a look at `dfx identity new`.
 
 Connect your local dfx identity to your Orbit identity:
 
@@ -83,8 +87,6 @@ Tell the command line tool where to find the orbit station:
   ```
   dfx-orbit me
   ```
-
-TODO: The Oisy canister ID is also called the wallet ID and the station ID. Consistent nomenclature that doesn't conflict with established terminology would be nice.
 
 ### Grant permission to make requests
 
@@ -165,12 +167,13 @@ This will create an Orbit request. Once approved you will be able to propose can
 Suppose that you have built a new Wasm and put a copy at `./MY-CANISTER.wasm.gz`. To upgrade your canister to the new Wasm:
 
 ```
-dfx-orbit request canister install --mode upgrade --wasm ./MY-CANISTER.wasm.gz MY_CANISTER
+dfx-orbit request canister install --mode upgrade MY_CANISTER --wasm ./MY-CANISTER.wasm.gz
 ```
 
 ### Upload assets to a canister
 
-We will assume that Orbit is a controller of the asset canister. If not, please adapt the following commands by using `dfx canister call` instead of `dfx-orbit request canister call`.
+We will assume that Orbit is a controller of the asset canister.
+If not, please transfer the control of the canister to the orbit station.
 
 #### Authorize the developer to upload assets
 
