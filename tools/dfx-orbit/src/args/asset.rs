@@ -15,8 +15,6 @@ pub enum AssetArgsAction {
     Upload(AssetUploadArgs),
     /// Compute local evidence
     ComputeEvidence(AssetComputeEvidenceArgs),
-    /// Commit assets previously uploaded to an assed canister
-    Commit(AssetCommitArgs),
     /// Check an asset upload request
     Check(AssetCheckArgs),
 }
@@ -30,9 +28,13 @@ pub struct AssetUploadArgs {
     #[clap(long)]
     pub(crate) ignore_evidence: bool,
 
-    /// Do not submit a request to commit the batch ID to the orbit station
+    /// The title of the request to commit the batch
     #[clap(long)]
-    pub(crate) skip_commit: bool,
+    pub(crate) title: Option<String>,
+
+    /// The summary of the request to commit the batch
+    #[clap(long)]
+    pub(crate) summary: Option<String>,
 
     /// The source directories to upload (multiple values possible)
     #[clap(num_args = 1..)]
@@ -49,17 +51,6 @@ pub struct AssetComputeEvidenceArgs {
 }
 
 #[derive(Debug, Clone, Parser)]
-pub struct AssetCommitArgs {
-    /// The name of the asset canister targeted by this action
-    pub(crate) canister: String,
-
-    /// The batch ID to commit to
-    pub(crate) batch_id: Nat,
-
-    /// The evidence (as hex string) to commit to
-    pub(crate) evidence: String,
-}
-#[derive(Debug, Clone, Parser)]
 pub struct AssetCheckArgs {
     /// The name of the asset canister targeted by this action
     pub(crate) canister: String,
@@ -67,11 +58,14 @@ pub struct AssetCheckArgs {
     /// The ID of the request to commit the assets
     pub(crate) request_id: String,
 
+    /// The batch ID to commit to
+    pub(crate) batch_id: Nat,
+
     /// The source directories of the asset upload (multiple values possible)
     #[clap(num_args = 1..)]
     pub(crate) files: Vec<String>,
 
     /// Automatically approve the request, if the request evidence matches the local evidence
     #[clap(long)]
-    try_approve: bool,
+    then_approve: bool,
 }

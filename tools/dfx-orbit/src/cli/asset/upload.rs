@@ -46,6 +46,8 @@ impl DfxOrbit {
         canister_id: Principal,
         batch_id: Nat,
         evidence: ByteBuf,
+        title: Option<String>,
+        summary: Option<String>,
     ) -> anyhow::Result<CreateRequestResponse> {
         let args = CommitProposedBatchArguments { batch_id, evidence };
         let arg = candid::encode_one(args)?;
@@ -64,8 +66,8 @@ impl DfxOrbit {
                         execution_method_cycles: None,
                     },
                 ),
-                title: None,
-                summary: None,
+                title,
+                summary,
                 execution_plan: None,
             })
             .await?;

@@ -31,22 +31,22 @@ impl DfxOrbit {
                     .upload(canister_id, &paths, upload_args.ignore_evidence)
                     .await?;
 
-                if !upload_args.skip_commit {
-                    let result = self
-                        .request_commit_batch(canister_id, batch_id.clone(), evidence)
-                        .await?;
-                    let request_id = result.request.id;
+                let result = self
+                    .request_commit_batch(
+                        canister_id,
+                        batch_id.clone(),
+                        evidence,
+                        upload_args.title,
+                        upload_args.summary,
+                    )
+                    .await?;
+                let request_id = result.request.id;
 
-                    println!("Created request to commit batches. To verify the batch against local files, run:");
-                    println!("dfx-orbit asset check {canister_name} {request_id} [FILES]");
-                } else {
-                    let evidence = hex::encode(&evidence);
-                    println!("Prepared the batches. To commit, run:");
-                    println!("dfx-orbit asset commit {canister_id} {batch_id} {evidence}");
-                }
+                println!("Created request to commit batches. To verify the batch against local files, run:");
+                println!("dfx-orbit asset check {canister_name} {request_id} [FILES]");
+
                 Ok(())
             }
-            AssetArgsAction::Commit(_) => todo!(),
             AssetArgsAction::ComputeEvidence(compute_args) => {
                 let pathbufs = as_path_bufs(compute_args.files);
                 let paths = as_paths(&pathbufs);

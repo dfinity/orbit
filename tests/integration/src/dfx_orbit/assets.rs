@@ -21,7 +21,7 @@ use crate::{
 };
 
 #[test]
-fn assets_update() {
+fn assets_upload() {
     let TestEnv {
         mut env,
         canister_ids,
@@ -97,7 +97,7 @@ fn assets_update() {
             .await
             .unwrap();
         dfx_orbit
-            .request_commit_batch(asset_canister, batch_id, evidence)
+            .request_commit_batch(asset_canister, batch_id, evidence, None, None)
             .await
             .unwrap();
 
