@@ -12,6 +12,9 @@ pub use user_group::*;
 pub mod account;
 pub use account::*;
 
+pub mod external_canister;
+pub use external_canister::*;
+
 pub mod transfer;
 pub use transfer::*;
 

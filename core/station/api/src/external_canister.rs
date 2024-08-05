@@ -52,6 +52,7 @@ pub struct CreateExternalCanisterOperationInput {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct CreateExternalCanisterOperationDTO {
     pub canister_id: Option<Principal>,
+    pub input: CreateExternalCanisterOperationInput,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

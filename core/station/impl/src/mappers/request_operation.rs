@@ -701,14 +701,7 @@ impl From<CreateExternalCanisterOperation> for CreateExternalCanisterOperationDT
     fn from(operation: CreateExternalCanisterOperation) -> CreateExternalCanisterOperationDTO {
         CreateExternalCanisterOperationDTO {
             canister_id: operation.canister_id,
-        }
-    }
-}
-
-impl From<CreateExternalCanisterOperationDTO> for CreateExternalCanisterOperation {
-    fn from(operation: CreateExternalCanisterOperationDTO) -> CreateExternalCanisterOperation {
-        CreateExternalCanisterOperation {
-            canister_id: operation.canister_id,
+            input: operation.input.into(),
         }
     }
 }

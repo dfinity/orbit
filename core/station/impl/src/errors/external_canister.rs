@@ -13,6 +13,9 @@ pub enum ExternalCanisterError {
     /// The external canister operation failed in execution.
     #[error(r#"The external canister operation failed due to {reason}"#)]
     Failed { reason: String },
+    /// The external canister has failed validation.
+    #[error(r#"The external canister has failed validation."#)]
+    ValidationError { info: String },
 }
 
 impl DetailableError for ExternalCanisterError {
@@ -25,6 +28,9 @@ impl DetailableError for ExternalCanisterError {
             }
             ExternalCanisterError::Failed { reason } => {
                 details.insert("reason".to_string(), reason.to_string());
+            }
+            ExternalCanisterError::ValidationError { info } => {
+                details.insert("info".to_string(), info.to_string());
             }
         }
 

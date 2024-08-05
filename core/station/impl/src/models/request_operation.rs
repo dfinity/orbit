@@ -388,6 +388,7 @@ pub struct CreateExternalCanisterOperationInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct CreateExternalCanisterOperation {
     pub canister_id: Option<Principal>,
+    pub input: CreateExternalCanisterOperationInput,
 }
 
 #[storable]

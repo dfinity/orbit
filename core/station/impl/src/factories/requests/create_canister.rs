@@ -18,7 +18,7 @@ impl Create<CreateExternalCanisterOperationInput> for CreateExternalCanisterRequ
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,
-        _operation_input: CreateExternalCanisterOperationInput,
+        operation_input: CreateExternalCanisterOperationInput,
     ) -> Result<Request, RequestError> {
         let request = Request::new(
             request_id,
@@ -26,6 +26,7 @@ impl Create<CreateExternalCanisterOperationInput> for CreateExternalCanisterRequ
             Request::default_expiration_dt_ns(),
             RequestOperation::CreateExternalCanister(CreateExternalCanisterOperation {
                 canister_id: None,
+                input: operation_input.into(),
             }),
             input
                 .execution_plan
@@ -64,15 +65,16 @@ impl<'p, 'o> CreateExternalCanisterRequestExecute<'p, 'o> {
 #[async_trait]
 impl Execute for CreateExternalCanisterRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
-        let canister_id = self
+        let external_canister = self
             .create_canister_service
-            .create_canister()
+            .add_external_canister(self.operation.input.clone())
             .await
             .map_err(|err| RequestExecuteError::Failed {
-                reason: format!("failed to create external canister: {}", err),
+                reason: format!("failed to add external canister: {}", err),
             })?;
+
         let mut create_operation = self.operation.clone();
-        create_operation.canister_id = Some(canister_id);
+        create_operation.canister_id = Some(external_canister.canister_id);
 
         Ok(RequestExecuteStage::Completed(
             RequestOperation::CreateExternalCanister(create_operation),
