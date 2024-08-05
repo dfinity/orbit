@@ -25,6 +25,7 @@ ic-agent.workspace = true
 ic-asset.workspace = true
 ic-certified-assets.workspace = true
 ic-utils.workspace = true
+sha2.workspace = true
 slog.workspace = true
 slog-term.workspace = true
 slog-async.workspace = true

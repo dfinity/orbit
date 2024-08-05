@@ -47,18 +47,33 @@ impl DfxOrbit {
 
                 Ok(())
             }
-            AssetArgsAction::ComputeEvidence(compute_args) => {
-                let pathbufs = as_path_bufs(compute_args.files);
+            AssetArgsAction::ComputeEvidence(args) => {
+                let pathbufs = as_path_bufs(args.files);
                 let paths = as_paths(&pathbufs);
 
-                let canister_id = self.canister_id(&compute_args.canister)?;
+                let canister_id = self.canister_id(&args.canister)?;
                 let asset_agent = self.asset_agent(canister_id)?;
 
                 let evidence = asset_agent.compute_evidence(&paths).await?;
                 println!("{evidence}");
                 Ok(())
             }
-            AssetArgsAction::Check(_) => todo!(),
+            AssetArgsAction::Check(args) => {
+                let pathbufs = as_path_bufs(args.files);
+                let paths = as_paths(&pathbufs);
+
+                let canister_id = self.canister_id(&args.canister)?;
+                let asset_agent = self.asset_agent(canister_id)?;
+
+                let evidence = asset_agent.compute_evidence(&paths).await?;
+                self.check_evidence(canister_id, args.request_id, args.batch_id, evidence)
+                    .await?;
+
+                println!("Local evidence matches expected arguments");
+
+                // TODO: Handle then approve
+                Ok(())
+            }
         }
     }
 
