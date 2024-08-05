@@ -2,6 +2,8 @@
 pub(crate) mod asset;
 pub(crate) mod station;
 
+use orbit_station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
+
 use crate::{
     args::{review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
     dfx_extension_api::OrbitExtensionAgent,
@@ -67,8 +69,14 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
                     )?
                 );
 
-                // TODO: Reaffirm user consent before progressing with submitting
-                if let Ok(submit) = args.try_into() {
+                if let Ok(submit) = SubmitRequestApprovalInput::try_from(args) {
+                    let action = match submit.decision {
+                        RequestApprovalStatusDTO::Approved => "approve",
+                        RequestApprovalStatusDTO::Rejected => "reject",
+                    };
+                    dfx_core::cli::ask_for_consent(&format!(
+                        "Would you like to {action} this request?"
+                    ))?;
                     dfx_orbit.station.submit(submit).await?;
                 };
 

@@ -10,6 +10,7 @@ use crate::{
 };
 use candid::Principal;
 use ic_utils::Canister;
+use orbit_station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
 use slog::Logger;
 use std::path::{Path, PathBuf};
 
@@ -67,12 +68,25 @@ impl DfxOrbit {
                 let asset_agent = self.asset_agent(canister_id)?;
 
                 let evidence = asset_agent.compute_evidence(&paths).await?;
-                self.check_evidence(canister_id, args.request_id, args.batch_id, evidence)
-                    .await?;
+                self.check_evidence(
+                    canister_id,
+                    args.request_id.clone(),
+                    args.batch_id,
+                    evidence,
+                )
+                .await?;
 
                 println!("Local evidence matches expected arguments");
 
-                // TODO: Handle then approve
+                if args.then_approve {
+                    dfx_core::cli::ask_for_consent("Do you want to approve the request?")?;
+                    let args = SubmitRequestApprovalInput {
+                        decision: RequestApprovalStatusDTO::Approved,
+                        request_id: args.request_id,
+                        reason: None,
+                    };
+                    self.station.submit(args).await?;
+                }
                 Ok(())
             }
         }
