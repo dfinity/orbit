@@ -21,14 +21,14 @@ pub struct AssetAgent<'agent> {
 impl DfxOrbit {
     pub async fn exec_asset(&mut self, args: AssetArgs) -> anyhow::Result<()> {
         match args.action {
-            AssetArgsAction::Upload(upload_args) => {
-                let pathbufs = as_path_bufs(upload_args.files);
+            AssetArgsAction::Upload(args) => {
+                let pathbufs = as_path_bufs(&args.files);
                 let paths = as_paths(&pathbufs);
 
-                let canister_name = upload_args.canister;
+                let canister_name = args.canister;
                 let canister_id = self.canister_id(&canister_name)?;
                 let (batch_id, evidence) = self
-                    .upload(canister_id, &paths, upload_args.ignore_evidence)
+                    .upload(canister_id, &paths, args.ignore_evidence)
                     .await?;
 
                 let result = self
@@ -36,19 +36,20 @@ impl DfxOrbit {
                         canister_id,
                         batch_id.clone(),
                         evidence,
-                        upload_args.title,
-                        upload_args.summary,
+                        args.title,
+                        args.summary,
                     )
                     .await?;
                 let request_id = result.request.id;
 
+                let files = args.files.join(" ");
                 println!("Created request to commit batches. To verify the batch against local files, run:");
-                println!("dfx-orbit asset check {canister_name} {request_id} [FILES]");
+                println!("dfx-orbit asset check {canister_name} {request_id} {batch_id} {files}");
 
                 Ok(())
             }
             AssetArgsAction::ComputeEvidence(args) => {
-                let pathbufs = as_path_bufs(args.files);
+                let pathbufs = as_path_bufs(&args.files);
                 let paths = as_paths(&pathbufs);
 
                 let canister_id = self.canister_id(&args.canister)?;
@@ -59,7 +60,7 @@ impl DfxOrbit {
                 Ok(())
             }
             AssetArgsAction::Check(args) => {
-                let pathbufs = as_path_bufs(args.files);
+                let pathbufs = as_path_bufs(&args.files);
                 let paths = as_paths(&pathbufs);
 
                 let canister_id = self.canister_id(&args.canister)?;
@@ -85,7 +86,7 @@ impl DfxOrbit {
     }
 }
 
-fn as_path_bufs(paths: Vec<String>) -> Vec<PathBuf> {
+fn as_path_bufs(paths: &Vec<String>) -> Vec<PathBuf> {
     paths.iter().map(|source| PathBuf::from(&source)).collect()
 }
 

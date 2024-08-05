@@ -224,14 +224,26 @@ A developer may upload one or more directories of HTTP assets with:
 dfx-orbit asset upload CANISTER_NAME SOME_DIR/ OTHER_DIR/
 ```
 
-The developer may now request that the assets be published. The command for this is printed at the end of the upload command. Example:
+This will upload the assets to the asset canister and then request the orbit station to publish
+the assets.
+
+#### Verifying an asset update
+
+After the request has been made, the reviewers can locally verify the request:
 
 ```
-...
-Jul 03 09:36:42.148 INFO Computing evidence.
-Proposed batch_id: 5
-Assets have been uploaded.  For the changes to take effect, run:
-dfx-orbit request canister call frontend commit_proposed_batch '(record { batch_id = 5 : nat; evidence = blob "\e3\b0\c4\42\98\fc\1c\14\9a\fb\f4\c8\99\6f\b9\24\27\ae\41\e4\64\9b\93\4c\a4\95\99\1b\78\52\b8\55" })'
+dfx-orbit asset check --then-approve CANISTER REQUEST_ID BATCH_ID SOME_DIR/ OTHER_DIR/
 ```
+
+The exact command is printed in the output of `dfx-orbit asset upload` and must be distributed
+from the proposer to the verifiers.
+
+> The verifiers needs to have the same set of data as was used in the request.
+> How the verifier accomplishes this is outside the scope of this document.
+>
+> - The verifier might either download a tarball from the requester and manually verify the content
+> - The verifier might check out a git revision and check that the content matches
+> - If there are build scripts used while generating the assets, care must be taken to make
+>   the build step deterministic, such that verifiers can recreate the exact assets
 
 Once the request has been approved, the changes will take effect.
