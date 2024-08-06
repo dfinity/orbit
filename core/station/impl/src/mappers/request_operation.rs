@@ -488,7 +488,7 @@ impl From<ConfigureExternalCanisterOperation>
     ) -> station_api::ConfigureExternalCanisterOperationDTO {
         station_api::ConfigureExternalCanisterOperationDTO {
             canister_id: operation.canister_id,
-            operation: operation.operation.into(),
+            kind: operation.kind.into(),
         }
     }
 }
@@ -529,6 +529,7 @@ impl From<ConfigureExternalCanisterSettingsInput>
             name: input.name,
             description: input.description,
             labels: input.labels,
+            state: input.state.map(Into::into),
             permissions: input.permissions.map(Into::into),
             request_policies: input.request_policies.map(Into::into),
         }

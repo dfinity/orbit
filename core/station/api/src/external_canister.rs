@@ -76,7 +76,7 @@ pub struct ChangeExternalCanisterOperationDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ConfigureExternalCanisterOperationInput {
     pub canister_id: Principal,
-    pub operation: ConfigureExternalCanisterOperationKindDTO,
+    pub kind: ConfigureExternalCanisterOperationKindDTO,
 }
 
 pub type ConfigureExternalCanisterOperationDTO = ConfigureExternalCanisterOperationInput;
@@ -86,6 +86,7 @@ pub struct ConfigureExternalCanisterSettingsInput {
     pub name: Option<String>,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
+    pub state: Option<ExternalCanisterStateDTO>,
     pub permissions: Option<ExternalCanisterPermissionsInput>,
     pub request_policies: Option<ExternalCanisterRequestPoliciesInput>,
 }

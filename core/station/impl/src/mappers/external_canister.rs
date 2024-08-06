@@ -49,7 +49,7 @@ impl From<station_api::ConfigureExternalCanisterOperationInput>
     fn from(input: station_api::ConfigureExternalCanisterOperationInput) -> Self {
         ConfigureExternalCanisterOperationInput {
             canister_id: input.canister_id,
-            operation: input.operation.into(),
+            kind: input.kind.into(),
         }
     }
 }
@@ -98,8 +98,27 @@ impl From<station_api::ConfigureExternalCanisterSettingsInput>
             name: input.name,
             description: input.description,
             labels: input.labels,
+            state: input.state.map(Into::into),
             permissions: input.permissions.map(Into::into),
             request_policies: input.request_policies.map(Into::into),
+        }
+    }
+}
+
+impl From<ExternalCanisterState> for station_api::ExternalCanisterStateDTO {
+    fn from(state: ExternalCanisterState) -> Self {
+        match state {
+            ExternalCanisterState::Active => station_api::ExternalCanisterStateDTO::Active,
+            ExternalCanisterState::Archived => station_api::ExternalCanisterStateDTO::Archived,
+        }
+    }
+}
+
+impl From<station_api::ExternalCanisterStateDTO> for ExternalCanisterState {
+    fn from(state: station_api::ExternalCanisterStateDTO) -> Self {
+        match state {
+            station_api::ExternalCanisterStateDTO::Active => ExternalCanisterState::Active,
+            station_api::ExternalCanisterStateDTO::Archived => ExternalCanisterState::Archived,
         }
     }
 }

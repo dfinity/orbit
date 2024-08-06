@@ -650,6 +650,8 @@ type ConfigureExternalCanisterSettingsInput = record {
   permissions : opt ExternalCanisterPermissionsInput;
   // The request policies for the canister.
   request_policies : opt ExternalCanisterRequestPoliciesInput;
+  // The state of the external canister.
+  state : opt ExternalCanisterState;
 };
 
 // The input type for configuring an external canister in the station.
@@ -672,7 +674,7 @@ type ConfigureExternalCanisterOperationInput = record {
   // The canister to update.
   canister_id : principal;
   // The kind of operation to perform.
-  operation : ConfigureExternalCanisterOperationKind;
+  kind : ConfigureExternalCanisterOperationKind;
 };
 
 type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;

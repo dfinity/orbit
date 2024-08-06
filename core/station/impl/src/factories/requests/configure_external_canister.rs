@@ -72,7 +72,7 @@ impl Execute for ConfigureExternalCanisterRequestExecute<'_, '_> {
                 reason: format!("External canister not found: {}", e),
             })?;
 
-        match &self.operation.operation {
+        match &self.operation.kind {
             ConfigureExternalCanisterOperationKind::Delete => {
                 self.external_canister_service
                     .hard_delete_external_canister(&external_canister.id)

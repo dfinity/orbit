@@ -211,8 +211,8 @@ export type ChangeExternalCanisterResourceTarget = { 'Any' : null } |
   { 'Canister' : Principal };
 export type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
 export interface ConfigureExternalCanisterOperationInput {
+  'kind' : ConfigureExternalCanisterOperationKind,
   'canister_id' : Principal,
-  'operation' : ConfigureExternalCanisterOperationKind,
 }
 export type ConfigureExternalCanisterOperationKind = { 'SoftDelete' : null } |
   { 'Settings' : ConfigureExternalCanisterSettingsInput } |
@@ -225,6 +225,7 @@ export interface ConfigureExternalCanisterSettingsInput {
   'labels' : [] | [Array<string>],
   'description' : [] | [string],
   'request_policies' : [] | [ExternalCanisterRequestPoliciesInput],
+  'state' : [] | [ExternalCanisterState],
 }
 export interface CreateExternalCanisterOperation {
   'canister_id' : [] | [Principal],

@@ -75,6 +75,7 @@ mod tests {
         },
         repositories::indexes::external_canister_index::ExternalCanisterIndexRepository,
     };
+    use candid::Principal;
     use orbit_essentials::repository::IndexRepository;
 
     #[test]
@@ -112,5 +113,46 @@ mod tests {
         assert!(!result.is_empty());
         assert_eq!(result.len(), 1);
         assert!(result.contains(&[5; 16]));
+    }
+
+    #[test]
+    fn test_find_by_canister_id() {
+        let repository = ExternalCanisterIndexRepository::default();
+        for i in 0..10 {
+            repository.insert(ExternalCanisterIndex {
+                index: ExternalCanisterIndexKind::CanisterId(Principal::from_slice(&[i; 29])),
+                external_canister_id: [i; 16],
+            });
+        }
+
+        let result = repository.find_by_criteria(ExternalCanisterIndexCriteria {
+            from: ExternalCanisterIndexKind::CanisterId(Principal::from_slice(&[5; 29])),
+            to: ExternalCanisterIndexKind::CanisterId(Principal::from_slice(&[5; 29])),
+        });
+
+        assert!(!result.is_empty());
+        assert_eq!(result.len(), 1);
+        assert!(result.contains(&[5; 16]));
+    }
+
+    #[test]
+    fn test_find_by_labels() {
+        let repository = ExternalCanisterIndexRepository::default();
+        for i in 0..10 {
+            repository.insert(ExternalCanisterIndex {
+                index: ExternalCanisterIndexKind::Label(format!("label-{}", i)),
+                external_canister_id: [i; 16],
+            });
+        }
+
+        let result = repository.find_by_criteria(ExternalCanisterIndexCriteria {
+            from: ExternalCanisterIndexKind::Label("label-5".to_string()),
+            to: ExternalCanisterIndexKind::Label("label-6".to_string()),
+        });
+
+        assert!(!result.is_empty());
+        assert_eq!(result.len(), 2);
+        assert!(result.contains(&[5; 16]));
+        assert!(result.contains(&[6; 16]));
     }
 }

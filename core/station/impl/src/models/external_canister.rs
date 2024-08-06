@@ -1,7 +1,5 @@
-use super::indexes::external_canister_index::{ExternalCanisterIndex, ExternalCanisterIndexKind};
 use super::resource::ValidationMethodResourceTarget;
 use super::ConfigureExternalCanisterSettingsInput;
-use crate::core::utils::format_unique_string;
 use crate::errors::ExternalCanisterError;
 use candid::Principal;
 use orbit_essentials::storable;
@@ -82,41 +80,6 @@ impl ExternalCanister {
         Self::key(self.id)
     }
 
-    /// Converts the external canister to an index by its name.
-    pub fn to_index_by_name(&self) -> ExternalCanisterIndex {
-        ExternalCanisterIndex {
-            index: ExternalCanisterIndexKind::Name(format_unique_string(self.name.as_str())),
-            external_canister_id: self.id,
-        }
-    }
-
-    /// Converts the external canister to indexes by its labels.
-    pub fn to_index_by_labels(&self) -> Vec<ExternalCanisterIndex> {
-        self.labels
-            .iter()
-            .map(|label| ExternalCanisterIndex {
-                index: ExternalCanisterIndexKind::Label(format_unique_string(label.as_str())),
-                external_canister_id: self.id,
-            })
-            .collect()
-    }
-
-    /// Converts the external canister to an index by its canister id.
-    pub fn to_index_by_canister_id(&self) -> ExternalCanisterIndex {
-        ExternalCanisterIndex {
-            index: ExternalCanisterIndexKind::CanisterId(self.canister_id),
-            external_canister_id: self.id,
-        }
-    }
-
-    /// Converts the external canister to indexes to facilitate searching.
-    pub fn indexes(&self) -> Vec<ExternalCanisterIndex> {
-        let mut indexes = vec![self.to_index_by_name(), self.to_index_by_canister_id()];
-        indexes.extend(self.to_index_by_labels());
-
-        indexes
-    }
-
     pub fn update_with(&mut self, changes: ConfigureExternalCanisterSettingsInput) {
         if let Some(name) = changes.name {
             self.name = name;
@@ -128,6 +91,10 @@ impl ExternalCanister {
 
         if let Some(labels) = changes.labels {
             self.labels = labels;
+        }
+
+        if let Some(state) = changes.state {
+            self.state = state;
         }
     }
 }
@@ -207,5 +174,172 @@ impl ModelValidator<ExternalCanisterError> for ExternalCanister {
         validate_labels(&self.labels)?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+pub mod external_canister_test_utils {
+    use super::*;
+    use crate::core::ic_cdk::next_time;
+    use candid::Principal;
+    use uuid::Uuid;
+
+    pub fn mock_external_canister() -> ExternalCanister {
+        let resource_id = *Uuid::new_v4().as_bytes();
+        let canister_id = Principal::from_slice(&resource_id);
+
+        ExternalCanister {
+            id: resource_id,
+            canister_id,
+            name: canister_id.to_string(),
+            description: Some("Test canister description".to_string()),
+            labels: vec!["test".to_string()],
+            state: ExternalCanisterState::Active,
+            created_at: next_time(),
+            modified_at: None,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use external_canister_test_utils::mock_external_canister;
+    use ic_stable_structures::Storable;
+    use orbit_essentials::model::ModelValidator;
+
+    #[test]
+    fn valid_model_serialization() {
+        let model = mock_external_canister();
+
+        let serialized_model = model.to_bytes();
+        let deserialized_model = ExternalCanister::from_bytes(serialized_model);
+
+        assert_eq!(model.id, deserialized_model.id);
+        assert_eq!(model.canister_id, deserialized_model.canister_id);
+        assert_eq!(model.name, deserialized_model.name);
+        assert_eq!(model.description, deserialized_model.description);
+        assert_eq!(model.labels, deserialized_model.labels);
+        assert_eq!(model.state, deserialized_model.state);
+        assert_eq!(model.created_at, deserialized_model.created_at);
+        assert_eq!(model.modified_at, deserialized_model.modified_at);
+    }
+
+    #[test]
+    fn valid_external_canister_validation() {
+        let mut external_canister = mock_external_canister();
+        external_canister.name = "Test canister".to_string();
+        external_canister.description = Some("Test canister description".to_string());
+        external_canister.labels = vec!["test".to_string()];
+
+        assert!(external_canister.validate().is_ok());
+    }
+
+    #[test]
+    fn invalid_external_canister_validation() {
+        let mut external_canister = mock_external_canister();
+        external_canister.name = "".to_string();
+
+        assert!(external_canister.validate().is_err());
+    }
+
+    #[test]
+    fn invalid_external_canister_validation_with_long_name() {
+        let result = validate_name(&"a".repeat(ExternalCanister::MAX_NAME_LENGTH + 1));
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            ExternalCanisterError::ValidationError {
+                info: format!(
+                    "The name of the external canister cannot be longer than {} characters.",
+                    ExternalCanister::MAX_NAME_LENGTH
+                )
+            }
+        );
+    }
+
+    #[test]
+    fn invalid_external_canister_validation_with_long_description() {
+        let result = validate_description(&Some(
+            "a".repeat(ExternalCanister::MAX_DESCRIPTION_LENGTH + 1),
+        ));
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            ExternalCanisterError::ValidationError {
+                info: format!(
+                    "The description of the external canister cannot be longer than {} characters.",
+                    ExternalCanister::MAX_DESCRIPTION_LENGTH
+                )
+            }
+        );
+    }
+
+    #[test]
+    fn invalid_external_canister_validation_with_long_label() {
+        let result = validate_labels(&["a".repeat(ExternalCanister::MAX_LABEL_LENGTH + 1)]);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            ExternalCanisterError::ValidationError {
+                info: format!(
+                    "The label '{}' cannot be longer than {} characters.",
+                    "a".repeat(ExternalCanister::MAX_LABEL_LENGTH + 1),
+                    ExternalCanister::MAX_LABEL_LENGTH
+                )
+            }
+        );
+    }
+
+    #[test]
+    fn invalid_external_canister_validation_with_too_many_labels() {
+        let result = validate_labels(&vec!["a".to_string(); ExternalCanister::MAX_LABELS + 1]);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            ExternalCanisterError::ValidationError {
+                info: format!(
+                    "The external canister cannot have more than {} labels.",
+                    ExternalCanister::MAX_LABELS
+                )
+            }
+        );
+    }
+
+    #[test]
+    fn invalid_external_canister_validation_with_duplicate_labels() {
+        let result = validate_labels(&["a".to_string(), "a".to_string()]);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            ExternalCanisterError::ValidationError {
+                info: "The labels cannot be duplicated.".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn update_existing_model_with_changes() {
+        let mut model = mock_external_canister();
+        let changes = ConfigureExternalCanisterSettingsInput {
+            name: Some("New name".to_string()),
+            description: Some("New description".to_string()),
+            labels: Some(vec!["new".to_string()]),
+            permissions: None,
+            request_policies: None,
+            state: Some(ExternalCanisterState::Archived),
+        };
+
+        model.update_with(changes);
+
+        assert_eq!(model.name, "New name".to_string());
+        assert_eq!(model.description, Some("New description".to_string()));
+        assert_eq!(model.labels, vec!["new".to_string()]);
+        assert_eq!(model.state, ExternalCanisterState::Archived);
     }
 }

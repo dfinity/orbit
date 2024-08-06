@@ -293,6 +293,8 @@ impl ExternalCanisterService {
     }
 
     /// Verifies that the name is unique among external canisters.
+    ///
+    /// If `skip_id` is provided, it will be ignored if the match would be the same.
     fn check_unique_name(
         &self,
         name: &str,
@@ -311,6 +313,8 @@ impl ExternalCanisterService {
     }
 
     /// Verifies that the canister id is unique among external canisters.
+    ///
+    /// If `skip_id` is provided, it will be ignored if the match would be the same.
     fn check_unique_canister_id(
         &self,
         canister_id: &Principal,
@@ -326,5 +330,121 @@ impl ExternalCanisterService {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        core::test_utils,
+        models::{
+            permission::Allow, CreateExternalCanisterOperationKindAddExisting,
+            ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput,
+        },
+    };
+
+    fn setup() {
+        test_utils::init_canister_system();
+    }
+
+    #[tokio::test]
+    async fn test_add_external_canister() {
+        setup();
+        let result = EXTERNAL_CANISTER_SERVICE
+            .add_external_canister(CreateExternalCanisterOperationInput {
+                name: "test".to_string(),
+                description: None,
+                labels: None,
+                permissions: ExternalCanisterPermissionsInput {
+                    read: Allow::authenticated(),
+                    change: Allow::authenticated(),
+                    calls: Vec::new(),
+                },
+                request_policies: ExternalCanisterRequestPoliciesInput {
+                    change: None,
+                    calls: Vec::new(),
+                },
+                kind: CreateExternalCanisterOperationKind::AddExisting(
+                    CreateExternalCanisterOperationKindAddExisting {
+                        canister_id: Principal::from_slice(&[10; 29]),
+                    },
+                ),
+            })
+            .await;
+
+        assert!(result.is_ok());
+
+        let result = result.unwrap();
+        assert_eq!(result.name, "test");
+        assert_eq!(result.canister_id, Principal::from_slice(&[10; 29]));
+    }
+
+    #[tokio::test]
+    async fn fail_to_add_duplicate_name_external_canister() {
+        setup();
+        for i in 0..2 {
+            let result = EXTERNAL_CANISTER_SERVICE
+                .add_external_canister(CreateExternalCanisterOperationInput {
+                    name: "test".to_string(),
+                    description: None,
+                    labels: None,
+                    permissions: ExternalCanisterPermissionsInput {
+                        read: Allow::authenticated(),
+                        change: Allow::authenticated(),
+                        calls: Vec::new(),
+                    },
+                    request_policies: ExternalCanisterRequestPoliciesInput {
+                        change: None,
+                        calls: Vec::new(),
+                    },
+                    kind: CreateExternalCanisterOperationKind::AddExisting(
+                        CreateExternalCanisterOperationKindAddExisting {
+                            canister_id: Principal::from_slice(&[i; 29]),
+                        },
+                    ),
+                })
+                .await;
+
+            match i {
+                0 => assert!(result.is_ok()),
+                1 => assert!(result.is_err()),
+                _ => unreachable!("unexpected iteration"),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn fail_to_add_duplicate_canister_id_external_canister() {
+        setup();
+        for i in 0..2 {
+            let result = EXTERNAL_CANISTER_SERVICE
+                .add_external_canister(CreateExternalCanisterOperationInput {
+                    name: format!("test{}", i),
+                    description: None,
+                    labels: None,
+                    permissions: ExternalCanisterPermissionsInput {
+                        read: Allow::authenticated(),
+                        change: Allow::authenticated(),
+                        calls: Vec::new(),
+                    },
+                    request_policies: ExternalCanisterRequestPoliciesInput {
+                        change: None,
+                        calls: Vec::new(),
+                    },
+                    kind: CreateExternalCanisterOperationKind::AddExisting(
+                        CreateExternalCanisterOperationKindAddExisting {
+                            canister_id: Principal::from_slice(&[10; 29]),
+                        },
+                    ),
+                })
+                .await;
+
+            match i {
+                0 => assert!(result.is_ok()),
+                1 => assert!(result.is_err()),
+                _ => unreachable!("unexpected iteration"),
+            }
+        }
     }
 }

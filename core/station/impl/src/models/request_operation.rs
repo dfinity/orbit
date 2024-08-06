@@ -4,7 +4,8 @@ use super::{
     request_specifier::RequestSpecifier,
     resource::{Resource, ValidationMethodResourceTarget},
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata,
-    DisasterRecoveryCommittee, MetadataItem, UserGroupId, UserId, UserStatus,
+    DisasterRecoveryCommittee, ExternalCanisterState, MetadataItem, UserGroupId, UserId,
+    UserStatus,
 };
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ValidationError;
@@ -399,7 +400,7 @@ pub struct CreateExternalCanisterOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ConfigureExternalCanisterOperationInput {
     pub canister_id: Principal,
-    pub operation: ConfigureExternalCanisterOperationKind,
+    pub kind: ConfigureExternalCanisterOperationKind,
 }
 
 pub type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
@@ -430,6 +431,7 @@ pub struct ConfigureExternalCanisterSettingsInput {
     pub name: Option<String>,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
+    pub state: Option<ExternalCanisterState>,
     pub permissions: Option<ExternalCanisterPermissionsInput>,
     pub request_policies: Option<ExternalCanisterRequestPoliciesInput>,
 }

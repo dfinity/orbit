@@ -238,12 +238,17 @@ export const idlFactory = ({ IDL }) => {
     'change' : IDL.Opt(RequestPolicyRule),
   });
   const ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPolicies;
+  const ExternalCanisterState = IDL.Variant({
+    'Active' : IDL.Null,
+    'Archived' : IDL.Null,
+  });
   const ConfigureExternalCanisterSettingsInput = IDL.Record({
     'permissions' : IDL.Opt(ExternalCanisterPermissionsInput),
     'name' : IDL.Opt(IDL.Text),
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'description' : IDL.Opt(IDL.Text),
     'request_policies' : IDL.Opt(ExternalCanisterRequestPoliciesInput),
+    'state' : IDL.Opt(ExternalCanisterState),
   });
   const DefiniteCanisterSettingsInput = IDL.Record({
     'freezing_threshold' : IDL.Opt(IDL.Nat),
@@ -260,8 +265,8 @@ export const idlFactory = ({ IDL }) => {
     'TopUp' : IDL.Nat64,
   });
   const ConfigureExternalCanisterOperationInput = IDL.Record({
+    'kind' : ConfigureExternalCanisterOperationKind,
     'canister_id' : IDL.Principal,
-    'operation' : ConfigureExternalCanisterOperationKind,
   });
   const CanisterInstallMode = IDL.Variant({
     'reinstall' : IDL.Null,
@@ -749,10 +754,6 @@ export const idlFactory = ({ IDL }) => {
     'id' : UUID,
     'can_change' : IDL.Bool,
     'can_call' : IDL.Vec(ExternalCanisterCallerMethodsPrivileges),
-  });
-  const ExternalCanisterState = IDL.Variant({
-    'Active' : IDL.Null,
-    'Archived' : IDL.Null,
   });
   const ExternalCanister = IDL.Record({
     'id' : UUID,
