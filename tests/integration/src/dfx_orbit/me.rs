@@ -1,5 +1,5 @@
 use crate::{
-    dfx_orbit::{dfx_orbit_test, setup_dfx_orbit, setup_dfx_user},
+    dfx_orbit::{dfx_orbit_test, setup_dfx_orbit, setup_dfx_user, DfxOrbitTestConfig},
     setup::setup_new_env,
     TestEnv,
 };
@@ -15,7 +15,7 @@ fn me() {
 
     let (_, dfx_user) = setup_dfx_user(&env, &canister_ids);
 
-    let response = dfx_orbit_test(&mut env, async {
+    let response = dfx_orbit_test(&mut env, DfxOrbitTestConfig::default(), async {
         // Setup the station agent
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 

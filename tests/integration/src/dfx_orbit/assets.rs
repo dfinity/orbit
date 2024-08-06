@@ -1,13 +1,4 @@
-use pocket_ic::PocketIc;
-use rand::{thread_rng, Rng};
-use station_api::{
-    AddRequestPolicyOperationInput, CallExternalCanisterResourceTargetDTO,
-    ExecutionMethodResourceTargetDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, ValidationMethodResourceTargetDTO,
-};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tempfile::Builder;
-
+use super::DfxOrbitTestConfig;
 use crate::{
     dfx_orbit::{
         canister_call::permit_call_operation, dfx_orbit_test, fetch_asset, setup_dfx_orbit,
@@ -17,6 +8,19 @@ use crate::{
     utils::execute_request,
     CanisterIds, TestEnv,
 };
+use pocket_ic::PocketIc;
+use rand::{thread_rng, Rng};
+use station_api::{
+    AddRequestPolicyOperationInput, CallExternalCanisterResourceTargetDTO,
+    ExecutionMethodResourceTargetDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    RequestSpecifierDTO, ValidationMethodResourceTargetDTO,
+};
+use std::{
+    collections::BTreeMap,
+    path::Path,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
+use tempfile::Builder;
 
 #[test]
 fn assets_upload() {
@@ -66,7 +70,14 @@ fn assets_upload() {
     )
     .unwrap();
 
-    dfx_orbit_test(&mut env, async {
+    let mut asset_canisters = BTreeMap::new();
+    asset_canisters.insert(
+        String::from("test_asset_upload"),
+        vec![asset_dir.path().to_str().unwrap().to_string()],
+    );
+    let config = DfxOrbitTestConfig { asset_canisters };
+
+    dfx_orbit_test(&mut env, config, async {
         // Setup the station agent
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
@@ -75,10 +86,18 @@ fn assets_upload() {
             .request_prepare_permission(asset_canister, None, None)
             .await
             .unwrap();
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        // Test that we can retreive the sources from `dfx.json`
+        let sources = dfx_orbit.as_path_bufs("test_asset_upload", &[]).unwrap();
+        let sources_path = sources
+            .iter()
+            .map(|pathbuf| pathbuf.as_path())
+            .collect::<Vec<&Path>>();
 
         // As dfx user: Request to upload new files to the asset canister
         let (batch_id, evidence) = dfx_orbit
-            .upload(asset_canister, &[asset_dir.path()], false)
+            .upload(asset_canister, &sources_path, false)
             .await
             .unwrap();
         let response = dfx_orbit

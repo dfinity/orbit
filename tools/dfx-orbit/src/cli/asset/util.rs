@@ -51,11 +51,7 @@ impl DfxOrbit {
         Ok(response)
     }
 
-    pub(crate) fn as_path_bufs(
-        &self,
-        canister: &str,
-        paths: &[String],
-    ) -> anyhow::Result<Vec<PathBuf>> {
+    pub fn as_path_bufs(&self, canister: &str, paths: &[String]) -> anyhow::Result<Vec<PathBuf>> {
         if paths.is_empty() {
             let config = self.interface.config().ok_or_else(|| {
                 anyhow!("Could not read \"dfx.json\". Are you in the correct directory?")

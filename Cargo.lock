@@ -2401,6 +2401,7 @@ dependencies = [
  "hex",
  "ic-cdk 0.13.2",
  "ic-ledger-types",
+ "itertools 0.13.0",
  "lazy_static",
  "num-bigint 0.4.5",
  "orbit-essentials",
@@ -2482,6 +2483,15 @@ name = "itertools"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]

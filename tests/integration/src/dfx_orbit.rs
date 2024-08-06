@@ -5,12 +5,14 @@ use crate::{
 };
 use candid::Principal;
 use dfx_orbit::{dfx_extension_api::OrbitExtensionAgent, station_agent::StationConfig, DfxOrbit};
+use itertools::Itertools;
 use pocket_ic::PocketIc;
 use rand::Rng;
 use rand_chacha::{rand_core::SeedableRng, ChaCha8Rng};
 use station_api::UserDTO;
 use std::{
     cell::RefCell,
+    collections::BTreeMap,
     future::Future,
     hash::{DefaultHasher, Hash, Hasher},
     path::Path,
@@ -43,7 +45,17 @@ const IDENTITY_JSON: &str = "
   \"default\": \"default\"
 }";
 
-fn dfx_orbit_test<F>(env: &mut PocketIc, test_func: F) -> F::Output
+/// The test setup needs to be configurable
+///
+/// This struct allows to gradually introduce configurations into the `dfx_orbit` tests
+/// to allow testing more fine grained controls
+#[derive(Debug, Clone, Default)]
+struct DfxOrbitTestConfig {
+    /// Sets the asset canisters to be defined in the dfx.json, maps name tp list of paths
+    asset_canisters: BTreeMap<String, Vec<String>>,
+}
+
+fn dfx_orbit_test<F>(env: &mut PocketIc, config: DfxOrbitTestConfig, test_func: F) -> F::Output
 where
     F: Future,
 {
@@ -90,7 +102,7 @@ where
         *port.borrow()
     });
 
-    setup_test_dfx_json(tmp_dir.path());
+    setup_test_dfx_json(tmp_dir.path(), config);
     setup_identity(tmp_dir.path());
 
     // Start the live environment
@@ -123,15 +135,38 @@ fn setup_identity(dfx_root: &Path) {
     std::fs::write(default_id_path.join("identity.pem"), TEST_KEY).unwrap();
 }
 
-fn setup_test_dfx_json(dfx_root: &Path) {
+/// Sets up a custom `dfx.json` from the provided `config`
+fn setup_test_dfx_json(dfx_root: &Path, config: DfxOrbitTestConfig) {
     let port = PORT.with(|port| *port.borrow());
-    let dfx_json = test_dfx_json_from_template(port);
+    let dfx_json = test_dfx_json_from_template(config, port);
+    println!("{}", &dfx_json);
     std::fs::write(dfx_root.join("dfx.json"), dfx_json).unwrap();
 }
 
-fn test_dfx_json_from_template(port: u16) -> String {
+/// Generate a custom `dfx.json` from the provided `config`
+fn test_dfx_json_from_template(config: DfxOrbitTestConfig, port: u16) -> String {
+    let asset_canisters = config
+        .asset_canisters
+        .iter()
+        .map(|(name, sources)| {
+            (
+                name,
+                sources
+                    .iter()
+                    .map(|source| format!("\"{source}\""))
+                    .join(","),
+            )
+        })
+        .map(|(name, sources)| {
+            format!("\"{name}\": {{ \"source\": [{sources}], \"type\": \"assets\"}}")
+        })
+        .join(",");
+
     format!(
         "{{
+            \"canisters\": {{
+                {asset_canisters}
+            }},
             \"networks\": {{
                 \"test\": {{
                     \"providers\": [
@@ -175,6 +210,7 @@ fn setup_dfx_user(env: &PocketIc, canister_ids: &CanisterIds) -> (Principal, Use
     (dfx_principal, dfx_user)
 }
 
+/// Install the counter cansiter under given `canister_id` into the running IC
 fn setup_counter_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> Principal {
     // create and install the counter canister
     let canister_id = create_canister(env, canister_ids.station);
@@ -192,6 +228,10 @@ fn setup_counter_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> Pri
     canister_id
 }
 
+/// Fetches an asset from the local host and port
+///
+/// This is a bit tricky, as the boundary node uses the `Referer` header to determine the
+/// resource being fetched.
 async fn fetch_asset(canister_id: Principal, path: &str) -> Vec<u8> {
     let port = PORT.with(|port| *port.borrow());
     let local_url = format!("http://localhost:{}{}", port, path);
@@ -208,5 +248,3 @@ async fn fetch_asset(canister_id: Principal, path: &str) -> Vec<u8> {
         .unwrap()
         .into()
 }
-
-// TODO: Test canister update

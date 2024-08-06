@@ -12,6 +12,7 @@ hex = { workspace = true }
 orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alpha.3' }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
+itertools = { workspace = true }
 lazy_static = { workspace = true }
 num-bigint = { workspace = true }
 pocket-ic = { workspace = true }

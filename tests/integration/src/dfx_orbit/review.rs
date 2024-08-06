@@ -10,7 +10,8 @@ use station_api::{
 use crate::{
     dfx_orbit::{
         canister_call::{permit_call_operation, set_four_eyes_on_call},
-        dfx_orbit_test, setup_counter_canister, setup_dfx_orbit, TEST_PRINCIPAL,
+        dfx_orbit_test, setup_counter_canister, setup_dfx_orbit, DfxOrbitTestConfig,
+        TEST_PRINCIPAL,
     },
     setup::{setup_new_env, WALLET_ADMIN_USER},
     utils::{
@@ -71,7 +72,7 @@ fn review() {
     let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
     assert_eq!(ctr, 0_u32.to_le_bytes());
 
-    dfx_orbit_test(&mut env, async {
+    dfx_orbit_test(&mut env, DfxOrbitTestConfig::default(), async {
         // Setup the station agent
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 

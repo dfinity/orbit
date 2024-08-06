@@ -1,5 +1,7 @@
 use crate::{
-    dfx_orbit::{dfx_orbit_test, setup_counter_canister, setup_dfx_orbit, setup_dfx_user},
+    dfx_orbit::{
+        dfx_orbit_test, setup_counter_canister, setup_dfx_orbit, setup_dfx_user, DfxOrbitTestConfig,
+    },
     setup::{setup_new_env, WALLET_ADMIN_USER},
     utils::{
         add_user, execute_request, submit_request_approval, update_raw, user_test_id,
@@ -53,7 +55,7 @@ fn canister_call() {
         execution_plan: None,
     };
 
-    let request = dfx_orbit_test(&mut env, async {
+    let request = dfx_orbit_test(&mut env, DfxOrbitTestConfig::default(), async {
         // Setup the station agent
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
