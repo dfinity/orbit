@@ -294,7 +294,15 @@ fn check_address_book_for_transfer() {
 
     // send ICP to admin user's station account
     let admin_account_address = AccountIdentifier::from_hex(&admin_account.address).unwrap();
-    send_icp_to_account(&env, controller, admin_account_address, ICP + ICP_FEE, 0).unwrap();
+    send_icp_to_account(
+        &env,
+        controller,
+        admin_account_address,
+        ICP + ICP_FEE,
+        0,
+        None,
+    )
+    .unwrap();
 
     // try transfer from admin account to John Doe
     // and check that transfer request gets rejected

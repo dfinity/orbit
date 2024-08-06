@@ -1,3 +1,10 @@
+use std::{fmt::Debug, sync::Arc};
+
+use candid::Principal;
+use ic_ledger_types::AccountIdentifier;
+
+use crate::operations::obtain::ObtainCycles;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EstimatedRuntime {
     /// The estimated min runtime in seconds to trigger the funding operation.
@@ -159,8 +166,15 @@ impl Default for FundStrategy {
     }
 }
 
-/// The options when initializing the fund manager.
 #[derive(Debug, Clone)]
+pub struct CycleMintingOptions {
+    pub ledger_canister_id: Principal,
+    pub cmc_canister_id: Principal,
+    pub icp_account_id: AccountIdentifier,
+}
+
+/// The options when initializing the fund manager.
+#[derive(Clone)]
 pub struct FundManagerOptions {
     /// The interval in secs to track the canister balance.
     interval_secs: u64,
@@ -172,6 +186,8 @@ pub struct FundManagerOptions {
     ///
     /// The default is to fund the canister when the balance is below the threshold.
     strategy: FundStrategy,
+    /// Obtain cycles if the funding canister balance is too low.
+    obtain_cycles: Option<Arc<dyn ObtainCycles>>,
 }
 
 impl Default for FundManagerOptions {
@@ -182,6 +198,7 @@ impl Default for FundManagerOptions {
             chunk_size: 20,
             strategy: FundStrategy::default(),
             delayed_start: false,
+            obtain_cycles: None,
         }
     }
 }
@@ -189,6 +206,12 @@ impl Default for FundManagerOptions {
 impl FundManagerOptions {
     pub fn new() -> Self {
         FundManagerOptions::default()
+    }
+
+    /// Enable minting cycles from ICP if the canister balance is too low.
+    pub fn with_obtain_cycles(mut self, obtain_cycles: Arc<dyn ObtainCycles>) -> Self {
+        self.obtain_cycles = Some(obtain_cycles);
+        self
     }
 
     /// Set the interval in secs to track the canister balance.
@@ -223,6 +246,11 @@ impl FundManagerOptions {
     /// Get the strategy to use when funding the canister.
     pub fn strategy(&self) -> &FundStrategy {
         &self.strategy
+    }
+
+    /// Get the obtain cycles implementation if enabled.
+    pub fn obtain_cycles(&self) -> Option<Arc<dyn ObtainCycles>> {
+        self.obtain_cycles.clone()
     }
 
     /// Get the chunk size for when doing a batched fetch of canister balances.

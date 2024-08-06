@@ -28,6 +28,7 @@ pub struct ManageSystemInfoOperationDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ManageSystemInfoOperationInput {
     pub name: Option<String>,
+    pub funding_account_id: Option<UuidDTO>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]

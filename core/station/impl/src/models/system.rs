@@ -8,7 +8,7 @@ use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
 use std::borrow::Cow;
 
-use super::UserGroupId;
+use super::{AccountId, UserGroupId};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SystemState {
@@ -38,6 +38,8 @@ pub struct SystemInfo {
     upgrader_wasm_module: Option<Vec<u8>>,
     /// The disaster recovery committee user group id.
     disaster_recovery_committee: Option<DisasterRecoveryCommittee>,
+    /// Cycle minting ICP account.
+    cycle_minting_account: Option<AccountId>,
 }
 
 impl Default for SystemInfo {
@@ -49,6 +51,7 @@ impl Default for SystemInfo {
             upgrader_canister_id: None,
             upgrader_wasm_module: None,
             disaster_recovery_committee: None,
+            cycle_minting_account: None,
         }
     }
 }
@@ -62,6 +65,14 @@ impl SystemInfo {
             upgrader_wasm_module: Some(upgrader_wasm_module),
             ..Default::default()
         }
+    }
+
+    pub fn get_cycle_minting_account(&self) -> Option<&AccountId> {
+        self.cycle_minting_account.as_ref()
+    }
+
+    pub fn set_cycle_minting_account(&mut self, account_id: AccountId) {
+        self.cycle_minting_account = Some(account_id);
     }
 
     pub fn get_name(&self) -> &str {

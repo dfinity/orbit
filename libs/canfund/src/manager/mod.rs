@@ -6,7 +6,7 @@ use self::{
     record::{CanisterRecord, CyclesBalance},
 };
 use crate::{
-    fetch::cycles::{FetchCyclesBalance, FetchCyclesBalanceFromCanisterStatus},
+    operations::fetch::{FetchCyclesBalance, FetchCyclesBalanceFromCanisterStatus},
     utils::calc_estimated_cycles_per_sec,
 };
 use ic_cdk::{
@@ -14,7 +14,7 @@ use ic_cdk::{
         management_canister::main::{deposit_cycles, CanisterId, CanisterIdRecord},
         time,
     },
-    print, spawn,
+    id, print, spawn, trap,
 };
 use ic_cdk_timers::TimerId;
 use std::{
@@ -62,6 +62,12 @@ impl FundManager {
 
     /// Configures the fund manager with the specified options.
     pub fn with_options(&mut self, options: FundManagerOptions) -> &mut Self {
+        self.inner.borrow_mut().options = options;
+
+        self
+    }
+
+    pub fn with_cycle_minting(&mut self, options: FundManagerOptions) -> &mut Self {
         self.inner.borrow_mut().options = options;
 
         self
@@ -193,7 +199,48 @@ impl FundManager {
 
             // Funds the canisters with the needed cycles.
             for (canister_id, needed_cycles) in canisters_to_fund {
-                if let Err((err_code, err_msg)) =
+                if canister_id == id() {
+                    ic_cdk::println!("Topping up self with {} cycles", needed_cycles);
+                    let maybe_obtain_cycles = manager.borrow().options().obtain_cycles().clone();
+
+                    if let Some(obtain_cycles) = maybe_obtain_cycles {
+                        let mut tries_left = 4;
+                        while tries_left > 0 {
+                            tries_left -= 1;
+                            ic_cdk::println!("Obtaining cycles...");
+                            match obtain_cycles
+                                .obtain_cycles(needed_cycles, canister_id)
+                                .await
+                            {
+                                Ok(cycles_obtained) => {
+                                    print(format!(
+                                        "Obtained {} cycles for canister {}",
+                                        cycles_obtained,
+                                        canister_id.to_text()
+                                    ));
+                                    break;
+                                }
+                                Err(error) => {
+                                    print(format!(
+                                        "Failed to obtain {} cycles for canister {}, err: {}",
+                                        needed_cycles,
+                                        canister_id.to_text(),
+                                        error.details
+                                    ));
+
+                                    if error.can_retry {
+                                        print("Retrying to obtain cycles...");
+                                        continue;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        print("WARNING: No top-up method configured for topping up the funding canister");
+                        trap("No top-up method configured for topping up the funding canister");
+                    }
+                } else if let Err((err_code, err_msg)) =
                     deposit_cycles(CanisterIdRecord { canister_id }, needed_cycles).await
                 {
                     print(format!(
@@ -216,6 +263,11 @@ impl FundManager {
         canister_ids: &[CanisterId],
         cycles_fetcher: Arc<dyn FetchCyclesBalance>,
     ) -> Vec<(CanisterId, u128)> {
+        ic_cdk::print("Monitoring canisters:");
+        for id in canister_ids {
+            ic_cdk::println!(" - {}", id.to_text());
+        }
+
         let mut canisters_to_fund = Vec::new();
         let options = manager.borrow().options().clone();
         let requests = canister_ids
@@ -234,6 +286,8 @@ impl FundManager {
 
                         canister_record
                             .set_cycles(CyclesBalance::new(*cycles_balance, current_time));
+
+                        ic_cdk::print(format!("{} evaluation:", canister_id.to_text()));
 
                         let needed_cycles = calc_needed_cycles(
                             &canister_record.get_cycles().clone().unwrap_or_default(),
@@ -312,6 +366,12 @@ fn calc_needed_cycles(
     match strategy {
         FundStrategy::Always(cycles) => *cycles,
         FundStrategy::BelowThreshold(threshold) => {
+            ic_cdk::println!(
+                "Current cycles: {}, Previous cycles: {:?}, Threshold: {:?}",
+                current.amount,
+                previous,
+                threshold
+            );
             if current.amount <= threshold.min_cycles() {
                 return threshold.fund_cycles();
             }
@@ -327,6 +387,14 @@ fn calc_needed_cycles(
             if estimated_cycles_per_sec == 0 {
                 let is_below_threshold = current.amount <= estimated_runtime.fallback_min_cycles();
 
+                ic_cdk::println!(
+                    "Current cycles: {}, Previous cycles: {:?}, Estimated cycles per sec: {}, Is below threshold: {}",
+                    current.amount,
+                    previous,
+                    estimated_cycles_per_sec,
+                    is_below_threshold
+                );
+
                 // If the current cycles balance is below the threshold, we should fund the canister.
                 if is_below_threshold {
                     return estimated_runtime.fallback_fund_cycles();
@@ -338,6 +406,15 @@ fn calc_needed_cycles(
             // If the current cycles balance is below the min cycles threshold,
             // fund the canister with the fallback cycles amount.
             if current.amount <= estimated_runtime.fallback_min_cycles() {
+                ic_cdk::println!(
+                    "Current cycles: {}, Previous cycles: {:?}, Estimated cycles per sec: {}, Fallback min cycles: {}, Fallback fund cycles: {}",
+                    current.amount,
+                    previous,
+                    estimated_cycles_per_sec,
+                    estimated_runtime.fallback_min_cycles(),
+                    estimated_runtime.fallback_fund_cycles()
+                );
+
                 return estimated_runtime.fallback_fund_cycles();
             }
 
@@ -356,8 +433,28 @@ fn calc_needed_cycles(
             let estimated_runtime_secs = current.amount / estimated_cycles_per_sec;
 
             if estimated_runtime_secs <= estimated_runtime.min_runtime_secs() as u128 {
+                ic_cdk::println!(
+                    "Current cycles: {}, Previous cycles: {:?}, Estimated cycles per sec: {}, Estimated runtime secs: {}, Min runtime secs: {}, Fund with cycles: {}",
+                    current.amount,
+                    previous,
+                    estimated_cycles_per_sec,
+                    estimated_runtime_secs,
+                    estimated_runtime.min_runtime_secs(),
+                    fund_with_cycles
+                );
+
                 return fund_with_cycles;
             }
+
+            ic_cdk::println!(
+                "Current cycles: {}, Previous cycles: {:?}, Estimated cycles per sec: {}, Estimated runtime secs: {}, Min runtime secs: {}, Fund with cycles: {}",
+                current.amount,
+                previous,
+                estimated_cycles_per_sec,
+                estimated_runtime_secs,
+                estimated_runtime.min_runtime_secs(),
+                0
+            );
 
             0
         }

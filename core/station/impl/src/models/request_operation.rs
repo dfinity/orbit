@@ -425,6 +425,7 @@ pub struct RemoveRequestPolicyOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ManageSystemInfoOperationInput {
     pub name: Option<String>,
+    pub funding_account_id: Option<UUID>,
 }
 
 #[storable]

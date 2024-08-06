@@ -718,13 +718,25 @@ impl From<RemoveRequestPolicyOperation> for station_api::RemoveRequestPolicyOper
 
 impl From<ManageSystemInfoOperationInput> for station_api::ManageSystemInfoOperationInput {
     fn from(input: ManageSystemInfoOperationInput) -> station_api::ManageSystemInfoOperationInput {
-        station_api::ManageSystemInfoOperationInput { name: input.name }
+        station_api::ManageSystemInfoOperationInput {
+            name: input.name,
+            funding_account_id: input
+                .funding_account_id
+                .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
+        }
     }
 }
 
 impl From<station_api::ManageSystemInfoOperationInput> for ManageSystemInfoOperationInput {
     fn from(input: station_api::ManageSystemInfoOperationInput) -> ManageSystemInfoOperationInput {
-        ManageSystemInfoOperationInput { name: input.name }
+        ManageSystemInfoOperationInput {
+            name: input.name,
+            funding_account_id: input.funding_account_id.map(|id| {
+                *HelperMapper::to_uuid(id)
+                    .expect("Invalid account id")
+                    .as_bytes()
+            }),
+        }
     }
 }
 

@@ -19,6 +19,7 @@ candid = { workspace = true }
 futures = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic-ledger-types = { workspace = true }
 num-bigint = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }

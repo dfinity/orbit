@@ -3,8 +3,9 @@ use crate::{
         authorization::Authorization,
         generate_uuid_v4,
         ic_cdk::next_time,
+        read_system_info,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
-        CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
+        write_system_info, CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
     },
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
@@ -14,12 +15,13 @@ use crate::{
         request_specifier::RequestSpecifier,
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
-        AddRequestPolicyOperationInput, EditAccountOperationInput, EditPermissionOperationInput,
+        AddRequestPolicyOperationInput, Blockchain, BlockchainStandard, EditAccountOperationInput,
+        EditPermissionOperationInput,
     },
     repositories::{AccountRepository, AccountWhereClause, ACCOUNT_REPOSITORY},
     services::{
         permission::{PermissionService, PERMISSION_SERVICE},
-        RequestPolicyService, REQUEST_POLICY_SERVICE,
+        RequestPolicyService, REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
     },
 };
 use lazy_static::lazy_static;
@@ -244,6 +246,33 @@ impl AccountService {
                 ))),
             })
             .await?;
+
+        let mut system_info = read_system_info();
+
+        ic_cdk::println!(
+            "Creating new account! {} {} {} {} {}",
+            system_info.get_cycle_minting_account().is_none(),
+            ACCOUNT_REPOSITORY.len() == 1,
+            matches!(new_account.blockchain, Blockchain::InternetComputer),
+            new_account.standard == BlockchainStandard::Native,
+            new_account.symbol == "ICP"
+        );
+
+        // if this is the first account created, and there is no cycle minting account set, set this account as the cycle minting account
+        if system_info.get_cycle_minting_account().is_none()
+            && ACCOUNT_REPOSITORY.len() == 1
+            && matches!(new_account.blockchain, Blockchain::InternetComputer)
+            && new_account.standard == BlockchainStandard::Native
+            && new_account.symbol == "ICP"
+        {
+            ic_cdk::println!("Setting cycle minting account to {}", uuid);
+
+            system_info.set_cycle_minting_account(*uuid.as_bytes());
+            write_system_info(system_info);
+
+            #[cfg(target_arch = "wasm32")]
+            SYSTEM_SERVICE.set_fund_manager_obtain_cycles(&new_account.id);
+        }
 
         Ok(new_account)
     }
