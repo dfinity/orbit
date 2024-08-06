@@ -110,6 +110,8 @@ pub enum UserPrivilege {
     AddAddressBookEntry,
     ChangeCanister,
     ListRequests,
+    CreateExternalCanister,
+    ListExternalCanisters,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

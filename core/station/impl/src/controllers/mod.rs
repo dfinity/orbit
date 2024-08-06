@@ -6,11 +6,11 @@
 mod system;
 pub use system::*;
 
-mod status;
-pub use status::*;
-
 mod capabilities;
 pub use capabilities::*;
+
+mod external_canister;
+pub use external_canister::*;
 
 mod account;
 pub use account::*;

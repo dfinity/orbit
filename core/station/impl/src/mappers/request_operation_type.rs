@@ -43,6 +43,9 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::SetDisasterRecovery => {
                 RequestOperationType::SetDisasterRecovery
             }
+            RequestOperationTypeDTO::ConfigureExternalCanister => {
+                RequestOperationType::ConfigureExternalCanister
+            }
         }
     }
 }
@@ -86,6 +89,9 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::ManageSystemInfo => RequestOperationTypeDTO::ManageSystemInfo,
             RequestOperationType::SetDisasterRecovery => {
                 RequestOperationTypeDTO::SetDisasterRecovery
+            }
+            RequestOperationType::ConfigureExternalCanister => {
+                RequestOperationTypeDTO::ConfigureExternalCanister
             }
         }
     }
@@ -265,6 +271,9 @@ impl From<station_api::ListRequestsOperationTypeDTO> for RequestOperationFilterT
             }
             station_api::ListRequestsOperationTypeDTO::CallExternalCanister(target) => {
                 RequestOperationFilterType::CallExternalCanister(target)
+            }
+            station_api::ListRequestsOperationTypeDTO::ConfigureExternalCanister(target) => {
+                RequestOperationFilterType::ConfigureExternalCanister(target)
             }
             station_api::ListRequestsOperationTypeDTO::EditPermission => {
                 RequestOperationFilterType::EditPermission
