@@ -12,7 +12,6 @@ use candid::Principal;
 use ic_utils::Canister;
 use orbit_station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
 use slog::Logger;
-use std::path::{Path, PathBuf};
 
 pub struct AssetAgent<'agent> {
     canister_agent: Canister<'agent>,
@@ -32,8 +31,8 @@ impl DfxOrbit {
                 Ok(())
             }
             AssetArgsAction::Upload(args) => {
-                let pathbufs = as_path_bufs(&args.files);
-                let paths = as_paths(&pathbufs);
+                let pathbufs = self.as_path_bufs(&args.canister, &args.files)?;
+                let paths = Self::as_paths(&pathbufs);
 
                 let canister_name = args.canister;
                 let canister_id = self.canister_id(&canister_name)?;
@@ -59,8 +58,8 @@ impl DfxOrbit {
                 Ok(())
             }
             AssetArgsAction::ComputeEvidence(args) => {
-                let pathbufs = as_path_bufs(&args.files);
-                let paths = as_paths(&pathbufs);
+                let pathbufs = self.as_path_bufs(&args.canister, &args.files)?;
+                let paths = Self::as_paths(&pathbufs);
 
                 let canister_id = self.canister_id(&args.canister)?;
                 let asset_agent = self.asset_agent(canister_id)?;
@@ -70,8 +69,8 @@ impl DfxOrbit {
                 Ok(())
             }
             AssetArgsAction::Check(args) => {
-                let pathbufs = as_path_bufs(&args.files);
-                let paths = as_paths(&pathbufs);
+                let pathbufs = self.as_path_bufs(&args.canister, &args.files)?;
+                let paths = Self::as_paths(&pathbufs);
 
                 let canister_id = self.canister_id(&args.canister)?;
                 let asset_agent = self.asset_agent(canister_id)?;
@@ -107,12 +106,4 @@ impl DfxOrbit {
             logger: self.logger.clone(),
         })
     }
-}
-
-fn as_path_bufs(paths: &[String]) -> Vec<PathBuf> {
-    paths.iter().map(|source| PathBuf::from(&source)).collect()
-}
-
-fn as_paths(paths: &[PathBuf]) -> Vec<&Path> {
-    paths.iter().map(|pathbuf| pathbuf.as_path()).collect()
 }

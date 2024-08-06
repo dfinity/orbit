@@ -53,7 +53,6 @@ pub struct AssetUploadArgs {
     pub(crate) summary: Option<String>,
 
     /// The source directories to upload (multiple values possible)
-    #[clap(num_args = 1..)]
     pub(crate) files: Vec<String>,
 }
 
@@ -62,7 +61,6 @@ pub struct AssetComputeEvidenceArgs {
     /// The name of the asset canister targeted by this action
     pub(crate) canister: String,
     /// The source directories to compute evidence from (multiple values possible)
-    #[clap(num_args = 1..)]
     pub(crate) files: Vec<String>,
 }
 
@@ -78,7 +76,6 @@ pub struct AssetCheckArgs {
     pub(crate) batch_id: Nat,
 
     /// The source directories of the asset upload (multiple values possible)
-    #[clap(num_args = 1..)]
     pub(crate) files: Vec<String>,
 
     /// Automatically approve the request, if the request's evidence matches the local evidence
