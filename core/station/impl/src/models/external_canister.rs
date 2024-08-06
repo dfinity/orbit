@@ -80,6 +80,11 @@ impl ExternalCanister {
         Self::key(self.id)
     }
 
+    /// Checks if the external canister is archived.
+    pub fn is_archived(&self) -> bool {
+        self.state == ExternalCanisterState::Archived
+    }
+
     pub fn update_with(&mut self, changes: ConfigureExternalCanisterSettingsInput) {
         if let Some(name) = changes.name {
             self.name = name;

@@ -348,3 +348,17 @@ impl RequestFactory {
         }
     }
 }
+
+#[cfg(test)]
+pub mod requests_test_utils {
+    pub fn mock_request_api_input(
+        operation: station_api::RequestOperationInput,
+    ) -> station_api::CreateRequestInput {
+        station_api::CreateRequestInput {
+            operation,
+            title: None,
+            summary: None,
+            execution_plan: None,
+        }
+    }
+}

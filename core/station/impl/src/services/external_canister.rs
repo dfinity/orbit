@@ -447,4 +447,38 @@ mod tests {
             }
         }
     }
+
+    #[tokio::test]
+    async fn test_soft_delete_of_canister() {
+        setup();
+        let canister = EXTERNAL_CANISTER_SERVICE
+            .add_external_canister(CreateExternalCanisterOperationInput {
+                name: "test".to_string(),
+                description: None,
+                labels: None,
+                permissions: ExternalCanisterPermissionsInput {
+                    read: Allow::authenticated(),
+                    change: Allow::authenticated(),
+                    calls: Vec::new(),
+                },
+                request_policies: ExternalCanisterRequestPoliciesInput {
+                    change: None,
+                    calls: Vec::new(),
+                },
+                kind: CreateExternalCanisterOperationKind::AddExisting(
+                    CreateExternalCanisterOperationKindAddExisting {
+                        canister_id: Principal::from_slice(&[10; 29]),
+                    },
+                ),
+            })
+            .await
+            .unwrap();
+
+        let result = EXTERNAL_CANISTER_SERVICE.soft_delete_external_canister(&canister.id);
+
+        assert!(result.is_ok());
+        assert!(EXTERNAL_CANISTER_SERVICE
+            .get_external_canister(&canister.id)
+            .is_err());
+    }
 }
