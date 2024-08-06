@@ -245,11 +245,18 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'request_policies' : IDL.Opt(ExternalCanisterRequestPoliciesInput),
   });
+  const DefiniteCanisterSettingsInput = IDL.Record({
+    'freezing_threshold' : IDL.Opt(IDL.Nat),
+    'controllers' : IDL.Opt(IDL.Vec(IDL.Principal)),
+    'reserved_cycles_limit' : IDL.Opt(IDL.Nat),
+    'memory_allocation' : IDL.Opt(IDL.Nat),
+    'compute_allocation' : IDL.Opt(IDL.Nat),
+  });
   const ConfigureExternalCanisterOperationKind = IDL.Variant({
     'SoftDelete' : IDL.Null,
     'Settings' : ConfigureExternalCanisterSettingsInput,
     'Delete' : IDL.Null,
-    'NativeSettings' : DefiniteCanisterSettings,
+    'NativeSettings' : DefiniteCanisterSettingsInput,
     'TopUp' : IDL.Nat64,
   });
   const ConfigureExternalCanisterOperationInput = IDL.Record({
@@ -514,6 +521,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateExternalCanisterOperation = IDL.Record({
     'canister_id' : IDL.Opt(IDL.Principal),
+    'input' : CreateExternalCanisterOperationInput,
   });
   const EditAddressBookEntryOperation = IDL.Record({
     'input' : EditAddressBookEntryOperationInput,
@@ -742,6 +750,10 @@ export const idlFactory = ({ IDL }) => {
     'can_change' : IDL.Bool,
     'can_call' : IDL.Vec(ExternalCanisterCallerMethodsPrivileges),
   });
+  const ExternalCanisterState = IDL.Variant({
+    'Active' : IDL.Null,
+    'Archived' : IDL.Null,
+  });
   const ExternalCanister = IDL.Record({
     'id' : UUID,
     'permissions' : ExternalCanisterPermissions,
@@ -752,6 +764,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'created_at' : TimestampRFC3339,
     'request_policies' : ExternalCanisterRequestPolicies,
+    'state' : ExternalCanisterState,
   });
   const GetExternalCanisterResult = IDL.Variant({
     'Ok' : IDL.Record({

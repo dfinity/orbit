@@ -1,4 +1,5 @@
 use crate::models::ExternalCanisterId;
+use candid::Principal;
 use orbit_essentials::storable;
 
 /// The main index for external canisters.
@@ -14,6 +15,7 @@ pub struct ExternalCanisterIndex {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ExternalCanisterIndexKind {
+    CanisterId(Principal),
     Name(String),
     Label(String),
 }

@@ -1,5 +1,6 @@
 use super::indexes::external_canister_index::{ExternalCanisterIndex, ExternalCanisterIndexKind};
 use super::resource::ValidationMethodResourceTarget;
+use super::ConfigureExternalCanisterSettingsInput;
 use crate::core::utils::format_unique_string;
 use crate::errors::ExternalCanisterError;
 use candid::Principal;
@@ -8,6 +9,7 @@ use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
+use std::collections::BTreeSet;
 use std::hash::Hash;
 
 /// The external canister id, which is a UUID.
@@ -99,12 +101,34 @@ impl ExternalCanister {
             .collect()
     }
 
+    /// Converts the external canister to an index by its canister id.
+    pub fn to_index_by_canister_id(&self) -> ExternalCanisterIndex {
+        ExternalCanisterIndex {
+            index: ExternalCanisterIndexKind::CanisterId(self.canister_id),
+            external_canister_id: self.id,
+        }
+    }
+
     /// Converts the external canister to indexes to facilitate searching.
     pub fn indexes(&self) -> Vec<ExternalCanisterIndex> {
-        let mut indexes = vec![self.to_index_by_name()];
+        let mut indexes = vec![self.to_index_by_name(), self.to_index_by_canister_id()];
         indexes.extend(self.to_index_by_labels());
 
         indexes
+    }
+
+    pub fn update_with(&mut self, changes: ConfigureExternalCanisterSettingsInput) {
+        if let Some(name) = changes.name {
+            self.name = name;
+        }
+
+        if let Some(description) = changes.description {
+            self.description = Some(description);
+        }
+
+        if let Some(labels) = changes.labels {
+            self.labels = labels;
+        }
     }
 }
 
@@ -164,6 +188,13 @@ fn validate_labels(labels: &[String]) -> ModelValidatorResult<ExternalCanisterEr
                 ),
             });
         }
+    }
+
+    let labels_set: BTreeSet<&String> = labels.iter().collect();
+    if labels_set.len() != labels.len() {
+        return Err(ExternalCanisterError::ValidationError {
+            info: "The labels cannot be duplicated.".to_string(),
+        });
     }
 
     Ok(())

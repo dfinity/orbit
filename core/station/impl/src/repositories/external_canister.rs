@@ -8,6 +8,7 @@ use crate::{
         ExternalCanister, ExternalCanisterId, ExternalCanisterKey,
     },
 };
+use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::repository::IndexRepository;
@@ -84,5 +85,33 @@ impl ExternalCanisterRepository {
             });
 
         found.into_iter().next()
+    }
+
+    /// Returns an external canister by its canister id if it exists.
+    pub fn find_by_canister_id(&self, canister_id: &Principal) -> Option<ExternalCanisterId> {
+        let found = self
+            .indexes
+            .find_by_criteria(ExternalCanisterIndexCriteria {
+                from: ExternalCanisterIndexKind::CanisterId(*canister_id),
+                to: ExternalCanisterIndexKind::CanisterId(*canister_id),
+            });
+
+        found.into_iter().next()
+    }
+
+    /// Verifies that the name is unique among external canisters.
+    pub fn is_unique_name(&self, name: &str, skip_id: Option<ExternalCanisterId>) -> bool {
+        self.find_by_name(name)
+            .map_or(true, |existing_id| skip_id == Some(existing_id))
+    }
+
+    /// Verifies that the canister id is unique among external canisters.
+    pub fn is_unique_canister_id(
+        &self,
+        canister_id: &Principal,
+        skip_id: Option<ExternalCanisterId>,
+    ) -> bool {
+        self.find_by_canister_id(canister_id)
+            .map_or(true, |existing_id| skip_id == Some(existing_id))
     }
 }

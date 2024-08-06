@@ -32,6 +32,7 @@ pub enum RequestOperation {
     RemoveUserGroup(RemoveUserGroupOperation),
     ChangeCanister(ChangeCanisterOperation),
     ChangeExternalCanister(ChangeExternalCanisterOperation),
+    ConfigureExternalCanister(ConfigureExternalCanisterOperation),
     CreateExternalCanister(CreateExternalCanisterOperation),
     CallExternalCanister(CallExternalCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
@@ -58,6 +59,9 @@ impl Display for RequestOperation {
             RequestOperation::RemoveUserGroup(_) => write!(f, "remove_user_group"),
             RequestOperation::ChangeCanister(_) => write!(f, "change_canister"),
             RequestOperation::ChangeExternalCanister(_) => write!(f, "change_external_canister"),
+            RequestOperation::ConfigureExternalCanister(_) => {
+                write!(f, "configure_external_canister")
+            }
             RequestOperation::CreateExternalCanister(_) => write!(f, "create_external_canister"),
             RequestOperation::CallExternalCanister(_) => write!(f, "call_external_canister"),
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
@@ -389,6 +393,45 @@ pub struct CreateExternalCanisterOperationInput {
 pub struct CreateExternalCanisterOperation {
     pub canister_id: Option<Principal>,
     pub input: CreateExternalCanisterOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ConfigureExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub operation: ConfigureExternalCanisterOperationKind,
+}
+
+pub type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ConfigureExternalCanisterOperationKind {
+    Settings(ConfigureExternalCanisterSettingsInput),
+    TopUp(u64),
+    SoftDelete,
+    Delete,
+    NativeSettings(DefiniteCanisterSettingsInput),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct DefiniteCanisterSettingsInput {
+    pub controllers: Option<Vec<Principal>>,
+    pub compute_allocation: Option<candid::Nat>,
+    pub memory_allocation: Option<candid::Nat>,
+    pub freezing_threshold: Option<candid::Nat>,
+    pub reserved_cycles_limit: Option<candid::Nat>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ConfigureExternalCanisterSettingsInput {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub labels: Option<Vec<String>>,
+    pub permissions: Option<ExternalCanisterPermissionsInput>,
+    pub request_policies: Option<ExternalCanisterRequestPoliciesInput>,
 }
 
 #[storable]

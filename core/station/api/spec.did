@@ -665,7 +665,7 @@ type ConfigureExternalCanisterOperationKind = variant {
   // Caution: This operation is irreversible.
   Delete;
   // The Internet Computer canister settings to configure for the external canister.
-  NativeSettings : DefiniteCanisterSettings;
+  NativeSettings : DefiniteCanisterSettingsInput;
 };
 
 type ConfigureExternalCanisterOperationInput = record {
@@ -679,6 +679,7 @@ type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInpu
 
 type CreateExternalCanisterOperation = record {
   canister_id : opt principal;
+  input : CreateExternalCanisterOperationInput;
 };
 
 type CanisterMethod = record {
@@ -2148,6 +2149,14 @@ type DefiniteCanisterSettings = record {
   reserved_cycles_limit : nat;
 };
 
+type DefiniteCanisterSettingsInput = record {
+  controllers : opt vec principal;
+  compute_allocation : opt nat;
+  memory_allocation : opt nat;
+  freezing_threshold : opt nat;
+  reserved_cycles_limit : opt nat;
+};
+
 type CanisterStatusResponse = record {
   status : variant { running; stopping; stopped };
   settings : DefiniteCanisterSettings;
@@ -2227,6 +2236,8 @@ type ExternalCanister = record {
   description : opt text;
   // The labels that can be used to categorize the canister.
   labels : vec text;
+  // The current state of the record (e.g. `Active`).
+  state : ExternalCanisterState;
   // The permissions that are set for who can interact with the canister.
   permissions : ExternalCanisterPermissions;
   // The request policies that are associated with the canister.
@@ -2235,6 +2246,14 @@ type ExternalCanister = record {
   created_at : TimestampRFC3339;
   // The time at which the canister was last modified, if available.
   modified_at : opt TimestampRFC3339;
+};
+
+// The state of the external canister.
+type ExternalCanisterState = variant {
+  // The record is active and can be interacted with.
+  Active;
+  // The record is archived and can no longer be interacted with.
+  Archived;
 };
 
 // Input type for getting a external canister.

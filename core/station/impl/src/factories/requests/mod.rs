@@ -20,6 +20,7 @@ mod add_user;
 mod add_user_group;
 mod call_canister;
 mod change_canister;
+mod configure_external_canister;
 mod create_canister;
 mod edit_account;
 mod edit_address_book_entry;
@@ -44,6 +45,9 @@ use self::{
     change_canister::{
         ChangeCanisterRequestCreate, ChangeCanisterRequestExecute,
         ChangeExternalCanisterRequestCreate, ChangeExternalCanisterRequestExecute,
+    },
+    configure_external_canister::{
+        ConfigureExternalCanisterRequestCreate, ConfigureExternalCanisterRequestExecute,
     },
     create_canister::{CreateExternalCanisterRequestCreate, CreateExternalCanisterRequestExecute},
     edit_account::{EditAccountRequestCreate, EditAccountRequestExecute},
@@ -182,8 +186,11 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
-            RequestOperationInput::ConfigureExternalCanister(_operation) => {
-                unimplemented!("ConfigureExternalCanister operation is not implemented yet.")
+            RequestOperationInput::ConfigureExternalCanister(operation) => {
+                let creator = Box::new(ConfigureExternalCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
             }
             RequestOperationInput::CreateExternalCanister(operation) => {
                 let creator = Box::new(CreateExternalCanisterRequestCreate {});
@@ -295,6 +302,13 @@ impl RequestFactory {
             }
             RequestOperation::CallExternalCanister(operation) => {
                 Box::new(CallExternalCanisterRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&EXTERNAL_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::ConfigureExternalCanister(operation) => {
+                Box::new(ConfigureExternalCanisterRequestExecute::new(
                     request,
                     operation,
                     Arc::clone(&EXTERNAL_CANISTER_SERVICE),

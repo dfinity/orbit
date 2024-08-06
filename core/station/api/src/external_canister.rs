@@ -12,15 +12,15 @@ pub type ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPoliciesD
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct DefiniteCanisterSettingsInput {
     /// Controllers of the canister.
-    pub controllers: Vec<Principal>,
+    pub controllers: Option<Vec<Principal>>,
     /// Compute allocation.
-    pub compute_allocation: Nat,
+    pub compute_allocation: Option<Nat>,
     /// Memory allocation.
-    pub memory_allocation: Nat,
+    pub memory_allocation: Option<Nat>,
     /// Freezing threshold.
-    pub freezing_threshold: Nat,
+    pub freezing_threshold: Option<Nat>,
     /// Reserved cycles limit.
-    pub reserved_cycles_limit: Nat,
+    pub reserved_cycles_limit: Option<Nat>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -158,10 +158,17 @@ pub struct ExternalCanisterDTO {
     pub name: String,
     pub description: Option<String>,
     pub labels: Vec<String>,
+    pub state: ExternalCanisterStateDTO,
     pub permissions: ExternalCanisterPermissionsDTO,
     pub request_policies: ExternalCanisterRequestPoliciesDTO,
     pub created_at: TimestampRfc3339,
     pub modified_at: Option<TimestampRfc3339>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum ExternalCanisterStateDTO {
+    Active,
+    Archived,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

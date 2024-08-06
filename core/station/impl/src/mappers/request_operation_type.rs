@@ -117,6 +117,9 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::ChangeExternalCanister(_) => {
                 RequestOperationType::ChangeExternalCanister
             }
+            RequestOperation::ConfigureExternalCanister(_) => {
+                RequestOperationType::ConfigureExternalCanister
+            }
             RequestOperation::CreateExternalCanister(_) => {
                 RequestOperationType::CreateExternalCanister
             }

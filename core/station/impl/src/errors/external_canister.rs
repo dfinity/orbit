@@ -7,7 +7,10 @@ use thiserror::Error;
 /// Container for external canister errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum ExternalCanisterError {
-    /// The external canister operation failed in validation.
+    /// The external canister was not found.
+    #[error(r#"The external canister with id '{id}' was not found."#)]
+    NotFound { id: String },
+    /// The canister id is not a valid external canister.
     #[error(r#"The principal {principal} is an invalid external canister."#)]
     InvalidExternalCanister { principal: Principal },
     /// The external canister operation failed in execution.
@@ -23,6 +26,9 @@ impl DetailableError for ExternalCanisterError {
         let mut details = HashMap::new();
 
         match self {
+            ExternalCanisterError::NotFound { id } => {
+                details.insert("id".to_string(), id.to_string());
+            }
             ExternalCanisterError::InvalidExternalCanister { principal } => {
                 details.insert("principal".to_string(), principal.to_string());
             }
