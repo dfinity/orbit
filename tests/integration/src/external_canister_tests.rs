@@ -385,12 +385,12 @@ fn create_external_canister_and_check_status() {
             permissions: ExternalCanisterPermissionsInput {
                 calls: vec![],
                 read: AllowDTO {
-                    auth_scope: station_api::AuthScopeDTO::Authenticated,
+                    auth_scope: station_api::AuthScopeDTO::Restricted,
                     user_groups: vec![],
                     users: vec![],
                 },
                 change: AllowDTO {
-                    auth_scope: station_api::AuthScopeDTO::Authenticated,
+                    auth_scope: station_api::AuthScopeDTO::Restricted,
                     user_groups: vec![],
                     users: vec![],
                 },
