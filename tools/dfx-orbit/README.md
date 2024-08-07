@@ -7,7 +7,7 @@ It is designed to work alongside `dfx` to allow a `dfx`-like workflow to manage 
 
 ### Prequisites
 
-This guide assumes, that the user has setup and is acqainted with the following tools:
+This guide assumes, that the user has setup and is acquainted with the following tools:
 
 - A fairly recent rust toolchain. This tool is known to work on linux using rust `1.79.0`.
 - A working `dfx` development setup.
