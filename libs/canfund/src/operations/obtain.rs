@@ -77,7 +77,6 @@ impl ObtainCycles for MintCycles {
         amount: u128,
         target_canister_id: candid::Principal,
     ) -> Result<u128, ObtainCycleError> {
-        ic_cdk::println!("Getting ICP/XDR rate from CMC");
         // get ICP/XDR rate from CMC
         let price = self
             .cmc
@@ -96,7 +95,6 @@ impl ObtainCycles for MintCycles {
         let cycles_per_icp: u128 =
             price.data.xdr_permyriad_per_icp as u128 * cycles_per_xdr / 10_000u128;
         let icp_to_mint_cycles_from_e8s = amount * 100_000_000u128 / cycles_per_icp;
-        ic_cdk::println!("ICP needed: {} ICP (e8s)", icp_to_mint_cycles_from_e8s);
 
         // transfer ICP to ledger account of CMC
         let call_result = transfer(
@@ -119,8 +117,6 @@ impl ObtainCycles for MintCycles {
             can_retry: false,
         })?;
 
-        ic_cdk::println!("ICP transfer result: {:?}", call_result);
-
         let block_index = call_result.map_err(|err| ObtainCycleError {
             can_retry: matches!(&err, ic_ledger_types::TransferError::TxCreatedInFuture),
             details: format!("Error transferring ICP to CMC account: {}", err),
@@ -133,8 +129,6 @@ impl ObtainCycles for MintCycles {
         loop {
             retries_left -= 1;
 
-            ic_cdk::println!("Notifying CMC about top-up");
-
             match self
                 .cmc
                 .notify_top_up(block_index, target_canister_id)
@@ -146,7 +140,10 @@ impl ObtainCycles for MintCycles {
                     ),
                     can_retry: false,
                 })? {
-                NotifyTopUpResult::Ok(cycles) => Ok(cycles),
+                NotifyTopUpResult::Ok(cycles) => {
+                    // exit the retry loop
+                    return Ok(cycles);
+                }
                 NotifyTopUpResult::Err(err) => match err {
                     NotifyError::Refunded {
                         reason,

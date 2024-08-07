@@ -220,6 +220,9 @@ fn can_mint_cycles_to_top_up_self() {
     // top the upgrader up so that it wont run out of cycles
     env.add_cycles(upgrader_id, 100_000_000_000_000);
 
+    env.stop_canister(upgrader_id, Some(NNS_ROOT_CANISTER_ID))
+        .expect("stop canister failed");
+
     // set starting cycle balance to 100b
     advance_time_to_burn_cycles(
         &env,
@@ -247,10 +250,18 @@ fn can_mint_cycles_to_top_up_self() {
     env.tick();
     env.tick();
     env.tick();
+    env.tick();
+    env.tick();
 
     let post_account_balance = get_icp_account_balance(&env, account_id);
     let post_cycle_balance = env.cycle_balance(canister_ids.station);
 
     assert!(post_account_balance < pre_account_balance);
     assert!(post_cycle_balance > pre_cycle_balance);
+
+    // assert that while we lose some cycles during the process, it'll be roughly what we expect
+    assert!(
+        post_cycle_balance - pre_cycle_balance > 249_000_000_000
+            && post_cycle_balance - pre_cycle_balance < 250_000_000_000
+    );
 }

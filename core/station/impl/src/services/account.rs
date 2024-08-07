@@ -249,15 +249,6 @@ impl AccountService {
 
         let mut system_info = read_system_info();
 
-        ic_cdk::println!(
-            "Creating new account! {} {} {} {} {}",
-            system_info.get_cycle_minting_account().is_none(),
-            ACCOUNT_REPOSITORY.len() == 1,
-            matches!(new_account.blockchain, Blockchain::InternetComputer),
-            new_account.standard == BlockchainStandard::Native,
-            new_account.symbol == "ICP"
-        );
-
         // if this is the first account created, and there is no cycle minting account set, set this account as the cycle minting account
         if system_info.get_cycle_minting_account().is_none()
             && ACCOUNT_REPOSITORY.len() == 1
