@@ -1223,12 +1223,26 @@ impl RequestOperation {
                 input, ..
             }) => {
                 vec![
+                    // Any canister with any method
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
                         CallExternalCanisterResourceTarget {
                             validation_method: input.validation_method.clone().into(),
                             execution_method: ExecutionMethodResourceTarget::Any,
                         },
                     )),
+                    // A specific canister with any execution method
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                        CallExternalCanisterResourceTarget {
+                            validation_method: input.validation_method.clone().into(),
+                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                CanisterMethod {
+                                    canister_id: input.execution_method.canister_id,
+                                    method_name: CanisterMethod::WILDCARD.to_string(),
+                                },
+                            ),
+                        },
+                    )),
+                    // A specific canister with a specific execution method
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
                         CallExternalCanisterResourceTarget {
                             validation_method: input.validation_method.clone().into(),

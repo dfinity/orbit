@@ -220,8 +220,7 @@ impl AccountService {
                 resource: Resource::Account(AccountResourceAction::Read(ResourceId::Id(
                     *uuid.as_bytes(),
                 ))),
-            })
-            .await?;
+            })?;
 
         self.permission_service
             .edit_permission(EditPermissionOperationInput {
@@ -231,8 +230,7 @@ impl AccountService {
                 resource: Resource::Account(AccountResourceAction::Update(ResourceId::Id(
                     *uuid.as_bytes(),
                 ))),
-            })
-            .await?;
+            })?;
 
         self.permission_service
             .edit_permission(EditPermissionOperationInput {
@@ -242,8 +240,7 @@ impl AccountService {
                 resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
                     *uuid.as_bytes(),
                 ))),
-            })
-            .await?;
+            })?;
 
         Ok(new_account)
     }
@@ -318,8 +315,7 @@ impl AccountService {
                     resource: Resource::Account(AccountResourceAction::Read(ResourceId::Id(
                         account.id,
                     ))),
-                })
-                .await?;
+                })?;
         }
 
         if let Some(configs_permission) = input.configs_permission {
@@ -331,8 +327,7 @@ impl AccountService {
                     resource: Resource::Account(AccountResourceAction::Update(ResourceId::Id(
                         account.id,
                     ))),
-                })
-                .await?;
+                })?;
         }
 
         if let Some(transfer_permission) = input.transfer_permission {
@@ -344,8 +339,7 @@ impl AccountService {
                     resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
                         account.id,
                     ))),
-                })
-                .await?;
+                })?;
         }
 
         Ok(account)

@@ -1,11 +1,19 @@
 use crate::{
     core::{with_memory_manager, Memory, PERMISSION_MEMORY_ID},
-    models::permission::{Permission, PermissionKey},
+    models::{
+        permission::{Permission, PermissionKey},
+        resource::{
+            CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
+            ExternalCanisterResourceAction, Resource, ValidationMethodResourceTarget,
+        },
+        CanisterMethod,
+    },
 };
+use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::repository::Repository;
-use std::{cell::RefCell, sync::Arc};
+use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<PermissionKey, Permission, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -46,11 +54,111 @@ impl Repository<PermissionKey, Permission> for PermissionRepository {
     }
 }
 
+impl PermissionRepository {
+    /// Finds all permissions that are available for a given external canister.
+    pub fn find_external_canister_call_permissions(
+        &self,
+        canister_id: &Principal,
+    ) -> Vec<Permission> {
+        DB.with(|db| {
+            let mut all_calls = HashSet::new();
+            let calls_with_no_validation = db
+                .borrow()
+                .range(
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                        CallExternalCanisterResourceTarget {
+                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                CanisterMethod {
+                                    canister_id: *canister_id,
+                                    method_name: String::new(),
+                                },
+                            ),
+                            validation_method: ValidationMethodResourceTarget::No,
+                        },
+                    ))..,
+                )
+                .take_while(|(key, _)| {
+                    matches!(
+                        key,
+                        Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                            CallExternalCanisterResourceTarget {
+                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                    CanisterMethod {
+                                        canister_id: id,
+                                        ..
+                                    }
+                                ),
+                                ..
+                            }
+                        ))
+
+                        if id == canister_id
+                    )
+                })
+                .map(|(_, permission)| permission)
+                .collect::<HashSet<Permission>>();
+
+            let calls_with_validation = db
+                .borrow()
+                .range(
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                        CallExternalCanisterResourceTarget {
+                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                CanisterMethod {
+                                    canister_id: *canister_id,
+                                    method_name: String::new(),
+                                },
+                            ),
+                            validation_method: ValidationMethodResourceTarget::ValidationMethod(
+                                CanisterMethod {
+                                    canister_id: *canister_id,
+                                    method_name: String::new(),
+                                },
+                            ),
+                        },
+                    ))..,
+                )
+                .take_while(|(key, _)| {
+                    matches!(
+                        key,
+                        Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                            CallExternalCanisterResourceTarget {
+                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                    CanisterMethod {
+                                        canister_id: id,
+                                        ..
+                                    }
+                                ),
+                                ..
+                            }
+                        ))
+
+                        if id == canister_id
+                    )
+                })
+                .map(|(_, permission)| permission)
+                .collect::<HashSet<Permission>>();
+
+            all_calls.extend(calls_with_no_validation);
+            all_calls.extend(calls_with_validation);
+
+            all_calls.into_iter().collect()
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::models::permission::permission_test_utils::mock_permission;
-    use crate::models::resource::{Resource, ResourceAction, ResourceId};
+    use crate::models::permission::Allow;
+    use crate::models::resource::{
+        CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
+        ExternalCanisterResourceAction, Resource, ResourceAction, ResourceId,
+        ValidationMethodResourceTarget,
+    };
+    use crate::models::CanisterMethod;
+    use candid::Principal;
     use orbit_essentials::model::ModelKey;
 
     #[test]
@@ -86,5 +194,96 @@ mod tests {
             .unwrap();
 
         assert_eq!(permission, policy);
+    }
+
+    #[test]
+    fn test_find_all_external_canister_call_permissions() {
+        // adds permission to all canisters
+        let permission = Permission {
+            resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                CallExternalCanisterResourceTarget {
+                    execution_method: ExecutionMethodResourceTarget::Any,
+                    validation_method: ValidationMethodResourceTarget::No,
+                },
+            )),
+            allow: Allow::authenticated(),
+        };
+
+        PERMISSION_REPOSITORY.insert(permission.key(), permission.clone());
+
+        // adds permission to 3 different canisters and some of their methods
+        for canister_nr in 0..3 {
+            let canister_id = Principal::from_slice(&[canister_nr; 29]);
+
+            for method_nr in 0..10 {
+                let permission_with_no_validation = Permission {
+                    resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                        CallExternalCanisterResourceTarget {
+                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                CanisterMethod {
+                                    canister_id,
+                                    method_name: format!("method_{}", method_nr),
+                                },
+                            ),
+                            validation_method: ValidationMethodResourceTarget::No,
+                        },
+                    )),
+                    allow: Allow::authenticated(),
+                };
+
+                let permission_with_validation = Permission {
+                    resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                        CallExternalCanisterResourceTarget {
+                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                CanisterMethod {
+                                    canister_id,
+                                    method_name: format!("method_{}", method_nr),
+                                },
+                            ),
+                            validation_method: ValidationMethodResourceTarget::ValidationMethod(
+                                CanisterMethod {
+                                    canister_id,
+                                    method_name: format!("method_{}", method_nr),
+                                },
+                            ),
+                        },
+                    )),
+                    allow: Allow::authenticated(),
+                };
+
+                PERMISSION_REPOSITORY.insert(
+                    permission_with_no_validation.key(),
+                    permission_with_no_validation.clone(),
+                );
+                PERMISSION_REPOSITORY.insert(
+                    permission_with_validation.key(),
+                    permission_with_validation.clone(),
+                );
+            }
+        }
+
+        let permissions = PERMISSION_REPOSITORY
+            .find_external_canister_call_permissions(&Principal::from_slice(&[1; 29]));
+
+        assert_eq!(permissions.len(), 20);
+
+        for permission in permissions {
+            assert!(matches!(
+                permission.resource,
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                    CallExternalCanisterResourceTarget {
+                        execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                            CanisterMethod {
+                                canister_id,
+                                ..
+                            }
+                        ),
+                        ..
+                    }
+                ))
+
+                if canister_id == Principal::from_slice(&[1; 29])
+            ));
+        }
     }
 }
