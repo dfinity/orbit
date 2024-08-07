@@ -445,7 +445,8 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            permission::Allow, CreateExternalCanisterOperationKindAddExisting,
+            permission::Allow, resource::ValidationMethodResourceTarget,
+            CreateExternalCanisterOperationKindAddExisting, ExternalCanisterCallPermission,
             ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput,
         },
     };
@@ -465,7 +466,23 @@ mod tests {
                 permissions: ExternalCanisterPermissionsInput {
                     read: Allow::authenticated(),
                     change: Allow::authenticated(),
-                    calls: Vec::new(),
+                    calls: vec![
+                        ExternalCanisterCallPermission {
+                            allow: Allow::authenticated(),
+                            execution_method: "test".to_string(),
+                            validation_method: ValidationMethodResourceTarget::No,
+                        },
+                        ExternalCanisterCallPermission {
+                            allow: Allow::authenticated(),
+                            execution_method: "test".to_string(),
+                            validation_method: ValidationMethodResourceTarget::ValidationMethod(
+                                CanisterMethod {
+                                    canister_id: Principal::from_slice(&[10; 29]),
+                                    method_name: "validate_test".to_string(),
+                                },
+                            ),
+                        },
+                    ],
                 },
                 request_policies: ExternalCanisterRequestPoliciesInput {
                     change: None,
@@ -481,9 +498,41 @@ mod tests {
 
         assert!(result.is_ok());
 
-        let result = result.unwrap();
-        assert_eq!(result.name, "test");
-        assert_eq!(result.canister_id, Principal::from_slice(&[10; 29]));
+        let external_canister = result.unwrap();
+        assert_eq!(external_canister.name, "test");
+        assert_eq!(
+            external_canister.canister_id,
+            Principal::from_slice(&[10; 29])
+        );
+
+        let read_permission = PERMISSION_REPOSITORY
+            .get(&Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(
+                    external_canister.canister_id,
+                )),
+            ))
+            .unwrap();
+
+        assert!(read_permission.allowed_authenticated());
+
+        let change_permission = PERMISSION_REPOSITORY
+            .get(&Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Change(
+                    ChangeExternalCanisterResourceTarget::Canister(external_canister.canister_id),
+                ),
+            ))
+            .unwrap();
+
+        assert!(change_permission.allowed_authenticated());
+
+        let call_permission = PERMISSION_REPOSITORY
+            .find_external_canister_call_permissions(&external_canister.canister_id);
+
+        assert_eq!(call_permission.len(), 2);
+
+        for permission in call_permission {
+            assert!(permission.allowed_authenticated());
+        }
     }
 
     #[tokio::test]

@@ -421,6 +421,18 @@ impl Resource {
                                     validation_method: target.validation_method.clone(),
                                     execution_method:
                                         ExecutionMethodResourceTarget::ExecutionMethod(
+                                            CanisterMethod {
+                                                canister_id: canister_method.canister_id,
+                                                method_name: CanisterMethod::WILDCARD.to_string(),
+                                            },
+                                        ),
+                                },
+                            )),
+                            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                                CallExternalCanisterResourceTarget {
+                                    validation_method: target.validation_method.clone(),
+                                    execution_method:
+                                        ExecutionMethodResourceTarget::ExecutionMethod(
                                             canister_method.clone(),
                                         ),
                                 },
