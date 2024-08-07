@@ -1,7 +1,6 @@
 use crate::setup::WALLET_ADMIN_USER;
 use candid::Principal;
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
-use ic_ledger_types::Subaccount;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};

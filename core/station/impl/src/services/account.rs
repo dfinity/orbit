@@ -21,7 +21,7 @@ use crate::{
     repositories::{AccountRepository, AccountWhereClause, ACCOUNT_REPOSITORY},
     services::{
         permission::{PermissionService, PERMISSION_SERVICE},
-        RequestPolicyService, REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
+        RequestPolicyService, REQUEST_POLICY_SERVICE,
     },
 };
 use lazy_static::lazy_static;
