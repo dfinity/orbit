@@ -211,13 +211,13 @@ export type ChangeExternalCanisterResourceTarget = { 'Any' : null } |
   { 'Canister' : Principal };
 export type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
 export interface ConfigureExternalCanisterOperationInput {
+  'kind' : ConfigureExternalCanisterOperationKind,
   'canister_id' : Principal,
-  'operation' : ConfigureExternalCanisterOperationKind,
 }
 export type ConfigureExternalCanisterOperationKind = { 'SoftDelete' : null } |
   { 'Settings' : ConfigureExternalCanisterSettingsInput } |
   { 'Delete' : null } |
-  { 'NativeSettings' : DefiniteCanisterSettings } |
+  { 'NativeSettings' : DefiniteCanisterSettingsInput } |
   { 'TopUp' : bigint };
 export interface ConfigureExternalCanisterSettingsInput {
   'permissions' : [] | [ExternalCanisterPermissionsInput],
@@ -225,9 +225,11 @@ export interface ConfigureExternalCanisterSettingsInput {
   'labels' : [] | [Array<string>],
   'description' : [] | [string],
   'request_policies' : [] | [ExternalCanisterRequestPoliciesInput],
+  'state' : [] | [ExternalCanisterState],
 }
 export interface CreateExternalCanisterOperation {
   'canister_id' : [] | [Principal],
+  'input' : CreateExternalCanisterOperationInput,
 }
 export interface CreateExternalCanisterOperationInput {
   'permissions' : ExternalCanisterPermissionsInput,
@@ -268,6 +270,13 @@ export interface DefiniteCanisterSettings {
   'reserved_cycles_limit' : bigint,
   'memory_allocation' : bigint,
   'compute_allocation' : bigint,
+}
+export interface DefiniteCanisterSettingsInput {
+  'freezing_threshold' : [] | [bigint],
+  'controllers' : [] | [Array<Principal>],
+  'reserved_cycles_limit' : [] | [bigint],
+  'memory_allocation' : [] | [bigint],
+  'compute_allocation' : [] | [bigint],
 }
 export interface DisasterRecovery {
   'user_group_name' : [] | [string],
@@ -372,6 +381,7 @@ export interface ExternalCanister {
   'description' : [] | [string],
   'created_at' : TimestampRFC3339,
   'request_policies' : ExternalCanisterRequestPolicies,
+  'state' : ExternalCanisterState,
 }
 export interface ExternalCanisterCallPermission {
   'execution_method' : string,
@@ -410,6 +420,8 @@ export type ExternalCanisterResourceAction = {
   { 'Read' : ReadExternalCanisterResourceTarget } |
   { 'Create' : CreateExternalCanisterResourceTarget } |
   { 'Change' : ChangeExternalCanisterResourceTarget };
+export type ExternalCanisterState = { 'Active' : null } |
+  { 'Archived' : null };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
 export type FetchAccountBalancesResult = {
     'Ok' : { 'balances' : Array<AccountBalance> }

@@ -1,35 +1,92 @@
+use crate::core::ic_cdk::api::print;
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ExternalCanisterError;
+use crate::mappers::ExternalCanisterMapper;
+use crate::models::{
+    ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
+    CreateExternalCanisterOperationKind, DefiniteCanisterSettingsInput, ExternalCanister,
+    ExternalCanisterId,
+};
+use crate::repositories::{ExternalCanisterRepository, EXTERNAL_CANISTER_REPOSITORY};
 use candid::{Encode, Principal};
 use ic_cdk::api::call::call_raw;
 use ic_cdk::api::management_canister::main::{
-    self as mgmt, CanisterIdRecord, CanisterStatusResponse, CreateCanisterArgument,
+    self as mgmt, delete_canister, deposit_cycles, stop_canister, update_settings,
+    CanisterIdRecord, CanisterStatusResponse, CreateCanisterArgument, UpdateSettingsArgument,
 };
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
+use orbit_essentials::model::ModelValidator;
+use orbit_essentials::repository::Repository;
 use std::sync::Arc;
+use uuid::Uuid;
 
 lazy_static! {
-    pub static ref EXTERNAL_CANISTER_SERVICE: Arc<ExternalCanisterService> =
-        Arc::new(ExternalCanisterService::default());
+    pub static ref EXTERNAL_CANISTER_SERVICE: Arc<ExternalCanisterService> = Arc::new(
+        ExternalCanisterService::new(Arc::clone(&EXTERNAL_CANISTER_REPOSITORY))
+    );
 }
 
 const CREATE_CANISTER_CYCLES: u128 = 100_000_000_000; // the default fee of 100 B cycles
 
 #[derive(Default, Debug)]
-pub struct ExternalCanisterService {}
+pub struct ExternalCanisterService {
+    external_canister_repository: Arc<ExternalCanisterRepository>,
+}
 
 impl ExternalCanisterService {
-    pub async fn create_canister(&self) -> ServiceResult<Principal, ExternalCanisterError> {
+    pub fn new(external_canister_repository: Arc<ExternalCanisterRepository>) -> Self {
+        Self {
+            external_canister_repository,
+        }
+    }
+
+    // Returns the external canister if found, otherwise an error.
+    pub fn get_external_canister(
+        &self,
+        id: &ExternalCanisterId,
+    ) -> ServiceResult<ExternalCanister> {
+        let resource = self
+            .external_canister_repository
+            .get(&ExternalCanister::key(*id))
+            .ok_or(ExternalCanisterError::NotFound {
+                id: Uuid::from_bytes(*id).hyphenated().to_string(),
+            })?;
+
+        Ok(resource)
+    }
+
+    // Returns the external canister by its canister id if found, otherwise an error.
+    pub fn get_external_canister_by_canister_id(
+        &self,
+        canister_id: &Principal,
+    ) -> ServiceResult<ExternalCanister> {
+        let recource_id = self
+            .external_canister_repository
+            .find_by_canister_id(canister_id)
+            .ok_or(ExternalCanisterError::InvalidExternalCanister {
+                principal: *canister_id,
+            })?;
+
+        self.get_external_canister(&recource_id)
+    }
+
+    pub async fn create_canister(
+        &self,
+        cycles: Option<u128>,
+    ) -> ServiceResult<Principal, ExternalCanisterError> {
         let create_canister_arg = CreateCanisterArgument { settings: None };
 
-        let canister_id = mgmt::create_canister(create_canister_arg, CREATE_CANISTER_CYCLES)
-            .await
-            .map_err(|(_, err)| ExternalCanisterError::Failed {
-                reason: err.to_string(),
-            })?
-            .0
-            .canister_id;
+        let canister_id = mgmt::create_canister(
+            create_canister_arg,
+            cycles.unwrap_or(CREATE_CANISTER_CYCLES),
+        )
+        .await
+        .map_err(|(_, err)| ExternalCanisterError::Failed {
+            reason: err.to_string(),
+        })?
+        .0
+        .canister_id;
 
         Ok(canister_id)
     }
@@ -71,5 +128,371 @@ impl ExternalCanisterService {
         .map_err(|(_, err)| ExternalCanisterError::Failed {
             reason: err.to_string(),
         })
+    }
+
+    /// Adds a new external canister to the system.
+    ///
+    /// Can be used to create another canister to a subnet or add an existing canister.
+    pub async fn add_external_canister(
+        &self,
+        input: CreateExternalCanisterOperationInput,
+    ) -> ServiceResult<ExternalCanister> {
+        self.check_unique_name(input.name.clone().as_str(), None)?;
+        let external_canister = match &input.kind {
+            CreateExternalCanisterOperationKind::CreateNew(opts) => {
+                let mut external_canister = ExternalCanisterMapper::from_create_input(
+                    // The canister will be created below, but this makes sure that we can validate the
+                    // model ahead of time without the canister id that will be generated.
+                    Principal::anonymous(),
+                    input.clone(),
+                );
+
+                external_canister.validate()?;
+
+                // Create the canister in the subnet and update the external canister with the correct id.
+                external_canister.canister_id = self
+                    .create_canister(opts.initial_cycles.map(|cycles| cycles as u128))
+                    .await
+                    .map_err(|err| ExternalCanisterError::Failed {
+                        reason: format!("failed to create external canister: {}", err),
+                    })?;
+
+                external_canister
+            }
+            CreateExternalCanisterOperationKind::AddExisting(opts) => {
+                EnsureExternalCanister::is_external_canister(opts.canister_id)?;
+                self.check_unique_canister_id(&opts.canister_id, None)?;
+
+                let external_canister =
+                    ExternalCanisterMapper::from_create_input(opts.canister_id, input);
+
+                external_canister.validate()?;
+
+                external_canister
+            }
+        };
+
+        // todo: add permissions and request policies handling
+
+        self.external_canister_repository
+            .insert(external_canister.to_key(), external_canister.clone());
+
+        Ok(external_canister)
+    }
+
+    /// Edits an external canister's settings.
+    pub fn edit_external_canister(
+        &self,
+        id: &ExternalCanisterId,
+        input: ConfigureExternalCanisterSettingsInput,
+    ) -> ServiceResult<ExternalCanister> {
+        let mut external_canister = self.get_external_canister(id)?;
+
+        external_canister.update_with(input);
+        external_canister.validate()?;
+
+        // todo: add permissions and request policies handling
+
+        self.external_canister_repository
+            .insert(external_canister.to_key(), external_canister.clone());
+
+        Ok(external_canister)
+    }
+
+    /// Adds cycles to the external canister, the cycles are taken from the station's balance.
+    pub async fn top_up_canister(&self, canister_id: Principal, cycles: u128) -> ServiceResult<()> {
+        if let Err((err_code, err_msg)) =
+            deposit_cycles(CanisterIdRecord { canister_id }, cycles).await
+        {
+            Err(ExternalCanisterError::Failed {
+                reason: format!(
+                    "Failed to top up canister {} with {} cycles, code: {:?} and reason: {:?}",
+                    canister_id.to_text(),
+                    cycles,
+                    err_code,
+                    err_msg
+                ),
+            })?;
+        }
+
+        Ok(())
+    }
+
+    /// Only deletes the external canister from the system.
+    pub fn soft_delete_external_canister(
+        &self,
+        id: &ExternalCanisterId,
+    ) -> ServiceResult<ExternalCanister> {
+        let external_canister = self.get_external_canister(id)?;
+        self.external_canister_repository
+            .remove(&external_canister.to_key());
+
+        // todo: remove permissions and request policies
+
+        Ok(external_canister)
+    }
+
+    /// Deletes an external canister from the system, as well as from the subnet.
+    pub async fn hard_delete_external_canister(
+        &self,
+        id: &ExternalCanisterId,
+    ) -> ServiceResult<ExternalCanister> {
+        let external_canister = self.get_external_canister(id)?;
+
+        // Deleting a canister requires the canister to be stopped first.
+        //
+        // See https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-delete_canister
+        if let Err((err_code, err_msg)) = stop_canister(CanisterIdRecord {
+            canister_id: external_canister.canister_id,
+        })
+        .await
+        {
+            // We simply log the error and continue, this is because stopped canisters will fail this call
+            // but we still want to delete the canister.
+            print(format!(
+                "Failed to stop canister {}, code: {:?} and reason: {:?}",
+                external_canister.canister_id.to_text(),
+                err_code,
+                err_msg
+            ));
+        }
+
+        if let Err((err_code, err_msg)) = delete_canister(CanisterIdRecord {
+            canister_id: external_canister.canister_id,
+        })
+        .await
+        {
+            Err(ExternalCanisterError::Failed {
+                reason: format!(
+                    "Failed to delete canister {} from the subnet, code: {:?} and reason: {:?}",
+                    external_canister.canister_id.to_text(),
+                    err_code,
+                    err_msg
+                ),
+            })?;
+        }
+
+        // The soft delete is done after the hard delete to ensure that the external canister
+        // is removed from the subnet before it is removed from the system.
+        //
+        // The intercanister call is more likely to fail than the local operation.
+        self.soft_delete_external_canister(id)?;
+
+        Ok(external_canister)
+    }
+
+    /// Changes the IC settings of the external canister.
+    pub async fn change_canister_ic_settings(
+        &self,
+        canister_id: Principal,
+        settings: DefiniteCanisterSettingsInput,
+    ) -> ServiceResult<()> {
+        if let Err((err_code, err_msg)) = update_settings(UpdateSettingsArgument {
+            canister_id,
+            settings: settings.into(),
+        })
+        .await
+        {
+            Err(ExternalCanisterError::Failed {
+                reason: format!(
+                    "Failed to update canister {} settings, code: {:?} and reason: {:?}",
+                    canister_id.to_text(),
+                    err_code,
+                    err_msg
+                ),
+            })?;
+        }
+
+        Ok(())
+    }
+
+    /// Verifies that the name is unique among external canisters.
+    ///
+    /// If `skip_id` is provided, it will be ignored if the match would be the same.
+    fn check_unique_name(
+        &self,
+        name: &str,
+        skip_id: Option<ExternalCanisterId>,
+    ) -> ServiceResult<()> {
+        if !self
+            .external_canister_repository
+            .is_unique_name(name, skip_id)
+        {
+            Err(ExternalCanisterError::ValidationError {
+                info: format!("The name '{}' is already in use.", name),
+            })?;
+        }
+
+        Ok(())
+    }
+
+    /// Verifies that the canister id is unique among external canisters.
+    ///
+    /// If `skip_id` is provided, it will be ignored if the match would be the same.
+    fn check_unique_canister_id(
+        &self,
+        canister_id: &Principal,
+        skip_id: Option<ExternalCanisterId>,
+    ) -> ServiceResult<()> {
+        if !self
+            .external_canister_repository
+            .is_unique_canister_id(canister_id, skip_id)
+        {
+            Err(ExternalCanisterError::ValidationError {
+                info: format!("The canister id '{}' is already in use.", canister_id),
+            })?;
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{
+        core::test_utils,
+        models::{
+            permission::Allow, CreateExternalCanisterOperationKindAddExisting,
+            ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput,
+        },
+    };
+
+    fn setup() {
+        test_utils::init_canister_system();
+    }
+
+    #[tokio::test]
+    async fn test_add_external_canister() {
+        setup();
+        let result = EXTERNAL_CANISTER_SERVICE
+            .add_external_canister(CreateExternalCanisterOperationInput {
+                name: "test".to_string(),
+                description: None,
+                labels: None,
+                permissions: ExternalCanisterPermissionsInput {
+                    read: Allow::authenticated(),
+                    change: Allow::authenticated(),
+                    calls: Vec::new(),
+                },
+                request_policies: ExternalCanisterRequestPoliciesInput {
+                    change: None,
+                    calls: Vec::new(),
+                },
+                kind: CreateExternalCanisterOperationKind::AddExisting(
+                    CreateExternalCanisterOperationKindAddExisting {
+                        canister_id: Principal::from_slice(&[10; 29]),
+                    },
+                ),
+            })
+            .await;
+
+        assert!(result.is_ok());
+
+        let result = result.unwrap();
+        assert_eq!(result.name, "test");
+        assert_eq!(result.canister_id, Principal::from_slice(&[10; 29]));
+    }
+
+    #[tokio::test]
+    async fn fail_to_add_duplicate_name_external_canister() {
+        setup();
+        for i in 0..2 {
+            let result = EXTERNAL_CANISTER_SERVICE
+                .add_external_canister(CreateExternalCanisterOperationInput {
+                    name: "test".to_string(),
+                    description: None,
+                    labels: None,
+                    permissions: ExternalCanisterPermissionsInput {
+                        read: Allow::authenticated(),
+                        change: Allow::authenticated(),
+                        calls: Vec::new(),
+                    },
+                    request_policies: ExternalCanisterRequestPoliciesInput {
+                        change: None,
+                        calls: Vec::new(),
+                    },
+                    kind: CreateExternalCanisterOperationKind::AddExisting(
+                        CreateExternalCanisterOperationKindAddExisting {
+                            canister_id: Principal::from_slice(&[i; 29]),
+                        },
+                    ),
+                })
+                .await;
+
+            match i {
+                0 => assert!(result.is_ok()),
+                1 => assert!(result.is_err()),
+                _ => unreachable!("unexpected iteration"),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn fail_to_add_duplicate_canister_id_external_canister() {
+        setup();
+        for i in 0..2 {
+            let result = EXTERNAL_CANISTER_SERVICE
+                .add_external_canister(CreateExternalCanisterOperationInput {
+                    name: format!("test{}", i),
+                    description: None,
+                    labels: None,
+                    permissions: ExternalCanisterPermissionsInput {
+                        read: Allow::authenticated(),
+                        change: Allow::authenticated(),
+                        calls: Vec::new(),
+                    },
+                    request_policies: ExternalCanisterRequestPoliciesInput {
+                        change: None,
+                        calls: Vec::new(),
+                    },
+                    kind: CreateExternalCanisterOperationKind::AddExisting(
+                        CreateExternalCanisterOperationKindAddExisting {
+                            canister_id: Principal::from_slice(&[10; 29]),
+                        },
+                    ),
+                })
+                .await;
+
+            match i {
+                0 => assert!(result.is_ok()),
+                1 => assert!(result.is_err()),
+                _ => unreachable!("unexpected iteration"),
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_soft_delete_of_canister() {
+        setup();
+        let canister = EXTERNAL_CANISTER_SERVICE
+            .add_external_canister(CreateExternalCanisterOperationInput {
+                name: "test".to_string(),
+                description: None,
+                labels: None,
+                permissions: ExternalCanisterPermissionsInput {
+                    read: Allow::authenticated(),
+                    change: Allow::authenticated(),
+                    calls: Vec::new(),
+                },
+                request_policies: ExternalCanisterRequestPoliciesInput {
+                    change: None,
+                    calls: Vec::new(),
+                },
+                kind: CreateExternalCanisterOperationKind::AddExisting(
+                    CreateExternalCanisterOperationKindAddExisting {
+                        canister_id: Principal::from_slice(&[10; 29]),
+                    },
+                ),
+            })
+            .await
+            .unwrap();
+
+        let result = EXTERNAL_CANISTER_SERVICE.soft_delete_external_canister(&canister.id);
+
+        assert!(result.is_ok());
+        assert!(EXTERNAL_CANISTER_SERVICE
+            .get_external_canister(&canister.id)
+            .is_err());
     }
 }
