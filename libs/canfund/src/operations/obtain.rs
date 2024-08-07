@@ -2,10 +2,14 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use candid::Principal;
-use ic_ledger_types::{transfer, Memo, Subaccount, Tokens, TransferArgs};
+use ic_ledger_types::{Memo, Subaccount, Tokens, TransferArgs};
 
-use crate::api::cmc::{CyclesMintingCanister, NotifyError, NotifyTopUpResult};
+use crate::api::{
+    cmc::{CyclesMintingCanister, NotifyError, NotifyTopUpResult},
+    ledger::LedgerCanister,
+};
 
+#[derive(Debug)]
 pub struct ObtainCycleError {
     /// Details of the error.
     pub details: String,
@@ -65,8 +69,7 @@ pub trait ObtainCycles: Send + Sync {
 
 pub struct MintCycles {
     pub cmc: Arc<dyn CyclesMintingCanister>,
-    // ledger: Arc<dyn LedgerCanister>,
-    pub ledger_canister_id: Principal,
+    pub ledger: Arc<dyn LedgerCanister>,
     pub from_subaccount: Subaccount,
 }
 
@@ -97,25 +100,24 @@ impl ObtainCycles for MintCycles {
         let icp_to_mint_cycles_from_e8s = amount * 100_000_000u128 / cycles_per_icp;
 
         // transfer ICP to ledger account of CMC
-        let call_result = transfer(
-            self.ledger_canister_id,
-            TransferArgs {
+        let call_result = self
+            .ledger
+            .transfer(TransferArgs {
                 memo: Memo(0x50555054),
                 amount: Tokens::from_e8s(icp_to_mint_cycles_from_e8s as u64),
                 fee: Tokens::from_e8s(10_000),
                 from_subaccount: Some(self.from_subaccount),
                 to: self.cmc.get_top_up_address(target_canister_id),
                 created_at_time: None,
-            },
-        )
-        .await
-        .map_err(|err| ObtainCycleError {
-            details: format!(
-                "Error transferring ICP to CMC account: code={:?}, message={}",
-                err.0, err.1
-            ),
-            can_retry: false,
-        })?;
+            })
+            .await
+            .map_err(|err| ObtainCycleError {
+                details: format!(
+                    "Error transferring ICP to CMC account: code={:?}, message={}",
+                    err.0, err.1
+                ),
+                can_retry: false,
+            })?;
 
         let block_index = call_result.map_err(|err| ObtainCycleError {
             can_retry: matches!(&err, ic_ledger_types::TransferError::TxCreatedInFuture),
@@ -186,5 +188,37 @@ impl ObtainCycles for MintCycles {
                 },
             }?;
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::api::{cmc::test::TestCmcCanister, ledger::test::TestLedgerCanister};
+
+    #[tokio::test]
+    async fn test_obtain() {
+        let cmc = Arc::new(TestCmcCanister::default());
+        let ledger = Arc::new(TestLedgerCanister::default());
+
+        let obtain = MintCycles {
+            cmc: cmc.clone(),
+            ledger: ledger.clone(),
+            from_subaccount: Subaccount([0u8; 32]),
+        };
+
+        obtain
+            .obtain_cycles(1_000_000_000_000, Principal::anonymous())
+            .await
+            .expect("obtain_cycles failed");
+
+        // calls to get the ICP price
+        assert!(*cmc.get_icp_xdr_called.read().await);
+
+        // calls to transfer ICP to the CMC account
+        assert!(matches!(
+            *ledger.transfer_called_with.read().await,
+            Some(TransferArgs { amount, .. }) if amount == Tokens::from_e8s(100_000_000 / 5)
+        ));
     }
 }

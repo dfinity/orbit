@@ -17,7 +17,10 @@ use crate::{
     repositories::{RequestRepository, REQUEST_REPOSITORY},
 };
 use candid::Principal;
-use canfund::{api::cmc::IcCyclesMintingCanister, operations::obtain::MintCycles};
+use canfund::{
+    api::{cmc::IcCyclesMintingCanister, ledger::IcLedgerCanister},
+    operations::obtain::MintCycles,
+};
 use ic_ledger_types::{Subaccount, MAINNET_CYCLES_MINTING_CANISTER_ID, MAINNET_LEDGER_CANISTER_ID};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
@@ -106,7 +109,7 @@ impl SystemService {
 
     pub fn get_obtain_cycle_config(&self, cycle_minting_account: &AccountId) -> MintCycles {
         MintCycles {
-            ledger_canister_id: MAINNET_LEDGER_CANISTER_ID,
+            ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
             cmc: Arc::new(IcCyclesMintingCanister::new(
                 MAINNET_CYCLES_MINTING_CANISTER_ID,
             )),

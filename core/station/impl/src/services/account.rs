@@ -15,8 +15,8 @@ use crate::{
         request_specifier::RequestSpecifier,
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
-        AddRequestPolicyOperationInput, Blockchain, BlockchainStandard, EditAccountOperationInput,
-        EditPermissionOperationInput,
+        AddRequestPolicyOperationInput, Blockchain, BlockchainStandard, CycleObtainStrategy,
+        EditAccountOperationInput, EditPermissionOperationInput,
     },
     repositories::{AccountRepository, AccountWhereClause, ACCOUNT_REPOSITORY},
     services::{
@@ -250,7 +250,7 @@ impl AccountService {
         let mut system_info = read_system_info();
 
         // if this is the first account created, and there is no cycle minting account set, set this account as the cycle minting account
-        if system_info.get_cycle_minting_account().is_none()
+        if system_info.get_cycle_obtain_strategy().is_none()
             && ACCOUNT_REPOSITORY.len() == 1
             && matches!(new_account.blockchain, Blockchain::InternetComputer)
             && new_account.standard == BlockchainStandard::Native
@@ -258,7 +258,9 @@ impl AccountService {
         {
             ic_cdk::println!("Setting cycle minting account to {}", uuid);
 
-            system_info.set_cycle_minting_account(*uuid.as_bytes());
+            system_info.set_cycle_obtain_strategy(CycleObtainStrategy::MintFromICP {
+                account_id: *uuid.as_bytes(),
+            });
             write_system_info(system_info);
 
             #[cfg(target_arch = "wasm32")]

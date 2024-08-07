@@ -24,3 +24,6 @@ num-bigint = { workspace = true }
 thiserror = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ['full'] }

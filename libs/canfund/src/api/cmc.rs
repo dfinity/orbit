@@ -4,12 +4,12 @@ use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use serde::Deserialize;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct GetIcpXdrResultData {
     pub xdr_permyriad_per_icp: u64,
     pub timestamp_seconds: u64,
 }
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct GetIcpXdrResult {
     pub data: GetIcpXdrResultData,
     pub certificate: Vec<u8>,
@@ -98,5 +98,52 @@ impl CyclesMintingCanister for IcCyclesMintingCanister {
 
     fn get_top_up_address(&self, target_canister_id: Principal) -> AccountIdentifier {
         AccountIdentifier::new(&self.cmc_canister_id, &Subaccount::from(target_canister_id))
+    }
+}
+
+#[cfg(test)]
+pub mod test {
+    use std::sync::Arc;
+
+    use super::*;
+    use async_trait::async_trait;
+    use tokio::sync::RwLock;
+
+    #[derive(Default)]
+    pub struct TestCmcCanister {
+        pub notify_top_up_called_with: Arc<RwLock<Option<u64>>>,
+        pub get_icp_xdr_called: Arc<RwLock<bool>>,
+    }
+
+    #[async_trait]
+    impl CyclesMintingCanister for TestCmcCanister {
+        async fn get_icp_xdr(&self) -> CallResult<GetIcpXdrResult> {
+            let mut locked = self.get_icp_xdr_called.write().await;
+            *locked = true;
+            Ok(GetIcpXdrResult {
+                data: GetIcpXdrResultData {
+                    xdr_permyriad_per_icp: 5 * 10000, // 5 XDR per ICP
+                    timestamp_seconds: 0,
+                },
+                ..Default::default()
+            })
+        }
+
+        async fn notify_top_up(
+            &self,
+            block_index: u64,
+            _canister_id: Principal,
+        ) -> CallResult<NotifyTopUpResult> {
+            let mut locked = self.notify_top_up_called_with.write().await;
+            *locked = Some(block_index);
+            Ok(NotifyTopUpResult::Ok(10))
+        }
+
+        fn get_top_up_address(&self, target_canister_id: Principal) -> AccountIdentifier {
+            AccountIdentifier::new(
+                &Principal::anonymous(),
+                &Subaccount::from(target_canister_id),
+            )
+        }
     }
 }

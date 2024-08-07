@@ -23,6 +23,12 @@ pub struct DisasterRecoveryCommittee {
     pub quorum: u16,
 }
 
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum CycleObtainStrategy {
+    MintFromICP { account_id: AccountId },
+}
+
 #[storable(size = SYSTEM_RESERVED_MEMORY_BYTES)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SystemInfo {
@@ -38,8 +44,8 @@ pub struct SystemInfo {
     upgrader_wasm_module: Option<Vec<u8>>,
     /// The disaster recovery committee user group id.
     disaster_recovery_committee: Option<DisasterRecoveryCommittee>,
-    /// Cycle minting ICP account.
-    cycle_minting_account: Option<AccountId>,
+    /// Defines how the station tops up itself with cycles.
+    cycle_obtain_strategy: Option<CycleObtainStrategy>,
 }
 
 impl Default for SystemInfo {
@@ -51,7 +57,7 @@ impl Default for SystemInfo {
             upgrader_canister_id: None,
             upgrader_wasm_module: None,
             disaster_recovery_committee: None,
-            cycle_minting_account: None,
+            cycle_obtain_strategy: None,
         }
     }
 }
@@ -67,12 +73,12 @@ impl SystemInfo {
         }
     }
 
-    pub fn get_cycle_minting_account(&self) -> Option<&AccountId> {
-        self.cycle_minting_account.as_ref()
+    pub fn get_cycle_obtain_strategy(&self) -> Option<&CycleObtainStrategy> {
+        self.cycle_obtain_strategy.as_ref()
     }
 
-    pub fn set_cycle_minting_account(&mut self, account_id: AccountId) {
-        self.cycle_minting_account = Some(account_id);
+    pub fn set_cycle_obtain_strategy(&mut self, strategy: CycleObtainStrategy) {
+        self.cycle_obtain_strategy = Some(strategy);
     }
 
     pub fn get_name(&self) -> &str {
