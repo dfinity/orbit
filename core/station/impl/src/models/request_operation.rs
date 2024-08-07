@@ -443,6 +443,10 @@ pub struct CanisterMethod {
     pub method_name: String,
 }
 
+impl CanisterMethod {
+    pub const WILDCARD: &'static str = "*";
+}
+
 impl ModelValidator<ValidationError> for CanisterMethod {
     fn validate(&self) -> ModelValidatorResult<ValidationError> {
         EnsureExternalCanister::is_external_canister(self.canister_id)?;

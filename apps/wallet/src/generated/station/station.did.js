@@ -127,9 +127,6 @@ export const idlFactory = ({ IDL }) => {
     'Any' : IDL.Null,
     'Canister' : IDL.Principal,
   });
-  const CreateExternalCanisterResourceTarget = IDL.Variant({
-    'Any' : IDL.Null,
-  });
   const ChangeExternalCanisterResourceTarget = IDL.Variant({
     'Any' : IDL.Null,
     'Canister' : IDL.Principal,
@@ -138,7 +135,7 @@ export const idlFactory = ({ IDL }) => {
     'Call' : CallExternalCanisterResourceTarget,
     'List' : IDL.Null,
     'Read' : ReadExternalCanisterResourceTarget,
-    'Create' : CreateExternalCanisterResourceTarget,
+    'Create' : IDL.Null,
     'Change' : ChangeExternalCanisterResourceTarget,
   });
   const AccountResourceAction = IDL.Variant({
@@ -315,7 +312,7 @@ export const idlFactory = ({ IDL }) => {
     'EditRequestPolicy' : ResourceIds,
     'RemoveRequestPolicy' : ResourceIds,
     'RemoveAddressBookEntry' : ResourceIds,
-    'CreateExternalCanister' : CreateExternalCanisterResourceTarget,
+    'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : ResourceIds,
     'ChangeCanister' : IDL.Null,
     'EditUser' : ResourceIds,

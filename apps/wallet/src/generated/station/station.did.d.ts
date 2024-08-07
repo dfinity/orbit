@@ -249,7 +249,6 @@ export interface CreateExternalCanisterOperationKindAddExisting {
 export interface CreateExternalCanisterOperationKindCreateNew {
   'initial_cycles' : [] | [bigint],
 }
-export type CreateExternalCanisterResourceTarget = { 'Any' : null };
 export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
@@ -418,7 +417,7 @@ export type ExternalCanisterResourceAction = {
   } |
   { 'List' : null } |
   { 'Read' : ReadExternalCanisterResourceTarget } |
-  { 'Create' : CreateExternalCanisterResourceTarget } |
+  { 'Create' : null } |
   { 'Change' : ChangeExternalCanisterResourceTarget };
 export type ExternalCanisterState = { 'Active' : null } |
   { 'Archived' : null };
@@ -917,7 +916,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'EditRequestPolicy' : ResourceIds } |
   { 'RemoveRequestPolicy' : ResourceIds } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
-  { 'CreateExternalCanister' : CreateExternalCanisterResourceTarget } |
+  { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : ResourceIds } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |

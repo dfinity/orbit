@@ -48,7 +48,7 @@ type RequestSpecifier = variant {
   ChangeCanister;
   SetDisasterRecovery;
   ChangeExternalCanister : ChangeExternalCanisterResourceTarget;
-  CreateExternalCanister : CreateExternalCanisterResourceTarget;
+  CreateExternalCanister;
   CallExternalCanister : CallExternalCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
   AddRequestPolicy;
@@ -1797,11 +1797,6 @@ type ChangeCanisterResourceAction = variant {
   Create;
 };
 
-// The target of a request to create a external canister.
-type CreateExternalCanisterResourceTarget = variant {
-  Any;
-};
-
 // The target canister of a request to change a external canister.
 type ChangeExternalCanisterResourceTarget = variant {
   Any;
@@ -1817,7 +1812,7 @@ type ReadExternalCanisterResourceTarget = variant {
 // The actions that are available for external canisters.
 type ExternalCanisterResourceAction = variant {
   List;
-  Create : CreateExternalCanisterResourceTarget;
+  Create;
   Change : ChangeExternalCanisterResourceTarget;
   Call : CallExternalCanisterResourceTarget;
   Read : ReadExternalCanisterResourceTarget;

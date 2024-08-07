@@ -4,9 +4,9 @@ use crate::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget,
             ChangeCanisterResourceAction, ChangeExternalCanisterResourceTarget,
-            CreateExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
-            ExternalCanisterResourceAction, PermissionResourceAction, Resource, ResourceAction,
-            ResourceId, SystemResourceAction, UserResourceAction,
+            ExecutionMethodResourceTarget, ExternalCanisterResourceAction,
+            PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+            UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
@@ -1214,21 +1214,33 @@ impl RequestOperation {
                 ..
             }) => {
                 vec![Resource::ExternalCanister(
-                    ExternalCanisterResourceAction::Create(
-                        CreateExternalCanisterResourceTarget::Any,
-                    ),
+                    ExternalCanisterResourceAction::Create,
                 )]
             }
             RequestOperation::CallExternalCanister(CallExternalCanisterOperation {
                 input, ..
             }) => {
                 vec![
+                    // Any canister with any method
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
                         CallExternalCanisterResourceTarget {
                             validation_method: input.validation_method.clone().into(),
                             execution_method: ExecutionMethodResourceTarget::Any,
                         },
                     )),
+                    // A specific canister with any execution method
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                        CallExternalCanisterResourceTarget {
+                            validation_method: input.validation_method.clone().into(),
+                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                CanisterMethod {
+                                    canister_id: input.execution_method.canister_id,
+                                    method_name: CanisterMethod::WILDCARD.to_string(),
+                                },
+                            ),
+                        },
+                    )),
+                    // A specific canister with a specific execution method
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
                         CallExternalCanisterResourceTarget {
                             validation_method: input.validation_method.clone().into(),
