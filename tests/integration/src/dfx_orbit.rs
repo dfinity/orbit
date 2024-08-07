@@ -181,6 +181,16 @@ fn test_dfx_json_from_template(config: DfxOrbitTestConfig, port: u16) -> String 
 
 /// Setup the station agent for the test
 async fn setup_dfx_orbit(station_id: Principal) -> DfxOrbit {
+    // Setup a logger with highest log level. Capture logging by test harness
+    use slog::Drain;
+    let decorator = slog_term::PlainDecorator::new(slog_term::TestStdoutWriter);
+    let drain = slog_term::FullFormat::new(decorator)
+        .build()
+        .filter_level(slog::Level::Trace)
+        .fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+    let logger = slog::Logger::root(drain, slog::o!());
+
     let port = PORT.with(|port| *port.borrow());
 
     let orbit_agent = OrbitExtensionAgent::new().unwrap();
@@ -193,7 +203,7 @@ async fn setup_dfx_orbit(station_id: Principal) -> DfxOrbit {
         })
         .unwrap();
 
-    DfxOrbit::new(orbit_agent).await.unwrap()
+    DfxOrbit::new(orbit_agent, logger).await.unwrap()
 }
 
 /// Create the dfx user's identities and add them to the station

@@ -15,9 +15,9 @@ use dfx_core::{config::model::canister_id_store::CanisterIdStore, DfxInterface};
 use dfx_extension_api::OrbitExtensionAgent;
 use ic_utils::{canister::CanisterBuilder, Canister};
 use orbit_station_api::CreateRequestResponse;
-use slog::{o, Drain, Logger};
 
 pub use cli::asset::AssetAgent;
+use slog::Logger;
 pub use station_agent::StationAgent;
 pub struct DfxOrbit {
     // The station agent that handles communication with the station
@@ -32,16 +32,11 @@ pub struct DfxOrbit {
 
 impl DfxOrbit {
     /// Creates a new agent for communicating with the default station.
-    pub async fn new(mut agent: OrbitExtensionAgent) -> anyhow::Result<Self> {
+    pub async fn new(mut agent: OrbitExtensionAgent, logger: Logger) -> anyhow::Result<Self> {
         let config = agent
             .default_station()?
             .ok_or_else(|| anyhow::format_err!("No default station specified"))?;
         let interface = agent.dfx_interface().await?;
-
-        let decorator = slog_term::TermDecorator::new().build();
-        let drain = slog_term::FullFormat::new(decorator).build().fuse();
-        let drain = slog_async::Async::new(drain).build().fuse();
-        let logger = slog::Logger::root(drain, o!());
 
         Ok(Self {
             station: StationAgent::new(interface.agent().clone(), config),
