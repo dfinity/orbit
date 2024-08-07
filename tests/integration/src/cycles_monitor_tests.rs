@@ -1,13 +1,10 @@
-use crate::interfaces::{
-    get_icp_account_balance, get_icp_balance, send_icp, send_icp_to_account, ICP, ICP_FEE,
-};
+use crate::interfaces::{get_icp_account_balance, send_icp_to_account, ICP};
 use crate::setup::{
     get_canister_wasm, setup_new_env, setup_new_env_with_config, SetupConfig, WALLET_ADMIN_USER,
 };
 use crate::utils::{
     advance_time_to_burn_cycles, controller_test_id, create_icp_account,
-    get_core_canister_health_status, get_system_info, get_user, subaccount_from_id, user_test_id,
-    NNS_ROOT_CANISTER_ID,
+    get_core_canister_health_status, get_system_info, get_user, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use control_panel_api::{
@@ -15,15 +12,13 @@ use control_panel_api::{
     DeployStationResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
     UserSubscriptionStatusDTO,
 };
-use ic_ledger_types::{AccountIdentifier, Subaccount};
+use ic_ledger_types::AccountIdentifier;
 use orbit_essentials::api::ApiResult;
-use orbit_essentials::utils;
+
 use pocket_ic::{update_candid_as, CallError};
 use sha2::{Digest, Sha256};
 use station_api::{HealthStatus, SystemInfoResponse};
-use std::str::FromStr;
 use std::time::Duration;
-use uuid::Uuid;
 
 #[test]
 fn successful_monitors_upgrader_and_tops_up() {

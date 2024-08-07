@@ -14,7 +14,7 @@ use ic_cdk::{
         management_canister::main::{deposit_cycles, CanisterId, CanisterIdRecord},
         time,
     },
-    id, print, spawn, trap,
+    id, print, spawn,
 };
 use ic_cdk_timers::TimerId;
 use std::{

@@ -588,7 +588,7 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
     };
     let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
-        &env,
+        env,
         station_id,
         WALLET_ADMIN_USER,
         "create_request",
@@ -617,7 +617,7 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
         request_id: account_creation_request_dto.id,
     };
     let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
-        &env,
+        env,
         station_id,
         WALLET_ADMIN_USER,
         "get_request",
@@ -635,20 +635,12 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
         }
     };
 
-    let account_dto = match finalized_request.operation {
-        RequestOperationDTO::AddAccount(add_account) => add_account.account.unwrap(),
+    match finalized_request.operation {
+        RequestOperationDTO::AddAccount(add_account) => {
+            add_account.account.expect("no account in result")
+        }
         _ => {
             panic!("request must be AddAccount");
         }
-    };
-
-    account_dto
-}
-
-pub fn subaccount_from_id(id: &[u8; 16]) -> Subaccount {
-    let len = id.len();
-    let mut subaccount_id = [0u8; 32];
-    subaccount_id[0..len].copy_from_slice(&id[0..len]);
-
-    Subaccount(subaccount_id)
+    }
 }

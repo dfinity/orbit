@@ -7,7 +7,7 @@ use candid::{CandidType, Encode, Principal};
 use control_panel_api::UploadCanisterModulesInput;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{PocketIc, PocketIcBuilder};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use station_api::{AdminInitInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
 use std::collections::{HashMap, HashSet};
 use std::env;
@@ -25,8 +25,6 @@ pub static CANISTER_INITIAL_CYCLES: u128 = 100_000_000_000_000;
 pub enum ExchangeRateCanister {
     /// Enables the exchange rate canister with the given canister ID.
     Set(Principal),
-    /// Disable the exchange rate canister.
-    Unset,
 }
 
 #[derive(Serialize, CandidType, Clone, Debug, PartialEq, Eq)]
