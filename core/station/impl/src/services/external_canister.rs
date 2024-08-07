@@ -636,4 +636,63 @@ mod tests {
             .get_external_canister(&canister.id)
             .is_err());
     }
+
+    #[tokio::test]
+    async fn test_edit_external_canister() {
+        setup();
+        let canister = EXTERNAL_CANISTER_SERVICE
+            .add_external_canister(CreateExternalCanisterOperationInput {
+                name: "test".to_string(),
+                description: None,
+                labels: None,
+                permissions: ExternalCanisterPermissionsInput {
+                    read: Allow::authenticated(),
+                    change: Allow::authenticated(),
+                    calls: vec![ExternalCanisterCallPermission {
+                        allow: Allow::authenticated(),
+                        execution_method: "test".to_string(),
+                        validation_method: ValidationMethodResourceTarget::No,
+                    }],
+                },
+                request_policies: ExternalCanisterRequestPoliciesInput {
+                    change: None,
+                    calls: Vec::new(),
+                },
+                kind: CreateExternalCanisterOperationKind::AddExisting(
+                    CreateExternalCanisterOperationKindAddExisting {
+                        canister_id: Principal::from_slice(&[10; 29]),
+                    },
+                ),
+            })
+            .await
+            .unwrap();
+
+        let updated_canister = EXTERNAL_CANISTER_SERVICE
+            .edit_external_canister(
+                &canister.id,
+                ConfigureExternalCanisterSettingsInput {
+                    name: Some("test2".to_string()),
+                    description: None,
+                    labels: None,
+                    state: None,
+                    permissions: Some(ExternalCanisterPermissionsInput {
+                        read: Allow::authenticated(),
+                        change: Allow::authenticated(),
+                        calls: Vec::new(),
+                    }),
+                    request_policies: Some(ExternalCanisterRequestPoliciesInput {
+                        change: None,
+                        calls: Vec::new(),
+                    }),
+                },
+            )
+            .unwrap();
+
+        assert_eq!(updated_canister.name, "test2");
+
+        let call_permission = PERMISSION_REPOSITORY
+            .find_external_canister_call_permissions(&updated_canister.canister_id);
+
+        assert!(call_permission.is_empty());
+    }
 }
