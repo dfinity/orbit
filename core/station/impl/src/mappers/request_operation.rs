@@ -4,9 +4,9 @@ use crate::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget,
             ChangeCanisterResourceAction, ChangeExternalCanisterResourceTarget,
-            CreateExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
-            ExternalCanisterResourceAction, PermissionResourceAction, Resource, ResourceAction,
-            ResourceId, SystemResourceAction, UserResourceAction,
+            ExecutionMethodResourceTarget, ExternalCanisterResourceAction,
+            PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+            UserResourceAction,
         },
         Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
         AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
@@ -1214,9 +1214,7 @@ impl RequestOperation {
                 ..
             }) => {
                 vec![Resource::ExternalCanister(
-                    ExternalCanisterResourceAction::Create(
-                        CreateExternalCanisterResourceTarget::Any,
-                    ),
+                    ExternalCanisterResourceAction::Create,
                 )]
             }
             RequestOperation::CallExternalCanister(CallExternalCanisterOperation {

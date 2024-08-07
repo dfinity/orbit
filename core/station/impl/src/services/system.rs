@@ -426,7 +426,6 @@ mod install_canister_handlers {
                     users: Some(allow.users),
                     resource: policy.1.to_owned(),
                 })
-                .await
                 .map_err(|e| format!("Failed to add default permission: {:?}", e))?;
         }
 

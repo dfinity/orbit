@@ -7,7 +7,6 @@ use crate::core::validation::{
 use crate::errors::ValidationError;
 use crate::models::resource::{
     CallExternalCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
-    CreateExternalCanisterResourceTarget,
 };
 use crate::models::user::User;
 use crate::repositories::ADDRESS_BOOK_REPOSITORY;
@@ -67,7 +66,7 @@ pub enum RequestSpecifier {
     ChangeCanister,
     SetDisasterRecovery,
     ChangeExternalCanister(ChangeExternalCanisterResourceTarget),
-    CreateExternalCanister(CreateExternalCanisterResourceTarget),
+    CreateExternalCanister,
     CallExternalCanister(CallExternalCanisterResourceTarget),
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
@@ -87,7 +86,7 @@ impl ModelValidator<ValidationError> for RequestSpecifier {
             | RequestSpecifier::AddAddressBookEntry
             | RequestSpecifier::ChangeCanister
             | RequestSpecifier::ChangeExternalCanister(_)
-            | RequestSpecifier::CreateExternalCanister(_)
+            | RequestSpecifier::CreateExternalCanister
             | RequestSpecifier::AddRequestPolicy
             | RequestSpecifier::ManageSystemInfo
             | RequestSpecifier::SetDisasterRecovery
@@ -144,7 +143,7 @@ impl From<&RequestSpecifier> for RequestOperationType {
             RequestSpecifier::ChangeExternalCanister(_) => {
                 RequestOperationType::ChangeExternalCanister
             }
-            RequestSpecifier::CreateExternalCanister(_) => {
+            RequestSpecifier::CreateExternalCanister => {
                 RequestOperationType::CreateExternalCanister
             }
             RequestSpecifier::CallExternalCanister(_) => RequestOperationType::CallExternalCanister,
@@ -264,8 +263,7 @@ mod tests {
             request_test_utils::mock_request,
             resource::{
                 CallExternalCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
-                CreateExternalCanisterResourceTarget, ExecutionMethodResourceTarget, ResourceIds,
-                ValidationMethodResourceTarget,
+                ExecutionMethodResourceTarget, ResourceIds, ValidationMethodResourceTarget,
             },
             system::SystemInfo,
             CanisterMethod, RequestKey,
@@ -368,7 +366,7 @@ mod tests {
         ))
         .validate()
         .expect("ChangeExternalCanister should be valid");
-        RequestSpecifier::CreateExternalCanister(CreateExternalCanisterResourceTarget::Any)
+        RequestSpecifier::CreateExternalCanister
             .validate()
             .expect("CreateExternalCanister should be valid");
         RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {

@@ -13,7 +13,7 @@ use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::repository::Repository;
-use std::{cell::RefCell, collections::HashSet, sync::Arc};
+use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<PermissionKey, Permission, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -61,9 +61,7 @@ impl PermissionRepository {
         canister_id: &Principal,
     ) -> Vec<Permission> {
         DB.with(|db| {
-            let mut all_calls = HashSet::new();
-            let calls_with_no_validation = db
-                .borrow()
+            db.borrow()
                 .range(
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
                         CallExternalCanisterResourceTarget {
@@ -96,53 +94,7 @@ impl PermissionRepository {
                     )
                 })
                 .map(|(_, permission)| permission)
-                .collect::<HashSet<Permission>>();
-
-            let calls_with_validation = db
-                .borrow()
-                .range(
-                    Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                        CallExternalCanisterResourceTarget {
-                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
-                                CanisterMethod {
-                                    canister_id: *canister_id,
-                                    method_name: String::new(),
-                                },
-                            ),
-                            validation_method: ValidationMethodResourceTarget::ValidationMethod(
-                                CanisterMethod {
-                                    canister_id: *canister_id,
-                                    method_name: String::new(),
-                                },
-                            ),
-                        },
-                    ))..,
-                )
-                .take_while(|(key, _)| {
-                    matches!(
-                        key,
-                        Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                            CallExternalCanisterResourceTarget {
-                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
-                                    CanisterMethod {
-                                        canister_id: id,
-                                        ..
-                                    }
-                                ),
-                                ..
-                            }
-                        ))
-
-                        if id == canister_id
-                    )
-                })
-                .map(|(_, permission)| permission)
-                .collect::<HashSet<Permission>>();
-
-            all_calls.extend(calls_with_no_validation);
-            all_calls.extend(calls_with_validation);
-
-            all_calls.into_iter().collect()
+                .collect()
         })
     }
 }
