@@ -12,7 +12,7 @@ pub struct ExternalCanisterIndex {
     /// An indexed value of the external canister.
     pub index: ExternalCanisterIndexKind,
     /// The external canister id, which is a UUID.
-    pub external_canister_id: ExternalCanisterId,
+    pub external_canister_resource_id: ExternalCanisterId,
 }
 
 #[storable]
@@ -28,7 +28,7 @@ impl ExternalCanister {
     pub fn to_index_by_name(&self) -> ExternalCanisterIndex {
         ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::Name(format_unique_string(self.name.as_str())),
-            external_canister_id: self.id,
+            external_canister_resource_id: self.id,
         }
     }
 
@@ -38,7 +38,7 @@ impl ExternalCanister {
             .iter()
             .map(|label| ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::Label(format_unique_string(label.as_str())),
-                external_canister_id: self.id,
+                external_canister_resource_id: self.id,
             })
             .collect()
     }
@@ -47,7 +47,7 @@ impl ExternalCanister {
     pub fn to_index_by_canister_id(&self) -> ExternalCanisterIndex {
         ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::CanisterId(self.canister_id),
-            external_canister_id: self.id,
+            external_canister_resource_id: self.id,
         }
     }
 
@@ -76,7 +76,7 @@ mod tests {
     fn valid_model_serialization() {
         let model = ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::CanisterId(Principal::anonymous()),
-            external_canister_id: [u8::MAX; 16],
+            external_canister_resource_id: [u8::MAX; 16],
         };
 
         let serialized_model = model.to_bytes();
@@ -84,8 +84,8 @@ mod tests {
 
         assert_eq!(model.index, deserialized_model.index);
         assert_eq!(
-            model.external_canister_id,
-            deserialized_model.external_canister_id
+            model.external_canister_resource_id,
+            deserialized_model.external_canister_resource_id
         );
     }
 
@@ -100,7 +100,7 @@ mod tests {
             index.index,
             ExternalCanisterIndexKind::Name(format_unique_string("Finance"))
         );
-        assert_eq!(index.external_canister_id, canister.id);
+        assert_eq!(index.external_canister_resource_id, canister.id);
     }
 
     #[test]
@@ -114,7 +114,7 @@ mod tests {
             index.index,
             ExternalCanisterIndexKind::CanisterId(Principal::anonymous())
         );
-        assert_eq!(index.external_canister_id, canister.id);
+        assert_eq!(index.external_canister_resource_id, canister.id);
     }
 
     #[test]
@@ -130,14 +130,14 @@ mod tests {
             index.index,
             ExternalCanisterIndexKind::Label("label-1".to_string())
         );
-        assert_eq!(index.external_canister_id, canister.id);
+        assert_eq!(index.external_canister_resource_id, canister.id);
 
         let index = &indexes[1];
         assert_eq!(
             index.index,
             ExternalCanisterIndexKind::Label("label-2".to_string())
         );
-        assert_eq!(index.external_canister_id, canister.id);
+        assert_eq!(index.external_canister_resource_id, canister.id);
     }
 
     #[test]

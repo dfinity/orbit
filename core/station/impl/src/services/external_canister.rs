@@ -1,3 +1,4 @@
+use crate::core::ic_cdk::api::print;
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ExternalCanisterError;
 use crate::mappers::ExternalCanisterMapper;
@@ -137,26 +138,39 @@ impl ExternalCanisterService {
         input: CreateExternalCanisterOperationInput,
     ) -> ServiceResult<ExternalCanister> {
         self.check_unique_name(input.name.clone().as_str(), None)?;
+        let external_canister = match &input.kind {
+            CreateExternalCanisterOperationKind::CreateNew(opts) => {
+                let mut external_canister = ExternalCanisterMapper::from_create_input(
+                    // The canister will be created below, but this makes sure that we can validate the
+                    // model ahead of time without the canister id that will be generated.
+                    Principal::anonymous(),
+                    input.clone(),
+                );
 
-        let canister_id = match &input.kind {
-            CreateExternalCanisterOperationKind::CreateNew(opts) => self
-                .create_canister(opts.initial_cycles.map(|cycles| cycles as u128))
-                .await
-                .map_err(|err| ExternalCanisterError::Failed {
-                    reason: format!("failed to create external canister: {}", err),
-                })?,
+                external_canister.validate()?;
+
+                // Create the canister in the subnet and update the external canister with the correct id.
+                external_canister.canister_id = self
+                    .create_canister(opts.initial_cycles.map(|cycles| cycles as u128))
+                    .await
+                    .map_err(|err| ExternalCanisterError::Failed {
+                        reason: format!("failed to create external canister: {}", err),
+                    })?;
+
+                external_canister
+            }
             CreateExternalCanisterOperationKind::AddExisting(opts) => {
                 EnsureExternalCanister::is_external_canister(opts.canister_id)?;
-
                 self.check_unique_canister_id(&opts.canister_id, None)?;
 
-                opts.canister_id
+                let external_canister =
+                    ExternalCanisterMapper::from_create_input(opts.canister_id, input);
+
+                external_canister.validate()?;
+
+                external_canister
             }
         };
-
-        let external_canister = ExternalCanisterMapper::from_create_input(canister_id, input);
-
-        external_canister.validate()?;
 
         // todo: add permissions and request policies handling
 
@@ -233,14 +247,14 @@ impl ExternalCanisterService {
         })
         .await
         {
-            Err(ExternalCanisterError::Failed {
-                reason: format!(
-                    "Failed to stop canister {}, code: {:?} and reason: {:?}",
-                    external_canister.canister_id.to_text(),
-                    err_code,
-                    err_msg
-                ),
-            })?;
+            // We simply log the error and continue, this is because stopped canisters will fail this call
+            // but we still want to delete the canister.
+            print(format!(
+                "Failed to stop canister {}, code: {:?} and reason: {:?}",
+                external_canister.canister_id.to_text(),
+                err_code,
+                err_msg
+            ));
         }
 
         if let Err((err_code, err_msg)) = delete_canister(CanisterIdRecord {

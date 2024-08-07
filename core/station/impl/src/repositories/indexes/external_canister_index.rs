@@ -42,16 +42,16 @@ impl IndexRepository<ExternalCanisterIndex, ExternalCanisterId>
         DB.with(|db| {
             let start_key = ExternalCanisterIndex {
                 index: criteria.from,
-                external_canister_id: [u8::MIN; 16],
+                external_canister_resource_id: [u8::MIN; 16],
             };
             let end_key = ExternalCanisterIndex {
                 index: criteria.to,
-                external_canister_id: [u8::MAX; 16],
+                external_canister_resource_id: [u8::MAX; 16],
             };
 
             db.borrow()
                 .range(start_key..=end_key)
-                .map(|(index, _)| index.external_canister_id)
+                .map(|(index, _)| index.external_canister_resource_id)
                 .collect::<HashSet<ExternalCanisterId>>()
         })
     }
@@ -83,7 +83,7 @@ mod tests {
         let repository = ExternalCanisterIndexRepository::default();
         let index = ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::Name("test".to_string()),
-            external_canister_id: [1; 16],
+            external_canister_resource_id: [1; 16],
         };
 
         assert!(!repository.exists(&index));
@@ -101,7 +101,7 @@ mod tests {
         for i in 0..10 {
             repository.insert(ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::Name(format!("test-{}", i)),
-                external_canister_id: [i; 16],
+                external_canister_resource_id: [i; 16],
             });
         }
 
@@ -121,7 +121,7 @@ mod tests {
         for i in 0..10 {
             repository.insert(ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::CanisterId(Principal::from_slice(&[i; 29])),
-                external_canister_id: [i; 16],
+                external_canister_resource_id: [i; 16],
             });
         }
 
@@ -141,7 +141,7 @@ mod tests {
         for i in 0..10 {
             repository.insert(ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::Label(format!("label-{}", i)),
-                external_canister_id: [i; 16],
+                external_canister_resource_id: [i; 16],
             });
         }
 
