@@ -396,7 +396,7 @@ fn create_external_canister_and_check_status() {
                 },
             },
             request_policies: ExternalCanisterRequestPoliciesInput {
-                change: None,
+                change: Vec::new(),
                 calls: vec![],
             },
         });

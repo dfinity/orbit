@@ -229,10 +229,15 @@ export const idlFactory = ({ IDL }) => {
     'execution_method' : IDL.Text,
     'rule' : RequestPolicyRule,
     'validation_method' : ValidationMethodResourceTarget,
+    'policy_id' : IDL.Opt(UUID),
+  });
+  const ExternalCanisterChangeRequestPolicyRule = IDL.Record({
+    'rule' : RequestPolicyRule,
+    'policy_id' : IDL.Opt(UUID),
   });
   const ExternalCanisterRequestPolicies = IDL.Record({
     'calls' : IDL.Vec(ExternalCanisterCallRequestPolicyRule),
-    'change' : IDL.Opt(RequestPolicyRule),
+    'change' : IDL.Vec(ExternalCanisterChangeRequestPolicyRule),
   });
   const ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPolicies;
   const ExternalCanisterState = IDL.Variant({

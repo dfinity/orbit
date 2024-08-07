@@ -79,7 +79,6 @@ impl Execute for RemoveRequestPolicyRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         self.policy_service
             .remove_request_policy(&self.operation.input.policy_id)
-            .await
             .map_err(|e| RequestExecuteError::Failed {
                 reason: format!("Failed to remove request policy: {}", e),
             })?;

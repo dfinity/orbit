@@ -134,9 +134,16 @@ pub struct ExternalCanisterCallPermissionDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalCanisterCallRequestPolicyRule {
+    pub policy_id: Option<UuidDTO>,
     pub rule: RequestPolicyRuleDTO,
     pub validation_method: ValidationMethodResourceTargetDTO,
     pub execution_method: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterChangeRequestPolicyRule {
+    pub policy_id: Option<UuidDTO>,
+    pub rule: RequestPolicyRuleDTO,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -148,7 +155,7 @@ pub struct ExternalCanisterPermissionsDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalCanisterRequestPoliciesDTO {
-    pub change: Option<RequestPolicyRuleDTO>,
+    pub change: Vec<ExternalCanisterChangeRequestPolicyRule>,
     pub calls: Vec<ExternalCanisterCallRequestPolicyRule>,
 }
 

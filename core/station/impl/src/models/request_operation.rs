@@ -347,6 +347,7 @@ pub struct ExternalCanisterPermissionsInput {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterCallRequestPolicyRuleInput {
+    pub policy_id: Option<UUID>,
     pub rule: RequestPolicyRule,
     pub validation_method: ValidationMethodResourceTarget,
     pub execution_method: String,
@@ -354,8 +355,15 @@ pub struct ExternalCanisterCallRequestPolicyRuleInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterChangeRequestPolicyRuleInput {
+    pub policy_id: Option<UUID>,
+    pub rule: RequestPolicyRule,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterRequestPoliciesInput {
-    pub change: Option<RequestPolicyRule>,
+    pub change: Vec<ExternalCanisterChangeRequestPolicyRuleInput>,
     pub calls: Vec<ExternalCanisterCallRequestPolicyRuleInput>,
 }
 

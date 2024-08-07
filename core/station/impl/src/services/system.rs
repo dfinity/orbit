@@ -412,7 +412,6 @@ mod install_canister_handlers {
                     specifier: policy.0.to_owned(),
                     rule: policy.1.to_owned(),
                 })
-                .await
                 .map_err(|e| format!("Failed to add default request policy: {:?}", e))?;
         }
 

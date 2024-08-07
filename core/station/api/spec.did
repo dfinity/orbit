@@ -2184,6 +2184,10 @@ type ExternalCanisterCallPermission = record {
 
 // The request policy rule for the canister call operation.
 type ExternalCanisterCallRequestPolicyRule = record {
+  // The optional id of the request policy rule.
+  //
+  // If not provided a new policy rule will be created.
+  policy_id : opt UUID;
   // The request policy rule for the canister call operation.
   rule : RequestPolicyRule;
   // The validation method that is used to match the policy against
@@ -2192,6 +2196,16 @@ type ExternalCanisterCallRequestPolicyRule = record {
   // The method name that the rule is for,
   // if `*` is used the rule applies to all methods.
   execution_method : text;
+};
+
+// The request policy rule for the canister change operation.
+type ExternalCanisterChangeRequestPolicyRule = record {
+  // The optional id of the request policy rule.
+  //
+  // If not provided a new policy rule will be created.
+  policy_id : opt UUID;
+  // The request policy rule for the canister change operation.
+  rule : RequestPolicyRule;
 };
 
 // The permissions set for the external canister.
@@ -2212,8 +2226,8 @@ type ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
 
 // The request policy rules for the external canister.
 type ExternalCanisterRequestPolicies = record {
-  // The request policy rule for the canister change operation.
-  change : opt RequestPolicyRule;
+  // The request policy rules for the canister change operation.
+  change : vec ExternalCanisterChangeRequestPolicyRule;
   // The request policy rules for the calling methods on the canister.
   calls : vec ExternalCanisterCallRequestPolicyRule;
 };

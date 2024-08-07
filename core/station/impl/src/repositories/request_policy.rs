@@ -8,6 +8,7 @@ use crate::{
         resource::Resource, RequestPolicy,
     },
 };
+use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::repository::{IndexRepository, RefreshIndexMode, Repository};
@@ -104,6 +105,17 @@ impl RequestPolicyRepository {
             .find_by_criteria(RequestPolicyResourceIndexCriteria { resource });
 
         ids.iter().filter_map(|id| self.get(id)).collect()
+    }
+
+    /// Finds all external canister policies related to the specified canister id.
+    ///
+    /// Includes:
+    ///
+    /// - `Change` related policies.
+    /// - `Call` related policies.
+    pub fn find_external_canister_policies(&self, canister_id: &Principal) -> Vec<UUID> {
+        self.resource_index
+            .find_external_canister_policies(canister_id)
     }
 }
 
