@@ -18,6 +18,7 @@ use ic_utils::{canister::CanisterBuilder, Canister};
 use orbit_station_api::CreateRequestResponse;
 use slog::Logger;
 pub use station_agent::StationAgent;
+use station_agent::StationConfig;
 
 pub struct DfxOrbit {
     // The station agent that handles communication with the station
@@ -32,11 +33,12 @@ pub struct DfxOrbit {
 
 impl DfxOrbit {
     /// Creates a new agent for communicating with the default station.
-    pub async fn new(mut agent: OrbitExtensionAgent, logger: Logger) -> anyhow::Result<Self> {
-        let config = agent
-            .default_station()?
-            .ok_or_else(|| anyhow::format_err!("No default station specified"))?;
-        let interface = agent.dfx_interface().await?;
+    pub async fn new(
+        mut agent: OrbitExtensionAgent,
+        config: StationConfig,
+        logger: Logger,
+    ) -> anyhow::Result<Self> {
+        let interface = agent.dfx_interface(&config.network).await?;
 
         Ok(Self {
             station: StationAgent::new(interface.agent().clone(), config),

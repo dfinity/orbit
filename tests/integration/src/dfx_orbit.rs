@@ -193,16 +193,13 @@ async fn setup_dfx_orbit(station_id: Principal) -> DfxOrbit {
     let port = PORT.with(|port| *port.borrow());
 
     let orbit_agent = OrbitExtensionAgent::new().unwrap();
-    orbit_agent
-        .add_station(StationConfig {
-            name: String::from("Test"),
-            station_id,
-            network: String::from("test"),
-            url: format!("http://localhost:{}", port),
-        })
-        .unwrap();
-
-    DfxOrbit::new(orbit_agent, logger).await.unwrap()
+    let config = StationConfig {
+        name: String::from("Test"),
+        station_id,
+        network: String::from("test"),
+        url: format!("http://localhost:{}", port),
+    };
+    DfxOrbit::new(orbit_agent, config, logger).await.unwrap()
 }
 
 /// Create the dfx user's identities and add them to the station
