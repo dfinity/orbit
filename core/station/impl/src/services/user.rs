@@ -561,7 +561,6 @@ mod tests {
                 users: Some(vec![user.id]),
                 resource: Resource::User(UserResourceAction::List),
             })
-            .await
             .unwrap();
         PERMISSION_SERVICE
             .edit_permission(EditPermissionOperationInput {
@@ -570,7 +569,6 @@ mod tests {
                 users: Some(Vec::new()),
                 resource: Resource::User(UserResourceAction::Create),
             })
-            .await
             .unwrap();
 
         let privileges = USER_SERVICE.get_caller_privileges(&ctx).await.unwrap();

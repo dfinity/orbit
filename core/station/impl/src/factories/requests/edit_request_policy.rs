@@ -79,7 +79,6 @@ impl Execute for EditRequestPolicyRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         self.policy_service
             .edit_request_policy(self.operation.input.to_owned())
-            .await
             .map_err(|e| RequestExecuteError::Failed {
                 reason: format!("Failed to update request policy: {}", e),
             })?;

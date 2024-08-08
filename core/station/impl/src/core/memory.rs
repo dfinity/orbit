@@ -41,6 +41,8 @@ pub const OPERATION_TYPE_TO_REQUEST_ID_INDEX_MEMORY_ID: MemoryId = MemoryId::new
 pub const REQUEST_RESOURCE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(30);
 pub const POLICY_RESOURCE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(31);
 pub const REQUEST_EVALUATION_RESULT_MEMORY_ID: MemoryId = MemoryId::new(32);
+pub const EXTERNAL_CANISTER_MEMORY_ID: MemoryId = MemoryId::new(33);
+pub const EXTERNAL_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(34);
 
 thread_local! {
   /// Static configuration of the canister.

@@ -211,13 +211,13 @@ export type ChangeExternalCanisterResourceTarget = { 'Any' : null } |
   { 'Canister' : Principal };
 export type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
 export interface ConfigureExternalCanisterOperationInput {
+  'kind' : ConfigureExternalCanisterOperationKind,
   'canister_id' : Principal,
-  'operation' : ConfigureExternalCanisterOperationKind,
 }
 export type ConfigureExternalCanisterOperationKind = { 'SoftDelete' : null } |
   { 'Settings' : ConfigureExternalCanisterSettingsInput } |
   { 'Delete' : null } |
-  { 'NativeSettings' : DefiniteCanisterSettings } |
+  { 'NativeSettings' : DefiniteCanisterSettingsInput } |
   { 'TopUp' : bigint };
 export interface ConfigureExternalCanisterSettingsInput {
   'permissions' : [] | [ExternalCanisterPermissionsInput],
@@ -225,9 +225,11 @@ export interface ConfigureExternalCanisterSettingsInput {
   'labels' : [] | [Array<string>],
   'description' : [] | [string],
   'request_policies' : [] | [ExternalCanisterRequestPoliciesInput],
+  'state' : [] | [ExternalCanisterState],
 }
 export interface CreateExternalCanisterOperation {
   'canister_id' : [] | [Principal],
+  'input' : CreateExternalCanisterOperationInput,
 }
 export interface CreateExternalCanisterOperationInput {
   'permissions' : ExternalCanisterPermissionsInput,
@@ -247,7 +249,6 @@ export interface CreateExternalCanisterOperationKindAddExisting {
 export interface CreateExternalCanisterOperationKindCreateNew {
   'initial_cycles' : [] | [bigint],
 }
-export type CreateExternalCanisterResourceTarget = { 'Any' : null };
 export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
@@ -268,6 +269,13 @@ export interface DefiniteCanisterSettings {
   'reserved_cycles_limit' : bigint,
   'memory_allocation' : bigint,
   'compute_allocation' : bigint,
+}
+export interface DefiniteCanisterSettingsInput {
+  'freezing_threshold' : [] | [bigint],
+  'controllers' : [] | [Array<Principal>],
+  'reserved_cycles_limit' : [] | [bigint],
+  'memory_allocation' : [] | [bigint],
+  'compute_allocation' : [] | [bigint],
 }
 export interface DisasterRecovery {
   'user_group_name' : [] | [string],
@@ -372,6 +380,7 @@ export interface ExternalCanister {
   'description' : [] | [string],
   'created_at' : TimestampRFC3339,
   'request_policies' : ExternalCanisterRequestPolicies,
+  'state' : ExternalCanisterState,
 }
 export interface ExternalCanisterCallPermission {
   'execution_method' : string,
@@ -382,6 +391,7 @@ export interface ExternalCanisterCallRequestPolicyRule {
   'execution_method' : string,
   'rule' : RequestPolicyRule,
   'validation_method' : ValidationMethodResourceTarget,
+  'policy_id' : [] | [UUID],
 }
 export interface ExternalCanisterCallerMethodsPrivileges {
   'execution_method' : string,
@@ -392,6 +402,10 @@ export interface ExternalCanisterCallerPrivileges {
   'can_change' : boolean,
   'can_call' : Array<ExternalCanisterCallerMethodsPrivileges>,
 }
+export interface ExternalCanisterChangeRequestPolicyRule {
+  'rule' : RequestPolicyRule,
+  'policy_id' : [] | [UUID],
+}
 export interface ExternalCanisterPermissions {
   'calls' : Array<ExternalCanisterCallPermission>,
   'read' : Allow,
@@ -400,7 +414,7 @@ export interface ExternalCanisterPermissions {
 export type ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
 export interface ExternalCanisterRequestPolicies {
   'calls' : Array<ExternalCanisterCallRequestPolicyRule>,
-  'change' : [] | [RequestPolicyRule],
+  'change' : Array<ExternalCanisterChangeRequestPolicyRule>,
 }
 export type ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPolicies;
 export type ExternalCanisterResourceAction = {
@@ -408,8 +422,10 @@ export type ExternalCanisterResourceAction = {
   } |
   { 'List' : null } |
   { 'Read' : ReadExternalCanisterResourceTarget } |
-  { 'Create' : CreateExternalCanisterResourceTarget } |
+  { 'Create' : null } |
   { 'Change' : ChangeExternalCanisterResourceTarget };
+export type ExternalCanisterState = { 'Active' : null } |
+  { 'Archived' : null };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
 export type FetchAccountBalancesResult = {
     'Ok' : { 'balances' : Array<AccountBalance> }
@@ -905,7 +921,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'EditRequestPolicy' : ResourceIds } |
   { 'RemoveRequestPolicy' : ResourceIds } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
-  { 'CreateExternalCanister' : CreateExternalCanisterResourceTarget } |
+  { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : ResourceIds } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
