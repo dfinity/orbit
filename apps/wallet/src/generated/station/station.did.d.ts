@@ -400,6 +400,7 @@ export interface ExternalCanisterCallerMethodsPrivileges {
 export interface ExternalCanisterCallerPrivileges {
   'id' : UUID,
   'can_change' : boolean,
+  'canister_id' : Principal,
   'can_call' : Array<ExternalCanisterCallerMethodsPrivileges>,
 }
 export interface ExternalCanisterChangeRequestPolicyRule {

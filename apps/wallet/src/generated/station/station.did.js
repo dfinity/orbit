@@ -755,6 +755,7 @@ export const idlFactory = ({ IDL }) => {
   const ExternalCanisterCallerPrivileges = IDL.Record({
     'id' : UUID,
     'can_change' : IDL.Bool,
+    'canister_id' : IDL.Principal,
     'can_call' : IDL.Vec(ExternalCanisterCallerMethodsPrivileges),
   });
   const ExternalCanister = IDL.Record({

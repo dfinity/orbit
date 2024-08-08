@@ -1,5 +1,8 @@
 use super::resource::ValidationMethodResourceTarget;
-use super::ConfigureExternalCanisterSettingsInput;
+use super::{
+    ConfigureExternalCanisterSettingsInput, ExternalCanisterPermissionsInput,
+    ExternalCanisterRequestPoliciesInput,
+};
 use crate::errors::ExternalCanisterError;
 use candid::Principal;
 use orbit_essentials::storable;
@@ -38,6 +41,9 @@ pub struct ExternalCanister {
     pub modified_at: Option<Timestamp>,
 }
 
+pub type ExternalCanisterPermissions = ExternalCanisterPermissionsInput;
+pub type ExternalCanisterRequestPolicies = ExternalCanisterRequestPoliciesInput;
+
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterKey {
@@ -60,6 +66,7 @@ pub struct ExternalCanisterCallerMethodsPrivileges {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterCallerPrivileges {
     pub id: UUID,
+    pub canister_id: Principal,
     pub can_change: bool,
     pub can_call: Vec<ExternalCanisterCallerMethodsPrivileges>,
 }

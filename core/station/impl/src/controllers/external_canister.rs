@@ -69,7 +69,29 @@ impl ExternalCanisterController {
         &self,
         input: GetExternalCanisterInput,
     ) -> ApiResult<GetExternalCanisterResponse> {
-        unimplemented!("get_external_canister")
+        let ctx = call_context();
+        let external_canister = self
+            .canister_service
+            .get_external_canister_by_canister_id(&input.canister_id)?;
+        let external_canister_policies = self
+            .canister_service
+            .get_external_canister_request_policies(&external_canister.canister_id);
+        let external_canister_permissions = self
+            .canister_service
+            .get_external_canister_permissions(&external_canister.canister_id);
+        let caller_privileges = self
+            .canister_service
+            .get_caller_privileges_for_external_canister(
+                &external_canister.id,
+                &external_canister.canister_id,
+                &ctx,
+            );
+
+        Ok(GetExternalCanisterResponse {
+            canister: external_canister
+                .into_dto(external_canister_permissions, external_canister_policies),
+            privileges: caller_privileges.into(),
+        })
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::List)]))]

@@ -193,6 +193,7 @@ pub struct ExternalCanisterCallerMethodPrivilegesDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalCanisterCallerPrivilegesDTO {
     pub id: UuidDTO,
+    pub canister_id: Principal,
     pub can_change: bool,
     pub can_call: Vec<ExternalCanisterCallerMethodPrivilegesDTO>,
 }

@@ -3,11 +3,15 @@ use crate::{
     models::{
         ConfigureExternalCanisterOperationInput, ConfigureExternalCanisterOperationKind,
         ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
-        DefiniteCanisterSettingsInput, ExternalCanister, ExternalCanisterState,
+        DefiniteCanisterSettingsInput, ExternalCanister, ExternalCanisterCallerMethodsPrivileges,
+        ExternalCanisterCallerPrivileges, ExternalCanisterPermissions,
+        ExternalCanisterRequestPolicies, ExternalCanisterState,
     },
 };
 use candid::Principal;
 use ic_cdk::api::management_canister::main::CanisterSettings;
+use orbit_essentials::utils::timestamp_to_rfc3339;
+use station_api::ExternalCanisterDTO;
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
@@ -27,6 +31,49 @@ impl ExternalCanisterMapper {
             state: ExternalCanisterState::Active,
             created_at: next_time(),
             modified_at: None,
+        }
+    }
+}
+
+impl ExternalCanister {
+    pub fn into_dto(
+        self,
+        permissions: ExternalCanisterPermissions,
+        policies: ExternalCanisterRequestPolicies,
+    ) -> ExternalCanisterDTO {
+        ExternalCanisterDTO {
+            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
+            canister_id: self.canister_id,
+            name: self.name,
+            description: self.description,
+            labels: self.labels,
+            state: self.state.into(),
+            permissions: permissions.into(),
+            request_policies: policies.into(),
+            created_at: timestamp_to_rfc3339(&self.created_at),
+            modified_at: self.modified_at.map(|ts| timestamp_to_rfc3339(&ts)),
+        }
+    }
+}
+
+impl From<ExternalCanisterCallerPrivileges> for station_api::ExternalCanisterCallerPrivilegesDTO {
+    fn from(privileges: ExternalCanisterCallerPrivileges) -> Self {
+        station_api::ExternalCanisterCallerPrivilegesDTO {
+            id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
+            canister_id: privileges.canister_id,
+            can_change: privileges.can_change,
+            can_call: privileges.can_call.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<ExternalCanisterCallerMethodsPrivileges>
+    for station_api::ExternalCanisterCallerMethodPrivilegesDTO
+{
+    fn from(privileges: ExternalCanisterCallerMethodsPrivileges) -> Self {
+        station_api::ExternalCanisterCallerMethodPrivilegesDTO {
+            validation_method: privileges.validation_method.into(),
+            execution_method: privileges.execution_method,
         }
     }
 }
