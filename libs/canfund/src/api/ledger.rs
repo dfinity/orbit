@@ -35,13 +35,19 @@ pub mod test {
 
     #[derive(Default)]
     pub struct TestLedgerCanister {
-        pub transfer_called_with: Arc<RwLock<Option<TransferArgs>>>,
+        pub transfer_called_with: Arc<RwLock<Vec<TransferArgs>>>,
+        pub returns_with: Option<CallResult<TransferResult>>,
     }
     #[async_trait]
     impl LedgerCanister for TestLedgerCanister {
         async fn transfer(&self, _args: TransferArgs) -> CallResult<TransferResult> {
             let mut locked = self.transfer_called_with.write().await;
-            *locked = Some(_args);
+            locked.push(_args);
+
+            if let Some(value) = &self.returns_with {
+                return value.clone();
+            }
+
             Ok(Ok(0))
         }
     }

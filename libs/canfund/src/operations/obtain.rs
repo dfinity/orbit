@@ -17,45 +17,6 @@ pub struct ObtainCycleError {
     pub can_retry: bool,
 }
 
-impl From<NotifyError> for ObtainCycleError {
-    fn from(value: NotifyError) -> Self {
-        match value {
-            NotifyError::Refunded {
-                reason,
-                block_index,
-            } => ObtainCycleError {
-                details: format!(
-                    "Top-up transaction refunded: reason={}, block_index={:?}",
-                    reason, block_index
-                ),
-                can_retry: true,
-            },
-            NotifyError::Processing => ObtainCycleError {
-                details: "Top-up transaction is still processing".to_string(),
-                can_retry: false,
-            },
-            NotifyError::TransactionTooOld(value) => ObtainCycleError {
-                details: format!("Top-up transaction too old. Value={}", value),
-                can_retry: false,
-            },
-            NotifyError::InvalidTransaction(message) => ObtainCycleError {
-                details: format!("Invalid top-up transaction: {}", message),
-                can_retry: false,
-            },
-            NotifyError::Other {
-                error_code,
-                error_message,
-            } => ObtainCycleError {
-                details: format!(
-                    "Error notifying CMC about top-up: code={}, message={}",
-                    error_code, error_message
-                ),
-                can_retry: false,
-            },
-        }
-    }
-}
-
 /// Trait to top up the funding canister balance if it is too low.
 /// Example sources are minting from or swapping for ICP.
 #[async_trait]
@@ -90,7 +51,9 @@ impl ObtainCycles for MintCycles {
                     "Error getting ICP/XDR price from CMC: code={:?}, message={}",
                     err.0, err.1
                 ),
-                can_retry: false,
+
+                // at this point the process can be safely retried
+                can_retry: true,
             })?;
 
         // convert cycle amount to ICP amount
@@ -116,7 +79,8 @@ impl ObtainCycles for MintCycles {
                     "Error transferring ICP to CMC account: code={:?}, message={}",
                     err.0, err.1
                 ),
-                can_retry: false,
+                // failed transfers should be safe to retry
+                can_retry: true,
             })?;
 
         let block_index = call_result.map_err(|err| ObtainCycleError {
@@ -135,18 +99,26 @@ impl ObtainCycles for MintCycles {
                 .cmc
                 .notify_top_up(block_index, target_canister_id)
                 .await
-                .map_err(|err| ObtainCycleError {
-                    details: format!(
-                        "Error getting ICP/XDR price from CMC: code={:?}, message={}",
-                        err.0, err.1
-                    ),
-                    can_retry: false,
-                })? {
-                NotifyTopUpResult::Ok(cycles) => {
+            {
+                Err(err) => {
+                    if retries_left == 0 {
+                        // retry the notify call
+                        Err(ObtainCycleError {
+                            details: format!(
+                                "Error notifying CMC about top-up: code={:?}, message={}",
+                                err.0, err.1
+                            ),
+                            can_retry: false,
+                        })?;
+                    } else {
+                        continue;
+                    }
+                }
+                Ok(NotifyTopUpResult::Ok(cycles)) => {
                     // exit the retry loop
                     return Ok(cycles);
                 }
-                NotifyTopUpResult::Err(err) => match err {
+                Ok(NotifyTopUpResult::Err(err)) => match &err {
                     NotifyError::Refunded {
                         reason,
                         block_index,
@@ -178,26 +150,34 @@ impl ObtainCycles for MintCycles {
                     NotifyError::Other {
                         error_code,
                         error_message,
-                    } => Err(ObtainCycleError {
-                        details: format!(
-                            "Error notifying CMC about top-up: code={}, message={}",
-                            error_code, error_message
-                        ),
-                        can_retry: false,
-                    }),
-                },
-            }?;
+                    } => {
+                        if retries_left == 0 {
+                            Err(ObtainCycleError {
+                                details: format!(
+                                    "Error notifying CMC about top-up: code={}, message={}",
+                                    error_code, error_message
+                                ),
+                                can_retry: false,
+                            })?;
+                        }
+                        continue;
+                    }
+                }?,
+            };
         }
     }
 }
 
 #[cfg(test)]
 mod test {
+
+    use ic_cdk::api::call::RejectionCode;
+
     use super::*;
     use crate::api::{cmc::test::TestCmcCanister, ledger::test::TestLedgerCanister};
 
     #[tokio::test]
-    async fn test_obtain() {
+    async fn test_obtain_by_minting() {
         let cmc = Arc::new(TestCmcCanister::default());
         let ledger = Arc::new(TestLedgerCanister::default());
 
@@ -217,8 +197,60 @@ mod test {
 
         // calls to transfer ICP to the CMC account
         assert!(matches!(
-            *ledger.transfer_called_with.read().await,
-            Some(TransferArgs { amount, .. }) if amount == Tokens::from_e8s(100_000_000 / 5)
+            ledger.transfer_called_with.read().await.first(),
+            Some(TransferArgs { amount, .. }) if amount == &Tokens::from_e8s(100_000_000 / 5)
         ));
+    }
+
+    #[tokio::test]
+    async fn test_cycle_minting_notify_retries() {
+        let notify_return_values_retried = vec![
+            (Err((RejectionCode::SysFatal, "error".to_string())), true),
+            (Ok(NotifyTopUpResult::Err(NotifyError::Processing)), true),
+            (
+                Ok(NotifyTopUpResult::Err(NotifyError::Other {
+                    error_code: 0,
+                    error_message: String::new(),
+                })),
+                true,
+            ),
+            (
+                Ok(NotifyTopUpResult::Err(NotifyError::Refunded {
+                    block_index: Some(0),
+                    reason: "reason".to_string(),
+                })),
+                false,
+            ),
+        ];
+
+        for test in notify_return_values_retried {
+            let cmc = Arc::new(TestCmcCanister {
+                notify_top_up_returns_with: Some(test.0),
+                ..Default::default()
+            });
+
+            let ledger = Arc::new(TestLedgerCanister::default());
+
+            let obtain = MintCycles {
+                cmc: cmc.clone(),
+                ledger: ledger.clone(),
+                from_subaccount: Subaccount([0u8; 32]),
+            };
+
+            obtain
+                .obtain_cycles(1_000_000_000_000, Principal::anonymous())
+                .await
+                .expect_err("obtain_cycles should fail");
+
+            // transfer was called only once
+            assert!(ledger.transfer_called_with.read().await.len() == 1);
+
+            if test.1 {
+                // notify was retried
+                assert!(cmc.notify_top_up_called_with.read().await.len() > 1);
+            } else {
+                assert_eq!(cmc.notify_top_up_called_with.read().await.len(), 1);
+            }
+        }
     }
 }

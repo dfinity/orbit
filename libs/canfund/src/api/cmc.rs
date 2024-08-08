@@ -4,12 +4,12 @@ use ic_cdk::api::call::CallResult;
 use ic_ledger_types::{AccountIdentifier, Subaccount};
 use serde::Deserialize;
 
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Deserialize, Default, Clone)]
 pub struct GetIcpXdrResultData {
     pub xdr_permyriad_per_icp: u64,
     pub timestamp_seconds: u64,
 }
-#[derive(CandidType, Deserialize, Default)]
+#[derive(CandidType, Deserialize, Default, Clone)]
 pub struct GetIcpXdrResult {
     pub data: GetIcpXdrResultData,
     pub certificate: Vec<u8>,
@@ -22,13 +22,13 @@ pub struct NotifyTopUpArg {
     pub canister_id: Principal,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone)]
 pub enum NotifyTopUpResult {
     Ok(u128),
     Err(NotifyError),
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Clone)]
 pub enum NotifyError {
     Refunded {
         reason: String,
@@ -111,8 +111,11 @@ pub mod test {
 
     #[derive(Default)]
     pub struct TestCmcCanister {
-        pub notify_top_up_called_with: Arc<RwLock<Option<u64>>>,
+        pub notify_top_up_called_with: Arc<RwLock<Vec<u64>>>,
         pub get_icp_xdr_called: Arc<RwLock<bool>>,
+
+        pub notify_top_up_returns_with: Option<CallResult<NotifyTopUpResult>>,
+        pub get_icp_xdr_returns_with: Option<CallResult<GetIcpXdrResult>>,
     }
 
     #[async_trait]
@@ -120,6 +123,11 @@ pub mod test {
         async fn get_icp_xdr(&self) -> CallResult<GetIcpXdrResult> {
             let mut locked = self.get_icp_xdr_called.write().await;
             *locked = true;
+
+            if let Some(value) = &self.get_icp_xdr_returns_with {
+                return value.clone();
+            }
+
             Ok(GetIcpXdrResult {
                 data: GetIcpXdrResultData {
                     xdr_permyriad_per_icp: 5 * 10000, // 5 XDR per ICP
@@ -135,7 +143,12 @@ pub mod test {
             _canister_id: Principal,
         ) -> CallResult<NotifyTopUpResult> {
             let mut locked = self.notify_top_up_called_with.write().await;
-            *locked = Some(block_index);
+            locked.push(block_index);
+
+            if let Some(value) = &self.notify_top_up_returns_with {
+                return value.clone();
+            }
+
             Ok(NotifyTopUpResult::Ok(10))
         }
 

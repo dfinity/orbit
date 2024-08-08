@@ -67,12 +67,6 @@ impl FundManager {
         self
     }
 
-    pub fn with_cycle_minting(&mut self, options: FundManagerOptions) -> &mut Self {
-        self.inner.borrow_mut().options = options;
-
-        self
-    }
-
     /// Registers a canister to be monitored by the fund manager.
     pub fn register(&mut self, canister_id: CanisterId) -> &mut Self {
         self.inner.borrow_mut().register(canister_id);
