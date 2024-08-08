@@ -469,6 +469,21 @@ impl ExternalCanisterService {
         self.external_canister_repository
             .remove(&external_canister.to_key());
 
+        // Removes the read & change permissions.
+        self.permission_service
+            .remove_permission(&Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(
+                    external_canister.canister_id,
+                )),
+            ));
+
+        self.permission_service
+            .remove_permission(&Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Change(
+                    ChangeExternalCanisterResourceTarget::Canister(external_canister.canister_id),
+                ),
+            ));
+
         // Remove all permissions related to the external canister.
         self.permission_repository
             .find_external_canister_call_permissions(&external_canister.canister_id)
