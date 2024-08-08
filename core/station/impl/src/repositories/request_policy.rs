@@ -246,3 +246,91 @@ mod tests {
             }));
     }
 }
+
+#[cfg(feature = "canbench")]
+mod benchs {
+    use crate::models::{
+        request_specifier::RequestSpecifier,
+        resource::{
+            CallExternalCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
+            ExecutionMethodResourceTarget, ValidationMethodResourceTarget,
+        },
+        CanisterMethod, RequestPolicyRule,
+    };
+    use super::*;
+    use canbench_rs::{bench, BenchResult};
+    use uuid::Uuid;
+
+    #[bench(raw)]
+    fn find_external_canister_policies_are_below_query_limit() -> BenchResult {
+        // adds 50k policies: 100 different canisters with 10 change policies and 490 call policies each
+        for i in 0..100 {
+            let canister_id = Principal::from_slice(&[i; 29]);
+            let mut policies = Vec::new();
+            for _ in 0..10 {
+                policies.push(RequestPolicy {
+                    id: *Uuid::new_v4().as_bytes(),
+                    rule: RequestPolicyRule::AutoApproved,
+                    specifier: RequestSpecifier::ChangeExternalCanister(
+                        ChangeExternalCanisterResourceTarget::Canister(canister_id),
+                    ),
+                });
+            }
+
+            for j in 0..90 {
+                policies.push(RequestPolicy {
+                    id: *Uuid::new_v4().as_bytes(),
+                    rule: RequestPolicyRule::AutoApproved,
+                    specifier: RequestSpecifier::CallExternalCanister(
+                        CallExternalCanisterResourceTarget {
+                            validation_method: ValidationMethodResourceTarget::No,
+                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                CanisterMethod {
+                                    canister_id,
+                                    method_name: format!("method_{}", j),
+                                },
+                            ),
+                        },
+                    ),
+                });
+            }
+
+            for j in 0..400 {
+                policies.push(RequestPolicy {
+                    id: *Uuid::new_v4().as_bytes(),
+                    rule: RequestPolicyRule::AutoApproved,
+                    specifier: RequestSpecifier::CallExternalCanister(
+                        CallExternalCanisterResourceTarget {
+                            validation_method: ValidationMethodResourceTarget::ValidationMethod(
+                                CanisterMethod {
+                                    canister_id,
+                                    method_name: format!("validate_method_{}", j),
+                                },
+                            ),
+                            execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                CanisterMethod {
+                                    canister_id,
+                                    method_name: format!("method_{}", j),
+                                },
+                            ),
+                        },
+                    ),
+                });
+            }
+
+            for policy in policies {
+                REQUEST_POLICY_REPOSITORY.insert(policy.id, policy);
+            }
+        }
+
+        canbench_rs::bench_fn(|| {
+            let lookup_canister_id = Principal::from_slice(&[30; 29]);
+            let policies =
+                REQUEST_POLICY_REPOSITORY.find_external_canister_policies(&lookup_canister_id);
+
+            if policies.len() != 500 {
+                panic!("Expected 500 policies, got {}", policies.len());
+            }
+        })
+    }
+}
