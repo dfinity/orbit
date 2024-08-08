@@ -24,9 +24,9 @@ use crate::{
         EditAddressBookEntryOperation, EditPermissionOperation, EditPermissionOperationInput,
         EditRequestPolicyOperation, EditRequestPolicyOperationInput, EditUserGroupOperation,
         EditUserOperation, EditUserOperationInput, ExternalCanisterCallPermission,
-        ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterPermissionsInput,
-        ExternalCanisterRequestPoliciesInput, ManageSystemInfoOperation,
-        ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
+        ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterChangeRequestPolicyRuleInput,
+        ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput,
+        ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
         RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
         TransferOperation, User,
@@ -603,6 +603,11 @@ impl From<station_api::ExternalCanisterCallRequestPolicyRuleInput>
         input: station_api::ExternalCanisterCallRequestPolicyRuleInput,
     ) -> ExternalCanisterCallRequestPolicyRuleInput {
         ExternalCanisterCallRequestPolicyRuleInput {
+            policy_id: input.policy_id.map(|policy_id| {
+                *HelperMapper::to_uuid(policy_id)
+                    .expect("Invalid policy id format")
+                    .as_bytes()
+            }),
             rule: input.rule.into(),
             validation_method: input.validation_method.into(),
             execution_method: input.execution_method,
@@ -617,9 +622,44 @@ impl From<ExternalCanisterCallRequestPolicyRuleInput>
         input: ExternalCanisterCallRequestPolicyRuleInput,
     ) -> station_api::ExternalCanisterCallRequestPolicyRuleInput {
         station_api::ExternalCanisterCallRequestPolicyRuleInput {
+            policy_id: input
+                .policy_id
+                .map(|policy_id| Uuid::from_bytes(policy_id).hyphenated().to_string()),
             rule: input.rule.into(),
             validation_method: input.validation_method.into(),
             execution_method: input.execution_method,
+        }
+    }
+}
+
+impl From<station_api::ExternalCanisterChangeRequestPolicyRule>
+    for ExternalCanisterChangeRequestPolicyRuleInput
+{
+    fn from(
+        input: station_api::ExternalCanisterChangeRequestPolicyRule,
+    ) -> ExternalCanisterChangeRequestPolicyRuleInput {
+        ExternalCanisterChangeRequestPolicyRuleInput {
+            policy_id: input.policy_id.map(|policy_id| {
+                *HelperMapper::to_uuid(policy_id)
+                    .expect("Invalid policy id format")
+                    .as_bytes()
+            }),
+            rule: input.rule.into(),
+        }
+    }
+}
+
+impl From<ExternalCanisterChangeRequestPolicyRuleInput>
+    for station_api::ExternalCanisterChangeRequestPolicyRule
+{
+    fn from(
+        input: ExternalCanisterChangeRequestPolicyRuleInput,
+    ) -> station_api::ExternalCanisterChangeRequestPolicyRule {
+        station_api::ExternalCanisterChangeRequestPolicyRule {
+            policy_id: input
+                .policy_id
+                .map(|policy_id| Uuid::from_bytes(policy_id).hyphenated().to_string()),
+            rule: input.rule.into(),
         }
     }
 }
@@ -631,7 +671,7 @@ impl From<station_api::ExternalCanisterRequestPoliciesInput>
         input: station_api::ExternalCanisterRequestPoliciesInput,
     ) -> ExternalCanisterRequestPoliciesInput {
         ExternalCanisterRequestPoliciesInput {
-            change: input.change.map(Into::into),
+            change: input.change.into_iter().map(Into::into).collect(),
             calls: input.calls.into_iter().map(Into::into).collect(),
         }
     }
@@ -644,7 +684,7 @@ impl From<ExternalCanisterRequestPoliciesInput>
         input: ExternalCanisterRequestPoliciesInput,
     ) -> station_api::ExternalCanisterRequestPoliciesInput {
         station_api::ExternalCanisterRequestPoliciesInput {
-            change: input.change.map(Into::into),
+            change: input.change.into_iter().map(Into::into).collect(),
             calls: input.calls.into_iter().map(Into::into).collect(),
         }
     }

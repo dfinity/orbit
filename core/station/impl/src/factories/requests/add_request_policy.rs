@@ -68,7 +68,6 @@ impl Execute for AddRequestPolicyRequestExecute<'_, '_> {
         let policy = self
             .policy_service
             .add_request_policy(self.operation.input.to_owned())
-            .await
             .map_err(|e| RequestExecuteError::Failed {
                 reason: format!("Failed to create request policy: {}", e),
             })?;

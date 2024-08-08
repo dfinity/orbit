@@ -1,21 +1,27 @@
 use super::permission::{PermissionService, PERMISSION_SERVICE};
+use super::request_policy::{RequestPolicyService, REQUEST_POLICY_SERVICE};
 use crate::core::ic_cdk::api::print;
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ExternalCanisterError;
 use crate::mappers::ExternalCanisterMapper;
+use crate::models::request_specifier::RequestSpecifier;
 use crate::models::resource::{
     CallExternalCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
     ExecutionMethodResourceTarget, ExternalCanisterResourceAction,
-    ReadExternalCanisterResourceTarget, Resource,
+    ReadExternalCanisterResourceTarget, Resource, ValidationMethodResourceTarget,
 };
 use crate::models::{
-    CanisterMethod, ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
-    CreateExternalCanisterOperationKind, DefiniteCanisterSettingsInput,
-    EditPermissionOperationInput, ExternalCanister, ExternalCanisterId,
-    ExternalCanisterPermissionsInput,
+    AddRequestPolicyOperationInput, CanisterMethod, ConfigureExternalCanisterSettingsInput,
+    CreateExternalCanisterOperationInput, CreateExternalCanisterOperationKind,
+    DefiniteCanisterSettingsInput, EditPermissionOperationInput, EditRequestPolicyOperationInput,
+    ExternalCanister, ExternalCanisterId, ExternalCanisterPermissionsInput,
+    ExternalCanisterRequestPoliciesInput,
 };
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
-use crate::repositories::{ExternalCanisterRepository, EXTERNAL_CANISTER_REPOSITORY};
+use crate::repositories::{
+    ExternalCanisterRepository, RequestPolicyRepository, EXTERNAL_CANISTER_REPOSITORY,
+    REQUEST_POLICY_REPOSITORY,
+};
 use candid::{Encode, Principal};
 use ic_cdk::api::call::call_raw;
 use ic_cdk::api::management_canister::main::{
@@ -26,6 +32,8 @@ use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::model::ModelValidator;
 use orbit_essentials::repository::Repository;
+use orbit_essentials::types::UUID;
+use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -35,6 +43,8 @@ lazy_static! {
             Arc::clone(&EXTERNAL_CANISTER_REPOSITORY),
             Arc::clone(&PERMISSION_SERVICE),
             Arc::clone(&PERMISSION_REPOSITORY),
+            Arc::clone(&REQUEST_POLICY_SERVICE),
+            Arc::clone(&REQUEST_POLICY_REPOSITORY),
         ));
 }
 
@@ -45,6 +55,8 @@ pub struct ExternalCanisterService {
     external_canister_repository: Arc<ExternalCanisterRepository>,
     permission_service: Arc<PermissionService>,
     permission_repository: Arc<PermissionRepository>,
+    request_policy_service: Arc<RequestPolicyService>,
+    request_policy_repository: Arc<RequestPolicyRepository>,
 }
 
 impl ExternalCanisterService {
@@ -52,11 +64,15 @@ impl ExternalCanisterService {
         external_canister_repository: Arc<ExternalCanisterRepository>,
         permission_service: Arc<PermissionService>,
         permission_repository: Arc<PermissionRepository>,
+        request_policy_service: Arc<RequestPolicyService>,
+        request_policy_repository: Arc<RequestPolicyRepository>,
     ) -> Self {
         Self {
             external_canister_repository,
             permission_service,
             permission_repository,
+            request_policy_service,
+            request_policy_repository,
         }
     }
 
@@ -195,8 +211,10 @@ impl ExternalCanisterService {
             .insert(external_canister.to_key(), external_canister.clone());
 
         self.configure_external_canister_permissions(&external_canister, input.permissions)?;
-
-        // todo: add request policies handling
+        self.configure_external_canister_request_policies(
+            &external_canister,
+            input.request_policies,
+        )?;
 
         Ok(external_canister)
     }
@@ -268,6 +286,133 @@ impl ExternalCanisterService {
         Ok(())
     }
 
+    fn configure_external_canister_request_policies(
+        &self,
+        external_canister: &ExternalCanister,
+        input: ExternalCanisterRequestPoliciesInput,
+    ) -> ServiceResult<()> {
+        let current_policies: HashSet<UUID> = self
+            .request_policy_repository
+            .find_external_canister_policies(&external_canister.canister_id)
+            .into_iter()
+            .collect();
+
+        // if the updated list of policies does not contain the current policy, remove it from the system
+        let policies_to_remove = current_policies
+            .iter()
+            .filter(|policy_id| {
+                !input
+                    .calls
+                    .iter()
+                    .any(|policy| policy.policy_id == Some(**policy_id))
+                    || !input
+                        .change
+                        .iter()
+                        .any(|policy| policy.policy_id == Some(**policy_id))
+            })
+            .collect::<Vec<&UUID>>();
+
+        for policy_id in policies_to_remove {
+            self.request_policy_service
+                .remove_request_policy(policy_id)?;
+        }
+
+        // add or update the `Change` policies
+        for policy in input.change {
+            match policy.policy_id {
+                Some(policy_id) => {
+                    if !current_policies.contains(&policy_id) {
+                        print(format!(
+                            "Policy with id {} not found for external canister {}",
+                            Uuid::from_bytes(policy_id).hyphenated(),
+                            external_canister.canister_id.to_text()
+                        ));
+
+                        continue;
+                    }
+
+                    self.request_policy_service.edit_request_policy(
+                        EditRequestPolicyOperationInput {
+                            policy_id,
+                            rule: Some(policy.rule),
+                            specifier: None,
+                        },
+                    )?;
+                }
+                None => {
+                    self.request_policy_service.add_request_policy(
+                        AddRequestPolicyOperationInput {
+                            rule: policy.rule,
+                            specifier: RequestSpecifier::ChangeExternalCanister(
+                                ChangeExternalCanisterResourceTarget::Canister(
+                                    external_canister.canister_id,
+                                ),
+                            ),
+                        },
+                    )?;
+                }
+            }
+        }
+
+        // add or update the `Call` policies
+        for policy in input.calls {
+            match policy.policy_id {
+                Some(policy_id) => {
+                    if !current_policies.contains(&policy_id) {
+                        print(format!(
+                            "Policy with id {} not found for external canister {}",
+                            Uuid::from_bytes(policy_id).hyphenated(),
+                            external_canister.canister_id.to_text()
+                        ));
+
+                        continue;
+                    }
+
+                    self.request_policy_service.edit_request_policy(
+                        EditRequestPolicyOperationInput {
+                            policy_id,
+                            rule: Some(policy.rule),
+                            specifier: None,
+                        },
+                    )?;
+                }
+                None => {
+                    if let ValidationMethodResourceTarget::ValidationMethod(validation) =
+                        &policy.validation_method
+                    {
+                        if validation.canister_id == external_canister.canister_id
+                            && validation.method_name == policy.execution_method
+                        {
+                            Err(ExternalCanisterError::ValidationError {
+                                info: format!("The validation method `{}` cannot be the same as the execution method.", policy.execution_method),
+                            })?;
+                        }
+                    }
+
+                    self.request_policy_service.add_request_policy(
+                        AddRequestPolicyOperationInput {
+                            rule: policy.rule,
+                            specifier: RequestSpecifier::CallExternalCanister(
+                                CallExternalCanisterResourceTarget {
+                                    execution_method:
+                                        ExecutionMethodResourceTarget::ExecutionMethod(
+                                            CanisterMethod {
+                                                canister_id: external_canister.canister_id,
+                                                method_name: policy.execution_method,
+                                            },
+                                        ),
+                                    validation_method: policy.validation_method,
+                                },
+                            ),
+                        },
+                    )?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     /// Edits an external canister's settings.
     pub fn edit_external_canister(
         &self,
@@ -279,13 +424,18 @@ impl ExternalCanisterService {
         external_canister.update_with(input.clone());
         external_canister.validate()?;
 
-        // todo: request policies handling
-
         self.external_canister_repository
             .insert(external_canister.to_key(), external_canister.clone());
 
         if let Some(updated_permissions) = input.permissions {
             self.configure_external_canister_permissions(&external_canister, updated_permissions)?;
+        }
+
+        if let Some(updated_request_policies) = input.request_policies {
+            self.configure_external_canister_request_policies(
+                &external_canister,
+                updated_request_policies,
+            )?;
         }
 
         Ok(external_canister)
@@ -319,7 +469,44 @@ impl ExternalCanisterService {
         self.external_canister_repository
             .remove(&external_canister.to_key());
 
-        // todo: remove permissions and request policies
+        // Removes the read & change permissions.
+        self.permission_service
+            .remove_permission(&Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(
+                    external_canister.canister_id,
+                )),
+            ));
+
+        self.permission_service
+            .remove_permission(&Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Change(
+                    ChangeExternalCanisterResourceTarget::Canister(external_canister.canister_id),
+                ),
+            ));
+
+        // Remove all permissions related to the external canister.
+        self.permission_repository
+            .find_external_canister_call_permissions(&external_canister.canister_id)
+            .iter()
+            .for_each(|permission| {
+                self.permission_service
+                    .remove_permission(&permission.resource);
+            });
+
+        // Remove all request policies related to the external canister.
+        self.request_policy_repository
+            .find_external_canister_policies(&external_canister.canister_id)
+            .iter()
+            .for_each(|policy_id| {
+                if let Err(err) = self.request_policy_service.remove_request_policy(policy_id) {
+                    // This can be ignored to not block the deletion of the external canister.
+                    print(format!(
+                        "Failed to remove request policy with id {}, reason: {}",
+                        Uuid::from_bytes(*policy_id).hyphenated(),
+                        err
+                    ));
+                }
+            });
 
         Ok(external_canister)
     }
@@ -441,13 +628,17 @@ impl ExternalCanisterService {
 
 #[cfg(test)]
 mod tests {
+    use orbit_essentials::api::ApiError;
+
     use super::*;
     use crate::{
         core::test_utils,
         models::{
             permission::Allow, resource::ValidationMethodResourceTarget,
             CreateExternalCanisterOperationKindAddExisting, ExternalCanisterCallPermission,
-            ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput,
+            ExternalCanisterCallRequestPolicyRuleInput,
+            ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsInput,
+            ExternalCanisterRequestPoliciesInput, RequestPolicyRule,
         },
     };
 
@@ -485,8 +676,16 @@ mod tests {
                     ],
                 },
                 request_policies: ExternalCanisterRequestPoliciesInput {
-                    change: None,
-                    calls: Vec::new(),
+                    change: vec![ExternalCanisterChangeRequestPolicyRuleInput {
+                        policy_id: None,
+                        rule: RequestPolicyRule::AutoApproved,
+                    }],
+                    calls: vec![ExternalCanisterCallRequestPolicyRuleInput {
+                        policy_id: None,
+                        execution_method: "test".to_string(),
+                        validation_method: ValidationMethodResourceTarget::No,
+                        rule: RequestPolicyRule::AutoApproved,
+                    }],
                 },
                 kind: CreateExternalCanisterOperationKind::AddExisting(
                     CreateExternalCanisterOperationKindAddExisting {
@@ -533,6 +732,117 @@ mod tests {
         for permission in call_permission {
             assert!(permission.allowed_authenticated());
         }
+
+        let request_policies = REQUEST_POLICY_REPOSITORY
+            .find_external_canister_policies(&external_canister.canister_id);
+
+        assert_eq!(request_policies.len(), 2);
+
+        for policy in request_policies {
+            let policy = REQUEST_POLICY_REPOSITORY.get(&policy).unwrap();
+
+            assert_eq!(policy.rule, RequestPolicyRule::AutoApproved);
+        }
+    }
+
+    #[tokio::test]
+    async fn add_external_canister_with_non_compatible_policy_is_ignored() {
+        setup();
+        let incompatible_policy = REQUEST_POLICY_SERVICE
+            .add_request_policy(AddRequestPolicyOperationInput {
+                rule: RequestPolicyRule::AutoApproved,
+                specifier: RequestSpecifier::ChangeExternalCanister(
+                    ChangeExternalCanisterResourceTarget::Canister(Principal::from_slice(&[1; 29])),
+                ),
+            })
+            .unwrap();
+
+        let external_canister = EXTERNAL_CANISTER_SERVICE
+            .add_external_canister(CreateExternalCanisterOperationInput {
+                name: "test".to_string(),
+                description: None,
+                labels: None,
+                permissions: ExternalCanisterPermissionsInput {
+                    read: Allow::authenticated(),
+                    change: Allow::authenticated(),
+                    calls: Vec::new(),
+                },
+                request_policies: ExternalCanisterRequestPoliciesInput {
+                    change: vec![ExternalCanisterChangeRequestPolicyRuleInput {
+                        policy_id: Some(incompatible_policy.id),
+                        rule: RequestPolicyRule::AutoApproved,
+                    }],
+                    calls: Vec::new(),
+                },
+                kind: CreateExternalCanisterOperationKind::AddExisting(
+                    CreateExternalCanisterOperationKindAddExisting {
+                        canister_id: Principal::from_slice(&[10; 29]),
+                    },
+                ),
+            })
+            .await
+            .unwrap();
+
+        let request_policies = REQUEST_POLICY_REPOSITORY
+            .find_external_canister_policies(&external_canister.canister_id);
+
+        assert!(request_policies.is_empty());
+
+        let policy = REQUEST_POLICY_REPOSITORY
+            .get(&incompatible_policy.id)
+            .unwrap();
+
+        assert_eq!(
+            policy.specifier,
+            RequestSpecifier::ChangeExternalCanister(
+                ChangeExternalCanisterResourceTarget::Canister(Principal::from_slice(&[1; 29])),
+            )
+        );
+    }
+
+    #[tokio::test]
+    async fn same_validation_and_execution_method_should_fail() {
+        setup();
+        let result = EXTERNAL_CANISTER_SERVICE
+            .add_external_canister(CreateExternalCanisterOperationInput {
+                name: "test".to_string(),
+                description: None,
+                labels: None,
+                permissions: ExternalCanisterPermissionsInput {
+                    read: Allow::authenticated(),
+                    change: Allow::authenticated(),
+                    calls: Vec::new(),
+                },
+                request_policies: ExternalCanisterRequestPoliciesInput {
+                    change: Vec::new(),
+                    calls: vec![ExternalCanisterCallRequestPolicyRuleInput {
+                        policy_id: None,
+                        execution_method: "test".to_string(),
+                        validation_method: ValidationMethodResourceTarget::ValidationMethod(
+                            CanisterMethod {
+                                canister_id: Principal::from_slice(&[10; 29]),
+                                method_name: "test".to_string(),
+                            },
+                        ),
+                        rule: RequestPolicyRule::AutoApproved,
+                    }],
+                },
+                kind: CreateExternalCanisterOperationKind::AddExisting(
+                    CreateExternalCanisterOperationKindAddExisting {
+                        canister_id: Principal::from_slice(&[10; 29]),
+                    },
+                ),
+            })
+            .await;
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            ApiError::from(ExternalCanisterError::ValidationError {
+                info: "The validation method `test` cannot be the same as the execution method."
+                    .to_string()
+            })
+        );
     }
 
     #[tokio::test]
@@ -550,7 +860,7 @@ mod tests {
                         calls: Vec::new(),
                     },
                     request_policies: ExternalCanisterRequestPoliciesInput {
-                        change: None,
+                        change: Vec::new(),
                         calls: Vec::new(),
                     },
                     kind: CreateExternalCanisterOperationKind::AddExisting(
@@ -584,7 +894,7 @@ mod tests {
                         calls: Vec::new(),
                     },
                     request_policies: ExternalCanisterRequestPoliciesInput {
-                        change: None,
+                        change: Vec::new(),
                         calls: Vec::new(),
                     },
                     kind: CreateExternalCanisterOperationKind::AddExisting(
@@ -617,7 +927,7 @@ mod tests {
                     calls: Vec::new(),
                 },
                 request_policies: ExternalCanisterRequestPoliciesInput {
-                    change: None,
+                    change: Vec::new(),
                     calls: Vec::new(),
                 },
                 kind: CreateExternalCanisterOperationKind::AddExisting(
@@ -655,7 +965,7 @@ mod tests {
                     }],
                 },
                 request_policies: ExternalCanisterRequestPoliciesInput {
-                    change: None,
+                    change: Vec::new(),
                     calls: Vec::new(),
                 },
                 kind: CreateExternalCanisterOperationKind::AddExisting(
@@ -681,7 +991,7 @@ mod tests {
                         calls: Vec::new(),
                     }),
                     request_policies: Some(ExternalCanisterRequestPoliciesInput {
-                        change: None,
+                        change: Vec::new(),
                         calls: Vec::new(),
                     }),
                 },
