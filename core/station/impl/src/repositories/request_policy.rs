@@ -249,6 +249,7 @@ mod tests {
 
 #[cfg(feature = "canbench")]
 mod benchs {
+    use super::*;
     use crate::models::{
         request_specifier::RequestSpecifier,
         resource::{
@@ -257,7 +258,6 @@ mod benchs {
         },
         CanisterMethod, RequestPolicyRule,
     };
-    use super::*;
     use canbench_rs::{bench, BenchResult};
     use uuid::Uuid;
 
