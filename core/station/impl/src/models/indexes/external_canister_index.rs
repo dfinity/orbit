@@ -13,6 +13,8 @@ pub struct ExternalCanisterIndex {
     pub index: ExternalCanisterIndexKind,
     /// The external canister id, which is a UUID.
     pub external_canister_entry_id: ExternalCanisterId,
+    /// The external canister id, which is a Principal.
+    pub canister_id: Principal,
 }
 
 #[storable]
@@ -29,6 +31,7 @@ impl ExternalCanister {
         ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::Name(format_unique_string(self.name.as_str())),
             external_canister_entry_id: self.id,
+            canister_id: self.canister_id,
         }
     }
 
@@ -39,6 +42,7 @@ impl ExternalCanister {
             .map(|label| ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::Label(format_unique_string(label.as_str())),
                 external_canister_entry_id: self.id,
+                canister_id: self.canister_id,
             })
             .collect()
     }
@@ -48,6 +52,7 @@ impl ExternalCanister {
         ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::CanisterId(self.canister_id),
             external_canister_entry_id: self.id,
+            canister_id: self.canister_id,
         }
     }
 
@@ -77,6 +82,7 @@ mod tests {
         let model = ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::CanisterId(Principal::anonymous()),
             external_canister_entry_id: [u8::MAX; 16],
+            canister_id: Principal::anonymous(),
         };
 
         let serialized_model = model.to_bytes();

@@ -10,6 +10,7 @@ use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
+use station_api::GetExternalCanisterFiltersResponse;
 use std::collections::BTreeSet;
 use std::hash::Hash;
 
@@ -70,6 +71,8 @@ pub struct ExternalCanisterCallerPrivileges {
     pub can_change: bool,
     pub can_call: Vec<ExternalCanisterCallerMethodsPrivileges>,
 }
+
+pub type ExternalCanisterAvailableFilters = GetExternalCanisterFiltersResponse;
 
 impl ExternalCanister {
     pub const MAX_NAME_LENGTH: usize = 100;

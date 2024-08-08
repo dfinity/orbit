@@ -2,6 +2,7 @@ use super::permission::{PermissionService, PERMISSION_SERVICE};
 use super::request_policy::{RequestPolicyService, REQUEST_POLICY_SERVICE};
 use crate::core::authorization::Authorization;
 use crate::core::ic_cdk::api::print;
+use crate::core::utils::{retain_accessible_resources, PaginatedData};
 use crate::core::validation::EnsureExternalCanister;
 use crate::core::CallContext;
 use crate::errors::ExternalCanisterError;
@@ -16,16 +17,16 @@ use crate::models::{
     AddRequestPolicyOperationInput, CanisterMethod, ConfigureExternalCanisterSettingsInput,
     CreateExternalCanisterOperationInput, CreateExternalCanisterOperationKind,
     DefiniteCanisterSettingsInput, EditPermissionOperationInput, EditRequestPolicyOperationInput,
-    ExternalCanister, ExternalCanisterCallPermission, ExternalCanisterCallRequestPolicyRuleInput,
-    ExternalCanisterCallerMethodsPrivileges, ExternalCanisterCallerPrivileges,
-    ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterId, ExternalCanisterPermissions,
-    ExternalCanisterPermissionsInput, ExternalCanisterRequestPolicies,
-    ExternalCanisterRequestPoliciesInput, RequestPolicy,
+    ExternalCanister, ExternalCanisterAvailableFilters, ExternalCanisterCallPermission,
+    ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterCallerMethodsPrivileges,
+    ExternalCanisterCallerPrivileges, ExternalCanisterChangeRequestPolicyRuleInput,
+    ExternalCanisterId, ExternalCanisterPermissions, ExternalCanisterPermissionsInput,
+    ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesInput, RequestPolicy,
 };
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
 use crate::repositories::{
-    ExternalCanisterRepository, RequestPolicyRepository, EXTERNAL_CANISTER_REPOSITORY,
-    REQUEST_POLICY_REPOSITORY,
+    ExternalCanisterRepository, ExternalCanisterWhereClause, RequestPolicyRepository,
+    EXTERNAL_CANISTER_REPOSITORY, REQUEST_POLICY_REPOSITORY,
 };
 use candid::{Encode, Principal};
 use ic_cdk::api::call::call_raw;
@@ -36,8 +37,13 @@ use ic_cdk::api::management_canister::main::{
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::model::ModelValidator;
+use orbit_essentials::pagination::{paginated_items, PaginatedItemsArgs};
 use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
+use station_api::{
+    GetExternalCanisterFiltersInput, GetExternalCanisterFiltersResponseNameEntry,
+    ListExternalCanistersInput,
+};
 use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -65,6 +71,9 @@ pub struct ExternalCanisterService {
 }
 
 impl ExternalCanisterService {
+    const DEFAULT_LIST_LIMIT: u16 = 25;
+    const MAX_LIST_LIMIT: u16 = 250;
+
     pub fn new(
         external_canister_repository: Arc<ExternalCanisterRepository>,
         permission_service: Arc<PermissionService>,
@@ -285,6 +294,93 @@ impl ExternalCanisterService {
                 })
                 .collect(),
         }
+    }
+
+    /// Lists all external canisters that match the given filters.
+    ///
+    /// Filters can contain:
+    ///
+    /// - `canister_ids`: A list of canister ids to filter by.
+    /// - `labels`: A list of labels to filter by.
+    /// - `paginate`: Pagination settings.
+    ///
+    pub fn list_external_canisters(
+        &self,
+        input: ListExternalCanistersInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<PaginatedData<ExternalCanister>> {
+        let mut found_ids = self.external_canister_repository.find_canister_ids_where(
+            ExternalCanisterWhereClause {
+                canister_ids: input.canister_ids.clone(),
+                labels: input.labels.clone(),
+            },
+        );
+
+        // filter out requests that the caller does not have access to read
+        retain_accessible_resources(ctx, &mut found_ids, |id| {
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
+                ReadExternalCanisterResourceTarget::Canister(*id),
+            ))
+        });
+
+        let paginated_ids = paginated_items(PaginatedItemsArgs {
+            offset: input.paginate.to_owned().and_then(|p| p.offset),
+            limit: input.paginate.and_then(|p| p.limit),
+            default_limit: Some(Self::DEFAULT_LIST_LIMIT),
+            max_limit: Some(Self::MAX_LIST_LIMIT),
+            items: &found_ids,
+        })?;
+
+        Ok(PaginatedData {
+            total: paginated_ids.total,
+            next_offset: paginated_ids.next_offset,
+            items: paginated_ids
+                .items
+                .into_iter()
+                .flat_map(|id| match self.get_external_canister_by_canister_id(&id) {
+                    Ok(entry) => Some(entry),
+                    Err(error) => {
+                        print(format!(
+                            "Failed to get external canister entry {}: {:?}",
+                            id.to_text(),
+                            error
+                        ));
+                        None
+                    }
+                })
+                .collect::<Vec<ExternalCanister>>(),
+        })
+    }
+
+    /// Lists the available information that facilitates filtering external canisters.
+    ///
+    /// These helpers can contain:
+    ///
+    /// - `name`: The available names of existing external canisters.
+    /// - `labels`: The available labels of existing external canisters.
+    pub fn available_external_canisters_filters(
+        &self,
+        input: GetExternalCanisterFiltersInput,
+    ) -> ExternalCanisterAvailableFilters {
+        let names = input.with_name.as_ref().map(|name| {
+            self.external_canister_repository
+                .find_names_by_prefix(name.prefix.clone().unwrap_or_default().as_str(), None)
+                .iter()
+                .map(
+                    |(name, _, canister_id)| GetExternalCanisterFiltersResponseNameEntry {
+                        name: name.clone(),
+                        canister_id: *canister_id,
+                    },
+                )
+                .collect::<Vec<GetExternalCanisterFiltersResponseNameEntry>>()
+        });
+
+        let labels = match input.with_labels {
+            Some(true) => Some(self.external_canister_repository.find_all_labels()),
+            _ => None,
+        };
+
+        ExternalCanisterAvailableFilters { names, labels }
     }
 
     pub async fn create_canister(

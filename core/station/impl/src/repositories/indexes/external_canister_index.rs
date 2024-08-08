@@ -7,6 +7,7 @@ use crate::{
         ExternalCanisterId,
     },
 };
+use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use orbit_essentials::repository::IndexRepository;
 use std::{cell::RefCell, collections::HashSet};
@@ -45,10 +46,12 @@ impl IndexRepository<ExternalCanisterIndex, ExternalCanisterId>
             let start_key = ExternalCanisterIndex {
                 index: criteria.from,
                 external_canister_entry_id: [u8::MIN; 16],
+                canister_id: Principal::from_slice(&[u8::MIN; 29]),
             };
             let end_key = ExternalCanisterIndex {
                 index: criteria.to,
                 external_canister_entry_id: [u8::MAX; 16],
+                canister_id: Principal::from_slice(&[u8::MAX; 29]),
             };
 
             db.borrow()
@@ -60,6 +63,8 @@ impl IndexRepository<ExternalCanisterIndex, ExternalCanisterId>
 }
 
 impl ExternalCanisterIndexRepository {
+    pub const MAX_NAME_PREFIX_LIST_LIMIT: usize = 250;
+
     pub fn len(&self) -> u64 {
         DB.with(|m| m.borrow().len())
     }
@@ -69,18 +74,33 @@ impl ExternalCanisterIndexRepository {
     }
 
     /// Finds the names of the external canisters that start with the given prefix.
-    pub fn find_names_by_prefix(&self, prefix: &str) -> Vec<String> {
+    ///
+    /// Returns a list of names, external canister ids, and their canister ids.
+    pub fn find_names_by_prefix(
+        &self,
+        prefix: &str,
+        limit: Option<usize>,
+    ) -> Vec<(String, ExternalCanisterId, Principal)> {
+        let limit = limit.unwrap_or(Self::MAX_NAME_PREFIX_LIST_LIMIT);
+        let mut count = 0;
+
         DB.with(|db| {
             db.borrow()
                 .range((ExternalCanisterIndex {
                     index: ExternalCanisterIndexKind::Name(prefix.to_string()),
                     external_canister_entry_id: [u8::MIN; 16],
+                    canister_id: Principal::from_slice(&[u8::MIN; 29]),
                 })..)
                 .take_while(|(index, _)| {
+                    if count >= limit {
+                        return false;
+                    }
+
+                    count += 1;
                     matches!(&index.index, ExternalCanisterIndexKind::Name(name) if name.starts_with(prefix))
                 })
                 .filter_map(|(index, _)| match &index.index {
-                    ExternalCanisterIndexKind::Name(name) => Some(name.clone()),
+                    ExternalCanisterIndexKind::Name(name) => Some((name.clone(), index.external_canister_entry_id, index.canister_id)),
                     _ => None,
                 })
                 .collect()
@@ -95,6 +115,7 @@ impl ExternalCanisterIndexRepository {
                     (ExternalCanisterIndex {
                         index: ExternalCanisterIndexKind::Label(String::new()),
                         external_canister_entry_id: [u8::MIN; 16],
+                        canister_id: Principal::from_slice(&[u8::MIN; 29]),
                     })..,
                 )
                 .take_while(|(index, _)| {
@@ -128,6 +149,7 @@ mod tests {
         let index = ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::Name("test".to_string()),
             external_canister_entry_id: [1; 16],
+            canister_id: Principal::anonymous(),
         };
 
         assert!(!repository.exists(&index));
@@ -146,6 +168,7 @@ mod tests {
             repository.insert(ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::Name(format!("test-{}", i)),
                 external_canister_entry_id: [i; 16],
+                canister_id: Principal::anonymous(),
             });
         }
 
@@ -166,6 +189,7 @@ mod tests {
             repository.insert(ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::CanisterId(Principal::from_slice(&[i; 29])),
                 external_canister_entry_id: [i; 16],
+                canister_id: Principal::anonymous(),
             });
         }
 
@@ -186,6 +210,7 @@ mod tests {
             repository.insert(ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::Label(format!("label-{}", i)),
                 external_canister_entry_id: [i; 16],
+                canister_id: Principal::anonymous(),
             });
         }
 
@@ -210,6 +235,7 @@ mod tests {
             repository.insert(ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::Name(index_name.clone()),
                 external_canister_entry_id: [i; 16],
+                canister_id: Principal::anonymous(),
             });
 
             if index_name.starts_with(search_prefix) {
@@ -217,7 +243,11 @@ mod tests {
             }
         }
 
-        let result = repository.find_names_by_prefix("test2");
+        let result = repository
+            .find_names_by_prefix("test2", None)
+            .into_iter()
+            .map(|(name, _, _)| name)
+            .collect::<Vec<String>>();
 
         assert!(!result.is_empty());
         assert_eq!(result.len(), expected_results.len());
@@ -233,6 +263,7 @@ mod tests {
             repository.insert(ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::Label(format!("label-{}", i)),
                 external_canister_entry_id: [i; 16],
+                canister_id: Principal::anonymous(),
             });
         }
 
@@ -240,6 +271,7 @@ mod tests {
             repository.insert(ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::Label(format!("label-{}", i)),
                 external_canister_entry_id: [i + 20; 16],
+                canister_id: Principal::anonymous(),
             });
         }
 

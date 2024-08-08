@@ -118,6 +118,34 @@ impl ExternalCanisterRepository {
         self.find_by_canister_id(canister_id)
             .map_or(true, |existing_id| skip_id == Some(existing_id))
     }
+
+    /// Finds all the labels of the external canisters, which are unique.
+    pub fn find_all_labels(&self) -> Vec<String> {
+        self.indexes.find_all_labels()
+    }
+
+    /// Finds the names of the external canisters that start with the given prefix.
+    pub fn find_names_by_prefix(
+        &self,
+        prefix: &str,
+        limit: Option<usize>,
+    ) -> Vec<(String, ExternalCanisterId, Principal)> {
+        self.indexes.find_names_by_prefix(prefix, limit)
+    }
+
+    /// Finds external canisters based on the provided where clause.
+    pub fn find_canister_ids_where(
+        &self,
+        _where_clause: ExternalCanisterWhereClause,
+    ) -> Vec<Principal> {
+        unimplemented!()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ExternalCanisterWhereClause {
+    pub canister_ids: Option<Vec<Principal>>,
+    pub labels: Option<Vec<String>>,
 }
 
 #[cfg(test)]

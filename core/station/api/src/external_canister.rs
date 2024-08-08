@@ -221,13 +221,13 @@ pub struct ListExternalCanistersResponse {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetExternalCanisterFiltersInputWithName {
-    prefix: Option<String>,
+    pub prefix: Option<String>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetExternalCanisterFiltersInput {
-    with_name: Option<GetExternalCanisterFiltersInputWithName>,
-    with_labels: Option<bool>,
+    pub with_name: Option<GetExternalCanisterFiltersInputWithName>,
+    pub with_labels: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
