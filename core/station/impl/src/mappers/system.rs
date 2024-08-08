@@ -22,7 +22,7 @@ impl SystemInfo {
                         .map(|g| g.name.clone()),
                 }
             }),
-            cycle_obtain_strategy: self.get_cycle_obtain_strategy().map(|s| s.clone().into()),
+            cycle_obtain_strategy: self.get_cycle_obtain_strategy().map(|s| (*s).into()),
         }
     }
 }
