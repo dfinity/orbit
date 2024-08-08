@@ -86,6 +86,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "alloc-no-stdlib"
+version = "2.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc7bb162ec39d46ab1ca8c77bf72e890535becd1751bb45f64c597edb4c8c6b3"
+
+[[package]]
+name = "alloc-stdlib"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94fb8275041c72129eb51b7d0322c29b8387a0386127718b096429201a5d6ece"
+dependencies = [
+ "alloc-no-stdlib",
+]
+
+[[package]]
 name = "allocator-api2"
 version = "0.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -441,6 +456,27 @@ dependencies = [
  "pairing",
  "rand_core",
  "subtle",
+]
+
+[[package]]
+name = "brotli"
+version = "6.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74f7971dbd9326d58187408ab83117d8ac1bb9c17b085fdacd1cf2f598719b6b"
+dependencies = [
+ "alloc-no-stdlib",
+ "alloc-stdlib",
+ "brotli-decompressor",
+]
+
+[[package]]
+name = "brotli-decompressor"
+version = "4.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a45bd2e4095a8b518033b128020dd4a55aab1c0a381ba4404a472630f4bc362"
+dependencies = [
+ "alloc-no-stdlib",
+ "alloc-stdlib",
 ]
 
 [[package]]
@@ -1041,10 +1077,11 @@ checksum = "339544cc9e2c4dc3fc7149fd630c5f22263a4fdf18a98afd0075784968b5cf00"
 [[package]]
 name = "dfx-core"
 version = "0.0.1"
-source = "git+https://github.com/dfinity/sdk.git?tag=0.20.2-beta.0#06eaa58f9c52d27a015cd8f754ecd3d0d0ba555b"
+source = "git+https://github.com/dfinity/sdk.git?tag=0.22.0#d0c8be188d1a19c1908f148e3bc5331b62de780a"
 dependencies = [
  "aes-gcm",
  "argon2",
+ "backoff",
  "bip32",
  "byte-unit",
  "bytes",
@@ -1070,6 +1107,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
+ "sha2 0.10.8",
  "slog",
  "tar",
  "tempfile",
@@ -1082,10 +1120,11 @@ dependencies = [
 [[package]]
 name = "dfx-core"
 version = "0.0.1"
-source = "git+https://github.com/dfinity/sdk.git?rev=ae10a96b381cfce3d8ac5a6cb940d19224ea6d2e#ae10a96b381cfce3d8ac5a6cb940d19224ea6d2e"
+source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
 dependencies = [
  "aes-gcm",
  "argon2",
+ "backoff",
  "bip32",
  "byte-unit",
  "bytes",
@@ -1111,6 +1150,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
+ "sha2 0.10.8",
  "slog",
  "tar",
  "tempfile",
@@ -1122,14 +1162,15 @@ dependencies = [
 
 [[package]]
 name = "dfx-orbit"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "candid",
  "candid_parser",
  "cap-std",
  "clap",
- "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?tag=0.20.2-beta.0)",
+ "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?tag=0.22.0)",
+ "hex",
  "ic-agent",
  "ic-asset",
  "ic-certified-assets",
@@ -1137,13 +1178,13 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
+ "sha2 0.10.8",
  "slog",
  "slog-async",
  "slog-term",
  "station-api",
  "thiserror",
  "tokio",
- "walkdir",
 ]
 
 [[package]]
@@ -1934,8 +1975,8 @@ dependencies = [
 
 [[package]]
 name = "ic-agent"
-version = "0.35.0"
-source = "git+https://github.com/dfinity/agent-rs.git?rev=8273d321e9a09fd8373bd4e38b0676ec6ad9c260#8273d321e9a09fd8373bd4e38b0676ec6ad9c260"
+version = "0.36.0"
+source = "git+https://github.com/dfinity/agent-rs.git?rev=be929fd7967249c879f48f2f494cbfc5805a7d98#be929fd7967249c879f48f2f494cbfc5805a7d98"
 dependencies = [
  "async-lock 3.4.0",
  "backoff",
@@ -1975,12 +2016,13 @@ dependencies = [
 [[package]]
 name = "ic-asset"
 version = "0.20.0"
-source = "git+https://github.com/dfinity/sdk.git?rev=ae10a96b381cfce3d8ac5a6cb940d19224ea6d2e#ae10a96b381cfce3d8ac5a6cb940d19224ea6d2e"
+source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
 dependencies = [
  "backoff",
+ "brotli",
  "candid",
  "derivative",
- "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?rev=ae10a96b381cfce3d8ac5a6cb940d19224ea6d2e)",
+ "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845)",
  "flate2",
  "futures",
  "futures-intrusive",
@@ -2131,7 +2173,7 @@ dependencies = [
 [[package]]
 name = "ic-certified-assets"
 version = "0.2.5"
-source = "git+https://github.com/dfinity/sdk.git?rev=ae10a96b381cfce3d8ac5a6cb940d19224ea6d2e#ae10a96b381cfce3d8ac5a6cb940d19224ea6d2e"
+source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
 dependencies = [
  "base64 0.13.1",
  "candid",
@@ -2142,6 +2184,7 @@ dependencies = [
  "ic-response-verification",
  "itertools 0.10.5",
  "num-traits",
+ "percent-encoding",
  "serde",
  "serde_bytes",
  "serde_cbor",
@@ -2165,8 +2208,8 @@ dependencies = [
 
 [[package]]
 name = "ic-identity-hsm"
-version = "0.35.0"
-source = "git+https://github.com/dfinity/agent-rs.git?rev=8273d321e9a09fd8373bd4e38b0676ec6ad9c260#8273d321e9a09fd8373bd4e38b0676ec6ad9c260"
+version = "0.36.0"
+source = "git+https://github.com/dfinity/agent-rs.git?rev=be929fd7967249c879f48f2f494cbfc5805a7d98#be929fd7967249c879f48f2f494cbfc5805a7d98"
 dependencies = [
  "hex",
  "ic-agent",
@@ -2236,8 +2279,8 @@ dependencies = [
 
 [[package]]
 name = "ic-transport-types"
-version = "0.35.0"
-source = "git+https://github.com/dfinity/agent-rs.git?rev=8273d321e9a09fd8373bd4e38b0676ec6ad9c260#8273d321e9a09fd8373bd4e38b0676ec6ad9c260"
+version = "0.36.0"
+source = "git+https://github.com/dfinity/agent-rs.git?rev=be929fd7967249c879f48f2f494cbfc5805a7d98#be929fd7967249c879f48f2f494cbfc5805a7d98"
 dependencies = [
  "candid",
  "hex",
@@ -2252,8 +2295,8 @@ dependencies = [
 
 [[package]]
 name = "ic-utils"
-version = "0.35.0"
-source = "git+https://github.com/dfinity/agent-rs.git?rev=8273d321e9a09fd8373bd4e38b0676ec6ad9c260#8273d321e9a09fd8373bd4e38b0676ec6ad9c260"
+version = "0.36.0"
+source = "git+https://github.com/dfinity/agent-rs.git?rev=be929fd7967249c879f48f2f494cbfc5805a7d98#be929fd7967249c879f48f2f494cbfc5805a7d98"
 dependencies = [
  "async-trait",
  "candid",
@@ -2358,6 +2401,7 @@ dependencies = [
  "hex",
  "ic-cdk 0.13.2",
  "ic-ledger-types",
+ "itertools 0.13.0",
  "lazy_static",
  "num-bigint 0.4.5",
  "orbit-essentials",
@@ -2439,6 +2483,15 @@ name = "itertools"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
 dependencies = [
  "either",
 ]

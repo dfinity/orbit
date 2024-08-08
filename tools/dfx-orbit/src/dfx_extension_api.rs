@@ -1,7 +1,7 @@
 //! Placeholders for the proposed dfx extension API methods.
 use anyhow::Context;
 use dfx_core::interface::dfx::DfxInterface;
-use slog::{o, Drain, Logger};
+
 use std::path::PathBuf;
 
 /// The name of the Orbit dfx extension.
@@ -11,8 +11,6 @@ const ORBIT_EXTENSION_NAME: &str = "orbit";
 pub struct OrbitExtensionAgent {
     /// The directory where all extension configuration files are stored, including those of other extensions.
     extensions_dir: cap_std::fs::Dir,
-    /// A logger; some public `sdk` repository methods require a specific type of logger so this is a compatible logger.
-    logger: Logger,
 }
 
 impl OrbitExtensionAgent {
@@ -24,22 +22,7 @@ impl OrbitExtensionAgent {
     }
 
     fn new_from_dir(extensions_dir: cap_std::fs::Dir) -> Self {
-        let logger = {
-            let decorator = slog_term::TermDecorator::new().build();
-            let drain = slog_term::FullFormat::new(decorator).build().fuse();
-            let drain = slog_async::Async::new(drain).build().fuse();
-
-            slog::Logger::root(drain, o!())
-        };
-        Self {
-            extensions_dir,
-            logger,
-        }
-    }
-
-    /// A logger; some public `sdk` repository methods require a specific type of logger so this is a compatible logger.
-    pub fn logger(&self) -> &Logger {
-        &self.logger
+        Self { extensions_dir }
     }
 
     /// Gets the extensions directory, typically at `~/.config/dfx/extensions`

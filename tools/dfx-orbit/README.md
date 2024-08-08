@@ -5,9 +5,15 @@ It is designed to work alongside `dfx` to allow a `dfx`-like workflow to manage 
 
 ## Getting started
 
-### Installation
+### Prequisites
 
-Build the tool:
+This guide assumes, that the user has setup and is acquainted with the following tools:
+
+- A fairly recent rust toolchain. This tool is known to work on linux using rust `1.79.0`.
+- A working `dfx` development setup.
+- An internet identity and an Orbit account with the correct permissions.
+
+### Installation
 
 Currently, there are two ways of installing `dfx-orbit`:
 
@@ -19,19 +25,22 @@ To get the most recent version of `dfx-orbit` without manually cloning the entir
 cargo install -f --git https://github.com/dfinity/orbit.git --bin dfx-orbit
 ```
 
-#### Install from the repository
+#### Clone and install from the repository
+
+This version is potentially more useful, if you want to make patches or use a specific branch.
 
 ```
-$ cargo build -p dfx-orbit
+git clone https://github.com/dfinity/orbit.git
+cargo install -f --path tools/dfx-orbit/
 ```
 
 Verify that the tool works:
 
 ```
-$ ./target/debug/dfx-orbit --version
+$ dfx-orbit --version
 dfx-orbit 0.1.0
 
-$ ./target/debug/dfx-orbit --help
+$ dfx-orbit --help
 Command line tool for interacting with the Orbit digital asset manager on the ICP blockchain.
 
 Usage: dfx-orbit <COMMAND>
@@ -41,12 +50,7 @@ Commands:
 ...
 ```
 
-Add `dfx-orbit` to your `PATH`.
-
 ### Connect to Orbit
-
-> **NOTE**: This assumes that you already have a `dfx` setup working.
-> If you need to set up a new identity, have a look at `dfx identity new`.
 
 Connect your local dfx identity to your Orbit identity:
 
@@ -83,8 +87,6 @@ Tell the command line tool where to find the orbit station:
   ```
   dfx-orbit me
   ```
-
-TODO: The Oisy canister ID is also called the wallet ID and the station ID. Consistent nomenclature that doesn't conflict with established terminology would be nice.
 
 ### Grant permission to make requests
 
@@ -165,55 +167,34 @@ This will create an Orbit request. Once approved you will be able to propose can
 Suppose that you have built a new Wasm and put a copy at `./MY-CANISTER.wasm.gz`. To upgrade your canister to the new Wasm:
 
 ```
-dfx-orbit request canister install --mode upgrade --wasm ./MY-CANISTER.wasm.gz MY_CANISTER
+dfx-orbit request canister install --mode upgrade MY_CANISTER --wasm ./MY-CANISTER.wasm.gz
 ```
 
 ### Upload assets to a canister
 
-We will assume that Orbit is a controller of the asset canister. If not, please adapt the following commands by using `dfx canister call` instead of `dfx-orbit request canister call`.
+We will assume that Orbit is a controller of the asset canister.
+If not, please transfer the control of the canister to the orbit station.
 
 #### Authorize the developer to upload assets
 
 Note: Uploaded assets are not published. They are only prepared for release.
 
 ```
-developer_principal="$(dfx identity get-principal)"
-dfx-orbit request canister call frontend grant_permission "
-(
-  record {
-    permission = variant { Prepare };
-    to_principal = principal \"$developer_principal\";
-  },
-)
-"
+dfx-orbit asset request-prepare-permission frontend
 ```
 
-When the request has been approved, check the list of principals permitted to prepare assets:
+In case you want to verify, whether you have the `Prepare` permission on the asset canister,
+run:
 
 ```
 dfx canister call frontend list_permitted '(record { permission = variant { Prepare } })'
 ```
 
-#### Authorize the orbit station to commit assets
-
-Note: Committing uploaded assets causes them to be published on the asset canister web site.
-
-```
-station_principal="$(dfx-orbit station show | jq -r .station_id)"
-dfx-orbit request canister call frontend grant_permission "
-(
-  record {
-    permission = variant { Commit };
-    to_principal = principal \"$station_principal\";
-  },
-)
-"
-```
-
-When the request has been approved, check the list of principals permitted to commit assets:
+and check whether your principal is among the ones listed.
+You can optain your own principal via:
 
 ```
-dfx canister call frontend list_permitted '(record { permission = variant { Commit } })'
+dfx identity get-principal
 ```
 
 #### Request an asset update
@@ -224,14 +205,26 @@ A developer may upload one or more directories of HTTP assets with:
 dfx-orbit asset upload CANISTER_NAME SOME_DIR/ OTHER_DIR/
 ```
 
-The developer may now request that the assets be published. The command for this is printed at the end of the upload command. Example:
+This will upload the assets to the asset canister and then request the orbit station to publish
+the assets.
+
+#### Verifying an asset update
+
+After the request has been made, the reviewers can locally verify the request:
 
 ```
-...
-Jul 03 09:36:42.148 INFO Computing evidence.
-Proposed batch_id: 5
-Assets have been uploaded.  For the changes to take effect, run:
-dfx-orbit request canister call frontend commit_proposed_batch '(record { batch_id = 5 : nat; evidence = blob "\e3\b0\c4\42\98\fc\1c\14\9a\fb\f4\c8\99\6f\b9\24\27\ae\41\e4\64\9b\93\4c\a4\95\99\1b\78\52\b8\55" })'
+dfx-orbit asset check --then-approve CANISTER REQUEST_ID BATCH_ID SOME_DIR/ OTHER_DIR/
 ```
+
+The exact command is printed in the output of `dfx-orbit asset upload` and must be distributed
+from the proposer to the verifiers.
+
+> The verifiers needs to have the same set of data as was used in the request.
+> How the verifier accomplishes this is outside the scope of this document.
+>
+> - The verifier might either download a tarball from the requester and manually verify the content
+> - The verifier might check out a git revision and check that the content matches
+> - If there are build scripts used while generating the assets, care must be taken to make
+>   the build step deterministic, such that verifiers can recreate the exact assets
 
 Once the request has been approved, the changes will take effect.

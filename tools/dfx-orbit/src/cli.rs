@@ -1,10 +1,11 @@
 //! Implementation of the `dfx-orbit` commands.
-mod asset;
-mod station;
+pub(crate) mod asset;
+pub(crate) mod station;
 
-pub use crate::cli::asset::AssetUploadRequest;
+use orbit_station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
+
 use crate::{
-    args::{asset::AssetArgsAction, review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
+    args::{review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
     dfx_extension_api::OrbitExtensionAgent,
     DfxOrbit,
 };
@@ -28,15 +29,12 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             Ok(())
         }
         DfxOrbitSubcommands::Request(request_args) => {
-            let response = dfx_orbit
+            let request = dfx_orbit
                 .station
                 .request(request_args.into_create_request_input(&dfx_orbit)?)
                 .await?;
-            let request_id = &response.request.id;
-            let request_url = dfx_orbit.station.request_url(request_id);
-            println!("Created request: {request_id}");
-            println!("Request URL: {request_url}");
-            println!("To view the request, run: dfx-orbit review id {request_id}");
+            dfx_orbit.print_create_request_info(&request);
+
             Ok(())
         }
         DfxOrbitSubcommands::Review(review_args) => match review_args {
@@ -68,8 +66,14 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
                     )?
                 );
 
-                // TODO: Reaffirm user consent before progressing with submitting
-                if let Ok(submit) = args.try_into() {
+                if let Ok(submit) = SubmitRequestApprovalInput::try_from(args) {
+                    let action = match submit.decision {
+                        RequestApprovalStatusDTO::Approved => "approve",
+                        RequestApprovalStatusDTO::Rejected => "reject",
+                    };
+                    dfx_core::cli::ask_for_consent(&format!(
+                        "Would you like to {action} this request?"
+                    ))?;
                     dfx_orbit.station.submit(submit).await?;
                 };
 
@@ -77,16 +81,8 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             }
         },
         DfxOrbitSubcommands::Asset(asset_args) => {
-            match asset_args.action {
-                AssetArgsAction::Upload(upload_args) => {
-                    dfx_orbit
-                        .upload_assets(upload_args.canister, upload_args.files)
-                        .await?;
-                }
-            }
-
+            dfx_orbit.exec_asset(asset_args).await?;
             Ok(())
-            //
         }
         _ => unreachable!(),
     }
