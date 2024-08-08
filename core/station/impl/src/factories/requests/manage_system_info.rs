@@ -95,7 +95,7 @@ mod tests {
             RequestOperation::ManageSystemInfo(ManageSystemInfoOperation {
                 input: ManageSystemInfoOperationInput {
                     name: Some("name".to_string()),
-                    funding_account_id: None,
+                    cycle_obtain_strategy: None,
                 },
             })
         );
@@ -146,7 +146,7 @@ mod mnanage_system_info_test_utils {
     pub fn mock_manage_system_info_api_input() -> station_api::ManageSystemInfoOperationInput {
         station_api::ManageSystemInfoOperationInput {
             name: Some("name".to_string()),
-            funding_account_id: None,
+            cycle_obtain_strategy: None,
         }
     }
 

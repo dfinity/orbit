@@ -12,14 +12,14 @@ use crate::{
     factories::blockchains::InternetComputer,
     models::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
-        AccountId, ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
+        CycleObtainStrategy, ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
     },
     repositories::{RequestRepository, REQUEST_REPOSITORY},
 };
 use candid::Principal;
 use canfund::{
     api::{cmc::IcCyclesMintingCanister, ledger::IcLedgerCanister},
-    operations::obtain::MintCycles,
+    operations::obtain::{MintCycles, ObtainCycles},
 };
 use ic_ledger_types::{Subaccount, MAINNET_CYCLES_MINTING_CANISTER_ID, MAINNET_LEDGER_CANISTER_ID};
 use lazy_static::lazy_static;
@@ -107,25 +107,25 @@ impl SystemService {
         });
     }
 
-    pub fn get_obtain_cycle_config(&self, cycle_minting_account: &AccountId) -> MintCycles {
-        MintCycles {
-            ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
-            cmc: Arc::new(IcCyclesMintingCanister::new(
-                MAINNET_CYCLES_MINTING_CANISTER_ID,
-            )),
-            from_subaccount: Subaccount(InternetComputer::subaccount_from_station_account_id(
-                cycle_minting_account,
-            )),
+    pub fn get_obtain_cycle_config(&self, strategy: &CycleObtainStrategy) -> Arc<dyn ObtainCycles> {
+        match strategy {
+            CycleObtainStrategy::MintFromICP { account_id } => Arc::new(MintCycles {
+                ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
+                cmc: Arc::new(IcCyclesMintingCanister::new(
+                    MAINNET_CYCLES_MINTING_CANISTER_ID,
+                )),
+                from_subaccount: Subaccount(InternetComputer::subaccount_from_station_account_id(
+                    account_id,
+                )),
+            }),
         }
     }
     #[cfg(target_arch = "wasm32")]
-    pub fn set_fund_manager_obtain_cycles(&self, cycle_minting_account: &AccountId) {
+    pub fn set_fund_manager_obtain_cycles(&self, strategy: &CycleObtainStrategy) {
         install_canister_handlers::FUND_MANAGER.with(|fund_manager| {
             let mut fund_manager = fund_manager.borrow_mut();
             let options = fund_manager.get_options();
-            let options = options.with_obtain_cycles(Arc::new(
-                self.get_obtain_cycle_config(cycle_minting_account),
-            ));
+            let options = options.with_obtain_cycles(self.get_obtain_cycle_config(strategy));
             fund_manager.with_options(options);
         });
     }
@@ -162,7 +162,7 @@ impl SystemService {
 
             install_canister_handlers::monitor_upgrader_cycles(
                 *system_info.get_upgrader_canister_id(),
-                system_info.get_cycle_minting_account().clone().copied(),
+                system_info.get_cycle_obtain_strategy().clone().copied(),
             );
 
             // initializes the job timers after the canister is fully initialized
@@ -409,7 +409,7 @@ mod install_canister_handlers {
     use crate::models::permission::Allow;
     use crate::models::request_specifier::UserSpecifier;
     use crate::models::{
-        AccountId, AddAccountOperationInput, AddRequestPolicyOperationInput,
+        AddAccountOperationInput, AddRequestPolicyOperationInput, CycleObtainStrategy,
         EditPermissionOperationInput, RequestPolicyRule, ADMIN_GROUP_ID,
     };
     use crate::services::permission::PERMISSION_SERVICE;
@@ -584,7 +584,7 @@ mod install_canister_handlers {
     /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.
     pub fn monitor_upgrader_cycles(
         upgrader_id: Principal,
-        cycle_minting_account_id: Option<AccountId>,
+        cycle_obtain_strategy: Option<CycleObtainStrategy>,
     ) {
         print(format!(
             "Starting fund manager to monitor self {} and upgrader canister {} cycles",
@@ -606,10 +606,9 @@ mod install_canister_handlers {
                         .with_fallback_fund_cycles(250_000_000_000),
                 ));
 
-            if let Some(cycle_minting_account) = cycle_minting_account_id {
-                fund_manager_options = fund_manager_options.with_obtain_cycles(Arc::new(
-                    SYSTEM_SERVICE.get_obtain_cycle_config(&cycle_minting_account),
-                ));
+            if let Some(strategy) = cycle_obtain_strategy {
+                fund_manager_options = fund_manager_options
+                    .with_obtain_cycles(SYSTEM_SERVICE.get_obtain_cycle_config(&strategy));
             }
 
             fund_manager.with_options(fund_manager_options);

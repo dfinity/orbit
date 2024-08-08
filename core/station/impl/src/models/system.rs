@@ -24,7 +24,7 @@ pub struct DisasterRecoveryCommittee {
 }
 
 #[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum CycleObtainStrategy {
     MintFromICP { account_id: AccountId },
 }

@@ -34,6 +34,7 @@ pub struct CyclesCanisterInitPayload {
     pub minting_account_id: Option<AccountIdentifier>,
     pub exchange_rate_canister: Option<ExchangeRateCanister>,
     pub cycles_ledger_canister_id: Option<Principal>,
+    pub last_purged_notification: Option<u64>,
 }
 
 #[derive(Clone)]
@@ -194,21 +195,6 @@ fn install_canisters(
         Some(controller),
     );
 
-    // let exchange_canister_wasm = get_canister_wasm("exchange").to_vec();
-    // let exchange: Option<CyclesCanisterInitPayload> = Some(CyclesCanisterInitPayload {
-    //     ledger_canister_id: Some(nns_ledger_canister_id),
-    //     governance_canister_id: Some(nns_governance_canister_id),
-    //     minting_account_id: None,
-    //     exchange_rate_canister: Some(ExchangeRateCanister::Set(nns_exchange_rate_canister_id)),
-    //     cycles_ledger_canister_id: Some(nns_cycles_ledger_canister_id),
-    // });
-    // env.install_canister(
-    //     cmc_canister_id,
-    //     exchange_canister_wasm,
-    //     Encode!(&exchange).unwrap(),
-    //     Some(controller),
-    // );
-
     let cmc_canister_wasm = get_canister_wasm("cmc").to_vec();
     let cmc_init_args: Option<CyclesCanisterInitPayload> = Some(CyclesCanisterInitPayload {
         ledger_canister_id: Some(nns_ledger_canister_id),
@@ -216,6 +202,7 @@ fn install_canisters(
         minting_account_id: None,
         exchange_rate_canister: Some(ExchangeRateCanister::Set(nns_exchange_rate_canister_id)),
         cycles_ledger_canister_id: Some(nns_cycles_ledger_canister_id),
+        last_purged_notification: Some(0),
     });
     env.install_canister(
         cmc_canister_id,

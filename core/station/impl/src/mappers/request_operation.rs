@@ -19,14 +19,15 @@ use crate::{
         ConfigureExternalCanisterOperationKind, ConfigureExternalCanisterSettingsInput,
         CreateExternalCanisterOperation, CreateExternalCanisterOperationInput,
         CreateExternalCanisterOperationKind, CreateExternalCanisterOperationKindAddExisting,
-        CreateExternalCanisterOperationKindCreateNew, DefiniteCanisterSettingsInput,
-        DisasterRecoveryCommittee, EditAccountOperation, EditAccountOperationInput,
-        EditAddressBookEntryOperation, EditPermissionOperation, EditPermissionOperationInput,
-        EditRequestPolicyOperation, EditRequestPolicyOperationInput, EditUserGroupOperation,
-        EditUserOperation, EditUserOperationInput, ExternalCanisterCallPermission,
-        ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterChangeRequestPolicyRuleInput,
-        ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput,
-        ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
+        CreateExternalCanisterOperationKindCreateNew, CycleObtainStrategy,
+        DefiniteCanisterSettingsInput, DisasterRecoveryCommittee, EditAccountOperation,
+        EditAccountOperationInput, EditAddressBookEntryOperation, EditPermissionOperation,
+        EditPermissionOperationInput, EditRequestPolicyOperation, EditRequestPolicyOperationInput,
+        EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
+        ExternalCanisterCallPermission, ExternalCanisterCallRequestPolicyRuleInput,
+        ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsInput,
+        ExternalCanisterRequestPoliciesInput, ManageSystemInfoOperation,
+        ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
         RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
         TransferOperation, User,
@@ -1021,13 +1022,37 @@ impl From<RemoveRequestPolicyOperation> for station_api::RemoveRequestPolicyOper
     }
 }
 
+impl From<station_api::CycleObtainStrategyDTO> for CycleObtainStrategy {
+    fn from(value: station_api::CycleObtainStrategyDTO) -> Self {
+        match value {
+            station_api::CycleObtainStrategyDTO::MintFromICP { account_id } => {
+                CycleObtainStrategy::MintFromICP {
+                    account_id: *HelperMapper::to_uuid(account_id)
+                        .expect("Invalid account id")
+                        .as_bytes(),
+                }
+            }
+        }
+    }
+}
+
+impl From<CycleObtainStrategy> for station_api::CycleObtainStrategyDTO {
+    fn from(value: CycleObtainStrategy) -> Self {
+        match value {
+            CycleObtainStrategy::MintFromICP { account_id } => {
+                station_api::CycleObtainStrategyDTO::MintFromICP {
+                    account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
+                }
+            }
+        }
+    }
+}
+
 impl From<ManageSystemInfoOperationInput> for station_api::ManageSystemInfoOperationInput {
     fn from(input: ManageSystemInfoOperationInput) -> station_api::ManageSystemInfoOperationInput {
         station_api::ManageSystemInfoOperationInput {
             name: input.name,
-            funding_account_id: input
-                .funding_account_id
-                .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
+            cycle_obtain_strategy: input.cycle_obtain_strategy.map(|strategy| strategy.into()),
         }
     }
 }
@@ -1036,11 +1061,7 @@ impl From<station_api::ManageSystemInfoOperationInput> for ManageSystemInfoOpera
     fn from(input: station_api::ManageSystemInfoOperationInput) -> ManageSystemInfoOperationInput {
         ManageSystemInfoOperationInput {
             name: input.name,
-            funding_account_id: input.funding_account_id.map(|id| {
-                *HelperMapper::to_uuid(id)
-                    .expect("Invalid account id")
-                    .as_bytes()
-            }),
+            cycle_obtain_strategy: input.cycle_obtain_strategy.map(|strategy| strategy.into()),
         }
     }
 }

@@ -32,6 +32,8 @@ use station_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInpu
 use std::sync::Arc;
 use uuid::Uuid;
 
+use super::SYSTEM_SERVICE;
+
 lazy_static! {
     pub static ref ACCOUNT_SERVICE: Arc<AccountService> = Arc::new(AccountService::new(
         Arc::clone(&REQUEST_POLICY_SERVICE),
@@ -244,24 +246,30 @@ impl AccountService {
                 ))),
             })?;
 
-        let mut system_info = read_system_info();
+        if SYSTEM_SERVICE.is_healthy() {
+            let mut system_info = read_system_info();
 
-        // if this is the first account created, and there is no cycle minting account set, set this account as the cycle minting account
-        if system_info.get_cycle_obtain_strategy().is_none()
-            && ACCOUNT_REPOSITORY.len() == 1
-            && matches!(new_account.blockchain, Blockchain::InternetComputer)
-            && new_account.standard == BlockchainStandard::Native
-            && new_account.symbol == "ICP"
-        {
-            ic_cdk::println!("Setting cycle minting account to {}", uuid);
+            // if this is the first account created, and there is no cycle minting account set, set this account as the cycle minting account
+            if system_info.get_cycle_obtain_strategy().is_none()
+                && ACCOUNT_REPOSITORY.len() == 1
+                && matches!(new_account.blockchain, Blockchain::InternetComputer)
+                && new_account.standard == BlockchainStandard::Native
+                && new_account.symbol == "ICP"
+            {
+                ic_cdk::println!("Setting cycle minting account to {}", uuid);
 
-            system_info.set_cycle_obtain_strategy(CycleObtainStrategy::MintFromICP {
-                account_id: *uuid.as_bytes(),
-            });
-            write_system_info(system_info);
+                system_info.set_cycle_obtain_strategy(CycleObtainStrategy::MintFromICP {
+                    account_id: *uuid.as_bytes(),
+                });
+                write_system_info(system_info);
 
-            #[cfg(target_arch = "wasm32")]
-            SYSTEM_SERVICE.set_fund_manager_obtain_cycles(&new_account.id);
+                #[cfg(target_arch = "wasm32")]
+                crate::services::SYSTEM_SERVICE.set_fund_manager_obtain_cycles(
+                    &CycleObtainStrategy::MintFromICP {
+                        account_id: new_account.id,
+                    },
+                );
+            }
         }
 
         Ok(new_account)

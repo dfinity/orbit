@@ -263,6 +263,7 @@ export type CreateRequestResult = {
     }
   } |
   { 'Err' : Error };
+export type CycleObtainStrategy = { 'MintFromICP' : { 'account_id' : UUID } };
 export interface DefiniteCanisterSettings {
   'freezing_threshold' : bigint,
   'controllers' : Array<Principal>,
@@ -699,7 +700,10 @@ export type ListUsersResult = {
 export interface ManageSystemInfoOperation {
   'input' : ManageSystemInfoOperationInput,
 }
-export interface ManageSystemInfoOperationInput { 'name' : [] | [string] }
+export interface ManageSystemInfoOperationInput {
+  'name' : [] | [string],
+  'cycle_obtain_strategy' : [] | [CycleObtainStrategy],
+}
 export type MarkNotificationReadResult = { 'Ok' : null } |
   { 'Err' : Error };
 export interface MarkNotificationsReadInput {
@@ -1000,6 +1004,7 @@ export interface SystemInfo {
   'version' : string,
   'cycles' : bigint,
   'upgrader_id' : Principal,
+  'cycle_obtain_strategy' : [] | [CycleObtainStrategy],
 }
 export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
   { 'Err' : Error };
