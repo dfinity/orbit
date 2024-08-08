@@ -233,7 +233,7 @@ watch(
         model.value = { [specifier.value]: { Any: null } };
         break;
       case RequestSpecifierEnum.CreateExternalCanister:
-        model.value = { [specifier.value]: { Any: null } };
+        model.value = { [specifier.value]: null };
         break;
       case RequestSpecifierEnum.CallExternalCanister:
         model.value = {

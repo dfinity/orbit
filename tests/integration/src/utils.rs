@@ -299,8 +299,24 @@ pub fn add_user(
     group_ids: Vec<String>,
     station_canister_id: Principal,
 ) -> UserDTO {
+    add_user_with_name(
+        env,
+        identity.to_text().to_string(),
+        identity,
+        group_ids,
+        station_canister_id,
+    )
+}
+
+pub fn add_user_with_name(
+    env: &PocketIc,
+    user_name: String,
+    identity: Principal,
+    group_ids: Vec<String>,
+    station_canister_id: Principal,
+) -> UserDTO {
     let add_user = RequestOperationInput::AddUser(AddUserOperationInput {
-        name: identity.to_text().to_string(),
+        name: user_name,
         identities: vec![identity],
         groups: group_ids,
         status: UserStatusDTO::Active,

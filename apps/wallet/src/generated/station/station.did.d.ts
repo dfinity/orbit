@@ -209,11 +209,46 @@ export interface ChangeExternalCanisterOperationInput {
 }
 export type ChangeExternalCanisterResourceTarget = { 'Any' : null } |
   { 'Canister' : Principal };
+export type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
+export interface ConfigureExternalCanisterOperationInput {
+  'kind' : ConfigureExternalCanisterOperationKind,
+  'canister_id' : Principal,
+}
+export type ConfigureExternalCanisterOperationKind = { 'SoftDelete' : null } |
+  { 'Settings' : ConfigureExternalCanisterSettingsInput } |
+  { 'Delete' : null } |
+  { 'NativeSettings' : DefiniteCanisterSettingsInput } |
+  { 'TopUp' : bigint };
+export interface ConfigureExternalCanisterSettingsInput {
+  'permissions' : [] | [ExternalCanisterPermissionsInput],
+  'name' : [] | [string],
+  'labels' : [] | [Array<string>],
+  'description' : [] | [string],
+  'request_policies' : [] | [ExternalCanisterRequestPoliciesInput],
+  'state' : [] | [ExternalCanisterState],
+}
 export interface CreateExternalCanisterOperation {
   'canister_id' : [] | [Principal],
+  'input' : CreateExternalCanisterOperationInput,
 }
-export type CreateExternalCanisterOperationInput = {};
-export type CreateExternalCanisterResourceTarget = { 'Any' : null };
+export interface CreateExternalCanisterOperationInput {
+  'permissions' : ExternalCanisterPermissionsInput,
+  'kind' : CreateExternalCanisterOperationKind,
+  'name' : string,
+  'labels' : [] | [Array<string>],
+  'description' : [] | [string],
+  'request_policies' : ExternalCanisterRequestPoliciesInput,
+}
+export type CreateExternalCanisterOperationKind = {
+    'AddExisting' : CreateExternalCanisterOperationKindAddExisting
+  } |
+  { 'CreateNew' : CreateExternalCanisterOperationKindCreateNew };
+export interface CreateExternalCanisterOperationKindAddExisting {
+  'canister_id' : Principal,
+}
+export interface CreateExternalCanisterOperationKindCreateNew {
+  'initial_cycles' : [] | [bigint],
+}
 export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
@@ -234,6 +269,13 @@ export interface DefiniteCanisterSettings {
   'reserved_cycles_limit' : bigint,
   'memory_allocation' : bigint,
   'compute_allocation' : bigint,
+}
+export interface DefiniteCanisterSettingsInput {
+  'freezing_threshold' : [] | [bigint],
+  'controllers' : [] | [Array<Principal>],
+  'reserved_cycles_limit' : [] | [bigint],
+  'memory_allocation' : [] | [bigint],
+  'compute_allocation' : [] | [bigint],
 }
 export interface DisasterRecovery {
   'user_group_name' : [] | [string],
@@ -328,12 +370,62 @@ export type EvaluationSummaryReason = { 'AllowList' : null } |
   { 'ApprovalQuorum' : null };
 export type ExecutionMethodResourceTarget = { 'Any' : null } |
   { 'ExecutionMethod' : CanisterMethod };
+export interface ExternalCanister {
+  'id' : UUID,
+  'permissions' : ExternalCanisterPermissions,
+  'modified_at' : [] | [TimestampRFC3339],
+  'name' : string,
+  'labels' : Array<string>,
+  'canister_id' : Principal,
+  'description' : [] | [string],
+  'created_at' : TimestampRFC3339,
+  'request_policies' : ExternalCanisterRequestPolicies,
+  'state' : ExternalCanisterState,
+}
+export interface ExternalCanisterCallPermission {
+  'execution_method' : string,
+  'allow' : Allow,
+  'validation_method' : ValidationMethodResourceTarget,
+}
+export interface ExternalCanisterCallRequestPolicyRule {
+  'execution_method' : string,
+  'rule' : RequestPolicyRule,
+  'validation_method' : ValidationMethodResourceTarget,
+  'policy_id' : [] | [UUID],
+}
+export interface ExternalCanisterCallerMethodsPrivileges {
+  'execution_method' : string,
+  'validation_method' : ValidationMethodResourceTarget,
+}
+export interface ExternalCanisterCallerPrivileges {
+  'id' : UUID,
+  'can_change' : boolean,
+  'can_call' : Array<ExternalCanisterCallerMethodsPrivileges>,
+}
+export interface ExternalCanisterChangeRequestPolicyRule {
+  'rule' : RequestPolicyRule,
+  'policy_id' : [] | [UUID],
+}
+export interface ExternalCanisterPermissions {
+  'calls' : Array<ExternalCanisterCallPermission>,
+  'read' : Allow,
+  'change' : Allow,
+}
+export type ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
+export interface ExternalCanisterRequestPolicies {
+  'calls' : Array<ExternalCanisterCallRequestPolicyRule>,
+  'change' : Array<ExternalCanisterChangeRequestPolicyRule>,
+}
+export type ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPolicies;
 export type ExternalCanisterResourceAction = {
     'Call' : CallExternalCanisterResourceTarget
   } |
+  { 'List' : null } |
   { 'Read' : ReadExternalCanisterResourceTarget } |
-  { 'Create' : CreateExternalCanisterResourceTarget } |
+  { 'Create' : null } |
   { 'Change' : ChangeExternalCanisterResourceTarget };
+export type ExternalCanisterState = { 'Active' : null } |
+  { 'Archived' : null };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
 export type FetchAccountBalancesResult = {
     'Ok' : { 'balances' : Array<AccountBalance> }
@@ -349,6 +441,25 @@ export type GetAddressBookEntryResult = {
     'Ok' : {
       'privileges' : AddressBookEntryCallerPrivileges,
       'address_book_entry' : AddressBookEntry,
+    }
+  } |
+  { 'Err' : Error };
+export interface GetExternalCanisterFiltersInput {
+  'with_labels' : [] | [boolean],
+  'with_name' : [] | [{ 'prefix' : [] | [string] }],
+}
+export type GetExternalCanisterFiltersResult = {
+    'Ok' : {
+      'labels' : [] | [Array<string>],
+      'names' : [] | [Array<{ 'name' : string, 'canister_id' : Principal }>],
+    }
+  } |
+  { 'Err' : Error };
+export interface GetExternalCanisterInput { 'canister_id' : Principal }
+export type GetExternalCanisterResult = {
+    'Ok' : {
+      'privileges' : ExternalCanisterCallerPrivileges,
+      'canister' : ExternalCanister,
     }
   } |
   { 'Err' : Error };
@@ -459,6 +570,20 @@ export type ListAddressBookEntriesResult = {
     }
   } |
   { 'Err' : Error };
+export interface ListExternalCanistersInput {
+  'canister_ids' : [] | [Array<Principal>],
+  'labels' : [] | [Array<string>],
+  'paginate' : [] | [PaginationInput],
+}
+export type ListExternalCanistersResult = {
+    'Ok' : {
+      'total' : bigint,
+      'privileges' : Array<ExternalCanisterCallerPrivileges>,
+      'canisters' : Array<ExternalCanister>,
+      'next_offset' : [] | [bigint],
+    }
+  } |
+  { 'Err' : Error };
 export interface ListNotificationsInput {
   'status' : [] | [NotificationStatus],
   'to_dt' : [] | [TimestampRFC3339],
@@ -510,6 +635,7 @@ export interface ListRequestsInput {
 }
 export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
+  { 'ConfigureExternalCanister' : [] | [Principal] } |
   { 'ChangeExternalCanister' : [] | [Principal] } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
@@ -694,6 +820,7 @@ export type RequestExecutionSchedule = { 'Immediate' : null } |
   { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
 export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'EditPermission' : EditPermissionOperation } |
+  { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperation } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperation } |
   { 'AddUser' : AddUserOperation } |
   { 'EditUserGroup' : EditUserGroupOperation } |
@@ -717,6 +844,7 @@ export type RequestOperationInput = {
     'AddUserGroup' : AddUserGroupOperationInput
   } |
   { 'EditPermission' : EditPermissionOperationInput } |
+  { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperationInput } |
   { 'AddUser' : AddUserOperationInput } |
   { 'EditUserGroup' : EditUserGroupOperationInput } |
@@ -738,6 +866,7 @@ export type RequestOperationInput = {
   { 'AddAccount' : AddAccountOperationInput };
 export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
+  { 'ConfigureExternalCanister' : null } |
   { 'ChangeExternalCanister' : null } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : null } |
@@ -792,7 +921,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'EditRequestPolicy' : ResourceIds } |
   { 'RemoveRequestPolicy' : ResourceIds } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
-  { 'CreateExternalCanister' : CreateExternalCanisterResourceTarget } |
+  { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : ResourceIds } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
@@ -961,12 +1090,14 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
+  { 'CreateExternalCanister' : null } |
   { 'ChangeCanister' : null } |
   { 'ManageSystemInfo' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |
   { 'AddRequestPolicy' : null } |
   { 'ListAddressBookEntries' : null } |
+  { 'ListExternalCanisters' : null } |
   { 'ListRequests' : null } |
   { 'SystemInfo' : null } |
   { 'Capabilities' : null } |
@@ -995,6 +1126,14 @@ export interface _SERVICE {
     [GetAddressBookEntryInput],
     GetAddressBookEntryResult
   >,
+  'get_external_canister' : ActorMethod<
+    [GetExternalCanisterInput],
+    GetExternalCanisterResult
+  >,
+  'get_external_canister_filters' : ActorMethod<
+    [GetExternalCanisterFiltersInput],
+    GetExternalCanisterFiltersResult
+  >,
   'get_next_approvable_request' : ActorMethod<
     [GetNextApprovableRequestInput],
     GetNextApprovableRequestResult
@@ -1018,6 +1157,10 @@ export interface _SERVICE {
   'list_address_book_entries' : ActorMethod<
     [ListAddressBookEntriesInput],
     ListAddressBookEntriesResult
+  >,
+  'list_external_canisters' : ActorMethod<
+    [ListExternalCanistersInput],
+    ListExternalCanistersResult
   >,
   'list_notifications' : ActorMethod<
     [ListNotificationsInput],

@@ -55,13 +55,22 @@ impl PermissionService {
         }
     }
 
+    /// Returns a permission for a given resource.
+    ///
+    /// If it does not exist, a default permission is returned.
     pub fn get_permission(&self, resource: &Resource) -> Permission {
         self.permission_repository
             .get(resource)
             .unwrap_or_else(|| Permission::new(Allow::default(), resource.clone()))
     }
 
-    pub async fn edit_permission(
+    /// Removes a permission for a given resource, if it exists.
+    pub fn remove_permission(&self, resource: &Resource) {
+        self.permission_repository.remove(resource);
+    }
+
+    /// Edits a permission for a given resource.
+    pub fn edit_permission(
         &self,
         input: EditPermissionOperationInput,
     ) -> ServiceResult<Permission> {
@@ -87,6 +96,7 @@ impl PermissionService {
         Ok(permission)
     }
 
+    /// Lists permissions with optional pagination.
     pub async fn list_permissions(
         &self,
         input: ListPermissionsInput,
@@ -112,13 +122,13 @@ impl PermissionService {
 
     pub fn get_permissions_dependencies(
         &self,
-        policies: &Vec<Permission>,
+        permissions: &Vec<Permission>,
     ) -> ServiceResult<PermissionDependenciesResponse> {
         let mut user_ids = HashSet::new();
         let mut group_ids = HashSet::new();
-        for policy in policies {
-            group_ids.extend(policy.allow.user_groups.clone());
-            user_ids.extend(policy.allow.users.clone());
+        for permission in permissions {
+            group_ids.extend(permission.allow.user_groups.clone());
+            user_ids.extend(permission.allow.users.clone());
         }
 
         let mut groups = Vec::new();
@@ -153,31 +163,27 @@ mod tests {
         repositories::{USER_GROUP_REPOSITORY, USER_REPOSITORY},
     };
 
-    #[tokio::test]
-    async fn test_permission_operations() {
+    #[test]
+    fn test_permission_operations() {
         let service = PERMISSION_SERVICE.clone();
-        let result = service
-            .edit_permission(EditPermissionOperationInput {
-                auth_scope: Some(AuthScope::Authenticated),
-                user_groups: None,
-                users: None,
-                resource: Resource::Request(RequestResourceAction::List),
-            })
-            .await;
+        let result = service.edit_permission(EditPermissionOperationInput {
+            auth_scope: Some(AuthScope::Authenticated),
+            user_groups: None,
+            users: None,
+            resource: Resource::Request(RequestResourceAction::List),
+        });
 
         assert!(result.is_ok());
 
         let policy = result.unwrap();
         assert!(policy.allowed_authenticated());
 
-        let result = service
-            .edit_permission(EditPermissionOperationInput {
-                auth_scope: Some(AuthScope::Public),
-                user_groups: None,
-                users: None,
-                resource: Resource::Request(RequestResourceAction::List),
-            })
-            .await;
+        let result = service.edit_permission(EditPermissionOperationInput {
+            auth_scope: Some(AuthScope::Public),
+            user_groups: None,
+            users: None,
+            resource: Resource::Request(RequestResourceAction::List),
+        });
 
         assert!(result.is_ok());
 
@@ -260,8 +266,8 @@ mod tests {
         assert_eq!(result.next_offset, Some(15));
     }
 
-    #[tokio::test]
-    async fn test_override_permission_auth_scope() {
+    #[test]
+    fn test_override_permission_auth_scope() {
         let service = PERMISSION_SERVICE.clone();
         let resource = Resource::Request(RequestResourceAction::List);
         let _ = service
@@ -271,7 +277,6 @@ mod tests {
                 users: None,
                 resource: resource.clone(),
             })
-            .await
             .unwrap();
 
         assert!(service.get_permission(&resource).allowed_public());
@@ -283,14 +288,13 @@ mod tests {
                 users: None,
                 resource: resource.clone(),
             })
-            .await
             .unwrap();
 
         assert!(service.get_permission(&resource).allowed_authenticated());
     }
 
-    #[tokio::test]
-    async fn fail_edit_permission_invalid_ids() {
+    #[test]
+    fn fail_edit_permission_invalid_ids() {
         let service = PermissionService::default();
 
         disable_mock_resource_validation();
@@ -304,7 +308,6 @@ mod tests {
                 users: None,
                 user_groups: None,
             })
-            .await
             .expect_err("Should fail with invalid account ID");
 
         service
@@ -314,7 +317,6 @@ mod tests {
                 users: Some(vec![[1; 16]]),
                 user_groups: None,
             })
-            .await
             .expect_err("Should fail with invalid User ID");
 
         service
@@ -324,7 +326,29 @@ mod tests {
                 users: None,
                 user_groups: Some(vec![[1; 16]]),
             })
-            .await
             .expect_err("Should fail with invalid Group ID");
+    }
+
+    #[test]
+    fn test_remove_permission() {
+        let service = PERMISSION_SERVICE.clone();
+        let resource = Resource::Request(RequestResourceAction::List);
+        let _ = service
+            .edit_permission(EditPermissionOperationInput {
+                auth_scope: Some(AuthScope::Public),
+                user_groups: None,
+                users: None,
+                resource: resource.clone(),
+            })
+            .unwrap();
+
+        assert!(service.get_permission(&resource).allowed_public());
+
+        service.remove_permission(&resource);
+
+        assert_eq!(
+            service.get_permission(&resource),
+            Permission::new(Allow::default(), resource)
+        );
     }
 }

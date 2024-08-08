@@ -4,8 +4,8 @@ use crate::models::{
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
         AccountResourceAction, CallExternalCanisterResourceTarget, ChangeCanisterResourceAction,
-        ChangeExternalCanisterResourceTarget, CreateExternalCanisterResourceTarget,
-        ExecutionMethodResourceTarget, ExternalCanisterResourceAction, PermissionResourceAction,
+        ChangeExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
+        ExternalCanisterResourceAction, PermissionResourceAction,
         ReadExternalCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction,
         ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
         ValidationMethodResourceTarget,
@@ -150,7 +150,7 @@ lazy_static! {
         // create, change, call, and read external canister
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ExternalCanister(ExternalCanisterResourceAction::Create(CreateExternalCanisterResourceTarget::Any)),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Create),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
@@ -238,7 +238,7 @@ pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPoli
         ),
         // create, change, and call external canister
         (
-            RequestSpecifier::CreateExternalCanister(CreateExternalCanisterResourceTarget::Any),
+            RequestSpecifier::CreateExternalCanister,
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (

@@ -1,7 +1,10 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{CallExternalCanisterOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{
+        CallExternalCanisterOperation, CanisterMethod, Request, RequestExecutionPlan,
+        RequestOperation,
+    },
     services::ExternalCanisterService,
 };
 use async_trait::async_trait;
@@ -24,6 +27,13 @@ impl Create<CallExternalCanisterOperationInput> for CallExternalCanisterRequestC
         input: CreateRequestInput,
         operation_input: CallExternalCanisterOperationInput,
     ) -> Result<Request, RequestError> {
+        // Disallows the wildcard execution method
+        if operation_input.execution_method.method_name == CanisterMethod::WILDCARD {
+            return Err(RequestError::ValidationError {
+                info: "Wildcard execution method is not allowed.".to_string(),
+            });
+        }
+
         let arg_rendering = match operation_input.validation_method {
             Some(ref validation_method) => {
                 let rendering_bytes = self

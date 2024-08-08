@@ -65,7 +65,6 @@ impl Execute for EditPermissionRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         self.policy_service
             .edit_permission(self.operation.input.to_owned())
-            .await
             .map_err(|e| RequestExecuteError::Failed {
                 reason: format!("Failed to update permission: {}", e),
             })?;

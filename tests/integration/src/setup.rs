@@ -14,7 +14,7 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 static POCKET_IC_BIN: &str = "./pocket-ic";
 
@@ -85,7 +85,13 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
         .with_application_subnet()
         .with_ii_subnet()
         .build();
-    env.set_time(SystemTime::now());
+
+    // If we set the time to SystemTime::now, and then progress pocketIC a couple ticks
+    // and then enter live mode, we would crash the deterministic state machine, as the
+    // live mode would set the time back to the current time.
+    // Therefore, if we want to use live mode, we need to start the tests with the time
+    // set to the past.
+    env.set_time(SystemTime::now() - Duration::from_secs(24 * 60 * 60));
     let controller = controller_test_id();
     let minter = minter_test_id();
     let canister_ids = install_canisters(&mut env, config, controller, minter);

@@ -8,6 +8,7 @@ cd $SCRIPT_DIR/..
 
 TESTNAME=${1:-}
 DOWNLOAD_NNS_CANISTERS="${DOWNLOAD_NNS_CANISTERS:-true}"
+DOWNLOAD_ASSET_CANISTER="${DOWNLOAD_ASSET_CANISTER:-true}"
 BUILD_WASMS="${BUILD_WASMS:-true}"
 TEST_THREADS="${TEST_THREADS:-2}"
 OSTYPE="$(uname -s)" || OSTYPE="$OSTYPE"
@@ -40,6 +41,10 @@ if [ $DOWNLOAD_NNS_CANISTERS == "true" ]; then
     ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister
     ./scripts/download-nns-canister-wasm.sh icp_index ic-icp-index-canister
     ./scripts/download-nns-canister-wasm.sh cmc cycles-minting-canister
+fi
+
+if [ $DOWNLOAD_ASSET_CANISTER == "true" ]; then
+    ./scripts/download-asset-canister-wasm.sh
 fi
 
 cargo test --package integration-tests $TESTNAME -- --test-threads $TEST_THREADS --nocapture

@@ -56,8 +56,7 @@ impl RequestPolicyController {
             .get_request_policy(HelperMapper::to_uuid(input.id)?.as_bytes())?;
         let privileges = self
             .request_policy_service
-            .get_caller_privileges_for_request_policy(&request_policy.id, &ctx)
-            .await?;
+            .get_caller_privileges_for_request_policy(&request_policy.id, &ctx)?;
 
         Ok(GetRequestPolicyResponse {
             policy: request_policy.to_dto(),
@@ -73,15 +72,13 @@ impl RequestPolicyController {
         let ctx = call_context();
         let result = self
             .request_policy_service
-            .list_request_policies(input, &ctx)
-            .await?;
+            .list_request_policies(input, &ctx)?;
 
         let mut privileges = Vec::new();
         for policy in &result.items {
             let privilege = self
                 .request_policy_service
-                .get_caller_privileges_for_request_policy(&policy.id, &ctx)
-                .await?;
+                .get_caller_privileges_for_request_policy(&policy.id, &ctx)?;
 
             privileges.push(RequestPolicyCallerPrivilegesDTO::from(privilege));
         }

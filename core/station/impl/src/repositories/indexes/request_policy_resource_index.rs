@@ -1,9 +1,18 @@
 use crate::{
     core::{with_memory_manager, Memory, POLICY_RESOURCE_INDEX_MEMORY_ID},
-    models::indexes::request_policy_resource_index::{
-        RequestPolicyResourceIndex, RequestPolicyResourceIndexCriteria,
+    models::{
+        indexes::request_policy_resource_index::{
+            RequestPolicyResourceIndex, RequestPolicyResourceIndexCriteria,
+        },
+        resource::{
+            CallExternalCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
+            ExecutionMethodResourceTarget, ExternalCanisterResourceAction, Resource,
+            ValidationMethodResourceTarget,
+        },
+        CanisterMethod,
     },
 };
+use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use orbit_essentials::{repository::IndexRepository, types::UUID};
 use std::{cell::RefCell, collections::HashSet};
@@ -69,6 +78,82 @@ impl IndexRepository<RequestPolicyResourceIndex, UUID> for RequestPolicyResource
     }
 }
 
+impl RequestPolicyResourceIndexRepository {
+    /// Finds all external canister policies related to the specified canister id.
+    ///
+    /// Includes:
+    ///
+    /// - `Change` related policies.
+    /// - `Call` related policies.
+    pub fn find_external_canister_policies(&self, canister_id: &Principal) -> Vec<UUID> {
+        DB.with(|db| {
+            let mut policies = Vec::new();
+            // Find all change related policies for the specified canister id.
+            policies.extend(
+                db.borrow()
+                    .range(
+                        (RequestPolicyResourceIndex {
+                            resource: Resource::ExternalCanister(
+                                ExternalCanisterResourceAction::Change(
+                                    ChangeExternalCanisterResourceTarget::Canister(*canister_id),
+                                ),
+                            ),
+                            policy_id: [u8::MIN; 16],
+                        })..(RequestPolicyResourceIndex {
+                            resource: Resource::ExternalCanister(
+                                ExternalCanisterResourceAction::Change(
+                                    ChangeExternalCanisterResourceTarget::Canister(*canister_id),
+                                ),
+                            ),
+                            policy_id: [u8::MAX; 16],
+                        }),
+                    )
+                    .map(|(index, _)| index.policy_id)
+                    .collect::<Vec<UUID>>(),
+            );
+
+            // Find all call related policies for the specified canister id.
+            policies.extend(
+                db.borrow()
+                .range(
+                    (RequestPolicyResourceIndex {
+                        resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                            CallExternalCanisterResourceTarget {
+                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                    CanisterMethod {
+                                        canister_id: *canister_id,
+                                        method_name: String::new(),
+                                    },
+                                ),
+                                validation_method: ValidationMethodResourceTarget::No,
+                            },
+                        )),
+                        policy_id: [u8::MIN; 16],
+                    })..,
+                )
+                .take_while(|(index, _)| {
+                    matches!(
+                        &index.resource,
+                        Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                            CallExternalCanisterResourceTarget {
+                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                    CanisterMethod { canister_id: id, .. }
+                                ),
+                                ..
+                            }
+                        ))
+                        if id == canister_id
+                    )
+                })
+                .map(|(index, _)| index.policy_id)
+                .collect::<Vec<UUID>>()
+            );
+
+            policies
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::models::resource::{Resource, UserResourceAction};
@@ -110,5 +195,53 @@ mod tests {
 
         assert_eq!(result.len(), 1);
         assert!(result.contains(&index.policy_id));
+    }
+
+    #[test]
+    fn test_find_external_canister_policies() {
+        let repository = RequestPolicyResourceIndexRepository::default();
+        for i in 0..10 {
+            let index = RequestPolicyResourceIndex {
+                resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    ChangeExternalCanisterResourceTarget::Canister(Principal::from_slice(
+                        &[i % 2; 29],
+                    )),
+                )),
+                policy_id: [i; 16],
+            };
+
+            repository.insert(index);
+        }
+
+        let policies = repository.find_external_canister_policies(&Principal::from_slice(&[1; 29]));
+
+        assert_eq!(policies.len(), 5);
+    }
+
+    #[test]
+    fn test_find_external_canister_policies_with_call() {
+        let repository = RequestPolicyResourceIndexRepository::default();
+        for i in 0..10 {
+            let index = RequestPolicyResourceIndex {
+                resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                    CallExternalCanisterResourceTarget {
+                        execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                            CanisterMethod {
+                                canister_id: Principal::from_slice(&[i % 2; 29]),
+                                method_name: format!("method_{}", i),
+                            },
+                        ),
+                        validation_method: ValidationMethodResourceTarget::No,
+                    },
+                )),
+                policy_id: [i; 16],
+            };
+
+            repository.insert(index);
+        }
+
+        let policies = repository.find_external_canister_policies(&Principal::from_slice(&[1; 29]));
+
+        assert_eq!(policies.len(), 5);
     }
 }

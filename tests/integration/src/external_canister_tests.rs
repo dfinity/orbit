@@ -11,15 +11,16 @@ use orbit_essentials::api::ApiResult;
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{
-    AddRequestPolicyOperationInput, CallExternalCanisterOperationInput,
+    AddRequestPolicyOperationInput, AllowDTO, CallExternalCanisterOperationInput,
     CallExternalCanisterResourceTargetDTO, CanisterInstallMode, CanisterMethodDTO,
     ChangeExternalCanisterOperationInput, ChangeExternalCanisterResourceTargetDTO,
-    CreateExternalCanisterOperationInput, CreateExternalCanisterResourceTargetDTO,
-    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ListRequestsInput,
-    ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
-    ReadExternalCanisterResourceTargetDTO, RequestApprovalStatusDTO, RequestOperationDTO,
-    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, RequestStatusDTO,
-    UserSpecifierDTO, ValidationMethodResourceTargetDTO,
+    CreateExternalCanisterOperationInput, CreateExternalCanisterOperationKindCreateNewDTO,
+    CreateExternalCanisterOperationKindDTO, EditPermissionOperationInput,
+    ExecutionMethodResourceTargetDTO, ExternalCanisterPermissionsInput,
+    ExternalCanisterRequestPoliciesInput, ListRequestsInput, ListRequestsOperationTypeDTO,
+    ListRequestsResponse, QuorumDTO, ReadExternalCanisterResourceTargetDTO,
+    RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    RequestSpecifierDTO, RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 
 #[test]
@@ -372,7 +373,33 @@ fn create_external_canister_and_check_status() {
 
     // submitting request to create a external canister fails due to insufficient permissions to create such requests
     let create_canister_operation =
-        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {});
+        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
+            kind: CreateExternalCanisterOperationKindDTO::CreateNew(
+                CreateExternalCanisterOperationKindCreateNewDTO {
+                    initial_cycles: None,
+                },
+            ),
+            name: "test".to_string(),
+            description: None,
+            labels: None,
+            permissions: ExternalCanisterPermissionsInput {
+                calls: vec![],
+                read: AllowDTO {
+                    auth_scope: station_api::AuthScopeDTO::Restricted,
+                    user_groups: vec![],
+                    users: vec![],
+                },
+                change: AllowDTO {
+                    auth_scope: station_api::AuthScopeDTO::Restricted,
+                    user_groups: vec![],
+                    users: vec![],
+                },
+            },
+            request_policies: ExternalCanisterRequestPoliciesInput {
+                change: Vec::new(),
+                calls: vec![],
+            },
+        });
     let trap_message = submit_request_with_expected_trap(
         &env,
         user_a,
@@ -386,9 +413,7 @@ fn create_external_canister_and_check_status() {
     // allow anyone to create requests to create a external canister
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
         resource: station_api::ResourceDTO::ExternalCanister(
-            station_api::ExternalCanisterResourceActionDTO::Create(
-                CreateExternalCanisterResourceTargetDTO::Any,
-            ),
+            station_api::ExternalCanisterResourceActionDTO::Create,
         ),
         auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
         user_groups: None,
@@ -441,9 +466,7 @@ fn create_external_canister_and_check_status() {
     // set four eyes principle for creating external canisters
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
-            specifier: RequestSpecifierDTO::CreateExternalCanister(
-                CreateExternalCanisterResourceTargetDTO::Any,
-            ),
+            specifier: RequestSpecifierDTO::CreateExternalCanister,
             rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
                 approvers: UserSpecifierDTO::Any,
                 min_approved: 2,

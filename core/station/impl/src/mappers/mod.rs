@@ -39,6 +39,9 @@ pub use helper::*;
 mod user;
 pub use user::*;
 
+mod external_canister;
+pub use external_canister::*;
+
 mod user_group;
 
 mod user_status;

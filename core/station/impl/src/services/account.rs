@@ -182,28 +182,28 @@ impl AccountService {
 
         // adds the associated transfer policy based on the transfer criteria
         if let Some(policy_rule) = &input.transfer_request_policy {
-            let transfer_request_policy = self
-                .request_policy_service
-                .add_request_policy(AddRequestPolicyOperationInput {
-                    specifier: RequestSpecifier::Transfer(ResourceIds::Ids(vec![*uuid.as_bytes()])),
-                    rule: policy_rule.clone(),
-                })
-                .await?;
+            let transfer_request_policy =
+                self.request_policy_service
+                    .add_request_policy(AddRequestPolicyOperationInput {
+                        specifier: RequestSpecifier::Transfer(ResourceIds::Ids(vec![
+                            *uuid.as_bytes()
+                        ])),
+                        rule: policy_rule.clone(),
+                    })?;
 
             new_account.transfer_request_policy_id = Some(transfer_request_policy.id);
         }
 
         // adds the associated edit policy based on the edit criteria
         if let Some(policy_rule) = &input.configs_request_policy {
-            let configs_request_policy = self
-                .request_policy_service
-                .add_request_policy(AddRequestPolicyOperationInput {
-                    specifier: RequestSpecifier::EditAccount(ResourceIds::Ids(vec![
-                        *uuid.as_bytes()
-                    ])),
-                    rule: policy_rule.to_owned(),
-                })
-                .await?;
+            let configs_request_policy =
+                self.request_policy_service
+                    .add_request_policy(AddRequestPolicyOperationInput {
+                        specifier: RequestSpecifier::EditAccount(ResourceIds::Ids(vec![
+                            *uuid.as_bytes()
+                        ])),
+                        rule: policy_rule.to_owned(),
+                    })?;
 
             new_account.configs_request_policy_id = Some(configs_request_policy.id);
         }
@@ -222,8 +222,7 @@ impl AccountService {
                 resource: Resource::Account(AccountResourceAction::Read(ResourceId::Id(
                     *uuid.as_bytes(),
                 ))),
-            })
-            .await?;
+            })?;
 
         self.permission_service
             .edit_permission(EditPermissionOperationInput {
@@ -233,8 +232,7 @@ impl AccountService {
                 resource: Resource::Account(AccountResourceAction::Update(ResourceId::Id(
                     *uuid.as_bytes(),
                 ))),
-            })
-            .await?;
+            })?;
 
         self.permission_service
             .edit_permission(EditPermissionOperationInput {
@@ -244,8 +242,7 @@ impl AccountService {
                 resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
                     *uuid.as_bytes(),
                 ))),
-            })
-            .await?;
+            })?;
 
         let mut system_info = read_system_info();
 
@@ -305,23 +302,19 @@ impl AccountService {
         };
 
         if let Some(transfer_request_policy_input) = input.transfer_request_policy {
-            self.request_policy_service
-                .handle_policy_change(
-                    RequestSpecifier::Transfer(ResourceIds::Ids(vec![account.id])),
-                    transfer_request_policy_input,
-                    &mut account.transfer_request_policy_id,
-                )
-                .await?;
+            self.request_policy_service.handle_policy_change(
+                RequestSpecifier::Transfer(ResourceIds::Ids(vec![account.id])),
+                transfer_request_policy_input,
+                &mut account.transfer_request_policy_id,
+            )?;
         }
 
         if let Some(configs_request_policy_input) = input.configs_request_policy {
-            self.request_policy_service
-                .handle_policy_change(
-                    RequestSpecifier::EditAccount(ResourceIds::Ids(vec![account.id])),
-                    configs_request_policy_input,
-                    &mut account.configs_request_policy_id,
-                )
-                .await?;
+            self.request_policy_service.handle_policy_change(
+                RequestSpecifier::EditAccount(ResourceIds::Ids(vec![account.id])),
+                configs_request_policy_input,
+                &mut account.configs_request_policy_id,
+            )?;
         }
 
         account.validate()?;
@@ -340,8 +333,7 @@ impl AccountService {
                     resource: Resource::Account(AccountResourceAction::Read(ResourceId::Id(
                         account.id,
                     ))),
-                })
-                .await?;
+                })?;
         }
 
         if let Some(configs_permission) = input.configs_permission {
@@ -353,8 +345,7 @@ impl AccountService {
                     resource: Resource::Account(AccountResourceAction::Update(ResourceId::Id(
                         account.id,
                     ))),
-                })
-                .await?;
+                })?;
         }
 
         if let Some(transfer_permission) = input.transfer_permission {
@@ -366,8 +357,7 @@ impl AccountService {
                     resource: Resource::Account(AccountResourceAction::Transfer(ResourceId::Id(
                         account.id,
                     ))),
-                })
-                .await?;
+                })?;
         }
 
         Ok(account)
