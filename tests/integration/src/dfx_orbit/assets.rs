@@ -1,15 +1,4 @@
-use dfx_orbit::StationAgent;
-use pocket_ic::PocketIc;
-use rand::{thread_rng, Rng};
-use station_api::{
-    AddRequestPolicyOperationInput, CallExternalCanisterOperationInput,
-    CallExternalCanisterResourceTargetDTO, CanisterMethodDTO, CreateRequestInput,
-    ExecutionMethodResourceTargetDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, ValidationMethodResourceTargetDTO,
-};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tempfile::tempdir;
-
+use super::DfxOrbitTestConfig;
 use crate::{
     dfx_orbit::{
         canister_call::permit_call_operation, dfx_orbit_test, fetch_asset, setup_dfx_orbit,
@@ -19,16 +8,29 @@ use crate::{
     utils::execute_request,
     CanisterIds, TestEnv,
 };
+use pocket_ic::PocketIc;
+use rand::{thread_rng, Rng};
+use station_api::{
+    AddRequestPolicyOperationInput, CallExternalCanisterResourceTargetDTO,
+    ExecutionMethodResourceTargetDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    RequestSpecifierDTO, ValidationMethodResourceTargetDTO,
+};
+use std::{
+    collections::BTreeMap,
+    path::Path,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
+use tempfile::Builder;
 
 #[test]
-fn assets_update() {
+fn assets_upload() {
     let TestEnv {
         mut env,
         canister_ids,
         ..
     } = setup_new_env();
 
-    let (dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
+    let (_dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
 
     // Install the assets canister under orbit control
     let asset_canister = create_canister(&mut env, canister_ids.station);
@@ -40,25 +42,6 @@ fn assets_update() {
         Some(canister_ids.station),
     );
 
-    // As admin: Setup the prepare permission in the asset canister for the dfx user
-    execute_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        station_api::RequestOperationInput::CallExternalCanister(
-            CallExternalCanisterOperationInput {
-                validation_method: None,
-                execution_method: CanisterMethodDTO {
-                    canister_id: asset_canister,
-                    method_name: String::from("grant_permission"),
-                },
-                arg: Some(StationAgent::request_prepare_permission_payload(dfx_principal).unwrap()),
-                execution_method_cycles: None,
-            },
-        ),
-    )
-    .unwrap();
-
     // As admin: Grant the user the call permission, set auto-approval for external calls
     permit_call_operation(&env, &canister_ids);
     set_auto_approve(&env, &canister_ids);
@@ -66,7 +49,10 @@ fn assets_update() {
     // Setup a tmpdir, and store two assets in it
     // We generate the assets dyniamically, since we want to make sure we are not
     // fetching old assets
-    let asset_dir = tempdir().unwrap();
+    // NOTE: Currently, the local asset computation skips hidden files while the
+    // remote version does not. This creates an issue if we just used tempdir(), as that
+    // uses `.` prefix.
+    let asset_dir = Builder::new().prefix("asset").tempdir().unwrap();
     let asset_a = format!(
         "This is the current time: {}",
         SystemTime::now()
@@ -84,40 +70,55 @@ fn assets_update() {
     )
     .unwrap();
 
-    dfx_orbit_test(&mut env, async {
+    let mut asset_canisters = BTreeMap::new();
+    asset_canisters.insert(
+        String::from("test_asset_upload"),
+        vec![asset_dir.path().to_str().unwrap().to_string()],
+    );
+    let config = DfxOrbitTestConfig { asset_canisters };
+
+    dfx_orbit_test(&mut env, config, async {
         // Setup the station agent
-        let mut dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
+        let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
+
+        // As dfx user: Request to have Prepare permission for asset_canister
+        let _response = dfx_orbit
+            .request_prepare_permission(asset_canister, None, None)
+            .await
+            .unwrap();
+        tokio::time::sleep(Duration::from_secs(1)).await;
+
+        // Test that we can retreive the sources from `dfx.json`
+        let sources = dfx_orbit.as_path_bufs("test_asset_upload", &[]).unwrap();
+        let sources_path = sources
+            .iter()
+            .map(|pathbuf| pathbuf.as_path())
+            .collect::<Vec<&Path>>();
 
         // As dfx user: Request to upload new files to the asset canister
-        let upload_request = dfx_orbit
-            .upload_assets(
-                asset_canister.to_string(),
-                vec![asset_dir.path().to_str().unwrap().to_string()],
+        let (batch_id, evidence) = dfx_orbit
+            .upload(asset_canister, &sources_path, false)
+            .await
+            .unwrap();
+        let response = dfx_orbit
+            .request_commit_batch(
+                asset_canister,
+                batch_id.clone(),
+                evidence.clone(),
+                None,
+                None,
             )
             .await
             .unwrap();
 
-        //  As dfx user: Request commitment of the batch
-        let _result = dfx_orbit
-            .station
-            .request(CreateRequestInput {
-                operation: station_api::RequestOperationInput::CallExternalCanister(
-                    CallExternalCanisterOperationInput {
-                        validation_method: None,
-                        execution_method: CanisterMethodDTO {
-                            canister_id: asset_canister,
-                            method_name: String::from("commit_proposed_batch"),
-                        },
-                        arg: Some(
-                            StationAgent::commit_proposed_batch_payload(upload_request).unwrap(),
-                        ),
-                        execution_method_cycles: None,
-                    },
-                ),
-                title: None,
-                summary: None,
-                execution_plan: None,
-            })
+        // Check whether the request passes the asset check
+        dfx_orbit
+            .check_evidence(
+                asset_canister,
+                response.request.id,
+                batch_id,
+                hex::encode(evidence),
+            )
             .await
             .unwrap();
 

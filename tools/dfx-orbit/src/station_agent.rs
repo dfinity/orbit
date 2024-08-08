@@ -25,47 +25,44 @@ impl StationAgent {
     }
 
     pub async fn request(
-        &mut self,
+        &self,
         input: CreateRequestInput,
     ) -> StationAgentResult<CreateRequestResponse> {
         self.update_orbit_typed("create_request", input).await
     }
 
     pub async fn submit(
-        &mut self,
+        &self,
         args: SubmitRequestApprovalInput,
     ) -> StationAgentResult<SubmitRequestApprovalResponse> {
         self.update_orbit_typed("submit_request_approval", args)
             .await
     }
 
-    pub async fn me(&mut self) -> StationAgentResult<MeResponse> {
+    pub async fn me(&self) -> StationAgentResult<MeResponse> {
         self.update_orbit_typed("me", ()).await
     }
 
-    pub async fn review_id(
-        &mut self,
-        args: GetRequestInput,
-    ) -> StationAgentResult<GetRequestResponse> {
+    pub async fn review_id(&self, args: GetRequestInput) -> StationAgentResult<GetRequestResponse> {
         self.update_orbit_typed("get_request", args).await
     }
 
     pub async fn review_list(
-        &mut self,
+        &self,
         args: ListRequestsInput,
     ) -> StationAgentResult<ListRequestsResponse> {
         self.update_orbit_typed("list_requests", args).await
     }
 
     pub async fn review_next(
-        &mut self,
+        &self,
         args: GetNextApprovableRequestInput,
     ) -> StationAgentResult<GetNextApprovableRequestResponse> {
         self.update_orbit_typed("get_next_approvable_request", args)
             .await
     }
 
-    async fn update_orbit(&mut self, method_name: &str) -> UpdateBuilder {
+    async fn update_orbit(&self, method_name: &str) -> UpdateBuilder {
         self.agent.update(&self.config.station_id, method_name)
     }
 
@@ -73,7 +70,7 @@ impl StationAgent {
     ///
     /// This version integrates candid encoding / decoding
     async fn update_orbit_typed<Req, Res>(
-        &mut self,
+        &self,
         method_name: &str,
         request: Req,
     ) -> StationAgentResult<Res>
