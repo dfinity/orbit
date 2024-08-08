@@ -59,7 +59,7 @@ impl ModelValidator<ValidationError> for Resource {
             },
             Resource::ExternalCanister(action) => match action {
                 ExternalCanisterResourceAction::List
-                | ExternalCanisterResourceAction::Create(_)
+                | ExternalCanisterResourceAction::Create
                 | ExternalCanisterResourceAction::Change(_)
                 | ExternalCanisterResourceAction::Read(_) => (),
                 ExternalCanisterResourceAction::Call(target) => target.validate()?,
@@ -154,12 +154,6 @@ pub enum ChangeCanisterResourceAction {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum CreateExternalCanisterResourceTarget {
-    Any,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ChangeExternalCanisterResourceTarget {
     Any,
     Canister(Principal),
@@ -176,7 +170,7 @@ pub enum ReadExternalCanisterResourceTarget {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ExternalCanisterResourceAction {
     List,
-    Create(CreateExternalCanisterResourceTarget),
+    Create,
     Change(ChangeExternalCanisterResourceTarget),
     Read(ReadExternalCanisterResourceTarget),
     Call(CallExternalCanisterResourceTarget),
@@ -221,8 +215,8 @@ impl ModelValidator<ValidationError> for ExecutionMethodResourceTarget {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct CallExternalCanisterResourceTarget {
-    pub validation_method: ValidationMethodResourceTarget,
     pub execution_method: ExecutionMethodResourceTarget,
+    pub validation_method: ValidationMethodResourceTarget,
 }
 
 impl ModelValidator<ValidationError> for CallExternalCanisterResourceTarget {
@@ -377,13 +371,9 @@ impl Resource {
                         ExternalCanisterResourceAction::List,
                     )]
                 }
-                ExternalCanisterResourceAction::Create(
-                    CreateExternalCanisterResourceTarget::Any,
-                ) => {
+                ExternalCanisterResourceAction::Create => {
                     vec![Resource::ExternalCanister(
-                        ExternalCanisterResourceAction::Create(
-                            CreateExternalCanisterResourceTarget::Any,
-                        ),
+                        ExternalCanisterResourceAction::Create,
                     )]
                 }
                 ExternalCanisterResourceAction::Change(
@@ -424,6 +414,18 @@ impl Resource {
                                 CallExternalCanisterResourceTarget {
                                     validation_method: target.validation_method.clone(),
                                     execution_method: ExecutionMethodResourceTarget::Any,
+                                },
+                            )),
+                            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                                CallExternalCanisterResourceTarget {
+                                    validation_method: target.validation_method.clone(),
+                                    execution_method:
+                                        ExecutionMethodResourceTarget::ExecutionMethod(
+                                            CanisterMethod {
+                                                canister_id: canister_method.canister_id,
+                                                method_name: CanisterMethod::WILDCARD.to_string(),
+                                            },
+                                        ),
                                 },
                             )),
                             Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
@@ -639,14 +641,6 @@ impl Display for ChangeCanisterResourceAction {
     }
 }
 
-impl Display for CreateExternalCanisterResourceTarget {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            CreateExternalCanisterResourceTarget::Any => write!(f, "Any"),
-        }
-    }
-}
-
 impl Display for ChangeExternalCanisterResourceTarget {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -673,9 +667,7 @@ impl Display for ExternalCanisterResourceAction {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             ExternalCanisterResourceAction::List => write!(f, "List"),
-            ExternalCanisterResourceAction::Create(target) => {
-                write!(f, "Create({})", target)
-            }
+            ExternalCanisterResourceAction::Create => write!(f, "Create"),
             ExternalCanisterResourceAction::Change(target) => {
                 write!(f, "Change({})", target)
             }
@@ -781,9 +773,9 @@ mod test {
 
     use super::{
         AccountResourceAction, ChangeCanisterResourceAction, ChangeExternalCanisterResourceTarget,
-        CreateExternalCanisterResourceTarget, ExternalCanisterResourceAction,
-        PermissionResourceAction, ReadExternalCanisterResourceTarget, RequestResourceAction,
-        Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+        ExternalCanisterResourceAction, PermissionResourceAction,
+        ReadExternalCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction,
+        ResourceId, SystemResourceAction, UserResourceAction,
     };
 
     #[test]
@@ -804,9 +796,7 @@ mod test {
             Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
             Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
-            Resource::ExternalCanister(ExternalCanisterResourceAction::Create(
-                CreateExternalCanisterResourceTarget::Any,
-            )),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Create),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
                 ChangeExternalCanisterResourceTarget::Any,
             )),

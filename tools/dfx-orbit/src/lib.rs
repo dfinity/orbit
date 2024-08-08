@@ -11,14 +11,14 @@ pub mod local_config;
 pub mod station_agent;
 
 use candid::Principal;
+pub use cli::asset::AssetAgent;
 use dfx_core::{config::model::canister_id_store::CanisterIdStore, DfxInterface};
 use dfx_extension_api::OrbitExtensionAgent;
 use ic_utils::{canister::CanisterBuilder, Canister};
 use orbit_station_api::CreateRequestResponse;
-
-pub use cli::asset::AssetAgent;
 use slog::Logger;
 pub use station_agent::StationAgent;
+
 pub struct DfxOrbit {
     // The station agent that handles communication with the station
     pub station: StationAgent,

@@ -2,14 +2,13 @@
 pub(crate) mod asset;
 pub(crate) mod station;
 
-use orbit_station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
-use slog::trace;
-
 use crate::{
     args::{review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},
     dfx_extension_api::OrbitExtensionAgent,
     DfxOrbit,
 };
+use orbit_station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
+use slog::trace;
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
 pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {

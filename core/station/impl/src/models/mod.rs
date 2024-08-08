@@ -20,6 +20,9 @@ pub use metadata::*;
 pub mod user;
 pub use user::*;
 
+pub mod external_canister;
+pub use external_canister::*;
+
 pub mod user_group;
 pub use user_group::*;
 

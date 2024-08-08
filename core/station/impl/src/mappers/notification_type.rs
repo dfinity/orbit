@@ -90,6 +90,7 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::SetDisasterRecovery(_)
                     | RequestOperation::ChangeCanister(_)
                     | RequestOperation::ChangeExternalCanister(_)
+                    | RequestOperation::ConfigureExternalCanister(_)
                     | RequestOperation::CreateExternalCanister(_)
                     | RequestOperation::CallExternalCanister(_) => None,
                 };
@@ -114,6 +115,7 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::SetDisasterRecovery(_)
                     | RequestOperation::ChangeCanister(_)
                     | RequestOperation::ChangeExternalCanister(_)
+                    | RequestOperation::ConfigureExternalCanister(_)
                     | RequestOperation::CreateExternalCanister(_)
                     | RequestOperation::CallExternalCanister(_) => None,
                 };

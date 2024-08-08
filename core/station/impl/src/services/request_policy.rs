@@ -1,7 +1,6 @@
 use crate::{
     core::{
         authorization::Authorization,
-        generate_uuid_v4,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext,
     },
@@ -54,13 +53,12 @@ impl RequestPolicyService {
         Ok(policy)
     }
 
-    pub async fn add_request_policy(
+    pub fn add_request_policy(
         &self,
         input: AddRequestPolicyOperationInput,
     ) -> ServiceResult<RequestPolicy> {
-        let id: uuid::Uuid = generate_uuid_v4().await;
         let policy = RequestPolicy {
-            id: *id.as_bytes(),
+            id: *Uuid::new_v4().as_bytes(),
             specifier: input.specifier,
             rule: input.rule,
         };
@@ -76,7 +74,7 @@ impl RequestPolicyService {
     /// Handles the policy change operation.
     ///
     /// Removes the existing policy rule if variant is `Remove`, otherwise edits the existing rule or adds a new one.
-    pub async fn handle_policy_change(
+    pub fn handle_policy_change(
         &self,
         specifier: RequestSpecifier,
         policy_rule: RequestPolicyRuleInput,
@@ -86,7 +84,7 @@ impl RequestPolicyService {
             RequestPolicyRuleInput::Remove => {
                 if let Some(existing_policy_id) = editable_policy_id {
                     if let Err(RequestError::PolicyNotFound { id }) =
-                        self.remove_request_policy(existing_policy_id).await
+                        self.remove_request_policy(existing_policy_id)
                     {
                         print(format!(
                             "Cannot handle policy change: policy {} not found",
@@ -106,17 +104,14 @@ impl RequestPolicyService {
                             policy_id: *existing_policy_id,
                             specifier: Some(specifier),
                             rule: Some(policy_rule),
-                        })
-                        .await?;
+                        })?;
                     }
                     None => {
                         // If there's no existing policy, add a new one
-                        let policy = self
-                            .add_request_policy(AddRequestPolicyOperationInput {
-                                specifier,
-                                rule: policy_rule,
-                            })
-                            .await?;
+                        let policy = self.add_request_policy(AddRequestPolicyOperationInput {
+                            specifier,
+                            rule: policy_rule,
+                        })?;
 
                         *editable_policy_id = Some(policy.id);
                     }
@@ -127,7 +122,7 @@ impl RequestPolicyService {
         Ok(())
     }
 
-    pub async fn edit_request_policy(
+    pub fn edit_request_policy(
         &self,
         input: EditRequestPolicyOperationInput,
     ) -> ServiceResult<RequestPolicy> {
@@ -149,7 +144,7 @@ impl RequestPolicyService {
         Ok(policy)
     }
 
-    pub async fn remove_request_policy(&self, id: &UUID) -> ServiceResult<(), RequestError> {
+    pub fn remove_request_policy(&self, id: &UUID) -> ServiceResult<(), RequestError> {
         let policy = self.get_request_policy(id)?;
 
         self.request_policy_repository.remove(&policy.id);
@@ -157,7 +152,7 @@ impl RequestPolicyService {
         Ok(())
     }
 
-    pub async fn get_caller_privileges_for_request_policy(
+    pub fn get_caller_privileges_for_request_policy(
         &self,
         policy_id: &UUID,
         ctx: &CallContext,
@@ -175,7 +170,7 @@ impl RequestPolicyService {
         })
     }
 
-    pub async fn list_request_policies(
+    pub fn list_request_policies(
         &self,
         input: ListRequestPoliciesInput,
         ctx: &CallContext,
@@ -210,15 +205,13 @@ mod tests {
         },
     };
 
-    #[tokio::test]
-    async fn test_request_policy_operations() {
+    #[test]
+    fn test_request_policy_operations() {
         let service = REQUEST_POLICY_SERVICE.clone();
-        let policy = service
-            .add_request_policy(AddRequestPolicyOperationInput {
-                specifier: RequestSpecifier::AddAccount,
-                rule: RequestPolicyRule::AutoApproved,
-            })
-            .await;
+        let policy = service.add_request_policy(AddRequestPolicyOperationInput {
+            specifier: RequestSpecifier::AddAccount,
+            rule: RequestPolicyRule::AutoApproved,
+        });
 
         assert!(policy.is_ok());
 
@@ -228,13 +221,11 @@ mod tests {
         assert_eq!(fetched_policy.specifier, policy.specifier);
         assert_eq!(fetched_policy.rule, policy.rule);
 
-        let policy = service
-            .edit_request_policy(EditRequestPolicyOperationInput {
-                policy_id: policy.id,
-                specifier: Some(RequestSpecifier::AddAccount),
-                rule: Some(RequestPolicyRule::AutoApproved),
-            })
-            .await;
+        let policy = service.edit_request_policy(EditRequestPolicyOperationInput {
+            policy_id: policy.id,
+            specifier: Some(RequestSpecifier::AddAccount),
+            rule: Some(RequestPolicyRule::AutoApproved),
+        });
 
         assert!(policy.is_ok());
 
@@ -253,8 +244,8 @@ mod tests {
         assert!(result.is_err());
     }
 
-    #[tokio::test]
-    async fn list_request_policies_should_use_offset_and_limit() {
+    #[test]
+    fn list_request_policies_should_use_offset_and_limit() {
         for i in 0..50 {
             let mut policy = mock_request_policy();
             policy.id = [i; 16];
@@ -269,32 +260,30 @@ mod tests {
 
         let result = REQUEST_POLICY_SERVICE
             .list_request_policies(input, &CallContext::new(self_canister_id()))
-            .await
             .unwrap();
         assert_eq!(result.items.len(), 30);
         assert_eq!(result.next_offset, Some(45));
     }
 
-    #[tokio::test]
-    async fn test_remove_request_policy() {
+    #[test]
+    fn test_remove_request_policy() {
         let service = REQUEST_POLICY_SERVICE.clone();
         let policy = service
             .add_request_policy(AddRequestPolicyOperationInput {
                 specifier: RequestSpecifier::AddAccount,
                 rule: RequestPolicyRule::AutoApproved,
             })
-            .await
             .unwrap();
 
         assert!(service.get_request_policy(&policy.id).is_ok());
 
-        service.remove_request_policy(&policy.id).await.unwrap();
+        service.remove_request_policy(&policy.id).unwrap();
 
         assert!(service.get_request_policy(&policy.id).is_err());
     }
 
-    #[tokio::test]
-    async fn test_handle_policy_change() {
+    #[test]
+    fn test_handle_policy_change() {
         let mut account = mock_account();
         account.configs_request_policy_id = None;
 
@@ -304,7 +293,6 @@ mod tests {
                 RequestPolicyRuleInput::Set(RequestPolicyRule::AutoApproved),
                 &mut account.configs_request_policy_id,
             )
-            .await
             .unwrap();
 
         assert!(account.configs_request_policy_id.is_some());
@@ -315,7 +303,6 @@ mod tests {
                 RequestPolicyRuleInput::Remove,
                 &mut account.configs_request_policy_id,
             )
-            .await
             .unwrap();
 
         assert!(account.configs_request_policy_id.is_none());

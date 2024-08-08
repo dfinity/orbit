@@ -84,6 +84,18 @@ impl Request {
                     request_id: self.id,
                 },
             ],
+            RequestOperation::ConfigureExternalCanister(operation) => vec![
+                RequestOperationTypeIndex {
+                    operation_type: RequestOperationFilterType::ConfigureExternalCanister(None),
+                    request_id: self.id,
+                },
+                RequestOperationTypeIndex {
+                    operation_type: RequestOperationFilterType::ConfigureExternalCanister(Some(
+                        operation.canister_id,
+                    )),
+                    request_id: self.id,
+                },
+            ],
             RequestOperation::CreateExternalCanister(_) => vec![RequestOperationTypeIndex {
                 operation_type: RequestOperationFilterType::CreateExternalCanister,
                 request_id: self.id,

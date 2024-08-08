@@ -5,9 +5,8 @@ use crate::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget,
             ChangeCanisterResourceAction, ChangeExternalCanisterResourceTarget,
-            CreateExternalCanisterResourceTarget, ExternalCanisterResourceAction,
-            PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-            SystemResourceAction, UserResourceAction,
+            ExternalCanisterResourceAction, PermissionResourceAction, RequestResourceAction,
+            Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
         },
         CanisterMethod, Transfer,
     },
@@ -61,9 +60,9 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::ManageSystemInfo => {
                 Resource::System(SystemResourceAction::ManageSystemInfo)
             }
-            UserPrivilege::CreateExternalCanister => Resource::ExternalCanister(
-                ExternalCanisterResourceAction::Create(CreateExternalCanisterResourceTarget::Any),
-            ),
+            UserPrivilege::CreateExternalCanister => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Create)
+            }
             UserPrivilege::ListExternalCanisters => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::List)
             }
@@ -226,9 +225,9 @@ impl From<&station_api::CreateRequestInput> for Resource {
                     ChangeExternalCanisterResourceTarget::Canister(input.canister_id),
                 ))
             }
-            RequestOperationInput::CreateExternalCanister(_) => Resource::ExternalCanister(
-                ExternalCanisterResourceAction::Create(CreateExternalCanisterResourceTarget::Any),
-            ),
+            RequestOperationInput::CreateExternalCanister(_) => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Create)
+            }
             RequestOperationInput::CallExternalCanister(input) => {
                 let validation_method: Option<CanisterMethod> =
                     input.validation_method.clone().map(|m| m.into());

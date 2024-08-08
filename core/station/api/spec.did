@@ -48,7 +48,7 @@ type RequestSpecifier = variant {
   ChangeCanister;
   SetDisasterRecovery;
   ChangeExternalCanister : ChangeExternalCanisterResourceTarget;
-  CreateExternalCanister : CreateExternalCanisterResourceTarget;
+  CreateExternalCanister;
   CallExternalCanister : CallExternalCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
   AddRequestPolicy;
@@ -650,6 +650,8 @@ type ConfigureExternalCanisterSettingsInput = record {
   permissions : opt ExternalCanisterPermissionsInput;
   // The request policies for the canister.
   request_policies : opt ExternalCanisterRequestPoliciesInput;
+  // The state of the external canister.
+  state : opt ExternalCanisterState;
 };
 
 // The input type for configuring an external canister in the station.
@@ -665,20 +667,21 @@ type ConfigureExternalCanisterOperationKind = variant {
   // Caution: This operation is irreversible.
   Delete;
   // The Internet Computer canister settings to configure for the external canister.
-  NativeSettings : DefiniteCanisterSettings;
+  NativeSettings : DefiniteCanisterSettingsInput;
 };
 
 type ConfigureExternalCanisterOperationInput = record {
   // The canister to update.
   canister_id : principal;
   // The kind of operation to perform.
-  operation : ConfigureExternalCanisterOperationKind;
+  kind : ConfigureExternalCanisterOperationKind;
 };
 
 type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
 
 type CreateExternalCanisterOperation = record {
   canister_id : opt principal;
+  input : CreateExternalCanisterOperationInput;
 };
 
 type CanisterMethod = record {
@@ -1794,11 +1797,6 @@ type ChangeCanisterResourceAction = variant {
   Create;
 };
 
-// The target of a request to create a external canister.
-type CreateExternalCanisterResourceTarget = variant {
-  Any;
-};
-
 // The target canister of a request to change a external canister.
 type ChangeExternalCanisterResourceTarget = variant {
   Any;
@@ -1814,7 +1812,7 @@ type ReadExternalCanisterResourceTarget = variant {
 // The actions that are available for external canisters.
 type ExternalCanisterResourceAction = variant {
   List;
-  Create : CreateExternalCanisterResourceTarget;
+  Create;
   Change : ChangeExternalCanisterResourceTarget;
   Call : CallExternalCanisterResourceTarget;
   Read : ReadExternalCanisterResourceTarget;
@@ -2148,6 +2146,14 @@ type DefiniteCanisterSettings = record {
   reserved_cycles_limit : nat;
 };
 
+type DefiniteCanisterSettingsInput = record {
+  controllers : opt vec principal;
+  compute_allocation : opt nat;
+  memory_allocation : opt nat;
+  freezing_threshold : opt nat;
+  reserved_cycles_limit : opt nat;
+};
+
 type CanisterStatusResponse = record {
   status : variant { running; stopping; stopped };
   settings : DefiniteCanisterSettings;
@@ -2178,6 +2184,10 @@ type ExternalCanisterCallPermission = record {
 
 // The request policy rule for the canister call operation.
 type ExternalCanisterCallRequestPolicyRule = record {
+  // The optional id of the request policy rule.
+  //
+  // If not provided a new policy rule will be created.
+  policy_id : opt UUID;
   // The request policy rule for the canister call operation.
   rule : RequestPolicyRule;
   // The validation method that is used to match the policy against
@@ -2186,6 +2196,16 @@ type ExternalCanisterCallRequestPolicyRule = record {
   // The method name that the rule is for,
   // if `*` is used the rule applies to all methods.
   execution_method : text;
+};
+
+// The request policy rule for the canister change operation.
+type ExternalCanisterChangeRequestPolicyRule = record {
+  // The optional id of the request policy rule.
+  //
+  // If not provided a new policy rule will be created.
+  policy_id : opt UUID;
+  // The request policy rule for the canister change operation.
+  rule : RequestPolicyRule;
 };
 
 // The permissions set for the external canister.
@@ -2206,8 +2226,8 @@ type ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
 
 // The request policy rules for the external canister.
 type ExternalCanisterRequestPolicies = record {
-  // The request policy rule for the canister change operation.
-  change : opt RequestPolicyRule;
+  // The request policy rules for the canister change operation.
+  change : vec ExternalCanisterChangeRequestPolicyRule;
   // The request policy rules for the calling methods on the canister.
   calls : vec ExternalCanisterCallRequestPolicyRule;
 };
@@ -2227,6 +2247,8 @@ type ExternalCanister = record {
   description : opt text;
   // The labels that can be used to categorize the canister.
   labels : vec text;
+  // The current state of the record (e.g. `Active`).
+  state : ExternalCanisterState;
   // The permissions that are set for who can interact with the canister.
   permissions : ExternalCanisterPermissions;
   // The request policies that are associated with the canister.
@@ -2235,6 +2257,14 @@ type ExternalCanister = record {
   created_at : TimestampRFC3339;
   // The time at which the canister was last modified, if available.
   modified_at : opt TimestampRFC3339;
+};
+
+// The state of the external canister.
+type ExternalCanisterState = variant {
+  // The record is active and can be interacted with.
+  Active;
+  // The record is archived and can no longer be interacted with.
+  Archived;
 };
 
 // Input type for getting a external canister.

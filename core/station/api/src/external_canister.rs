@@ -12,15 +12,15 @@ pub type ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPoliciesD
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct DefiniteCanisterSettingsInput {
     /// Controllers of the canister.
-    pub controllers: Vec<Principal>,
+    pub controllers: Option<Vec<Principal>>,
     /// Compute allocation.
-    pub compute_allocation: Nat,
+    pub compute_allocation: Option<Nat>,
     /// Memory allocation.
-    pub memory_allocation: Nat,
+    pub memory_allocation: Option<Nat>,
     /// Freezing threshold.
-    pub freezing_threshold: Nat,
+    pub freezing_threshold: Option<Nat>,
     /// Reserved cycles limit.
-    pub reserved_cycles_limit: Nat,
+    pub reserved_cycles_limit: Option<Nat>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -52,6 +52,7 @@ pub struct CreateExternalCanisterOperationInput {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct CreateExternalCanisterOperationDTO {
     pub canister_id: Option<Principal>,
+    pub input: CreateExternalCanisterOperationInput,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -75,7 +76,7 @@ pub struct ChangeExternalCanisterOperationDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ConfigureExternalCanisterOperationInput {
     pub canister_id: Principal,
-    pub operation: ConfigureExternalCanisterOperationKindDTO,
+    pub kind: ConfigureExternalCanisterOperationKindDTO,
 }
 
 pub type ConfigureExternalCanisterOperationDTO = ConfigureExternalCanisterOperationInput;
@@ -85,6 +86,7 @@ pub struct ConfigureExternalCanisterSettingsInput {
     pub name: Option<String>,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
+    pub state: Option<ExternalCanisterStateDTO>,
     pub permissions: Option<ExternalCanisterPermissionsInput>,
     pub request_policies: Option<ExternalCanisterRequestPoliciesInput>,
 }
@@ -132,9 +134,16 @@ pub struct ExternalCanisterCallPermissionDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalCanisterCallRequestPolicyRule {
+    pub policy_id: Option<UuidDTO>,
     pub rule: RequestPolicyRuleDTO,
     pub validation_method: ValidationMethodResourceTargetDTO,
     pub execution_method: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterChangeRequestPolicyRule {
+    pub policy_id: Option<UuidDTO>,
+    pub rule: RequestPolicyRuleDTO,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -146,7 +155,7 @@ pub struct ExternalCanisterPermissionsDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalCanisterRequestPoliciesDTO {
-    pub change: Option<RequestPolicyRuleDTO>,
+    pub change: Vec<ExternalCanisterChangeRequestPolicyRule>,
     pub calls: Vec<ExternalCanisterCallRequestPolicyRule>,
 }
 
@@ -157,10 +166,17 @@ pub struct ExternalCanisterDTO {
     pub name: String,
     pub description: Option<String>,
     pub labels: Vec<String>,
+    pub state: ExternalCanisterStateDTO,
     pub permissions: ExternalCanisterPermissionsDTO,
     pub request_policies: ExternalCanisterRequestPoliciesDTO,
     pub created_at: TimestampRfc3339,
     pub modified_at: Option<TimestampRfc3339>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum ExternalCanisterStateDTO {
+    Active,
+    Archived,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

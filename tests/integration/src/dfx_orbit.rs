@@ -139,7 +139,6 @@ fn setup_identity(dfx_root: &Path) {
 fn setup_test_dfx_json(dfx_root: &Path, config: DfxOrbitTestConfig) {
     let port = PORT.with(|port| *port.borrow());
     let dfx_json = test_dfx_json_from_template(config, port);
-    println!("{}", &dfx_json);
     std::fs::write(dfx_root.join("dfx.json"), dfx_json).unwrap();
 }
 
@@ -220,7 +219,7 @@ fn setup_dfx_user(env: &PocketIc, canister_ids: &CanisterIds) -> (Principal, Use
     (dfx_principal, dfx_user)
 }
 
-/// Install the counter cansiter under given `canister_id` into the running IC
+/// Install the counter canister under given `canister_id` into the running IC
 fn setup_counter_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> Principal {
     // create and install the counter canister
     let canister_id = create_canister(env, canister_ids.station);
