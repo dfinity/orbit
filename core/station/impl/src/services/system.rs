@@ -162,7 +162,7 @@ impl SystemService {
 
             install_canister_handlers::monitor_upgrader_cycles(
                 *system_info.get_upgrader_canister_id(),
-                system_info.get_cycle_obtain_strategy().clone().copied(),
+                system_info.get_cycle_obtain_strategy().copied(),
             );
 
             // initializes the job timers after the canister is fully initialized
