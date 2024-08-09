@@ -40,9 +40,9 @@ pub mod test {
     }
     #[async_trait]
     impl LedgerCanister for TestLedgerCanister {
-        async fn transfer(&self, _args: TransferArgs) -> CallResult<TransferResult> {
+        async fn transfer(&self, args: TransferArgs) -> CallResult<TransferResult> {
             let mut locked = self.transfer_called_with.write().await;
-            locked.push(_args);
+            locked.push(args);
 
             if let Some(value) = &self.returns_with {
                 return value.clone();
