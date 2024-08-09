@@ -3,15 +3,20 @@ pub mod id;
 pub mod list;
 pub mod next;
 
-use clap::Subcommand;
+use clap::{Parser, Subcommand};
 use id::ReviewIdArgs;
 use list::ReviewListArgs;
 use next::ReviewNextArgs;
 
 /// Station management commands.
+#[derive(Debug, Parser)]
+pub struct ReviewArgs {
+    #[clap(subcommand)]
+    pub(crate) action: ReviewActionArgs,
+}
+
 #[derive(Debug, Subcommand)]
-#[command(version, about, long_about = None)]
-pub enum ReviewArgs {
+pub enum ReviewActionArgs {
     /// List requests
     List(ReviewListArgs),
     /// Review the next request.

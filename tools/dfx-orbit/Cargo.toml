@@ -19,6 +19,7 @@ serde.workspace = true
 serde_bytes.workspace = true
 serde_json.workspace = true
 cap-std.workspace = true
+dateparser.workspace = true
 dfx-core.workspace = true
 hex.workspace = true
 ic-agent.workspace = true
@@ -29,6 +30,7 @@ sha2.workspace = true
 slog.workspace = true
 slog-term.workspace = true
 slog-async.workspace = true
+tabled.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ['rt'] }
 

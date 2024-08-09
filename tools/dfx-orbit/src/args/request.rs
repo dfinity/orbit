@@ -2,7 +2,7 @@
 pub mod canister;
 pub mod permission;
 
-use crate::{DfxOrbit, StationAgent};
+use crate::DfxOrbit;
 use canister::RequestCanisterArgs;
 use clap::{Parser, Subcommand};
 use orbit_station_api::CreateRequestInput;
@@ -34,15 +34,6 @@ pub enum RequestArgsActions {
     /// Request permissions
     #[command(subcommand)]
     Permission(RequestPermissionArgs),
-}
-
-/// Converts the CLI arg type into the equivalent Orbit API type.
-pub trait CreateRequestArgs {
-    /// Converts the CLI arg type into the equivalent Orbit API type.
-    fn into_create_request_input(
-        self,
-        station_agent: &StationAgent,
-    ) -> anyhow::Result<CreateRequestInput>;
 }
 
 impl RequestArgs {

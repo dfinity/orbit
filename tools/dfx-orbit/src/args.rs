@@ -43,7 +43,6 @@ pub enum DfxOrbitSubcommands {
     /// Make requests to Orbit
     Request(RequestArgs),
     /// View and decide on requests.
-    #[clap(subcommand)]
     Review(ReviewArgs),
     /// Manage assets stored in an asset canister through Orbit
     Asset(AssetArgs),
