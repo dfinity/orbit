@@ -11,6 +11,10 @@ use next::ReviewNextArgs;
 /// Station management commands.
 #[derive(Debug, Parser)]
 pub struct ReviewArgs {
+    /// Return output as JSON
+    #[clap(short, long)]
+    pub(crate) json: bool,
+
     #[clap(subcommand)]
     pub(crate) action: ReviewActionArgs,
 }
