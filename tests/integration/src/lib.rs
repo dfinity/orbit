@@ -27,6 +27,7 @@ pub struct TestEnv {
 pub struct CanisterIds {
     pub icp_ledger: Principal,
     pub icp_index: Principal,
+    pub cycles_minting_canister: Principal,
     pub control_panel: Principal,
     pub station: Principal,
 }

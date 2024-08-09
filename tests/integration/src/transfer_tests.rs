@@ -134,7 +134,15 @@ fn make_transfer_successful() {
 
     // send ICP to orbit station account
     let account_address = AccountIdentifier::from_hex(&account_dto.address).unwrap();
-    send_icp_to_account(&env, WALLET_ADMIN_USER, account_address, ICP + ICP_FEE, 0).unwrap();
+    send_icp_to_account(
+        &env,
+        WALLET_ADMIN_USER,
+        account_address,
+        ICP + ICP_FEE,
+        0,
+        None,
+    )
+    .unwrap();
 
     // check user balance after transfer to orbit station account
     let new_user_balance = get_icp_balance(&env, WALLET_ADMIN_USER);

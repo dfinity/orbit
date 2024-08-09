@@ -16,4 +16,6 @@ pub enum Error {
     MetricsResponseDeserializationFailed,
     #[error("The canister cycles balance metric was not found in the response.")]
     CyclesBalanceMetricNotFound { metric_name: String },
+    #[error("Could not obtain cycles for topping up the funding canister.")]
+    ObtainCyclesError { details: String },
 }

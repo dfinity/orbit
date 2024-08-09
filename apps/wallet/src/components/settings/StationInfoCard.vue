@@ -270,7 +270,7 @@ const manageSystemInfoInput = ref<{
   model: ManageSystemInfoOperationInput;
 }>({
   valid: false,
-  model: { name: [station.configuration.details.name] },
+  model: { name: [station.configuration.details.name], cycle_obtain_strategy: [] },
 });
 
 const submitManageSystemInfoOperation = async ({

@@ -78,6 +78,17 @@ impl InternetComputer {
         }
     }
 
+    /// Generates the corresponded subaccount id for the given station_account id.
+    ///
+    /// The subaccount id is a 32 bytes array that is used to identify a station_account in the ICP ledger.
+    pub fn subaccount_from_station_account_id(station_account_id: &AccountId) -> [u8; 32] {
+        let len = station_account_id.len();
+        let mut subaccount_id = [0u8; 32];
+        subaccount_id[0..len].copy_from_slice(&station_account_id[0..len]);
+
+        subaccount_id
+    }
+
     pub fn ledger_canister_id() -> Principal {
         Principal::from_text(Self::ICP_LEDGER_CANISTER_ID).unwrap()
     }
@@ -88,17 +99,6 @@ impl InternetComputer {
         Ok(hex::encode(hasher.finalize()))
     }
 
-    /// Generates the corresponded subaccount id for the given station_account id.
-    ///
-    /// The subaccount id is a 32 bytes array that is used to identify a station_account in the ICP ledger.
-    fn subaccount_from_station_account_id(&self, station_account_id: &AccountId) -> [u8; 32] {
-        let len = station_account_id.len();
-        let mut subaccount_id = [0u8; 32];
-        subaccount_id[0..len].copy_from_slice(&station_account_id[0..len]);
-
-        subaccount_id
-    }
-
     /// Creates the corresponded station_account account id for the given station_account id, which is the concatenation
     /// of the station canister id and the station_account uuid as the subaccount id.
     ///
@@ -107,7 +107,7 @@ impl InternetComputer {
         &self,
         station_account_id: &AccountId,
     ) -> AccountIdentifier {
-        let subaccount = self.subaccount_from_station_account_id(station_account_id);
+        let subaccount = InternetComputer::subaccount_from_station_account_id(station_account_id);
 
         AccountIdentifier::new(&self.station_canister_id, &Subaccount(subaccount))
     }
@@ -176,7 +176,7 @@ impl InternetComputer {
                     timestamp_nanos: current_time,
                 }),
                 from_subaccount: Some(Subaccount(
-                    self.subaccount_from_station_account_id(&station_account.id),
+                    InternetComputer::subaccount_from_station_account_id(&station_account.id),
                 )),
                 memo: Memo(memo),
                 to: to_address,

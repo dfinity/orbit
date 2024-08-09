@@ -7,9 +7,10 @@
 //! - Monitoring of canister cycles.
 //! - Adding cycles to a canister.
 
+pub mod api;
 pub mod errors;
-pub mod fetch;
 pub mod manager;
+pub mod operations;
 pub mod types;
 pub mod utils;
 

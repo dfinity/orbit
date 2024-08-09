@@ -8,7 +8,7 @@ use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
 use std::borrow::Cow;
 
-use super::UserGroupId;
+use super::{AccountId, UserGroupId};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SystemState {
@@ -21,6 +21,12 @@ pub enum SystemState {
 pub struct DisasterRecoveryCommittee {
     pub user_group_id: UserGroupId,
     pub quorum: u16,
+}
+
+#[storable]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum CycleObtainStrategy {
+    MintFromNativeToken { account_id: AccountId },
 }
 
 #[storable(size = SYSTEM_RESERVED_MEMORY_BYTES)]
@@ -38,6 +44,8 @@ pub struct SystemInfo {
     upgrader_wasm_module: Option<Vec<u8>>,
     /// The disaster recovery committee user group id.
     disaster_recovery_committee: Option<DisasterRecoveryCommittee>,
+    /// Defines how the station tops up itself with cycles.
+    cycle_obtain_strategy: Option<CycleObtainStrategy>,
 }
 
 impl Default for SystemInfo {
@@ -49,6 +57,7 @@ impl Default for SystemInfo {
             upgrader_canister_id: None,
             upgrader_wasm_module: None,
             disaster_recovery_committee: None,
+            cycle_obtain_strategy: None,
         }
     }
 }
@@ -62,6 +71,14 @@ impl SystemInfo {
             upgrader_wasm_module: Some(upgrader_wasm_module),
             ..Default::default()
         }
+    }
+
+    pub fn get_cycle_obtain_strategy(&self) -> Option<&CycleObtainStrategy> {
+        self.cycle_obtain_strategy.as_ref()
+    }
+
+    pub fn set_cycle_obtain_strategy(&mut self, strategy: CycleObtainStrategy) {
+        self.cycle_obtain_strategy = Some(strategy);
     }
 
     pub fn get_name(&self) -> &str {
