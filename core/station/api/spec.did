@@ -2287,8 +2287,10 @@ type ExternalCanisterCallerMethodsPrivileges = record {
 
 // The caller privileges for the external canister.
 type ExternalCanisterCallerPrivileges = record {
-  // The external canister retource id.
+  // The external canister entry id.
   id : UUID;
+  // The canister id.
+  canister_id : principal;
   // Wether or not the caller can edit the external canister.
   can_change : bool;
   // The list of methods that the caller can call on the external canister.
@@ -2305,14 +2307,24 @@ type GetExternalCanisterResult = variant {
   Err : Error;
 };
 
+// The input type for sorting the results of listing external canisters.
+type ListExternalCanistersSortInput = variant {
+  // Sort by the name of the external canister.
+  Name : SortByDirection;
+};
+
 // Input type for listing external canisters with the given filters.
 type ListExternalCanistersInput = record {
   // The principal id of the external canister to search for.
   canister_ids : opt vec principal;
   // The labels to use for filtering the external canisters.
   labels : opt vec text;
+  // The current state of the external canisters to use for filtering (e.g. `Active`, `Archived`).
+  states : opt vec ExternalCanisterState;
   // The pagination parameters.
   paginate : opt PaginationInput;
+  // The sort parameters.
+  sort_by : opt ListExternalCanistersSortInput;
 };
 
 // Result type for listing external canisters.

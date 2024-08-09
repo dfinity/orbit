@@ -1,5 +1,8 @@
 use super::resource::ValidationMethodResourceTarget;
-use super::ConfigureExternalCanisterSettingsInput;
+use super::{
+    ConfigureExternalCanisterSettingsInput, ExternalCanisterPermissionsInput,
+    ExternalCanisterRequestPoliciesInput,
+};
 use crate::errors::ExternalCanisterError;
 use candid::Principal;
 use orbit_essentials::storable;
@@ -7,6 +10,7 @@ use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
+use station_api::GetExternalCanisterFiltersResponse;
 use std::collections::BTreeSet;
 use std::hash::Hash;
 
@@ -38,6 +42,9 @@ pub struct ExternalCanister {
     pub modified_at: Option<Timestamp>,
 }
 
+pub type ExternalCanisterPermissions = ExternalCanisterPermissionsInput;
+pub type ExternalCanisterRequestPolicies = ExternalCanisterRequestPoliciesInput;
+
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterKey {
@@ -60,9 +67,12 @@ pub struct ExternalCanisterCallerMethodsPrivileges {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterCallerPrivileges {
     pub id: UUID,
+    pub canister_id: Principal,
     pub can_change: bool,
     pub can_call: Vec<ExternalCanisterCallerMethodsPrivileges>,
 }
+
+pub type ExternalCanisterAvailableFilters = GetExternalCanisterFiltersResponse;
 
 impl ExternalCanister {
     pub const MAX_NAME_LENGTH: usize = 100;
@@ -182,7 +192,7 @@ impl ModelValidator<ExternalCanisterError> for ExternalCanister {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench"))]
 pub mod external_canister_test_utils {
     use super::*;
     use crate::core::ic_cdk::next_time;

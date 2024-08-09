@@ -1,6 +1,6 @@
 use crate::{
     AllowDTO, CanisterInstallMode, PaginationInput, RequestPolicyRuleDTO, Sha256HashDTO,
-    TimestampRfc3339, UuidDTO, ValidationMethodResourceTargetDTO,
+    SortDirection, TimestampRfc3339, UuidDTO, ValidationMethodResourceTargetDTO,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
 
@@ -193,6 +193,7 @@ pub struct ExternalCanisterCallerMethodPrivilegesDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalCanisterCallerPrivilegesDTO {
     pub id: UuidDTO,
+    pub canister_id: Principal,
     pub can_change: bool,
     pub can_call: Vec<ExternalCanisterCallerMethodPrivilegesDTO>,
 }
@@ -204,10 +205,17 @@ pub struct GetExternalCanisterResponse {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum ListExternalCanistersSortInput {
+    Name(SortDirection),
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ListExternalCanistersInput {
     pub canister_ids: Option<Vec<Principal>>,
     pub labels: Option<Vec<String>>,
+    pub states: Option<Vec<ExternalCanisterStateDTO>>,
     pub paginate: Option<PaginationInput>,
+    pub sort_by: Option<ListExternalCanistersSortInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -220,13 +228,13 @@ pub struct ListExternalCanistersResponse {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetExternalCanisterFiltersInputWithName {
-    prefix: Option<String>,
+    pub prefix: Option<String>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetExternalCanisterFiltersInput {
-    with_name: Option<GetExternalCanisterFiltersInputWithName>,
-    with_labels: Option<bool>,
+    pub with_name: Option<GetExternalCanisterFiltersInputWithName>,
+    pub with_labels: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

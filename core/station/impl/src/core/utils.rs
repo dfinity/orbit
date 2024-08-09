@@ -1,3 +1,5 @@
+use candid::Principal;
+
 use super::authorization::Authorization;
 use super::CallContext;
 use crate::errors::PaginationError;
@@ -112,6 +114,10 @@ pub(crate) fn retain_accessible_resources<T, F>(
 pub(crate) fn format_unique_string(text: &str) -> String {
     deunicode::deunicode(text).to_lowercase().replace(' ', "")
 }
+
+/// The minimum principal value that can be used.
+pub const MIN_PRINCIPAL: Principal = Principal::from_slice(&[0; 29]);
+pub const MAX_PRINCIPAL: Principal = Principal::from_slice(&[255; 29]);
 
 #[cfg(test)]
 mod tests {

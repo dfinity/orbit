@@ -11,8 +11,9 @@ use lazy_static::lazy_static;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::with_middleware;
 use station_api::{
-    GetExternalCanisterFiltersInput, GetExternalCanisterFiltersResponse, GetExternalCanisterInput,
-    GetExternalCanisterResponse, ListExternalCanistersInput, ListExternalCanistersResponse,
+    ExternalCanisterCallerPrivilegesDTO, GetExternalCanisterFiltersInput,
+    GetExternalCanisterFiltersResponse, GetExternalCanisterInput, GetExternalCanisterResponse,
+    ListExternalCanistersInput, ListExternalCanistersResponse,
 };
 use std::sync::Arc;
 
@@ -69,22 +70,86 @@ impl ExternalCanisterController {
         &self,
         input: GetExternalCanisterInput,
     ) -> ApiResult<GetExternalCanisterResponse> {
-        unimplemented!("get_external_canister")
+        let ctx = call_context();
+        let external_canister = self
+            .canister_service
+            .get_external_canister_by_canister_id(&input.canister_id)?;
+        let external_canister_policies = self
+            .canister_service
+            .get_external_canister_request_policies(&external_canister.canister_id);
+        let external_canister_permissions = self
+            .canister_service
+            .get_external_canister_permissions(&external_canister.canister_id);
+        let caller_privileges = self
+            .canister_service
+            .get_caller_privileges_for_external_canister(
+                &external_canister.id,
+                &external_canister.canister_id,
+                &ctx,
+            );
+
+        Ok(GetExternalCanisterResponse {
+            canister: external_canister
+                .into_dto(external_canister_permissions, external_canister_policies),
+            privileges: caller_privileges.into(),
+        })
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::List)]))]
     async fn list_external_canisters(
         &self,
-        _input: ListExternalCanistersInput,
+        input: ListExternalCanistersInput,
     ) -> ApiResult<ListExternalCanistersResponse> {
-        unimplemented!("list_external_canisters")
+        let ctx = call_context();
+        let result = self.canister_service.list_external_canisters(input, &ctx)?;
+
+        let mut privileges = Vec::new();
+        for external_canister in &result.items {
+            let caller_privileges = self
+                .canister_service
+                .get_caller_privileges_for_external_canister(
+                    &external_canister.id,
+                    &external_canister.canister_id,
+                    &ctx,
+                );
+
+            privileges.push(ExternalCanisterCallerPrivilegesDTO::from(caller_privileges));
+        }
+
+        Ok(ListExternalCanistersResponse {
+            canisters: result
+                .items
+                .into_iter()
+                .map(|external_canister| {
+                    let policies = self
+                        .canister_service
+                        .get_external_canister_permissions(&external_canister.canister_id);
+                    let permissions = self
+                        .canister_service
+                        .get_external_canister_request_policies(&external_canister.canister_id);
+
+                    external_canister.into_dto(policies, permissions)
+                })
+                .collect(),
+            next_offset: result.next_offset,
+            total: result.total,
+            privileges,
+        })
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::List)]))]
     async fn get_external_canister_filters(
         &self,
-        _input: GetExternalCanisterFiltersInput,
+        input: GetExternalCanisterFiltersInput,
     ) -> ApiResult<GetExternalCanisterFiltersResponse> {
-        unimplemented!("get_external_canister_filters")
+        let ctx = call_context();
+        let filters = self
+            .canister_service
+            .available_external_canisters_filters(input, &ctx);
+
+        Ok(GetExternalCanisterFiltersResponse {
+            names: filters.names,
+            labels: filters.labels,
+        })
     }
 }
