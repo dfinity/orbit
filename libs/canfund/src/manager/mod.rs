@@ -5,10 +5,7 @@ use self::{
     options::{FundManagerOptions, FundStrategy},
     record::{CanisterRecord, CyclesBalance},
 };
-use crate::{
-    operations::fetch::{FetchCyclesBalance, FetchCyclesBalanceFromCanisterStatus},
-    utils::calc_estimated_cycles_per_sec,
-};
+use crate::{operations::fetch::FetchCyclesBalance, utils::calc_estimated_cycles_per_sec};
 use ic_cdk::{
     api::{
         management_canister::main::{deposit_cycles, CanisterId, CanisterIdRecord},
@@ -36,7 +33,6 @@ pub struct FundManagerCore {
     lock: ProcessExecutionLock,
     canisters: HashMap<CanisterId, CanisterRecord>,
     options: FundManagerOptions,
-    cycles_fetcher: Arc<dyn FetchCyclesBalance>,
 }
 
 /// The fund manager that monitors and funds canisters with cycles based on the configuration.
@@ -68,8 +64,14 @@ impl FundManager {
     }
 
     /// Registers a canister to be monitored by the fund manager.
-    pub fn register(&mut self, canister_id: CanisterId) -> &mut Self {
-        self.inner.borrow_mut().register(canister_id);
+    pub fn register(
+        &mut self,
+        canister_id: CanisterId,
+        cycles_fetcher: Arc<dyn FetchCyclesBalance>,
+    ) -> &mut Self {
+        self.inner
+            .borrow_mut()
+            .register(canister_id, cycles_fetcher);
 
         self
     }
@@ -89,16 +91,6 @@ impl FundManager {
     /// Returns the options for the fund manager.
     pub fn get_options(&self) -> FundManagerOptions {
         self.inner.borrow().options.clone()
-    }
-
-    /// Configures the fund manager to use the specified cycles fetcher to get the canister cycles balance.
-    pub fn with_cycles_fetcher(
-        &mut self,
-        cycles_fetcher: Arc<dyn FetchCyclesBalance>,
-    ) -> &mut Self {
-        self.inner.borrow_mut().set_cycles_fetcher(cycles_fetcher);
-
-        self
     }
 
     /// Returns whether the fund manager has started tracking the canisters.
@@ -175,21 +167,22 @@ impl FundManager {
             return;
         }
 
-        let (all_canister_ids, chunk_size, cycles_fetcher) = {
+        let (all_canister_ids, chunk_size) = {
             let manager_ref = manager.borrow();
-            let all_canister_ids: Vec<CanisterId> = manager_ref.canisters.keys().cloned().collect();
+            let all_canister_ids: Vec<(CanisterId, Arc<dyn FetchCyclesBalance>)> = manager_ref
+                .canisters
+                .iter()
+                .map(|(canister_id, canister_record)| {
+                    (*canister_id, canister_record.get_cycles_fetcher())
+                })
+                .collect();
             let chunk_size = manager_ref.options.chunk_size();
-            let cycles_fetcher = Arc::clone(&manager_ref.cycles_fetcher);
-            (all_canister_ids, chunk_size, cycles_fetcher)
+            (all_canister_ids, chunk_size)
         };
 
         for canister_ids in all_canister_ids.chunks(cmp::max(1, chunk_size as usize)) {
-            let canisters_to_fund = Self::monitor_specified_canisters(
-                Rc::clone(&manager),
-                canister_ids,
-                cycles_fetcher.clone(),
-            )
-            .await;
+            let canisters_to_fund =
+                Self::monitor_specified_canisters(Rc::clone(&manager), canister_ids).await;
 
             // Funds the canisters with the needed cycles.
             for (canister_id, needed_cycles) in canisters_to_fund {
@@ -252,19 +245,18 @@ impl FundManager {
     /// Returns a list of canister ids and the cycles needed to fund them, if any.
     async fn monitor_specified_canisters(
         manager: Rc<RefCell<FundManagerCore>>,
-        canister_ids: &[CanisterId],
-        cycles_fetcher: Arc<dyn FetchCyclesBalance>,
+        canisters: &[(CanisterId, Arc<dyn FetchCyclesBalance>)],
     ) -> Vec<(CanisterId, u128)> {
         let mut canisters_to_fund = Vec::new();
         let options = manager.borrow().options().clone();
-        let requests = canister_ids
+        let requests = canisters
             .iter()
-            .map(|&canister_id| cycles_fetcher.fetch_cycles_balance(canister_id));
+            .map(|(canister_id, cycles_fetcher)| cycles_fetcher.fetch_cycles_balance(*canister_id));
 
         let results = futures::future::join_all(requests).await;
         let current_time = time();
 
-        for (i, canister_id) in canister_ids.iter().enumerate() {
+        for (i, (canister_id, _)) in canisters.iter().enumerate() {
             match &results[i] {
                 Ok(cycles_balance) => {
                     let mut manager_mut = manager.borrow_mut();
@@ -304,7 +296,6 @@ impl FundManagerCore {
         Rc::new(RefCell::new(FundManagerCore {
             canisters: HashMap::new(),
             options: FundManagerOptions::default(),
-            cycles_fetcher: Arc::new(FetchCyclesBalanceFromCanisterStatus),
             lock: ProcessExecutionLock::new(),
         }))
     }
@@ -314,18 +305,17 @@ impl FundManagerCore {
         &self.options
     }
 
-    /// Configures the fund manager to use the specified cycles fetcher to get the canister cyclesbalance.
-    pub fn set_cycles_fetcher(&mut self, cycles_fetcher: Arc<dyn FetchCyclesBalance>) {
-        self.cycles_fetcher = cycles_fetcher;
-    }
-
     /// Register a canister to be monitored by the fund manager.
     ///
     /// If the canister is already registered, it will be ignored.
-    pub fn register(&mut self, canister_id: CanisterId) {
+    pub fn register(
+        &mut self,
+        canister_id: CanisterId,
+        cycles_fetcher: Arc<dyn FetchCyclesBalance>,
+    ) {
         match self.canisters.entry(canister_id) {
             Entry::Vacant(entry) => {
-                entry.insert(CanisterRecord::default());
+                entry.insert(CanisterRecord::new(cycles_fetcher));
             }
             Entry::Occupied(_) => {
                 // The canister is already registered so ignore.

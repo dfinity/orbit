@@ -17,6 +17,8 @@ use orbit_essentials::{
 use std::{collections::BTreeSet, sync::Arc};
 use uuid::Uuid;
 
+use super::CANISTER_SERVICE;
+
 lazy_static! {
     pub static ref USER_SERVICE: Arc<UserService> =
         Arc::new(UserService::new(Arc::clone(&USER_REPOSITORY)));
@@ -197,7 +199,10 @@ impl UserService {
         self.user_repository.insert(user.to_key(), user.clone());
 
         FUND_MANAGER.with(|fund_manager| {
-            fund_manager.borrow_mut().register(station_canister_id);
+            fund_manager.borrow_mut().register(
+                station_canister_id,
+                CANISTER_SERVICE.create_station_cycles_fetcher(),
+            );
         });
 
         Ok(user)
