@@ -28,7 +28,7 @@ pub struct ManageSystemInfoOperationDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum CycleObtainStrategyDTO {
-    MintFromICP { account_id: UuidDTO },
+    MintFromNativeToken { account_id: UuidDTO },
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

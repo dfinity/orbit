@@ -1662,7 +1662,7 @@ type ManageSystemInfoOperationInput = record {
 // Strategy defining how the station canister tops up its own cycles.
 type CycleObtainStrategy = variant {
   // Use the CMC to mint cycles from ICP held in an Orbit account.
-  MintFromICP : record {
+  MintFromNativeToken : record {
     // The Orbit account ID to use for minting cycles.
     account_id : UUID;
   };

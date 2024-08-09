@@ -109,7 +109,7 @@ impl SystemService {
 
     pub fn get_obtain_cycle_config(&self, strategy: &CycleObtainStrategy) -> Arc<dyn ObtainCycles> {
         match strategy {
-            CycleObtainStrategy::MintFromICP { account_id } => Arc::new(MintCycles {
+            CycleObtainStrategy::MintFromNativeToken { account_id } => Arc::new(MintCycles {
                 ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
                 cmc: Arc::new(IcCyclesMintingCanister::new(
                     MAINNET_CYCLES_MINTING_CANISTER_ID,

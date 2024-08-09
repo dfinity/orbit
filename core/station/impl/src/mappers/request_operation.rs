@@ -1025,8 +1025,8 @@ impl From<RemoveRequestPolicyOperation> for station_api::RemoveRequestPolicyOper
 impl From<station_api::CycleObtainStrategyDTO> for CycleObtainStrategy {
     fn from(value: station_api::CycleObtainStrategyDTO) -> Self {
         match value {
-            station_api::CycleObtainStrategyDTO::MintFromICP { account_id } => {
-                CycleObtainStrategy::MintFromICP {
+            station_api::CycleObtainStrategyDTO::MintFromNativeToken { account_id } => {
+                CycleObtainStrategy::MintFromNativeToken {
                     account_id: *HelperMapper::to_uuid(account_id)
                         .expect("Invalid account id")
                         .as_bytes(),
@@ -1039,8 +1039,8 @@ impl From<station_api::CycleObtainStrategyDTO> for CycleObtainStrategy {
 impl From<CycleObtainStrategy> for station_api::CycleObtainStrategyDTO {
     fn from(value: CycleObtainStrategy) -> Self {
         match value {
-            CycleObtainStrategy::MintFromICP { account_id } => {
-                station_api::CycleObtainStrategyDTO::MintFromICP {
+            CycleObtainStrategy::MintFromNativeToken { account_id } => {
+                station_api::CycleObtainStrategyDTO::MintFromNativeToken {
                     account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
                 }
             }

@@ -384,7 +384,7 @@ export const idlFactory = ({ IDL }) => {
     'identities' : IDL.Opt(IDL.Vec(IDL.Principal)),
   });
   const CycleObtainStrategy = IDL.Variant({
-    'MintFromICP' : IDL.Record({ 'account_id' : UUID }),
+    'MintFromNativeToken' : IDL.Record({ 'account_id' : UUID }),
   });
   const ManageSystemInfoOperationInput = IDL.Record({
     'name' : IDL.Opt(IDL.Text),

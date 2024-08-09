@@ -258,14 +258,14 @@ impl AccountService {
             {
                 ic_cdk::println!("Setting cycle minting account to {}", uuid);
 
-                system_info.set_cycle_obtain_strategy(CycleObtainStrategy::MintFromICP {
+                system_info.set_cycle_obtain_strategy(CycleObtainStrategy::MintFromNativeToken {
                     account_id: *uuid.as_bytes(),
                 });
                 write_system_info(system_info);
 
                 #[cfg(target_arch = "wasm32")]
                 crate::services::SYSTEM_SERVICE.set_fund_manager_obtain_cycles(
-                    &CycleObtainStrategy::MintFromICP {
+                    &CycleObtainStrategy::MintFromNativeToken {
                         account_id: new_account.id,
                     },
                 );

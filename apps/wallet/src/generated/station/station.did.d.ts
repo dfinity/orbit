@@ -263,7 +263,9 @@ export type CreateRequestResult = {
     }
   } |
   { 'Err' : Error };
-export type CycleObtainStrategy = { 'MintFromICP' : { 'account_id' : UUID } };
+export type CycleObtainStrategy = {
+    'MintFromNativeToken' : { 'account_id' : UUID }
+  };
 export interface DefiniteCanisterSettings {
   'freezing_threshold' : bigint,
   'controllers' : Array<Principal>,
