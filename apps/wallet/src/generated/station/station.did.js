@@ -987,7 +987,13 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
+  const SortByDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
+  const ListExternalCanistersSortInput = IDL.Variant({
+    'Name' : SortByDirection,
+  });
   const ListExternalCanistersInput = IDL.Record({
+    'sort_by' : IDL.Opt(ListExternalCanistersSortInput),
+    'states' : IDL.Opt(IDL.Vec(ExternalCanisterState)),
     'canister_ids' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'paginate' : IDL.Opt(PaginationInput),
@@ -1101,7 +1107,6 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
-  const SortByDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
   const ListRequestsSortBy = IDL.Variant({
     'ExpirationDt' : SortByDirection,
     'LastModificationDt' : SortByDirection,

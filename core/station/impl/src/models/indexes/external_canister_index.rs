@@ -13,15 +13,18 @@ pub struct ExternalCanisterIndex {
     pub index: ExternalCanisterIndexKind,
     /// The external canister id, which is a UUID.
     pub external_canister_entry_id: ExternalCanisterId,
-    /// The external canister id, which is a Principal.
+    /// The canister id of the external canister, also, it helps avoid an extra lookup for permission checks.
     pub canister_id: Principal,
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ExternalCanisterIndexKind {
+    // Used to check if a canister id already exists.
     CanisterId(Principal),
+    // Used to check if a name already exists and to list all names to facilitate searching.
     Name(String),
+    // Used to list all labels to facilitate searching/
     Label(String),
 }
 
@@ -59,6 +62,7 @@ impl ExternalCanister {
     /// Converts the external canister to indexes to facilitate searching.
     pub fn indexes(&self) -> Vec<ExternalCanisterIndex> {
         let mut indexes = vec![self.to_index_by_name(), self.to_index_by_canister_id()];
+
         indexes.extend(self.to_index_by_labels());
 
         indexes

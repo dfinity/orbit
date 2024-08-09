@@ -1,6 +1,6 @@
 use crate::{
     AllowDTO, CanisterInstallMode, PaginationInput, RequestPolicyRuleDTO, Sha256HashDTO,
-    TimestampRfc3339, UuidDTO, ValidationMethodResourceTargetDTO,
+    SortDirection, TimestampRfc3339, UuidDTO, ValidationMethodResourceTargetDTO,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
 
@@ -205,10 +205,17 @@ pub struct GetExternalCanisterResponse {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum ListExternalCanistersSortInput {
+    Name(SortDirection),
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ListExternalCanistersInput {
     pub canister_ids: Option<Vec<Principal>>,
     pub labels: Option<Vec<String>>,
+    pub states: Option<Vec<ExternalCanisterStateDTO>>,
     pub paginate: Option<PaginationInput>,
+    pub sort_by: Option<ListExternalCanistersSortInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

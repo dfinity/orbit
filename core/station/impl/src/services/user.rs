@@ -578,3 +578,32 @@ mod tests {
         assert!(privileges.contains(&UserPrivilege::AddUser));
     }
 }
+
+#[cfg(any(test, feature = "canbench"))]
+pub mod user_service_test_utils {
+    use super::*;
+    use crate::models::user_group_test_utils::add_group;
+
+    pub fn add_users(users_count: u8, groups_count: u8) -> Vec<User> {
+        let mut groups = Vec::new();
+        let mut users = Vec::new();
+        for _ in 0..groups_count {
+            let group_name = Uuid::new_v4().to_string();
+            groups.push(add_group(&group_name));
+        }
+
+        for _ in 0..users_count {
+            let user_id = Uuid::new_v4();
+            let input = AddUserOperationInput {
+                identities: vec![Principal::from_slice(user_id.as_bytes())],
+                groups: groups.iter().map(|g| g.id).collect(),
+                status: UserStatus::Active,
+                name: user_id.to_string(),
+            };
+
+            users.push(USER_SERVICE.add_user(input).unwrap());
+        }
+
+        users
+    }
+}

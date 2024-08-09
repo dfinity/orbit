@@ -7,10 +7,11 @@ use crate::{
         ExternalCanisterCallerPrivileges, ExternalCanisterPermissions,
         ExternalCanisterRequestPolicies, ExternalCanisterState,
     },
+    repositories::ExternalCanisterWhereClauseSort,
 };
 use candid::Principal;
 use ic_cdk::api::management_canister::main::CanisterSettings;
-use orbit_essentials::utils::timestamp_to_rfc3339;
+use orbit_essentials::{repository::SortDirection, utils::timestamp_to_rfc3339};
 use station_api::ExternalCanisterDTO;
 use uuid::Uuid;
 
@@ -63,6 +64,19 @@ impl From<ExternalCanisterCallerPrivileges> for station_api::ExternalCanisterCal
             canister_id: privileges.canister_id,
             can_change: privileges.can_change,
             can_call: privileges.can_call.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<station_api::ListExternalCanistersSortInput> for ExternalCanisterWhereClauseSort {
+    fn from(input: station_api::ListExternalCanistersSortInput) -> Self {
+        match input {
+            station_api::ListExternalCanistersSortInput::Name(direction) => {
+                ExternalCanisterWhereClauseSort::Name(match direction {
+                    station_api::SortDirection::Asc => SortDirection::Ascending,
+                    station_api::SortDirection::Desc => SortDirection::Descending,
+                })
+            }
         }
     }
 }

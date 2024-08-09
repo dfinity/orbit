@@ -311,8 +311,13 @@ impl ExternalCanisterService {
     ) -> ServiceResult<PaginatedData<ExternalCanister>> {
         let mut found_ids = self.external_canister_repository.find_canister_ids_where(
             ExternalCanisterWhereClause {
-                canister_ids: input.canister_ids.clone(),
-                labels: input.labels.clone(),
+                canister_ids: input.canister_ids.clone().unwrap_or_default(),
+                labels: input.labels.clone().unwrap_or_default(),
+                states: input
+                    .states
+                    .map(|states| states.into_iter().map(Into::into).collect())
+                    .unwrap_or_default(),
+                sort_by: input.sort_by.clone().map(Into::into),
             },
         );
 
@@ -361,10 +366,11 @@ impl ExternalCanisterService {
     pub fn available_external_canisters_filters(
         &self,
         input: GetExternalCanisterFiltersInput,
+        ctx: &CallContext,
     ) -> ExternalCanisterAvailableFilters {
-        let names = input.with_name.as_ref().map(|name| {
+        let mut names = input.with_name.as_ref().map(|name| {
             self.external_canister_repository
-                .find_names_by_prefix(name.prefix.clone().unwrap_or_default().as_str(), None)
+                .find_names_by_prefix(name.prefix.clone().unwrap_or_default().as_str())
                 .iter()
                 .map(
                     |(name, _, canister_id)| GetExternalCanisterFiltersResponseNameEntry {
@@ -375,6 +381,17 @@ impl ExternalCanisterService {
                 .collect::<Vec<GetExternalCanisterFiltersResponseNameEntry>>()
         });
 
+        // filter out names that the caller does not have access to read
+        if let Some(ref mut names) = &mut names {
+            retain_accessible_resources(ctx, names, |entry| {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
+                    ReadExternalCanisterResourceTarget::Canister(entry.canister_id),
+                ))
+            });
+
+            names.truncate(Self::MAX_LIST_LIMIT as usize)
+        }
+
         let labels = match input.with_labels {
             Some(true) => Some(self.external_canister_repository.find_all_labels()),
             _ => None,
@@ -383,6 +400,10 @@ impl ExternalCanisterService {
         ExternalCanisterAvailableFilters { names, labels }
     }
 
+    /// Creates a new external canister.
+    ///
+    /// Optionally, the caller can provide the initial cycles to deposit into the canister, if not provided,
+    /// the default value will be used.
     pub async fn create_canister(
         &self,
         cycles: Option<u128>,
@@ -403,6 +424,9 @@ impl ExternalCanisterService {
         Ok(canister_id)
     }
 
+    /// Calls the management canister to get the status of the canister with the given id.
+    ///
+    /// The station needs to be a controller of the target canister.
     pub async fn canister_status(
         &self,
         input: CanisterIdRecord,
@@ -421,6 +445,7 @@ impl ExternalCanisterService {
         Ok(canister_status_response)
     }
 
+    /// Calls the target canister with the given method, argument, and cycles.
     pub async fn call_external_canister(
         &self,
         canister_id: Principal,
@@ -1383,5 +1408,131 @@ mod tests {
 
         assert_eq!(policies.calls.len(), 1);
         assert_eq!(policies.change.len(), 2);
+    }
+}
+
+#[cfg(feature = "canbench")]
+mod benchs {
+    use super::*;
+    use crate::{models::ExternalCanisterState, services::user_service_test_utils::add_users};
+    use canbench_rs::{bench, BenchResult};
+    use external_canister_test_utils::add_test_external_canisters;
+
+    #[bench(raw)]
+    fn list_external_canisters_with_all_statuses() -> BenchResult {
+        // creates 20 admin users with 5 groups assigned
+        let admins = add_users(20, 5);
+        // and 100 employees with 10 groups assigned
+        let _ = add_users(100, 10);
+
+        let first_admin = admins.first().expect("Unexpected admin not set");
+        let first_admin_identity = first_admin
+            .identities
+            .first()
+            .expect("Unexpected admin identity not available");
+
+        let first_admin = first_admin.clone();
+        let caller_identity = first_admin_identity.clone();
+
+        // these should only be accessible to admins
+        add_test_external_canisters(
+            500, // adds 500 external canisters managed by the station
+            10,  // with 10 individual method calls each
+            ExternalCanisterState::Active,
+            Some(first_admin.groups.clone()),
+        );
+
+        // these are accessible by any employee
+        add_test_external_canisters(
+            1500, // adds 1500 external canisters managed by the station
+            5,    // with 5 individual method calls each
+            ExternalCanisterState::Active,
+            None,
+        );
+
+        // also adds 1000 archived external canisters
+        add_test_external_canisters(
+            1000, // adds 1000 external canisters managed by the station
+            5,    // with 5 individual method calls each
+            ExternalCanisterState::Archived,
+            None,
+        );
+
+        canbench_rs::bench_fn(|| {
+            let result = EXTERNAL_CANISTER_SERVICE
+                .list_external_canisters(
+                    ListExternalCanistersInput {
+                        canister_ids: None,
+                        labels: None,
+                        states: Some(vec![
+                            station_api::ExternalCanisterStateDTO::Active,
+                            station_api::ExternalCanisterStateDTO::Archived,
+                        ]),
+                        paginate: Some(station_api::PaginationInput {
+                            limit: Some(25),
+                            offset: None,
+                        }),
+                        sort_by: Some(station_api::ListExternalCanistersSortInput::Name(
+                            station_api::SortDirection::Asc,
+                        )),
+                    },
+                    &CallContext::new(caller_identity),
+                )
+                .expect("Unexpected failed search of external canisters");
+
+            if result.total != 3000 {
+                panic!(
+                    "Unexpected total count of external canisters, expected 3000, got {}",
+                    result.total
+                );
+            }
+        })
+    }
+}
+
+#[cfg(feature = "canbench")]
+mod external_canister_test_utils {
+    use super::*;
+    use crate::models::{
+        external_canister_test_utils::mock_external_canister, permission::Allow,
+        ExternalCanisterState,
+    };
+
+    pub fn add_test_external_canisters(
+        canisters_count: usize,
+        calls_count: usize,
+        state: ExternalCanisterState,
+        allow_user_groups: Option<Vec<UUID>>,
+    ) {
+        let allow = match allow_user_groups {
+            Some(groups) => Allow::user_groups(groups),
+            None => Allow::authenticated(),
+        };
+
+        for _ in 0..canisters_count {
+            let mut external_canister = mock_external_canister();
+            external_canister.state = state.clone();
+            let calls = (0..calls_count)
+                .map(|i| ExternalCanisterCallPermission {
+                    allow: Allow::authenticated(),
+                    execution_method: format!("exec_method_{}", i),
+                    validation_method: ValidationMethodResourceTarget::No,
+                })
+                .collect::<Vec<ExternalCanisterCallPermission>>();
+
+            EXTERNAL_CANISTER_REPOSITORY
+                .insert(external_canister.to_key(), external_canister.clone());
+
+            let mut input = ConfigureExternalCanisterSettingsInput::default();
+            input.permissions = Some(ExternalCanisterPermissionsInput {
+                calls,
+                read: allow.clone(),
+                change: allow.clone(),
+            });
+
+            EXTERNAL_CANISTER_SERVICE
+                .edit_external_canister(&external_canister.id, input)
+                .expect("Unexpected error while configuring external canister");
+        }
     }
 }

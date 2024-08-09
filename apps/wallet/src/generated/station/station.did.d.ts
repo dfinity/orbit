@@ -572,6 +572,8 @@ export type ListAddressBookEntriesResult = {
   } |
   { 'Err' : Error };
 export interface ListExternalCanistersInput {
+  'sort_by' : [] | [ListExternalCanistersSortInput],
+  'states' : [] | [Array<ExternalCanisterState>],
   'canister_ids' : [] | [Array<Principal>],
   'labels' : [] | [Array<string>],
   'paginate' : [] | [PaginationInput],
@@ -585,6 +587,7 @@ export type ListExternalCanistersResult = {
     }
   } |
   { 'Err' : Error };
+export type ListExternalCanistersSortInput = { 'Name' : SortByDirection };
 export interface ListNotificationsInput {
   'status' : [] | [NotificationStatus],
   'to_dt' : [] | [TimestampRFC3339],

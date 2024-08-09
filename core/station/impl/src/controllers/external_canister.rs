@@ -142,9 +142,10 @@ impl ExternalCanisterController {
         &self,
         input: GetExternalCanisterFiltersInput,
     ) -> ApiResult<GetExternalCanisterFiltersResponse> {
+        let ctx = call_context();
         let filters = self
             .canister_service
-            .available_external_canisters_filters(input);
+            .available_external_canisters_filters(input, &ctx);
 
         Ok(GetExternalCanisterFiltersResponse {
             names: filters.names,

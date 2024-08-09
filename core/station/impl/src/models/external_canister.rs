@@ -192,7 +192,7 @@ impl ModelValidator<ExternalCanisterError> for ExternalCanister {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench"))]
 pub mod external_canister_test_utils {
     use super::*;
     use crate::core::ic_cdk::next_time;

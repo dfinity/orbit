@@ -5,15 +5,15 @@ use crate::{
         indexes::external_canister_index::{
             ExternalCanisterIndexCriteria, ExternalCanisterIndexKind,
         },
-        ExternalCanister, ExternalCanisterId, ExternalCanisterKey,
+        ExternalCanister, ExternalCanisterId, ExternalCanisterKey, ExternalCanisterState,
     },
 };
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::IndexRepository;
+use orbit_essentials::repository::{IndexRepository, SortDirection};
 use orbit_essentials::repository::{RefreshIndexMode, Repository};
-use std::{cell::RefCell, sync::Arc};
+use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
 thread_local! {
   /// The memory reference to the external canister repository.
@@ -77,14 +77,8 @@ impl ExternalCanisterRepository {
     /// Returns an external canister by its name if it exists.
     pub fn find_by_name(&self, name: &str) -> Option<ExternalCanisterId> {
         let name = format_unique_string(name);
-        let found = self
-            .indexes
-            .find_by_criteria(ExternalCanisterIndexCriteria {
-                from: ExternalCanisterIndexKind::Name(name.to_string()),
-                to: ExternalCanisterIndexKind::Name(name.to_string()),
-            });
 
-        found.into_iter().next()
+        self.indexes.find_by_name(&name)
     }
 
     /// Returns an external canister by its canister id if it exists.
@@ -128,24 +122,80 @@ impl ExternalCanisterRepository {
     pub fn find_names_by_prefix(
         &self,
         prefix: &str,
-        limit: Option<usize>,
     ) -> Vec<(String, ExternalCanisterId, Principal)> {
-        self.indexes.find_names_by_prefix(prefix, limit)
+        self.indexes.find_names_by_prefix(prefix)
     }
 
     /// Finds external canisters based on the provided where clause.
     pub fn find_canister_ids_where(
         &self,
-        _where_clause: ExternalCanisterWhereClause,
+        where_clause: ExternalCanisterWhereClause,
     ) -> Vec<Principal> {
-        unimplemented!()
+        let filter_by_labels: HashSet<String> = where_clause.labels.into_iter().collect();
+        let filter_by_canister_ids: HashSet<Principal> =
+            where_clause.canister_ids.into_iter().collect();
+        let filter_by_states: HashSet<ExternalCanisterState> =
+            where_clause.states.into_iter().collect();
+
+        let mut found_ids = self
+            .list()
+            .into_iter()
+            .filter_map(|entry| {
+                if !filter_by_labels.is_empty()
+                    && !entry
+                        .labels
+                        .iter()
+                        .any(|label| filter_by_labels.contains(label))
+                {
+                    return None;
+                }
+
+                if !filter_by_canister_ids.is_empty()
+                    && !filter_by_canister_ids.contains(&entry.canister_id)
+                {
+                    return None;
+                }
+
+                if !filter_by_states.is_empty() && !filter_by_states.contains(&entry.state) {
+                    return None;
+                }
+
+                Some((entry.name, entry.canister_id))
+            })
+            .collect::<Vec<(String, Principal)>>();
+
+        let sort_by = match where_clause.sort_by {
+            Some(sort_by) => sort_by,
+            None => ExternalCanisterWhereClauseSort::Name(SortDirection::Ascending),
+        };
+
+        match sort_by {
+            ExternalCanisterWhereClauseSort::Name(direction) => {
+                found_ids.sort_by(|(name_a, _), (name_b, _)| match direction {
+                    SortDirection::Ascending => name_a.cmp(name_b),
+                    SortDirection::Descending => name_b.cmp(name_a),
+                });
+            }
+        }
+
+        found_ids
+            .into_iter()
+            .map(|(_, canister_id)| canister_id)
+            .collect()
     }
 }
 
 #[derive(Debug, Clone)]
+pub enum ExternalCanisterWhereClauseSort {
+    Name(SortDirection),
+}
+
+#[derive(Debug, Clone)]
 pub struct ExternalCanisterWhereClause {
-    pub canister_ids: Option<Vec<Principal>>,
-    pub labels: Option<Vec<String>>,
+    pub canister_ids: Vec<Principal>,
+    pub labels: Vec<String>,
+    pub states: Vec<ExternalCanisterState>,
+    pub sort_by: Option<ExternalCanisterWhereClauseSort>,
 }
 
 #[cfg(test)]
