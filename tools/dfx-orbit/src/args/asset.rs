@@ -3,9 +3,9 @@ use clap::{Parser, Subcommand};
 
 /// Station management commands.
 #[derive(Debug, Clone, Parser)]
-#[command(version, about, long_about = None)]
+#[clap(version, about, long_about = None)]
 pub struct AssetArgs {
-    #[command(subcommand)]
+    #[clap(subcommand)]
     pub(crate) action: AssetArgsAction,
 }
 

@@ -13,12 +13,12 @@ use orbit_station_api::RequestOperationInput;
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterArgs {
     /// The operation to request
-    #[command(subcommand)]
+    #[clap(subcommand)]
     action: RequestCanisterActionArgs,
 }
 
 #[derive(Debug, Clone, Subcommand)]
-#[command(version, about, long_about = None)]
+#[clap(version, about, long_about = None)]
 pub enum RequestCanisterActionArgs {
     /// Request to upgrade the canister wasm
     Install(RequestCanisterInstallArgs),
