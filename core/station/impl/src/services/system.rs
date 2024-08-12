@@ -13,7 +13,7 @@ use crate::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
         ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
     },
-    repositories::{RequestRepository, REQUEST_REPOSITORY},
+    repositories::{permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY},
 };
 use candid::Principal;
 use lazy_static::lazy_static;
@@ -227,6 +227,15 @@ impl SystemService {
         };
     }
 
+    /// Initializes the cache of the canister data.
+    ///
+    /// Must only be called within a canister init or post_upgrade call.
+    fn init_cache(&self) {
+        // Initializes the cache of the permission repository,
+        // using at most 20B instructions.
+        PERMISSION_REPOSITORY.build_cache();
+    }
+
     /// Initializes the canister with the given owners and settings.
     ///
     /// Must only be called within a canister init call.
@@ -252,6 +261,9 @@ impl SystemService {
         // sets the name of the canister
         system_info.set_name(input.name.clone());
 
+        // initializes the cache of the canister data, must happen during the same call as the init
+        self.init_cache();
+
         // Handles the post init process in a one-off timer to allow for inter canister calls,
         // this adds the default canister configurations, deploys the station upgrader and makes sure
         // there are no unintended controllers of the canister.
@@ -264,6 +276,9 @@ impl SystemService {
     ///
     /// Must only be called within a canister post_upgrade call.
     pub async fn upgrade_canister(&self, input: Option<SystemUpgrade>) -> ServiceResult<()> {
+        // initializes the cache of the canister data, must happen during the same call as the upgrade
+        self.init_cache();
+
         // recompute all metrics to make sure they are up to date, only gauges are recomputed
         // since they are the only ones that can change over time.
         recompute_metrics();

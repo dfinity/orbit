@@ -1,25 +1,25 @@
 benches:
   find_external_canister_policies_are_below_query_limit:
     total:
-      instructions: 27299957
+      instructions: 27370495
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
   list_external_canisters_with_all_statuses:
     total:
-      instructions: 3462083192
-      heap_increase: 19
+      instructions: 225638784
+      heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
   repository_batch_insert_100_requests:
     total:
-      instructions: 490157820
+      instructions: 490537864
       heap_increase: 0
-      stable_memory_increase: 240
+      stable_memory_increase: 192
     scopes: {}
   repository_filter_all_request_ids_by_default_filters:
     total:
-      instructions: 466321334
+      instructions: 466672477
       heap_increase: 1
       stable_memory_increase: 0
     scopes: {}
@@ -31,13 +31,13 @@ benches:
     scopes: {}
   service_filter_all_requests_with_creation_time_filters:
     total:
-      instructions: 1151272168
+      instructions: 1127914406
       heap_increase: 0
       stable_memory_increase: 16
     scopes: {}
   service_filter_all_requests_with_default_filters:
     total:
-      instructions: 6015172659
+      instructions: 5837697222
       heap_increase: 3
       stable_memory_increase: 16
     scopes: {}
