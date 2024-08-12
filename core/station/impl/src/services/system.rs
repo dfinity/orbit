@@ -422,6 +422,7 @@ mod install_canister_handlers {
     use crate::services::REQUEST_POLICY_SERVICE;
     use candid::{Encode, Principal};
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
+    use canfund::manager::RegisterOpts;
     use canfund::operations::fetch::FetchCyclesBalanceFromCanisterStatus;
     use canfund::FundManager;
     use ic_cdk::api::management_canister::main::{self as mgmt};
@@ -619,10 +620,7 @@ mod install_canister_handlers {
             fund_manager.with_options(fund_manager_options);
 
             // monitor the upgrader canister
-            fund_manager.register(
-                upgrader_id,
-                Arc::new(FetchCyclesBalanceFromCanisterStatus {}),
-            );
+            fund_manager.register(upgrader_id, RegisterOpts::default());
 
             fund_manager.start();
         });

@@ -4,6 +4,7 @@ use crate::errors::CanisterError;
 use crate::repositories::{UserRepository, USER_REPOSITORY};
 use crate::SYSTEM_VERSION;
 use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
+use canfund::manager::RegisterOpts;
 use canfund::operations::fetch::{FetchCyclesBalance, FetchCyclesBalanceFromPrometheusMetrics};
 use canfund::FundManager;
 use control_panel_api::UploadCanisterModulesInput;
@@ -110,7 +111,10 @@ impl CanisterService {
             );
 
             for canister_id in deployed_stations {
-                fund_manager.register(*canister_id, self.create_station_cycles_fetcher());
+                fund_manager.register(
+                    *canister_id,
+                    RegisterOpts::new().with_cycles_fetcher(self.create_station_cycles_fetcher()),
+                );
             }
 
             fund_manager.start();

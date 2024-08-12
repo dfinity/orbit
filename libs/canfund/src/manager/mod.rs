@@ -6,7 +6,9 @@ use self::{
     record::{CanisterRecord, CyclesBalance},
 };
 use crate::{
-    operations::fetch::{FetchCyclesBalance, FetchOwnCyclesBalance},
+    operations::fetch::{
+        FetchCyclesBalance, FetchCyclesBalanceFromCanisterStatus, FetchOwnCyclesBalance,
+    },
     utils::calc_estimated_cycles_per_sec,
 };
 use ic_cdk::{
@@ -38,6 +40,33 @@ pub struct FundManagerCore {
     options: FundManagerOptions,
 }
 
+/// RegisterOpts holds the options for registering a canister to be monitored by the fund manager.
+/// By default it uses the `FetchCyclesBalanceFromCanisterStatus` to fetch the cycles balance.
+pub struct RegisterOpts {
+    pub cycles_fetcher: Arc<dyn FetchCyclesBalance>,
+}
+
+impl RegisterOpts {
+    /// Creates a new register options with the default cycles fetcher.
+    pub fn new() -> Self {
+        Self {
+            cycles_fetcher: Arc::new(FetchCyclesBalanceFromCanisterStatus {}),
+        }
+    }
+
+    /// Sets the cycles fetcher for the register options.
+    pub fn with_cycles_fetcher(mut self, cycles_fetcher: Arc<dyn FetchCyclesBalance>) -> Self {
+        self.cycles_fetcher = cycles_fetcher;
+        self
+    }
+}
+
+impl Default for RegisterOpts {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// The fund manager that monitors and funds canisters with cycles based on the configuration.
 pub struct FundManager {
     inner: Rc<RefCell<FundManagerCore>>,
@@ -58,7 +87,10 @@ impl FundManager {
             tracker: None,
         };
 
-        manager.register(id(), Arc::new(FetchOwnCyclesBalance {}));
+        manager.register(
+            id(),
+            RegisterOpts::new().with_cycles_fetcher(Arc::new(FetchOwnCyclesBalance {})),
+        );
 
         manager
     }
@@ -71,14 +103,8 @@ impl FundManager {
     }
 
     /// Registers a canister to be monitored by the fund manager.
-    pub fn register(
-        &mut self,
-        canister_id: CanisterId,
-        cycles_fetcher: Arc<dyn FetchCyclesBalance>,
-    ) -> &mut Self {
-        self.inner
-            .borrow_mut()
-            .register(canister_id, cycles_fetcher);
+    pub fn register(&mut self, canister_id: CanisterId, opts: RegisterOpts) -> &mut Self {
+        self.inner.borrow_mut().register(canister_id, opts);
 
         self
     }
@@ -358,14 +384,10 @@ impl FundManagerCore {
     /// Register a canister to be monitored by the fund manager.
     ///
     /// If the canister is already registered, it will be ignored.
-    pub fn register(
-        &mut self,
-        canister_id: CanisterId,
-        cycles_fetcher: Arc<dyn FetchCyclesBalance>,
-    ) {
+    pub fn register(&mut self, canister_id: CanisterId, opts: RegisterOpts) {
         match self.canisters.entry(canister_id) {
             Entry::Vacant(entry) => {
-                entry.insert(CanisterRecord::new(cycles_fetcher));
+                entry.insert(CanisterRecord::new(opts.cycles_fetcher));
             }
             Entry::Occupied(_) => {
                 // The canister is already registered so ignore.
