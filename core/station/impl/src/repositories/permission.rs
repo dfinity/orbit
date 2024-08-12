@@ -131,8 +131,6 @@ impl PermissionRepository {
                 Self::MAX_CACHE_SIZE,
                 PERMISSION_REPOSITORY.len(),
             ));
-
-            return;
         }
 
         CACHE.with(|cache| {
