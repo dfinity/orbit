@@ -61,7 +61,7 @@ pub struct FetchOwnCyclesBalance;
 #[async_trait::async_trait]
 impl FetchCyclesBalance for FetchOwnCyclesBalance {
     async fn fetch_cycles_balance(&self, _canister_id: CanisterId) -> Result<u128, Error> {
-        Ok(ic_cdk::api::canister_balance() as u128)
+        Ok(ic_cdk::api::canister_balance128())
     }
 }
 

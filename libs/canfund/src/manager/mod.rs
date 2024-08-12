@@ -5,7 +5,10 @@ use self::{
     options::{FundManagerOptions, FundStrategy},
     record::{CanisterRecord, CyclesBalance},
 };
-use crate::{operations::fetch::FetchCyclesBalance, utils::calc_estimated_cycles_per_sec};
+use crate::{
+    operations::fetch::{FetchCyclesBalance, FetchOwnCyclesBalance},
+    utils::calc_estimated_cycles_per_sec,
+};
 use ic_cdk::{
     api::{
         management_canister::main::{deposit_cycles, CanisterId, CanisterIdRecord},
@@ -50,10 +53,14 @@ impl Default for FundManager {
 impl FundManager {
     /// Creates a new fund manager with the specified options.
     pub fn new() -> Self {
-        FundManager {
+        let mut manager = FundManager {
             inner: FundManagerCore::new(),
             tracker: None,
-        }
+        };
+
+        manager.register(id(), Arc::new(FetchOwnCyclesBalance {}));
+
+        manager
     }
 
     /// Configures the fund manager with the specified options.
@@ -186,15 +193,54 @@ impl FundManager {
 
             // Funds the canisters with the needed cycles.
             for (canister_id, needed_cycles) in canisters_to_fund {
-                if canister_id == id() {
-                    ic_cdk::println!("Topping up self with {} cycles", needed_cycles);
-                    let maybe_obtain_cycles = manager.borrow().options().obtain_cycles().clone();
+                // Before transferring cycles from the funding canister, check if the funding canister actually has enough cycles.
+                let funding_canister_needs_cycles = canister_id != id() && {
+                    // Get the current balance.
+                    let funding_canister_balance = ic_cdk::api::canister_balance128();
 
-                    if let Some(obtain_cycles) = maybe_obtain_cycles {
+                    // Get the record of the funding canister, if it exists, to access the previsous cycles balance to calculate estimated runtime left.
+                    let maybe_funding_canister_record =
+                        manager.borrow().canisters.get(&id()).cloned();
+
+                    // see if transferring cycles to the canister will make the funding canister run low of cycles
+                    let funding_canister_needed_cycles = calc_needed_cycles(
+                        &CyclesBalance::new(
+                            funding_canister_balance.saturating_sub(needed_cycles),
+                            time(),
+                        ),
+                        &maybe_funding_canister_record
+                            .as_ref()
+                            .and_then(|record| record.get_previous_cycles().clone()),
+                        manager.borrow().options().strategy(),
+                    );
+
+                    funding_canister_needed_cycles > 0
+                };
+
+                // If either the funding canister is low on cycles,
+                // or it does not have enough cycles to fund another canister,
+                // then need to obtain cycles for the funding canister.
+                if canister_id == id() || funding_canister_needs_cycles {
+                    let maybe_obtain_cycles =
+                        manager.borrow().options().obtain_cycles_options().clone();
+
+                    if let Some(obtain_cycles_options) = maybe_obtain_cycles {
+                        if canister_id == id() && !obtain_cycles_options.top_up_self {
+                            // Obtaining cycles solely for topping up the funding canister is disabled.
+                            continue;
+                        }
+
+                        ic_cdk::println!(
+                            "Topping up {} with {} cycles",
+                            canister_id,
+                            needed_cycles
+                        );
+
                         let mut tries_left = 4;
                         while tries_left > 0 {
                             tries_left -= 1;
-                            match obtain_cycles
+                            match obtain_cycles_options
+                                .obtain_cycles
                                 .obtain_cycles(needed_cycles, canister_id)
                                 .await
                             {
@@ -223,7 +269,11 @@ impl FundManager {
                             }
                         }
                     } else {
-                        print("WARNING: No top-up method configured for topping up the funding canister");
+                        if funding_canister_needs_cycles {
+                            print(format!("WARNING: Could not top up canister {}. Funding canister is low on cycles.", canister_id.to_text()));
+                        }
+
+                        print("WARNING: No top-up method configured for topping up the funding canister. Consider configuring `obtain_cycles_options`.");
                     }
                 } else if let Err((err_code, err_msg)) =
                     deposit_cycles(CanisterIdRecord { canister_id }, needed_cycles).await

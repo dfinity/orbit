@@ -166,6 +166,14 @@ impl Default for FundStrategy {
     }
 }
 
+#[derive(Clone)]
+pub struct ObtainCyclesOptions {
+    /// How to obtain cycles when the funding canister balance gets low.
+    pub obtain_cycles: Arc<dyn ObtainCycles>,
+    /// If canfund should use obtain_cycles to top up the canister balance canfund is running on.
+    pub top_up_self: bool,
+}
+
 #[derive(Debug, Clone)]
 pub struct CycleMintingOptions {
     pub ledger_canister_id: Principal,
@@ -186,8 +194,8 @@ pub struct FundManagerOptions {
     ///
     /// The default is to fund the canister when the balance is below the threshold.
     strategy: FundStrategy,
-    /// Obtain cycles if the funding canister balance is too low.
-    obtain_cycles: Option<Arc<dyn ObtainCycles>>,
+    /// Obtain cycles options to handle the funding canister balance getting low.
+    obtain_cycles_options: Option<ObtainCyclesOptions>,
 }
 
 impl Default for FundManagerOptions {
@@ -198,7 +206,7 @@ impl Default for FundManagerOptions {
             chunk_size: 20,
             strategy: FundStrategy::default(),
             delayed_start: false,
-            obtain_cycles: None,
+            obtain_cycles_options: None,
         }
     }
 }
@@ -209,8 +217,11 @@ impl FundManagerOptions {
     }
 
     /// Enable minting cycles from ICP if the canister balance is too low.
-    pub fn with_obtain_cycles(mut self, obtain_cycles: Arc<dyn ObtainCycles>) -> Self {
-        self.obtain_cycles = Some(obtain_cycles);
+    pub fn with_obtain_cycles_options(
+        mut self,
+        obtain_cycles_options: ObtainCyclesOptions,
+    ) -> Self {
+        self.obtain_cycles_options = Some(obtain_cycles_options);
         self
     }
 
@@ -249,8 +260,8 @@ impl FundManagerOptions {
     }
 
     /// Get the obtain cycles implementation if enabled.
-    pub fn obtain_cycles(&self) -> Option<Arc<dyn ObtainCycles>> {
-        self.obtain_cycles.clone()
+    pub fn obtain_cycles_options(&self) -> Option<ObtainCyclesOptions> {
+        self.obtain_cycles_options.clone()
     }
 
     /// Get the chunk size for when doing a batched fetch of canister balances.

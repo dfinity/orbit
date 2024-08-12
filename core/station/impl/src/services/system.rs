@@ -19,7 +19,8 @@ use crate::{
 use candid::Principal;
 use canfund::{
     api::{cmc::IcCyclesMintingCanister, ledger::IcLedgerCanister},
-    operations::obtain::{MintCycles, ObtainCycles},
+    manager::options::ObtainCyclesOptions,
+    operations::obtain::MintCycles,
 };
 use ic_ledger_types::{Subaccount, MAINNET_CYCLES_MINTING_CANISTER_ID, MAINNET_LEDGER_CANISTER_ID};
 use lazy_static::lazy_static;
@@ -107,17 +108,20 @@ impl SystemService {
         });
     }
 
-    pub fn get_obtain_cycle_config(&self, strategy: &CycleObtainStrategy) -> Arc<dyn ObtainCycles> {
+    pub fn get_obtain_cycle_config(&self, strategy: &CycleObtainStrategy) -> ObtainCyclesOptions {
         match strategy {
-            CycleObtainStrategy::MintFromNativeToken { account_id } => Arc::new(MintCycles {
-                ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
-                cmc: Arc::new(IcCyclesMintingCanister::new(
-                    MAINNET_CYCLES_MINTING_CANISTER_ID,
-                )),
-                from_subaccount: Subaccount(InternetComputer::subaccount_from_station_account_id(
-                    account_id,
-                )),
-            }),
+            CycleObtainStrategy::MintFromNativeToken { account_id } => ObtainCyclesOptions {
+                obtain_cycles: Arc::new(MintCycles {
+                    ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
+                    cmc: Arc::new(IcCyclesMintingCanister::new(
+                        MAINNET_CYCLES_MINTING_CANISTER_ID,
+                    )),
+                    from_subaccount: Subaccount(
+                        InternetComputer::subaccount_from_station_account_id(account_id),
+                    ),
+                }),
+                top_up_self: true,
+            },
         }
     }
     #[cfg(target_arch = "wasm32")]
@@ -125,7 +129,8 @@ impl SystemService {
         install_canister_handlers::FUND_MANAGER.with(|fund_manager| {
             let mut fund_manager = fund_manager.borrow_mut();
             let options = fund_manager.get_options();
-            let options = options.with_obtain_cycles(self.get_obtain_cycle_config(strategy));
+            let options =
+                options.with_obtain_cycles_options(self.get_obtain_cycle_config(strategy));
             fund_manager.with_options(options);
         });
     }
@@ -417,7 +422,7 @@ mod install_canister_handlers {
     use crate::services::REQUEST_POLICY_SERVICE;
     use candid::{Encode, Principal};
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
-    use canfund::operations::fetch::{FetchCyclesBalanceFromCanisterStatus, FetchOwnCyclesBalance};
+    use canfund::operations::fetch::FetchCyclesBalanceFromCanisterStatus;
     use canfund::FundManager;
     use ic_cdk::api::management_canister::main::{self as mgmt};
     use ic_cdk::id;
@@ -608,13 +613,11 @@ mod install_canister_handlers {
 
             if let Some(strategy) = cycle_obtain_strategy {
                 fund_manager_options = fund_manager_options
-                    .with_obtain_cycles(SYSTEM_SERVICE.get_obtain_cycle_config(&strategy));
+                    .with_obtain_cycles_options(SYSTEM_SERVICE.get_obtain_cycle_config(&strategy));
             }
 
             fund_manager.with_options(fund_manager_options);
 
-            // monitor itself
-            fund_manager.register(id(), Arc::new(FetchOwnCyclesBalance {}));
             // monitor the upgrader canister
             fund_manager.register(
                 upgrader_id,
