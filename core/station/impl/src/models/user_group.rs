@@ -160,7 +160,7 @@ mod tests {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench"))]
 pub mod user_group_test_utils {
     use super::*;
     use orbit_essentials::repository::Repository;

@@ -434,7 +434,7 @@ pub struct DefiniteCanisterSettingsInput {
 }
 
 #[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct ConfigureExternalCanisterSettingsInput {
     pub name: Option<String>,
     pub description: Option<String>,
