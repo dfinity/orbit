@@ -5,8 +5,6 @@ use crate::{
 use candid::{CandidType, Deserialize, Nat, Principal};
 
 pub type ExternalCanisterPermissionsInput = ExternalCanisterPermissionsDTO;
-pub type ExternalCanisterCallRequestPolicyRuleInput = ExternalCanisterCallRequestPolicyRule;
-pub type ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPoliciesDTO;
 
 // Taken from https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-create_canister
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -133,7 +131,15 @@ pub struct ExternalCanisterCallPermissionDTO {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct ExternalCanisterCallRequestPolicyRule {
+pub struct ExternalCanisterCallRequestPolicyRuleDTO {
+    pub policy_id: UuidDTO,
+    pub rule: RequestPolicyRuleDTO,
+    pub validation_method: ValidationMethodResourceTargetDTO,
+    pub execution_method: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterCallRequestPolicyRuleInput {
     pub policy_id: Option<UuidDTO>,
     pub rule: RequestPolicyRuleDTO,
     pub validation_method: ValidationMethodResourceTargetDTO,
@@ -141,7 +147,13 @@ pub struct ExternalCanisterCallRequestPolicyRule {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct ExternalCanisterChangeRequestPolicyRule {
+pub struct ExternalCanisterChangeRequestPolicyRuleDTO {
+    pub policy_id: UuidDTO,
+    pub rule: RequestPolicyRuleDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterChangeRequestPolicyRuleInput {
     pub policy_id: Option<UuidDTO>,
     pub rule: RequestPolicyRuleDTO,
 }
@@ -155,8 +167,14 @@ pub struct ExternalCanisterPermissionsDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalCanisterRequestPoliciesDTO {
-    pub change: Vec<ExternalCanisterChangeRequestPolicyRule>,
-    pub calls: Vec<ExternalCanisterCallRequestPolicyRule>,
+    pub change: Vec<ExternalCanisterChangeRequestPolicyRuleDTO>,
+    pub calls: Vec<ExternalCanisterCallRequestPolicyRuleDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterRequestPoliciesInput {
+    pub change: Vec<ExternalCanisterChangeRequestPolicyRuleInput>,
+    pub calls: Vec<ExternalCanisterCallRequestPolicyRuleInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

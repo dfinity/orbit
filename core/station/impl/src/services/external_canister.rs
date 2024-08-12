@@ -18,10 +18,10 @@ use crate::models::{
     CreateExternalCanisterOperationInput, CreateExternalCanisterOperationKind,
     DefiniteCanisterSettingsInput, EditPermissionOperationInput, EditRequestPolicyOperationInput,
     ExternalCanister, ExternalCanisterAvailableFilters, ExternalCanisterCallPermission,
-    ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterCallerMethodsPrivileges,
-    ExternalCanisterCallerPrivileges, ExternalCanisterChangeRequestPolicyRuleInput,
-    ExternalCanisterId, ExternalCanisterPermissions, ExternalCanisterPermissionsInput,
-    ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesInput, RequestPolicy,
+    ExternalCanisterCallRequestPolicyRule, ExternalCanisterCallerMethodsPrivileges,
+    ExternalCanisterCallerPrivileges, ExternalCanisterChangeRequestPolicyRule, ExternalCanisterId,
+    ExternalCanisterPermissions, ExternalCanisterPermissionsInput, ExternalCanisterRequestPolicies,
+    ExternalCanisterRequestPoliciesInput, RequestPolicy,
 };
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
 use crate::repositories::{
@@ -149,8 +149,8 @@ impl ExternalCanisterService {
                             }),
                         validation_method,
                     } if *target_canister_id == *canister_id => {
-                        Some(ExternalCanisterCallRequestPolicyRuleInput {
-                            policy_id: Some(policy.id),
+                        Some(ExternalCanisterCallRequestPolicyRule {
+                            policy_id: policy.id,
                             execution_method: method_name.clone(),
                             validation_method: validation_method.clone(),
                             rule: policy.rule.clone(),
@@ -160,7 +160,7 @@ impl ExternalCanisterService {
                 },
                 _ => None,
             })
-            .collect::<Vec<ExternalCanisterCallRequestPolicyRuleInput>>();
+            .collect::<Vec<ExternalCanisterCallRequestPolicyRule>>();
 
         let change = policies
             .iter()
@@ -169,8 +169,8 @@ impl ExternalCanisterService {
                     ChangeExternalCanisterResourceTarget::Canister(target_canister_id)
                         if *target_canister_id == *canister_id =>
                     {
-                        Some(ExternalCanisterChangeRequestPolicyRuleInput {
-                            policy_id: Some(policy.id),
+                        Some(ExternalCanisterChangeRequestPolicyRule {
+                            policy_id: policy.id,
                             rule: policy.rule.clone(),
                         })
                     }
@@ -178,7 +178,7 @@ impl ExternalCanisterService {
                 },
                 _ => None,
             })
-            .collect::<Vec<ExternalCanisterChangeRequestPolicyRuleInput>>();
+            .collect::<Vec<ExternalCanisterChangeRequestPolicyRule>>();
 
         ExternalCanisterRequestPolicies { calls, change }
     }
