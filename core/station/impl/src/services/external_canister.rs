@@ -1,7 +1,10 @@
 use super::permission::{PermissionService, PERMISSION_SERVICE};
 use super::request_policy::{RequestPolicyService, REQUEST_POLICY_SERVICE};
+use crate::core::authorization::Authorization;
 use crate::core::ic_cdk::api::print;
+use crate::core::utils::{retain_accessible_resources, PaginatedData};
 use crate::core::validation::EnsureExternalCanister;
+use crate::core::CallContext;
 use crate::errors::ExternalCanisterError;
 use crate::mappers::ExternalCanisterMapper;
 use crate::models::request_specifier::RequestSpecifier;
@@ -14,13 +17,16 @@ use crate::models::{
     AddRequestPolicyOperationInput, CanisterMethod, ConfigureExternalCanisterSettingsInput,
     CreateExternalCanisterOperationInput, CreateExternalCanisterOperationKind,
     DefiniteCanisterSettingsInput, EditPermissionOperationInput, EditRequestPolicyOperationInput,
-    ExternalCanister, ExternalCanisterId, ExternalCanisterPermissionsInput,
-    ExternalCanisterRequestPoliciesInput,
+    ExternalCanister, ExternalCanisterAvailableFilters, ExternalCanisterCallPermission,
+    ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterCallerMethodsPrivileges,
+    ExternalCanisterCallerPrivileges, ExternalCanisterChangeRequestPolicyRuleInput,
+    ExternalCanisterId, ExternalCanisterPermissions, ExternalCanisterPermissionsInput,
+    ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesInput, RequestPolicy,
 };
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
 use crate::repositories::{
-    ExternalCanisterRepository, RequestPolicyRepository, EXTERNAL_CANISTER_REPOSITORY,
-    REQUEST_POLICY_REPOSITORY,
+    ExternalCanisterRepository, ExternalCanisterWhereClause, RequestPolicyRepository,
+    EXTERNAL_CANISTER_REPOSITORY, REQUEST_POLICY_REPOSITORY,
 };
 use candid::{Encode, Principal};
 use ic_cdk::api::call::call_raw;
@@ -31,8 +37,13 @@ use ic_cdk::api::management_canister::main::{
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::model::ModelValidator;
+use orbit_essentials::pagination::{paginated_items, PaginatedItemsArgs};
 use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
+use station_api::{
+    GetExternalCanisterFiltersInput, GetExternalCanisterFiltersResponseNameEntry,
+    ListExternalCanistersInput,
+};
 use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -60,6 +71,9 @@ pub struct ExternalCanisterService {
 }
 
 impl ExternalCanisterService {
+    const DEFAULT_LIST_LIMIT: u16 = 25;
+    const MAX_LIST_LIMIT: u16 = 250;
+
     pub fn new(
         external_canister_repository: Arc<ExternalCanisterRepository>,
         permission_service: Arc<PermissionService>,
@@ -106,6 +120,290 @@ impl ExternalCanisterService {
         self.get_external_canister(&recource_id)
     }
 
+    /// Returns all request policies of the external canister by its canister id.
+    ///
+    /// The policies are grouped by the type of request they are for:
+    ///
+    /// - `calls`: Policies for calling the external canister.
+    /// - `change`: Policies for changing the external canister.
+    pub fn get_external_canister_request_policies(
+        &self,
+        canister_id: &Principal,
+    ) -> ExternalCanisterRequestPolicies {
+        let policies = self
+            .request_policy_repository
+            .find_external_canister_policies(canister_id)
+            .iter()
+            .filter_map(|policy_id| self.request_policy_repository.get(policy_id))
+            .collect::<Vec<RequestPolicy>>();
+
+        let calls = policies
+            .iter()
+            .filter_map(|policy| match &policy.specifier {
+                RequestSpecifier::CallExternalCanister(target) => match target {
+                    CallExternalCanisterResourceTarget {
+                        execution_method:
+                            ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
+                                canister_id: target_canister_id,
+                                method_name,
+                            }),
+                        validation_method,
+                    } if *target_canister_id == *canister_id => {
+                        Some(ExternalCanisterCallRequestPolicyRuleInput {
+                            policy_id: Some(policy.id),
+                            execution_method: method_name.clone(),
+                            validation_method: validation_method.clone(),
+                            rule: policy.rule.clone(),
+                        })
+                    }
+                    _ => None,
+                },
+                _ => None,
+            })
+            .collect::<Vec<ExternalCanisterCallRequestPolicyRuleInput>>();
+
+        let change = policies
+            .iter()
+            .filter_map(|policy| match &policy.specifier {
+                RequestSpecifier::ChangeExternalCanister(target) => match target {
+                    ChangeExternalCanisterResourceTarget::Canister(target_canister_id)
+                        if *target_canister_id == *canister_id =>
+                    {
+                        Some(ExternalCanisterChangeRequestPolicyRuleInput {
+                            policy_id: Some(policy.id),
+                            rule: policy.rule.clone(),
+                        })
+                    }
+                    _ => None,
+                },
+                _ => None,
+            })
+            .collect::<Vec<ExternalCanisterChangeRequestPolicyRuleInput>>();
+
+        ExternalCanisterRequestPolicies { calls, change }
+    }
+
+    /// Returns the permissions of the external canister by its canister id.
+    ///
+    /// The permissions are grouped by the type of action they are for:
+    ///
+    /// - `read`: Permissions for reading the external canister.
+    /// - `change`: Permissions for changing the external canister.
+    /// - `calls`: Permissions for calling the external canister.
+    pub fn get_external_canister_permissions(
+        &self,
+        canister_id: &Principal,
+    ) -> ExternalCanisterPermissions {
+        let read_permission = self
+            .permission_service
+            .get_permission(&Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(
+                    *canister_id,
+                )),
+            ));
+
+        let change_permission =
+            self.permission_service
+                .get_permission(&Resource::ExternalCanister(
+                    ExternalCanisterResourceAction::Change(
+                        ChangeExternalCanisterResourceTarget::Canister(*canister_id),
+                    ),
+                ));
+
+        ExternalCanisterPermissions {
+            read: read_permission.allow,
+            change: change_permission.allow,
+            calls: self.find_external_canister_call_permissions(canister_id),
+        }
+    }
+
+    fn find_external_canister_call_permissions(
+        &self,
+        canister_id: &Principal,
+    ) -> Vec<ExternalCanisterCallPermission> {
+        self.permission_repository
+            .find_external_canister_call_permissions(canister_id)
+            .iter()
+            .filter_map(|permission| match &permission.resource {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Call(target)) => {
+                    match &target {
+                        CallExternalCanisterResourceTarget {
+                            execution_method:
+                                ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
+                                    canister_id: target_canister_id,
+                                    method_name,
+                                }),
+                            validation_method,
+                        } if *target_canister_id == *canister_id => {
+                            Some(ExternalCanisterCallPermission {
+                                allow: permission.allow.clone(),
+                                execution_method: method_name.clone(),
+                                validation_method: validation_method.clone(),
+                            })
+                        }
+                        _ => None,
+                    }
+                }
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// Returns the permissions of the caller for the external canister.
+    pub fn get_caller_privileges_for_external_canister(
+        &self,
+        entry_id: &UUID,
+        canister_id: &Principal,
+        ctx: &CallContext,
+    ) -> ExternalCanisterCallerPrivileges {
+        ExternalCanisterCallerPrivileges {
+            id: *entry_id,
+            canister_id: *canister_id,
+            can_change: Authorization::is_allowed(
+                ctx,
+                &Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    ChangeExternalCanisterResourceTarget::Canister(*canister_id),
+                )),
+            ),
+            can_call: self
+                .find_external_canister_call_permissions(canister_id)
+                .iter()
+                .filter_map(|p| {
+                    let can_call = Authorization::is_allowed(
+                        ctx,
+                        &Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                            CallExternalCanisterResourceTarget {
+                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                    CanisterMethod {
+                                        canister_id: *canister_id,
+                                        method_name: p.execution_method.clone(),
+                                    },
+                                ),
+                                validation_method: p.validation_method.clone(),
+                            },
+                        )),
+                    );
+
+                    match can_call {
+                        true => Some(ExternalCanisterCallerMethodsPrivileges {
+                            validation_method: p.validation_method.clone(),
+                            execution_method: p.execution_method.clone(),
+                        }),
+                        false => None,
+                    }
+                })
+                .collect(),
+        }
+    }
+
+    /// Lists all external canisters that match the given filters.
+    ///
+    /// Filters can contain:
+    ///
+    /// - `canister_ids`: A list of canister ids to filter by.
+    /// - `labels`: A list of labels to filter by.
+    /// - `paginate`: Pagination settings.
+    ///
+    pub fn list_external_canisters(
+        &self,
+        input: ListExternalCanistersInput,
+        ctx: &CallContext,
+    ) -> ServiceResult<PaginatedData<ExternalCanister>> {
+        let mut found_ids = self.external_canister_repository.find_canister_ids_where(
+            ExternalCanisterWhereClause {
+                canister_ids: input.canister_ids.clone().unwrap_or_default(),
+                labels: input.labels.clone().unwrap_or_default(),
+                states: input
+                    .states
+                    .map(|states| states.into_iter().map(Into::into).collect())
+                    .unwrap_or_default(),
+                sort_by: input.sort_by.clone().map(Into::into),
+            },
+        );
+
+        // filter out requests that the caller does not have access to read
+        retain_accessible_resources(ctx, &mut found_ids, |id| {
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
+                ReadExternalCanisterResourceTarget::Canister(*id),
+            ))
+        });
+
+        let paginated_ids = paginated_items(PaginatedItemsArgs {
+            offset: input.paginate.to_owned().and_then(|p| p.offset),
+            limit: input.paginate.and_then(|p| p.limit),
+            default_limit: Some(Self::DEFAULT_LIST_LIMIT),
+            max_limit: Some(Self::MAX_LIST_LIMIT),
+            items: &found_ids,
+        })?;
+
+        Ok(PaginatedData {
+            total: paginated_ids.total,
+            next_offset: paginated_ids.next_offset,
+            items: paginated_ids
+                .items
+                .into_iter()
+                .flat_map(|id| match self.get_external_canister_by_canister_id(&id) {
+                    Ok(entry) => Some(entry),
+                    Err(error) => {
+                        print(format!(
+                            "Failed to get external canister entry {}: {:?}",
+                            id.to_text(),
+                            error
+                        ));
+                        None
+                    }
+                })
+                .collect::<Vec<ExternalCanister>>(),
+        })
+    }
+
+    /// Lists the available information that facilitates filtering external canisters.
+    ///
+    /// These helpers can contain:
+    ///
+    /// - `name`: The available names of existing external canisters.
+    /// - `labels`: The available labels of existing external canisters.
+    pub fn available_external_canisters_filters(
+        &self,
+        input: GetExternalCanisterFiltersInput,
+        ctx: &CallContext,
+    ) -> ExternalCanisterAvailableFilters {
+        let mut names = input.with_name.as_ref().map(|name| {
+            self.external_canister_repository
+                .find_names_by_prefix(name.prefix.clone().unwrap_or_default().as_str())
+                .iter()
+                .map(
+                    |(name, _, canister_id)| GetExternalCanisterFiltersResponseNameEntry {
+                        name: name.clone(),
+                        canister_id: *canister_id,
+                    },
+                )
+                .collect::<Vec<GetExternalCanisterFiltersResponseNameEntry>>()
+        });
+
+        // filter out names that the caller does not have access to read
+        if let Some(ref mut names) = &mut names {
+            retain_accessible_resources(ctx, names, |entry| {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
+                    ReadExternalCanisterResourceTarget::Canister(entry.canister_id),
+                ))
+            });
+
+            names.truncate(Self::MAX_LIST_LIMIT as usize)
+        }
+
+        let labels = match input.with_labels {
+            Some(true) => Some(self.external_canister_repository.find_all_labels()),
+            _ => None,
+        };
+
+        ExternalCanisterAvailableFilters { names, labels }
+    }
+
+    /// Creates a new external canister.
+    ///
+    /// Optionally, the caller can provide the initial cycles to deposit into the canister, if not provided,
+    /// the default value will be used.
     pub async fn create_canister(
         &self,
         cycles: Option<u128>,
@@ -126,6 +424,9 @@ impl ExternalCanisterService {
         Ok(canister_id)
     }
 
+    /// Calls the management canister to get the status of the canister with the given id.
+    ///
+    /// The station needs to be a controller of the target canister.
     pub async fn canister_status(
         &self,
         input: CanisterIdRecord,
@@ -144,6 +445,7 @@ impl ExternalCanisterService {
         Ok(canister_status_response)
     }
 
+    /// Calls the target canister with the given method, argument, and cycles.
     pub async fn call_external_canister(
         &self,
         canister_id: Principal,
@@ -634,7 +936,8 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            permission::Allow, resource::ValidationMethodResourceTarget,
+            permission::{Allow, AuthScope},
+            resource::ValidationMethodResourceTarget,
             CreateExternalCanisterOperationKindAddExisting, ExternalCanisterCallPermission,
             ExternalCanisterCallRequestPolicyRuleInput,
             ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsInput,
@@ -1004,5 +1307,232 @@ mod tests {
             .find_external_canister_call_permissions(&updated_canister.canister_id);
 
         assert!(call_permission.is_empty());
+    }
+
+    #[tokio::test]
+    async fn finds_all_call_permissions() {
+        setup();
+        for i in 0..2 {
+            let _ = EXTERNAL_CANISTER_SERVICE
+                .add_external_canister(CreateExternalCanisterOperationInput {
+                    name: format!("test{}", i),
+                    description: None,
+                    labels: None,
+                    permissions: ExternalCanisterPermissionsInput {
+                        read: Allow::authenticated(),
+                        change: Allow::authenticated(),
+                        calls: vec![
+                            ExternalCanisterCallPermission {
+                                allow: Allow::authenticated(),
+                                execution_method: "test".to_string(),
+                                validation_method: ValidationMethodResourceTarget::No,
+                            },
+                            ExternalCanisterCallPermission {
+                                allow: Allow::authenticated(),
+                                execution_method: "test".to_string(),
+                                validation_method: ValidationMethodResourceTarget::ValidationMethod(
+                                    CanisterMethod {
+                                        canister_id: Principal::from_slice(&[i; 29]),
+                                        method_name: "validate_test".to_string(),
+                                    },
+                                ),
+                            },
+                        ],
+                    },
+                    request_policies: ExternalCanisterRequestPoliciesInput {
+                        change: Vec::new(),
+                        calls: Vec::new(),
+                    },
+                    kind: CreateExternalCanisterOperationKind::AddExisting(
+                        CreateExternalCanisterOperationKindAddExisting {
+                            canister_id: Principal::from_slice(&[i; 29]),
+                        },
+                    ),
+                })
+                .await
+                .unwrap();
+        }
+
+        let permissions = EXTERNAL_CANISTER_SERVICE
+            .get_external_canister_permissions(&Principal::from_slice(&[1; 29]));
+
+        assert_eq!(permissions.read.auth_scope, AuthScope::Authenticated);
+        assert_eq!(permissions.change.auth_scope, AuthScope::Authenticated);
+        assert_eq!(permissions.calls.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn finds_request_policies_of_external_canister() {
+        setup();
+        for i in 0..2 {
+            let _ = EXTERNAL_CANISTER_SERVICE
+                .add_external_canister(CreateExternalCanisterOperationInput {
+                    name: format!("test{}", i),
+                    description: None,
+                    labels: None,
+                    permissions: ExternalCanisterPermissionsInput {
+                        read: Allow::authenticated(),
+                        change: Allow::authenticated(),
+                        calls: Vec::new(),
+                    },
+                    request_policies: ExternalCanisterRequestPoliciesInput {
+                        change: vec![
+                            ExternalCanisterChangeRequestPolicyRuleInput {
+                                policy_id: None,
+                                rule: RequestPolicyRule::AutoApproved,
+                            },
+                            ExternalCanisterChangeRequestPolicyRuleInput {
+                                policy_id: None,
+                                rule: RequestPolicyRule::AutoApproved,
+                            },
+                        ],
+                        calls: vec![ExternalCanisterCallRequestPolicyRuleInput {
+                            policy_id: None,
+                            execution_method: "test".to_string(),
+                            validation_method: ValidationMethodResourceTarget::No,
+                            rule: RequestPolicyRule::AutoApproved,
+                        }],
+                    },
+                    kind: CreateExternalCanisterOperationKind::AddExisting(
+                        CreateExternalCanisterOperationKindAddExisting {
+                            canister_id: Principal::from_slice(&[i; 29]),
+                        },
+                    ),
+                })
+                .await
+                .unwrap();
+        }
+
+        let policies = EXTERNAL_CANISTER_SERVICE
+            .get_external_canister_request_policies(&Principal::from_slice(&[1; 29]));
+
+        assert_eq!(policies.calls.len(), 1);
+        assert_eq!(policies.change.len(), 2);
+    }
+}
+
+#[cfg(feature = "canbench")]
+mod benchs {
+    use super::*;
+    use crate::{models::ExternalCanisterState, services::user_service_test_utils::add_users};
+    use canbench_rs::{bench, BenchResult};
+    use external_canister_test_utils::add_test_external_canisters;
+
+    #[bench(raw)]
+    fn list_external_canisters_with_all_statuses() -> BenchResult {
+        // creates 20 admin users with 5 groups assigned
+        let admins = add_users(20, 5);
+        // and 100 employees with 10 groups assigned
+        let _ = add_users(100, 10);
+
+        let first_admin = admins.first().expect("Unexpected admin not set");
+        let first_admin_identity = first_admin
+            .identities
+            .first()
+            .expect("Unexpected admin identity not available");
+
+        let first_admin = first_admin.clone();
+        let caller_identity = first_admin_identity.clone();
+
+        // these should only be accessible to admins
+        add_test_external_canisters(
+            500, // adds 500 external canisters managed by the station
+            10,  // with 10 individual method calls each
+            ExternalCanisterState::Active,
+            Some(first_admin.groups.clone()),
+        );
+
+        // these are accessible by any employee
+        add_test_external_canisters(
+            1500, // adds 1500 external canisters managed by the station
+            5,    // with 5 individual method calls each
+            ExternalCanisterState::Active,
+            None,
+        );
+
+        // also adds 1000 archived external canisters
+        add_test_external_canisters(
+            1000, // adds 1000 external canisters managed by the station
+            5,    // with 5 individual method calls each
+            ExternalCanisterState::Archived,
+            None,
+        );
+
+        canbench_rs::bench_fn(|| {
+            let result = EXTERNAL_CANISTER_SERVICE
+                .list_external_canisters(
+                    ListExternalCanistersInput {
+                        canister_ids: None,
+                        labels: None,
+                        states: Some(vec![
+                            station_api::ExternalCanisterStateDTO::Active,
+                            station_api::ExternalCanisterStateDTO::Archived,
+                        ]),
+                        paginate: Some(station_api::PaginationInput {
+                            limit: Some(25),
+                            offset: None,
+                        }),
+                        sort_by: Some(station_api::ListExternalCanistersSortInput::Name(
+                            station_api::SortDirection::Asc,
+                        )),
+                    },
+                    &CallContext::new(caller_identity),
+                )
+                .expect("Unexpected failed search of external canisters");
+
+            if result.total != 3000 {
+                panic!(
+                    "Unexpected total count of external canisters, expected 3000, got {}",
+                    result.total
+                );
+            }
+        })
+    }
+}
+
+#[cfg(feature = "canbench")]
+mod external_canister_test_utils {
+    use super::*;
+    use crate::models::{
+        external_canister_test_utils::mock_external_canister, permission::Allow,
+        ExternalCanisterState,
+    };
+
+    pub fn add_test_external_canisters(
+        canisters_count: usize,
+        calls_count: usize,
+        state: ExternalCanisterState,
+        allow_user_groups: Option<Vec<UUID>>,
+    ) {
+        let allow = match allow_user_groups {
+            Some(groups) => Allow::user_groups(groups),
+            None => Allow::authenticated(),
+        };
+
+        for _ in 0..canisters_count {
+            let mut external_canister = mock_external_canister();
+            external_canister.state = state.clone();
+            let calls = (0..calls_count)
+                .map(|i| ExternalCanisterCallPermission {
+                    allow: Allow::authenticated(),
+                    execution_method: format!("exec_method_{}", i),
+                    validation_method: ValidationMethodResourceTarget::No,
+                })
+                .collect::<Vec<ExternalCanisterCallPermission>>();
+
+            EXTERNAL_CANISTER_REPOSITORY
+                .insert(external_canister.to_key(), external_canister.clone());
+
+            let mut input = ConfigureExternalCanisterSettingsInput::default();
+            input.permissions = Some(ExternalCanisterPermissionsInput {
+                calls,
+                read: allow.clone(),
+                change: allow.clone(),
+            });
+
+            EXTERNAL_CANISTER_SERVICE
+                .edit_external_canister(&external_canister.id, input)
+                .expect("Unexpected error while configuring external canister");
+        }
     }
 }
