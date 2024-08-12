@@ -438,7 +438,6 @@ mod install_canister_handlers {
     use candid::{Encode, Principal};
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
     use canfund::manager::RegisterOpts;
-    use canfund::operations::fetch::FetchCyclesBalanceFromCanisterStatus;
     use canfund::FundManager;
     use ic_cdk::api::management_canister::main::{self as mgmt};
     use ic_cdk::id;
@@ -446,7 +445,6 @@ mod install_canister_handlers {
     use orbit_essentials::types::UUID;
     use station_api::{InitAccountInput, SystemInit};
     use std::cell::RefCell;
-    use std::sync::Arc;
 
     use super::SYSTEM_SERVICE;
 

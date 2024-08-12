@@ -7,6 +7,7 @@ use crate::{
     services::canister::FUND_MANAGER,
 };
 use candid::Principal;
+use canfund::manager::RegisterOpts;
 use control_panel_api::{RegisterUserInput, UpdateWaitingListInput};
 use lazy_static::lazy_static;
 use orbit_essentials::repository::Repository;
@@ -201,7 +202,8 @@ impl UserService {
         FUND_MANAGER.with(|fund_manager| {
             fund_manager.borrow_mut().register(
                 station_canister_id,
-                CANISTER_SERVICE.create_station_cycles_fetcher(),
+                RegisterOpts::new()
+                    .with_cycles_fetcher(CANISTER_SERVICE.create_station_cycles_fetcher()),
             );
         });
 
