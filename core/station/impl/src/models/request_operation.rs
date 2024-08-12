@@ -4,8 +4,8 @@ use super::{
     request_specifier::RequestSpecifier,
     resource::{Resource, ValidationMethodResourceTarget},
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata,
-    DisasterRecoveryCommittee, ExternalCanisterCallPermission, ExternalCanisterState, MetadataItem,
-    UserGroupId, UserId, UserStatus,
+    CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
+    ExternalCanisterState, MetadataItem, UserGroupId, UserId, UserStatus,
 };
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ValidationError;
@@ -532,6 +532,7 @@ pub struct RemoveRequestPolicyOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ManageSystemInfoOperationInput {
     pub name: Option<String>,
+    pub cycle_obtain_strategy: Option<CycleObtainStrategy>,
 }
 
 #[storable]

@@ -3,8 +3,9 @@ use crate::core::{canister_config, write_canister_config, CallContext};
 use crate::errors::CanisterError;
 use crate::repositories::{UserRepository, USER_REPOSITORY};
 use crate::SYSTEM_VERSION;
-use canfund::fetch::cycles::FetchCyclesBalanceFromPrometheusMetrics;
 use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
+use canfund::manager::RegisterOpts;
+use canfund::operations::fetch::{FetchCyclesBalance, FetchCyclesBalanceFromPrometheusMetrics};
 use canfund::FundManager;
 use control_panel_api::UploadCanisterModulesInput;
 use lazy_static::lazy_static;
@@ -71,6 +72,13 @@ impl CanisterService {
         Ok(())
     }
 
+    pub fn create_station_cycles_fetcher(&self) -> Arc<dyn FetchCyclesBalance> {
+        Arc::new(FetchCyclesBalanceFromPrometheusMetrics::new(
+            "/metrics".to_string(),
+            "station_canister_cycles_balance".to_string(),
+        ))
+    }
+
     // Monitor the cycles of active canisters that have been deployed by the control panel
     // and top up if necessary.
     fn start_canister_cycles_monitoring(&self) {
@@ -101,15 +109,12 @@ impl CanisterService {
                             .with_fallback_fund_cycles(250_000_000_000),
                     )),
             );
-            fund_manager.with_cycles_fetcher(Arc::new(
-                FetchCyclesBalanceFromPrometheusMetrics::new(
-                    "/metrics".to_string(),
-                    "station_canister_cycles_balance".to_string(),
-                ),
-            ));
 
             for canister_id in deployed_stations {
-                fund_manager.register(*canister_id);
+                fund_manager.register(
+                    *canister_id,
+                    RegisterOpts::new().with_cycles_fetcher(self.create_station_cycles_fetcher()),
+                );
             }
 
             fund_manager.start();

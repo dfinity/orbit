@@ -7,6 +7,7 @@ use crate::{
     services::canister::FUND_MANAGER,
 };
 use candid::Principal;
+use canfund::manager::RegisterOpts;
 use control_panel_api::{RegisterUserInput, UpdateWaitingListInput};
 use lazy_static::lazy_static;
 use orbit_essentials::repository::Repository;
@@ -16,6 +17,8 @@ use orbit_essentials::{
 };
 use std::{collections::BTreeSet, sync::Arc};
 use uuid::Uuid;
+
+use super::CANISTER_SERVICE;
 
 lazy_static! {
     pub static ref USER_SERVICE: Arc<UserService> =
@@ -197,7 +200,11 @@ impl UserService {
         self.user_repository.insert(user.to_key(), user.clone());
 
         FUND_MANAGER.with(|fund_manager| {
-            fund_manager.borrow_mut().register(station_canister_id);
+            fund_manager.borrow_mut().register(
+                station_canister_id,
+                RegisterOpts::new()
+                    .with_cycles_fetcher(CANISTER_SERVICE.create_station_cycles_fetcher()),
+            );
         });
 
         Ok(user)
