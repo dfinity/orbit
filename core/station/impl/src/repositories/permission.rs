@@ -1,7 +1,8 @@
 use crate::{
+    core::ic_cdk::api::print,
     core::{with_memory_manager, Memory, PERMISSION_MEMORY_ID},
     models::{
-        permission::{Permission, PermissionKey},
+        permission::{Allow, Permission, PermissionKey},
         resource::{
             CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
             ExternalCanisterResourceAction, Resource, ValidationMethodResourceTarget,
@@ -13,14 +14,16 @@ use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::repository::Repository;
-use std::{cell::RefCell, sync::Arc};
+use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<PermissionKey, Permission, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
     RefCell::new(
       StableBTreeMap::init(memory_manager.get(PERMISSION_MEMORY_ID))
     )
-  })
+  });
+
+  static CACHE: RefCell<HashMap<Resource, Allow>> = RefCell::new(HashMap::new());
 }
 
 lazy_static! {
@@ -34,23 +37,113 @@ pub struct PermissionRepository {}
 
 impl Repository<PermissionKey, Permission> for PermissionRepository {
     fn list(&self) -> Vec<Permission> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+        DB.with(|m| match self.use_only_cache() {
+            true => CACHE.with(|cache| {
+                cache
+                    .borrow()
+                    .iter()
+                    .map(|(resource, allow)| Permission {
+                        resource: resource.clone(),
+                        allow: allow.clone(),
+                    })
+                    .collect()
+            }),
+            false => m.borrow().iter().map(|(_, v)| v.clone()).collect(),
+        })
     }
 
     fn get(&self, key: &PermissionKey) -> Option<Permission> {
-        DB.with(|m| m.borrow().get(key))
+        DB.with(|m| {
+            let maybe_cache_hit = CACHE.with(|cache| {
+                cache.borrow().get(key).map(|allow| Permission {
+                    resource: key.clone(),
+                    allow: allow.clone(),
+                })
+            });
+
+            match self.use_only_cache() {
+                true => maybe_cache_hit,
+                false => maybe_cache_hit.or_else(|| m.borrow().get(key).clone()),
+            }
+        })
     }
 
     fn insert(&self, key: PermissionKey, value: Permission) -> Option<Permission> {
-        DB.with(|m| m.borrow_mut().insert(key, value.clone()))
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
+
+            // Update the cache and remove the first element if the cache is full.
+            CACHE.with(|cache| {
+                let mut cache = cache.borrow_mut();
+
+                cache.insert(value.resource.clone(), value.allow.clone());
+
+                if cache.len() >= PermissionRepository::MAX_CACHE_SIZE {
+                    let maybe_remove_key = cache.iter_mut().take(1).map(|(k, _)| k.clone()).next();
+                    if let Some(remove_key) = maybe_remove_key {
+                        cache.remove(&remove_key);
+                    }
+                }
+            });
+
+            prev
+        })
     }
 
     fn remove(&self, key: &PermissionKey) -> Option<Permission> {
-        DB.with(|m| m.borrow_mut().remove(key))
+        DB.with(|m| {
+            CACHE.with(|cache| cache.borrow_mut().remove(key));
+
+            m.borrow_mut().remove(key)
+        })
     }
 
     fn len(&self) -> usize {
         DB.with(|m| m.borrow().len()) as usize
+    }
+}
+
+impl PermissionRepository {
+    /// Currently the cache uses around 0.35KiB per entry (Resource, Allow),
+    /// so the max cache size is around 108MiB.
+    ///
+    /// Moreover, it takes approximately 70million instructions to load each entry
+    /// to the cache, which means that rebuilding the cache from the repository
+    /// would take around 20B instructions.
+    ///
+    /// Since init/upgrade hooks can use up to 200B instructions, rebuilding
+    /// a cache in the worst case would take up to 10% of the available instructions.
+    pub const MAX_CACHE_SIZE: usize = 300_000;
+
+    /// Checks if every permission in the repository is in the cache.
+    fn use_only_cache(&self) -> bool {
+        self.len() <= Self::MAX_CACHE_SIZE
+    }
+
+    /// Builds the cache from the stable memory repository.
+    ///
+    /// This method should only be called during init or upgrade hooks to ensure that the cache is
+    /// up-to-date with the repository and that we have enough instructions to rebuild the cache.
+    pub fn build_cache(&self) {
+        if self.len() > Self::MAX_CACHE_SIZE {
+            print(format!(
+                "Only the first {} permissions will be added to the cache, the reposity has {} permissions.",
+                Self::MAX_CACHE_SIZE,
+                PERMISSION_REPOSITORY.len(),
+            ));
+        }
+
+        CACHE.with(|cache| {
+            cache.borrow_mut().clear();
+
+            DB.with(|db| {
+                for (_, permission) in db.borrow().iter().take(Self::MAX_CACHE_SIZE) {
+                    cache
+                        .borrow_mut()
+                        .insert(permission.resource.clone(), permission.allow.clone());
+                }
+            });
+        });
     }
 }
 
@@ -237,5 +330,76 @@ mod tests {
                 if canister_id == Principal::from_slice(&[1; 29])
             ));
         }
+    }
+
+    #[test]
+    fn insert_updates_cache() {
+        let repository = &PERMISSION_REPOSITORY;
+        let policy = mock_permission();
+
+        assert!(repository.get(&policy.key()).is_none());
+
+        repository.insert(policy.key(), policy.clone());
+
+        assert!(repository.get(&policy.key()).is_some());
+        assert!(CACHE.with(|cache| cache.borrow().contains_key(&policy.resource)));
+    }
+
+    #[test]
+    fn remove_updates_cache() {
+        let repository = &PERMISSION_REPOSITORY;
+        let policy = mock_permission();
+
+        assert!(repository.get(&policy.key()).is_none());
+
+        repository.insert(policy.key(), policy.clone());
+
+        assert!(repository.get(&policy.key()).is_some());
+        assert!(CACHE.with(|cache| cache.borrow().contains_key(&policy.resource)));
+
+        repository.remove(&policy.key());
+
+        assert!(repository.get(&policy.key()).is_none());
+        assert!(!CACHE.with(|cache| cache.borrow().contains_key(&policy.resource)));
+    }
+
+    #[test]
+    fn get_uses_cache() {
+        let repository = &PERMISSION_REPOSITORY;
+        let policy = mock_permission();
+
+        assert!(repository.get(&policy.key()).is_none());
+
+        repository.insert(policy.key(), policy.clone());
+
+        // Clear the stable repository to ensure that the cache is used.
+        DB.with(|db| db.borrow_mut().remove(&policy.key()));
+
+        assert!(repository.get(&policy.key()).is_some());
+    }
+
+    #[test]
+    fn list_uses_cache_when_all_entries_are_loaded() {
+        let repository = &PERMISSION_REPOSITORY;
+        let permissions = (0..10).map(|_| mock_permission()).collect::<Vec<_>>();
+
+        for permission in permissions.iter() {
+            repository.insert(permission.key(), permission.clone());
+        }
+
+        // Clear the stable repository to ensure that the cache is used.
+        DB.with(|db| {
+            let mut db = db.borrow_mut();
+
+            for permission in permissions.iter() {
+                db.remove(&permission.key());
+            }
+
+            assert_eq!(db.len(), 0);
+        });
+
+        // even though the stable repository is empty, the cache should still be in-place which
+        // would allow the list method to return the permissions.
+        assert_eq!(repository.list().len(), permissions.len());
     }
 }
