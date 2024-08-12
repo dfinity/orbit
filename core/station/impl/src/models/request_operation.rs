@@ -4,8 +4,8 @@ use super::{
     request_specifier::RequestSpecifier,
     resource::{Resource, ValidationMethodResourceTarget},
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata,
-    CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterState, MetadataItem,
-    UserGroupId, UserId, UserStatus,
+    CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
+    ExternalCanisterState, MetadataItem, UserGroupId, UserId, UserStatus,
 };
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ValidationError;
@@ -326,14 +326,6 @@ pub struct ChangeExternalCanisterOperation {
     pub module_checksum: Vec<u8>,
     pub arg_checksum: Option<Vec<u8>>,
     pub input: ChangeExternalCanisterOperationInput,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ExternalCanisterCallPermission {
-    pub allow: Allow,
-    pub validation_method: ValidationMethodResourceTarget,
-    pub execution_method: String,
 }
 
 #[storable]

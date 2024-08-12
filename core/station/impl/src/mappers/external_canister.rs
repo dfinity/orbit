@@ -3,8 +3,9 @@ use crate::{
     models::{
         ConfigureExternalCanisterOperationInput, ConfigureExternalCanisterOperationKind,
         ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
-        DefiniteCanisterSettingsInput, ExternalCanister, ExternalCanisterCallerMethodsPrivileges,
-        ExternalCanisterCallerPrivileges, ExternalCanisterPermissions,
+        DefiniteCanisterSettingsInput, ExternalCanister, ExternalCanisterCallRequestPolicyRule,
+        ExternalCanisterCallerMethodsPrivileges, ExternalCanisterCallerPrivileges,
+        ExternalCanisterChangeRequestPolicyRule, ExternalCanisterPermissions,
         ExternalCanisterRequestPolicies, ExternalCanisterState,
     },
     repositories::ExternalCanisterWhereClauseSort,
@@ -53,6 +54,51 @@ impl ExternalCanister {
             request_policies: policies.into(),
             created_at: timestamp_to_rfc3339(&self.created_at),
             modified_at: self.modified_at.map(|ts| timestamp_to_rfc3339(&ts)),
+        }
+    }
+}
+
+impl From<ExternalCanisterPermissions> for station_api::ExternalCanisterPermissionsDTO {
+    fn from(permissions: ExternalCanisterPermissions) -> Self {
+        station_api::ExternalCanisterPermissionsDTO {
+            read: permissions.read.into(),
+            change: permissions.change.into(),
+            calls: permissions.calls.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<ExternalCanisterRequestPolicies> for station_api::ExternalCanisterRequestPoliciesDTO {
+    fn from(policies: ExternalCanisterRequestPolicies) -> Self {
+        station_api::ExternalCanisterRequestPoliciesDTO {
+            change: policies.change.into_iter().map(Into::into).collect(),
+            calls: policies.calls.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<ExternalCanisterChangeRequestPolicyRule>
+    for station_api::ExternalCanisterChangeRequestPolicyRuleDTO
+{
+    fn from(rule: ExternalCanisterChangeRequestPolicyRule) -> Self {
+        station_api::ExternalCanisterChangeRequestPolicyRuleDTO {
+            policy_id: Uuid::from_bytes(rule.policy_id).hyphenated().to_string(),
+            rule: rule.rule.into(),
+        }
+    }
+}
+
+impl From<ExternalCanisterCallRequestPolicyRule>
+    for station_api::ExternalCanisterCallRequestPolicyRuleDTO
+{
+    fn from(privileges: ExternalCanisterCallRequestPolicyRule) -> Self {
+        station_api::ExternalCanisterCallRequestPolicyRuleDTO {
+            policy_id: Uuid::from_bytes(privileges.policy_id)
+                .hyphenated()
+                .to_string(),
+            rule: privileges.rule.into(),
+            validation_method: privileges.validation_method.into(),
+            execution_method: privileges.execution_method,
         }
     }
 }

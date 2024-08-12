@@ -633,11 +633,11 @@ impl From<ExternalCanisterCallRequestPolicyRuleInput>
     }
 }
 
-impl From<station_api::ExternalCanisterChangeRequestPolicyRule>
+impl From<station_api::ExternalCanisterChangeRequestPolicyRuleInput>
     for ExternalCanisterChangeRequestPolicyRuleInput
 {
     fn from(
-        input: station_api::ExternalCanisterChangeRequestPolicyRule,
+        input: station_api::ExternalCanisterChangeRequestPolicyRuleInput,
     ) -> ExternalCanisterChangeRequestPolicyRuleInput {
         ExternalCanisterChangeRequestPolicyRuleInput {
             policy_id: input.policy_id.map(|policy_id| {
@@ -651,12 +651,12 @@ impl From<station_api::ExternalCanisterChangeRequestPolicyRule>
 }
 
 impl From<ExternalCanisterChangeRequestPolicyRuleInput>
-    for station_api::ExternalCanisterChangeRequestPolicyRule
+    for station_api::ExternalCanisterChangeRequestPolicyRuleInput
 {
     fn from(
         input: ExternalCanisterChangeRequestPolicyRuleInput,
-    ) -> station_api::ExternalCanisterChangeRequestPolicyRule {
-        station_api::ExternalCanisterChangeRequestPolicyRule {
+    ) -> station_api::ExternalCanisterChangeRequestPolicyRuleInput {
+        station_api::ExternalCanisterChangeRequestPolicyRuleInput {
             policy_id: input
                 .policy_id
                 .map(|policy_id| Uuid::from_bytes(policy_id).hyphenated().to_string()),

@@ -1,8 +1,6 @@
+use super::permission::Allow;
 use super::resource::ValidationMethodResourceTarget;
-use super::{
-    ConfigureExternalCanisterSettingsInput, ExternalCanisterPermissionsInput,
-    ExternalCanisterRequestPoliciesInput,
-};
+use super::{ConfigureExternalCanisterSettingsInput, RequestPolicyRule};
 use crate::errors::ExternalCanisterError;
 use candid::Principal;
 use orbit_essentials::storable;
@@ -42,8 +40,39 @@ pub struct ExternalCanister {
     pub modified_at: Option<Timestamp>,
 }
 
-pub type ExternalCanisterPermissions = ExternalCanisterPermissionsInput;
-pub type ExternalCanisterRequestPolicies = ExternalCanisterRequestPoliciesInput;
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallPermission {
+    pub allow: Allow,
+    pub validation_method: ValidationMethodResourceTarget,
+    pub execution_method: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterPermissions {
+    pub read: Allow,
+    pub change: Allow,
+    pub calls: Vec<ExternalCanisterCallPermission>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterChangeRequestPolicyRule {
+    pub policy_id: UUID,
+    pub rule: RequestPolicyRule,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallRequestPolicyRule {
+    pub policy_id: UUID,
+    pub rule: RequestPolicyRule,
+    pub validation_method: ValidationMethodResourceTarget,
+    pub execution_method: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterRequestPolicies {
+    pub change: Vec<ExternalCanisterChangeRequestPolicyRule>,
+    pub calls: Vec<ExternalCanisterCallRequestPolicyRule>,
+}
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

@@ -394,6 +394,12 @@ export interface ExternalCanisterCallRequestPolicyRule {
   'execution_method' : string,
   'rule' : RequestPolicyRule,
   'validation_method' : ValidationMethodResourceTarget,
+  'policy_id' : UUID,
+}
+export interface ExternalCanisterCallRequestPolicyRuleInput {
+  'execution_method' : string,
+  'rule' : RequestPolicyRule,
+  'validation_method' : ValidationMethodResourceTarget,
   'policy_id' : [] | [UUID],
 }
 export interface ExternalCanisterCallerMethodsPrivileges {
@@ -408,6 +414,10 @@ export interface ExternalCanisterCallerPrivileges {
 }
 export interface ExternalCanisterChangeRequestPolicyRule {
   'rule' : RequestPolicyRule,
+  'policy_id' : UUID,
+}
+export interface ExternalCanisterChangeRequestPolicyRuleInput {
+  'rule' : RequestPolicyRule,
   'policy_id' : [] | [UUID],
 }
 export interface ExternalCanisterPermissions {
@@ -420,7 +430,10 @@ export interface ExternalCanisterRequestPolicies {
   'calls' : Array<ExternalCanisterCallRequestPolicyRule>,
   'change' : Array<ExternalCanisterChangeRequestPolicyRule>,
 }
-export type ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPolicies;
+export interface ExternalCanisterRequestPoliciesInput {
+  'calls' : Array<ExternalCanisterCallRequestPolicyRuleInput>,
+  'change' : Array<ExternalCanisterChangeRequestPolicyRuleInput>,
+}
 export type ExternalCanisterResourceAction = {
     'Call' : CallExternalCanisterResourceTarget
   } |
