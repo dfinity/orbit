@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use ic_ledger_types::{
-    AccountBalanceArgs, AccountIdentifier, Memo, Tokens, TransferArgs, TransferError,
+    AccountBalanceArgs, AccountIdentifier, Memo, Subaccount, Tokens, TransferArgs, TransferError,
     DEFAULT_SUBACCOUNT,
 };
 use pocket_ic::{update_candid_as, PocketIc};
@@ -41,6 +41,22 @@ pub fn get_icp_balance(env: &PocketIc, user_id: Principal) -> u64 {
     res.0.e8s()
 }
 
+pub fn get_icp_account_balance(env: &PocketIc, account_id: AccountIdentifier) -> u64 {
+    let ledger_canister_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+    let account_balance_args = AccountBalanceArgs {
+        account: account_id,
+    };
+    let res: (Tokens,) = update_candid_as(
+        env,
+        ledger_canister_id,
+        Principal::anonymous(),
+        "account_balance",
+        (account_balance_args,),
+    )
+    .unwrap();
+    res.0.e8s()
+}
+
 pub const ICP: u64 = 100_000_000; // in e8s
 pub const ICP_FEE: u64 = 10_000; // in e8s
 
@@ -54,13 +70,14 @@ pub fn send_icp_to_account(
     beneficiary_account: AccountIdentifier,
     e8s: u64,
     memo: u64,
+    from_subaccount: Option<Subaccount>,
 ) -> Result<u64, TransferError> {
     let ledger_canister_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
     let transfer_args = TransferArgs {
         memo: Memo(memo),
         amount: Tokens::from_e8s(e8s),
         fee: Tokens::from_e8s(10_000),
-        from_subaccount: None,
+        from_subaccount,
         to: beneficiary_account,
         created_at_time: None,
     };
@@ -83,5 +100,5 @@ pub fn send_icp(
     memo: u64,
 ) -> Result<u64, TransferError> {
     let to = AccountIdentifier::new(&beneficiary_id, &DEFAULT_SUBACCOUNT);
-    send_icp_to_account(env, sender_id, to, e8s, memo)
+    send_icp_to_account(env, sender_id, to, e8s, memo, None)
 }
