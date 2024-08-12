@@ -14,7 +14,7 @@ use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::repository::Repository;
-use std::{cell::RefCell, collections::BTreeMap, sync::Arc};
+use std::{cell::RefCell, collections::HashMap, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<PermissionKey, Permission, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -23,7 +23,7 @@ thread_local! {
     )
   });
 
-  static CACHE: RefCell<BTreeMap<Resource, Allow>> = const { RefCell::new(BTreeMap::new()) };
+  static CACHE: RefCell<HashMap<Resource, Allow>> = RefCell::new(HashMap::new());
 }
 
 lazy_static! {
@@ -79,7 +79,10 @@ impl Repository<PermissionKey, Permission> for PermissionRepository {
                 cache.insert(value.resource.clone(), value.allow.clone());
 
                 if cache.len() >= PermissionRepository::MAX_CACHE_SIZE {
-                    cache.pop_first();
+                    let maybe_remove_key = cache.iter_mut().take(1).map(|(k, _)| k.clone()).next();
+                    if let Some(remove_key) = maybe_remove_key {
+                        cache.remove(&remove_key);
+                    }
                 }
             });
 
@@ -397,7 +400,7 @@ mod tests {
             assert_eq!(db.len(), 0);
         });
 
-        // even though the stable repository is empty, the cache should still be in-place which 
+        // even though the stable repository is empty, the cache should still be in-place which
         // would allow the list method to return the permissions.
         assert_eq!(repository.list().len(), permissions.len());
     }
