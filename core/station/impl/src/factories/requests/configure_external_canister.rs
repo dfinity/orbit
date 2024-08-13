@@ -102,14 +102,6 @@ impl Execute for ConfigureExternalCanisterRequestExecute<'_, '_> {
                         reason: format!("Failed to soft delete canister: {}", e),
                     })?;
             }
-            ConfigureExternalCanisterOperationKind::TopUp(cycles) => {
-                self.external_canister_service
-                    .top_up_canister(external_canister.canister_id, *cycles as u128)
-                    .await
-                    .map_err(|e| RequestExecuteError::Failed {
-                        reason: format!("Failed to top up canister: {}", e),
-                    })?;
-            }
             ConfigureExternalCanisterOperationKind::NativeSettings(settings) => {
                 self.external_canister_service
                     .change_canister_ic_settings(external_canister.canister_id, settings.clone())
@@ -206,7 +198,15 @@ pub mod configure_external_canister_test_utils {
     pub fn mock_operation_api_input() -> station_api::ConfigureExternalCanisterOperationInput {
         station_api::ConfigureExternalCanisterOperationInput {
             canister_id: Principal::from_slice(&[1; 29]),
-            kind: station_api::ConfigureExternalCanisterOperationKindDTO::TopUp(100),
+            kind: station_api::ConfigureExternalCanisterOperationKindDTO::NativeSettings(
+                station_api::DefiniteCanisterSettingsInput {
+                    controllers: Some(vec![Principal::from_slice(&[1; 29])]),
+                    compute_allocation: None,
+                    memory_allocation: None,
+                    freezing_threshold: None,
+                    reserved_cycles_limit: None,
+                },
+            ),
         }
     }
 }

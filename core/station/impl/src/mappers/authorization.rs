@@ -4,9 +4,9 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget,
-            ChangeCanisterResourceAction, ChangeExternalCanisterResourceTarget,
-            ExternalCanisterResourceAction, PermissionResourceAction, RequestResourceAction,
-            Resource, ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+            ChangeCanisterResourceAction, ExternalCanisterId, ExternalCanisterResourceAction,
+            PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+            SystemResourceAction, UserResourceAction,
         },
         CanisterMethod, Transfer,
     },
@@ -216,13 +216,18 @@ impl From<&station_api::CreateRequestInput> for Resource {
             }
             RequestOperationInput::ChangeExternalCanister(input) => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                    ChangeExternalCanisterResourceTarget::Canister(input.canister_id),
+                    ExternalCanisterId::Canister(input.canister_id),
                 ))
             }
             // Configuration of external canisters share the same `Change` action privilege
             RequestOperationInput::ConfigureExternalCanister(input) => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                    ChangeExternalCanisterResourceTarget::Canister(input.canister_id),
+                    ExternalCanisterId::Canister(input.canister_id),
+                ))
+            }
+            RequestOperationInput::FundExternalCanister(input) => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    ExternalCanisterId::Canister(input.canister_id),
                 ))
             }
             RequestOperationInput::CreateExternalCanister(_) => {

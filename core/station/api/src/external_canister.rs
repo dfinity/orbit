@@ -92,7 +92,6 @@ pub struct ConfigureExternalCanisterSettingsInput {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ConfigureExternalCanisterOperationKindDTO {
     Settings(ConfigureExternalCanisterSettingsInput),
-    TopUp(u64),
     SoftDelete,
     Delete,
     NativeSettings(DefiniteCanisterSettingsInput),
@@ -266,3 +265,21 @@ pub struct GetExternalCanisterFiltersResponse {
     pub names: Option<Vec<GetExternalCanisterFiltersResponseNameEntry>>,
     pub labels: Option<Vec<String>>,
 }
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct FundExternalCanisterSendCyclesInput {
+    pub cycles: u64,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum FundExternalCanisterOperationKindDTO {
+    Send(FundExternalCanisterSendCyclesInput),
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct FundExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub kind: FundExternalCanisterOperationKindDTO,
+}
+
+pub type FundExternalCanisterOperationDTO = FundExternalCanisterOperationInput;

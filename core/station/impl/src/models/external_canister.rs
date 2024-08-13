@@ -13,14 +13,14 @@ use std::collections::BTreeSet;
 use std::hash::Hash;
 
 /// The external canister id, which is a UUID.
-pub type ExternalCanisterId = UUID;
+pub type ExternalCanisterEntryId = UUID;
 
 /// Represents an external canister that the station can interact with.
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanister {
     /// The external canister id, which is a UUID.
-    pub id: ExternalCanisterId,
+    pub id: ExternalCanisterEntryId,
     /// The canister id, which is a Principal.
     pub canister_id: Principal,
     /// The canister name.
@@ -77,7 +77,7 @@ pub struct ExternalCanisterRequestPolicies {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterKey {
-    pub id: ExternalCanisterId,
+    pub id: ExternalCanisterEntryId,
 }
 
 #[storable]
@@ -110,7 +110,7 @@ impl ExternalCanister {
     pub const MAX_DESCRIPTION_LENGTH: usize = 1000;
 
     /// Creates a new external canister key from the given key components.
-    pub fn key(id: ExternalCanisterId) -> ExternalCanisterKey {
+    pub fn key(id: ExternalCanisterEntryId) -> ExternalCanisterKey {
         ExternalCanisterKey { id }
     }
 
