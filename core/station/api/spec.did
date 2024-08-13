@@ -1840,7 +1840,7 @@ type ChangeCanisterResourceAction = variant {
   Create;
 };
 
-// The target canister of a interact with.
+// The target canister to interact with.
 type ExternalCanisterId = variant {
   Any;
   Canister : principal;
