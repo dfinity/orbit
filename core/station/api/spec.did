@@ -895,7 +895,7 @@ type RequestOperationInput = variant {
   ConfigureExternalCanister : ConfigureExternalCanisterOperationInput;
   // An operation for calling an external canister.
   CallExternalCanister : CallExternalCanisterOperationInput;
-  // An operation for sending cycles to an external canister.
+  // An operation for funding an external canister.
   FundExternalCanister : FundExternalCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
