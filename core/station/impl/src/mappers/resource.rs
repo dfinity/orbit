@@ -278,7 +278,7 @@ impl From<ExternalCanisterResourceAction> for station_api::ExternalCanisterResou
                 station_api::ExternalCanisterResourceActionDTO::Create
             }
             ExternalCanisterResourceAction::Fund(target) => {
-                station_api::ExternalCanisterResourceActionDTO::Change(target.into())
+                station_api::ExternalCanisterResourceActionDTO::Fund(target.into())
             }
             ExternalCanisterResourceAction::Change(target) => {
                 station_api::ExternalCanisterResourceActionDTO::Change(target.into())
