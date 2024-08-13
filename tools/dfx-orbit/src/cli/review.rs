@@ -5,7 +5,7 @@ use crate::{
     DfxOrbit,
 };
 use display::display_list;
-use orbit_station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
+use orbit_station_api::{RequestApprovalStatusDTO, RequestStatusDTO, SubmitRequestApprovalInput};
 use serde::Serialize;
 
 impl DfxOrbit {
@@ -19,7 +19,7 @@ impl DfxOrbit {
                 if as_json {
                     display_as_json(&response);
                 } else {
-                    display_list(&response);
+                    display_list(response);
                 }
                 Ok(())
             }
@@ -28,19 +28,24 @@ impl DfxOrbit {
                 Ok(())
             }
             ReviewActionArgs::Id(args) => {
-                display_as_json(&self.station.review_id(args.clone().into()).await?);
+                let request = &self.station.review_id(args.clone().into()).await?;
+                display_as_json(request);
 
-                if let Ok(submit) = SubmitRequestApprovalInput::try_from(args) {
-                    let action = match submit.decision {
-                        RequestApprovalStatusDTO::Approved => "approve",
-                        RequestApprovalStatusDTO::Rejected => "reject",
-                    };
-                    dfx_core::cli::ask_for_consent(&format!(
-                        "Would you like to {action} this request?"
-                    ))?;
-                    self.station.submit(submit).await?;
-                };
-
+                match request.request.status {
+                    RequestStatusDTO::Created => {
+                        if let Ok(submit) = SubmitRequestApprovalInput::try_from(args) {
+                            let action = match submit.decision {
+                                RequestApprovalStatusDTO::Approved => "approve",
+                                RequestApprovalStatusDTO::Rejected => "reject",
+                            };
+                            dfx_core::cli::ask_for_consent(&format!(
+                                "Would you like to {action} this request?"
+                            ))?;
+                            self.station.submit(submit).await?;
+                        };
+                    }
+                    _ => (),
+                }
                 Ok(())
             }
         }
