@@ -262,6 +262,12 @@ impl ExternalCanisterService {
                     ExternalCanisterId::Canister(*canister_id),
                 )),
             ),
+            can_fund: Authorization::is_allowed(
+                ctx,
+                &Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                    ExternalCanisterId::Canister(*canister_id),
+                )),
+            ),
             can_call: self
                 .find_external_canister_call_permissions(canister_id)
                 .iter()
@@ -766,7 +772,7 @@ impl ExternalCanisterService {
         self.external_canister_repository
             .remove(&external_canister.to_key());
 
-        // Removes the read & change permissions.
+        // Removes the read, change & fund permissions.
         self.permission_service
             .remove_permission(&Resource::ExternalCanister(
                 ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(
@@ -777,6 +783,13 @@ impl ExternalCanisterService {
         self.permission_service
             .remove_permission(&Resource::ExternalCanister(
                 ExternalCanisterResourceAction::Change(ExternalCanisterId::Canister(
+                    external_canister.canister_id,
+                )),
+            ));
+
+        self.permission_service
+            .remove_permission(&Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Fund(ExternalCanisterId::Canister(
                     external_canister.canister_id,
                 )),
             ));

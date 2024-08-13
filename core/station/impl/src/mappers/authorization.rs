@@ -226,7 +226,7 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 ))
             }
             RequestOperationInput::FundExternalCanister(input) => {
-                Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
                     ExternalCanisterId::Canister(input.canister_id),
                 ))
             }

@@ -408,6 +408,7 @@ export interface ExternalCanisterCallerPrivileges {
   'can_change' : boolean,
   'canister_id' : Principal,
   'can_call' : Array<ExternalCanisterCallerMethodsPrivileges>,
+  'can_fund' : boolean,
 }
 export interface ExternalCanisterChangeRequestPolicyRule {
   'rule' : RequestPolicyRule,

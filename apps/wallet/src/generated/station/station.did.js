@@ -770,6 +770,7 @@ export const idlFactory = ({ IDL }) => {
     'can_change' : IDL.Bool,
     'canister_id' : IDL.Principal,
     'can_call' : IDL.Vec(ExternalCanisterCallerMethodsPrivileges),
+    'can_fund' : IDL.Bool,
   });
   const ExternalCanisterCallRequestPolicyRule = IDL.Record({
     'execution_method' : IDL.Text,

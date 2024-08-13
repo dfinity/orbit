@@ -2358,6 +2358,8 @@ type ExternalCanisterCallerPrivileges = record {
   canister_id : principal;
   // Wether or not the caller can edit the external canister.
   can_change : bool;
+  // Wether or not the caller can fund the external canister.
+  can_fund : bool;
   // The list of methods that the caller can call on the external canister.
   can_call : vec ExternalCanisterCallerMethodsPrivileges;
 };

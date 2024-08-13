@@ -111,6 +111,7 @@ impl From<ExternalCanisterCallerPrivileges> for station_api::ExternalCanisterCal
             id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
             canister_id: privileges.canister_id,
             can_change: privileges.can_change,
+            can_fund: privileges.can_fund,
             can_call: privileges.can_call.into_iter().map(Into::into).collect(),
         }
     }

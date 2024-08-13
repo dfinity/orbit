@@ -1287,10 +1287,10 @@ impl RequestOperation {
                 ..
             }) => {
                 vec![
-                    Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
                         ExternalCanisterId::Any,
                     )),
-                    Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
                         ExternalCanisterId::Canister(*canister_id),
                     )),
                 ]

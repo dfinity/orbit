@@ -438,7 +438,7 @@ impl RequestSpecifier {
             }
             RequestSpecifier::FundExternalCanister(target) => {
                 vec![Resource::ExternalCanister(
-                    ExternalCanisterResourceAction::Change(target.clone()),
+                    ExternalCanisterResourceAction::Fund(target.clone()),
                 )]
             }
             RequestSpecifier::CreateExternalCanister => {
