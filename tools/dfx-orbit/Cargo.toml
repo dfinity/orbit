@@ -1,6 +1,6 @@
 [package]
 name = "dfx-orbit"
-version = "0.2.0"
+version = "0.3.0"
 description = "Command line tool for interacting with the Orbit digital asset manager on the ICP blockchain."
 authors.workspace = true
 edition.workspace = true
