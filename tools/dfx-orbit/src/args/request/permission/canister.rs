@@ -1,8 +1,8 @@
 use crate::DfxOrbit;
 use clap::Parser;
 use orbit_station_api::{
-    ChangeExternalCanisterResourceTargetDTO, EditPermissionOperationInput,
-    ExternalCanisterResourceActionDTO, RequestOperationInput, ResourceDTO,
+    EditPermissionOperationInput, ExternalCanisterIdDTO, ExternalCanisterResourceActionDTO,
+    RequestOperationInput, ResourceDTO,
 };
 
 /// Requests the permisson to propose canister upgrades.
@@ -19,14 +19,13 @@ impl RequestPermissionUpgradeCanisterArgs {
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
-        let canisters: ChangeExternalCanisterResourceTargetDTO =
-            if let Some(canister_name_or_id) = self.canister {
-                dfx_orbit
-                    .canister_id(&canister_name_or_id)
-                    .map(ChangeExternalCanisterResourceTargetDTO::Canister)?
-            } else {
-                ChangeExternalCanisterResourceTargetDTO::Any
-            };
+        let canisters: ExternalCanisterIdDTO = if let Some(canister_name_or_id) = self.canister {
+            dfx_orbit
+                .canister_id(&canister_name_or_id)
+                .map(ExternalCanisterIdDTO::Canister)?
+        } else {
+            ExternalCanisterIdDTO::Any
+        };
 
         let resource =
             ResourceDTO::ExternalCanister(ExternalCanisterResourceActionDTO::Change(canisters));

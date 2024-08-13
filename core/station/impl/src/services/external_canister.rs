@@ -9,9 +9,8 @@ use crate::errors::ExternalCanisterError;
 use crate::mappers::ExternalCanisterMapper;
 use crate::models::request_specifier::RequestSpecifier;
 use crate::models::resource::{
-    CallExternalCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
-    ExecutionMethodResourceTarget, ExternalCanisterResourceAction,
-    ReadExternalCanisterResourceTarget, Resource, ValidationMethodResourceTarget,
+    CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget, ExternalCanisterId,
+    ExternalCanisterResourceAction, Resource, ValidationMethodResourceTarget,
 };
 use crate::models::{
     AddRequestPolicyOperationInput, CanisterMethod, ConfigureExternalCanisterSettingsInput,
@@ -19,9 +18,9 @@ use crate::models::{
     DefiniteCanisterSettingsInput, EditPermissionOperationInput, EditRequestPolicyOperationInput,
     ExternalCanister, ExternalCanisterAvailableFilters, ExternalCanisterCallPermission,
     ExternalCanisterCallRequestPolicyRule, ExternalCanisterCallerMethodsPrivileges,
-    ExternalCanisterCallerPrivileges, ExternalCanisterChangeRequestPolicyRule, ExternalCanisterId,
-    ExternalCanisterPermissions, ExternalCanisterPermissionsInput, ExternalCanisterRequestPolicies,
-    ExternalCanisterRequestPoliciesInput, RequestPolicy,
+    ExternalCanisterCallerPrivileges, ExternalCanisterChangeRequestPolicyRule,
+    ExternalCanisterEntryId, ExternalCanisterPermissions, ExternalCanisterPermissionsInput,
+    ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesInput, RequestPolicy,
 };
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
 use crate::repositories::{
@@ -93,7 +92,7 @@ impl ExternalCanisterService {
     // Returns the external canister if found, otherwise an error.
     pub fn get_external_canister(
         &self,
-        id: &ExternalCanisterId,
+        id: &ExternalCanisterEntryId,
     ) -> ServiceResult<ExternalCanister> {
         let resource = self
             .external_canister_repository
@@ -166,7 +165,7 @@ impl ExternalCanisterService {
             .iter()
             .filter_map(|policy| match &policy.specifier {
                 RequestSpecifier::ChangeExternalCanister(target) => match target {
-                    ChangeExternalCanisterResourceTarget::Canister(target_canister_id)
+                    ExternalCanisterId::Canister(target_canister_id)
                         if *target_canister_id == *canister_id =>
                     {
                         Some(ExternalCanisterChangeRequestPolicyRule {
@@ -197,17 +196,15 @@ impl ExternalCanisterService {
         let read_permission = self
             .permission_service
             .get_permission(&Resource::ExternalCanister(
-                ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(
-                    *canister_id,
-                )),
+                ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(*canister_id)),
             ));
 
         let change_permission =
             self.permission_service
                 .get_permission(&Resource::ExternalCanister(
-                    ExternalCanisterResourceAction::Change(
-                        ChangeExternalCanisterResourceTarget::Canister(*canister_id),
-                    ),
+                    ExternalCanisterResourceAction::Change(ExternalCanisterId::Canister(
+                        *canister_id,
+                    )),
                 ));
 
         ExternalCanisterPermissions {
@@ -262,7 +259,13 @@ impl ExternalCanisterService {
             can_change: Authorization::is_allowed(
                 ctx,
                 &Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                    ChangeExternalCanisterResourceTarget::Canister(*canister_id),
+                    ExternalCanisterId::Canister(*canister_id),
+                )),
+            ),
+            can_fund: Authorization::is_allowed(
+                ctx,
+                &Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                    ExternalCanisterId::Canister(*canister_id),
                 )),
             ),
             can_call: self
@@ -324,7 +327,7 @@ impl ExternalCanisterService {
         // filter out requests that the caller does not have access to read
         retain_accessible_resources(ctx, &mut found_ids, |id| {
             Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
-                ReadExternalCanisterResourceTarget::Canister(*id),
+                ExternalCanisterId::Canister(*id),
             ))
         });
 
@@ -385,7 +388,7 @@ impl ExternalCanisterService {
         if let Some(ref mut names) = &mut names {
             retain_accessible_resources(ctx, names, |entry| {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
-                    ReadExternalCanisterResourceTarget::Canister(entry.canister_id),
+                    ExternalCanisterId::Canister(entry.canister_id),
                 ))
             });
 
@@ -534,7 +537,7 @@ impl ExternalCanisterService {
                 users: Some(input.read.users),
                 user_groups: Some(input.read.user_groups),
                 resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
-                    ReadExternalCanisterResourceTarget::Canister(external_canister.canister_id),
+                    ExternalCanisterId::Canister(external_canister.canister_id),
                 )),
             })?;
 
@@ -545,7 +548,7 @@ impl ExternalCanisterService {
                 users: Some(input.change.users),
                 user_groups: Some(input.change.user_groups),
                 resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                    ChangeExternalCanisterResourceTarget::Canister(external_canister.canister_id),
+                    ExternalCanisterId::Canister(external_canister.canister_id),
                 )),
             })?;
 
@@ -646,9 +649,7 @@ impl ExternalCanisterService {
                         AddRequestPolicyOperationInput {
                             rule: policy.rule,
                             specifier: RequestSpecifier::ChangeExternalCanister(
-                                ChangeExternalCanisterResourceTarget::Canister(
-                                    external_canister.canister_id,
-                                ),
+                                ExternalCanisterId::Canister(external_canister.canister_id),
                             ),
                         },
                     )?;
@@ -718,7 +719,7 @@ impl ExternalCanisterService {
     /// Edits an external canister's settings.
     pub fn edit_external_canister(
         &self,
-        id: &ExternalCanisterId,
+        id: &ExternalCanisterEntryId,
         input: ConfigureExternalCanisterSettingsInput,
     ) -> ServiceResult<ExternalCanister> {
         let mut external_canister = self.get_external_canister(id)?;
@@ -765,25 +766,32 @@ impl ExternalCanisterService {
     /// Only deletes the external canister from the system.
     pub fn soft_delete_external_canister(
         &self,
-        id: &ExternalCanisterId,
+        id: &ExternalCanisterEntryId,
     ) -> ServiceResult<ExternalCanister> {
         let external_canister = self.get_external_canister(id)?;
         self.external_canister_repository
             .remove(&external_canister.to_key());
 
-        // Removes the read & change permissions.
+        // Removes the read, change & fund permissions.
         self.permission_service
             .remove_permission(&Resource::ExternalCanister(
-                ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(
+                ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(
                     external_canister.canister_id,
                 )),
             ));
 
         self.permission_service
             .remove_permission(&Resource::ExternalCanister(
-                ExternalCanisterResourceAction::Change(
-                    ChangeExternalCanisterResourceTarget::Canister(external_canister.canister_id),
-                ),
+                ExternalCanisterResourceAction::Change(ExternalCanisterId::Canister(
+                    external_canister.canister_id,
+                )),
+            ));
+
+        self.permission_service
+            .remove_permission(&Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Fund(ExternalCanisterId::Canister(
+                    external_canister.canister_id,
+                )),
             ));
 
         // Remove all permissions related to the external canister.
@@ -816,7 +824,7 @@ impl ExternalCanisterService {
     /// Deletes an external canister from the system, as well as from the subnet.
     pub async fn hard_delete_external_canister(
         &self,
-        id: &ExternalCanisterId,
+        id: &ExternalCanisterEntryId,
     ) -> ServiceResult<ExternalCanister> {
         let external_canister = self.get_external_canister(id)?;
 
@@ -893,7 +901,7 @@ impl ExternalCanisterService {
     fn check_unique_name(
         &self,
         name: &str,
-        skip_id: Option<ExternalCanisterId>,
+        skip_id: Option<ExternalCanisterEntryId>,
     ) -> ServiceResult<()> {
         if !self
             .external_canister_repository
@@ -913,7 +921,7 @@ impl ExternalCanisterService {
     fn check_unique_canister_id(
         &self,
         canister_id: &Principal,
-        skip_id: Option<ExternalCanisterId>,
+        skip_id: Option<ExternalCanisterEntryId>,
     ) -> ServiceResult<()> {
         if !self
             .external_canister_repository
@@ -1009,7 +1017,7 @@ mod tests {
 
         let read_permission = PERMISSION_REPOSITORY
             .get(&Resource::ExternalCanister(
-                ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(
+                ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(
                     external_canister.canister_id,
                 )),
             ))
@@ -1019,9 +1027,9 @@ mod tests {
 
         let change_permission = PERMISSION_REPOSITORY
             .get(&Resource::ExternalCanister(
-                ExternalCanisterResourceAction::Change(
-                    ChangeExternalCanisterResourceTarget::Canister(external_canister.canister_id),
-                ),
+                ExternalCanisterResourceAction::Change(ExternalCanisterId::Canister(
+                    external_canister.canister_id,
+                )),
             ))
             .unwrap();
 
@@ -1054,9 +1062,9 @@ mod tests {
         let incompatible_policy = REQUEST_POLICY_SERVICE
             .add_request_policy(AddRequestPolicyOperationInput {
                 rule: RequestPolicyRule::AutoApproved,
-                specifier: RequestSpecifier::ChangeExternalCanister(
-                    ChangeExternalCanisterResourceTarget::Canister(Principal::from_slice(&[1; 29])),
-                ),
+                specifier: RequestSpecifier::ChangeExternalCanister(ExternalCanisterId::Canister(
+                    Principal::from_slice(&[1; 29]),
+                )),
             })
             .unwrap();
 
@@ -1097,9 +1105,9 @@ mod tests {
 
         assert_eq!(
             policy.specifier,
-            RequestSpecifier::ChangeExternalCanister(
-                ChangeExternalCanisterResourceTarget::Canister(Principal::from_slice(&[1; 29])),
-            )
+            RequestSpecifier::ChangeExternalCanister(ExternalCanisterId::Canister(
+                Principal::from_slice(&[1; 29])
+            ),)
         );
     }
 

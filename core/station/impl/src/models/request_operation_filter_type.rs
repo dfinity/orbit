@@ -27,4 +27,5 @@ pub enum RequestOperationFilterType {
     RemoveAddressBookEntry,
     ManageSystemInfo,
     ConfigureExternalCanister(Option<Principal>),
+    FundExternalCanister(Option<Principal>),
 }

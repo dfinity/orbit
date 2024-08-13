@@ -47,7 +47,8 @@ type RequestSpecifier = variant {
   RemoveAddressBookEntry : ResourceIds;
   ChangeCanister;
   SetDisasterRecovery;
-  ChangeExternalCanister : ChangeExternalCanisterResourceTarget;
+  ChangeExternalCanister : ExternalCanisterId;
+  FundExternalCanister : ExternalCanisterId;
   CreateExternalCanister;
   CallExternalCanister : CallExternalCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
@@ -658,8 +659,6 @@ type ConfigureExternalCanisterSettingsInput = record {
 type ConfigureExternalCanisterOperationKind = variant {
   // The settings to configure for the external canister.
   Settings : ConfigureExternalCanisterSettingsInput;
-  // The cycles to top up the canister with.
-  TopUp : nat64;
   // Remove the canister from the Station only.
   SoftDelete;
   // Remove the canister from the Station and the IC.
@@ -678,6 +677,29 @@ type ConfigureExternalCanisterOperationInput = record {
 };
 
 type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
+
+// The operation kind for funding an external canister in the station.
+type FundExternalCanisterOperationKind = variant {
+  // The amount of cycles to send to the canister.
+  Send : FundExternalCanisterSendCyclesInput;
+};
+
+// The input type for specifying the cycles to send to an external canister.
+type FundExternalCanisterSendCyclesInput = record {
+  // The amount of cycles to send to the canister.
+  cycles : nat64;
+};
+
+// The input type for funding an external canister in the station.
+type FundExternalCanisterOperationInput = record {
+  // The external canister to fund.
+  canister_id : principal;
+  // The kind of funding operation to perform.
+  kind : FundExternalCanisterOperationKind;
+};
+
+// The request operation for funding an external canister from the station.
+type FundExternalCanisterOperation = FundExternalCanisterOperationInput;
 
 type CreateExternalCanisterOperation = record {
   canister_id : opt principal;
@@ -822,6 +844,8 @@ type RequestOperation = variant {
   CreateExternalCanister : CreateExternalCanisterOperation;
   // An operation for configuring an external canister.
   ConfigureExternalCanister : ConfigureExternalCanisterOperation;
+  // An operation for funding an external canister.
+  FundExternalCanister : FundExternalCanisterOperation;
   // An operation for calling an external canister.
   CallExternalCanister : CallExternalCanisterOperation;
   // An operation for editing an permission.
@@ -871,6 +895,8 @@ type RequestOperationInput = variant {
   ConfigureExternalCanister : ConfigureExternalCanisterOperationInput;
   // An operation for calling an external canister.
   CallExternalCanister : CallExternalCanisterOperationInput;
+  // An operation for funding an external canister.
+  FundExternalCanister : FundExternalCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
   // An operation for adding a request policy.
@@ -918,6 +944,8 @@ type RequestOperationType = variant {
   CreateExternalCanister;
   // An operation for calling an external canister.
   CallExternalCanister;
+  // An operation for sending cycles to an external canister.
+  FundExternalCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -1045,6 +1073,8 @@ type ListRequestsOperationType = variant {
   CreateExternalCanister;
   // An operation for calling an external canister with an optionally specified canister ID.
   CallExternalCanister : opt principal;
+  // An operation for sending cycles to an external canister.
+  FundExternalCanister : opt principal;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -1810,14 +1840,8 @@ type ChangeCanisterResourceAction = variant {
   Create;
 };
 
-// The target canister of a request to change a external canister.
-type ChangeExternalCanisterResourceTarget = variant {
-  Any;
-  Canister : principal;
-};
-
-// The target canister of a request to read (e.g., fetch status of) a external canister.
-type ReadExternalCanisterResourceTarget = variant {
+// The target canister to interact with.
+type ExternalCanisterId = variant {
   Any;
   Canister : principal;
 };
@@ -1826,9 +1850,10 @@ type ReadExternalCanisterResourceTarget = variant {
 type ExternalCanisterResourceAction = variant {
   List;
   Create;
-  Change : ChangeExternalCanisterResourceTarget;
+  Change : ExternalCanisterId;
+  Read : ExternalCanisterId;
+  Fund : ExternalCanisterId;
   Call : CallExternalCanisterResourceTarget;
-  Read : ReadExternalCanisterResourceTarget;
 };
 
 // The validation method targets of a `CallExternalCanister` request.
@@ -2333,6 +2358,8 @@ type ExternalCanisterCallerPrivileges = record {
   canister_id : principal;
   // Wether or not the caller can edit the external canister.
   can_change : bool;
+  // Wether or not the caller can fund the external canister.
+  can_fund : bool;
   // The list of methods that the caller can call on the external canister.
   can_call : vec ExternalCanisterCallerMethodsPrivileges;
 };

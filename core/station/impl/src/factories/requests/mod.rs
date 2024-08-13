@@ -8,6 +8,9 @@ use crate::{
     },
 };
 use async_trait::async_trait;
+use fund_external_canister::{
+    FundExternalCanisterRequestCreate, FundExternalCanisterRequestExecute,
+};
 use orbit_essentials::types::UUID;
 use set_disaster_recovery::SetDisasterRecoveryRequestCreate;
 use station_api::{CreateRequestInput, RequestOperationInput};
@@ -28,6 +31,7 @@ mod edit_permission;
 mod edit_request_policy;
 mod edit_user;
 mod edit_user_group;
+mod fund_external_canister;
 mod manage_system_info;
 mod remove_address_book_entry;
 mod remove_request_policy;
@@ -186,6 +190,12 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
+            RequestOperationInput::FundExternalCanister(operation) => {
+                let creator = Box::new(FundExternalCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
             RequestOperationInput::ConfigureExternalCanister(operation) => {
                 let creator = Box::new(ConfigureExternalCanisterRequestCreate {});
                 creator
@@ -309,6 +319,13 @@ impl RequestFactory {
             }
             RequestOperation::ConfigureExternalCanister(operation) => {
                 Box::new(ConfigureExternalCanisterRequestExecute::new(
+                    request,
+                    operation,
+                    Arc::clone(&EXTERNAL_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::FundExternalCanister(operation) => {
+                Box::new(FundExternalCanisterRequestExecute::new(
                     request,
                     operation,
                     Arc::clone(&EXTERNAL_CANISTER_SERVICE),
