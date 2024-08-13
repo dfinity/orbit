@@ -17,19 +17,19 @@ impl DfxOrbit {
                 let response = self.station.review_list(args.into()).await?;
 
                 if as_json {
-                    display_as_json(&response);
+                    print_as_json(&response);
                 } else {
-                    display_list(response);
+                    println!("{}", display_list(response));
                 }
                 Ok(())
             }
             ReviewActionArgs::Next(args) => {
-                display_as_json(&self.station.review_next(args.into()).await?);
+                print_as_json(&self.station.review_next(args.into()).await?);
                 Ok(())
             }
             ReviewActionArgs::Id(args) => {
                 let request = &self.station.review_id(args.clone().into()).await?;
-                display_as_json(request);
+                print_as_json(request);
 
                 match request.request.status {
                     RequestStatusDTO::Created => {
@@ -52,7 +52,7 @@ impl DfxOrbit {
     }
 }
 
-fn display_as_json<D>(data: D)
+fn print_as_json<D>(data: D)
 where
     D: Serialize,
 {

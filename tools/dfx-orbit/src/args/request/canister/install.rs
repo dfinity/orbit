@@ -1,11 +1,10 @@
 //! Arguments for `dfx orbit canister change wasm`.
 
+use crate::DfxOrbit;
 use clap::{Parser, ValueEnum};
 use orbit_station_api::{
     CanisterInstallMode, ChangeExternalCanisterOperationInput, RequestOperationInput,
 };
-
-use crate::DfxOrbit;
 
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Clone, Parser)]

@@ -3,6 +3,8 @@
 use clap::Parser;
 use orbit_station_api::GetNextApprovableRequestInput;
 
+// TODO: Only show review types that are relevant to dfx-orbbit -> can deactivate with --all
+
 /// Reviews the next request.
 #[derive(Debug, Parser)]
 pub struct ReviewNextArgs {}

@@ -5,7 +5,7 @@ use tabled::{
     Table,
 };
 
-pub(crate) fn display_list(data: ListRequestsResponse) {
+pub(crate) fn display_list(data: ListRequestsResponse) -> String {
     let add_info = data
         .additional_info
         .into_iter()
@@ -80,5 +80,9 @@ pub(crate) fn display_list(data: ListRequestsResponse) {
 
     let table_config = Settings::default().with(Style::psql());
     let table = Table::from_iter(titled_iter).with(table_config).to_string();
-    println!("{}", table);
+
+    table
 }
+
+// TODO: Display request for review id and review next
+// TODO: ^ This needs canister id to name reverse backup
