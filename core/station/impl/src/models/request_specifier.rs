@@ -362,18 +362,16 @@ mod tests {
             .validate()
             .expect("ChangeExternalCanister should be valid");
         RequestSpecifier::ChangeExternalCanister(ExternalCanisterId::Canister(
-            Principal::management_canister(),
+            external_canister_id,
         ))
         .validate()
         .expect("ChangeExternalCanister should be valid");
         RequestSpecifier::FundExternalCanister(ExternalCanisterId::Any)
             .validate()
             .expect("FundExternalCanister should be valid");
-        RequestSpecifier::FundExternalCanister(ExternalCanisterId::Canister(
-            Principal::management_canister(),
-        ))
-        .validate()
-        .expect("FundExternalCanister should be valid");
+        RequestSpecifier::FundExternalCanister(ExternalCanisterId::Canister(external_canister_id))
+            .validate()
+            .expect("FundExternalCanister should be valid");
         RequestSpecifier::CreateExternalCanister
             .validate()
             .expect("CreateExternalCanister should be valid");

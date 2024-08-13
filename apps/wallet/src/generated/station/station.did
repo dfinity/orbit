@@ -678,7 +678,7 @@ type ConfigureExternalCanisterOperationInput = record {
 
 type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
 
-// The input type for funding an external canister in the station.
+// The operation kind for funding an external canister in the station.
 type FundExternalCanisterOperationKind = variant {
   // The amount of cycles to send to the canister.
   Send : FundExternalCanisterSendCyclesInput;
@@ -895,7 +895,7 @@ type RequestOperationInput = variant {
   ConfigureExternalCanister : ConfigureExternalCanisterOperationInput;
   // An operation for calling an external canister.
   CallExternalCanister : CallExternalCanisterOperationInput;
-  // An operation for sending cycles to an external canister.
+  // An operation for funding an external canister.
   FundExternalCanister : FundExternalCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
@@ -1840,7 +1840,7 @@ type ChangeCanisterResourceAction = variant {
   Create;
 };
 
-// The target canister of a interact with.
+// The target canister to interact with.
 type ExternalCanisterId = variant {
   Any;
   Canister : principal;

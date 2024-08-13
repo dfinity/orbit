@@ -23,12 +23,12 @@ pub enum Resource {
     Account(AccountResourceAction),
     AddressBook(ResourceAction),
     ChangeCanister(ChangeCanisterResourceAction),
-    ExternalCanister(ExternalCanisterResourceAction),
     Request(RequestResourceAction),
     RequestPolicy(ResourceAction),
     System(SystemResourceAction),
     User(UserResourceAction),
     UserGroup(ResourceAction),
+    ExternalCanister(ExternalCanisterResourceAction),
 }
 
 impl ModelValidator<ValidationError> for Resource {
@@ -165,10 +165,10 @@ pub enum ExternalCanisterId {
 pub enum ExternalCanisterResourceAction {
     List,
     Create,
-    Fund(ExternalCanisterId),
     Change(ExternalCanisterId),
     Read(ExternalCanisterId),
     Call(CallExternalCanisterResourceTarget),
+    Fund(ExternalCanisterId),
 }
 
 #[storable]
