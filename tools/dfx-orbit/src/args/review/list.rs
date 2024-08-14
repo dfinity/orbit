@@ -4,7 +4,7 @@ use clap::Parser;
 use orbit_station_api::{ListRequestsInput, SortDirection};
 
 // TODO: Ideas what we could filter by:
-// - Filter by status: -> Only the ones which are in Creates
+// - Filter by status: -> Only the ones which are in Created
 // - Filter by times -> There are four times that could be set
 // - Filter by request ids
 // - Filter by default only for external canister calls -> --all for all

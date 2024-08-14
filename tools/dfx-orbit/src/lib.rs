@@ -10,6 +10,7 @@ pub mod dfx_extension_api;
 pub mod local_config;
 pub mod station_agent;
 
+use anyhow::anyhow;
 use candid::Principal;
 pub use cli::asset::AssetAgent;
 use dfx_core::{config::model::canister_id_store::CanisterIdStore, DfxInterface};
@@ -60,6 +61,23 @@ impl DfxOrbit {
             .or_else(|_| canister_id_store.get(canister_name))?;
 
         Ok(canister_id)
+    }
+
+    /// Gets the name of the canister given it's id
+    pub fn canister_name(&self, canister_id: &Principal) -> anyhow::Result<String> {
+        let canister_id_store = CanisterIdStore::new(
+            &self.logger,
+            self.interface.network_descriptor(),
+            self.interface.config(),
+        )?;
+
+        let canister_id = canister_id.to_string();
+        let canister_name = canister_id_store
+            .get_name(&canister_id)
+            .cloned()
+            .ok_or(anyhow!("Failed to find canister name"))?;
+
+        Ok(canister_name)
     }
 
     pub fn own_principal(&self) -> anyhow::Result<Principal> {
