@@ -7,7 +7,7 @@ use crate::{
         indexes::external_canister_index::{
             ExternalCanisterIndex, ExternalCanisterIndexCriteria, ExternalCanisterIndexKind,
         },
-        ExternalCanisterId,
+        ExternalCanisterEntryId,
     },
 };
 use candid::Principal;
@@ -27,7 +27,7 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct ExternalCanisterIndexRepository {}
 
-impl IndexRepository<ExternalCanisterIndex, ExternalCanisterId>
+impl IndexRepository<ExternalCanisterIndex, ExternalCanisterEntryId>
     for ExternalCanisterIndexRepository
 {
     type FindByCriteria = ExternalCanisterIndexCriteria;
@@ -44,7 +44,7 @@ impl IndexRepository<ExternalCanisterIndex, ExternalCanisterId>
         DB.with(|m| m.borrow_mut().remove(index).is_some())
     }
 
-    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<ExternalCanisterId> {
+    fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<ExternalCanisterEntryId> {
         DB.with(|db| {
             let start_key = ExternalCanisterIndex {
                 index: criteria.from,
@@ -60,7 +60,7 @@ impl IndexRepository<ExternalCanisterIndex, ExternalCanisterId>
             db.borrow()
                 .range(start_key..=end_key)
                 .map(|(index, _)| index.external_canister_entry_id)
-                .collect::<HashSet<ExternalCanisterId>>()
+                .collect::<HashSet<ExternalCanisterEntryId>>()
         })
     }
 }
@@ -82,7 +82,7 @@ impl ExternalCanisterIndexRepository {
     pub fn find_names_by_prefix(
         &self,
         prefix: &str,
-    ) -> Vec<(String, ExternalCanisterId, Principal)> {
+    ) -> Vec<(String, ExternalCanisterEntryId, Principal)> {
         DB.with(|db| {
             db.borrow()
                 .range((ExternalCanisterIndex {
@@ -100,7 +100,7 @@ impl ExternalCanisterIndexRepository {
     }
 
     /// Finds the external canister that matches the given name.
-    pub fn find_by_name(&self, search_name: &str) -> Option<ExternalCanisterId> {
+    pub fn find_by_name(&self, search_name: &str) -> Option<ExternalCanisterEntryId> {
         DB.with(|db| {
             db.borrow()
                 .range(
@@ -121,7 +121,7 @@ impl ExternalCanisterIndexRepository {
                     },
                     _ => None,
                 })
-                .collect::<Vec<ExternalCanisterId>>()
+                .collect::<Vec<ExternalCanisterEntryId>>()
                 .first()
                 .cloned()
         })

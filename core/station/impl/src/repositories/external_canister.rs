@@ -5,7 +5,7 @@ use crate::{
         indexes::external_canister_index::{
             ExternalCanisterIndexCriteria, ExternalCanisterIndexKind,
         },
-        ExternalCanister, ExternalCanisterId, ExternalCanisterKey, ExternalCanisterState,
+        ExternalCanister, ExternalCanisterEntryId, ExternalCanisterKey, ExternalCanisterState,
     },
 };
 use candid::Principal;
@@ -75,14 +75,14 @@ impl Repository<ExternalCanisterKey, ExternalCanister> for ExternalCanisterRepos
 
 impl ExternalCanisterRepository {
     /// Returns an external canister by its name if it exists.
-    pub fn find_by_name(&self, name: &str) -> Option<ExternalCanisterId> {
+    pub fn find_by_name(&self, name: &str) -> Option<ExternalCanisterEntryId> {
         let name = format_unique_string(name);
 
         self.indexes.find_by_name(&name)
     }
 
     /// Returns an external canister by its canister id if it exists.
-    pub fn find_by_canister_id(&self, canister_id: &Principal) -> Option<ExternalCanisterId> {
+    pub fn find_by_canister_id(&self, canister_id: &Principal) -> Option<ExternalCanisterEntryId> {
         let found = self
             .indexes
             .find_by_criteria(ExternalCanisterIndexCriteria {
@@ -96,7 +96,7 @@ impl ExternalCanisterRepository {
     /// Verifies that the name is unique among external canisters.
     ///
     /// If `skip_id` is provided, it will be ignored if the match would be the same.
-    pub fn is_unique_name(&self, name: &str, skip_id: Option<ExternalCanisterId>) -> bool {
+    pub fn is_unique_name(&self, name: &str, skip_id: Option<ExternalCanisterEntryId>) -> bool {
         self.find_by_name(name)
             .map_or(true, |existing_id| skip_id == Some(existing_id))
     }
@@ -107,7 +107,7 @@ impl ExternalCanisterRepository {
     pub fn is_unique_canister_id(
         &self,
         canister_id: &Principal,
-        skip_id: Option<ExternalCanisterId>,
+        skip_id: Option<ExternalCanisterEntryId>,
     ) -> bool {
         self.find_by_canister_id(canister_id)
             .map_or(true, |existing_id| skip_id == Some(existing_id))
@@ -122,7 +122,7 @@ impl ExternalCanisterRepository {
     pub fn find_names_by_prefix(
         &self,
         prefix: &str,
-    ) -> Vec<(String, ExternalCanisterId, Principal)> {
+    ) -> Vec<(String, ExternalCanisterEntryId, Principal)> {
         self.indexes.find_names_by_prefix(prefix)
     }
 

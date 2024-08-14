@@ -36,6 +36,7 @@ pub enum RequestOperation {
     ConfigureExternalCanister(ConfigureExternalCanisterOperation),
     CreateExternalCanister(CreateExternalCanisterOperation),
     CallExternalCanister(CallExternalCanisterOperation),
+    FundExternalCanister(FundExternalCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
@@ -65,6 +66,7 @@ impl Display for RequestOperation {
             }
             RequestOperation::CreateExternalCanister(_) => write!(f, "create_external_canister"),
             RequestOperation::CallExternalCanister(_) => write!(f, "call_external_canister"),
+            RequestOperation::FundExternalCanister(_) => write!(f, "fund_external_canister"),
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
@@ -398,6 +400,27 @@ pub struct CreateExternalCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct FundExternalCanisterSendCyclesInput {
+    pub cycles: u64,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum FundExternalCanisterOperationKind {
+    Send(FundExternalCanisterSendCyclesInput),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct FundExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub kind: FundExternalCanisterOperationKind,
+}
+
+pub type FundExternalCanisterOperation = FundExternalCanisterOperationInput;
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ConfigureExternalCanisterOperationInput {
     pub canister_id: Principal,
     pub kind: ConfigureExternalCanisterOperationKind,
@@ -409,7 +432,6 @@ pub type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperation
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ConfigureExternalCanisterOperationKind {
     Settings(ConfigureExternalCanisterSettingsInput),
-    TopUp(u64),
     SoftDelete,
     Delete,
     NativeSettings(DefiniteCanisterSettingsInput),

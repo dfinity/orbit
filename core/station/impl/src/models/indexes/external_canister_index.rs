@@ -1,6 +1,6 @@
 use crate::{
     core::utils::format_unique_string,
-    models::{ExternalCanister, ExternalCanisterId},
+    models::{ExternalCanister, ExternalCanisterEntryId},
 };
 use candid::Principal;
 use orbit_essentials::storable;
@@ -12,7 +12,7 @@ pub struct ExternalCanisterIndex {
     /// An indexed value of the external canister.
     pub index: ExternalCanisterIndexKind,
     /// The external canister id, which is a UUID.
-    pub external_canister_entry_id: ExternalCanisterId,
+    pub external_canister_entry_id: ExternalCanisterEntryId,
     /// The canister id of the external canister, also, it helps avoid an extra lookup for permission checks.
     pub canister_id: Principal,
 }

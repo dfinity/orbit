@@ -29,6 +29,7 @@ pub enum RequestOperationType {
     CallExternalCanister = 22,
     SetDisasterRecovery = 23,
     ConfigureExternalCanister = 24,
+    FundExternalCanister = 25,
 }
 
 impl FromStr for RequestOperationType {
@@ -58,6 +59,7 @@ impl FromStr for RequestOperationType {
             "manage_system_info" => Ok(RequestOperationType::ManageSystemInfo),
             "set_disaster_recovery_committee" => Ok(RequestOperationType::SetDisasterRecovery),
             "configure_external_canister" => Ok(RequestOperationType::ConfigureExternalCanister),
+            "fund_external_canister" => Ok(RequestOperationType::FundExternalCanister),
             _ => Err(()),
         }
     }
@@ -92,6 +94,7 @@ impl Display for RequestOperationType {
             RequestOperationType::ConfigureExternalCanister => {
                 write!(f, "configure_external_canister")
             }
+            RequestOperationType::FundExternalCanister => write!(f, "fund_external_canister"),
         }
     }
 }
@@ -221,6 +224,10 @@ mod tests {
         assert_eq!(
             RequestOperationType::from_str("configure_external_canister").unwrap(),
             RequestOperationType::ConfigureExternalCanister
+        );
+        assert_eq!(
+            RequestOperationType::from_str("fund_external_canister").unwrap(),
+            RequestOperationType::FundExternalCanister
         );
     }
 }
