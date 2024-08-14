@@ -16,8 +16,7 @@ pub struct RequestCanisterCallArgs {
     method_name: String,
     /// The argument to pass to the method.
     argument: Option<String>,
-    // TODO:
-    // /// The format of the argument.
+    // TODO: The format of the argument.
     // #[clap(short, long)]
     // r#type: Option<CandidFormat>,
     // TODO: Read argument from a file

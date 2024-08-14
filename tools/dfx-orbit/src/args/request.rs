@@ -21,7 +21,6 @@ pub struct RequestArgs {
     summary: Option<String>,
 
     // TODO: Summary file as an alternative to summary
-    // TODO: Execution plan
     #[clap(subcommand)]
     action: RequestArgsActions,
 }

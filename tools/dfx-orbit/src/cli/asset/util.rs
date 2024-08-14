@@ -1,8 +1,4 @@
-use std::path::{Path, PathBuf};
-
 use crate::DfxOrbit;
-
-use super::AssetAgent;
 use anyhow::{anyhow, bail};
 use candid::Principal;
 use dfx_core::config::model::dfinity::CanisterTypeProperties;
@@ -11,6 +7,7 @@ use orbit_station_api::{
     CallExternalCanisterOperationInput, CanisterMethodDTO, CreateRequestInput,
     CreateRequestResponse, RequestOperationInput,
 };
+use std::path::{Path, PathBuf};
 
 impl DfxOrbit {
     /// Request from the station to grant the `Prepare` permission for the asset canister
@@ -77,19 +74,5 @@ impl DfxOrbit {
 
     pub(crate) fn as_paths(paths: &[PathBuf]) -> Vec<&Path> {
         paths.iter().map(|pathbuf| pathbuf.as_path()).collect()
-    }
-}
-
-impl AssetAgent<'_> {
-    // TODO: Turn into a functionality
-    pub fn request_prepare_permission_payload(
-        canister: Principal,
-    ) -> Result<Vec<u8>, candid::Error> {
-        let args = GrantPermissionArguments {
-            to_principal: canister,
-            permission: Permission::Prepare,
-        };
-
-        candid::encode_one(args)
     }
 }
