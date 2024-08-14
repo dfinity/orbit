@@ -13,14 +13,13 @@ use sha2::{Digest, Sha256};
 use station_api::{
     AddRequestPolicyOperationInput, AllowDTO, CallExternalCanisterOperationInput,
     CallExternalCanisterResourceTargetDTO, CanisterInstallMode, CanisterMethodDTO,
-    ChangeExternalCanisterOperationInput, ChangeExternalCanisterResourceTargetDTO,
-    CreateExternalCanisterOperationInput, CreateExternalCanisterOperationKindCreateNewDTO,
-    CreateExternalCanisterOperationKindDTO, EditPermissionOperationInput,
-    ExecutionMethodResourceTargetDTO, ExternalCanisterPermissionsInput,
-    ExternalCanisterRequestPoliciesInput, ListRequestsInput, ListRequestsOperationTypeDTO,
-    ListRequestsResponse, QuorumDTO, ReadExternalCanisterResourceTargetDTO,
-    RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
+    ChangeExternalCanisterOperationInput, CreateExternalCanisterOperationInput,
+    CreateExternalCanisterOperationKindCreateNewDTO, CreateExternalCanisterOperationKindDTO,
+    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
+    ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput, ListRequestsInput,
+    ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO, RequestApprovalStatusDTO,
+    RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
+    RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 
 #[test]
@@ -80,7 +79,7 @@ fn successful_four_eyes_upgrade() {
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
         resource: station_api::ResourceDTO::ExternalCanister(
             station_api::ExternalCanisterResourceActionDTO::Change(
-                ChangeExternalCanisterResourceTargetDTO::Canister(canister_id),
+                ExternalCanisterIdDTO::Canister(canister_id),
             ),
         ),
         auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
@@ -126,7 +125,7 @@ fn successful_four_eyes_upgrade() {
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
             specifier: RequestSpecifierDTO::ChangeExternalCanister(
-                ChangeExternalCanisterResourceTargetDTO::Canister(canister_id),
+                ExternalCanisterIdDTO::Canister(canister_id),
             ),
             rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
                 approvers: UserSpecifierDTO::Any,
@@ -586,9 +585,9 @@ fn create_external_canister_and_check_status() {
     // allow the first user to read the canister status of the external canister created above
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
         resource: station_api::ResourceDTO::ExternalCanister(
-            station_api::ExternalCanisterResourceActionDTO::Read(
-                ReadExternalCanisterResourceTargetDTO::Canister(canister_id),
-            ),
+            station_api::ExternalCanisterResourceActionDTO::Read(ExternalCanisterIdDTO::Canister(
+                canister_id,
+            )),
         ),
         auth_scope: None,
         user_groups: None,

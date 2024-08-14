@@ -6,7 +6,9 @@ use crate::{
         DefiniteCanisterSettingsInput, ExternalCanister, ExternalCanisterCallRequestPolicyRule,
         ExternalCanisterCallerMethodsPrivileges, ExternalCanisterCallerPrivileges,
         ExternalCanisterChangeRequestPolicyRule, ExternalCanisterPermissions,
-        ExternalCanisterRequestPolicies, ExternalCanisterState,
+        ExternalCanisterRequestPolicies, ExternalCanisterState, FundExternalCanisterOperation,
+        FundExternalCanisterOperationInput, FundExternalCanisterOperationKind,
+        FundExternalCanisterSendCyclesInput,
     },
     repositories::ExternalCanisterWhereClauseSort,
 };
@@ -109,6 +111,7 @@ impl From<ExternalCanisterCallerPrivileges> for station_api::ExternalCanisterCal
             id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
             canister_id: privileges.canister_id,
             can_change: privileges.can_change,
+            can_fund: privileges.can_fund,
             can_call: privileges.can_call.into_iter().map(Into::into).collect(),
         }
     }
@@ -172,9 +175,6 @@ impl From<station_api::ConfigureExternalCanisterOperationKindDTO>
             station_api::ConfigureExternalCanisterOperationKindDTO::SoftDelete => {
                 ConfigureExternalCanisterOperationKind::SoftDelete
             }
-            station_api::ConfigureExternalCanisterOperationKindDTO::TopUp(cycles) => {
-                ConfigureExternalCanisterOperationKind::TopUp(cycles)
-            }
             station_api::ConfigureExternalCanisterOperationKindDTO::NativeSettings(settings) => {
                 ConfigureExternalCanisterOperationKind::NativeSettings(settings.into())
             }
@@ -226,6 +226,64 @@ impl From<station_api::ExternalCanisterStateDTO> for ExternalCanisterState {
         match state {
             station_api::ExternalCanisterStateDTO::Active => ExternalCanisterState::Active,
             station_api::ExternalCanisterStateDTO::Archived => ExternalCanisterState::Archived,
+        }
+    }
+}
+
+impl From<FundExternalCanisterOperation> for station_api::FundExternalCanisterOperationDTO {
+    fn from(operation: FundExternalCanisterOperation) -> Self {
+        station_api::FundExternalCanisterOperationDTO {
+            canister_id: operation.canister_id,
+            kind: operation.kind.into(),
+        }
+    }
+}
+
+impl From<station_api::FundExternalCanisterOperationDTO> for FundExternalCanisterOperationInput {
+    fn from(operation: station_api::FundExternalCanisterOperationDTO) -> Self {
+        FundExternalCanisterOperationInput {
+            canister_id: operation.canister_id,
+            kind: operation.kind.into(),
+        }
+    }
+}
+
+impl From<FundExternalCanisterOperationKind> for station_api::FundExternalCanisterOperationKindDTO {
+    fn from(kind: FundExternalCanisterOperationKind) -> Self {
+        match kind {
+            FundExternalCanisterOperationKind::Send(input) => {
+                station_api::FundExternalCanisterOperationKindDTO::Send(input.into())
+            }
+        }
+    }
+}
+
+impl From<station_api::FundExternalCanisterOperationKindDTO> for FundExternalCanisterOperationKind {
+    fn from(kind: station_api::FundExternalCanisterOperationKindDTO) -> Self {
+        match kind {
+            station_api::FundExternalCanisterOperationKindDTO::Send(input) => {
+                FundExternalCanisterOperationKind::Send(input.into())
+            }
+        }
+    }
+}
+
+impl From<FundExternalCanisterSendCyclesInput>
+    for station_api::FundExternalCanisterSendCyclesInput
+{
+    fn from(input: FundExternalCanisterSendCyclesInput) -> Self {
+        station_api::FundExternalCanisterSendCyclesInput {
+            cycles: input.cycles,
+        }
+    }
+}
+
+impl From<station_api::FundExternalCanisterSendCyclesInput>
+    for FundExternalCanisterSendCyclesInput
+{
+    fn from(input: station_api::FundExternalCanisterSendCyclesInput) -> Self {
+        FundExternalCanisterSendCyclesInput {
+            cycles: input.cycles,
         }
     }
 }

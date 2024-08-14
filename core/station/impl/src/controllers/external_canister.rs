@@ -1,8 +1,6 @@
 use crate::{
     core::middlewares::{authorize, call_context},
-    models::resource::{
-        ExternalCanisterResourceAction, ReadExternalCanisterResourceTarget, Resource,
-    },
+    models::resource::{ExternalCanisterId, ExternalCanisterResourceAction, Resource},
     services::{ExternalCanisterService, EXTERNAL_CANISTER_SERVICE},
 };
 use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse};
@@ -60,12 +58,12 @@ impl ExternalCanisterController {
         Self { canister_service }
     }
 
-    #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(input.canister_id)))]))]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]
     async fn canister_status(&self, input: CanisterIdRecord) -> ApiResult<CanisterStatusResponse> {
         self.canister_service.canister_status(input).await
     }
 
-    #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Canister(input.canister_id)))]))]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]
     async fn get_external_canister(
         &self,
         input: GetExternalCanisterInput,

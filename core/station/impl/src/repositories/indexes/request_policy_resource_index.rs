@@ -5,9 +5,8 @@ use crate::{
             RequestPolicyResourceIndex, RequestPolicyResourceIndexCriteria,
         },
         resource::{
-            CallExternalCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
-            ExecutionMethodResourceTarget, ExternalCanisterResourceAction, Resource,
-            ValidationMethodResourceTarget,
+            CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget, ExternalCanisterId,
+            ExternalCanisterResourceAction, Resource, ValidationMethodResourceTarget,
         },
         CanisterMethod,
     },
@@ -95,14 +94,14 @@ impl RequestPolicyResourceIndexRepository {
                         (RequestPolicyResourceIndex {
                             resource: Resource::ExternalCanister(
                                 ExternalCanisterResourceAction::Change(
-                                    ChangeExternalCanisterResourceTarget::Canister(*canister_id),
+                                    ExternalCanisterId::Canister(*canister_id),
                                 ),
                             ),
                             policy_id: [u8::MIN; 16],
                         })..(RequestPolicyResourceIndex {
                             resource: Resource::ExternalCanister(
                                 ExternalCanisterResourceAction::Change(
-                                    ChangeExternalCanisterResourceTarget::Canister(*canister_id),
+                                    ExternalCanisterId::Canister(*canister_id),
                                 ),
                             ),
                             policy_id: [u8::MAX; 16],
@@ -203,9 +202,7 @@ mod tests {
         for i in 0..10 {
             let index = RequestPolicyResourceIndex {
                 resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                    ChangeExternalCanisterResourceTarget::Canister(Principal::from_slice(
-                        &[i % 2; 29],
-                    )),
+                    ExternalCanisterId::Canister(Principal::from_slice(&[i % 2; 29])),
                 )),
                 policy_id: [i; 16],
             };

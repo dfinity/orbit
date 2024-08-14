@@ -253,8 +253,8 @@ mod benchs {
     use crate::models::{
         request_specifier::RequestSpecifier,
         resource::{
-            CallExternalCanisterResourceTarget, ChangeExternalCanisterResourceTarget,
-            ExecutionMethodResourceTarget, ValidationMethodResourceTarget,
+            CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget, ExternalCanisterId,
+            ValidationMethodResourceTarget,
         },
         CanisterMethod, RequestPolicyRule,
     };
@@ -272,7 +272,7 @@ mod benchs {
                     id: *Uuid::new_v4().as_bytes(),
                     rule: RequestPolicyRule::AutoApproved,
                     specifier: RequestSpecifier::ChangeExternalCanister(
-                        ChangeExternalCanisterResourceTarget::Canister(canister_id),
+                        ExternalCanisterId::Canister(canister_id),
                     ),
                 });
             }

@@ -72,13 +72,7 @@ pub enum ChangeCanisterResourceActionDTO {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub enum ChangeExternalCanisterResourceTargetDTO {
-    Any,
-    Canister(Principal),
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub enum ReadExternalCanisterResourceTargetDTO {
+pub enum ExternalCanisterIdDTO {
     Any,
     Canister(Principal),
 }
@@ -87,9 +81,10 @@ pub enum ReadExternalCanisterResourceTargetDTO {
 pub enum ExternalCanisterResourceActionDTO {
     List,
     Create,
-    Change(ChangeExternalCanisterResourceTargetDTO),
+    Read(ExternalCanisterIdDTO),
+    Fund(ExternalCanisterIdDTO),
+    Change(ExternalCanisterIdDTO),
     Call(CallExternalCanisterResourceTargetDTO),
-    Read(ReadExternalCanisterResourceTargetDTO),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

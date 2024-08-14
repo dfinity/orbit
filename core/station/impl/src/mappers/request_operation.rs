@@ -3,10 +3,9 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget,
-            ChangeCanisterResourceAction, ChangeExternalCanisterResourceTarget,
-            ExecutionMethodResourceTarget, ExternalCanisterResourceAction,
-            PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-            UserResourceAction,
+            ChangeCanisterResourceAction, ExecutionMethodResourceTarget, ExternalCanisterId,
+            ExternalCanisterResourceAction, PermissionResourceAction, Resource, ResourceAction,
+            ResourceId, SystemResourceAction, UserResourceAction,
         },
         Account, AccountKey, AddAccountOperation, AddAccountOperationInput,
         AddAddressBookEntryOperation, AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
@@ -26,8 +25,8 @@ use crate::{
         EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
         ExternalCanisterCallPermission, ExternalCanisterCallRequestPolicyRuleInput,
         ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsInput,
-        ExternalCanisterRequestPoliciesInput, ManageSystemInfoOperation,
-        ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
+        ExternalCanisterRequestPoliciesInput, FundExternalCanisterOperation,
+        ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
         RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
         TransferOperation, User,
@@ -507,9 +506,6 @@ impl From<ConfigureExternalCanisterOperationKind>
             }
             ConfigureExternalCanisterOperationKind::SoftDelete => {
                 station_api::ConfigureExternalCanisterOperationKindDTO::SoftDelete
-            }
-            ConfigureExternalCanisterOperationKind::TopUp(cycles) => {
-                station_api::ConfigureExternalCanisterOperationKindDTO::TopUp(cycles)
             }
             ConfigureExternalCanisterOperationKind::Settings(input) => {
                 station_api::ConfigureExternalCanisterOperationKindDTO::Settings(input.into())
@@ -1182,6 +1178,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::ChangeExternalCanister(operation) => {
                 RequestOperationDTO::ChangeExternalCanister(Box::new(operation.into()))
             }
+            RequestOperation::FundExternalCanister(operation) => {
+                RequestOperationDTO::FundExternalCanister(Box::new(operation.into()))
+            }
             RequestOperation::ConfigureExternalCanister(operation) => {
                 RequestOperationDTO::ConfigureExternalCanister(Box::new(operation.into()))
             }
@@ -1297,10 +1296,10 @@ impl RequestOperation {
             }) => {
                 vec![
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                        ChangeExternalCanisterResourceTarget::Any,
+                        ExternalCanisterId::Any,
                     )),
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                        ChangeExternalCanisterResourceTarget::Canister(input.canister_id),
+                        ExternalCanisterId::Canister(input.canister_id),
                     )),
                 ]
             }
@@ -1310,10 +1309,23 @@ impl RequestOperation {
             }) => {
                 vec![
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                        ChangeExternalCanisterResourceTarget::Any,
+                        ExternalCanisterId::Any,
                     )),
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                        ChangeExternalCanisterResourceTarget::Canister(*canister_id),
+                        ExternalCanisterId::Canister(*canister_id),
+                    )),
+                ]
+            }
+            RequestOperation::FundExternalCanister(FundExternalCanisterOperation {
+                canister_id,
+                ..
+            }) => {
+                vec![
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                        ExternalCanisterId::Any,
+                    )),
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                        ExternalCanisterId::Canister(*canister_id),
                     )),
                 ]
             }
