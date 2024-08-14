@@ -104,31 +104,36 @@ const cycleObtainStrategies = computed(() => {
 });
 
 watch(
-  () => isFormValid.value,
-  isValid => {
-    if (isValid) {
-      const selectedCycleObtainStrategy = cycleObtainStrategySelected.value!;
-
-      switch (selectedCycleObtainStrategy) {
+  () => cycleObtainStrategySelected.value,
+  newValue => {
+    if (newValue) {
+      switch (newValue) {
         case CycleObtainStrategyEnum.Disabled:
           model.value.cycle_obtain_strategy = [{ Disabled: null }];
           break;
-        case CycleObtainStrategyEnum.MintFromNativeToken:
-          model.value.cycle_obtain_strategy = [
-            {
-              MintFromNativeToken: {
-                account_id: mintFromNativeTokenAccountId.value!,
-              },
-            },
-          ];
-          break;
-        default:
-          unreachable(selectedCycleObtainStrategy);
       }
     }
-
-    emit('valid', isValid ?? false);
   },
+);
+
+watch(
+  () => mintFromNativeTokenAccountId.value,
+  newValue => {
+    if (newValue) {
+      model.value.cycle_obtain_strategy = [
+        {
+          MintFromNativeToken: {
+            account_id: newValue,
+          },
+        },
+      ];
+    }
+  },
+);
+
+watch(
+  () => isFormValid.value,
+  isValid => emit('valid', isValid ?? false),
 );
 
 const name = computed({
