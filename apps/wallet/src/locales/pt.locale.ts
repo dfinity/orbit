@@ -580,6 +580,8 @@ export default {
       btn_new_transfer: 'Nova transferência',
       btn_upload_csv: 'Carregar CSV',
       error_fetching_account: 'Erro ao carregar as conta, por favor, tente novamente.',
+      cycle_obtain_account:
+        'Esta conta é usada para recarregar o saldo de ciclos da carteira Orbit.',
     },
     account: {
       not_found: 'Conta não encontrada',

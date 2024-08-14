@@ -583,6 +583,8 @@ export default {
       btn_new_transfer: 'Nouveau Transfert',
       btn_upload_csv: 'Uploader un CSV',
       error_fetching_account: 'Erreur lors du chargement du compte, veuillez essayer de nouveau.',
+      cycle_obtain_account:
+        'Ce compte est utilisé pour recharger le solde de cycles de la station Orbit.',
     },
     account: {
       not_found: 'Pas de compte trouvé',

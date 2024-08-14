@@ -578,6 +578,7 @@ export default {
       btn_new_transfer: 'New transfer',
       btn_upload_csv: 'Upload CSV',
       error_fetching_account: 'Error fetching account, please try again.',
+      cycle_obtain_account: 'This account is used to top up the Orbit station cycle balance.',
     },
     account: {
       not_found: 'Account not found',
