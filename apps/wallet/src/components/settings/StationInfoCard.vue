@@ -76,6 +76,48 @@
           </VListItemSubtitle>
         </VListItem>
         <VListItem class="px-0">
+          <VListItemTitle class="font-weight-bold">
+            {{ $t('terms.cycle_obtain_strategy') }}
+            <AuthCheck :privileges="[Privilege.ManageSystemInfo]">
+              <ActionBtn
+                v-model="manageSystemInfoInput"
+                :icon="mdiPencil"
+                :title="$t(`requests.types.managesysteminfo.title`)"
+                color="primary"
+                :submit="submitManageSystemInfoOperation"
+                size="x-small"
+                variant="text"
+                data-test-id="manage-system-info-btn"
+                @failed="useOnFailedOperation"
+                @submitted="useOnSuccessfulOperation"
+              >
+                <template #default="{ model: elem, submit }">
+                  <ManageSystemInfoForm
+                    v-model="elem.value.model"
+                    @valid="isValid => (elem.value.valid = isValid)"
+                    @submit="submit"
+                  />
+                </template>
+                <template #actions="{ submit, loading: saving, model: elem }">
+                  <VSpacer />
+                  <VBtn
+                    :loading="saving"
+                    :disabled="!elem.value.valid"
+                    color="primary"
+                    variant="flat"
+                    @click="submit"
+                  >
+                    {{ $t('terms.save') }}
+                  </VBtn>
+                </template>
+              </ActionBtn>
+            </AuthCheck>
+          </VListItemTitle>
+          <VListItemSubtitle class="d-inline">
+            <span data-test-id="obtain-cycle-strategy">{{ cycleObtainStrategy }}</span>
+          </VListItemSubtitle>
+        </VListItem>
+        <VListItem class="px-0">
           <VListItemTitle class="font-weight-bold">{{ $t(`terms.version`) }}</VListItemTitle>
           <VListItemSubtitle>{{
             station.configuration.details?.version ? station.configuration.details.version : '-'
@@ -163,7 +205,12 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import { defaultHomeRoute } from '~/configs/routes.config';
-import { ManageSystemInfoOperationInput, Request } from '~/generated/station/station.did';
+import {
+  CycleObtainStrategy,
+  CycleObtainStrategyInput,
+  ManageSystemInfoOperationInput,
+  Request,
+} from '~/generated/station/station.did';
 import { storeUserStationToUserStation } from '~/mappers/stations.mapper';
 import { i18n } from '~/plugins/i18n.plugin';
 import { services } from '~/plugins/services.plugin';
@@ -173,6 +220,7 @@ import { useStationStore } from '~/stores/station.store';
 import { Privilege } from '~/types/auth.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import StationInfoForm, { StationInfoModel } from './StationInfoForm.vue';
+import { unreachable, variantIs } from '~/utils/helper.utils';
 
 const station = useStationStore();
 const session = useSessionStore();
@@ -265,12 +313,31 @@ const stationConfigInput = ref<{
   model: StationInfoModel;
 }>(initialCreateInput());
 
+function cycleObtainStrategyToInput(strategy: CycleObtainStrategy): CycleObtainStrategyInput {
+  if (variantIs(strategy, 'MintFromNativeToken')) {
+    return {
+      MintFromNativeToken: {
+        account_id: strategy.MintFromNativeToken.account_id,
+      },
+    };
+  } else if (variantIs(strategy, 'Disabled')) {
+    return { Disabled: null };
+  } else {
+    return unreachable(strategy);
+  }
+}
+
 const manageSystemInfoInput = ref<{
   valid: boolean;
   model: ManageSystemInfoOperationInput;
 }>({
   valid: false,
-  model: { name: [station.configuration.details.name], cycle_obtain_strategy: [] },
+  model: {
+    name: [station.configuration.details.name],
+    cycle_obtain_strategy: station.configuration.cycleObtainStrategy
+      ? [cycleObtainStrategyToInput(station.configuration.cycleObtainStrategy)]
+      : [],
+  },
 });
 
 const submitManageSystemInfoOperation = async ({
@@ -279,6 +346,18 @@ const submitManageSystemInfoOperation = async ({
   valid: boolean;
   model: ManageSystemInfoOperationInput;
 }): Promise<Request> => {
+  console.log('submit', model);
+
   return station.service.createManageSystemInfoRequest(model);
 };
+
+const cycleObtainStrategy = computed(() => {
+  if (variantIs(station.configuration.cycleObtainStrategy, 'MintFromNativeToken')) {
+    return `${i18n.global.t('pages.administration.cycle_obtain_strategy_mint_from_native_token')} "${station.configuration.cycleObtainStrategy.MintFromNativeToken.account_name}"`;
+  } else if (variantIs(station.configuration.cycleObtainStrategy, 'Disabled')) {
+    return i18n.global.t('pages.administration.cycle_obtain_strategy_disabled');
+  } else {
+    return unreachable(station.configuration.cycleObtainStrategy);
+  }
+});
 </script>

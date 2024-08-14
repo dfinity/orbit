@@ -9,6 +9,7 @@ import { logger } from '~/core/logger.core';
 import {
   Asset,
   Capabilities,
+  CycleObtainStrategy,
   Notification,
   UUID,
   User,
@@ -19,9 +20,11 @@ import { router } from '~/plugins/router.plugin';
 import { services } from '~/plugins/services.plugin';
 import { StationService } from '~/services/station.service';
 import { useAppStore } from '~/stores/app.store';
+import { Privilege } from '~/types/auth.types';
 import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
 import { LoadableItem } from '~/types/helper.types';
 import { computedStationName, isApiError, popRedirectToLocation } from '~/utils/app.utils';
+import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import { arrayBatchMaker, removeBasePathFromPathname, variantIs } from '~/utils/helper.utils';
 import { accountsWorker, startWorkers, stopWorkers } from '~/workers';
 
@@ -50,6 +53,7 @@ export interface StationStoreState {
   configuration: {
     loading: boolean;
     details: Capabilities;
+    cycleObtainStrategy: CycleObtainStrategy;
   };
   notifications: {
     loading: boolean;
@@ -120,6 +124,7 @@ const initialStoreState = (): StationStoreState => {
         version: '',
         supported_assets: [],
       },
+      cycleObtainStrategy: { Disabled: null },
     },
     notifications: {
       loading: false,
@@ -227,6 +232,13 @@ export const useStationStore = defineStore('station', {
 
         this.user = myUser.me;
         this.privileges = myUser.privileges;
+
+        if (hasRequiredPrivilege({ anyOf: [Privilege.SystemInfo] })) {
+          const systemInfo = await stationService.systemInfo();
+          this.configuration.cycleObtainStrategy = systemInfo.system.cycle_obtain_strategy;
+
+          console.log(systemInfo);
+        }
 
         // loads the capabilities of the station
         this.configuration.details = await stationService.capabilities();

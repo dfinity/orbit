@@ -1656,15 +1656,30 @@ type ManageSystemInfoOperationInput = record {
   // The name of the station.
   name : opt text;
   // The strategy to use to for the station to top itself up with cycles.
-  cycle_obtain_strategy : opt CycleObtainStrategy;
+  cycle_obtain_strategy : opt CycleObtainStrategyInput;
 };
 
 // Strategy defining how the station canister tops up its own cycles.
-type CycleObtainStrategy = variant {
+type CycleObtainStrategyInput = variant {
+  // Do not obtain cycles for Orbit.
+  Disabled;
   // Use the CMC to mint cycles from ICP held in an Orbit account.
   MintFromNativeToken : record {
     // The Orbit account ID to use for minting cycles.
     account_id : UUID;
+  };
+};
+
+// Strategy defining how the station canister tops up its own cycles.
+type CycleObtainStrategy = variant {
+  // Do not obtain cycles for Orbit.
+  Disabled;
+  // Use the CMC to mint cycles from ICP held in an Orbit account.
+  MintFromNativeToken : record {
+    // The Orbit account ID to use for minting cycles.
+    account_id : UUID;
+    // The Orbit account name.
+    account_name : opt text;
   };
 };
 
@@ -1685,7 +1700,7 @@ type SystemInfo = record {
   // The disaster recovery configuration.
   disaster_recovery : opt DisasterRecovery;
   // Strategy defining how the station canister tops up its own cycles.
-  cycle_obtain_strategy : opt CycleObtainStrategy;
+  cycle_obtain_strategy : CycleObtainStrategy;
 };
 
 // The disaster recovery committee extended with the user group name.

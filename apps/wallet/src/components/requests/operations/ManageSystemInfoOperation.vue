@@ -1,23 +1,26 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <RequestOperationListRow v-if="formValue.name?.[0]">
+    <RequestOperationListRow v-if="name">
       <template #name>{{ $t('terms.name') }}</template>
       <template #content>
-        {{ formValue.name[0] }}
+        {{ name }}
+      </template>
+    </RequestOperationListRow>
+    <RequestOperationListRow v-if="cycleObtainStartegySummary">
+      <template #name>{{ $t('terms.cycle_obtain_strategy') }}</template>
+      <template #content>
+        {{ cycleObtainStartegySummary }}
       </template>
     </RequestOperationListRow>
   </div>
-  <ManageSystemInfoForm v-else :model-value="formValue" mode="view" />
+  <ManageSystemInfoForm v-else :model-value="props.operation.input" mode="view" />
 </template>
 
 <script setup lang="ts">
-import { Ref, computed, onBeforeMount, ref } from 'vue';
+import { computed } from 'vue';
 import ManageSystemInfoForm from '~/components/settings/ManageSystemInfoForm.vue';
-import {
-  ManageSystemInfoOperation,
-  ManageSystemInfoOperationInput,
-  Request,
-} from '~/generated/station/station.did';
+import { ManageSystemInfoOperation, Request } from '~/generated/station/station.did';
+import { cycleObtainStrategyToSummary } from '~/mappers/obtain-cycles.mapper';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 
 const props = withDefaults(
@@ -32,12 +35,11 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
-const formValue: Ref<Partial<ManageSystemInfoOperationInput>> = ref({});
 
-onBeforeMount(() => {
-  const operation: Partial<ManageSystemInfoOperationInput> = {};
-  operation.name = props.operation.input.name;
-
-  formValue.value = operation;
-});
+const name = computed(() => props.operation.input.name?.[0] ?? '');
+const cycleObtainStartegySummary = computed(() =>
+  props.operation.input.cycle_obtain_strategy[0]
+    ? cycleObtainStrategyToSummary(props.operation.input.cycle_obtain_strategy[0])
+    : null,
+);
 </script>
