@@ -371,8 +371,6 @@ export class StationService {
       throw result.Err;
     }
 
-    // result.Ok.system.cycle_obtain_strategy = [];
-
     return result.Ok;
   }
 

@@ -236,8 +236,6 @@ export const useStationStore = defineStore('station', {
         if (hasRequiredPrivilege({ anyOf: [Privilege.SystemInfo] })) {
           const systemInfo = await stationService.systemInfo();
           this.configuration.cycleObtainStrategy = systemInfo.system.cycle_obtain_strategy;
-
-          console.log(systemInfo);
         }
 
         // loads the capabilities of the station

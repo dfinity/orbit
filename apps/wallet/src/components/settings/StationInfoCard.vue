@@ -346,8 +346,6 @@ const submitManageSystemInfoOperation = async ({
   valid: boolean;
   model: ManageSystemInfoOperationInput;
 }): Promise<Request> => {
-  console.log('submit', model);
-
   return station.service.createManageSystemInfoRequest(model);
 };
 
