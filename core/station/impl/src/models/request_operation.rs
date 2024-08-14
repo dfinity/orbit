@@ -81,6 +81,7 @@ impl Display for RequestOperation {
 pub struct TransferOperation {
     pub transfer_id: Option<UUID>,
     pub input: TransferOperationInput,
+    pub fee: Option<candid::Nat>,
 }
 
 #[storable]

@@ -348,6 +348,8 @@ type TransferOperation = record {
   input : TransferOperationInput;
   // The id of the executed transfer.
   transfer_id : opt UUID;
+  // The fee paid for the transaction.
+  fee : opt nat;
 };
 
 // Input type for editing an account through a request.

@@ -70,6 +70,7 @@ impl TransferOperation {
             transfer_id: self
                 .transfer_id
                 .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
+            fee: self.fee,
         }
     }
 }
