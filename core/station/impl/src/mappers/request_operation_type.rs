@@ -1,7 +1,86 @@
 use crate::mappers::HelperMapper;
-use crate::models::request_operation_filter_type::RequestOperationFilterType;
-use crate::models::{RequestOperation, RequestOperationType};
+use crate::models::{ListRequestsOperationType, RequestOperation, RequestOperationType};
 use station_api::{ListRequestsOperationTypeDTO, RequestOperationTypeDTO};
+
+impl From<station_api::ListRequestsOperationTypeDTO> for ListRequestsOperationType {
+    fn from(value: station_api::ListRequestsOperationTypeDTO) -> Self {
+        match value {
+            station_api::ListRequestsOperationTypeDTO::Transfer(from_account_id) => {
+                ListRequestsOperationType::Transfer(from_account_id.map(|id| {
+                    *HelperMapper::to_uuid(id)
+                        .expect("Invalid account id")
+                        .as_bytes()
+                }))
+            }
+            station_api::ListRequestsOperationTypeDTO::AddAccount => {
+                ListRequestsOperationType::AddAccount
+            }
+            station_api::ListRequestsOperationTypeDTO::EditAccount => {
+                ListRequestsOperationType::EditAccount
+            }
+            station_api::ListRequestsOperationTypeDTO::AddAddressBookEntry => {
+                ListRequestsOperationType::AddAddressBookEntry
+            }
+            station_api::ListRequestsOperationTypeDTO::EditAddressBookEntry => {
+                ListRequestsOperationType::EditAddressBookEntry
+            }
+            station_api::ListRequestsOperationTypeDTO::RemoveAddressBookEntry => {
+                ListRequestsOperationType::RemoveAddressBookEntry
+            }
+            station_api::ListRequestsOperationTypeDTO::AddUser => {
+                ListRequestsOperationType::AddUser
+            }
+            station_api::ListRequestsOperationTypeDTO::EditUser => {
+                ListRequestsOperationType::EditUser
+            }
+            station_api::ListRequestsOperationTypeDTO::AddUserGroup => {
+                ListRequestsOperationType::AddUserGroup
+            }
+            station_api::ListRequestsOperationTypeDTO::EditUserGroup => {
+                ListRequestsOperationType::EditUserGroup
+            }
+            station_api::ListRequestsOperationTypeDTO::RemoveUserGroup => {
+                ListRequestsOperationType::RemoveUserGroup
+            }
+            station_api::ListRequestsOperationTypeDTO::ChangeCanister => {
+                ListRequestsOperationType::ChangeCanister
+            }
+            station_api::ListRequestsOperationTypeDTO::CreateExternalCanister => {
+                ListRequestsOperationType::CreateExternalCanister
+            }
+            station_api::ListRequestsOperationTypeDTO::ChangeExternalCanister(canister_id) => {
+                ListRequestsOperationType::ChangeExternalCanister(canister_id)
+            }
+            station_api::ListRequestsOperationTypeDTO::CallExternalCanister(canister_id) => {
+                ListRequestsOperationType::CallExternalCanister(canister_id)
+            }
+            station_api::ListRequestsOperationTypeDTO::ConfigureExternalCanister(canister_id) => {
+                ListRequestsOperationType::ConfigureExternalCanister(canister_id)
+            }
+            station_api::ListRequestsOperationTypeDTO::FundExternalCanister(canister_id) => {
+                ListRequestsOperationType::FundExternalCanister(canister_id)
+            }
+            station_api::ListRequestsOperationTypeDTO::EditPermission => {
+                ListRequestsOperationType::EditPermission
+            }
+            station_api::ListRequestsOperationTypeDTO::AddRequestPolicy => {
+                ListRequestsOperationType::AddRequestPolicy
+            }
+            station_api::ListRequestsOperationTypeDTO::EditRequestPolicy => {
+                ListRequestsOperationType::EditRequestPolicy
+            }
+            station_api::ListRequestsOperationTypeDTO::RemoveRequestPolicy => {
+                ListRequestsOperationType::RemoveRequestPolicy
+            }
+            station_api::ListRequestsOperationTypeDTO::ManageSystemInfo => {
+                ListRequestsOperationType::ManageSystemInfo
+            }
+            station_api::ListRequestsOperationTypeDTO::SetDisasterRecovery => {
+                ListRequestsOperationType::SetDisasterRecovery
+            }
+        }
+    }
+}
 
 impl From<RequestOperationTypeDTO> for RequestOperationType {
     fn from(dto: RequestOperationTypeDTO) -> Self {
@@ -226,86 +305,6 @@ impl RequestOperation {
                 ListRequestsOperationTypeDTO::ManageSystemInfo,
             ) => true,
             _ => false,
-        }
-    }
-}
-
-impl From<station_api::ListRequestsOperationTypeDTO> for RequestOperationFilterType {
-    fn from(dto: station_api::ListRequestsOperationTypeDTO) -> Self {
-        match dto {
-            station_api::ListRequestsOperationTypeDTO::Transfer(from_account_id) => {
-                RequestOperationFilterType::Transfer(from_account_id.map(|id| {
-                    *HelperMapper::to_uuid(id)
-                        .expect("Invalid account id")
-                        .as_bytes()
-                }))
-            }
-            station_api::ListRequestsOperationTypeDTO::AddAccount => {
-                RequestOperationFilterType::AddAccount
-            }
-            station_api::ListRequestsOperationTypeDTO::EditAccount => {
-                RequestOperationFilterType::EditAccount
-            }
-            station_api::ListRequestsOperationTypeDTO::AddAddressBookEntry => {
-                RequestOperationFilterType::AddAddressBookEntry
-            }
-            station_api::ListRequestsOperationTypeDTO::EditAddressBookEntry => {
-                RequestOperationFilterType::EditAddressBookEntry
-            }
-            station_api::ListRequestsOperationTypeDTO::RemoveAddressBookEntry => {
-                RequestOperationFilterType::RemoveAddressBookEntry
-            }
-            station_api::ListRequestsOperationTypeDTO::AddUser => {
-                RequestOperationFilterType::AddUser
-            }
-            station_api::ListRequestsOperationTypeDTO::EditUser => {
-                RequestOperationFilterType::EditUser
-            }
-            station_api::ListRequestsOperationTypeDTO::AddUserGroup => {
-                RequestOperationFilterType::AddUserGroup
-            }
-            station_api::ListRequestsOperationTypeDTO::EditUserGroup => {
-                RequestOperationFilterType::EditUserGroup
-            }
-            station_api::ListRequestsOperationTypeDTO::RemoveUserGroup => {
-                RequestOperationFilterType::RemoveUserGroup
-            }
-            station_api::ListRequestsOperationTypeDTO::ChangeCanister => {
-                RequestOperationFilterType::ChangeCanister
-            }
-            station_api::ListRequestsOperationTypeDTO::ChangeExternalCanister(target) => {
-                RequestOperationFilterType::ChangeExternalCanister(target)
-            }
-            station_api::ListRequestsOperationTypeDTO::CreateExternalCanister => {
-                RequestOperationFilterType::CreateExternalCanister
-            }
-            station_api::ListRequestsOperationTypeDTO::CallExternalCanister(target) => {
-                RequestOperationFilterType::CallExternalCanister(target)
-            }
-            station_api::ListRequestsOperationTypeDTO::ConfigureExternalCanister(target) => {
-                RequestOperationFilterType::ConfigureExternalCanister(target)
-            }
-            station_api::ListRequestsOperationTypeDTO::FundExternalCanister(target) => {
-                RequestOperationFilterType::FundExternalCanister(target)
-            }
-            station_api::ListRequestsOperationTypeDTO::EditPermission => {
-                RequestOperationFilterType::EditPermission
-            }
-            station_api::ListRequestsOperationTypeDTO::AddRequestPolicy => {
-                RequestOperationFilterType::AddRequestPolicy
-            }
-            station_api::ListRequestsOperationTypeDTO::EditRequestPolicy => {
-                RequestOperationFilterType::EditRequestPolicy
-            }
-            station_api::ListRequestsOperationTypeDTO::RemoveRequestPolicy => {
-                RequestOperationFilterType::RemoveRequestPolicy
-            }
-            station_api::ListRequestsOperationTypeDTO::ManageSystemInfo => {
-                RequestOperationFilterType::ManageSystemInfo
-            }
-            station_api::ListRequestsOperationTypeDTO::SetDisasterRecovery => {
-                RequestOperationFilterType::SetDisasterRecovery
-            }
         }
     }
 }

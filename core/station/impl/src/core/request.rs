@@ -276,10 +276,10 @@ impl
 /// - The request is not approved or rejected
 /// - There are matching policies for the request and the user is a part of the group that is allowed to approve
 /// - The user has not already approved on the request
-pub struct RequestApprovalRightsEvaluator {
+pub struct RequestApprovalRightsEvaluator<'a> {
     pub approval_rights_evaluator: Arc<ApprovalRightsEvaluate>,
     pub approver_id: UserId,
-    pub request_id: RequestId,
+    pub request: &'a Request,
 }
 
 pub type ApprovalRightsEvaluate = dyn EvaluateRequestPolicyRule<
@@ -288,37 +288,43 @@ pub type ApprovalRightsEvaluate = dyn EvaluateRequestPolicyRule<
     EvaluateError,
 >;
 
-impl RequestApprovalRightsEvaluator {
+impl<'a> RequestApprovalRightsEvaluator<'a> {
     pub fn new(
         approval_rights_evaluator: Arc<ApprovalRightsEvaluate>,
         approver_id: UserId,
-        request_id: RequestId,
+        request: &'a Request,
     ) -> Self {
         Self {
             approval_rights_evaluator,
             approver_id,
-            request_id,
+            request,
         }
     }
 }
 
-impl Evaluate<bool> for RequestApprovalRightsEvaluator {
+impl<'a> Evaluate<bool> for RequestApprovalRightsEvaluator<'a> {
     fn evaluate(&self) -> Result<bool, EvaluateError> {
-        if REQUEST_REPOSITORY.exists_approver(&self.request_id, &self.approver_id)
-            || !REQUEST_REPOSITORY.exists_status(&self.request_id, RequestStatusCode::Created)
+        if self
+            .request
+            .approvals
+            .iter()
+            .any(|approval| approval.approver_id == self.approver_id)
+            || RequestStatusCode::from(self.request.status.clone()) != RequestStatusCode::Created
         {
             return Ok(false);
         }
 
-        let matching_policies = REQUEST_REPOSITORY
-            .get_resources(&self.request_id)
+        let matching_policies = self
+            .request
+            .operation
+            .to_resources()
             .iter()
             .flat_map(|resource| REQUEST_POLICY_REPOSITORY.find_by_resource(resource.to_owned()))
             .collect::<Vec<_>>();
 
         for policy in matching_policies {
             if self.approval_rights_evaluator.evaluate((
-                Arc::new(self.request_id.to_owned()),
+                Arc::new(self.request.id.to_owned()),
                 Arc::new(self.approver_id),
                 Arc::new(policy.rule.to_owned()),
             ))? {

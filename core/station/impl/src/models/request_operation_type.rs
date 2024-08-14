@@ -1,8 +1,11 @@
+use candid::Principal;
 use orbit_essentials::storable;
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,
 };
+
+use super::{AccountId, RequestOperationFilterType};
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -30,6 +33,139 @@ pub enum RequestOperationType {
     SetDisasterRecovery = 23,
     ConfigureExternalCanister = 24,
     FundExternalCanister = 25,
+}
+
+/// A helper enum to filter the requests based on the operation type and
+/// optional additional data (e.g. account id).
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ListRequestsOperationType {
+    Transfer(Option<AccountId>),
+    AddAccount,
+    EditAccount,
+    AddUser,
+    EditUser,
+    AddUserGroup,
+    EditUserGroup,
+    RemoveUserGroup,
+    ChangeCanister,
+    SetDisasterRecovery,
+    CreateExternalCanister,
+    ChangeExternalCanister(Option<Principal>),
+    CallExternalCanister(Option<Principal>),
+    ConfigureExternalCanister(Option<Principal>),
+    FundExternalCanister(Option<Principal>),
+    EditPermission,
+    AddRequestPolicy,
+    EditRequestPolicy,
+    RemoveRequestPolicy,
+    AddAddressBookEntry,
+    EditAddressBookEntry,
+    RemoveAddressBookEntry,
+    ManageSystemInfo,
+}
+
+impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
+    fn eq(&self, other: &ListRequestsOperationType) -> bool {
+        match other {
+            ListRequestsOperationType::Transfer(None) => {
+                matches!(self, RequestOperationFilterType::Transfer(_))
+            }
+            ListRequestsOperationType::Transfer(Some(account_id)) => {
+                matches!(self, RequestOperationFilterType::Transfer(id) if id == account_id)
+            }
+            ListRequestsOperationType::AddAccount => {
+                matches!(self, RequestOperationFilterType::AddAccount)
+            }
+            ListRequestsOperationType::EditAccount => {
+                matches!(self, RequestOperationFilterType::EditAccount)
+            }
+            ListRequestsOperationType::AddUser => {
+                matches!(self, RequestOperationFilterType::AddUser)
+            }
+            ListRequestsOperationType::EditUser => {
+                matches!(self, RequestOperationFilterType::EditUser)
+            }
+            ListRequestsOperationType::AddUserGroup => {
+                matches!(self, RequestOperationFilterType::AddUserGroup)
+            }
+            ListRequestsOperationType::EditUserGroup => {
+                matches!(self, RequestOperationFilterType::EditUserGroup)
+            }
+            ListRequestsOperationType::RemoveUserGroup => {
+                matches!(self, RequestOperationFilterType::RemoveUserGroup)
+            }
+            ListRequestsOperationType::ChangeCanister => {
+                matches!(self, RequestOperationFilterType::ChangeCanister)
+            }
+            ListRequestsOperationType::SetDisasterRecovery => {
+                matches!(self, RequestOperationFilterType::SetDisasterRecovery)
+            }
+            ListRequestsOperationType::CreateExternalCanister => {
+                matches!(self, RequestOperationFilterType::CreateExternalCanister)
+            }
+            ListRequestsOperationType::ChangeExternalCanister(None) => {
+                matches!(self, RequestOperationFilterType::ChangeExternalCanister(_))
+            }
+            ListRequestsOperationType::ChangeExternalCanister(Some(canister_id)) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::ChangeExternalCanister(id) if id == canister_id
+                )
+            }
+            ListRequestsOperationType::CallExternalCanister(None) => {
+                matches!(self, RequestOperationFilterType::CallExternalCanister(_))
+            }
+            ListRequestsOperationType::CallExternalCanister(Some(canister_id)) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::CallExternalCanister(id) if id == canister_id
+                )
+            }
+            ListRequestsOperationType::ConfigureExternalCanister(None) => matches!(
+                self,
+                RequestOperationFilterType::ConfigureExternalCanister(_)
+            ),
+            ListRequestsOperationType::ConfigureExternalCanister(Some(canister_id)) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::ConfigureExternalCanister(id) if id == canister_id
+                )
+            }
+            ListRequestsOperationType::FundExternalCanister(None) => {
+                matches!(self, RequestOperationFilterType::FundExternalCanister(_))
+            }
+            ListRequestsOperationType::FundExternalCanister(Some(canister_id)) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::FundExternalCanister(id) if id == canister_id
+                )
+            }
+            ListRequestsOperationType::EditPermission => {
+                matches!(self, RequestOperationFilterType::EditPermission)
+            }
+            ListRequestsOperationType::AddRequestPolicy => {
+                matches!(self, RequestOperationFilterType::AddRequestPolicy)
+            }
+            ListRequestsOperationType::EditRequestPolicy => {
+                matches!(self, RequestOperationFilterType::EditRequestPolicy)
+            }
+            ListRequestsOperationType::RemoveRequestPolicy => {
+                matches!(self, RequestOperationFilterType::RemoveRequestPolicy)
+            }
+            ListRequestsOperationType::AddAddressBookEntry => {
+                matches!(self, RequestOperationFilterType::AddAddressBookEntry)
+            }
+            ListRequestsOperationType::EditAddressBookEntry => {
+                matches!(self, RequestOperationFilterType::EditAddressBookEntry)
+            }
+            ListRequestsOperationType::RemoveAddressBookEntry => {
+                matches!(self, RequestOperationFilterType::RemoveAddressBookEntry)
+            }
+            ListRequestsOperationType::ManageSystemInfo => {
+                matches!(self, RequestOperationFilterType::ManageSystemInfo)
+            }
+        }
+    }
 }
 
 impl FromStr for RequestOperationType {

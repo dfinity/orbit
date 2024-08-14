@@ -1,4 +1,5 @@
 use candid::Principal;
+use orbit_essentials::types::UUID;
 
 use super::authorization::Authorization;
 use super::CallContext;
@@ -117,7 +118,15 @@ pub(crate) fn format_unique_string(text: &str) -> String {
 
 /// The minimum principal value that can be used.
 pub const MIN_PRINCIPAL: Principal = Principal::from_slice(&[0; 29]);
+
+/// The maximum principal value that can be used.
 pub const MAX_PRINCIPAL: Principal = Principal::from_slice(&[255; 29]);
+
+/// The minimum UUID value that can be used.
+pub const MIN_UUID: UUID = [u8::MIN; 16];
+
+/// The maximum UUID value that can be used.
+pub const MAX_UUID: UUID = [u8::MAX; 16];
 
 #[cfg(test)]
 mod tests {

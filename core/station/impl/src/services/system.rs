@@ -15,6 +15,7 @@ use crate::{
         CycleObtainStrategy, ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
     },
     repositories::{permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY},
+    SYSTEM_VERSION,
 };
 use candid::Principal;
 use canfund::{
@@ -323,6 +324,9 @@ impl SystemService {
             Some(input) => input,
             None => SystemUpgrade { name: None },
         };
+
+        // Version is set to the current global system version, needs to happen after the migrations.
+        system_info.set_version(SYSTEM_VERSION.to_string());
 
         // verifies that the upgrade request exists and marks it as completed
         if let Some(request_id) = system_info.get_change_canister_request() {

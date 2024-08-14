@@ -29,6 +29,21 @@ pub enum RequestStatusCode {
     Failed = 7,
 }
 
+impl From<RequestStatus> for RequestStatusCode {
+    fn from(status: RequestStatus) -> Self {
+        match status {
+            RequestStatus::Created => RequestStatusCode::Created,
+            RequestStatus::Approved => RequestStatusCode::Approved,
+            RequestStatus::Rejected => RequestStatusCode::Rejected,
+            RequestStatus::Scheduled { .. } => RequestStatusCode::Scheduled,
+            RequestStatus::Processing { .. } => RequestStatusCode::Processing,
+            RequestStatus::Completed { .. } => RequestStatusCode::Completed,
+            RequestStatus::Failed { .. } => RequestStatusCode::Failed,
+            RequestStatus::Cancelled { .. } => RequestStatusCode::Cancelled,
+        }
+    }
+}
+
 impl From<RequestStatusCode> for u8 {
     fn from(status: RequestStatusCode) -> Self {
         status as u8

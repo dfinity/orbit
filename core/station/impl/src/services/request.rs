@@ -1062,9 +1062,9 @@ mod benchs {
 
     #[bench(raw)]
     fn service_filter_all_requests_with_creation_time_filters() -> BenchResult {
-        let end_creation_time = create_test_requests(20000u64);
+        let end_creation_time = create_test_requests(20_000u64);
 
-        // test list_requests that that 300 requests as initial set
+        // test list_requests 300 requests as initial set
 
         canbench_rs::bench_fn(|| {
             spawn(async move {
