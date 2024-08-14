@@ -4,7 +4,6 @@ use crate::{
     args::review::{ReviewActionArgs, ReviewArgs},
     DfxOrbit,
 };
-use display::{display_get_request_response, display_list};
 use orbit_station_api::{RequestApprovalStatusDTO, RequestStatusDTO, SubmitRequestApprovalInput};
 use serde::Serialize;
 
@@ -19,7 +18,7 @@ impl DfxOrbit {
                 if as_json {
                     print_as_json(&response);
                 } else {
-                    println!("{}", display_list(response));
+                    println!("{}", self.display_list(response));
                 }
                 Ok(())
             }
@@ -32,7 +31,7 @@ impl DfxOrbit {
                 if as_json {
                     print_as_json(&request);
                 } else {
-                    println!("{}", display_get_request_response(request))
+                    println!("{}", self.display_get_request_response(request))
                 }
 
                 Ok(())
@@ -42,7 +41,7 @@ impl DfxOrbit {
                 if as_json {
                     print_as_json(&request);
                 } else {
-                    println!("{}", display_get_request_response(request.clone()))
+                    println!("{}", self.display_get_request_response(request.clone()))
                 }
 
                 if let RequestStatusDTO::Created = request.request.status {
