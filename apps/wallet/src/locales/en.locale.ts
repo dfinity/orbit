@@ -536,7 +536,6 @@ export default {
     skip: 'Skip',
     version: 'Version',
     continue: 'Continue',
-    cycle_obtain_strategy: 'Station top-up method',
   },
   forms: {
     create: 'Create',
@@ -606,9 +605,6 @@ export default {
     },
     administration: {
       title: 'Administration',
-      cycle_obtain_strategy_disabled:
-        'WARNING: Station cycle balance top-up disabled. Your station may run out of cycles.',
-      cycle_obtain_strategy_mint_from_native_token: 'Mint from ICP account',
     },
     users: {
       title: 'Users',
@@ -794,9 +790,5 @@ export default {
       managesysteminfo: 'Manage system info',
       changeexternalcanister: 'Change external canister',
     },
-  },
-  cycle_obtain_strategies: {
-    disabled: 'Disabled',
-    mintfromnativetoken: 'Mint from ICP account',
   },
 };
