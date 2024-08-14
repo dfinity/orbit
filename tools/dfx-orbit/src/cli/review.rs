@@ -31,21 +31,19 @@ impl DfxOrbit {
                 let request = &self.station.review_id(args.clone().into()).await?;
                 print_as_json(request);
 
-                match request.request.status {
-                    RequestStatusDTO::Created => {
-                        if let Ok(submit) = SubmitRequestApprovalInput::try_from(args) {
-                            let action = match submit.decision {
-                                RequestApprovalStatusDTO::Approved => "approve",
-                                RequestApprovalStatusDTO::Rejected => "reject",
-                            };
-                            dfx_core::cli::ask_for_consent(&format!(
-                                "Would you like to {action} this request?"
-                            ))?;
-                            self.station.submit(submit).await?;
+                if let RequestStatusDTO::Created = request.request.status {
+                    if let Ok(submit) = SubmitRequestApprovalInput::try_from(args) {
+                        let action = match submit.decision {
+                            RequestApprovalStatusDTO::Approved => "approve",
+                            RequestApprovalStatusDTO::Rejected => "reject",
                         };
-                    }
-                    _ => (),
+                        dfx_core::cli::ask_for_consent(&format!(
+                            "Would you like to {action} this request?"
+                        ))?;
+                        self.station.submit(submit).await?;
+                    };
                 }
+
                 Ok(())
             }
         }

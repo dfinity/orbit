@@ -66,7 +66,7 @@ fn candid_from_string_or_file(
     // First try to read the argument file, if it was provided
     Ok(arg_path
         .as_ref()
-        .map(|path| std::fs::read_to_string(path))
+        .map(std::fs::read_to_string)
         .transpose()?
         // Otherwise use the argument from the command line
         .or_else(|| arg_string.clone())
