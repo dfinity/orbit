@@ -1223,6 +1223,7 @@ dependencies = [
  "ic-asset",
  "ic-certified-assets",
  "ic-utils",
+ "itertools 0.13.0",
  "serde",
  "serde_bytes",
  "serde_json",
