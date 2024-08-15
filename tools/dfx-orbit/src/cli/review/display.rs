@@ -1,3 +1,4 @@
+use crate::DfxOrbit;
 use candid::Principal;
 use itertools::Itertools;
 use orbit_station_api::{
@@ -9,8 +10,6 @@ use tabled::{
     settings::{Settings, Style},
     Table,
 };
-
-use crate::DfxOrbit;
 
 impl DfxOrbit {
     pub(crate) fn display_list(&self, data: ListRequestsResponse) -> String {
@@ -56,18 +55,12 @@ impl DfxOrbit {
         let mut output = String::new();
 
         // General request information
-        writeln!(output, "===REQUEST===").unwrap();
+        writeln!(output, "=== REQUEST ===").unwrap();
         writeln!(output, "ID: {}", base_info.id).unwrap();
         writeln!(
             output,
             "Operation: {}",
             self.display_request_operation(&base_info.operation)
-        )
-        .unwrap();
-        writeln!(
-            output,
-            "Status: {}",
-            self.display_request_status(&base_info.status)
         )
         .unwrap();
         writeln!(output, "Title: {}", base_info.title).unwrap();
@@ -85,6 +78,15 @@ impl DfxOrbit {
                 .join(", ")
         )
         .unwrap();
+        writeln!(
+            output,
+            "Status: {}",
+            self.display_request_status(&base_info.status)
+        )
+        .unwrap();
+        if let Some(additional_status) = self.display_additional_stats_info(&base_info.status) {
+            writeln!(output, "{}", additional_status).unwrap();
+        }
 
         match base_info.operation {
             RequestOperationDTO::ChangeExternalCanister(op) => {
@@ -95,9 +97,9 @@ impl DfxOrbit {
             }
             _ => (),
         };
-        // write!(output, "ID: {}\n", base_info.id).unwrap();
 
-        // TODO: Per operation additional information
+        // TODO: CreateCanister Additional information
+        // TODO: Configure Canist Additional information
 
         output
     }
@@ -120,7 +122,7 @@ impl DfxOrbit {
             CanisterInstallMode::Reinstall => "Reinstall",
             CanisterInstallMode::Upgrade => "Upgrade",
         };
-        writeln!(output, "Mode {}", mode).unwrap();
+        writeln!(output, "Mode: {}", mode).unwrap();
 
         writeln!(output, "Module checksum: 0x{}", &op.module_checksum).unwrap();
         if let Some(arg_checksum) = &op.arg_checksum {
@@ -136,7 +138,7 @@ impl DfxOrbit {
         writeln!(output, "=== Call External Canister ===").unwrap();
         writeln!(
             output,
-            "Execution method: \"{}\" of canister {}",
+            "Execution method: \"{}\" of {}",
             op.execution_method.method_name,
             self.try_reverse_lookup(&op.execution_method.canister_id)
         )
@@ -144,7 +146,7 @@ impl DfxOrbit {
         if let Some(validation_method) = &op.validation_method {
             writeln!(
                 output,
-                "Validation method: \"{}\" of canister {}",
+                "Validation method: \"{}\" of {}",
                 validation_method.method_name,
                 self.try_reverse_lookup(&validation_method.canister_id)
             )
@@ -160,7 +162,7 @@ impl DfxOrbit {
             writeln!(output, "Execution method cycles: {}", cycles).unwrap()
         }
         if let Some(reply) = &op.execution_method_reply {
-            match candid_parser::IDLArgs::from_bytes(&reply) {
+            match candid_parser::IDLArgs::from_bytes(reply) {
                 // TODO: Check if we can get the type information from somewhere to annotate this with types
                 Ok(response) => writeln!(output, "Execution response: {}", response),
                 Err(_) => writeln!(output, "FAILED TO PARSE EXECUTION RESPONSE"),
@@ -215,6 +217,18 @@ impl DfxOrbit {
             RequestStatusDTO::Processing { .. } => "Processing",
             RequestStatusDTO::Completed { .. } => "Completed",
             RequestStatusDTO::Failed { .. } => "Failed",
+        }
+    }
+
+    fn display_additional_stats_info(&self, status: &RequestStatusDTO) -> Option<String> {
+        match status {
+            RequestStatusDTO::Cancelled { reason } => {
+                reason.clone().map(|reason| format!("Reason: {}", reason))
+            }
+            RequestStatusDTO::Failed { reason } => {
+                reason.clone().map(|reason| format!("Reason: {}", reason))
+            }
+            _ => None,
         }
     }
 }

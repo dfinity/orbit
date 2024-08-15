@@ -30,6 +30,7 @@ pub enum ReviewActionArgs {
     Id(ReviewIdArgs),
 }
 
+// FIXME: Using this list doesn't seem to work.
 fn external_canister_operations() -> Vec<ListRequestsOperationTypeDTO> {
     vec![
         ListRequestsOperationTypeDTO::ChangeExternalCanister(None),
