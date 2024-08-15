@@ -123,9 +123,9 @@ impl DfxOrbit {
         writeln!(output, "Mode {}", mode).unwrap();
 
         writeln!(output, "Module checksum: 0x{}", &op.module_checksum).unwrap();
-        op.arg_checksum
-            .as_ref()
-            .map(|arg_checksum| writeln!(output, "Argument checksum: 0x{}", arg_checksum).unwrap());
+        if let Some(arg_checksum) = &op.arg_checksum {
+            writeln!(output, "Argument checksum: 0x{}", arg_checksum).unwrap()
+        }
     }
 
     fn display_call_canister_operation(
@@ -141,7 +141,7 @@ impl DfxOrbit {
             self.try_reverse_lookup(&op.execution_method.canister_id)
         )
         .unwrap();
-        op.validation_method.as_ref().map(|validation_method| {
+        if let Some(validation_method) = &op.validation_method {
             writeln!(
                 output,
                 "Validation method: \"{}\" of canister {}",
@@ -149,18 +149,24 @@ impl DfxOrbit {
                 self.try_reverse_lookup(&validation_method.canister_id)
             )
             .unwrap()
-        });
-        op.arg_checksum
-            .as_ref()
-            .map(|checksum| writeln!(output, "Argument checksum: 0x{}", checksum).unwrap());
-        op.arg_rendering
-            .as_ref()
-            .map(|args| writeln!(output, "Argument: {}", args).unwrap());
-        op.execution_method_cycles
-            .as_ref()
-            .map(|cycles| writeln!(output, "Execution method cycles: {}", cycles));
-
-        todo!()
+        }
+        if let Some(checksum) = &op.arg_checksum {
+            writeln!(output, "Argument checksum: 0x{}", checksum).unwrap()
+        }
+        if let Some(args) = &op.arg_rendering {
+            writeln!(output, "Argument: {}", args).unwrap()
+        }
+        if let Some(cycles) = &op.execution_method_cycles {
+            writeln!(output, "Execution method cycles: {}", cycles).unwrap()
+        }
+        if let Some(reply) = &op.execution_method_reply {
+            match candid_parser::IDLArgs::from_bytes(&reply) {
+                // TODO: Check if we can get the type information from somewhere to annotate this with types
+                Ok(response) => writeln!(output, "Execution response: {}", response),
+                Err(_) => writeln!(output, "FAILED TO PARSE EXECUTION RESPONSE"),
+            }
+            .unwrap();
+        }
     }
 
     fn try_reverse_lookup(&self, canister_id: &Principal) -> String {
