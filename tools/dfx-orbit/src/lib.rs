@@ -110,9 +110,9 @@ impl DfxOrbit {
     }
 
     pub fn get_config(&self) -> anyhow::Result<Arc<Config>> {
-        Ok(self.interface.config().ok_or_else(|| {
+        self.interface.config().ok_or_else(|| {
             anyhow!("Could not read \"dfx.json\". Are you in the correct directory?")
-        })?)
+        })
     }
 
     pub fn get_canister_config(&self, canister: &str) -> anyhow::Result<ConfigCanistersCanister> {

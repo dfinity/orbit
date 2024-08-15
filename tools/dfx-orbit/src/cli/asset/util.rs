@@ -48,11 +48,7 @@ impl DfxOrbit {
         Ok(response)
     }
 
-    pub(crate) fn as_path_bufs(
-        &self,
-        canister: &str,
-        paths: &[String],
-    ) -> anyhow::Result<Vec<PathBuf>> {
+    pub fn as_path_bufs(&self, canister: &str, paths: &[String]) -> anyhow::Result<Vec<PathBuf>> {
         if paths.is_empty() {
             let canister_config = self.get_canister_config(canister)?;
             let CanisterTypeProperties::Assets { source, .. } = &canister_config.type_specific

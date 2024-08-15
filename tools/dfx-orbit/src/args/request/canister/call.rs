@@ -20,6 +20,7 @@ pub struct RequestCanisterCallArgs {
     // TODO: The format of the argument.
     // #[clap(short, long)]
     // r#type: Option<CandidFormat>,
+    /// Pass the argument as a file.
     #[clap(short = 'f', long, conflicts_with = "argument")]
     arg_file: Option<String>,
     /// Specifies the amount of cycles to send on the call.

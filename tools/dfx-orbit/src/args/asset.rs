@@ -79,6 +79,6 @@ pub struct AssetCheckArgs {
     pub(crate) files: Vec<String>,
 
     /// Automatically approve the request, if the request's evidence matches the local evidence
-    #[clap(long)]
+    #[clap(short = 'a', long)]
     pub(crate) then_approve: bool,
 }
