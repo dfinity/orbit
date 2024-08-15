@@ -1,5 +1,6 @@
 use crate::core::ic_cdk::api::trap;
-use crate::core::{read_system_info, write_system_info};
+use crate::core::{read_system_info, write_system_info, REQUEST_INDEX_MEMORY_ID};
+use crate::models::indexes::request_index::{RequestIndexFields, RequestIndexKey};
 use crate::STABLE_MEMORY_VERSION;
 use crate::{
     core::{with_memory_manager, Memory},
@@ -46,57 +47,35 @@ impl MigrationHandler {
     }
 }
 
-const USER_IDENTITY_INDEX_MEMORY_ID: MemoryId = MemoryId::new(3);
-const USER_STATUS_GROUP_INDEX_MEMORY_ID: MemoryId = MemoryId::new(18);
-const NAME_TO_USER_ID_INDEX_MEMORY_ID: MemoryId = MemoryId::new(28);
-// Old request indexes
-const REQUEST_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(5);
-const REQUEST_APPROVER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(8);
-const REQUEST_STATUS_MEMORY_ID: MemoryId = MemoryId::new(9);
-const REQUEST_SCHEDULED_INDEX_MEMORY_ID: MemoryId = MemoryId::new(10);
-const REQUEST_REQUESTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(21);
-const REQUEST_CREATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(22);
-const REQUEST_KEY_CREATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(23);
-const REQUEST_KEY_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(24);
-const REQUEST_SORT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(25);
-const REQUEST_STATUS_MODIFICATION_INDEX_MEMORY_ID: MemoryId = MemoryId::new(26);
-const OPERATION_TYPE_TO_REQUEST_ID_INDEX_MEMORY_ID: MemoryId = MemoryId::new(29);
-// Old user group indexes
-const USER_GROUP_NAME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(15);
-// Old account indexes
-const NAME_TO_ACCOUNT_ID_INDEX_MEMORY_ID: MemoryId = MemoryId::new(27);
-
 /// The migration to apply to the station canister stable memory.
 ///
 /// Please include the migration steps in the `apply_migration` function.
 fn apply_migration() {
+    // step 1: clear unused memory ids
     with_memory_manager(|memory_manager| {
-        // step 1: clear unused memory ids
         for memory_id in [
-            USER_IDENTITY_INDEX_MEMORY_ID,
-            USER_STATUS_GROUP_INDEX_MEMORY_ID,
-            NAME_TO_USER_ID_INDEX_MEMORY_ID,
-            REQUEST_EXPIRATION_TIME_INDEX_MEMORY_ID,
-            REQUEST_APPROVER_INDEX_MEMORY_ID,
-            REQUEST_STATUS_MEMORY_ID,
-            REQUEST_SCHEDULED_INDEX_MEMORY_ID,
-            REQUEST_REQUESTER_INDEX_MEMORY_ID,
-            REQUEST_CREATION_TIME_INDEX_MEMORY_ID,
-            REQUEST_KEY_CREATION_TIME_INDEX_MEMORY_ID,
-            REQUEST_KEY_EXPIRATION_TIME_INDEX_MEMORY_ID,
-            REQUEST_SORT_INDEX_MEMORY_ID,
-            REQUEST_STATUS_MODIFICATION_INDEX_MEMORY_ID,
-            OPERATION_TYPE_TO_REQUEST_ID_INDEX_MEMORY_ID,
-            USER_GROUP_NAME_INDEX_MEMORY_ID,
-            NAME_TO_ACCOUNT_ID_INDEX_MEMORY_ID,
+            MemoryId::new(3),  // USER_IDENTITY_INDEX_MEMORY_ID,
+            MemoryId::new(18), // USER_STATUS_GROUP_INDEX_MEMORY_ID
+            MemoryId::new(28), // NAME_TO_USER_ID_INDEX_MEMORY_ID
+            MemoryId::new(5),  // REQUEST_EXPIRATION_TIME_INDEX_MEMORY_ID
+            MemoryId::new(8),  // REQUEST_APPROVER_INDEX_MEMORY_ID
+            MemoryId::new(9),  // REQUEST_STATUS_INDEX_MEMORY_ID
+            MemoryId::new(10), // REQUEST_SCHEDULED_INDEX_MEMORY_ID
+            MemoryId::new(21), // REQUEST_REQUESTER_INDEX_MEMORY_ID
+            MemoryId::new(22), // REQUEST_CREATION_TIME_INDEX_MEMORY_ID
+            MemoryId::new(23), // REQUEST_KEY_CREATION_TIME_INDEX_MEMORY_ID
+            MemoryId::new(24), // REQUEST_KEY_EXPIRATION_TIME_INDEX_MEMORY_ID
+            MemoryId::new(25), // REQUEST_SORT_INDEX_MEMORY_ID
+            MemoryId::new(26), // REQUEST_STATUS_MODIFICATION_INDEX_MEMORY_ID
+            MemoryId::new(29), // OPERATION_TYPE_TO_REQUEST_ID_INDEX_MEMORY_ID
+            MemoryId::new(15), // USER_GROUP_NAME_INDEX_MEMORY_ID
+            MemoryId::new(27), // NAME_TO_ACCOUNT_ID_INDEX_MEMORY_ID
         ] {
-            let mut unused_memory: StableBTreeMap<(), (), VirtualMemory<Memory>> =
-                StableBTreeMap::new(memory_manager.get(memory_id));
-
-            unused_memory.clear_new();
+            // First this cleans up the memory by initializing it again with an empty type
+            StableBTreeMap::<(), (), VirtualMemory<Memory>>::new(memory_manager.get(memory_id));
         }
+    });
 
-        // step 2: recreates the indexes for all requests
-        REQUEST_REPOSITORY.rebuild_indexes();
-    })
+    // step 2: recreates the indexes for all requests
+    REQUEST_REPOSITORY.rebuild_indexes();
 }
