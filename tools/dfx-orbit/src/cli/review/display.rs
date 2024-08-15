@@ -1,7 +1,8 @@
+use candid::Principal;
 use itertools::Itertools;
 use orbit_station_api::{
-    CanisterInstallMode, ChangeExternalCanisterOperationDTO, GetRequestResponse,
-    ListRequestsResponse, RequestOperationDTO, RequestStatusDTO,
+    CallExternalCanisterOperationDTO, CanisterInstallMode, ChangeExternalCanisterOperationDTO,
+    GetRequestResponse, ListRequestsResponse, RequestOperationDTO, RequestStatusDTO,
 };
 use std::{collections::HashMap, fmt::Write};
 use tabled::{
@@ -89,12 +90,13 @@ impl DfxOrbit {
             RequestOperationDTO::ChangeExternalCanister(op) => {
                 self.display_change_canister_operation(&mut output, op.as_ref())
             }
+            RequestOperationDTO::CallExternalCanister(op) => {
+                self.display_call_canister_operation(&mut output, op.as_ref())
+            }
             _ => (),
         };
         // write!(output, "ID: {}\n", base_info.id).unwrap();
-        //  approved by (comma sepatated)
 
-        // TODO: Display operation
         // TODO: Per operation additional information
 
         output
@@ -106,12 +108,11 @@ impl DfxOrbit {
         op: &ChangeExternalCanisterOperationDTO,
     ) {
         writeln!(output, "=== Change External Canister ===").unwrap();
-        match self.canister_name(&op.canister_id).ok() {
-            Some(canister_name) => {
-                writeln!(output, "Target: {} ({})", canister_name, &op.canister_id)
-            }
-            None => writeln!(output, "Target: {}", &op.canister_id),
-        }
+        writeln!(
+            output,
+            "Target: {}",
+            self.try_reverse_lookup(&op.canister_id)
+        )
         .unwrap();
 
         let mode = match op.mode {
@@ -124,7 +125,51 @@ impl DfxOrbit {
         writeln!(output, "Module checksum: 0x{}", &op.module_checksum).unwrap();
         op.arg_checksum
             .as_ref()
-            .map(|arg_checksum| writeln!(output, "Arg checksum: 0x{}", arg_checksum).unwrap());
+            .map(|arg_checksum| writeln!(output, "Argument checksum: 0x{}", arg_checksum).unwrap());
+    }
+
+    fn display_call_canister_operation(
+        &self,
+        output: &mut String,
+        op: &CallExternalCanisterOperationDTO,
+    ) {
+        writeln!(output, "=== Call External Canister ===").unwrap();
+        writeln!(
+            output,
+            "Execution method: \"{}\" of canister {}",
+            op.execution_method.method_name,
+            self.try_reverse_lookup(&op.execution_method.canister_id)
+        )
+        .unwrap();
+        op.validation_method.as_ref().map(|validation_method| {
+            writeln!(
+                output,
+                "Validation method: \"{}\" of canister {}",
+                validation_method.method_name,
+                self.try_reverse_lookup(&validation_method.canister_id)
+            )
+            .unwrap()
+        });
+        op.arg_checksum
+            .as_ref()
+            .map(|checksum| writeln!(output, "Argument checksum: 0x{}", checksum).unwrap());
+        op.arg_rendering
+            .as_ref()
+            .map(|args| writeln!(output, "Argument: {}", args).unwrap());
+        op.execution_method_cycles
+            .as_ref()
+            .map(|cycles| writeln!(output, "Execution method cycles: {}", cycles));
+
+        todo!()
+    }
+
+    fn try_reverse_lookup(&self, canister_id: &Principal) -> String {
+        match self.canister_name(canister_id).ok() {
+            Some(canister_name) => {
+                format!("{} ({})", canister_name, canister_id)
+            }
+            None => format!("{}", canister_id),
+        }
     }
 
     fn display_request_operation(&self, op: &RequestOperationDTO) -> &'static str {
