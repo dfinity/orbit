@@ -13,13 +13,20 @@ pub mod station_agent;
 use anyhow::anyhow;
 use candid::Principal;
 pub use cli::asset::AssetAgent;
-use dfx_core::{config::model::canister_id_store::CanisterIdStore, DfxInterface};
+use dfx_core::{
+    config::model::{
+        canister_id_store::CanisterIdStore,
+        dfinity::{Config, ConfigCanistersCanister},
+    },
+    DfxInterface,
+};
 use dfx_extension_api::OrbitExtensionAgent;
 use ic_utils::{canister::CanisterBuilder, Canister};
 use orbit_station_api::CreateRequestResponse;
 use slog::Logger;
 pub use station_agent::StationAgent;
 use station_agent::StationConfig;
+use std::sync::Arc;
 
 pub struct DfxOrbit {
     // The station agent that handles communication with the station
@@ -100,5 +107,24 @@ impl DfxOrbit {
         println!("Created request: {request_id}");
         println!("Request URL: {request_url}");
         println!("To view the request, run: dfx-orbit review id {request_id}");
+    }
+
+    pub fn get_config(&self) -> anyhow::Result<Arc<Config>> {
+        Ok(self.interface.config().ok_or_else(|| {
+            anyhow!("Could not read \"dfx.json\". Are you in the correct directory?")
+        })?)
+    }
+
+    pub fn get_canister_config(&self, canister: &str) -> anyhow::Result<ConfigCanistersCanister> {
+        let config = self.get_config()?;
+        let canister_config = config
+            .get_config()
+            .canisters
+            .as_ref()
+            .ok_or_else(|| anyhow!("No canisters defined in this \"dfx.json\""))?
+            .get(canister)
+            .ok_or_else(|| anyhow!("Could not find {canister} in \"dfx.json\""))?;
+
+        Ok(canister_config.clone())
     }
 }

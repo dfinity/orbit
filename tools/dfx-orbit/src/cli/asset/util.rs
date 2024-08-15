@@ -1,5 +1,5 @@
 use crate::DfxOrbit;
-use anyhow::{anyhow, bail};
+use anyhow::bail;
 use candid::Principal;
 use dfx_core::config::model::dfinity::CanisterTypeProperties;
 use ic_certified_assets::types::{GrantPermissionArguments, Permission};
@@ -48,20 +48,13 @@ impl DfxOrbit {
         Ok(response)
     }
 
-    pub fn as_path_bufs(&self, canister: &str, paths: &[String]) -> anyhow::Result<Vec<PathBuf>> {
+    pub(crate) fn as_path_bufs(
+        &self,
+        canister: &str,
+        paths: &[String],
+    ) -> anyhow::Result<Vec<PathBuf>> {
         if paths.is_empty() {
-            let config = self.interface.config().ok_or_else(|| {
-                anyhow!("Could not read \"dfx.json\". Are you in the correct directory?")
-            })?;
-
-            let canister_config = config
-                .get_config()
-                .canisters
-                .as_ref()
-                .ok_or_else(|| anyhow!("No canisters defined in this \"dfx.json\""))?
-                .get(canister)
-                .ok_or_else(|| anyhow!("Could not find {canister} in \"dfx.json\""))?;
-
+            let canister_config = self.get_canister_config(canister)?;
             let CanisterTypeProperties::Assets { source, .. } = &canister_config.type_specific
             else {
                 bail!("Canister {canister} is not an asset canister");
