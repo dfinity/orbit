@@ -1,19 +1,22 @@
 //! CLI arguments for `dfx-orbit review next`.
 
+use super::external_canister_operations;
 use clap::Parser;
 use orbit_station_api::GetNextApprovableRequestInput;
 
-// TODO: Only show review types that are relevant to dfx-orbbit -> can deactivate with --all
-
 /// Reviews the next request.
 #[derive(Debug, Parser)]
-pub struct ReviewNextArgs {}
+pub struct ReviewNextArgs {
+    /// Show any request type, not only the ones related to canister management
+    #[clap(short, long)]
+    any: bool,
+}
 
 impl From<ReviewNextArgs> for GetNextApprovableRequestInput {
-    fn from(_: ReviewNextArgs) -> Self {
+    fn from(args: ReviewNextArgs) -> Self {
         Self {
             excluded_request_ids: vec![],
-            operation_types: None,
+            operation_types: (!args.any).then(external_canister_operations),
         }
     }
 }

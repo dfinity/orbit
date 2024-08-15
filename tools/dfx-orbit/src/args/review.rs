@@ -7,6 +7,7 @@ use clap::{Parser, Subcommand};
 use id::ReviewIdArgs;
 use list::ReviewListArgs;
 use next::ReviewNextArgs;
+use orbit_station_api::ListRequestsOperationTypeDTO;
 
 /// Station management commands.
 #[derive(Debug, Parser)]
@@ -27,4 +28,13 @@ pub enum ReviewActionArgs {
     Next(ReviewNextArgs),
     /// Review a specific request.
     Id(ReviewIdArgs),
+}
+
+fn external_canister_operations() -> Vec<ListRequestsOperationTypeDTO> {
+    vec![
+        ListRequestsOperationTypeDTO::ChangeExternalCanister(None),
+        ListRequestsOperationTypeDTO::CreateExternalCanister,
+        ListRequestsOperationTypeDTO::CallExternalCanister(None),
+        ListRequestsOperationTypeDTO::ConfigureExternalCanister(None),
+    ]
 }
