@@ -33,9 +33,6 @@ pub const POLICY_RESOURCE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(31);
 pub const REQUEST_EVALUATION_RESULT_MEMORY_ID: MemoryId = MemoryId::new(32);
 pub const EXTERNAL_CANISTER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(34);
 
-
-
-
 pub const USER_IDENTITY_INDEX_MEMORY_ID: MemoryId = MemoryId::new(3);
 pub const REQUEST_EXPIRATION_TIME_INDEX_MEMORY_ID: MemoryId = MemoryId::new(5);
 pub const REQUEST_APPROVER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(8);

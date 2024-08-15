@@ -110,7 +110,7 @@ impl RequestIndexRepository {
                         request_id: MAX_UUID,
                     },
                 )
-                .take(take_limit.map(|limit| limit).unwrap_or(usize::MAX))
+                .take(take_limit.unwrap_or(usize::MAX))
                 .map(
                     |(
                         RequestIndexKey {

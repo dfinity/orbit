@@ -14,7 +14,7 @@ use crate::{
             request_index::RequestIndexFields, request_resource_index::RequestResourceIndexCriteria,
         },
         resource::Resource,
-        ListRequestsOperationType, Request, RequestId, RequestKey, RequestStatusCode, UserId,
+        ListRequestsOperationType, Request, RequestId, RequestKey, RequestStatusCode,
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -135,7 +135,9 @@ impl RequestRepository {
 
     /// Saves all indexes for the given request.
     fn save_indexes(&self, current: &Request, previous: Option<Request>) {
-        previous.map(|previous| self.cleanup_indexes(&previous));
+        if let Some(previous) = previous {
+            self.cleanup_indexes(&previous);
+        }
 
         current
             .to_indexes()
@@ -277,22 +279,19 @@ impl RequestRepository {
                     return false;
                 }
 
-                if condition.expiration_dt_from.is_some() || condition.expiration_dt_to.is_some() {
-                    if fields.expiration_dt < condition.expiration_dt_from.unwrap_or(u64::MIN)
-                        || fields.expiration_dt > condition.expiration_dt_to.unwrap_or(u64::MAX)
-                    {
-                        return false;
-                    }
+                if fields.expiration_dt < condition.expiration_dt_from.unwrap_or(u64::MIN)
+                    || fields.expiration_dt > condition.expiration_dt_to.unwrap_or(u64::MAX)
+                {
+                    return false;
                 }
 
-                if !condition.operation_types.is_empty() {
-                    if !condition
+                if !condition.operation_types.is_empty()
+                    && !condition
                         .operation_types
                         .iter()
                         .any(|filter_by_operation| fields.operation_type.eq(filter_by_operation))
-                    {
-                        return false;
-                    }
+                {
+                    return false;
                 }
 
                 if !where_requesters.is_empty() && !where_requesters.contains(&fields.requested_by)
@@ -306,29 +305,23 @@ impl RequestRepository {
                     return false;
                 }
 
-                let all_approvals = fields
-                    .approved_by
-                    .iter()
-                    .chain(fields.rejected_by.iter())
-                    .map(|approver| *approver)
-                    .collect::<Vec<UserId>>();
+                let mut all_approvals = fields.approved_by.to_owned();
+                all_approvals.extend(fields.rejected_by.to_owned());
 
-                if !where_approvals.is_empty() {
-                    if !all_approvals
+                if !where_approvals.is_empty()
+                    && !all_approvals
                         .iter()
                         .any(|approver| where_approvals.contains(approver))
-                    {
-                        return false;
-                    }
+                {
+                    return false;
                 }
 
-                if !where_not_approvals.is_empty() {
-                    if all_approvals
+                if !where_not_approvals.is_empty()
+                    && all_approvals
                         .iter()
                         .any(|approver| where_not_approvals.contains(approver))
-                    {
-                        return false;
-                    }
+                {
+                    return false;
                 }
 
                 true

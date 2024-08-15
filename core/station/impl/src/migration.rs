@@ -72,7 +72,7 @@ const NAME_TO_ACCOUNT_ID_INDEX_MEMORY_ID: MemoryId = MemoryId::new(27);
 fn apply_migration() {
     with_memory_manager(|memory_manager| {
         // step 1: clear unused memory ids
-        for memory_id in vec![
+        for memory_id in [
             USER_IDENTITY_INDEX_MEMORY_ID,
             USER_STATUS_GROUP_INDEX_MEMORY_ID,
             NAME_TO_USER_ID_INDEX_MEMORY_ID,
