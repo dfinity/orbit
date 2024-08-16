@@ -1,6 +1,7 @@
 import { CycleObtainStrategyInput } from '~/generated/station/station.did';
 import { CycleObtainStrategyEnum } from '~/types/obtain-cycles.types';
 import { unreachable, variantIs } from '~/utils/helper.utils';
+import { i18n } from '~/plugins/i18n.plugin';
 
 export function cycleObtainStrategyInputToKey(
   strategy: CycleObtainStrategyInput,
@@ -17,9 +18,9 @@ export function cycleObtainStrategyInputToKey(
 
 export function cycleObtainStrategyToSummary(strategy: CycleObtainStrategyInput): string {
   if (variantIs(strategy, 'Disabled')) {
-    return 'Disabled';
+    return i18n.global.t('cycle_obtain_strategies.disabled');
   } else if (variantIs(strategy, 'MintFromNativeToken')) {
-    return `Mint from ICP account "${strategy.MintFromNativeToken.account_id}"`;
+    return `${i18n.global.t('cycle_obtain_strategies.mintfromnativetoken')} "${strategy.MintFromNativeToken.account_id}"`;
   } else {
     return unreachable(strategy);
   }
