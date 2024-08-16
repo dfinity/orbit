@@ -207,8 +207,6 @@ export interface ChangeExternalCanisterOperationInput {
   'canister_id' : Principal,
   'module' : Uint8Array | number[],
 }
-export type ChangeExternalCanisterResourceTarget = { 'Any' : null } |
-  { 'Canister' : Principal };
 export type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
 export interface ConfigureExternalCanisterOperationInput {
   'kind' : ConfigureExternalCanisterOperationKind,
@@ -217,8 +215,7 @@ export interface ConfigureExternalCanisterOperationInput {
 export type ConfigureExternalCanisterOperationKind = { 'SoftDelete' : null } |
   { 'Settings' : ConfigureExternalCanisterSettingsInput } |
   { 'Delete' : null } |
-  { 'NativeSettings' : DefiniteCanisterSettingsInput } |
-  { 'TopUp' : bigint };
+  { 'NativeSettings' : DefiniteCanisterSettingsInput };
 export interface ConfigureExternalCanisterSettingsInput {
   'permissions' : [] | [ExternalCanisterPermissionsInput],
   'name' : [] | [string],
@@ -263,6 +260,15 @@ export type CreateRequestResult = {
     }
   } |
   { 'Err' : Error };
+export type CycleObtainStrategy = { 'Disabled' : null } |
+  {
+    'MintFromNativeToken' : {
+      'account_id' : UUID,
+      'account_name' : [] | [string],
+    }
+  };
+export type CycleObtainStrategyInput = { 'Disabled' : null } |
+  { 'MintFromNativeToken' : { 'account_id' : UUID } };
 export interface DefiniteCanisterSettings {
   'freezing_threshold' : bigint,
   'controllers' : Array<Principal>,
@@ -391,6 +397,12 @@ export interface ExternalCanisterCallRequestPolicyRule {
   'execution_method' : string,
   'rule' : RequestPolicyRule,
   'validation_method' : ValidationMethodResourceTarget,
+  'policy_id' : UUID,
+}
+export interface ExternalCanisterCallRequestPolicyRuleInput {
+  'execution_method' : string,
+  'rule' : RequestPolicyRule,
+  'validation_method' : ValidationMethodResourceTarget,
   'policy_id' : [] | [UUID],
 }
 export interface ExternalCanisterCallerMethodsPrivileges {
@@ -400,12 +412,20 @@ export interface ExternalCanisterCallerMethodsPrivileges {
 export interface ExternalCanisterCallerPrivileges {
   'id' : UUID,
   'can_change' : boolean,
+  'canister_id' : Principal,
   'can_call' : Array<ExternalCanisterCallerMethodsPrivileges>,
+  'can_fund' : boolean,
 }
 export interface ExternalCanisterChangeRequestPolicyRule {
   'rule' : RequestPolicyRule,
+  'policy_id' : UUID,
+}
+export interface ExternalCanisterChangeRequestPolicyRuleInput {
+  'rule' : RequestPolicyRule,
   'policy_id' : [] | [UUID],
 }
+export type ExternalCanisterId = { 'Any' : null } |
+  { 'Canister' : Principal };
 export interface ExternalCanisterPermissions {
   'calls' : Array<ExternalCanisterCallPermission>,
   'read' : Allow,
@@ -416,14 +436,18 @@ export interface ExternalCanisterRequestPolicies {
   'calls' : Array<ExternalCanisterCallRequestPolicyRule>,
   'change' : Array<ExternalCanisterChangeRequestPolicyRule>,
 }
-export type ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPolicies;
+export interface ExternalCanisterRequestPoliciesInput {
+  'calls' : Array<ExternalCanisterCallRequestPolicyRuleInput>,
+  'change' : Array<ExternalCanisterChangeRequestPolicyRuleInput>,
+}
 export type ExternalCanisterResourceAction = {
     'Call' : CallExternalCanisterResourceTarget
   } |
+  { 'Fund' : ExternalCanisterId } |
   { 'List' : null } |
-  { 'Read' : ReadExternalCanisterResourceTarget } |
+  { 'Read' : ExternalCanisterId } |
   { 'Create' : null } |
-  { 'Change' : ChangeExternalCanisterResourceTarget };
+  { 'Change' : ExternalCanisterId };
 export type ExternalCanisterState = { 'Active' : null } |
   { 'Archived' : null };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
@@ -431,6 +455,15 @@ export type FetchAccountBalancesResult = {
     'Ok' : { 'balances' : Array<AccountBalance> }
   } |
   { 'Err' : Error };
+export type FundExternalCanisterOperation = FundExternalCanisterOperationInput;
+export interface FundExternalCanisterOperationInput {
+  'kind' : FundExternalCanisterOperationKind,
+  'canister_id' : Principal,
+}
+export type FundExternalCanisterOperationKind = {
+    'Send' : FundExternalCanisterSendCyclesInput
+  };
+export interface FundExternalCanisterSendCyclesInput { 'cycles' : bigint }
 export interface GetAccountInput { 'account_id' : UUID }
 export type GetAccountResult = {
     'Ok' : { 'privileges' : AccountCallerPrivileges, 'account' : Account }
@@ -571,6 +604,8 @@ export type ListAddressBookEntriesResult = {
   } |
   { 'Err' : Error };
 export interface ListExternalCanistersInput {
+  'sort_by' : [] | [ListExternalCanistersSortInput],
+  'states' : [] | [Array<ExternalCanisterState>],
   'canister_ids' : [] | [Array<Principal>],
   'labels' : [] | [Array<string>],
   'paginate' : [] | [PaginationInput],
@@ -584,6 +619,7 @@ export type ListExternalCanistersResult = {
     }
   } |
   { 'Err' : Error };
+export type ListExternalCanistersSortInput = { 'Name' : SortByDirection };
 export interface ListNotificationsInput {
   'status' : [] | [NotificationStatus],
   'to_dt' : [] | [TimestampRFC3339],
@@ -645,6 +681,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
+  { 'FundExternalCanister' : [] | [Principal] } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
@@ -699,7 +736,10 @@ export type ListUsersResult = {
 export interface ManageSystemInfoOperation {
   'input' : ManageSystemInfoOperationInput,
 }
-export interface ManageSystemInfoOperationInput { 'name' : [] | [string] }
+export interface ManageSystemInfoOperationInput {
+  'name' : [] | [string],
+  'cycle_obtain_strategy' : [] | [CycleObtainStrategyInput],
+}
 export type MarkNotificationReadResult = { 'Ok' : null } |
   { 'Err' : Error };
 export interface MarkNotificationsReadInput {
@@ -764,8 +804,6 @@ export interface QuorumPercentage {
   'min_approved' : number,
   'approvers' : UserSpecifier,
 }
-export type ReadExternalCanisterResourceTarget = { 'Any' : null } |
-  { 'Canister' : Principal };
 export interface RemoveAddressBookEntryOperation {
   'input' : RemoveAddressBookEntryOperationInput,
 }
@@ -830,6 +868,7 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperation } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
+  { 'FundExternalCanister' : FundExternalCanisterOperation } |
   { 'ChangeCanister' : ChangeCanisterOperation } |
   { 'EditUser' : EditUserOperation } |
   { 'ManageSystemInfo' : ManageSystemInfoOperation } |
@@ -854,6 +893,7 @@ export type RequestOperationInput = {
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperationInput } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
+  { 'FundExternalCanister' : FundExternalCanisterOperationInput } |
   { 'ChangeCanister' : ChangeCanisterOperationInput } |
   { 'EditUser' : EditUserOperationInput } |
   { 'ManageSystemInfo' : ManageSystemInfoOperationInput } |
@@ -876,6 +916,7 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
+  { 'FundExternalCanister' : null } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
@@ -914,7 +955,7 @@ export type RequestResourceAction = { 'List' : null } |
   { 'Read' : ResourceId };
 export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'EditPermission' : ResourceSpecifier } |
-  { 'ChangeExternalCanister' : ChangeExternalCanisterResourceTarget } |
+  { 'ChangeExternalCanister' : ExternalCanisterId } |
   { 'AddUser' : null } |
   { 'EditUserGroup' : ResourceIds } |
   { 'SetDisasterRecovery' : null } |
@@ -923,6 +964,7 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : ResourceIds } |
+  { 'FundExternalCanister' : ExternalCanisterId } |
   { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
   { 'ManageSystemInfo' : null } |
@@ -1000,6 +1042,7 @@ export interface SystemInfo {
   'version' : string,
   'cycles' : bigint,
   'upgrader_id' : Principal,
+  'cycle_obtain_strategy' : CycleObtainStrategy,
 }
 export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
   { 'Err' : Error };
@@ -1041,6 +1084,7 @@ export interface TransferListItem {
 }
 export interface TransferMetadata { 'key' : string, 'value' : string }
 export interface TransferOperation {
+  'fee' : [] | [bigint],
   'network' : Network,
   'transfer_id' : [] | [UUID],
   'from_account' : [] | [Account],

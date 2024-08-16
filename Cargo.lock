@@ -679,10 +679,12 @@ dependencies = [
  "futures",
  "ic-cdk 0.13.2",
  "ic-cdk-timers",
+ "ic-ledger-types",
  "num-bigint 0.4.5",
  "serde",
  "serde_bytes",
  "thiserror",
+ "tokio",
 ]
 
 [[package]]

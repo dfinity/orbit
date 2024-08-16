@@ -123,20 +123,17 @@ export const idlFactory = ({ IDL }) => {
     'execution_method' : ExecutionMethodResourceTarget,
     'validation_method' : ValidationMethodResourceTarget,
   });
-  const ReadExternalCanisterResourceTarget = IDL.Variant({
-    'Any' : IDL.Null,
-    'Canister' : IDL.Principal,
-  });
-  const ChangeExternalCanisterResourceTarget = IDL.Variant({
+  const ExternalCanisterId = IDL.Variant({
     'Any' : IDL.Null,
     'Canister' : IDL.Principal,
   });
   const ExternalCanisterResourceAction = IDL.Variant({
     'Call' : CallExternalCanisterResourceTarget,
+    'Fund' : ExternalCanisterId,
     'List' : IDL.Null,
-    'Read' : ReadExternalCanisterResourceTarget,
+    'Read' : ExternalCanisterId,
     'Create' : IDL.Null,
-    'Change' : ChangeExternalCanisterResourceTarget,
+    'Change' : ExternalCanisterId,
   });
   const AccountResourceAction = IDL.Variant({
     'List' : IDL.Null,
@@ -225,21 +222,20 @@ export const idlFactory = ({ IDL }) => {
       'AllowListedByMetadata' : AddressBookMetadata,
     })
   );
-  const ExternalCanisterCallRequestPolicyRule = IDL.Record({
+  const ExternalCanisterCallRequestPolicyRuleInput = IDL.Record({
     'execution_method' : IDL.Text,
     'rule' : RequestPolicyRule,
     'validation_method' : ValidationMethodResourceTarget,
     'policy_id' : IDL.Opt(UUID),
   });
-  const ExternalCanisterChangeRequestPolicyRule = IDL.Record({
+  const ExternalCanisterChangeRequestPolicyRuleInput = IDL.Record({
     'rule' : RequestPolicyRule,
     'policy_id' : IDL.Opt(UUID),
   });
-  const ExternalCanisterRequestPolicies = IDL.Record({
-    'calls' : IDL.Vec(ExternalCanisterCallRequestPolicyRule),
-    'change' : IDL.Vec(ExternalCanisterChangeRequestPolicyRule),
+  const ExternalCanisterRequestPoliciesInput = IDL.Record({
+    'calls' : IDL.Vec(ExternalCanisterCallRequestPolicyRuleInput),
+    'change' : IDL.Vec(ExternalCanisterChangeRequestPolicyRuleInput),
   });
-  const ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPolicies;
   const ExternalCanisterState = IDL.Variant({
     'Active' : IDL.Null,
     'Archived' : IDL.Null,
@@ -264,7 +260,6 @@ export const idlFactory = ({ IDL }) => {
     'Settings' : ConfigureExternalCanisterSettingsInput,
     'Delete' : IDL.Null,
     'NativeSettings' : DefiniteCanisterSettingsInput,
-    'TopUp' : IDL.Nat64,
   });
   const ConfigureExternalCanisterOperationInput = IDL.Record({
     'kind' : ConfigureExternalCanisterOperationKind,
@@ -310,7 +305,7 @@ export const idlFactory = ({ IDL }) => {
   const RequestSpecifier = IDL.Variant({
     'AddUserGroup' : IDL.Null,
     'EditPermission' : ResourceSpecifier,
-    'ChangeExternalCanister' : ChangeExternalCanisterResourceTarget,
+    'ChangeExternalCanister' : ExternalCanisterId,
     'AddUser' : IDL.Null,
     'EditUserGroup' : ResourceIds,
     'SetDisasterRecovery' : IDL.Null,
@@ -319,6 +314,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAddressBookEntry' : ResourceIds,
     'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : ResourceIds,
+    'FundExternalCanister' : ExternalCanisterId,
     'ChangeCanister' : IDL.Null,
     'EditUser' : ResourceIds,
     'ManageSystemInfo' : IDL.Null,
@@ -367,6 +363,16 @@ export const idlFactory = ({ IDL }) => {
     'address_book_entry_id' : UUID,
     'address_owner' : IDL.Opt(IDL.Text),
   });
+  const FundExternalCanisterSendCyclesInput = IDL.Record({
+    'cycles' : IDL.Nat64,
+  });
+  const FundExternalCanisterOperationKind = IDL.Variant({
+    'Send' : FundExternalCanisterSendCyclesInput,
+  });
+  const FundExternalCanisterOperationInput = IDL.Record({
+    'kind' : FundExternalCanisterOperationKind,
+    'canister_id' : IDL.Principal,
+  });
   const ChangeCanisterTarget = IDL.Variant({
     'UpgradeUpgrader' : IDL.Null,
     'UpgradeStation' : IDL.Null,
@@ -383,8 +389,13 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Opt(IDL.Text),
     'identities' : IDL.Opt(IDL.Vec(IDL.Principal)),
   });
+  const CycleObtainStrategyInput = IDL.Variant({
+    'Disabled' : IDL.Null,
+    'MintFromNativeToken' : IDL.Record({ 'account_id' : UUID }),
+  });
   const ManageSystemInfoOperationInput = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
+    'cycle_obtain_strategy' : IDL.Opt(CycleObtainStrategyInput),
   });
   const TransferMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const NetworkId = IDL.Text;
@@ -452,6 +463,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput,
     'CreateExternalCanister' : CreateExternalCanisterOperationInput,
     'EditAddressBookEntry' : EditAddressBookEntryOperationInput,
+    'FundExternalCanister' : FundExternalCanisterOperationInput,
     'ChangeCanister' : ChangeCanisterOperationInput,
     'EditUser' : EditUserOperationInput,
     'ManageSystemInfo' : ManageSystemInfoOperationInput,
@@ -533,6 +545,7 @@ export const idlFactory = ({ IDL }) => {
   const EditAddressBookEntryOperation = IDL.Record({
     'input' : EditAddressBookEntryOperationInput,
   });
+  const FundExternalCanisterOperation = FundExternalCanisterOperationInput;
   const ChangeCanisterOperation = IDL.Record({
     'module_checksum' : Sha256Hash,
     'target' : ChangeCanisterTarget,
@@ -562,6 +575,7 @@ export const idlFactory = ({ IDL }) => {
     'symbol' : AssetSymbol,
   });
   const TransferOperation = IDL.Record({
+    'fee' : IDL.Opt(IDL.Nat),
     'network' : Network,
     'transfer_id' : IDL.Opt(UUID),
     'from_account' : IDL.Opt(Account),
@@ -615,6 +629,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
     'CreateExternalCanister' : CreateExternalCanisterOperation,
     'EditAddressBookEntry' : EditAddressBookEntryOperation,
+    'FundExternalCanister' : FundExternalCanisterOperation,
     'ChangeCanister' : ChangeCanisterOperation,
     'EditUser' : EditUserOperation,
     'ManageSystemInfo' : ManageSystemInfoOperation,
@@ -755,7 +770,23 @@ export const idlFactory = ({ IDL }) => {
   const ExternalCanisterCallerPrivileges = IDL.Record({
     'id' : UUID,
     'can_change' : IDL.Bool,
+    'canister_id' : IDL.Principal,
     'can_call' : IDL.Vec(ExternalCanisterCallerMethodsPrivileges),
+    'can_fund' : IDL.Bool,
+  });
+  const ExternalCanisterCallRequestPolicyRule = IDL.Record({
+    'execution_method' : IDL.Text,
+    'rule' : RequestPolicyRule,
+    'validation_method' : ValidationMethodResourceTarget,
+    'policy_id' : UUID,
+  });
+  const ExternalCanisterChangeRequestPolicyRule = IDL.Record({
+    'rule' : RequestPolicyRule,
+    'policy_id' : UUID,
+  });
+  const ExternalCanisterRequestPolicies = IDL.Record({
+    'calls' : IDL.Vec(ExternalCanisterCallRequestPolicyRule),
+    'change' : IDL.Vec(ExternalCanisterChangeRequestPolicyRule),
   });
   const ExternalCanister = IDL.Record({
     'id' : UUID,
@@ -804,6 +835,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAddressBookEntry' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
+    'FundExternalCanister' : IDL.Opt(IDL.Principal),
     'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
@@ -986,7 +1018,13 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
+  const SortByDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
+  const ListExternalCanistersSortInput = IDL.Variant({
+    'Name' : SortByDirection,
+  });
   const ListExternalCanistersInput = IDL.Record({
+    'sort_by' : IDL.Opt(ListExternalCanistersSortInput),
+    'states' : IDL.Opt(IDL.Vec(ExternalCanisterState)),
     'canister_ids' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'paginate' : IDL.Opt(PaginationInput),
@@ -1027,6 +1065,7 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAddressBookEntry' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
+    'FundExternalCanister' : IDL.Null,
     'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
@@ -1100,7 +1139,6 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
-  const SortByDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
   const ListRequestsSortBy = IDL.Variant({
     'ExpirationDt' : SortByDirection,
     'LastModificationDt' : SortByDirection,
@@ -1217,6 +1255,13 @@ export const idlFactory = ({ IDL }) => {
     'user_group_name' : IDL.Opt(IDL.Text),
     'committee' : DisasterRecoveryCommittee,
   });
+  const CycleObtainStrategy = IDL.Variant({
+    'Disabled' : IDL.Null,
+    'MintFromNativeToken' : IDL.Record({
+      'account_id' : UUID,
+      'account_name' : IDL.Opt(IDL.Text),
+    }),
+  });
   const SystemInfo = IDL.Record({
     'disaster_recovery' : IDL.Opt(DisasterRecovery),
     'name' : IDL.Text,
@@ -1225,6 +1270,7 @@ export const idlFactory = ({ IDL }) => {
     'version' : IDL.Text,
     'cycles' : IDL.Nat64,
     'upgrader_id' : IDL.Principal,
+    'cycle_obtain_strategy' : CycleObtainStrategy,
   });
   const SystemInfoResult = IDL.Variant({
     'Ok' : IDL.Record({ 'system' : SystemInfo }),

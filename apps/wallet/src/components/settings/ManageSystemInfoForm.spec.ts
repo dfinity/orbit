@@ -21,6 +21,11 @@ describe('ManageSystemInfoForm', () => {
       props: {
         modelValue: {
           name: ['Test'],
+          cycle_obtain_strategy: [
+            {
+              Disabled: null,
+            },
+          ],
         },
       },
     });
@@ -40,6 +45,11 @@ describe('ManageSystemInfoForm', () => {
       [
         {
           name: ['Personal'],
+          cycle_obtain_strategy: [
+            {
+              Disabled: null,
+            },
+          ],
         },
       ],
     ]);

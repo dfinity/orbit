@@ -30,9 +30,23 @@ async fn initialize(input: Option<SystemInstall>) {
 #[cfg(all(feature = "canbench", not(test)))]
 #[ic_cdk_macros::init]
 pub async fn mock_init() {
+    use crate::core::write_system_info;
+    use crate::models::SystemInfo;
+    use crate::repositories::permission::PERMISSION_REPOSITORY;
+    use candid::Principal;
+
     // Initialize the random number generator with a fixed seed to ensure deterministic
     // results across runs of the benchmarks.
     orbit_essentials::utils::initialize_rng_from_seed([0u8; 32]);
+
+    // Initialize the system info.
+    let mut system = SystemInfo::default();
+    system.set_upgrader_canister_id(Principal::from_slice(&[25; 29]));
+
+    // Initialize the permission cached entries for repositories.
+    PERMISSION_REPOSITORY.build_cache();
+
+    write_system_info(system);
 }
 
 #[post_upgrade]

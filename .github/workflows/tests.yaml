@@ -94,6 +94,8 @@ jobs:
             name: 'ledger-canister'
           - canister: 'icp_index'
             name: 'ic-icp-index-canister'
+          - canister: 'cmc'
+            name: 'cycles-minting-canister'
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4

@@ -1,3 +1,10 @@
+use std::{fmt::Debug, sync::Arc};
+
+use candid::Principal;
+use ic_ledger_types::AccountIdentifier;
+
+use crate::operations::obtain::ObtainCycles;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct EstimatedRuntime {
     /// The estimated min runtime in seconds to trigger the funding operation.
@@ -159,8 +166,23 @@ impl Default for FundStrategy {
     }
 }
 
-/// The options when initializing the fund manager.
+#[derive(Clone)]
+pub struct ObtainCyclesOptions {
+    /// How to obtain cycles when the funding canister balance gets low.
+    pub obtain_cycles: Arc<dyn ObtainCycles>,
+    /// If canfund should use obtain_cycles to top up the canister balance canfund is running on.
+    pub top_up_self: bool,
+}
+
 #[derive(Debug, Clone)]
+pub struct CycleMintingOptions {
+    pub ledger_canister_id: Principal,
+    pub cmc_canister_id: Principal,
+    pub icp_account_id: AccountIdentifier,
+}
+
+/// The options when initializing the fund manager.
+#[derive(Clone)]
 pub struct FundManagerOptions {
     /// The interval in secs to track the canister balance.
     interval_secs: u64,
@@ -172,6 +194,8 @@ pub struct FundManagerOptions {
     ///
     /// The default is to fund the canister when the balance is below the threshold.
     strategy: FundStrategy,
+    /// Obtain cycles options to handle the funding canister balance getting low.
+    obtain_cycles_options: Option<ObtainCyclesOptions>,
 }
 
 impl Default for FundManagerOptions {
@@ -182,6 +206,7 @@ impl Default for FundManagerOptions {
             chunk_size: 20,
             strategy: FundStrategy::default(),
             delayed_start: false,
+            obtain_cycles_options: None,
         }
     }
 }
@@ -189,6 +214,15 @@ impl Default for FundManagerOptions {
 impl FundManagerOptions {
     pub fn new() -> Self {
         FundManagerOptions::default()
+    }
+
+    /// Enable minting cycles from ICP if the canister balance is too low.
+    pub fn with_obtain_cycles_options(
+        mut self,
+        obtain_cycles_options: Option<ObtainCyclesOptions>,
+    ) -> Self {
+        self.obtain_cycles_options = obtain_cycles_options;
+        self
     }
 
     /// Set the interval in secs to track the canister balance.
@@ -223,6 +257,11 @@ impl FundManagerOptions {
     /// Get the strategy to use when funding the canister.
     pub fn strategy(&self) -> &FundStrategy {
         &self.strategy
+    }
+
+    /// Get the obtain cycles implementation if enabled.
+    pub fn obtain_cycles_options(&self) -> Option<ObtainCyclesOptions> {
+        self.obtain_cycles_options.clone()
     }
 
     /// Get the chunk size for when doing a batched fetch of canister balances.

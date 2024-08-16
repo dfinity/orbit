@@ -44,6 +44,7 @@ impl Create<station_api::TransferOperationInput> for TransferRequestCreate {
             Request::default_expiration_dt_ns(),
             RequestOperation::Transfer(TransferOperation {
                 transfer_id: None,
+                fee: None,
                 input: TransferOperationInput {
                     from_account_id: *from_account_id.as_bytes(),
                     to: operation_input.to,

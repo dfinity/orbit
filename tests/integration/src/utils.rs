@@ -5,12 +5,13 @@ use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
 use station_api::{
-    AddUserOperationInput, AllowDTO, ApiErrorDTO, CreateRequestInput, CreateRequestResponse,
-    GetPermissionResponse, GetRequestInput, GetRequestResponse, HealthStatus, MeResponse,
-    RequestApprovalStatusDTO, RequestDTO, RequestExecutionScheduleDTO, RequestOperationDTO,
-    RequestOperationInput, RequestStatusDTO, ResourceIdDTO, SetDisasterRecoveryOperationDTO,
+    AccountDTO, AddAccountOperationInput, AddUserOperationInput, AllowDTO, ApiErrorDTO,
+    CreateRequestInput, CreateRequestResponse, GetPermissionResponse, GetRequestInput,
+    GetRequestResponse, HealthStatus, MeResponse, QuorumPercentageDTO, RequestApprovalStatusDTO,
+    RequestDTO, RequestExecutionScheduleDTO, RequestOperationDTO, RequestOperationInput,
+    RequestPolicyRuleDTO, RequestStatusDTO, ResourceIdDTO, SetDisasterRecoveryOperationDTO,
     SetDisasterRecoveryOperationInput, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
-    SystemInfoDTO, SystemInfoResponse, UserDTO, UserStatusDTO,
+    SystemInfoDTO, SystemInfoResponse, UserDTO, UserSpecifierDTO, UserStatusDTO, UuidDTO,
 };
 use std::time::Duration;
 use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
@@ -558,4 +559,103 @@ pub fn get_account_transfer_permission(
         .expect("Failed to get account transfer permission")
         .permission
         .allow
+}
+
+pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDTO) -> AccountDTO {
+    // create account
+    let create_account_args = AddAccountOperationInput {
+        name: "test".to_string(),
+        blockchain: "icp".to_string(),
+        standard: "native".to_string(),
+        read_permission: AllowDTO {
+            auth_scope: station_api::AuthScopeDTO::Restricted,
+            user_groups: vec![],
+            users: vec![user_id.clone()],
+        },
+        configs_permission: AllowDTO {
+            auth_scope: station_api::AuthScopeDTO::Restricted,
+            user_groups: vec![],
+            users: vec![user_id.clone()],
+        },
+        transfer_permission: AllowDTO {
+            auth_scope: station_api::AuthScopeDTO::Restricted,
+            user_groups: vec![],
+            users: vec![user_id.clone()],
+        },
+        transfer_request_policy: Some(RequestPolicyRuleDTO::QuorumPercentage(
+            QuorumPercentageDTO {
+                approvers: UserSpecifierDTO::Id(vec![user_id.clone()]),
+                min_approved: 100,
+            },
+        )),
+        configs_request_policy: Some(RequestPolicyRuleDTO::QuorumPercentage(
+            QuorumPercentageDTO {
+                approvers: UserSpecifierDTO::Id(vec![user_id.clone()]),
+                min_approved: 100,
+            },
+        )),
+        metadata: vec![],
+    };
+    let add_account_request = CreateRequestInput {
+        operation: RequestOperationInput::AddAccount(create_account_args),
+        title: None,
+        summary: None,
+        execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
+    };
+    let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
+        env,
+        station_id,
+        WALLET_ADMIN_USER,
+        "create_request",
+        (add_account_request,),
+    )
+    .unwrap();
+
+    // wait for the request to be approved (timer's period is 5 seconds)
+    env.advance_time(Duration::from_secs(5));
+    env.tick();
+
+    let account_creation_request_dto = res.0.unwrap().request;
+    match account_creation_request_dto.status {
+        RequestStatusDTO::Approved { .. } => {}
+        _ => {
+            panic!("request must be approved by now");
+        }
+    };
+
+    // wait for the request to be executed (timer's period is 5 seconds)
+    env.advance_time(Duration::from_secs(5));
+    env.tick();
+
+    // fetch the created account id from the request
+    let get_request_args = GetRequestInput {
+        request_id: account_creation_request_dto.id,
+    };
+    let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
+        env,
+        station_id,
+        WALLET_ADMIN_USER,
+        "get_request",
+        (get_request_args,),
+    )
+    .unwrap();
+    let finalized_request = res.0.unwrap().request;
+    match finalized_request.status {
+        RequestStatusDTO::Completed { .. } => {}
+        _ => {
+            panic!(
+                "request must be completed by now but instead is {:?}",
+                finalized_request.status
+            );
+        }
+    };
+
+    match finalized_request.operation {
+        RequestOperationDTO::AddAccount(add_account) => {
+            add_account.account.expect("no account in result")
+        }
+        _ => {
+            panic!("request must be AddAccount");
+        }
+    }
 }

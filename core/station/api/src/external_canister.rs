@@ -1,12 +1,10 @@
 use crate::{
     AllowDTO, CanisterInstallMode, PaginationInput, RequestPolicyRuleDTO, Sha256HashDTO,
-    TimestampRfc3339, UuidDTO, ValidationMethodResourceTargetDTO,
+    SortDirection, TimestampRfc3339, UuidDTO, ValidationMethodResourceTargetDTO,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
 
 pub type ExternalCanisterPermissionsInput = ExternalCanisterPermissionsDTO;
-pub type ExternalCanisterCallRequestPolicyRuleInput = ExternalCanisterCallRequestPolicyRule;
-pub type ExternalCanisterRequestPoliciesInput = ExternalCanisterRequestPoliciesDTO;
 
 // Taken from https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-create_canister
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -94,7 +92,6 @@ pub struct ConfigureExternalCanisterSettingsInput {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ConfigureExternalCanisterOperationKindDTO {
     Settings(ConfigureExternalCanisterSettingsInput),
-    TopUp(u64),
     SoftDelete,
     Delete,
     NativeSettings(DefiniteCanisterSettingsInput),
@@ -133,7 +130,15 @@ pub struct ExternalCanisterCallPermissionDTO {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct ExternalCanisterCallRequestPolicyRule {
+pub struct ExternalCanisterCallRequestPolicyRuleDTO {
+    pub policy_id: UuidDTO,
+    pub rule: RequestPolicyRuleDTO,
+    pub validation_method: ValidationMethodResourceTargetDTO,
+    pub execution_method: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterCallRequestPolicyRuleInput {
     pub policy_id: Option<UuidDTO>,
     pub rule: RequestPolicyRuleDTO,
     pub validation_method: ValidationMethodResourceTargetDTO,
@@ -141,7 +146,13 @@ pub struct ExternalCanisterCallRequestPolicyRule {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct ExternalCanisterChangeRequestPolicyRule {
+pub struct ExternalCanisterChangeRequestPolicyRuleDTO {
+    pub policy_id: UuidDTO,
+    pub rule: RequestPolicyRuleDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterChangeRequestPolicyRuleInput {
     pub policy_id: Option<UuidDTO>,
     pub rule: RequestPolicyRuleDTO,
 }
@@ -155,8 +166,14 @@ pub struct ExternalCanisterPermissionsDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalCanisterRequestPoliciesDTO {
-    pub change: Vec<ExternalCanisterChangeRequestPolicyRule>,
-    pub calls: Vec<ExternalCanisterCallRequestPolicyRule>,
+    pub change: Vec<ExternalCanisterChangeRequestPolicyRuleDTO>,
+    pub calls: Vec<ExternalCanisterCallRequestPolicyRuleDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterRequestPoliciesInput {
+    pub change: Vec<ExternalCanisterChangeRequestPolicyRuleInput>,
+    pub calls: Vec<ExternalCanisterCallRequestPolicyRuleInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -193,7 +210,9 @@ pub struct ExternalCanisterCallerMethodPrivilegesDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalCanisterCallerPrivilegesDTO {
     pub id: UuidDTO,
+    pub canister_id: Principal,
     pub can_change: bool,
+    pub can_fund: bool,
     pub can_call: Vec<ExternalCanisterCallerMethodPrivilegesDTO>,
 }
 
@@ -204,10 +223,17 @@ pub struct GetExternalCanisterResponse {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum ListExternalCanistersSortInput {
+    Name(SortDirection),
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ListExternalCanistersInput {
     pub canister_ids: Option<Vec<Principal>>,
     pub labels: Option<Vec<String>>,
+    pub states: Option<Vec<ExternalCanisterStateDTO>>,
     pub paginate: Option<PaginationInput>,
+    pub sort_by: Option<ListExternalCanistersSortInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -220,13 +246,13 @@ pub struct ListExternalCanistersResponse {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetExternalCanisterFiltersInputWithName {
-    prefix: Option<String>,
+    pub prefix: Option<String>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetExternalCanisterFiltersInput {
-    with_name: Option<GetExternalCanisterFiltersInputWithName>,
-    with_labels: Option<bool>,
+    pub with_name: Option<GetExternalCanisterFiltersInputWithName>,
+    pub with_labels: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -240,3 +266,21 @@ pub struct GetExternalCanisterFiltersResponse {
     pub names: Option<Vec<GetExternalCanisterFiltersResponseNameEntry>>,
     pub labels: Option<Vec<String>>,
 }
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct FundExternalCanisterSendCyclesInput {
+    pub cycles: u64,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum FundExternalCanisterOperationKindDTO {
+    Send(FundExternalCanisterSendCyclesInput),
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct FundExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub kind: FundExternalCanisterOperationKindDTO,
+}
+
+pub type FundExternalCanisterOperationDTO = FundExternalCanisterOperationInput;

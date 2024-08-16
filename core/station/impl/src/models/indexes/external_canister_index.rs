@@ -1,6 +1,6 @@
 use crate::{
     core::utils::format_unique_string,
-    models::{ExternalCanister, ExternalCanisterId},
+    models::{ExternalCanister, ExternalCanisterEntryId},
 };
 use candid::Principal;
 use orbit_essentials::storable;
@@ -12,14 +12,19 @@ pub struct ExternalCanisterIndex {
     /// An indexed value of the external canister.
     pub index: ExternalCanisterIndexKind,
     /// The external canister id, which is a UUID.
-    pub external_canister_entry_id: ExternalCanisterId,
+    pub external_canister_entry_id: ExternalCanisterEntryId,
+    /// The canister id of the external canister, also, it helps avoid an extra lookup for permission checks.
+    pub canister_id: Principal,
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ExternalCanisterIndexKind {
+    // Used to check if a canister id already exists.
     CanisterId(Principal),
+    // Used to check if a name already exists and to list all names to facilitate searching.
     Name(String),
+    // Used to list all labels to facilitate searching/
     Label(String),
 }
 
@@ -29,6 +34,7 @@ impl ExternalCanister {
         ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::Name(format_unique_string(self.name.as_str())),
             external_canister_entry_id: self.id,
+            canister_id: self.canister_id,
         }
     }
 
@@ -39,6 +45,7 @@ impl ExternalCanister {
             .map(|label| ExternalCanisterIndex {
                 index: ExternalCanisterIndexKind::Label(format_unique_string(label.as_str())),
                 external_canister_entry_id: self.id,
+                canister_id: self.canister_id,
             })
             .collect()
     }
@@ -48,12 +55,14 @@ impl ExternalCanister {
         ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::CanisterId(self.canister_id),
             external_canister_entry_id: self.id,
+            canister_id: self.canister_id,
         }
     }
 
     /// Converts the external canister to indexes to facilitate searching.
     pub fn indexes(&self) -> Vec<ExternalCanisterIndex> {
         let mut indexes = vec![self.to_index_by_name(), self.to_index_by_canister_id()];
+
         indexes.extend(self.to_index_by_labels());
 
         indexes
@@ -77,6 +86,7 @@ mod tests {
         let model = ExternalCanisterIndex {
             index: ExternalCanisterIndexKind::CanisterId(Principal::anonymous()),
             external_canister_entry_id: [u8::MAX; 16],
+            canister_id: Principal::anonymous(),
         };
 
         let serialized_model = model.to_bytes();

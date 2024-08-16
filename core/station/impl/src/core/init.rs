@@ -4,11 +4,9 @@ use crate::models::{
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
         AccountResourceAction, CallExternalCanisterResourceTarget, ChangeCanisterResourceAction,
-        ChangeExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
-        ExternalCanisterResourceAction, PermissionResourceAction,
-        ReadExternalCanisterResourceTarget, RequestResourceAction, Resource, ResourceAction,
-        ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
-        ValidationMethodResourceTarget,
+        ExecutionMethodResourceTarget, ExternalCanisterId, ExternalCanisterResourceAction,
+        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+        ResourceIds, SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
     },
     ADMIN_GROUP_ID,
 };
@@ -154,7 +152,7 @@ lazy_static! {
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ExternalCanister(ExternalCanisterResourceAction::Change(ChangeExternalCanisterResourceTarget::Any)),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Change(ExternalCanisterId::Any)),
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
@@ -165,7 +163,7 @@ lazy_static! {
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ReadExternalCanisterResourceTarget::Any)),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Any)),
         ),
     ];
 
@@ -242,7 +240,7 @@ pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPoli
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
-            RequestSpecifier::ChangeExternalCanister(ChangeExternalCanisterResourceTarget::Any),
+            RequestSpecifier::ChangeExternalCanister(ExternalCanisterId::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (

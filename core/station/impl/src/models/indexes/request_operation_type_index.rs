@@ -96,6 +96,18 @@ impl Request {
                     request_id: self.id,
                 },
             ],
+            RequestOperation::FundExternalCanister(operation) => vec![
+                RequestOperationTypeIndex {
+                    operation_type: RequestOperationFilterType::FundExternalCanister(None),
+                    request_id: self.id,
+                },
+                RequestOperationTypeIndex {
+                    operation_type: RequestOperationFilterType::FundExternalCanister(Some(
+                        operation.canister_id,
+                    )),
+                    request_id: self.id,
+                },
+            ],
             RequestOperation::CreateExternalCanister(_) => vec![RequestOperationTypeIndex {
                 operation_type: RequestOperationFilterType::CreateExternalCanister,
                 request_id: self.id,
@@ -180,6 +192,7 @@ mod tests {
         let account_id = [0; 16];
         request.operation = RequestOperation::Transfer(TransferOperation {
             transfer_id: None,
+            fee: None,
             input: TransferOperationInput {
                 amount: candid::Nat(BigUint::from(100u32)),
                 fee: None,

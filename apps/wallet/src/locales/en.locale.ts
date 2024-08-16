@@ -187,9 +187,11 @@ export default {
       change_target: 'Change Target',
       wasm_checksum: 'Wasm Checksum',
       from_account: 'From Account',
+      from_account_address: 'From Address',
       to: 'To Address',
       amount: 'Amount',
       fee: 'Fee',
+      comment: 'Comment',
     },
     download: {
       user_group: 'User Groups',
@@ -413,6 +415,7 @@ export default {
     arg: 'Arg',
     access: 'Access',
     previous: 'Previous',
+    comment: 'Comment',
     comment_optional: 'Comment (optional)',
     next: 'Next',
     back: 'Back',
@@ -534,6 +537,7 @@ export default {
     skip: 'Skip',
     version: 'Version',
     continue: 'Continue',
+    cycle_obtain_strategy: 'Station top-up method',
   },
   forms: {
     create: 'Create',
@@ -577,13 +581,16 @@ export default {
       btn_new_transfer: 'New transfer',
       btn_upload_csv: 'Upload CSV',
       error_fetching_account: 'Error fetching account, please try again.',
+      cycle_obtain_account: 'This account is used to top up the Orbit station cycle balance.',
     },
     account: {
       not_found: 'Account not found',
       not_found_description: 'The account you are looking for does not exist.',
       csv_transfer_subtitle: 'Upload a CSV file to create multiple transfers at once.',
-      csv_transfer_file_format_hint: 'The CSV file must contain the column "{to}" and "{amount}".',
+      csv_transfer_file_format_hint:
+        'The CSV file must contain the column "{to}" and "{amount}", and optionally "{comment}".',
       csv_transfer_file_column_to: 'to',
+      csv_transfer_file_column_comment: 'comment',
       csv_transfer_file_column_amount: 'amount',
       csv_transfer_file_rows_title: 'Transfers to be created: {count}',
       csv_ignored_transfers_hint: 'Transfers with errors will be ignored.',
@@ -602,6 +609,9 @@ export default {
     },
     administration: {
       title: 'Administration',
+      cycle_obtain_strategy_disabled:
+        'WARNING: Station cycle balance top-up disabled. Your station may run out of cycles.',
+      cycle_obtain_strategy_mint_from_native_token: 'Mint from ICP account',
     },
     users: {
       title: 'Users',
@@ -787,5 +797,9 @@ export default {
       managesysteminfo: 'Manage system info',
       changeexternalcanister: 'Change external canister',
     },
+  },
+  cycle_obtain_strategies: {
+    disabled: 'Disabled',
+    mintfromnativetoken: 'Mint from ICP account',
   },
 };

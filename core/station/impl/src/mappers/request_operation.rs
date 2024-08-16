@@ -3,13 +3,12 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget,
-            ChangeCanisterResourceAction, ChangeExternalCanisterResourceTarget,
-            ExecutionMethodResourceTarget, ExternalCanisterResourceAction,
-            PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-            UserResourceAction,
+            ChangeCanisterResourceAction, ExecutionMethodResourceTarget, ExternalCanisterId,
+            ExternalCanisterResourceAction, PermissionResourceAction, Resource, ResourceAction,
+            ResourceId, SystemResourceAction, UserResourceAction,
         },
-        Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
-        AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
+        Account, AccountKey, AddAccountOperation, AddAccountOperationInput,
+        AddAddressBookEntryOperation, AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
         AddRequestPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
         CallExternalCanisterOperation, CallExternalCanisterOperationInput, CanisterInstallMode,
         CanisterInstallModeArgs, CanisterMethod, CanisterReinstallModeArgs,
@@ -19,20 +18,22 @@ use crate::{
         ConfigureExternalCanisterOperationKind, ConfigureExternalCanisterSettingsInput,
         CreateExternalCanisterOperation, CreateExternalCanisterOperationInput,
         CreateExternalCanisterOperationKind, CreateExternalCanisterOperationKindAddExisting,
-        CreateExternalCanisterOperationKindCreateNew, DefiniteCanisterSettingsInput,
-        DisasterRecoveryCommittee, EditAccountOperation, EditAccountOperationInput,
-        EditAddressBookEntryOperation, EditPermissionOperation, EditPermissionOperationInput,
-        EditRequestPolicyOperation, EditRequestPolicyOperationInput, EditUserGroupOperation,
-        EditUserOperation, EditUserOperationInput, ExternalCanisterCallPermission,
-        ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterChangeRequestPolicyRuleInput,
-        ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput,
+        CreateExternalCanisterOperationKindCreateNew, CycleObtainStrategy,
+        DefiniteCanisterSettingsInput, DisasterRecoveryCommittee, EditAccountOperation,
+        EditAccountOperationInput, EditAddressBookEntryOperation, EditPermissionOperation,
+        EditPermissionOperationInput, EditRequestPolicyOperation, EditRequestPolicyOperationInput,
+        EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
+        ExternalCanisterCallPermission, ExternalCanisterCallRequestPolicyRuleInput,
+        ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsInput,
+        ExternalCanisterRequestPoliciesInput, FundExternalCanisterOperation,
         ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
         RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
         TransferOperation, User,
     },
     repositories::{
-        AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
+        AccountRepository, AddressBookRepository, UserRepository, ACCOUNT_REPOSITORY,
+        USER_GROUP_REPOSITORY,
     },
 };
 use orbit_essentials::repository::Repository;
@@ -70,6 +71,7 @@ impl TransferOperation {
             transfer_id: self
                 .transfer_id
                 .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
+            fee: self.fee,
         }
     }
 }
@@ -506,9 +508,6 @@ impl From<ConfigureExternalCanisterOperationKind>
             ConfigureExternalCanisterOperationKind::SoftDelete => {
                 station_api::ConfigureExternalCanisterOperationKindDTO::SoftDelete
             }
-            ConfigureExternalCanisterOperationKind::TopUp(cycles) => {
-                station_api::ConfigureExternalCanisterOperationKindDTO::TopUp(cycles)
-            }
             ConfigureExternalCanisterOperationKind::Settings(input) => {
                 station_api::ConfigureExternalCanisterOperationKindDTO::Settings(input.into())
             }
@@ -632,11 +631,11 @@ impl From<ExternalCanisterCallRequestPolicyRuleInput>
     }
 }
 
-impl From<station_api::ExternalCanisterChangeRequestPolicyRule>
+impl From<station_api::ExternalCanisterChangeRequestPolicyRuleInput>
     for ExternalCanisterChangeRequestPolicyRuleInput
 {
     fn from(
-        input: station_api::ExternalCanisterChangeRequestPolicyRule,
+        input: station_api::ExternalCanisterChangeRequestPolicyRuleInput,
     ) -> ExternalCanisterChangeRequestPolicyRuleInput {
         ExternalCanisterChangeRequestPolicyRuleInput {
             policy_id: input.policy_id.map(|policy_id| {
@@ -650,12 +649,12 @@ impl From<station_api::ExternalCanisterChangeRequestPolicyRule>
 }
 
 impl From<ExternalCanisterChangeRequestPolicyRuleInput>
-    for station_api::ExternalCanisterChangeRequestPolicyRule
+    for station_api::ExternalCanisterChangeRequestPolicyRuleInput
 {
     fn from(
         input: ExternalCanisterChangeRequestPolicyRuleInput,
-    ) -> station_api::ExternalCanisterChangeRequestPolicyRule {
-        station_api::ExternalCanisterChangeRequestPolicyRule {
+    ) -> station_api::ExternalCanisterChangeRequestPolicyRuleInput {
+        station_api::ExternalCanisterChangeRequestPolicyRuleInput {
             policy_id: input
                 .policy_id
                 .map(|policy_id| Uuid::from_bytes(policy_id).hyphenated().to_string()),
@@ -1021,15 +1020,80 @@ impl From<RemoveRequestPolicyOperation> for station_api::RemoveRequestPolicyOper
     }
 }
 
+impl From<station_api::CycleObtainStrategyDTO> for CycleObtainStrategy {
+    fn from(value: station_api::CycleObtainStrategyDTO) -> Self {
+        match value {
+            station_api::CycleObtainStrategyDTO::Disabled => CycleObtainStrategy::Disabled,
+            station_api::CycleObtainStrategyDTO::MintFromNativeToken { account_id, .. } => {
+                CycleObtainStrategy::MintFromNativeToken {
+                    account_id: *HelperMapper::to_uuid(account_id)
+                        .expect("Invalid account id")
+                        .as_bytes(),
+                }
+            }
+        }
+    }
+}
+
+impl From<CycleObtainStrategy> for station_api::CycleObtainStrategyDTO {
+    fn from(value: CycleObtainStrategy) -> Self {
+        match value {
+            CycleObtainStrategy::Disabled => station_api::CycleObtainStrategyDTO::Disabled,
+            CycleObtainStrategy::MintFromNativeToken { account_id } => {
+                station_api::CycleObtainStrategyDTO::MintFromNativeToken {
+                    account_name: ACCOUNT_REPOSITORY
+                        .get(&AccountKey { id: account_id })
+                        .map(|a| a.name),
+                    account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
+                }
+            }
+        }
+    }
+}
+
+impl From<station_api::CycleObtainStrategyInput> for CycleObtainStrategy {
+    fn from(value: station_api::CycleObtainStrategyInput) -> Self {
+        match value {
+            station_api::CycleObtainStrategyInput::Disabled => CycleObtainStrategy::Disabled,
+            station_api::CycleObtainStrategyInput::MintFromNativeToken { account_id, .. } => {
+                CycleObtainStrategy::MintFromNativeToken {
+                    account_id: *HelperMapper::to_uuid(account_id)
+                        .expect("Invalid account id")
+                        .as_bytes(),
+                }
+            }
+        }
+    }
+}
+
+impl From<CycleObtainStrategy> for station_api::CycleObtainStrategyInput {
+    fn from(value: CycleObtainStrategy) -> Self {
+        match value {
+            CycleObtainStrategy::Disabled => station_api::CycleObtainStrategyInput::Disabled,
+            CycleObtainStrategy::MintFromNativeToken { account_id } => {
+                station_api::CycleObtainStrategyInput::MintFromNativeToken {
+                    account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
+                }
+            }
+        }
+    }
+}
+
 impl From<ManageSystemInfoOperationInput> for station_api::ManageSystemInfoOperationInput {
     fn from(input: ManageSystemInfoOperationInput) -> station_api::ManageSystemInfoOperationInput {
-        station_api::ManageSystemInfoOperationInput { name: input.name }
+        station_api::ManageSystemInfoOperationInput {
+            name: input.name,
+            cycle_obtain_strategy: input.cycle_obtain_strategy.map(|strategy| strategy.into()),
+        }
     }
 }
 
 impl From<station_api::ManageSystemInfoOperationInput> for ManageSystemInfoOperationInput {
     fn from(input: station_api::ManageSystemInfoOperationInput) -> ManageSystemInfoOperationInput {
-        ManageSystemInfoOperationInput { name: input.name }
+        ManageSystemInfoOperationInput {
+            name: input.name,
+            cycle_obtain_strategy: input.cycle_obtain_strategy.map(|strategy| strategy.into()),
+        }
     }
 }
 
@@ -1114,6 +1178,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             }
             RequestOperation::ChangeExternalCanister(operation) => {
                 RequestOperationDTO::ChangeExternalCanister(Box::new(operation.into()))
+            }
+            RequestOperation::FundExternalCanister(operation) => {
+                RequestOperationDTO::FundExternalCanister(Box::new(operation.into()))
             }
             RequestOperation::ConfigureExternalCanister(operation) => {
                 RequestOperationDTO::ConfigureExternalCanister(Box::new(operation.into()))
@@ -1230,10 +1297,10 @@ impl RequestOperation {
             }) => {
                 vec![
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                        ChangeExternalCanisterResourceTarget::Any,
+                        ExternalCanisterId::Any,
                     )),
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                        ChangeExternalCanisterResourceTarget::Canister(input.canister_id),
+                        ExternalCanisterId::Canister(input.canister_id),
                     )),
                 ]
             }
@@ -1243,10 +1310,23 @@ impl RequestOperation {
             }) => {
                 vec![
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                        ChangeExternalCanisterResourceTarget::Any,
+                        ExternalCanisterId::Any,
                     )),
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
-                        ChangeExternalCanisterResourceTarget::Canister(*canister_id),
+                        ExternalCanisterId::Canister(*canister_id),
+                    )),
+                ]
+            }
+            RequestOperation::FundExternalCanister(FundExternalCanisterOperation {
+                canister_id,
+                ..
+            }) => {
+                vec![
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                        ExternalCanisterId::Any,
+                    )),
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                        ExternalCanisterId::Canister(*canister_id),
                     )),
                 ]
             }

@@ -4,8 +4,8 @@ use super::{
     request_specifier::RequestSpecifier,
     resource::{Resource, ValidationMethodResourceTarget},
     AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata,
-    DisasterRecoveryCommittee, ExternalCanisterState, MetadataItem, UserGroupId, UserId,
-    UserStatus,
+    CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
+    ExternalCanisterState, MetadataItem, UserGroupId, UserId, UserStatus,
 };
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ValidationError;
@@ -36,6 +36,7 @@ pub enum RequestOperation {
     ConfigureExternalCanister(ConfigureExternalCanisterOperation),
     CreateExternalCanister(CreateExternalCanisterOperation),
     CallExternalCanister(CallExternalCanisterOperation),
+    FundExternalCanister(FundExternalCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
@@ -65,6 +66,7 @@ impl Display for RequestOperation {
             }
             RequestOperation::CreateExternalCanister(_) => write!(f, "create_external_canister"),
             RequestOperation::CallExternalCanister(_) => write!(f, "call_external_canister"),
+            RequestOperation::FundExternalCanister(_) => write!(f, "fund_external_canister"),
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
@@ -79,6 +81,7 @@ impl Display for RequestOperation {
 pub struct TransferOperation {
     pub transfer_id: Option<UUID>,
     pub input: TransferOperationInput,
+    pub fee: Option<candid::Nat>,
 }
 
 #[storable]
@@ -330,14 +333,6 @@ pub struct ChangeExternalCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ExternalCanisterCallPermission {
-    pub allow: Allow,
-    pub validation_method: ValidationMethodResourceTarget,
-    pub execution_method: String,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterPermissionsInput {
     pub read: Allow,
     pub change: Allow,
@@ -406,6 +401,27 @@ pub struct CreateExternalCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct FundExternalCanisterSendCyclesInput {
+    pub cycles: u64,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum FundExternalCanisterOperationKind {
+    Send(FundExternalCanisterSendCyclesInput),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct FundExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub kind: FundExternalCanisterOperationKind,
+}
+
+pub type FundExternalCanisterOperation = FundExternalCanisterOperationInput;
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ConfigureExternalCanisterOperationInput {
     pub canister_id: Principal,
     pub kind: ConfigureExternalCanisterOperationKind,
@@ -417,7 +433,6 @@ pub type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperation
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ConfigureExternalCanisterOperationKind {
     Settings(ConfigureExternalCanisterSettingsInput),
-    TopUp(u64),
     SoftDelete,
     Delete,
     NativeSettings(DefiniteCanisterSettingsInput),
@@ -434,7 +449,7 @@ pub struct DefiniteCanisterSettingsInput {
 }
 
 #[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct ConfigureExternalCanisterSettingsInput {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -540,6 +555,7 @@ pub struct RemoveRequestPolicyOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ManageSystemInfoOperationInput {
     pub name: Option<String>,
+    pub cycle_obtain_strategy: Option<CycleObtainStrategy>,
 }
 
 #[storable]

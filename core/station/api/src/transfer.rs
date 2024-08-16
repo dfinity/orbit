@@ -26,6 +26,7 @@ pub struct TransferOperationDTO {
     pub network: NetworkDTO,
     pub input: TransferOperationInput,
     pub transfer_id: Option<UuidDTO>,
+    pub fee: Option<candid::Nat>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

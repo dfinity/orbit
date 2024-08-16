@@ -1,5 +1,6 @@
+use super::permission::Allow;
 use super::resource::ValidationMethodResourceTarget;
-use super::ConfigureExternalCanisterSettingsInput;
+use super::{ConfigureExternalCanisterSettingsInput, RequestPolicyRule};
 use crate::errors::ExternalCanisterError;
 use candid::Principal;
 use orbit_essentials::storable;
@@ -7,18 +8,19 @@ use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
 };
+use station_api::GetExternalCanisterFiltersResponse;
 use std::collections::BTreeSet;
 use std::hash::Hash;
 
 /// The external canister id, which is a UUID.
-pub type ExternalCanisterId = UUID;
+pub type ExternalCanisterEntryId = UUID;
 
 /// Represents an external canister that the station can interact with.
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanister {
     /// The external canister id, which is a UUID.
-    pub id: ExternalCanisterId,
+    pub id: ExternalCanisterEntryId,
     /// The canister id, which is a Principal.
     pub canister_id: Principal,
     /// The canister name.
@@ -40,8 +42,42 @@ pub struct ExternalCanister {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallPermission {
+    pub allow: Allow,
+    pub validation_method: ValidationMethodResourceTarget,
+    pub execution_method: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterPermissions {
+    pub read: Allow,
+    pub change: Allow,
+    pub calls: Vec<ExternalCanisterCallPermission>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterChangeRequestPolicyRule {
+    pub policy_id: UUID,
+    pub rule: RequestPolicyRule,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallRequestPolicyRule {
+    pub policy_id: UUID,
+    pub rule: RequestPolicyRule,
+    pub validation_method: ValidationMethodResourceTarget,
+    pub execution_method: String,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterRequestPolicies {
+    pub change: Vec<ExternalCanisterChangeRequestPolicyRule>,
+    pub calls: Vec<ExternalCanisterCallRequestPolicyRule>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterKey {
-    pub id: ExternalCanisterId,
+    pub id: ExternalCanisterEntryId,
 }
 
 #[storable]
@@ -60,9 +96,13 @@ pub struct ExternalCanisterCallerMethodsPrivileges {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterCallerPrivileges {
     pub id: UUID,
+    pub canister_id: Principal,
     pub can_change: bool,
+    pub can_fund: bool,
     pub can_call: Vec<ExternalCanisterCallerMethodsPrivileges>,
 }
+
+pub type ExternalCanisterAvailableFilters = GetExternalCanisterFiltersResponse;
 
 impl ExternalCanister {
     pub const MAX_NAME_LENGTH: usize = 100;
@@ -71,7 +111,7 @@ impl ExternalCanister {
     pub const MAX_DESCRIPTION_LENGTH: usize = 1000;
 
     /// Creates a new external canister key from the given key components.
-    pub fn key(id: ExternalCanisterId) -> ExternalCanisterKey {
+    pub fn key(id: ExternalCanisterEntryId) -> ExternalCanisterKey {
         ExternalCanisterKey { id }
     }
 
@@ -182,7 +222,7 @@ impl ModelValidator<ExternalCanisterError> for ExternalCanister {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "canbench"))]
 pub mod external_canister_test_utils {
     use super::*;
     use crate::core::ic_cdk::next_time;

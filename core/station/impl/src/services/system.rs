@@ -9,13 +9,20 @@ use crate::{
         read_system_info, read_system_state, write_system_info,
     },
     errors::SystemError,
+    factories::blockchains::InternetComputer,
     models::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
-        ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
+        CycleObtainStrategy, ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
     },
-    repositories::{RequestRepository, REQUEST_REPOSITORY},
+    repositories::{permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY},
 };
 use candid::Principal;
+use canfund::{
+    api::{cmc::IcCyclesMintingCanister, ledger::IcLedgerCanister},
+    manager::options::ObtainCyclesOptions,
+    operations::obtain::MintCycles,
+};
+use ic_ledger_types::{Subaccount, MAINNET_CYCLES_MINTING_CANISTER_ID, MAINNET_LEDGER_CANISTER_ID};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
@@ -87,6 +94,10 @@ impl SystemService {
             system_info.set_name(name.clone());
         }
 
+        if let Some(strategy) = input.cycle_obtain_strategy {
+            system_info.set_cycle_obtain_strategy(strategy);
+        }
+
         write_system_info(system_info);
     }
 
@@ -98,6 +109,37 @@ impl SystemService {
         // syncs the committee and account to the upgrader
         crate::core::ic_cdk::spawn(async {
             DISASTER_RECOVERY_SERVICE.sync_all().await;
+        });
+    }
+
+    pub fn get_obtain_cycle_config(
+        &self,
+        strategy: &CycleObtainStrategy,
+    ) -> Option<ObtainCyclesOptions> {
+        match strategy {
+            CycleObtainStrategy::Disabled => None,
+            CycleObtainStrategy::MintFromNativeToken { account_id } => Some(ObtainCyclesOptions {
+                obtain_cycles: Arc::new(MintCycles {
+                    ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
+                    cmc: Arc::new(IcCyclesMintingCanister::new(
+                        MAINNET_CYCLES_MINTING_CANISTER_ID,
+                    )),
+                    from_subaccount: Subaccount(
+                        InternetComputer::subaccount_from_station_account_id(account_id),
+                    ),
+                }),
+                top_up_self: true,
+            }),
+        }
+    }
+    #[cfg(target_arch = "wasm32")]
+    pub fn set_fund_manager_obtain_cycles(&self, strategy: &CycleObtainStrategy) {
+        install_canister_handlers::FUND_MANAGER.with(|fund_manager| {
+            let mut fund_manager = fund_manager.borrow_mut();
+            let options = fund_manager.get_options();
+            let options =
+                options.with_obtain_cycles_options(self.get_obtain_cycle_config(strategy));
+            fund_manager.with_options(options);
         });
     }
 
@@ -133,6 +175,7 @@ impl SystemService {
 
             install_canister_handlers::monitor_upgrader_cycles(
                 *system_info.get_upgrader_canister_id(),
+                *system_info.get_cycle_obtain_strategy(),
             );
 
             // initializes the job timers after the canister is fully initialized
@@ -227,6 +270,15 @@ impl SystemService {
         };
     }
 
+    /// Initializes the cache of the canister data.
+    ///
+    /// Must only be called within a canister init or post_upgrade call.
+    fn init_cache(&self) {
+        // Initializes the cache of the permission repository,
+        // using at most 20B instructions.
+        PERMISSION_REPOSITORY.build_cache();
+    }
+
     /// Initializes the canister with the given owners and settings.
     ///
     /// Must only be called within a canister init call.
@@ -252,6 +304,9 @@ impl SystemService {
         // sets the name of the canister
         system_info.set_name(input.name.clone());
 
+        // initializes the cache of the canister data, must happen during the same call as the init
+        self.init_cache();
+
         // Handles the post init process in a one-off timer to allow for inter canister calls,
         // this adds the default canister configurations, deploys the station upgrader and makes sure
         // there are no unintended controllers of the canister.
@@ -264,6 +319,9 @@ impl SystemService {
     ///
     /// Must only be called within a canister post_upgrade call.
     pub async fn upgrade_canister(&self, input: Option<SystemUpgrade>) -> ServiceResult<()> {
+        // initializes the cache of the canister data, must happen during the same call as the upgrade
+        self.init_cache();
+
         // recompute all metrics to make sure they are up to date, only gauges are recomputed
         // since they are the only ones that can change over time.
         recompute_metrics();
@@ -379,21 +437,24 @@ mod install_canister_handlers {
     use crate::models::permission::Allow;
     use crate::models::request_specifier::UserSpecifier;
     use crate::models::{
-        AddAccountOperationInput, AddRequestPolicyOperationInput, EditPermissionOperationInput,
-        RequestPolicyRule, ADMIN_GROUP_ID,
+        AddAccountOperationInput, AddRequestPolicyOperationInput, CycleObtainStrategy,
+        EditPermissionOperationInput, RequestPolicyRule, ADMIN_GROUP_ID,
     };
     use crate::services::permission::PERMISSION_SERVICE;
     use crate::services::ACCOUNT_SERVICE;
     use crate::services::REQUEST_POLICY_SERVICE;
     use candid::{Encode, Principal};
-    use canfund::fetch::cycles::FetchCyclesBalanceFromCanisterStatus;
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
+    use canfund::manager::RegisterOpts;
     use canfund::FundManager;
     use ic_cdk::api::management_canister::main::{self as mgmt};
+    use ic_cdk::id;
+
     use orbit_essentials::types::UUID;
     use station_api::{InitAccountInput, SystemInit};
     use std::cell::RefCell;
-    use std::sync::Arc;
+
+    use super::SYSTEM_SERVICE;
 
     thread_local! {
         pub static FUND_MANAGER: RefCell<FundManager> = RefCell::new(FundManager::new());
@@ -548,29 +609,38 @@ mod install_canister_handlers {
     }
 
     /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.
-    pub fn monitor_upgrader_cycles(upgrader_id: Principal) {
+    pub fn monitor_upgrader_cycles(
+        upgrader_id: Principal,
+        cycle_obtain_strategy: CycleObtainStrategy,
+    ) {
         print(format!(
-            "Starting fund manager to monitor upgrader canister {} cycles",
+            "Starting fund manager to monitor self {} and upgrader canister {} cycles",
+            id(),
             upgrader_id.to_text()
         ));
 
         FUND_MANAGER.with(|fund_manager| {
             let mut fund_manager = fund_manager.borrow_mut();
 
-            fund_manager.with_options(
-                FundManagerOptions::new()
-                    .with_interval_secs(24 * 60 * 60) // daily
-                    .with_strategy(FundStrategy::BelowEstimatedRuntime(
-                        EstimatedRuntime::new()
-                            .with_min_runtime_secs(14 * 24 * 60 * 60) // 14 days
-                            .with_fund_runtime_secs(30 * 24 * 60 * 60) // 30 days
-                            .with_max_runtime_cycles_fund(1_000_000_000_000)
-                            .with_fallback_min_cycles(125_000_000_000)
-                            .with_fallback_fund_cycles(250_000_000_000),
-                    )),
+            let mut fund_manager_options = FundManagerOptions::new()
+                .with_interval_secs(24 * 60 * 60) // daily
+                .with_strategy(FundStrategy::BelowEstimatedRuntime(
+                    EstimatedRuntime::new()
+                        .with_min_runtime_secs(14 * 24 * 60 * 60) // 14 days
+                        .with_fund_runtime_secs(30 * 24 * 60 * 60) // 30 days
+                        .with_max_runtime_cycles_fund(1_000_000_000_000)
+                        .with_fallback_min_cycles(125_000_000_000)
+                        .with_fallback_fund_cycles(250_000_000_000),
+                ));
+
+            fund_manager_options = fund_manager_options.with_obtain_cycles_options(
+                SYSTEM_SERVICE.get_obtain_cycle_config(&cycle_obtain_strategy),
             );
-            fund_manager.with_cycles_fetcher(Arc::new(FetchCyclesBalanceFromCanisterStatus));
-            fund_manager.register(upgrader_id);
+
+            fund_manager.with_options(fund_manager_options);
+
+            // monitor the upgrader canister
+            fund_manager.register(upgrader_id, RegisterOpts::default());
 
             fund_manager.start();
         });

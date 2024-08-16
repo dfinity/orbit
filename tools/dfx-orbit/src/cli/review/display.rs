@@ -199,6 +199,7 @@ impl DfxOrbit {
             RequestOperationDTO::CreateExternalCanister(_) => "CreateExternalCanister",
             RequestOperationDTO::ConfigureExternalCanister(_) => "ConfigureExternalCanister",
             RequestOperationDTO::CallExternalCanister(_) => "CallExternalCanister",
+            RequestOperationDTO::FundExternalCanister(_) => "FundExternalCanister",
             RequestOperationDTO::EditPermission(_) => "EditPermission",
             RequestOperationDTO::AddRequestPolicy(_) => "AddRequestPolicy",
             RequestOperationDTO::EditRequestPolicy(_) => "EditRequestPolicy",

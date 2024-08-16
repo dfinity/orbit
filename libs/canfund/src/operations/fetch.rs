@@ -53,6 +53,18 @@ impl FetchCyclesBalance for FetchCyclesBalanceFromCanisterStatus {
     }
 }
 
+/// Fetches the canister cycles balance using the `ic_cdk::api::canister_balance` method.
+/// This fetcher is only suitable for the current canister.
+#[derive(Clone)]
+pub struct FetchOwnCyclesBalance;
+
+#[async_trait::async_trait]
+impl FetchCyclesBalance for FetchOwnCyclesBalance {
+    async fn fetch_cycles_balance(&self, _canister_id: CanisterId) -> Result<u128, Error> {
+        Ok(ic_cdk::api::canister_balance128())
+    }
+}
+
 /// Fetches the canister cycles balance by leveraging prometheus metrics
 /// exposed by the canister through an HTTP endpoint.
 #[derive(Clone)]

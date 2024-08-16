@@ -134,6 +134,7 @@ impl Job {
                             &mut request.operation
                         {
                             transfer_operation.transfer_id = Some(transfer.id);
+                            transfer_operation.fee = Some(transfer.fee);
                         }
 
                         request.status = RequestStatus::Completed {

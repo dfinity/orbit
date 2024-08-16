@@ -73,7 +73,8 @@ export const mapRequestsOperationTypeToGroup = (
     variantIs(operationType, 'ChangeExternalCanister') ||
     variantIs(operationType, 'CreateExternalCanister') ||
     variantIs(operationType, 'CallExternalCanister') ||
-    variantIs(operationType, 'ConfigureExternalCanister')
+    variantIs(operationType, 'ConfigureExternalCanister') ||
+    variantIs(operationType, 'FundExternalCanister')
   ) {
     return ListRequestsOperationTypeGroup.ExternalCanister;
   }
@@ -234,6 +235,9 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'ConfigureExternalCanister')) {
     return RequestOperationEnum.ConfigureExternalCanister;
   }
+  if (variantIs(operation, 'FundExternalCanister')) {
+    return RequestOperationEnum.FundExternalCanister;
+  }
   if (variantIs(operation, 'SetDisasterRecovery')) {
     return RequestOperationEnum.SetDisasterRecovery;
   }
@@ -302,6 +306,8 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { ConfigureExternalCanister: [] };
   } else if (variantIs(requestOperation, 'CallExternalCanister')) {
     return { CallExternalCanister: [] };
+  } else if (variantIs(requestOperation, 'FundExternalCanister')) {
+    return { FundExternalCanister: [] };
   } else if (variantIs(requestOperation, 'SetDisasterRecovery')) {
     return { SetDisasterRecovery: null };
   } else {
@@ -351,6 +357,8 @@ export const mapListRequestsOperationTypeGroupToCsvHeaders = (
     headers.to = 'To';
     headers.amount = 'Amount';
     headers.fee = 'Fee';
+    headers.comment = 'Comment';
+    headers.from_account_address = 'From Account Address';
   }
 
   return headers;
@@ -474,14 +482,17 @@ const mapRequestToTransferCsvRow = (request: Request): CsvRow => {
 
     return {
       from_account: account.name,
+      from_account_address: account.address,
       to: request.operation.Transfer.input.to,
       amount:
         formatBalance(request.operation.Transfer.input.amount, account.decimals) +
         ' ' +
         account.symbol,
-      fee: request.operation.Transfer.input.fee[0]
-        ? formatBalance(request.operation.Transfer.input.fee[0], account.decimals)
+      fee: request.operation.Transfer.fee[0]
+        ? formatBalance(request.operation.Transfer.fee[0], account.decimals) + ' ' + account.symbol
         : '',
+      // comment: request.summary[0] ?? '',
+      comment: request.summary[0] ?? '',
     };
   }
 

@@ -3,8 +3,9 @@ use crate::{
         authorization::Authorization,
         generate_uuid_v4,
         ic_cdk::next_time,
+        read_system_info,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
-        CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
+        write_system_info, CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
     },
     errors::AccountError,
     factories::blockchains::BlockchainApiFactory,
@@ -14,7 +15,8 @@ use crate::{
         request_specifier::RequestSpecifier,
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
-        AddRequestPolicyOperationInput, EditAccountOperationInput, EditPermissionOperationInput,
+        AddRequestPolicyOperationInput, Blockchain, BlockchainStandard, CycleObtainStrategy,
+        EditAccountOperationInput, EditPermissionOperationInput,
     },
     repositories::{AccountRepository, AccountWhereClause, ACCOUNT_REPOSITORY},
     services::{
@@ -29,6 +31,8 @@ use orbit_essentials::{
 use station_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput};
 use std::sync::Arc;
 use uuid::Uuid;
+
+use super::SYSTEM_SERVICE;
 
 lazy_static! {
     pub static ref ACCOUNT_SERVICE: Arc<AccountService> = Arc::new(AccountService::new(
@@ -241,6 +245,32 @@ impl AccountService {
                     *uuid.as_bytes(),
                 ))),
             })?;
+
+        if SYSTEM_SERVICE.is_healthy() {
+            let mut system_info = read_system_info();
+
+            // if this is the first account created, and there is no cycle minting account set, set this account as the cycle minting account
+            if system_info.get_cycle_obtain_strategy() == &CycleObtainStrategy::Disabled
+                && ACCOUNT_REPOSITORY.len() == 1
+                && matches!(new_account.blockchain, Blockchain::InternetComputer)
+                && new_account.standard == BlockchainStandard::Native
+                && new_account.symbol == "ICP"
+            {
+                ic_cdk::println!("Setting cycle minting account to {}", uuid);
+
+                system_info.set_cycle_obtain_strategy(CycleObtainStrategy::MintFromNativeToken {
+                    account_id: *uuid.as_bytes(),
+                });
+                write_system_info(system_info);
+
+                #[cfg(target_arch = "wasm32")]
+                crate::services::SYSTEM_SERVICE.set_fund_manager_obtain_cycles(
+                    &CycleObtainStrategy::MintFromNativeToken {
+                        account_id: new_account.id,
+                    },
+                );
+            }
+        }
 
         Ok(new_account)
     }

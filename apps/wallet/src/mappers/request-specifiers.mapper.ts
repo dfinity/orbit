@@ -83,6 +83,10 @@ export const mapRequestSpecifierToEnum = (specifier: RequestSpecifier): RequestS
     return RequestSpecifierEnum.CallExternalCanister;
   }
 
+  if (variantIs(specifier, 'FundExternalCanister')) {
+    return RequestSpecifierEnum.FundExternalCanister;
+  }
+
   if (variantIs(specifier, 'SetDisasterRecovery')) {
     return RequestSpecifierEnum.SetDisasterRecovery;
   }
