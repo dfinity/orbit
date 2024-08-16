@@ -414,6 +414,7 @@ export default {
     summary: 'Sommaire',
     metadata: 'Metadata',
     wasm: 'Wasm',
+    comment: 'Commentaire',
     comment_optional: 'Commentaire (optionnel)',
     arg: 'Paramètre',
     target: 'Cible',
@@ -589,8 +590,9 @@ export default {
       csv_transfer_subtitle:
         "Uploader un fichier CSV pour créer plusieurs demandes de transfert d'un coup.",
       csv_transfer_file_format_hint:
-        'Le fichier CSV doit contenir les colones "{to}" et "{amount}".',
+        'Le fichier CSV doit contenir les colones "{to}" et "{amount}", et optionnellement "{comment}".',
       csv_transfer_file_column_to: 'de',
+      csv_transfer_file_column_comment: 'commentaire',
       csv_transfer_file_column_amount: 'montant',
       csv_transfer_file_rows_title: 'Transfers to be created: {count}',
       csv_ignored_transfers_hint: 'Transfers with errors will be ignored.',
