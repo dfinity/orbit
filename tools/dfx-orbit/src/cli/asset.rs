@@ -22,6 +22,7 @@ pub struct AssetAgent<'agent> {
 }
 
 impl DfxOrbit {
+    // TODO: Remove this and all downstream functions that are not needed anymore
     pub async fn exec_asset(&self, args: AssetArgs) -> anyhow::Result<()> {
         match args.action {
             AssetArgsAction::RequestPreparePermission(args) => {

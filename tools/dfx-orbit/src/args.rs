@@ -3,6 +3,7 @@ pub mod asset;
 pub mod request;
 pub mod review;
 pub mod station;
+pub mod verify;
 
 use asset::AssetArgs;
 use clap::{Parser, Subcommand};

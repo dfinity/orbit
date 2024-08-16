@@ -69,13 +69,13 @@ impl RequestAssetUploadArgs {
     ) -> anyhow::Result<RequestOperationInput> {
         let pathbufs = dfx_orbit.as_path_bufs(&self.canister, &self.files)?;
         let paths = DfxOrbit::as_paths(&pathbufs);
-        let canister_name = self.canister;
-        let canister_id = dfx_orbit.canister_id(&canister_name)?;
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
 
         let (batch_id, evidence) = dfx_orbit
             .upload(canister_id, &paths, self.ignore_evidence)
             .await?;
         println!("Batch id: {batch_id}");
+        println!("Evidence: 0x{}", hex::encode(&evidence));
 
         DfxOrbit::commit_batch_input(canister_id, batch_id, evidence)
     }

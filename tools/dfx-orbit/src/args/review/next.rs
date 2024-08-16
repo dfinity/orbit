@@ -5,7 +5,7 @@ use clap::Parser;
 use orbit_station_api::GetNextApprovableRequestInput;
 
 /// Reviews the next request.
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct ReviewNextArgs {
     /// Show any request type, not only the ones related to canister management
     #[clap(short, long)]

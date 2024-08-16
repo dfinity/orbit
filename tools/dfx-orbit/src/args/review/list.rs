@@ -11,7 +11,7 @@ use super::external_canister_operations;
 // - Filter by request ids
 
 /// Reviews the next request.
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct ReviewListArgs {
     /// Show all request types, not only the ones related to canister management
     #[clap(short, long)]
