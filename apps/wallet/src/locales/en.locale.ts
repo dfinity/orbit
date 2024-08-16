@@ -187,9 +187,11 @@ export default {
       change_target: 'Change Target',
       wasm_checksum: 'Wasm Checksum',
       from_account: 'From Account',
+      from_account_address: 'From Address',
       to: 'To Address',
       amount: 'Amount',
       fee: 'Fee',
+      comment: 'Comment',
     },
     download: {
       user_group: 'User Groups',

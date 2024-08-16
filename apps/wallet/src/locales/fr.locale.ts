@@ -197,9 +197,11 @@ export default {
       change_target: 'Cible',
       wasm_checksum: 'Checksum du Wasm',
       from_account: 'Du Compte',
+      from_account_address: 'Adresse du Compte',
       to: "A l'Adresse",
       amount: 'Montant',
       fee: 'Frais',
+      comment: 'Commentaire',
     },
     download: {
       user_group: "Groupes d'Usagers",

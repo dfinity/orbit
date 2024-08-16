@@ -522,6 +522,7 @@ mod tests {
         request.requested_by = ctx.caller_user.id;
         request.operation = RequestOperation::Transfer(TransferOperation {
             transfer_id: None,
+            fee: None,
             input: TransferOperationInput {
                 from_account_id: *account_id.as_bytes(),
                 amount: candid::Nat(100u32.into()),
@@ -552,6 +553,7 @@ mod tests {
         request.status = RequestStatus::Created;
         request.operation = RequestOperation::Transfer(TransferOperation {
             transfer_id: None,
+            fee: None,
             input: TransferOperationInput {
                 from_account_id: *account_id.as_bytes(),
                 amount: candid::Nat(100u32.into()),
@@ -706,6 +708,7 @@ mod tests {
         request.status = RequestStatus::Created;
         request.operation = RequestOperation::Transfer(TransferOperation {
             transfer_id: None,
+            fee: None,
             input: TransferOperationInput {
                 from_account_id: [9; 16],
                 amount: candid::Nat(100u32.into()),
@@ -821,6 +824,7 @@ mod tests {
                 transfer.status = RequestStatus::Created;
                 transfer.operation = RequestOperation::Transfer(TransferOperation {
                     transfer_id: None,
+                    fee: None,
                     input: TransferOperationInput {
                         from_account_id: account.id,
                         amount: candid::Nat(100u32.into()),

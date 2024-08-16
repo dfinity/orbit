@@ -451,6 +451,8 @@ mod tests {
 
         let operation = RequestOperation::Transfer(TransferOperation {
             transfer_id: None,
+            fee: None,
+
             input: TransferOperationInput {
                 network: "mainnet".to_string(),
                 amount: 1u64.into(),
@@ -472,6 +474,7 @@ mod tests {
 
         validate_request_operation_foreign_keys(&RequestOperation::Transfer(TransferOperation {
             transfer_id: None,
+            fee: None,
             input: TransferOperationInput {
                 network: "mainnet".to_string(),
                 amount: 1u64.into(),
@@ -651,6 +654,7 @@ pub mod request_test_utils {
             execution_plan: RequestExecutionPlan::Immediate,
             operation: RequestOperation::Transfer(TransferOperation {
                 transfer_id: None,
+                fee: None,
                 input: TransferOperationInput {
                     network: "mainnet".to_string(),
                     amount: candid::Nat(BigUint::from(100u32)),

@@ -575,6 +575,7 @@ export const idlFactory = ({ IDL }) => {
     'symbol' : AssetSymbol,
   });
   const TransferOperation = IDL.Record({
+    'fee' : IDL.Opt(IDL.Nat),
     'network' : Network,
     'transfer_id' : IDL.Opt(UUID),
     'from_account' : IDL.Opt(Account),

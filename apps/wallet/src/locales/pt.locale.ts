@@ -208,9 +208,11 @@ export default {
       change_target: 'Alvo da atualização',
       wasm_checksum: 'Checksum do módulo WASM',
       from_account: 'De conta',
+      from_account_address: 'De endereço',
       to: 'Para',
       amount: 'Quantidade',
       fee: 'Taxa',
+      comment: 'Comentário',
     },
     types: {
       addusergroup: {

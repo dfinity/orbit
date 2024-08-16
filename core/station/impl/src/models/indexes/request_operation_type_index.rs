@@ -192,6 +192,7 @@ mod tests {
         let account_id = [0; 16];
         request.operation = RequestOperation::Transfer(TransferOperation {
             transfer_id: None,
+            fee: None,
             input: TransferOperationInput {
                 amount: candid::Nat(BigUint::from(100u32)),
                 fee: None,
