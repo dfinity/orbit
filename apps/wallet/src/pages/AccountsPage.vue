@@ -198,7 +198,6 @@ onMounted(async () => {
     try {
       const systemInfo = (await station.service.systemInfo()).system;
 
-      console.log(systemInfo);
 
       if (variantIs(systemInfo.cycle_obtain_strategy, 'MintFromNativeToken')) {
         sourceCylceAccount.value = systemInfo.cycle_obtain_strategy.MintFromNativeToken.account_id;
