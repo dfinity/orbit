@@ -1,14 +1,13 @@
 //! CLI arguments for `dfx-orbit canister`.
 
-pub mod call;
-pub mod install;
-
 use crate::DfxOrbit;
 use anyhow::Context;
-use call::RequestCanisterCallArgs;
-use clap::{Parser, Subcommand};
-use install::RequestCanisterInstallArgs;
-use orbit_station_api::RequestOperationInput;
+use clap::{Parser, Subcommand, ValueEnum};
+
+use orbit_station_api::{
+    CallExternalCanisterOperationInput, CanisterInstallMode, CanisterMethodDTO,
+    ChangeExternalCanisterOperationInput, RequestOperationInput,
+};
 
 // TODO: Support Canister create + integration test
 // TODO: Support Canister install check
@@ -54,6 +53,122 @@ impl RequestCanisterActionArgs {
             RequestCanisterActionArgs::Call(call_args) => {
                 call_args.into_create_request_input(dfx_orbit)
             }
+        }
+    }
+}
+
+/// Requests that a call be made to a canister.
+#[derive(Debug, Clone, Parser)]
+pub struct RequestCanisterCallArgs {
+    /// The canister name or ID.
+    canister: String,
+    /// The name of the method to call.
+    method_name: String,
+    /// The argument to pass to the method.
+    argument: Option<String>,
+    // TODO: The format of the argument.
+    // #[clap(short, long)]
+    // r#type: Option<CandidFormat>,
+    /// Pass the argument as a file.
+    #[clap(short = 'f', long, conflicts_with = "argument")]
+    arg_file: Option<String>,
+    /// Specifies the amount of cycles to send on the call.
+    #[clap(short, long)]
+    with_cycles: Option<u64>,
+}
+
+impl RequestCanisterCallArgs {
+    /// Converts the CLI arg stype into the equivalent Orbit API type.
+    pub(crate) fn into_create_request_input(
+        self,
+        dfx_orbit: &DfxOrbit,
+    ) -> anyhow::Result<RequestOperationInput> {
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
+        let arg = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+
+        Ok(RequestOperationInput::CallExternalCanister(
+            CallExternalCanisterOperationInput {
+                validation_method: None,
+                execution_method: CanisterMethodDTO {
+                    canister_id,
+                    method_name: self.method_name,
+                },
+                arg,
+                execution_method_cycles: self.with_cycles,
+            },
+        ))
+    }
+}
+
+/// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
+#[derive(Debug, Clone, Parser)]
+pub struct RequestCanisterInstallArgs {
+    /// The canister name or ID.
+    canister: String,
+    /// The installation mode.
+    #[clap(long, value_enum, rename_all = "kebab-case", default_value = "install")]
+    mode: CanisterInstallModeArgs,
+    /// The path to the Wasm file to install.
+    #[clap(short, long)]
+    wasm: String,
+    /// The argument to pass to the canister.
+    #[clap(short, long, conflicts_with = "arg_file")]
+    arg: Option<String>,
+    /// The path to a file containing the argument to pass to the canister.
+    #[clap(short = 'f', long, conflicts_with = "arg")]
+    arg_file: Option<String>,
+}
+
+impl RequestCanisterInstallArgs {
+    /// Converts the CLI arg type into the equivalent Orbit API type.
+    pub(crate) fn into_create_request_input(
+        self,
+        dfx_orbit: &DfxOrbit,
+    ) -> anyhow::Result<RequestOperationInput> {
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
+
+        let operation = {
+            let module = std::fs::read(self.wasm)
+                .expect("Could not read Wasm file")
+                .to_vec();
+            let arg = if let Some(file) = self.arg_file {
+                Some(
+                    std::fs::read(file)
+                        .expect("Could not read argument file")
+                        .to_vec(),
+                )
+            } else {
+                self.arg.map(|arg| arg.as_bytes().to_vec())
+            };
+            let mode = self.mode.into();
+            ChangeExternalCanisterOperationInput {
+                canister_id,
+                mode,
+                module,
+                arg,
+            }
+        };
+        Ok(RequestOperationInput::ChangeExternalCanister(operation))
+    }
+}
+
+/// Canister installation mode equivalent to `dfx canister install --mode XXX` and `orbit_station_api::CanisterInstallMode`.
+#[derive(Copy, Clone, Eq, PartialEq, Debug, ValueEnum)]
+pub enum CanisterInstallModeArgs {
+    /// Corresponds to `dfx canister install`
+    Install,
+    /// Corresponds to `dfx canister reinstall`
+    Reinstall,
+    /// Corresponds to `dfx canister upgrade`
+    Upgrade,
+}
+
+impl From<CanisterInstallModeArgs> for CanisterInstallMode {
+    fn from(mode: CanisterInstallModeArgs) -> Self {
+        match mode {
+            CanisterInstallModeArgs::Install => CanisterInstallMode::Install,
+            CanisterInstallModeArgs::Reinstall => CanisterInstallMode::Reinstall,
+            CanisterInstallModeArgs::Upgrade => CanisterInstallMode::Upgrade,
         }
     }
 }
