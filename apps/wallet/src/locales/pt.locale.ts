@@ -802,6 +802,6 @@ export default {
   },
   cycle_obtain_strategies: {
     disabled: 'Desativado',
-    mintfromnativetoken: 'Recarregar a partir da conta ICP',
+    mintfromnativetoken: 'Recarregar a partir da conta de ICP',
   },
 };
