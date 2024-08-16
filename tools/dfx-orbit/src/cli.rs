@@ -30,7 +30,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             .ok_or_else(|| anyhow::format_err!("No default station specified"))?,
     };
 
-    let mut dfx_orbit = DfxOrbit::new(orbit_agent, config, logger).await?;
+    let dfx_orbit = DfxOrbit::new(orbit_agent, config, logger).await?;
 
     match args.command {
         DfxOrbitSubcommands::Me => {
@@ -41,7 +41,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
         DfxOrbitSubcommands::Request(request_args) => {
             let request = dfx_orbit
                 .station
-                .request(request_args.into_create_request_input(&dfx_orbit)?)
+                .request(request_args.into_create_request_input(&dfx_orbit).await?)
                 .await?;
             dfx_orbit.print_create_request_info(&request);
 

@@ -1,8 +1,10 @@
 //! Defines the command line arguments for `dfx-orbit request`.  These correspond to Orbit station `create_request` API calls.
+pub mod asset;
 pub mod canister;
 pub mod permission;
 
 use crate::DfxOrbit;
+use asset::RequestAssetArgs;
 use canister::RequestCanisterArgs;
 use clap::{Parser, Subcommand};
 use orbit_station_api::CreateRequestInput;
@@ -30,19 +32,24 @@ pub struct RequestArgs {
 pub enum RequestArgsActions {
     /// Request canister operations through Orbit
     Canister(RequestCanisterArgs),
+    /// Request asset operations through Orbit
+    Asset(RequestAssetArgs),
     /// Request permissions
     #[clap(subcommand)]
     Permission(RequestPermissionArgs),
 }
 
 impl RequestArgs {
-    pub(crate) fn into_create_request_input(
+    pub(crate) async fn into_create_request_input(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<CreateRequestInput> {
         let operation = match self.action {
             RequestArgsActions::Canister(canister_args) => {
                 canister_args.into_create_request_input(dfx_orbit)?
+            }
+            RequestArgsActions::Asset(asset_args) => {
+                asset_args.into_create_request_input(dfx_orbit).await?
             }
             RequestArgsActions::Permission(permission_args) => {
                 permission_args.into_create_request_input(dfx_orbit)?

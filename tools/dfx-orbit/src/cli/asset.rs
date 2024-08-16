@@ -22,7 +22,7 @@ pub struct AssetAgent<'agent> {
 }
 
 impl DfxOrbit {
-    pub async fn exec_asset(&mut self, args: AssetArgs) -> anyhow::Result<()> {
+    pub async fn exec_asset(&self, args: AssetArgs) -> anyhow::Result<()> {
         match args.action {
             AssetArgsAction::RequestPreparePermission(args) => {
                 self.asset_request_prepare_permission(args).await
@@ -84,7 +84,7 @@ impl DfxOrbit {
     }
 
     async fn asset_compute_evidence(
-        &mut self,
+        &self,
         args: AssetComputeEvidenceArgs,
     ) -> Result<(), anyhow::Error> {
         let pathbufs = self.as_path_bufs(&args.canister, &args.files)?;
@@ -98,7 +98,7 @@ impl DfxOrbit {
         Ok(())
     }
 
-    async fn asset_check(&mut self, args: AssetCheckArgs) -> Result<(), anyhow::Error> {
+    async fn asset_check(&self, args: AssetCheckArgs) -> Result<(), anyhow::Error> {
         let pathbufs = self.as_path_bufs(&args.canister, &args.files)?;
         let paths = Self::as_paths(&pathbufs);
 
