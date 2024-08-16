@@ -606,7 +606,6 @@ export const mapRequestsToCsvTable = (
   for (const key in headers) {
     headers[key] = mapRequestCsvHeaderToTranslation(key);
   }
-  console.log('headers', headers);
 
   const rows = requests.map(entry => {
     const row: CsvRow = {
