@@ -609,7 +609,7 @@ export default {
     administration: {
       title: 'Administração',
       cycle_obtain_strategy_disabled: 'AVISO: Recarga de saldo de ciclos da carteira desativada.',
-      cycle_obtain_strategy_mint_from_native_token: 'Recarregar a partir da conta ICP',
+      cycle_obtain_strategy_mint_from_native_token: 'Recarregar a partir da conta de ICP',
     },
     user_groups: {
       title: 'Grupos de usuários',
