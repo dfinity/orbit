@@ -52,7 +52,7 @@
                 <tr>
                   <th class="text-center bg-background">#</th>
                   <th class="bg-background">{{ $t('terms.to') }}</th>
-                  <th class="bg-background" v-if="hasAnyComments">{{ $t('terms.comment') }}</th>
+                  <th v-if="hasAnyComments" class="bg-background">{{ $t('terms.comment') }}</th>
                   <th class="text-right bg-background">{{ $t('terms.amount') }}</th>
                 </tr>
               </thead>
@@ -78,7 +78,7 @@
                       {{ $t('terms.invalid') }}
                     </template>
                   </td>
-                  <td class="w-75" v-if="hasAnyComments">
+                  <td v-if="hasAnyComments" class="w-75">
                     <span v-if="transfer.comment">{{ transfer.comment }}</span>
                   </td>
                   <td class="text-right text-no-wrap">

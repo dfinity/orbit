@@ -540,6 +540,7 @@ export default {
     skip: 'Sauter',
     version: 'Version',
     continue: 'Continuer',
+    cycle_obtain_strategy: 'Méthode de recharge du portefeuille',
   },
   forms: {
     create: 'Créer',
@@ -583,6 +584,8 @@ export default {
       btn_new_transfer: 'Nouveau Transfert',
       btn_upload_csv: 'Uploader un CSV',
       error_fetching_account: 'Erreur lors du chargement du compte, veuillez essayer de nouveau.',
+      cycle_obtain_account:
+        'Ce compte est utilisé pour recharger le solde de cycles de la station Orbit.',
     },
     account: {
       not_found: 'Pas de compte trouvé',
@@ -612,6 +615,8 @@ export default {
     },
     administration: {
       title: 'Administration',
+      cycle_obtain_strategy_disabled: 'Stratégie de recharge des cycles non définie',
+      cycle_obtain_strategy_mint_from_native_token: 'Mint depuis le compte ICP',
     },
     users: {
       title: 'Usagers',
@@ -800,5 +805,9 @@ export default {
       managesysteminfo: 'Gérer les informations système',
       changeexternalcanister: 'Modifier un canister géré',
     },
+  },
+  cycle_obtain_strategies: {
+    disabled: 'Désactivé',
+    mintfromnativetoken: 'Mint depuis le compte ICP',
   },
 };
