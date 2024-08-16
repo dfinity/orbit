@@ -52,6 +52,7 @@
                 <tr>
                   <th class="text-center bg-background">#</th>
                   <th class="bg-background">{{ $t('terms.to') }}</th>
+                  <th class="bg-background" v-if="hasAnyComments">{{ $t('terms.comment') }}</th>
                   <th class="text-right bg-background">{{ $t('terms.amount') }}</th>
                 </tr>
               </thead>
@@ -69,11 +70,16 @@
                     <small v-else>{{ idx + 1 }}</small>
                   </td>
                   <td class="w-75">
-                    <span v-if="transfer.to">{{ transfer.to }}</span>
+                    <span v-if="transfer.to">
+                      {{ transfer.to }}
+                    </span>
                     <template v-else>
                       <VIcon :icon="mdiAlertCircle" color="error" class="mr-1" />
                       {{ $t('terms.invalid') }}
                     </template>
+                  </td>
+                  <td class="w-75" v-if="hasAnyComments">
+                    <span v-if="transfer.comment">{{ transfer.comment }}</span>
                   </td>
                   <td class="text-right text-no-wrap">
                     <span v-if="transfer.amount">
@@ -194,7 +200,7 @@ const props = withDefaults(
     prependIcon: undefined,
     appendIcon: undefined,
     text: undefined,
-    dialogMaxWidth: 800,
+    dialogMaxWidth: 1000,
   },
 );
 
@@ -209,11 +215,13 @@ const open = ref(false);
 const loading = ref(false);
 const transfersCsv = ref<File[] | undefined>(undefined);
 const csvToColumn = computed(() => i18n.t('pages.account.csv_transfer_file_column_to'));
+const csvCommentColumn = computed(() => i18n.t('pages.account.csv_transfer_file_column_comment'));
 const csvAmountColumn = computed(() => i18n.t('pages.account.csv_transfer_file_column_amount'));
 const csvHint = computed(() =>
   i18n.t('pages.account.csv_transfer_file_format_hint', {
     to: csvToColumn.value,
     amount: csvAmountColumn.value,
+    comment: csvCommentColumn.value,
   }),
 );
 const hasInvalidTransfers = computed(() => rows.value.some(row => !row.valid));
@@ -221,9 +229,12 @@ const rawCsvTable = ref<CsvTable | null>(null);
 const invalidRawCsvTable = ref<CsvTable | null>(null);
 const downloadingInvalid = ref(false);
 const chainApi = computed(() => ChainApiFactory.create(props.account));
+
+type CsvTransferWithComment = Partial<Transfer> & { comment?: string };
+
 const rows = ref<
   {
-    transfer: Partial<Transfer>;
+    transfer: CsvTransferWithComment;
     valid: boolean;
     requesting: boolean;
     failed: boolean;
@@ -240,6 +251,8 @@ const canSubmit = computed(() => {
 
   return !rows.value.some(row => row.requesting) && remainingValidRows.length > 0;
 });
+
+const hasAnyComments = computed(() => rows.value.some(row => row.transfer.comment));
 
 const totalAmount = computed(() =>
   rows.value.reduce((acc, row) => {
@@ -281,7 +294,7 @@ watch(
     };
 
     for (const row of rawCsvTable.value.rows) {
-      const transfer: Partial<Transfer> = {};
+      const transfer: CsvTransferWithComment = {};
       let valid = true;
 
       if (
@@ -289,6 +302,9 @@ watch(
         chainApi.value.isValidAddress(row[csvToColumn.value])
       ) {
         transfer.to = row[csvToColumn.value];
+      }
+      if (row?.[csvCommentColumn.value] !== undefined) {
+        transfer.comment = row[csvCommentColumn.value];
       }
 
       if (row?.[csvAmountColumn.value] !== undefined) {
@@ -350,7 +366,11 @@ const startBatchTransfer = async (): Promise<void> => {
   try {
     registerBeforeUnloadConfirmation();
     loading.value = true;
-    const transfersToProcess: { rowId: number; transfer: TransferOperationInput }[] = [];
+    const transfersToProcess: {
+      rowId: number;
+      transfer: TransferOperationInput;
+      comment?: string;
+    }[] = [];
     for (let rowId = 0; rowId < rows.value.length; rowId++) {
       const row = rows.value[rowId];
       if (row.valid && !row.requested && !row.requesting) {
@@ -368,6 +388,7 @@ const startBatchTransfer = async (): Promise<void> => {
             fee: [],
             metadata: [],
           },
+          comment: row.transfer.comment,
         });
       }
     }
@@ -377,7 +398,7 @@ const startBatchTransfer = async (): Promise<void> => {
         const row = rows.value[entry.rowId];
         row.requesting = true;
         return station.service
-          .transfer(entry.transfer)
+          .transfer(entry.transfer, entry.comment)
           .then(() => {
             row.requested = true;
           })
