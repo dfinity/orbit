@@ -49,23 +49,10 @@ impl DfxOrbit {
         title: Option<String>,
         summary: Option<String>,
     ) -> anyhow::Result<CreateRequestResponse> {
-        let args = CommitProposedBatchArguments { batch_id, evidence };
-        let arg = candid::encode_one(args)?;
-
         let response = self
             .station
             .request(CreateRequestInput {
-                operation: RequestOperationInput::CallExternalCanister(
-                    CallExternalCanisterOperationInput {
-                        validation_method: None,
-                        execution_method: CanisterMethodDTO {
-                            canister_id,
-                            method_name: String::from("commit_proposed_batch"),
-                        },
-                        arg: Some(arg),
-                        execution_method_cycles: None,
-                    },
-                ),
+                operation: DfxOrbit::commit_batch_input(canister_id, batch_id, evidence)?,
                 title,
                 summary,
                 execution_plan: None,
@@ -73,6 +60,27 @@ impl DfxOrbit {
             .await?;
 
         Ok(response)
+    }
+
+    pub(crate) fn commit_batch_input(
+        canister_id: Principal,
+        batch_id: Nat,
+        evidence: ByteBuf,
+    ) -> anyhow::Result<RequestOperationInput> {
+        let args = CommitProposedBatchArguments { batch_id, evidence };
+        let arg = candid::encode_one(args)?;
+
+        Ok(RequestOperationInput::CallExternalCanister(
+            CallExternalCanisterOperationInput {
+                validation_method: None,
+                execution_method: CanisterMethodDTO {
+                    canister_id,
+                    method_name: String::from("commit_proposed_batch"),
+                },
+                arg: Some(arg),
+                execution_method_cycles: None,
+            },
+        ))
     }
 }
 
