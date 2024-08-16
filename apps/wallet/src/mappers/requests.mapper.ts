@@ -602,7 +602,6 @@ export const mapRequestsToCsvTable = (
     details: 'Details',
   };
 
-
   for (const key in headers) {
     headers[key] = mapRequestCsvHeaderToTranslation(key);
   }
