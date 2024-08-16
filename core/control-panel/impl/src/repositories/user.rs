@@ -16,8 +16,8 @@ use crate::{
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::RefreshIndexMode;
-use orbit_essentials::repository::{IndexRepository, Repository};
+use orbit_essentials::repository::StableDb;
+use orbit_essentials::repository::{IndexRepository, IndexedRepository, Repository};
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
@@ -39,15 +39,28 @@ pub struct UserRepository {
     status_index: UserStatusIndexRepository,
 }
 
-impl Repository<UserKey, User> for UserRepository {
-    fn list(&self) -> Vec<User> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<UserKey, User, VirtualMemory<Memory>> for UserRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<UserKey, User, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<UserKey, User, VirtualMemory<Memory>> for UserRepository {
+    fn remove_entry_indexes(&self, entry: &User) {
+        self.identity_index.remove(&entry.to_index_for_identity());
+        self.status_index.remove(&entry.to_index_for_status());
     }
 
-    fn get(&self, key: &UserKey) -> Option<User> {
-        DB.with(|m| m.borrow().get(key))
+    fn add_entry_indexes(&self, entry: &User) {
+        self.identity_index.insert(entry.to_index_for_identity());
+        self.status_index.insert(entry.to_index_for_status());
     }
+}
 
+impl Repository<UserKey, User, VirtualMemory<Memory>> for UserRepository {
     fn insert(&self, key: UserKey, value: User) -> Option<User> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
@@ -59,20 +72,7 @@ impl Repository<UserKey, User> for UserRepository {
                     .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
             });
 
-            self.identity_index
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| vec![prev.to_index_for_identity()]),
-                    current: vec![value.to_index_for_identity()],
-                });
-            self.status_index
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| vec![prev.to_index_for_status()]),
-                    current: vec![value.to_index_for_status()],
-                });
+            self.save_entry_indexes(&value, prev.as_ref());
 
             prev
         })
@@ -89,27 +89,12 @@ impl Repository<UserKey, User> for UserRepository {
                         .iter()
                         .for_each(|metric| metric.borrow_mut().sub(prev))
                 });
-            }
 
-            self.identity_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| vec![prev.to_index_for_identity()]),
-                });
-            self.status_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| vec![prev.to_index_for_status()]),
-                });
+                self.remove_entry_indexes(prev);
+            }
 
             prev
         })
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
     }
 }
 

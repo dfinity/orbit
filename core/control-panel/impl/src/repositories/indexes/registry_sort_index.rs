@@ -3,7 +3,7 @@ use crate::{
     models::{indexes::registry_sort_index::RegistrySortIndex, RegistryEntryId},
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use orbit_essentials::repository::Repository;
+use orbit_essentials::repository::{Repository, StableDb};
 use std::cell::RefCell;
 
 thread_local! {
@@ -18,26 +18,22 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct RegistrySortIndexRepository {}
 
-impl Repository<RegistryEntryId, RegistrySortIndex> for RegistrySortIndexRepository {
-    fn list(&self) -> Vec<RegistrySortIndex> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<RegistryEntryId, RegistrySortIndex, VirtualMemory<Memory>>
+    for RegistrySortIndexRepository
+{
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(
+            &mut StableBTreeMap<RegistryEntryId, RegistrySortIndex, VirtualMemory<Memory>>,
+        ) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
     }
+}
 
-    fn get(&self, key: &RegistryEntryId) -> Option<RegistrySortIndex> {
-        DB.with(|m| m.borrow().get(key))
-    }
-
-    fn insert(&self, key: RegistryEntryId, value: RegistrySortIndex) -> Option<RegistrySortIndex> {
-        DB.with(|m| m.borrow_mut().insert(key, value.clone()))
-    }
-
-    fn remove(&self, key: &RegistryEntryId) -> Option<RegistrySortIndex> {
-        DB.with(|m| m.borrow_mut().remove(key))
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
-    }
+impl Repository<RegistryEntryId, RegistrySortIndex, VirtualMemory<Memory>>
+    for RegistrySortIndexRepository
+{
 }
 
 #[cfg(test)]

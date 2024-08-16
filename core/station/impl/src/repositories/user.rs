@@ -1,17 +1,15 @@
 use super::indexes::{
-    name_to_user_id_index::NameToUserIdIndexRepository,
-    user_identity_index::UserIdentityIndexRepository,
-    user_status_group_index::UserStatusGroupIndexRepository,
+    unique_index::UniqueIndexRepository, user_status_group_index::UserStatusGroupIndexRepository,
 };
+use crate::core::ic_cdk::api::print;
 use crate::{
     core::{
-        metrics::USER_METRICS, observer::Observer, with_memory_manager, Memory, USER_MEMORY_ID,
+        cache::Cache, metrics::USER_METRICS, observer::Observer, utils::format_unique_string,
+        with_memory_manager, Memory, USER_MEMORY_ID,
     },
     models::{
         indexes::{
-            name_to_user_id_index::NameToUserIdIndexCriteria,
-            user_identity_index::UserIdentityIndexCriteria,
-            user_status_group_index::UserStatusGroupIndexCriteria,
+            unique_index::UniqueIndexKey, user_status_group_index::UserStatusGroupIndexCriteria,
         },
         User, UserGroupId, UserId, UserKey, UserStatus,
     },
@@ -20,7 +18,7 @@ use crate::{
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::{IndexRepository, RefreshIndexMode};
+use orbit_essentials::repository::{IndexRepository, IndexedRepository, StableDb};
 use orbit_essentials::{repository::Repository, types::UUID};
 use std::{cell::RefCell, sync::Arc};
 
@@ -29,7 +27,9 @@ thread_local! {
     RefCell::new(
       StableBTreeMap::init(memory_manager.get(USER_MEMORY_ID))
     )
-  })
+  });
+
+  static CACHE: RefCell<Cache<UserId, User>> = RefCell::new(Cache::new(UserRepository::MAX_CACHE_SIZE));
 }
 
 lazy_static! {
@@ -39,9 +39,8 @@ lazy_static! {
 /// A repository that enables managing users in stable memory.
 #[derive(Debug)]
 pub struct UserRepository {
-    identity_index: UserIdentityIndexRepository,
+    unique_index: UniqueIndexRepository,
     group_status_index: UserStatusGroupIndexRepository,
-    name_index: NameToUserIdIndexRepository,
     change_observer: Observer<(User, Option<User>)>,
     remove_observer: Observer<User>,
 }
@@ -57,24 +56,62 @@ impl Default for UserRepository {
         Self {
             change_observer,
             remove_observer,
-            identity_index: UserIdentityIndexRepository::default(),
+            unique_index: UniqueIndexRepository::default(),
             group_status_index: UserStatusGroupIndexRepository::default(),
-            name_index: NameToUserIdIndexRepository::default(),
         }
     }
 }
 
-impl Repository<UserKey, User> for UserRepository {
+impl StableDb<UserKey, User, VirtualMemory<Memory>> for UserRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<UserKey, User, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<UserKey, User, VirtualMemory<Memory>> for UserRepository {
+    fn remove_entry_indexes(&self, entry: &User) {
+        self.unique_index.refresh(&[], &entry.to_unique_indexes());
+
+        entry.to_index_for_groups().iter().for_each(|index| {
+            self.group_status_index.remove(index);
+        });
+    }
+
+    fn add_entry_indexes(&self, entry: &User) {
+        self.unique_index.refresh(&entry.to_unique_indexes(), &[]);
+
+        entry.to_index_for_groups().iter().for_each(|index| {
+            self.group_status_index.insert(index.clone());
+        });
+    }
+}
+
+impl Repository<UserKey, User, VirtualMemory<Memory>> for UserRepository {
     fn list(&self) -> Vec<User> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+        DB.with(|m| match self.use_only_cache() {
+            true => CACHE.with(|cache| cache.borrow().values().cloned().collect()),
+            false => m.borrow().iter().map(|(_, user)| user).collect(),
+        })
     }
 
     fn get(&self, key: &UserKey) -> Option<User> {
-        DB.with(|m| m.borrow().get(key))
+        DB.with(|m| {
+            let maybe_cache_hit = CACHE.with(|cache| cache.borrow().get(&key.id).cloned());
+
+            match self.use_only_cache() {
+                true => maybe_cache_hit,
+                false => maybe_cache_hit.or_else(|| m.borrow().get(key).clone()),
+            }
+        })
     }
 
     fn insert(&self, key: UserKey, value: User) -> Option<User> {
         DB.with(|m| {
+            CACHE.with(|cache| cache.borrow_mut().insert(key.id, value.clone()));
+
             let prev = m.borrow_mut().insert(key, value.clone());
 
             // Update metrics when a user is upserted.
@@ -84,25 +121,7 @@ impl Repository<UserKey, User> for UserRepository {
                     .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
             });
 
-            self.identity_index
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| prev.to_index_for_identities()),
-                    current: value.to_index_for_identities(),
-                });
-            self.group_status_index
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| prev.to_index_for_groups()),
-                    current: value.to_index_for_groups(),
-                });
-            self.name_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index_by_name()),
-                    current: Some(value.to_index_by_name()),
-                });
+            self.save_entry_indexes(&value, prev.as_ref());
 
             let args = (value, prev);
             self.change_observer.notify(&args);
@@ -113,6 +132,8 @@ impl Repository<UserKey, User> for UserRepository {
 
     fn remove(&self, key: &UserKey) -> Option<User> {
         DB.with(|m| {
+            CACHE.with(|cache| cache.borrow_mut().remove(&key.id));
+
             let prev = m.borrow_mut().remove(key);
 
             // Update metrics when a user is removed.
@@ -124,22 +145,9 @@ impl Repository<UserKey, User> for UserRepository {
                 });
             }
 
-            self.identity_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| prev.to_index_for_identities()),
-                });
-            self.group_status_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| prev.to_index_for_groups()),
-                });
-            self.name_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index_by_name()),
-                });
+            if let Some(prev) = &prev {
+                self.remove_entry_indexes(prev);
+            }
 
             if let Some(prev) = &prev {
                 self.remove_observer.notify(prev);
@@ -148,47 +156,57 @@ impl Repository<UserKey, User> for UserRepository {
             prev
         })
     }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
-    }
 }
 
 impl UserRepository {
-    /// Returns the user associated with the given identity if it exists.
-    pub fn find_by_identity(&self, identity: &Principal) -> Option<User> {
-        self.identity_index
-            .find_by_criteria(UserIdentityIndexCriteria {
-                identity_id: identity.to_owned(),
-            })
-            .iter()
-            .find_map(|id| self.get(&User::key(*id)))
+    /// Currently the cache uses around ??? KiB per entry (Resource, Allow),
+    /// so the max cache size is around ??? MiB.
+    ///
+    /// Moreover, it takes approximately ??? million instructions to load each entry
+    /// to the cache, which means that rebuilding the cache from the repository
+    /// would take around ??? million instructions.
+    pub const MAX_CACHE_SIZE: usize = 50_000;
+
+    /// Checks if every user in the repository is in the cache.
+    fn use_only_cache(&self) -> bool {
+        self.len() <= Self::MAX_CACHE_SIZE
     }
 
-    /// Returns true if a user with the given identity and status exists.
-    pub fn exists_by_identity_and_status(&self, identity: &Principal, status: &UserStatus) -> bool {
-        self.identity_index
-            .find_by_criteria(UserIdentityIndexCriteria {
-                identity_id: identity.to_owned(),
-            })
-            .iter()
-            .any(|id| {
-                if let Some(user) = self.get(&User::key(*id)) {
-                    user.status == *status
-                } else {
-                    false
+    /// Builds the cache from the stable memory repository.
+    ///
+    /// This method should only be called during init or upgrade hooks to ensure that the cache is
+    /// up-to-date with the repository and that we have enough instructions to rebuild the cache.
+    pub fn build_cache(&self) {
+        if self.len() > Self::MAX_CACHE_SIZE {
+            print(format!(
+                "Only the first {} users will be added to the cache, the reposity has {} users.",
+                Self::MAX_CACHE_SIZE,
+                USER_REPOSITORY.len(),
+            ));
+        }
+
+        CACHE.with(|cache| {
+            cache.borrow_mut().clear();
+
+            DB.with(|db| {
+                for (_, user) in db.borrow().iter().take(Self::MAX_CACHE_SIZE) {
+                    cache.borrow_mut().insert(user.id, user.clone());
                 }
-            })
+            });
+        });
+    }
+
+    /// Returns the user associated with the given identity if it exists.
+    pub fn find_by_identity(&self, identity: &Principal) -> Option<User> {
+        self.unique_index
+            .get(&UniqueIndexKey::UserIdentity(*identity))
+            .and_then(|id| self.get(&User::key(id)))
     }
 
     // Returns the user associated with the given name if it exists.
     pub fn find_by_name(&self, name: &str) -> Option<UserId> {
-        self.name_index
-            .find_by_criteria(NameToUserIdIndexCriteria {
-                name: name.to_owned(),
-            })
-            .into_iter()
-            .next()
+        self.unique_index
+            .get(&UniqueIndexKey::UserName(format_unique_string(name)))
     }
 
     /// Returns the users associated with the given group and their user status if they exist.

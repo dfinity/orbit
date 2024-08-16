@@ -20,7 +20,7 @@ use crate::{
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    repository::{IndexRepository, RefreshIndexMode, Repository},
+    repository::{IndexRepository, IndexedRepository, Repository, StableDb},
     types::{Timestamp, UUID},
 };
 use station_api::ListRequestsSortBy;
@@ -67,29 +67,46 @@ impl Default for RequestRepository {
     }
 }
 
-impl Repository<RequestKey, Request> for RequestRepository {
-    fn list(&self) -> Vec<Request> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<RequestKey, Request, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {
+    fn remove_entry_indexes(&self, entry: &Request) {
+        entry.to_index_for_resource().iter().for_each(|index| {
+            self.resource_index.remove(index);
+        });
+
+        entry.to_indexes().iter().for_each(|(index_key, _)| {
+            self.index.remove(index_key);
+        });
     }
 
-    fn get(&self, key: &RequestKey) -> Option<Request> {
-        DB.with(|m| m.borrow().get(key))
-    }
+    fn add_entry_indexes(&self, entry: &Request) {
+        entry.to_index_for_resource().into_iter().for_each(|index| {
+            self.resource_index.insert(index);
+        });
 
+        entry
+            .to_indexes()
+            .into_iter()
+            .for_each(|(index_key, index_fields)| {
+                self.index.insert(index_key, index_fields);
+            });
+    }
+}
+
+impl Repository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {
     fn insert(&self, key: RequestKey, value: Request) -> Option<Request> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
-            self.resource_index
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map(|prev| prev.to_index_for_resource())
-                        .unwrap_or_default(),
-                    current: value.to_index_for_resource(),
-                });
-
-            self.save_indexes(&value, prev.clone());
+            self.save_entry_indexes(&value, prev.as_ref());
 
             let args = (value, prev);
             self.change_observer.notify(&args);
@@ -102,16 +119,8 @@ impl Repository<RequestKey, Request> for RequestRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
 
-            self.resource_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev
-                        .clone()
-                        .map(|prev| prev.to_index_for_resource())
-                        .unwrap_or_default(),
-                });
-
             if let Some(prev) = &prev {
-                self.cleanup_indexes(prev);
+                self.remove_entry_indexes(prev);
 
                 self.remove_observer.notify(prev);
             }
@@ -119,51 +128,9 @@ impl Repository<RequestKey, Request> for RequestRepository {
             prev
         })
     }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
-    }
 }
 
 impl RequestRepository {
-    /// Cleans up the indexes for the provided request.
-    fn cleanup_indexes(&self, request: &Request) {
-        request.to_indexes().iter().for_each(|(index_key, _)| {
-            self.index.remove(index_key);
-        });
-    }
-
-    /// Saves all indexes for the given request.
-    fn save_indexes(&self, current: &Request, previous: Option<Request>) {
-        if let Some(previous) = previous {
-            self.cleanup_indexes(&previous);
-        }
-
-        current
-            .to_indexes()
-            .into_iter()
-            .for_each(|(index_key, index_fields)| {
-                self.index.insert(index_key, index_fields);
-            });
-    }
-
-    pub fn exists(&self, key: &RequestKey) -> bool {
-        DB.with(|m| m.borrow().contains_key(key))
-    }
-
-    /// This method goes over all the requests and rebuilds the indexes.
-    ///
-    /// WARNING: Please only use during upgrades to ensure enough intructions are available.
-    pub fn rebuild_indexes(&self) {
-        DB.with(|m| {
-            let db = m.borrow();
-
-            for (_, request) in db.iter() {
-                self.save_indexes(&request, None);
-            }
-        });
-    }
-
     /// Find requests that have the provided status and would be expired between the provided timestamps.
     pub fn find_by_status_and_expiration_dt(
         &self,

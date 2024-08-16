@@ -1,15 +1,14 @@
 use crate::core::ic_cdk::api::trap;
-use crate::core::{read_system_info, write_system_info, REQUEST_INDEX_MEMORY_ID};
-use crate::models::indexes::request_index::{RequestIndexFields, RequestIndexKey};
+use crate::core::{read_system_info, write_system_info};
+use crate::repositories::{
+    ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, EXTERNAL_CANISTER_REPOSITORY,
+    USER_GROUP_REPOSITORY, USER_REPOSITORY,
+};
 use crate::STABLE_MEMORY_VERSION;
-use crate::{
-    core::{with_memory_manager, Memory},
-    repositories::REQUEST_REPOSITORY,
-};
-use ic_stable_structures::{
-    memory_manager::{MemoryId, VirtualMemory},
-    StableBTreeMap,
-};
+use crate::{core::with_memory_manager, repositories::REQUEST_REPOSITORY};
+use ic_stable_structures::memory_manager::MemoryId;
+use ic_stable_structures::Memory;
+use orbit_essentials::repository::IndexedRepository;
 
 /// Handles stable memory schema migrations for the station canister.
 ///
@@ -55,27 +54,44 @@ fn apply_migration() {
     with_memory_manager(|memory_manager| {
         for memory_id in [
             MemoryId::new(3),  // USER_IDENTITY_INDEX_MEMORY_ID,
-            MemoryId::new(18), // USER_STATUS_GROUP_INDEX_MEMORY_ID
-            MemoryId::new(28), // NAME_TO_USER_ID_INDEX_MEMORY_ID
             MemoryId::new(5),  // REQUEST_EXPIRATION_TIME_INDEX_MEMORY_ID
             MemoryId::new(8),  // REQUEST_APPROVER_INDEX_MEMORY_ID
             MemoryId::new(9),  // REQUEST_STATUS_INDEX_MEMORY_ID
             MemoryId::new(10), // REQUEST_SCHEDULED_INDEX_MEMORY_ID
+            MemoryId::new(15), // USER_GROUP_NAME_INDEX_MEMORY_ID
+            MemoryId::new(18), // USER_STATUS_GROUP_INDEX_MEMORY_ID
             MemoryId::new(21), // REQUEST_REQUESTER_INDEX_MEMORY_ID
             MemoryId::new(22), // REQUEST_CREATION_TIME_INDEX_MEMORY_ID
             MemoryId::new(23), // REQUEST_KEY_CREATION_TIME_INDEX_MEMORY_ID
             MemoryId::new(24), // REQUEST_KEY_EXPIRATION_TIME_INDEX_MEMORY_ID
             MemoryId::new(25), // REQUEST_SORT_INDEX_MEMORY_ID
             MemoryId::new(26), // REQUEST_STATUS_MODIFICATION_INDEX_MEMORY_ID
-            MemoryId::new(29), // OPERATION_TYPE_TO_REQUEST_ID_INDEX_MEMORY_ID
-            MemoryId::new(15), // USER_GROUP_NAME_INDEX_MEMORY_ID
             MemoryId::new(27), // NAME_TO_ACCOUNT_ID_INDEX_MEMORY_ID
+            MemoryId::new(28), // NAME_TO_USER_ID_INDEX_MEMORY_ID
+            MemoryId::new(29), // OPERATION_TYPE_TO_REQUEST_ID_INDEX_MEMORY_ID
+            MemoryId::new(34), // EXTERNAL_CANISTER_INDEX_MEMORY_ID
         ] {
-            // First this cleans up the memory by initializing it again with an empty type
-            StableBTreeMap::<(), (), VirtualMemory<Memory>>::new(memory_manager.get(memory_id));
+            // This cleans up the memory by writing a single zero byte to the memory id,
+            // this will make the memory id available for reuse in the future.
+            //
+            // This makes sure that if `init` is called on the memory id, it will make sure
+            // it can be reused with a different datatype.
+            let memory = memory_manager.get(memory_id);
+            if memory.size() > 0 {
+                // This marks the memory as unused, this is because the StableBTreeMap
+                // implementation uses the first three bytes of the memory to store the MAGIC value [66, 84, 82]
+                // that indicates that the memory is used by the StableBTreeMap, so adding a single different byte
+                // in those first three bytes will make the memory available for reuse.
+                memory.write(0, &[0]);
+            }
         }
     });
 
-    // step 2: recreates the indexes for all requests
+    // step 2: recreates the indexes for all affected repositories
+    USER_GROUP_REPOSITORY.rebuild_indexes();
+    USER_REPOSITORY.rebuild_indexes();
+    ACCOUNT_REPOSITORY.rebuild_indexes();
+    EXTERNAL_CANISTER_REPOSITORY.rebuild_indexes();
+    ADDRESS_BOOK_REPOSITORY.rebuild_indexes();
     REQUEST_REPOSITORY.rebuild_indexes();
 }

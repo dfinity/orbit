@@ -14,7 +14,10 @@ use crate::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
         CycleObtainStrategy, ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
     },
-    repositories::{permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY},
+    repositories::{
+        permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY,
+        USER_GROUP_REPOSITORY, USER_REPOSITORY,
+    },
     SYSTEM_VERSION,
 };
 use candid::Principal;
@@ -267,8 +270,8 @@ impl SystemService {
     ///
     /// Must only be called within a canister init or post_upgrade call.
     fn init_cache(&self) {
-        // Initializes the cache of the permission repository,
-        // using at most 20B instructions.
+        USER_GROUP_REPOSITORY.build_cache();
+        USER_REPOSITORY.build_cache();
         PERMISSION_REPOSITORY.build_cache();
     }
 

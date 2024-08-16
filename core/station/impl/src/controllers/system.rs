@@ -33,7 +33,6 @@ async fn initialize(input: Option<SystemInstall>) {
 pub async fn mock_init() {
     use crate::core::write_system_info;
     use crate::models::SystemInfo;
-    use crate::repositories::permission::PERMISSION_REPOSITORY;
     use candid::Principal;
 
     // Initialize the random number generator with a fixed seed to ensure deterministic
@@ -44,14 +43,18 @@ pub async fn mock_init() {
     let mut system = SystemInfo::default();
     system.set_upgrader_canister_id(Principal::from_slice(&[25; 29]));
 
-    // Initialize the permission cached entries for repositories.
-    PERMISSION_REPOSITORY.build_cache();
-
     write_system_info(system);
 }
 
 #[post_upgrade]
 async fn post_upgrade(input: Option<SystemInstall>) {
+    // Runs the migrations for the canister to ensure the stable memory schema is up-to-date
+    //
+    // WARNING: This needs to be done before any other access to stable memory is done, this is because
+    // it might clear memory ids and the current codebase might be reusing them and loading a diffirent
+    // datatype from the one that was initially stored.
+    migration::MigrationHandler::run();
+
     match input {
         None => CONTROLLER.post_upgrade(None).await,
         Some(SystemInstall::Upgrade(input)) => CONTROLLER.post_upgrade(Some(input)).await,
@@ -95,13 +98,6 @@ impl SystemController {
     }
 
     async fn post_upgrade(&self, input: Option<SystemUpgrade>) {
-        // Runs the migrations for the canister to ensure the stable memory schema is up-to-date
-        //
-        // WARNING: This needs to be done before any other access to stable memory is done, this is because
-        // it might clear memory ids and the current codebase might be reusing them and loading a diffirent
-        // datatype from the one that was initially stored.
-        migration::MigrationHandler::run();
-
         self.system_service
             .upgrade_canister(input)
             .await
@@ -122,5 +118,58 @@ impl SystemController {
         Ok(SystemInfoResponse {
             system: system_info.to_dto(&cycles, SYSTEM_VERSION),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::core::ic_cdk::next_time;
+    use crate::core::{read_system_info, write_system_info};
+    use crate::models::request_test_utils::mock_request;
+    use crate::models::{RequestStatus, SystemInfo};
+    use crate::repositories::REQUEST_REPOSITORY;
+    use crate::STABLE_MEMORY_VERSION;
+    use candid::Principal;
+    use orbit_essentials::repository::Repository;
+
+    #[tokio::test]
+    async fn apply_migration_should_migrate_stable_memory_version() {
+        let mut system_info = SystemInfo::new(Principal::management_canister(), Vec::new());
+
+        system_info.set_stable_memory_version(0);
+
+        write_system_info(system_info);
+
+        post_upgrade(None).await;
+
+        let mut system_info = read_system_info();
+
+        assert_eq!(
+            system_info.get_stable_memory_version(),
+            STABLE_MEMORY_VERSION
+        );
+
+        // now reset to the original version, add a request and check if the migration is applied again
+        let mut request = mock_request();
+        request.status = RequestStatus::Processing {
+            started_at: next_time(),
+        };
+
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+
+        system_info.set_stable_memory_version(0);
+        system_info.set_change_canister_request(request.id);
+
+        write_system_info(system_info);
+
+        post_upgrade(None).await;
+
+        let system_info = read_system_info();
+
+        assert_eq!(
+            system_info.get_stable_memory_version(),
+            STABLE_MEMORY_VERSION
+        );
     }
 }

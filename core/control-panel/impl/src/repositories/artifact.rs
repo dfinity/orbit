@@ -8,8 +8,8 @@ use crate::{
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::RefreshIndexMode;
-use orbit_essentials::repository::{IndexRepository, Repository};
+use orbit_essentials::repository::StableDb;
+use orbit_essentials::repository::{IndexRepository, IndexedRepository, Repository};
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
@@ -31,26 +31,35 @@ pub struct ArtifactRepository {
     indexes: ArtifactIndexRepository,
 }
 
-impl Repository<ArtifactId, Artifact> for ArtifactRepository {
-    fn list(&self) -> Vec<Artifact> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<ArtifactId, Artifact, VirtualMemory<Memory>> for ArtifactRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<ArtifactId, Artifact, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<ArtifactId, Artifact, VirtualMemory<Memory>> for ArtifactRepository {
+    fn remove_entry_indexes(&self, entry: &Artifact) {
+        entry.indexes().iter().for_each(|index| {
+            self.indexes.remove(index);
+        });
     }
 
-    fn get(&self, key: &ArtifactId) -> Option<Artifact> {
-        DB.with(|m| m.borrow().get(key))
+    fn add_entry_indexes(&self, entry: &Artifact) {
+        entry.indexes().iter().for_each(|index| {
+            self.indexes.insert(index.clone());
+        });
     }
+}
 
+impl Repository<ArtifactId, Artifact, VirtualMemory<Memory>> for ArtifactRepository {
     fn insert(&self, key: ArtifactId, value: Artifact) -> Option<Artifact> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
-            self.indexes
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev: Artifact| prev.indexes()),
-                    current: value.indexes(),
-                });
+            self.save_entry_indexes(&value, prev.as_ref());
 
             prev
         })
@@ -60,17 +69,12 @@ impl Repository<ArtifactId, Artifact> for ArtifactRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
 
-            self.indexes
-                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev.clone().map_or(Vec::new(), |prev| prev.indexes()),
-                });
+            if let Some(prev) = &prev {
+                self.remove_entry_indexes(prev);
+            }
 
             prev
         })
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
     }
 }
 

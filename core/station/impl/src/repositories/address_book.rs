@@ -14,7 +14,7 @@ use crate::{
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    repository::{IndexRepository, RefreshIndexMode, Repository},
+    repository::{IndexRepository, IndexedRepository, Repository, StableDb},
     types::UUID,
 };
 use std::{cell::RefCell, sync::Arc};
@@ -40,15 +40,34 @@ pub struct AddressBookRepository {
     standard_index: AddressBookStandardIndexRepository,
 }
 
-impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository {
-    fn list(&self) -> Vec<AddressBookEntry> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>
+    for AddressBookRepository
+{
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(
+            &mut StableBTreeMap<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>,
+        ) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>
+    for AddressBookRepository
+{
+    fn remove_entry_indexes(&self, value: &AddressBookEntry) {
+        self.index.remove(&value.to_index());
     }
 
-    fn get(&self, key: &AddressBookEntryKey) -> Option<AddressBookEntry> {
-        DB.with(|m| m.borrow().get(key))
+    fn add_entry_indexes(&self, value: &AddressBookEntry) {
+        self.index.insert(value.to_index());
     }
+}
 
+impl Repository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>
+    for AddressBookRepository
+{
     fn insert(
         &self,
         key: AddressBookEntryKey,
@@ -64,11 +83,7 @@ impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository
                     .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
             });
 
-            self.index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index()),
-                    current: Some(value.to_index()),
-                });
+            self.save_entry_indexes(&value, prev.as_ref());
 
             prev
         })
@@ -87,17 +102,12 @@ impl Repository<AddressBookEntryKey, AddressBookEntry> for AddressBookRepository
                 });
             }
 
-            self.index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index()),
-                });
+            if let Some(prev) = &prev {
+                self.remove_entry_indexes(prev);
+            }
 
             prev
         })
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
     }
 }
 

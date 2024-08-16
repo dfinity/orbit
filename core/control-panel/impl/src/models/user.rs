@@ -64,7 +64,7 @@ pub struct User {
 }
 
 #[storable]
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Eq, Ord, Hash, PartialEq, PartialOrd)]
 pub struct UserKey(pub UUID);
 
 impl User {

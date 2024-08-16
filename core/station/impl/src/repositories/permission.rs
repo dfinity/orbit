@@ -1,6 +1,5 @@
 use crate::{
-    core::ic_cdk::api::print,
-    core::{with_memory_manager, Memory, PERMISSION_MEMORY_ID},
+    core::{cache::Cache, ic_cdk::api::print, with_memory_manager, Memory, PERMISSION_MEMORY_ID},
     models::{
         permission::{Allow, Permission, PermissionKey},
         resource::{
@@ -13,8 +12,8 @@ use crate::{
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::Repository;
-use std::{cell::RefCell, collections::HashMap, sync::Arc};
+use orbit_essentials::repository::{Repository, StableDb};
+use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<PermissionKey, Permission, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -23,7 +22,7 @@ thread_local! {
     )
   });
 
-  static CACHE: RefCell<HashMap<Resource, Allow>> = RefCell::new(HashMap::new());
+  static CACHE: RefCell<Cache<Resource, Allow>> = RefCell::new(Cache::new(PermissionRepository::MAX_CACHE_SIZE));
 }
 
 lazy_static! {
@@ -35,7 +34,16 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct PermissionRepository {}
 
-impl Repository<PermissionKey, Permission> for PermissionRepository {
+impl StableDb<PermissionKey, Permission, VirtualMemory<Memory>> for PermissionRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<PermissionKey, Permission, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl Repository<PermissionKey, Permission, VirtualMemory<Memory>> for PermissionRepository {
     fn list(&self) -> Vec<Permission> {
         DB.with(|m| match self.use_only_cache() {
             true => CACHE.with(|cache| {
@@ -77,13 +85,6 @@ impl Repository<PermissionKey, Permission> for PermissionRepository {
                 let mut cache = cache.borrow_mut();
 
                 cache.insert(value.resource.clone(), value.allow.clone());
-
-                if cache.len() >= PermissionRepository::MAX_CACHE_SIZE {
-                    let maybe_remove_key = cache.iter_mut().take(1).map(|(k, _)| k.clone()).next();
-                    if let Some(remove_key) = maybe_remove_key {
-                        cache.remove(&remove_key);
-                    }
-                }
             });
 
             prev
@@ -96,10 +97,6 @@ impl Repository<PermissionKey, Permission> for PermissionRepository {
 
             m.borrow_mut().remove(key)
         })
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
     }
 }
 

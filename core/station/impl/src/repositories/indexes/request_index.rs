@@ -9,7 +9,7 @@ use crate::{
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
-use orbit_essentials::repository::Repository;
+use orbit_essentials::repository::{Repository, StableDb};
 use std::{cell::RefCell, collections::HashMap};
 
 thread_local! {
@@ -24,7 +24,22 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct RequestIndexRepository {}
 
-impl Repository<RequestIndexKey, RequestIndexFields> for RequestIndexRepository {
+impl StableDb<RequestIndexKey, RequestIndexFields, VirtualMemory<Memory>>
+    for RequestIndexRepository
+{
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(
+            &mut StableBTreeMap<RequestIndexKey, RequestIndexFields, VirtualMemory<Memory>>,
+        ) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl Repository<RequestIndexKey, RequestIndexFields, VirtualMemory<Memory>>
+    for RequestIndexRepository
+{
     fn get(&self, key: &RequestIndexKey) -> Option<RequestIndexFields> {
         DB.with(|m| m.borrow().get(key).clone())
     }

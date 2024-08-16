@@ -20,7 +20,7 @@ use crate::{
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    repository::{IndexRepository, RefreshIndexMode, Repository},
+    repository::{IndexRepository, IndexedRepository, Repository, StableDb},
     types::Timestamp,
 };
 use station_api::TransferStatusTypeDTO;
@@ -66,29 +66,33 @@ impl Default for TransferRepository {
     }
 }
 
-impl Repository<TransferKey, Transfer> for TransferRepository {
-    fn list(&self) -> Vec<Transfer> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<TransferKey, Transfer, VirtualMemory<Memory>> for TransferRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<TransferKey, Transfer, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<TransferKey, Transfer, VirtualMemory<Memory>> for TransferRepository {
+    fn remove_entry_indexes(&self, entry: &Transfer) {
+        self.account_index.remove(&entry.to_index_by_account());
+        self.status_index.remove(&entry.to_index_by_status());
     }
 
-    fn get(&self, key: &TransferKey) -> Option<Transfer> {
-        DB.with(|m| m.borrow().get(key))
+    fn add_entry_indexes(&self, entry: &Transfer) {
+        self.account_index.insert(entry.to_index_by_account());
+        self.status_index.insert(entry.to_index_by_status());
     }
+}
 
+impl Repository<TransferKey, Transfer, VirtualMemory<Memory>> for TransferRepository {
     fn insert(&self, key: TransferKey, value: Transfer) -> Option<Transfer> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
-            self.account_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index_by_account()),
-                    current: Some(value.to_index_by_account()),
-                });
-            self.status_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index_by_status()),
-                    current: Some(value.to_index_by_status()),
-                });
+            self.save_entry_indexes(&value, prev.as_ref());
 
             let args = (value, prev);
             self.change_observer.notify(&args);
@@ -101,14 +105,9 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
 
-            self.account_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index_by_account()),
-                });
-            self.status_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index_by_status()),
-                });
+            if let Some(prev) = &prev {
+                self.remove_entry_indexes(prev);
+            }
 
             if let Some(prev) = &prev {
                 self.remove_observer.notify(prev);
@@ -116,10 +115,6 @@ impl Repository<TransferKey, Transfer> for TransferRepository {
 
             prev
         })
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
     }
 }
 

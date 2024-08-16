@@ -129,11 +129,7 @@ impl AccountService {
         input: AddAccountOperationInput,
         with_account_id: Option<UUID>,
     ) -> ServiceResult<Account> {
-        if self
-            .account_repository
-            .find_account_id_by_name(&input.name)
-            .is_some()
-        {
+        if self.account_repository.find_by_name(&input.name).is_some() {
             Err(AccountError::AccountNameAlreadyExists)?
         }
 
@@ -286,7 +282,7 @@ impl AccountService {
 
             if self
                 .account_repository
-                .find_account_id_by_name(name)
+                .find_by_name(name)
                 .is_some_and(|id| id != account.id)
             {
                 Err(AccountError::AccountNameAlreadyExists)?

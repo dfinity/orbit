@@ -1,13 +1,19 @@
-use super::indexes::user_group_name_index::UserGroupNameIndexRepository;
 use crate::{
-    core::{metrics::USER_GROUP_METRICS, with_memory_manager, Memory, USER_GROUP_MEMORY_ID},
-    models::{indexes::user_group_name_index::UserGroupNameIndexCriteria, UserGroup},
+    core::{
+        metrics::USER_GROUP_METRICS, utils::format_unique_string, with_memory_manager, Memory,
+        USER_GROUP_MEMORY_ID,
+    },
+    models::{indexes::unique_index::UniqueIndexKey, UserGroup},
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::{IndexRepository, RefreshIndexMode};
-use orbit_essentials::{repository::Repository, types::UUID};
+use orbit_essentials::{
+    repository::{IndexedRepository, Repository, StableDb},
+    types::UUID,
+};
 use std::{cell::RefCell, sync::Arc};
+
+use super::indexes::unique_index::UniqueIndexRepository;
 
 thread_local! {
   static DB: RefCell<StableBTreeMap<UUID, UserGroup, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -25,18 +31,29 @@ lazy_static! {
 /// A repository that enables managing users in stable memory.
 #[derive(Default, Debug)]
 pub struct UserGroupRepository {
-    name_index: UserGroupNameIndexRepository,
+    unique_index: UniqueIndexRepository,
 }
 
-impl Repository<UUID, UserGroup> for UserGroupRepository {
-    fn list(&self) -> Vec<UserGroup> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<UUID, UserGroup, VirtualMemory<Memory>> for UserGroupRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<UUID, UserGroup, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<UUID, UserGroup, VirtualMemory<Memory>> for UserGroupRepository {
+    fn remove_entry_indexes(&self, entry: &UserGroup) {
+        self.unique_index.refresh(&[], &entry.to_unique_indexes());
     }
 
-    fn get(&self, key: &UUID) -> Option<UserGroup> {
-        DB.with(|m| m.borrow().get(key))
+    fn add_entry_indexes(&self, entry: &UserGroup) {
+        self.unique_index.refresh(&entry.to_unique_indexes(), &[]);
     }
+}
 
+impl Repository<UUID, UserGroup, VirtualMemory<Memory>> for UserGroupRepository {
     fn insert(&self, key: UUID, value: UserGroup) -> Option<UserGroup> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
@@ -48,11 +65,7 @@ impl Repository<UUID, UserGroup> for UserGroupRepository {
                     .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
             });
 
-            self.name_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index_by_name()),
-                    current: Some(value.to_index_by_name()),
-                });
+            self.save_entry_indexes(&value, prev.as_ref());
 
             prev
         })
@@ -69,34 +82,26 @@ impl Repository<UUID, UserGroup> for UserGroupRepository {
                         .iter()
                         .for_each(|metric| metric.borrow_mut().sub(prev))
                 });
-            }
 
-            self.name_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index_by_name()),
-                });
+                self.remove_entry_indexes(prev);
+            }
 
             prev
         })
     }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
-    }
 }
 
 impl UserGroupRepository {
-    pub fn find_by_name(&self, name: &str) -> Option<UserGroup> {
-        let user_group_ids = self
-            .name_index
-            .find_by_criteria(UserGroupNameIndexCriteria {
-                name: name.to_string(),
-            });
+    /// Builds the cache from the stable memory repository.
+    ///
+    /// This method should only be called during init or upgrade hooks to ensure that the cache is
+    /// up-to-date with the repository and that we have enough instructions to rebuild the cache.
+    pub fn build_cache(&self) {}
 
-        user_group_ids
-            .iter()
-            .next()
-            .and_then(|user_group_id| self.get(user_group_id))
+    pub fn find_by_name(&self, name: &str) -> Option<UserGroup> {
+        self.unique_index
+            .get(&UniqueIndexKey::UserGroupName(format_unique_string(name)))
+            .and_then(|id| self.get(&id))
     }
 
     pub fn find_where(&self, where_clause: UseGroupWhereClause) -> Vec<UserGroup> {

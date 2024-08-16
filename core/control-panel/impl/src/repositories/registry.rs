@@ -13,11 +13,11 @@ use control_panel_api::RegistryEntrySortBy;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    repository::{IndexRepository, OrSelectionFilter, Repository},
+    repository::{IndexRepository, IndexedRepository, OrSelectionFilter, Repository, StableDb},
     types::UUID,
 };
 use orbit_essentials::{
-    repository::{RefreshIndexMode, SelectionFilter, SortDirection, SortingStrategy},
+    repository::{SelectionFilter, SortDirection, SortingStrategy},
     types::Timestamp,
 };
 use std::{cell::RefCell, collections::HashSet, sync::Arc};
@@ -42,28 +42,41 @@ pub struct RegistryRepository {
     sort_index: RegistrySortIndexRepository,
 }
 
-impl Repository<RegistryEntryId, RegistryEntry> for RegistryRepository {
-    fn list(&self) -> Vec<RegistryEntry> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<RegistryEntryId, RegistryEntry, VirtualMemory<Memory>> for RegistryRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<RegistryEntryId, RegistryEntry, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<RegistryEntryId, RegistryEntry, VirtualMemory<Memory>>
+    for RegistryRepository
+{
+    fn remove_entry_indexes(&self, entry: &RegistryEntry) {
+        entry.indexes().iter().for_each(|index| {
+            self.indexes.remove(index);
+        });
+
+        self.sort_index.remove(&entry.id);
     }
 
-    fn get(&self, key: &RegistryEntryId) -> Option<RegistryEntry> {
-        DB.with(|m| m.borrow().get(key))
-    }
+    fn add_entry_indexes(&self, entry: &RegistryEntry) {
+        entry.indexes().iter().for_each(|index| {
+            self.indexes.insert(index.clone());
+        });
 
+        self.sort_index.insert(entry.id, entry.to_sort_index());
+    }
+}
+
+impl Repository<RegistryEntryId, RegistryEntry, VirtualMemory<Memory>> for RegistryRepository {
     fn insert(&self, key: RegistryEntryId, value: RegistryEntry) -> Option<RegistryEntry> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
-            self.indexes
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev: RegistryEntry| prev.indexes()),
-                    current: value.indexes(),
-                });
-
-            self.sort_index.insert(key, value.to_sort_index());
+            self.save_entry_indexes(&value, prev.as_ref());
 
             prev
         })
@@ -73,19 +86,12 @@ impl Repository<RegistryEntryId, RegistryEntry> for RegistryRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
 
-            self.indexes
-                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev.clone().map_or(Vec::new(), |prev| prev.indexes()),
-                });
-
-            self.sort_index.remove(key);
+            if let Some(prev) = &prev {
+                self.remove_entry_indexes(prev);
+            }
 
             prev
         })
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
     }
 }
 

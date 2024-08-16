@@ -1,18 +1,16 @@
-use super::indexes::external_canister_index::ExternalCanisterIndexRepository;
+use super::indexes::unique_index::UniqueIndexRepository;
 use crate::{
     core::{utils::format_unique_string, with_memory_manager, Memory, EXTERNAL_CANISTER_MEMORY_ID},
     models::{
-        indexes::external_canister_index::{
-            ExternalCanisterIndexCriteria, ExternalCanisterIndexKind,
-        },
-        ExternalCanister, ExternalCanisterEntryId, ExternalCanisterKey, ExternalCanisterState,
+        indexes::unique_index::UniqueIndexKey, ExternalCanister, ExternalCanisterEntryId,
+        ExternalCanisterKey, ExternalCanisterState,
     },
 };
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::{IndexRepository, SortDirection};
-use orbit_essentials::repository::{RefreshIndexMode, Repository};
+use orbit_essentials::repository::{IndexedRepository, SortDirection};
+use orbit_essentials::repository::{Repository, StableDb};
 use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
 thread_local! {
@@ -32,18 +30,37 @@ lazy_static! {
 /// A repository that enables managing external canisters in stable memory.
 #[derive(Debug, Default)]
 pub struct ExternalCanisterRepository {
-    indexes: ExternalCanisterIndexRepository,
+    unique_index: UniqueIndexRepository,
 }
 
-impl Repository<ExternalCanisterKey, ExternalCanister> for ExternalCanisterRepository {
-    fn list(&self) -> Vec<ExternalCanister> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>
+    for ExternalCanisterRepository
+{
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(
+            &mut StableBTreeMap<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>,
+        ) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>
+    for ExternalCanisterRepository
+{
+    fn remove_entry_indexes(&self, value: &ExternalCanister) {
+        self.unique_index.refresh(&[], &value.to_unique_indexes());
     }
 
-    fn get(&self, key: &ExternalCanisterKey) -> Option<ExternalCanister> {
-        DB.with(|m| m.borrow().get(key))
+    fn add_entry_indexes(&self, value: &ExternalCanister) {
+        self.unique_index.refresh(&value.to_unique_indexes(), &[]);
     }
+}
 
+impl Repository<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>
+    for ExternalCanisterRepository
+{
     fn insert(
         &self,
         key: ExternalCanisterKey,
@@ -52,24 +69,22 @@ impl Repository<ExternalCanisterKey, ExternalCanister> for ExternalCanisterRepos
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
-            self.indexes
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev: ExternalCanister| prev.indexes()),
-                    current: value.indexes(),
-                });
+            self.save_entry_indexes(&value, prev.as_ref());
 
             prev
         })
     }
 
     fn remove(&self, key: &ExternalCanisterKey) -> Option<ExternalCanister> {
-        DB.with(|m| m.borrow_mut().remove(key))
-    }
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
 
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
+            if let Some(prev) = &prev {
+                self.remove_entry_indexes(prev);
+            }
+
+            prev
+        })
     }
 }
 
@@ -78,19 +93,14 @@ impl ExternalCanisterRepository {
     pub fn find_by_name(&self, name: &str) -> Option<ExternalCanisterEntryId> {
         let name = format_unique_string(name);
 
-        self.indexes.find_by_name(&name)
+        self.unique_index
+            .get(&UniqueIndexKey::ExternalCanisterName(name))
     }
 
     /// Returns an external canister by its canister id if it exists.
     pub fn find_by_canister_id(&self, canister_id: &Principal) -> Option<ExternalCanisterEntryId> {
-        let found = self
-            .indexes
-            .find_by_criteria(ExternalCanisterIndexCriteria {
-                from: ExternalCanisterIndexKind::CanisterId(*canister_id),
-                to: ExternalCanisterIndexKind::CanisterId(*canister_id),
-            });
-
-        found.into_iter().next()
+        self.unique_index
+            .get(&UniqueIndexKey::ExternalCanisterId(*canister_id))
     }
 
     /// Verifies that the name is unique among external canisters.
@@ -115,7 +125,12 @@ impl ExternalCanisterRepository {
 
     /// Finds all the labels of the external canisters, which are unique.
     pub fn find_all_labels(&self) -> Vec<String> {
-        self.indexes.find_all_labels()
+        self.list()
+            .into_iter()
+            .flat_map(|entry| entry.labels.into_iter())
+            .collect::<HashSet<String>>()
+            .into_iter()
+            .collect()
     }
 
     /// Finds the names of the external canisters that start with the given prefix.
@@ -123,7 +138,20 @@ impl ExternalCanisterRepository {
         &self,
         prefix: &str,
     ) -> Vec<(String, ExternalCanisterEntryId, Principal)> {
-        self.indexes.find_names_by_prefix(prefix)
+        self.unique_index
+            .find_by_criteria(
+                Some(UniqueIndexKey::ExternalCanisterName(format_unique_string(
+                    prefix,
+                ))),
+                None,
+                None,
+            )
+            .into_iter()
+            .filter_map(|id| {
+                self.get(&ExternalCanisterKey { id })
+                    .map(|entry| (entry.name, entry.id, entry.canister_id))
+            })
+            .collect()
     }
 
     /// Finds external canisters based on the provided where clause.

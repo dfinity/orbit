@@ -447,8 +447,10 @@ mod tests {
     async fn edit_user_with_existing_name_should_fail() {
         let mut user = mock_user();
         user.name = "Jane Doe".to_string();
+        user.identities = vec![Principal::from_slice(&[1; 29])];
         let mut another_user = mock_user();
         another_user.name = "John Doe".to_string();
+        another_user.identities = vec![Principal::from_slice(&[2; 29])];
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
         USER_REPOSITORY.insert(another_user.to_key(), another_user.clone());
