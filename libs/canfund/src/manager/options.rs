@@ -219,9 +219,9 @@ impl FundManagerOptions {
     /// Enable minting cycles from ICP if the canister balance is too low.
     pub fn with_obtain_cycles_options(
         mut self,
-        obtain_cycles_options: ObtainCyclesOptions,
+        obtain_cycles_options: Option<ObtainCyclesOptions>,
     ) -> Self {
-        self.obtain_cycles_options = Some(obtain_cycles_options);
+        self.obtain_cycles_options = obtain_cycles_options;
         self
     }
 

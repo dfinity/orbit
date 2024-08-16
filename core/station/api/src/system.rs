@@ -12,7 +12,7 @@ pub struct SystemInfoDTO {
     pub last_upgrade_timestamp: TimestampRfc3339,
     pub raw_rand_successful: bool,
     pub disaster_recovery: Option<DisasterRecoveryDTO>,
-    pub cycle_obtain_strategy: Option<CycleObtainStrategyDTO>,
+    pub cycle_obtain_strategy: CycleObtainStrategyDTO,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -28,13 +28,23 @@ pub struct ManageSystemInfoOperationDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum CycleObtainStrategyDTO {
+    Disabled,
+    MintFromNativeToken {
+        account_id: UuidDTO,
+        account_name: Option<String>,
+    },
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum CycleObtainStrategyInput {
+    Disabled,
     MintFromNativeToken { account_id: UuidDTO },
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ManageSystemInfoOperationInput {
     pub name: Option<String>,
-    pub cycle_obtain_strategy: Option<CycleObtainStrategyDTO>,
+    pub cycle_obtain_strategy: Option<CycleObtainStrategyInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]

@@ -537,6 +537,7 @@ export default {
     skip: 'Skip',
     version: 'Version',
     continue: 'Continue',
+    cycle_obtain_strategy: 'Station top-up method',
   },
   forms: {
     create: 'Create',
@@ -580,6 +581,7 @@ export default {
       btn_new_transfer: 'New transfer',
       btn_upload_csv: 'Upload CSV',
       error_fetching_account: 'Error fetching account, please try again.',
+      cycle_obtain_account: 'This account is used to top up the Orbit station cycle balance.',
     },
     account: {
       not_found: 'Account not found',
@@ -607,6 +609,9 @@ export default {
     },
     administration: {
       title: 'Administration',
+      cycle_obtain_strategy_disabled:
+        'WARNING: Station cycle balance top-up disabled. Your station may run out of cycles.',
+      cycle_obtain_strategy_mint_from_native_token: 'Mint from ICP account',
     },
     users: {
       title: 'Users',
@@ -792,5 +797,9 @@ export default {
       managesysteminfo: 'Manage system info',
       changeexternalcanister: 'Change external canister',
     },
+  },
+  cycle_obtain_strategies: {
+    disabled: 'Disabled',
+    mintfromnativetoken: 'Mint from ICP account',
   },
 };

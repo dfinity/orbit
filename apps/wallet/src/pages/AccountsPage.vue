@@ -67,6 +67,17 @@
                 }}
               </div>
             </template>
+            <template #item.name="{ item: account }">
+              {{ account.name }}
+
+              <VTooltip v-if="account.id == sourceCylceAccount" location="bottom">
+                <template #activator="{ props: tooltipProps }">
+                  <VIcon :icon="mdiCashSync" class="ml-2 pb-1" v-bind="tooltipProps"></VIcon>
+                </template>
+                {{ $t('pages.accounts.cycle_obtain_account') }}
+              </VTooltip>
+            </template>
+
             <template #item.address="{ item: account }">
               <div class="d-flex align-center flex-no-wrap">
                 <TextOverflow :max-length="app.isMobile ? 16 : 32" :text="account.address" />
@@ -104,8 +115,8 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiChevronRight, mdiContentCopy } from '@mdi/js';
-import { computed, ref } from 'vue';
+import { mdiCashSync, mdiChevronRight, mdiContentCopy } from '@mdi/js';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VBtn, VDataTable, VIcon, VPagination } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
@@ -118,6 +129,7 @@ import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import { Routes } from '~/configs/routes.config';
+import { UUID } from '~/generated/control-panel/control_panel.did';
 import { Account, AccountCallerPrivileges } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
@@ -125,7 +137,8 @@ import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
 import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
-import { formatBalance, throttle } from '~/utils/helper.utils';
+import { hasRequiredPrivilege } from '~/utils/auth.utils';
+import { formatBalance, throttle, unreachable, variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const i18n = useI18n();
@@ -153,6 +166,8 @@ const headers = computed<TableHeader[]>(() => {
   ];
 });
 
+const sourceCylceAccount = ref<UUID | undefined>();
+
 let useVerifiedCall = false;
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const accounts = ref<Account[]>([]);
@@ -177,4 +192,22 @@ const fetchList = useFetchList(
     getTotal: res => Number(res.total),
   },
 );
+
+onMounted(async () => {
+  if (hasRequiredPrivilege({ anyOf: [Privilege.SystemInfo] })) {
+    try {
+      const systemInfo = (await station.service.systemInfo()).system;
+
+      if (variantIs(systemInfo.cycle_obtain_strategy, 'MintFromNativeToken')) {
+        sourceCylceAccount.value = systemInfo.cycle_obtain_strategy.MintFromNativeToken.account_id;
+      } else if (variantIs(systemInfo.cycle_obtain_strategy, 'Disabled')) {
+        // do nothing
+      } else {
+        unreachable(systemInfo.cycle_obtain_strategy);
+      }
+    } catch (e: unknown) {
+      app.sendErrorNotification(e);
+    }
+  }
+});
 </script>

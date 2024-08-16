@@ -539,6 +539,7 @@ export default {
     skip: 'Saltar',
     version: 'Versão',
     continue: 'Continuar',
+    cycle_obtain_strategy: 'Método de recarga da carteira',
   },
   forms: {
     create: 'Criar',
@@ -582,6 +583,8 @@ export default {
       btn_new_transfer: 'Nova transferência',
       btn_upload_csv: 'Carregar CSV',
       error_fetching_account: 'Erro ao carregar as conta, por favor, tente novamente.',
+      cycle_obtain_account:
+        'Esta conta é usada para recarregar o saldo de ciclos da carteira Orbit.',
     },
     account: {
       not_found: 'Conta não encontrada',
@@ -610,6 +613,8 @@ export default {
     },
     administration: {
       title: 'Administração',
+      cycle_obtain_strategy_disabled: 'AVISO: Recarga de saldo de ciclos da carteira desativada.',
+      cycle_obtain_strategy_mint_from_native_token: 'Recarregar a partir da conta de ICP',
     },
     user_groups: {
       title: 'Grupos de usuários',
@@ -799,5 +804,9 @@ export default {
       managesysteminfo: 'Gerir informações do sistema',
       changeexternalcanister: 'Alterar canister gerenciado',
     },
+  },
+  cycle_obtain_strategies: {
+    disabled: 'Desativado',
+    mintfromnativetoken: 'Recarregar a partir da conta de ICP',
   },
 };

@@ -250,7 +250,7 @@ impl AccountService {
             let mut system_info = read_system_info();
 
             // if this is the first account created, and there is no cycle minting account set, set this account as the cycle minting account
-            if system_info.get_cycle_obtain_strategy().is_none()
+            if system_info.get_cycle_obtain_strategy() == &CycleObtainStrategy::Disabled
                 && ACCOUNT_REPOSITORY.len() == 1
                 && matches!(new_account.blockchain, Blockchain::InternetComputer)
                 && new_account.standard == BlockchainStandard::Native
