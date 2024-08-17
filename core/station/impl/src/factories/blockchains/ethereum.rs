@@ -79,7 +79,7 @@ impl BlockchainApi for Ethereum {
         account: &Account,
         transfer: &Transfer,
     ) -> BlockchainApiResult<BlockchainTransactionSubmitted> {
-        let nonce = 0u64;
+        let nonce = eth_get_transaction_count(&self.chain, &account.address).await?;
         let gas_limit = 50000u128;
         let max_fee_per_gas: u128 = 40 * 10u128.pow(9); // gwei
         let max_priority_fee_per_gas = 100u128;
@@ -222,6 +222,30 @@ async fn eth_get_balance(
             account_id: address.to_owned(),
         })?;
     Ok(balance)
+}
+
+async fn eth_get_transaction_count(
+    chain: &alloy_chains::Chain,
+    address: &str,
+) -> Result<u64, BlockchainApiError> {
+    let deserialized = request_evm_rpc(
+        chain,
+        "eth_getTransactionCount",
+        serde_json::json!([address, "latest"]),
+    )
+    .await?;
+    let tx_count_hex = deserialized
+        .as_str()
+        .ok_or(BlockchainApiError::BlockchainNetworkError {
+            info: "RPC did not return tx count ".to_owned(),
+        })?;
+
+    let tx_count = U256::from_str(tx_count_hex)
+        .map_err(|_e| BlockchainApiError::BlockchainNetworkError {
+            info: "Failed to parse tx count".to_owned(),
+        })?
+        .to();
+    Ok(tx_count)
 }
 
 pub async fn request_evm_rpc(
