@@ -197,6 +197,25 @@ impl RequestCanisterInstallArgs {
         };
         Ok(RequestOperationInput::ChangeExternalCanister(operation))
     }
+
+    pub(crate) fn verify(
+        &self,
+        dfx_orbit: &DfxOrbit,
+        request: &GetRequestResponse,
+    ) -> anyhow::Result<()> {
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
+        let arg = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+        let arg_checksum = arg.map(|arg| hex::encode(Sha256::digest(arg)));
+
+        let RequestOperationDTO::ChangeExternalCanister(op) = &request.request.operation else {
+            bail!("This request is not a change external canister request");
+        };
+        if CanisterInstallModeArgs::from(op.mode.clone()) != self.mode {
+            bail!("");
+        }
+
+        todo!()
+    }
 }
 
 /// Canister installation mode equivalent to `dfx canister install --mode XXX` and `orbit_station_api::CanisterInstallMode`.
@@ -213,9 +232,19 @@ pub enum CanisterInstallModeArgs {
 impl From<CanisterInstallModeArgs> for CanisterInstallMode {
     fn from(mode: CanisterInstallModeArgs) -> Self {
         match mode {
-            CanisterInstallModeArgs::Install => CanisterInstallMode::Install,
-            CanisterInstallModeArgs::Reinstall => CanisterInstallMode::Reinstall,
-            CanisterInstallModeArgs::Upgrade => CanisterInstallMode::Upgrade,
+            CanisterInstallModeArgs::Install => Self::Install,
+            CanisterInstallModeArgs::Reinstall => Self::Reinstall,
+            CanisterInstallModeArgs::Upgrade => Self::Upgrade,
+        }
+    }
+}
+
+impl From<CanisterInstallMode> for CanisterInstallModeArgs {
+    fn from(mode: CanisterInstallMode) -> Self {
+        match mode {
+            CanisterInstallMode::Install => Self::Install,
+            CanisterInstallMode::Reinstall => Self::Reinstall,
+            CanisterInstallMode::Upgrade => Self::Upgrade,
         }
     }
 }
