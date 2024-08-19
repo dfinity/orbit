@@ -4,6 +4,7 @@ use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
+use sha2::Digest;
 use station_api::{
     AccountDTO, AddAccountOperationInput, AddUserOperationInput, AllowDTO, ApiErrorDTO,
     CreateRequestInput, CreateRequestResponse, GetPermissionResponse, GetRequestInput,
@@ -658,4 +659,170 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
             panic!("request must be AddAccount");
         }
     }
+}
+
+thread_local! {
+    static UNIQUE_COUNTER: std::cell::RefCell<u64> = const { std::cell::RefCell::new(0) };
+}
+
+pub fn next_number() -> u64 {
+    UNIQUE_COUNTER.with(|counter| {
+        let mut counter = counter.borrow_mut();
+        *counter += 1;
+        *counter
+    })
+}
+
+/// Creates a file in the `assets` folder with the given name and content.
+pub fn create_file(name: &str, content: &[u8]) {
+    let current_dir = std::env::current_dir().expect("Failed to get current directory");
+    let relative_path = std::path::Path::new("assets").join(name);
+    let absolute_path = current_dir.join(relative_path);
+
+    if let Some(parent_dir) = absolute_path.parent() {
+        std::fs::create_dir_all(parent_dir).expect("Failed to create directories");
+    }
+
+    std::fs::write(&absolute_path, content).expect("Failed to write file");
+}
+
+/// Reads the content of a file in the `assets` folder with the given name.
+pub fn read_file(name: &str) -> Option<Vec<u8>> {
+    let current_dir = std::env::current_dir().expect("Failed to get current directory");
+    let relative_path = std::path::Path::new("assets").join(name);
+    let absolute_path = current_dir.join(relative_path);
+
+    if !absolute_path.exists() {
+        return None;
+    }
+
+    std::fs::read(absolute_path).ok()
+}
+
+pub fn str_to_sha256_hex(data: String) -> String {
+    let mut hasher = sha2::Sha256::new();
+
+    hasher.update(data);
+
+    let result = hasher.finalize();
+
+    hex::encode(result)
+}
+
+pub fn add_user_group(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+) -> String {
+    let add_user_group_request = submit_request(
+        env,
+        requester,
+        station_canister_id,
+        RequestOperationInput::AddUserGroup(station_api::AddUserGroupOperationInput {
+            name: format!("group-{}", next_number()),
+        }),
+    );
+
+    let result = wait_for_request(env, requester, station_canister_id, add_user_group_request)
+        .expect("Failed to add user group");
+
+    match result.operation {
+        RequestOperationDTO::AddUserGroup(add_user_group) => {
+            add_user_group
+                .user_group
+                .expect("Unexpected missing user group")
+                .id
+        }
+        _ => panic!("unexpected request operation"),
+    }
+}
+
+pub fn add_user_v2(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+    group_ids: Vec<String>,
+    new_user_udentity: Option<Principal>,
+) -> UserDTO {
+    let next_id = next_number();
+    let user_name = format!("user-{}", next_id);
+    let next_id = next_id.to_be_bytes();
+    let identity = new_user_udentity.unwrap_or(Principal::from_slice(next_id.as_ref()));
+    let add_user = RequestOperationInput::AddUser(AddUserOperationInput {
+        name: user_name,
+        identities: vec![identity],
+        groups: group_ids,
+        status: UserStatusDTO::Active,
+    });
+    let add_user_request = submit_request(env, requester, station_canister_id, add_user);
+    let new_request = wait_for_request(env, requester, station_canister_id, add_user_request)
+        .expect("Failed to add user");
+
+    match new_request.operation {
+        RequestOperationDTO::AddUser(add_user) => add_user.user.unwrap(),
+        _ => panic!("invalid request operation"),
+    }
+}
+
+pub fn add_address_book_entry(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+) {
+    let add_address_book_entry_request = submit_request(
+        env,
+        requester,
+        station_canister_id,
+        RequestOperationInput::AddAddressBookEntry(
+            station_api::AddAddressBookEntryOperationInput {
+                blockchain: "icp".to_string(),
+                labels: vec!["native".to_string()],
+                address_owner: format!("user-{}", next_number()),
+                metadata: Vec::new(),
+                address: format!("{}{}", "0x", str_to_sha256_hex(next_number().to_string())),
+            },
+        ),
+    );
+
+    wait_for_request(
+        env,
+        requester,
+        station_canister_id,
+        add_address_book_entry_request,
+    )
+    .expect("Failed to add address book entry");
+}
+
+pub fn add_account(env: &PocketIc, station_canister_id: Principal, requester: Principal) {
+    let add_account_request = submit_request(
+        env,
+        requester,
+        station_canister_id,
+        RequestOperationInput::AddAccount(station_api::AddAccountOperationInput {
+            name: format!("account-{}", next_number()),
+            blockchain: "icp".to_string(),
+            standard: "native".to_string(),
+            metadata: Vec::new(),
+            configs_permission: station_api::AllowDTO {
+                auth_scope: station_api::AuthScopeDTO::Authenticated,
+                user_groups: Vec::new(),
+                users: vec![],
+            },
+            read_permission: station_api::AllowDTO {
+                auth_scope: station_api::AuthScopeDTO::Authenticated,
+                user_groups: Vec::new(),
+                users: vec![],
+            },
+            transfer_permission: station_api::AllowDTO {
+                auth_scope: station_api::AuthScopeDTO::Authenticated,
+                user_groups: Vec::new(),
+                users: vec![],
+            },
+            configs_request_policy: Some(station_api::RequestPolicyRuleDTO::AutoApproved),
+            transfer_request_policy: Some(station_api::RequestPolicyRuleDTO::AutoApproved),
+        }),
+    );
+
+    wait_for_request(env, requester, station_canister_id, add_account_request)
+        .expect("Failed to add account");
 }
