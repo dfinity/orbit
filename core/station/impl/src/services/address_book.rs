@@ -85,7 +85,8 @@ impl AddressBookService {
             .find_where(AddressBookWhereClause {
                 ids: input.ids,
                 addresses: input.addresses,
-                address_chain: input.address_chain,
+                blockchain: input.blockchain,
+                labels: input.labels,
             });
 
         Ok(paginated_items(PaginatedItemsArgs {
@@ -108,11 +109,10 @@ impl AddressBookService {
         let new_entry = AddressBookMapper::from_create_input(input.to_owned(), *uuid.as_bytes())?;
         new_entry.validate()?;
 
-        if let Some(v) = self.address_book_repository.find_by_address(
-            new_entry.blockchain.clone(),
-            new_entry.standard.clone(),
-            new_entry.address.clone(),
-        ) {
+        if let Some(v) = self
+            .address_book_repository
+            .find_by_address(new_entry.blockchain.clone(), new_entry.address.clone())
+        {
             return Err(AddressBookError::DuplicateAddress {
                 id: Uuid::from_bytes(v.id).hyphenated().to_string(),
             })?;
@@ -169,8 +169,7 @@ mod tests {
         core::test_utils,
         models::{
             address_book_entry_test_utils::mock_address_book_entry, AddAddressBookEntryOperation,
-            AddAddressBookEntryOperationInput, Blockchain, BlockchainStandard, ChangeMetadata,
-            Metadata, MetadataItem,
+            AddAddressBookEntryOperationInput, Blockchain, ChangeMetadata, Metadata, MetadataItem,
         },
     };
     use station_api::MetadataDTO;
@@ -200,8 +199,8 @@ mod tests {
                 address_owner: "foo".to_string(),
                 address: "0x1234".to_string(),
                 blockchain: Blockchain::InternetComputer,
-                standard: BlockchainStandard::Native,
                 metadata: address_book_entry.metadata.clone().into(),
+                labels: vec![],
             },
         };
 
@@ -246,6 +245,7 @@ mod tests {
             change_metadata: Some(ChangeMetadata::ReplaceAllBy(
                 metadata.as_btreemap().to_owned(),
             )),
+            labels: None,
         };
         let result = ctx.service.edit_entry(operation).await;
         assert!(result.is_ok());
@@ -285,6 +285,7 @@ mod tests {
             change_metadata: Some(ChangeMetadata::OverrideSpecifiedBy(
                 diff_metadata_dto.as_btreemap().to_owned(),
             )),
+            labels: None,
         };
         let result = ctx.service.edit_entry(operation).await;
         assert!(result.is_ok());
@@ -301,6 +302,7 @@ mod tests {
             address_book_entry_id: address_book_entry.id,
             address_owner: None,
             change_metadata: Some(ChangeMetadata::RemoveKeys(remove_keys)),
+            labels: None,
         };
         let result = ctx.service.edit_entry(operation).await;
         assert!(result.is_ok());
@@ -328,25 +330,5 @@ mod tests {
         ctx.service
             .get_entry_by_id(&address_book_entry.id)
             .unwrap_err();
-    }
-
-    #[tokio::test]
-    async fn fail_create_entry_invalid_blockchain_standard() {
-        let ctx = setup();
-
-        let operation = AddAddressBookEntryOperation {
-            address_book_entry_id: None,
-            input: AddAddressBookEntryOperationInput {
-                address_owner: "foo".to_string(),
-                address: "0x1234".to_string(),
-                blockchain: Blockchain::InternetComputer,
-                standard: BlockchainStandard::ERC20,
-                metadata: vec![],
-            },
-        };
-
-        let result = ctx.service.create_entry(operation.input).await;
-
-        assert!(result.is_err());
     }
 }

@@ -1,6 +1,6 @@
 use crate::{
     core::utils::format_unique_string,
-    models::{Account, ExternalCanister, User, UserGroup},
+    models::{Account, AddressBookEntry, ExternalCanister, User, UserGroup},
 };
 use candid::Principal;
 use orbit_essentials::{storable, types::UUID};
@@ -8,12 +8,34 @@ use orbit_essentials::{storable, types::UUID};
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum UniqueIndexKey {
+    AccountName(String),
+    AddressBookBlockchainAddress(
+        String, // Blockchain
+        String, // Address
+    ),
     ExternalCanisterId(Principal),
     ExternalCanisterName(String),
-    UserName(String),
-    UserIdentity(Principal),
     UserGroupName(String),
-    AccountName(String),
+    UserIdentity(Principal),
+    UserName(String),
+}
+
+impl AddressBookEntry {
+    /// Converts the address book entry to it's unique index by address.
+    fn to_unique_index_by_address(&self) -> (UniqueIndexKey, UUID) {
+        (
+            UniqueIndexKey::AddressBookBlockchainAddress(
+                self.blockchain.to_string().to_lowercase(),
+                self.address.to_string(),
+            ),
+            self.id,
+        )
+    }
+
+    /// Extracts all unique indexes for the address book entry.
+    pub fn to_unique_indexes(&self) -> Vec<(UniqueIndexKey, UUID)> {
+        vec![self.to_unique_index_by_address()]
+    }
 }
 
 impl User {
@@ -103,8 +125,9 @@ impl Account {
 mod tests {
     use super::*;
     use crate::models::{
-        account_test_utils::mock_account, external_canister_test_utils::mock_external_canister,
-        user_group_test_utils::mock_user_group, user_test_utils::mock_user,
+        account_test_utils::mock_account, address_book_entry_test_utils::mock_address_book_entry,
+        external_canister_test_utils::mock_external_canister,
+        user_group_test_utils::mock_user_group, user_test_utils::mock_user, Blockchain,
     };
 
     #[test]
@@ -169,6 +192,24 @@ mod tests {
         assert_eq!(
             indexes[0].0,
             UniqueIndexKey::AccountName(format_unique_string("Test"))
+        );
+    }
+
+    #[test]
+    fn test_address_book_entry_unique_indexes() {
+        let mut address_book_entry = mock_address_book_entry();
+        address_book_entry.blockchain = Blockchain::InternetComputer;
+        address_book_entry.address = "Test".to_string();
+
+        let indexes = address_book_entry.to_unique_indexes();
+
+        assert_eq!(indexes.len(), 1);
+        assert_eq!(
+            indexes[0].0,
+            UniqueIndexKey::AddressBookBlockchainAddress(
+                Blockchain::InternetComputer.to_string(),
+                "Test".to_string()
+            )
         );
     }
 }

@@ -60,6 +60,7 @@ fn apply_migration() {
             MemoryId::new(10), // REQUEST_SCHEDULED_INDEX_MEMORY_ID
             MemoryId::new(15), // USER_GROUP_NAME_INDEX_MEMORY_ID
             MemoryId::new(18), // USER_STATUS_GROUP_INDEX_MEMORY_ID
+            MemoryId::new(20), // ADDRESS_BOOK_INDEX_MEMORY_ID
             MemoryId::new(21), // REQUEST_REQUESTER_INDEX_MEMORY_ID
             MemoryId::new(22), // REQUEST_CREATION_TIME_INDEX_MEMORY_ID
             MemoryId::new(23), // REQUEST_KEY_CREATION_TIME_INDEX_MEMORY_ID

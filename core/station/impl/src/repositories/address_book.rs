@@ -1,23 +1,21 @@
-use super::indexes::address_book_index::AddressBookIndexRepository;
-use super::indexes::address_book_standard_index::AddressBookStandardIndexRepository;
+use super::indexes::unique_index::UniqueIndexRepository;
 use crate::{
-    core::{metrics::ADDRESS_BOOK_METRICS, with_memory_manager, Memory, ADDRESS_BOOK_MEMORY_ID},
+    core::{
+        metrics::ADDRESS_BOOK_METRICS, utils::max_string_of_size, with_memory_manager, Memory,
+        ADDRESS_BOOK_MEMORY_ID,
+    },
     models::{
-        indexes::{
-            address_book_index::AddressBookIndexCriteria,
-            address_book_standard_index::AddressBookStandardIndexCriteria,
-        },
-        AddressBookEntry, AddressBookEntryId, AddressBookEntryKey, AddressChain, Blockchain,
-        BlockchainStandard,
+        indexes::unique_index::UniqueIndexKey, AddressBookEntry, AddressBookEntryId,
+        AddressBookEntryKey, Blockchain,
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    repository::{IndexRepository, IndexedRepository, Repository, StableDb},
+    repository::{IndexedRepository, Repository, StableDb},
     types::UUID,
 };
-use std::{cell::RefCell, sync::Arc};
+use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
 thread_local! {
   /// The memory reference to the AddressBookEntry repository.
@@ -36,8 +34,7 @@ lazy_static! {
 /// A repository that enables managing address book entries in stable memory.
 #[derive(Default, Debug)]
 pub struct AddressBookRepository {
-    index: AddressBookIndexRepository,
-    standard_index: AddressBookStandardIndexRepository,
+    unique_index: UniqueIndexRepository,
 }
 
 impl StableDb<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>
@@ -57,11 +54,18 @@ impl IndexedRepository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memo
     for AddressBookRepository
 {
     fn remove_entry_indexes(&self, value: &AddressBookEntry) {
-        self.index.remove(&value.to_index());
+        value.to_unique_indexes().iter().for_each(|(index, _)| {
+            self.unique_index.remove(index);
+        });
     }
 
     fn add_entry_indexes(&self, value: &AddressBookEntry) {
-        self.index.insert(value.to_index());
+        value
+            .to_unique_indexes()
+            .into_iter()
+            .for_each(|(index, entry_id)| {
+                self.unique_index.insert(index, entry_id);
+            });
     }
 }
 
@@ -112,51 +116,45 @@ impl Repository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>
 }
 
 impl AddressBookRepository {
+    /// Get the address book entry by it's unique key.
     pub fn find_by_address(
         &self,
         blockchain: Blockchain,
-        standard: BlockchainStandard,
         address: String,
     ) -> Option<AddressBookEntry> {
-        let ids = self.index.find_by_criteria(AddressBookIndexCriteria {
-            blockchain,
-            standard,
-            address,
-        });
-
-        ids.iter()
-            .find_map(|id| self.get(&AddressBookEntry::key(*id)))
-    }
-
-    pub fn exists(
-        &self,
-        blockchain: Blockchain,
-        standard: BlockchainStandard,
-        address: String,
-    ) -> bool {
-        !self
-            .index
-            .find_by_criteria(AddressBookIndexCriteria {
-                blockchain,
-                standard,
+        self.unique_index
+            .get(&UniqueIndexKey::AddressBookBlockchainAddress(
+                blockchain.to_string().to_lowercase(),
                 address,
-            })
-            .is_empty()
+            ))
+            .and_then(|id| self.get(&AddressBookEntry::key(id)))
     }
 
-    pub fn find_by_blockchain_standard(
-        &self,
-        blockchain: Blockchain,
-        standard: BlockchainStandard,
-    ) -> Vec<AddressBookEntry> {
-        let ids = self
-            .standard_index
-            .find_by_criteria(AddressBookStandardIndexCriteria {
-                blockchain,
-                standard,
-            });
+    /// Checks if an address book entry exists for the given blockchain and address.
+    pub fn exists(&self, blockchain: Blockchain, address: String) -> bool {
+        self.unique_index
+            .get(&UniqueIndexKey::AddressBookBlockchainAddress(
+                blockchain.to_string().to_lowercase(),
+                address,
+            ))
+            .is_some()
+    }
 
-        ids.iter()
+    /// List all address book entries of a given blockchain.
+    pub fn find_by_blockchain(&self, blockchain: Blockchain) -> Vec<AddressBookEntry> {
+        self.unique_index
+            .find_by_criteria(
+                Some(UniqueIndexKey::AddressBookBlockchainAddress(
+                    blockchain.to_string().to_lowercase(),
+                    String::new(),
+                )),
+                Some(UniqueIndexKey::AddressBookBlockchainAddress(
+                    blockchain.to_string().to_lowercase(),
+                    max_string_of_size(&(AddressBookEntry::ADDRESS_RANGE.1 as usize)),
+                )),
+                None,
+            )
+            .iter()
             .filter_map(|id| self.get(&AddressBookEntry::key(*id)))
             .collect::<Vec<_>>()
     }
@@ -168,10 +166,32 @@ impl AddressBookRepository {
     }
 
     pub fn find_where(&self, where_clause: AddressBookWhereClause) -> Vec<AddressBookEntry> {
-        let mut entries = match where_clause.address_chain {
-            Some(chain) => self.find_by_blockchain_standard(chain.blockchain, chain.standard),
+        let mut entries = match where_clause.blockchain {
+            Some(blockchain) => self.find_by_blockchain(blockchain),
             _ => self.list(),
         };
+
+        let where_labels = where_clause
+            .labels
+            .map(|labels| {
+                labels
+                    .into_iter()
+                    .map(|label| label.to_lowercase())
+                    .collect::<HashSet<_>>()
+            })
+            .unwrap_or_default();
+
+        if !where_labels.is_empty() {
+            entries.retain(|entry| {
+                let entry_labels = entry
+                    .labels
+                    .iter()
+                    .map(|label| label.to_lowercase())
+                    .collect::<HashSet<_>>();
+
+                entry_labels.intersection(&where_labels).count() == where_labels.len()
+            });
+        }
 
         if let Some(ids) = where_clause.ids {
             entries.retain(|entry| ids.contains(&entry.id));
@@ -189,7 +209,8 @@ impl AddressBookRepository {
 
 #[derive(Debug, Clone)]
 pub struct AddressBookWhereClause {
-    pub address_chain: Option<AddressChain>,
+    pub blockchain: Option<Blockchain>,
+    pub labels: Option<Vec<String>>,
     pub addresses: Option<Vec<String>>,
     pub ids: Option<Vec<UUID>>,
 }
@@ -214,24 +235,25 @@ mod tests {
     }
 
     #[test]
-    fn test_find_by_blockchain_standard() {
+    fn test_find_by_blockchain() {
         let repository = AddressBookRepository::default();
 
-        let address_book_entry_0 = address_book_entry_test_utils::mock_address_book_entry();
+        let mut address_book_entry_0 = address_book_entry_test_utils::mock_address_book_entry();
+        address_book_entry_0.blockchain = Blockchain::InternetComputer;
         repository.insert(address_book_entry_0.to_key(), address_book_entry_0.clone());
 
         let mut address_book_entry_1 = address_book_entry_test_utils::mock_address_book_entry();
+        address_book_entry_1.blockchain = Blockchain::InternetComputer;
         address_book_entry_1.address = "0x5678".to_string();
         address_book_entry_1.id = [42; 16];
         repository.insert(address_book_entry_1.to_key(), address_book_entry_1.clone());
 
         let mut address_book_entry_2 = address_book_entry_test_utils::mock_address_book_entry();
-        address_book_entry_2.standard = BlockchainStandard::ICRC1;
+        address_book_entry_2.blockchain = Blockchain::Ethereum;
         address_book_entry_2.id = [66; 16];
         repository.insert(address_book_entry_2.to_key(), address_book_entry_2.clone());
 
-        let result = repository
-            .find_by_blockchain_standard(Blockchain::InternetComputer, BlockchainStandard::Native);
+        let result = repository.find_by_blockchain(Blockchain::InternetComputer);
         assert!(result.contains(&address_book_entry_0));
         assert!(result.contains(&address_book_entry_1));
         assert!(!result.contains(&address_book_entry_2));

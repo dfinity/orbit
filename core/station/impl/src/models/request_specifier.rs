@@ -233,11 +233,9 @@ impl Match<RequestHasMetadata> for AddressBookMetadataMatcher {
         Ok(match request.operation.to_owned() {
             RequestOperation::Transfer(transfer) => {
                 if let Ok(account) = ACCOUNT_SERVICE.get_account(&transfer.input.from_account_id) {
-                    if let Some(address_book_entry) = ADDRESS_BOOK_REPOSITORY.find_by_address(
-                        account.blockchain,
-                        account.standard,
-                        transfer.input.to,
-                    ) {
+                    if let Some(address_book_entry) = ADDRESS_BOOK_REPOSITORY
+                        .find_by_address(account.blockchain, transfer.input.to)
+                    {
                         address_book_entry.metadata.contains(&metadata)
                     } else {
                         false

@@ -148,7 +148,7 @@ pub struct AddAddressBookEntryOperationInput {
     pub address_owner: String,
     pub address: String,
     pub blockchain: Blockchain,
-    pub standard: BlockchainStandard,
+    pub labels: Vec<String>,
     pub metadata: Vec<MetadataItem>,
 }
 
@@ -164,6 +164,7 @@ pub struct EditAddressBookEntryOperationInput {
     pub address_book_entry_id: AddressBookEntryId,
     pub address_owner: Option<String>,
     pub change_metadata: Option<ChangeMetadata>,
+    pub labels: Option<Vec<String>>,
 }
 
 #[storable]

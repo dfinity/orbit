@@ -586,6 +586,7 @@ mod tests {
                     address_book_entry_id: [0; 16],
                     address_owner: None,
                     change_metadata: None,
+                    labels: None,
                 },
             },
         ))

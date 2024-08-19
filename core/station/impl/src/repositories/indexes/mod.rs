@@ -1,5 +1,3 @@
-pub mod address_book_index;
-pub mod address_book_standard_index;
 pub mod notification_user_index;
 pub mod request_index;
 pub mod request_policy_resource_index;

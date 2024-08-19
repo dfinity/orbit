@@ -417,10 +417,10 @@ type AddAddressBookEntryOperationInput = record {
   address : text;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
-  // The blockchain standard of the address (e.g. `native`, `erc20`, etc.).
-  standard : text;
   // Metadata associated with the address book entry (e.g. `{"kyc": "true"}`).
   metadata : vec AddressBookMetadata;
+  // The labels associated with the address book entry (e.g. `["exchange", "kyc"]`).
+  labels : vec text;
 };
 
 type EditAddressBookEntryOperation = record {
@@ -445,6 +445,8 @@ type EditAddressBookEntryOperationInput = record {
   address_book_entry_id : UUID;
   // The new owner of the address.
   address_owner : opt text;
+  // The updated list of labels associated with the address book entry.
+  labels : opt vec text;
   // Instructions to update the address book entry's metadata.
   change_metadata : opt ChangeAddressBookMetadata;
 };
@@ -1565,11 +1567,10 @@ type AddressBookEntry = record {
   address : text;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
-  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
-  // with spaces replaced with underscores.
-  standard : text;
   // Metadata associated with the address book entry (e.g. `{"kyc": "true"}`).
   metadata : vec AddressBookMetadata;
+  // The list of labels associated with the address book entry (e.g. `["kyc", "approved"]`).
+  labels : vec text;
   // The time at which the address book entry was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : text;
 };
@@ -1599,14 +1600,10 @@ type ListAddressBookEntriesInput = record {
   ids : opt vec UUID;
   // The address to search for.
   addresses : opt vec text;
-  // The blockchain and standard to use for filtering the address book entries.
-  address_chain : opt record {
-    // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
-    blockchain : text;
-    // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
-    // with spaces replaced with underscores.
-    standard : text;
-  };
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : opt text;
+  // The labels to search for, if provided only address book entries with the given labels will be returned.
+  labels : opt vec text;
   // The pagination parameters.
   paginate : opt PaginationInput;
 };

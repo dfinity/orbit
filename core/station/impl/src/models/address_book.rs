@@ -1,4 +1,4 @@
-use super::{Blockchain, BlockchainStandard};
+use super::Blockchain;
 use crate::errors::AddressBookError;
 use crate::models::Metadata;
 use candid::{CandidType, Deserialize};
@@ -24,10 +24,11 @@ pub struct AddressBookEntry {
     pub address: String,
     /// The blockchain type (e.g. `icp`, `eth`, `btc`)
     pub blockchain: Blockchain,
-    /// The blockchain standard (e.g. `native`, `icrc1`, `erc20`, etc.)
-    pub standard: BlockchainStandard,
     /// The address' metadata.
     pub metadata: Metadata,
+    /// The labels associated with the address.
+    #[serde(default)]
+    pub labels: Vec<String>,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
 }
@@ -65,10 +66,42 @@ fn validate_address(address: &str) -> ModelValidatorResult<AddressBookError> {
     Ok(())
 }
 
+fn validate_labels(labels: &[String]) -> ModelValidatorResult<AddressBookError> {
+    for label in labels {
+        if label.is_empty() {
+            return Err(AddressBookError::ValidationError {
+                info: "Label entry cannot be empty".to_string(),
+            });
+        }
+
+        if label.len() > AddressBookEntry::MAX_LABEL_LENGTH {
+            return Err(AddressBookError::ValidationError {
+                info: format!(
+                    "Label entry cannot be longer than {} characters",
+                    AddressBookEntry::MAX_LABEL_LENGTH
+                ),
+            });
+        }
+    }
+
+    if labels.len() > AddressBookEntry::MAX_LABELS {
+        return Err(AddressBookError::ValidationError {
+            info: format!(
+                "Address book entry cannot have more than {} labels",
+                AddressBookEntry::MAX_LABELS
+            ),
+        });
+    }
+
+    Ok(())
+}
+
 impl ModelValidator<AddressBookError> for AddressBookEntry {
     fn validate(&self) -> ModelValidatorResult<AddressBookError> {
         validate_address_owner(&self.address_owner)?;
         validate_address(&self.address)?;
+        validate_labels(&self.labels)?;
+
         self.metadata.validate()?;
 
         Ok(())
@@ -78,6 +111,8 @@ impl ModelValidator<AddressBookError> for AddressBookEntry {
 impl AddressBookEntry {
     pub const ADDRESS_RANGE: (u16, u16) = (1, 255);
     pub const ADDRESS_OWNER_RANGE: (u16, u16) = (1, 255);
+    pub const MAX_LABELS: usize = 10;
+    pub const MAX_LABEL_LENGTH: usize = 150;
 
     /// Creates a new address_book_entry key from the given key components.
     pub fn key(id: AddressBookEntryId) -> AddressBookEntryKey {
@@ -94,16 +129,11 @@ impl AddressBookEntry {
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
-pub struct AddressChain {
-    pub blockchain: Blockchain,
-    pub standard: BlockchainStandard,
-}
-
-#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct ListAddressBookEntriesInput {
     pub ids: Option<Vec<UUID>>,
     pub addresses: Option<Vec<String>>,
-    pub address_chain: Option<AddressChain>,
+    pub blockchain: Option<Blockchain>,
+    pub labels: Option<Vec<String>>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -195,6 +225,25 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn fail_label_too_long() {
+        let mut address_book_entry = mock_address_book_entry();
+        address_book_entry.labels = vec!["a".repeat(AddressBookEntry::MAX_LABEL_LENGTH + 1)];
+
+        let result = address_book_entry.validate();
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            AddressBookError::ValidationError {
+                info: format!(
+                    "Label entry cannot be longer than {} characters",
+                    AddressBookEntry::MAX_LABEL_LENGTH
+                ),
+            }
+        );
+    }
 }
 
 #[cfg(test)]
@@ -209,8 +258,8 @@ pub mod address_book_entry_test_utils {
             id: *Uuid::new_v4().as_bytes(),
             address_owner: "foo".to_string(),
             address: "0x1234".to_string(),
+            labels: Vec::new(),
             blockchain: Blockchain::InternetComputer,
-            standard: BlockchainStandard::Native,
             metadata: Metadata::mock(),
             last_modification_timestamp: 0,
         }

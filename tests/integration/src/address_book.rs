@@ -5,9 +5,9 @@ use crate::TestEnv;
 use ic_ledger_types::AccountIdentifier;
 use pocket_ic::update_candid_as;
 use station_api::{
-    AddAccountOperationInput, AddAddressBookEntryOperationInput, AddressChainInput, AllowDTO,
-    ApiErrorDTO, ChangeMetadataDTO, EditAddressBookEntryOperationInput,
-    GetAddressBookEntryInputDTO, GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
+    AddAccountOperationInput, AddAddressBookEntryOperationInput, AllowDTO, ApiErrorDTO,
+    ChangeMetadataDTO, EditAddressBookEntryOperationInput, GetAddressBookEntryInputDTO,
+    GetAddressBookEntryResponseDTO, ListAddressBookEntriesInputDTO,
     ListAddressBookEntriesResponseDTO, MetadataDTO, RemoveAddressBookEntryOperationInput,
     RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO, RequestStatusDTO,
     TransferOperationInput,
@@ -25,7 +25,7 @@ fn address_book_entry_lifecycle() {
             address_owner: "John Doe".to_string(),
             address: "0x1234".to_string(),
             blockchain: "icp".to_string(),
-            standard: "native".to_string(),
+            labels: vec!["native".to_string()],
             metadata: vec![MetadataDTO {
                 key: "kyc".to_string(),
                 value: "false".to_string(),
@@ -47,7 +47,7 @@ fn address_book_entry_lifecycle() {
     assert_eq!(address_book_entry.address_owner, "John Doe".to_string());
     assert_eq!(address_book_entry.address, "0x1234".to_string());
     assert_eq!(address_book_entry.blockchain, "icp".to_string());
-    assert_eq!(address_book_entry.standard, "native".to_string());
+    assert_eq!(address_book_entry.labels, vec!["native".to_string()]);
     assert_eq!(
         address_book_entry.metadata,
         vec![MetadataDTO {
@@ -62,7 +62,7 @@ fn address_book_entry_lifecycle() {
             address_owner: "Max Mustermann".to_string(),
             address: "0x1234".to_string(),
             blockchain: "icp".to_string(),
-            standard: "native".to_string(),
+            labels: vec!["native".to_string()],
             metadata: vec![MetadataDTO {
                 key: "kyc".to_string(),
                 value: "true".to_string(),
@@ -82,7 +82,7 @@ fn address_book_entry_lifecycle() {
             address_owner: "Max Mustermann".to_string(),
             address: "0x5678".to_string(),
             blockchain: "icp".to_string(),
-            standard: "native".to_string(),
+            labels: vec!["native".to_string()],
             metadata: vec![MetadataDTO {
                 key: "kyc".to_string(),
                 value: "true".to_string(),
@@ -107,7 +107,7 @@ fn address_book_entry_lifecycle() {
     );
     assert_eq!(next_address_book_entry.address, "0x5678".to_string());
     assert_eq!(next_address_book_entry.blockchain, "icp".to_string());
-    assert_eq!(next_address_book_entry.standard, "native".to_string());
+    assert_eq!(next_address_book_entry.labels, vec!["native".to_string()]);
     assert_eq!(
         next_address_book_entry.metadata,
         vec![MetadataDTO {
@@ -118,10 +118,8 @@ fn address_book_entry_lifecycle() {
 
     // list address book entries
     let list_address_book_entries_args = ListAddressBookEntriesInputDTO {
-        address_chain: Some(AddressChainInput {
-            blockchain: "icp".to_string(),
-            standard: "native".to_string(),
-        }),
+        blockchain: Some("icp".to_string()),
+        labels: None,
         addresses: None,
         ids: None,
         paginate: None,
@@ -147,6 +145,7 @@ fn address_book_entry_lifecycle() {
         RequestOperationInput::EditAddressBookEntry(EditAddressBookEntryOperationInput {
             address_book_entry_id: address_book_entry.id.clone(),
             address_owner: None,
+            labels: None,
             change_metadata: Some(ChangeMetadataDTO::OverrideSpecifiedBy(vec![MetadataDTO {
                 key: "kyc".to_string(),
                 value: "true".to_string(),
@@ -192,10 +191,8 @@ fn address_book_entry_lifecycle() {
 
     // list address book entries and check that the address book entry for John Doe is indeed deleted
     let list_address_book_entries_args = ListAddressBookEntriesInputDTO {
-        address_chain: Some(AddressChainInput {
-            blockchain: "icp".to_string(),
-            standard: "native".to_string(),
-        }),
+        blockchain: Some("icp".to_string()),
+        labels: None,
         addresses: None,
         ids: None,
         paginate: None,
@@ -235,7 +232,7 @@ fn check_address_book_for_transfer() {
             address_owner: "John Doe".to_string(),
             address: john_doe_account.clone(),
             blockchain: "icp".to_string(),
-            standard: "native".to_string(),
+            labels: vec!["native".to_string()],
             metadata: vec![MetadataDTO {
                 key: "kyc".to_string(),
                 value: "false".to_string(),
@@ -335,6 +332,7 @@ fn check_address_book_for_transfer() {
         RequestOperationInput::EditAddressBookEntry(EditAddressBookEntryOperationInput {
             address_book_entry_id: address_book_entry.id.clone(),
             address_owner: None,
+            labels: None,
             change_metadata: Some(ChangeMetadataDTO::OverrideSpecifiedBy(vec![MetadataDTO {
                 key: "kyc".to_string(),
                 value: "true".to_string(),

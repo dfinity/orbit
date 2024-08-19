@@ -407,11 +407,8 @@ impl
                             });
                         }
                         Ok(account) => {
-                            let is_in_address_book = ADDRESS_BOOK_REPOSITORY.exists(
-                                account.blockchain,
-                                account.standard,
-                                transfer.input.to.clone(),
-                            );
+                            let is_in_address_book = ADDRESS_BOOK_REPOSITORY
+                                .exists(account.blockchain, transfer.input.to.clone());
 
                             if is_in_address_book {
                                 return Ok(RequestPolicyRuleResult {

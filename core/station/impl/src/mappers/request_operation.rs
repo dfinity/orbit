@@ -182,8 +182,8 @@ impl AddAddressBookEntryOperation {
                 address_owner: self.input.address_owner,
                 address: self.input.address,
                 blockchain: self.input.blockchain.to_string(),
-                standard: self.input.standard.to_string(),
                 metadata: self.input.metadata.into_iter().map(Into::into).collect(),
+                labels: self.input.labels,
             },
         }
     }
@@ -198,9 +198,8 @@ impl From<station_api::AddAddressBookEntryOperationInput> for AddAddressBookEntr
             address: input.address,
             blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
                 .expect("Invalid blockchain"),
-            standard: BlockchainMapper::to_blockchain_standard(input.standard)
-                .expect("Invalid blockchain standard"),
             metadata: input.metadata.into_iter().map(Into::into).collect(),
+            labels: input.labels,
         }
     }
 }
@@ -217,6 +216,7 @@ impl From<EditAddressBookEntryOperation> for EditAddressBookEntryOperationDTO {
                     .input
                     .change_metadata
                     .map(|change_metadata| change_metadata.into()),
+                labels: operation.input.labels,
             },
         }
     }
