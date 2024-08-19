@@ -23,6 +23,7 @@ mod add_user;
 mod add_user_group;
 mod call_canister;
 mod change_canister;
+mod change_external_canister;
 mod configure_external_canister;
 mod create_canister;
 mod edit_account;
@@ -46,8 +47,8 @@ use self::{
     add_user::{AddUserRequestCreate, AddUserRequestExecute},
     add_user_group::{AddUserGroupRequestCreate, AddUserGroupRequestExecute},
     call_canister::{CallExternalCanisterRequestCreate, CallExternalCanisterRequestExecute},
-    change_canister::{
-        ChangeCanisterRequestCreate, ChangeCanisterRequestExecute,
+    change_canister::{ChangeCanisterRequestCreate, ChangeCanisterRequestExecute},
+    change_external_canister::{
         ChangeExternalCanisterRequestCreate, ChangeExternalCanisterRequestExecute,
     },
     configure_external_canister::{
