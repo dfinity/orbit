@@ -1,8 +1,7 @@
+use crate::DfxOrbit;
 use candid::Nat;
 use clap::{Parser, Subcommand};
 use orbit_station_api::GetRequestResponse;
-
-use crate::DfxOrbit;
 
 #[derive(Debug, Clone, Parser)]
 pub struct VerifyAssetArgs {
@@ -14,6 +13,7 @@ pub struct VerifyAssetArgs {
 #[derive(Debug, Clone, Subcommand)]
 #[clap(version, about, long_about = None)]
 pub enum VerifyAssetActionArgs {
+    // TODO: Verify Request Permission
     /// Upload assets to an asset canister
     Upload(VerifyAssetUploadArgs),
 }
@@ -58,6 +58,7 @@ impl VerifyAssetUploadArgs {
 
         let evidence = asset_agent.compute_evidence(&paths).await?;
 
+        println!("Computed evidence: 0x{evidence}");
         DfxOrbit::check_evidence(request, canister_id, self.batch_id.clone(), evidence)?;
 
         Ok(())

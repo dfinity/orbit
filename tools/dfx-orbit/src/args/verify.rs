@@ -1,14 +1,13 @@
-pub mod asset;
+mod asset;
+mod canister;
 
+use crate::DfxOrbit;
 use asset::VerifyAssetArgs;
+use canister::VerifyCanisterArgs;
 use clap::{Parser, Subcommand};
 use orbit_station_api::GetRequestInput;
 
-use crate::DfxOrbit;
-
-/// Station management commands.
 #[derive(Debug, Clone, Parser)]
-#[clap(version, about, long_about = None)]
 pub struct VerifyArgs {
     /// The ID of the request to verify
     pub(crate) request_id: String,
@@ -23,6 +22,8 @@ pub struct VerifyArgs {
 pub enum VerifyArgsAction {
     /// Manage assets stored in an asset canister through Orbit
     Asset(VerifyAssetArgs),
+    /// Request canister operations through Orbit
+    Canister(VerifyCanisterArgs),
 }
 
 impl VerifyArgs {
@@ -34,11 +35,16 @@ impl VerifyArgs {
             })
             .await?;
 
+        // TODO: Don't allow non-pending requests to be verified, since they might no longer be
+        // verifiable after the verification
+
         match self.action {
+            // TODO: Implement canister verification
             VerifyArgsAction::Asset(args) => args.verify(dfx_orbit, &request).await?,
+            VerifyArgsAction::Canister(args) => args.verify(dfx_orbit, &request)?,
         }
 
-        // TODO:
+        // TODO: Implement then_approve
         // if args.then_approve {
         //     dfx_core::cli::ask_for_consent("Do you want to approve the request?")?;
         //     let args = SubmitRequestApprovalInput {

@@ -50,6 +50,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
         DfxOrbitSubcommands::Verify(verify_args) => {
             verify_args.verify(&dfx_orbit).await?;
 
+            println!("Request passes verification");
             Ok(())
         }
         DfxOrbitSubcommands::Review(review_args) => dfx_orbit.exec_review(review_args).await,

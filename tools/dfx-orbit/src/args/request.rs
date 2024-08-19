@@ -30,10 +30,10 @@ pub struct RequestArgs {
 #[derive(Debug, Clone, Subcommand)]
 #[clap(version, about, long_about = None)]
 pub enum RequestArgsActions {
-    /// Request canister operations through Orbit
-    Canister(RequestCanisterArgs),
     /// Manage assets stored in an asset canister through Orbit
     Asset(RequestAssetArgs),
+    /// Request canister operations through Orbit
+    Canister(RequestCanisterArgs),
     /// Request permissions
     #[clap(subcommand)]
     Permission(RequestPermissionArgs),

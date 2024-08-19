@@ -1,13 +1,16 @@
 //! CLI arguments for `dfx-orbit canister`.
 
 use crate::DfxOrbit;
-use anyhow::Context;
+use anyhow::{bail, Context};
 use clap::{Parser, Subcommand, ValueEnum};
 
 use orbit_station_api::{
     CallExternalCanisterOperationInput, CanisterInstallMode, CanisterMethodDTO,
-    ChangeExternalCanisterOperationInput, RequestOperationInput,
+    ChangeExternalCanisterOperationInput, GetRequestResponse, RequestOperationDTO,
+    RequestOperationInput,
 };
+use sha2::{Digest, Sha256};
+use slog::info;
 
 // TODO: Support Canister create + integration test
 // TODO: Support Canister install check
@@ -98,6 +101,50 @@ impl RequestCanisterCallArgs {
             },
         ))
     }
+
+    pub(crate) fn verify(
+        &self,
+        dfx_orbit: &DfxOrbit,
+        request: &GetRequestResponse,
+    ) -> anyhow::Result<()> {
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
+        let arg = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+        let arg_checksum = arg.map(|arg| hex::encode(Sha256::digest(arg)));
+
+        let RequestOperationDTO::CallExternalCanister(op) = &request.request.operation else {
+            bail!("This request is not an external canister call");
+        };
+        if op.execution_method.canister_id != canister_id {
+            bail!(
+                "Canister id of request \"{}\" does not match expected id",
+                op.execution_method.canister_id
+            )
+        }
+        if op.execution_method.method_name != self.method_name {
+            bail!(
+                "The request targets another method: \"{}\"",
+                op.execution_method.method_name
+            )
+        }
+        if op.arg_checksum != arg_checksum {
+            info!(
+                dfx_orbit.logger,
+                "Request argument: {}",
+                display_arg_checksum(&op.arg_checksum)
+            );
+            info!(
+                dfx_orbit.logger,
+                "Local argument:   {}",
+                display_arg_checksum(&arg_checksum)
+            );
+            bail!("Argument checksum does not match");
+        }
+        if op.execution_method_cycles != self.with_cycles {
+            bail!("Attached cycles do not match");
+        }
+
+        Ok(())
+    }
 }
 
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
@@ -113,7 +160,7 @@ pub struct RequestCanisterInstallArgs {
     wasm: String,
     /// The argument to pass to the canister.
     #[clap(short, long, conflicts_with = "arg_file")]
-    arg: Option<String>,
+    argument: Option<String>,
     /// The path to a file containing the argument to pass to the canister.
     #[clap(short = 'f', long, conflicts_with = "arg")]
     arg_file: Option<String>,
@@ -138,7 +185,7 @@ impl RequestCanisterInstallArgs {
                         .to_vec(),
                 )
             } else {
-                self.arg.map(|arg| arg.as_bytes().to_vec())
+                self.argument.map(|arg| arg.as_bytes().to_vec())
             };
             let mode = self.mode.into();
             ChangeExternalCanisterOperationInput {
@@ -192,4 +239,10 @@ fn candid_from_string_or_file(
                 .to_bytes()
         })
         .transpose()?)
+}
+
+fn display_arg_checksum(arg: &Option<String>) -> String {
+    arg.as_ref()
+        .map(|s| format!("0x{}", s))
+        .unwrap_or(String::from("No argument"))
 }
