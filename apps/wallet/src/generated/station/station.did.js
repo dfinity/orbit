@@ -390,12 +390,13 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Opt(IDL.Text),
     'identities' : IDL.Opt(IDL.Vec(IDL.Principal)),
   });
-  const CycleObtainStrategy = IDL.Variant({
+  const CycleObtainStrategyInput = IDL.Variant({
+    'Disabled' : IDL.Null,
     'MintFromNativeToken' : IDL.Record({ 'account_id' : UUID }),
   });
   const ManageSystemInfoOperationInput = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
-    'cycle_obtain_strategy' : IDL.Opt(CycleObtainStrategy),
+    'cycle_obtain_strategy' : IDL.Opt(CycleObtainStrategyInput),
   });
   const TransferMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const NetworkId = IDL.Text;
@@ -575,6 +576,7 @@ export const idlFactory = ({ IDL }) => {
     'symbol' : AssetSymbol,
   });
   const TransferOperation = IDL.Record({
+    'fee' : IDL.Opt(IDL.Nat),
     'network' : Network,
     'transfer_id' : IDL.Opt(UUID),
     'from_account' : IDL.Opt(Account),
@@ -1253,6 +1255,13 @@ export const idlFactory = ({ IDL }) => {
     'user_group_name' : IDL.Opt(IDL.Text),
     'committee' : DisasterRecoveryCommittee,
   });
+  const CycleObtainStrategy = IDL.Variant({
+    'Disabled' : IDL.Null,
+    'MintFromNativeToken' : IDL.Record({
+      'account_id' : UUID,
+      'account_name' : IDL.Opt(IDL.Text),
+    }),
+  });
   const SystemInfo = IDL.Record({
     'disaster_recovery' : IDL.Opt(DisasterRecovery),
     'name' : IDL.Text,
@@ -1261,7 +1270,7 @@ export const idlFactory = ({ IDL }) => {
     'version' : IDL.Text,
     'cycles' : IDL.Nat64,
     'upgrader_id' : IDL.Principal,
-    'cycle_obtain_strategy' : IDL.Opt(CycleObtainStrategy),
+    'cycle_obtain_strategy' : CycleObtainStrategy,
   });
   const SystemInfoResult = IDL.Variant({
     'Ok' : IDL.Record({ 'system' : SystemInfo }),

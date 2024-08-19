@@ -208,9 +208,11 @@ export default {
       change_target: 'Alvo da atualização',
       wasm_checksum: 'Checksum do módulo WASM',
       from_account: 'De conta',
+      from_account_address: 'De endereço',
       to: 'Para',
       amount: 'Quantidade',
       fee: 'Taxa',
+      comment: 'Comentário',
     },
     types: {
       addusergroup: {
@@ -411,6 +413,7 @@ export default {
     overriden: 'Substituído',
     id: 'ID',
     any: 'Qualquer',
+    comment: 'Comentário',
     comment_optional: 'Comentário (opcional)',
     everyone: 'Todos',
     action: 'Ação',
@@ -536,6 +539,7 @@ export default {
     skip: 'Saltar',
     version: 'Versão',
     continue: 'Continuar',
+    cycle_obtain_strategy: 'Método de recarga da carteira',
   },
   forms: {
     create: 'Criar',
@@ -579,13 +583,17 @@ export default {
       btn_new_transfer: 'Nova transferência',
       btn_upload_csv: 'Carregar CSV',
       error_fetching_account: 'Erro ao carregar as conta, por favor, tente novamente.',
+      cycle_obtain_account:
+        'Esta conta é usada para recarregar o saldo de ciclos da carteira Orbit.',
     },
     account: {
       not_found: 'Conta não encontrada',
       not_found_description: 'A conta que está a tentar aceder não existe.',
       csv_transfer_subtitle: 'Carregar um ficheiro CSV para transferir fundos para várias contas.',
-      csv_transfer_file_format_hint: 'O ficheiro CSV deve conter as colunas "{to}" e "{amount}".',
+      csv_transfer_file_format_hint:
+        'O ficheiro CSV deve conter as colunas "{to}" e "{amount}", e opcionalmente "{comment}".',
       csv_transfer_file_column_to: 'Para',
+      csv_transfer_file_column_comment: 'Comentário',
       csv_transfer_file_column_amount: 'Quantidade',
       csv_transfer_file_rows_title: 'Transferências para criar: {count}',
       csv_ignored_transfers_hint: 'Transferências com erros serão ignoradas.',
@@ -605,6 +613,8 @@ export default {
     },
     administration: {
       title: 'Administração',
+      cycle_obtain_strategy_disabled: 'AVISO: Recarga de saldo de ciclos da carteira desativada.',
+      cycle_obtain_strategy_mint_from_native_token: 'Recarregar a partir da conta de ICP',
     },
     user_groups: {
       title: 'Grupos de usuários',
@@ -794,5 +804,9 @@ export default {
       managesysteminfo: 'Gerir informações do sistema',
       changeexternalcanister: 'Alterar canister gerenciado',
     },
+  },
+  cycle_obtain_strategies: {
+    disabled: 'Desativado',
+    mintfromnativetoken: 'Recarregar a partir da conta de ICP',
   },
 };

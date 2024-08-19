@@ -357,6 +357,8 @@ export const mapListRequestsOperationTypeGroupToCsvHeaders = (
     headers.to = 'To';
     headers.amount = 'Amount';
     headers.fee = 'Fee';
+    headers.comment = 'Comment';
+    headers.from_account_address = 'From Account Address';
   }
 
   return headers;
@@ -480,14 +482,17 @@ const mapRequestToTransferCsvRow = (request: Request): CsvRow => {
 
     return {
       from_account: account.name,
+      from_account_address: account.address,
       to: request.operation.Transfer.input.to,
       amount:
         formatBalance(request.operation.Transfer.input.amount, account.decimals) +
         ' ' +
         account.symbol,
-      fee: request.operation.Transfer.input.fee[0]
-        ? formatBalance(request.operation.Transfer.input.fee[0], account.decimals)
+      fee: request.operation.Transfer.fee[0]
+        ? formatBalance(request.operation.Transfer.fee[0], account.decimals) + ' ' + account.symbol
         : '',
+      // comment: request.summary[0] ?? '',
+      comment: request.summary[0] ?? '',
     };
   }
 

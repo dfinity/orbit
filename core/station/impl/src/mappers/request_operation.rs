@@ -7,8 +7,8 @@ use crate::{
             ExternalCanisterResourceAction, PermissionResourceAction, Resource, ResourceAction,
             ResourceId, SystemResourceAction, UserResourceAction,
         },
-        Account, AddAccountOperation, AddAccountOperationInput, AddAddressBookEntryOperation,
-        AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
+        Account, AccountKey, AddAccountOperation, AddAccountOperationInput,
+        AddAddressBookEntryOperation, AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
         AddRequestPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
         CallExternalCanisterOperation, CallExternalCanisterOperationInput, CanisterInstallMode,
         CanisterInstallModeArgs, CanisterMethod, CanisterReinstallModeArgs,
@@ -32,7 +32,8 @@ use crate::{
         TransferOperation, User,
     },
     repositories::{
-        AccountRepository, AddressBookRepository, UserRepository, USER_GROUP_REPOSITORY,
+        AccountRepository, AddressBookRepository, UserRepository, ACCOUNT_REPOSITORY,
+        USER_GROUP_REPOSITORY,
     },
 };
 use orbit_essentials::repository::Repository;
@@ -70,6 +71,7 @@ impl TransferOperation {
             transfer_id: self
                 .transfer_id
                 .map(|id| Uuid::from_bytes(id).hyphenated().to_string()),
+            fee: self.fee,
         }
     }
 }
@@ -1021,7 +1023,8 @@ impl From<RemoveRequestPolicyOperation> for station_api::RemoveRequestPolicyOper
 impl From<station_api::CycleObtainStrategyDTO> for CycleObtainStrategy {
     fn from(value: station_api::CycleObtainStrategyDTO) -> Self {
         match value {
-            station_api::CycleObtainStrategyDTO::MintFromNativeToken { account_id } => {
+            station_api::CycleObtainStrategyDTO::Disabled => CycleObtainStrategy::Disabled,
+            station_api::CycleObtainStrategyDTO::MintFromNativeToken { account_id, .. } => {
                 CycleObtainStrategy::MintFromNativeToken {
                     account_id: *HelperMapper::to_uuid(account_id)
                         .expect("Invalid account id")
@@ -1035,8 +1038,40 @@ impl From<station_api::CycleObtainStrategyDTO> for CycleObtainStrategy {
 impl From<CycleObtainStrategy> for station_api::CycleObtainStrategyDTO {
     fn from(value: CycleObtainStrategy) -> Self {
         match value {
+            CycleObtainStrategy::Disabled => station_api::CycleObtainStrategyDTO::Disabled,
             CycleObtainStrategy::MintFromNativeToken { account_id } => {
                 station_api::CycleObtainStrategyDTO::MintFromNativeToken {
+                    account_name: ACCOUNT_REPOSITORY
+                        .get(&AccountKey { id: account_id })
+                        .map(|a| a.name),
+                    account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
+                }
+            }
+        }
+    }
+}
+
+impl From<station_api::CycleObtainStrategyInput> for CycleObtainStrategy {
+    fn from(value: station_api::CycleObtainStrategyInput) -> Self {
+        match value {
+            station_api::CycleObtainStrategyInput::Disabled => CycleObtainStrategy::Disabled,
+            station_api::CycleObtainStrategyInput::MintFromNativeToken { account_id, .. } => {
+                CycleObtainStrategy::MintFromNativeToken {
+                    account_id: *HelperMapper::to_uuid(account_id)
+                        .expect("Invalid account id")
+                        .as_bytes(),
+                }
+            }
+        }
+    }
+}
+
+impl From<CycleObtainStrategy> for station_api::CycleObtainStrategyInput {
+    fn from(value: CycleObtainStrategy) -> Self {
+        match value {
+            CycleObtainStrategy::Disabled => station_api::CycleObtainStrategyInput::Disabled,
+            CycleObtainStrategy::MintFromNativeToken { account_id } => {
+                station_api::CycleObtainStrategyInput::MintFromNativeToken {
                     account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
                 }
             }

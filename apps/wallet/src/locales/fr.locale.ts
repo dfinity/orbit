@@ -197,9 +197,11 @@ export default {
       change_target: 'Cible',
       wasm_checksum: 'Checksum du Wasm',
       from_account: 'Du Compte',
+      from_account_address: 'Adresse du Compte',
       to: "A l'Adresse",
       amount: 'Montant',
       fee: 'Frais',
+      comment: 'Commentaire',
     },
     download: {
       user_group: "Groupes d'Usagers",
@@ -414,6 +416,7 @@ export default {
     summary: 'Sommaire',
     metadata: 'Metadata',
     wasm: 'Wasm',
+    comment: 'Commentaire',
     comment_optional: 'Commentaire (optionnel)',
     arg: 'Paramètre',
     target: 'Cible',
@@ -539,6 +542,7 @@ export default {
     skip: 'Sauter',
     version: 'Version',
     continue: 'Continuer',
+    cycle_obtain_strategy: 'Méthode de recharge du portefeuille',
   },
   forms: {
     create: 'Créer',
@@ -582,6 +586,8 @@ export default {
       btn_new_transfer: 'Nouveau Transfert',
       btn_upload_csv: 'Uploader un CSV',
       error_fetching_account: 'Erreur lors du chargement du compte, veuillez essayer de nouveau.',
+      cycle_obtain_account:
+        'Ce compte est utilisé pour recharger le solde de cycles de la station Orbit.',
     },
     account: {
       not_found: 'Pas de compte trouvé',
@@ -589,8 +595,9 @@ export default {
       csv_transfer_subtitle:
         "Uploader un fichier CSV pour créer plusieurs demandes de transfert d'un coup.",
       csv_transfer_file_format_hint:
-        'Le fichier CSV doit contenir les colones "{to}" et "{amount}".',
+        'Le fichier CSV doit contenir les colones "{to}" et "{amount}", et optionnellement "{comment}".',
       csv_transfer_file_column_to: 'de',
+      csv_transfer_file_column_comment: 'commentaire',
       csv_transfer_file_column_amount: 'montant',
       csv_transfer_file_rows_title: 'Transfers to be created: {count}',
       csv_ignored_transfers_hint: 'Transfers with errors will be ignored.',
@@ -610,6 +617,8 @@ export default {
     },
     administration: {
       title: 'Administration',
+      cycle_obtain_strategy_disabled: 'Stratégie de recharge des cycles non définie',
+      cycle_obtain_strategy_mint_from_native_token: 'Mint depuis le compte ICP',
     },
     users: {
       title: 'Usagers',
@@ -798,5 +807,9 @@ export default {
       managesysteminfo: 'Gérer les informations système',
       changeexternalcanister: 'Modifier un canister géré',
     },
+  },
+  cycle_obtain_strategies: {
+    disabled: 'Désactivé',
+    mintfromnativetoken: 'Mint depuis le compte ICP',
   },
 };

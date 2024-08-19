@@ -99,6 +99,10 @@ impl SystemService {
             system_info.set_name(name.clone());
         }
 
+        if let Some(strategy) = input.cycle_obtain_strategy {
+            system_info.set_cycle_obtain_strategy(strategy);
+        }
+
         write_system_info(system_info);
     }
 
@@ -113,9 +117,13 @@ impl SystemService {
         });
     }
 
-    pub fn get_obtain_cycle_config(&self, strategy: &CycleObtainStrategy) -> ObtainCyclesOptions {
+    pub fn get_obtain_cycle_config(
+        &self,
+        strategy: &CycleObtainStrategy,
+    ) -> Option<ObtainCyclesOptions> {
         match strategy {
-            CycleObtainStrategy::MintFromNativeToken { account_id } => ObtainCyclesOptions {
+            CycleObtainStrategy::Disabled => None,
+            CycleObtainStrategy::MintFromNativeToken { account_id } => Some(ObtainCyclesOptions {
                 obtain_cycles: Arc::new(MintCycles {
                     ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
                     cmc: Arc::new(IcCyclesMintingCanister::new(
@@ -126,7 +134,7 @@ impl SystemService {
                     ),
                 }),
                 top_up_self: true,
-            },
+            }),
         }
     }
     #[cfg(target_arch = "wasm32")]
@@ -172,7 +180,7 @@ impl SystemService {
 
             install_canister_handlers::monitor_upgrader_cycles(
                 *system_info.get_upgrader_canister_id(),
-                system_info.get_cycle_obtain_strategy().copied(),
+                *system_info.get_cycle_obtain_strategy(),
             );
 
             // initializes the job timers after the canister is fully initialized
@@ -616,7 +624,7 @@ mod install_canister_handlers {
     /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.
     pub fn monitor_upgrader_cycles(
         upgrader_id: Principal,
-        cycle_obtain_strategy: Option<CycleObtainStrategy>,
+        cycle_obtain_strategy: CycleObtainStrategy,
     ) {
         print(format!(
             "Starting fund manager to monitor self {} and upgrader canister {} cycles",
@@ -638,10 +646,9 @@ mod install_canister_handlers {
                         .with_fallback_fund_cycles(250_000_000_000),
                 ));
 
-            if let Some(strategy) = cycle_obtain_strategy {
-                fund_manager_options = fund_manager_options
-                    .with_obtain_cycles_options(SYSTEM_SERVICE.get_obtain_cycle_config(&strategy));
-            }
+            fund_manager_options = fund_manager_options.with_obtain_cycles_options(
+                SYSTEM_SERVICE.get_obtain_cycle_config(&cycle_obtain_strategy),
+            );
 
             fund_manager.with_options(fund_manager_options);
 

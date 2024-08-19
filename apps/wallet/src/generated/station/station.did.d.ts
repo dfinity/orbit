@@ -260,9 +260,15 @@ export type CreateRequestResult = {
     }
   } |
   { 'Err' : Error };
-export type CycleObtainStrategy = {
-    'MintFromNativeToken' : { 'account_id' : UUID }
+export type CycleObtainStrategy = { 'Disabled' : null } |
+  {
+    'MintFromNativeToken' : {
+      'account_id' : UUID,
+      'account_name' : [] | [string],
+    }
   };
+export type CycleObtainStrategyInput = { 'Disabled' : null } |
+  { 'MintFromNativeToken' : { 'account_id' : UUID } };
 export interface DefiniteCanisterSettings {
   'freezing_threshold' : bigint,
   'controllers' : Array<Principal>,
@@ -734,7 +740,7 @@ export interface ManageSystemInfoOperation {
 }
 export interface ManageSystemInfoOperationInput {
   'name' : [] | [string],
-  'cycle_obtain_strategy' : [] | [CycleObtainStrategy],
+  'cycle_obtain_strategy' : [] | [CycleObtainStrategyInput],
 }
 export type MarkNotificationReadResult = { 'Ok' : null } |
   { 'Err' : Error };
@@ -1038,7 +1044,7 @@ export interface SystemInfo {
   'version' : string,
   'cycles' : bigint,
   'upgrader_id' : Principal,
-  'cycle_obtain_strategy' : [] | [CycleObtainStrategy],
+  'cycle_obtain_strategy' : CycleObtainStrategy,
 }
 export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
   { 'Err' : Error };
@@ -1080,6 +1086,7 @@ export interface TransferListItem {
 }
 export interface TransferMetadata { 'key' : string, 'value' : string }
 export interface TransferOperation {
+  'fee' : [] | [bigint],
   'network' : Network,
   'transfer_id' : [] | [UUID],
   'from_account' : [] | [Account],
