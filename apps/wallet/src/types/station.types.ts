@@ -131,7 +131,7 @@ export interface ListAddressBookEntriesArgs {
   offset?: number;
   addresses?: string[];
   blockchain?: string;
-  standard?: string;
+  labels?: [];
   ids?: UUID[];
 }
 

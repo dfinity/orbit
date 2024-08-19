@@ -359,6 +359,7 @@ export const idlFactory = ({ IDL }) => {
     'ReplaceAllBy' : IDL.Vec(AddressBookMetadata),
   });
   const EditAddressBookEntryOperationInput = IDL.Record({
+    'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'change_metadata' : IDL.Opt(ChangeAddressBookMetadata),
     'address_book_entry_id' : UUID,
     'address_owner' : IDL.Opt(IDL.Text),
@@ -422,10 +423,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const AddAddressBookEntryOperationInput = IDL.Record({
     'metadata' : IDL.Vec(AddressBookMetadata),
+    'labels' : IDL.Vec(IDL.Text),
     'blockchain' : IDL.Text,
     'address' : IDL.Text,
     'address_owner' : IDL.Text,
-    'standard' : IDL.Text,
   });
   const AddRequestPolicyOperationInput = IDL.Record({
     'rule' : RequestPolicyRule,
@@ -585,11 +586,11 @@ export const idlFactory = ({ IDL }) => {
   const AddressBookEntry = IDL.Record({
     'id' : UUID,
     'metadata' : IDL.Vec(AddressBookMetadata),
+    'labels' : IDL.Vec(IDL.Text),
     'blockchain' : IDL.Text,
     'address' : IDL.Text,
     'last_modification_timestamp' : IDL.Text,
     'address_owner' : IDL.Text,
-    'standard' : IDL.Text,
   });
   const AddAddressBookEntryOperation = IDL.Record({
     'address_book_entry' : IDL.Opt(AddressBookEntry),
@@ -1001,11 +1002,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const ListAddressBookEntriesInput = IDL.Record({
     'ids' : IDL.Opt(IDL.Vec(UUID)),
+    'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'blockchain' : IDL.Opt(IDL.Text),
     'addresses' : IDL.Opt(IDL.Vec(IDL.Text)),
     'paginate' : IDL.Opt(PaginationInput),
-    'address_chain' : IDL.Opt(
-      IDL.Record({ 'blockchain' : IDL.Text, 'standard' : IDL.Text })
-    ),
   });
   const ListAddressBookEntriesResult = IDL.Variant({
     'Ok' : IDL.Record({

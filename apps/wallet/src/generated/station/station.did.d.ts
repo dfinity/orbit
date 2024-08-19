@@ -59,10 +59,10 @@ export interface AddAddressBookEntryOperation {
 }
 export interface AddAddressBookEntryOperationInput {
   'metadata' : Array<AddressBookMetadata>,
+  'labels' : Array<string>,
   'blockchain' : string,
   'address' : string,
   'address_owner' : string,
-  'standard' : string,
 }
 export interface AddRequestPolicyOperation {
   'input' : AddRequestPolicyOperationInput,
@@ -90,11 +90,11 @@ export interface AddUserOperationInput {
 export interface AddressBookEntry {
   'id' : UUID,
   'metadata' : Array<AddressBookMetadata>,
+  'labels' : Array<string>,
   'blockchain' : string,
   'address' : string,
   'last_modification_timestamp' : string,
   'address_owner' : string,
-  'standard' : string,
 }
 export interface AddressBookEntryCallerPrivileges {
   'id' : UUID,
@@ -300,6 +300,7 @@ export interface EditAddressBookEntryOperation {
   'input' : EditAddressBookEntryOperationInput,
 }
 export interface EditAddressBookEntryOperationInput {
+  'labels' : [] | [Array<string>],
   'change_metadata' : [] | [ChangeAddressBookMetadata],
   'address_book_entry_id' : UUID,
   'address_owner' : [] | [string],
@@ -584,9 +585,10 @@ export type ListAccountsResult = {
   { 'Err' : Error };
 export interface ListAddressBookEntriesInput {
   'ids' : [] | [Array<UUID>],
+  'labels' : [] | [Array<string>],
+  'blockchain' : [] | [string],
   'addresses' : [] | [Array<string>],
   'paginate' : [] | [PaginationInput],
-  'address_chain' : [] | [{ 'blockchain' : string, 'standard' : string }],
 }
 export type ListAddressBookEntriesResult = {
     'Ok' : {
