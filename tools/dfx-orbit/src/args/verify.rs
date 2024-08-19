@@ -26,7 +26,7 @@ pub enum VerifyArgsAction {
 }
 
 impl VerifyArgs {
-    async fn verify(self, dfx_orbit: &DfxOrbit) -> anyhow::Result<()> {
+    pub(crate) async fn verify(self, dfx_orbit: &DfxOrbit) -> anyhow::Result<()> {
         let request = dfx_orbit
             .station
             .review_id(GetRequestInput {
@@ -35,7 +35,7 @@ impl VerifyArgs {
             .await?;
 
         match self.action {
-            VerifyArgsAction::Asset(args) => args.verify(&dfx_orbit, &request).await?,
+            VerifyArgsAction::Asset(args) => args.verify(dfx_orbit, &request).await?,
         }
 
         Ok(())

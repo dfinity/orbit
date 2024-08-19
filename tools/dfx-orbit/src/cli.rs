@@ -47,12 +47,17 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
 
             Ok(())
         }
+        DfxOrbitSubcommands::Verify(verify_args) => {
+            verify_args.verify(&dfx_orbit).await?;
+
+            Ok(())
+        }
         DfxOrbitSubcommands::Review(review_args) => dfx_orbit.exec_review(review_args).await,
         DfxOrbitSubcommands::Asset(asset_args) => {
             dfx_orbit.exec_asset(asset_args).await?;
             Ok(())
         }
-        _ => unreachable!(),
+        DfxOrbitSubcommands::Station(_) => unreachable!(),
     }
 }
 

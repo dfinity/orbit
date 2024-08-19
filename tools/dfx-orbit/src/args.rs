@@ -10,6 +10,7 @@ use clap::{Parser, Subcommand};
 use request::RequestArgs;
 use review::ReviewArgs;
 use station::StationArgs;
+use verify::VerifyArgs;
 
 /// Manages Orbit on the Internet Computer.
 // TODO: Better version information
@@ -42,6 +43,8 @@ pub enum DfxOrbitSubcommands {
     Station(StationArgs),
     /// Make requests to Orbit
     Request(RequestArgs),
+    /// Verify requests
+    Verify(VerifyArgs),
     /// View and decide on requests.
     Review(ReviewArgs),
     /// Manage assets stored in an asset canister through Orbit
