@@ -113,7 +113,7 @@ fn assets_upload() {
 
         // Check whether the request passes the asset check
         dfx_orbit
-            .check_evidence(
+            .check_asset_upload_request(
                 asset_canister,
                 response.request.id,
                 batch_id,

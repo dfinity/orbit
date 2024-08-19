@@ -107,7 +107,7 @@ impl DfxOrbit {
         let asset_agent = self.asset_agent(canister_id)?;
 
         let evidence = asset_agent.compute_evidence(&paths).await?;
-        self.check_evidence(
+        self.check_asset_upload_request(
             canister_id,
             args.request_id.clone(),
             args.batch_id,
