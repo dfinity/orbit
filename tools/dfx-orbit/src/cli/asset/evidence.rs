@@ -3,35 +3,13 @@ use crate::DfxOrbit;
 use anyhow::bail;
 use candid::{Nat, Principal};
 use ic_certified_assets::types::CommitProposedBatchArguments;
-use orbit_station_api::{
-    CanisterMethodDTO, GetRequestInput, GetRequestResponse, RequestOperationDTO,
-};
+use orbit_station_api::{CanisterMethodDTO, GetRequestResponse, RequestOperationDTO};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use std::path::Path;
 
 impl DfxOrbit {
-    /// Check that the locally computed evidence will lead to the correcst sha256 checksum
-    /// of the args of the request
-    pub async fn check_asset_upload_request(
-        &self,
-        canister_id: Principal,
-        request_id: String,
-        batch_id: Nat,
-        evidence: String,
-    ) -> anyhow::Result<()> {
-        let request = self
-            .station
-            .review_id(GetRequestInput {
-                request_id: request_id.clone(),
-            })
-            .await?;
-
-        Self::check_evidence(&request, canister_id, batch_id, evidence)?;
-        Ok(())
-    }
-
-    pub(crate) fn check_evidence(
+    pub fn check_evidence(
         request: &GetRequestResponse,
         canister_id: Principal,
         batch_id: Nat,

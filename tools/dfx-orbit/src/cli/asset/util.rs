@@ -4,35 +4,12 @@ use candid::Principal;
 use dfx_core::config::model::dfinity::CanisterTypeProperties;
 use ic_certified_assets::types::{GrantPermissionArguments, Permission};
 use orbit_station_api::{
-    CallExternalCanisterOperationInput, CanisterMethodDTO, CreateRequestInput,
-    CreateRequestResponse, RequestOperationInput,
+    CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput,
 };
 use std::path::{Path, PathBuf};
 
 impl DfxOrbit {
-    /// Request from the station to grant the `Prepare` permission for the asset canister
-    pub async fn request_prepare_permission(
-        &self,
-        canister_id: Principal,
-        title: Option<String>,
-        summary: Option<String>,
-    ) -> anyhow::Result<CreateRequestResponse> {
-        let me = self.own_principal()?;
-
-        let response = self
-            .station
-            .request(CreateRequestInput {
-                operation: Self::grant_permission_request(canister_id, me)?,
-                title,
-                summary,
-                execution_plan: None,
-            })
-            .await?;
-
-        Ok(response)
-    }
-
-    pub(crate) fn grant_permission_request(
+    pub fn grant_permission_request(
         asset_canister: Principal,
         to_principal: Principal,
     ) -> anyhow::Result<RequestOperationInput> {

@@ -180,7 +180,7 @@ If not, please transfer the control of the canister to the orbit station.
 Note: Uploaded assets are not published. They are only prepared for release.
 
 ```
-dfx-orbit asset request-prepare-permission frontend
+dfx-orbit request asset prepare-permission frontend
 ```
 
 In case you want to verify, whether you have the `Prepare` permission on the asset canister,
@@ -202,7 +202,7 @@ dfx identity get-principal
 A developer may upload one or more directories of HTTP assets with:
 
 ```
-dfx-orbit asset upload CANISTER_NAME SOME_DIR/ OTHER_DIR/
+dfx-orbit request asset upload CANISTER_NAME SOME_DIR/ OTHER_DIR/
 ```
 
 This will upload the assets to the asset canister and then request the orbit station to publish
@@ -213,11 +213,8 @@ the assets.
 After the request has been made, the reviewers can locally verify the request:
 
 ```
-dfx-orbit asset check --then-approve CANISTER REQUEST_ID BATCH_ID SOME_DIR/ OTHER_DIR/
+dfx-orbit verify asset upload CANISTER REQUEST_ID BATCH_ID SOME_DIR/ OTHER_DIR/
 ```
-
-The exact command is printed in the output of `dfx-orbit asset upload` and must be distributed
-from the proposer to the verifiers.
 
 > The verifiers needs to have the same set of data as was used in the request.
 > How the verifier accomplishes this is outside the scope of this document.

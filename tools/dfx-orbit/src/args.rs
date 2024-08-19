@@ -1,11 +1,9 @@
 //! Command line interface for `dfx-orbit`.
-pub mod asset;
 pub mod request;
 pub mod review;
 pub mod station;
 pub mod verify;
 
-use asset::AssetArgs;
 use clap::{Parser, Subcommand};
 use request::RequestArgs;
 use review::ReviewArgs;
@@ -47,8 +45,6 @@ pub enum DfxOrbitSubcommands {
     Verify(VerifyArgs),
     /// View and decide on requests.
     Review(ReviewArgs),
-    /// Manage assets stored in an asset canister through Orbit
-    Asset(AssetArgs),
     /// Gets the caller's profile on an Orbit station.
     Me,
 }

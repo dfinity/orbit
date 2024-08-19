@@ -32,7 +32,7 @@ pub struct RequestArgs {
 pub enum RequestArgsActions {
     /// Request canister operations through Orbit
     Canister(RequestCanisterArgs),
-    /// Request asset operations through Orbit
+    /// Manage assets stored in an asset canister through Orbit
     Asset(RequestAssetArgs),
     /// Request permissions
     #[clap(subcommand)]

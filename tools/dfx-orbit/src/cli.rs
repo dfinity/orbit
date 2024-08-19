@@ -53,10 +53,6 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             Ok(())
         }
         DfxOrbitSubcommands::Review(review_args) => dfx_orbit.exec_review(review_args).await,
-        DfxOrbitSubcommands::Asset(asset_args) => {
-            dfx_orbit.exec_asset(asset_args).await?;
-            Ok(())
-        }
         DfxOrbitSubcommands::Station(_) => unreachable!(),
     }
 }

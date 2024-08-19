@@ -4,7 +4,6 @@ use orbit_station_api::RequestOperationInput;
 
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetArgs {
-    /// The operation to request
     #[clap(subcommand)]
     pub(crate) action: RequestAssetActionArgs,
 }

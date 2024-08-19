@@ -4,8 +4,7 @@ use anyhow::bail;
 use candid::{Nat, Principal};
 use ic_certified_assets::types::CommitProposedBatchArguments;
 use orbit_station_api::{
-    CallExternalCanisterOperationInput, CanisterMethodDTO, CreateRequestInput,
-    CreateRequestResponse, RequestOperationInput,
+    CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput,
 };
 use serde_bytes::ByteBuf;
 use slog::{info, warn};
@@ -41,28 +40,7 @@ impl DfxOrbit {
         Ok((batch_id, evidence))
     }
 
-    pub async fn request_commit_batch(
-        &self,
-        canister_id: Principal,
-        batch_id: Nat,
-        evidence: ByteBuf,
-        title: Option<String>,
-        summary: Option<String>,
-    ) -> anyhow::Result<CreateRequestResponse> {
-        let response = self
-            .station
-            .request(CreateRequestInput {
-                operation: DfxOrbit::commit_batch_input(canister_id, batch_id, evidence)?,
-                title,
-                summary,
-                execution_plan: None,
-            })
-            .await?;
-
-        Ok(response)
-    }
-
-    pub(crate) fn commit_batch_input(
+    pub fn commit_batch_input(
         canister_id: Principal,
         batch_id: Nat,
         evidence: ByteBuf,

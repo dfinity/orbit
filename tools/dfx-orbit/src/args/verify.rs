@@ -21,7 +21,7 @@ pub struct VerifyArgs {
 
 #[derive(Debug, Clone, Subcommand)]
 pub enum VerifyArgsAction {
-    /// Verify orbit actions with regards to assets
+    /// Manage assets stored in an asset canister through Orbit
     Asset(VerifyAssetArgs),
 }
 
@@ -37,6 +37,17 @@ impl VerifyArgs {
         match self.action {
             VerifyArgsAction::Asset(args) => args.verify(dfx_orbit, &request).await?,
         }
+
+        // TODO:
+        // if args.then_approve {
+        //     dfx_core::cli::ask_for_consent("Do you want to approve the request?")?;
+        //     let args = SubmitRequestApprovalInput {
+        //         decision: RequestApprovalStatusDTO::Approved,
+        //         request_id: args.request_id,
+        //         reason: None,
+        //     };
+        //     self.station.submit(args).await?;
+        // }
 
         Ok(())
     }
