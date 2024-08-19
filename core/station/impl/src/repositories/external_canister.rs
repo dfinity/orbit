@@ -9,7 +9,7 @@ use crate::{
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::{IndexedRepository, SortDirection};
+use orbit_essentials::repository::{IndexedRepository, RebuildRepository, SortDirection};
 use orbit_essentials::repository::{Repository, StableDb};
 use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
@@ -44,6 +44,11 @@ impl StableDb<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>
     {
         DB.with(|m| f(&mut m.borrow_mut()))
     }
+}
+
+impl RebuildRepository<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>
+    for ExternalCanisterRepository
+{
 }
 
 impl IndexedRepository<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>
@@ -230,19 +235,20 @@ pub struct ExternalCanisterWhereClause {
 mod tests {
     use super::*;
     use crate::models::external_canister_test_utils::mock_external_canister;
+    use orbit_essentials::model::ModelKey;
 
     #[test]
     fn test_crud() {
         let repository = ExternalCanisterRepository::default();
         let entry = mock_external_canister();
 
-        assert!(repository.get(&entry.to_key()).is_none());
+        assert!(repository.get(&entry.key()).is_none());
 
-        repository.insert(entry.to_key(), entry.clone());
+        repository.insert(entry.key(), entry.clone());
 
-        assert!(repository.get(&entry.to_key()).is_some());
-        assert!(repository.remove(&entry.to_key()).is_some());
-        assert!(repository.get(&entry.to_key()).is_none());
+        assert!(repository.get(&entry.key()).is_some());
+        assert!(repository.remove(&entry.key()).is_some());
+        assert!(repository.get(&entry.key()).is_none());
     }
 
     #[test]
@@ -252,7 +258,7 @@ mod tests {
             let mut entry = mock_external_canister();
             entry.name = format!("test-{}", i);
 
-            repository.insert(entry.to_key(), entry);
+            repository.insert(entry.key(), entry);
         }
 
         let result = repository.find_by_name("test-5");
@@ -267,7 +273,7 @@ mod tests {
             let mut entry = mock_external_canister();
             entry.canister_id = Principal::from_slice(&[i; 29]);
 
-            repository.insert(entry.to_key(), entry);
+            repository.insert(entry.key(), entry);
         }
 
         assert!(repository
@@ -286,7 +292,7 @@ mod tests {
 
         assert!(repository.is_unique_name(&entry.name, None));
 
-        repository.insert(entry.to_key(), entry.clone());
+        repository.insert(entry.key(), entry.clone());
 
         assert!(!repository.is_unique_name(&entry.name, None));
         assert!(repository.is_unique_name(&entry.name, Some(entry.id)));
@@ -299,7 +305,7 @@ mod tests {
 
         assert!(repository.is_unique_canister_id(&entry.canister_id, None));
 
-        repository.insert(entry.to_key(), entry.clone());
+        repository.insert(entry.key(), entry.clone());
 
         assert!(!repository.is_unique_canister_id(&entry.canister_id, None));
         assert!(repository.is_unique_canister_id(&entry.canister_id, Some(entry.id)));

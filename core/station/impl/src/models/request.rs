@@ -20,6 +20,7 @@ use crate::errors::{EvaluateError, RequestError, ValidationError};
 use crate::models::resource::{ExecutionMethodResourceTarget, ValidationMethodResourceTarget};
 use crate::repositories::USER_REPOSITORY;
 use candid::{CandidType, Deserialize};
+use orbit_essentials::model::ModelKey;
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
 use orbit_essentials::{
@@ -71,6 +72,12 @@ pub struct Request {
 pub struct RequestKey {
     /// The request id, which is a UUID.
     pub id: RequestId,
+}
+
+impl ModelKey<RequestKey> for Request {
+    fn key(&self) -> RequestKey {
+        RequestKey { id: self.id }
+    }
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -370,6 +377,19 @@ impl Request {
         };
 
         evaluator.evaluate()
+    }
+
+    /// Checks if the request is finalized.
+    ///
+    /// A request that is finalized won't have its status changed anymore.
+    pub fn is_finalized(&self) -> bool {
+        matches!(
+            self.status,
+            RequestStatus::Completed { .. }
+                | RequestStatus::Cancelled { .. }
+                | RequestStatus::Failed { .. }
+                | RequestStatus::Rejected
+        )
     }
 }
 

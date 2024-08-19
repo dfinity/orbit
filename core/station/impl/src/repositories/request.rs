@@ -14,13 +14,14 @@ use crate::{
             request_index::RequestIndexFields, request_resource_index::RequestResourceIndexCriteria,
         },
         resource::Resource,
-        ListRequestsOperationType, Request, RequestId, RequestKey, RequestStatusCode,
+        ListRequestsOperationType, Request, RequestId, RequestKey, RequestOperation,
+        RequestStatusCode,
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    repository::{IndexRepository, IndexedRepository, Repository, StableDb},
+    repository::{IndexRepository, IndexedRepository, RebuildRepository, Repository, StableDb},
     types::{Timestamp, UUID},
 };
 use station_api::ListRequestsSortBy;
@@ -73,6 +74,35 @@ impl StableDb<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository 
         F: FnOnce(&mut StableBTreeMap<RequestKey, Request, VirtualMemory<Memory>>) -> R,
     {
         DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl RebuildRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {
+    fn rebuild(&self) {
+        Self::with_db(|db| {
+            let keys = db
+                .iter()
+                .map(|(k, _)| k.clone())
+                .collect::<Vec<RequestKey>>();
+
+            for key in keys {
+                if let Some(mut value) = db.get(&key) {
+                    // First make sure there is no dangling index for the entry.
+                    self.remove_entry_indexes(&value);
+                    // Then add the updated indexes.
+                    self.add_entry_indexes(&value);
+
+                    // Clear the module field if the request is finalized to save memory.
+                    if value.is_finalized() {
+                        if let RequestOperation::ChangeCanister(operation) = &mut value.operation {
+                            operation.input.module = Vec::new();
+                        }
+                    }
+
+                    db.insert(key, value);
+                }
+            }
+        });
     }
 }
 

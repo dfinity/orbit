@@ -12,7 +12,8 @@ use crate::{
     factories::blockchains::InternetComputer,
     models::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
-        CycleObtainStrategy, ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
+        CycleObtainStrategy, ManageSystemInfoOperationInput, RequestId, RequestKey,
+        RequestOperation, RequestStatus,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY,
@@ -340,6 +341,11 @@ impl SystemService {
                         completed_at: completed_time,
                     };
                     request.last_modification_timestamp = completed_time;
+
+                    if let RequestOperation::ChangeCanister(operation) = &mut request.operation {
+                        // Clears the module when the operation is completed, this helps to reduce memory usage.
+                        operation.input.module = Vec::new();
+                    }
 
                     self.request_repository.insert(request.to_key(), request);
                 }

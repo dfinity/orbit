@@ -8,7 +8,7 @@ use crate::STABLE_MEMORY_VERSION;
 use crate::{core::with_memory_manager, repositories::REQUEST_REPOSITORY};
 use ic_stable_structures::memory_manager::MemoryId;
 use ic_stable_structures::Memory;
-use orbit_essentials::repository::IndexedRepository;
+use orbit_essentials::repository::RebuildRepository;
 
 /// Handles stable memory schema migrations for the station canister.
 ///
@@ -88,11 +88,11 @@ fn apply_migration() {
         }
     });
 
-    // step 2: recreates the indexes for all affected repositories
-    USER_GROUP_REPOSITORY.rebuild_indexes();
-    USER_REPOSITORY.rebuild_indexes();
-    ACCOUNT_REPOSITORY.rebuild_indexes();
-    EXTERNAL_CANISTER_REPOSITORY.rebuild_indexes();
-    ADDRESS_BOOK_REPOSITORY.rebuild_indexes();
-    REQUEST_REPOSITORY.rebuild_indexes();
+    // step 2: rebuilds the repositories to ensure the data is up-to-date
+    USER_GROUP_REPOSITORY.rebuild();
+    USER_REPOSITORY.rebuild();
+    ACCOUNT_REPOSITORY.rebuild();
+    EXTERNAL_CANISTER_REPOSITORY.rebuild();
+    ADDRESS_BOOK_REPOSITORY.rebuild();
+    REQUEST_REPOSITORY.rebuild();
 }

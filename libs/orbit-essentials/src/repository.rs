@@ -1,4 +1,4 @@
-use crate::types::UUID;
+use crate::{model::ModelKey, types::UUID};
 use ic_stable_structures::{Memory, StableBTreeMap, Storable};
 use std::collections::HashSet;
 
@@ -16,7 +16,7 @@ where
 pub trait IndexedRepository<Key, Value, Mem>: Repository<Key, Value, Mem>
 where
     Key: Eq + std::hash::Hash + Clone + Ord + Storable,
-    Value: Clone + Storable,
+    Value: Clone + Storable + ModelKey<Key>,
     Mem: Memory,
 {
     /// Removes the indexes for the current value.
@@ -34,18 +34,32 @@ where
 
         self.add_entry_indexes(value);
     }
+}
 
+pub trait RebuildRepository<Key, Value, Mem>:
+    Repository<Key, Value, Mem> + IndexedRepository<Key, Value, Mem>
+where
+    Key: Eq + std::hash::Hash + Clone + Ord + Storable,
+    Value: Clone + Storable + ModelKey<Key>,
+    Mem: Memory,
+{
     /// This method goes over all the entries and rebuilds the indexes.
     ///
     /// WARNING: Please only use during upgrades to ensure enough intructions are available.
-    fn rebuild_indexes(&self) {
+    fn rebuild(&self) {
         Self::with_db(|db| {
-            db.iter().for_each(|(_, value)| {
-                // First make sure there is no dangling index for the entry.
-                self.remove_entry_indexes(&value);
-                // Then add the updated indexes.
-                self.add_entry_indexes(&value);
-            });
+            let keys = db.iter().map(|(k, _)| k.clone()).collect::<Vec<Key>>();
+
+            for key in keys {
+                if let Some(value) = db.get(&key) {
+                    // First make sure there is no dangling index for the entry.
+                    self.remove_entry_indexes(&value);
+                    // Then add the updated indexes.
+                    self.add_entry_indexes(&value);
+                    // Finally, update the entry in the database.
+                    db.insert(key, value);
+                }
+            }
         });
     }
 }

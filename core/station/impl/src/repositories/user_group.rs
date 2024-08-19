@@ -8,7 +8,7 @@ use crate::{
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    repository::{IndexedRepository, Repository, StableDb},
+    repository::{IndexedRepository, RebuildRepository, Repository, StableDb},
     types::UUID,
 };
 use std::{cell::RefCell, sync::Arc};
@@ -42,6 +42,8 @@ impl StableDb<UUID, UserGroup, VirtualMemory<Memory>> for UserGroupRepository {
         DB.with(|m| f(&mut m.borrow_mut()))
     }
 }
+
+impl RebuildRepository<UUID, UserGroup, VirtualMemory<Memory>> for UserGroupRepository {}
 
 impl IndexedRepository<UUID, UserGroup, VirtualMemory<Memory>> for UserGroupRepository {
     fn remove_entry_indexes(&self, entry: &UserGroup) {

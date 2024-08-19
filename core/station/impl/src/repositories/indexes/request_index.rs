@@ -40,29 +40,6 @@ impl StableDb<RequestIndexKey, RequestIndexFields, VirtualMemory<Memory>>
 impl Repository<RequestIndexKey, RequestIndexFields, VirtualMemory<Memory>>
     for RequestIndexRepository
 {
-    fn get(&self, key: &RequestIndexKey) -> Option<RequestIndexFields> {
-        DB.with(|m| m.borrow().get(key).clone())
-    }
-
-    fn insert(
-        &self,
-        key: RequestIndexKey,
-        value: RequestIndexFields,
-    ) -> Option<RequestIndexFields> {
-        DB.with(|m| m.borrow_mut().insert(key, value))
-    }
-
-    fn remove(&self, index: &RequestIndexKey) -> Option<RequestIndexFields> {
-        DB.with(|m| m.borrow_mut().remove(index))
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len() as usize)
-    }
-
-    fn list(&self) -> Vec<RequestIndexFields> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v.clone()).collect())
-    }
 }
 
 impl RequestIndexRepository {

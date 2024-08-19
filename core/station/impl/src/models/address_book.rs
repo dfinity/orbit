@@ -2,6 +2,7 @@ use super::Blockchain;
 use crate::errors::AddressBookError;
 use crate::models::Metadata;
 use candid::{CandidType, Deserialize};
+use orbit_essentials::model::ModelKey;
 use orbit_essentials::storable;
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
@@ -38,6 +39,12 @@ pub struct AddressBookEntry {
 pub struct AddressBookEntryKey {
     /// The address book entry id, which is a UUID.
     pub id: AddressBookEntryId,
+}
+
+impl ModelKey<AddressBookEntryKey> for AddressBookEntry {
+    fn key(&self) -> AddressBookEntryKey {
+        AddressBookEntryKey { id: self.id }
+    }
 }
 
 fn validate_address_owner(address_owner: &str) -> ModelValidatorResult<AddressBookError> {

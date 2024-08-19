@@ -4,7 +4,7 @@ use crate::{
     errors::{RecordValidationError, UserError},
 };
 use candid::{CandidType, Deserialize, Principal};
-use orbit_essentials::storable;
+use orbit_essentials::{model::ModelKey, storable};
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::{Timestamp, UUID},
@@ -37,6 +37,12 @@ pub struct User {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct UserKey {
     pub id: UserId,
+}
+
+impl ModelKey<UserKey> for User {
+    fn key(&self) -> UserKey {
+        UserKey { id: self.id }
+    }
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

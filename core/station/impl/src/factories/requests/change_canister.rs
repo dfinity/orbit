@@ -128,9 +128,13 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
                     disaster_recovery_service.sync_all().await;
                 });
 
-                Ok(RequestExecuteStage::Completed(
-                    self.request.operation.clone(),
-                ))
+                let mut operation = self.request.operation.clone();
+                if let RequestOperation::ChangeCanister(operation) = &mut operation {
+                    // Clears the module when the operation is completed, this helps to reduce memory usage.
+                    operation.input.module = Vec::new();
+                }
+
+                Ok(RequestExecuteStage::Completed(operation))
             }
         }
     }

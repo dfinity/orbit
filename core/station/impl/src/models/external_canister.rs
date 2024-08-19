@@ -3,6 +3,7 @@ use super::resource::ValidationMethodResourceTarget;
 use super::{ConfigureExternalCanisterSettingsInput, RequestPolicyRule};
 use crate::errors::ExternalCanisterError;
 use candid::Principal;
+use orbit_essentials::model::ModelKey;
 use orbit_essentials::storable;
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
@@ -42,6 +43,18 @@ pub struct ExternalCanister {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterKey {
+    pub id: ExternalCanisterEntryId,
+}
+
+impl ModelKey<ExternalCanisterKey> for ExternalCanister {
+    fn key(&self) -> ExternalCanisterKey {
+        ExternalCanisterKey { id: self.id }
+    }
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterCallPermission {
     pub allow: Allow,
     pub validation_method: ValidationMethodResourceTarget,
@@ -76,12 +89,6 @@ pub struct ExternalCanisterRequestPolicies {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ExternalCanisterKey {
-    pub id: ExternalCanisterEntryId,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ExternalCanisterState {
     Active,
     Archived,
@@ -109,16 +116,6 @@ impl ExternalCanister {
     pub const MAX_LABEL_LENGTH: usize = 50;
     pub const MAX_LABELS: usize = 10;
     pub const MAX_DESCRIPTION_LENGTH: usize = 1000;
-
-    /// Creates a new external canister key from the given key components.
-    pub fn key(id: ExternalCanisterEntryId) -> ExternalCanisterKey {
-        ExternalCanisterKey { id }
-    }
-
-    /// Extracts the lookup key of the external canister.
-    pub fn to_key(&self) -> ExternalCanisterKey {
-        Self::key(self.id)
-    }
 
     /// Checks if the external canister is archived.
     pub fn is_archived(&self) -> bool {

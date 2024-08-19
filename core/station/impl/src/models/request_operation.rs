@@ -260,6 +260,7 @@ pub enum ChangeCanisterTarget {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ChangeCanisterOperationInput {
     pub target: ChangeCanisterTarget,
+    /// The module is only available while the operation is not finalized.
     pub module: Vec<u8>,
     pub arg: Option<Vec<u8>>,
 }

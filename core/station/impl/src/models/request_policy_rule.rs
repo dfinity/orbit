@@ -11,7 +11,7 @@ use crate::{
     repositories::{UserWhereClause, ADDRESS_BOOK_REPOSITORY, USER_REPOSITORY},
     services::ACCOUNT_SERVICE,
 };
-use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
+use orbit_essentials::model::{ModelKey, ModelValidator, ModelValidatorResult};
 use orbit_essentials::storable;
 use station_api::EvaluationSummaryReasonDTO;
 use std::{cmp, hash::Hash};
@@ -151,6 +151,12 @@ pub struct RequestEvaluationResult {
     pub request_id: RequestId,
     pub status: EvaluationStatus,
     pub policy_results: Vec<RequestPolicyRuleResult>,
+}
+
+impl ModelKey<RequestId> for RequestEvaluationResult {
+    fn key(&self) -> RequestId {
+        self.request_id
+    }
 }
 
 impl RequestEvaluationResult {

@@ -9,7 +9,7 @@ use crate::{
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::{IndexedRepository, Repository, StableDb};
+use orbit_essentials::repository::{IndexedRepository, RebuildRepository, Repository, StableDb};
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
@@ -53,6 +53,8 @@ impl StableDb<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository 
         DB.with(|m| f(&mut m.borrow_mut()))
     }
 }
+
+impl RebuildRepository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository {}
 
 impl IndexedRepository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository {
     fn remove_entry_indexes(&self, value: &Account) {

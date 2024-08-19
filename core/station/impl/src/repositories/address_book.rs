@@ -12,7 +12,7 @@ use crate::{
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    repository::{IndexedRepository, Repository, StableDb},
+    repository::{IndexedRepository, RebuildRepository, Repository, StableDb},
     types::UUID,
 };
 use std::{cell::RefCell, collections::HashSet, sync::Arc};
@@ -48,6 +48,11 @@ impl StableDb<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>
     {
         DB.with(|m| f(&mut m.borrow_mut()))
     }
+}
+
+impl RebuildRepository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>
+    for AddressBookRepository
+{
 }
 
 impl IndexedRepository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>

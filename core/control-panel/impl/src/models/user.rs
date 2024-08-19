@@ -2,6 +2,7 @@ use super::UserStation;
 use crate::errors::UserError;
 use candid::Principal;
 use email_address::EmailAddress;
+use orbit_essentials::model::ModelKey;
 use orbit_essentials::storable;
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
@@ -66,6 +67,12 @@ pub struct User {
 #[storable]
 #[derive(Clone, Debug, Eq, Ord, Hash, PartialEq, PartialOrd)]
 pub struct UserKey(pub UUID);
+
+impl ModelKey<UserKey> for User {
+    fn key(&self) -> UserKey {
+        UserKey(self.id)
+    }
+}
 
 impl User {
     pub const NAME_LEN_RANGE: (u8, u8) = (1, 100);
