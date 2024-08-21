@@ -3,9 +3,8 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, ExternalCanisterResourceAction,
-        PermissionResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
-        SystemResourceAction, UserResourceAction,
+        AccountResourceAction, ExternalCanisterResourceAction, PermissionResourceAction, Resource,
+        ResourceAction, ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
     },
     EvaluatedRequestPolicyRule, EvaluationStatus, Percentage, RequestEvaluationResult,
     RequestPolicy, RequestPolicyCallerPrivileges, RequestPolicyRuleResult,
@@ -427,9 +426,7 @@ impl RequestSpecifier {
                     .collect::<_>(),
             },
             RequestSpecifier::SetDisasterRecovery | RequestSpecifier::ChangeCanister => {
-                vec![Resource::ChangeCanister(
-                    ChangeCanisterResourceAction::Create,
-                )]
+                vec![Resource::System(SystemResourceAction::Upgrade)]
             }
             RequestSpecifier::ChangeExternalCanister(target) => {
                 vec![Resource::ExternalCanister(

@@ -21,6 +21,21 @@ struct MacroArguments {
     ///
     /// If this is not provided, the object will be serialized to and deserialized from the default serialization format.
     pub serializer: SerializerFormat,
+
+    /// Wether or not deserialize should be implemented for the object.
+    ///
+    /// This is useful to provide a custom deserialize implementation for the object.
+    pub skip_deserialize: bool,
+}
+
+impl Default for MacroArguments {
+    fn default() -> Self {
+        Self {
+            size: None,
+            serializer: SerializerFormat::Cbor,
+            skip_deserialize: false,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -50,6 +65,7 @@ impl MacroDefinition for StorableMacro {
 impl StorableMacro {
     const MACRO_ARG_KEY_SIZE: &'static str = "size";
     const MACRO_ARG_KEY_SERIALIZER: &'static str = "serializer";
+    const MACRO_ARG_KEY_SKIP_DESERIALIZE: &'static str = "skip_deserialize";
 
     fn expand_implementation(&self, args: &MacroArguments) -> Result<TokenStream, Error> {
         let parsed_input: DeriveInput = parse2(self.input.clone())?;
@@ -57,11 +73,10 @@ impl StorableMacro {
         match parsed_input.data {
             syn::Data::Struct(_) | syn::Data::Enum(_) => {
                 let input = parsed_input.clone();
-                let size_value: Option<u32> = args.size;
 
-                match args.serializer {
-                    SerializerFormat::Candid => expand_candid_impl(&input, size_value),
-                    SerializerFormat::Cbor => expand_cbor_impl(&input, size_value),
+                match &args.serializer {
+                    SerializerFormat::Candid => expand_candid_impl(&input, args),
+                    SerializerFormat::Cbor => expand_cbor_impl(&input, args),
                 }
             }
             _ => Err(Error::new_spanned(
@@ -73,12 +88,10 @@ impl StorableMacro {
 
     fn parse_input_arguments(&self) -> Result<MacroArguments, Error> {
         let parser = syn::punctuated::Punctuated::<syn::ExprAssign, Token![,]>::parse_terminated;
-        let args = parser.parse(self.input_args.clone().into())?;
+        let raw_args = parser.parse(self.input_args.clone().into())?;
+        let mut args = MacroArguments::default();
 
-        let mut size: Option<u32> = None;
-        let mut serializer: SerializerFormat = SerializerFormat::Cbor;
-
-        for expr in args {
+        for expr in raw_args {
             let syn::ExprAssign {
                 left,
                 right,
@@ -94,7 +107,7 @@ impl StorableMacro {
                             ..
                         }) = *right
                         {
-                            size = Some(lit_int.base10_parse()?);
+                            args.size = Some(lit_int.base10_parse()?);
                         }
                     }
 
@@ -104,8 +117,8 @@ impl StorableMacro {
                             ..
                         }) = *right
                         {
-                            serializer =
-                                SerializerFormat::from_str(&lit_str.value()).map_err(|err| {
+                            args.serializer = SerializerFormat::from_str(&lit_str.value())
+                                .map_err(|err| {
                                     Error::new(
                                         lit_str.span(),
                                         format!(
@@ -115,6 +128,16 @@ impl StorableMacro {
                                         ),
                                     )
                                 })?;
+                        }
+                    }
+
+                    Self::MACRO_ARG_KEY_SKIP_DESERIALIZE => {
+                        if let syn::Expr::Lit(syn::ExprLit {
+                            lit: syn::Lit::Bool(lit_bool),
+                            ..
+                        }) = *right
+                        {
+                            args.skip_deserialize = lit_bool.value;
                         }
                     }
 
@@ -132,19 +155,26 @@ impl StorableMacro {
             }
         }
 
-        Ok(MacroArguments { size, serializer })
+        Ok(args)
     }
 }
 
 fn expand_candid_impl(
     input: &DeriveInput,
-    size: Option<u32>,
+    args: &MacroArguments,
 ) -> Result<proc_macro2::TokenStream, Error> {
     let object_name = input.ident.clone();
-    let storage_bounds = storage_bounds(size);
+    let storage_bounds = storage_bounds(args.size);
+    let derive_serialize = quote! { #[derive(candid::CandidType)] };
+    let derive_deserialize = if args.skip_deserialize {
+        quote! {}
+    } else {
+        quote! { #[derive(candid::Deserialize)] }
+    };
 
     let expanded = quote! {
-        #[derive(candid::CandidType, candid::Deserialize)]
+        #derive_serialize
+        #derive_deserialize
         #input
 
         impl orbit_essentials::ic_stable_structures::Storable for #object_name {
@@ -169,13 +199,20 @@ fn expand_candid_impl(
 
 fn expand_cbor_impl(
     input: &DeriveInput,
-    size: Option<u32>,
+    args: &MacroArguments,
 ) -> Result<proc_macro2::TokenStream, Error> {
     let object_name = input.ident.clone();
-    let storage_bounds = storage_bounds(size);
+    let storage_bounds = storage_bounds(args.size);
+    let derive_serialize = quote! { #[derive(serde::Serialize)] };
+    let derive_deserialize = if args.skip_deserialize {
+        quote! {}
+    } else {
+        quote! { #[derive(serde::Deserialize)] }
+    };
 
     let expanded = quote! {
-        #[derive(serde::Serialize, serde::Deserialize)]
+        #derive_serialize
+        #derive_deserialize
         #input
 
         impl orbit_essentials::ic_stable_structures::Storable for #object_name {
@@ -240,12 +277,13 @@ mod tests {
         })
         .unwrap();
 
-        let expanded = expand_cbor_impl(&input, None).unwrap();
+        let expanded = expand_cbor_impl(&input, &MacroArguments::default()).unwrap();
 
         assert_eq!(
             expanded.to_string(),
             quote! {
-                #[derive(serde::Serialize, serde::Deserialize)]
+                #[derive(serde::Serialize)]
+                #[derive(serde::Deserialize)]
                 pub struct MyStruct {
                     pub id: u32,
                 }
@@ -275,12 +313,13 @@ mod tests {
         })
         .unwrap();
 
-        let expanded = expand_candid_impl(&input, None).unwrap();
+        let expanded = expand_candid_impl(&input, &MacroArguments::default()).unwrap();
 
         assert_eq!(
             expanded.to_string(),
             quote! {
-                #[derive(candid::CandidType, candid::Deserialize)]
+                #[derive(candid::CandidType)]
+                #[derive(candid::Deserialize)]
                 pub struct MyStruct {
                     pub id: u32,
                 }

@@ -3,9 +3,9 @@ use crate::{
     models::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget,
-            ChangeCanisterResourceAction, ExecutionMethodResourceTarget, ExternalCanisterId,
-            ExternalCanisterResourceAction, PermissionResourceAction, Resource, ResourceAction,
-            ResourceId, SystemResourceAction, UserResourceAction,
+            ExecutionMethodResourceTarget, ExternalCanisterId, ExternalCanisterResourceAction,
+            PermissionResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+            UserResourceAction,
         },
         Account, AccountKey, AddAccountOperation, AddAccountOperationInput,
         AddAddressBookEntryOperation, AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
@@ -1287,9 +1287,7 @@ impl RequestOperation {
                 ]
             }
             RequestOperation::SetDisasterRecovery(_) | RequestOperation::ChangeCanister(_) => {
-                vec![Resource::ChangeCanister(
-                    ChangeCanisterResourceAction::Create,
-                )]
+                vec![Resource::System(SystemResourceAction::Upgrade)]
             }
             RequestOperation::ChangeExternalCanister(ChangeExternalCanisterOperation {
                 input,

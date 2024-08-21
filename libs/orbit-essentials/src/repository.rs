@@ -47,20 +47,19 @@ where
     ///
     /// WARNING: Please only use during upgrades to ensure enough intructions are available.
     fn rebuild(&self) {
-        Self::with_db(|db| {
-            let keys = db.iter().map(|(k, _)| k.clone()).collect::<Vec<Key>>();
+        // Keys are on most cases small, this makes it safer to collect them into the heap.
+        let keys = Self::with_db(|db| db.iter().map(|(k, _)| k).collect::<Vec<Key>>());
 
-            for key in keys {
-                if let Some(value) = db.get(&key) {
-                    // First make sure there is no dangling index for the entry.
-                    self.remove_entry_indexes(&value);
-                    // Then add the updated indexes.
-                    self.add_entry_indexes(&value);
-                    // Finally, update the entry in the database.
-                    db.insert(key, value);
-                }
+        for key in keys {
+            if let Some(value) = Self::with_db(|db| db.get(&key)) {
+                // First make sure there is no dangling index for the entry.
+                self.remove_entry_indexes(&value);
+                // Then add the updated indexes.
+                self.add_entry_indexes(&value);
+                // Finally, update the entry in the database.
+                Self::with_db(|db| db.insert(key, value));
             }
-        });
+        }
     }
 }
 

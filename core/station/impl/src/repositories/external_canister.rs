@@ -9,7 +9,7 @@ use crate::{
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::{IndexedRepository, RebuildRepository, SortDirection};
+use orbit_essentials::repository::{IndexedRepository, SortDirection};
 use orbit_essentials::repository::{Repository, StableDb};
 use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
@@ -44,11 +44,6 @@ impl StableDb<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>
     {
         DB.with(|m| f(&mut m.borrow_mut()))
     }
-}
-
-impl RebuildRepository<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>
-    for ExternalCanisterRepository
-{
 }
 
 impl IndexedRepository<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>

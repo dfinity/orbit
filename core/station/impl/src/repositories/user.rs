@@ -18,9 +18,7 @@ use crate::{
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::{
-    IndexRepository, IndexedRepository, RebuildRepository, StableDb,
-};
+use orbit_essentials::repository::{IndexRepository, IndexedRepository, StableDb};
 use orbit_essentials::{repository::Repository, types::UUID};
 use std::{cell::RefCell, sync::Arc};
 
@@ -72,8 +70,6 @@ impl StableDb<UserKey, User, VirtualMemory<Memory>> for UserRepository {
         DB.with(|m| f(&mut m.borrow_mut()))
     }
 }
-
-impl RebuildRepository<UserKey, User, VirtualMemory<Memory>> for UserRepository {}
 
 impl IndexedRepository<UserKey, User, VirtualMemory<Memory>> for UserRepository {
     fn remove_entry_indexes(&self, entry: &User) {
@@ -163,7 +159,7 @@ impl Repository<UserKey, User, VirtualMemory<Memory>> for UserRepository {
 }
 
 impl UserRepository {
-    /// Currently the cache uses around ??? KiB per entry (Resource, Allow),
+    /// Currently the cache uses around ??? KiB per entry (UUID, User),
     /// so the max cache size is around ??? MiB.
     ///
     /// Moreover, it takes approximately ??? million instructions to load each entry

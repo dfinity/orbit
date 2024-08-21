@@ -3,10 +3,10 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, CallExternalCanisterResourceTarget, ChangeCanisterResourceAction,
-        ExecutionMethodResourceTarget, ExternalCanisterId, ExternalCanisterResourceAction,
-        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-        ResourceIds, SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
+        AccountResourceAction, CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
+        ExternalCanisterId, ExternalCanisterResourceAction, PermissionResourceAction,
+        RequestResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
+        SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
     },
     ADMIN_GROUP_ID,
 };
@@ -28,6 +28,11 @@ lazy_static! {
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::System(SystemResourceAction::ManageSystemInfo),
+        ),
+        // Admins can upgrade the canister
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::System(SystemResourceAction::Upgrade),
         ),
         // users
         (
@@ -139,11 +144,6 @@ lazy_static! {
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
-        ),
-        // change canister
-        (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
         ),
         // create, change, call, and read external canister
         (

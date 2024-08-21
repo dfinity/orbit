@@ -11,6 +11,7 @@ pub mod core;
 pub mod errors;
 pub mod factories;
 pub mod jobs;
+mod macros;
 pub mod mappers;
 pub mod migration;
 pub mod models;

@@ -665,6 +665,13 @@ thread_local! {
     static UNIQUE_COUNTER: std::cell::RefCell<u64> = const { std::cell::RefCell::new(0) };
 }
 
+pub fn set_next_number(next: u64) {
+    UNIQUE_COUNTER.with(|counter| {
+        let mut counter = counter.borrow_mut();
+        *counter = next;
+    });
+}
+
 pub fn next_number() -> u64 {
     UNIQUE_COUNTER.with(|counter| {
         let mut counter = counter.borrow_mut();

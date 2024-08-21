@@ -3,7 +3,7 @@ use std::time::Duration;
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     add_account, add_address_book_entry, add_user_group, add_user_v2, create_file, read_file,
-    submit_request, wait_for_request, NNS_ROOT_CANISTER_ID,
+    set_next_number, submit_request, wait_for_request, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -110,7 +110,7 @@ fn test_canister_migration_path_with_same_wasm() {
 }
 
 #[test]
-fn test_canister_migration_path_with_older_wasm_memory() {
+fn test_canister_migration_path_with_previous_wasm_memory_version() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
@@ -148,6 +148,27 @@ fn test_canister_migration_path_with_older_wasm_memory() {
     assert_can_list_user_groups_endpoint(&env, canister_ids.station, WALLET_ADMIN_USER);
     assert_can_list_address_book_entries(&env, canister_ids.station, WALLET_ADMIN_USER);
     assert_can_list_accounts(&env, canister_ids.station, WALLET_ADMIN_USER);
+
+    // Makes sure that the next number is pointing at a value that was not already used in the previous version
+    set_next_number(9_999);
+
+    // Create at least one more entry of each type to ensure the stable memory is working
+    let new_user_groups = vec![add_user_group(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+    )];
+
+    add_user_v2(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        new_user_groups,
+        None,
+    );
+
+    add_account(&env, canister_ids.station, WALLET_ADMIN_USER);
+    add_address_book_entry(&env, canister_ids.station, WALLET_ADMIN_USER);
 }
 
 /// Create the context of the station canister, including:

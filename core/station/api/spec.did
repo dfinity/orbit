@@ -1849,11 +1849,6 @@ type AccountResourceAction = variant {
   Update : ResourceId;
 };
 
-// The actions that are available for canister changes.
-type ChangeCanisterResourceAction = variant {
-  Create;
-};
-
 // The target canister to interact with.
 type ExternalCanisterId = variant {
   Any;
@@ -1899,6 +1894,7 @@ type SystemResourceAction = variant {
   SystemInfo;
   Capabilities;
   ManageSystemInfo;
+  Upgrade;
 };
 
 // The actions that are available for users.
@@ -1920,7 +1916,6 @@ type Resource = variant {
   Permission : PermissionResourceAction;
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
-  ChangeCanister : ChangeCanisterResourceAction;
   ExternalCanister : ExternalCanisterResourceAction;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
@@ -2103,7 +2098,7 @@ type UserPrivilege = variant {
   AddRequestPolicy;
   ListAddressBookEntries;
   AddAddressBookEntry;
-  ChangeCanister;
+  SystemUpgrade;
   ListRequests;
   CreateExternalCanister;
   ListExternalCanisters;

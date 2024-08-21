@@ -12,7 +12,7 @@ use crate::{
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::{Repository, StableDb};
+use orbit_essentials::repository::{IndexedRepository, Repository, StableDb};
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
@@ -39,14 +39,24 @@ impl StableDb<PermissionKey, Permission, VirtualMemory<Memory>> for PermissionRe
     where
         F: FnOnce(&mut StableBTreeMap<PermissionKey, Permission, VirtualMemory<Memory>>) -> R,
     {
-        DB.with(|m| f(&mut m.borrow_mut()))
+        DB.with(|db| f(&mut db.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<PermissionKey, Permission, VirtualMemory<Memory>> for PermissionRepository {
+    fn remove_entry_indexes(&self, _: &Permission) {
+        // no indexes to remove
+    }
+
+    fn add_entry_indexes(&self, _: &Permission) {
+        // no indexes to add
     }
 }
 
 impl Repository<PermissionKey, Permission, VirtualMemory<Memory>> for PermissionRepository {
     fn list(&self) -> Vec<Permission> {
-        DB.with(|m| match self.use_only_cache() {
-            true => CACHE.with(|cache| {
+        if self.use_only_cache() {
+            return CACHE.with(|cache| {
                 cache
                     .borrow()
                     .iter()
@@ -55,48 +65,43 @@ impl Repository<PermissionKey, Permission, VirtualMemory<Memory>> for Permission
                         allow: allow.clone(),
                     })
                     .collect()
-            }),
-            false => m.borrow().iter().map(|(_, v)| v.clone()).collect(),
-        })
+            });
+        }
+
+        Self::with_db(|db| db.iter().map(|(_, v)| v.clone()).collect())
     }
 
     fn get(&self, key: &PermissionKey) -> Option<Permission> {
-        DB.with(|m| {
-            let maybe_cache_hit = CACHE.with(|cache| {
-                cache.borrow().get(key).map(|allow| Permission {
-                    resource: key.clone(),
-                    allow: allow.clone(),
-                })
-            });
+        let maybe_cache_hit = CACHE.with(|cache| {
+            cache.borrow().get(key).map(|allow| Permission {
+                resource: key.clone(),
+                allow: allow.clone(),
+            })
+        });
 
-            match self.use_only_cache() {
-                true => maybe_cache_hit,
-                false => maybe_cache_hit.or_else(|| m.borrow().get(key).clone()),
-            }
-        })
+        if self.use_only_cache() {
+            return maybe_cache_hit;
+        }
+
+        maybe_cache_hit.or_else(|| Self::with_db(|db| db.get(key).clone()))
     }
 
     fn insert(&self, key: PermissionKey, value: Permission) -> Option<Permission> {
-        DB.with(|m| {
-            let prev = m.borrow_mut().insert(key, value.clone());
+        // Update the cache with the new value.
+        CACHE.with(|cache| {
+            cache
+                .borrow_mut()
+                .insert(value.resource.clone(), value.allow.clone())
+        });
 
-            // Update the cache and remove the first element if the cache is full.
-            CACHE.with(|cache| {
-                let mut cache = cache.borrow_mut();
-
-                cache.insert(value.resource.clone(), value.allow.clone());
-            });
-
-            prev
-        })
+        Self::with_db(|db| db.insert(key.clone(), value.clone()))
     }
 
     fn remove(&self, key: &PermissionKey) -> Option<Permission> {
-        DB.with(|m| {
-            CACHE.with(|cache| cache.borrow_mut().remove(key));
+        // Remove the value from the cache.
+        CACHE.with(|cache| cache.borrow_mut().remove(key));
 
-            m.borrow_mut().remove(key)
-        })
+        Self::with_db(|db| db.remove(key))
     }
 }
 

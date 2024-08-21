@@ -73,6 +73,8 @@ sha2 = "0.10"
 slog = "2.5.2"
 slog-async = "2.4.0"
 slog-term = "2.9.0"
+strum = "0.26"
+strum_macros = "0.26"
 syn = { version = "2.0", features = ["extra-traits", "full"] }
 tempfile = "3.10"
 thiserror = "1.0.48"
