@@ -21,20 +21,20 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VAlert, VProgressCircular } from 'vuetify/components';
-import { useDefaultUpgradeFormValue } from '~/composables/change-canister.composable';
+import { useDefaultUpgradeFormValue } from '~/composables/system-upgrade.composable';
 import logger from '~/core/logger.core';
 import { services } from '~/plugins/services.plugin';
 import { useStationStore } from '~/stores/station.store';
 import { toArrayBuffer } from '~/utils/helper.utils';
-import { ChangeCanisterFormValue } from './change-canister.types';
+import { SystemUpgradeFormValue } from './system-upgrade.types';
 
 const i18n = useI18n();
 const props = defineProps<{
-  modelValue: ChangeCanisterFormValue;
+  modelValue: SystemUpgradeFormValue;
 }>();
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: ChangeCanisterFormValue): void;
+  (event: 'update:modelValue', payload: SystemUpgradeFormValue): void;
   (event: 'valid', payload: boolean): void;
   (event: 'loading', payload: boolean): void;
 }>();

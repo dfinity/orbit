@@ -1,6 +1,5 @@
-use crate::{DisasterRecoveryCommitteeDTO, MetadataDTO, UuidDTO};
-
 use super::TimestampRfc3339;
+use crate::{DisasterRecoveryCommitteeDTO, MetadataDTO, Sha256HashDTO, UuidDTO};
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
@@ -104,4 +103,26 @@ pub enum SystemInstall {
 pub enum HealthStatus {
     Healthy,
     Uninitialized,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum SystemUpgradeTargetDTO {
+    UpgradeStation,
+    UpgradeUpgrader,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct SystemUpgradeOperationInput {
+    pub target: SystemUpgradeTargetDTO,
+    #[serde(with = "serde_bytes")]
+    pub module: Vec<u8>,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
+    pub arg: Option<Vec<u8>>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct SystemUpgradeOperationDTO {
+    pub target: SystemUpgradeTargetDTO,
+    pub module_checksum: Sha256HashDTO,
+    pub arg_checksum: Option<Sha256HashDTO>,
 }

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '~/test.utils';
-import ChangeCanisterForm from './ChangeCanisterForm.vue';
-import { ChangeCanisterFormMode } from '~/components/change-canister/change-canister.types';
+import SystemUpgradeForm from './SystemUpgradeForm.vue';
+import { SystemUpgradeFormMode } from './system-upgrade.types';
 
-describe('ChangeCanisterForm', () => {
+describe('SystemUpgradeForm', () => {
   it('renders with empty form', () => {
-    const wrapper = mount(ChangeCanisterForm, {
+    const wrapper = mount(SystemUpgradeForm, {
       props: {
-        mode: ChangeCanisterFormMode.Advanced,
+        mode: SystemUpgradeFormMode.Advanced,
         modelValue: {
           wasmInitArg: undefined,
           target: undefined,

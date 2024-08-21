@@ -16,8 +16,9 @@ use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::{storable, types::UUID};
 use std::fmt::Display;
 
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[storable(skip_deserialize = true)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, strum::VariantNames)]
+#[strum(serialize_all = "PascalCase")]
 pub enum RequestOperation {
     Transfer(TransferOperation),
     AddAccount(AddAccountOperation),
@@ -31,7 +32,7 @@ pub enum RequestOperation {
     AddUserGroup(AddUserGroupOperation),
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
-    ChangeCanister(ChangeCanisterOperation),
+    SystemUpgrade(SystemUpgradeOperation),
     ChangeExternalCanister(ChangeExternalCanisterOperation),
     ConfigureExternalCanister(ConfigureExternalCanisterOperation),
     CreateExternalCanister(CreateExternalCanisterOperation),
@@ -59,7 +60,7 @@ impl Display for RequestOperation {
             RequestOperation::AddUserGroup(_) => write!(f, "add_user_group"),
             RequestOperation::EditUserGroup(_) => write!(f, "adit_user_group"),
             RequestOperation::RemoveUserGroup(_) => write!(f, "remove_user_group"),
-            RequestOperation::ChangeCanister(_) => write!(f, "change_canister"),
+            RequestOperation::SystemUpgrade(_) => write!(f, "system_upgrade"),
             RequestOperation::ChangeExternalCanister(_) => write!(f, "change_external_canister"),
             RequestOperation::ConfigureExternalCanister(_) => {
                 write!(f, "configure_external_canister")
@@ -254,15 +255,15 @@ pub struct RemoveUserGroupOperationInput {
 
 #[storable]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ChangeCanisterTarget {
+pub enum SystemUpgradeTarget {
     UpgradeStation,
     UpgradeUpgrader,
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ChangeCanisterOperationInput {
-    pub target: ChangeCanisterTarget,
+pub struct SystemUpgradeOperationInput {
+    pub target: SystemUpgradeTarget,
     /// The module is only available while the operation is not finalized.
     pub module: Vec<u8>,
     pub arg: Option<Vec<u8>>,
@@ -270,10 +271,10 @@ pub struct ChangeCanisterOperationInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ChangeCanisterOperation {
+pub struct SystemUpgradeOperation {
     pub module_checksum: Vec<u8>,
     pub arg_checksum: Option<Vec<u8>>,
-    pub input: ChangeCanisterOperationInput,
+    pub input: SystemUpgradeOperationInput,
 }
 
 #[storable]

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '~/test.utils';
-import ChangeCanisterConfirmationScreen from './ChangeCanisterConfirmationScreen.vue';
+import SystemUpgradeConfirmationScreen from './SystemUpgradeConfirmationScreen.vue';
 
-describe('ChangeCanisterConfirmationScreen', () => {
+describe('SystemUpgradeConfirmationScreen', () => {
   it('confirmation screen has checksum and comment fields', () => {
-    const wrapper = mount(ChangeCanisterConfirmationScreen, {
+    const wrapper = mount(SystemUpgradeConfirmationScreen, {
       props: {
         wasmModuleChecksum: 'checksum',
         comment: 'My test comment',
@@ -17,7 +17,7 @@ describe('ChangeCanisterConfirmationScreen', () => {
   });
 
   it('confirmation screen shows the checksum in the field in readonly mode', () => {
-    const wrapper = mount(ChangeCanisterConfirmationScreen, {
+    const wrapper = mount(SystemUpgradeConfirmationScreen, {
       props: {
         wasmModuleChecksum: 'checksum',
       },
@@ -31,7 +31,7 @@ describe('ChangeCanisterConfirmationScreen', () => {
   });
 
   it('confirmation screen shows the comment in the field in edit mode', () => {
-    const wrapper = mount(ChangeCanisterConfirmationScreen, {
+    const wrapper = mount(SystemUpgradeConfirmationScreen, {
       props: {
         wasmModuleChecksum: 'checksum',
         comment: 'My test comment',

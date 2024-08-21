@@ -22,7 +22,6 @@ mod add_request_policy;
 mod add_user;
 mod add_user_group;
 mod call_canister;
-mod change_canister;
 mod change_external_canister;
 mod configure_external_canister;
 mod create_canister;
@@ -38,6 +37,7 @@ mod remove_address_book_entry;
 mod remove_request_policy;
 mod remove_user_group;
 mod set_disaster_recovery;
+mod system_upgrade;
 mod transfer;
 
 use self::{
@@ -47,7 +47,6 @@ use self::{
     add_user::{AddUserRequestCreate, AddUserRequestExecute},
     add_user_group::{AddUserGroupRequestCreate, AddUserGroupRequestExecute},
     call_canister::{CallExternalCanisterRequestCreate, CallExternalCanisterRequestExecute},
-    change_canister::{ChangeCanisterRequestCreate, ChangeCanisterRequestExecute},
     change_external_canister::{
         ChangeExternalCanisterRequestCreate, ChangeExternalCanisterRequestExecute,
     },
@@ -68,6 +67,7 @@ use self::{
     },
     remove_request_policy::{RemoveRequestPolicyRequestCreate, RemoveRequestPolicyRequestExecute},
     remove_user_group::{RemoveUserGroupRequestCreate, RemoveUserGroupRequestExecute},
+    system_upgrade::{SystemUpgradeRequestCreate, SystemUpgradeRequestExecute},
     transfer::{TransferRequestCreate, TransferRequestExecute},
 };
 
@@ -173,8 +173,8 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
-            RequestOperationInput::ChangeCanister(operation) => {
-                let creator = Box::new(ChangeCanisterRequestCreate {});
+            RequestOperationInput::SystemUpgrade(operation) => {
+                let creator = Box::new(SystemUpgradeRequestCreate {});
                 creator
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
@@ -288,12 +288,11 @@ impl RequestFactory {
             RequestOperation::SetDisasterRecovery(operation) => Box::new(
                 set_disaster_recovery::SetDisasterRecoveryRequestExecute::new(request, operation),
             ),
-            RequestOperation::ChangeCanister(operation) => {
-                Box::new(ChangeCanisterRequestExecute::new(
+            RequestOperation::SystemUpgrade(operation) => {
+                Box::new(SystemUpgradeRequestExecute::new(
                     request,
                     operation,
                     Arc::clone(&SYSTEM_SERVICE),
-                    Arc::clone(&CHANGE_CANISTER_SERVICE),
                     Arc::clone(&DISASTER_RECOVERY_SERVICE),
                 ))
             }

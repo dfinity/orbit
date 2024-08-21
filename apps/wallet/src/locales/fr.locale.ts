@@ -129,7 +129,7 @@ export default {
       },
     },
   },
-  change_canister: {
+  system_upgrade: {
     targets: {
       upgradestation: 'Portefeuille',
       upgradeupgrader: 'Upgrader',
@@ -210,7 +210,7 @@ export default {
       permission: "Police d'Accès",
       request_policy: 'Police de Demande',
       address_book_entry: "Carnet d'Adresses",
-      change_canister: 'Mise à Jour',
+      system_upgrade: 'Mise à Jour',
       transfer: 'Transferts',
       external_canister: 'Canister Géré',
       system_info: 'Informations Système',
@@ -248,9 +248,9 @@ export default {
         title: "Supprimer une entrée de carnet d'adresses",
         request_title: "Demande de supprimer une entrée de carnet d'adresses",
       },
-      changecanister: {
-        title: 'Modifier un canister',
-        request_title: 'Demande de modifier un canister',
+      systemupgrade: {
+        title: 'Mise à jour du système',
+        request_title: 'Demande de mise à jour du système',
       },
       editpermission: {
         title: 'Modifier les permissions',
@@ -741,7 +741,6 @@ export default {
       permission: "Police d'Accés",
       requestpolicy: 'Police de Demande',
       system: 'Système',
-      changecanister: 'Modification de Canister',
       transfer: 'Transfert',
       request: 'Demande',
       addressbook: "Carnet d'Adresses",
@@ -759,6 +758,7 @@ export default {
       systeminfocapabilities: 'Capacités (Actifs Pris en Charge)',
       systeminfoconfig: 'Configuration (Mises à jour, Métriques, Utilisation)',
       managesysteminfo: 'Gérer les informations système (par exemple. nom)',
+      systemupgrade: 'Mise à jour du système',
     },
     allow: {
       public: "N'importe qui",
@@ -796,7 +796,7 @@ export default {
       removeaddressbookentry: "Éffacer une entrée dans le carnet d'adresses",
       editaddressbookentry: "Modifier une entrée dans le carnet d'adresses",
       addrequestpolicy: 'Ajouter une police de demande',
-      changecanister: 'Modifier un canister',
+      systemupgrade: 'Mise à jour du système',
       editrequestpolicy: 'Modifier une police de demande',
       edituser: 'Modifier un usager',
       transfer: 'Transfert',

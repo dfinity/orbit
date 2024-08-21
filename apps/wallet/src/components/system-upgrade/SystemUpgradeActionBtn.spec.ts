@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '~/test.utils';
-import ChangeCanisterActionBtn from './ChangeCanisterActionBtn.vue';
+import SystemUpgradeActionBtn from './SystemUpgradeActionBtn.vue';
 
-describe('ChangeCanisterActionBtn', () => {
+describe('SystemUpgradeActionBtn', () => {
   it('renders action btn', () => {
-    const wrapper = mount(ChangeCanisterActionBtn);
+    const wrapper = mount(SystemUpgradeActionBtn);
 
     expect(wrapper.exists()).toBe(true);
   });
 
   it('on click emits editing', async () => {
-    const wrapper = mount(ChangeCanisterActionBtn);
+    const wrapper = mount(SystemUpgradeActionBtn);
     const btn = wrapper.find('[data-test-id="submit-upgrade-btn"]');
 
     expect(btn.exists()).toBe(true);
@@ -22,7 +22,7 @@ describe('ChangeCanisterActionBtn', () => {
 
   it('highlight mode on mobile shows no text', async () => {
     const wrapper = mount(
-      ChangeCanisterActionBtn,
+      SystemUpgradeActionBtn,
       {
         props: {
           mode: 'highlight',
@@ -43,7 +43,7 @@ describe('ChangeCanisterActionBtn', () => {
 
   it('highlight mode on desktop shows text', async () => {
     const wrapper = mount(
-      ChangeCanisterActionBtn,
+      SystemUpgradeActionBtn,
       {
         props: {
           mode: 'highlight',

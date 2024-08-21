@@ -34,9 +34,6 @@ pub use user::*;
 mod user_group;
 pub use user_group::*;
 
-mod change_canister;
-pub use change_canister::*;
-
 mod external_canister;
 pub use external_canister::*;
 

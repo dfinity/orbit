@@ -212,7 +212,7 @@ fn validate_request_operation_foreign_keys(
         RequestOperation::RemoveUserGroup(ok) => {
             EnsureUserGroup::id_exists(&ok.input.user_group_id)?;
         }
-        RequestOperation::ChangeCanister(_) => (),
+        RequestOperation::SystemUpgrade(_) => (),
         RequestOperation::ChangeExternalCanister(_) => (),
         RequestOperation::ConfigureExternalCanister(_) => (),
         RequestOperation::FundExternalCanister(_) => (),

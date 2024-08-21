@@ -2400,6 +2400,7 @@ dependencies = [
  "candid_parser",
  "control-panel-api",
  "dfx-orbit",
+ "flate2",
  "hex",
  "ic-cdk 0.13.2",
  "ic-ledger-types",

@@ -45,7 +45,7 @@ type RequestSpecifier = variant {
   AddAddressBookEntry;
   EditAddressBookEntry : ResourceIds;
   RemoveAddressBookEntry : ResourceIds;
-  ChangeCanister;
+  SystemUpgrade;
   SetDisasterRecovery;
   ChangeExternalCanister : ExternalCanisterId;
   FundExternalCanister : ExternalCanisterId;
@@ -548,23 +548,23 @@ type CanisterInstallMode = variant {
   upgrade;
 };
 
-type ChangeCanisterTarget = variant {
+type SystemUpgradeTarget = variant {
   UpgradeStation;
   UpgradeUpgrader;
 };
 
-type ChangeCanisterOperationInput = record {
+type SystemUpgradeOperationInput = record {
   // The target to change.
-  target : ChangeCanisterTarget;
+  target : SystemUpgradeTarget;
   // The wasm module to install.
   module : blob;
   // The initial argument passed to the new wasm module.
   arg : opt blob;
 };
 
-type ChangeCanisterOperation = record {
+type SystemUpgradeOperation = record {
   // The target to change.
-  target : ChangeCanisterTarget;
+  target : SystemUpgradeTarget;
   // The checksum of the wasm module.
   module_checksum : Sha256Hash;
   // The checksum of the arg blob.
@@ -838,8 +838,8 @@ type RequestOperation = variant {
   EditUserGroup : EditUserGroupOperation;
   // An operation for removing an existing user group.
   RemoveUserGroup : RemoveUserGroupOperation;
-  // An operation for changing a canister.
-  ChangeCanister : ChangeCanisterOperation;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade : SystemUpgradeOperation;
   // An operation for setting disaster recovery.
   SetDisasterRecovery : SetDisasterRecoveryOperation;
   // An operation for changing a external canister.
@@ -887,8 +887,8 @@ type RequestOperationInput = variant {
   EditUserGroup : EditUserGroupOperationInput;
   // An operation for removing an existing user group.
   RemoveUserGroup : RemoveUserGroupOperationInput;
-  // An operation for changing a canister.
-  ChangeCanister : ChangeCanisterOperationInput;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade : SystemUpgradeOperationInput;
   // An operation for setting disaster recovery.
   SetDisasterRecovery : SetDisasterRecoveryOperationInput;
   // An operation for changing a external canister.
@@ -936,8 +936,8 @@ type RequestOperationType = variant {
   EditUserGroup;
   // An operation for removing an existing user group.
   RemoveUserGroup;
-  // An operation for changing a canister.
-  ChangeCanister;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade;
   // An operation for setting disaster recovery for a canister.
   SetDisasterRecovery;
   // An operation for changing a external canister.
@@ -1067,8 +1067,8 @@ type ListRequestsOperationType = variant {
   EditUserGroup;
   // An operation for removing an existing user group.
   RemoveUserGroup;
-  // An operation for changing a canister.
-  ChangeCanister;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade;
   // An operation for changing a external canister with an optionally specified canister ID.
   ChangeExternalCanister : opt principal;
   // An operation for configuring an external canister.

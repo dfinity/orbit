@@ -1,9 +1,4 @@
-use crate::{
-    errors::ChangeCanisterError,
-    models::{CanisterInstallMode, CanisterUpgradeModeArgs},
-    services::{SystemService, SYSTEM_SERVICE},
-};
-use candid::CandidType;
+use crate::{errors::ChangeCanisterError, models::CanisterInstallMode};
 use candid::Principal;
 use ic_cdk::api::management_canister::{
     main::{self as mgmt, InstallCodeArgument},
@@ -15,59 +10,15 @@ use std::sync::Arc;
 
 lazy_static! {
     pub static ref CHANGE_CANISTER_SERVICE: Arc<ChangeCanisterService> =
-        Arc::new(ChangeCanisterService::new(Arc::clone(&SYSTEM_SERVICE)));
+        Arc::new(ChangeCanisterService::new());
 }
 
-#[derive(Debug)]
-pub struct ChangeCanisterService {
-    system_service: Arc<SystemService>,
-}
-
-#[derive(Clone, CandidType)]
-struct ChangeCanisterParams {
-    module: Vec<u8>,
-    arg: Vec<u8>,
-}
+#[derive(Default, Debug)]
+pub struct ChangeCanisterService {}
 
 impl ChangeCanisterService {
-    pub fn new(system_service: Arc<SystemService>) -> Self {
-        Self { system_service }
-    }
-
-    /// Execute an upgrade of the station by requesting the upgrader to perform it on our behalf.
-    pub async fn upgrade_station(&self, module: &[u8], arg: &[u8]) -> ServiceResult<()> {
-        let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
-
-        ic_cdk::call(
-            upgrader_canister_id,
-            "trigger_upgrade",
-            (ChangeCanisterParams {
-                module: module.to_owned(),
-                arg: arg.to_owned(),
-            },),
-        )
-        .await
-        .map_err(|(_, err)| ChangeCanisterError::Failed {
-            reason: err.to_string(),
-        })?;
-
-        Ok(())
-    }
-
-    /// Execute an upgrade of the upgrader canister.
-    pub async fn upgrade_upgrader(
-        &self,
-        module: &[u8],
-        arg: Option<Vec<u8>>,
-    ) -> ServiceResult<(), ChangeCanisterError> {
-        let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
-        self.install_canister(
-            upgrader_canister_id,
-            CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}),
-            module,
-            arg,
-        )
-        .await
+    pub fn new() -> Self {
+        Self {}
     }
 
     /// Execute an install or upgrade of a canister.

@@ -1,5 +1,6 @@
 use crate::setup::WALLET_ADMIN_USER;
 use candid::Principal;
+use flate2::{write::GzEncoder, Compression};
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
@@ -14,6 +15,7 @@ use station_api::{
     SetDisasterRecoveryOperationInput, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
     SystemInfoDTO, SystemInfoResponse, UserDTO, UserSpecifierDTO, UserStatusDTO, UuidDTO,
 };
+use std::io::Write;
 use std::time::Duration;
 use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
 
@@ -659,6 +661,12 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
             panic!("request must be AddAccount");
         }
     }
+}
+
+pub fn compress_to_gzip(data: &Vec<u8>) -> Vec<u8> {
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::best());
+    encoder.write_all(data).expect("Failed to write data");
+    encoder.finish().expect("Failed to finish compression")
 }
 
 thread_local! {

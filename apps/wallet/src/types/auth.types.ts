@@ -13,7 +13,7 @@ export enum Privilege {
   ListAddressBookEntries = 'ListAddressBookEntries',
   AddAddressBookEntry = 'AddAddressBookEntry',
   ListRequests = 'ListRequests',
-  ChangeCanister = 'ChangeCanister',
+  SystemUpgrade = 'SystemUpgrade',
   ManageSystemInfo = 'ManageSystemInfo',
 }
 

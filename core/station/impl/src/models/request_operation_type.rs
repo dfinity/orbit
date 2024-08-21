@@ -18,7 +18,7 @@ pub enum RequestOperationType {
     AddUserGroup = 6,
     EditUserGroup = 7,
     RemoveUserGroup = 8,
-    ChangeCanister = 9,
+    SystemUpgrade = 9,
     EditPermission = 11,
     AddRequestPolicy = 13,
     EditRequestPolicy = 14,
@@ -47,7 +47,7 @@ pub enum ListRequestsOperationType {
     AddUserGroup,
     EditUserGroup,
     RemoveUserGroup,
-    ChangeCanister,
+    SystemUpgrade,
     SetDisasterRecovery,
     CreateExternalCanister,
     ChangeExternalCanister(Option<Principal>),
@@ -94,8 +94,8 @@ impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
             ListRequestsOperationType::RemoveUserGroup => {
                 matches!(self, RequestOperationFilterType::RemoveUserGroup)
             }
-            ListRequestsOperationType::ChangeCanister => {
-                matches!(self, RequestOperationFilterType::ChangeCanister)
+            ListRequestsOperationType::SystemUpgrade => {
+                matches!(self, RequestOperationFilterType::SystemUpgrade)
             }
             ListRequestsOperationType::SetDisasterRecovery => {
                 matches!(self, RequestOperationFilterType::SetDisasterRecovery)
@@ -184,7 +184,7 @@ impl FromStr for RequestOperationType {
             "add_user_group" => Ok(RequestOperationType::AddUserGroup),
             "edit_user_group" => Ok(RequestOperationType::EditUserGroup),
             "remove_user_group" => Ok(RequestOperationType::RemoveUserGroup),
-            "change_canister" => Ok(RequestOperationType::ChangeCanister),
+            "system_upgrade" => Ok(RequestOperationType::SystemUpgrade),
             "change_external_canister" => Ok(RequestOperationType::ChangeExternalCanister),
             "create_external_canister" => Ok(RequestOperationType::CreateExternalCanister),
             "call_external_canister" => Ok(RequestOperationType::CallExternalCanister),
@@ -215,7 +215,7 @@ impl Display for RequestOperationType {
             RequestOperationType::AddUserGroup => write!(f, "add_user_group"),
             RequestOperationType::EditUserGroup => write!(f, "edit_user_group"),
             RequestOperationType::RemoveUserGroup => write!(f, "remove_user_group"),
-            RequestOperationType::ChangeCanister => write!(f, "change_canister"),
+            RequestOperationType::SystemUpgrade => write!(f, "system_upgrade"),
             RequestOperationType::ChangeExternalCanister => write!(f, "change_external_canister"),
             RequestOperationType::CreateExternalCanister => write!(f, "create_external_canister"),
             RequestOperationType::CallExternalCanister => write!(f, "call_external_canister"),
@@ -318,8 +318,8 @@ mod tests {
             RequestOperationType::RemoveUserGroup
         );
         assert_eq!(
-            RequestOperationType::from_str("change_canister").unwrap(),
-            RequestOperationType::ChangeCanister
+            RequestOperationType::from_str("system_upgrade").unwrap(),
+            RequestOperationType::SystemUpgrade
         );
         assert_eq!(
             RequestOperationType::from_str("change_external_canister").unwrap(),

@@ -38,22 +38,22 @@
 import { mdiCodeArray, mdiCube, mdiTarget } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { VAlert, VFileInput, VSelect, VTextarea } from 'vuetify/components';
-import { ChangeCanisterFormValue } from '~/components/change-canister/change-canister.types';
+import { SystemUpgradeFormValue } from './system-upgrade.types';
 import {
   useDefaultUpgradeFormValue,
   useUpgradeTargets,
-} from '~/composables/change-canister.composable';
+} from '~/composables/system-upgrade.composable';
 import logger from '~/core/logger.core';
-import { ChangeCanisterTargetType } from '~/types/station.types';
+import { SystemUpgradeTargetType } from '~/types/station.types';
 import { readFileAsArrayBuffer } from '~/utils/file.utils';
 import { requiredRule } from '~/utils/form.utils';
 
 const props = defineProps<{
-  modelValue: ChangeCanisterFormValue;
+  modelValue: SystemUpgradeFormValue;
 }>();
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: ChangeCanisterFormValue): void;
+  (event: 'update:modelValue', payload: SystemUpgradeFormValue): void;
 }>();
 
 const modelValue = computed({
@@ -63,7 +63,7 @@ const modelValue = computed({
 
 const wasmModuleFile = ref<File[]>([]);
 const upgradeTargets = useUpgradeTargets();
-const upgradeTarget = ref<ChangeCanisterTargetType>(ChangeCanisterTargetType.UpgradeStation);
+const upgradeTarget = ref<SystemUpgradeTargetType>(SystemUpgradeTargetType.UpgradeStation);
 const upgradeTargetItems = computed(() => Object.values(upgradeTargets.value));
 const wasmInitArg = ref<string>(props.modelValue.wasmInitArg ?? '');
 
@@ -98,13 +98,13 @@ watch(
   () => upgradeTarget.value,
   () => {
     switch (upgradeTarget.value) {
-      case ChangeCanisterTargetType.UpgradeStation:
+      case SystemUpgradeTargetType.UpgradeStation:
         modelValue.value = {
           ...modelValue.value,
           target: { UpgradeStation: null },
         };
         break;
-      case ChangeCanisterTargetType.UpgradeUpgrader:
+      case SystemUpgradeTargetType.UpgradeUpgrader:
         modelValue.value = {
           ...modelValue.value,
           target: { UpgradeUpgrader: null },

@@ -24,14 +24,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { ChangeCanisterOperation, Request } from '~/generated/station/station.did';
+import { SystemUpgradeOperation, Request } from '~/generated/station/station.did';
 import { variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 
 const props = withDefaults(
   defineProps<{
     request: Request;
-    operation: ChangeCanisterOperation;
+    operation: SystemUpgradeOperation;
     mode?: 'list' | 'detail';
   }>(),
   {

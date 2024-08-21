@@ -22,7 +22,7 @@ export const requestSpecifiersIncludedRules = (): Record<
   [RequestSpecifierEnum.AddRequestPolicy]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.EditRequestPolicy]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.RemoveRequestPolicy]: [...defaultRequestPolicyRules],
-  [RequestSpecifierEnum.ChangeCanister]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.SystemUpgrade]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.AddUserGroup]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.EditUserGroup]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.RemoveUserGroup]: [...defaultRequestPolicyRules],

@@ -244,7 +244,7 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::Transfer(account) => {
                 station_api::RequestSpecifierDTO::Transfer(account.into())
             }
-            RequestSpecifier::ChangeCanister => station_api::RequestSpecifierDTO::ChangeCanister,
+            RequestSpecifier::SystemUpgrade => station_api::RequestSpecifierDTO::SystemUpgrade,
             RequestSpecifier::SetDisasterRecovery => {
                 station_api::RequestSpecifierDTO::SetDisasterRecovery
             }
@@ -309,7 +309,7 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             station_api::RequestSpecifierDTO::Transfer(transfer_specifier) => {
                 RequestSpecifier::Transfer(transfer_specifier.into())
             }
-            station_api::RequestSpecifierDTO::ChangeCanister => RequestSpecifier::ChangeCanister,
+            station_api::RequestSpecifierDTO::SystemUpgrade => RequestSpecifier::SystemUpgrade,
             station_api::RequestSpecifierDTO::SetDisasterRecovery => {
                 RequestSpecifier::SetDisasterRecovery
             }
@@ -425,7 +425,7 @@ impl RequestSpecifier {
                     .map(|id| Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(*id))))
                     .collect::<_>(),
             },
-            RequestSpecifier::SetDisasterRecovery | RequestSpecifier::ChangeCanister => {
+            RequestSpecifier::SetDisasterRecovery | RequestSpecifier::SystemUpgrade => {
                 vec![Resource::System(SystemResourceAction::Upgrade)]
             }
             RequestSpecifier::ChangeExternalCanister(target) => {

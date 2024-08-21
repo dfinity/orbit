@@ -264,10 +264,10 @@ impl<'de> Deserialize<'de> for RequestSpecifier {
         const ENUM_NAME: &str = "RequestSpecifier";
 
         const CURRENT_VARIANTS: &[&str] = RequestSpecifier::VARIANTS;
-        const REMOVED_VARIANTS: [&str; 0] = [];
+        const REMOVED_VARIANTS: [&str; 1] = ["ChangeCanister"];
 
         // IMPORTANT: The size of the array must be hardcoded, to make sure it can be checked at compile-time.
-        static EXPECTED_VARIANTS: [&str; 22] = {
+        static EXPECTED_VARIANTS: [&str; 23] = {
             let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] =
                 concat_str_arrays!(CURRENT_VARIANTS, REMOVED_VARIANTS);
 
@@ -276,7 +276,7 @@ impl<'de> Deserialize<'de> for RequestSpecifier {
 
         // Define the old version of the types for migration purposes
         #[derive(Deserialize)]
-        enum OldCreteExternalCanisterTarget {
+        enum OldCreateExternalCanisterTarget {
             Any,
         }
 
@@ -303,10 +303,12 @@ impl<'de> Deserialize<'de> for RequestSpecifier {
                         // Even though the value of the variant is not used, we still need to consume it
                         // to make sure there is no trailing data left in the end of the deserialization.
                         let _ = variant_access
-                            .newtype_variant::<Option<OldCreteExternalCanisterTarget>>();
+                            .newtype_variant::<Option<OldCreateExternalCanisterTarget>>();
 
                         Ok(RequestSpecifier::CreateExternalCanister)
                     }
+                    // `ChangeCanister` does not exist anymore, so we need to handle it here
+                    "ChangeCanister" => Ok(RequestSpecifier::SystemUpgrade),
                     // Then all the default cases
                     "AddAccount" => Ok(RequestSpecifier::AddAccount),
                     "AddUser" => Ok(RequestSpecifier::AddUser),
@@ -331,7 +333,7 @@ impl<'de> Deserialize<'de> for RequestSpecifier {
                         let value = variant_access.newtype_variant()?;
                         Ok(RequestSpecifier::Transfer(value))
                     }
-                    "ChangeCanister" => Ok(RequestSpecifier::ChangeCanister),
+                    "SystemUpgrade" => Ok(RequestSpecifier::SystemUpgrade),
                     "SetDisasterRecovery" => Ok(RequestSpecifier::SetDisasterRecovery),
                     "ChangeExternalCanister" => {
                         let value = variant_access.newtype_variant()?;
@@ -377,6 +379,150 @@ impl<'de> Deserialize<'de> for RequestSpecifier {
     }
 }
 
+impl<'de> Deserialize<'de> for RequestOperation {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        const ENUM_NAME: &str = "RequestOperation";
+
+        const CURRENT_VARIANTS: &[&str] = RequestOperation::VARIANTS;
+        const REMOVED_VARIANTS: [&str; 1] = ["ChangeCanister"];
+
+        // IMPORTANT: The size of the array must be hardcoded, to make sure it can be checked at compile-time.
+        static EXPECTED_VARIANTS: [&str; 24] = {
+            let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] =
+                concat_str_arrays!(CURRENT_VARIANTS, REMOVED_VARIANTS);
+
+            variants
+        };
+
+        struct RequestOperationVisitor;
+
+        impl<'de> Visitor<'de> for RequestOperationVisitor {
+            type Value = RequestOperation;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str(&format!("a valid {} enum variant", ENUM_NAME))
+            }
+
+            fn visit_enum<A>(self, data: A) -> Result<Self::Value, A::Error>
+            where
+                A: EnumAccess<'de>,
+            {
+                let (variant, variant_access) = data.variant::<String>()?;
+
+                // Due to the fact that serde serialization uses a string representation of the enum variant,
+                // it is not possible to do a compile-time check for all variants of the enum.
+                match variant.as_str() {
+                    // First the new formats
+                    // `ChangeCanister` does not exist anymore, so we need to handle it here
+                    "ChangeCanister" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::SystemUpgrade(value))
+                    }
+                    // Then all the default cases
+                    "Transfer" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::Transfer(value))
+                    }
+                    "AddAccount" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::AddAccount(value))
+                    }
+                    "EditAccount" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::EditAccount(value))
+                    }
+                    "AddAddressBookEntry" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::AddAddressBookEntry(value))
+                    }
+                    "EditAddressBookEntry" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::EditAddressBookEntry(value))
+                    }
+                    "RemoveAddressBookEntry" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::RemoveAddressBookEntry(value))
+                    }
+                    "AddUser" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::AddUser(value))
+                    }
+                    "EditUser" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::EditUser(value))
+                    }
+                    "EditPermission" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::EditPermission(value))
+                    }
+                    "AddUserGroup" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::AddUserGroup(value))
+                    }
+                    "EditUserGroup" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::EditUserGroup(value))
+                    }
+                    "RemoveUserGroup" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::RemoveUserGroup(value))
+                    }
+                    "SystemUpgrade" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::SystemUpgrade(value))
+                    }
+                    "ChangeExternalCanister" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::ChangeExternalCanister(value))
+                    }
+                    "ConfigureExternalCanister" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::ConfigureExternalCanister(value))
+                    }
+                    "CreateExternalCanister" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::CreateExternalCanister(value))
+                    }
+                    "CallExternalCanister" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::CallExternalCanister(value))
+                    }
+                    "FundExternalCanister" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::FundExternalCanister(value))
+                    }
+                    "AddRequestPolicy" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::AddRequestPolicy(value))
+                    }
+                    "EditRequestPolicy" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::EditRequestPolicy(value))
+                    }
+                    "RemoveRequestPolicy" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::RemoveRequestPolicy(value))
+                    }
+                    "ManageSystemInfo" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::ManageSystemInfo(value))
+                    }
+                    "SetDisasterRecovery" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::SetDisasterRecovery(value))
+                    }
+                    _ => Err(de::Error::unknown_variant(&variant, &EXPECTED_VARIANTS)),
+                }
+            }
+        }
+
+        deserializer.deserialize_enum(ENUM_NAME, &EXPECTED_VARIANTS, RequestOperationVisitor)
+    }
+}
+
 // Repositories should only implement the `RebuildRepository` trait if they are affected by the migration,
 // otherwise, they should not implement the trait.
 //
@@ -388,19 +534,19 @@ impl RebuildRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRe
 
         for key in keys {
             match self.get(&key) {
-                Some(mut value) => {
+                Some(mut request) => {
                     // First make sure there is no dangling index for the entry.
-                    self.remove_entry_indexes(&value);
+                    self.remove_entry_indexes(&request);
                     // Then add the updated indexes.
-                    self.add_entry_indexes(&value);
+                    self.add_entry_indexes(&request);
                     // Clear the module field if the request is finalized to save memory.
-                    if value.is_finalized() {
-                        if let RequestOperation::ChangeCanister(operation) = &mut value.operation {
+                    if request.is_finalized() {
+                        if let RequestOperation::SystemUpgrade(operation) = &mut request.operation {
                             operation.input.module = Vec::new();
                         }
                     }
 
-                    Self::with_db(|db| db.insert(key, value));
+                    Self::with_db(|db| db.insert(key, request));
                 }
                 None => print(format!(
                     "Unexpected Request Id({}) not found in the repository",
@@ -415,7 +561,7 @@ impl RebuildRepository<PermissionKey, Permission, VirtualMemory<Memory>> for Per
     fn rebuild(&self) {
         let permissions = Self::with_db(|db| db.iter().map(|(_, v)| v).collect::<Vec<_>>());
 
-        // then clear the repository because the resource is a key that was updated and has dropped the
+        // Then clear the repository because the resource is a key that was updated and has dropped the
         // `ChangeCanister` variant, and Resource is a complex type that is serialized and deserialized.
         Self::with_db(|db| db.clear_new());
 

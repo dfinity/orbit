@@ -1,17 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import {
-  useDefaultUpgradeModel,
-  useUpgradeTargets,
-} from '~/composables/change-canister.composable';
+import { useDefaultUpgradeModel, useUpgradeTargets } from '~/composables/system-upgrade.composable';
 import { setupComponent } from '~/test.utils';
-import { ChangeCanisterTargetType } from '~/types/station.types';
+import { SystemUpgradeTargetType } from '~/types/station.types';
 
-describe('change-canister.composable', () => {
+describe('system-upgrade.composable', () => {
   it('should return upgrade targets with correct targets', () => {
     const vm = setupComponent(() => ({ targets: useUpgradeTargets() }));
 
-    expect(vm.targets.station.value).toEqual(ChangeCanisterTargetType.UpgradeStation);
-    expect(vm.targets.upgrader.value).toEqual(ChangeCanisterTargetType.UpgradeUpgrader);
+    expect(vm.targets.station.value).toEqual(SystemUpgradeTargetType.UpgradeStation);
+    expect(vm.targets.upgrader.value).toEqual(SystemUpgradeTargetType.UpgradeUpgrader);
   });
 
   it('should return default form value with empty values', () => {

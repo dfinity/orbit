@@ -2,34 +2,34 @@ use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{
-        ChangeCanisterOperation, ChangeCanisterTarget, Request, RequestExecutionPlan,
-        RequestOperation,
+        Request, RequestExecutionPlan, RequestOperation, SystemUpgradeOperation,
+        SystemUpgradeTarget,
     },
-    services::{ChangeCanisterService, DisasterRecoveryService, SystemService},
+    services::{DisasterRecoveryService, SystemService},
 };
 use async_trait::async_trait;
 use candid::Encode;
 use orbit_essentials::types::UUID;
 use sha2::{Digest, Sha256};
-use station_api::{ChangeCanisterOperationInput, CreateRequestInput};
+use station_api::{CreateRequestInput, SystemUpgradeOperationInput};
 use std::sync::Arc;
 
-pub struct ChangeCanisterRequestCreate;
+pub struct SystemUpgradeRequestCreate;
 
 #[async_trait]
-impl Create<ChangeCanisterOperationInput> for ChangeCanisterRequestCreate {
+impl Create<SystemUpgradeOperationInput> for SystemUpgradeRequestCreate {
     async fn create(
         &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: CreateRequestInput,
-        operation_input: ChangeCanisterOperationInput,
+        operation_input: SystemUpgradeOperationInput,
     ) -> Result<Request, RequestError> {
         let request = Request::new(
             request_id,
             requested_by_user,
             Request::default_expiration_dt_ns(),
-            RequestOperation::ChangeCanister(ChangeCanisterOperation {
+            RequestOperation::SystemUpgrade(SystemUpgradeOperation {
                 arg_checksum: operation_input.arg.as_ref().map(|arg| {
                     let mut hasher = Sha256::new();
                     hasher.update(arg);
@@ -54,44 +54,41 @@ impl Create<ChangeCanisterOperationInput> for ChangeCanisterRequestCreate {
     }
 }
 
-pub struct ChangeCanisterRequestExecute<'p, 'o> {
+pub struct SystemUpgradeRequestExecute<'p, 'o> {
     request: &'p Request,
-    operation: &'o ChangeCanisterOperation,
+    operation: &'o SystemUpgradeOperation,
     system_service: Arc<SystemService>,
-    change_canister_service: Arc<ChangeCanisterService>,
     disaster_recovery_service: Arc<DisasterRecoveryService>,
 }
 
-impl<'p, 'o> ChangeCanisterRequestExecute<'p, 'o> {
+impl<'p, 'o> SystemUpgradeRequestExecute<'p, 'o> {
     pub fn new(
         request: &'p Request,
-        operation: &'o ChangeCanisterOperation,
+        operation: &'o SystemUpgradeOperation,
         system_service: Arc<SystemService>,
-        change_canister_service: Arc<ChangeCanisterService>,
         disaster_recovery_service: Arc<DisasterRecoveryService>,
     ) -> Self {
         Self {
             request,
             operation,
             system_service,
-            change_canister_service,
             disaster_recovery_service,
         }
     }
 }
 
 #[async_trait]
-impl Execute for ChangeCanisterRequestExecute<'_, '_> {
+impl Execute for SystemUpgradeRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         match self.operation.input.target {
-            ChangeCanisterTarget::UpgradeStation => {
+            SystemUpgradeTarget::UpgradeStation => {
                 self.system_service
                     .set_self_upgrade_request(self.request.id);
 
                 let default_arg = Encode!(&()).unwrap();
                 let arg = self.operation.input.arg.as_ref().unwrap_or(&default_arg);
                 let out = self
-                    .change_canister_service
+                    .system_service
                     .upgrade_station(&self.operation.input.module, arg)
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
@@ -109,8 +106,8 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
                 ))
             }
 
-            ChangeCanisterTarget::UpgradeUpgrader => {
-                self.change_canister_service
+            SystemUpgradeTarget::UpgradeUpgrader => {
+                self.system_service
                     .upgrade_upgrader(
                         &self.operation.input.module,
                         self.operation.input.arg.clone(),
@@ -127,7 +124,7 @@ impl Execute for ChangeCanisterRequestExecute<'_, '_> {
                 });
 
                 let mut operation = self.request.operation.clone();
-                if let RequestOperation::ChangeCanister(operation) = &mut operation {
+                if let RequestOperation::SystemUpgrade(operation) = &mut operation {
                     // Clears the module when the operation is completed, this helps to reduce memory usage.
                     operation.input.module = Vec::new();
                 }

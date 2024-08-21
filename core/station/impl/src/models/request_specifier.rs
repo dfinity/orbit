@@ -62,11 +62,11 @@ pub enum RequestSpecifier {
     EditAddressBookEntry(ResourceIds),
     RemoveAddressBookEntry(ResourceIds),
     Transfer(ResourceIds),
-    ChangeCanister,
     SetDisasterRecovery,
-    ChangeExternalCanister(ExternalCanisterId),
     CreateExternalCanister,
+    ChangeExternalCanister(ExternalCanisterId),
     CallExternalCanister(CallExternalCanisterResourceTarget),
+    FundExternalCanister(ExternalCanisterId),
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIds),
@@ -75,7 +75,7 @@ pub enum RequestSpecifier {
     EditUserGroup(ResourceIds),
     RemoveUserGroup(ResourceIds),
     ManageSystemInfo,
-    FundExternalCanister(ExternalCanisterId),
+    SystemUpgrade,
 }
 
 impl ModelValidator<ValidationError> for RequestSpecifier {
@@ -84,7 +84,7 @@ impl ModelValidator<ValidationError> for RequestSpecifier {
             RequestSpecifier::AddAccount
             | RequestSpecifier::AddUser
             | RequestSpecifier::AddAddressBookEntry
-            | RequestSpecifier::ChangeCanister
+            | RequestSpecifier::SystemUpgrade
             | RequestSpecifier::ChangeExternalCanister(_)
             | RequestSpecifier::FundExternalCanister(_)
             | RequestSpecifier::CreateExternalCanister
@@ -140,7 +140,7 @@ impl From<&RequestSpecifier> for RequestOperationType {
             }
             RequestSpecifier::Transfer(_) => RequestOperationType::Transfer,
             RequestSpecifier::EditPermission(_) => RequestOperationType::EditPermission,
-            RequestSpecifier::ChangeCanister => RequestOperationType::ChangeCanister,
+            RequestSpecifier::SystemUpgrade => RequestOperationType::SystemUpgrade,
             RequestSpecifier::ChangeExternalCanister(_) => {
                 RequestOperationType::ChangeExternalCanister
             }
@@ -354,9 +354,9 @@ mod tests {
         RequestSpecifier::AddAddressBookEntry
             .validate()
             .expect("AddAddressBookEntry should be valid");
-        RequestSpecifier::ChangeCanister
+        RequestSpecifier::SystemUpgrade
             .validate()
-            .expect("ChangeCanister should be valid");
+            .expect("SystemUpgrade should be valid");
         RequestSpecifier::ChangeExternalCanister(ExternalCanisterId::Any)
             .validate()
             .expect("ChangeExternalCanister should be valid");

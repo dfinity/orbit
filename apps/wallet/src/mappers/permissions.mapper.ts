@@ -23,10 +23,6 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.RequestPolicy;
   }
 
-  if (variantIs(resource, 'ChangeCanister')) {
-    return ResourceTypeEnum.ChangeCanister;
-  }
-
   if (variantIs(resource, 'System')) {
     return ResourceTypeEnum.System;
   }

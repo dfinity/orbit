@@ -208,7 +208,7 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 )))
             }
             RequestOperationInput::SetDisasterRecovery(_)
-            | RequestOperationInput::ChangeCanister(_) => {
+            | RequestOperationInput::SystemUpgrade(_) => {
                 Resource::System(SystemResourceAction::Upgrade)
             }
             RequestOperationInput::ChangeExternalCanister(input) => {

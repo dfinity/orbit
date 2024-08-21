@@ -171,6 +171,16 @@ lazy_static! {
 
 pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPolicyRule)> {
     vec![
+        // System upgrade
+        (
+            RequestSpecifier::SystemUpgrade,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        // system info
+        (
+            RequestSpecifier::ManageSystemInfo,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
         // accounts
         (
             RequestSpecifier::AddAccount,
@@ -229,11 +239,6 @@ pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPoli
             RequestSpecifier::RemoveUserGroup(ResourceIds::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
-        // change canister
-        (
-            RequestSpecifier::ChangeCanister,
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
-        ),
         // create, change, and call external canister
         (
             RequestSpecifier::CreateExternalCanister,
@@ -248,11 +253,6 @@ pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPoli
                 validation_method: ValidationMethodResourceTarget::No,
                 execution_method: ExecutionMethodResourceTarget::Any,
             }),
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
-        ),
-        // system info
-        (
-            RequestSpecifier::ManageSystemInfo,
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
     ]

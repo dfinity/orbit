@@ -12,8 +12,7 @@ use crate::{
         AddRequestPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
         CallExternalCanisterOperation, CallExternalCanisterOperationInput, CanisterInstallMode,
         CanisterInstallModeArgs, CanisterMethod, CanisterReinstallModeArgs,
-        CanisterUpgradeModeArgs, ChangeCanisterOperation, ChangeCanisterOperationInput,
-        ChangeCanisterTarget, ChangeExternalCanisterOperation,
+        CanisterUpgradeModeArgs, ChangeExternalCanisterOperation,
         ChangeExternalCanisterOperationInput, ConfigureExternalCanisterOperation,
         ConfigureExternalCanisterOperationKind, ConfigureExternalCanisterSettingsInput,
         CreateExternalCanisterOperation, CreateExternalCanisterOperationInput,
@@ -29,6 +28,7 @@ use crate::{
         ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
         RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
+        SystemUpgradeOperation, SystemUpgradeOperationInput, SystemUpgradeTarget,
         TransferOperation, User,
     },
     repositories::{
@@ -39,8 +39,7 @@ use crate::{
 use orbit_essentials::repository::Repository;
 use station_api::{
     AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
-    CallExternalCanisterOperationDTO, CanisterMethodDTO, ChangeCanisterOperationDTO,
-    ChangeCanisterTargetDTO, ChangeExternalCanisterOperationDTO,
+    CallExternalCanisterOperationDTO, CanisterMethodDTO, ChangeExternalCanisterOperationDTO,
     CreateExternalCanisterOperationDTO, EditAccountOperationDTO, EditAddressBookEntryOperationDTO,
     EditUserOperationDTO, NetworkDTO, RemoveAddressBookEntryOperationDTO, RequestOperationDTO,
     TransferOperationDTO,
@@ -318,27 +317,35 @@ impl From<station_api::EditUserOperationInput> for EditUserOperationInput {
     }
 }
 
-impl From<ChangeCanisterTarget> for ChangeCanisterTargetDTO {
-    fn from(value: ChangeCanisterTarget) -> Self {
+impl From<SystemUpgradeTarget> for station_api::SystemUpgradeTargetDTO {
+    fn from(value: SystemUpgradeTarget) -> Self {
         match value {
-            ChangeCanisterTarget::UpgradeStation => ChangeCanisterTargetDTO::UpgradeStation,
-            ChangeCanisterTarget::UpgradeUpgrader => ChangeCanisterTargetDTO::UpgradeUpgrader,
+            SystemUpgradeTarget::UpgradeStation => {
+                station_api::SystemUpgradeTargetDTO::UpgradeStation
+            }
+            SystemUpgradeTarget::UpgradeUpgrader => {
+                station_api::SystemUpgradeTargetDTO::UpgradeUpgrader
+            }
         }
     }
 }
 
-impl From<ChangeCanisterTargetDTO> for ChangeCanisterTarget {
-    fn from(value: ChangeCanisterTargetDTO) -> Self {
+impl From<station_api::SystemUpgradeTargetDTO> for SystemUpgradeTarget {
+    fn from(value: station_api::SystemUpgradeTargetDTO) -> Self {
         match value {
-            ChangeCanisterTargetDTO::UpgradeStation => ChangeCanisterTarget::UpgradeStation,
-            ChangeCanisterTargetDTO::UpgradeUpgrader => ChangeCanisterTarget::UpgradeUpgrader,
+            station_api::SystemUpgradeTargetDTO::UpgradeStation => {
+                SystemUpgradeTarget::UpgradeStation
+            }
+            station_api::SystemUpgradeTargetDTO::UpgradeUpgrader => {
+                SystemUpgradeTarget::UpgradeUpgrader
+            }
         }
     }
 }
 
-impl From<ChangeCanisterOperationInput> for station_api::ChangeCanisterOperationInput {
-    fn from(input: ChangeCanisterOperationInput) -> station_api::ChangeCanisterOperationInput {
-        station_api::ChangeCanisterOperationInput {
+impl From<SystemUpgradeOperationInput> for station_api::SystemUpgradeOperationInput {
+    fn from(input: SystemUpgradeOperationInput) -> station_api::SystemUpgradeOperationInput {
+        station_api::SystemUpgradeOperationInput {
             target: input.target.into(),
             module: input.module,
             arg: input.arg,
@@ -346,9 +353,9 @@ impl From<ChangeCanisterOperationInput> for station_api::ChangeCanisterOperation
     }
 }
 
-impl From<station_api::ChangeCanisterOperationInput> for ChangeCanisterOperationInput {
-    fn from(input: station_api::ChangeCanisterOperationInput) -> ChangeCanisterOperationInput {
-        ChangeCanisterOperationInput {
+impl From<station_api::SystemUpgradeOperationInput> for SystemUpgradeOperationInput {
+    fn from(input: station_api::SystemUpgradeOperationInput) -> SystemUpgradeOperationInput {
+        SystemUpgradeOperationInput {
             target: input.target.into(),
             module: input.module,
             arg: input.arg,
@@ -356,9 +363,9 @@ impl From<station_api::ChangeCanisterOperationInput> for ChangeCanisterOperation
     }
 }
 
-impl From<ChangeCanisterOperation> for ChangeCanisterOperationDTO {
-    fn from(operation: ChangeCanisterOperation) -> ChangeCanisterOperationDTO {
-        ChangeCanisterOperationDTO {
+impl From<SystemUpgradeOperation> for station_api::SystemUpgradeOperationDTO {
+    fn from(operation: SystemUpgradeOperation) -> station_api::SystemUpgradeOperationDTO {
+        station_api::SystemUpgradeOperationDTO {
             target: operation.input.target.into(),
             module_checksum: hex::encode(operation.module_checksum),
             arg_checksum: operation.arg_checksum.map(hex::encode),
@@ -1170,8 +1177,8 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::RemoveUserGroup(operation) => {
                 RequestOperationDTO::RemoveUserGroup(Box::new(operation.into()))
             }
-            RequestOperation::ChangeCanister(operation) => {
-                RequestOperationDTO::ChangeCanister(Box::new(operation.into()))
+            RequestOperation::SystemUpgrade(operation) => {
+                RequestOperationDTO::SystemUpgrade(Box::new(operation.into()))
             }
             RequestOperation::SetDisasterRecovery(operation) => {
                 RequestOperationDTO::SetDisasterRecovery(Box::new(operation.into()))
@@ -1286,7 +1293,7 @@ impl RequestOperation {
                     Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
                 ]
             }
-            RequestOperation::SetDisasterRecovery(_) | RequestOperation::ChangeCanister(_) => {
+            RequestOperation::SetDisasterRecovery(_) | RequestOperation::SystemUpgrade(_) => {
                 vec![Resource::System(SystemResourceAction::Upgrade)]
             }
             RequestOperation::ChangeExternalCanister(ChangeExternalCanisterOperation {

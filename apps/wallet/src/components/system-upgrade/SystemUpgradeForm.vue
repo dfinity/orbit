@@ -1,13 +1,13 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
     <RegistryUpdateMode
-      v-if="props.mode === ChangeCanisterFormMode.Registry"
+      v-if="props.mode === SystemUpgradeFormMode.Registry"
       v-model="modelValue"
       @valid="emit('valid', $event)"
       @loading="emit('loading', $event)"
     />
     <AdvancedUpdateMode
-      v-else-if="props.mode === ChangeCanisterFormMode.Advanced"
+      v-else-if="props.mode === SystemUpgradeFormMode.Advanced"
       v-model="modelValue"
     />
   </VForm>
@@ -16,33 +16,30 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
 import { VForm } from 'vuetify/components';
-import {
-  ChangeCanisterFormMode,
-  ChangeCanisterFormValue,
-} from '~/components/change-canister/change-canister.types';
+import { SystemUpgradeFormMode, SystemUpgradeFormValue } from './system-upgrade.types';
 import { VFormValidation } from '~/types/helper.types';
 import AdvancedUpdateMode from './AdvancedUpdateMode.vue';
 import RegistryUpdateMode from './RegistryUpdateMode.vue';
 
-export type ChangeCanisterFormProps = {
-  mode?: ChangeCanisterFormMode;
-  modelValue: ChangeCanisterFormValue;
+export type SystemUpgradeFormProps = {
+  mode?: SystemUpgradeFormMode;
+  modelValue: SystemUpgradeFormValue;
   valid?: boolean;
 };
 
 const form = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
-const props = withDefaults(defineProps<ChangeCanisterFormProps>(), {
+const props = withDefaults(defineProps<SystemUpgradeFormProps>(), {
   valid: false,
-  mode: ChangeCanisterFormMode.Registry,
+  mode: SystemUpgradeFormMode.Registry,
 });
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: ChangeCanisterFormProps['modelValue']): void;
+  (event: 'update:modelValue', payload: SystemUpgradeFormProps['modelValue']): void;
   (event: 'valid', payload: boolean): void;
   (event: 'loading', payload: boolean): void;
-  (event: 'submit', payload: ChangeCanisterFormProps['modelValue']): void;
+  (event: 'submit', payload: SystemUpgradeFormProps['modelValue']): void;
 }>();
 
 watch(

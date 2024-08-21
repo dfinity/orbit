@@ -79,7 +79,7 @@ export interface ListAccountsArgs {
   searchTerm?: string;
 }
 
-export enum ChangeCanisterTargetType {
+export enum SystemUpgradeTargetType {
   UpgradeStation = 'UpgradeStation',
   UpgradeUpgrader = 'UpgradeUpgrader',
 }
@@ -93,7 +93,7 @@ export enum RequestSpecifierEnum {
   RemoveAddressBookEntry = 'RemoveAddressBookEntry',
   EditAddressBookEntry = 'EditAddressBookEntry',
   AddRequestPolicy = 'AddRequestPolicy',
-  ChangeCanister = 'ChangeCanister',
+  SystemUpgrade = 'SystemUpgrade',
   EditRequestPolicy = 'EditRequestPolicy',
   EditUser = 'EditUser',
   Transfer = 'Transfer',
@@ -159,7 +159,7 @@ export enum RequestOperationEnum {
   EditRequestPolicy = 'EditRequestPolicy',
   RemoveRequestPolicy = 'RemoveRequestPolicy',
   EditPermission = 'EditPermission',
-  ChangeCanister = 'ChangeCanister',
+  SystemUpgrade = 'SystemUpgrade',
   Transfer = 'Transfer',
   ManageSystemInfo = 'ManageSystemInfo',
   ChangeExternalCanister = 'ChangeExternalCanister',

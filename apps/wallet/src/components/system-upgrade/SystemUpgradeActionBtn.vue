@@ -10,7 +10,7 @@
     :append-icon="isHighlightedAction && !isMobileHighlight ? mdiCloudDownload : undefined"
     :color="isHighlightedAction ? 'warning' : undefined"
     :rounded="isHighlightedAction ? true : undefined"
-    :submit="form => submitUpgrade(form.modelValue as ChangeCanisterFormProps['modelValue'])"
+    :submit="form => submitUpgrade(form.modelValue as SystemUpgradeFormProps['modelValue'])"
     data-test-id="submit-upgrade-btn"
     @opened="emit('editing', true)"
     @closed="onClosed"
@@ -18,18 +18,18 @@
     @submitted="useOnSuccessfulOperation"
   >
     <template #default="{ model: elem }">
-      <ChangeCanisterForm
-        v-show="screen === ChangeCanisterScreen.Form"
+      <SystemUpgradeForm
+        v-show="screen === SystemUpgradeScreen.Form"
         :mode="formMode"
-        :model-value="elem.value.modelValue as ChangeCanisterFormProps['modelValue']"
+        :model-value="elem.value.modelValue as SystemUpgradeFormProps['modelValue']"
         @update:model-value="elem.value.modelValue = $event"
         @valid="elem.value.valid = $event"
         @loading="formLoading = $event"
         @submit="goToConfirmation(elem.value.modelValue)"
       />
 
-      <ChangeCanisterConfirmationScreen
-        v-if="screen === ChangeCanisterScreen.Confirm"
+      <SystemUpgradeConfirmationScreen
+        v-if="screen === SystemUpgradeScreen.Confirm"
         :wasm-module-checksum="wasmChecksum"
         :comment="elem.value.modelValue.comment"
         @update:comment="
@@ -42,26 +42,20 @@
     </template>
     <template #actions="{ submit, loading: saving, model: elem }">
       <VBtn
-        v-if="screen === ChangeCanisterScreen.Form"
+        v-if="screen === SystemUpgradeScreen.Form"
         :disabled="saving"
-        :append-icon="
-          formMode === ChangeCanisterFormMode.Advanced ? mdiCloudDownload : mdiWrenchCog
-        "
+        :append-icon="formMode === SystemUpgradeFormMode.Advanced ? mdiCloudDownload : mdiWrenchCog"
         variant="text"
         @click="toggleFormMode"
       >
         {{
-          formMode === ChangeCanisterFormMode.Advanced
-            ? $t('terms.automated')
-            : $t('terms.advanced')
+          formMode === SystemUpgradeFormMode.Advanced ? $t('terms.automated') : $t('terms.advanced')
         }}
       </VBtn>
       <VSpacer />
       <div class="d-flex align-md-center justify-end flex-column-reverse flex-md-row ga-2">
         <VBtn
-          v-if="
-            screen === ChangeCanisterScreen.Form && formMode === ChangeCanisterFormMode.Registry
-          "
+          v-if="screen === SystemUpgradeScreen.Form && formMode === SystemUpgradeFormMode.Registry"
           :disabled="station.versionManagement.loading || formLoading"
           color="primary"
           variant="text"
@@ -72,7 +66,7 @@
           {{ $t('app.check_updates_btn') }}
         </VBtn>
         <VBtn
-          v-if="screen === ChangeCanisterScreen.Form"
+          v-if="screen === SystemUpgradeScreen.Form"
           :loading="saving"
           :disabled="!elem.value.valid"
           color="primary"
@@ -82,7 +76,7 @@
           {{ $t('terms.continue') }}
         </VBtn>
         <VBtn
-          v-else-if="screen === ChangeCanisterScreen.Confirm"
+          v-else-if="screen === SystemUpgradeScreen.Confirm"
           :loading="saving"
           :disabled="saving"
           color="primary"
@@ -101,10 +95,8 @@ import { mdiCloudDownload, mdiRefresh, mdiWrenchCog } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { VBtn } from 'vuetify/components';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
-import ChangeCanisterForm, {
-  ChangeCanisterFormProps,
-} from '~/components/change-canister/ChangeCanisterForm.vue';
-import { useDefaultUpgradeModel } from '~/composables/change-canister.composable';
+import SystemUpgradeForm, { SystemUpgradeFormProps } from './SystemUpgradeForm.vue';
+import { useDefaultUpgradeModel } from '~/composables/system-upgrade.composable';
 import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
@@ -113,8 +105,8 @@ import { Request } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
 import { arrayBufferToHashHex, hexStringToArrayBuffer } from '~/utils/crypto.utils';
 import { assertAndReturn } from '~/utils/helper.utils';
-import { ChangeCanisterFormMode, ChangeCanisterScreen } from './change-canister.types';
-import ChangeCanisterConfirmationScreen from './ChangeCanisterConfirmationScreen.vue';
+import { SystemUpgradeFormMode, SystemUpgradeScreen } from './system-upgrade.types';
+import SystemUpgradeConfirmationScreen from './SystemUpgradeConfirmationScreen.vue';
 import { useAppStore } from '~/stores/app.store';
 import { useI18n } from 'vue-i18n';
 
@@ -140,28 +132,28 @@ const btnText = computed(() => {
 });
 
 const station = useStationStore();
-const upgradeModel = ref<ChangeCanisterFormProps>(useDefaultUpgradeModel());
-const screen = ref<ChangeCanisterScreen>(ChangeCanisterScreen.Form);
-const formMode = ref<ChangeCanisterFormMode>(ChangeCanisterFormMode.Registry);
+const upgradeModel = ref<SystemUpgradeFormProps>(useDefaultUpgradeModel());
+const screen = ref<SystemUpgradeScreen>(SystemUpgradeScreen.Form);
+const formMode = ref<SystemUpgradeFormMode>(SystemUpgradeFormMode.Registry);
 const toggleFormMode = () => {
   upgradeModel.value = useDefaultUpgradeModel();
   formMode.value =
-    formMode.value === ChangeCanisterFormMode.Advanced
-      ? ChangeCanisterFormMode.Registry
-      : ChangeCanisterFormMode.Advanced;
+    formMode.value === SystemUpgradeFormMode.Advanced
+      ? SystemUpgradeFormMode.Registry
+      : SystemUpgradeFormMode.Advanced;
 };
 const wasmChecksum = ref<string>('');
 const formLoading = ref(false);
-const goToConfirmation = async (model: ChangeCanisterFormProps['modelValue']): Promise<void> => {
+const goToConfirmation = async (model: SystemUpgradeFormProps['modelValue']): Promise<void> => {
   const wasmModule = assertAndReturn(model.wasmModule, 'model.wasmModule is required');
   wasmChecksum.value = await arrayBufferToHashHex(wasmModule);
 
-  screen.value = ChangeCanisterScreen.Confirm;
+  screen.value = SystemUpgradeScreen.Confirm;
 };
 
-const submitUpgrade = async (model: ChangeCanisterFormProps['modelValue']): Promise<Request> => {
+const submitUpgrade = async (model: SystemUpgradeFormProps['modelValue']): Promise<Request> => {
   const fileBuffer = assertAndReturn(model.wasmModule, 'model.wasmModule is required');
-  const res = await station.service.changeCanister(
+  const res = await station.service.systemUpgrade(
     {
       arg:
         model.wasmInitArg && model.wasmInitArg.length > 0
@@ -186,8 +178,8 @@ const emit = defineEmits<{
 }>();
 
 const onClosed = () => {
-  formMode.value = ChangeCanisterFormMode.Registry;
-  screen.value = ChangeCanisterScreen.Form;
+  formMode.value = SystemUpgradeFormMode.Registry;
+  screen.value = SystemUpgradeScreen.Form;
   upgradeModel.value = useDefaultUpgradeModel();
 
   emit('editing', false);

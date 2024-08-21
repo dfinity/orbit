@@ -182,19 +182,6 @@ export type ChangeAddressBookMetadata = {
   } |
   { 'RemoveKeys' : Array<string> } |
   { 'ReplaceAllBy' : Array<AddressBookMetadata> };
-export interface ChangeCanisterOperation {
-  'module_checksum' : Sha256Hash,
-  'target' : ChangeCanisterTarget,
-  'arg_checksum' : [] | [Sha256Hash],
-}
-export interface ChangeCanisterOperationInput {
-  'arg' : [] | [Uint8Array | number[]],
-  'target' : ChangeCanisterTarget,
-  'module' : Uint8Array | number[],
-}
-export type ChangeCanisterResourceAction = { 'Create' : null };
-export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
-  { 'UpgradeStation' : null };
 export interface ChangeExternalCanisterOperation {
   'mode' : CanisterInstallMode,
   'canister_id' : Principal,
@@ -680,11 +667,11 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
+  { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'FundExternalCanister' : [] | [Principal] } |
-  { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
   { 'Transfer' : [] | [UUID] } |
@@ -867,11 +854,11 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'SetDisasterRecovery' : SetDisasterRecoveryOperation } |
   { 'EditRequestPolicy' : EditRequestPolicyOperation } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperation } |
+  { 'SystemUpgrade' : SystemUpgradeOperation } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperation } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
   { 'FundExternalCanister' : FundExternalCanisterOperation } |
-  { 'ChangeCanister' : ChangeCanisterOperation } |
   { 'EditUser' : EditUserOperation } |
   { 'ManageSystemInfo' : ManageSystemInfoOperation } |
   { 'Transfer' : TransferOperation } |
@@ -892,11 +879,11 @@ export type RequestOperationInput = {
   { 'SetDisasterRecovery' : SetDisasterRecoveryOperationInput } |
   { 'EditRequestPolicy' : EditRequestPolicyOperationInput } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput } |
+  { 'SystemUpgrade' : SystemUpgradeOperationInput } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperationInput } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
   { 'FundExternalCanister' : FundExternalCanisterOperationInput } |
-  { 'ChangeCanister' : ChangeCanisterOperationInput } |
   { 'EditUser' : EditUserOperationInput } |
   { 'ManageSystemInfo' : ManageSystemInfoOperationInput } |
   { 'Transfer' : TransferOperationInput } |
@@ -915,11 +902,11 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
+  { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'FundExternalCanister' : null } |
-  { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
   { 'Transfer' : null } |
@@ -963,11 +950,11 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : ResourceIds } |
   { 'RemoveRequestPolicy' : ResourceIds } |
+  { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : ResourceIds } |
   { 'FundExternalCanister' : ExternalCanisterId } |
-  { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
   { 'ManageSystemInfo' : null } |
   { 'Transfer' : ResourceIds } |
@@ -999,7 +986,6 @@ export type Resource = { 'Request' : RequestResourceAction } |
   { 'ExternalCanister' : ExternalCanisterResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
-  { 'ChangeCanister' : ChangeCanisterResourceAction } |
   { 'UserGroup' : ResourceAction } |
   { 'Permission' : PermissionResourceAction } |
   { 'RequestPolicy' : ResourceAction };
@@ -1058,10 +1044,23 @@ export interface SystemInit {
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
   { 'Init' : SystemInit };
-export type SystemResourceAction = { 'ManageSystemInfo' : null } |
+export type SystemResourceAction = { 'Upgrade' : null } |
+  { 'ManageSystemInfo' : null } |
   { 'SystemInfo' : null } |
   { 'Capabilities' : null };
 export interface SystemUpgrade { 'name' : [] | [string] }
+export interface SystemUpgradeOperation {
+  'module_checksum' : Sha256Hash,
+  'target' : SystemUpgradeTarget,
+  'arg_checksum' : [] | [Sha256Hash],
+}
+export interface SystemUpgradeOperationInput {
+  'arg' : [] | [Uint8Array | number[]],
+  'target' : SystemUpgradeTarget,
+  'module' : Uint8Array | number[],
+}
+export type SystemUpgradeTarget = { 'UpgradeUpgrader' : null } |
+  { 'UpgradeStation' : null };
 export type SystemUpgraderInput = { 'Id' : Principal } |
   { 'WasmModule' : Uint8Array | number[] };
 export type TimestampRFC3339 = string;
@@ -1136,8 +1135,8 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
+  { 'SystemUpgrade' : null } |
   { 'CreateExternalCanister' : null } |
-  { 'ChangeCanister' : null } |
   { 'ManageSystemInfo' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |

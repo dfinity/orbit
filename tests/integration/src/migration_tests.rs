@@ -2,8 +2,9 @@ use std::time::Duration;
 
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    add_account, add_address_book_entry, add_user_group, add_user_v2, create_file, read_file,
-    set_next_number, submit_request, wait_for_request, NNS_ROOT_CANISTER_ID,
+    add_account, add_address_book_entry, add_user_group, add_user_v2, compress_to_gzip,
+    create_file, read_file, set_next_number, submit_request, wait_for_request,
+    NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -30,9 +31,9 @@ fn test_canister_migration_path_with_same_wasm() {
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
-        station_api::RequestOperationInput::ChangeCanister(
-            station_api::ChangeCanisterOperationInput {
-                target: station_api::ChangeCanisterTargetDTO::UpgradeUpgrader,
+        station_api::RequestOperationInput::SystemUpgrade(
+            station_api::SystemUpgradeOperationInput {
+                target: station_api::SystemUpgradeTargetDTO::UpgradeUpgrader,
                 module: upgrader_wasm.clone(),
                 arg: None,
             },
@@ -52,9 +53,9 @@ fn test_canister_migration_path_with_same_wasm() {
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
-        station_api::RequestOperationInput::ChangeCanister(
-            station_api::ChangeCanisterOperationInput {
-                target: station_api::ChangeCanisterTargetDTO::UpgradeStation,
+        station_api::RequestOperationInput::SystemUpgrade(
+            station_api::SystemUpgradeOperationInput {
+                target: station_api::SystemUpgradeTargetDTO::UpgradeStation,
                 module: station_wasm.clone(),
                 arg: None,
             },
@@ -85,7 +86,8 @@ fn test_canister_migration_path_with_same_wasm() {
     env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .expect("unexpected failure stopping canister");
 
-    let canister_memory = env.get_stable_memory(canister_ids.station);
+    let mut canister_memory = env.get_stable_memory(canister_ids.station);
+    canister_memory = compress_to_gzip(&canister_memory);
 
     // This is used to store the stable memory of the canister for future use
     create_file("station.bin", &canister_memory);
@@ -128,7 +130,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
     env.set_stable_memory(
         canister_ids.station,
         wasm_memory,
-        pocket_ic::common::rest::BlobCompression::NoCompression,
+        pocket_ic::common::rest::BlobCompression::Gzip,
     );
 
     env.upgrade_canister(

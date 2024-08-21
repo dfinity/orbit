@@ -13,7 +13,7 @@ pub enum RequestOperationFilterType {
     AddUserGroup,
     EditUserGroup,
     RemoveUserGroup,
-    ChangeCanister,
+    SystemUpgrade,
     SetDisasterRecovery,
     ChangeExternalCanister(Principal),
     CreateExternalCanister,
@@ -43,7 +43,7 @@ impl From<RequestOperation> for RequestOperationFilterType {
             RequestOperation::AddUserGroup(_) => RequestOperationFilterType::AddUserGroup,
             RequestOperation::EditUserGroup(_) => RequestOperationFilterType::EditUserGroup,
             RequestOperation::RemoveUserGroup(_) => RequestOperationFilterType::RemoveUserGroup,
-            RequestOperation::ChangeCanister(_) => RequestOperationFilterType::ChangeCanister,
+            RequestOperation::SystemUpgrade(_) => RequestOperationFilterType::SystemUpgrade,
             RequestOperation::SetDisasterRecovery(_) => {
                 RequestOperationFilterType::SetDisasterRecovery
             }

@@ -51,10 +51,10 @@ export const mapRequestsOperationTypeToGroup = (
   }
 
   if (
-    variantIs(operationType, 'ChangeCanister') ||
+    variantIs(operationType, 'SystemUpgrade') ||
     variantIs(operationType, 'SetDisasterRecovery')
   ) {
-    return ListRequestsOperationTypeGroup.ChangeCanister;
+    return ListRequestsOperationTypeGroup.SystemUpgrade;
   }
 
   if (
@@ -208,8 +208,8 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'EditPermission')) {
     return RequestOperationEnum.EditPermission;
   }
-  if (variantIs(operation, 'ChangeCanister')) {
-    return RequestOperationEnum.ChangeCanister;
+  if (variantIs(operation, 'SystemUpgrade')) {
+    return RequestOperationEnum.SystemUpgrade;
   }
   if (variantIs(operation, 'AddUserGroup')) {
     return RequestOperationEnum.AddUserGroup;
@@ -288,8 +288,8 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { RemoveRequestPolicy: null };
   } else if (variantIs(requestOperation, 'EditPermission')) {
     return { EditPermission: null };
-  } else if (variantIs(requestOperation, 'ChangeCanister')) {
-    return { ChangeCanister: null };
+  } else if (variantIs(requestOperation, 'SystemUpgrade')) {
+    return { SystemUpgrade: null };
   } else if (variantIs(requestOperation, 'AddUserGroup')) {
     return { AddUserGroup: null };
   } else if (variantIs(requestOperation, 'EditUserGroup')) {
@@ -347,7 +347,7 @@ export const mapListRequestsOperationTypeGroupToCsvHeaders = (
     headers.policy_id = 'Policy ID';
   }
 
-  if (group === ListRequestsOperationTypeGroup.ChangeCanister) {
+  if (group === ListRequestsOperationTypeGroup.SystemUpgrade) {
     headers.change_target = 'Change Target';
     headers.wasm_checksum = 'Wasm Checksum';
   }
@@ -533,24 +533,24 @@ const mapRequestToPermissionCsvRow = (request: Request): CsvRow => {
   return {};
 };
 
-const mapRequestToChangeCanisterCsvRow = (request: Request): CsvRow => {
-  if (variantIs(request.operation, 'ChangeCanister')) {
-    const args = request.operation.ChangeCanister.arg_checksum[0]
-      ? request.operation.ChangeCanister.arg_checksum[0]
+const mapRequestToSystemUpgradeCsvRow = (request: Request): CsvRow => {
+  if (variantIs(request.operation, 'SystemUpgrade')) {
+    const args = request.operation.SystemUpgrade.arg_checksum[0]
+      ? request.operation.SystemUpgrade.arg_checksum[0]
       : '';
 
-    if (variantIs(request.operation.ChangeCanister.target, 'UpgradeStation')) {
+    if (variantIs(request.operation.SystemUpgrade.target, 'UpgradeStation')) {
       return {
         change_target: 'station',
-        wasm_checksum: request.operation.ChangeCanister.module_checksum,
+        wasm_checksum: request.operation.SystemUpgrade.module_checksum,
         details: stringify({ args }),
       };
     }
 
-    if (variantIs(request.operation.ChangeCanister.target, 'UpgradeUpgrader')) {
+    if (variantIs(request.operation.SystemUpgrade.target, 'UpgradeUpgrader')) {
       return {
         change_target: 'upgrader',
-        wasm_checksum: request.operation.ChangeCanister.module_checksum,
+        wasm_checksum: request.operation.SystemUpgrade.module_checksum,
         details: stringify({ args }),
       };
     }
@@ -576,8 +576,8 @@ export const mapRequestToCsvRow = (
       return mapRequestToRequestPolicyCsvRow(request);
     case ListRequestsOperationTypeGroup.Permission:
       return mapRequestToPermissionCsvRow(request);
-    case ListRequestsOperationTypeGroup.ChangeCanister:
-      return mapRequestToChangeCanisterCsvRow(request);
+    case ListRequestsOperationTypeGroup.SystemUpgrade:
+      return mapRequestToSystemUpgradeCsvRow(request);
     case ListRequestsOperationTypeGroup.Transfer:
       return mapRequestToTransferCsvRow(request);
   }

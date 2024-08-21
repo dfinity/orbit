@@ -8,7 +8,7 @@ export enum ListRequestsOperationTypeGroup {
   AddressBook = 'address_book_entry',
   RequestPolicy = 'request_policy',
   Permission = 'permission',
-  ChangeCanister = 'change_canister',
+  SystemUpgrade = 'system_upgrade',
   SystemInfo = 'system_info',
   ExternalCanister = 'external_canister',
 }
