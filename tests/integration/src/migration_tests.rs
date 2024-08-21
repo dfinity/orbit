@@ -18,10 +18,10 @@ const REQUEST_POLICY_NR: usize = 3;
 const SYSTEM_UPGRADER_UPDATES_NR: usize = 1;
 const SYSTEM_STATION_UPDATES_NR: usize = 1;
 const EXPECTED_GENERATED_REQUESTS: usize = 150;
-const EXPECTED_REQUEST_POLICIES: usize =
+const EXPECTED_REQUEST_POLICIES_NR: usize =
     // for accounts there are transfer policies and configuration policies
     ACCOUNTS_NR * 2 + REQUEST_POLICY_NR + BASELINE_NR_OF_REQUEST_POLICIES;
-const EXPECTED_NR_PERMISSIONS: usize =
+const EXPECTED_PERMISSIONS_NR: usize =
     // for accounts there are view, transfer and configuration permissions
     ACCOUNTS_NR * 3 + BASELINE_NR_PERMISSIONS;
 
@@ -55,7 +55,7 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     // This is used to store the stable memory of the canister for future use
     let mut canister_memory = env.get_stable_memory(canister_ids.station);
     canister_memory = compress_to_gzip(&canister_memory);
-    create_file("station.bin", &canister_memory);
+    create_file("station-memory-latest.bin", &canister_memory);
 
     // Then upgrade the canister with the same wasm to trigger the upgrade path and assure that the
     // migration path is not triggered and the canister is still working
@@ -101,13 +101,13 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_REQUEST_POLICIES,
+        EXPECTED_REQUEST_POLICIES_NR,
     );
     assert_can_list_permissions(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_NR_PERMISSIONS,
+        EXPECTED_PERMISSIONS_NR,
     );
 }
 
@@ -119,7 +119,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
 
     let station_wasm = get_canister_wasm("station").to_vec();
     let wasm_memory =
-        read_file("station-previous.bin").expect("Unexpected missing older wasm memory");
+        read_file("station-memory-v0.bin").expect("Unexpected missing older wasm memory");
 
     env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .expect("unexpected failure stopping canister");
@@ -173,25 +173,88 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         WALLET_ADMIN_USER,
         EXPECTED_GENERATED_REQUESTS,
     );
-    assert_can_list_request_policies(&env, canister_ids.station, WALLET_ADMIN_USER, 0);
-    assert_can_list_permissions(&env, canister_ids.station, WALLET_ADMIN_USER, 0);
+    assert_can_list_request_policies(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        EXPECTED_REQUEST_POLICIES_NR,
+    );
+    assert_can_list_permissions(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        EXPECTED_PERMISSIONS_NR,
+    );
 
-    // Makes sure that the next number is pointing at a value that was not already used in the previous version
+    // Makes sure that the next test data id number is pointing at a value that was
+    // not already used in the previous version
     set_test_data_id(9_999);
+
+    // Number of new entries to generate for each type
+    let new_records = 1;
 
     // Adds more data to the canister to ensure everything is working
     let mut test_data_generator =
         StationDataGenerator::new(&env, canister_ids.station, WALLET_ADMIN_USER)
-            .with_users(5)
-            .with_user_groups(5)
-            .with_accounts(5)
-            .with_address_book_entries(5)
+            .with_users(new_records)
+            .with_user_groups(new_records)
+            .with_accounts(new_records)
+            .with_address_book_entries(new_records)
+            .with_request_policy_updates(new_records)
             .with_station_updates(0)
             .with_upgrader_updates(0)
             .with_edit_operations();
 
     // Adding the data to the canister should not fail
     test_data_generator.generate();
+
+    // Assert that the new data is present in the canister
+    assert_can_list_users_endpoint(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        USER_NR + 1 + new_records, // +1 because there is the first admin user
+    );
+    assert_can_list_user_groups_endpoint(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        USER_GROUPS_NR + 1 + new_records, // +1 because there is the first admin user
+    );
+    assert_can_list_address_book_entries(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        ADDRESS_BOOK_ENTRIES_NR + new_records,
+    );
+    assert_can_list_accounts(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        ACCOUNTS_NR + new_records,
+    );
+    assert_can_list_requests(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        EXPECTED_GENERATED_REQUESTS + test_data_generator.request_count(),
+    );
+    assert_can_list_request_policies(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        EXPECTED_REQUEST_POLICIES_NR + new_records + 
+        // for accounts there are transfer policies and configuration policies
+        (new_records * 2),
+    );
+    assert_can_list_permissions(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        EXPECTED_PERMISSIONS_NR + 
+        // for accounts there are view, transfer and configuration permissions
+        (new_records * 3),
+    );
 }
 
 fn assert_can_read_me_endpoint(env: &PocketIc, station_id: Principal, requester: Principal) {
