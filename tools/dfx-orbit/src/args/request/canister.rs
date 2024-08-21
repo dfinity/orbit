@@ -174,26 +174,13 @@ impl RequestCanisterInstallArgs {
     ) -> anyhow::Result<RequestOperationInput> {
         let canister_id = dfx_orbit.canister_id(&self.canister)?;
 
-        let operation = {
-            let module = std::fs::read(self.wasm)
-                .expect("Could not read Wasm file")
-                .to_vec();
-            let arg = if let Some(file) = self.arg_file {
-                Some(
-                    std::fs::read(file)
-                        .expect("Could not read argument file")
-                        .to_vec(),
-                )
-            } else {
-                self.argument.map(|arg| arg.as_bytes().to_vec())
-            };
-            let mode = self.mode.into();
-            ChangeExternalCanisterOperationInput {
-                canister_id,
-                mode,
-                module,
-                arg,
-            }
+        let (module, arg) = self.load_module_and_args()?;
+        let mode = self.mode.into();
+        let operation = ChangeExternalCanisterOperationInput {
+            canister_id,
+            mode,
+            module,
+            arg,
         };
         Ok(RequestOperationInput::ChangeExternalCanister(operation))
     }
@@ -204,17 +191,37 @@ impl RequestCanisterInstallArgs {
         request: &GetRequestResponse,
     ) -> anyhow::Result<()> {
         let canister_id = dfx_orbit.canister_id(&self.canister)?;
-        let arg = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+        let (module, arg) = self.load_module_and_args()?;
+
+        let module_checksum = hex::encode(Sha256::digest(module));
         let arg_checksum = arg.map(|arg| hex::encode(Sha256::digest(arg)));
 
         let RequestOperationDTO::ChangeExternalCanister(op) = &request.request.operation else {
             bail!("This request is not a change external canister request");
         };
+        if op.canister_id != canister_id {
+            bail!(
+                "Canister id {} does not match expected canister id",
+                op.canister_id
+            );
+        }
         if CanisterInstallModeArgs::from(op.mode.clone()) != self.mode {
-            bail!("");
+            bail!("Canister install mode {:?} does not match", op.mode);
+        }
+        if op.module_checksum != module_checksum {
+            bail!("Module checksum does not match");
         }
 
         todo!()
+    }
+
+    fn load_module_and_args(&self) -> anyhow::Result<(Vec<u8>, Option<Vec<u8>>)> {
+        let module = std::fs::read(&self.wasm)
+            .with_context(|| "Could not read Wasm file")?
+            .to_vec();
+        let args = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+
+        Ok((module, args))
     }
 }
 
