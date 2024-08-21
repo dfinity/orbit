@@ -1,97 +1,64 @@
-use std::time::Duration;
-
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{
-    add_account, add_address_book_entry, add_user_group, add_user_v2, compress_to_gzip,
-    create_file, read_file, set_next_number, submit_request, wait_for_request,
-    NNS_ROOT_CANISTER_ID,
-};
+use crate::test_data::{set_test_data_id, StationDataGenerator};
+use crate::utils::{compress_to_gzip, create_file, read_file, NNS_ROOT_CANISTER_ID};
 use crate::TestEnv;
 use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, PocketIc};
-use station_api::MeResponse;
+
+const BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // can be found in the station core/init.rs
+const BASELINE_NR_PERMISSIONS: usize = 34; // can be found in the station core/init.rs
 
 const USER_GROUPS_NR: usize = 10;
-const USER_NR: usize = 20;
+const USER_NR: usize = 10;
 const ACCOUNTS_NR: usize = 25;
-const ADDRESS_BOOK_ENTRIES_NR: usize = 100;
+const ADDRESS_BOOK_ENTRIES_NR: usize = 25;
+const PERMISSIONS_NR: usize = 5;
+const REQUEST_POLICY_NR: usize = 3;
+const SYSTEM_UPGRADER_UPDATES_NR: usize = 1;
+const SYSTEM_STATION_UPDATES_NR: usize = 1;
+const EXPECTED_GENERATED_REQUESTS: usize = 150;
+const EXPECTED_REQUEST_POLICIES: usize =
+    // for accounts there are transfer policies and configuration policies
+    ACCOUNTS_NR * 2 + REQUEST_POLICY_NR + BASELINE_NR_OF_REQUEST_POLICIES;
+const EXPECTED_NR_PERMISSIONS: usize =
+    // for accounts there are view, transfer and configuration permissions
+    ACCOUNTS_NR * 3 + BASELINE_NR_PERMISSIONS;
 
 #[test]
-fn test_canister_migration_path_with_same_wasm() {
+fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
 
+    let mut test_data_generator =
+        StationDataGenerator::new(&env, canister_ids.station, WALLET_ADMIN_USER)
+            .with_users(USER_NR)
+            .with_user_groups(USER_GROUPS_NR)
+            .with_accounts(ACCOUNTS_NR)
+            .with_address_book_entries(ADDRESS_BOOK_ENTRIES_NR)
+            .with_station_updates(SYSTEM_STATION_UPDATES_NR)
+            .with_upgrader_updates(SYSTEM_UPGRADER_UPDATES_NR)
+            .with_permission_updates(PERMISSIONS_NR)
+            .with_request_policy_updates(REQUEST_POLICY_NR)
+            .with_max_user_groups_per_user(5)
+            .with_edit_operations();
+
+    // Adds the test data to the canister
+    test_data_generator.generate();
+
     let station_wasm = get_canister_wasm("station").to_vec();
-    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
-
-    // Create at least one upgrader upgrade
-    let request_upgrader_upgrade = submit_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        station_api::RequestOperationInput::SystemUpgrade(
-            station_api::SystemUpgradeOperationInput {
-                target: station_api::SystemUpgradeTargetDTO::UpgradeUpgrader,
-                module: upgrader_wasm.clone(),
-                arg: None,
-            },
-        ),
-    );
-
-    wait_for_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        request_upgrader_upgrade,
-    )
-    .expect("Failed to upgrade upgrader");
-
-    // Create at least one station upgrade
-    let request_station_upgrade = submit_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        station_api::RequestOperationInput::SystemUpgrade(
-            station_api::SystemUpgradeOperationInput {
-                target: station_api::SystemUpgradeTargetDTO::UpgradeStation,
-                module: station_wasm.clone(),
-                arg: None,
-            },
-        ),
-    );
-
-    // wait with extra ticks since the canister is stopped by the upgrade process
-    for _ in 0..10 {
-        env.tick();
-        env.advance_time(Duration::from_secs(1));
-    }
-
-    wait_for_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        request_station_upgrade,
-    )
-    .expect("Failed to upgrade station");
-
-    // wait with extra ticks to make sure the post_process logic that is async is executed
-    for _ in 0..10 {
-        env.tick();
-    }
-
-    create_stable_memory(&env, canister_ids.station);
 
     env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .expect("unexpected failure stopping canister");
 
+    // This is used to store the stable memory of the canister for future use
     let mut canister_memory = env.get_stable_memory(canister_ids.station);
     canister_memory = compress_to_gzip(&canister_memory);
-
-    // This is used to store the stable memory of the canister for future use
     create_file("station.bin", &canister_memory);
 
+    // Then upgrade the canister with the same wasm to trigger the upgrade path and assure that the
+    // migration path is not triggered and the canister is still working
     env.upgrade_canister(
         canister_ids.station,
         station_wasm,
@@ -105,10 +72,43 @@ fn test_canister_migration_path_with_same_wasm() {
 
     // Assert that the canister api is still working after the upgrade
     assert_can_read_me_endpoint(&env, canister_ids.station, WALLET_ADMIN_USER);
-    assert_can_list_users_endpoint(&env, canister_ids.station, WALLET_ADMIN_USER);
-    assert_can_list_user_groups_endpoint(&env, canister_ids.station, WALLET_ADMIN_USER);
-    assert_can_list_address_book_entries(&env, canister_ids.station, WALLET_ADMIN_USER);
-    assert_can_list_accounts(&env, canister_ids.station, WALLET_ADMIN_USER);
+    assert_can_list_users_endpoint(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        USER_NR + 1, // +1 because there is the first admin user
+    );
+    assert_can_list_user_groups_endpoint(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        USER_GROUPS_NR + 1, // +1 because there is the first admin user
+    );
+    assert_can_list_address_book_entries(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        ADDRESS_BOOK_ENTRIES_NR,
+    );
+    assert_can_list_accounts(&env, canister_ids.station, WALLET_ADMIN_USER, ACCOUNTS_NR);
+    assert_can_list_requests(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        test_data_generator.request_count(),
+    );
+    assert_can_list_request_policies(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        EXPECTED_REQUEST_POLICIES,
+    );
+    assert_can_list_permissions(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        EXPECTED_NR_PERMISSIONS,
+    );
 }
 
 #[test]
@@ -124,15 +124,17 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
     env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .expect("unexpected failure stopping canister");
 
-    // This needed to avoid `install_code` rate limit error
+    // This is needed to avoid `install_code` rate limit error
     env.tick();
 
+    // Set the stable memory of the canister to the previous version of the canister
     env.set_stable_memory(
         canister_ids.station,
         wasm_memory,
         pocket_ic::common::rest::BlobCompression::Gzip,
     );
 
+    // Then upgrade the canister to trigger the migration path
     env.upgrade_canister(
         canister_ids.station,
         station_wasm,
@@ -146,67 +148,65 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
 
     // Assert that the canister api is still working after the upgrade
     assert_can_read_me_endpoint(&env, canister_ids.station, WALLET_ADMIN_USER);
-    assert_can_list_users_endpoint(&env, canister_ids.station, WALLET_ADMIN_USER);
-    assert_can_list_user_groups_endpoint(&env, canister_ids.station, WALLET_ADMIN_USER);
-    assert_can_list_address_book_entries(&env, canister_ids.station, WALLET_ADMIN_USER);
-    assert_can_list_accounts(&env, canister_ids.station, WALLET_ADMIN_USER);
+    assert_can_list_users_endpoint(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        USER_NR + 1, // +1 because there is the first admin user
+    );
+    assert_can_list_user_groups_endpoint(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        USER_GROUPS_NR + 1, // +1 because there is the first admin user
+    );
+    assert_can_list_address_book_entries(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        ADDRESS_BOOK_ENTRIES_NR,
+    );
+    assert_can_list_accounts(&env, canister_ids.station, WALLET_ADMIN_USER, ACCOUNTS_NR);
+    assert_can_list_requests(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        EXPECTED_GENERATED_REQUESTS,
+    );
+    assert_can_list_request_policies(&env, canister_ids.station, WALLET_ADMIN_USER, 0);
+    assert_can_list_permissions(&env, canister_ids.station, WALLET_ADMIN_USER, 0);
 
     // Makes sure that the next number is pointing at a value that was not already used in the previous version
-    set_next_number(9_999);
+    set_test_data_id(9_999);
 
-    // Create at least one more entry of each type to ensure the stable memory is working
-    let new_user_groups = vec![add_user_group(
-        &env,
-        canister_ids.station,
-        WALLET_ADMIN_USER,
-    )];
+    // Adds more data to the canister to ensure everything is working
+    let mut test_data_generator =
+        StationDataGenerator::new(&env, canister_ids.station, WALLET_ADMIN_USER)
+            .with_users(5)
+            .with_user_groups(5)
+            .with_accounts(5)
+            .with_address_book_entries(5)
+            .with_station_updates(0)
+            .with_upgrader_updates(0)
+            .with_edit_operations();
 
-    add_user_v2(
-        &env,
-        canister_ids.station,
-        WALLET_ADMIN_USER,
-        new_user_groups,
-        None,
-    );
-
-    add_account(&env, canister_ids.station, WALLET_ADMIN_USER);
-    add_address_book_entry(&env, canister_ids.station, WALLET_ADMIN_USER);
-}
-
-/// Create the context of the station canister, including:
-///
-/// - Users
-/// - User groups
-/// - Accounts
-/// - Address book entries
-/// - Requests
-fn create_stable_memory(env: &PocketIc, station_id: Principal) {
-    let mut group_ids = Vec::new();
-    for _ in 0..USER_GROUPS_NR {
-        group_ids.push(add_user_group(env, station_id, WALLET_ADMIN_USER));
-    }
-
-    for _ in 0..USER_NR {
-        add_user_v2(env, station_id, WALLET_ADMIN_USER, group_ids.clone(), None);
-    }
-
-    for _ in 0..ACCOUNTS_NR {
-        add_account(env, station_id, WALLET_ADMIN_USER);
-    }
-
-    for _ in 0..ADDRESS_BOOK_ENTRIES_NR {
-        add_address_book_entry(env, station_id, WALLET_ADMIN_USER);
-    }
+    // Adding the data to the canister should not fail
+    test_data_generator.generate();
 }
 
 fn assert_can_read_me_endpoint(env: &PocketIc, station_id: Principal, requester: Principal) {
-    let res: (ApiResult<MeResponse>,) =
+    let res: (ApiResult<station_api::MeResponse>,) =
         update_candid_as(env, station_id, requester, "me", ()).unwrap();
 
     res.0.unwrap();
 }
 
-fn assert_can_list_users_endpoint(env: &PocketIc, station_id: Principal, requester: Principal) {
+fn assert_can_list_users_endpoint(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    expected: usize,
+) {
     let res: (ApiResult<station_api::ListUsersResponse>,) = update_candid_as(
         env,
         station_id,
@@ -226,13 +226,14 @@ fn assert_can_list_users_endpoint(env: &PocketIc, station_id: Principal, request
 
     let res = res.0.unwrap();
 
-    assert_eq!(res.total as usize, USER_NR + 1); // 1 is the default admin user
+    assert_eq!(res.total as usize, expected);
 }
 
 fn assert_can_list_user_groups_endpoint(
     env: &PocketIc,
     station_id: Principal,
     requester: Principal,
+    expected: usize,
 ) {
     let res: (ApiResult<station_api::ListUserGroupsResponse>,) = update_candid_as(
         env,
@@ -251,10 +252,15 @@ fn assert_can_list_user_groups_endpoint(
 
     let res = res.0.unwrap();
 
-    assert_eq!(res.total as usize, USER_GROUPS_NR + 1); // 1 is the default group
+    assert_eq!(res.total as usize, expected);
 }
 
-fn assert_can_list_accounts(env: &PocketIc, station_id: Principal, requester: Principal) {
+fn assert_can_list_accounts(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    expected: usize,
+) {
     let res: (ApiResult<station_api::ListAccountsResponse>,) = update_candid_as(
         env,
         station_id,
@@ -272,13 +278,14 @@ fn assert_can_list_accounts(env: &PocketIc, station_id: Principal, requester: Pr
 
     let res = res.0.unwrap();
 
-    assert_eq!(res.total as usize, ACCOUNTS_NR);
+    assert_eq!(res.total as usize, expected);
 }
 
 fn assert_can_list_address_book_entries(
     env: &PocketIc,
     station_id: Principal,
     requester: Principal,
+    expected: usize,
 ) {
     let res: (ApiResult<station_api::ListAddressBookEntriesResponseDTO>,) = update_candid_as(
         env,
@@ -300,5 +307,90 @@ fn assert_can_list_address_book_entries(
 
     let res = res.0.unwrap();
 
-    assert_eq!(res.total as usize, ADDRESS_BOOK_ENTRIES_NR);
+    assert_eq!(res.total as usize, expected);
+}
+
+fn assert_can_list_requests(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    expected: usize,
+) {
+    let res: (ApiResult<station_api::ListRequestsResponse>,) = update_candid_as(
+        env,
+        station_id,
+        requester,
+        "list_requests",
+        (station_api::ListRequestsInput {
+            approver_ids: None,
+            created_from_dt: None,
+            created_to_dt: None,
+            expiration_from_dt: None,
+            expiration_to_dt: None,
+            only_approvable: false,
+            operation_types: None,
+            requester_ids: None,
+            sort_by: None,
+            with_evaluation_results: true,
+            statuses: None,
+            paginate: Some(station_api::PaginationInput {
+                offset: Some(0),
+                limit: Some(25),
+            }),
+        },),
+    )
+    .unwrap();
+
+    let res = res.0.unwrap();
+
+    assert_eq!(res.total as usize, expected);
+}
+
+fn assert_can_list_request_policies(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    expected: usize,
+) {
+    let res: (ApiResult<station_api::ListRequestPoliciesResponse>,) = update_candid_as(
+        env,
+        station_id,
+        requester,
+        "list_request_policies",
+        (station_api::ListRequestPoliciesInput {
+            limit: Some(25),
+            offset: Some(0),
+        },),
+    )
+    .unwrap();
+
+    let res = res.0.unwrap();
+
+    assert_eq!(res.total as usize, expected);
+}
+
+fn assert_can_list_permissions(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    expected: usize,
+) {
+    let res: (ApiResult<station_api::ListPermissionsResponse>,) = update_candid_as(
+        env,
+        station_id,
+        requester,
+        "list_permissions",
+        (station_api::ListPermissionsInput {
+            resources: None,
+            paginate: Some(station_api::PaginationInput {
+                offset: Some(0),
+                limit: Some(25),
+            }),
+        },),
+    )
+    .unwrap();
+
+    let res = res.0.unwrap();
+
+    assert_eq!(res.total as usize, expected);
 }
