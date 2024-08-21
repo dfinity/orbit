@@ -1,3 +1,4 @@
+/// Concatenate two arrays of string literals into a single array of string literals at compile time.
 #[macro_export]
 macro_rules! concat_str_arrays {
     ($array1:expr, $array2:expr) => {{

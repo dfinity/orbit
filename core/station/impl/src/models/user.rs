@@ -295,11 +295,15 @@ pub mod user_test_utils {
     use uuid::Uuid;
 
     pub fn mock_user() -> User {
+        let uuid = Uuid::new_v4();
+        let id = *uuid.as_bytes();
+        let identity = Principal::from_slice(&id);
+
         User {
-            id: *Uuid::new_v4().as_bytes(),
-            identities: vec![Principal::from_slice(&[24; 29])],
+            id,
+            identities: vec![identity],
             groups: vec![],
-            name: "test".to_string(),
+            name: format!("user_{}", uuid),
             status: UserStatus::Active,
             last_modification_timestamp: 0,
         }

@@ -159,12 +159,11 @@ impl Repository<UserKey, User, VirtualMemory<Memory>> for UserRepository {
 }
 
 impl UserRepository {
-    /// Currently the cache uses around ??? KiB per entry (UUID, User),
-    /// so the max cache size is around ??? MiB.
+    /// Currently the cache uses around 250 bytes per entry (UUID, User),
+    /// so the max cache size is around 12.5 MiB.
     ///
-    /// Moreover, it takes approximately ??? million instructions to load each entry
-    /// to the cache, which means that rebuilding the cache from the repository
-    /// would take around ??? million instructions.
+    /// Moreover, it takes approximately 36_800 instructions to load each entry, which means that
+    /// rebuilding the cache from the repository would take around 1.84B instructions.
     pub const MAX_CACHE_SIZE: usize = 50_000;
 
     /// Checks if every user in the repository is in the cache.
@@ -304,5 +303,37 @@ mod tests {
         let result = repository.find_by_group_and_status(&[0; 16], &UserStatus::Inactive);
 
         assert!(!result.is_empty());
+    }
+}
+
+#[cfg(feature = "canbench")]
+mod benchs {
+    use super::*;
+    use crate::models::user_test_utils;
+    use canbench_rs::{bench, BenchResult};
+    use orbit_essentials::model::ModelKey;
+
+    #[bench(raw)]
+    fn find_100_users_from_50k_user_dataset() -> BenchResult {
+        for i in 0..50_000 {
+            let mut user = user_test_utils::mock_user();
+            if i < 100 {
+                user.name = format!("lookup_user_{}", i);
+            }
+
+            USER_REPOSITORY.insert(user.key(), user);
+        }
+
+        canbench_rs::bench_fn(|| {
+            let users = USER_REPOSITORY.find_where(UserWhereClause {
+                groups: None,
+                statuses: Some(vec![UserStatus::Active]),
+                search_term: Some("lookup_user_".to_string()),
+            });
+
+            if users.len() != 100 {
+                panic!("Expected 100 users, got {}", users.len());
+            }
+        })
     }
 }

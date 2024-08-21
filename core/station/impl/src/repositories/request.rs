@@ -738,14 +738,14 @@ mod benchs {
     use uuid::Uuid;
 
     #[bench(raw)]
-    fn repository_batch_insert_100_requests() -> BenchResult {
+    fn batch_insert_100_requests() -> BenchResult {
         canbench_rs::bench_fn(|| {
             request_repository_test_utils::add_requests_to_repository(100);
         })
     }
 
     #[bench(raw)]
-    fn repository_list_all_requests() -> BenchResult {
+    fn list_1k_requests() -> BenchResult {
         request_repository_test_utils::add_requests_to_repository(1_000);
 
         canbench_rs::bench_fn(|| {
@@ -754,8 +754,8 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn repository_filter_all_request_ids_by_default_filters() -> BenchResult {
-        for i in 0..2_500 {
+    fn find_1k_requests_from_10k_dataset_default_filters() -> BenchResult {
+        for i in 0..10_000 {
             let mut request = mock_request();
             request.id = *Uuid::new_v4().as_bytes();
             request.created_timestamp = i;

@@ -133,7 +133,7 @@ impl<'de> Deserialize<'de> for Resource {
 
         // IMPORTANT: The size of the array must be hardcoded, to make sure it can be checked at compile-time.
         static EXPECTED_VARIANTS: [&str; 10] = {
-            let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] =
+            let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] = [""; 10];
                 concat_str_arrays!(CURRENT_VARIANTS, REMOVED_VARIANTS);
 
             variants

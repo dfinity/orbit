@@ -260,7 +260,7 @@ mod benchs {
     use uuid::Uuid;
 
     #[bench(raw)]
-    fn find_external_canister_policies_are_below_query_limit() -> BenchResult {
+    fn find_500_external_canister_policies_from_50k_dataset() -> BenchResult {
         // adds 50k policies: 100 different canisters with 10 change policies and 490 call policies each
         for i in 0..100 {
             let canister_id = Principal::from_slice(&[i; 29]);

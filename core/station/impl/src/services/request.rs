@@ -1022,7 +1022,7 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn service_filter_all_requests_with_default_filters() -> BenchResult {
+    fn service_find_all_requests_from_2k_dataset() -> BenchResult {
         let end_creation_time = create_test_requests(2000u64);
 
         canbench_rs::bench_fn(|| {
@@ -1065,10 +1065,8 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn service_filter_all_requests_with_creation_time_filters() -> BenchResult {
+    fn service_filter_300_requests_from_20k_dataset() -> BenchResult {
         let end_creation_time = create_test_requests(20_000u64);
-
-        // test list_requests 300 requests as initial set
 
         canbench_rs::bench_fn(|| {
             spawn(async move {

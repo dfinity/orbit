@@ -243,17 +243,15 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_REQUEST_POLICIES_NR + new_records + 
         // for accounts there are transfer policies and configuration policies
-        (new_records * 2),
+        EXPECTED_REQUEST_POLICIES_NR + new_records + (new_records * 2),
     );
     assert_can_list_permissions(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_PERMISSIONS_NR + 
         // for accounts there are view, transfer and configuration permissions
-        (new_records * 3),
+        EXPECTED_PERMISSIONS_NR + (new_records * 3),
     );
 }
 
