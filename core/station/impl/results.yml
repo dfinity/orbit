@@ -11,12 +11,6 @@ benches:
       heap_increase: 97
       stable_memory_increase: 0
     scopes: {}
-  find_1k_requests_from_10k_dataset_default_filters:
-    total:
-      instructions: 64069321
-      heap_increase: 11
-      stable_memory_increase: 0
-    scopes: {}
   find_500_external_canister_policies_from_50k_dataset:
     total:
       instructions: 30920471
@@ -33,6 +27,12 @@ benches:
     total:
       instructions: 209082147
       heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+  repository_find_1k_requests_from_10k_dataset_default_filters:
+    total:
+      instructions: 64069321
+      heap_increase: 11
       stable_memory_increase: 0
     scopes: {}
   service_filter_300_requests_from_20k_dataset:

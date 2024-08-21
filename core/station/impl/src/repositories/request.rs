@@ -754,7 +754,7 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn find_1k_requests_from_10k_dataset_default_filters() -> BenchResult {
+    fn repository_find_1k_requests_from_10k_dataset_default_filters() -> BenchResult {
         for i in 0..10_000 {
             let mut request = mock_request();
             request.id = *Uuid::new_v4().as_bytes();
