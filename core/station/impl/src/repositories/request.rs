@@ -365,7 +365,10 @@ impl RequestRepository {
             }
 
             match ord {
-                std::cmp::Ordering::Equal => a_id.cmp(b_id),
+                std::cmp::Ordering::Equal => match dir {
+                    station_api::SortDirection::Asc => a_id.cmp(b_id),
+                    station_api::SortDirection::Desc => b_id.cmp(a_id),
+                },
                 _ => match dir {
                     station_api::SortDirection::Asc => ord.reverse(),
                     station_api::SortDirection::Desc => ord,
@@ -373,8 +376,7 @@ impl RequestRepository {
             }
         });
 
-        // self.sort_ids_with_strategy(&mut ids, &sort_by);
-        Ok(entries.iter().map(|(id, _)| *id).collect())
+        Ok(entries.into_iter().map(|(id, _)| id).collect())
     }
 
     #[cfg(test)]
@@ -803,7 +805,7 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn heap_size_of_indexed_fields_cache_is_lt_300mib() -> BenchResult {
+    fn heap_size_of_indexed_request_fields_cache_is_lt_300mib() -> BenchResult {
         let entries_count = 10_000;
         let max_entries = RequestRepository::MAX_INDEXED_FIELDS_CACHE_SIZE as u64;
         let max_allowed_heap_size_bytes = 300_000_000;

@@ -17,7 +17,7 @@ benches:
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
-  heap_size_of_indexed_fields_cache_is_lt_300mib:
+  heap_size_of_indexed_request_fields_cache_is_lt_300mib:
     total:
       instructions: 128977905
       heap_increase: 87
@@ -37,19 +37,19 @@ benches:
     scopes: {}
   repository_find_1k_requests_from_10k_dataset_default_filters:
     total:
-      instructions: 93770288
+      instructions: 94491311
       heap_increase: 17
       stable_memory_increase: 0
     scopes: {}
   service_filter_5k_requests_from_100k_dataset:
     total:
-      instructions: 664503122
+      instructions: 671969904
       heap_increase: 106
       stable_memory_increase: 16
     scopes: {}
   service_find_all_requests_from_2k_dataset:
     total:
-      instructions: 269470840
+      instructions: 272450682
       heap_increase: 44
       stable_memory_increase: 16
     scopes: {}
