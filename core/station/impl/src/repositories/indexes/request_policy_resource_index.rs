@@ -39,7 +39,7 @@ impl RequestPolicyResourceIndexRepository {
     }
 
     pub fn list(&self) -> Vec<RequestPolicyResourceIndex> {
-        DB.with(|m| m.borrow().iter().map(|(k, _)| k.clone()).collect())
+        DB.with(|m| m.borrow().iter().map(|(key, _)| key).collect())
     }
 }
 

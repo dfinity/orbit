@@ -110,7 +110,7 @@ impl RequestIndexRepository {
                             request_id,
                         },
                         value,
-                    )| (request_id, value.clone()),
+                    )| (request_id, value),
                 )
                 .collect()
         })

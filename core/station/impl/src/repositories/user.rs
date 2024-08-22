@@ -201,7 +201,7 @@ impl UserRepository {
 
             DB.with(|db| {
                 for (_, user) in db.borrow().iter().take(Self::MAX_CACHE_SIZE) {
-                    cache.borrow_mut().insert(user.id, user.clone());
+                    cache.borrow_mut().insert(user.id, user);
                 }
             });
         });

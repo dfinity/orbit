@@ -31,25 +31,25 @@ benches:
     scopes: {}
   list_external_canisters_with_all_statuses:
     total:
-      instructions: 200963347
+      instructions: 201020284
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
   repository_find_1k_requests_from_10k_dataset_default_filters:
     total:
-      instructions: 97570888
+      instructions: 93770288
       heap_increase: 17
       stable_memory_increase: 0
     scopes: {}
   service_filter_5k_requests_from_100k_dataset:
     total:
-      instructions: 685525658
+      instructions: 664503122
       heap_increase: 106
       stable_memory_increase: 16
     scopes: {}
   service_find_all_requests_from_2k_dataset:
     total:
-      instructions: 277095682
+      instructions: 269470840
       heap_increase: 44
       stable_memory_increase: 16
     scopes: {}

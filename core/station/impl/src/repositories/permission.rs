@@ -69,7 +69,7 @@ impl Repository<PermissionKey, Permission, VirtualMemory<Memory>> for Permission
         } else {
             Self::with_db(|db| {
                 db.iter().for_each(|(_, permission)| {
-                    permissions.push(permission.clone());
+                    permissions.push(permission);
                 });
             });
         }
@@ -148,7 +148,7 @@ impl PermissionRepository {
                 for (_, permission) in db.borrow().iter().take(Self::MAX_CACHE_SIZE) {
                     cache
                         .borrow_mut()
-                        .insert(permission.resource.clone(), permission.allow.clone());
+                        .insert(permission.resource, permission.allow);
                 }
             });
         });
