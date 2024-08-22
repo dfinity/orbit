@@ -29,8 +29,7 @@ impl VerifyCanisterArgs {
         request: &GetRequestResponse,
     ) -> anyhow::Result<()> {
         match self.action {
-            // TODO: Verify the arguments
-            VerifyCanisterActionArgs::Install(_args) => (),
+            VerifyCanisterActionArgs::Install(args) => args.verify(dfx_orbit, request)?,
             VerifyCanisterActionArgs::Call(args) => args.verify(dfx_orbit, request)?,
         }
 

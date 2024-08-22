@@ -10,7 +10,7 @@ use orbit_station_api::{
     RequestOperationInput,
 };
 use sha2::{Digest, Sha256};
-use slog::info;
+use slog::{info, Logger};
 
 // TODO: Support Canister create + integration test
 // TODO: Support Canister install check
@@ -127,15 +127,11 @@ impl RequestCanisterCallArgs {
             )
         }
         if op.arg_checksum != arg_checksum {
-            info!(
-                dfx_orbit.logger,
-                "Request argument: {}",
-                display_arg_checksum(&op.arg_checksum)
-            );
-            info!(
-                dfx_orbit.logger,
-                "Local argument:   {}",
-                display_arg_checksum(&arg_checksum)
+            log_hashes(
+                &dfx_orbit.logger,
+                "argument",
+                &arg_checksum,
+                &op.arg_checksum,
             );
             bail!("Argument checksum does not match");
         }
@@ -209,10 +205,25 @@ impl RequestCanisterInstallArgs {
             bail!("Canister install mode {:?} does not match", op.mode);
         }
         if op.module_checksum != module_checksum {
+            log_hashes(
+                &dfx_orbit.logger,
+                "module",
+                &Some(module_checksum),
+                &Some(op.module_checksum.clone()),
+            );
             bail!("Module checksum does not match");
         }
+        if op.arg_checksum != arg_checksum {
+            log_hashes(
+                &dfx_orbit.logger,
+                "argument",
+                &arg_checksum,
+                &op.arg_checksum,
+            );
+            bail!("Argument checksum does not match");
+        }
 
-        todo!()
+        Ok(())
     }
 
     fn load_module_and_args(&self) -> anyhow::Result<(Vec<u8>, Option<Vec<u8>>)> {
@@ -277,8 +288,14 @@ fn candid_from_string_or_file(
         .transpose()?)
 }
 
+fn log_hashes(logger: &Logger, name: &str, local: &Option<String>, remote: &Option<String>) {
+    info!(logger, "Hash mismatch of {}", name);
+    info!(logger, "Request {}: {}", name, display_arg_checksum(remote));
+    info!(logger, "Local {}:   {}", name, display_arg_checksum(local));
+}
+
 fn display_arg_checksum(arg: &Option<String>) -> String {
     arg.as_ref()
         .map(|s| format!("0x{}", s))
-        .unwrap_or(String::from("No argument"))
+        .unwrap_or(String::from("None"))
 }
