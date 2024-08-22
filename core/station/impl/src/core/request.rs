@@ -2,6 +2,7 @@ use super::evaluation::Evaluate;
 use crate::{
     errors::EvaluateError,
     models::{
+        indexes::request_index::RequestIndexFields,
         request_policy_rule::{
             EvaluateRequestPolicyRule, RequestEvaluationResult, RequestPolicyRule,
             RequestPolicyRuleResult,
@@ -279,7 +280,7 @@ impl
 pub struct RequestApprovalRightsEvaluator<'a> {
     pub approval_rights_evaluator: Arc<ApprovalRightsEvaluate>,
     pub approver_id: UserId,
-    pub request: &'a Request,
+    pub request: &'a RequestIndexFields,
 }
 
 pub type ApprovalRightsEvaluate = dyn EvaluateRequestPolicyRule<
@@ -292,7 +293,7 @@ impl<'a> RequestApprovalRightsEvaluator<'a> {
     pub fn new(
         approval_rights_evaluator: Arc<ApprovalRightsEvaluate>,
         approver_id: UserId,
-        request: &'a Request,
+        request: &'a RequestIndexFields,
     ) -> Self {
         Self {
             approval_rights_evaluator,
@@ -304,20 +305,18 @@ impl<'a> RequestApprovalRightsEvaluator<'a> {
 
 impl<'a> Evaluate<bool> for RequestApprovalRightsEvaluator<'a> {
     fn evaluate(&self) -> Result<bool, EvaluateError> {
-        if self
-            .request
-            .approvals
-            .iter()
-            .any(|approval| approval.approver_id == self.approver_id)
-            || RequestStatusCode::from(self.request.status.clone()) != RequestStatusCode::Created
+        let is_user_approval = |id: &UUID| *id == self.approver_id;
+
+        if self.request.approved_by.iter().any(is_user_approval)
+            || self.request.rejected_by.iter().any(is_user_approval)
+            || self.request.status != RequestStatusCode::Created
         {
             return Ok(false);
         }
 
         let matching_policies = self
             .request
-            .operation
-            .to_resources()
+            .resources
             .iter()
             .flat_map(|resource| REQUEST_POLICY_REPOSITORY.find_by_resource(resource.to_owned()))
             .collect::<Vec<_>>();

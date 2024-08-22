@@ -7,12 +7,11 @@ use crate::{
     errors::AuthorizationError,
     models::{
         resource::{RequestResourceAction, Resource, ResourceId, UserResourceAction},
-        Request, User,
+        User,
     },
     repositories::REQUEST_REPOSITORY,
     services::permission::PERMISSION_SERVICE,
 };
-use orbit_essentials::repository::Repository;
 
 pub struct Authorization;
 
@@ -67,14 +66,11 @@ impl Authorization {
 fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
     match &resource {
         &Resource::Request(RequestResourceAction::Read(ResourceId::Id(request_id))) => {
-            // todo: update this to not need to deserialize the request from the repository
-            match REQUEST_REPOSITORY.get(&Request::key(*request_id)) {
+            match REQUEST_REPOSITORY.find_indexed_fields_by_request_id(request_id) {
                 None => false,
                 Some(request) => {
-                    if request
-                        .approvals
-                        .iter()
-                        .any(|approval| approval.approver_id == user.id)
+                    if request.approved_by.iter().any(|id| *id == user.id)
+                        || request.rejected_by.iter().any(|id| *id == user.id)
                         || request.requested_by == user.id
                     {
                         return true;

@@ -1065,8 +1065,8 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn service_filter_300_requests_from_20k_dataset() -> BenchResult {
-        let end_creation_time = create_test_requests(20_000u64);
+    fn service_filter_5k_requests_from_100k_dataset() -> BenchResult {
+        let end_creation_time = create_test_requests(100_000u64);
 
         canbench_rs::bench_fn(|| {
             spawn(async move {
@@ -1074,7 +1074,7 @@ mod benchs {
                     .list_requests(
                         station_api::ListRequestsInput {
                             created_from_dt: Some(timestamp_to_rfc3339(
-                                &(end_creation_time - 300 * 1_000_000_000),
+                                &(end_creation_time - 5_000 * 1_000_000_000),
                             )),
                             created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
                             statuses: Some(vec![

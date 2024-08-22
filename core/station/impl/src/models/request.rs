@@ -299,7 +299,7 @@ impl Request {
 
     pub async fn can_approve(&self, user_id: &UUID) -> bool {
         let validator = RequestApprovalRightsEvaluator {
-            request: self,
+            request: &self.index_fields(),
             approver_id: *user_id,
             approval_rights_evaluator: REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR.clone(),
         };

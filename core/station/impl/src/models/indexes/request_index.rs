@@ -1,6 +1,6 @@
 use crate::models::{
-    Request, RequestApprovalStatus, RequestId, RequestOperationFilterType, RequestStatus,
-    RequestStatusCode, UserId,
+    resource::Resource, Request, RequestApprovalStatus, RequestId, RequestOperationFilterType,
+    RequestStatus, RequestStatusCode, UserId,
 };
 use orbit_essentials::{storable, types::Timestamp};
 use std::collections::BTreeSet;
@@ -8,6 +8,7 @@ use std::collections::BTreeSet;
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct RequestIndexFields {
+    pub id: RequestId,
     pub requested_by: UserId,
     pub status: RequestStatusCode,
     pub operation_type: RequestOperationFilterType,
@@ -17,6 +18,7 @@ pub struct RequestIndexFields {
     pub last_modified_at: Timestamp,
     pub approved_by: BTreeSet<UserId>,
     pub rejected_by: BTreeSet<UserId>,
+    pub resources: Vec<Resource>,
 }
 
 #[storable]
@@ -39,8 +41,9 @@ pub struct RequestIndexKey {
 
 impl Request {
     /// Converts the request to the corresponding index fields.
-    fn index_fields(&self) -> RequestIndexFields {
+    pub fn index_fields(&self) -> RequestIndexFields {
         RequestIndexFields {
+            id: self.id,
             requested_by: self.requested_by,
             status: self.status.clone().into(),
             operation_type: self.operation.clone().into(),
@@ -67,6 +70,7 @@ impl Request {
                     _ => None,
                 })
                 .collect(),
+            resources: self.operation.to_resources(),
         }
     }
 

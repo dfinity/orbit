@@ -3,6 +3,7 @@ use super::indexes::{
 };
 use crate::{
     core::{
+        cache::Cache,
         metrics::{metrics_observe_insert_request, metrics_observe_remove_request},
         observer::Observer,
         with_memory_manager, Memory, REQUEST_MEMORY_ID,
@@ -32,6 +33,9 @@ thread_local! {
             StableBTreeMap::init(memory_manager.get(REQUEST_MEMORY_ID))
         )
     });
+
+    /// Cache for indexed fields of requests, helps to speed up the search and filtering of requests.
+    static INDEXED_FIELDS_CACHE: RefCell<Cache<RequestId, RequestIndexFields>> = RefCell::new(Cache::new(RequestRepository::MAX_INDEXED_FIELDS_CACHE_SIZE));
 }
 
 lazy_static! {
@@ -78,6 +82,11 @@ impl StableDb<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository 
 
 impl IndexedRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {
     fn remove_entry_indexes(&self, entry: &Request) {
+        // Remove the indexed fields from the cache to free up memory.
+        INDEXED_FIELDS_CACHE.with(|cache| {
+            cache.borrow_mut().remove(&entry.id);
+        });
+
         entry.to_index_for_resource().iter().for_each(|index| {
             self.resource_index.remove(index);
         });
@@ -88,6 +97,16 @@ impl IndexedRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRe
     }
 
     fn add_entry_indexes(&self, entry: &Request) {
+        // The `INDEXED_FIELDS_CACHE` only needs to be updated when the request is being inserted if there is a
+        // cache hit. This makes the cache more efficient and reduces the number of cache entries needed.
+        //
+        // The cache is pupulated on demand when the repository searches for a request based on filters.
+        INDEXED_FIELDS_CACHE.with(|cache| {
+            if cache.borrow().contains_key(&entry.id) {
+                cache.borrow_mut().insert(entry.id, entry.index_fields());
+            }
+        });
+
         entry.to_index_for_resource().into_iter().for_each(|index| {
             self.resource_index.insert(index);
         });
@@ -131,6 +150,10 @@ impl Repository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepositor
 }
 
 impl RequestRepository {
+    /// Currently the cache uses around 600 bytes per entry Map<RequestId, RequestIndexFields>,
+    /// so the max cache storage size is around 300 MiB.
+    const MAX_INDEXED_FIELDS_CACHE_SIZE: usize = 500_000;
+
     /// Find requests that have the provided status and would be expired between the provided timestamps.
     pub fn find_by_status_and_expiration_dt(
         &self,
@@ -207,6 +230,25 @@ impl RequestRepository {
             })
             .into_iter()
             .collect()
+    }
+
+    /// Find the indexed fields of a request by its id.
+    pub fn find_indexed_fields_by_request_id(
+        &self,
+        request_id: &RequestId,
+    ) -> Option<RequestIndexFields> {
+        INDEXED_FIELDS_CACHE
+            .with(|cache| cache.borrow().get(request_id).cloned())
+            .or_else(|| {
+                return self.get(&RequestKey { id: *request_id }).map(|request| {
+                    let fields = request.index_fields();
+                    INDEXED_FIELDS_CACHE.with(|cache| {
+                        cache.borrow_mut().insert(*request_id, fields.clone());
+                    });
+
+                    fields
+                });
+            })
     }
 
     /// Find request ids based on the provided condition.
@@ -290,6 +332,10 @@ impl RequestRepository {
                 {
                     return false;
                 }
+
+                INDEXED_FIELDS_CACHE.with(|cache| {
+                    cache.borrow_mut().insert(*id, fields.clone());
+                });
 
                 true
             })
@@ -733,7 +779,10 @@ mod tests {
 #[cfg(feature = "canbench")]
 mod benchs {
     use super::*;
-    use crate::models::{request_test_utils::mock_request, RequestStatus};
+    use crate::{
+        core::WASM_PAGE_SIZE,
+        models::{request_test_utils::mock_request, RequestStatus},
+    };
     use canbench_rs::{bench, BenchResult};
     use uuid::Uuid;
 
@@ -751,6 +800,41 @@ mod benchs {
         canbench_rs::bench_fn(|| {
             let _ = REQUEST_REPOSITORY.list();
         })
+    }
+
+    #[bench(raw)]
+    fn heap_size_of_indexed_fields_cache_is_lt_300mib() -> BenchResult {
+        let entries_count = 10_000;
+        let max_entries = RequestRepository::MAX_INDEXED_FIELDS_CACHE_SIZE as u64;
+        let max_allowed_heap_size_bytes = 300_000_000;
+        let mut requests = Vec::with_capacity(entries_count as usize);
+
+        for _ in 0..entries_count {
+            let request = mock_request();
+            requests.push(request);
+        }
+
+        let result = canbench_rs::bench_fn(|| {
+            INDEXED_FIELDS_CACHE.with(|cache| {
+                for request in requests {
+                    cache
+                        .borrow_mut()
+                        .insert(request.id, request.index_fields());
+                }
+            });
+        });
+
+        let heap_pages = result.total.heap_increase;
+        let heap_size_bytes = heap_pages * WASM_PAGE_SIZE as u64;
+        let byte_size_per_entry = heap_size_bytes / entries_count;
+
+        assert!(
+            byte_size_per_entry * max_entries < max_allowed_heap_size_bytes,
+            "Heap size of the request index fields cache is greater than 100 MiB, got: {} bytes",
+            byte_size_per_entry * max_entries
+        );
+
+        result
     }
 
     #[bench(raw)]
