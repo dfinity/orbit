@@ -810,6 +810,7 @@ mod tests {
                 status: UserStatus::Active,
             },
         });
+        irrelevant_request.created_timestamp = 9;
 
         ctx.repository
             .insert(irrelevant_request.to_key(), irrelevant_request.to_owned());
@@ -834,7 +835,7 @@ mod tests {
                         to: "0x1234".to_string(),
                     },
                 });
-                transfer.created_timestamp = 10;
+                transfer.created_timestamp = 10 + i as u64;
                 transfer.approvals = vec![RequestApproval {
                     decided_dt: 0,
                     last_modification_timestamp: 0,
