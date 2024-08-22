@@ -91,10 +91,22 @@ impl IndexedRepository<UserKey, User, VirtualMemory<Memory>> for UserRepository 
 
 impl Repository<UserKey, User, VirtualMemory<Memory>> for UserRepository {
     fn list(&self) -> Vec<User> {
-        DB.with(|m| match self.use_only_cache() {
-            true => CACHE.with(|cache| cache.borrow().values().cloned().collect()),
-            false => m.borrow().iter().map(|(_, user)| user).collect(),
-        })
+        let mut users = Vec::with_capacity(self.len());
+
+        if self.use_only_cache() {
+            CACHE.with(|cache| {
+                cache
+                    .borrow()
+                    .iter()
+                    .for_each(|(_, user)| users.push(user.clone()))
+            });
+        } else {
+            Self::with_db(|db| {
+                db.iter().for_each(|(_, user)| users.push(user));
+            });
+        }
+
+        users
     }
 
     fn get(&self, key: &UserKey) -> Option<User> {
@@ -103,7 +115,7 @@ impl Repository<UserKey, User, VirtualMemory<Memory>> for UserRepository {
 
             match self.use_only_cache() {
                 true => maybe_cache_hit,
-                false => maybe_cache_hit.or_else(|| m.borrow().get(key).clone()),
+                false => maybe_cache_hit.or_else(|| m.borrow().get(key)),
             }
         })
     }

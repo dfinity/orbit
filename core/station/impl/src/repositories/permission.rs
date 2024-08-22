@@ -55,20 +55,26 @@ impl IndexedRepository<PermissionKey, Permission, VirtualMemory<Memory>> for Per
 
 impl Repository<PermissionKey, Permission, VirtualMemory<Memory>> for PermissionRepository {
     fn list(&self) -> Vec<Permission> {
+        let mut permissions = Vec::with_capacity(self.len());
+
         if self.use_only_cache() {
-            return CACHE.with(|cache| {
-                cache
-                    .borrow()
-                    .iter()
-                    .map(|(resource, allow)| Permission {
+            CACHE.with(|cache| {
+                cache.borrow().iter().for_each(|(resource, allow)| {
+                    permissions.push(Permission {
                         resource: resource.clone(),
                         allow: allow.clone(),
-                    })
-                    .collect()
+                    });
+                });
+            });
+        } else {
+            Self::with_db(|db| {
+                db.iter().for_each(|(_, permission)| {
+                    permissions.push(permission.clone());
+                });
             });
         }
 
-        Self::with_db(|db| db.iter().map(|(_, v)| v.clone()).collect())
+        permissions
     }
 
     fn get(&self, key: &PermissionKey) -> Option<Permission> {
@@ -83,7 +89,7 @@ impl Repository<PermissionKey, Permission, VirtualMemory<Memory>> for Permission
             return maybe_cache_hit;
         }
 
-        maybe_cache_hit.or_else(|| Self::with_db(|db| db.get(key).clone()))
+        maybe_cache_hit.or_else(|| Self::with_db(|db| db.get(key)))
     }
 
     fn insert(&self, key: PermissionKey, value: Permission) -> Option<Permission> {
@@ -94,7 +100,7 @@ impl Repository<PermissionKey, Permission, VirtualMemory<Memory>> for Permission
                 .insert(value.resource.clone(), value.allow.clone())
         });
 
-        Self::with_db(|db| db.insert(key.clone(), value.clone()))
+        Self::with_db(|db| db.insert(key, value))
     }
 
     fn remove(&self, key: &PermissionKey) -> Option<Permission> {

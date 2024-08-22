@@ -48,7 +48,8 @@ where
     /// WARNING: Please only use during upgrades to ensure enough intructions are available.
     fn rebuild(&self) {
         // Keys are on most cases small, this makes it safer to collect them into the heap.
-        let keys = Self::with_db(|db| db.iter().map(|(k, _)| k).collect::<Vec<Key>>());
+        let mut keys = Vec::with_capacity(self.len());
+        Self::with_db(|db| db.iter().for_each(|(k, _)| keys.push(k)));
 
         for key in keys {
             if let Some(value) = Self::with_db(|db| db.get(&key)) {
@@ -72,7 +73,11 @@ where
 {
     /// Returns the list of records from the repository.
     fn list(&self) -> Vec<Value> {
-        Self::with_db(|db| db.iter().map(|(_, v)| v.clone()).collect())
+        let mut entries = Vec::with_capacity(self.len());
+
+        Self::with_db(|db| db.iter().for_each(|(_, entry)| entries.push(entry)));
+
+        entries
     }
 
     /// Returns whether a record exists in the repository.
