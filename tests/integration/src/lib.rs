@@ -10,6 +10,7 @@ mod dfx_orbit;
 mod disaster_recovery_tests;
 mod external_canister_tests;
 mod interfaces;
+mod rate_limiter;
 mod register_tests;
 mod setup;
 mod transfer_tests;

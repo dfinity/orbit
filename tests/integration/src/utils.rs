@@ -212,13 +212,9 @@ pub fn wait_for_request_with_extra_ticks(
     request: RequestDTO,
     extra_ticks: u64,
 ) -> Result<RequestDTO, Option<RequestStatusDTO>> {
-    // wait for the request to be approved (timer's period is 5 seconds)
-    env.advance_time(Duration::from_secs(5));
-    env.tick();
-    // wait for the request to be processing (timer's period is 5 seconds)
-    env.advance_time(Duration::from_secs(5));
-    env.tick();
     for _ in 0..extra_ticks {
+        // timer's period for processing requests is 5 seconds
+        env.advance_time(Duration::from_secs(5));
         env.tick();
     }
     // wait for the request to be completed
@@ -230,6 +226,9 @@ pub fn wait_for_request_with_extra_ticks(
         if is_request_evaluated(new_request.clone()) {
             return Err(Some(new_request.status));
         }
+        // timer's period for processing requests is 5 seconds
+        env.advance_time(Duration::from_secs(5));
+        env.tick();
     }
     Err(None)
 }
