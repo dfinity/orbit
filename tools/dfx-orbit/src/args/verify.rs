@@ -5,7 +5,7 @@ use crate::DfxOrbit;
 use asset::VerifyAssetArgs;
 use canister::VerifyCanisterArgs;
 use clap::{Parser, Subcommand};
-use orbit_station_api::{GetRequestInput, RequestApprovalStatusDTO, SubmitRequestApprovalInput};
+use orbit_station_api::GetRequestInput;
 
 #[derive(Debug, Clone, Parser)]
 pub struct VerifyArgs {
@@ -65,27 +65,13 @@ impl VerifyArgs {
             Ok(()) => {
                 dfx_core::cli::ask_for_consent("Do you want to approve the request?")?;
                 if let Some(reason) = self.and_approve {
-                    dfx_orbit
-                        .station
-                        .submit(SubmitRequestApprovalInput {
-                            decision: RequestApprovalStatusDTO::Approved,
-                            request_id: self.request_id,
-                            reason,
-                        })
-                        .await?;
+                    dfx_orbit.station.approve(self.request_id, reason).await?;
                 }
             }
             Err(err) => {
                 dfx_core::cli::ask_for_consent("Do you want to reject the request?")?;
                 if let Some(reason) = self.or_reject {
-                    dfx_orbit
-                        .station
-                        .submit(SubmitRequestApprovalInput {
-                            decision: RequestApprovalStatusDTO::Rejected,
-                            request_id: self.request_id,
-                            reason,
-                        })
-                        .await?;
+                    dfx_orbit.station.reject(self.request_id, reason).await?;
                 };
 
                 return Err(err);

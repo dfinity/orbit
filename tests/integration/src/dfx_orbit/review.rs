@@ -3,8 +3,8 @@ use pocket_ic::PocketIc;
 use station_api::{
     AuthScopeDTO, CallExternalCanisterOperationInput, CanisterMethodDTO,
     EditPermissionOperationInput, GetNextApprovableRequestInput, GetRequestInput,
-    ListRequestsInput, ListRequestsOperationTypeDTO, RequestApprovalStatusDTO,
-    RequestOperationInput, RequestResourceActionDTO, ResourceDTO, SubmitRequestApprovalInput,
+    ListRequestsInput, ListRequestsOperationTypeDTO, RequestOperationInput,
+    RequestResourceActionDTO, ResourceDTO,
 };
 
 use crate::{
@@ -125,11 +125,7 @@ fn review() {
         // Approve the request
         let _response = dfx_orbit
             .station
-            .submit(SubmitRequestApprovalInput {
-                decision: RequestApprovalStatusDTO::Approved,
-                request_id: submitted_request.id,
-                reason: None,
-            })
+            .approve(submitted_request.id, None)
             .await
             .unwrap();
     });
