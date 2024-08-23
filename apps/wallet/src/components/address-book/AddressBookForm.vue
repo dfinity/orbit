@@ -52,6 +52,7 @@ import BlockchainAutocomplete from '~/components/inputs/BlockchainAutocomplete.v
 import MetadataField from '~/components/inputs/MetadataField.vue';
 import { AddressBookEntry, Asset } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
+import { BlockchainStandard } from '~/types/chain.types';
 import { VFormValidation } from '~/types/helper.types';
 import { requiredRule } from '~/utils/form.utils';
 
@@ -94,10 +95,10 @@ const station = useStationStore();
 const onSelectedBlockchain = (asset?: Asset): void => {
   if (asset) {
     model.value.blockchain = asset.blockchain;
-    model.value.standard = asset.standard;
+    model.value.labels = [BlockchainStandard.Native];
   } else {
     model.value.blockchain = undefined;
-    model.value.standard = undefined;
+    model.value.labels = undefined;
   }
 };
 

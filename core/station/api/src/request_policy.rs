@@ -14,7 +14,7 @@ pub enum RequestSpecifierDTO {
     EditAddressBookEntry(ResourceIdsDTO),
     RemoveAddressBookEntry(ResourceIdsDTO),
     Transfer(ResourceIdsDTO),
-    ChangeCanister,
+    SystemUpgrade,
     SetDisasterRecovery,
     ChangeExternalCanister(ExternalCanisterIdDTO),
     FundExternalCanister(ExternalCanisterIdDTO),

@@ -85,7 +85,7 @@ const emit = defineEmits<{
   (event: 'back', payload: void): void;
 }>();
 
-const maybeParseCanisterId = (canisterId: string): Principal | undefined => {
+const maybeParseStationId = (canisterId: string): Principal | undefined => {
   try {
     return Principal.fromText(canisterId);
   } catch {
@@ -93,8 +93,8 @@ const maybeParseCanisterId = (canisterId: string): Principal | undefined => {
   }
 };
 
-const onChangeCanisterIdMaybeFetchName = async () => {
-  let stationId = maybeParseCanisterId(canisterId.value);
+const onChangeStationIdMaybeFetchName = async () => {
+  let stationId = maybeParseStationId(canisterId.value);
   if (!stationId) {
     return;
   }
@@ -110,7 +110,7 @@ const onChangeCanisterIdMaybeFetchName = async () => {
 
 watch(
   () => canisterId.value,
-  () => onChangeCanisterIdMaybeFetchName(),
+  () => onChangeStationIdMaybeFetchName(),
 );
 
 async function addNewStation() {

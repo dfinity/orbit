@@ -16,7 +16,7 @@
         <LanguageSelector v-if="props.languageSelector" />
         <NotificationsPanelToggle v-if="session.isAuthenticated" :variant="props.variant" />
         <UserAvatarSelector v-if="session.isAuthenticated" :variant="props.variant" />
-        <ChangeCanisterActionBtn v-if="showUpdateBtn" mode="highlight" class="mr-1" />
+        <SystemUpgradeActionBtn v-if="showUpdateBtn" mode="highlight" class="mr-1" />
         <VBtn
           v-if="props.expandableSidebar"
           density="compact"
@@ -39,7 +39,7 @@ import UserAvatarSelector from '~/components/UserAvatarSelector.vue';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import { useStationStore } from '~/stores/station.store';
-import ChangeCanisterActionBtn from '../change-canister/ChangeCanisterActionBtn.vue';
+import SystemUpgradeActionBtn from '../system-upgrade/SystemUpgradeActionBtn.vue';
 import { variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(
@@ -81,6 +81,6 @@ const showUpdateBtn = computed(
     session.isAuthenticated &&
     station.hasNewVersion &&
     !station.versionManagement.updateRequested &&
-    station.privileges.some(p => variantIs(p, 'ChangeCanister')),
+    station.privileges.some(p => variantIs(p, 'SystemUpgrade')),
 );
 </script>

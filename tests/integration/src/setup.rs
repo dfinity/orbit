@@ -6,7 +6,7 @@ use crate::{CanisterIds, TestEnv};
 use candid::{CandidType, Encode, Principal};
 use control_panel_api::UploadCanisterModulesInput;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
-use pocket_ic::{PocketIc, PocketIcBuilder};
+use pocket_ic::{query_candid_as, PocketIc, PocketIcBuilder};
 use serde::Serialize;
 use station_api::{AdminInitInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
 use std::collections::{HashMap, HashSet};
@@ -279,6 +279,14 @@ fn install_canisters(
     // required because the station canister updates its own controllers
     env.tick();
     env.tick();
+
+    // the newly created station should be healthy at this point
+    let res: (station_api::HealthStatus,) =
+        query_candid_as(env, station, WALLET_ADMIN_USER, "health_status", ())
+            .expect("Unexpected error calling Station health_status");
+    let health_status = res.0;
+
+    assert_eq!(health_status, station_api::HealthStatus::Healthy);
 
     CanisterIds {
         icp_ledger: nns_ledger_canister_id,

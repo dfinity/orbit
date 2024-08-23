@@ -1,7 +1,6 @@
 import {
   PermissionResourceAction,
   AccountResourceAction,
-  ChangeCanisterResourceAction,
   RequestResourceAction,
   ResourceAction,
   ResourceId,
@@ -69,17 +68,6 @@ export const isSystemResourceActionContained = (
   }
 
   if (variantIs(a, 'ManageSystemInfo') && variantIs(b, 'ManageSystemInfo')) {
-    return true;
-  }
-
-  return false;
-};
-
-export const isChangeCanisterResourceActionContained = (
-  a: ChangeCanisterResourceAction,
-  b: ChangeCanisterResourceAction,
-) => {
-  if (variantIs(a, 'Create') && variantIs(b, 'Create')) {
     return true;
   }
 

@@ -114,7 +114,7 @@ const loadAddressBookEntry = async (): Promise<{
 }> => {
   if (props.addressBookEntryId.value === undefined) {
     const createModel: Partial<AddressBookEntry> = {
-      standard: BlockchainStandard.Native,
+      labels: [BlockchainStandard.Native],
     };
 
     return { entry: createModel };
@@ -151,6 +151,7 @@ const save = async (): Promise<void> => {
             ReplaceAllBy: addressBookEntry.value.metadata ?? [],
           },
         ],
+        labels: addressBookEntry.value.labels ? [addressBookEntry.value.labels] : [],
       });
 
       useOnSuccessfulOperation(request);
@@ -161,7 +162,7 @@ const save = async (): Promise<void> => {
 
     const request = await station.service.addAddressBookEntry({
       blockchain: assertAndReturn(addressBookEntry.value.blockchain, 'blockchain'),
-      standard: assertAndReturn(addressBookEntry.value.standard, 'standard'),
+      labels: assertAndReturn(addressBookEntry.value.labels, 'labels'),
       address_owner: assertAndReturn(addressBookEntry.value.address_owner, 'address_owner'),
       address: assertAndReturn(addressBookEntry.value.address, 'address'),
       metadata: addressBookEntry.value.metadata ?? [],

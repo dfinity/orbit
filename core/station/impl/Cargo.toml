@@ -37,6 +37,7 @@ serde = { workspace = true, features = ['derive'] }
 serde_bytes = { workspace = true }
 serde_cbor = { workspace = true }
 sha2 = { workspace = true }
+strum = { version = "0.26", features = ["derive"] }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ['v4'] }
 station-api = { path = '../api', version = '0.0.2-alpha.4' }

@@ -1,19 +1,15 @@
-use super::indexes::name_to_account_id_index::NameToAccountIdIndexRepository;
+use super::indexes::unique_index::UniqueIndexRepository;
 use crate::{
     core::{
-        metrics::ACCOUNT_METRICS, observer::Observer, with_memory_manager, Memory,
-        ACCOUNT_MEMORY_ID,
+        metrics::ACCOUNT_METRICS, observer::Observer, utils::format_unique_string,
+        with_memory_manager, Memory, ACCOUNT_MEMORY_ID,
     },
-    models::{
-        indexes::name_to_account_id_index::NameToAccountIdIndexCriteria, Account, AccountId,
-        AccountKey,
-    },
+    models::{indexes::unique_index::UniqueIndexKey, Account, AccountId, AccountKey},
     services::disaster_recovery_observes_insert_account,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::IndexRepository;
-use orbit_essentials::repository::{RefreshIndexMode, Repository};
+use orbit_essentials::repository::{IndexedRepository, Repository, StableDb};
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
@@ -33,7 +29,7 @@ lazy_static! {
 /// A repository that enables managing accounts in stable memory.
 #[derive(Debug)]
 pub struct AccountRepository {
-    name_index: NameToAccountIdIndexRepository,
+    unique_index: UniqueIndexRepository,
     change_observer: Observer<(Account, Option<Account>)>,
 }
 
@@ -44,20 +40,47 @@ impl Default for AccountRepository {
 
         Self {
             change_observer,
-            name_index: NameToAccountIdIndexRepository::default(),
+            unique_index: UniqueIndexRepository::default(),
         }
     }
 }
 
-impl Repository<AccountKey, Account> for AccountRepository {
-    fn list(&self) -> Vec<Account> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<AccountKey, Account, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|db| f(&mut db.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository {
+    fn remove_entry_indexes(&self, value: &Account) {
+        value
+            .to_unique_indexes()
+            .into_iter()
+            .for_each(|(index, _)| {
+                self.unique_index.remove(&index);
+            });
     }
 
-    fn get(&self, key: &AccountKey) -> Option<Account> {
-        DB.with(|m| m.borrow().get(key))
+    fn add_entry_indexes(&self, value: &Account) {
+        value
+            .to_unique_indexes()
+            .into_iter()
+            .for_each(|(index, key)| {
+                self.unique_index.insert(index, key);
+            });
     }
 
+    /// Clears all the indexes for the repository.
+    fn clear_indexes(&self) {
+        self.unique_index
+            .clear_when(|key| matches!(key, UniqueIndexKey::AccountName(_)));
+    }
+}
+
+impl Repository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository {
     fn insert(&self, key: AccountKey, value: Account) -> Option<Account> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
@@ -69,11 +92,7 @@ impl Repository<AccountKey, Account> for AccountRepository {
                     .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
             });
 
-            self.name_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index_by_name()),
-                    current: Some(value.to_index_by_name()),
-                });
+            self.save_entry_indexes(&value, prev.as_ref());
 
             let args = (value, prev);
             self.change_observer.notify(&args);
@@ -95,17 +114,12 @@ impl Repository<AccountKey, Account> for AccountRepository {
                 });
             }
 
-            self.name_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index_by_name()),
-                });
+            if let Some(prev) = &prev {
+                self.remove_entry_indexes(prev);
+            }
 
             prev
         })
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
     }
 }
 
@@ -133,13 +147,10 @@ impl AccountRepository {
         accounts
     }
 
-    pub fn find_account_id_by_name(&self, name: &str) -> Option<AccountId> {
-        self.name_index
-            .find_by_criteria(NameToAccountIdIndexCriteria {
-                name: name.to_owned(),
-            })
-            .into_iter()
-            .next()
+    /// Finds an account by its name.
+    pub fn find_by_name(&self, name: &str) -> Option<AccountId> {
+        self.unique_index
+            .get(&UniqueIndexKey::AccountName(format_unique_string(name)))
     }
 
     pub fn with_empty_observers() -> Self {

@@ -65,7 +65,7 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
       { AddRequestPolicy: null },
       { EditRequestPolicy: null },
       { RemoveRequestPolicy: null },
-      { ChangeCanister: null },
+      { SystemUpgrade: null },
       { AddUserGroup: null },
       { EditUserGroup: null },
       { RemoveUserGroup: null },

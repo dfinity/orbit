@@ -1,6 +1,7 @@
 use super::{request_policy_rule::RequestPolicyRule, request_specifier::RequestSpecifier};
 use crate::errors::{MatchError, RequestPolicyError};
 use candid::{CandidType, Deserialize};
+use orbit_essentials::model::ModelKey;
 use orbit_essentials::storable;
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
@@ -21,6 +22,12 @@ pub struct RequestPolicy {
     pub id: UUID,
     pub specifier: RequestSpecifier,
     pub rule: RequestPolicyRule,
+}
+
+impl ModelKey<UUID> for RequestPolicy {
+    fn key(&self) -> UUID {
+        self.id
+    }
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

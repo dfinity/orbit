@@ -4,7 +4,7 @@ use crate::errors::MapperError;
 use crate::mappers::blockchain::BlockchainMapper;
 use crate::models::{
     AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
-    AddressChain, ListAddressBookEntriesInput,
+    ListAddressBookEntriesInput,
 };
 use orbit_essentials::types::UUID;
 use orbit_essentials::utils::timestamp_to_rfc3339;
@@ -24,9 +24,9 @@ impl AddressBookMapper {
                 .to_string(),
             address_owner: address_book_entry.address_owner,
             address: address_book_entry.address,
-            standard: address_book_entry.standard.to_string(),
             blockchain: address_book_entry.blockchain.to_string(),
             metadata: address_book_entry.metadata.into_vec_dto(),
+            labels: address_book_entry.labels,
             last_modification_timestamp: timestamp_to_rfc3339(
                 &address_book_entry.last_modification_timestamp,
             ),
@@ -37,28 +37,12 @@ impl AddressBookMapper {
         input: AddAddressBookEntryOperationInput,
         entry_id: UUID,
     ) -> Result<AddressBookEntry, MapperError> {
-        if !input
-            .blockchain
-            .supported_standards()
-            .contains(&input.standard)
-        {
-            return Err(MapperError::UnsupportedBlockchainStandard {
-                blockchain: input.blockchain.to_string(),
-                supported_standards: input
-                    .blockchain
-                    .supported_standards()
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect(),
-            });
-        }
-
         let new_entry = AddressBookEntry {
             id: entry_id,
             address_owner: input.address_owner,
             address: input.address,
             blockchain: input.blockchain,
-            standard: input.standard,
+            labels: input.labels,
             metadata: input.metadata.into(),
             last_modification_timestamp: next_time(),
         };
@@ -76,12 +60,10 @@ impl AddressBookEntry {
 impl From<ListAddressBookEntriesInputDTO> for ListAddressBookEntriesInput {
     fn from(input: ListAddressBookEntriesInputDTO) -> ListAddressBookEntriesInput {
         ListAddressBookEntriesInput {
-            address_chain: input.address_chain.map(|address_chain| AddressChain {
-                blockchain: BlockchainMapper::to_blockchain(address_chain.blockchain)
-                    .expect("Invalid blockchain"),
-                standard: BlockchainMapper::to_blockchain_standard(address_chain.standard)
-                    .expect("Invalid blockchain standard"),
+            blockchain: input.blockchain.map(|blockchain| {
+                BlockchainMapper::to_blockchain(blockchain).expect("Invalid blockchain")
             }),
+            labels: input.labels,
             addresses: input.addresses,
             ids: input.ids.map(|ids| {
                 ids.into_iter()

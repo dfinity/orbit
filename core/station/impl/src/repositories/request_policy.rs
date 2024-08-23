@@ -11,7 +11,7 @@ use crate::{
 use candid::Principal;
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::repository::{IndexRepository, RefreshIndexMode, Repository};
+use orbit_essentials::repository::{IndexRepository, IndexedRepository, Repository, StableDb};
 use orbit_essentials::types::UUID;
 use std::{cell::RefCell, sync::Arc};
 
@@ -35,15 +35,35 @@ pub struct RequestPolicyRepository {
     resource_index: RequestPolicyResourceIndexRepository,
 }
 
-impl Repository<UUID, RequestPolicy> for RequestPolicyRepository {
-    fn list(&self) -> Vec<RequestPolicy> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<UUID, RequestPolicy, VirtualMemory<Memory>> for RequestPolicyRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<UUID, RequestPolicy, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<UUID, RequestPolicy, VirtualMemory<Memory>> for RequestPolicyRepository {
+    fn remove_entry_indexes(&self, entry: &RequestPolicy) {
+        entry.to_index_for_resource().iter().for_each(|index| {
+            self.resource_index.remove(index);
+        });
     }
 
-    fn get(&self, key: &UUID) -> Option<RequestPolicy> {
-        DB.with(|m| m.borrow().get(key))
+    fn add_entry_indexes(&self, entry: &RequestPolicy) {
+        entry.to_index_for_resource().into_iter().for_each(|index| {
+            self.resource_index.insert(index);
+        });
     }
 
+    /// Clears the indexes of the repository.
+    fn clear_indexes(&self) {
+        self.resource_index.clear();
+    }
+}
+
+impl Repository<UUID, RequestPolicy, VirtualMemory<Memory>> for RequestPolicyRepository {
     fn insert(&self, key: UUID, value: RequestPolicy) -> Option<RequestPolicy> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
@@ -55,14 +75,7 @@ impl Repository<UUID, RequestPolicy> for RequestPolicyRepository {
                     .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
             });
 
-            self.resource_index
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map(|prev| prev.to_index_for_resource())
-                        .unwrap_or_default(),
-                    current: value.to_index_for_resource(),
-                });
+            self.save_entry_indexes(&value, prev.as_ref());
 
             prev
         })
@@ -79,22 +92,12 @@ impl Repository<UUID, RequestPolicy> for RequestPolicyRepository {
                         .iter()
                         .for_each(|metric| metric.borrow_mut().sub(prev))
                 });
-            }
 
-            self.resource_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev
-                        .clone()
-                        .map(|prev| prev.to_index_for_resource())
-                        .unwrap_or_default(),
-                });
+                self.remove_entry_indexes(prev);
+            }
 
             prev
         })
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
     }
 }
 
@@ -262,7 +265,7 @@ mod benchs {
     use uuid::Uuid;
 
     #[bench(raw)]
-    fn find_external_canister_policies_are_below_query_limit() -> BenchResult {
+    fn find_500_external_canister_policies_from_50k_dataset() -> BenchResult {
         // adds 50k policies: 100 different canisters with 10 change policies and 490 call policies each
         for i in 0..100 {
             let canister_id = Principal::from_slice(&[i; 29]);
