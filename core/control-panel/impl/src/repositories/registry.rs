@@ -69,6 +69,11 @@ impl IndexedRepository<RegistryEntryId, RegistryEntry, VirtualMemory<Memory>>
 
         self.sort_index.insert(entry.id, entry.to_sort_index());
     }
+
+    fn clear_indexes(&self) {
+        self.indexes.clear();
+        self.sort_index.clear();
+    }
 }
 
 impl Repository<RegistryEntryId, RegistryEntry, VirtualMemory<Memory>> for RegistryRepository {

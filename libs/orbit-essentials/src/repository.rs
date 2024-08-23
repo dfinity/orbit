@@ -26,9 +26,7 @@ where
     fn add_entry_indexes(&self, value: &Value);
 
     /// Clears all the indexes.
-    fn clear_indexes(&self) {
-        // This is a no-op by default.
-    }
+    fn clear_indexes(&self);
 
     /// Saves the indexes for the current value and removes the old indexes if
     /// the value has changed.

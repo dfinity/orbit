@@ -58,6 +58,11 @@ impl IndexedRepository<UserKey, User, VirtualMemory<Memory>> for UserRepository 
         self.identity_index.insert(entry.to_index_for_identity());
         self.status_index.insert(entry.to_index_for_status());
     }
+
+    fn clear_indexes(&self) {
+        self.identity_index.clear();
+        self.status_index.clear();
+    }
 }
 
 impl Repository<UserKey, User, VirtualMemory<Memory>> for UserRepository {

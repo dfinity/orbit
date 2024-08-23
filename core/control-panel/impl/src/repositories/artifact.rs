@@ -52,6 +52,10 @@ impl IndexedRepository<ArtifactId, Artifact, VirtualMemory<Memory>> for Artifact
             self.indexes.insert(index.clone());
         });
     }
+
+    fn clear_indexes(&self) {
+        self.indexes.clear();
+    }
 }
 
 impl Repository<ArtifactId, Artifact, VirtualMemory<Memory>> for ArtifactRepository {
