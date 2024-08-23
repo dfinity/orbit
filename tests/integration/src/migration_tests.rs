@@ -82,7 +82,7 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        USER_GROUPS_NR + 1, // +1 because there is the first admin user
+        USER_GROUPS_NR + 1, // +1 because there is the first admin group
     );
     assert_can_list_address_book_entries(
         &env,
