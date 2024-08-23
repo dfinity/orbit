@@ -28,6 +28,13 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct RequestPolicyResourceIndexRepository {}
 
+impl RequestPolicyResourceIndexRepository {
+    /// Clears the repository by removing all the entries.
+    pub fn clear(&self) {
+        DB.with(|m| m.borrow_mut().clear_new());
+    }
+}
+
 #[cfg(test)]
 impl RequestPolicyResourceIndexRepository {
     pub fn len(&self) -> usize {

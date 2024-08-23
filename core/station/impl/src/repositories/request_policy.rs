@@ -56,6 +56,11 @@ impl IndexedRepository<UUID, RequestPolicy, VirtualMemory<Memory>> for RequestPo
             self.resource_index.insert(index);
         });
     }
+
+    /// Clears the indexes of the repository.
+    fn clear_indexes(&self) {
+        self.resource_index.clear();
+    }
 }
 
 impl Repository<UUID, RequestPolicy, VirtualMemory<Memory>> for RequestPolicyRepository {

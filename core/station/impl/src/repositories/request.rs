@@ -118,6 +118,14 @@ impl IndexedRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRe
                 self.index.insert(index_key, index_fields);
             });
     }
+
+    /// Clears all the indexes for the repository.
+    fn clear_indexes(&self) {
+        INDEXED_FIELDS_CACHE.with(|cache| cache.borrow_mut().clear());
+
+        self.index.clear();
+        self.resource_index.clear();
+    }
 }
 
 impl Repository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {

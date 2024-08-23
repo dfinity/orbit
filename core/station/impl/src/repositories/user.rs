@@ -73,7 +73,9 @@ impl StableDb<UserKey, User, VirtualMemory<Memory>> for UserRepository {
 
 impl IndexedRepository<UserKey, User, VirtualMemory<Memory>> for UserRepository {
     fn remove_entry_indexes(&self, entry: &User) {
-        self.unique_index.refresh(&[], &entry.to_unique_indexes());
+        entry.to_unique_indexes().iter().for_each(|(index, _)| {
+            self.unique_index.remove(index);
+        });
 
         entry.to_index_for_groups().iter().for_each(|index| {
             self.group_status_index.remove(index);
@@ -81,10 +83,24 @@ impl IndexedRepository<UserKey, User, VirtualMemory<Memory>> for UserRepository 
     }
 
     fn add_entry_indexes(&self, entry: &User) {
-        self.unique_index.refresh(&entry.to_unique_indexes(), &[]);
+        entry
+            .to_unique_indexes()
+            .into_iter()
+            .for_each(|(index, id)| {
+                self.unique_index.insert(index, id);
+            });
 
-        entry.to_index_for_groups().iter().for_each(|index| {
-            self.group_status_index.insert(index.clone());
+        entry.to_index_for_groups().into_iter().for_each(|index| {
+            self.group_status_index.insert(index);
+        });
+    }
+
+    fn clear_indexes(&self) {
+        self.group_status_index.clear();
+
+        self.unique_index.clear_when(|key| {
+            matches!(key, UniqueIndexKey::UserIdentity(_))
+                || matches!(key, UniqueIndexKey::UserName(_))
         });
     }
 }

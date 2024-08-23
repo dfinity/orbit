@@ -67,6 +67,12 @@ impl IndexedRepository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memo
                 self.unique_index.insert(index, entry_id);
             });
     }
+
+    /// Clears all the indexes for the repository.
+    fn clear_indexes(&self) {
+        self.unique_index
+            .clear_when(|key| matches!(key, UniqueIndexKey::AddressBookBlockchainAddress(_, _)));
+    }
 }
 
 impl Repository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>

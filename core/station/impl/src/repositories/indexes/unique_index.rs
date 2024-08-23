@@ -73,27 +73,24 @@ impl UniqueIndexRepository {
         DB.with(|m| m.borrow().get(key).is_some())
     }
 
-    /// Refreshes the unique index repository with the given current and previous indexes.
-    pub fn refresh(&self, current: &[(UniqueIndexKey, UUID)], previous: &[(UniqueIndexKey, UUID)]) {
-        DB.with(|m| {
-            let set_current: HashSet<UniqueIndexKey> =
-                current.iter().map(|(k, _)| k.clone()).collect();
-            let mut already_inserted = HashSet::new();
+    /// Clears all the entries in the repository that match the given criteria.
+    pub fn clear_when<F>(&self, should_remove: F)
+    where
+        F: Fn(&UniqueIndexKey) -> bool,
+    {
+        DB.with(|db| {
+            let mut keys_to_remove = Vec::new();
 
-            for (key, value) in previous {
-                if !set_current.contains(key) {
-                    m.borrow_mut().remove(key);
-                } else {
-                    already_inserted.insert((key, value));
+            for (key, _) in db.borrow().iter() {
+                if should_remove(&key) {
+                    keys_to_remove.push(key);
                 }
             }
 
-            for (key, value) in current {
-                if !already_inserted.contains(&(key, value)) {
-                    m.borrow_mut().insert(key.clone(), *value);
-                }
-            }
-        })
+            keys_to_remove.into_iter().for_each(|key| {
+                db.borrow_mut().remove(&key);
+            });
+        });
     }
 }
 
@@ -103,31 +100,26 @@ mod tests {
     use crate::models::indexes::unique_index::UniqueIndexKey;
 
     #[test]
-    fn refresh_removes_unused_keys() {
+    fn test_unique_index_repository() {
         let repository = UniqueIndexRepository::default();
-        let current = vec![(UniqueIndexKey::UserName("name".to_owned()), [1u8; 16])];
-        let previous = vec![(UniqueIndexKey::UserName("old_name".to_owned()), [2u8; 16])];
 
-        for (index, id) in &previous {
-            repository.insert(index.clone(), *id);
-        }
+        let key = UniqueIndexKey::AccountName("test".to_string());
+        let id = [1; 16];
 
-        assert_eq!(repository.len(), 1);
-        assert_eq!(
-            repository.get(&UniqueIndexKey::UserName("old_name".to_owned())),
-            Some([2u8; 16])
-        );
+        assert!(!repository.exists(&key));
 
-        repository.refresh(&current, &previous);
+        repository.insert(key.clone(), id);
 
-        assert_eq!(repository.len(), 1);
-        assert_eq!(
-            repository.get(&UniqueIndexKey::UserName("old_name".to_owned())),
-            None
-        );
-        assert_eq!(
-            repository.get(&UniqueIndexKey::UserName("name".to_owned())),
-            Some([1u8; 16])
-        );
+        let another_key = UniqueIndexKey::AccountName("test2".to_string());
+        let another_id = [2; 16];
+
+        repository.insert(another_key.clone(), another_id);
+
+        assert!(repository.exists(&key));
+        assert_eq!(repository.get(&key), Some(id));
+
+        repository.remove(&key);
+
+        assert!(!repository.exists(&key));
     }
 }

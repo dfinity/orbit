@@ -25,6 +25,11 @@ where
     /// Adds the indexes for the current value.
     fn add_entry_indexes(&self, value: &Value);
 
+    /// Clears all the indexes.
+    fn clear_indexes(&self) {
+        // This is a no-op by default.
+    }
+
     /// Saves the indexes for the current value and removes the old indexes if
     /// the value has changed.
     fn save_entry_indexes(&self, value: &Value, previous: Option<&Value>) {
@@ -47,19 +52,21 @@ where
     ///
     /// WARNING: Please only use during upgrades to ensure enough intructions are available.
     fn rebuild(&self) {
-        // Keys are on most cases small, this makes it safer to collect them into the heap.
-        let mut keys = Vec::with_capacity(self.len());
-        Self::with_db(|db| db.iter().for_each(|(k, _)| keys.push(k)));
+        let mut entries = Vec::with_capacity(self.len());
+        Self::with_db(|db| db.iter().for_each(|(_, v)| entries.push(v)));
 
-        for key in keys {
-            if let Some(value) = Self::with_db(|db| db.get(&key)) {
-                // First make sure there is no dangling index for the entry.
-                self.remove_entry_indexes(&value);
-                // Then add the updated indexes.
-                self.add_entry_indexes(&value);
-                // Finally, update the entry in the database.
-                Self::with_db(|db| db.insert(key, value));
-            }
+        // First remove all the indexes.
+        self.clear_indexes();
+
+        // Then clear the repository because the key might have changed for the entries and
+        // we don't want to have dangling entries.
+        Self::with_db(|db| db.clear_new());
+
+        for value in entries {
+            // Then add the updated indexes.
+            self.add_entry_indexes(&value);
+            // Finally, update the entry in the database.
+            Self::with_db(|db| db.insert(value.key(), value));
         }
     }
 }
@@ -121,6 +128,11 @@ where
         }
 
         found_ids.unwrap_or_default()
+    }
+
+    /// Removes all the entries from the repository.
+    fn clear(&self) {
+        Self::with_db(|db| db.clear_new());
     }
 }
 

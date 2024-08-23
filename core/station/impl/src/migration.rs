@@ -1,4 +1,4 @@
-use crate::core::ic_cdk::api::{print, trap};
+use crate::core::ic_cdk::api::trap;
 use crate::core::{read_system_info, write_system_info, Memory};
 use crate::models::permission::{Permission, PermissionKey};
 use crate::models::request_specifier::RequestSpecifier;
@@ -19,6 +19,7 @@ use crate::{concat_str_arrays, STABLE_MEMORY_VERSION};
 use crate::{core::with_memory_manager, repositories::REQUEST_REPOSITORY};
 use ic_stable_structures::memory_manager::{MemoryId, VirtualMemory};
 use ic_stable_structures::Memory as DefaultMemoryTrait;
+use orbit_essentials::model::ModelKey;
 use orbit_essentials::repository::{IndexedRepository, RebuildRepository, Repository, StableDb};
 use orbit_essentials::storable;
 use orbit_essentials::types::UUID;
@@ -26,7 +27,6 @@ use serde::de::{self, EnumAccess, VariantAccess, Visitor};
 use serde::{Deserialize, Deserializer};
 use std::fmt;
 use strum::VariantNames;
-use uuid::Uuid;
 
 /// Handles stable memory schema migrations for the station canister.
 ///
@@ -530,49 +530,31 @@ impl<'de> Deserialize<'de> for RequestOperation {
 
 impl RebuildRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {
     fn rebuild(&self) {
-        let keys = Self::with_db(|db| db.iter().map(|(k, _)| k).collect::<Vec<_>>());
+        let mut requests = Vec::with_capacity(self.len());
+        Self::with_db(|db| db.iter().for_each(|(_, v)| requests.push(v)));
 
-        for key in keys {
-            match self.get(&key) {
-                Some(mut request) => {
-                    // First make sure there is no dangling index for the entry.
-                    self.remove_entry_indexes(&request);
-                    // Then add the updated indexes.
-                    self.add_entry_indexes(&request);
-                    // Clear the module field if the request is finalized to save memory.
-                    if request.is_finalized() {
-                        if let RequestOperation::SystemUpgrade(operation) = &mut request.operation {
-                            operation.input.module = Vec::new();
-                        }
-                    }
+        // Then clear the repository to drop the existing data.
+        Self::with_db(|db| db.clear_new());
 
-                    Self::with_db(|db| db.insert(key, request));
+        // Clear the indexes to avoid duplicates.
+        self.clear_indexes();
+
+        for mut request in requests.into_iter() {
+            // Then add the updated indexes.
+            self.add_entry_indexes(&request);
+            // Clear the module field if the request is finalized to save memory.
+            if request.is_finalized() {
+                if let RequestOperation::SystemUpgrade(operation) = &mut request.operation {
+                    operation.input.module = Vec::new();
                 }
-                None => print(format!(
-                    "Unexpected Request Id({}) not found in the repository",
-                    Uuid::from_bytes(key.id)
-                )),
             }
+
+            Self::with_db(|db| db.insert(request.key(), request));
         }
     }
 }
 
-impl RebuildRepository<PermissionKey, Permission, VirtualMemory<Memory>> for PermissionRepository {
-    fn rebuild(&self) {
-        let permissions = Self::with_db(|db| db.iter().map(|(_, v)| v).collect::<Vec<_>>());
-
-        // Then clear the repository because the resource is a key that was updated and has dropped the
-        // `ChangeCanister` variant, and Resource is a complex type that is serialized and deserialized.
-        Self::with_db(|db| db.clear_new());
-
-        Self::with_db(|db| {
-            for permission in permissions {
-                db.insert(permission.resource.clone(), permission);
-            }
-        });
-    }
-}
-
+impl RebuildRepository<PermissionKey, Permission, VirtualMemory<Memory>> for PermissionRepository {}
 impl RebuildRepository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository {}
 impl RebuildRepository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>
     for AddressBookRepository

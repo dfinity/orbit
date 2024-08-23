@@ -56,11 +56,27 @@ impl StableDb<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository 
 
 impl IndexedRepository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository {
     fn remove_entry_indexes(&self, value: &Account) {
-        self.unique_index.refresh(&[], &value.to_unique_indexes());
+        value
+            .to_unique_indexes()
+            .into_iter()
+            .for_each(|(index, _)| {
+                self.unique_index.remove(&index);
+            });
     }
 
     fn add_entry_indexes(&self, value: &Account) {
-        self.unique_index.refresh(&value.to_unique_indexes(), &[]);
+        value
+            .to_unique_indexes()
+            .into_iter()
+            .for_each(|(index, key)| {
+                self.unique_index.insert(index, key);
+            });
+    }
+
+    /// Clears all the indexes for the repository.
+    fn clear_indexes(&self) {
+        self.unique_index
+            .clear_when(|key| matches!(key, UniqueIndexKey::AccountName(_)));
     }
 }
 

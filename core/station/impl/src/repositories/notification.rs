@@ -52,6 +52,11 @@ impl IndexedRepository<NotificationKey, Notification, VirtualMemory<Memory>>
     fn add_entry_indexes(&self, value: &Notification) {
         self.user_index.insert(value.to_index_for_target_user());
     }
+
+    /// Clears all the indexes.
+    fn clear_indexes(&self) {
+        self.user_index.clear();
+    }
 }
 
 impl Repository<NotificationKey, Notification, VirtualMemory<Memory>> for NotificationRepository {

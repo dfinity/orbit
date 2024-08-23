@@ -51,6 +51,10 @@ impl IndexedRepository<PermissionKey, Permission, VirtualMemory<Memory>> for Per
     fn add_entry_indexes(&self, _: &Permission) {
         // no indexes to add
     }
+
+    fn clear_indexes(&self) {
+        CACHE.with(|cache| cache.borrow_mut().clear());
+    }
 }
 
 impl Repository<PermissionKey, Permission, VirtualMemory<Memory>> for PermissionRepository {

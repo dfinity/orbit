@@ -46,11 +46,27 @@ impl StableDb<UUID, UserGroup, VirtualMemory<Memory>> for UserGroupRepository {
 
 impl IndexedRepository<UUID, UserGroup, VirtualMemory<Memory>> for UserGroupRepository {
     fn remove_entry_indexes(&self, entry: &UserGroup) {
-        self.unique_index.refresh(&[], &entry.to_unique_indexes());
+        entry
+            .to_unique_indexes()
+            .into_iter()
+            .for_each(|(index, _)| {
+                self.unique_index.remove(&index);
+            });
     }
 
     fn add_entry_indexes(&self, entry: &UserGroup) {
-        self.unique_index.refresh(&entry.to_unique_indexes(), &[]);
+        entry
+            .to_unique_indexes()
+            .into_iter()
+            .for_each(|(index, id)| {
+                self.unique_index.insert(index, id);
+            });
+    }
+
+    /// Clears all the indexes for the user group.
+    fn clear_indexes(&self) {
+        self.unique_index
+            .clear_when(|key| matches!(key, UniqueIndexKey::UserGroupName(_)));
     }
 }
 

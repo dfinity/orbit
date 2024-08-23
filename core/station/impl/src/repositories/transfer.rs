@@ -85,6 +85,12 @@ impl IndexedRepository<TransferKey, Transfer, VirtualMemory<Memory>> for Transfe
         self.account_index.insert(entry.to_index_by_account());
         self.status_index.insert(entry.to_index_by_status());
     }
+
+    /// Clears all the indexes for the repository.
+    fn clear_indexes(&self) {
+        self.account_index.clear();
+        self.status_index.clear();
+    }
 }
 
 impl Repository<TransferKey, Transfer, VirtualMemory<Memory>> for TransferRepository {

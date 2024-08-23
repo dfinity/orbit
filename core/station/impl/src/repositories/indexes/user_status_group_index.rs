@@ -21,6 +21,13 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct UserStatusGroupIndexRepository {}
 
+impl UserStatusGroupIndexRepository {
+    /// Clears the repository by removing all the entries.
+    pub fn clear(&self) {
+        DB.with(|m| m.borrow_mut().clear_new());
+    }
+}
+
 impl IndexRepository<UserStatusGroupIndex, UserId> for UserStatusGroupIndexRepository {
     type FindByCriteria = UserStatusGroupIndexCriteria;
 

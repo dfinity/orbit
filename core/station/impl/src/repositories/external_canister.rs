@@ -50,11 +50,29 @@ impl IndexedRepository<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memo
     for ExternalCanisterRepository
 {
     fn remove_entry_indexes(&self, value: &ExternalCanister) {
-        self.unique_index.refresh(&[], &value.to_unique_indexes());
+        value
+            .to_unique_indexes()
+            .into_iter()
+            .for_each(|(index, _)| {
+                self.unique_index.remove(&index);
+            });
     }
 
     fn add_entry_indexes(&self, value: &ExternalCanister) {
-        self.unique_index.refresh(&value.to_unique_indexes(), &[]);
+        value
+            .to_unique_indexes()
+            .into_iter()
+            .for_each(|(index, id)| {
+                self.unique_index.insert(index, id);
+            });
+    }
+
+    /// Clears all the indexes of the repository.
+    fn clear_indexes(&self) {
+        self.unique_index.clear_when(|key| {
+            matches!(key, UniqueIndexKey::ExternalCanisterId(_))
+                || matches!(key, UniqueIndexKey::ExternalCanisterName(_))
+        });
     }
 }
 
