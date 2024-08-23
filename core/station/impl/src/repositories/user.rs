@@ -96,6 +96,8 @@ impl IndexedRepository<UserKey, User, VirtualMemory<Memory>> for UserRepository 
     }
 
     fn clear_indexes(&self) {
+        CACHE.with(|cache| cache.borrow_mut().clear());
+
         self.group_status_index.clear();
 
         self.unique_index.clear_when(|key| {

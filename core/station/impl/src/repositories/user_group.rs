@@ -65,6 +65,8 @@ impl IndexedRepository<UUID, UserGroup, VirtualMemory<Memory>> for UserGroupRepo
 
     /// Clears all the indexes for the user group.
     fn clear_indexes(&self) {
+        CACHE.with(|cache| cache.borrow_mut().clear());
+
         self.unique_index
             .clear_when(|key| matches!(key, UniqueIndexKey::UserGroupName(_)));
     }
