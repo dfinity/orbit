@@ -456,7 +456,8 @@ mod tests {
             request_test_utils::mock_request,
             resource::ResourceIds,
             user_test_utils::mock_user,
-            AddAccountOperationInput, AddUserOperation, AddUserOperationInput, Blockchain,
+            AddAccountOperationInput, AddAddressBookEntryOperation,
+            AddAddressBookEntryOperationInput, AddUserOperation, AddUserOperationInput, Blockchain,
             BlockchainStandard, Metadata, Percentage, RequestApproval, RequestOperation,
             RequestPolicy, RequestStatus, TransferOperation, TransferOperationInput, User,
             UserGroup, UserStatus, ADMIN_GROUP_ID,
@@ -468,6 +469,7 @@ mod tests {
         services::AccountService,
     };
     use candid::Principal;
+    use orbit_essentials::model::ModelKey;
     use station_api::{
         ListRequestsOperationTypeDTO, RequestApprovalStatusDTO, RequestStatusCodeDTO,
     };
@@ -697,6 +699,92 @@ mod tests {
             .unwrap();
 
         assert!(!request.approvals.is_empty());
+    }
+
+    #[tokio::test]
+    async fn users_with_approval_rights_can_view_request() {
+        let requester = mock_user();
+        let approver = mock_user();
+        let another_user = mock_user();
+
+        USER_REPOSITORY.insert(requester.key(), requester.clone());
+        USER_REPOSITORY.insert(approver.key(), approver.clone());
+        USER_REPOSITORY.insert(another_user.key(), another_user.clone());
+
+        let policy = RequestPolicy {
+            id: [0; 16],
+            specifier: RequestSpecifier::AddAddressBookEntry,
+            rule: RequestPolicyRule::And(vec![RequestPolicyRule::Quorum(
+                UserSpecifier::Id(vec![requester.id, approver.id, another_user.id]),
+                2,
+            )]),
+        };
+
+        REQUEST_POLICY_REPOSITORY.insert(policy.id, policy);
+
+        let mut request = mock_request();
+        request.created_timestamp = 10;
+        request.operation = RequestOperation::AddAddressBookEntry(AddAddressBookEntryOperation {
+            address_book_entry_id: None,
+            input: AddAddressBookEntryOperationInput {
+                address_owner: "test".to_owned(),
+                address: "abc".to_owned(),
+                blockchain: Blockchain::InternetComputer,
+                metadata: vec![],
+                labels: vec![],
+            },
+        });
+        request.approvals = vec![
+            RequestApproval {
+                approver_id: requester.id,
+                status: RequestApprovalStatus::Approved,
+                decided_dt: 10,
+                last_modification_timestamp: 10,
+                status_reason: None,
+            },
+            RequestApproval {
+                approver_id: approver.id,
+                status: RequestApprovalStatus::Approved,
+                decided_dt: 10,
+                last_modification_timestamp: 10,
+                status_reason: None,
+            },
+        ];
+        request.status = RequestStatus::Failed {
+            reason: Some("test".to_string()),
+        };
+
+        REQUEST_REPOSITORY.insert(request.key(), request.clone());
+
+        let default_list_query = ListRequestsInput {
+            approver_ids: None,
+            requester_ids: None,
+            created_from_dt: None,
+            created_to_dt: None,
+            expiration_from_dt: None,
+            expiration_to_dt: None,
+            only_approvable: false,
+            with_evaluation_results: false,
+            operation_types: None,
+            paginate: None,
+            sort_by: None,
+            statuses: None,
+        };
+
+        let users = vec![requester, approver, another_user];
+        // all users can see the request, even the another_user who is not an approver but has approval rights
+        for user in users {
+            let requests = REQUEST_SERVICE
+                .list_requests(
+                    default_list_query.clone(),
+                    &CallContext::new(user.identities[0]),
+                )
+                .await
+                .unwrap();
+
+            assert_eq!(requests.total, 1);
+            assert_eq!(requests.items[0].id, request.id);
+        }
     }
 
     #[tokio::test]
