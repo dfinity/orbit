@@ -90,7 +90,7 @@ impl RequestService {
     ) -> ServiceResult<RequestCallerPrivileges> {
         let approver = self.user_service.get_user_by_identity(&ctx.caller())?;
         let request = self.get_request(request_id)?;
-        let can_approve = request.can_approve(&approver.id).await;
+        let can_approve = request.can_approve(&approver.id);
 
         Ok(RequestCallerPrivileges {
             id: *request_id,
@@ -326,7 +326,7 @@ impl RequestService {
         self.request_repository
             .insert(request.to_key(), request.to_owned());
 
-        if request.can_approve(&requester.id).await {
+        if request.can_approve(&requester.id) {
             request.add_approval(requester.id, RequestApprovalStatus::Approved, None)?;
         }
 
@@ -415,7 +415,7 @@ impl RequestService {
         let request_id = HelperMapper::to_uuid(input.request_id)?;
         let mut request = self.get_request(request_id.as_bytes())?;
 
-        if !request.can_approve(&approver.id).await {
+        if !request.can_approve(&approver.id) {
             Err(RequestError::ApprovalNotAllowed)?
         }
 

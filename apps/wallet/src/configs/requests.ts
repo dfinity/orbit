@@ -1,8 +1,2 @@
-import { RequestSpecifierEnum } from '~/types/station.types';
-
-export const disabledRequestOperations = [
-  RequestSpecifierEnum.ChangeExternalCanister,
-  RequestSpecifierEnum.CreateExternalCanister,
-  RequestSpecifierEnum.CallExternalCanister,
-  RequestSpecifierEnum.SetDisasterRecovery,
-];
+// Request operations that are disabled for the user
+export const disabledRequestOperations = [];

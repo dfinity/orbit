@@ -71,6 +71,10 @@ export const isSystemResourceActionContained = (
     return true;
   }
 
+  if (variantIs(a, 'Upgrade') && variantIs(b, 'Upgrade')) {
+    return true;
+  }
+
   return false;
 };
 
