@@ -7,10 +7,10 @@ use crate::TestEnv;
 use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, CallError};
 use station_api::{
-    AddUserOperationInput, ChangeCanisterOperationInput, ChangeCanisterResourceActionDTO,
-    ChangeCanisterTargetDTO, EditPermissionOperationInput, ListNotificationsInput,
+    AddUserOperationInput, EditPermissionOperationInput, ListNotificationsInput,
     ListNotificationsResponse, MarkNotificationsReadInput, MeResponse, RequestApprovalStatusDTO,
-    RequestOperationInput, RequestStatusDTO, ResourceDTO,
+    RequestOperationInput, RequestStatusDTO, ResourceDTO, SystemResourceActionDTO,
+    SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
 };
 
 #[test]
@@ -20,8 +20,8 @@ fn notification_authorization() {
     } = setup_new_env();
 
     // admin makes a failed request which triggers a notification
-    let change_canister_operation_input = ChangeCanisterOperationInput {
-        target: ChangeCanisterTargetDTO::UpgradeUpgrader,
+    let change_canister_operation_input = SystemUpgradeOperationInput {
+        target: SystemUpgradeTargetDTO::UpgradeUpgrader,
         module: vec![],
         arg: None,
     };
@@ -29,7 +29,7 @@ fn notification_authorization() {
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
-        RequestOperationInput::ChangeCanister(change_canister_operation_input.clone()),
+        RequestOperationInput::SystemUpgrade(change_canister_operation_input.clone()),
         10,
     )
     .unwrap_err()
@@ -121,7 +121,7 @@ fn notification_authorization() {
 
     // allow anyone to create change canister requests
     let edit_permission_operation_input = EditPermissionOperationInput {
-        resource: ResourceDTO::ChangeCanister(ChangeCanisterResourceActionDTO::Create),
+        resource: ResourceDTO::System(SystemResourceActionDTO::Upgrade),
         auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
         user_groups: None,
         users: None,
@@ -139,7 +139,7 @@ fn notification_authorization() {
         &env,
         user_id,
         canister_ids.station,
-        RequestOperationInput::ChangeCanister(change_canister_operation_input),
+        RequestOperationInput::SystemUpgrade(change_canister_operation_input),
     );
 
     // let the admin user reject the request => the request becomes rejected which triggers a notification

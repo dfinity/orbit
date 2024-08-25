@@ -55,7 +55,7 @@
           {{ $t('app.disaster_recovery_not_configured') }}
         </VAlert>
       </div>
-      <AuthCheck :privileges="[Privilege.ChangeCanister]">
+      <AuthCheck :privileges="[Privilege.SystemUpgrade]">
         <ActionBtn
           v-model="setDisasterRecoveryInput"
           :title="$t(`app.disaster_recovery_dialog_title`)"

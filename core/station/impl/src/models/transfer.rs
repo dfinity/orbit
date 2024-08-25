@@ -3,6 +3,7 @@ use crate::core::ic_cdk::next_time;
 use crate::core::validation::{EnsureAccount, EnsureIdExists, EnsureRequest, EnsureUser};
 use crate::errors::{RecordValidationError, TransferError};
 use crate::models::Metadata;
+use orbit_essentials::model::ModelKey;
 use orbit_essentials::storable;
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
@@ -82,6 +83,12 @@ pub struct Transfer {
 pub struct TransferKey {
     /// The transfer id, which is a UUID.
     pub id: TransferId,
+}
+
+impl ModelKey<TransferKey> for Transfer {
+    fn key(&self) -> TransferKey {
+        TransferKey { id: self.id }
+    }
 }
 
 impl Transfer {

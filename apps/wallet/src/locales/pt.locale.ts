@@ -108,7 +108,7 @@ export default {
       line2: 'Multi-Custódia',
     },
   },
-  change_canister: {
+  system_upgrade: {
     targets: {
       upgradestation: 'Carteira',
       upgradeupgrader: 'Atualizador',
@@ -179,7 +179,7 @@ export default {
       permission: 'Regras de acesso',
       request_policy: 'Regras de aprovação',
       address_book_entry: 'Livro de endereços',
-      change_canister: 'Atualizações de sistema',
+      system_upgrade: 'Atualizações de sistema',
       transfer: 'Transferências',
       external_canister: 'Canister gerenciado',
       system_info: 'Informações do sistema',
@@ -247,9 +247,9 @@ export default {
         title: 'Remover endereço',
         request_title: 'Pedido de remoção de endereço',
       },
-      changecanister: {
-        title: 'Alterar canister',
-        request_title: 'Pedido de alteração de canister',
+      systemupgrade: {
+        title: 'Atualização de sistema',
+        request_title: 'Pedido de atualização de sistema',
       },
       editpermission: {
         title: 'Editar permissão',
@@ -738,7 +738,6 @@ export default {
       permission: 'Regra de acesso',
       requestpolicy: 'Regra para pedidos',
       system: 'Sistema',
-      changecanister: 'Alterar canister',
       transfer: 'Transfência',
       request: 'Pedido',
       addressbook: 'Livro de endereços',
@@ -756,6 +755,7 @@ export default {
       systeminfocapabilities: 'Capacidades (Ativos Suportados)',
       systeminfoconfig: 'Configuração (Atualizações, Métricas, Uso)',
       managesysteminfo: 'Gerir Informações do Sistema (e.g. nome)',
+      systemupgrade: 'Atualizar o sistema',
     },
     allow: {
       public: 'Acesso público',
@@ -793,7 +793,7 @@ export default {
       removeaddressbookentry: 'Remover entrada do livro de endereços',
       editaddressbookentry: 'Editar entrada do livro de endereços',
       addrequestpolicy: 'Adicionar regra',
-      changecanister: 'Alterar canister',
+      systemupgrade: 'Atualização de sistema',
       editrequestpolicy: 'Editar permissão',
       edituser: 'Editar usuário',
       transfer: 'Transferência',

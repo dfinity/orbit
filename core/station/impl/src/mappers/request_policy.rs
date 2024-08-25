@@ -3,9 +3,8 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ChangeCanisterResourceAction, ExternalCanisterResourceAction,
-        PermissionResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
-        SystemResourceAction, UserResourceAction,
+        AccountResourceAction, ExternalCanisterResourceAction, PermissionResourceAction, Resource,
+        ResourceAction, ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
     },
     EvaluatedRequestPolicyRule, EvaluationStatus, Percentage, RequestEvaluationResult,
     RequestPolicy, RequestPolicyCallerPrivileges, RequestPolicyRuleResult,
@@ -245,7 +244,7 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::Transfer(account) => {
                 station_api::RequestSpecifierDTO::Transfer(account.into())
             }
-            RequestSpecifier::ChangeCanister => station_api::RequestSpecifierDTO::ChangeCanister,
+            RequestSpecifier::SystemUpgrade => station_api::RequestSpecifierDTO::SystemUpgrade,
             RequestSpecifier::SetDisasterRecovery => {
                 station_api::RequestSpecifierDTO::SetDisasterRecovery
             }
@@ -310,7 +309,7 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             station_api::RequestSpecifierDTO::Transfer(transfer_specifier) => {
                 RequestSpecifier::Transfer(transfer_specifier.into())
             }
-            station_api::RequestSpecifierDTO::ChangeCanister => RequestSpecifier::ChangeCanister,
+            station_api::RequestSpecifierDTO::SystemUpgrade => RequestSpecifier::SystemUpgrade,
             station_api::RequestSpecifierDTO::SetDisasterRecovery => {
                 RequestSpecifier::SetDisasterRecovery
             }
@@ -426,10 +425,8 @@ impl RequestSpecifier {
                     .map(|id| Resource::AddressBook(ResourceAction::Delete(ResourceId::Id(*id))))
                     .collect::<_>(),
             },
-            RequestSpecifier::SetDisasterRecovery | RequestSpecifier::ChangeCanister => {
-                vec![Resource::ChangeCanister(
-                    ChangeCanisterResourceAction::Create,
-                )]
+            RequestSpecifier::SetDisasterRecovery | RequestSpecifier::SystemUpgrade => {
+                vec![Resource::System(SystemResourceAction::Upgrade)]
             }
             RequestSpecifier::ChangeExternalCanister(target) => {
                 vec![Resource::ExternalCanister(

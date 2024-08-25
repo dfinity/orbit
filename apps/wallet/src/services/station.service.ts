@@ -9,7 +9,6 @@ import {
   AddUserGroupOperationInput,
   AddUserOperationInput,
   Capabilities,
-  ChangeCanisterOperationInput,
   CreateRequestInput,
   DisasterRecoveryCommittee,
   EditAccountOperationInput,
@@ -53,6 +52,7 @@ import {
   Request,
   SubmitRequestApprovalInput,
   SystemInfoResult,
+  SystemUpgradeOperationInput,
   Transfer,
   TransferListItem,
   TransferOperationInput,
@@ -532,7 +532,7 @@ export class StationService {
   }
 
   async listAddressBook(
-    { limit, offset, blockchain, standard, ids, addresses }: ListAddressBookEntriesArgs = {},
+    { limit, offset, blockchain, labels, ids, addresses }: ListAddressBookEntriesArgs = {},
     verifiedCall = false,
   ): Promise<ExtractOk<ListAddressBookEntriesResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
@@ -543,15 +543,8 @@ export class StationService {
           offset: offset !== undefined ? [BigInt(offset)] : [],
         },
       ],
-      address_chain:
-        blockchain && standard
-          ? [
-              {
-                blockchain: blockchain,
-                standard: standard,
-              },
-            ]
-          : [],
+      blockchain: blockchain ? [blockchain] : [],
+      labels: labels ? [labels] : [],
       addresses: addresses ? [addresses] : [],
       ids: ids ? [ids] : [],
     });
@@ -828,15 +821,15 @@ export class StationService {
     return result.Ok.request;
   }
 
-  async changeCanister(
-    input: ChangeCanisterOperationInput,
+  async systemUpgrade(
+    input: SystemUpgradeOperationInput,
     opts: { comment?: string } = {},
   ): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
-      operation: { ChangeCanister: input },
+      operation: { SystemUpgrade: input },
     });
 
     if (variantIs(result, 'Err')) {

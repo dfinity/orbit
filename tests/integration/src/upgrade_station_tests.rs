@@ -7,8 +7,8 @@ use crate::TestEnv;
 use candid::Encode;
 use sha2::{Digest, Sha256};
 use station_api::{
-    ChangeCanisterOperationInput, ChangeCanisterTargetDTO, HealthStatus, RequestOperationInput,
-    SystemInstall, SystemUpgrade,
+    HealthStatus, RequestOperationInput, SystemInstall, SystemUpgrade, SystemUpgradeOperationInput,
+    SystemUpgradeTargetDTO,
 };
 
 #[test]
@@ -32,8 +32,8 @@ fn successful_station_upgrade() {
     let station_init_arg = SystemInstall::Upgrade(SystemUpgrade { name: None });
     let station_init_arg_bytes = Encode!(&station_init_arg).unwrap();
     let station_upgrade_operation =
-        RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
-            target: ChangeCanisterTargetDTO::UpgradeStation,
+        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+            target: SystemUpgradeTargetDTO::UpgradeStation,
             module: station_wasm.clone(),
             arg: Some(station_init_arg_bytes),
         });
@@ -59,8 +59,8 @@ fn successful_station_upgrade() {
 
     // submit one more station upgrade request with no changes
     let station_upgrade_operation =
-        RequestOperationInput::ChangeCanister(ChangeCanisterOperationInput {
-            target: ChangeCanisterTargetDTO::UpgradeStation,
+        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+            target: SystemUpgradeTargetDTO::UpgradeStation,
             module: station_wasm.clone(),
             arg: None,
         });

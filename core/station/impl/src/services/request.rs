@@ -683,8 +683,8 @@ mod tests {
                             address_owner: "".to_owned(),
                             address: "abc".to_owned(),
                             blockchain: "icp".to_owned(),
-                            standard: "native".to_owned(),
                             metadata: vec![],
+                            labels: vec![],
                         },
                     ),
                     title: None,
@@ -810,6 +810,7 @@ mod tests {
                 status: UserStatus::Active,
             },
         });
+        irrelevant_request.created_timestamp = 9;
 
         ctx.repository
             .insert(irrelevant_request.to_key(), irrelevant_request.to_owned());
@@ -834,7 +835,7 @@ mod tests {
                         to: "0x1234".to_string(),
                     },
                 });
-                transfer.created_timestamp = 10;
+                transfer.created_timestamp = 10 + i as u64;
                 transfer.approvals = vec![RequestApproval {
                     decided_dt: 0,
                     last_modification_timestamp: 0,
@@ -1022,7 +1023,7 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn service_filter_all_requests_with_default_filters() -> BenchResult {
+    fn service_find_all_requests_from_2k_dataset() -> BenchResult {
         let end_creation_time = create_test_requests(2000u64);
 
         canbench_rs::bench_fn(|| {
@@ -1065,10 +1066,8 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn service_filter_all_requests_with_creation_time_filters() -> BenchResult {
-        let end_creation_time = create_test_requests(20000u64);
-
-        // test list_requests that that 300 requests as initial set
+    fn service_filter_5k_requests_from_100k_dataset() -> BenchResult {
+        let end_creation_time = create_test_requests(100_000u64);
 
         canbench_rs::bench_fn(|| {
             spawn(async move {
@@ -1076,7 +1075,7 @@ mod benchs {
                     .list_requests(
                         station_api::ListRequestsInput {
                             created_from_dt: Some(timestamp_to_rfc3339(
-                                &(end_creation_time - 300 * 1_000_000_000),
+                                &(end_creation_time - 5_000 * 1_000_000_000),
                             )),
                             created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
                             statuses: Some(vec![

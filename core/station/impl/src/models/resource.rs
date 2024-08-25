@@ -16,13 +16,16 @@ use crate::{
     models::CanisterMethod,
 };
 
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+/// The deserile implementation is available in the migration module for the `Resource` enum, this is
+/// because the enum had a backward incompatible change in the past and the migration module is handling
+/// the deserialization of the old data.
+#[storable(skip_deserialize = true)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, strum::VariantNames)]
+#[strum(serialize_all = "PascalCase")]
 pub enum Resource {
     Permission(PermissionResourceAction),
     Account(AccountResourceAction),
     AddressBook(ResourceAction),
-    ChangeCanister(ChangeCanisterResourceAction),
     ExternalCanister(ExternalCanisterResourceAction),
     Notification(NotificationResourceAction),
     Request(RequestResourceAction),
@@ -55,9 +58,6 @@ impl ModelValidator<ValidationError> for Resource {
                     EnsureAddressBookEntry::resource_id_exists(resource_id)?
                 }
             },
-            Resource::ChangeCanister(action) => match action {
-                ChangeCanisterResourceAction::Create => (),
-            },
             Resource::ExternalCanister(action) => match action {
                 ExternalCanisterResourceAction::List
                 | ExternalCanisterResourceAction::Create
@@ -89,7 +89,8 @@ impl ModelValidator<ValidationError> for Resource {
             Resource::System(action) => match action {
                 SystemResourceAction::SystemInfo
                 | SystemResourceAction::Capabilities
-                | SystemResourceAction::ManageSystemInfo => (),
+                | SystemResourceAction::ManageSystemInfo
+                | SystemResourceAction::Upgrade => (),
             },
             Resource::User(action) => match action {
                 UserResourceAction::List | UserResourceAction::Create => (),
@@ -152,12 +153,7 @@ pub enum SystemResourceAction {
     SystemInfo,
     Capabilities,
     ManageSystemInfo,
-}
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum ChangeCanisterResourceAction {
-    Create,
+    Upgrade,
 }
 
 #[storable]
@@ -367,13 +363,6 @@ impl Resource {
                     ))]
                 }
             },
-            Resource::ChangeCanister(action) => match action {
-                ChangeCanisterResourceAction::Create => {
-                    vec![Resource::ChangeCanister(
-                        ChangeCanisterResourceAction::Create,
-                    )]
-                }
-            },
             Resource::ExternalCanister(action) => match action {
                 ExternalCanisterResourceAction::List => {
                     vec![Resource::ExternalCanister(
@@ -568,6 +557,9 @@ impl Resource {
                 SystemResourceAction::ManageSystemInfo => {
                     vec![Resource::System(SystemResourceAction::ManageSystemInfo)]
                 }
+                SystemResourceAction::Upgrade => {
+                    vec![Resource::System(SystemResourceAction::Upgrade)]
+                }
             },
             Resource::User(action) => match action {
                 UserResourceAction::Create => vec![Resource::User(UserResourceAction::Create)],
@@ -632,7 +624,6 @@ impl Display for Resource {
             Resource::Permission(action) => write!(f, "Permission({})", action),
             Resource::Account(action) => write!(f, "Account({})", action),
             Resource::AddressBook(action) => write!(f, "AddressBook({})", action),
-            Resource::ChangeCanister(action) => write!(f, "ChangeCanister({})", action),
             Resource::ExternalCanister(action) => {
                 write!(f, "ExternalCanister({})", action)
             }
@@ -675,14 +666,6 @@ impl Display for AccountResourceAction {
             AccountResourceAction::Transfer(id) => write!(f, "Transfer({})", id),
             AccountResourceAction::Read(id) => write!(f, "Read({})", id),
             AccountResourceAction::Update(id) => write!(f, "Update({})", id),
-        }
-    }
-}
-
-impl Display for ChangeCanisterResourceAction {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ChangeCanisterResourceAction::Create => write!(f, "Create"),
         }
     }
 }
@@ -787,6 +770,7 @@ impl Display for SystemResourceAction {
             SystemResourceAction::SystemInfo => write!(f, "SystemInfo"),
             SystemResourceAction::Capabilities => write!(f, "Capabilities"),
             SystemResourceAction::ManageSystemInfo => write!(f, "ManageSystemInfo"),
+            SystemResourceAction::Upgrade => write!(f, "Upgrade"),
         }
     }
 }
@@ -816,9 +800,9 @@ impl Display for ResourceId {
 #[cfg(test)]
 mod test {
     use super::{
-        AccountResourceAction, ChangeCanisterResourceAction, ExternalCanisterId,
-        ExternalCanisterResourceAction, PermissionResourceAction, RequestResourceAction, Resource,
-        ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+        AccountResourceAction, ExternalCanisterId, ExternalCanisterResourceAction,
+        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+        SystemResourceAction, UserResourceAction,
     };
     use crate::core::validation::disable_mock_resource_validation;
     use candid::Principal;
@@ -841,7 +825,6 @@ mod test {
             Resource::AddressBook(ResourceAction::Read(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Update(ResourceId::Any)),
             Resource::AddressBook(ResourceAction::Delete(ResourceId::Any)),
-            Resource::ChangeCanister(ChangeCanisterResourceAction::Create),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Create),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
                 ExternalCanisterId::Any,

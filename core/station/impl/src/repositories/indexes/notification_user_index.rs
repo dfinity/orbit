@@ -21,6 +21,13 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct NotificationUserIndexRepository {}
 
+impl NotificationUserIndexRepository {
+    /// Clears the repository by removing all the entries.
+    pub fn clear(&self) {
+        DB.with(|m| m.borrow_mut().clear_new());
+    }
+}
+
 impl IndexRepository<NotificationUserIndex, NotificationId> for NotificationUserIndexRepository {
     type FindByCriteria = NotificationUserIndexCriteria;
 

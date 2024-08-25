@@ -70,20 +70,27 @@ impl Authorization {
 fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
     match &resource {
         &Resource::Request(RequestResourceAction::Read(ResourceId::Id(request_id))) => {
-            if REQUEST_REPOSITORY.exists_approver(request_id, &user.id)
-                || REQUEST_REPOSITORY.exists_requester(request_id, &user.id)
-            {
-                return true;
+            match REQUEST_REPOSITORY.find_indexed_fields_by_request_id(request_id) {
+                None => false,
+                Some(request) => {
+                    if request.approved_by.iter().any(|id| *id == user.id)
+                        || request.rejected_by.iter().any(|id| *id == user.id)
+                        || request.requested_by == user.id
+                    {
+                        return true;
+                    }
+
+                    let validator = RequestApprovalRightsEvaluator::new(
+                        REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR.clone(),
+                        user.id,
+                        &request,
+                    );
+
+                    validator.evaluate().unwrap_or(false)
+                }
             }
-
-            let validator = RequestApprovalRightsEvaluator::new(
-                REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR.clone(),
-                user.id,
-                *request_id,
-            );
-
-            validator.evaluate().unwrap_or(false)
         }
+
         Resource::User(UserResourceAction::Read(ResourceId::Id(user_id))) => {
             // The user has access to their own user record.
             *user_id == user.id

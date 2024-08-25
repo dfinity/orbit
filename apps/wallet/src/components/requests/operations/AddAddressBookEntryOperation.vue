@@ -44,7 +44,7 @@ onBeforeMount(() => {
   const entry: Partial<AddressBookEntry> = {};
   entry.blockchain = props.operation.input.blockchain;
   entry.address_owner = props.operation.input.address_owner;
-  entry.standard = props.operation.input.standard;
+  entry.labels = props.operation.input.labels;
   entry.address = props.operation.input.address;
   entry.metadata = props.operation.input.metadata;
 

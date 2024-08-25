@@ -27,3 +27,13 @@ pub enum SortDirection {
     Asc,
     Desc,
 }
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum CanisterInstallMode {
+    #[serde(rename = "install")]
+    Install = 1,
+    #[serde(rename = "reinstall")]
+    Reinstall = 2,
+    #[serde(rename = "upgrade")]
+    Upgrade = 3,
+}

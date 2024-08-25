@@ -401,7 +401,7 @@ export const useStationStore = defineStore('station', {
     async checkVersionUpdates(): Promise<void> {
       if (
         // if the user does not have the privilege to change the canister, we do not need to check for updates
-        !this.privileges.some(privilege => variantIs(privilege, 'ChangeCanister')) ||
+        !this.privileges.some(privilege => variantIs(privilege, 'SystemUpgrade')) ||
         // disables checking for updates if it's already ongoing
         this.versionManagement.loading
       ) {
@@ -452,7 +452,7 @@ export const useStationStore = defineStore('station', {
         const result = await this.service
           .listRequests({
             limit: 1,
-            types: [{ ChangeCanister: null }],
+            types: [{ SystemUpgrade: null }],
             statuses: [
               { Approved: null },
               { Processing: null },

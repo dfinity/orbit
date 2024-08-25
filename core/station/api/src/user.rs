@@ -108,7 +108,7 @@ pub enum UserPrivilege {
     AddRequestPolicy,
     ListAddressBookEntries,
     AddAddressBookEntry,
-    ChangeCanister,
+    SystemUpgrade,
     ListRequests,
     CreateExternalCanister,
     ListExternalCanisters,

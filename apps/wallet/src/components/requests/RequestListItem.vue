@@ -46,7 +46,7 @@ import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperat
 import AddRequestPolicyOperation from './operations/AddRequestPolicyOperation.vue';
 import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
 import AddUserOperation from './operations/AddUserOperation.vue';
-import ChangeCanisterOperation from './operations/ChangeCanisterOperation.vue';
+import SystemUpgradeOperation from './operations/SystemUpgradeOperation.vue';
 import EditAccountOperation from './operations/EditAccountOperation.vue';
 import EditAddressBookEntryOperation from './operations/EditAddressBookEntryOperation.vue';
 import EditPermissionOperation from './operations/EditPermissionOperation.vue';
@@ -90,7 +90,7 @@ const componentsMap: {
   AddRequestPolicy: AddRequestPolicyOperation,
   EditRequestPolicy: EditRequestPolicyOperation,
   RemoveRequestPolicy: RemoveRequestPolicyOperation,
-  ChangeCanister: ChangeCanisterOperation,
+  SystemUpgrade: SystemUpgradeOperation,
   EditPermission: EditPermissionOperation,
   ManageSystemInfo: ManageSystemInfoOperation,
   ChangeExternalCanister: UnsupportedOperation,

@@ -7,7 +7,6 @@ export enum ResourceTypeEnum {
   Transfer = 'Transfer',
   Permission = 'Permission',
   RequestPolicy = 'RequestPolicy',
-  ChangeCanister = 'ChangeCanister',
   System = 'System',
   Request = 'Request',
   AddressBook = 'AddressBook',
@@ -25,6 +24,7 @@ export enum ResourceActionEnum {
   SystemInfoConfig = 'SystemInfoConfig',
   SystemInfoCapabilities = 'SystemInfoCapabilities',
   ManageSystemInfo = 'ManageSystemInfo',
+  SystemUpgrade = 'SystemUpgrade',
 }
 
 export enum AuthScopeEnum {

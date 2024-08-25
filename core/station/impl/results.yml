@@ -1,44 +1,56 @@
 benches:
-  find_external_canister_policies_are_below_query_limit:
+  batch_insert_100_requests:
     total:
-      instructions: 27370495
+      instructions: 224484119
       heap_increase: 0
+      stable_memory_increase: 96
+    scopes: {}
+  find_100_users_from_50k_user_dataset:
+    total:
+      instructions: 218535601
+      heap_increase: 97
+      stable_memory_increase: 0
+    scopes: {}
+  find_500_external_canister_policies_from_50k_dataset:
+    total:
+      instructions: 30920471
+      heap_increase: 0
+      stable_memory_increase: 0
+    scopes: {}
+  heap_size_of_indexed_request_fields_cache_is_lt_300mib:
+    total:
+      instructions: 128977905
+      heap_increase: 87
+      stable_memory_increase: 0
+    scopes: {}
+  list_1k_requests:
+    total:
+      instructions: 95868889
+      heap_increase: 7
       stable_memory_increase: 0
     scopes: {}
   list_external_canisters_with_all_statuses:
     total:
-      instructions: 225638784
+      instructions: 201197808
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
-  repository_batch_insert_100_requests:
+  repository_find_1k_requests_from_10k_dataset_default_filters:
     total:
-      instructions: 490537864
-      heap_increase: 0
-      stable_memory_increase: 192
-    scopes: {}
-  repository_filter_all_request_ids_by_default_filters:
-    total:
-      instructions: 466672477
-      heap_increase: 1
+      instructions: 94491311
+      heap_increase: 17
       stable_memory_increase: 0
     scopes: {}
-  repository_list_all_requests:
+  service_filter_5k_requests_from_100k_dataset:
     total:
-      instructions: 97189374
-      heap_increase: 10
-      stable_memory_increase: 0
-    scopes: {}
-  service_filter_all_requests_with_creation_time_filters:
-    total:
-      instructions: 1127914406
-      heap_increase: 0
+      instructions: 671845652
+      heap_increase: 106
       stable_memory_increase: 16
     scopes: {}
-  service_filter_all_requests_with_default_filters:
+  service_find_all_requests_from_2k_dataset:
     total:
-      instructions: 5837697222
-      heap_increase: 3
+      instructions: 272328010
+      heap_increase: 44
       stable_memory_increase: 16
     scopes: {}
 version: 0.1.4

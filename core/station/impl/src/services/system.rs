@@ -1,4 +1,3 @@
-use super::DISASTER_RECOVERY_SERVICE;
 use crate::{
     core::{
         ic_cdk::{
@@ -12,11 +11,20 @@ use crate::{
     factories::blockchains::InternetComputer,
     models::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
-        CycleObtainStrategy, ManageSystemInfoOperationInput, RequestId, RequestKey, RequestStatus,
+        CanisterInstallMode, CanisterUpgradeModeArgs, CycleObtainStrategy,
+        ManageSystemInfoOperationInput, RequestId, RequestKey, RequestOperation, RequestStatus,
     },
-    repositories::{permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY},
+    repositories::{
+        permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY,
+        USER_GROUP_REPOSITORY, USER_REPOSITORY,
+    },
+    services::{
+        change_canister::{ChangeCanisterService, CHANGE_CANISTER_SERVICE},
+        disaster_recovery::DISASTER_RECOVERY_SERVICE,
+    },
+    SYSTEM_VERSION,
 };
-use candid::Principal;
+use candid::{CandidType, Principal};
 use canfund::{
     api::{cmc::IcCyclesMintingCanister, ledger::IcLedgerCanister},
     manager::options::ObtainCyclesOptions,
@@ -31,18 +39,33 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 lazy_static! {
-    pub static ref SYSTEM_SERVICE: Arc<SystemService> =
-        Arc::new(SystemService::new(Arc::clone(&REQUEST_REPOSITORY)));
+    pub static ref SYSTEM_SERVICE: Arc<SystemService> = Arc::new(SystemService::new(
+        Arc::clone(&REQUEST_REPOSITORY),
+        Arc::clone(&CHANGE_CANISTER_SERVICE)
+    ));
 }
 
 #[derive(Default, Debug)]
 pub struct SystemService {
     request_repository: Arc<RequestRepository>,
+    change_canister_service: Arc<ChangeCanisterService>,
+}
+
+#[derive(Clone, CandidType)]
+struct InstallCanisterParams {
+    module: Vec<u8>,
+    arg: Vec<u8>,
 }
 
 impl SystemService {
-    pub fn new(request_repository: Arc<RequestRepository>) -> Self {
-        Self { request_repository }
+    pub fn new(
+        request_repository: Arc<RequestRepository>,
+        change_canister_service: Arc<ChangeCanisterService>,
+    ) -> Self {
+        Self {
+            request_repository,
+            change_canister_service,
+        }
     }
 
     /// Gets the system information of the current canister.
@@ -110,6 +133,44 @@ impl SystemService {
         crate::core::ic_cdk::spawn(async {
             DISASTER_RECOVERY_SERVICE.sync_all().await;
         });
+    }
+
+    /// Execute an upgrade of the station by requesting the upgrader to perform it on our behalf.
+    pub async fn upgrade_station(&self, module: &[u8], arg: &[u8]) -> ServiceResult<()> {
+        let upgrader_canister_id = self.get_upgrader_canister_id();
+
+        ic_cdk::call(
+            upgrader_canister_id,
+            "trigger_upgrade",
+            (InstallCanisterParams {
+                module: module.to_owned(),
+                arg: arg.to_owned(),
+            },),
+        )
+        .await
+        .map_err(|(_, err)| SystemError::UpgradeFailed {
+            reason: err.to_string(),
+        })?;
+
+        Ok(())
+    }
+
+    /// Execute an upgrade of the upgrader canister.
+    pub async fn upgrade_upgrader(&self, module: &[u8], arg: Option<Vec<u8>>) -> ServiceResult<()> {
+        let upgrader_canister_id = self.get_upgrader_canister_id();
+        self.change_canister_service
+            .install_canister(
+                upgrader_canister_id,
+                CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}),
+                module,
+                arg,
+            )
+            .await
+            .map_err(|e| SystemError::UpgradeFailed {
+                reason: e.to_string(),
+            })?;
+
+        Ok(())
     }
 
     pub fn get_obtain_cycle_config(
@@ -274,8 +335,8 @@ impl SystemService {
     ///
     /// Must only be called within a canister init or post_upgrade call.
     fn init_cache(&self) {
-        // Initializes the cache of the permission repository,
-        // using at most 20B instructions.
+        USER_GROUP_REPOSITORY.build_cache();
+        USER_REPOSITORY.build_cache();
         PERMISSION_REPOSITORY.build_cache();
     }
 
@@ -332,6 +393,9 @@ impl SystemService {
             None => SystemUpgrade { name: None },
         };
 
+        // Version is set to the current global system version, needs to happen after the migrations.
+        system_info.set_version(SYSTEM_VERSION.to_string());
+
         // verifies that the upgrade request exists and marks it as completed
         if let Some(request_id) = system_info.get_change_canister_request() {
             match self.request_repository.get(&RequestKey { id: *request_id }) {
@@ -341,6 +405,11 @@ impl SystemService {
                         completed_at: completed_time,
                     };
                     request.last_modification_timestamp = completed_time;
+
+                    if let RequestOperation::SystemUpgrade(operation) = &mut request.operation {
+                        // Clears the module when the operation is completed, this helps to reduce memory usage.
+                        operation.input.module = Vec::new();
+                    }
 
                     self.request_repository.insert(request.to_key(), request);
                 }

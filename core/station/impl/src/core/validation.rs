@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{hash::Hash, sync::Arc};
 
 #[cfg(test)]
 use std::cell::RefCell;
@@ -18,6 +18,7 @@ use crate::{
     services::SYSTEM_SERVICE,
 };
 use candid::Principal;
+use ic_stable_structures::{Memory, Storable};
 #[cfg(not(test))]
 pub use orbit_essentials::cdk as ic_cdk;
 #[cfg(test)]
@@ -42,7 +43,13 @@ pub fn enable_mock_resource_validation() {
     MOCK_RESOURCE_VALIDATION_ON.with(|v| *v.borrow_mut() = true);
 }
 
-fn ensure_entry_exists<K, V>(repository: Arc<dyn Repository<K, V>>, key: K) -> Option<()> {
+fn ensure_entry_exists<K, V, M, R>(repository: Arc<R>, key: K) -> Option<()>
+where
+    R: Repository<K, V, M>,
+    K: Hash + Clone + Eq + Ord + Storable,
+    V: Clone + Storable,
+    M: Memory,
+{
     #[cfg(test)]
     if MOCK_RESOURCE_VALIDATION_ON.with(|v| *v.borrow()) {
         return Some(());

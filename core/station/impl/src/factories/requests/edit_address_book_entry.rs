@@ -36,6 +36,7 @@ impl Create<station_api::EditAddressBookEntryOperationInput> for EditAddressBook
                     address_book_entry_id: *address_book_entry_id.as_bytes(),
                     address_owner: operation_input.address_owner,
                     change_metadata: operation_input.change_metadata.map(|m| m.into()),
+                    labels: operation_input.labels,
                 },
             }),
             input
