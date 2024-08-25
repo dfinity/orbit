@@ -761,6 +761,8 @@ export interface Notification {
   'message' : [] | [string],
   'target_user_id' : UUID,
 }
+export type NotificationResourceAction = { 'List' : null } |
+  { 'Update' : ResourceId };
 export type NotificationStatus = { 'Read' : null } |
   { 'Sent' : null };
 export type NotificationType = {
@@ -992,6 +994,7 @@ export type RequestStatusCode = { 'Failed' : null } |
   { 'Created' : null } |
   { 'Completed' : null };
 export type Resource = { 'Request' : RequestResourceAction } |
+  { 'Notification' : NotificationResourceAction } |
   { 'System' : SystemResourceAction } |
   { 'User' : UserResourceAction } |
   { 'ExternalCanister' : ExternalCanisterResourceAction } |

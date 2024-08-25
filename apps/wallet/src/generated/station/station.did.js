@@ -96,6 +96,10 @@ export const idlFactory = ({ IDL }) => {
     'List' : IDL.Null,
     'Read' : ResourceId,
   });
+  const NotificationResourceAction = IDL.Variant({
+    'List' : IDL.Null,
+    'Update' : ResourceId,
+  });
   const SystemResourceAction = IDL.Variant({
     'ManageSystemInfo' : IDL.Null,
     'SystemInfo' : IDL.Null,
@@ -156,6 +160,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Resource = IDL.Variant({
     'Request' : RequestResourceAction,
+    'Notification' : NotificationResourceAction,
     'System' : SystemResourceAction,
     'User' : UserResourceAction,
     'ExternalCanister' : ExternalCanisterResourceAction,

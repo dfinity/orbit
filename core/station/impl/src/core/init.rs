@@ -5,8 +5,9 @@ use crate::models::{
     resource::{
         AccountResourceAction, CallExternalCanisterResourceTarget, ChangeCanisterResourceAction,
         ExecutionMethodResourceTarget, ExternalCanisterId, ExternalCanisterResourceAction,
-        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-        ResourceIds, SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
+        NotificationResourceAction, PermissionResourceAction, RequestResourceAction, Resource,
+        ResourceAction, ResourceId, ResourceIds, SystemResourceAction, UserResourceAction,
+        ValidationMethodResourceTarget,
     },
     ADMIN_GROUP_ID,
 };
@@ -164,6 +165,15 @@ lazy_static! {
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Any)),
+        ),
+        // notifications
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Notification(NotificationResourceAction::List),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Notification(NotificationResourceAction::Update(ResourceId::Any)),
         ),
     ];
 

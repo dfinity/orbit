@@ -1,12 +1,13 @@
 use super::HelperMapper;
 use crate::{
     core::ic_cdk::api::trap,
+    core::CallContext,
     models::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget,
             ChangeCanisterResourceAction, ExternalCanisterId, ExternalCanisterResourceAction,
-            PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-            SystemResourceAction, UserResourceAction,
+            NotificationResourceAction, PermissionResourceAction, RequestResourceAction, Resource,
+            ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
         },
         CanisterMethod, Transfer,
     },
@@ -67,6 +68,14 @@ impl From<UserPrivilege> for Resource {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::List)
             }
         }
+    }
+}
+
+impl From<&CallContext> for Resource {
+    fn from(input: &CallContext) -> Self {
+        Resource::User(UserResourceAction::Read(ResourceId::Id(
+            input.user().expect("Caller does not exist as a user").id,
+        )))
     }
 }
 
@@ -147,6 +156,12 @@ impl From<&station_api::GetAddressBookEntryInputDTO> for Resource {
                 .expect("Invalid address book entry id")
                 .as_bytes(),
         )))
+    }
+}
+
+impl From<&station_api::ListNotificationsInput> for Resource {
+    fn from(_input: &station_api::ListNotificationsInput) -> Self {
+        Resource::Notification(NotificationResourceAction::List)
     }
 }
 
@@ -332,6 +347,36 @@ impl GetTransfersInputRef<'_> {
             .iter()
             .map(|account_id| {
                 Resource::Account(AccountResourceAction::Read(ResourceId::Id(*account_id)))
+            })
+            .collect()
+    }
+}
+
+pub(crate) struct MarkNotificationsReadInputRef<'a>(
+    pub &'a station_api::MarkNotificationsReadInput,
+);
+
+impl MarkNotificationsReadInputRef<'_> {
+    pub fn to_resources(&self) -> Vec<Resource> {
+        let notification_ids = self
+            .0
+            .notification_ids
+            .iter()
+            .map(|notification_id| {
+                let notification_id = *HelperMapper::to_uuid(notification_id.to_owned())
+                    .expect("Invalid notification id")
+                    .as_bytes();
+
+                notification_id
+            })
+            .collect::<Vec<UUID>>();
+
+        notification_ids
+            .iter()
+            .map(|notification_id| {
+                Resource::Notification(NotificationResourceAction::Update(ResourceId::Id(
+                    *notification_id,
+                )))
             })
             .collect()
     }

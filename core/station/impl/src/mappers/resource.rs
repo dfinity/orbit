@@ -2,8 +2,9 @@ use crate::models::{
     resource::{
         AccountResourceAction, CallExternalCanisterResourceTarget, ChangeCanisterResourceAction,
         ExecutionMethodResourceTarget, ExternalCanisterId, ExternalCanisterResourceAction,
-        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-        SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
+        NotificationResourceAction, PermissionResourceAction, RequestResourceAction, Resource,
+        ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+        ValidationMethodResourceTarget,
     },
     CanisterMethod,
 };
@@ -28,6 +29,7 @@ impl From<station_api::ResourceDTO> for Resource {
             station_api::ResourceDTO::ExternalCanister(action) => {
                 Resource::ExternalCanister(action.into())
             }
+            station_api::ResourceDTO::Notification(action) => Resource::Notification(action.into()),
             station_api::ResourceDTO::Request(action) => Resource::Request(action.into()),
             station_api::ResourceDTO::System(action) => Resource::System(action.into()),
         }
@@ -51,6 +53,7 @@ impl From<Resource> for station_api::ResourceDTO {
             Resource::ExternalCanister(action) => {
                 station_api::ResourceDTO::ExternalCanister(action.into())
             }
+            Resource::Notification(action) => station_api::ResourceDTO::Notification(action.into()),
             Resource::Request(action) => station_api::ResourceDTO::Request(action.into()),
             Resource::System(action) => station_api::ResourceDTO::System(action.into()),
         }
@@ -288,6 +291,28 @@ impl From<ExternalCanisterResourceAction> for station_api::ExternalCanisterResou
             }
             ExternalCanisterResourceAction::Read(target) => {
                 station_api::ExternalCanisterResourceActionDTO::Read(target.into())
+            }
+        }
+    }
+}
+
+impl From<station_api::NotificationResourceActionDTO> for NotificationResourceAction {
+    fn from(action: station_api::NotificationResourceActionDTO) -> Self {
+        match action {
+            station_api::NotificationResourceActionDTO::List => NotificationResourceAction::List,
+            station_api::NotificationResourceActionDTO::Update(id) => {
+                NotificationResourceAction::Update(id.into())
+            }
+        }
+    }
+}
+
+impl From<NotificationResourceAction> for station_api::NotificationResourceActionDTO {
+    fn from(action: NotificationResourceAction) -> Self {
+        match action {
+            NotificationResourceAction::List => station_api::NotificationResourceActionDTO::List,
+            NotificationResourceAction::Update(id) => {
+                station_api::NotificationResourceActionDTO::Update(id.into())
             }
         }
     }

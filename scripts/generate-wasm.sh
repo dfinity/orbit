@@ -43,25 +43,25 @@ else
   echo "OS not supported: ${OSTYPE:-$RUNNER_OS}"
   exit 1
 fi
-curl -sL "${URL}" -o ic-wasm || exit 1
-chmod +x ic-wasm
+#curl -sL "${URL}" -o ic-wasm || exit 1
+#chmod +x ic-wasm
 
 PACKAGE=$(echo $PACKAGE | tr - _)
 
 # if candid file exists, generate metadata
 if [ -f "$candid_spec_file" ]; then
   echo Adding wasm metadata: \"candid:service\"
-  ./ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm metadata candid:service -f $candid_spec_file -v public
+  ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm metadata candid:service -f $candid_spec_file -v public
 fi
 
 if [ -n "$package_version" ]; then
   echo Adding wasm metadata: \"app:version\"
-  ./ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm metadata app:version -d "$package_version" -v public
+  ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm metadata app:version -d "$package_version" -v public
 fi
 
 echo Optimising wasm
-./ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
-./ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize O3
+ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
+ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm optimize O3
 
 echo Compressing wasm
 mkdir -p wasms
