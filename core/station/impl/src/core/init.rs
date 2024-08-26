@@ -165,15 +165,6 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Any)),
         ),
-        // notifications
-        (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::Notification(NotificationResourceAction::List),
-        ),
-        (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::Notification(NotificationResourceAction::Update(ResourceId::Any)),
-        ),
     ];
 
 }
