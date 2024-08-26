@@ -4,9 +4,9 @@ use crate::models::{
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
         AccountResourceAction, CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
-        ExternalCanisterId, ExternalCanisterResourceAction, NotificationResourceAction,
-        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-        ResourceIds, SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
+        ExternalCanisterId, ExternalCanisterResourceAction, PermissionResourceAction,
+        RequestResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
+        SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
     },
     ADMIN_GROUP_ID,
 };
