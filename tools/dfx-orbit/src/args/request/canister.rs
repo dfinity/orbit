@@ -13,7 +13,6 @@ use sha2::{Digest, Sha256};
 use slog::{info, Logger};
 
 // TODO: Support Canister create + integration test
-// TODO: Support Canister install check
 // TODO: Canister get response functionality
 
 /// Request canister operations through Orbit
@@ -271,7 +270,7 @@ fn candid_from_string_or_file(
     arg_string: &Option<String>,
     arg_path: &Option<String>,
 ) -> anyhow::Result<Option<Vec<u8>>> {
-    // TODO: It would be really nice to be able to use `blob_from_arguments(..)` here, as in dfx, to geta ll the nice things such as help composing the argument.
+    // TODO: It would be really nice to be able to use `blob_from_arguments(..)` here, as in dfx, to get all the nice things such as help composing the argument.
     // First try to read the argument file, if it was provided
     Ok(arg_path
         .as_ref()

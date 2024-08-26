@@ -95,11 +95,10 @@ impl DfxOrbit {
             RequestOperationDTO::CallExternalCanister(op) => {
                 self.display_call_canister_operation(&mut output, op.as_ref())
             }
+            // TODO: CreateCanister Additional information
+            // TODO: ConfigureCanister Additional information
             _ => (),
         };
-
-        // TODO: CreateCanister Additional information
-        // TODO: Configure Canist Additional information
 
         output
     }

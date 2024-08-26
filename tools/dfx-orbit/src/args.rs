@@ -11,9 +11,8 @@ use station::StationArgs;
 use verify::VerifyArgs;
 
 /// Manages Orbit on the Internet Computer.
-// TODO: Better version information
 #[derive(Parser, Debug)]
-#[clap(version, about, long_about = None)]
+#[clap(version, about)]
 pub struct DfxOrbitArgs {
     /// Increase verbosity level
     #[clap(short, long, action = clap::ArgAction::Count, conflicts_with = "quiet")]

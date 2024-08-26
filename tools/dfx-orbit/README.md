@@ -104,15 +104,6 @@ Initially you are likely to have only permission to see your own profile:
 ]
 ```
 
-Without permission to make and view requests, you will not be able to do much. It is recommended to make a `Developer` group with the following permissions:
-
-| Name in UI   | Privilege in `dfx-orbit me` | Name in error messages | Used for                         |
-| ------------ | --------------------------- | ---------------------- | -------------------------------- |
-| Request/List | `ListRequests`              | `Request(List)`        | `dfx-orbit review list`          |
-| Request/Read | Not Shown                   | `Request(Read(Id))`    | `dfx-orbit review id REQUEST_ID` |
-
-TODO: It would be nice to be able to link directly to a permission. E.g. this could open the permissions page and focus on one specific permission: https://orbitwallet.io/en/settings/user-groups/permissions#Request/List
-
 ## Make canister calls with Orbit
 
 Instead of using `dfx canister call CANISTER METHOD ARGUMENTS` use `dfx-orbit request canister call CANISTER METHOD ARGUMENTS`.
