@@ -84,7 +84,7 @@ impl BlockchainApi for Ethereum {
         let value = nat_to_u256(&transfer.amount);
         let gas_limit = eth_estimate_gas(&self.chain, &transfer.to_address, &input, value).await?;
         let max_fee_per_gas: u128 = 40 * 10u128.pow(9); // gwei
-        let max_priority_fee_per_gas = 100u128;
+        let max_priority_fee_per_gas = 0128;
 
         let transaction = alloy::consensus::TxEip1559 {
             chain_id: self.chain.id(),
