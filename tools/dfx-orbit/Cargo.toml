@@ -31,8 +31,7 @@ slog-term.workspace = true
 slog-async.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ['rt'] }
-
-orbit-station-api = { path = "../../core/station/api", package = "station-api" }
+station-api = { path = "../../core/station/api", version = '0.0.2-alpha.4' }
 
 [lib]
 doctest = false

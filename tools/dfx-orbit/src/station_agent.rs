@@ -3,7 +3,7 @@
 pub use crate::station_agent::{config::StationConfig, error::StationAgentResult};
 use candid::CandidType;
 use ic_agent::{agent::UpdateBuilder, Agent};
-use orbit_station_api::{
+use station_api::{
     ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetNextApprovableRequestInput,
     GetNextApprovableRequestResponse, GetRequestInput, GetRequestResponse, ListRequestsInput,
     ListRequestsResponse, MeResponse, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
