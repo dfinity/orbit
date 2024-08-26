@@ -5,8 +5,8 @@ pub mod permission;
 use crate::{DfxOrbit, StationAgent};
 use canister::RequestCanisterArgs;
 use clap::{Parser, Subcommand};
-use orbit_station_api::CreateRequestInput;
 use permission::RequestPermissionArgs;
+use station_api::CreateRequestInput;
 
 /// Request canister changes.
 #[derive(Debug, Clone, Parser)]

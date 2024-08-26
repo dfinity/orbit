@@ -7,7 +7,7 @@ use crate::DfxOrbit;
 use call::RequestCanisterCallArgs;
 use clap::{Parser, Subcommand};
 use install::RequestCanisterInstallArgs;
-use orbit_station_api::RequestOperationInput;
+use station_api::RequestOperationInput;
 
 /// Request canister operations through Orbit
 #[derive(Debug, Clone, Parser)]
