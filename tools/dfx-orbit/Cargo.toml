@@ -1,14 +1,13 @@
+
 [package]
-name = "dfx-orbit"
-version = "0.2.0"
-description = "Command line tool for interacting with the Orbit digital asset manager on the ICP blockchain."
+name = 'dfx-orbit'
+version = '0.3.0'
+description = 'Command line tool for interacting with the Orbit digital asset manager on the ICP blockchain.'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
 homepage.workspace = true
 license.workspace = true
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow.workspace = true
@@ -31,7 +30,7 @@ slog-term.workspace = true
 slog-async.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ['rt'] }
-station-api = { path = "../../core/station/api", version = '0.0.2-alpha.4' }
+station-api = { path = '../../core/station/api', version = '0.0.2-alpha.5' }
 
 [lib]
 doctest = false
