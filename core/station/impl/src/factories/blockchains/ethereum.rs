@@ -80,7 +80,9 @@ impl BlockchainApi for Ethereum {
         transfer: &Transfer,
     ) -> BlockchainApiResult<BlockchainTransactionSubmitted> {
         let nonce = eth_get_transaction_count(&self.chain, &account.address).await?;
-        let gas_limit = 50000u128;
+        let input = alloy::primitives::Bytes::default();
+        let value = nat_to_u256(&transfer.amount);
+        let gas_limit = eth_estimate_gas(&self.chain, &transfer.to_address, &input, value).await?;
         let max_fee_per_gas: u128 = 40 * 10u128.pow(9); // gwei
         let max_priority_fee_per_gas = 100u128;
 
@@ -96,9 +98,9 @@ impl BlockchainApi for Ethereum {
                     error: error.to_string(),
                 }
             })?),
-            value: nat_to_u256(&transfer.amount),
+            value,
             access_list: alloy::eips::eip2930::AccessList::default(),
-            input: alloy::primitives::Bytes::default(),
+            input,
         };
         let sent_tx_hash = sign_and_send_transaction(&account, &self.chain, transaction).await?;
 
@@ -246,6 +248,36 @@ async fn eth_get_transaction_count(
         })?
         .to();
     Ok(tx_count)
+}
+
+async fn eth_estimate_gas(
+    chain: &alloy_chains::Chain,
+    to: &str,
+    data: &alloy::primitives::Bytes,
+    value: U256,
+) -> Result<u128, BlockchainApiError> {
+    let deserialized = request_evm_rpc(
+        chain,
+        "eth_estimateGas",
+        serde_json::json!({
+            "to": to,
+            "data": data,
+            "value": value
+        }),
+    )
+    .await?;
+    let gas_limit_hex =
+        deserialized
+            .as_str()
+            .ok_or(BlockchainApiError::BlockchainNetworkError {
+                info: "RPC did not return gas limit ".to_owned(),
+            })?;
+    let parsed = U256::from_str(&gas_limit_hex).map_err(|_e| {
+        BlockchainApiError::BlockchainNetworkError {
+            info: "Failed to parse gas limit".to_owned(),
+        }
+    })?;
+    Ok(parsed.to::<u128>())
 }
 
 pub async fn request_evm_rpc(

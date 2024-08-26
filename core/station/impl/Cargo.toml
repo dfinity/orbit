@@ -43,6 +43,9 @@ station-api = { path = '../api', version = '0.0.2-alpha.3' }
 upgrader-api = { path = '../../upgrader/api', version = '0.0.2-alpha.3' }
 alloy = { version = "0.2.0", features = [
     "signers",
+    "network",
+    "rpc",
+    "rpc-types",
     "k256",
     "consensus",
     "eips",
