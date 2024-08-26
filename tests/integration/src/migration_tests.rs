@@ -7,7 +7,7 @@ use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, PocketIc};
 
 const BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // can be found in the station core/init.rs
-const BASELINE_NR_PERMISSIONS: usize = 36; // can be found in the station core/init.rs
+const BASELINE_NR_PERMISSIONS: usize = 34; // can be found in the station core/init.rs
 
 const USER_GROUPS_NR: usize = 10;
 const USER_NR: usize = 10;
