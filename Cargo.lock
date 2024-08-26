@@ -651,7 +651,7 @@ dependencies = [
 
 [[package]]
 name = "canfund"
-version = "0.0.2-alpha.2"
+version = "0.0.2-alpha.3"
 dependencies = [
  "async-trait",
  "candid",
@@ -821,7 +821,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
 name = "control-panel"
-version = "0.0.2-alpha.4"
+version = "0.0.2-alpha.5"
 dependencies = [
  "candid",
  "candid_parser",
@@ -1164,7 +1164,7 @@ dependencies = [
 
 [[package]]
 name = "dfx-orbit"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "candid",
@@ -2987,7 +2987,7 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "orbit-essentials"
-version = "0.0.2-alpha.3"
+version = "0.0.2-alpha.4"
 dependencies = [
  "candid",
  "convert_case",
@@ -3012,7 +3012,7 @@ dependencies = [
 
 [[package]]
 name = "orbit-essentials-macros"
-version = "0.0.2-alpha.2"
+version = "0.0.2-alpha.3"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4372,7 +4372,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "station"
-version = "0.0.2-alpha.5"
+version = "0.0.2-alpha.6"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4406,7 +4406,7 @@ dependencies = [
 
 [[package]]
 name = "station-api"
-version = "0.0.2-alpha.4"
+version = "0.0.2-alpha.5"
 dependencies = [
  "candid",
  "orbit-essentials",
