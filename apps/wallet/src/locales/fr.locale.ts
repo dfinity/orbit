@@ -805,7 +805,11 @@ export default {
       removeusergroup: "Éffacer un groupe d'usagers",
       addaccount: 'Ajouter un compte',
       managesysteminfo: 'Gérer les informations système',
-      changeexternalcanister: 'Modifier un canister géré',
+      changeexternalcanister: 'Modifier un canister',
+      fundexternalcanister: 'Financer un canister',
+      setdisasterrecovery: 'Définir la récupération après sinistre',
+      callexternalcanister: 'Appeler un canister',
+      createexternalcanister: 'Créer un canister',
     },
   },
   cycle_obtain_strategies: {

@@ -43,13 +43,13 @@ benches:
     scopes: {}
   service_filter_5k_requests_from_100k_dataset:
     total:
-      instructions: 671845652
+      instructions: 686870525
       heap_increase: 106
       stable_memory_increase: 16
     scopes: {}
   service_find_all_requests_from_2k_dataset:
     total:
-      instructions: 272328010
+      instructions: 278337883
       heap_increase: 44
       stable_memory_increase: 16
     scopes: {}

@@ -71,3 +71,7 @@ wasms/*.wasm.gz
 .canbench_output
 .nx/cache
 /artifacts
+
+# The latest memory dump of the station will change every time the tests are run due to 
+# the system time added to PocketIC being the current time, making it non deterministic.
+tests/integration/assets/station-memory-latest.bin

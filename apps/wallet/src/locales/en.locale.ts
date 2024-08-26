@@ -537,7 +537,7 @@ export default {
     skip: 'Skip',
     version: 'Version',
     continue: 'Continue',
-    cycle_obtain_strategy: 'Station top-up method',
+    cycle_obtain_strategy: 'Wallet top-up method',
   },
   forms: {
     create: 'Create',
@@ -795,7 +795,11 @@ export default {
       removeusergroup: 'Remove user group',
       addaccount: 'Add account',
       managesysteminfo: 'Manage system info',
-      changeexternalcanister: 'Change external canister',
+      changeexternalcanister: 'Change canister',
+      fundexternalcanister: 'Fund canister',
+      setdisasterrecovery: 'Configure disaster recovery',
+      callexternalcanister: 'Call canister',
+      createexternalcanister: 'Create canister',
     },
   },
   cycle_obtain_strategies: {
