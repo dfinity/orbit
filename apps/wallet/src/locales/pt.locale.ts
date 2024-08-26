@@ -802,7 +802,10 @@ export default {
       removeusergroup: 'Remove grupo de usuários',
       addaccount: 'Adicionar conta',
       managesysteminfo: 'Gerir informações do sistema',
-      changeexternalcanister: 'Alterar canister gerenciado',
+      changeexternalcanister: 'Alterar canister',
+      fundexternalcanister: 'Financiar canister',
+      setdisasterrecovery: 'Recuperação de sistema',
+      callexternalcanister: 'Interagir com canister',
     },
   },
   cycle_obtain_strategies: {

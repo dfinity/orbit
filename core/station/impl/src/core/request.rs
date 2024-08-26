@@ -8,7 +8,7 @@ use crate::{
             RequestPolicyRuleResult,
         },
         request_specifier::{Match, UserInvolvedInPolicyRuleForRequestResource, UserSpecifier},
-        EvaluationStatus, Request, RequestId, RequestStatusCode, User, UserId, UserStatus,
+        EvaluationStatus, Request, RequestId, User, UserId, UserStatus,
     },
     repositories::{
         request_policy::REQUEST_POLICY_REPOSITORY, REQUEST_REPOSITORY, USER_REPOSITORY,
@@ -270,13 +270,12 @@ impl
     }
 }
 
-/// Evaluates if the user has the right to add their approval on the request.
+/// Evaluates if the user has approval rights to a given request.
 ///
 /// The user has the right to add if:
 ///
-/// - The request is not approved or rejected
-/// - There are matching policies for the request and the user is a part of the group that is allowed to approve
-/// - The user has not already approved on the request
+/// - There are matching policies for the request
+/// - The user is a part of the group that is allowed to approve
 pub struct RequestApprovalRightsEvaluator<'a> {
     pub approval_rights_evaluator: Arc<ApprovalRightsEvaluate>,
     pub approver_id: UserId,
@@ -305,15 +304,6 @@ impl<'a> RequestApprovalRightsEvaluator<'a> {
 
 impl<'a> Evaluate<bool> for RequestApprovalRightsEvaluator<'a> {
     fn evaluate(&self) -> Result<bool, EvaluateError> {
-        let is_user_approval = |id: &UUID| *id == self.approver_id;
-
-        if self.request.approved_by.iter().any(is_user_approval)
-            || self.request.rejected_by.iter().any(is_user_approval)
-            || self.request.status != RequestStatusCode::Created
-        {
-            return Ok(false);
-        }
-
         let matching_policies = self
             .request
             .resources

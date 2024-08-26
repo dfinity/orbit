@@ -297,15 +297,30 @@ impl Request {
         next_time() + time_in_ns
     }
 
-    pub async fn can_approve(&self, user_id: &UUID) -> bool {
-        let validator = RequestApprovalRightsEvaluator {
+    /// Checks if the user can approve the request.
+    pub fn can_approve(&self, user_id: &UUID) -> bool {
+        // Only requests that are in the created state can be approved.
+        if self.status != RequestStatus::Created {
+            return false;
+        }
+
+        // If the user has already added their approval, they can't add again.
+        if self
+            .approvals
+            .iter()
+            .any(|approval| approval.approver_id == *user_id)
+        {
+            return false;
+        }
+
+        let approval_rights_evaluator = RequestApprovalRightsEvaluator {
             request: &self.index_fields(),
             approver_id: *user_id,
             approval_rights_evaluator: REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR.clone(),
         };
 
-        match validator.evaluate() {
-            Ok(can_approve) => can_approve,
+        match approval_rights_evaluator.evaluate() {
+            Ok(has_approval_right) => has_approval_right,
             Err(_) => {
                 print(format!(
                     "Failed to evaluate voting rights for request: {:?}",
