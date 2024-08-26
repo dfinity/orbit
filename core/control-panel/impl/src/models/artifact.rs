@@ -1,6 +1,6 @@
 use crate::{core::ic_cdk::next_time, errors::ArtifactError, repositories::ARTIFACT_REPOSITORY};
 use orbit_essentials::{
-    model::{ModelValidator, ModelValidatorResult},
+    model::{ModelKey, ModelValidator, ModelValidatorResult},
     storable,
     types::{Timestamp, UUID},
     utils::sha256_hash,
@@ -28,6 +28,12 @@ pub struct Artifact {
     rc: u32,
     /// The date when the artifact was created.
     created_at: Timestamp,
+}
+
+impl ModelKey<ArtifactId> for Artifact {
+    fn key(&self) -> ArtifactId {
+        self.id
+    }
 }
 
 #[derive(Clone, Debug)]

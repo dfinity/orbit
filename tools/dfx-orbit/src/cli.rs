@@ -2,7 +2,7 @@
 pub(crate) mod asset;
 pub(crate) mod station;
 
-use orbit_station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
+use station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
 
 use crate::{
     args::{review::ReviewArgs, DfxOrbitArgs, DfxOrbitSubcommands},

@@ -21,6 +21,13 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct RequestResourceIndexRepository {}
 
+impl RequestResourceIndexRepository {
+    /// Clears the repository by removing all the entries.
+    pub fn clear(&self) {
+        DB.with(|m| m.borrow_mut().clear_new());
+    }
+}
+
 impl IndexRepository<RequestResourceIndex, Resource> for RequestResourceIndexRepository {
     type FindByCriteria = RequestResourceIndexCriteria;
 

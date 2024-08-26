@@ -23,6 +23,13 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct TransferAccountIndexRepository {}
 
+impl TransferAccountIndexRepository {
+    /// Clears the repository by removing all the entries.
+    pub fn clear(&self) {
+        DB.with(|m| m.borrow_mut().clear_new());
+    }
+}
+
 impl IndexRepository<TransferAccountIndex, TransferId> for TransferAccountIndexRepository {
     type FindByCriteria = TransferAccountIndexCriteria;
 

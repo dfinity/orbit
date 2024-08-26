@@ -9,7 +9,6 @@ import {
 import {
   isPermissionResourceActionContained,
   isAccountResourceActionContained,
-  isChangeCanisterResourceActionContained,
   isRequestResourceActionContained,
   isResourceActionContained,
   isSystemResourceActionContained,
@@ -273,31 +272,16 @@ export const globalPermissions = (): AggregatedResoucePermissions[] => [
         allow: defaultAllowLevels(),
         canEdit: false,
       },
-    ],
-    match(specifier: Resource, resource: Resource): boolean {
-      if (variantIs(specifier, 'System') && variantIs(resource, 'System')) {
-        return isSystemResourceActionContained(specifier.System, resource.System);
-      }
-
-      return false;
-    },
-  },
-  {
-    resourceType: ResourceTypeEnum.ChangeCanister,
-    resources: [
       {
-        action: ResourceActionEnum.Create,
-        resource: { ChangeCanister: { Create: null } },
+        action: ResourceActionEnum.SystemUpgrade,
+        resource: { System: { Upgrade: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
     ],
     match(specifier: Resource, resource: Resource): boolean {
-      if (variantIs(specifier, 'ChangeCanister') && variantIs(resource, 'ChangeCanister')) {
-        return isChangeCanisterResourceActionContained(
-          specifier.ChangeCanister,
-          resource.ChangeCanister,
-        );
+      if (variantIs(specifier, 'System') && variantIs(resource, 'System')) {
+        return isSystemResourceActionContained(specifier.System, resource.System);
       }
 
       return false;

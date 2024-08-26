@@ -3,16 +3,18 @@
 use candid::Principal;
 use pocket_ic::PocketIc;
 
-mod address_book;
+mod address_book_tests;
 mod control_panel_tests;
 mod cycles_monitor_tests;
 mod dfx_orbit;
 mod disaster_recovery_tests;
 mod external_canister_tests;
 mod interfaces;
+mod migration_tests;
 mod rate_limiter;
 mod register_tests;
 mod setup;
+mod test_data;
 mod transfer_tests;
 mod upgrade_station_tests;
 mod utils;

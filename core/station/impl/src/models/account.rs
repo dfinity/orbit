@@ -3,6 +3,7 @@ use crate::errors::AccountError;
 use crate::models::Metadata;
 use crate::repositories::request_policy::REQUEST_POLICY_REPOSITORY;
 use candid::{CandidType, Deserialize};
+use orbit_essentials::model::ModelKey;
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
 use orbit_essentials::{
@@ -63,6 +64,12 @@ pub struct Account {
 pub struct AccountKey {
     /// The account id, which is a UUID.
     pub id: AccountId,
+}
+
+impl ModelKey<AccountKey> for Account {
+    fn key(&self) -> AccountKey {
+        AccountKey { id: self.id }
+    }
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

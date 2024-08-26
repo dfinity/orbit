@@ -14,11 +14,11 @@
               <VCol cols="12" md="8">
                 <RecentRequests
                   :title="$t(`app.station_upgrades_card_title`)"
-                  :types="[{ ChangeCanister: null }, { ManageSystemInfo: null }]"
+                  :types="[{ SystemUpgrade: null }, { ManageSystemInfo: null }]"
                 >
                   <template #top-actions>
-                    <AuthCheck :privileges="[Privilege.ChangeCanister]">
-                      <ChangeCanisterActionBtn />
+                    <AuthCheck :privileges="[Privilege.SystemUpgrade]">
+                      <SystemUpgradeActionBtn />
                     </AuthCheck>
                     <VBtn
                       variant="elevated"
@@ -53,7 +53,7 @@ import { useI18n } from 'vue-i18n';
 import { VBtn, VCol } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import PageLayout from '~/components/PageLayout.vue';
-import ChangeCanisterActionBtn from '~/components/change-canister/ChangeCanisterActionBtn.vue';
+import SystemUpgradeActionBtn from '~/components/system-upgrade/SystemUpgradeActionBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';

@@ -19,8 +19,9 @@ use crate::models::{
     ExternalCanister, ExternalCanisterAvailableFilters, ExternalCanisterCallPermission,
     ExternalCanisterCallRequestPolicyRule, ExternalCanisterCallerMethodsPrivileges,
     ExternalCanisterCallerPrivileges, ExternalCanisterChangeRequestPolicyRule,
-    ExternalCanisterEntryId, ExternalCanisterPermissions, ExternalCanisterPermissionsInput,
-    ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesInput, RequestPolicy,
+    ExternalCanisterEntryId, ExternalCanisterKey, ExternalCanisterPermissions,
+    ExternalCanisterPermissionsInput, ExternalCanisterRequestPolicies,
+    ExternalCanisterRequestPoliciesInput, RequestPolicy,
 };
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
 use crate::repositories::{
@@ -35,6 +36,7 @@ use ic_cdk::api::management_canister::main::{
 };
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
+use orbit_essentials::model::ModelKey;
 use orbit_essentials::model::ModelValidator;
 use orbit_essentials::pagination::{paginated_items, PaginatedItemsArgs};
 use orbit_essentials::repository::Repository;
@@ -96,7 +98,7 @@ impl ExternalCanisterService {
     ) -> ServiceResult<ExternalCanister> {
         let resource = self
             .external_canister_repository
-            .get(&ExternalCanister::key(*id))
+            .get(&ExternalCanisterKey { id: *id })
             .ok_or(ExternalCanisterError::NotFound {
                 id: Uuid::from_bytes(*id).hyphenated().to_string(),
             })?;
@@ -513,7 +515,7 @@ impl ExternalCanisterService {
         };
 
         self.external_canister_repository
-            .insert(external_canister.to_key(), external_canister.clone());
+            .insert(external_canister.key(), external_canister.clone());
 
         self.configure_external_canister_permissions(&external_canister, input.permissions)?;
         self.configure_external_canister_request_policies(
@@ -728,7 +730,7 @@ impl ExternalCanisterService {
         external_canister.validate()?;
 
         self.external_canister_repository
-            .insert(external_canister.to_key(), external_canister.clone());
+            .insert(external_canister.key(), external_canister.clone());
 
         if let Some(updated_permissions) = input.permissions {
             self.configure_external_canister_permissions(&external_canister, updated_permissions)?;
@@ -770,7 +772,7 @@ impl ExternalCanisterService {
     ) -> ServiceResult<ExternalCanister> {
         let external_canister = self.get_external_canister(id)?;
         self.external_canister_repository
-            .remove(&external_canister.to_key());
+            .remove(&external_canister.key());
 
         // Removes the read, change & fund permissions.
         self.permission_service
@@ -1528,8 +1530,7 @@ mod external_canister_test_utils {
                 })
                 .collect::<Vec<ExternalCanisterCallPermission>>();
 
-            EXTERNAL_CANISTER_REPOSITORY
-                .insert(external_canister.to_key(), external_canister.clone());
+            EXTERNAL_CANISTER_REPOSITORY.insert(external_canister.key(), external_canister.clone());
 
             let mut input = ConfigureExternalCanisterSettingsInput::default();
             input.permissions = Some(ExternalCanisterPermissionsInput {

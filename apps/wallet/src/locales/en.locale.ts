@@ -119,7 +119,7 @@ export default {
       },
     },
   },
-  change_canister: {
+  system_upgrade: {
     targets: {
       upgradestation: 'Wallet',
       upgradeupgrader: 'Upgrader',
@@ -200,7 +200,7 @@ export default {
       permission: 'Access Policies',
       request_policy: 'Request Policies',
       address_book_entry: 'Address Book',
-      change_canister: 'Upgrades',
+      system_upgrade: 'Upgrades',
       transfer: 'Transfers',
       external_canister: 'External Canisters',
       system_info: 'System Info',
@@ -238,9 +238,9 @@ export default {
         title: 'Remove address book entry',
         request_title: 'Remove address book entry request',
       },
-      changecanister: {
-        title: 'Change canister',
-        request_title: 'Change canister request',
+      systemupgrade: {
+        title: 'System upgrade',
+        request_title: 'System upgrade request',
       },
       editpermission: {
         title: 'Edit permission',
@@ -537,7 +537,7 @@ export default {
     skip: 'Skip',
     version: 'Version',
     continue: 'Continue',
-    cycle_obtain_strategy: 'Station top-up method',
+    cycle_obtain_strategy: 'Wallet top-up method',
   },
   forms: {
     create: 'Create',
@@ -731,7 +731,6 @@ export default {
       permission: 'Access Policy',
       requestpolicy: 'Request Policy',
       system: 'System',
-      changecanister: 'Change Canister',
       transfer: 'Transfer',
       request: 'Request',
       addressbook: 'Address Book',
@@ -749,6 +748,7 @@ export default {
       systeminfocapabilities: 'Capabilities (Supported Assets)',
       systeminfoconfig: 'Configuration (Upgrades, Metrics, Usage)',
       managesysteminfo: 'Manage System Info (e.g. name)',
+      systemupgrade: 'Upgrade',
     },
     allow: {
       public: 'Anyone',
@@ -786,7 +786,7 @@ export default {
       removeaddressbookentry: 'Remove address book entry',
       editaddressbookentry: 'Edit address book entry',
       addrequestpolicy: 'Add request policy',
-      changecanister: 'Change canister',
+      systemupgrade: 'System upgrade',
       editrequestpolicy: 'Edit request policy',
       edituser: 'Edit user',
       transfer: 'Transfer',
@@ -795,7 +795,11 @@ export default {
       removeusergroup: 'Remove user group',
       addaccount: 'Add account',
       managesysteminfo: 'Manage system info',
-      changeexternalcanister: 'Change external canister',
+      changeexternalcanister: 'Change canister',
+      fundexternalcanister: 'Fund canister',
+      setdisasterrecovery: 'Configure disaster recovery',
+      callexternalcanister: 'Call canister',
+      createexternalcanister: 'Create canister',
     },
   },
   cycle_obtain_strategies: {

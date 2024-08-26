@@ -1,30 +1,118 @@
-use crate::types::UUID;
-use std::{collections::HashSet, fmt::Debug};
+use crate::{model::ModelKey, types::UUID};
+use ic_stable_structures::{Memory, StableBTreeMap, Storable};
+use std::collections::HashSet;
+
+pub trait StableDb<Key, Value, Mem>
+where
+    Key: Eq + std::hash::Hash + Clone + Ord + Storable,
+    Value: Clone + Storable,
+    Mem: Memory,
+{
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<Key, Value, Mem>) -> R;
+}
+
+pub trait IndexedRepository<Key, Value, Mem>: Repository<Key, Value, Mem>
+where
+    Key: Eq + std::hash::Hash + Clone + Ord + Storable,
+    Value: Clone + Storable + ModelKey<Key>,
+    Mem: Memory,
+{
+    /// Removes the indexes for the current value.
+    fn remove_entry_indexes(&self, value: &Value);
+
+    /// Adds the indexes for the current value.
+    fn add_entry_indexes(&self, value: &Value);
+
+    /// Clears all the indexes.
+    fn clear_indexes(&self);
+
+    /// Saves the indexes for the current value and removes the old indexes if
+    /// the value has changed.
+    fn save_entry_indexes(&self, value: &Value, previous: Option<&Value>) {
+        if let Some(prev) = previous {
+            self.remove_entry_indexes(prev);
+        }
+
+        self.add_entry_indexes(value);
+    }
+}
+
+pub trait RebuildRepository<Key, Value, Mem>:
+    Repository<Key, Value, Mem> + IndexedRepository<Key, Value, Mem>
+where
+    Key: Eq + std::hash::Hash + Clone + Ord + Storable,
+    Value: Clone + Storable + ModelKey<Key>,
+    Mem: Memory,
+{
+    /// This method goes over all the entries and rebuilds the indexes.
+    ///
+    /// WARNING: Please only use during upgrades to ensure enough intructions are available.
+    fn rebuild(&self) {
+        let mut entries = Vec::with_capacity(self.len());
+        Self::with_db(|db| db.iter().for_each(|(_, v)| entries.push(v)));
+
+        // First remove all the indexes.
+        self.clear_indexes();
+
+        // Then clear the repository because the key might have changed for the entries and
+        // we don't want to have dangling entries.
+        Self::with_db(|db| db.clear_new());
+
+        for value in entries {
+            // Then add the updated indexes.
+            self.add_entry_indexes(&value);
+            // Finally, update the entry in the database.
+            Self::with_db(|db| db.insert(value.key(), value));
+        }
+    }
+}
 
 /// A repository is a generic interface for storing and retrieving data.
-pub trait Repository<Key, Value> {
+pub trait Repository<Key, Value, Mem>: StableDb<Key, Value, Mem>
+where
+    Key: Eq + std::hash::Hash + Clone + Ord + Storable,
+    Value: Clone + Storable,
+    Mem: Memory,
+{
     /// Returns the list of records from the repository.
-    fn list(&self) -> Vec<Value>;
+    fn list(&self) -> Vec<Value> {
+        let mut entries = Vec::with_capacity(self.len());
+
+        Self::with_db(|db| db.iter().for_each(|(_, entry)| entries.push(entry)));
+
+        entries
+    }
+
+    /// Returns whether a record exists in the repository.
+    fn exists(&self, key: &Key) -> bool {
+        Self::with_db(|db| db.contains_key(key))
+    }
 
     /// Returns the record from the repository if it exists.
-    fn get(&self, key: &Key) -> Option<Value>;
+    fn get(&self, key: &Key) -> Option<Value> {
+        Self::with_db(|db| db.get(key))
+    }
 
     /// Inserts a record into the repository.
-    fn insert(&self, key: Key, value: Value) -> Option<Value>;
+    fn insert(&self, key: Key, value: Value) -> Option<Value> {
+        Self::with_db(|db| db.insert(key, value))
+    }
 
     /// Removes a record from the repository and returns it if it exists.
-    fn remove(&self, key: &Key) -> Option<Value>;
+    fn remove(&self, key: &Key) -> Option<Value> {
+        Self::with_db(|db| db.remove(key))
+    }
 
     /// Returns the number of records stored in the repository.
-    fn len(&self) -> usize;
+    fn len(&self) -> usize {
+        Self::with_db(|db| db.len() as usize)
+    }
 
     /// Returns whether the repository is empty or not.
     fn is_empty(&self) -> bool {
         self.len() == 0
-    }
-
-    fn refresh_indexes(&self, _current: Value, _previous: Option<Value>) {
-        // no-op
     }
 
     fn find_with_filters<'a>(
@@ -38,6 +126,11 @@ pub trait Repository<Key, Value> {
         }
 
         found_ids.unwrap_or_default()
+    }
+
+    /// Removes all the entries from the repository.
+    fn clear(&self) {
+        Self::with_db(|db| db.clear_new());
     }
 }
 
@@ -56,68 +149,6 @@ pub trait IndexRepository<Index, Value> {
 
     /// Returns all records from the repository that match a set criteria.
     fn find_by_criteria(&self, criteria: Self::FindByCriteria) -> HashSet<Value>;
-
-    fn refresh_index_on_modification(&self, mode: RefreshIndexMode<Index>)
-    where
-        Index: Eq + std::hash::Hash + Clone,
-    {
-        match mode {
-            RefreshIndexMode::Value { previous, current } => match (previous, current) {
-                (Some(prev), Some(curr)) => {
-                    if prev != curr {
-                        self.remove(&prev);
-                        self.insert(curr);
-                    }
-                }
-                (Some(prev), None) => {
-                    self.remove(&prev);
-                }
-                (None, Some(curr)) => {
-                    self.insert(curr);
-                }
-                _ => {}
-            },
-            RefreshIndexMode::List { previous, current } => {
-                let set_prev: HashSet<Index> = previous.into_iter().collect();
-                let set_curr: HashSet<Index> = current.into_iter().collect();
-
-                for prev in set_prev.difference(&set_curr) {
-                    self.remove(prev);
-                }
-
-                for curr in set_curr.difference(&set_prev) {
-                    self.insert(curr.clone());
-                }
-            }
-            RefreshIndexMode::CleanupValue { current } => {
-                if let Some(curr) = current {
-                    self.remove(&curr);
-                }
-            }
-            RefreshIndexMode::CleanupList { current } => {
-                for curr in current {
-                    self.remove(&curr);
-                }
-            }
-        }
-    }
-}
-
-pub enum RefreshIndexMode<Index> {
-    Value {
-        previous: Option<Index>,
-        current: Option<Index>,
-    },
-    List {
-        previous: Vec<Index>,
-        current: Vec<Index>,
-    },
-    CleanupValue {
-        current: Option<Index>,
-    },
-    CleanupList {
-        current: Vec<Index>,
-    },
 }
 
 /// A filter that can be applied to a set of ids to select or filter them down based on some criteria.

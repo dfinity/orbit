@@ -1,3 +1,46 @@
+## 0.0.2-alpha.6 (2024-08-26)
+
+
+### 🚀 Features
+
+- **wallet:** add disaster recovery config UI
+
+- **station:** address book of external canisters
+
+- **station:** add external canister management
+
+- **station:** external canister method calls permissions
+
+- **station:** integrate request policies and external canisters
+
+- **station:** add external canister endpoints
+
+- **station:** add cache layer to permission repository
+
+- **station:** mint cycles to top up station
+
+- **station:** use different types for input and get of external canister policies
+
+- **station:** use own policies & permissions for canisters cycles fund
+
+- **station:** add frontend to manage cycle obtain startegies
+
+- **station:** add fee, comment, from address to csv export
+
+- **station:** optimized repository lookups
+
+
+### 🩹 Fixes
+
+- **station:** requests are visible to users with approval rights
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Leon Tan
+- olaszakos
+
 ## 0.0.2-alpha.5 (2024-07-04)
 
 

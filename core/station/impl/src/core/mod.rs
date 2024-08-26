@@ -6,6 +6,8 @@ pub use assets::*;
 mod constants;
 pub use constants::*;
 
+pub mod cache;
+
 mod limiter;
 
 mod memory;

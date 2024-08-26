@@ -6,7 +6,6 @@ pub enum ResourceDTO {
     Permission(PermissionResourceActionDTO),
     Account(AccountResourceActionDTO),
     AddressBook(ResourceActionDTO),
-    ChangeCanister(ChangeCanisterResourceActionDTO),
     ExternalCanister(ExternalCanisterResourceActionDTO),
     Request(RequestResourceActionDTO),
     RequestPolicy(ResourceActionDTO),
@@ -64,11 +63,7 @@ pub enum SystemResourceActionDTO {
     SystemInfo,
     Capabilities,
     ManageSystemInfo,
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub enum ChangeCanisterResourceActionDTO {
-    Create,
+    Upgrade,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

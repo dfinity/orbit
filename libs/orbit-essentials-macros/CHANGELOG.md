@@ -1,3 +1,20 @@
+## 0.0.2-alpha.3 (2024-08-26)
+
+
+### 🚀 Features
+
+- **station:** optimized repository lookups
+
+
+### ❤️  Thank You
+
+- Jan Wendling
+- Kepler Vital
+- Leon Tan
+- Max
+- mraszyk
+- olaszakos
+
 ## 0.0.2-alpha.2 (2024-05-17)
 
 
