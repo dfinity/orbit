@@ -9,7 +9,7 @@ use crate::{
 use alloy::{
     consensus::SignableTransaction,
     eips::eip2718::Encodable2718,
-    primitives::{hex, Address, TxKind, B256, U256},
+    primitives::{address, hex, Address, TxKind, B256, U256},
     signers::k256::ecdsa,
 };
 use async_trait::async_trait;
@@ -19,7 +19,7 @@ use evm_rpc_canister_types::{
     SendRawTransactionResult, SendRawTransactionStatus, EVM_RPC,
 };
 use num_bigint::BigUint;
-use std::str::FromStr;
+use std::{collections::BTreeMap, str::FromStr};
 
 use ic_cdk::api::management_canister::ecdsa::{
     ecdsa_public_key, sign_with_ecdsa, EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyArgument,
@@ -44,6 +44,10 @@ impl Ethereum {
     }
 }
 
+const METADATA_KEY_GAS_LIMIT: &str = "gas_limit";
+const METADATA_KEY_MAX_FEE_PER_GAS: &str = "max_fee_per_gas";
+const METADATA_KEY_MAX_PRIORITY_FEE_PER_GAS: &str = "max_priority_fee_per_gas";
+
 #[async_trait]
 impl BlockchainApi for Ethereum {
     async fn generate_address(&self, account: &Account) -> BlockchainApiResult<String> {
@@ -64,9 +68,30 @@ impl BlockchainApi for Ethereum {
         &self,
         _account: &Account,
     ) -> BlockchainApiResult<BlockchainTransactionFee> {
+        let max_fee_per_gas: u128 = 40 * 10u128.pow(9);
+        let max_priority_fee_per_gas = 0128;
+        let to_address = address!("0000000000000000000000000000000000000000");
+        let gas_limit = eth_estimate_gas(
+            &self.chain,
+            &to_address.to_string(),
+            &alloy::primitives::Bytes::default(),
+            U256::from(0),
+        )
+        .await?;
+        let fee = gas_limit * max_fee_per_gas;
         Ok(BlockchainTransactionFee {
-            fee: BigUint::from(0u32),
-            metadata: Metadata::default(),
+            fee: BigUint::from(fee),
+            metadata: Metadata::new(BTreeMap::from([
+                (METADATA_KEY_GAS_LIMIT.to_owned(), gas_limit.to_string()),
+                (
+                    METADATA_KEY_MAX_FEE_PER_GAS.to_owned(),
+                    max_fee_per_gas.to_string(),
+                ),
+                (
+                    METADATA_KEY_MAX_PRIORITY_FEE_PER_GAS.to_owned(),
+                    max_priority_fee_per_gas.to_string(),
+                ),
+            ])),
         })
     }
 
@@ -82,9 +107,11 @@ impl BlockchainApi for Ethereum {
         let nonce = eth_get_transaction_count(&self.chain, &account.address).await?;
         let input = alloy::primitives::Bytes::default();
         let value = nat_to_u256(&transfer.amount);
-        let gas_limit = eth_estimate_gas(&self.chain, &transfer.to_address, &input, value).await?;
-        let max_fee_per_gas: u128 = 40 * 10u128.pow(9); // gwei
-        let max_priority_fee_per_gas = 0128;
+        let gas_limit = get_metadata_value::<u128>(&transfer.metadata, METADATA_KEY_GAS_LIMIT)?;
+        let max_fee_per_gas =
+            get_metadata_value::<u128>(&transfer.metadata, METADATA_KEY_MAX_FEE_PER_GAS)?;
+        let max_priority_fee_per_gas =
+            get_metadata_value::<u128>(&transfer.metadata, METADATA_KEY_MAX_PRIORITY_FEE_PER_GAS)?;
 
         let transaction = alloy::consensus::TxEip1559 {
             chain_id: self.chain.id(),
@@ -152,6 +179,18 @@ fn get_key_id() -> EcdsaKeyId {
         curve: EcdsaCurve::Secp256k1,
         name,
     }
+}
+
+fn get_metadata_value<T: FromStr>(metadata: &Metadata, key: &str) -> Result<T, BlockchainApiError> {
+    metadata
+        .get(key)
+        .ok_or(BlockchainApiError::TransactionSubmitFailed {
+            info: format!("Missing metadata key: {}", key),
+        })?
+        .parse()
+        .map_err(|_| BlockchainApiError::TransactionSubmitFailed {
+            info: format!("Failed to parse metadata key: {}", key),
+        })
 }
 
 fn principal_to_derivation_path(account: &Account) -> Vec<Vec<u8>> {
