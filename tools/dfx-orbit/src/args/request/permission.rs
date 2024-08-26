@@ -2,7 +2,7 @@
 
 use crate::DfxOrbit;
 use clap::{Parser, Subcommand};
-use orbit_station_api::{
+use station_api::{
     EditPermissionOperationInput, ExternalCanisterIdDTO, ExternalCanisterResourceActionDTO,
     PermissionResourceActionDTO, RequestOperationInput, ResourceDTO,
 };

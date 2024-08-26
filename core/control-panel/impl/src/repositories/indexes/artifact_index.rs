@@ -21,6 +21,13 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct ArtifactIndexRepository {}
 
+impl ArtifactIndexRepository {
+    /// Clears all entries in the index repository.
+    pub fn clear(&self) {
+        DB.with(|m| m.borrow_mut().clear_new());
+    }
+}
+
 impl IndexRepository<ArtifactIndex, ArtifactId> for ArtifactIndexRepository {
     type FindByCriteria = ArtifactIndexCriteria;
 

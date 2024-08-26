@@ -27,10 +27,10 @@ impl Job {
     /// Cancel the requests that have expired while still pending.
     async fn cancel_requests(&self) -> bool {
         let current_time = next_time();
-        let mut requests = self.request_repository.find_by_expiration_dt_and_status(
+        let mut requests = self.request_repository.find_by_status_and_expiration_dt(
+            RequestStatusCode::Created,
             None,
             Some(current_time),
-            RequestStatusCode::Created.to_string(),
         );
 
         for request in requests.iter_mut() {

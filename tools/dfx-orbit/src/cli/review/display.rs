@@ -1,7 +1,7 @@
 use crate::DfxOrbit;
 use candid::Principal;
 use itertools::Itertools;
-use orbit_station_api::{
+use station_api::{
     CallExternalCanisterOperationDTO, CanisterInstallMode, ChangeExternalCanisterOperationDTO,
     GetRequestResponse, ListRequestsResponse, RequestOperationDTO, RequestStatusDTO,
 };
@@ -192,7 +192,7 @@ impl DfxOrbit {
             RequestOperationDTO::AddUserGroup(_) => "AddUserGroup",
             RequestOperationDTO::EditUserGroup(_) => "EditUserGroup",
             RequestOperationDTO::RemoveUserGroup(_) => "RemoveUserGroup",
-            RequestOperationDTO::ChangeCanister(_) => "ChangeCanister",
+            RequestOperationDTO::SystemUpgrade(_) => "SystemUpgrade",
             RequestOperationDTO::SetDisasterRecovery(_) => "SetDisasterRecovery",
             RequestOperationDTO::ChangeExternalCanister(_) => "ChangeExternalCanister",
             RequestOperationDTO::CreateExternalCanister(_) => "CreateExternalCanister",

@@ -4,7 +4,7 @@ use crate::{
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
-use orbit_essentials::{repository::Repository, types::UUID};
+use orbit_essentials::repository::{Repository, StableDb};
 use std::{cell::RefCell, sync::Arc};
 
 thread_local! {
@@ -24,34 +24,22 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct EvaluationResultRepository {}
 
-impl Repository<RequestId, RequestEvaluationResult> for EvaluationResultRepository {
-    fn list(&self) -> Vec<RequestEvaluationResult> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<RequestId, RequestEvaluationResult, VirtualMemory<Memory>>
+    for EvaluationResultRepository
+{
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(
+            &mut StableBTreeMap<RequestId, RequestEvaluationResult, VirtualMemory<Memory>>,
+        ) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
     }
+}
 
-    fn get(&self, key: &UUID) -> Option<RequestEvaluationResult> {
-        DB.with(|m| m.borrow().get(key))
-    }
-
-    fn insert(&self, key: UUID, value: RequestEvaluationResult) -> Option<RequestEvaluationResult> {
-        DB.with(|m| {
-            let prev = m.borrow_mut().insert(key, value);
-
-            prev
-        })
-    }
-
-    fn remove(&self, key: &UUID) -> Option<RequestEvaluationResult> {
-        DB.with(|m| {
-            let prev = m.borrow_mut().remove(key);
-
-            prev
-        })
-    }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
-    }
+impl Repository<RequestId, RequestEvaluationResult, VirtualMemory<Memory>>
+    for EvaluationResultRepository
+{
 }
 
 #[cfg(test)]

@@ -1,7 +1,7 @@
 use crate::DfxOrbit;
 use candid::Nat;
 use clap::{Parser, Subcommand};
-use orbit_station_api::GetRequestResponse;
+use station_api::GetRequestResponse;
 
 #[derive(Debug, Clone, Parser)]
 pub struct VerifyAssetArgs {

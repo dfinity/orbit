@@ -5,7 +5,7 @@ use crate::DfxOrbit;
 use asset::VerifyAssetArgs;
 use canister::VerifyCanisterArgs;
 use clap::{Parser, Subcommand};
-use orbit_station_api::GetRequestInput;
+use station_api::GetRequestInput;
 
 #[derive(Debug, Clone, Parser)]
 pub struct VerifyArgs {

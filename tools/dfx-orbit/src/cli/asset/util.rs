@@ -3,9 +3,7 @@ use anyhow::bail;
 use candid::Principal;
 use dfx_core::config::model::dfinity::CanisterTypeProperties;
 use ic_certified_assets::types::{GrantPermissionArguments, Permission};
-use orbit_station_api::{
-    CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput,
-};
+use station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput};
 use std::path::{Path, PathBuf};
 
 impl DfxOrbit {

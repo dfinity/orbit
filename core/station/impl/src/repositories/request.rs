@@ -1,19 +1,9 @@
 use super::indexes::{
-    request_approver_index::RequestApproverIndexRepository,
-    request_creation_time_index::RequestCreationTimeIndexRepository,
-    request_expiration_time_index::RequestExpirationTimeIndexRepository,
-    request_key_creation_time_index::RequestKeyCreationTimeIndexRepository,
-    request_key_expiration_time_index::RequestKeyExpirationTimeIndexRepository,
-    request_operation_type_index::RequestOperationTypeIndexRepository,
-    request_requester_index::RequestRequesterIndexRepository,
-    request_resource_index::RequestResourceIndexRepository,
-    request_scheduled_index::RequestScheduledIndexRepository,
-    request_sort_index::RequestSortIndexRepository,
-    request_status_index::RequestStatusIndexRepository,
-    request_status_modification_index::RequestStatusModificationIndexRepository,
+    request_index::RequestIndexRepository, request_resource_index::RequestResourceIndexRepository,
 };
 use crate::{
     core::{
+        cache::Cache,
         metrics::{metrics_observe_insert_request, metrics_observe_remove_request},
         observer::Observer,
         with_memory_manager, Memory, REQUEST_MEMORY_ID,
@@ -22,37 +12,20 @@ use crate::{
     jobs::{jobs_observe_insert_request, jobs_observe_remove_request},
     models::{
         indexes::{
-            request_approver_index::{RequestApproverIndex, RequestApproverIndexCriteria},
-            request_creation_time_index::RequestCreationTimeIndexCriteria,
-            request_expiration_time_index::RequestExpirationTimeIndexCriteria,
-            request_key_creation_time_index::RequestKeyCreationTimeIndexCriteria,
-            request_key_expiration_time_index::RequestKeyExpirationTimeIndexCriteria,
-            request_operation_type_index::{
-                RequestOperationTypeIndex, RequestOperationTypeIndexCriteria,
-            },
-            request_requester_index::{RequestRequesterIndex, RequestRequesterIndexCriteria},
-            request_resource_index::RequestResourceIndexCriteria,
-            request_scheduled_index::RequestScheduledIndexCriteria,
-            request_sort_index::RequestSortIndexKey,
-            request_status_index::{RequestStatusIndex, RequestStatusIndexCriteria},
-            request_status_modification_index::RequestStatusModificationIndexCriteria,
+            request_index::RequestIndexFields, request_resource_index::RequestResourceIndexCriteria,
         },
-        request_operation_filter_type::RequestOperationFilterType,
         resource::Resource,
-        Request, RequestId, RequestKey, RequestStatusCode, UserId,
+        ListRequestsOperationType, Request, RequestId, RequestKey, RequestStatusCode,
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    repository::{
-        IdentitySelectionFilter, IndexRepository, NotSelectionFilter, OrSelectionFilter,
-        RefreshIndexMode, Repository, SelectionFilter, SortDirection, SortingStrategy,
-    },
+    repository::{IndexRepository, IndexedRepository, Repository, StableDb},
     types::{Timestamp, UUID},
 };
 use station_api::ListRequestsSortBy;
-use std::{cell::RefCell, collections::HashSet, sync::Arc};
+use std::{cell::RefCell, collections::HashSet, sync::Arc, u64};
 
 thread_local! {
     static DB: RefCell<StableBTreeMap<RequestKey, Request, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -60,6 +33,9 @@ thread_local! {
             StableBTreeMap::init(memory_manager.get(REQUEST_MEMORY_ID))
         )
     });
+
+    /// Cache for indexed fields of requests, helps to speed up the search and filtering of requests.
+    static INDEXED_FIELDS_CACHE: RefCell<Cache<RequestId, RequestIndexFields>> = RefCell::new(Cache::new(RequestRepository::MAX_INDEXED_FIELDS_CACHE_SIZE));
 }
 
 lazy_static! {
@@ -70,18 +46,8 @@ lazy_static! {
 /// A repository that enables managing system requests in stable memory.
 #[derive(Debug)]
 pub struct RequestRepository {
-    approver_index: RequestApproverIndexRepository,
-    creation_dt_index: RequestCreationTimeIndexRepository,
-    expiration_dt_index: RequestExpirationTimeIndexRepository,
-    status_index: RequestStatusIndexRepository,
-    scheduled_index: RequestScheduledIndexRepository,
-    requester_index: RequestRequesterIndexRepository,
-    status_modification_index: RequestStatusModificationIndexRepository,
-    prefixed_creation_time_index: RequestKeyCreationTimeIndexRepository,
-    prefixed_expiration_time_index: RequestKeyExpirationTimeIndexRepository,
-    sort_index: RequestSortIndexRepository,
+    index: RequestIndexRepository,
     resource_index: RequestResourceIndexRepository,
-    operation_type_index: RequestOperationTypeIndexRepository,
     change_observer: Observer<(Request, Option<Request>)>,
     remove_observer: Observer<Request>,
 }
@@ -99,109 +65,75 @@ impl Default for RequestRepository {
         Self {
             change_observer,
             remove_observer,
-            approver_index: Default::default(),
-            creation_dt_index: Default::default(),
-            expiration_dt_index: Default::default(),
-            status_index: Default::default(),
-            scheduled_index: Default::default(),
-            requester_index: Default::default(),
-            status_modification_index: Default::default(),
-            prefixed_creation_time_index: Default::default(),
-            prefixed_expiration_time_index: Default::default(),
-            sort_index: Default::default(),
+            index: RequestIndexRepository::default(),
             resource_index: Default::default(),
-            operation_type_index: Default::default(),
         }
     }
 }
 
-impl Repository<RequestKey, Request> for RequestRepository {
-    fn list(&self) -> Vec<Request> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<RequestKey, Request, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {
+    fn remove_entry_indexes(&self, entry: &Request) {
+        // Remove the indexed fields from the cache to free up memory.
+        INDEXED_FIELDS_CACHE.with(|cache| {
+            cache.borrow_mut().remove(&entry.id);
+        });
+
+        entry.to_index_for_resource().iter().for_each(|index| {
+            self.resource_index.remove(index);
+        });
+
+        entry.to_indexes().iter().for_each(|(index_key, _)| {
+            self.index.remove(index_key);
+        });
     }
 
-    fn get(&self, key: &RequestKey) -> Option<Request> {
-        DB.with(|m| m.borrow().get(key))
+    fn add_entry_indexes(&self, entry: &Request) {
+        // The `INDEXED_FIELDS_CACHE` only needs to be updated when the request is being inserted if there is a
+        // cache hit. This makes the cache more efficient and reduces the number of cache entries needed.
+        //
+        // The cache is pupulated on demand when the repository searches for a request based on filters.
+        INDEXED_FIELDS_CACHE.with(|cache| {
+            if cache.borrow().contains_key(&entry.id) {
+                cache.borrow_mut().insert(entry.id, entry.index_fields());
+            }
+        });
+
+        entry.to_index_for_resource().into_iter().for_each(|index| {
+            self.resource_index.insert(index);
+        });
+
+        entry
+            .to_indexes()
+            .into_iter()
+            .for_each(|(index_key, index_fields)| {
+                self.index.insert(index_key, index_fields);
+            });
     }
 
+    /// Clears all the indexes for the repository.
+    fn clear_indexes(&self) {
+        INDEXED_FIELDS_CACHE.with(|cache| cache.borrow_mut().clear());
+
+        self.index.clear();
+        self.resource_index.clear();
+    }
+}
+
+impl Repository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {
     fn insert(&self, key: RequestKey, value: Request) -> Option<Request> {
         DB.with(|m| {
             let prev = m.borrow_mut().insert(key, value.clone());
 
-            self.approver_index
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| prev.to_index_for_approvers()),
-                    current: value.to_index_for_approvers(),
-                });
-            self.operation_type_index
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| prev.to_index_by_operation_types()),
-                    current: value.to_index_by_operation_types(),
-                });
-            self.requester_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index_for_requester()),
-                    current: Some(value.to_index_for_requester()),
-                });
-            self.scheduled_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().and_then(|prev| prev.to_index_by_scheduled()),
-                    current: value.to_index_by_scheduled(),
-                });
-            self.creation_dt_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index_by_creation_dt()),
-                    current: Some(value.to_index_by_creation_dt()),
-                });
-            self.prefixed_creation_time_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev
-                        .clone()
-                        .map(|prev| prev.to_index_by_key_and_creation_dt()),
-                    current: Some(value.to_index_by_key_and_creation_dt()),
-                });
-            self.expiration_dt_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index_by_expiration_dt()),
-                    current: Some(value.to_index_by_expiration_dt()),
-                });
-            self.prefixed_expiration_time_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev
-                        .clone()
-                        .map(|prev| prev.to_index_by_key_and_expiration_dt()),
-                    current: Some(value.to_index_by_key_and_expiration_dt()),
-                });
-            self.status_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index_by_status()),
-                    current: Some(value.to_index_by_status()),
-                });
-            self.sort_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev.clone().map(|prev| prev.to_index_for_sorting()),
-                    current: Some(value.to_index_for_sorting()),
-                });
-            self.status_modification_index
-                .refresh_index_on_modification(RefreshIndexMode::Value {
-                    previous: prev
-                        .clone()
-                        .map(|prev| prev.to_index_by_status_and_modification()),
-                    current: Some(value.to_index_by_status_and_modification()),
-                });
-
-            self.resource_index
-                .refresh_index_on_modification(RefreshIndexMode::List {
-                    previous: prev
-                        .clone()
-                        .map(|prev| prev.to_index_for_resource())
-                        .unwrap_or_default(),
-                    current: value.to_index_for_resource(),
-                });
+            self.save_entry_indexes(&value, prev.as_ref());
 
             let args = (value, prev);
             self.change_observer.notify(&args);
@@ -214,161 +146,88 @@ impl Repository<RequestKey, Request> for RequestRepository {
         DB.with(|m| {
             let prev = m.borrow_mut().remove(key);
 
-            self.approver_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| prev.to_index_for_approvers()),
-                });
-            self.operation_type_index.refresh_index_on_modification(
-                RefreshIndexMode::CleanupList {
-                    current: prev
-                        .clone()
-                        .map_or(Vec::new(), |prev| prev.to_index_by_operation_types()),
-                },
-            );
-            self.requester_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index_for_requester()),
-                });
-            self.scheduled_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().and_then(|prev| prev.to_index_by_scheduled()),
-                });
-            self.creation_dt_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index_by_creation_dt()),
-                });
-            self.expiration_dt_index.refresh_index_on_modification(
-                RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index_by_expiration_dt()),
-                },
-            );
-            self.prefixed_creation_time_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev
-                        .clone()
-                        .map(|prev| prev.to_index_by_key_and_creation_dt()),
-                });
-            self.prefixed_expiration_time_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev
-                        .clone()
-                        .map(|prev| prev.to_index_by_key_and_expiration_dt()),
-                });
-            self.status_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index_by_status()),
-                });
-            self.sort_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev.clone().map(|prev| prev.to_index_for_sorting()),
-                });
-            self.status_modification_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupValue {
-                    current: prev
-                        .clone()
-                        .map(|prev| prev.to_index_by_status_and_modification()),
-                });
-            self.resource_index
-                .refresh_index_on_modification(RefreshIndexMode::CleanupList {
-                    current: prev
-                        .clone()
-                        .map(|prev| prev.to_index_for_resource())
-                        .unwrap_or_default(),
-                });
-
             if let Some(prev) = &prev {
+                self.remove_entry_indexes(prev);
+
                 self.remove_observer.notify(prev);
             }
 
             prev
         })
     }
-
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
-    }
 }
 
 impl RequestRepository {
-    pub fn exists(&self, key: &RequestKey) -> bool {
-        DB.with(|m| m.borrow().contains_key(key))
-    }
+    /// Currently the cache uses around 600 bytes per entry Map<RequestId, RequestIndexFields>,
+    /// so the max cache storage size is around 300 MiB.
+    const MAX_INDEXED_FIELDS_CACHE_SIZE: usize = 500_000;
 
-    pub fn find_by_expiration_dt_and_status(
+    /// Find requests that have the provided status and would be expired between the provided timestamps.
+    pub fn find_by_status_and_expiration_dt(
         &self,
+        status: RequestStatusCode,
         expiration_dt_from: Option<Timestamp>,
         expiration_dt_to: Option<Timestamp>,
-        status: String,
     ) -> Vec<Request> {
-        let requests =
-            self.expiration_dt_index
-                .find_by_criteria(RequestExpirationTimeIndexCriteria {
-                    from_dt: expiration_dt_from,
-                    to_dt: expiration_dt_to,
-                });
-
-        requests
+        self.index
+            .find_by_status(status, None)
             .iter()
-            .filter_map(|id| match self.get(&Request::key(*id)) {
-                Some(request) => {
-                    if request
-                        .status
-                        .to_type()
-                        .to_string()
-                        .eq_ignore_ascii_case(status.as_str())
-                    {
-                        Some(request)
-                    } else {
-                        None
-                    }
+            .filter_map(|(request_id, fields)| {
+                let min = expiration_dt_from.unwrap_or(u64::MIN);
+                let max = expiration_dt_to.unwrap_or(u64::MAX);
+
+                if fields.expiration_dt < min || fields.expiration_dt > max {
+                    return None;
                 }
-                None => None,
+
+                self.get(&RequestKey { id: *request_id })
             })
             .collect::<Vec<Request>>()
     }
 
+    /// Find requests that have the provided status and has been modified between the provided timestamps.
     pub fn find_by_status(
         &self,
         status: RequestStatusCode,
         from_last_modified_dt: Option<Timestamp>,
         to_last_modified_dt: Option<Timestamp>,
     ) -> Vec<Request> {
-        let ids = self.status_modification_index.find_by_criteria(
-            RequestStatusModificationIndexCriteria {
-                status,
-                from_dt: from_last_modified_dt,
-                to_dt: to_last_modified_dt,
-            },
-        );
+        self.index
+            .find_by_status(status, None)
+            .iter()
+            .filter_map(|(request_id, fields)| {
+                if let Some(from_dt) = from_last_modified_dt {
+                    if fields.last_modified_at < from_dt {
+                        return None;
+                    }
+                }
 
-        ids.iter()
-            .filter_map(|id| self.get(&Request::key(*id)))
+                if let Some(to_dt) = to_last_modified_dt {
+                    if fields.last_modified_at > to_dt {
+                        return None;
+                    }
+                }
+
+                self.get(&RequestKey { id: *request_id })
+            })
             .collect::<Vec<Request>>()
     }
 
+    /// Find requests that are scheduled between the provided timestamps.
     pub fn find_scheduled(
         &self,
         from_dt: Option<Timestamp>,
         to_dt: Option<Timestamp>,
     ) -> Vec<Request> {
-        let requests = self
-            .scheduled_index
-            .find_by_criteria(RequestScheduledIndexCriteria { from_dt, to_dt });
-
-        requests
+        self.index
+            .find_by_scheduled_at_between(
+                from_dt.unwrap_or(u64::MIN),
+                to_dt.unwrap_or(u64::MAX),
+                None,
+            )
             .iter()
-            .filter_map(|id| self.get(&Request::key(*id)))
+            .filter_map(|(request_id, _)| self.get(&RequestKey { id: *request_id }))
             .collect::<Vec<Request>>()
-    }
-
-    /// Checks if the request is of the provided status.
-    pub fn exists_status(&self, request_id: &RequestId, status: RequestStatusCode) -> bool {
-        self.status_index.exists(&RequestStatusIndex {
-            request_id: *request_id,
-            status,
-        })
     }
 
     /// Get the list of Resource for a request id.
@@ -381,248 +240,151 @@ impl RequestRepository {
             .collect()
     }
 
-    /// Checks if the user has added their approval decision to the request.
-    pub fn exists_approver(&self, request_id: &RequestId, approver_id: &UserId) -> bool {
-        self.approver_index.exists(&RequestApproverIndex {
-            approver_id: *approver_id,
-            request_id: *request_id,
-        })
+    /// Find the indexed fields of a request by its id.
+    pub fn find_indexed_fields_by_request_id(
+        &self,
+        request_id: &RequestId,
+    ) -> Option<RequestIndexFields> {
+        INDEXED_FIELDS_CACHE
+            .with(|cache| cache.borrow().get(request_id).cloned())
+            .or_else(|| {
+                return self.get(&RequestKey { id: *request_id }).map(|request| {
+                    let fields = request.index_fields();
+                    INDEXED_FIELDS_CACHE.with(|cache| {
+                        cache.borrow_mut().insert(*request_id, fields.clone());
+                    });
+
+                    fields
+                });
+            })
     }
 
-    /// Checks if the user has requested the request.
-    pub fn exists_requester(&self, request_id: &RequestId, requester_id: &UserId) -> bool {
-        self.requester_index.exists(&RequestRequesterIndex {
-            requester_id: *requester_id,
-            request_id: *request_id,
-        })
-    }
-
+    /// Find request ids based on the provided condition.
+    ///
+    /// The request ids are sorted based on the provided sort strategy.
     pub fn find_ids_where(
         &self,
         condition: RequestWhereClause,
         sort_by: Option<ListRequestsSortBy>,
     ) -> Result<Vec<UUID>, RepositoryError> {
-        let filters = self.build_where_filtering_strategy(condition);
-        let request_ids = self.find_with_filters(filters);
-        let mut ids = request_ids.into_iter().collect::<Vec<_>>();
+        let mut entries = Vec::<(RequestId, RequestIndexFields)>::new();
 
-        self.sort_ids_with_strategy(&mut ids, &sort_by);
+        // first find the initial result set that would narrow down the search space
+        entries.extend(self.index.find_by_created_at_between(
+            condition.created_dt_from.unwrap_or(0),
+            condition.created_dt_to.unwrap_or(u64::MAX),
+            None,
+        ));
 
-        Ok(ids)
-    }
+        // transform lists to constant lookup time
+        let where_approvals: HashSet<_> = condition.approvers.iter().cloned().collect();
+        let where_not_approvals: HashSet<_> = condition.not_approvers.iter().cloned().collect();
+        let where_requesters: HashSet<_> = condition.requesters.iter().cloned().collect();
+        let where_not_requesters: HashSet<_> = condition.not_requesters.iter().cloned().collect();
+        let where_status: HashSet<_> = condition.statuses.iter().collect();
+        let where_not_ids: HashSet<_> = condition.excluded_ids.iter().collect();
 
-    /// Sorts the request IDs based on the provided sort strategy.
-    ///
-    /// If no sort strategy is provided, it defaults to sorting by creation timestamp descending.
-    fn sort_ids_with_strategy(
-        &self,
-        request_ids: &mut [UUID],
-        sort_by: &Option<ListRequestsSortBy>,
-    ) {
-        match sort_by {
-            Some(station_api::ListRequestsSortBy::CreatedAt(direction)) => {
-                let sort_strategy = TimestampSortingStrategy {
-                    index: &self.sort_index,
-                    timestamp_type: TimestampType::Creation,
-                    direction: match direction {
-                        station_api::SortDirection::Asc => Some(SortDirection::Ascending),
-                        station_api::SortDirection::Desc => Some(SortDirection::Descending),
-                    },
-                };
+        // filter the result set based on the condition
+        entries = entries
+            .into_iter()
+            .filter(|(id, fields)| {
+                if !where_not_ids.is_empty() && where_not_ids.contains(id) {
+                    return false;
+                }
 
-                sort_strategy.sort(request_ids);
-            }
-            Some(station_api::ListRequestsSortBy::ExpirationDt(direction)) => {
-                let sort_strategy = TimestampSortingStrategy {
-                    index: &self.sort_index,
-                    timestamp_type: TimestampType::Expiration,
-                    direction: match direction {
-                        station_api::SortDirection::Asc => Some(SortDirection::Ascending),
-                        station_api::SortDirection::Desc => Some(SortDirection::Descending),
-                    },
-                };
+                if !where_status.is_empty() && !where_status.contains(&fields.status) {
+                    return false;
+                }
 
-                sort_strategy.sort(request_ids);
-            }
-            Some(station_api::ListRequestsSortBy::LastModificationDt(direction)) => {
-                let sort_strategy = TimestampSortingStrategy {
-                    index: &self.sort_index,
-                    timestamp_type: TimestampType::Modification,
-                    direction: match direction {
-                        station_api::SortDirection::Asc => Some(SortDirection::Ascending),
-                        station_api::SortDirection::Desc => Some(SortDirection::Descending),
-                    },
-                };
+                if fields.expiration_dt < condition.expiration_dt_from.unwrap_or(u64::MIN)
+                    || fields.expiration_dt > condition.expiration_dt_to.unwrap_or(u64::MAX)
+                {
+                    return false;
+                }
 
-                sort_strategy.sort(request_ids);
-            }
-            None => {
-                // Default sort by creation timestamp descending
-                let sort_strategy = TimestampSortingStrategy {
-                    index: &self.sort_index,
-                    timestamp_type: TimestampType::Creation,
-                    direction: Some(SortDirection::Descending),
-                };
-
-                sort_strategy.sort(request_ids);
-            }
-        }
-    }
-
-    fn build_where_filtering_strategy<'a>(
-        &'a self,
-        condition: RequestWhereClause,
-    ) -> Vec<Box<dyn SelectionFilter<'a, IdType = UUID> + 'a>> {
-        let mut filters = Vec::new();
-
-        if condition.created_dt_from.is_some() || condition.created_dt_to.is_some() {
-            filters.push(Box::new(CreationDtSelectionFilter {
-                repository: &self.creation_dt_index,
-                prefixed_repository: &self.prefixed_creation_time_index,
-                from: condition.created_dt_from,
-                to: condition.created_dt_to,
-            }) as Box<dyn SelectionFilter<IdType = UUID>>);
-        }
-
-        if condition.expiration_dt_from.is_some() || condition.expiration_dt_to.is_some() {
-            filters.push(Box::new(ExpirationDtSelectionFilter {
-                repository: &self.expiration_dt_index,
-                prefixed_repository: &self.prefixed_expiration_time_index,
-                from: condition.expiration_dt_from,
-                to: condition.expiration_dt_to,
-            }) as Box<dyn SelectionFilter<IdType = UUID>>);
-        }
-
-        if !condition.statuses.is_empty() {
-            let includes_status = Box::new(OrSelectionFilter {
-                filters: condition
-                    .statuses
-                    .iter()
-                    .map(|status| {
-                        Box::new(StatusSelectionFilter {
-                            repository: &self.status_index,
-                            status: status.to_owned(),
-                        }) as Box<dyn SelectionFilter<IdType = UUID>>
-                    })
-                    .collect(),
-            }) as Box<dyn SelectionFilter<IdType = UUID>>;
-
-            filters.push(includes_status);
-        }
-
-        if !condition.operation_types.is_empty() {
-            let includes_operation_type = Box::new(OrSelectionFilter {
-                filters: condition
-                    .operation_types
-                    .iter()
-                    .map(|operation_type| {
-                        Box::new(OperationTypeSelectionFilter {
-                            repository: &self.operation_type_index,
-                            operation_type: operation_type.to_owned(),
-                        }) as Box<dyn SelectionFilter<IdType = UUID>>
-                    })
-                    .collect(),
-            }) as Box<dyn SelectionFilter<IdType = UUID>>;
-
-            filters.push(includes_operation_type);
-        }
-
-        if !condition.approvers.is_empty() {
-            let includes_approver = Box::new(OrSelectionFilter {
-                filters: condition
-                    .approvers
-                    .iter()
-                    .map(|approver_id| {
-                        Box::new(ApproverSelectionFilter {
-                            repository: &self.approver_index,
-                            approver_id: *approver_id,
-                        }) as Box<dyn SelectionFilter<IdType = UUID>>
-                    })
-                    .collect(),
-            }) as Box<dyn SelectionFilter<IdType = UUID>>;
-
-            filters.push(includes_approver);
-        }
-
-        if !condition.requesters.is_empty() {
-            let includes_requester = Box::new(OrSelectionFilter {
-                filters: condition
-                    .requesters
-                    .iter()
-                    .map(|requester_id| {
-                        Box::new(RequesterSelectionFilter {
-                            repository: &self.requester_index,
-                            requester_id: *requester_id,
-                        }) as Box<dyn SelectionFilter<IdType = UUID>>
-                    })
-                    .collect(),
-            }) as Box<dyn SelectionFilter<IdType = UUID>>;
-
-            filters.push(includes_requester);
-        }
-
-        if filters.is_empty() {
-            // If no filters are provided, return all
-            filters.push(Box::new(CreationDtSelectionFilter {
-                repository: &self.creation_dt_index,
-                prefixed_repository: &self.prefixed_creation_time_index,
-                from: None,
-                to: None,
-            }) as Box<dyn SelectionFilter<IdType = UUID>>);
-        }
-
-        // NotSelectionFilter doesn't select anything, only filters
-        if !condition.excluded_ids.is_empty() {
-            let excludes_ids = Box::new(NotSelectionFilter {
-                input: Box::new(IdentitySelectionFilter {
-                    ids: condition.excluded_ids.iter().cloned().collect(),
-                }),
-            }) as Box<dyn SelectionFilter<IdType = UUID>>;
-
-            filters.push(excludes_ids);
-        }
-
-        if !condition.not_approvers.is_empty() {
-            let excludes_approver = Box::new(NotSelectionFilter {
-                input: Box::new(OrSelectionFilter {
-                    filters: condition
-                        .not_approvers
+                if !condition.operation_types.is_empty()
+                    && !condition
+                        .operation_types
                         .iter()
-                        .map(|approver_id| {
-                            Box::new(ApproverSelectionFilter {
-                                repository: &self.approver_index,
-                                approver_id: *approver_id,
-                            })
-                                as Box<dyn SelectionFilter<IdType = UUID>>
-                        })
-                        .collect(),
-                }),
-            }) as Box<dyn SelectionFilter<IdType = UUID>>;
+                        .any(|filter_by_operation| fields.operation_type.eq(filter_by_operation))
+                {
+                    return false;
+                }
 
-            filters.push(excludes_approver);
-        }
+                if !where_requesters.is_empty() && !where_requesters.contains(&fields.requested_by)
+                {
+                    return false;
+                }
 
-        if !condition.not_requesters.is_empty() {
-            let excludes_requester = Box::new(NotSelectionFilter {
-                input: Box::new(OrSelectionFilter {
-                    filters: condition
-                        .not_requesters
+                if !where_not_requesters.is_empty()
+                    && where_not_requesters.contains(&fields.requested_by)
+                {
+                    return false;
+                }
+
+                let mut all_approvals = fields.approved_by.to_owned();
+                all_approvals.extend(fields.rejected_by.to_owned());
+
+                if !where_approvals.is_empty()
+                    && !all_approvals
                         .iter()
-                        .map(|requester_id| {
-                            Box::new(RequesterSelectionFilter {
-                                repository: &self.requester_index,
-                                requester_id: *requester_id,
-                            })
-                                as Box<dyn SelectionFilter<IdType = UUID>>
-                        })
-                        .collect(),
-                }),
-            }) as Box<dyn SelectionFilter<IdType = UUID>>;
+                        .any(|approver| where_approvals.contains(approver))
+                {
+                    return false;
+                }
 
-            filters.push(excludes_requester);
-        }
+                if !where_not_approvals.is_empty()
+                    && all_approvals
+                        .iter()
+                        .any(|approver| where_not_approvals.contains(approver))
+                {
+                    return false;
+                }
 
-        filters
+                INDEXED_FIELDS_CACHE.with(|cache| {
+                    cache.borrow_mut().insert(*id, fields.clone());
+                });
+
+                true
+            })
+            .collect::<Vec<(RequestId, RequestIndexFields)>>();
+
+        // Sorts the request IDs based on the provided sort field and direction.
+        entries.sort_by(|(a_id, a), (b_id, b)| {
+            // Default sort by creation timestamp descending
+            let mut ord = a.created_at.cmp(&b.created_at);
+            let mut dir = station_api::SortDirection::Desc;
+
+            if let Some(sort_by) = &sort_by {
+                match sort_by {
+                    ListRequestsSortBy::CreatedAt(direction) => {
+                        ord = a.created_at.cmp(&b.created_at);
+                        dir = direction.clone();
+                    }
+                    ListRequestsSortBy::ExpirationDt(direction) => {
+                        ord = a.expiration_dt.cmp(&b.expiration_dt);
+                        dir = direction.clone();
+                    }
+                    ListRequestsSortBy::LastModificationDt(direction) => {
+                        ord = a.last_modified_at.cmp(&b.last_modified_at);
+                        dir = direction.clone();
+                    }
+                }
+            }
+
+            match ord {
+                std::cmp::Ordering::Equal => match dir {
+                    station_api::SortDirection::Asc => a_id.cmp(b_id),
+                    station_api::SortDirection::Desc => b_id.cmp(a_id),
+                },
+                _ => match dir {
+                    station_api::SortDirection::Asc => ord.reverse(),
+                    station_api::SortDirection::Desc => ord,
+                },
+            }
+        });
+
+        Ok(entries.into_iter().map(|(id, _)| id).collect())
     }
 
     #[cfg(test)]
@@ -641,219 +403,13 @@ pub struct RequestWhereClause {
     pub created_dt_to: Option<Timestamp>,
     pub expiration_dt_from: Option<Timestamp>,
     pub expiration_dt_to: Option<Timestamp>,
-    pub operation_types: Vec<RequestOperationFilterType>,
+    pub operation_types: Vec<ListRequestsOperationType>,
     pub statuses: Vec<RequestStatusCode>,
     pub approvers: Vec<UUID>,
     pub not_approvers: Vec<UUID>,
     pub requesters: Vec<UUID>,
     pub not_requesters: Vec<UUID>,
     pub excluded_ids: Vec<UUID>,
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct CreationDtSelectionFilter<'a> {
-    repository: &'a RequestCreationTimeIndexRepository,
-    prefixed_repository: &'a RequestKeyCreationTimeIndexRepository,
-    from: Option<Timestamp>,
-    to: Option<Timestamp>,
-}
-
-impl<'a> SelectionFilter<'a> for CreationDtSelectionFilter<'a> {
-    type IdType = UUID;
-
-    fn matches(&self, id: &Self::IdType) -> bool {
-        self.prefixed_repository
-            .exists_by_criteria(RequestKeyCreationTimeIndexCriteria {
-                request_id: *id,
-                from_dt: self.from,
-                to_dt: self.to,
-            })
-    }
-
-    fn select(&self) -> HashSet<Self::IdType> {
-        self.repository
-            .find_by_criteria(RequestCreationTimeIndexCriteria {
-                from_dt: self.from,
-                to_dt: self.to,
-            })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct ExpirationDtSelectionFilter<'a> {
-    repository: &'a RequestExpirationTimeIndexRepository,
-    prefixed_repository: &'a RequestKeyExpirationTimeIndexRepository,
-    from: Option<Timestamp>,
-    to: Option<Timestamp>,
-}
-
-impl<'a> SelectionFilter<'a> for ExpirationDtSelectionFilter<'a> {
-    type IdType = UUID;
-
-    fn matches(&self, id: &Self::IdType) -> bool {
-        self.prefixed_repository
-            .exists_by_criteria(RequestKeyExpirationTimeIndexCriteria {
-                request_id: *id,
-                from_dt: self.from,
-                to_dt: self.to,
-            })
-    }
-
-    fn select(&self) -> HashSet<Self::IdType> {
-        self.repository
-            .find_by_criteria(RequestExpirationTimeIndexCriteria {
-                from_dt: self.from,
-                to_dt: self.to,
-            })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct OperationTypeSelectionFilter<'a> {
-    repository: &'a RequestOperationTypeIndexRepository,
-    operation_type: RequestOperationFilterType,
-}
-
-impl<'a> SelectionFilter<'a> for OperationTypeSelectionFilter<'a> {
-    type IdType = UUID;
-
-    fn matches(&self, id: &Self::IdType) -> bool {
-        self.repository.exists(&RequestOperationTypeIndex {
-            operation_type: self.operation_type.clone(),
-            request_id: *id,
-        })
-    }
-
-    fn select(&self) -> HashSet<Self::IdType> {
-        self.repository
-            .find_by_criteria(RequestOperationTypeIndexCriteria {
-                operation_type: self.operation_type.clone(),
-            })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct ApproverSelectionFilter<'a> {
-    repository: &'a RequestApproverIndexRepository,
-    approver_id: UUID,
-}
-
-impl<'a> SelectionFilter<'a> for ApproverSelectionFilter<'a> {
-    type IdType = UUID;
-
-    fn matches(&self, id: &Self::IdType) -> bool {
-        self.repository.exists(&RequestApproverIndex {
-            approver_id: self.approver_id,
-            request_id: *id,
-        })
-    }
-
-    fn select(&self) -> HashSet<Self::IdType> {
-        self.repository
-            .find_by_criteria(RequestApproverIndexCriteria {
-                approver_id: self.approver_id,
-            })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct RequesterSelectionFilter<'a> {
-    repository: &'a RequestRequesterIndexRepository,
-    requester_id: UUID,
-}
-
-impl<'a> SelectionFilter<'a> for RequesterSelectionFilter<'a> {
-    type IdType = UUID;
-
-    fn matches(&self, id: &Self::IdType) -> bool {
-        self.repository.exists(&RequestRequesterIndex {
-            requester_id: self.requester_id,
-            request_id: *id,
-        })
-    }
-
-    fn select(&self) -> HashSet<Self::IdType> {
-        self.repository
-            .find_by_criteria(RequestRequesterIndexCriteria {
-                requester_id: self.requester_id,
-            })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub(crate) struct StatusSelectionFilter<'a> {
-    repository: &'a RequestStatusIndexRepository,
-    status: RequestStatusCode,
-}
-
-impl<'a> SelectionFilter<'a> for StatusSelectionFilter<'a> {
-    type IdType = UUID;
-
-    fn matches(&self, id: &Self::IdType) -> bool {
-        self.repository.exists(&RequestStatusIndex {
-            status: self.status.to_owned(),
-            request_id: *id,
-        })
-    }
-
-    fn select(&self) -> HashSet<Self::IdType> {
-        self.repository
-            .find_by_criteria(RequestStatusIndexCriteria {
-                status: self.status.to_owned(),
-            })
-    }
-}
-
-#[derive(Debug, Clone)]
-enum TimestampType {
-    Creation,
-    Expiration,
-    Modification,
-}
-
-#[derive(Debug, Clone)]
-struct TimestampSortingStrategy<'a> {
-    index: &'a RequestSortIndexRepository,
-    timestamp_type: TimestampType,
-    direction: Option<SortDirection>,
-}
-
-impl<'a> SortingStrategy<'a> for TimestampSortingStrategy<'a> {
-    type IdType = UUID;
-
-    fn sort(&self, ids: &mut [Self::IdType]) {
-        let direction = self.direction.unwrap_or(SortDirection::Ascending);
-        let mut id_with_timestamps: Vec<(Timestamp, Self::IdType)> = ids
-            .iter()
-            .map(|id| {
-                let key = RequestSortIndexKey { request_id: *id };
-                let timestamp = self
-                    .index
-                    .get(&key)
-                    .map(|index| match self.timestamp_type {
-                        TimestampType::Creation => index.creation_timestamp,
-                        TimestampType::Expiration => index.expiration_timestamp,
-                        TimestampType::Modification => index.modification_timestamp,
-                    })
-                    .unwrap_or_default();
-                (timestamp, *id)
-            })
-            .collect();
-
-        id_with_timestamps.sort_by(|a, b| {
-            {
-                let ord = a.0.cmp(&b.0); // Compare timestamps
-                match direction {
-                    SortDirection::Ascending => ord,
-                    SortDirection::Descending => ord.reverse(),
-                }
-            }
-            .then_with(|| a.1.cmp(&b.1)) // Compare request IDs if timestamps are equal
-        });
-
-        let sorted_ids: Vec<UUID> = id_with_timestamps.into_iter().map(|(_, id)| id).collect();
-        ids.copy_from_slice(&sorted_ids);
-    }
 }
 
 #[cfg(test)]
@@ -894,23 +450,17 @@ mod tests {
             repository.insert(request.to_key(), request.clone());
         }
 
-        let last_six = repository.find_by_expiration_dt_and_status(
-            Some(45),
-            None,
-            RequestStatusCode::Created.to_string(),
-        );
+        let last_six =
+            repository.find_by_status_and_expiration_dt(RequestStatusCode::Created, Some(45), None);
 
-        let middle_eleven = repository.find_by_expiration_dt_and_status(
+        let middle_eleven = repository.find_by_status_and_expiration_dt(
+            RequestStatusCode::Created,
             Some(30),
             Some(40),
-            RequestStatusCode::Created.to_string(),
         );
 
-        let first_three = repository.find_by_expiration_dt_and_status(
-            None,
-            Some(2),
-            RequestStatusCode::Created.to_string(),
-        );
+        let first_three =
+            repository.find_by_status_and_expiration_dt(RequestStatusCode::Created, None, Some(2));
 
         assert_eq!(last_six.len(), 6);
         assert_eq!(middle_eleven.len(), 11);
@@ -925,11 +475,8 @@ mod tests {
 
         repository.insert(request.to_key(), request.clone());
 
-        let requests = repository.find_by_expiration_dt_and_status(
-            Some(20),
-            None,
-            request.status.to_type().to_string(),
-        );
+        let requests =
+            repository.find_by_status_and_expiration_dt(request.status.into(), Some(20), None);
 
         assert!(requests.is_empty());
     }
@@ -1221,7 +768,7 @@ mod tests {
             created_dt_to: Some(100),
             expiration_dt_from: None,
             expiration_dt_to: None,
-            operation_types: vec![RequestOperationFilterType::AddUserGroup],
+            operation_types: vec![ListRequestsOperationType::AddUserGroup],
             requesters: Vec::new(),
             approvers: Vec::new(),
             not_approvers: vec![],
@@ -1242,19 +789,22 @@ mod tests {
 #[cfg(feature = "canbench")]
 mod benchs {
     use super::*;
-    use crate::models::{request_test_utils::mock_request, RequestStatus};
+    use crate::{
+        core::WASM_PAGE_SIZE,
+        models::{request_test_utils::mock_request, RequestStatus},
+    };
     use canbench_rs::{bench, BenchResult};
     use uuid::Uuid;
 
     #[bench(raw)]
-    fn repository_batch_insert_100_requests() -> BenchResult {
+    fn batch_insert_100_requests() -> BenchResult {
         canbench_rs::bench_fn(|| {
             request_repository_test_utils::add_requests_to_repository(100);
         })
     }
 
     #[bench(raw)]
-    fn repository_list_all_requests() -> BenchResult {
+    fn list_1k_requests() -> BenchResult {
         request_repository_test_utils::add_requests_to_repository(1_000);
 
         canbench_rs::bench_fn(|| {
@@ -1263,8 +813,43 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn repository_filter_all_request_ids_by_default_filters() -> BenchResult {
-        for i in 0..2_500 {
+    fn heap_size_of_indexed_request_fields_cache_is_lt_300mib() -> BenchResult {
+        let entries_count = 10_000;
+        let max_entries = RequestRepository::MAX_INDEXED_FIELDS_CACHE_SIZE as u64;
+        let max_allowed_heap_size_bytes = 300_000_000;
+        let mut requests = Vec::with_capacity(entries_count as usize);
+
+        for _ in 0..entries_count {
+            let request = mock_request();
+            requests.push(request);
+        }
+
+        let result = canbench_rs::bench_fn(|| {
+            INDEXED_FIELDS_CACHE.with(|cache| {
+                for request in requests {
+                    cache
+                        .borrow_mut()
+                        .insert(request.id, request.index_fields());
+                }
+            });
+        });
+
+        let heap_pages = result.total.heap_increase;
+        let heap_size_bytes = heap_pages * WASM_PAGE_SIZE as u64;
+        let byte_size_per_entry = heap_size_bytes / entries_count;
+
+        assert!(
+            byte_size_per_entry * max_entries < max_allowed_heap_size_bytes,
+            "Heap size of the request index fields cache is greater than 100 MiB, got: {} bytes",
+            byte_size_per_entry * max_entries
+        );
+
+        result
+    }
+
+    #[bench(raw)]
+    fn repository_find_1k_requests_from_10k_dataset_default_filters() -> BenchResult {
+        for i in 0..10_000 {
             let mut request = mock_request();
             request.id = *Uuid::new_v4().as_bytes();
             request.created_timestamp = i;

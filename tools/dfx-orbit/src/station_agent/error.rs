@@ -1,5 +1,5 @@
 use ic_agent::AgentError;
-use orbit_station_api::ApiErrorDTO;
+use station_api::ApiErrorDTO;
 use thiserror::Error;
 
 pub type StationAgentResult<T> = Result<T, StationAgentError>;

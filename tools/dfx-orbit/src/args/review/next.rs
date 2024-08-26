@@ -2,7 +2,7 @@
 
 use super::external_canister_operations;
 use clap::Parser;
-use orbit_station_api::GetNextApprovableRequestInput;
+use station_api::GetNextApprovableRequestInput;
 
 /// Reviews the next request.
 #[derive(Debug, Clone, Parser)]

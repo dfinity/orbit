@@ -9,7 +9,7 @@ use crate::{
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    repository::{IndexRepository, Repository},
+    repository::{IndexRepository, IndexedRepository, Repository, StableDb},
     types::Timestamp,
 };
 use std::{cell::RefCell, sync::Arc};
@@ -33,47 +33,53 @@ pub struct NotificationRepository {
     user_index: NotificationUserIndexRepository,
 }
 
-impl Repository<NotificationKey, Notification> for NotificationRepository {
-    fn list(&self) -> Vec<Notification> {
-        DB.with(|m| m.borrow().iter().map(|(_, v)| v).collect())
+impl StableDb<NotificationKey, Notification, VirtualMemory<Memory>> for NotificationRepository {
+    fn with_db<F, R>(f: F) -> R
+    where
+        F: FnOnce(&mut StableBTreeMap<NotificationKey, Notification, VirtualMemory<Memory>>) -> R,
+    {
+        DB.with(|m| f(&mut m.borrow_mut()))
+    }
+}
+
+impl IndexedRepository<NotificationKey, Notification, VirtualMemory<Memory>>
+    for NotificationRepository
+{
+    fn remove_entry_indexes(&self, value: &Notification) {
+        self.user_index.remove(&value.to_index_for_target_user());
     }
 
-    fn get(&self, key: &NotificationKey) -> Option<Notification> {
-        DB.with(|m| m.borrow().get(key))
+    fn add_entry_indexes(&self, value: &Notification) {
+        self.user_index.insert(value.to_index_for_target_user());
     }
 
+    /// Clears all the indexes.
+    fn clear_indexes(&self) {
+        self.user_index.clear();
+    }
+}
+
+impl Repository<NotificationKey, Notification, VirtualMemory<Memory>> for NotificationRepository {
     fn insert(&self, key: NotificationKey, value: Notification) -> Option<Notification> {
-        DB.with(|m| match m.borrow_mut().insert(key, value.clone()) {
-            Some(prev) => {
-                let prev_user_index = prev.to_index_for_target_user();
-                if prev_user_index != value.to_index_for_target_user() {
-                    self.user_index.remove(&prev_user_index);
-                    self.user_index.insert(value.to_index_for_target_user());
-                }
+        DB.with(|m| {
+            let prev = m.borrow_mut().insert(key, value.clone());
 
-                Some(prev)
-            }
-            None => {
-                self.user_index.insert(value.to_index_for_target_user());
+            self.save_entry_indexes(&value, prev.as_ref());
 
-                None
-            }
+            prev
         })
     }
 
     fn remove(&self, key: &NotificationKey) -> Option<Notification> {
-        DB.with(|m| match m.borrow_mut().remove(key) {
-            Some(prev) => {
-                self.user_index.remove(&prev.to_index_for_target_user());
+        DB.with(|m| {
+            let prev = m.borrow_mut().remove(key);
 
-                Some(prev)
+            if let Some(prev) = &prev {
+                self.remove_entry_indexes(prev);
             }
-            None => None,
-        })
-    }
 
-    fn len(&self) -> usize {
-        DB.with(|m| m.borrow().len()) as usize
+            prev
+        })
     }
 }
 

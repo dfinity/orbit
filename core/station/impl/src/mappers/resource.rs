@@ -1,9 +1,9 @@
 use crate::models::{
     resource::{
-        AccountResourceAction, CallExternalCanisterResourceTarget, ChangeCanisterResourceAction,
-        ExecutionMethodResourceTarget, ExternalCanisterId, ExternalCanisterResourceAction,
-        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-        SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
+        AccountResourceAction, CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
+        ExternalCanisterId, ExternalCanisterResourceAction, PermissionResourceAction,
+        RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+        UserResourceAction, ValidationMethodResourceTarget,
     },
     CanisterMethod,
 };
@@ -22,9 +22,6 @@ impl From<station_api::ResourceDTO> for Resource {
             }
             station_api::ResourceDTO::UserGroup(action) => Resource::UserGroup(action.into()),
             station_api::ResourceDTO::AddressBook(action) => Resource::AddressBook(action.into()),
-            station_api::ResourceDTO::ChangeCanister(action) => {
-                Resource::ChangeCanister(action.into())
-            }
             station_api::ResourceDTO::ExternalCanister(action) => {
                 Resource::ExternalCanister(action.into())
             }
@@ -45,9 +42,6 @@ impl From<Resource> for station_api::ResourceDTO {
             }
             Resource::UserGroup(action) => station_api::ResourceDTO::UserGroup(action.into()),
             Resource::AddressBook(action) => station_api::ResourceDTO::AddressBook(action.into()),
-            Resource::ChangeCanister(action) => {
-                station_api::ResourceDTO::ChangeCanister(action.into())
-            }
             Resource::ExternalCanister(action) => {
                 station_api::ResourceDTO::ExternalCanister(action.into())
             }
@@ -191,6 +185,7 @@ impl From<station_api::SystemResourceActionDTO> for SystemResourceAction {
             station_api::SystemResourceActionDTO::ManageSystemInfo => {
                 SystemResourceAction::ManageSystemInfo
             }
+            station_api::SystemResourceActionDTO::Upgrade => SystemResourceAction::Upgrade,
         }
     }
 }
@@ -205,19 +200,8 @@ impl From<SystemResourceAction> for station_api::SystemResourceActionDTO {
             SystemResourceAction::ManageSystemInfo => {
                 station_api::SystemResourceActionDTO::ManageSystemInfo
             }
+            SystemResourceAction::Upgrade => station_api::SystemResourceActionDTO::Upgrade,
         }
-    }
-}
-
-impl From<station_api::ChangeCanisterResourceActionDTO> for ChangeCanisterResourceAction {
-    fn from(_: station_api::ChangeCanisterResourceActionDTO) -> Self {
-        ChangeCanisterResourceAction::Create
-    }
-}
-
-impl From<ChangeCanisterResourceAction> for station_api::ChangeCanisterResourceActionDTO {
-    fn from(_: ChangeCanisterResourceAction) -> Self {
-        station_api::ChangeCanisterResourceActionDTO::Create
     }
 }
 

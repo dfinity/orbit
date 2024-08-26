@@ -1,6 +1,6 @@
 use crate::DfxOrbit;
 use clap::{Parser, Subcommand};
-use orbit_station_api::RequestOperationInput;
+use station_api::RequestOperationInput;
 
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetArgs {

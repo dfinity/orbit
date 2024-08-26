@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use orbit_station_api::GetRequestResponse;
+use station_api::GetRequestResponse;
 
 use crate::{
     args::request::canister::{RequestCanisterCallArgs, RequestCanisterInstallArgs},

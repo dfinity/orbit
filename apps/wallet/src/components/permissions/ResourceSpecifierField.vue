@@ -135,23 +135,6 @@
       disabled
     />
   </template>
-  <template v-else-if="variantIs(model, 'ChangeCanister')">
-    <VTextField
-      :model-value="$t('permissions.resources.changecanister')"
-      :label="$t('terms.resource')"
-      variant="plain"
-      density="compact"
-      disabled
-    />
-
-    <VTextField
-      :model-value="toResourceActionText(model.ChangeCanister)"
-      :label="$t('terms.action')"
-      variant="plain"
-      density="compact"
-      disabled
-    />
-  </template>
 </template>
 
 <script lang="ts" setup>
@@ -258,6 +241,10 @@ const toSystemResourceActionText = (specifier: SystemResourceAction): string => 
 
   if (variantIs(specifier, 'ManageSystemInfo')) {
     return i18n.t('permissions.actions.managesysteminfo');
+  }
+
+  if (variantIs(specifier, 'Upgrade')) {
+    return i18n.t('permissions.actions.systemupgrade');
   }
 
   return unreachable(specifier);

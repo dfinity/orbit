@@ -3,14 +3,13 @@
 use crate::DfxOrbit;
 use anyhow::{bail, Context};
 use clap::{Parser, Subcommand, ValueEnum};
-
-use orbit_station_api::{
+use sha2::{Digest, Sha256};
+use slog::{info, Logger};
+use station_api::{
     CallExternalCanisterOperationInput, CanisterInstallMode, CanisterMethodDTO,
     ChangeExternalCanisterOperationInput, GetRequestResponse, RequestOperationDTO,
     RequestOperationInput,
 };
-use sha2::{Digest, Sha256};
-use slog::{info, Logger};
 
 // TODO: Support Canister create + integration test
 // TODO: Canister get response functionality

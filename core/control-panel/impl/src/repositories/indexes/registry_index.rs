@@ -21,6 +21,13 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct RegistryIndexRepository {}
 
+impl RegistryIndexRepository {
+    /// Clears all entries in the index repository.
+    pub fn clear(&self) {
+        DB.with(|m| m.borrow_mut().clear_new());
+    }
+}
+
 impl IndexRepository<RegistryIndex, RegistryEntryId> for RegistryIndexRepository {
     type FindByCriteria = RegistryIndexCriteria;
 

@@ -97,6 +97,7 @@ export const idlFactory = ({ IDL }) => {
     'Read' : ResourceId,
   });
   const SystemResourceAction = IDL.Variant({
+    'Upgrade' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
     'SystemInfo' : IDL.Null,
     'Capabilities' : IDL.Null,
@@ -149,7 +150,6 @@ export const idlFactory = ({ IDL }) => {
     'Create' : IDL.Null,
     'Update' : ResourceId,
   });
-  const ChangeCanisterResourceAction = IDL.Variant({ 'Create' : IDL.Null });
   const PermissionResourceAction = IDL.Variant({
     'Read' : IDL.Null,
     'Update' : IDL.Null,
@@ -161,7 +161,6 @@ export const idlFactory = ({ IDL }) => {
     'ExternalCanister' : ExternalCanisterResourceAction,
     'Account' : AccountResourceAction,
     'AddressBook' : ResourceAction,
-    'ChangeCanister' : ChangeCanisterResourceAction,
     'UserGroup' : ResourceAction,
     'Permission' : PermissionResourceAction,
     'RequestPolicy' : ResourceAction,
@@ -311,11 +310,11 @@ export const idlFactory = ({ IDL }) => {
     'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : ResourceIds,
     'RemoveRequestPolicy' : ResourceIds,
+    'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : ResourceIds,
     'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : ResourceIds,
     'FundExternalCanister' : ExternalCanisterId,
-    'ChangeCanister' : IDL.Null,
     'EditUser' : ResourceIds,
     'ManageSystemInfo' : IDL.Null,
     'Transfer' : ResourceIds,
@@ -332,6 +331,15 @@ export const idlFactory = ({ IDL }) => {
     'policy_id' : UUID,
   });
   const RemoveRequestPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
+  const SystemUpgradeTarget = IDL.Variant({
+    'UpgradeUpgrader' : IDL.Null,
+    'UpgradeStation' : IDL.Null,
+  });
+  const SystemUpgradeOperationInput = IDL.Record({
+    'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'target' : SystemUpgradeTarget,
+    'module' : IDL.Vec(IDL.Nat8),
+  });
   const RemoveAddressBookEntryOperationInput = IDL.Record({
     'address_book_entry_id' : UUID,
   });
@@ -359,6 +367,7 @@ export const idlFactory = ({ IDL }) => {
     'ReplaceAllBy' : IDL.Vec(AddressBookMetadata),
   });
   const EditAddressBookEntryOperationInput = IDL.Record({
+    'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'change_metadata' : IDL.Opt(ChangeAddressBookMetadata),
     'address_book_entry_id' : UUID,
     'address_owner' : IDL.Opt(IDL.Text),
@@ -372,15 +381,6 @@ export const idlFactory = ({ IDL }) => {
   const FundExternalCanisterOperationInput = IDL.Record({
     'kind' : FundExternalCanisterOperationKind,
     'canister_id' : IDL.Principal,
-  });
-  const ChangeCanisterTarget = IDL.Variant({
-    'UpgradeUpgrader' : IDL.Null,
-    'UpgradeStation' : IDL.Null,
-  });
-  const ChangeCanisterOperationInput = IDL.Record({
-    'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-    'target' : ChangeCanisterTarget,
-    'module' : IDL.Vec(IDL.Nat8),
   });
   const EditUserOperationInput = IDL.Record({
     'id' : UUID,
@@ -423,10 +423,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const AddAddressBookEntryOperationInput = IDL.Record({
     'metadata' : IDL.Vec(AddressBookMetadata),
+    'labels' : IDL.Vec(IDL.Text),
     'blockchain' : IDL.Text,
     'address' : IDL.Text,
     'address_owner' : IDL.Text,
-    'standard' : IDL.Text,
   });
   const AddRequestPolicyOperationInput = IDL.Record({
     'rule' : RequestPolicyRule,
@@ -460,11 +460,11 @@ export const idlFactory = ({ IDL }) => {
     'SetDisasterRecovery' : SetDisasterRecoveryOperationInput,
     'EditRequestPolicy' : EditRequestPolicyOperationInput,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput,
+    'SystemUpgrade' : SystemUpgradeOperationInput,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput,
     'CreateExternalCanister' : CreateExternalCanisterOperationInput,
     'EditAddressBookEntry' : EditAddressBookEntryOperationInput,
     'FundExternalCanister' : FundExternalCanisterOperationInput,
-    'ChangeCanister' : ChangeCanisterOperationInput,
     'EditUser' : EditUserOperationInput,
     'ManageSystemInfo' : ManageSystemInfoOperationInput,
     'Transfer' : TransferOperationInput,
@@ -535,6 +535,11 @@ export const idlFactory = ({ IDL }) => {
   const RemoveRequestPolicyOperation = IDL.Record({
     'input' : RemoveRequestPolicyOperationInput,
   });
+  const SystemUpgradeOperation = IDL.Record({
+    'module_checksum' : Sha256Hash,
+    'target' : SystemUpgradeTarget,
+    'arg_checksum' : IDL.Opt(Sha256Hash),
+  });
   const RemoveAddressBookEntryOperation = IDL.Record({
     'input' : RemoveAddressBookEntryOperationInput,
   });
@@ -546,11 +551,6 @@ export const idlFactory = ({ IDL }) => {
     'input' : EditAddressBookEntryOperationInput,
   });
   const FundExternalCanisterOperation = FundExternalCanisterOperationInput;
-  const ChangeCanisterOperation = IDL.Record({
-    'module_checksum' : Sha256Hash,
-    'target' : ChangeCanisterTarget,
-    'arg_checksum' : IDL.Opt(Sha256Hash),
-  });
   const EditUserOperation = IDL.Record({ 'input' : EditUserOperationInput });
   const ManageSystemInfoOperation = IDL.Record({
     'input' : ManageSystemInfoOperationInput,
@@ -587,11 +587,11 @@ export const idlFactory = ({ IDL }) => {
   const AddressBookEntry = IDL.Record({
     'id' : UUID,
     'metadata' : IDL.Vec(AddressBookMetadata),
+    'labels' : IDL.Vec(IDL.Text),
     'blockchain' : IDL.Text,
     'address' : IDL.Text,
     'last_modification_timestamp' : IDL.Text,
     'address_owner' : IDL.Text,
-    'standard' : IDL.Text,
   });
   const AddAddressBookEntryOperation = IDL.Record({
     'address_book_entry' : IDL.Opt(AddressBookEntry),
@@ -626,11 +626,11 @@ export const idlFactory = ({ IDL }) => {
     'SetDisasterRecovery' : SetDisasterRecoveryOperation,
     'EditRequestPolicy' : EditRequestPolicyOperation,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperation,
+    'SystemUpgrade' : SystemUpgradeOperation,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
     'CreateExternalCanister' : CreateExternalCanisterOperation,
     'EditAddressBookEntry' : EditAddressBookEntryOperation,
     'FundExternalCanister' : FundExternalCanisterOperation,
-    'ChangeCanister' : ChangeCanisterOperation,
     'EditUser' : EditUserOperation,
     'ManageSystemInfo' : ManageSystemInfoOperation,
     'Transfer' : TransferOperation,
@@ -832,11 +832,11 @@ export const idlFactory = ({ IDL }) => {
     'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
+    'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
     'FundExternalCanister' : IDL.Opt(IDL.Principal),
-    'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
     'Transfer' : IDL.Opt(UUID),
@@ -1003,11 +1003,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const ListAddressBookEntriesInput = IDL.Record({
     'ids' : IDL.Opt(IDL.Vec(UUID)),
+    'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'blockchain' : IDL.Opt(IDL.Text),
     'addresses' : IDL.Opt(IDL.Vec(IDL.Text)),
     'paginate' : IDL.Opt(PaginationInput),
-    'address_chain' : IDL.Opt(
-      IDL.Record({ 'blockchain' : IDL.Text, 'standard' : IDL.Text })
-    ),
   });
   const ListAddressBookEntriesResult = IDL.Variant({
     'Ok' : IDL.Record({
@@ -1062,11 +1061,11 @@ export const idlFactory = ({ IDL }) => {
     'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
+    'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
     'FundExternalCanister' : IDL.Null,
-    'ChangeCanister' : IDL.Null,
     'EditUser' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
     'Transfer' : IDL.Null,
@@ -1221,8 +1220,8 @@ export const idlFactory = ({ IDL }) => {
     'ListUserGroups' : IDL.Null,
     'AddUser' : IDL.Null,
     'ListUsers' : IDL.Null,
+    'SystemUpgrade' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
-    'ChangeCanister' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,

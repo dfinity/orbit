@@ -12,6 +12,8 @@ pub enum SystemError {
     NoAdminsSpecified,
     #[error(r#"There are too many admins defined, max allowed is {max}."#)]
     TooManyAdminsSpecified { max: usize },
+    #[error(r#"System upgrade failed."#)]
+    UpgradeFailed { reason: String },
 }
 
 impl DetailableError for SystemError {
@@ -19,6 +21,16 @@ impl DetailableError for SystemError {
         let mut details = HashMap::new();
         match self {
             SystemError::InitFailed { reason } => {
+                details.insert("reason".to_string(), reason.to_string());
+
+                Some(details)
+            }
+            SystemError::TooManyAdminsSpecified { max } => {
+                details.insert("max".to_string(), max.to_string());
+
+                Some(details)
+            }
+            SystemError::UpgradeFailed { reason } => {
                 details.insert("reason".to_string(), reason.to_string());
 
                 Some(details)
