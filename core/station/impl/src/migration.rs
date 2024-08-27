@@ -132,8 +132,8 @@ impl<'de> Deserialize<'de> for Resource {
         const REMOVED_VARIANTS: [&str; 1] = ["ChangeCanister"];
 
         // IMPORTANT: The size of the array must be hardcoded, to make sure it can be checked at compile-time.
-        static EXPECTED_VARIANTS: [&str; 10] = {
-            let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] = [""; 10];
+        static EXPECTED_VARIANTS: [&str; 11] = {
+            let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] = [""; 11];
             concat_str_arrays!(CURRENT_VARIANTS, REMOVED_VARIANTS);
 
             variants
@@ -226,6 +226,10 @@ impl<'de> Deserialize<'de> for Resource {
                     "AddressBook" => {
                         let value = variant_access.newtype_variant()?;
                         Ok(Resource::AddressBook(value))
+                    }
+                    "Notification" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(Resource::Notification(value))
                     }
                     "Request" => {
                         let value = variant_access.newtype_variant()?;

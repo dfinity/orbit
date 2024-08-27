@@ -11,6 +11,7 @@ mod disaster_recovery_tests;
 mod external_canister_tests;
 mod interfaces;
 mod migration_tests;
+mod notification;
 mod register_tests;
 mod setup;
 mod test_data;

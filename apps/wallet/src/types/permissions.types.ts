@@ -12,6 +12,7 @@ export enum ResourceTypeEnum {
   AddressBook = 'AddressBook',
   ExternalCanister = 'ExternalCanister',
   SetDisasterRecovery = 'SetDisasterRecovery',
+  Notification = 'Notification',
 }
 
 export enum ResourceActionEnum {

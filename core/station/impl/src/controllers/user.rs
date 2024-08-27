@@ -85,9 +85,7 @@ impl UserController {
     }
 
     /// Returns the user that is calling this endpoint.
-    ///
-    /// No authorization required since this endpoint only exposes the user associated with the caller identity.
-    /// If the caller does not have a user associated with the identity, an error will be returned.
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&call_context())]))]
     async fn me(&self) -> ApiResult<MeResponse> {
         let ctx = call_context();
         let user = self.user_service.get_user_by_identity(&ctx.caller())?;

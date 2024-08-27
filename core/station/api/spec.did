@@ -1883,6 +1883,12 @@ type CallExternalCanisterResourceTarget = record {
   execution_method : ExecutionMethodResourceTarget;
 };
 
+// The actions that are available for notifications.
+type NotificationResourceAction = variant {
+  List;
+  Update : ResourceId;
+};
+
 // The actions that are available for requests.
 type RequestResourceAction = variant {
   List;
@@ -1917,6 +1923,7 @@ type Resource = variant {
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
   ExternalCanister : ExternalCanisterResourceAction;
+  Notification : NotificationResourceAction;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
   System : SystemResourceAction;

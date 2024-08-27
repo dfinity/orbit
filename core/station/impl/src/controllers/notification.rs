@@ -1,6 +1,8 @@
 use crate::{
-    core::middlewares::{call_context, use_canister_call_metric},
+    core::middlewares::{authorize, call_context, use_canister_call_metric},
+    mappers::authorization::MarkNotificationsReadInputRef,
     mappers::notification::NotificationMapperError,
+    models::resource::Resource,
     services::NotificationService,
 };
 use ic_cdk_macros::{query, update};
@@ -41,7 +43,7 @@ impl NotificationController {
         }
     }
 
-    /// No authorization required since the user will be calling this only for their own notifications.
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn list_notifications(
         &self,
         input: ListNotificationsInput,
@@ -74,7 +76,7 @@ impl NotificationController {
         Ok(ListNotificationsResponse { notifications })
     }
 
-    /// No authorization required since the user will be calling this only for their own notifications.
+    #[with_middleware(guard = authorize(&call_context(), &MarkNotificationsReadInputRef(&input).to_resources()))]
     #[with_middleware(tail = use_canister_call_metric("mark_notifications_read", &result))]
     async fn mark_notifications_read(&self, input: MarkNotificationsReadInput) -> ApiResult<()> {
         self.notification_service
