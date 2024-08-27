@@ -5,7 +5,7 @@ use orbit_essentials::api::{HeaderField, HttpRequest, HttpResponse};
 use orbit_essentials::metrics::with_metrics_registry;
 
 // Canister entrypoints for the controller.
-#[query(name = "http_request")]
+#[query(name = "http_request", decoding_quota = 10000)]
 async fn http_request(request: HttpRequest) -> HttpResponse {
     CONTROLLER.router(request).await
 }
