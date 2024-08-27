@@ -1,7 +1,10 @@
 use crate::errors::{ExternalCanisterValidationError, RecordValidationError, ValidationError};
+use crate::models::RequestOperation;
 use orbit_essentials::api::DetailableError;
+use orbit_essentials::types::UUID;
 use std::collections::HashMap;
 use thiserror::Error;
+use uuid::Uuid;
 
 /// Container for system request errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
@@ -32,6 +35,15 @@ pub enum RequestError {
     /// Request policy not found for id `{id}`.
     #[error(r#"Request policy not found for id `{id}`"#)]
     PolicyNotFound { id: String },
+    /// The request is not processing.
+    #[error(r#"The request is not processing."#)]
+    NotProcessing { request_id: UUID },
+    /// The request has an unexpected operation.
+    #[error(r#"The request has an unexpected operation."#)]
+    UnexpectedRequestOperation {
+        actual: RequestOperation,
+        expected: String,
+    },
 }
 
 impl DetailableError for RequestError {
@@ -64,6 +76,18 @@ impl DetailableError for RequestError {
             }
             RequestError::PolicyNotFound { id } => {
                 details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
+            RequestError::NotProcessing { request_id } => {
+                details.insert(
+                    "request_id".to_string(),
+                    Uuid::from_bytes(*request_id).hyphenated().to_string(),
+                );
+                Some(details)
+            }
+            RequestError::UnexpectedRequestOperation { actual, expected } => {
+                details.insert("actual".to_string(), format!("{:?}", actual));
+                details.insert("expected".to_string(), expected.to_string());
                 Some(details)
             }
             _ => None,

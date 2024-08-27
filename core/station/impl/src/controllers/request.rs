@@ -1,7 +1,10 @@
 use crate::{
+    core::ic_cdk::next_time,
     core::middlewares::{authorize, call_context, use_canister_call_metric},
+    errors::{AuthorizationError, RequestError},
     mappers::HelperMapper,
     models::resource::{RequestResourceAction, Resource},
+    models::{RequestOperation, RequestStatus, SystemUpgradeTarget},
     services::{RequestService, REQUEST_SERVICE},
 };
 use ic_cdk_macros::{query, update};
@@ -11,8 +14,8 @@ use orbit_essentials::with_middleware;
 use station_api::{
     CreateRequestInput, CreateRequestResponse, GetNextApprovableRequestInput,
     GetNextApprovableRequestResponse, GetRequestInput, GetRequestResponse, ListRequestsInput,
-    ListRequestsResponse, RequestAdditionalInfoDTO, RequestCallerPrivilegesDTO,
-    SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
+    ListRequestsResponse, NotifyFailedStationUpgradeInput, RequestAdditionalInfoDTO,
+    RequestCallerPrivilegesDTO, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
 };
 use std::sync::Arc;
 
@@ -44,6 +47,11 @@ async fn submit_request_approval(
 #[update(name = "create_request")]
 async fn create_request(input: CreateRequestInput) -> ApiResult<CreateRequestResponse> {
     CONTROLLER.create_request(input).await
+}
+
+#[update(name = "notify_failed_station_upgrade")]
+async fn notify_failed_station_upgrade(input: NotifyFailedStationUpgradeInput) -> ApiResult<()> {
+    CONTROLLER.notify_failed_station_upgrade(input).await
 }
 
 // Controller initialization and implementation.
@@ -189,5 +197,65 @@ impl RequestController {
             privileges: privileges.into(),
             additional_info: additional_info.into(),
         })
+    }
+
+    // No authorization middleware as the caller is checked to be a controller of the station canister.
+    async fn notify_failed_station_upgrade(
+        &self,
+        input: NotifyFailedStationUpgradeInput,
+    ) -> ApiResult<()> {
+        let ctx = call_context();
+        if !ctx.caller_is_controller() {
+            let err = AuthorizationError::Unauthorized {
+                resource: "notify_failed_station_upgrade".to_string(),
+            };
+            return Err(err.into());
+        }
+
+        let request = self
+            .request_service
+            .get_request(HelperMapper::to_uuid(input.request_id)?.as_bytes())?;
+
+        // Check that the request is indeed a station upgrade request.
+        let expected_request_operation =
+            "SystemUpgrade(SystemUpgradeOperationInput { target: UpgradeStation, ..})".to_string();
+        match request.operation {
+            RequestOperation::SystemUpgrade(ref system_upgrade) => {
+                match system_upgrade.input.target {
+                    SystemUpgradeTarget::UpgradeStation => (),
+                    _ => {
+                        let err = RequestError::UnexpectedRequestOperation {
+                            actual: request.operation.clone(),
+                            expected: expected_request_operation,
+                        };
+                        return Err(err.into());
+                    }
+                }
+            }
+            _ => {
+                let err = RequestError::UnexpectedRequestOperation {
+                    actual: request.operation.clone(),
+                    expected: expected_request_operation,
+                };
+                return Err(err.into());
+            }
+        };
+
+        // Check that the request is still processing before making it failed.
+        match request.status {
+            RequestStatus::Processing { .. } => (),
+            _ => {
+                let err = RequestError::NotProcessing {
+                    request_id: request.id,
+                };
+                return Err(err.into());
+            }
+        };
+
+        self.request_service
+            .fail_request(request, input.reason, next_time())
+            .await;
+
+        Ok(())
     }
 }

@@ -24,7 +24,7 @@ use crate::{
     },
     SYSTEM_VERSION,
 };
-use candid::{CandidType, Principal};
+use candid::Principal;
 use canfund::{
     api::{cmc::IcCyclesMintingCanister, ledger::IcLedgerCanister},
     manager::options::ObtainCyclesOptions,
@@ -34,8 +34,10 @@ use ic_ledger_types::{Subaccount, MAINNET_CYCLES_MINTING_CANISTER_ID, MAINNET_LE
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
+use orbit_essentials::types::UUID;
 use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
 use std::sync::Arc;
+use upgrader_api::UpgradeParams;
 use uuid::Uuid;
 
 lazy_static! {
@@ -49,12 +51,6 @@ lazy_static! {
 pub struct SystemService {
     request_repository: Arc<RequestRepository>,
     change_canister_service: Arc<ChangeCanisterService>,
-}
-
-#[derive(Clone, CandidType)]
-struct InstallCanisterParams {
-    module: Vec<u8>,
-    arg: Vec<u8>,
 }
 
 impl SystemService {
@@ -136,13 +132,19 @@ impl SystemService {
     }
 
     /// Execute an upgrade of the station by requesting the upgrader to perform it on our behalf.
-    pub async fn upgrade_station(&self, module: &[u8], arg: &[u8]) -> ServiceResult<()> {
+    pub async fn upgrade_station(
+        &self,
+        request_id: UUID,
+        module: &[u8],
+        arg: &[u8],
+    ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
 
         ic_cdk::call(
             upgrader_canister_id,
             "trigger_upgrade",
-            (InstallCanisterParams {
+            (UpgradeParams {
+                request_id: Uuid::from_bytes(request_id).hyphenated().to_string(),
                 module: module.to_owned(),
                 arg: arg.to_owned(),
             },),

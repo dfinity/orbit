@@ -2472,6 +2472,18 @@ type HttpResponse = record {
   body : blob;
 };
 
+type NotifyFailedStationUpgradeInput = record {
+  // the failed station upgrade request ID
+  request_id : UUID;
+  // the failure reason
+  reason : text;
+};
+
+type NotifyFailedStationUpgradeResult = variant {
+  Ok;
+  Err : Error;
+};
+
 // The Station service definition.
 service : (opt SystemInstall) -> {
   // Check if the station is healthy and ready to be used.
@@ -2553,4 +2565,6 @@ service : (opt SystemInstall) -> {
   canister_status : (input : CanisterStatusInput) -> (CanisterStatusResult);
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
+  // Internal endpoint used by the upgrader canister to notify the station about a failed station upgrade request.
+  notify_failed_station_upgrade : (NotifyFailedStationUpgradeInput) -> (NotifyFailedStationUpgradeResult);
 };

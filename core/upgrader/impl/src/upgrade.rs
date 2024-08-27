@@ -5,11 +5,16 @@ use crate::{
 };
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
+use candid::Principal;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
 };
 use mockall::automock;
+use orbit_essentials::api::ApiResult;
+use orbit_essentials::cdk::{call, print};
+use station_api::NotifyFailedStationUpgradeInput;
 use std::sync::Arc;
+use upgrader_api::UuidDTO;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpgradeError {
@@ -22,6 +27,7 @@ pub enum UpgradeError {
 }
 
 pub struct UpgradeParams {
+    pub request_id: UuidDTO,
     pub module: Vec<u8>,
     pub arg: Vec<u8>,
     pub install_mode: CanisterInstallMode,
@@ -103,7 +109,7 @@ impl<T: Upgrade> Upgrade for WithStart<T> {
     }
 }
 
-pub struct WithBackground<T>(pub Arc<T>);
+pub struct WithBackground<T>(pub Arc<T>, pub LocalRef<StableValue<StorablePrincipal>>);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithBackground<T> {
@@ -111,9 +117,42 @@ impl<T: Upgrade> Upgrade for WithBackground<T> {
     /// so that it is performed in a non-blocking manner
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
         let u = self.0.clone();
+        let target_canister_id: Option<Principal> =
+            self.1.with(|p| p.borrow().get(&()).map(|sp| sp.0));
 
         ic_cdk::spawn(async move {
-            let _ = u.upgrade(ps).await;
+            let request_id = ps.request_id.clone();
+            let res = u.upgrade(ps).await;
+            // Notify the target canister about a failed upgrade unless the call is unauthorized (we don't want to spam
+            // the target canister with such errors).
+            if let Some(target_canister_id) = target_canister_id {
+                if let Err(ref err) = res {
+                    let err = match err {
+                        UpgradeError::UnexpectedError(err) => Some(err.to_string()),
+                        UpgradeError::NotController => Some(
+                            "The upgrader canister is not a controller of the target canister"
+                                .to_string(),
+                        ),
+                        UpgradeError::Unauthorized => None,
+                    };
+                    if let Some(err) = err {
+                        let notify_failed_station_upgrade_input = NotifyFailedStationUpgradeInput {
+                            request_id,
+                            reason: err,
+                        };
+                        let notify_res = call::<_, (ApiResult<()>,)>(
+                            target_canister_id,
+                            "notify_failed_station_upgrade",
+                            (notify_failed_station_upgrade_input,),
+                        )
+                        .await
+                        .map(|r| r.0);
+                        if let Err(e) = notify_res {
+                            print(format!("notify_failed_station_upgrade failed: {:?}", e));
+                        }
+                    }
+                }
+            }
         });
 
         Ok(())

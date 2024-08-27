@@ -161,15 +161,10 @@ impl Job {
                         .insert(transfer.to_key(), transfer.to_owned());
 
                     if let Some(request) = requests.get(&transfer.id) {
-                        let mut request = request.clone();
-                        request.status = RequestStatus::Failed {
-                            reason: Some(e.to_string()),
-                        };
-                        request.last_modification_timestamp = transfer_failed_time;
-                        self.request_repository
-                            .insert(request.to_key(), request.to_owned());
-
-                        self.request_service.failed_request_hook(&request).await;
+                        let request = request.clone();
+                        self.request_service
+                            .fail_request(request, e.to_string(), transfer_failed_time)
+                            .await;
                     } else {
                         print(format!(
                             "Error: request not found for transfer {}",

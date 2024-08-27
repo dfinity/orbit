@@ -73,6 +73,10 @@ impl CallContext {
     pub fn caller_is_controller_or_self(&self) -> bool {
         self.caller == self_canister_id() || is_controller(&self.caller)
     }
+
+    pub fn caller_is_controller(&self) -> bool {
+        is_controller(&self.caller)
+    }
 }
 
 #[cfg(test)]

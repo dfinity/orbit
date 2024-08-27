@@ -66,7 +66,7 @@ lazy_static! {
         let u = WithStop(u, &TARGET_CANISTER_ID);
         let u = WithStart(u, &TARGET_CANISTER_ID);
         let u = WithLogs(u, "upgrade".to_string());
-        let u = WithBackground(Arc::new(u));
+        let u = WithBackground(Arc::new(u), &TARGET_CANISTER_ID);
         let u = CheckController(u, &TARGET_CANISTER_ID);
         let u = WithAuthorization(u, &TARGET_CANISTER_ID);
         let u = WithLogs(u, "trigger_upgrade".to_string());
@@ -77,6 +77,7 @@ lazy_static! {
 #[update]
 async fn trigger_upgrade(params: upgrader_api::UpgradeParams) -> Result<(), TriggerUpgradeError> {
     let input: UpgradeParams = UpgradeParams {
+        request_id: params.request_id,
         module: params.module,
         arg: params.arg,
         install_mode: CanisterInstallMode::Upgrade(None),
