@@ -3,8 +3,10 @@
 use crate::DfxOrbit;
 use clap::{Parser, Subcommand};
 use station_api::{
-    EditPermissionOperationInput, ExternalCanisterIdDTO, ExternalCanisterResourceActionDTO,
+    CallExternalCanisterResourceTargetDTO, EditPermissionOperationInput,
+    ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO, ExternalCanisterResourceActionDTO,
     PermissionResourceActionDTO, RequestOperationInput, ResourceDTO,
+    ValidationMethodResourceTargetDTO,
 };
 
 /// Request permission.
@@ -15,8 +17,10 @@ pub enum RequestPermissionArgs {
     ReadPermissions(RequestPermissionReadPermissionsArgs),
     /// Request permission to update permission(s)
     UpdatePermissions(RequestPermissionUpdatePermissionsArgs),
-    /// Requests the permisson to propose canister upgrades
+    /// Request permission to propose canister upgrades
     UpgradeCanister(RequestPermissionUpgradeCanisterArgs),
+    /// Request permission to call canisters
+    CallCanister(RequestPermissionCallCanisterArgs),
 }
 
 impl RequestPermissionArgs {
@@ -26,18 +30,20 @@ impl RequestPermissionArgs {
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         let operation = match self {
-            RequestPermissionArgs::UpgradeCanister(canister_args) => {
-                canister_args.into_create_request_input(dfx_orbit)?
+            RequestPermissionArgs::UpgradeCanister(args) => {
+                args.into_create_request_input(dfx_orbit)?
             }
-            RequestPermissionArgs::ReadPermissions(permission_args) => permission_args.into(),
-            RequestPermissionArgs::UpdatePermissions(permission_args) => permission_args.into(),
+            RequestPermissionArgs::CallCanister(args) => args.into_create_request_input()?,
+
+            RequestPermissionArgs::ReadPermissions(args) => args.into(),
+            RequestPermissionArgs::UpdatePermissions(args) => args.into(),
         };
 
         Ok(operation)
     }
 }
 
-/// Requests the permisson to propose canister upgrades.
+/// Requests the permission to propose canister upgrades.
 #[derive(Debug, Clone, Parser)]
 pub struct RequestPermissionUpgradeCanisterArgs {
     /// A users that should be permitted to change permissions.  WARNING: Any user that is not listed will lose the ability to change permissions.
@@ -67,6 +73,37 @@ impl RequestPermissionUpgradeCanisterArgs {
 
         let resource =
             ResourceDTO::ExternalCanister(ExternalCanisterResourceActionDTO::Change(canisters));
+
+        Ok(RequestOperationInput::EditPermission(
+            EditPermissionOperationInput {
+                resource,
+                auth_scope: None,
+                users: Some(self.user),
+                user_groups: Some(self.group),
+            },
+        ))
+    }
+}
+
+#[derive(Debug, Clone, Parser)]
+pub struct RequestPermissionCallCanisterArgs {
+    /// A users that should be permitted to change permissions.  WARNING: Any user that is not listed will lose the ability to change permissions.
+    #[structopt(long)]
+    pub user: Vec<String>,
+    /// A groups that should be permitted to change permissions.  WARNING: Any group that is not listed will lose the ability to change permissions.
+    #[structopt(long)]
+    pub group: Vec<String>,
+}
+
+impl RequestPermissionCallCanisterArgs {
+    /// Converts the CLI arg type into the equivalent Orbit API type.
+    pub(crate) fn into_create_request_input(self) -> anyhow::Result<RequestOperationInput> {
+        let resource = ResourceDTO::ExternalCanister(ExternalCanisterResourceActionDTO::Call(
+            CallExternalCanisterResourceTargetDTO {
+                validation_method: ValidationMethodResourceTargetDTO::No,
+                execution_method: ExecutionMethodResourceTargetDTO::Any,
+            },
+        ));
 
         Ok(RequestOperationInput::EditPermission(
             EditPermissionOperationInput {
