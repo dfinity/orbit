@@ -13,23 +13,11 @@ pub struct VerifyArgs {
     pub(crate) request_id: String,
 
     /// Approve the request, if the validation succeeds
-    #[clap(
-        short = 'a',
-        long,
-        action,
-        value_name = "REASON",
-        default_missing_value = "None"
-    )]
-    pub(crate) and_approve: Option<Option<String>>,
+    #[clap(short = 'a', long)]
+    pub(crate) and_approve: bool,
     /// Reject the request, if the validation fails
-    #[clap(
-        short = 'r',
-        long,
-        action,
-        value_name = "REASON",
-        default_missing_value = "None"
-    )]
-    pub(crate) or_reject: Option<Option<String>>,
+    #[clap(short = 'r', long)]
+    pub(crate) or_reject: bool,
 
     /// The type of request to verify
     #[clap(subcommand)]
@@ -46,6 +34,7 @@ pub enum VerifyArgsAction {
 
 impl VerifyArgs {
     pub(crate) async fn verify(self, dfx_orbit: &DfxOrbit) -> anyhow::Result<()> {
+        // TODO: Move fetching the request and displaying it up a level
         let request = dfx_orbit
             .station
             .review_id(GetRequestInput {
@@ -53,6 +42,10 @@ impl VerifyArgs {
             })
             .await?;
 
+        println!(
+            "{}",
+            dfx_orbit.display_get_request_response(request.clone())
+        );
         // TODO: Don't allow non-pending requests to be verified, since they might no longer be
         // verifiable after the execution
 
@@ -63,15 +56,17 @@ impl VerifyArgs {
 
         match verified {
             Ok(()) => {
-                dfx_core::cli::ask_for_consent("Do you want to approve the request?")?;
-                if let Some(reason) = self.and_approve {
-                    dfx_orbit.station.approve(self.request_id, reason).await?;
+                println!("Verification successful!");
+                if self.and_approve {
+                    dfx_core::cli::ask_for_consent("Do you want to approve the request?")?;
+                    dfx_orbit.station.approve(self.request_id, None).await?;
                 }
             }
             Err(err) => {
-                dfx_core::cli::ask_for_consent("Do you want to reject the request?")?;
-                if let Some(reason) = self.or_reject {
-                    dfx_orbit.station.reject(self.request_id, reason).await?;
+                println!("Verification failed: {err}");
+                if self.or_reject {
+                    dfx_core::cli::ask_for_consent("Do you want to reject the request?")?;
+                    dfx_orbit.station.reject(self.request_id, None).await?;
                 };
 
                 return Err(err);
