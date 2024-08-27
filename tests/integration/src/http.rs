@@ -40,7 +40,7 @@ fn test_candid_decoding_quota(env: &PocketIc, canister_id: Principal) {
         )
         .unwrap_err();
     println!("desc: {}", err.description);
-    assert!(err.description.contains("Deserialization Failed"));
+    assert!(err.description.contains("Decoding cost exceeds the limit"));
 }
 
 #[test]
