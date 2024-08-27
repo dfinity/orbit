@@ -239,7 +239,6 @@ fn unauthorized_notify_failed_station_upgrade() {
         request_id: add_user_request.id,
         reason: "some reason".to_string(),
     };
-    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
     let res: (ApiResult<()>,) = update_candid_as(
         &env,
         canister_ids.station,
