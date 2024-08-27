@@ -20,6 +20,8 @@ export enum ResourceActionEnum {
   Create = 'Create',
   Read = 'Read',
   Update = 'Update',
+  Change = 'Change',
+  Fund = 'Fund',
   Delete = 'Delete',
   Transfer = 'Transfer',
   SystemInfoConfig = 'SystemInfoConfig',

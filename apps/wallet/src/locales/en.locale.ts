@@ -735,6 +735,7 @@ export default {
       request: 'Request',
       addressbook: 'Address Book',
       managesysteminfo: 'Manage System Info',
+      externalcanister: 'External Canister',
     },
     actions: {
       list: 'List',
@@ -749,6 +750,8 @@ export default {
       systeminfoconfig: 'Configuration (Upgrades, Metrics, Usage)',
       managesysteminfo: 'Manage System Info (e.g. name)',
       systemupgrade: 'Upgrade',
+      change: 'Change',
+      fund: 'Fund',
     },
     allow: {
       public: 'Anyone',
