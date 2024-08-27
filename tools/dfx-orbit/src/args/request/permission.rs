@@ -40,6 +40,12 @@ impl RequestPermissionArgs {
 /// Requests the permisson to propose canister upgrades.
 #[derive(Debug, Clone, Parser)]
 pub struct RequestPermissionUpgradeCanisterArgs {
+    /// A users that should be permitted to change permissions.  WARNING: Any user that is not listed will lose the ability to change permissions.
+    #[structopt(long)]
+    pub user: Vec<String>,
+    /// A groups that should be permitted to change permissions.  WARNING: Any group that is not listed will lose the ability to change permissions.
+    #[structopt(long)]
+    pub group: Vec<String>,
     /// Canister name or ID. If none specified, this will request all
     // TODO: If a canister is not specified, require --all.
     pub canister: Option<String>,
@@ -66,8 +72,8 @@ impl RequestPermissionUpgradeCanisterArgs {
             EditPermissionOperationInput {
                 resource,
                 auth_scope: None,
-                users: None,
-                user_groups: None,
+                users: Some(self.user),
+                user_groups: Some(self.group),
             },
         ))
     }
