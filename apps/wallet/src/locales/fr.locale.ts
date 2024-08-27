@@ -745,6 +745,7 @@ export default {
       request: 'Demande',
       addressbook: "Carnet d'Adresses",
       managesysteminfo: 'Gérer les informations système',
+      externalcanister: 'Canister Géré',
     },
     actions: {
       list: 'Lister',
@@ -759,6 +760,8 @@ export default {
       systeminfoconfig: 'Configuration (Mises à jour, Métriques, Utilisation)',
       managesysteminfo: 'Gérer les informations système (par exemple. nom)',
       systemupgrade: 'Mise à jour du système',
+      change: 'Changement',
+      fund: 'Financer',
     },
     allow: {
       public: "N'importe qui",
