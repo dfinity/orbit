@@ -90,3 +90,5 @@ pub mod permission;
 pub mod resource;
 
 pub mod indexes;
+
+pub mod rate_limiter;

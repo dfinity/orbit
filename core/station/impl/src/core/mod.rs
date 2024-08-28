@@ -8,7 +8,7 @@ pub use constants::*;
 
 pub mod cache;
 
-mod limiter;
+pub mod limiter;
 
 mod memory;
 pub use memory::*;
