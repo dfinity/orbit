@@ -57,7 +57,6 @@ fn fetch_asset(canister_id: Principal, port: u16, path: &str, expected: &str) {
     let url = format!("http://{}.localhost:{}{}", canister_id, port, path);
     let res = client.get(url).send().unwrap();
     let page = String::from_utf8(res.bytes().unwrap().to_vec()).unwrap();
-    println!("page: {}", page);
     assert!(page.contains(expected));
 }
 
