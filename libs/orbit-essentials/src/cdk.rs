@@ -63,6 +63,12 @@ pub mod mocks {
             static IC_CANISTER_BALANCE: RefCell<u64> = const { RefCell::new(100_000_000_000) };
         }
 
+        pub fn data_certificate() -> Option<Vec<u8>> {
+            None
+        }
+
+        pub fn set_certified_data(_data: &[u8]) {}
+
         pub fn set_mock_ic_time(time: SystemTime) {
             IC_TIME.with(|t| *t.borrow_mut() = time);
         }

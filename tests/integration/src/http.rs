@@ -52,3 +52,30 @@ fn test_http_request_deconding_quota() {
     test_candid_decoding_quota(&env, canister_ids.station);
     test_candid_decoding_quota(&env, canister_ids.control_panel);
 }
+
+fn fetch_asset(canister_id: Principal, port: u16, path: &str, expected: &str) {
+    let client = reqwest::blocking::Client::new();
+    let url = format!("http://{}.localhost:{}{}", canister_id, port, path);
+    let res = client.get(url).send().unwrap();
+    let page = String::from_utf8(res.bytes().unwrap().to_vec()).unwrap();
+    assert!(page.contains(expected));
+}
+
+#[test]
+fn test_skip_asset_certification() {
+    let TestEnv {
+        mut env,
+        canister_ids,
+        ..
+    } = setup_new_env();
+
+    let port = env.make_live(None).port_or_known_default().unwrap();
+
+    fetch_asset(
+        canister_ids.station,
+        port,
+        "/metrics",
+        "# HELP station_total_policies The total number of policies that are available.",
+    );
+    fetch_asset(canister_ids.control_panel, port, "/metrics", "# HELP control_panel_active_users Total number of active users in the system, labeled by the time interval.");
+}

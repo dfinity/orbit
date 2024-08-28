@@ -14,15 +14,20 @@ crate-type = ['lib']
 bench = false
 
 [dependencies]
+base64 = { workspace = true }
 candid = { workspace = true }
 convert_case = { workspace = true }
 getrandom = { workspace = true, features = ['custom'] }
 ic-cdk = { workspace = true }
+ic-certification = { workspace = true }
+ic-http-certification = { workspace = true }
+ic-representation-independent-hash = { workspace = true }
 ic-stable-structures = { workspace = true }
 orbit-essentials-macros = { path = '../orbit-essentials-macros', version = '0.0.2-alpha.3' }
 prometheus = { workspace = true }
 rand_chacha = { workspace = true }
 serde = { workspace = true }
+serde_cbor = { workspace = true }
 serde_json = { workspace = true }
 serde_bytes = { workspace = true }
 time = { workspace = true, features = ['formatting', 'parsing'] }
