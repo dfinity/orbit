@@ -8,6 +8,7 @@ use ic_cdk_macros::{init, post_upgrade};
 use ic_cdk_timers::{set_timer, set_timer_interval};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::update;
+use orbit_essentials::http::set_certified_data_for_skip_certification;
 use std::time::Duration;
 
 pub const MINUTE: u64 = 60;
@@ -53,6 +54,7 @@ fn init_timers_fn() {
 
 #[init]
 async fn initialize() {
+    set_certified_data_for_skip_certification();
     init_timers_fn();
 
     CANISTER_SERVICE
@@ -63,6 +65,7 @@ async fn initialize() {
 
 #[post_upgrade]
 async fn post_upgrade() {
+    set_certified_data_for_skip_certification();
     recompute_all_metrics();
     init_timers_fn();
 

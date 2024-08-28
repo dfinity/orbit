@@ -11,6 +11,7 @@ use crate::{
 use ic_cdk_macros::{post_upgrade, query};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ApiResult;
+use orbit_essentials::http::set_certified_data_for_skip_certification;
 use orbit_essentials::with_middleware;
 use station_api::{HealthStatus, SystemInfoResponse, SystemInstall, SystemUpgrade};
 use std::sync::Arc;
@@ -19,6 +20,7 @@ use std::sync::Arc;
 #[cfg(any(not(feature = "canbench"), test))]
 #[ic_cdk_macros::init]
 async fn initialize(input: Option<SystemInstall>) {
+    set_certified_data_for_skip_certification();
     match input {
         Some(SystemInstall::Init(input)) => CONTROLLER.initialize(input).await,
         Some(SystemInstall::Upgrade(_)) | None => trap("Invalid args to initialize canister"),
@@ -55,6 +57,7 @@ async fn post_upgrade(input: Option<SystemInstall>) {
     // datatype from the one that was initially stored.
     migration::MigrationHandler::run();
 
+    set_certified_data_for_skip_certification();
     match input {
         None => CONTROLLER.post_upgrade(None).await,
         Some(SystemInstall::Upgrade(input)) => CONTROLLER.post_upgrade(Some(input)).await,
