@@ -79,9 +79,7 @@ impl NotificationController {
     #[with_middleware(guard = authorize(&call_context(), &MarkNotificationsReadInputRef(&input).to_resources()))]
     #[with_middleware(tail = use_canister_call_metric("mark_notifications_read", &result))]
     async fn mark_notifications_read(&self, input: MarkNotificationsReadInput) -> ApiResult<()> {
-        self.notification_service
-            .mark_read(input, &call_context())
-            .await?;
+        self.notification_service.mark_read(input).await?;
 
         Ok(())
     }

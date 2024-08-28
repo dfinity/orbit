@@ -13,6 +13,7 @@ import {
   isResourceActionContained,
   isSystemResourceActionContained,
   isUserResourceActionContained,
+  isExternalCanisterActionContained,
 } from '~/utils/permissions.utils';
 import { variantIs } from '~/utils/helper.utils';
 
@@ -306,6 +307,51 @@ export const globalPermissions = (): AggregatedResoucePermissions[] => [
     match(specifier: Resource, resource: Resource): boolean {
       if (variantIs(specifier, 'Request') && variantIs(resource, 'Request')) {
         return isRequestResourceActionContained(specifier.Request, resource.Request);
+      }
+
+      return false;
+    },
+  },
+  {
+    resourceType: ResourceTypeEnum.ExternalCanister,
+    resources: [
+      {
+        action: ResourceActionEnum.List,
+        resource: { ExternalCanister: { List: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Create,
+        resource: { ExternalCanister: { Create: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Read,
+        resource: { ExternalCanister: { Read: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Change,
+        resource: { ExternalCanister: { Change: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Fund,
+        resource: { ExternalCanister: { Fund: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+    ],
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'ExternalCanister') && variantIs(resource, 'ExternalCanister')) {
+        return isExternalCanisterActionContained(
+          specifier.ExternalCanister,
+          resource.ExternalCanister,
+        );
       }
 
       return false;

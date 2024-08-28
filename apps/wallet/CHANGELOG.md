@@ -1,3 +1,20 @@
+## 0.0.2-alpha.9 (2024-08-27)
+
+
+### 🚀 Features
+
+- **wallet:** show global external canister permissions
+
+
+### 🩹 Fixes
+
+- **release:** compat file includes correct api version
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+
 ## 0.0.2-alpha.8 (2024-08-26)
 
 
