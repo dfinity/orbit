@@ -25,24 +25,25 @@ fn skip_certification_asset_tree() -> HashTree {
 }
 
 pub fn add_skip_certification_headers(response: &mut HttpResponse) {
-    let certified_data = data_certificate().expect("No data certificate available");
-    let witness = cbor_encode(&skip_certification_asset_tree());
-    let expr_path = ["http_expr", "<*>"];
-    let expr_path = cbor_encode(&expr_path);
+    if let Some(certified_data) = data_certificate() {
+        let witness = cbor_encode(&skip_certification_asset_tree());
+        let expr_path = ["http_expr", "<*>"];
+        let expr_path = cbor_encode(&expr_path);
 
-    response.headers.push(HeaderField(
-        IC_CERTIFICATE_EXPRESSION_HEADER.to_string(),
-        skip_certification_cel_expr(),
-    ));
-    response.headers.push(HeaderField(
-        IC_CERTIFICATE_HEADER.to_string(),
-        format!(
-            "certificate=:{}:, tree=:{}:, expr_path=:{}:, version=2",
-            BASE64.encode(certified_data),
-            BASE64.encode(witness),
-            BASE64.encode(expr_path)
-        ),
-    ));
+        response.headers.push(HeaderField(
+            IC_CERTIFICATE_EXPRESSION_HEADER.to_string(),
+            skip_certification_cel_expr(),
+        ));
+        response.headers.push(HeaderField(
+            IC_CERTIFICATE_HEADER.to_string(),
+            format!(
+                "certificate=:{}:, tree=:{}:, expr_path=:{}:, version=2",
+                BASE64.encode(certified_data),
+                BASE64.encode(witness),
+                BASE64.encode(expr_path)
+            ),
+        ));
+    }
 }
 
 // Encoding
