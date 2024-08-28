@@ -137,8 +137,8 @@ impl<'a> StationDataGenerator<'a> {
     fn increment_request_count(&mut self) {
         self.count_requests += 1;
 
-        // bump time to avoid getting rate-limited (the rate limiter aggregation window is 1h and resolution is 1s)
-        self.env.advance_time(Duration::from_secs(3601));
+        // bump time to avoid getting rate-limited (the rate limiter aggregation window is 1h and resolution is 60s)
+        self.env.advance_time(Duration::from_secs(3600 + 60));
     }
 
     pub fn generate(&mut self) {

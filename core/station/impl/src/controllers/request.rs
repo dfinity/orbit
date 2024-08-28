@@ -55,7 +55,7 @@ async fn create_request(input: CreateRequestInput) -> ApiResult<CreateRequestRes
     CONTROLLER.create_request(input).await
 }
 
-const RATE_LIMITER_RESOLUTION: Duration = Duration::from_secs(1);
+const RATE_LIMITER_RESOLUTION: Duration = Duration::from_secs(60);
 const RATE_LIMITER_TIME_WINDOW: Duration = Duration::from_secs(3600);
 
 thread_local! {

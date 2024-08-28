@@ -138,7 +138,7 @@ where
                 res.unwrap().0.unwrap();
             }
         }
-        // the rate limiter aggregation window is 1h and resolution is 1s
-        env.advance_time(Duration::from_secs(3601));
+        // the rate limiter aggregation window is 1h and resolution is 60s
+        env.advance_time(Duration::from_secs(3600 + 60));
     }
 }
