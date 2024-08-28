@@ -39,6 +39,10 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.ExternalCanister;
   }
 
+  if (variantIs(resource, 'Notification')) {
+    return ResourceTypeEnum.Notification;
+  }
+
   return unreachable(resource);
 };
 

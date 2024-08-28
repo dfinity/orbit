@@ -9,8 +9,8 @@ use uuid::Uuid;
 
 use crate::{
     core::validation::{
-        EnsureAccount, EnsureAddressBookEntry, EnsureRequest, EnsureRequestPolicy,
-        EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
+        EnsureAccount, EnsureAddressBookEntry, EnsureNotification, EnsureRequest,
+        EnsureRequestPolicy, EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
     },
     errors::ValidationError,
     models::CanisterMethod,
@@ -27,6 +27,7 @@ pub enum Resource {
     Account(AccountResourceAction),
     AddressBook(ResourceAction),
     ExternalCanister(ExternalCanisterResourceAction),
+    Notification(NotificationResourceAction),
     Request(RequestResourceAction),
     RequestPolicy(ResourceAction),
     System(SystemResourceAction),
@@ -64,6 +65,12 @@ impl ModelValidator<ValidationError> for Resource {
                 | ExternalCanisterResourceAction::Fund(_)
                 | ExternalCanisterResourceAction::Read(_) => (),
                 ExternalCanisterResourceAction::Call(target) => target.validate()?,
+            },
+            Resource::Notification(action) => match action {
+                NotificationResourceAction::List => (),
+                NotificationResourceAction::Update(resource_id) => {
+                    EnsureNotification::resource_id_exists(resource_id)?
+                }
             },
             Resource::Request(action) => match action {
                 RequestResourceAction::List => (),
@@ -165,6 +172,13 @@ pub enum ExternalCanisterResourceAction {
     Read(ExternalCanisterId),
     Fund(ExternalCanisterId),
     Call(CallExternalCanisterResourceTarget),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum NotificationResourceAction {
+    List,
+    Update(ResourceId),
 }
 
 #[storable]
@@ -462,6 +476,24 @@ impl Resource {
                     ]
                 }
             },
+            Resource::Notification(action) => match action {
+                NotificationResourceAction::List => {
+                    vec![Resource::Notification(NotificationResourceAction::List)]
+                }
+                NotificationResourceAction::Update(ResourceId::Id(id)) => {
+                    vec![
+                        Resource::Notification(NotificationResourceAction::Update(ResourceId::Id(
+                            *id,
+                        ))),
+                        Resource::Notification(NotificationResourceAction::Update(ResourceId::Any)),
+                    ]
+                }
+                NotificationResourceAction::Update(ResourceId::Any) => {
+                    vec![Resource::Notification(NotificationResourceAction::Update(
+                        ResourceId::Any,
+                    ))]
+                }
+            },
             Resource::Request(action) => match action {
                 RequestResourceAction::List => {
                     vec![Resource::Request(RequestResourceAction::List)]
@@ -595,6 +627,7 @@ impl Display for Resource {
             Resource::ExternalCanister(action) => {
                 write!(f, "ExternalCanister({})", action)
             }
+            Resource::Notification(action) => write!(f, "Notification({})", action),
             Resource::Request(action) => write!(f, "Request({})", action),
             Resource::RequestPolicy(action) => write!(f, "RequestPolicy({})", action),
             Resource::System(action) => write!(f, "System({})", action),
@@ -664,6 +697,17 @@ impl Display for ExternalCanisterResourceAction {
             }
             ExternalCanisterResourceAction::Read(target) => {
                 write!(f, "Read({})", target)
+            }
+        }
+    }
+}
+
+impl Display for NotificationResourceAction {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NotificationResourceAction::List => write!(f, "List"),
+            NotificationResourceAction::Update(id) => {
+                write!(f, "Update({})", id)
             }
         }
     }

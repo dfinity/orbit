@@ -742,6 +742,7 @@ export default {
       request: 'Pedido',
       addressbook: 'Livro de endereços',
       managesysteminfo: 'Gerir informações do sistema',
+      externalcanister: 'Canister gerenciado',
     },
     actions: {
       list: 'Listar',
@@ -756,6 +757,8 @@ export default {
       systeminfoconfig: 'Configuração (Atualizações, Métricas, Uso)',
       managesysteminfo: 'Gerir Informações do Sistema (e.g. nome)',
       systemupgrade: 'Atualizar o sistema',
+      change: 'Alterar',
+      fund: 'Financiar',
     },
     allow: {
       public: 'Acesso público',
