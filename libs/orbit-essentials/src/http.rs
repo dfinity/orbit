@@ -1,5 +1,5 @@
 use crate::api::{HeaderField, HttpResponse};
-use crate::cdk::api::{data_certificate, set_certified_data};
+use crate::cdk::api::data_certificate;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
 use ic_certification::{labeled, leaf, HashTree};
@@ -57,6 +57,6 @@ fn cbor_encode(value: &impl Serialize) -> Vec<u8> {
     serializer.into_inner()
 }
 
-pub fn set_certified_data_for_skip_certification() {
-    set_certified_data(&skip_certification_asset_tree().digest());
+pub fn certified_data_for_skip_certification() -> [u8; 32] {
+    skip_certification_asset_tree().digest()
 }
