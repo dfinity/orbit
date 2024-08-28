@@ -1,7 +1,7 @@
 use crate::api::{HeaderField, HttpResponse};
+use crate::cdk::api::{data_certificate, set_certified_data};
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
-use ic_cdk::api::{data_certificate, set_certified_data};
 use ic_certification::{labeled, leaf, HashTree};
 use ic_http_certification::DefaultCelBuilder;
 use ic_representation_independent_hash::hash;
