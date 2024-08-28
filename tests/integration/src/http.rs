@@ -50,4 +50,5 @@ fn test_http_request_deconding_quota() {
     } = setup_new_env();
 
     test_candid_decoding_quota(&env, canister_ids.station);
+    test_candid_decoding_quota(&env, canister_ids.control_panel);
 }
