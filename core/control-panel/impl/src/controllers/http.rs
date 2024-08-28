@@ -12,7 +12,7 @@ use orbit_essentials::metrics::with_metrics_registry;
 use std::sync::Arc;
 
 // Canister entrypoints for the controller.
-#[query(name = "http_request")]
+#[query(name = "http_request", decoding_quota = 10000)]
 async fn http_request(request: HttpRequest) -> HttpResponse {
     let mut resp = CONTROLLER.router(request).await;
     add_skip_certification_headers(&mut resp);
