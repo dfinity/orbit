@@ -42,32 +42,8 @@ impl Ethereum {
             chain: alloy_chains::Chain::sepolia(),
         }
     }
-}
 
-const METADATA_KEY_GAS_LIMIT: &str = "gas_limit";
-const METADATA_KEY_MAX_FEE_PER_GAS: &str = "max_fee_per_gas";
-const METADATA_KEY_MAX_PRIORITY_FEE_PER_GAS: &str = "max_priority_fee_per_gas";
-
-#[async_trait]
-impl BlockchainApi for Ethereum {
-    async fn generate_address(&self, account: &Account) -> BlockchainApiResult<String> {
-        let address = get_address_from_account(account).await?;
-        Ok(address)
-    }
-
-    async fn balance(&self, account: &Account) -> BlockchainApiResult<BigUint> {
-        let balance = eth_get_balance(&self.chain, &account.address).await?;
-        Ok(BigUint::from_bytes_be(&balance.to_be_bytes_vec()))
-    }
-
-    async fn decimals(&self, _account: &Account) -> BlockchainApiResult<u32> {
-        Ok(18)
-    }
-
-    async fn transaction_fee(
-        &self,
-        _account: &Account,
-    ) -> BlockchainApiResult<BlockchainTransactionFee> {
+    async fn estimate_transaction_fee(&self) -> BlockchainApiResult<BlockchainTransactionFee> {
         let max_fee_per_gas: u128 = 40 * 10u128.pow(9);
         let max_priority_fee_per_gas = 0128;
         let to_address = address!("0000000000000000000000000000000000000000");
@@ -94,6 +70,34 @@ impl BlockchainApi for Ethereum {
             ])),
         })
     }
+}
+
+const METADATA_KEY_GAS_LIMIT: &str = "gas_limit";
+const METADATA_KEY_MAX_FEE_PER_GAS: &str = "max_fee_per_gas";
+const METADATA_KEY_MAX_PRIORITY_FEE_PER_GAS: &str = "max_priority_fee_per_gas";
+
+#[async_trait]
+impl BlockchainApi for Ethereum {
+    async fn generate_address(&self, account: &Account) -> BlockchainApiResult<String> {
+        let address = get_address_from_account(account).await?;
+        Ok(address)
+    }
+
+    async fn balance(&self, account: &Account) -> BlockchainApiResult<BigUint> {
+        let balance = eth_get_balance(&self.chain, &account.address).await?;
+        Ok(BigUint::from_bytes_be(&balance.to_be_bytes_vec()))
+    }
+
+    async fn decimals(&self, _account: &Account) -> BlockchainApiResult<u32> {
+        Ok(18)
+    }
+
+    async fn transaction_fee(
+        &self,
+        _account: &Account,
+    ) -> BlockchainApiResult<BlockchainTransactionFee> {
+        self.estimate_transaction_fee().await
+    }
 
     fn default_network(&self) -> String {
         alloy_chains::Chain::mainnet().to_string()
@@ -107,11 +111,12 @@ impl BlockchainApi for Ethereum {
         let nonce = eth_get_transaction_count(&self.chain, &account.address).await?;
         let input = alloy::primitives::Bytes::default();
         let value = nat_to_u256(&transfer.amount);
-        let gas_limit = get_metadata_value::<u128>(&transfer.metadata, METADATA_KEY_GAS_LIMIT)?;
+        let fee = self.estimate_transaction_fee().await?;
+        let gas_limit = get_metadata_value::<u128>(&fee.metadata, METADATA_KEY_GAS_LIMIT)?;
         let max_fee_per_gas =
-            get_metadata_value::<u128>(&transfer.metadata, METADATA_KEY_MAX_FEE_PER_GAS)?;
+            get_metadata_value::<u128>(&fee.metadata, METADATA_KEY_MAX_FEE_PER_GAS)?;
         let max_priority_fee_per_gas =
-            get_metadata_value::<u128>(&transfer.metadata, METADATA_KEY_MAX_PRIORITY_FEE_PER_GAS)?;
+            get_metadata_value::<u128>(&fee.metadata, METADATA_KEY_MAX_PRIORITY_FEE_PER_GAS)?;
 
         let transaction = alloy::consensus::TxEip1559 {
             chain_id: self.chain.id(),
