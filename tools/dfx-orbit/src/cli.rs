@@ -1,5 +1,6 @@
 //! Implementation of the `dfx-orbit` commands.
 pub(crate) mod asset;
+pub(crate) mod me;
 pub(crate) mod review;
 pub(crate) mod station;
 
@@ -34,9 +35,13 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
 
     match args.command {
         // Nicer display, json optional
-        DfxOrbitSubcommands::Me => {
+        DfxOrbitSubcommands::Me(args) => {
             let ans = dfx_orbit.station.me().await?;
-            println!("{}", serde_json::to_string_pretty(&ans)?);
+            if args.json {
+                println!("{}", serde_json::to_string_pretty(&ans)?);
+            } else {
+                println!("{}", dfx_orbit.display_me(ans));
+            }
             Ok(())
         }
         DfxOrbitSubcommands::Request(request_args) => {

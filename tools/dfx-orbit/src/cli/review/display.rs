@@ -74,8 +74,8 @@ impl DfxOrbit {
             add_info
                 .approvers
                 .into_iter()
-                .map(|approver| approver.name)
-                .join(", ")
+                .map(|approver| format!("\n\t{}", approver.name))
+                .join("")
         )
         .unwrap();
         writeln!(

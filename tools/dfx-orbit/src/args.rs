@@ -45,5 +45,12 @@ pub enum DfxOrbitSubcommands {
     /// View and decide on requests.
     Review(ReviewArgs),
     /// Gets the caller's profile on an Orbit station.
-    Me,
+    Me(MeArgs),
+}
+
+#[derive(Debug, Clone, Parser)]
+pub struct MeArgs {
+    /// Return output as JSON
+    #[clap(short, long)]
+    pub(crate) json: bool,
 }
