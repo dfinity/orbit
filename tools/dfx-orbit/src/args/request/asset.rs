@@ -31,10 +31,12 @@ impl RequestAssetArgs {
     }
 }
 
+// TODO: Verification call for this request
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetPreparePermissionArgs {
     /// The name of the asset canister targeted by this action
     pub(crate) canister: String,
+    // TODO: Allow to specify principal to use instead of self
 }
 
 impl RequestAssetPreparePermissionArgs {

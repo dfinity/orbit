@@ -33,6 +33,7 @@ pub fn exec(orbit_agent: OrbitExtensionAgent, args: StationArgs) -> anyhow::Resu
                 .set_default_station(Some(use_args.name))
                 .with_context(|| "Failed to set default station in local dfx config")?;
         }
+        // TODO: Nicer display, json optional
         StationArgs::Show(show_args) => {
             let station = orbit_agent
                 .station_or_default(show_args.name.as_deref())

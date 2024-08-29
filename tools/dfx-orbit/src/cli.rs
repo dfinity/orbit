@@ -33,6 +33,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
     let dfx_orbit = DfxOrbit::new(orbit_agent, config, logger).await?;
 
     match args.command {
+        // Nicer display, json optional
         DfxOrbitSubcommands::Me => {
             let ans = dfx_orbit.station.me().await?;
             println!("{}", serde_json::to_string_pretty(&ans)?);

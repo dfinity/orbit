@@ -4,6 +4,7 @@ use super::external_canister_operations;
 use clap::Parser;
 use station_api::{ListRequestsInput, ListRequestsSortBy, SortDirection};
 
+// TODO: Filter by open only
 /// Reviews the next request.
 #[derive(Debug, Clone, Parser)]
 pub struct ReviewListArgs {
