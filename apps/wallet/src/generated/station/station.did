@@ -2473,8 +2473,6 @@ type HttpResponse = record {
 };
 
 type NotifyFailedStationUpgradeInput = record {
-  // the failed station upgrade request ID
-  request_id : UUID;
   // the failure reason
   reason : text;
 };

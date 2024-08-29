@@ -1,6 +1,3 @@
-// Most ids under the station canister are in the UUID format (e.g. "d0cf5b3f-7017-4cb8-9dcf-52619c42a7b0").
-type UUID = text;
-
 // Generic error type added to responses that can fail.
 type Error = record {
   // Error code, added as a string to allow for custom error codes.
@@ -16,8 +13,6 @@ type InitArg = record {
 };
 
 type UpgradeParams = record {
-  // The upgrade request id.
-  request_id : UUID;
   // The wasm module to upgrade to.
   module : blob;
   // The argument to be passed to upgrade.

@@ -4,7 +4,6 @@ pub use station_api::{MetadataDTO, UuidDTO};
 
 #[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize, PartialEq)]
 pub struct UpgradeParams {
-    pub request_id: UuidDTO,
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
     #[serde(with = "serde_bytes")]

@@ -779,10 +779,7 @@ export type NotificationType = {
   };
 export type NotificationTypeInput = { 'RequestCreated' : null } |
   { 'SystemMessage' : null };
-export interface NotifyFailedStationUpgradeInput {
-  'request_id' : UUID,
-  'reason' : string,
-}
+export interface NotifyFailedStationUpgradeInput { 'reason' : string }
 export type NotifyFailedStationUpgradeResult = { 'Ok' : null } |
   { 'Err' : Error };
 export interface PaginationInput {

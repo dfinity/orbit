@@ -14,6 +14,8 @@ pub enum SystemError {
     TooManyAdminsSpecified { max: usize },
     #[error(r#"System upgrade failed."#)]
     UpgradeFailed { reason: String },
+    #[error(r#"No station upgrade request is processing."#)]
+    NoStationUpgradeProcessing,
 }
 
 impl DetailableError for SystemError {

@@ -1242,10 +1242,7 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'me' : User, 'privileges' : IDL.Vec(UserPrivilege) }),
     'Err' : Error,
   });
-  const NotifyFailedStationUpgradeInput = IDL.Record({
-    'request_id' : UUID,
-    'reason' : IDL.Text,
-  });
+  const NotifyFailedStationUpgradeInput = IDL.Record({ 'reason' : IDL.Text });
   const NotifyFailedStationUpgradeResult = IDL.Variant({
     'Ok' : IDL.Null,
     'Err' : Error,

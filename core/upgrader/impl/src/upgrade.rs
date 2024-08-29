@@ -14,7 +14,6 @@ use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::{call, print};
 use station_api::NotifyFailedStationUpgradeInput;
 use std::sync::Arc;
-use upgrader_api::UuidDTO;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpgradeError {
@@ -27,7 +26,6 @@ pub enum UpgradeError {
 }
 
 pub struct UpgradeParams {
-    pub request_id: UuidDTO,
     pub module: Vec<u8>,
     pub arg: Vec<u8>,
     pub install_mode: CanisterInstallMode,
@@ -121,10 +119,9 @@ impl<T: Upgrade> Upgrade for WithBackground<T> {
             self.1.with(|p| p.borrow().get(&()).map(|sp| sp.0));
 
         ic_cdk::spawn(async move {
-            let request_id = ps.request_id.clone();
             let res = u.upgrade(ps).await;
-            // Notify the target canister about a failed upgrade unless the call is unauthorized (we don't want to spam
-            // the target canister with such errors).
+            // Notify the target canister about a failed upgrade unless the call is unauthorized
+            // (we don't want to spam the target canister with such errors).
             if let Some(target_canister_id) = target_canister_id {
                 if let Err(ref err) = res {
                     let err = match err {
@@ -136,10 +133,8 @@ impl<T: Upgrade> Upgrade for WithBackground<T> {
                         UpgradeError::Unauthorized => None,
                     };
                     if let Some(err) = err {
-                        let notify_failed_station_upgrade_input = NotifyFailedStationUpgradeInput {
-                            request_id,
-                            reason: err,
-                        };
+                        let notify_failed_station_upgrade_input =
+                            NotifyFailedStationUpgradeInput { reason: err };
                         let notify_res = call::<_, (ApiResult<()>,)>(
                             target_canister_id,
                             "notify_failed_station_upgrade",
@@ -147,6 +142,7 @@ impl<T: Upgrade> Upgrade for WithBackground<T> {
                         )
                         .await
                         .map(|r| r.0);
+                        // Log an error if the notification can't be made.
                         if let Err(e) = notify_res {
                             print(format!("notify_failed_station_upgrade failed: {:?}", e));
                         }

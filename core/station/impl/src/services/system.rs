@@ -13,6 +13,7 @@ use crate::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
         CanisterInstallMode, CanisterUpgradeModeArgs, CycleObtainStrategy,
         ManageSystemInfoOperationInput, RequestId, RequestKey, RequestOperation, RequestStatus,
+        SystemUpgradeTarget,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY,
@@ -21,6 +22,7 @@ use crate::{
     services::{
         change_canister::{ChangeCanisterService, CHANGE_CANISTER_SERVICE},
         disaster_recovery::DISASTER_RECOVERY_SERVICE,
+        request::{RequestService, REQUEST_SERVICE},
     },
     SYSTEM_VERSION,
 };
@@ -34,7 +36,6 @@ use ic_ledger_types::{Subaccount, MAINNET_CYCLES_MINTING_CANISTER_ID, MAINNET_LE
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
-use orbit_essentials::types::UUID;
 use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
 use std::sync::Arc;
 use upgrader_api::UpgradeParams;
@@ -43,6 +44,7 @@ use uuid::Uuid;
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> = Arc::new(SystemService::new(
         Arc::clone(&REQUEST_REPOSITORY),
+        Arc::clone(&REQUEST_SERVICE),
         Arc::clone(&CHANGE_CANISTER_SERVICE)
     ));
 }
@@ -50,16 +52,19 @@ lazy_static! {
 #[derive(Default, Debug)]
 pub struct SystemService {
     request_repository: Arc<RequestRepository>,
+    request_service: Arc<RequestService>,
     change_canister_service: Arc<ChangeCanisterService>,
 }
 
 impl SystemService {
     pub fn new(
         request_repository: Arc<RequestRepository>,
+        request_service: Arc<RequestService>,
         change_canister_service: Arc<ChangeCanisterService>,
     ) -> Self {
         Self {
             request_repository,
+            request_service,
             change_canister_service,
         }
     }
@@ -132,19 +137,13 @@ impl SystemService {
     }
 
     /// Execute an upgrade of the station by requesting the upgrader to perform it on our behalf.
-    pub async fn upgrade_station(
-        &self,
-        request_id: UUID,
-        module: &[u8],
-        arg: &[u8],
-    ) -> ServiceResult<()> {
+    pub async fn upgrade_station(&self, module: &[u8], arg: &[u8]) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
 
         ic_cdk::call(
             upgrader_canister_id,
             "trigger_upgrade",
             (UpgradeParams {
-                request_id: Uuid::from_bytes(request_id).hyphenated().to_string(),
                 module: module.to_owned(),
                 arg: arg.to_owned(),
             },),
@@ -440,6 +439,47 @@ impl SystemService {
         // Handles the post upgrade process in a one-off timer to allow for inter canister calls,
         // this upgrades the upgrader canister if a new upgrader module is provided.
         self.install_canister_post_process(system_info, SystemInstall::Upgrade(input));
+
+        Ok(())
+    }
+
+    pub async fn notify_failed_station_upgrade(&self, reason: String) -> ServiceResult<()> {
+        let system_info = self.get_system_info();
+        let request_id = system_info
+            .get_change_canister_request()
+            .ok_or(SystemError::NoStationUpgradeProcessing)?;
+
+        let request = self.request_service.get_request(request_id)?;
+
+        // Check that the request is indeed a station upgrade request.
+        match request.operation {
+            RequestOperation::SystemUpgrade(ref system_upgrade) => {
+                match system_upgrade.input.target {
+                    SystemUpgradeTarget::UpgradeStation => (),
+                    _ => panic!(
+                        "Expected upgrade request for station, got upgrade request for {:?}",
+                        system_upgrade.input.target
+                    ),
+                }
+            }
+            _ => panic!(
+                "Expected station upgrade request, got {:?}",
+                request.operation
+            ),
+        };
+
+        // Check that the request is still processing before making it failed.
+        match request.status {
+            RequestStatus::Processing { .. } => (),
+            _ => panic!(
+                "Expected the station upgrade request to be Processing, but it is {:?}",
+                request.status
+            ),
+        };
+
+        self.request_service
+            .fail_request(request, reason, next_time())
+            .await;
 
         Ok(())
     }

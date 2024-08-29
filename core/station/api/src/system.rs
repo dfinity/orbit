@@ -129,6 +129,5 @@ pub struct SystemUpgradeOperationDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct NotifyFailedStationUpgradeInput {
-    pub request_id: UuidDTO,
     pub reason: String,
 }

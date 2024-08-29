@@ -77,7 +77,6 @@ lazy_static! {
 #[update]
 async fn trigger_upgrade(params: upgrader_api::UpgradeParams) -> Result<(), TriggerUpgradeError> {
     let input: UpgradeParams = UpgradeParams {
-        request_id: params.request_id,
         module: params.module,
         arg: params.arg,
         install_mode: CanisterInstallMode::Upgrade(None),

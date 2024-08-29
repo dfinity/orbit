@@ -3,17 +3,20 @@ use crate::{
         ic_cdk::api::{canister_balance, set_certified_data, trap},
         middlewares::{authorize, call_context},
     },
+    errors::AuthorizationError,
     migration,
     models::resource::{Resource, SystemResourceAction},
     services::{SystemService, SYSTEM_SERVICE},
     SYSTEM_VERSION,
 };
-use ic_cdk_macros::{post_upgrade, query};
+use ic_cdk_macros::{post_upgrade, query, update};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::http::certified_data_for_skip_certification;
 use orbit_essentials::with_middleware;
-use station_api::{HealthStatus, SystemInfoResponse, SystemInstall, SystemUpgrade};
+use station_api::{
+    HealthStatus, NotifyFailedStationUpgradeInput, SystemInfoResponse, SystemInstall, SystemUpgrade,
+};
 use std::sync::Arc;
 
 fn set_certified_data_for_skip_certification() {
@@ -79,6 +82,11 @@ async fn system_info() -> ApiResult<SystemInfoResponse> {
     CONTROLLER.system_info().await
 }
 
+#[update(name = "notify_failed_station_upgrade")]
+async fn notify_failed_station_upgrade(input: NotifyFailedStationUpgradeInput) -> ApiResult<()> {
+    CONTROLLER.notify_failed_station_upgrade(input).await
+}
+
 // Controller initialization and implementation.
 lazy_static! {
     static ref CONTROLLER: SystemController = SystemController::new(Arc::clone(&SYSTEM_SERVICE));
@@ -125,6 +133,24 @@ impl SystemController {
         Ok(SystemInfoResponse {
             system: system_info.to_dto(&cycles, SYSTEM_VERSION),
         })
+    }
+
+    // No authorization middleware as the caller is checked to be a controller of the station canister.
+    async fn notify_failed_station_upgrade(
+        &self,
+        input: NotifyFailedStationUpgradeInput,
+    ) -> ApiResult<()> {
+        let ctx = call_context();
+        if !ctx.caller_is_controller() {
+            let err = AuthorizationError::Unauthorized {
+                resource: "notify_failed_station_upgrade".to_string(),
+            };
+            return Err(err.into());
+        }
+
+        self.system_service
+            .notify_failed_station_upgrade(input.reason)
+            .await
     }
 }
 
