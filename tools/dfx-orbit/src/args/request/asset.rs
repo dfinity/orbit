@@ -74,7 +74,7 @@ impl RequestAssetUploadArgs {
             .upload(canister_id, &paths, self.ignore_evidence)
             .await?;
         println!("Batch id: {batch_id}");
-        println!("Evidence: 0x{}", hex::encode(&evidence));
+        println!("Evidence: {}", hex::encode(&evidence));
 
         DfxOrbit::commit_batch_input(canister_id, batch_id, evidence)
     }

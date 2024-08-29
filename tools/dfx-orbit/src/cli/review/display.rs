@@ -123,9 +123,9 @@ impl DfxOrbit {
         };
         writeln!(output, "Mode: {}", mode).unwrap();
 
-        writeln!(output, "Module checksum: 0x{}", &op.module_checksum).unwrap();
+        writeln!(output, "Module checksum: {}", &op.module_checksum).unwrap();
         if let Some(arg_checksum) = &op.arg_checksum {
-            writeln!(output, "Argument checksum: 0x{}", arg_checksum).unwrap()
+            writeln!(output, "Argument checksum: {}", arg_checksum).unwrap()
         }
     }
 
@@ -152,7 +152,7 @@ impl DfxOrbit {
             .unwrap()
         }
         if let Some(checksum) = &op.arg_checksum {
-            writeln!(output, "Argument checksum: 0x{}", checksum).unwrap()
+            writeln!(output, "Argument checksum: {}", checksum).unwrap()
         }
         if let Some(args) = &op.arg_rendering {
             writeln!(output, "Argument: {}", args).unwrap()

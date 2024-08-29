@@ -5,6 +5,7 @@ use crate::{
     DfxOrbit,
 };
 use serde::Serialize;
+use slog::{info, warn};
 use station_api::{RequestApprovalStatusDTO, RequestStatusDTO, SubmitRequestApprovalInput};
 
 impl DfxOrbit {
@@ -54,7 +55,13 @@ impl DfxOrbit {
                             "Would you like to {action} this request?"
                         ))?;
                         self.station.submit(submit).await?;
+                        info!(self.logger, "Submitted response");
                     };
+                } else {
+                    warn!(
+                        self.logger,
+                        "Can not approve/reject the request since it has already completed",
+                    );
                 }
 
                 Ok(())

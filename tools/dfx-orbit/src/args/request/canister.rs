@@ -294,6 +294,6 @@ fn log_hashes(logger: &Logger, name: &str, local: &Option<String>, remote: &Opti
 
 fn display_arg_checksum(arg: &Option<String>) -> String {
     arg.as_ref()
-        .map(|s| format!("0x{}", s))
+        .map(|s| s.to_string())
         .unwrap_or(String::from("None"))
 }
