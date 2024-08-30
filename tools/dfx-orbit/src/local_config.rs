@@ -1,6 +1,7 @@
 //! Local dfx configuration of Orbit stations.
 use crate::{dfx_extension_api::OrbitExtensionAgent, station_agent::StationConfig};
 use anyhow::Context;
+use candid::Principal;
 use serde::{Deserialize, Serialize};
 
 /// Configuration that lives in e.g. ~/.config/dfx/orbit.json
@@ -106,7 +107,7 @@ impl OrbitExtensionAgent {
     }
 
     /// Gets the local stored dfx configuration for a given station, or the default station if none is specified.
-    pub fn station_or_default(&self, name: Option<&str>) -> anyhow::Result<StationConfig> {
+    pub fn station_or_default(&self, name: &Option<String>) -> anyhow::Result<StationConfig> {
         if let Some(name) = name {
             self.station(name)
         } else {
@@ -143,14 +144,34 @@ impl OrbitExtensionAgent {
     /// Renames an Orbit station in the local dfx configuration.
     ///
     /// If the station being renamed is the default station, the default is updated to reflect the new name.
-    pub fn rename_station(&self, name: &str, new_name: &str) -> anyhow::Result<()> {
+    pub fn edit_station(
+        &self,
+        name: &Option<String>,
+        new_name: Option<String>,
+        station_id: Option<Principal>,
+        network: Option<String>,
+        url: Option<String>,
+    ) -> anyhow::Result<()> {
+        let mut station = self.station_or_default(name)?;
+
+        let old_station_name = station.name.clone();
         let default_station_name = self.default_station_name()?;
-        let mut station = self.station(name)?;
-        station.name = new_name.to_string();
+
+        new_name.map(|name| station.name = name);
+        station_id.map(|id| station.station_id = id);
+        network.map(|network| station.network = network);
+        url.map(|url| station.url = url);
+
+        let new_station_name = station.name.clone();
+
+        // TODO: If we try to rename to a station that already exists, remove station will succeed
+        // but add_station will fail, effectively deleting the station. We need to check that the rename
+        // station does not exist beforehand.
+        self.remove_station(&old_station_name)?;
         self.add_station(station)?;
-        self.remove_station(name)?;
-        if default_station_name == Some(name.to_string()) {
-            self.set_default_station(Some(new_name.to_string()))?;
+
+        if default_station_name == Some(old_station_name.to_string()) {
+            self.set_default_station(Some(new_station_name))?;
         }
         Ok(())
     }
