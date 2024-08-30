@@ -17,7 +17,7 @@ impl DfxOrbit {
                 let response = self.station.review_list(args.into()).await?;
 
                 if as_json {
-                    print_as_json(&response);
+                    print_as_json(&response)?;
                 } else {
                     println!("{}", self.display_list(response));
                 }
@@ -30,9 +30,9 @@ impl DfxOrbit {
                     return Ok(());
                 };
                 if as_json {
-                    print_as_json(&request);
+                    print_as_json(&request)?;
                 } else {
-                    println!("{}", self.display_get_request_response(request))
+                    println!("{}", self.display_get_request_response(request)?)
                 }
 
                 Ok(())
@@ -40,9 +40,9 @@ impl DfxOrbit {
             ReviewActionArgs::Id(args) => {
                 let request = self.station.review_id(args.clone().into()).await?;
                 if as_json {
-                    print_as_json(&request);
+                    print_as_json(&request)?;
                 } else {
-                    println!("{}", self.display_get_request_response(request.clone()))
+                    println!("{}", self.display_get_request_response(request.clone())?)
                 }
 
                 if let RequestStatusDTO::Created = request.request.status {
@@ -70,9 +70,10 @@ impl DfxOrbit {
     }
 }
 
-fn print_as_json<D>(data: D)
+fn print_as_json<D>(data: D) -> anyhow::Result<()>
 where
     D: Serialize,
 {
-    println!("{}", serde_json::to_string_pretty(&data).unwrap());
+    println!("{}", serde_json::to_string_pretty(&data)?);
+    Ok(())
 }

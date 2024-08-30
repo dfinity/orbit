@@ -9,11 +9,12 @@ use crate::{
     dfx_extension_api::OrbitExtensionAgent,
     DfxOrbit,
 };
+use anyhow::Context;
 use slog::trace;
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
 pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
-    let logger = init_logger(args.verbose, args.quiet);
+    let logger = init_logger(args.verbose, args.quiet)?;
     trace!(logger, "Calling tool with arguments:\n{:#?}", args);
 
     let orbit_agent = OrbitExtensionAgent::new()?;
@@ -40,7 +41,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             if args.json {
                 println!("{}", serde_json::to_string_pretty(&ans)?);
             } else {
-                println!("{}", dfx_orbit.display_me(ans));
+                println!("{}", dfx_orbit.display_me(ans)?);
             }
             Ok(())
         }
@@ -68,13 +69,13 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
 ///
 /// Default log level is WARN, can be turned up to TRCE by adding -v flags
 /// and down to CRIT by adding -q flags
-fn init_logger(verbose: u8, quiet: u8) -> slog::Logger {
+fn init_logger(verbose: u8, quiet: u8) -> anyhow::Result<slog::Logger> {
     use slog::Drain;
 
     let verbose = verbose.clamp(0, 3);
     let quiet = quiet.clamp(0, 2);
     let level = 3 + verbose - quiet;
-    let level = slog::Level::from_usize(level as usize).unwrap();
+    let level = slog::Level::from_usize(level as usize).with_context(|| "Invalid log level")?;
 
     let decorator = slog_term::TermDecorator::new().build();
     let drain = slog_term::FullFormat::new(decorator)
@@ -82,5 +83,5 @@ fn init_logger(verbose: u8, quiet: u8) -> slog::Logger {
         .filter_level(level)
         .fuse();
     let drain = slog_async::Async::new(drain).build().fuse();
-    slog::Logger::root(drain, slog::o!())
+    Ok(slog::Logger::root(drain, slog::o!()))
 }

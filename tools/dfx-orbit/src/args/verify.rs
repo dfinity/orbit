@@ -44,7 +44,7 @@ impl VerifyArgs {
 
         println!(
             "{}",
-            dfx_orbit.display_get_request_response(request.clone())
+            dfx_orbit.display_get_request_response(request.clone())?
         );
         // TODO: Don't allow non-pending requests to be verified, since they might no longer be
         // verifiable after the execution

@@ -4,17 +4,16 @@ use station_api::{MeResponse, UserPrivilege, UserStatusDTO};
 use std::fmt::Write;
 
 impl DfxOrbit {
-    pub(crate) fn display_me(&self, response: MeResponse) -> String {
+    pub(crate) fn display_me(&self, response: MeResponse) -> anyhow::Result<String> {
         let mut output = String::new();
 
-        writeln!(output, "Name: {}", response.me.name).unwrap();
-        writeln!(output, "Id: {}", response.me.id).unwrap();
+        writeln!(output, "Name: {}", response.me.name)?;
+        writeln!(output, "Id: {}", response.me.id)?;
         writeln!(
             output,
             "Status: {}",
             display_user_status_dto(&response.me.status)
-        )
-        .unwrap();
+        )?;
         writeln!(
             output,
             "Identities: {}",
@@ -24,8 +23,7 @@ impl DfxOrbit {
                 .iter()
                 .map(|p| format!("\n\t{}", p))
                 .join("")
-        )
-        .unwrap();
+        )?;
         writeln!(
             output,
             "Groups: {}",
@@ -35,8 +33,7 @@ impl DfxOrbit {
                 .iter()
                 .map(|group| format!("\n\t{} ({})", group.name, group.id))
                 .join("")
-        )
-        .unwrap();
+        )?;
         writeln!(
             output,
             "Privileges: {}",
@@ -45,10 +42,9 @@ impl DfxOrbit {
                 .iter()
                 .map(|p| format!("\n\t{}", display_privilege(p)))
                 .join("")
-        )
-        .unwrap();
+        )?;
 
-        output
+        Ok(output)
     }
 }
 

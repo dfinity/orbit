@@ -48,26 +48,28 @@ impl DfxOrbit {
         table
     }
 
-    pub(crate) fn display_get_request_response(&self, request: GetRequestResponse) -> String {
+    pub(crate) fn display_get_request_response(
+        &self,
+        request: GetRequestResponse,
+    ) -> anyhow::Result<String> {
         let base_info = request.request;
         let add_info = request.additional_info;
 
         let mut output = String::new();
 
         // General request information
-        writeln!(output, "=== REQUEST ===").unwrap();
-        writeln!(output, "ID: {}", base_info.id).unwrap();
+        writeln!(output, "=== REQUEST ===")?;
+        writeln!(output, "ID: {}", base_info.id)?;
         writeln!(
             output,
             "Operation: {}",
             self.display_request_operation(&base_info.operation)
-        )
-        .unwrap();
-        writeln!(output, "Title: {}", base_info.title).unwrap();
+        )?;
+        writeln!(output, "Title: {}", base_info.title)?;
         if let Some(summary) = base_info.summary {
-            writeln!(output, "Summary: {}", summary).unwrap()
+            writeln!(output, "Summary: {}", summary)?
         }
-        writeln!(output, "Requested by: {}", add_info.requester_name).unwrap();
+        writeln!(output, "Requested by: {}", add_info.requester_name)?;
         writeln!(
             output,
             "Approved by: {}",
@@ -76,98 +78,95 @@ impl DfxOrbit {
                 .into_iter()
                 .map(|approver| format!("\n\t{}", approver.name))
                 .join("")
-        )
-        .unwrap();
+        )?;
         writeln!(
             output,
             "Status: {}",
             self.display_request_status(&base_info.status)
-        )
-        .unwrap();
+        )?;
         if let Some(additional_status) = self.display_additional_stats_info(&base_info.status) {
-            writeln!(output, "{}", additional_status).unwrap();
+            writeln!(output, "{}", additional_status)?;
         }
 
         match base_info.operation {
             RequestOperationDTO::ChangeExternalCanister(op) => {
-                self.display_change_canister_operation(&mut output, op.as_ref())
+                self.display_change_canister_operation(&mut output, op.as_ref())?;
             }
             RequestOperationDTO::CallExternalCanister(op) => {
-                self.display_call_canister_operation(&mut output, op.as_ref())
+                self.display_call_canister_operation(&mut output, op.as_ref())?;
             }
             // TODO: CreateCanister Additional information
             // TODO: ConfigureCanister Additional information
             _ => (),
         };
 
-        output
+        Ok(output)
     }
 
     fn display_change_canister_operation(
         &self,
         output: &mut String,
         op: &ChangeExternalCanisterOperationDTO,
-    ) {
-        writeln!(output, "=== Change External Canister ===").unwrap();
+    ) -> anyhow::Result<()> {
+        writeln!(output, "=== Change External Canister ===")?;
         writeln!(
             output,
             "Target: {}",
             self.try_reverse_lookup(&op.canister_id)
-        )
-        .unwrap();
+        )?;
 
         let mode = match op.mode {
             CanisterInstallMode::Install => "Install",
             CanisterInstallMode::Reinstall => "Reinstall",
             CanisterInstallMode::Upgrade => "Upgrade",
         };
-        writeln!(output, "Mode: {}", mode).unwrap();
+        writeln!(output, "Mode: {}", mode)?;
 
-        writeln!(output, "Module checksum: {}", &op.module_checksum).unwrap();
+        writeln!(output, "Module checksum: {}", &op.module_checksum)?;
         if let Some(arg_checksum) = &op.arg_checksum {
-            writeln!(output, "Argument checksum: {}", arg_checksum).unwrap()
+            writeln!(output, "Argument checksum: {}", arg_checksum)?;
         }
+        Ok(())
     }
 
     fn display_call_canister_operation(
         &self,
         output: &mut String,
         op: &CallExternalCanisterOperationDTO,
-    ) {
-        writeln!(output, "=== Call External Canister ===").unwrap();
+    ) -> anyhow::Result<()> {
+        writeln!(output, "=== Call External Canister ===")?;
         writeln!(
             output,
             "Execution method: \"{}\" of {}",
             op.execution_method.method_name,
             self.try_reverse_lookup(&op.execution_method.canister_id)
-        )
-        .unwrap();
+        )?;
         if let Some(validation_method) = &op.validation_method {
             writeln!(
                 output,
                 "Validation method: \"{}\" of {}",
                 validation_method.method_name,
                 self.try_reverse_lookup(&validation_method.canister_id)
-            )
-            .unwrap()
+            )?
         }
         if let Some(checksum) = &op.arg_checksum {
-            writeln!(output, "Argument checksum: {}", checksum).unwrap()
+            writeln!(output, "Argument checksum: {}", checksum)?
         }
         if let Some(args) = &op.arg_rendering {
-            writeln!(output, "Argument: {}", args).unwrap()
+            writeln!(output, "Argument: {}", args)?
         }
         if let Some(cycles) = &op.execution_method_cycles {
-            writeln!(output, "Execution method cycles: {}", cycles).unwrap()
+            writeln!(output, "Execution method cycles: {}", cycles)?
         }
         if let Some(reply) = &op.execution_method_reply {
             match candid_parser::IDLArgs::from_bytes(reply) {
                 // TODO: Check if we can get the type information from somewhere to annotate this with types
                 Ok(response) => writeln!(output, "Execution response: {}", response),
                 Err(_) => writeln!(output, "FAILED TO PARSE EXECUTION RESPONSE"),
-            }
-            .unwrap();
+            }?;
         }
+
+        Ok(())
     }
 
     fn try_reverse_lookup(&self, canister_id: &Principal) -> String {
