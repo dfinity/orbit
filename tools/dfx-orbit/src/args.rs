@@ -27,7 +27,10 @@ pub struct DfxOrbitArgs {
     pub(crate) station: Option<String>,
 
     // TODO: Allow to specify --network, to overwrite the network specified by the station
-    // TODO: Allow to specify --identity to use a non-default identity
+    /// The user identity to run this command as
+    #[clap(short, long)]
+    pub(crate) identity: Option<String>,
+
     /// Manage Orbit stations.
     #[clap(subcommand)]
     pub(crate) command: DfxOrbitSubcommands,

@@ -157,10 +157,18 @@ impl OrbitExtensionAgent {
         let old_station_name = station.name.clone();
         let default_station_name = self.default_station_name()?;
 
-        new_name.map(|name| station.name = name);
-        station_id.map(|id| station.station_id = id);
-        network.map(|network| station.network = network);
-        url.map(|url| station.url = url);
+        if let Some(name) = new_name {
+            station.name = name;
+        }
+        if let Some(id) = station_id {
+            station.station_id = id;
+        }
+        if let Some(network) = network {
+            station.network = network;
+        }
+        if let Some(url) = url {
+            station.url = url
+        }
 
         let new_station_name = station.name.clone();
 

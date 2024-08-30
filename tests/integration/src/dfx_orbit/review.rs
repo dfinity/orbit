@@ -123,7 +123,7 @@ fn review() {
         assert_eq!(next_request.request.id, id_request.request.id);
 
         // Approve the request
-        let _response = dfx_orbit
+        dfx_orbit
             .station
             .approve(submitted_request.id, None)
             .await
