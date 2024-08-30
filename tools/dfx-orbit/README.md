@@ -65,7 +65,7 @@ Tell the command line tool where to find the orbit station:
 - Copy the wallet ID
 - Store the station details locally. If your wallet is called `shiny` and is running locally, the command is:
   ```
-  dfx-orbit station add shiny --station-id "$WALLET_ID" --network local --url https://orbitwallet.io
+  dfx-orbit station add shiny --station-id "$WALLET_ID" --network ic
   ```
 - Verify that the station is in your list of stations:
   ```

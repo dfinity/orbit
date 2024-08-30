@@ -35,10 +35,9 @@ pub struct StationAddArgs {
     /// The dfx network name
     #[clap(short, long)]
     pub(crate) network: String,
-    /// The URL pointing to the Orbit Web UI ()
+    /// The URL pointing to the Orbit Web UI (defaults to "https://orbitwallet.io")
     #[clap(short, long)]
-    // TODO: Allow to default this to --url https://orbitwallet.io
-    pub(crate) url: String,
+    pub(crate) url: Option<String>,
 }
 
 impl From<StationAddArgs> for StationConfig {
@@ -47,7 +46,7 @@ impl From<StationAddArgs> for StationConfig {
             name: add.name,
             station_id: add.station_id,
             network: add.network,
-            url: add.url,
+            url: add.url.unwrap_or(String::from("https://orbitwallet.io")),
         }
     }
 }
