@@ -33,14 +33,17 @@ pub fn exec(orbit_agent: OrbitExtensionAgent, args: StationArgs) -> anyhow::Resu
                 .set_default_station(Some(use_args.name))
                 .with_context(|| "Failed to set default station in local dfx config")?;
         }
-        // TODO: Nicer display, json optional
         StationArgs::Show(show_args) => {
             let station = orbit_agent
                 .station_or_default(&show_args.name)
                 .with_context(|| "Failed to get station from local dfx config")?;
-            let json = serde_json::to_string_pretty(&station)
-                .with_context(|| "Failed to serialize station")?;
-            println!("{json}");
+            if show_args.json {
+                let json = serde_json::to_string_pretty(&station)
+                    .with_context(|| "Failed to serialize station")?;
+                println!("{json}");
+            } else {
+                println!("{}", station);
+            }
         }
         StationArgs::Remove(remove_args) => {
             orbit_agent

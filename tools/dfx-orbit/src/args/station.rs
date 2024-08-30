@@ -74,9 +74,12 @@ impl Display for ListResponse {
 /// Shows the local configuration for an Orbit station.
 #[derive(Debug, Parser)]
 pub struct StationShowArgs {
-    /// Station name.
-    #[clap(long)]
+    /// Station name
+    #[clap(short, long)]
     pub(crate) name: Option<String>,
+    /// Return output as JSON
+    #[clap(short, long)]
+    pub(crate) json: bool,
 }
 
 /// Renames an Orbit station in the local dfx configuration
