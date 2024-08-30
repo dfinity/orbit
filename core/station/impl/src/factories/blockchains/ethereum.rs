@@ -9,7 +9,8 @@ use crate::{
 use alloy::{
     consensus::SignableTransaction,
     eips::eip2718::Encodable2718,
-    primitives::{address, hex, Address, TxKind, B256, U256},
+    primitives::{hex, Address, TxKind, B256, U256},
+    providers::{Provider, ProviderBuilder},
     signers::k256::ecdsa,
 };
 use async_trait::async_trait;
@@ -18,6 +19,8 @@ use evm_rpc_canister_types::{
     EthSepoliaService, MultiSendRawTransactionResult, RpcService, RpcServices,
     SendRawTransactionResult, SendRawTransactionStatus, EVM_RPC,
 };
+use futures::FutureExt;
+use ic_cdk::print;
 use num_bigint::BigUint;
 use std::{collections::BTreeMap, str::FromStr};
 
@@ -26,7 +29,6 @@ use ic_cdk::api::management_canister::ecdsa::{
     SignWithEcdsaArgument,
 };
 
-#[derive(Debug)]
 pub struct Ethereum {
     chain: alloy_chains::Chain,
 }
@@ -43,17 +45,40 @@ impl Ethereum {
         }
     }
 
-    async fn estimate_transaction_fee(&self) -> BlockchainApiResult<BlockchainTransactionFee> {
+    async fn estimate_transaction_fee(
+        &self,
+        transfer: &Transfer,
+    ) -> Result<BlockchainTransactionFee, Box<dyn std::error::Error + Send>> {
+        // let rpc_url = "https://eth.merkle.io"
+        //     .parse()
+        //     .expect("cannot parse rpc url");
+        // let custom_provider = ProviderBuilder::new()
+        //     .with_recommended_fillers()
+        //     .on_http(rpc_url);
+
+        // // TODO: Get the max fee from the backend and populate the default for it
+        // let gas_price = custom_provider
+        //     .get_gas_price()
+        //     .await
+        //     .expect("cannot get gas price");
+        // let fees = custom_provider
+        //     .estimate_eip1559_fees(None)
+        //     .await
+        //     .expect("cannot estimate fees");
+
+        // print(format!("fees: {:?}", fees));
+
         let max_fee_per_gas: u128 = 40 * 10u128.pow(9);
         let max_priority_fee_per_gas = 0128;
-        let to_address = address!("0000000000000000000000000000000000000000");
-        let gas_limit = eth_estimate_gas(
-            &self.chain,
-            &to_address.to_string(),
-            &alloy::primitives::Bytes::default(),
-            U256::from(0),
-        )
-        .await?;
+
+        let to_address = &transfer.to_address.to_string();
+        let data = &alloy::primitives::Bytes::default();
+        let value = nat_to_u256(&transfer.amount);
+
+        let gas_limit = eth_estimate_gas(&self.chain, &to_address, data, value)
+            .await
+            .expect("cannot estimate gas");
+
         let fee = gas_limit * max_fee_per_gas;
         Ok(BlockchainTransactionFee {
             fee: BigUint::from(fee),
@@ -96,7 +121,10 @@ impl BlockchainApi for Ethereum {
         &self,
         _account: &Account,
     ) -> BlockchainApiResult<BlockchainTransactionFee> {
-        self.estimate_transaction_fee().await
+        Ok(BlockchainTransactionFee {
+            fee: BigUint::from(0u32),
+            metadata: Metadata::default(),
+        })
     }
 
     fn default_network(&self) -> String {
@@ -111,7 +139,21 @@ impl BlockchainApi for Ethereum {
         let nonce = eth_get_transaction_count(&self.chain, &account.address).await?;
         let input = alloy::primitives::Bytes::default();
         let value = nat_to_u256(&transfer.amount);
-        let fee = self.estimate_transaction_fee().await?;
+        let fee = self
+            .estimate_transaction_fee(&transfer)
+            .await
+            .expect("cannot estimate fee");
+
+        let rpc_url = "https://eth.merkle.io"
+            .parse()
+            .expect("cannot parse rpc url");
+        let custom_provider = ProviderBuilder::new()
+            .with_recommended_fillers()
+            .on_http(rpc_url);
+
+        // TODO: Get the max fee from the backend and populate the default for it
+        let gas_price = custom_provider.get_gas_price().await;
+
         let gas_limit = get_metadata_value::<u128>(&fee.metadata, METADATA_KEY_GAS_LIMIT)?;
         let max_fee_per_gas =
             get_metadata_value::<u128>(&fee.metadata, METADATA_KEY_MAX_FEE_PER_GAS)?;
@@ -215,6 +257,14 @@ pub async fn eth_send_raw_transaction(
     let services = get_evm_services(chain)?;
 
     let cycles = 1000000000;
+    //  https://internetcomputer.org/docs/current/developer-docs/multi-chain/ethereum/evm-rpc/costs
+    // (
+    //   3M
+    //   + 60K * nodes_in_subnet // Number of nodes in the subnet
+    //   + 400 * request_size // Size of the HTTP request in bytes
+    //   + 800 * max_response // Maximum HTTP response size in bytes
+    //   + provider_cost // Fixed cost for selected RPC provider
+    // ) * nodes_in_subnet //  Fixed canister overhead cost per node in subnet
 
     let raw_tx_hex = hex::encode_prefixed(raw_tx);
     let send_result = EVM_RPC

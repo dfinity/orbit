@@ -68,7 +68,7 @@ dfx start --clean --host 127.0.0.1:4943 --background
 
 ```sh
 cd apps/wallet
-nvm use
+nvm install && nvm use
 pnpm dev
 ```
 
