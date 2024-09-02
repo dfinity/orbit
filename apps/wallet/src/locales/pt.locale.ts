@@ -171,6 +171,7 @@ export default {
       system: 'Sistema',
       transfers: 'Transferências',
       users: 'Usuários',
+      external_canisters: 'Canisters',
     },
     download: {
       user_group: 'Grupos de usuários',
@@ -576,6 +577,7 @@ export default {
     transfer_requests: 'Pedidos de transferência',
     permissions: 'Permissões',
     request_policies: 'Regras de aprovação',
+    external_canisters: 'Canisters',
   },
   pages: {
     accounts: {
@@ -633,6 +635,12 @@ export default {
       create_new_user_title: 'Criar novo usuário',
       btn_edit_title: 'Editar usuário',
       error_fetching_users: 'Erro ao carregar os usuários, por favor, tente novamente.',
+    },
+    external_canisters: {
+      title: 'Canisters',
+      btn_add_canister: 'Adicionar canister',
+      add_new_canister_title: 'Adicionar novo canister',
+      error_fetching_canisters: 'Erro ao carregar os canisters, por favor, tente novamente.',
     },
     add_station: {
       initialization_title: 'Bem-vindo! Como você gostaria de se juntar à Orbit?',

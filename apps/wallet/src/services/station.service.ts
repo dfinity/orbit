@@ -36,6 +36,7 @@ import {
   ListAccountTransfersInput,
   ListAccountsResult,
   ListAddressBookEntriesResult,
+  ListExternalCanistersResult,
   ListNotificationsInput,
   ListPermissionsInput,
   ListPermissionsResult,
@@ -67,6 +68,7 @@ import {
   GetNextApprovableRequestArgs,
   ListAccountsArgs,
   ListAddressBookEntriesArgs,
+  ListExternalCanistersArgs,
   ListRequestsArgs,
 } from '~/types/station.types';
 import { transformIdlWithOnlyVerifiedCalls, variantIs } from '~/utils/helper.utils';
@@ -547,6 +549,31 @@ export class StationService {
       labels: labels ? [labels] : [],
       addresses: addresses ? [addresses] : [],
       ids: ids ? [ids] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async listExternalCanisters(
+    { states, labels, canisterIds, limit, offset, sortBy }: ListExternalCanistersArgs = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListExternalCanistersResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_external_canisters({
+      canister_ids: canisterIds ? [canisterIds] : [],
+      labels: labels ? [labels] : [],
+      states: states ? [states] : [],
+      sort_by: sortBy ? [sortBy] : [],
+      paginate: [
+        {
+          limit: limit ? [limit] : [],
+          offset: offset ? [BigInt(offset)] : [],
+        },
+      ],
     });
 
     if (variantIs(result, 'Err')) {

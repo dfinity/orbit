@@ -162,6 +162,7 @@ export default {
       system: 'System',
       transfers: 'Transfers',
       users: 'Users',
+      external_canisters: 'Canisters',
     },
     headers: {
       id: 'ID',
@@ -574,6 +575,7 @@ export default {
     transfer_requests: 'Transfer Requests',
     permissions: 'Permissions',
     request_policies: 'Request Policies',
+    external_canisters: 'Canisters',
   },
   pages: {
     accounts: {
@@ -619,6 +621,12 @@ export default {
       create_new_user_title: 'Create new user',
       btn_edit_title: 'Edit user',
       error_fetching_users: 'Error fetching users, please try again.',
+    },
+    external_canisters: {
+      title: 'Canisters',
+      btn_add_canister: 'Add canister',
+      add_new_canister_title: 'Create new canister',
+      error_fetching_canisters: 'Error fetching canisters, please try again.',
     },
     user_groups: {
       title: 'User Groups',

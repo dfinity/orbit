@@ -172,6 +172,7 @@ export default {
       system: 'Système',
       transfers: 'Transferts',
       users: 'Usagers',
+      external_canisters: 'Canisters',
     },
     headers: {
       id: 'ID',
@@ -579,6 +580,7 @@ export default {
     transfer_requests: 'Demandes de Transfert',
     permissions: "Polices d'Accés",
     request_policies: "Polices d'Aprobation",
+    external_canisters: 'Canisters',
   },
   pages: {
     accounts: {
@@ -626,6 +628,12 @@ export default {
       create_new_user_title: 'Créer un nouvel usager',
       btn_edit_title: "Modifier l'usager",
       error_fetching_users: 'Erreur du chargement des usagers, veuillez essayer de nouveau.',
+    },
+    external_canisters: {
+      title: 'Canisters',
+      btn_add_canister: 'Ajouter un canister',
+      add_new_canister_title: 'Ajouter un nouveau canister',
+      error_fetching_canisters: 'Erreur du chargement des canisters, veuillez essayer de nouveau.',
     },
     user_groups: {
       title: "Group d'Usagers",
