@@ -395,6 +395,10 @@ export default {
     add_station_list_item: 'Add wallet',
   },
   terms: {
+    active: 'Active',
+    archived: 'Archived',
+    canisters: 'Canisters',
+    labels: 'Labels',
     change: 'Change',
     quorum: 'Quorum',
     deposits: 'Deposits',
@@ -625,7 +629,8 @@ export default {
     external_canisters: {
       title: 'Canisters',
       btn_add_canister: 'Add canister',
-      add_new_canister_title: 'Create new canister',
+      add_new_canister_title: 'Add new canister',
+      edit_canister_title: 'Canister Configuration',
       error_fetching_canisters: 'Error fetching canisters, please try again.',
     },
     user_groups: {

@@ -401,6 +401,10 @@ export default {
     add_station_list_item: 'Ajouter un portefeuille',
   },
   terms: {
+    active: 'Actif',
+    archived: 'Archivé',
+    canisters: 'Canisters',
+    labels: 'Étiquettes',
     change: 'Changement',
     quorum: 'Quorum',
     deposits: 'Deports',

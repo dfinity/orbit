@@ -398,6 +398,10 @@ export default {
     add_station_list_item: 'Adicionar carteira',
   },
   terms: {
+    active: 'Ativo',
+    archived: 'Arquivado',
+    canisters: 'Canisters',
+    labels: 'Etiquetas',
     change: 'Alterar',
     quorum: 'Quórum',
     deposits: 'Depósitos',

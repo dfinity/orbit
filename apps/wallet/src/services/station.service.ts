@@ -9,6 +9,7 @@ import {
   AddUserGroupOperationInput,
   AddUserOperationInput,
   Capabilities,
+  CreateExternalCanisterOperationInput,
   CreateRequestInput,
   DisasterRecoveryCommittee,
   EditAccountOperationInput,
@@ -22,6 +23,7 @@ import {
   GetAccountResult,
   GetAddressBookEntryInput,
   GetAddressBookEntryResult,
+  GetExternalCanisterFiltersResult,
   GetNextApprovableRequestResult,
   GetPermissionInput,
   GetPermissionResult,
@@ -581,6 +583,44 @@ export class StationService {
     }
 
     return result.Ok;
+  }
+
+  async fetchExternalCanisterFilters(
+    args: {
+      with_labels?: boolean;
+      with_name?: string;
+    } = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<GetExternalCanisterFiltersResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_external_canister_filters({
+      with_labels: args.with_labels !== undefined ? [args.with_labels] : [],
+      with_name:
+        args.with_name !== undefined
+          ? [{ prefix: args.with_name.length ? [args.with_name] : [] }]
+          : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async addCanister(input: CreateExternalCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { CreateExternalCanister: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
   }
 
   async getAccount(

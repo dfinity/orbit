@@ -17,6 +17,11 @@ export enum AccountTransferStatus {
   Unknown = 'unknown',
 }
 
+export enum ExternalCanisterStateEnum {
+  Active = 'Active',
+  Archived = 'Archived',
+}
+
 export enum RequestStatusEnum {
   Created = 'Created',
   Approved = 'Approved',
@@ -143,7 +148,7 @@ export interface ListExternalCanistersArgs {
   limit?: number;
   offset?: number;
   canisterIds?: Principal[];
-  labels?: [];
+  labels?: string[];
   states?: ExternalCanisterState[];
   sortBy?: ListExternalCanistersSortInput;
 }
