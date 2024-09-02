@@ -92,7 +92,7 @@ const onSelectedAsset = (asset?: Asset): void => {
   if (asset) {
     model.value.symbol = asset.symbol;
     model.value.blockchain = asset.blockchain;
-    model.value.standard = asset.standard;
+    model.value.standard = asset.standards[0]; // todo: handle multiple standards
   } else {
     model.value.symbol = undefined;
     model.value.blockchain = undefined;

@@ -1,7 +1,7 @@
 //! Core utility features for the canister.
 
-mod assets;
-pub use assets::*;
+// mod assets;
+// pub use assets::*;
 
 mod constants;
 pub use constants::*;

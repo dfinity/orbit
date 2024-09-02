@@ -362,6 +362,9 @@ impl SystemService {
         // registers the admins of the canister
         init_canister_sync_handlers::set_admins(input.admins.clone())?;
 
+        // add initial assets
+        init_canister_sync_handlers::add_initial_assets();
+
         // sets the name of the canister
         system_info.set_name(input.name.clone());
 
@@ -444,14 +447,20 @@ impl SystemService {
 }
 
 mod init_canister_sync_handlers {
+    use std::collections::BTreeSet;
+
     use crate::core::ic_cdk::{api::print, next_time};
-    use crate::models::{AddUserOperationInput, UserStatus};
+    use crate::models::{
+        AddUserOperationInput, Asset, Blockchain, BlockchainStandard, Metadata, UserStatus,
+    };
+    use crate::repositories::ASSET_REPOSITORY;
     use crate::services::USER_SERVICE;
     use crate::{
         models::{UserGroup, ADMIN_GROUP_ID},
         repositories::USER_GROUP_REPOSITORY,
     };
     use orbit_essentials::api::ApiError;
+    use orbit_essentials::model::ModelKey;
     use orbit_essentials::repository::Repository;
     use station_api::AdminInitInput;
     use uuid::Uuid;
@@ -466,6 +475,22 @@ mod init_canister_sync_handlers {
                 last_modification_timestamp: next_time(),
             },
         );
+    }
+
+    pub fn add_initial_assets() {
+        let initial_assets: Vec<Asset> = vec![Asset {
+            blockchain: Blockchain::InternetComputer,
+            standards: BTreeSet::from([BlockchainStandard::Native]),
+            symbol: "ICP".to_string(),
+            name: "Internet Computer".to_string(),
+            metadata: Metadata::default(),
+            decimals: 8,
+            id: Uuid::new_v4().as_bytes().to_owned(),
+        }];
+
+        for asset in initial_assets {
+            ASSET_REPOSITORY.insert(asset.key(), asset);
+        }
     }
 
     /// Registers the newly added admins of the canister.
