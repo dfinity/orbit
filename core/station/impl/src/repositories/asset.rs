@@ -28,7 +28,7 @@ lazy_static! {
     pub static ref ASSET_REPOSITORY: Arc<AssetRepository> = Arc::new(AssetRepository::default());
 }
 
-/// A repository that enables managing users in stable memory.
+/// A repository that enables managing assets in stable memory.
 #[derive(Default, Debug)]
 pub struct AssetRepository {
     unique_index: UniqueIndexRepository,
@@ -73,23 +73,23 @@ impl IndexedRepository<UUID, Asset, VirtualMemory<Memory>> for AssetRepository {
 
 impl Repository<UUID, Asset, VirtualMemory<Memory>> for AssetRepository {
     fn list(&self) -> Vec<Asset> {
-        let mut user_groups = Vec::with_capacity(self.len());
+        let mut assets = Vec::with_capacity(self.len());
 
         if self.use_only_cache() {
             CACHE.with(|cache| {
-                cache.borrow().iter().for_each(|(_, user_group)| {
-                    user_groups.push(user_group.clone());
+                cache.borrow().iter().for_each(|(_, asset)| {
+                    assets.push(asset.clone());
                 });
             });
         } else {
             Self::with_db(|db| {
-                db.iter().for_each(|(_, user_group)| {
-                    user_groups.push(user_group);
+                db.iter().for_each(|(_, asset)| {
+                    assets.push(asset);
                 });
             });
         }
 
-        user_groups
+        assets
     }
 
     fn get(&self, key: &AssetId) -> Option<Asset> {
@@ -107,7 +107,7 @@ impl Repository<UUID, Asset, VirtualMemory<Memory>> for AssetRepository {
 
             let prev = m.borrow_mut().insert(key, value.clone());
 
-            // Update metrics when a user group is upserted.
+            // Update metrics when an asset is upserted.
             ASSET_METRICS.with(|metrics| {
                 metrics
                     .iter()
@@ -169,8 +169,8 @@ impl AssetRepository {
             cache.borrow_mut().clear();
 
             DB.with(|db| {
-                for (_, user_group) in db.borrow().iter().take(Self::MAX_CACHE_SIZE) {
-                    cache.borrow_mut().insert(user_group.id, user_group);
+                for (_, asset) in db.borrow().iter().take(Self::MAX_CACHE_SIZE) {
+                    cache.borrow_mut().insert(asset.id, asset);
                 }
             });
         });
