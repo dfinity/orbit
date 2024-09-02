@@ -249,7 +249,7 @@ impl ApplicationMetric<UserGroup> for MetricTotalUserGroups {
         self.dec(SERVICE_NAME, &labels! { "status" => "active" });
     }
 }
-/// Metric for the total number of address book entries.
+/// Metric for the total number of assets.
 pub struct MetricTotalAssets;
 
 impl ApplicationGaugeMetric<Asset> for MetricTotalAssets {}
