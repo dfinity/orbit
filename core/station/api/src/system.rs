@@ -126,3 +126,8 @@ pub struct SystemUpgradeOperationDTO {
     pub module_checksum: Sha256HashDTO,
     pub arg_checksum: Option<Sha256HashDTO>,
 }
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct NotifyFailedStationUpgradeInput {
+    pub reason: String,
+}

@@ -66,7 +66,7 @@ lazy_static! {
         let u = WithStop(u, &TARGET_CANISTER_ID);
         let u = WithStart(u, &TARGET_CANISTER_ID);
         let u = WithLogs(u, "upgrade".to_string());
-        let u = WithBackground(Arc::new(u));
+        let u = WithBackground(Arc::new(u), &TARGET_CANISTER_ID);
         let u = CheckController(u, &TARGET_CANISTER_ID);
         let u = WithAuthorization(u, &TARGET_CANISTER_ID);
         let u = WithLogs(u, "trigger_upgrade".to_string());

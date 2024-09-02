@@ -779,6 +779,9 @@ export type NotificationType = {
   };
 export type NotificationTypeInput = { 'RequestCreated' : null } |
   { 'SystemMessage' : null };
+export interface NotifyFailedStationUpgradeInput { 'reason' : string }
+export type NotifyFailedStationUpgradeResult = { 'Ok' : null } |
+  { 'Err' : Error };
 export interface PaginationInput {
   'offset' : [] | [bigint],
   'limit' : [] | [number],
@@ -1230,6 +1233,10 @@ export interface _SERVICE {
     MarkNotificationReadResult
   >,
   'me' : ActorMethod<[], MeResult>,
+  'notify_failed_station_upgrade' : ActorMethod<
+    [NotifyFailedStationUpgradeInput],
+    NotifyFailedStationUpgradeResult
+  >,
   'submit_request_approval' : ActorMethod<
     [SubmitRequestApprovalInput],
     SubmitRequestApprovalResult
