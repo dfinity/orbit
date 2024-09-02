@@ -20,7 +20,7 @@ pub enum AssetError {
     /// The given blockchain standard is unknown to the system.
     #[error(r#"The given blockchain standard is unknown to the system."#)]
     UnknownBlockchainStandard { blockchain_standard: String },
-    /// The account has failed validation.
+    /// The asset has failed validation.
     #[error(r#"The account has failed validation."#)]
     ValidationError { info: String },
 }
