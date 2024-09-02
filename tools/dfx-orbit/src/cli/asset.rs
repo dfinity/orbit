@@ -10,8 +10,8 @@ use crate::{
 };
 use candid::Principal;
 use ic_utils::Canister;
-use orbit_station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
 use slog::Logger;
+use station_api::{RequestApprovalStatusDTO, SubmitRequestApprovalInput};
 
 pub struct AssetAgent<'agent> {
     canister_agent: Canister<'agent>,

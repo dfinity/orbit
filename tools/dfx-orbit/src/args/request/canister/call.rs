@@ -3,9 +3,7 @@
 use crate::DfxOrbit;
 use anyhow::Context;
 use clap::Parser;
-use orbit_station_api::{
-    CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput,
-};
+use station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput};
 
 /// Requests that a call be made to a canister.
 #[derive(Debug, Clone, Parser)]

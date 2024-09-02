@@ -42,19 +42,13 @@ impl NotificationService {
         }
     }
 
-    pub fn get_notification(
-        &self,
-        id: &NotificationId,
-        ctx: &CallContext,
-    ) -> ServiceResult<Notification> {
+    pub fn get_notification(&self, id: &NotificationId) -> ServiceResult<Notification> {
         let notification = self
             .notification_repository
             .get(&Notification::key(*id))
             .ok_or(NotificationError::NotFound {
                 id: Uuid::from_bytes(id.to_owned()).hyphenated().to_string(),
             })?;
-
-        self.assert_notification_access(&notification, ctx)?;
 
         Ok(notification)
     }
@@ -82,15 +76,11 @@ impl NotificationService {
         Ok(notifications)
     }
 
-    pub async fn mark_read(
-        &self,
-        input: MarkNotificationsReadInput,
-        ctx: &CallContext,
-    ) -> ServiceResult<()> {
+    pub async fn mark_read(&self, input: MarkNotificationsReadInput) -> ServiceResult<()> {
         let mut notifications = input
             .notification_ids
             .iter()
-            .map(|id| self.get_notification(HelperMapper::to_uuid(id.clone())?.as_bytes(), ctx))
+            .map(|id| self.get_notification(HelperMapper::to_uuid(id.clone())?.as_bytes()))
             .collect::<Result<Vec<Notification>, _>>()?;
 
         for notification in notifications.iter_mut() {
@@ -138,24 +128,6 @@ impl NotificationService {
         self.notification_repository
             .insert(notification.to_key(), notification);
     }
-
-    fn assert_notification_access(
-        &self,
-        notification: &Notification,
-        ctx: &CallContext,
-    ) -> ServiceResult<()> {
-        let user = self.user_service.get_user_by_identity(&ctx.caller())?;
-
-        if user.id != notification.target_user_id {
-            Err(NotificationError::Forbidden {
-                id: Uuid::from_bytes(notification.id.to_owned())
-                    .hyphenated()
-                    .to_string(),
-            })?
-        }
-
-        Ok(())
-    }
 }
 
 #[cfg(test)]
@@ -172,7 +144,6 @@ mod tests {
         repository: NotificationRepository,
         service: NotificationService,
         caller_user: User,
-        call_context: CallContext,
     }
 
     fn setup() -> TestContext {
@@ -187,7 +158,6 @@ mod tests {
         TestContext {
             repository: NotificationRepository::default(),
             service: NotificationService::default(),
-            call_context,
             caller_user: user,
         }
     }
@@ -201,27 +171,9 @@ mod tests {
         ctx.repository
             .insert(notification.to_key(), notification.to_owned());
 
-        let result = ctx
-            .service
-            .get_notification(&notification.id, &ctx.call_context);
+        let result = ctx.service.get_notification(&notification.id);
 
         assert_eq!(notification, result.unwrap());
-    }
-
-    #[test]
-    fn fail_get_notification_not_allowed() {
-        let ctx = setup();
-        let mut notification = mock_notification();
-        notification.target_user_id = [1; 16];
-
-        ctx.repository
-            .insert(notification.to_key(), notification.to_owned());
-
-        let result = ctx
-            .service
-            .get_notification(&notification.id, &ctx.call_context);
-
-        assert!(result.is_err());
     }
 
     #[tokio::test]
@@ -238,13 +190,10 @@ mod tests {
 
         let result = ctx
             .service
-            .mark_read(
-                MarkNotificationsReadInput {
-                    notification_ids: vec![notification_id.to_string()],
-                    read: true,
-                },
-                &ctx.call_context,
-            )
+            .mark_read(MarkNotificationsReadInput {
+                notification_ids: vec![notification_id.to_string()],
+                read: true,
+            })
             .await;
 
         assert!(result.is_ok());

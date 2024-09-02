@@ -3,9 +3,9 @@ use crate::DfxOrbit;
 use anyhow::bail;
 use candid::{Nat, Principal};
 use ic_certified_assets::types::CommitProposedBatchArguments;
-use orbit_station_api::{CanisterMethodDTO, GetRequestInput, RequestOperationDTO};
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
+use station_api::{CanisterMethodDTO, GetRequestInput, RequestOperationDTO};
 use std::path::Path;
 
 impl DfxOrbit {

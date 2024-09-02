@@ -7,10 +7,10 @@ edition = '2021'
 [dependencies]
 candid = { workspace = true }
 candid_parser = { workspace = true }
-dfx-orbit = { path = "../../tools/dfx-orbit" }
+dfx-orbit = { path = '../../tools/dfx-orbit', version = '0.3.0' }
 flate2 = { workspace = true }
 hex = { workspace = true }
-orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alpha.3' }
+orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alpha.4' }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 itertools = { workspace = true }
@@ -27,5 +27,5 @@ tokio.workspace = true
 uuid = { workspace = true }
 control-panel-api = { path = '../../core/control-panel/api', version = '0.0.2-alpha.3' }
 upgrader-api = { path = '../../core/upgrader/api', version = '0.0.2-alpha.4' }
-station-api = { path = '../../core/station/api', version = '0.0.2-alpha.4' }
+station-api = { path = '../../core/station/api', version = '0.0.2-alpha.5' }
 wat = { workspace = true }

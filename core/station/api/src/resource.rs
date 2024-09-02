@@ -7,6 +7,7 @@ pub enum ResourceDTO {
     Account(AccountResourceActionDTO),
     AddressBook(ResourceActionDTO),
     ExternalCanister(ExternalCanisterResourceActionDTO),
+    Notification(NotificationResourceActionDTO),
     Request(RequestResourceActionDTO),
     RequestPolicy(ResourceActionDTO),
     System(SystemResourceActionDTO),
@@ -80,6 +81,12 @@ pub enum ExternalCanisterResourceActionDTO {
     Fund(ExternalCanisterIdDTO),
     Change(ExternalCanisterIdDTO),
     Call(CallExternalCanisterResourceTargetDTO),
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum NotificationResourceActionDTO {
+    List,
+    Update(ResourceIdDTO),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

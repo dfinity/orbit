@@ -31,7 +31,7 @@ pub fn authorize(ctx: &CallContext, resources: &[Resource]) {
             let allowed = Authorization::is_allowed(ctx, resource);
 
             if !allowed {
-                unauthorized_resources.push(format!("{:?}", resource));
+                unauthorized_resources.push(format!("{}", resource));
             }
 
             allowed

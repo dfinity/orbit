@@ -750,6 +750,8 @@ export interface Notification {
   'message' : [] | [string],
   'target_user_id' : UUID,
 }
+export type NotificationResourceAction = { 'List' : null } |
+  { 'Update' : ResourceId };
 export type NotificationStatus = { 'Read' : null } |
   { 'Sent' : null };
 export type NotificationType = {
@@ -777,6 +779,9 @@ export type NotificationType = {
   };
 export type NotificationTypeInput = { 'RequestCreated' : null } |
   { 'SystemMessage' : null };
+export interface NotifyFailedStationUpgradeInput { 'reason' : string }
+export type NotifyFailedStationUpgradeResult = { 'Ok' : null } |
+  { 'Err' : Error };
 export interface PaginationInput {
   'offset' : [] | [bigint],
   'limit' : [] | [number],
@@ -981,6 +986,7 @@ export type RequestStatusCode = { 'Failed' : null } |
   { 'Created' : null } |
   { 'Completed' : null };
 export type Resource = { 'Request' : RequestResourceAction } |
+  { 'Notification' : NotificationResourceAction } |
   { 'System' : SystemResourceAction } |
   { 'User' : UserResourceAction } |
   { 'ExternalCanister' : ExternalCanisterResourceAction } |
@@ -1227,6 +1233,10 @@ export interface _SERVICE {
     MarkNotificationReadResult
   >,
   'me' : ActorMethod<[], MeResult>,
+  'notify_failed_station_upgrade' : ActorMethod<
+    [NotifyFailedStationUpgradeInput],
+    NotifyFailedStationUpgradeResult
+  >,
   'submit_request_approval' : ActorMethod<
     [SubmitRequestApprovalInput],
     SubmitRequestApprovalResult

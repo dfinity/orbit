@@ -10,6 +10,7 @@
 pub mod api;
 pub mod cdk;
 pub mod deserialize;
+pub mod http;
 pub mod metrics;
 pub mod model;
 pub mod repository;

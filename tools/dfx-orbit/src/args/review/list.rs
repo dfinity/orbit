@@ -1,7 +1,7 @@
 //! CLI arguments for `dfx-orbit review list`.
 
 use clap::Parser;
-use orbit_station_api::ListRequestsInput;
+use station_api::ListRequestsInput;
 
 /// Reviews the next request.
 #[derive(Debug, Parser)]

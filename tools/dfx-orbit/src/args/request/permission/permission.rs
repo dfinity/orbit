@@ -1,7 +1,7 @@
 //! Arguments for `dfx-orbit request permission permission`.
 
 use clap::Parser;
-use orbit_station_api::{
+use station_api::{
     EditPermissionOperationInput, PermissionResourceActionDTO, RequestOperationInput, ResourceDTO,
 };
 
