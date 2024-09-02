@@ -33,9 +33,9 @@ thread_local! {
         Rc::new(RefCell::new(MetricTotalUserGroups)),
     ];
 
-     /// A collection of user group related metrics.
+    /// A collection of asset related metrics.
     ///
-    /// This list should be updated with new user group metrics as they are added.
+    /// This list should be updated with new asset metrics as they are added.
     pub static ASSET_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<Asset>>>> = vec![
         Rc::new(RefCell::new(MetricTotalAssets)),
     ];
