@@ -638,6 +638,7 @@ export default {
       title: 'Canisters',
       btn_add_canister: 'Ajouter un canister',
       add_new_canister_title: 'Ajouter un nouveau canister',
+      edit_canister_title: 'Modifier le canister',
       error_fetching_canisters: 'Erreur du chargement des canisters, veuillez essayer de nouveau.',
     },
     user_groups: {

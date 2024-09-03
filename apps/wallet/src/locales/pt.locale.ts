@@ -645,6 +645,7 @@ export default {
       title: 'Canisters',
       btn_add_canister: 'Adicionar canister',
       add_new_canister_title: 'Adicionar novo canister',
+      edit_canister_title: 'Editar canister',
       error_fetching_canisters: 'Erro ao carregar os canisters, por favor, tente novamente.',
     },
     add_station: {
