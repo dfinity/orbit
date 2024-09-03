@@ -57,7 +57,7 @@ impl DfxOrbit {
                         self.station.submit(submit).await?;
                         info!(self.logger, "Submitted response");
                     };
-                } else {
+                } else if args.approve.is_some() || args.reject.is_some() {
                     warn!(
                         self.logger,
                         "Can not approve/reject the request since it has already completed",
