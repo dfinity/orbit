@@ -1,5 +1,6 @@
 <template>
   <VBtn
+    data-test-id="btn-canister-setup"
     v-bind="$attrs"
     :size="props.size"
     :variant="props.variant"
@@ -15,6 +16,7 @@
   </VBtn>
 
   <CanisterSetupDialog
+    data-test-id="canister-setup-dialog"
     :open="open"
     :canister-id="props.canisterId"
     :readonly="props.readonly"

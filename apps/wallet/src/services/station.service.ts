@@ -24,6 +24,7 @@ import {
   GetAddressBookEntryInput,
   GetAddressBookEntryResult,
   GetExternalCanisterFiltersResult,
+  GetExternalCanisterResult,
   GetNextApprovableRequestResult,
   GetPermissionInput,
   GetPermissionResult,
@@ -551,6 +552,22 @@ export class StationService {
       labels: labels ? [labels] : [],
       addresses: addresses ? [addresses] : [],
       ids: ids ? [ids] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getExternalCanisterByCanisterId(
+    canisterId: Principal,
+    verifiedCall = false,
+  ): Promise<ExtractOk<GetExternalCanisterResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_external_canister({
+      canister_id: canisterId,
     });
 
     if (variantIs(result, 'Err')) {
