@@ -171,6 +171,7 @@ export default {
       system: 'Sistema',
       transfers: 'Transferências',
       users: 'Usuários',
+      external_canisters: 'Canisters',
     },
     download: {
       user_group: 'Grupos de usuários',
@@ -397,6 +398,11 @@ export default {
     add_station_list_item: 'Adicionar carteira',
   },
   terms: {
+    active: 'Ativo',
+    archived: 'Arquivado',
+    canisters: 'Canisters',
+    canister: 'Canister',
+    labels: 'Etiquetas',
     change: 'Alterar',
     quorum: 'Quórum',
     deposits: 'Depósitos',
@@ -576,6 +582,7 @@ export default {
     transfer_requests: 'Pedidos de transferência',
     permissions: 'Permissões',
     request_policies: 'Regras de aprovação',
+    external_canisters: 'Canisters',
   },
   pages: {
     accounts: {
@@ -633,6 +640,13 @@ export default {
       create_new_user_title: 'Criar novo usuário',
       btn_edit_title: 'Editar usuário',
       error_fetching_users: 'Erro ao carregar os usuários, por favor, tente novamente.',
+    },
+    external_canisters: {
+      title: 'Canisters',
+      btn_add_canister: 'Adicionar canister',
+      add_new_canister_title: 'Adicionar novo canister',
+      edit_canister_title: 'Editar canister',
+      error_fetching_canisters: 'Erro ao carregar os canisters, por favor, tente novamente.',
     },
     add_station: {
       initialization_title: 'Bem-vindo! Como você gostaria de se juntar à Orbit?',
@@ -742,6 +756,7 @@ export default {
       request: 'Pedido',
       addressbook: 'Livro de endereços',
       managesysteminfo: 'Gerir informações do sistema',
+      externalcanister: 'Canister gerenciado',
     },
     actions: {
       list: 'Listar',
@@ -756,6 +771,8 @@ export default {
       systeminfoconfig: 'Configuração (Atualizações, Métricas, Uso)',
       managesysteminfo: 'Gerir Informações do Sistema (e.g. nome)',
       systemupgrade: 'Atualizar o sistema',
+      change: 'Alterar',
+      fund: 'Financiar',
     },
     allow: {
       public: 'Acesso público',

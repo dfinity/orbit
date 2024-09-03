@@ -162,6 +162,7 @@ export default {
       system: 'System',
       transfers: 'Transfers',
       users: 'Users',
+      external_canisters: 'Canisters',
     },
     headers: {
       id: 'ID',
@@ -394,6 +395,11 @@ export default {
     add_station_list_item: 'Add wallet',
   },
   terms: {
+    active: 'Active',
+    archived: 'Archived',
+    canisters: 'Canisters',
+    labels: 'Labels',
+    canister: 'Canister',
     change: 'Change',
     quorum: 'Quorum',
     deposits: 'Deposits',
@@ -574,6 +580,7 @@ export default {
     transfer_requests: 'Transfer Requests',
     permissions: 'Permissions',
     request_policies: 'Request Policies',
+    external_canisters: 'Canisters',
   },
   pages: {
     accounts: {
@@ -619,6 +626,13 @@ export default {
       create_new_user_title: 'Create new user',
       btn_edit_title: 'Edit user',
       error_fetching_users: 'Error fetching users, please try again.',
+    },
+    external_canisters: {
+      title: 'Canisters',
+      btn_add_canister: 'Add canister',
+      add_new_canister_title: 'Add new canister',
+      edit_canister_title: 'Canister Configuration',
+      error_fetching_canisters: 'Error fetching canisters, please try again.',
     },
     user_groups: {
       title: 'User Groups',
@@ -735,6 +749,7 @@ export default {
       request: 'Request',
       addressbook: 'Address Book',
       managesysteminfo: 'Manage System Info',
+      externalcanister: 'External Canister',
     },
     actions: {
       list: 'List',
@@ -749,6 +764,8 @@ export default {
       systeminfoconfig: 'Configuration (Upgrades, Metrics, Usage)',
       managesysteminfo: 'Manage System Info (e.g. name)',
       systemupgrade: 'Upgrade',
+      change: 'Change',
+      fund: 'Fund',
     },
     allow: {
       public: 'Anyone',

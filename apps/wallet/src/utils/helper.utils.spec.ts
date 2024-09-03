@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  compactArray,
   isSemanticVersion,
+  parseLocationQuery,
   removeBasePathFromPathname,
   throttle,
   toArrayBuffer,
@@ -9,6 +11,7 @@ import {
 } from './helper.utils';
 import { idlFactory } from '~/generated/control-panel';
 import { IDL } from '@dfinity/candid';
+import { LocationQuery } from 'vue-router';
 
 describe('Core utils', () => {
   describe('throttle', () => {
@@ -159,6 +162,54 @@ describe('ArrayBuffer utils', () => {
 
       expect(output).toBeInstanceOf(ArrayBuffer);
       expect(new Uint8Array(output)).toEqual(new Uint8Array(input));
+    });
+  });
+});
+
+describe('Array utils', () => {
+  describe('compactArray', () => {
+    it('removes all null and undefined values from an array', () => {
+      const array = [1, null, 2, undefined, 3, 4, null, 5];
+      const result = compactArray(array);
+
+      expect(result).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('removes all null, undefined, and empty strings from an array', () => {
+      const array = [1, null, 2, undefined, 3, 4, null, 5, ''];
+      const result = compactArray(array, { removeEmptyStrings: true });
+
+      expect(result).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('only includes items that are in the set', () => {
+      const array = [1, 2, 3, 4, 5];
+      const include = new Set([1, 3, 5]);
+      const result = compactArray(array, { include });
+
+      expect(result).toEqual([1, 3, 5]);
+    });
+  });
+});
+
+describe('Location query utils', () => {
+  describe('parseLocationQuery', () => {
+    it('parses a location query object', () => {
+      const query: LocationQuery = {};
+      query.arg1 = 'value';
+      query.arg2 = ['value1', 'value2'];
+      query.arg3 = '';
+      query.arg4 = null;
+      query.arg5;
+      query.arg6 = ['value1', '', 'value2', null];
+
+      const result = parseLocationQuery(query);
+
+      expect(result).toEqual({
+        arg1: ['value'],
+        arg2: ['value1', 'value2'],
+        arg6: ['value1', 'value2'],
+      });
     });
   });
 });

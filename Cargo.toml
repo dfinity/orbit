@@ -31,6 +31,7 @@ codegen-units = 1
 anyhow = "1.0.75"
 deunicode = "1.4.4"
 async-trait = "0.1"
+base64 = "0.22.1"
 byteorder = "1.5"
 canbench-rs = "0.1.1"
 candid = "0.10.3"
@@ -47,7 +48,10 @@ hex = "0.4"
 # The ic-agent matches the one sed by bthe 
 ic-agent = { git = "https://github.com/dfinity/agent-rs.git", rev = "be929fd7967249c879f48f2f494cbfc5805a7d98" }
 ic-asset = { git = "https://github.com/dfinity/sdk.git", rev = "75c080ebae22a70578c06ddf1eda0b18ef091845" }
+ic-certification = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
 ic-certified-assets = { git = "https://github.com/dfinity/sdk.git", rev = "75c080ebae22a70578c06ddf1eda0b18ef091845" }
+ic-http-certification = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
+ic-representation-independent-hash = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
 ic-cdk = "0.13.2"
 ic-cdk-macros = "0.9"
 ic-cdk-timers = "0.7.0"

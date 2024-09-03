@@ -1,9 +1,12 @@
+import { Principal } from '@dfinity/principal';
 import {
   DisplayUser,
   RequestEvaluationResult,
   ListRequestsOperationType,
   RequestStatusCode,
   UUID,
+  ExternalCanisterState,
+  ListExternalCanistersSortInput,
 } from '~/generated/station/station.did';
 
 export enum AccountTransferStatus {
@@ -12,6 +15,11 @@ export enum AccountTransferStatus {
   Processing = 'processing',
   Completed = 'completed',
   Unknown = 'unknown',
+}
+
+export enum ExternalCanisterStateEnum {
+  Active = 'Active',
+  Archived = 'Archived',
 }
 
 export enum RequestStatusEnum {
@@ -70,6 +78,7 @@ export enum RequestDomains {
   AddressBook = 'address_book',
   Transfers = 'transfers',
   Users = 'users',
+  ExternalCanisters = 'external_canisters',
   System = 'system',
 }
 
@@ -133,6 +142,15 @@ export interface ListAddressBookEntriesArgs {
   blockchain?: string;
   labels?: [];
   ids?: UUID[];
+}
+
+export interface ListExternalCanistersArgs {
+  limit?: number;
+  offset?: number;
+  canisterIds?: Principal[];
+  labels?: string[];
+  states?: ExternalCanisterState[];
+  sortBy?: ListExternalCanistersSortInput;
 }
 
 export type MetadataItem = { key: string; value: string };

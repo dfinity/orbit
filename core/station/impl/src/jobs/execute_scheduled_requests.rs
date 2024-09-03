@@ -74,15 +74,10 @@ impl Job {
                 }
                 Err(e) => {
                     let request_failed_time = next_time();
-                    let mut request = requests[pos].clone();
-                    request.status = RequestStatus::Failed {
-                        reason: Some(e.to_string()),
-                    };
-                    request.last_modification_timestamp = request_failed_time;
-                    self.request_repository
-                        .insert(request.to_key(), request.to_owned());
-
-                    self.request_service.failed_request_hook(&request).await;
+                    let request = requests[pos].clone();
+                    self.request_service
+                        .fail_request(request, e.to_string(), request_failed_time)
+                        .await;
                 }
             }
         }

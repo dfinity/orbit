@@ -1,6 +1,7 @@
 import { TransferStatus } from '~/generated/station/station.did';
 import { AccountTransferStatus } from '~/types/station.types';
 import type { IDL as CandidIDL } from '@dfinity/candid';
+import { LocationQuery, LocationQueryValue } from 'vue-router';
 
 export const timer = (
   cb: () => void,
@@ -232,4 +233,60 @@ export const removeBasePathFromPathname = (pathname: string, basePath: string): 
 
 export const toArrayBuffer = (input: Uint8Array | number[]): ArrayBuffer => {
   return input instanceof Uint8Array ? input.buffer : new Uint8Array(input).buffer;
+};
+
+/**
+ * Removes all null and undefined values from an array and returns a new array.
+ *
+ * @param array - The array to compact.
+ * @returns A new array with all null and undefined values removed.
+ */
+export const compactArray = <T, R = T>(
+  array: (T | null | undefined)[],
+  opts: {
+    /** If true, also removes empty strings from the array. */
+    removeEmptyStrings?: boolean;
+    /** if provided, only includes items that are in the set. */
+    include?: Set<unknown>;
+  } = {},
+): R[] => {
+  return array.filter(item => {
+    if (item === null || item === undefined) {
+      return false;
+    }
+
+    if (opts.removeEmptyStrings && item === '') {
+      return false;
+    }
+
+    if (opts.include && !opts.include.has(item)) {
+      return false;
+    }
+
+    return true;
+  }) as R[];
+};
+
+/**
+ * Parses a location query object and returns a record with string arrays.
+ *
+ * Removes all null and undefined values from the query object.
+ *
+ * @param query The location query object.
+ * @returns a record with string arrays.
+ */
+export const parseLocationQuery = (query: LocationQuery): Record<string, string[]> => {
+  const result: Record<string, string[]> = {};
+
+  for (const key in query) {
+    if (typeof query[key] === 'string' && query[key] !== '') {
+      result[key] = [query[key] as string];
+    } else if (Array.isArray(query[key]) && query[key]?.length) {
+      result[key] = compactArray<string>(query[key] as LocationQueryValue[], {
+        removeEmptyStrings: true,
+      });
+    }
+  }
+
+  return result;
 };

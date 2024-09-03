@@ -1,24 +1,33 @@
 use crate::{
     core::{
-        ic_cdk::api::{canister_balance, trap},
+        ic_cdk::api::{canister_balance, set_certified_data, trap},
         middlewares::{authorize, call_context},
     },
+    errors::AuthorizationError,
     migration,
     models::resource::{Resource, SystemResourceAction},
     services::{SystemService, SYSTEM_SERVICE},
     SYSTEM_VERSION,
 };
-use ic_cdk_macros::{post_upgrade, query};
+use ic_cdk_macros::{post_upgrade, query, update};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ApiResult;
+use orbit_essentials::http::certified_data_for_skip_certification;
 use orbit_essentials::with_middleware;
-use station_api::{HealthStatus, SystemInfoResponse, SystemInstall, SystemUpgrade};
+use station_api::{
+    HealthStatus, NotifyFailedStationUpgradeInput, SystemInfoResponse, SystemInstall, SystemUpgrade,
+};
 use std::sync::Arc;
+
+fn set_certified_data_for_skip_certification() {
+    set_certified_data(&certified_data_for_skip_certification());
+}
 
 // Canister entrypoints for the controller.
 #[cfg(any(not(feature = "canbench"), test))]
 #[ic_cdk_macros::init]
 async fn initialize(input: Option<SystemInstall>) {
+    set_certified_data_for_skip_certification();
     match input {
         Some(SystemInstall::Init(input)) => CONTROLLER.initialize(input).await,
         Some(SystemInstall::Upgrade(_)) | None => trap("Invalid args to initialize canister"),
@@ -55,6 +64,7 @@ async fn post_upgrade(input: Option<SystemInstall>) {
     // datatype from the one that was initially stored.
     migration::MigrationHandler::run();
 
+    set_certified_data_for_skip_certification();
     match input {
         None => CONTROLLER.post_upgrade(None).await,
         Some(SystemInstall::Upgrade(input)) => CONTROLLER.post_upgrade(Some(input)).await,
@@ -70,6 +80,11 @@ async fn health_status() -> HealthStatus {
 #[query(name = "system_info")]
 async fn system_info() -> ApiResult<SystemInfoResponse> {
     CONTROLLER.system_info().await
+}
+
+#[update(name = "notify_failed_station_upgrade")]
+async fn notify_failed_station_upgrade(input: NotifyFailedStationUpgradeInput) -> ApiResult<()> {
+    CONTROLLER.notify_failed_station_upgrade(input).await
 }
 
 // Controller initialization and implementation.
@@ -118,6 +133,24 @@ impl SystemController {
         Ok(SystemInfoResponse {
             system: system_info.to_dto(&cycles, SYSTEM_VERSION),
         })
+    }
+
+    // No authorization middleware as the caller is checked to be a controller of the station canister.
+    async fn notify_failed_station_upgrade(
+        &self,
+        input: NotifyFailedStationUpgradeInput,
+    ) -> ApiResult<()> {
+        let ctx = call_context();
+        if !ctx.caller_is_controller() {
+            let err = AuthorizationError::Unauthorized {
+                resource: "notify_failed_station_upgrade".to_string(),
+            };
+            return Err(err.into());
+        }
+
+        self.system_service
+            .notify_failed_station_upgrade(input.reason)
+            .await
     }
 }
 

@@ -6,12 +6,16 @@ use super::{
 use crate::{
     errors::AuthorizationError,
     models::{
-        resource::{RequestResourceAction, Resource, ResourceId, UserResourceAction},
-        User,
+        resource::{
+            NotificationResourceAction, RequestResourceAction, Resource, ResourceId,
+            UserResourceAction,
+        },
+        NotificationKey, User,
     },
-    repositories::REQUEST_REPOSITORY,
+    repositories::{NOTIFICATION_REPOSITORY, REQUEST_REPOSITORY},
     services::permission::PERMISSION_SERVICE,
 };
+use orbit_essentials::repository::Repository;
 
 pub struct Authorization;
 
@@ -90,6 +94,23 @@ fn has_default_resource_access(user: &User, resource: &Resource) -> bool {
         Resource::User(UserResourceAction::Read(ResourceId::Id(user_id))) => {
             // The user has access to their own user record.
             *user_id == user.id
+        }
+        Resource::Notification(action) => {
+            match action {
+                // The user can always list notifications.
+                NotificationResourceAction::List => true,
+                // The user cannot update arbitrary notifications.
+                NotificationResourceAction::Update(ResourceId::Any) => false,
+                NotificationResourceAction::Update(ResourceId::Id(id)) => {
+                    let key = NotificationKey { id: *id };
+                    if let Some(notification) = NOTIFICATION_REPOSITORY.get(&key) {
+                        // The user has access to the user's own notifications.
+                        notification.target_user_id == user.id
+                    } else {
+                        false
+                    }
+                }
+            }
         }
         _ => false,
     }
