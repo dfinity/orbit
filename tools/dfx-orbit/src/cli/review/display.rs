@@ -1,11 +1,14 @@
 use crate::DfxOrbit;
 use candid::Principal;
-use itertools::Itertools;
 use station_api::{
     CallExternalCanisterOperationDTO, CanisterInstallMode, ChangeExternalCanisterOperationDTO,
-    GetRequestResponse, ListRequestsResponse, RequestOperationDTO, RequestStatusDTO,
+    GetRequestResponse, ListRequestsResponse, RequestAdditionalInfoDTO, RequestApprovalDTO,
+    RequestApprovalStatusDTO, RequestDTO, RequestOperationDTO, RequestStatusDTO,
 };
-use std::{collections::HashMap, fmt::Write};
+use std::{
+    collections::{BTreeMap, HashMap},
+    fmt::Write,
+};
 use tabled::{
     settings::{Settings, Style},
     Table,
@@ -66,22 +69,16 @@ impl DfxOrbit {
             self.display_request_operation(&base_info.operation)
         )?;
         writeln!(output, "Title: {}", base_info.title)?;
-        if let Some(summary) = base_info.summary {
+        if let Some(ref summary) = base_info.summary {
             writeln!(output, "Summary: {}", summary)?
         }
         writeln!(output, "Requested by: {}", add_info.requester_name)?;
+
+        self.display_approvers_and_rejectors(&mut output, &base_info, &add_info)?;
+
         writeln!(
             output,
-            "Approved by: {}",
-            add_info
-                .approvers
-                .into_iter()
-                .map(|approver| format!("\n\t{}", approver.name))
-                .join("")
-        )?;
-        writeln!(
-            output,
-            "Status: {}",
+            "Execution Status: {}",
             self.display_request_status(&base_info.status)
         )?;
         if let Some(additional_status) = self.display_additional_stats_info(&base_info.status) {
@@ -166,6 +163,54 @@ impl DfxOrbit {
             }?;
         }
 
+        Ok(())
+    }
+
+    fn display_approvers_and_rejectors<W: Write>(
+        &self,
+        writer: &mut W,
+        base_info: &RequestDTO,
+        add_info: &RequestAdditionalInfoDTO,
+    ) -> anyhow::Result<()> {
+        let usernames: BTreeMap<String, String> = add_info
+            .approvers
+            .iter()
+            .map(|user| (user.id.clone(), user.name.clone()))
+            .collect();
+
+        let (approvers, rejectors): (Vec<_>, Vec<_>) = base_info
+            .approvals
+            .iter()
+            .partition(|approval| approval.status == RequestApprovalStatusDTO::Approved);
+
+        if !approvers.is_empty() {
+            write!(writer, "Approved by: ")?;
+            self.display_request_approvals(writer, approvers, &usernames)?;
+        }
+        if !rejectors.is_empty() {
+            write!(writer, "Rejected by: ")?;
+            self.display_request_approvals(writer, rejectors, &usernames)?;
+        }
+
+        Ok(())
+    }
+
+    fn display_request_approvals<W: Write>(
+        &self,
+        writer: &mut W,
+        list: Vec<&RequestApprovalDTO>,
+        usernames: &BTreeMap<String, String>,
+    ) -> anyhow::Result<()> {
+        for user in list {
+            let name = usernames
+                .get(&user.approver_id)
+                .unwrap_or(&user.approver_id);
+            write!(writer, "\n\t{}", name)?;
+            if let Some(reason) = &user.status_reason {
+                write!(writer, " ({})", reason)?;
+            }
+        }
+        writeln!(writer)?;
         Ok(())
     }
 
