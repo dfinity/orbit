@@ -400,11 +400,18 @@ export default {
     no_withdraw_request_found_search: 'Pas de demande retrait trouvé pour ce critère.',
     add_station_list_item: 'Ajouter un portefeuille',
   },
+  external_canisters: {
+    add_new_label: 'Ajouter un nouveau étiquette',
+    use_existing: 'Utiliser un existant',
+    create_new: 'Créer un nouveau',
+    initial_cycles: 'Cycles initiaux',
+  },
   terms: {
     active: 'Actif',
     archived: 'Archivé',
     canisters: 'Canisters',
     canister: 'Canister',
+    description: 'Description',
     labels: 'Étiquettes',
     change: 'Changement',
     quorum: 'Quorum',

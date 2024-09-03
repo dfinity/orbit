@@ -9,6 +9,7 @@ import {
   AddUserGroupOperationInput,
   AddUserOperationInput,
   Capabilities,
+  ConfigureExternalCanisterSettingsInput,
   CreateExternalCanisterOperationInput,
   CreateRequestInput,
   DisasterRecoveryCommittee,
@@ -757,6 +758,46 @@ export class StationService {
 
   async createRequest(input: CreateRequestInput): Promise<Request> {
     const result = await this.actor.create_request(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async addExternalCanister(input: CreateExternalCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { CreateExternalCanister: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async editExternalCanisterSettings(
+    canisterId: Principal,
+    input: ConfigureExternalCanisterSettingsInput,
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        ConfigureExternalCanister: {
+          canister_id: canisterId,
+          kind: {
+            Settings: input,
+          },
+        },
+      },
+    });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
