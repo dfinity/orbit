@@ -399,6 +399,7 @@ export default {
     archived: 'Archived',
     canisters: 'Canisters',
     labels: 'Labels',
+    canister: 'Canister',
     change: 'Change',
     quorum: 'Quorum',
     deposits: 'Deposits',

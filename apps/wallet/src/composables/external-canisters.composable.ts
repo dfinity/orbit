@@ -14,6 +14,7 @@ export type ExternalCanistersFilters = {
   canister_items: SelectItem<string>[];
   labels: string[];
   states: ExternalCanisterStateEnum[];
+  sort_by: string;
 };
 
 export type ExternalCanistersFiltersStorable = {
@@ -21,6 +22,7 @@ export type ExternalCanistersFiltersStorable = {
   labels?: string[];
   canisters?: string[]; // format: {principal},{name}
   states?: ExternalCanisterStateEnum[];
+  sort_by?: string;
 };
 
 const getDefaultFilters = (): ExternalCanistersFilters => ({
@@ -29,6 +31,7 @@ const getDefaultFilters = (): ExternalCanistersFilters => ({
   canisters: [],
   canister_items: [],
   states: [ExternalCanisterStateEnum.Active],
+  sort_by: 'name_asc',
 });
 
 const parseFromStorableCanisterEntry = (entry: string): SelectItem<string> | null => {
@@ -71,16 +74,36 @@ const buildFilters = (rawQuery: LocationQuery): ExternalCanistersFilters => {
       canisters = [canisters];
     }
 
+    let sort_by = query?.sort_by ?? defaultFilters.sort_by;
+    if (Array.isArray(sort_by) && sort_by.length) {
+      sort_by = sort_by[0];
+    }
+
+    switch (sort_by) {
+      case 'name_desc':
+        sort_by = 'name_desc';
+        break;
+      default:
+        sort_by = 'name_asc';
+        break;
+    }
+
+    let name_prefix = query?.name_prefix ?? defaultFilters.name_prefix;
+    if (Array.isArray(name_prefix) && name_prefix.length) {
+      name_prefix = name_prefix[0];
+    }
+
     const canisterItems = canisters
       .map(parseFromStorableCanisterEntry)
       .filter(Boolean) as SelectItem<string>[];
 
     return {
-      name_prefix: query?.name_prefix ?? defaultFilters.name_prefix,
+      name_prefix,
       labels,
       states,
       canisters: canisterItems.map(entry => entry.value),
       canister_items: canisterItems,
+      sort_by,
     };
   } catch (e) {
     logger.error('Failed to parse filters from query', e);
@@ -121,6 +144,7 @@ export const useExternalCanistersFilters = () => {
           labels: filters.value.labels,
           states: filters.value.states,
           canisters: filterByCanisters.map(mapToStorableCanisterEntry),
+          sort_by: filters.value.sort_by,
         },
       });
     },

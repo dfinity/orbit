@@ -404,6 +404,7 @@ export default {
     active: 'Actif',
     archived: 'Archivé',
     canisters: 'Canisters',
+    canister: 'Canister',
     labels: 'Étiquettes',
     change: 'Changement',
     quorum: 'Quorum',
