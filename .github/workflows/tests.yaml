@@ -125,7 +125,7 @@ jobs:
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Download Artifacts'
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: integration-tests
           path: tests/integration/wasms
