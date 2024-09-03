@@ -7,6 +7,7 @@ import logger from '~/core/logger.core';
 import { useStationStore } from '~/stores/station.store';
 import { SelectItem } from '~/types/helper.types';
 import { ExternalCanisterStateEnum } from '~/types/station.types';
+import { compactArray, parseLocationQuery } from '~/utils/helper.utils';
 
 export type ExternalCanistersFilters = {
   name_prefix: string;
@@ -57,50 +58,43 @@ const mapToStorableCanisterEntry = (canister: SelectItem<string>): string =>
 
 const buildFilters = (rawQuery: LocationQuery): ExternalCanistersFilters => {
   try {
+    const query = parseLocationQuery(rawQuery);
     const defaultFilters = getDefaultFilters();
-    const query = rawQuery as ExternalCanistersFiltersStorable;
-    let states = query?.states ?? defaultFilters.states;
-    if (!Array.isArray(states)) {
-      states = [states];
+    const storaredFields: ExternalCanistersFiltersStorable = {};
+
+    if (query.labels?.length) {
+      storaredFields.labels = compactArray(query.labels);
     }
 
-    let labels = query?.labels ?? defaultFilters.labels;
-    if (!Array.isArray(labels)) {
-      labels = [labels];
+    if (query.states?.length) {
+      storaredFields.states = compactArray<string, ExternalCanisterStateEnum>(query.states, {
+        include: new Set(Object.values(ExternalCanisterStateEnum)),
+      });
     }
 
-    let canisters = query?.canisters ?? [];
-    if (!Array.isArray(canisters)) {
-      canisters = [canisters];
+    if (query.name_prefix?.length) {
+      storaredFields.name_prefix = query.name_prefix[0];
     }
 
-    let sort_by = query?.sort_by ?? defaultFilters.sort_by;
-    if (Array.isArray(sort_by) && sort_by.length) {
-      sort_by = sort_by[0];
-    }
+    const canisterItems = compactArray(
+      (query?.canisters ?? []).map(parseFromStorableCanisterEntry),
+    );
 
-    switch (sort_by) {
+    let sort_by = defaultFilters.sort_by;
+    switch (query?.sort_by?.[0]) {
       case 'name_desc':
         sort_by = 'name_desc';
         break;
+      case 'name_asc':
       default:
         sort_by = 'name_asc';
         break;
     }
 
-    let name_prefix = query?.name_prefix ?? defaultFilters.name_prefix;
-    if (Array.isArray(name_prefix) && name_prefix.length) {
-      name_prefix = name_prefix[0];
-    }
-
-    const canisterItems = canisters
-      .map(parseFromStorableCanisterEntry)
-      .filter(Boolean) as SelectItem<string>[];
-
     return {
-      name_prefix,
-      labels,
-      states,
+      name_prefix: storaredFields.name_prefix ?? defaultFilters.name_prefix,
+      labels: storaredFields.labels ?? defaultFilters.labels,
+      states: storaredFields.states ?? defaultFilters.states,
       canisters: canisterItems.map(entry => entry.value),
       canister_items: canisterItems,
       sort_by,
@@ -120,10 +114,12 @@ export const useExternalCanistersStates = (): ComputedRef<
 > => {
   const i18n = useI18n();
 
-  return computed(() => [
-    { key: ExternalCanisterStateEnum.Active, text: i18n.t('terms.active') },
-    { key: ExternalCanisterStateEnum.Archived, text: i18n.t('terms.archived') },
-  ]);
+  return computed(() => {
+    return Object.values(ExternalCanisterStateEnum).map(key => ({
+      key,
+      text: i18n.t(`terms.${key.toLowerCase()}`),
+    }));
+  });
 };
 
 export const useExternalCanistersFilters = () => {
