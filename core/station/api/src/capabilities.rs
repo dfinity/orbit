@@ -9,7 +9,7 @@ pub struct AssetDTO {
     pub symbol: String,
     // The asset standard that is supported (e.g. `erc20`, etc.), canonically
     // represented as a lowercase string with spaces replaced with underscores.
-    pub standard: String,
+    pub standards: Vec<String>,
     /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
     pub name: String,
     /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),

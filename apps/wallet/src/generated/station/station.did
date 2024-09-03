@@ -1642,7 +1642,7 @@ type Asset = record {
   blockchain : text;
   // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
   // with spaces replaced with underscores.
-  standard : text;
+  standards : vec text;
   // The asset symbol, e.g. "ICP" or "BTC".
   symbol : AssetSymbol;
   // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)

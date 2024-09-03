@@ -1,8 +1,8 @@
 use crate::{
-    models::{Account, AddressBookEntry, Request, RequestPolicy, Transfer, User, UserGroup},
+    models::{Account, AddressBookEntry, Asset, Request, RequestPolicy, Transfer, User, UserGroup},
     repositories::{
         request_policy::REQUEST_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY,
-        USER_GROUP_REPOSITORY, USER_REPOSITORY,
+        ASSET_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     SERVICE_NAME,
 };
@@ -31,6 +31,13 @@ thread_local! {
     /// This list should be updated with new user group metrics as they are added.
     pub static USER_GROUP_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<UserGroup>>>> = vec![
         Rc::new(RefCell::new(MetricTotalUserGroups)),
+    ];
+
+    /// A collection of asset related metrics.
+    ///
+    /// This list should be updated with new asset metrics as they are added.
+    pub static ASSET_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<Asset>>>> = vec![
+        Rc::new(RefCell::new(MetricTotalAssets)),
     ];
 
     /// A collection of account related metrics.
@@ -77,6 +84,7 @@ pub fn recompute_metrics() {
     let users = USER_REPOSITORY.list();
     let user_groups = USER_GROUP_REPOSITORY.list();
     let accounts = ACCOUNT_REPOSITORY.list();
+    let assets = ASSET_REPOSITORY.list();
 
     // To avoid deserialize all the data, we can use the repository length to get the total number of entries of
     // simple gauge metrics.
@@ -93,6 +101,12 @@ pub fn recompute_metrics() {
         metrics
             .iter()
             .for_each(|metric| metric.borrow_mut().recalculate(&user_groups))
+    });
+
+    ASSET_METRICS.with(|metrics| {
+        metrics
+            .iter()
+            .for_each(|metric| metric.borrow_mut().recalculate(&assets))
     });
 
     ACCOUNT_METRICS.with(|metrics| {
@@ -233,6 +247,30 @@ impl ApplicationMetric<UserGroup> for MetricTotalUserGroups {
 
     fn sub(&mut self, _: &UserGroup) {
         self.dec(SERVICE_NAME, &labels! { "status" => "active" });
+    }
+}
+/// Metric for the total number of assets.
+pub struct MetricTotalAssets;
+
+impl ApplicationGaugeMetric<Asset> for MetricTotalAssets {}
+
+impl ApplicationMetric<Asset> for MetricTotalAssets {
+    fn name(&self) -> &'static str {
+        "total_assets"
+    }
+
+    fn help(&self) -> &'static str {
+        "The total number of assets."
+    }
+
+    fn sum(&mut self, _: &Asset, previous: Option<&Asset>) {
+        if previous.is_none() {
+            self.inc(SERVICE_NAME);
+        }
+    }
+
+    fn sub(&mut self, _: &Asset) {
+        self.dec(SERVICE_NAME);
     }
 }
 

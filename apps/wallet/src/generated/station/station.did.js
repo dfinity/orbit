@@ -70,10 +70,10 @@ export const idlFactory = ({ IDL }) => {
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AssetSymbol = IDL.Text;
   const Asset = IDL.Record({
+    'standards' : IDL.Vec(IDL.Text),
     'metadata' : IDL.Vec(AssetMetadata),
     'name' : IDL.Text,
     'blockchain' : IDL.Text,
-    'standard' : IDL.Text,
     'symbol' : AssetSymbol,
   });
   const Capabilities = IDL.Record({

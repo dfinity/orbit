@@ -109,10 +109,10 @@ export interface Allow {
   'users' : Array<UUID>,
 }
 export interface Asset {
+  'standards' : Array<string>,
   'metadata' : Array<AssetMetadata>,
   'name' : string,
   'blockchain' : string,
-  'standard' : string,
   'symbol' : AssetSymbol,
 }
 export interface AssetMetadata { 'key' : string, 'value' : string }
