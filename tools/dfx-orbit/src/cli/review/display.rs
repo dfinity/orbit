@@ -207,7 +207,7 @@ impl DfxOrbit {
                 .unwrap_or(&user.approver_id);
             write!(writer, "\n\t{}", name)?;
             if let Some(reason) = &user.status_reason {
-                write!(writer, " ({})", reason)?;
+                write!(writer, " (Reason: \"{}\")", reason)?;
             }
         }
         writeln!(writer)?;
