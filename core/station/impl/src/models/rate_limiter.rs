@@ -9,6 +9,6 @@ pub struct RequestRateLimiterKey {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum RequestRateLimiterType {
-    Transfer,
-    Misc,
+    Cheap,
+    Expensive,
 }

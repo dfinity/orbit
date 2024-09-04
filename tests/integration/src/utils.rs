@@ -705,3 +705,8 @@ pub fn sha256_hex(data: &[u8]) -> String {
 
     hex::encode(result)
 }
+
+pub fn bump_time_to_avoid_ratelimit(env: &PocketIc) {
+    // the rate limiter aggregation window is 300s and resolution is 10s
+    env.advance_time(Duration::from_secs(300 + 10));
+}

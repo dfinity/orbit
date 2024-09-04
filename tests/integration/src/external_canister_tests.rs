@@ -1,8 +1,8 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    add_user, canister_status, execute_request, get_request, submit_request,
-    submit_request_approval, submit_request_raw, submit_request_with_expected_trap, update_raw,
-    user_test_id, wait_for_request, COUNTER_WAT,
+    add_user, bump_time_to_avoid_ratelimit, canister_status, execute_request, get_request,
+    submit_request, submit_request_approval, submit_request_raw, submit_request_with_expected_trap,
+    update_raw, user_test_id, wait_for_request, COUNTER_WAT,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -834,6 +834,8 @@ fn call_external_canister_test() {
     let cycles = env.cycle_balance(execution_canister_id);
     assert!((95 * T..=100 * T).contains(&cycles));
 
+    bump_time_to_avoid_ratelimit(&env);
+
     // submit a call external canister request with failing validation
     let failing_validation_call_canister_operation =
         RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
@@ -901,6 +903,8 @@ fn call_external_canister_test() {
     assert!(trap_message.contains(
         "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
     ));
+
+    bump_time_to_avoid_ratelimit(&env);
 
     // submit a request labeling the execution method as the validation method which is illegal given the permissions set so far
     let illegal_call_canister_operation =
@@ -987,6 +991,8 @@ fn call_external_canister_test() {
         add_request_policy,
     )
     .unwrap();
+
+    bump_time_to_avoid_ratelimit(&env);
 
     // submit the request to call the counter canister again
     let call_canister_operation_request = submit_request(

@@ -1,6 +1,8 @@
 use crate::interfaces::{default_account, send_icp_to_account, ICP};
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{execute_request, submit_request_raw, user_test_id};
+use crate::utils::{
+    bump_time_to_avoid_ratelimit, execute_request, submit_request_raw, user_test_id,
+};
 use crate::CanisterIds;
 use crate::TestEnv;
 use ic_ledger_types::AccountIdentifier;
@@ -9,15 +11,14 @@ use pocket_ic::update_candid_as;
 use pocket_ic::PocketIc;
 use station_api::{
     AddAccountOperationInput, AllowDTO, MeResponse, RequestOperationDTO, RequestOperationInput,
-    TransferOperationInput,
+    SystemUpgradeOperationInput, SystemUpgradeTargetDTO, TransferOperationInput,
 };
-use std::time::Duration;
 
-const TRANSFER_RATE_LIMIT: u64 = 1000;
-const MISC_RATE_LIMIT: u64 = 10;
+const CHEAP_RATE_LIMIT: u64 = 2000;
+const EXPENSIVE_RATE_LIMIT: u64 = 2;
 
 #[test]
-fn transfer_rate_limiter() {
+fn cheap_rate_limiter() {
     let TestEnv {
         env,
         canister_ids,
@@ -70,7 +71,7 @@ fn transfer_rate_limiter() {
     let account_address = AccountIdentifier::from_hex(&account_dto.address).unwrap();
     send_icp_to_account(&env, controller, account_address, 100_000_000, 0, None).unwrap();
 
-    test_rate_limit(&env, canister_ids, TRANSFER_RATE_LIMIT, |_| {
+    test_rate_limit(&env, canister_ids, CHEAP_RATE_LIMIT, |_| {
         let beneficiary_id = user_test_id(1);
         let transfer_operation_input = TransferOperationInput {
             from_account_id: account_dto.id.clone(),
@@ -85,40 +86,18 @@ fn transfer_rate_limiter() {
 }
 
 #[test]
-fn misc_rate_limiter() {
+fn expensive_rate_limiter() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
 
-    let res: (ApiResult<MeResponse>,) =
-        update_candid_as(&env, canister_ids.station, WALLET_ADMIN_USER, "me", ()).unwrap();
-    let user_dto = res.0.unwrap().me;
-
-    test_rate_limit(&env, canister_ids, MISC_RATE_LIMIT, |i| {
-        let add_account_operation_input = AddAccountOperationInput {
-            name: format!("test{}", i),
-            blockchain: "icp".to_string(),
-            standard: "native".to_string(),
-            read_permission: AllowDTO {
-                auth_scope: station_api::AuthScopeDTO::Restricted,
-                user_groups: vec![],
-                users: vec![user_dto.id.clone()],
-            },
-            configs_permission: AllowDTO {
-                auth_scope: station_api::AuthScopeDTO::Restricted,
-                user_groups: vec![],
-                users: vec![user_dto.id.clone()],
-            },
-            transfer_permission: AllowDTO {
-                auth_scope: station_api::AuthScopeDTO::Restricted,
-                user_groups: vec![],
-                users: vec![user_dto.id.clone()],
-            },
-            transfer_request_policy: None,
-            configs_request_policy: None,
-            metadata: vec![],
+    test_rate_limit(&env, canister_ids, EXPENSIVE_RATE_LIMIT, |_| {
+        let system_upgrade_operation_input = SystemUpgradeOperationInput {
+            target: SystemUpgradeTargetDTO::UpgradeStation,
+            module: vec![],
+            arg: None,
         };
-        RequestOperationInput::AddAccount(add_account_operation_input)
+        RequestOperationInput::SystemUpgrade(system_upgrade_operation_input)
     });
 }
 
@@ -127,6 +106,7 @@ where
     F: FnOnce(u64) -> RequestOperationInput + Copy,
 {
     for _ in 0..2 {
+        bump_time_to_avoid_ratelimit(env);
         for i in 0..(rate_limit + 1) {
             let res = submit_request_raw(env, WALLET_ADMIN_USER, canister_ids.station, f(i));
             if i >= rate_limit {
@@ -138,7 +118,5 @@ where
                 res.unwrap().0.unwrap();
             }
         }
-        // the rate limiter aggregation window is 1h and resolution is 60s
-        env.advance_time(Duration::from_secs(3600 + 60));
     }
 }

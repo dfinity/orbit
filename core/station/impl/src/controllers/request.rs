@@ -55,8 +55,8 @@ async fn create_request(input: CreateRequestInput) -> ApiResult<CreateRequestRes
     CONTROLLER.create_request(input).await
 }
 
-const RATE_LIMITER_RESOLUTION: Duration = Duration::from_secs(60);
-const RATE_LIMITER_TIME_WINDOW: Duration = Duration::from_secs(3600);
+const RATE_LIMITER_RESOLUTION: Duration = Duration::from_secs(10);
+const RATE_LIMITER_TIME_WINDOW: Duration = Duration::from_secs(300);
 
 thread_local! {
     static REQUEST_RATE_LIMITER: RefCell<HashMap<RequestRateLimiterKey, Limiter>> = RefCell::new(HashMap::new());

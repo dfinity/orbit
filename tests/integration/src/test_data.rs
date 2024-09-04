@@ -2,10 +2,10 @@
 
 use candid::Principal;
 use pocket_ic::PocketIc;
-use std::time::Duration;
 use system_upgrade::perform_upgrader_update;
 
 use crate::setup::get_canister_wasm;
+use crate::utils::bump_time_to_avoid_ratelimit;
 
 pub mod account;
 pub mod address_book;
@@ -137,8 +137,7 @@ impl<'a> StationDataGenerator<'a> {
     fn increment_request_count(&mut self) {
         self.count_requests += 1;
 
-        // bump time to avoid getting rate-limited (the rate limiter aggregation window is 1h and resolution is 60s)
-        self.env.advance_time(Duration::from_secs(3600 + 60));
+        bump_time_to_avoid_ratelimit(self.env);
     }
 
     pub fn generate(&mut self) {
