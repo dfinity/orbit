@@ -1242,6 +1242,11 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'me' : User, 'privileges' : IDL.Vec(UserPrivilege) }),
     'Err' : Error,
   });
+  const NotifyFailedStationUpgradeInput = IDL.Record({ 'reason' : IDL.Text });
+  const NotifyFailedStationUpgradeResult = IDL.Variant({
+    'Ok' : IDL.Null,
+    'Err' : Error,
+  });
   const SubmitRequestApprovalInput = IDL.Record({
     'request_id' : UUID,
     'decision' : RequestApprovalStatus,
@@ -1394,6 +1399,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'me' : IDL.Func([], [MeResult], ['query']),
+    'notify_failed_station_upgrade' : IDL.Func(
+        [NotifyFailedStationUpgradeInput],
+        [NotifyFailedStationUpgradeResult],
+        [],
+      ),
     'submit_request_approval' : IDL.Func(
         [SubmitRequestApprovalInput],
         [SubmitRequestApprovalResult],

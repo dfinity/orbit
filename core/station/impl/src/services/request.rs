@@ -440,6 +440,22 @@ impl RequestService {
 
         Ok(request)
     }
+
+    pub async fn fail_request(
+        &self,
+        mut request: Request,
+        reason: String,
+        request_failed_time: u64,
+    ) {
+        request.status = RequestStatus::Failed {
+            reason: Some(reason),
+        };
+        request.last_modification_timestamp = request_failed_time;
+        self.request_repository
+            .insert(request.to_key(), request.to_owned());
+
+        self.failed_request_hook(&request).await;
+    }
 }
 
 #[cfg(test)]
