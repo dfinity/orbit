@@ -2135,6 +2135,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-asset-certification"
+version = "2.6.0"
+source = "git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f#eefc99e2a0041ae46873864e6e2f7aa8506a361f"
+dependencies = [
+ "globset",
+ "ic-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f)",
+ "ic-http-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f)",
+ "thiserror",
+]
+
+[[package]]
 name = "ic-cbor"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2263,7 +2274,7 @@ dependencies = [
 [[package]]
 name = "ic-certification"
 version = "2.6.0"
-source = "git+https://github.com/dfinity/response-verification?rev=da70db93832f88ecc556ae082612aedec47d3816#da70db93832f88ecc556ae082612aedec47d3816"
+source = "git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f#eefc99e2a0041ae46873864e6e2f7aa8506a361f"
 dependencies = [
  "hex",
  "serde",
@@ -2310,12 +2321,12 @@ dependencies = [
 [[package]]
 name = "ic-http-certification"
 version = "2.6.0"
-source = "git+https://github.com/dfinity/response-verification?rev=da70db93832f88ecc556ae082612aedec47d3816#da70db93832f88ecc556ae082612aedec47d3816"
+source = "git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f#eefc99e2a0041ae46873864e6e2f7aa8506a361f"
 dependencies = [
  "candid",
  "http 0.2.12",
- "ic-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=da70db93832f88ecc556ae082612aedec47d3816)",
- "ic-representation-independent-hash 2.6.0 (git+https://github.com/dfinity/response-verification?rev=da70db93832f88ecc556ae082612aedec47d3816)",
+ "ic-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f)",
+ "ic-representation-independent-hash 2.6.0 (git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f)",
  "serde",
  "thiserror",
  "urlencoding",
@@ -2362,7 +2373,7 @@ dependencies = [
 [[package]]
 name = "ic-representation-independent-hash"
 version = "2.6.0"
-source = "git+https://github.com/dfinity/response-verification?rev=da70db93832f88ecc556ae082612aedec47d3816#da70db93832f88ecc556ae082612aedec47d3816"
+source = "git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f#eefc99e2a0041ae46873864e6e2f7aa8506a361f"
 dependencies = [
  "leb128",
  "sha2 0.10.8",
@@ -3131,9 +3142,9 @@ dependencies = [
  "hex",
  "ic-cdk 0.13.5",
  "ic-cdk-timers",
- "ic-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=da70db93832f88ecc556ae082612aedec47d3816)",
- "ic-http-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=da70db93832f88ecc556ae082612aedec47d3816)",
- "ic-representation-independent-hash 2.6.0 (git+https://github.com/dfinity/response-verification?rev=da70db93832f88ecc556ae082612aedec47d3816)",
+ "ic-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f)",
+ "ic-http-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f)",
+ "ic-representation-independent-hash 2.6.0 (git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f)",
  "ic-stable-structures",
  "orbit-essentials-macros",
  "prometheus",
@@ -4543,7 +4554,7 @@ dependencies = [
  "cfg-if",
  "libc",
  "psm",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -4558,6 +4569,7 @@ version = "0.0.2-alpha.6"
 dependencies = [
  "anyhow",
  "async-trait",
+ "base64 0.22.1",
  "byteorder",
  "canbench-rs",
  "candid",
@@ -4566,8 +4578,11 @@ dependencies = [
  "deunicode",
  "futures",
  "hex",
+ "ic-asset-certification",
  "ic-cdk 0.13.5",
  "ic-cdk-macros 0.9.0",
+ "ic-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f)",
+ "ic-http-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=eefc99e2a0041ae46873864e6e2f7aa8506a361f)",
  "ic-ledger-types",
  "ic-stable-structures",
  "lazy_static",
@@ -5458,7 +5473,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]

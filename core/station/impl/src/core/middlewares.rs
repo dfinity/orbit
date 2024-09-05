@@ -1,5 +1,6 @@
 use super::authorization::Authorization;
 use super::CallContext;
+use crate::controllers::certify_metrics;
 use crate::core::ic_cdk::api::trap;
 use crate::models::resource::Resource;
 use crate::services::SYSTEM_SERVICE;
@@ -65,4 +66,5 @@ where
             .with(&labels! { "status" => status, "method" => called_method })
             .inc();
     });
+    certify_metrics();
 }

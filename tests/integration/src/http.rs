@@ -39,12 +39,11 @@ fn test_candid_decoding_quota(env: &PocketIc, canister_id: Principal) {
             large_http_request_bytes,
         )
         .unwrap_err();
-    println!("desc: {}", err.description);
     assert!(err.description.contains("Decoding cost exceeds the limit"));
 }
 
 #[test]
-fn test_http_request_deconding_quota() {
+fn test_http_request_decoding_quota() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
@@ -53,16 +52,18 @@ fn test_http_request_deconding_quota() {
     test_candid_decoding_quota(&env, canister_ids.control_panel);
 }
 
-fn fetch_asset(canister_id: Principal, port: u16, path: &str, expected: &str) {
+fn fetch_asset(canister_id: Principal, port: u16, path: &str, expected: Vec<&str>) {
     let client = reqwest::blocking::Client::new();
     let url = format!("http://{}.localhost:{}{}", canister_id, port, path);
     let res = client.get(url).send().unwrap();
     let page = String::from_utf8(res.bytes().unwrap().to_vec()).unwrap();
-    assert!(page.contains(expected));
+    for exp in expected {
+        assert!(page.contains(exp));
+    }
 }
 
 #[test]
-fn test_skip_asset_certification() {
+fn test_asset_certification() {
     let TestEnv {
         mut env,
         canister_ids,
@@ -75,7 +76,7 @@ fn test_skip_asset_certification() {
         canister_ids.station,
         port,
         "/metrics",
-        "# HELP station_total_policies The total number of policies that are available.",
+        vec!["# HELP station_total_users The total number of users that are registered, labeled by their status.", "# HELP station_metrics_timestamp UNIX timestamp in nanoseconds when the metrics were exported"],
     );
-    fetch_asset(canister_ids.control_panel, port, "/metrics", "# HELP control_panel_active_users Total number of active users in the system, labeled by the time interval.");
+    fetch_asset(canister_ids.control_panel, port, "/metrics", vec!["# HELP control_panel_active_users Total number of active users in the system, labeled by the time interval."]);
 }

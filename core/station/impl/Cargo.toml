@@ -18,6 +18,7 @@ canbench = ['canbench-rs']
 
 [dependencies]
 anyhow = { workspace = true }
+base64 = { workspace = true }
 deunicode = { workspace = true }
 async-trait = { workspace = true }
 byteorder = { workspace = true }
@@ -27,8 +28,11 @@ canfund = { path = '../../../libs/canfund', version = '0.0.2-alpha.3' }
 futures = { workspace = true }
 hex = { workspace = true }
 orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.0.2-alpha.4' }
+ic-asset-certification = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
+ic-certification = { workspace = true }
+ic-http-certification = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
 lazy_static = { workspace = true }
