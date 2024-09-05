@@ -1,16 +1,31 @@
 use crate::core::ic_cdk::api::{
     canister_balance, data_certificate, print, set_certified_data, time, trap,
 };
+use crate::core::middlewares::use_canister_call_metric;
 use crate::SERVICE_NAME;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
 use ic_asset_certification::{Asset, AssetConfig, AssetEncoding, AssetRouter};
-use ic_cdk_macros::query;
+use ic_cdk_macros::{query, update};
 use ic_certification::HashTree;
 use ic_http_certification::{HeaderField, HttpCertificationTree, HttpRequest, HttpResponse};
+use orbit_essentials::api::ApiResult;
 use orbit_essentials::metrics::with_metrics_registry;
+use orbit_essentials::with_middleware;
 use serde::Serialize;
 use std::{cell::RefCell, rc::Rc};
+
+// no-op endpoint to refresh cycles balance in metrics
+#[update]
+async fn ping() {
+    let _ = do_ping().await;
+}
+
+// it is important to collect metrics here to refresh cycles balance in metrics
+#[with_middleware(tail = use_canister_call_metric("ping", &result))]
+async fn do_ping() -> ApiResult<()> {
+    Ok(())
+}
 
 #[query(decoding_quota = 10000)]
 fn http_request(req: HttpRequest) -> HttpResponse {

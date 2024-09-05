@@ -134,6 +134,9 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         pocket_ic::common::rest::BlobCompression::Gzip,
     );
 
+    // execute a round to avoid canister upgrade rate-limiting
+    env.tick();
+
     // Then upgrade the canister to trigger the migration path
     env.upgrade_canister(
         canister_ids.station,

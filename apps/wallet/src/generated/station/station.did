@@ -2565,4 +2565,6 @@ service : (opt SystemInstall) -> {
   http_request : (HttpRequest) -> (HttpResponse) query;
   // Internal endpoint used by the upgrader canister to notify the station about a failed station upgrade request.
   notify_failed_station_upgrade : (NotifyFailedStationUpgradeInput) -> (NotifyFailedStationUpgradeResult);
+  // no-op endpoint to refresh cycles balance in metrics
+  ping : () -> ();
 };

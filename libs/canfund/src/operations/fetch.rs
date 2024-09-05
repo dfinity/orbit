@@ -114,6 +114,9 @@ impl FetchCyclesBalanceFromPrometheusMetrics {
 #[async_trait::async_trait]
 impl FetchCyclesBalance for FetchCyclesBalanceFromPrometheusMetrics {
     async fn fetch_cycles_balance(&self, canister_id: CanisterId) -> Result<u128, Error> {
+        // ping to refresh cycles balance in metrics
+        let _ = call::<_, ()>(canister_id, "ping", ((),)).await;
+
         // Send the HTTP request to fetch the prometheus metrics.
         let response: Result<(HttpResponse,), _> = call(
             canister_id,
