@@ -57,7 +57,7 @@ pub fn certify_metrics() {
         encodings: encodings.clone(),
     }];
 
-    // 2. Collect all assets from the frontend build directory.
+    // 2. Collect all assets.
     let mut assets = Vec::new();
     with_metrics_registry(SERVICE_NAME, |registry| {
         registry
