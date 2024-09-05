@@ -10,9 +10,9 @@ use crate::{
     ConfigureExternalCanisterOperationDTO, ConfigureExternalCanisterOperationInput,
     CreateExternalCanisterOperationDTO, CreateExternalCanisterOperationInput, DisplayUserDTO,
     EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
-    EditPermissionOperationDTO, EditPermissionOperationInput, EditUserGroupOperationDTO,
-    EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput,
-    FundExternalCanisterOperationDTO, FundExternalCanisterOperationInput,
+    EditAssetOperationDTO, EditPermissionOperationDTO, EditPermissionOperationInput,
+    EditUserGroupOperationDTO, EditUserGroupOperationInput, EditUserOperationDTO,
+    EditUserOperationInput, FundExternalCanisterOperationDTO, FundExternalCanisterOperationInput,
     ManageSystemInfoOperationDTO, ManageSystemInfoOperationInput, PaginationInput,
     RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
     RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
@@ -84,6 +84,7 @@ pub enum RequestOperationDTO {
     RemoveRequestPolicy(Box<RemoveRequestPolicyOperationDTO>),
     ManageSystemInfo(Box<ManageSystemInfoOperationDTO>),
     AddAsset(Box<AddAssetOperationDTO>),
+    EditAsset(Box<EditAssetOperationDTO>),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -139,6 +140,7 @@ pub enum RequestOperationTypeDTO {
     ManageSystemInfo,
     ConfigureExternalCanister,
     AddAsset,
+    EditAsset,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

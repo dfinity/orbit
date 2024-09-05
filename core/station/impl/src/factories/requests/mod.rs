@@ -28,6 +28,7 @@ mod configure_external_canister;
 mod create_canister;
 mod edit_account;
 mod edit_address_book_entry;
+mod edit_asset;
 mod edit_permission;
 mod edit_request_policy;
 mod edit_user;
@@ -365,6 +366,9 @@ impl RequestFactory {
             ),
             RequestOperation::AddAsset(operation) => {
                 Box::new(add_asset::AddAssetRequestExecute::new(request, operation))
+            }
+            RequestOperation::EditAsset(operation) => {
+                Box::new(edit_asset::EditAssetRequestExecute::new(request, operation))
             }
         }
     }

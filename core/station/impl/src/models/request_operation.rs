@@ -44,7 +44,7 @@ pub enum RequestOperation {
     ManageSystemInfo(ManageSystemInfoOperation),
     SetDisasterRecovery(SetDisasterRecoveryOperation),
     AddAsset(AddAssetOperation),
-    // EditAsset,
+    EditAsset(EditAssetOperation),
     // RemoveAsset,
 }
 
@@ -77,6 +77,7 @@ impl Display for RequestOperation {
             RequestOperation::ManageSystemInfo(_) => write!(f, "manage_system_info"),
             RequestOperation::SetDisasterRecovery(_) => write!(f, "set_disaster_recovery"),
             RequestOperation::AddAsset(_) => write!(f, "add_asset"),
+            RequestOperation::EditAsset(_) => write!(f, "edit_asset"),
         }
     }
 }
@@ -97,6 +98,24 @@ pub struct AddAssetOperationInput {
     pub metadata: Metadata,
     pub blockchain: Blockchain,
     pub standards: Vec<BlockchainStandard>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditAssetOperation {
+    pub input: EditAssetOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditAssetOperationInput {
+    pub asset_id: AssetId,
+    pub name: Option<String>,
+    pub symbol: Option<String>,
+    pub decimals: Option<u32>,
+    pub change_metadata: Option<ChangeMetadata>,
+    pub blockchain: Option<Blockchain>,
+    pub standards: Option<Vec<BlockchainStandard>>,
 }
 
 #[storable]

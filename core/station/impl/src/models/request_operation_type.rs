@@ -34,6 +34,7 @@ pub enum RequestOperationType {
     ConfigureExternalCanister = 24,
     FundExternalCanister = 25,
     AddAsset = 26,
+    EditAsset = 27,
 }
 
 /// A helper enum to filter the requests based on the operation type and
@@ -233,6 +234,7 @@ impl Display for RequestOperationType {
             }
             RequestOperationType::FundExternalCanister => write!(f, "fund_external_canister"),
             RequestOperationType::AddAsset => write!(f, "add_asset"),
+            RequestOperationType::EditAsset => write!(f, "edit_asset"),
         }
     }
 }

@@ -20,17 +20,17 @@ use crate::{
         CreateExternalCanisterOperationKind, CreateExternalCanisterOperationKindAddExisting,
         CreateExternalCanisterOperationKindCreateNew, CycleObtainStrategy,
         DefiniteCanisterSettingsInput, DisasterRecoveryCommittee, EditAccountOperation,
-        EditAccountOperationInput, EditAddressBookEntryOperation, EditPermissionOperation,
-        EditPermissionOperationInput, EditRequestPolicyOperation, EditRequestPolicyOperationInput,
-        EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
-        ExternalCanisterCallPermission, ExternalCanisterCallRequestPolicyRuleInput,
-        ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsInput,
-        ExternalCanisterRequestPoliciesInput, FundExternalCanisterOperation,
-        ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
-        RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
-        RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
-        SystemUpgradeOperation, SystemUpgradeOperationInput, SystemUpgradeTarget,
-        TransferOperation, User,
+        EditAccountOperationInput, EditAddressBookEntryOperation, EditAssetOperation,
+        EditAssetOperationInput, EditPermissionOperation, EditPermissionOperationInput,
+        EditRequestPolicyOperation, EditRequestPolicyOperationInput, EditUserGroupOperation,
+        EditUserOperation, EditUserOperationInput, ExternalCanisterCallPermission,
+        ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterChangeRequestPolicyRuleInput,
+        ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput,
+        FundExternalCanisterOperation, ManageSystemInfoOperation, ManageSystemInfoOperationInput,
+        RemoveAddressBookEntryOperation, RemoveRequestPolicyOperation,
+        RemoveRequestPolicyOperationInput, RemoveUserGroupOperation, RequestOperation,
+        SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput, SystemUpgradeOperation,
+        SystemUpgradeOperationInput, SystemUpgradeTarget, TransferOperation, User,
     },
     repositories::{
         AccountRepository, AddressBookRepository, AssetRepository, UserRepository,
@@ -1154,6 +1154,60 @@ impl From<station_api::AddAssetOperationInput> for AddAssetOperationInput {
     }
 }
 
+impl From<EditAssetOperation> for station_api::EditAssetOperationDTO {
+    fn from(operation: EditAssetOperation) -> station_api::EditAssetOperationDTO {
+        station_api::EditAssetOperationDTO {
+            input: operation.input.into(),
+        }
+    }
+}
+
+impl From<EditAssetOperationInput> for station_api::EditAssetOperationInput {
+    fn from(input: EditAssetOperationInput) -> station_api::EditAssetOperationInput {
+        station_api::EditAssetOperationInput {
+            asset_id: Uuid::from_bytes(input.asset_id).hyphenated().to_string(),
+            name: input.name,
+            symbol: input.symbol,
+            decimals: input.decimals,
+            change_metadata: input
+                .change_metadata
+                .map(|change_metadata| change_metadata.into()),
+            blockchain: input.blockchain.map(|blockchain| blockchain.to_string()),
+            standards: input
+                .standards
+                .map(|standards| standards.into_iter().map(|s| s.to_string()).collect()),
+        }
+    }
+}
+
+impl From<station_api::EditAssetOperationInput> for EditAssetOperationInput {
+    fn from(input: station_api::EditAssetOperationInput) -> EditAssetOperationInput {
+        EditAssetOperationInput {
+            asset_id: *HelperMapper::to_uuid(input.asset_id)
+                .expect("Invalid asset id")
+                .as_bytes(),
+            name: input.name,
+            symbol: input.symbol,
+            decimals: input.decimals,
+            change_metadata: input
+                .change_metadata
+                .map(|change_metadata| change_metadata.into()),
+            blockchain: input.blockchain.map(|blockchain_dto| {
+                BlockchainMapper::to_blockchain(blockchain_dto).expect("Invalid blockchain")
+            }),
+            standards: input.standards.map(|standards| {
+                standards
+                    .into_iter()
+                    .map(|s| {
+                        BlockchainMapper::to_blockchain_standard(s)
+                            .expect("Invalid blockchain standard")
+                    })
+                    .collect()
+            }),
+        }
+    }
+}
+
 impl From<RequestOperation> for RequestOperationDTO {
     fn from(operation: RequestOperation) -> RequestOperationDTO {
         match operation {
@@ -1253,6 +1307,9 @@ impl From<RequestOperation> for RequestOperationDTO {
                     .and_then(|id| AssetRepository::default().get(&id));
 
                 RequestOperationDTO::AddAsset(Box::new(operation.to_dto(asset)))
+            }
+            RequestOperation::EditAsset(operation) => {
+                RequestOperationDTO::EditAsset(Box::new(operation.into()))
             }
         }
     }
@@ -1436,6 +1493,12 @@ impl RequestOperation {
             }
             RequestOperation::AddAsset(_) => {
                 vec![Resource::Asset(ResourceAction::Create)]
+            }
+            RequestOperation::EditAsset(EditAssetOperation { input }) => {
+                vec![
+                    Resource::Asset(ResourceAction::Update(ResourceId::Id(input.asset_id))),
+                    Resource::Asset(ResourceAction::Update(ResourceId::Any)),
+                ]
             }
         }
     }

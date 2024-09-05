@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::Deserialize;
 
-use crate::MetadataDTO;
+use crate::{ChangeMetadataDTO, MetadataDTO};
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct AssetDTO {
@@ -36,4 +36,19 @@ pub struct AddAssetOperationInput {
     pub symbol: String,
     pub decimals: u32,
     pub metadata: Vec<MetadataDTO>,
+}
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct EditAssetOperationDTO {
+    pub input: EditAssetOperationInput,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct EditAssetOperationInput {
+    pub asset_id: String,
+    pub name: Option<String>,
+    pub blockchain: Option<String>,
+    pub standards: Option<Vec<String>>,
+    pub symbol: Option<String>,
+    pub decimals: Option<u32>,
+    pub change_metadata: Option<ChangeMetadataDTO>,
 }

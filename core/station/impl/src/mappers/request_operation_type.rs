@@ -129,6 +129,7 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
                 RequestOperationType::ConfigureExternalCanister
             }
             RequestOperationTypeDTO::AddAsset => RequestOperationType::AddAsset,
+            RequestOperationTypeDTO::EditAsset => RequestOperationType::EditAsset,
         }
     }
 }
@@ -180,6 +181,7 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
                 RequestOperationTypeDTO::ConfigureExternalCanister
             }
             RequestOperationType::AddAsset => RequestOperationTypeDTO::AddAsset,
+            RequestOperationType::EditAsset => RequestOperationTypeDTO::EditAsset,
         }
     }
 }
@@ -219,6 +221,7 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::ManageSystemInfo(_) => RequestOperationType::ManageSystemInfo,
             RequestOperation::SetDisasterRecovery(_) => RequestOperationType::SetDisasterRecovery,
             RequestOperation::AddAsset(_) => RequestOperationType::AddAsset,
+            RequestOperation::EditAsset(_) => RequestOperationType::EditAsset,
         }
     }
 }

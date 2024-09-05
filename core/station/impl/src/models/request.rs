@@ -13,8 +13,8 @@ use crate::core::request::{
     RequestApprovalRightsEvaluator, RequestEvaluator, RequestPossibleApproversFinder,
 };
 use crate::core::validation::{
-    EnsureAccount, EnsureAddressBookEntry, EnsureIdExists, EnsureRequestPolicy, EnsureUser,
-    EnsureUserGroup,
+    EnsureAccount, EnsureAddressBookEntry, EnsureAsset, EnsureIdExists, EnsureRequestPolicy,
+    EnsureUser, EnsureUserGroup,
 };
 use crate::errors::{EvaluateError, RequestError, ValidationError};
 use crate::models::resource::{ExecutionMethodResourceTarget, ValidationMethodResourceTarget};
@@ -249,6 +249,9 @@ fn validate_request_operation_foreign_keys(
             }
         }
         RequestOperation::AddAsset(_) => (),
+        RequestOperation::EditAsset(op) => {
+            EnsureAsset::id_exists(&op.input.asset_id)?;
+        }
     }
     Ok(())
 }
