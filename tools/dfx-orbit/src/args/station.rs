@@ -6,7 +6,7 @@ use std::fmt::{self, Display, Formatter};
 
 /// Station management commands.
 #[derive(Debug, Subcommand)]
-#[command(version, about, long_about = None)]
+#[clap(version, about, long_about = None)]
 pub enum StationArgs {
     /// Adds an Orbit station to the local dfx configuration.
     Add(Add),
