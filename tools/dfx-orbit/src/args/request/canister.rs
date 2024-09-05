@@ -14,6 +14,10 @@ use station_api::{
 // TODO: Support Canister create + integration test
 // TODO: Canister get response functionality
 
+// TODO: Support Canister create + integration test
+// TODO: Support Canister install check
+// TODO: Canister get response functionality
+
 /// Request canister operations through Orbit
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterArgs {
