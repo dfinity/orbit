@@ -91,7 +91,7 @@ describe('DisasterRecoveryCard', () => {
         initialPiniaState: {
           session: { isAuthenticated: true },
           station: {
-            privileges: [{ ChangeCanister: null }],
+            privileges: [{ SystemUpgrade: null }],
           },
         },
       },
@@ -122,7 +122,7 @@ describe('DisasterRecoveryCard', () => {
         initialPiniaState: {
           session: { isAuthenticated: true },
           station: {
-            privileges: [{ ChangeCanister: null }],
+            privileges: [{ SystemUpgrade: null }],
           },
         },
       },

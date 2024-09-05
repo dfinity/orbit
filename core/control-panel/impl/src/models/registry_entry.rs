@@ -1,7 +1,7 @@
 use super::artifact::ArtifactId;
 use crate::repositories::{RegistryWhere, REGISTRY_REPOSITORY};
 use crate::{core::ic_cdk::next_time, errors::RegistryError};
-use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
+use orbit_essentials::model::{ModelKey, ModelValidator, ModelValidatorResult};
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
@@ -81,6 +81,12 @@ pub struct RegistryEntry {
     /// - The value must be between 1 and 512 characters long.
     /// - There can be up to 10 metadata entries per entry in the registry.
     pub metadata: BTreeMap<String, String>,
+}
+
+impl ModelKey<RegistryEntryId> for RegistryEntry {
+    fn key(&self) -> RegistryEntryId {
+        self.id
+    }
 }
 
 /// The registry value, which is the content of the registry.

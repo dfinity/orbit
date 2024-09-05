@@ -13,8 +13,10 @@ export enum Privilege {
   ListAddressBookEntries = 'ListAddressBookEntries',
   AddAddressBookEntry = 'AddAddressBookEntry',
   ListRequests = 'ListRequests',
-  ChangeCanister = 'ChangeCanister',
+  SystemUpgrade = 'SystemUpgrade',
   ManageSystemInfo = 'ManageSystemInfo',
+  ListExternalCanisters = 'ListExternalCanisters',
+  CreateExternalCanister = 'CreateExternalCanister',
 }
 
 export enum RequiredSessionState {

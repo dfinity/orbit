@@ -7,12 +7,12 @@ export enum ResourceTypeEnum {
   Transfer = 'Transfer',
   Permission = 'Permission',
   RequestPolicy = 'RequestPolicy',
-  ChangeCanister = 'ChangeCanister',
   System = 'System',
   Request = 'Request',
   AddressBook = 'AddressBook',
   ExternalCanister = 'ExternalCanister',
   SetDisasterRecovery = 'SetDisasterRecovery',
+  Notification = 'Notification',
 }
 
 export enum ResourceActionEnum {
@@ -20,11 +20,14 @@ export enum ResourceActionEnum {
   Create = 'Create',
   Read = 'Read',
   Update = 'Update',
+  Change = 'Change',
+  Fund = 'Fund',
   Delete = 'Delete',
   Transfer = 'Transfer',
   SystemInfoConfig = 'SystemInfoConfig',
   SystemInfoCapabilities = 'SystemInfoCapabilities',
   ManageSystemInfo = 'ManageSystemInfo',
+  SystemUpgrade = 'SystemUpgrade',
 }
 
 export enum AuthScopeEnum {

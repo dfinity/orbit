@@ -1,7 +1,8 @@
 import {
-  PermissionResourceAction,
   AccountResourceAction,
-  ChangeCanisterResourceAction,
+  ExternalCanisterId,
+  ExternalCanisterResourceAction,
+  PermissionResourceAction,
   RequestResourceAction,
   ResourceAction,
   ResourceId,
@@ -20,6 +21,21 @@ import { variantIs } from '~/utils/helper.utils';
 export const isResourceIdContained = (a: ResourceId, b: ResourceId) => {
   if (variantIs(a, 'Id') && variantIs(b, 'Id')) {
     return a.Id === b.Id;
+  }
+
+  return variantIs(a, 'Any') && variantIs(b, 'Any');
+};
+
+/**
+ * Checks if `a` is contained in `b`
+ *
+ * @param a Specifier to check if it is contained in b
+ * @param b Specifier to check if it contains a
+ * @returns true if a is contained in b
+ */
+export const isExternalCanisterIdContained = (a: ExternalCanisterId, b: ExternalCanisterId) => {
+  if (variantIs(a, 'Canister') && variantIs(b, 'Canister')) {
+    return a.Canister === b.Canister;
   }
 
   return variantIs(a, 'Any') && variantIs(b, 'Any');
@@ -72,14 +88,7 @@ export const isSystemResourceActionContained = (
     return true;
   }
 
-  return false;
-};
-
-export const isChangeCanisterResourceActionContained = (
-  a: ChangeCanisterResourceAction,
-  b: ChangeCanisterResourceAction,
-) => {
-  if (variantIs(a, 'Create') && variantIs(b, 'Create')) {
+  if (variantIs(a, 'Upgrade') && variantIs(b, 'Upgrade')) {
     return true;
   }
 
@@ -116,6 +125,33 @@ export const isUserResourceActionContained = (a: UserResourceAction, b: UserReso
 
   if (variantIs(a, 'Update') && variantIs(b, 'Update')) {
     return isResourceIdContained(a.Update, b.Update);
+  }
+
+  return false;
+};
+
+export const isExternalCanisterActionContained = (
+  a: ExternalCanisterResourceAction,
+  b: ExternalCanisterResourceAction,
+) => {
+  if (variantIs(a, 'List') && variantIs(b, 'List')) {
+    return true;
+  }
+
+  if (variantIs(a, 'Create') && variantIs(b, 'Create')) {
+    return true;
+  }
+
+  if (variantIs(a, 'Read') && variantIs(b, 'Read')) {
+    return isExternalCanisterIdContained(a.Read, b.Read);
+  }
+
+  if (variantIs(a, 'Change') && variantIs(b, 'Change')) {
+    return isExternalCanisterIdContained(a.Change, b.Change);
+  }
+
+  if (variantIs(a, 'Fund') && variantIs(b, 'Fund')) {
+    return isExternalCanisterIdContained(a.Fund, b.Fund);
   }
 
   return false;

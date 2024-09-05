@@ -135,6 +135,7 @@ mod tests {
         services::EXTERNAL_CANISTER_SERVICE,
     };
     use configure_external_canister_test_utils::mock_operation_api_input;
+    use orbit_essentials::model::ModelKey;
     use orbit_essentials::repository::Repository;
 
     #[tokio::test]
@@ -144,7 +145,7 @@ mod tests {
         external_canister.state = ExternalCanisterState::Archived;
         external_canister.canister_id = operation_input.canister_id;
 
-        EXTERNAL_CANISTER_REPOSITORY.insert(external_canister.to_key(), external_canister);
+        EXTERNAL_CANISTER_REPOSITORY.insert(external_canister.key(), external_canister);
 
         let request_id = [0u8; 16];
         let requested_by_user = [1u8; 16];

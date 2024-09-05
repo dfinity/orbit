@@ -7,7 +7,7 @@ use clap::{Parser, Subcommand};
 use id::ReviewIdArgs;
 use list::ReviewListArgs;
 use next::ReviewNextArgs;
-use orbit_station_api::ListRequestsOperationTypeDTO;
+use station_api::ListRequestsOperationTypeDTO;
 
 /// Station management commands.
 #[derive(Debug, Parser)]

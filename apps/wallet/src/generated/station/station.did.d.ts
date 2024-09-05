@@ -59,10 +59,10 @@ export interface AddAddressBookEntryOperation {
 }
 export interface AddAddressBookEntryOperationInput {
   'metadata' : Array<AddressBookMetadata>,
+  'labels' : Array<string>,
   'blockchain' : string,
   'address' : string,
   'address_owner' : string,
-  'standard' : string,
 }
 export interface AddRequestPolicyOperation {
   'input' : AddRequestPolicyOperationInput,
@@ -90,11 +90,11 @@ export interface AddUserOperationInput {
 export interface AddressBookEntry {
   'id' : UUID,
   'metadata' : Array<AddressBookMetadata>,
+  'labels' : Array<string>,
   'blockchain' : string,
   'address' : string,
   'last_modification_timestamp' : string,
   'address_owner' : string,
-  'standard' : string,
 }
 export interface AddressBookEntryCallerPrivileges {
   'id' : UUID,
@@ -182,19 +182,6 @@ export type ChangeAddressBookMetadata = {
   } |
   { 'RemoveKeys' : Array<string> } |
   { 'ReplaceAllBy' : Array<AddressBookMetadata> };
-export interface ChangeCanisterOperation {
-  'module_checksum' : Sha256Hash,
-  'target' : ChangeCanisterTarget,
-  'arg_checksum' : [] | [Sha256Hash],
-}
-export interface ChangeCanisterOperationInput {
-  'arg' : [] | [Uint8Array | number[]],
-  'target' : ChangeCanisterTarget,
-  'module' : Uint8Array | number[],
-}
-export type ChangeCanisterResourceAction = { 'Create' : null };
-export type ChangeCanisterTarget = { 'UpgradeUpgrader' : null } |
-  { 'UpgradeStation' : null };
 export interface ChangeExternalCanisterOperation {
   'mode' : CanisterInstallMode,
   'canister_id' : Principal,
@@ -306,6 +293,7 @@ export interface EditAddressBookEntryOperation {
   'input' : EditAddressBookEntryOperationInput,
 }
 export interface EditAddressBookEntryOperationInput {
+  'labels' : [] | [Array<string>],
   'change_metadata' : [] | [ChangeAddressBookMetadata],
   'address_book_entry_id' : UUID,
   'address_owner' : [] | [string],
@@ -590,9 +578,10 @@ export type ListAccountsResult = {
   { 'Err' : Error };
 export interface ListAddressBookEntriesInput {
   'ids' : [] | [Array<UUID>],
+  'labels' : [] | [Array<string>],
+  'blockchain' : [] | [string],
   'addresses' : [] | [Array<string>],
   'paginate' : [] | [PaginationInput],
-  'address_chain' : [] | [{ 'blockchain' : string, 'standard' : string }],
 }
 export type ListAddressBookEntriesResult = {
     'Ok' : {
@@ -678,11 +667,11 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
+  { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'FundExternalCanister' : [] | [Principal] } |
-  { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
   { 'Transfer' : [] | [UUID] } |
@@ -761,6 +750,8 @@ export interface Notification {
   'message' : [] | [string],
   'target_user_id' : UUID,
 }
+export type NotificationResourceAction = { 'List' : null } |
+  { 'Update' : ResourceId };
 export type NotificationStatus = { 'Read' : null } |
   { 'Sent' : null };
 export type NotificationType = {
@@ -788,6 +779,9 @@ export type NotificationType = {
   };
 export type NotificationTypeInput = { 'RequestCreated' : null } |
   { 'SystemMessage' : null };
+export interface NotifyFailedStationUpgradeInput { 'reason' : string }
+export type NotifyFailedStationUpgradeResult = { 'Ok' : null } |
+  { 'Err' : Error };
 export interface PaginationInput {
   'offset' : [] | [bigint],
   'limit' : [] | [number],
@@ -865,11 +859,11 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'SetDisasterRecovery' : SetDisasterRecoveryOperation } |
   { 'EditRequestPolicy' : EditRequestPolicyOperation } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperation } |
+  { 'SystemUpgrade' : SystemUpgradeOperation } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperation } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
   { 'FundExternalCanister' : FundExternalCanisterOperation } |
-  { 'ChangeCanister' : ChangeCanisterOperation } |
   { 'EditUser' : EditUserOperation } |
   { 'ManageSystemInfo' : ManageSystemInfoOperation } |
   { 'Transfer' : TransferOperation } |
@@ -890,11 +884,11 @@ export type RequestOperationInput = {
   { 'SetDisasterRecovery' : SetDisasterRecoveryOperationInput } |
   { 'EditRequestPolicy' : EditRequestPolicyOperationInput } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput } |
+  { 'SystemUpgrade' : SystemUpgradeOperationInput } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperationInput } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
   { 'FundExternalCanister' : FundExternalCanisterOperationInput } |
-  { 'ChangeCanister' : ChangeCanisterOperationInput } |
   { 'EditUser' : EditUserOperationInput } |
   { 'ManageSystemInfo' : ManageSystemInfoOperationInput } |
   { 'Transfer' : TransferOperationInput } |
@@ -913,11 +907,11 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
+  { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'FundExternalCanister' : null } |
-  { 'ChangeCanister' : null } |
   { 'EditUser' : null } |
   { 'ManageSystemInfo' : null } |
   { 'Transfer' : null } |
@@ -961,11 +955,11 @@ export type RequestSpecifier = { 'AddUserGroup' : null } |
   { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : ResourceIds } |
   { 'RemoveRequestPolicy' : ResourceIds } |
+  { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : ResourceIds } |
   { 'FundExternalCanister' : ExternalCanisterId } |
-  { 'ChangeCanister' : null } |
   { 'EditUser' : ResourceIds } |
   { 'ManageSystemInfo' : null } |
   { 'Transfer' : ResourceIds } |
@@ -992,12 +986,12 @@ export type RequestStatusCode = { 'Failed' : null } |
   { 'Created' : null } |
   { 'Completed' : null };
 export type Resource = { 'Request' : RequestResourceAction } |
+  { 'Notification' : NotificationResourceAction } |
   { 'System' : SystemResourceAction } |
   { 'User' : UserResourceAction } |
   { 'ExternalCanister' : ExternalCanisterResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
-  { 'ChangeCanister' : ChangeCanisterResourceAction } |
   { 'UserGroup' : ResourceAction } |
   { 'Permission' : PermissionResourceAction } |
   { 'RequestPolicy' : ResourceAction };
@@ -1056,10 +1050,23 @@ export interface SystemInit {
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
   { 'Init' : SystemInit };
-export type SystemResourceAction = { 'ManageSystemInfo' : null } |
+export type SystemResourceAction = { 'Upgrade' : null } |
+  { 'ManageSystemInfo' : null } |
   { 'SystemInfo' : null } |
   { 'Capabilities' : null };
 export interface SystemUpgrade { 'name' : [] | [string] }
+export interface SystemUpgradeOperation {
+  'module_checksum' : Sha256Hash,
+  'target' : SystemUpgradeTarget,
+  'arg_checksum' : [] | [Sha256Hash],
+}
+export interface SystemUpgradeOperationInput {
+  'arg' : [] | [Uint8Array | number[]],
+  'target' : SystemUpgradeTarget,
+  'module' : Uint8Array | number[],
+}
+export type SystemUpgradeTarget = { 'UpgradeUpgrader' : null } |
+  { 'UpgradeStation' : null };
 export type SystemUpgraderInput = { 'Id' : Principal } |
   { 'WasmModule' : Uint8Array | number[] };
 export type TimestampRFC3339 = string;
@@ -1134,8 +1141,8 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
+  { 'SystemUpgrade' : null } |
   { 'CreateExternalCanister' : null } |
-  { 'ChangeCanister' : null } |
   { 'ManageSystemInfo' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |
@@ -1226,6 +1233,10 @@ export interface _SERVICE {
     MarkNotificationReadResult
   >,
   'me' : ActorMethod<[], MeResult>,
+  'notify_failed_station_upgrade' : ActorMethod<
+    [NotifyFailedStationUpgradeInput],
+    NotifyFailedStationUpgradeResult
+  >,
   'submit_request_approval' : ActorMethod<
     [SubmitRequestApprovalInput],
     SubmitRequestApprovalResult

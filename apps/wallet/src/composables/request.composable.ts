@@ -2,7 +2,6 @@ import { ComputedRef, Ref, computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
-import { disabledRequestOperations } from '~/configs/requests';
 import { REQUEST_DIALOG_QUERY_PARAM } from '~/core/constants.core';
 import { logger } from '~/core/logger.core';
 import { ListRequestsOperationType, UUID } from '~/generated/station/station.did';
@@ -47,6 +46,19 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
     });
   }
 
+  if (hasRequiredPrivilege({ anyOf: [Privilege.ListExternalCanisters] })) {
+    domains.value.push({
+      id: RequestDomains.ExternalCanisters,
+      types: [
+        { CreateExternalCanister: null },
+        { FundExternalCanister: [] },
+        { ConfigureExternalCanister: [] },
+        { CallExternalCanister: [] },
+        { ChangeExternalCanister: [] },
+      ],
+    });
+  }
+
   if (hasRequiredPrivilege({ anyOf: [Privilege.ListAddressBookEntries] })) {
     domains.value.push({
       id: RequestDomains.AddressBook,
@@ -65,7 +77,7 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
       { AddRequestPolicy: null },
       { EditRequestPolicy: null },
       { RemoveRequestPolicy: null },
-      { ChangeCanister: null },
+      { SystemUpgrade: null },
       { AddUserGroup: null },
       { EditUserGroup: null },
       { RemoveUserGroup: null },
@@ -197,11 +209,6 @@ export const useAvailableORequestSpecifiers = (): SelectItem[] => {
   const items: SelectItem<string>[] = [];
 
   for (const specifier in RequestSpecifierEnum) {
-    // skip request operations that are not available for the user interface
-    if (disabledRequestOperations.includes(specifier as RequestSpecifierEnum)) {
-      continue;
-    }
-
     items.push({
       value: specifier,
       text: i18n.t(`request_policies.specifier.${specifier.toLowerCase()}`),

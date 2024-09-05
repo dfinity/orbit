@@ -21,6 +21,13 @@ thread_local! {
 #[derive(Default, Debug)]
 pub struct UserIdentityIndexRepository {}
 
+impl UserIdentityIndexRepository {
+    /// Clears all entries in the index repository.
+    pub fn clear(&self) {
+        DB.with(|m| m.borrow_mut().clear_new());
+    }
+}
+
 impl IndexRepository<UserIdentityIndex, UserId> for UserIdentityIndexRepository {
     type FindByCriteria = UserIdentityIndexCriteria;
 

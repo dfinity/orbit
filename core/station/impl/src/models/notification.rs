@@ -1,5 +1,6 @@
 use super::{NotificationStatus, NotificationType, UserId};
 use crate::errors::NotificationError;
+use orbit_essentials::model::ModelKey;
 use orbit_essentials::storable;
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
@@ -30,6 +31,12 @@ pub struct Notification {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct NotificationKey {
     pub id: NotificationId,
+}
+
+impl ModelKey<NotificationKey> for Notification {
+    fn key(&self) -> NotificationKey {
+        NotificationKey { id: self.id }
+    }
 }
 
 fn validate_title(title: &str) -> ModelValidatorResult<NotificationError> {

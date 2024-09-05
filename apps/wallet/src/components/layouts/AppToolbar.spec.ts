@@ -11,7 +11,7 @@ describe('AppToolbar', () => {
         initialPiniaState: {
           session: { isAuthenticated: true },
           station: {
-            privileges: [{ ChangeCanister: null }],
+            privileges: [{ SystemUpgrade: null }],
             versionManagement: {
               nextStationVersion: '1.2.3',
               nextUpgraderVersion: '1.2.3',
@@ -33,7 +33,7 @@ describe('AppToolbar', () => {
         initialPiniaState: {
           session: { isAuthenticated: true },
           station: {
-            privileges: [{ ChangeCanister: null }],
+            privileges: [{ SystemUpgrade: null }],
             versionManagement: {
               nextStationVersion: '1.2.3',
               nextUpgraderVersion: '1.2.3',
@@ -55,7 +55,7 @@ describe('AppToolbar', () => {
         initialPiniaState: {
           session: { isAuthenticated: true },
           station: {
-            privileges: [{ ChangeCanister: null }],
+            privileges: [{ SystemUpgrade: null }],
             versionManagement: {
               nextStationVersion: undefined,
               nextUpgraderVersion: undefined,
@@ -99,7 +99,7 @@ describe('AppToolbar', () => {
         initialPiniaState: {
           session: { isAuthenticated: false },
           station: {
-            privileges: [{ ChangeCanister: null }],
+            privileges: [{ SystemUpgrade: null }],
             versionManagement: {
               nextStationVersion: '1.2.3',
               nextUpgraderVersion: '1.2.3',

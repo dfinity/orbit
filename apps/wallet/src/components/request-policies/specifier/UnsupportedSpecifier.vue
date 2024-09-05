@@ -25,5 +25,5 @@ const input = withDefaults(
 
 const props = toRefs(input);
 
-const isIds = computed(() => variantIs(props.modelValue.value, 'Ids'));
+const isIds = computed(() => props.modelValue.value && variantIs(props.modelValue.value, 'Ids'));
 </script>

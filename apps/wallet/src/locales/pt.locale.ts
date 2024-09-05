@@ -108,7 +108,7 @@ export default {
       line2: 'Multi-Custódia',
     },
   },
-  change_canister: {
+  system_upgrade: {
     targets: {
       upgradestation: 'Carteira',
       upgradeupgrader: 'Atualizador',
@@ -171,6 +171,7 @@ export default {
       system: 'Sistema',
       transfers: 'Transferências',
       users: 'Usuários',
+      external_canisters: 'Canisters',
     },
     download: {
       user_group: 'Grupos de usuários',
@@ -179,7 +180,7 @@ export default {
       permission: 'Regras de acesso',
       request_policy: 'Regras de aprovação',
       address_book_entry: 'Livro de endereços',
-      change_canister: 'Atualizações de sistema',
+      system_upgrade: 'Atualizações de sistema',
       transfer: 'Transferências',
       external_canister: 'Canister gerenciado',
       system_info: 'Informações do sistema',
@@ -247,9 +248,9 @@ export default {
         title: 'Remover endereço',
         request_title: 'Pedido de remoção de endereço',
       },
-      changecanister: {
-        title: 'Alterar canister',
-        request_title: 'Pedido de alteração de canister',
+      systemupgrade: {
+        title: 'Atualização de sistema',
+        request_title: 'Pedido de atualização de sistema',
       },
       editpermission: {
         title: 'Editar permissão',
@@ -397,6 +398,11 @@ export default {
     add_station_list_item: 'Adicionar carteira',
   },
   terms: {
+    active: 'Ativo',
+    archived: 'Arquivado',
+    canisters: 'Canisters',
+    canister: 'Canister',
+    labels: 'Etiquetas',
     change: 'Alterar',
     quorum: 'Quórum',
     deposits: 'Depósitos',
@@ -576,6 +582,7 @@ export default {
     transfer_requests: 'Pedidos de transferência',
     permissions: 'Permissões',
     request_policies: 'Regras de aprovação',
+    external_canisters: 'Canisters',
   },
   pages: {
     accounts: {
@@ -633,6 +640,13 @@ export default {
       create_new_user_title: 'Criar novo usuário',
       btn_edit_title: 'Editar usuário',
       error_fetching_users: 'Erro ao carregar os usuários, por favor, tente novamente.',
+    },
+    external_canisters: {
+      title: 'Canisters',
+      btn_add_canister: 'Adicionar canister',
+      add_new_canister_title: 'Adicionar novo canister',
+      edit_canister_title: 'Editar canister',
+      error_fetching_canisters: 'Erro ao carregar os canisters, por favor, tente novamente.',
     },
     add_station: {
       initialization_title: 'Bem-vindo! Como você gostaria de se juntar à Orbit?',
@@ -738,11 +752,11 @@ export default {
       permission: 'Regra de acesso',
       requestpolicy: 'Regra para pedidos',
       system: 'Sistema',
-      changecanister: 'Alterar canister',
       transfer: 'Transfência',
       request: 'Pedido',
       addressbook: 'Livro de endereços',
       managesysteminfo: 'Gerir informações do sistema',
+      externalcanister: 'Canister gerenciado',
     },
     actions: {
       list: 'Listar',
@@ -756,6 +770,9 @@ export default {
       systeminfocapabilities: 'Capacidades (Ativos Suportados)',
       systeminfoconfig: 'Configuração (Atualizações, Métricas, Uso)',
       managesysteminfo: 'Gerir Informações do Sistema (e.g. nome)',
+      systemupgrade: 'Atualizar o sistema',
+      change: 'Alterar',
+      fund: 'Financiar',
     },
     allow: {
       public: 'Acesso público',
@@ -793,7 +810,7 @@ export default {
       removeaddressbookentry: 'Remover entrada do livro de endereços',
       editaddressbookentry: 'Editar entrada do livro de endereços',
       addrequestpolicy: 'Adicionar regra',
-      changecanister: 'Alterar canister',
+      systemupgrade: 'Atualização de sistema',
       editrequestpolicy: 'Editar permissão',
       edituser: 'Editar usuário',
       transfer: 'Transferência',
@@ -802,7 +819,10 @@ export default {
       removeusergroup: 'Remove grupo de usuários',
       addaccount: 'Adicionar conta',
       managesysteminfo: 'Gerir informações do sistema',
-      changeexternalcanister: 'Alterar canister gerenciado',
+      changeexternalcanister: 'Alterar canister',
+      fundexternalcanister: 'Financiar canister',
+      setdisasterrecovery: 'Recuperação de sistema',
+      callexternalcanister: 'Interagir com canister',
     },
   },
   cycle_obtain_strategies: {

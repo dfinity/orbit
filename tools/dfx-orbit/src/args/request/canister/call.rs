@@ -2,9 +2,7 @@
 
 use crate::DfxOrbit;
 use clap::Parser;
-use orbit_station_api::{
-    CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput,
-};
+use station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput};
 
 use super::candid_from_string_or_file;
 

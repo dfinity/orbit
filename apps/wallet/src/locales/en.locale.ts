@@ -119,7 +119,7 @@ export default {
       },
     },
   },
-  change_canister: {
+  system_upgrade: {
     targets: {
       upgradestation: 'Wallet',
       upgradeupgrader: 'Upgrader',
@@ -162,6 +162,7 @@ export default {
       system: 'System',
       transfers: 'Transfers',
       users: 'Users',
+      external_canisters: 'Canisters',
     },
     headers: {
       id: 'ID',
@@ -200,7 +201,7 @@ export default {
       permission: 'Access Policies',
       request_policy: 'Request Policies',
       address_book_entry: 'Address Book',
-      change_canister: 'Upgrades',
+      system_upgrade: 'Upgrades',
       transfer: 'Transfers',
       external_canister: 'External Canisters',
       system_info: 'System Info',
@@ -238,9 +239,9 @@ export default {
         title: 'Remove address book entry',
         request_title: 'Remove address book entry request',
       },
-      changecanister: {
-        title: 'Change canister',
-        request_title: 'Change canister request',
+      systemupgrade: {
+        title: 'System upgrade',
+        request_title: 'System upgrade request',
       },
       editpermission: {
         title: 'Edit permission',
@@ -394,6 +395,11 @@ export default {
     add_station_list_item: 'Add wallet',
   },
   terms: {
+    active: 'Active',
+    archived: 'Archived',
+    canisters: 'Canisters',
+    labels: 'Labels',
+    canister: 'Canister',
     change: 'Change',
     quorum: 'Quorum',
     deposits: 'Deposits',
@@ -537,7 +543,7 @@ export default {
     skip: 'Skip',
     version: 'Version',
     continue: 'Continue',
-    cycle_obtain_strategy: 'Station top-up method',
+    cycle_obtain_strategy: 'Wallet top-up method',
   },
   forms: {
     create: 'Create',
@@ -574,6 +580,7 @@ export default {
     transfer_requests: 'Transfer Requests',
     permissions: 'Permissions',
     request_policies: 'Request Policies',
+    external_canisters: 'Canisters',
   },
   pages: {
     accounts: {
@@ -619,6 +626,13 @@ export default {
       create_new_user_title: 'Create new user',
       btn_edit_title: 'Edit user',
       error_fetching_users: 'Error fetching users, please try again.',
+    },
+    external_canisters: {
+      title: 'Canisters',
+      btn_add_canister: 'Add canister',
+      add_new_canister_title: 'Add new canister',
+      edit_canister_title: 'Canister Configuration',
+      error_fetching_canisters: 'Error fetching canisters, please try again.',
     },
     user_groups: {
       title: 'User Groups',
@@ -731,11 +745,11 @@ export default {
       permission: 'Access Policy',
       requestpolicy: 'Request Policy',
       system: 'System',
-      changecanister: 'Change Canister',
       transfer: 'Transfer',
       request: 'Request',
       addressbook: 'Address Book',
       managesysteminfo: 'Manage System Info',
+      externalcanister: 'External Canister',
     },
     actions: {
       list: 'List',
@@ -749,6 +763,9 @@ export default {
       systeminfocapabilities: 'Capabilities (Supported Assets)',
       systeminfoconfig: 'Configuration (Upgrades, Metrics, Usage)',
       managesysteminfo: 'Manage System Info (e.g. name)',
+      systemupgrade: 'Upgrade',
+      change: 'Change',
+      fund: 'Fund',
     },
     allow: {
       public: 'Anyone',
@@ -786,7 +803,7 @@ export default {
       removeaddressbookentry: 'Remove address book entry',
       editaddressbookentry: 'Edit address book entry',
       addrequestpolicy: 'Add request policy',
-      changecanister: 'Change canister',
+      systemupgrade: 'System upgrade',
       editrequestpolicy: 'Edit request policy',
       edituser: 'Edit user',
       transfer: 'Transfer',
@@ -795,7 +812,11 @@ export default {
       removeusergroup: 'Remove user group',
       addaccount: 'Add account',
       managesysteminfo: 'Manage system info',
-      changeexternalcanister: 'Change external canister',
+      changeexternalcanister: 'Change canister',
+      fundexternalcanister: 'Fund canister',
+      setdisasterrecovery: 'Configure disaster recovery',
+      callexternalcanister: 'Call canister',
+      createexternalcanister: 'Create canister',
     },
   },
   cycle_obtain_strategies: {

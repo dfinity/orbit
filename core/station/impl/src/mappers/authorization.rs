@@ -1,12 +1,13 @@
 use super::HelperMapper;
 use crate::{
     core::ic_cdk::api::trap,
+    core::CallContext,
     models::{
         resource::{
-            AccountResourceAction, CallExternalCanisterResourceTarget,
-            ChangeCanisterResourceAction, ExternalCanisterId, ExternalCanisterResourceAction,
-            PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-            SystemResourceAction, UserResourceAction,
+            AccountResourceAction, CallExternalCanisterResourceTarget, ExternalCanisterId,
+            ExternalCanisterResourceAction, NotificationResourceAction, PermissionResourceAction,
+            RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
+            UserResourceAction,
         },
         CanisterMethod, Transfer,
     },
@@ -31,7 +32,7 @@ pub const USER_PRIVILEGES: [UserPrivilege; 18] = [
     UserPrivilege::AddUserGroup,
     UserPrivilege::ListAddressBookEntries,
     UserPrivilege::AddAddressBookEntry,
-    UserPrivilege::ChangeCanister,
+    UserPrivilege::SystemUpgrade,
     UserPrivilege::ListRequests,
     UserPrivilege::CreateExternalCanister,
     UserPrivilege::ListExternalCanisters,
@@ -53,9 +54,7 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::AddUserGroup => Resource::UserGroup(ResourceAction::Create),
             UserPrivilege::ListAddressBookEntries => Resource::AddressBook(ResourceAction::List),
             UserPrivilege::AddAddressBookEntry => Resource::AddressBook(ResourceAction::Create),
-            UserPrivilege::ChangeCanister => {
-                Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
-            }
+            UserPrivilege::SystemUpgrade => Resource::System(SystemResourceAction::Upgrade),
             UserPrivilege::ListRequests => Resource::Request(RequestResourceAction::List),
             UserPrivilege::ManageSystemInfo => {
                 Resource::System(SystemResourceAction::ManageSystemInfo)
@@ -67,6 +66,14 @@ impl From<UserPrivilege> for Resource {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::List)
             }
         }
+    }
+}
+
+impl From<&CallContext> for Resource {
+    fn from(input: &CallContext) -> Self {
+        Resource::User(UserResourceAction::Read(ResourceId::Id(
+            input.user().expect("Caller does not exist as a user").id,
+        )))
     }
 }
 
@@ -150,6 +157,12 @@ impl From<&station_api::GetAddressBookEntryInputDTO> for Resource {
     }
 }
 
+impl From<&station_api::ListNotificationsInput> for Resource {
+    fn from(_input: &station_api::ListNotificationsInput) -> Self {
+        Resource::Notification(NotificationResourceAction::List)
+    }
+}
+
 impl From<&station_api::CreateRequestInput> for Resource {
     fn from(input: &station_api::CreateRequestInput) -> Self {
         match &input.operation {
@@ -211,8 +224,8 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 )))
             }
             RequestOperationInput::SetDisasterRecovery(_)
-            | RequestOperationInput::ChangeCanister(_) => {
-                Resource::ChangeCanister(ChangeCanisterResourceAction::Create)
+            | RequestOperationInput::SystemUpgrade(_) => {
+                Resource::System(SystemResourceAction::Upgrade)
             }
             RequestOperationInput::ChangeExternalCanister(input) => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
@@ -332,6 +345,36 @@ impl GetTransfersInputRef<'_> {
             .iter()
             .map(|account_id| {
                 Resource::Account(AccountResourceAction::Read(ResourceId::Id(*account_id)))
+            })
+            .collect()
+    }
+}
+
+pub(crate) struct MarkNotificationsReadInputRef<'a>(
+    pub &'a station_api::MarkNotificationsReadInput,
+);
+
+impl MarkNotificationsReadInputRef<'_> {
+    pub fn to_resources(&self) -> Vec<Resource> {
+        let notification_ids = self
+            .0
+            .notification_ids
+            .iter()
+            .map(|notification_id| {
+                let notification_id = *HelperMapper::to_uuid(notification_id.to_owned())
+                    .expect("Invalid notification id")
+                    .as_bytes();
+
+                notification_id
+            })
+            .collect::<Vec<UUID>>();
+
+        notification_ids
+            .iter()
+            .map(|notification_id| {
+                Resource::Notification(NotificationResourceAction::Update(ResourceId::Id(
+                    *notification_id,
+                )))
             })
             .collect()
     }

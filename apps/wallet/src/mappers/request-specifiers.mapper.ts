@@ -47,8 +47,8 @@ export const mapRequestSpecifierToEnum = (specifier: RequestSpecifier): RequestS
     return RequestSpecifierEnum.RemoveUserGroup;
   }
 
-  if (variantIs(specifier, 'ChangeCanister')) {
-    return RequestSpecifierEnum.ChangeCanister;
+  if (variantIs(specifier, 'SystemUpgrade')) {
+    return RequestSpecifierEnum.SystemUpgrade;
   }
 
   if (variantIs(specifier, 'Transfer')) {

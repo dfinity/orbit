@@ -90,7 +90,7 @@ impl RequestService {
     ) -> ServiceResult<RequestCallerPrivileges> {
         let approver = self.user_service.get_user_by_identity(&ctx.caller())?;
         let request = self.get_request(request_id)?;
-        let can_approve = request.can_approve(&approver.id).await;
+        let can_approve = request.can_approve(&approver.id);
 
         Ok(RequestCallerPrivileges {
             id: *request_id,
@@ -326,7 +326,7 @@ impl RequestService {
         self.request_repository
             .insert(request.to_key(), request.to_owned());
 
-        if request.can_approve(&requester.id).await {
+        if request.can_approve(&requester.id) {
             request.add_approval(requester.id, RequestApprovalStatus::Approved, None)?;
         }
 
@@ -415,7 +415,7 @@ impl RequestService {
         let request_id = HelperMapper::to_uuid(input.request_id)?;
         let mut request = self.get_request(request_id.as_bytes())?;
 
-        if !request.can_approve(&approver.id).await {
+        if !request.can_approve(&approver.id) {
             Err(RequestError::ApprovalNotAllowed)?
         }
 
@@ -440,6 +440,22 @@ impl RequestService {
 
         Ok(request)
     }
+
+    pub async fn fail_request(
+        &self,
+        mut request: Request,
+        reason: String,
+        request_failed_time: u64,
+    ) {
+        request.status = RequestStatus::Failed {
+            reason: Some(reason),
+        };
+        request.last_modification_timestamp = request_failed_time;
+        self.request_repository
+            .insert(request.to_key(), request.to_owned());
+
+        self.failed_request_hook(&request).await;
+    }
 }
 
 #[cfg(test)]
@@ -456,7 +472,8 @@ mod tests {
             request_test_utils::mock_request,
             resource::ResourceIds,
             user_test_utils::mock_user,
-            AddAccountOperationInput, AddUserOperation, AddUserOperationInput, Blockchain,
+            AddAccountOperationInput, AddAddressBookEntryOperation,
+            AddAddressBookEntryOperationInput, AddUserOperation, AddUserOperationInput, Blockchain,
             BlockchainStandard, Metadata, Percentage, RequestApproval, RequestOperation,
             RequestPolicy, RequestStatus, TransferOperation, TransferOperationInput, User,
             UserGroup, UserStatus, ADMIN_GROUP_ID,
@@ -468,6 +485,7 @@ mod tests {
         services::AccountService,
     };
     use candid::Principal;
+    use orbit_essentials::model::ModelKey;
     use station_api::{
         ListRequestsOperationTypeDTO, RequestApprovalStatusDTO, RequestStatusCodeDTO,
     };
@@ -683,8 +701,8 @@ mod tests {
                             address_owner: "".to_owned(),
                             address: "abc".to_owned(),
                             blockchain: "icp".to_owned(),
-                            standard: "native".to_owned(),
                             metadata: vec![],
+                            labels: vec![],
                         },
                     ),
                     title: None,
@@ -697,6 +715,92 @@ mod tests {
             .unwrap();
 
         assert!(!request.approvals.is_empty());
+    }
+
+    #[tokio::test]
+    async fn users_with_approval_rights_can_view_request() {
+        let requester = mock_user();
+        let approver = mock_user();
+        let another_user = mock_user();
+
+        USER_REPOSITORY.insert(requester.key(), requester.clone());
+        USER_REPOSITORY.insert(approver.key(), approver.clone());
+        USER_REPOSITORY.insert(another_user.key(), another_user.clone());
+
+        let policy = RequestPolicy {
+            id: [0; 16],
+            specifier: RequestSpecifier::AddAddressBookEntry,
+            rule: RequestPolicyRule::And(vec![RequestPolicyRule::Quorum(
+                UserSpecifier::Id(vec![requester.id, approver.id, another_user.id]),
+                2,
+            )]),
+        };
+
+        REQUEST_POLICY_REPOSITORY.insert(policy.id, policy);
+
+        let mut request = mock_request();
+        request.created_timestamp = 10;
+        request.operation = RequestOperation::AddAddressBookEntry(AddAddressBookEntryOperation {
+            address_book_entry_id: None,
+            input: AddAddressBookEntryOperationInput {
+                address_owner: "test".to_owned(),
+                address: "abc".to_owned(),
+                blockchain: Blockchain::InternetComputer,
+                metadata: vec![],
+                labels: vec![],
+            },
+        });
+        request.approvals = vec![
+            RequestApproval {
+                approver_id: requester.id,
+                status: RequestApprovalStatus::Approved,
+                decided_dt: 10,
+                last_modification_timestamp: 10,
+                status_reason: None,
+            },
+            RequestApproval {
+                approver_id: approver.id,
+                status: RequestApprovalStatus::Approved,
+                decided_dt: 10,
+                last_modification_timestamp: 10,
+                status_reason: None,
+            },
+        ];
+        request.status = RequestStatus::Failed {
+            reason: Some("test".to_string()),
+        };
+
+        REQUEST_REPOSITORY.insert(request.key(), request.clone());
+
+        let default_list_query = ListRequestsInput {
+            approver_ids: None,
+            requester_ids: None,
+            created_from_dt: None,
+            created_to_dt: None,
+            expiration_from_dt: None,
+            expiration_to_dt: None,
+            only_approvable: false,
+            with_evaluation_results: false,
+            operation_types: None,
+            paginate: None,
+            sort_by: None,
+            statuses: None,
+        };
+
+        let users = vec![requester, approver, another_user];
+        // all users can see the request, even the another_user who is not an approver but has approval rights
+        for user in users {
+            let requests = REQUEST_SERVICE
+                .list_requests(
+                    default_list_query.clone(),
+                    &CallContext::new(user.identities[0]),
+                )
+                .await
+                .unwrap();
+
+            assert_eq!(requests.total, 1);
+            assert_eq!(requests.items[0].id, request.id);
+        }
     }
 
     #[tokio::test]
@@ -810,6 +914,7 @@ mod tests {
                 status: UserStatus::Active,
             },
         });
+        irrelevant_request.created_timestamp = 9;
 
         ctx.repository
             .insert(irrelevant_request.to_key(), irrelevant_request.to_owned());
@@ -834,7 +939,7 @@ mod tests {
                         to: "0x1234".to_string(),
                     },
                 });
-                transfer.created_timestamp = 10;
+                transfer.created_timestamp = 10 + i as u64;
                 transfer.approvals = vec![RequestApproval {
                     decided_dt: 0,
                     last_modification_timestamp: 0,
@@ -1022,7 +1127,7 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn service_filter_all_requests_with_default_filters() -> BenchResult {
+    fn service_find_all_requests_from_2k_dataset() -> BenchResult {
         let end_creation_time = create_test_requests(2000u64);
 
         canbench_rs::bench_fn(|| {
@@ -1065,10 +1170,8 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn service_filter_all_requests_with_creation_time_filters() -> BenchResult {
-        let end_creation_time = create_test_requests(20000u64);
-
-        // test list_requests that that 300 requests as initial set
+    fn service_filter_5k_requests_from_100k_dataset() -> BenchResult {
+        let end_creation_time = create_test_requests(100_000u64);
 
         canbench_rs::bench_fn(|| {
             spawn(async move {
@@ -1076,7 +1179,7 @@ mod benchs {
                     .list_requests(
                         station_api::ListRequestsInput {
                             created_from_dt: Some(timestamp_to_rfc3339(
-                                &(end_creation_time - 300 * 1_000_000_000),
+                                &(end_creation_time - 5_000 * 1_000_000_000),
                             )),
                             created_to_dt: Some(timestamp_to_rfc3339(&end_creation_time)),
                             statuses: Some(vec![

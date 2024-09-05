@@ -23,10 +23,6 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.RequestPolicy;
   }
 
-  if (variantIs(resource, 'ChangeCanister')) {
-    return ResourceTypeEnum.ChangeCanister;
-  }
-
   if (variantIs(resource, 'System')) {
     return ResourceTypeEnum.System;
   }
@@ -41,6 +37,10 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
 
   if (variantIs(resource, 'ExternalCanister')) {
     return ResourceTypeEnum.ExternalCanister;
+  }
+
+  if (variantIs(resource, 'Notification')) {
+    return ResourceTypeEnum.Notification;
   }
 
   return unreachable(resource);

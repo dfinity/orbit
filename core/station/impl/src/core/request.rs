@@ -2,12 +2,13 @@ use super::evaluation::Evaluate;
 use crate::{
     errors::EvaluateError,
     models::{
+        indexes::request_index::RequestIndexFields,
         request_policy_rule::{
             EvaluateRequestPolicyRule, RequestEvaluationResult, RequestPolicyRule,
             RequestPolicyRuleResult,
         },
         request_specifier::{Match, UserInvolvedInPolicyRuleForRequestResource, UserSpecifier},
-        EvaluationStatus, Request, RequestId, RequestStatusCode, User, UserId, UserStatus,
+        EvaluationStatus, Request, RequestId, User, UserId, UserStatus,
     },
     repositories::{
         request_policy::REQUEST_POLICY_REPOSITORY, REQUEST_REPOSITORY, USER_REPOSITORY,
@@ -269,17 +270,16 @@ impl
     }
 }
 
-/// Evaluates if the user has the right to add their approval on the request.
+/// Evaluates if the user has approval rights to a given request.
 ///
 /// The user has the right to add if:
 ///
-/// - The request is not approved or rejected
-/// - There are matching policies for the request and the user is a part of the group that is allowed to approve
-/// - The user has not already approved on the request
-pub struct RequestApprovalRightsEvaluator {
+/// - There are matching policies for the request
+/// - The user is a part of the group that is allowed to approve
+pub struct RequestApprovalRightsEvaluator<'a> {
     pub approval_rights_evaluator: Arc<ApprovalRightsEvaluate>,
     pub approver_id: UserId,
-    pub request_id: RequestId,
+    pub request: &'a RequestIndexFields,
 }
 
 pub type ApprovalRightsEvaluate = dyn EvaluateRequestPolicyRule<
@@ -288,37 +288,32 @@ pub type ApprovalRightsEvaluate = dyn EvaluateRequestPolicyRule<
     EvaluateError,
 >;
 
-impl RequestApprovalRightsEvaluator {
+impl<'a> RequestApprovalRightsEvaluator<'a> {
     pub fn new(
         approval_rights_evaluator: Arc<ApprovalRightsEvaluate>,
         approver_id: UserId,
-        request_id: RequestId,
+        request: &'a RequestIndexFields,
     ) -> Self {
         Self {
             approval_rights_evaluator,
             approver_id,
-            request_id,
+            request,
         }
     }
 }
 
-impl Evaluate<bool> for RequestApprovalRightsEvaluator {
+impl<'a> Evaluate<bool> for RequestApprovalRightsEvaluator<'a> {
     fn evaluate(&self) -> Result<bool, EvaluateError> {
-        if REQUEST_REPOSITORY.exists_approver(&self.request_id, &self.approver_id)
-            || !REQUEST_REPOSITORY.exists_status(&self.request_id, RequestStatusCode::Created)
-        {
-            return Ok(false);
-        }
-
-        let matching_policies = REQUEST_REPOSITORY
-            .get_resources(&self.request_id)
+        let matching_policies = self
+            .request
+            .resources
             .iter()
             .flat_map(|resource| REQUEST_POLICY_REPOSITORY.find_by_resource(resource.to_owned()))
             .collect::<Vec<_>>();
 
         for policy in matching_policies {
             if self.approval_rights_evaluator.evaluate((
-                Arc::new(self.request_id.to_owned()),
+                Arc::new(self.request.id.to_owned()),
                 Arc::new(self.approver_id),
                 Arc::new(policy.rule.to_owned()),
             ))? {

@@ -4,8 +4,8 @@ use crate::{
     args::review::{ReviewActionArgs, ReviewArgs},
     DfxOrbit,
 };
-use orbit_station_api::{RequestApprovalStatusDTO, RequestStatusDTO, SubmitRequestApprovalInput};
 use serde::Serialize;
+use station_api::{RequestApprovalStatusDTO, RequestStatusDTO, SubmitRequestApprovalInput};
 
 impl DfxOrbit {
     pub(crate) async fn exec_review(&self, args: ReviewArgs) -> anyhow::Result<()> {

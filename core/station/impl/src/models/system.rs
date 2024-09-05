@@ -1,6 +1,9 @@
-use crate::core::{
-    ic_cdk::api::{time, trap},
-    SYSTEM_RESERVED_MEMORY_BYTES,
+use crate::{
+    core::{
+        ic_cdk::api::{time, trap},
+        SYSTEM_RESERVED_MEMORY_BYTES,
+    },
+    STABLE_MEMORY_VERSION, SYSTEM_VERSION,
 };
 use candid::Principal;
 use ic_stable_structures::{storable::Bound, Storable};
@@ -51,6 +54,10 @@ pub struct SystemInfo {
     /// Defines how the station tops up itself with cycles.
     #[serde(default)]
     cycle_obtain_strategy: CycleObtainStrategy,
+    /// The system version.
+    version: Option<String>,
+    /// Last run migration version.
+    stable_memory_version: Option<u32>,
 }
 
 impl Default for SystemInfo {
@@ -62,6 +69,8 @@ impl Default for SystemInfo {
             upgrader_canister_id: None,
             upgrader_wasm_module: None,
             disaster_recovery_committee: None,
+            version: Some(SYSTEM_VERSION.to_string()),
+            stable_memory_version: Some(STABLE_MEMORY_VERSION),
             cycle_obtain_strategy: CycleObtainStrategy::default(),
         }
     }
@@ -78,6 +87,14 @@ impl SystemInfo {
         }
     }
 
+    pub fn get_stable_memory_version(&self) -> u32 {
+        self.stable_memory_version.unwrap_or(0)
+    }
+
+    pub fn set_stable_memory_version(&mut self, version: u32) {
+        self.stable_memory_version = Some(version);
+    }
+
     pub fn get_cycle_obtain_strategy(&self) -> &CycleObtainStrategy {
         &self.cycle_obtain_strategy
     }
@@ -88,6 +105,14 @@ impl SystemInfo {
 
     pub fn get_name(&self) -> &str {
         &self.name
+    }
+
+    pub fn get_version(&self) -> &str {
+        self.version.as_deref().unwrap_or("0.0.0")
+    }
+
+    pub fn set_version(&mut self, version: String) {
+        self.version = Some(version);
     }
 
     pub fn set_name(&mut self, name: String) {

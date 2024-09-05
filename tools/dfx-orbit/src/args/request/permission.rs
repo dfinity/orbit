@@ -6,8 +6,8 @@ pub mod permission;
 use crate::DfxOrbit;
 use canister::RequestPermissionUpgradeCanisterArgs;
 use clap::Subcommand;
-use orbit_station_api::RequestOperationInput;
 use permission::{RequestPermissionReadPermissionsArgs, RequestPermissionUpdatePermissionsArgs};
+use station_api::RequestOperationInput;
 
 /// Request permission.
 #[derive(Debug, Clone, Subcommand)]

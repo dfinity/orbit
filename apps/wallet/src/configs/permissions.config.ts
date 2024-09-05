@@ -9,11 +9,11 @@ import {
 import {
   isPermissionResourceActionContained,
   isAccountResourceActionContained,
-  isChangeCanisterResourceActionContained,
   isRequestResourceActionContained,
   isResourceActionContained,
   isSystemResourceActionContained,
   isUserResourceActionContained,
+  isExternalCanisterActionContained,
 } from '~/utils/permissions.utils';
 import { variantIs } from '~/utils/helper.utils';
 
@@ -273,31 +273,16 @@ export const globalPermissions = (): AggregatedResoucePermissions[] => [
         allow: defaultAllowLevels(),
         canEdit: false,
       },
-    ],
-    match(specifier: Resource, resource: Resource): boolean {
-      if (variantIs(specifier, 'System') && variantIs(resource, 'System')) {
-        return isSystemResourceActionContained(specifier.System, resource.System);
-      }
-
-      return false;
-    },
-  },
-  {
-    resourceType: ResourceTypeEnum.ChangeCanister,
-    resources: [
       {
-        action: ResourceActionEnum.Create,
-        resource: { ChangeCanister: { Create: null } },
+        action: ResourceActionEnum.SystemUpgrade,
+        resource: { System: { Upgrade: null } },
         allow: defaultAllowLevels(),
         canEdit: false,
       },
     ],
     match(specifier: Resource, resource: Resource): boolean {
-      if (variantIs(specifier, 'ChangeCanister') && variantIs(resource, 'ChangeCanister')) {
-        return isChangeCanisterResourceActionContained(
-          specifier.ChangeCanister,
-          resource.ChangeCanister,
-        );
+      if (variantIs(specifier, 'System') && variantIs(resource, 'System')) {
+        return isSystemResourceActionContained(specifier.System, resource.System);
       }
 
       return false;
@@ -322,6 +307,51 @@ export const globalPermissions = (): AggregatedResoucePermissions[] => [
     match(specifier: Resource, resource: Resource): boolean {
       if (variantIs(specifier, 'Request') && variantIs(resource, 'Request')) {
         return isRequestResourceActionContained(specifier.Request, resource.Request);
+      }
+
+      return false;
+    },
+  },
+  {
+    resourceType: ResourceTypeEnum.ExternalCanister,
+    resources: [
+      {
+        action: ResourceActionEnum.List,
+        resource: { ExternalCanister: { List: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Create,
+        resource: { ExternalCanister: { Create: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Read,
+        resource: { ExternalCanister: { Read: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Change,
+        resource: { ExternalCanister: { Change: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Fund,
+        resource: { ExternalCanister: { Fund: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+    ],
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'ExternalCanister') && variantIs(resource, 'ExternalCanister')) {
+        return isExternalCanisterActionContained(
+          specifier.ExternalCanister,
+          resource.ExternalCanister,
+        );
       }
 
       return false;

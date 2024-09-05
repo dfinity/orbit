@@ -1,6 +1,6 @@
 //! CLI arguments for `dfx-orbit review next`.
 use clap::Parser;
-use orbit_station_api::{GetRequestInput, RequestApprovalStatusDTO, SubmitRequestApprovalInput};
+use station_api::{GetRequestInput, RequestApprovalStatusDTO, SubmitRequestApprovalInput};
 
 /// Reviews the next request.
 #[derive(Debug, Clone, PartialEq, Eq, Parser)]

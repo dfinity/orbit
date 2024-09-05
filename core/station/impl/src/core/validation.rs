@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{hash::Hash, sync::Arc};
 
 #[cfg(test)]
 use std::cell::RefCell;
@@ -8,16 +8,17 @@ use crate::{
     factories::blockchains::InternetComputer,
     models::{
         resource::{Resource, ResourceId, ResourceIds},
-        AccountKey, AddressBookEntryKey, RequestKey, UserKey,
+        AccountKey, AddressBookEntryKey, NotificationKey, RequestKey, UserKey,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, request_policy::REQUEST_POLICY_REPOSITORY,
-        ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, REQUEST_REPOSITORY, USER_GROUP_REPOSITORY,
-        USER_REPOSITORY,
+        ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, NOTIFICATION_REPOSITORY, REQUEST_REPOSITORY,
+        USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     services::SYSTEM_SERVICE,
 };
 use candid::Principal;
+use ic_stable_structures::{Memory, Storable};
 #[cfg(not(test))]
 pub use orbit_essentials::cdk as ic_cdk;
 #[cfg(test)]
@@ -42,7 +43,13 @@ pub fn enable_mock_resource_validation() {
     MOCK_RESOURCE_VALIDATION_ON.with(|v| *v.borrow_mut() = true);
 }
 
-fn ensure_entry_exists<K, V>(repository: Arc<dyn Repository<K, V>>, key: K) -> Option<()> {
+fn ensure_entry_exists<K, V, M, R>(repository: Arc<R>, key: K) -> Option<()>
+where
+    R: Repository<K, V, M>,
+    K: Hash + Clone + Eq + Ord + Storable,
+    V: Clone + Storable,
+    M: Memory,
+{
     #[cfg(test)]
     if MOCK_RESOURCE_VALIDATION_ON.with(|v| *v.borrow()) {
         return Some(());
@@ -203,3 +210,20 @@ impl EnsureExternalCanister {
         Ok(())
     }
 }
+
+pub struct EnsureNotification {}
+
+impl EnsureIdExists<UUID> for EnsureNotification {
+    fn id_exists(id: &UUID) -> Result<(), RecordValidationError> {
+        ensure_entry_exists(
+            NOTIFICATION_REPOSITORY.to_owned(),
+            NotificationKey { id: *id },
+        )
+        .ok_or(RecordValidationError::NotFound {
+            model_name: "Notification".to_string(),
+            id: Uuid::from_bytes(*id).hyphenated().to_string(),
+        })
+    }
+}
+
+impl EnsureResourceIdExists for EnsureNotification {}

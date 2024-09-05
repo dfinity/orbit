@@ -8,7 +8,7 @@ use anyhow::Context;
 use call::RequestCanisterCallArgs;
 use clap::{Parser, Subcommand};
 use install::RequestCanisterInstallArgs;
-use orbit_station_api::RequestOperationInput;
+use station_api::RequestOperationInput;
 
 // TODO: Support Canister create + integration test
 // TODO: Support Canister install check

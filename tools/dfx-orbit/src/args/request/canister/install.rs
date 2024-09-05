@@ -2,11 +2,11 @@
 
 use crate::DfxOrbit;
 use clap::{Parser, ValueEnum};
-use orbit_station_api::{
+use station_api::{
     CanisterInstallMode, ChangeExternalCanisterOperationInput, RequestOperationInput,
 };
 
-/// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
+/// Requests that a canister be installed or updated.  Equivalent to `station_api::CanisterInstallMode`.
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterInstallArgs {
     /// The canister name or ID.
@@ -58,7 +58,7 @@ impl RequestCanisterInstallArgs {
     }
 }
 
-/// Canister installation mode equivalent to `dfx canister install --mode XXX` and `orbit_station_api::CanisterInstallMode`.
+/// Canister installation mode equivalent to `dfx canister install --mode XXX` and `station_api::CanisterInstallMode`.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, ValueEnum)]
 pub enum CanisterInstallModeArgs {
     /// Corresponds to `dfx canister install`

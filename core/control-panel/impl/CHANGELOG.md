@@ -1,3 +1,19 @@
+## 0.0.2-alpha.5 (2024-08-26)
+
+
+### 🚀 Features
+
+- **station:** mint cycles to top up station
+
+- **station:** optimized repository lookups
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Leon Tan
+- olaszakos
+
 ## 0.0.2-alpha.4 (2024-07-04)
 
 

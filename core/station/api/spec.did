@@ -45,7 +45,7 @@ type RequestSpecifier = variant {
   AddAddressBookEntry;
   EditAddressBookEntry : ResourceIds;
   RemoveAddressBookEntry : ResourceIds;
-  ChangeCanister;
+  SystemUpgrade;
   SetDisasterRecovery;
   ChangeExternalCanister : ExternalCanisterId;
   FundExternalCanister : ExternalCanisterId;
@@ -419,10 +419,10 @@ type AddAddressBookEntryOperationInput = record {
   address : text;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
-  // The blockchain standard of the address (e.g. `native`, `erc20`, etc.).
-  standard : text;
   // Metadata associated with the address book entry (e.g. `{"kyc": "true"}`).
   metadata : vec AddressBookMetadata;
+  // The labels associated with the address book entry (e.g. `["exchange", "kyc"]`).
+  labels : vec text;
 };
 
 type EditAddressBookEntryOperation = record {
@@ -447,6 +447,8 @@ type EditAddressBookEntryOperationInput = record {
   address_book_entry_id : UUID;
   // The new owner of the address.
   address_owner : opt text;
+  // The updated list of labels associated with the address book entry.
+  labels : opt vec text;
   // Instructions to update the address book entry's metadata.
   change_metadata : opt ChangeAddressBookMetadata;
 };
@@ -546,23 +548,23 @@ type CanisterInstallMode = variant {
   upgrade;
 };
 
-type ChangeCanisterTarget = variant {
+type SystemUpgradeTarget = variant {
   UpgradeStation;
   UpgradeUpgrader;
 };
 
-type ChangeCanisterOperationInput = record {
+type SystemUpgradeOperationInput = record {
   // The target to change.
-  target : ChangeCanisterTarget;
+  target : SystemUpgradeTarget;
   // The wasm module to install.
   module : blob;
   // The initial argument passed to the new wasm module.
   arg : opt blob;
 };
 
-type ChangeCanisterOperation = record {
+type SystemUpgradeOperation = record {
   // The target to change.
-  target : ChangeCanisterTarget;
+  target : SystemUpgradeTarget;
   // The checksum of the wasm module.
   module_checksum : Sha256Hash;
   // The checksum of the arg blob.
@@ -836,8 +838,8 @@ type RequestOperation = variant {
   EditUserGroup : EditUserGroupOperation;
   // An operation for removing an existing user group.
   RemoveUserGroup : RemoveUserGroupOperation;
-  // An operation for changing a canister.
-  ChangeCanister : ChangeCanisterOperation;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade : SystemUpgradeOperation;
   // An operation for setting disaster recovery.
   SetDisasterRecovery : SetDisasterRecoveryOperation;
   // An operation for changing a external canister.
@@ -885,8 +887,8 @@ type RequestOperationInput = variant {
   EditUserGroup : EditUserGroupOperationInput;
   // An operation for removing an existing user group.
   RemoveUserGroup : RemoveUserGroupOperationInput;
-  // An operation for changing a canister.
-  ChangeCanister : ChangeCanisterOperationInput;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade : SystemUpgradeOperationInput;
   // An operation for setting disaster recovery.
   SetDisasterRecovery : SetDisasterRecoveryOperationInput;
   // An operation for changing a external canister.
@@ -934,8 +936,8 @@ type RequestOperationType = variant {
   EditUserGroup;
   // An operation for removing an existing user group.
   RemoveUserGroup;
-  // An operation for changing a canister.
-  ChangeCanister;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade;
   // An operation for setting disaster recovery for a canister.
   SetDisasterRecovery;
   // An operation for changing a external canister.
@@ -1065,8 +1067,8 @@ type ListRequestsOperationType = variant {
   EditUserGroup;
   // An operation for removing an existing user group.
   RemoveUserGroup;
-  // An operation for changing a canister.
-  ChangeCanister;
+  // An operation for performing a system upgrade on the station or upgrader.
+  SystemUpgrade;
   // An operation for changing a external canister with an optionally specified canister ID.
   ChangeExternalCanister : opt principal;
   // An operation for configuring an external canister.
@@ -1567,11 +1569,10 @@ type AddressBookEntry = record {
   address : text;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
-  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
-  // with spaces replaced with underscores.
-  standard : text;
   // Metadata associated with the address book entry (e.g. `{"kyc": "true"}`).
   metadata : vec AddressBookMetadata;
+  // The list of labels associated with the address book entry (e.g. `["kyc", "approved"]`).
+  labels : vec text;
   // The time at which the address book entry was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : text;
 };
@@ -1601,14 +1602,10 @@ type ListAddressBookEntriesInput = record {
   ids : opt vec UUID;
   // The address to search for.
   addresses : opt vec text;
-  // The blockchain and standard to use for filtering the address book entries.
-  address_chain : opt record {
-    // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
-    blockchain : text;
-    // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
-    // with spaces replaced with underscores.
-    standard : text;
-  };
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : opt text;
+  // The labels to search for, if provided only address book entries with the given labels will be returned.
+  labels : opt vec text;
   // The pagination parameters.
   paginate : opt PaginationInput;
 };
@@ -1852,11 +1849,6 @@ type AccountResourceAction = variant {
   Update : ResourceId;
 };
 
-// The actions that are available for canister changes.
-type ChangeCanisterResourceAction = variant {
-  Create;
-};
-
 // The target canister to interact with.
 type ExternalCanisterId = variant {
   Any;
@@ -1891,6 +1883,12 @@ type CallExternalCanisterResourceTarget = record {
   execution_method : ExecutionMethodResourceTarget;
 };
 
+// The actions that are available for notifications.
+type NotificationResourceAction = variant {
+  List;
+  Update : ResourceId;
+};
+
 // The actions that are available for requests.
 type RequestResourceAction = variant {
   List;
@@ -1902,6 +1900,7 @@ type SystemResourceAction = variant {
   SystemInfo;
   Capabilities;
   ManageSystemInfo;
+  Upgrade;
 };
 
 // The actions that are available for users.
@@ -1923,8 +1922,8 @@ type Resource = variant {
   Permission : PermissionResourceAction;
   Account : AccountResourceAction;
   AddressBook : ResourceAction;
-  ChangeCanister : ChangeCanisterResourceAction;
   ExternalCanister : ExternalCanisterResourceAction;
+  Notification : NotificationResourceAction;
   Request : RequestResourceAction;
   RequestPolicy : ResourceAction;
   System : SystemResourceAction;
@@ -2106,7 +2105,7 @@ type UserPrivilege = variant {
   AddRequestPolicy;
   ListAddressBookEntries;
   AddAddressBookEntry;
-  ChangeCanister;
+  SystemUpgrade;
   ListRequests;
   CreateExternalCanister;
   ListExternalCanisters;
@@ -2473,6 +2472,16 @@ type HttpResponse = record {
   body : blob;
 };
 
+type NotifyFailedStationUpgradeInput = record {
+  // the failure reason
+  reason : text;
+};
+
+type NotifyFailedStationUpgradeResult = variant {
+  Ok;
+  Err : Error;
+};
+
 // The Station service definition.
 service : (opt SystemInstall) -> {
   // Check if the station is healthy and ready to be used.
@@ -2554,4 +2563,6 @@ service : (opt SystemInstall) -> {
   canister_status : (input : CanisterStatusInput) -> (CanisterStatusResult);
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
+  // Internal endpoint used by the upgrader canister to notify the station about a failed station upgrade request.
+  notify_failed_station_upgrade : (NotifyFailedStationUpgradeInput) -> (NotifyFailedStationUpgradeResult);
 };

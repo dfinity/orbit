@@ -129,7 +129,7 @@ export default {
       },
     },
   },
-  change_canister: {
+  system_upgrade: {
     targets: {
       upgradestation: 'Portefeuille',
       upgradeupgrader: 'Upgrader',
@@ -172,6 +172,7 @@ export default {
       system: 'Système',
       transfers: 'Transferts',
       users: 'Usagers',
+      external_canisters: 'Canisters',
     },
     headers: {
       id: 'ID',
@@ -210,7 +211,7 @@ export default {
       permission: "Police d'Accès",
       request_policy: 'Police de Demande',
       address_book_entry: "Carnet d'Adresses",
-      change_canister: 'Mise à Jour',
+      system_upgrade: 'Mise à Jour',
       transfer: 'Transferts',
       external_canister: 'Canister Géré',
       system_info: 'Informations Système',
@@ -248,9 +249,9 @@ export default {
         title: "Supprimer une entrée de carnet d'adresses",
         request_title: "Demande de supprimer une entrée de carnet d'adresses",
       },
-      changecanister: {
-        title: 'Modifier un canister',
-        request_title: 'Demande de modifier un canister',
+      systemupgrade: {
+        title: 'Mise à jour du système',
+        request_title: 'Demande de mise à jour du système',
       },
       editpermission: {
         title: 'Modifier les permissions',
@@ -400,6 +401,11 @@ export default {
     add_station_list_item: 'Ajouter un portefeuille',
   },
   terms: {
+    active: 'Actif',
+    archived: 'Archivé',
+    canisters: 'Canisters',
+    canister: 'Canister',
+    labels: 'Étiquettes',
     change: 'Changement',
     quorum: 'Quorum',
     deposits: 'Deports',
@@ -579,6 +585,7 @@ export default {
     transfer_requests: 'Demandes de Transfert',
     permissions: "Polices d'Accés",
     request_policies: "Polices d'Aprobation",
+    external_canisters: 'Canisters',
   },
   pages: {
     accounts: {
@@ -626,6 +633,13 @@ export default {
       create_new_user_title: 'Créer un nouvel usager',
       btn_edit_title: "Modifier l'usager",
       error_fetching_users: 'Erreur du chargement des usagers, veuillez essayer de nouveau.',
+    },
+    external_canisters: {
+      title: 'Canisters',
+      btn_add_canister: 'Ajouter un canister',
+      add_new_canister_title: 'Ajouter un nouveau canister',
+      edit_canister_title: 'Modifier le canister',
+      error_fetching_canisters: 'Erreur du chargement des canisters, veuillez essayer de nouveau.',
     },
     user_groups: {
       title: "Group d'Usagers",
@@ -741,11 +755,11 @@ export default {
       permission: "Police d'Accés",
       requestpolicy: 'Police de Demande',
       system: 'Système',
-      changecanister: 'Modification de Canister',
       transfer: 'Transfert',
       request: 'Demande',
       addressbook: "Carnet d'Adresses",
       managesysteminfo: 'Gérer les informations système',
+      externalcanister: 'Canister Géré',
     },
     actions: {
       list: 'Lister',
@@ -759,6 +773,9 @@ export default {
       systeminfocapabilities: 'Capacités (Actifs Pris en Charge)',
       systeminfoconfig: 'Configuration (Mises à jour, Métriques, Utilisation)',
       managesysteminfo: 'Gérer les informations système (par exemple. nom)',
+      systemupgrade: 'Mise à jour du système',
+      change: 'Changement',
+      fund: 'Financer',
     },
     allow: {
       public: "N'importe qui",
@@ -796,7 +813,7 @@ export default {
       removeaddressbookentry: "Éffacer une entrée dans le carnet d'adresses",
       editaddressbookentry: "Modifier une entrée dans le carnet d'adresses",
       addrequestpolicy: 'Ajouter une police de demande',
-      changecanister: 'Modifier un canister',
+      systemupgrade: 'Mise à jour du système',
       editrequestpolicy: 'Modifier une police de demande',
       edituser: 'Modifier un usager',
       transfer: 'Transfert',
@@ -805,7 +822,11 @@ export default {
       removeusergroup: "Éffacer un groupe d'usagers",
       addaccount: 'Ajouter un compte',
       managesysteminfo: 'Gérer les informations système',
-      changeexternalcanister: 'Modifier un canister géré',
+      changeexternalcanister: 'Modifier un canister',
+      fundexternalcanister: 'Financer un canister',
+      setdisasterrecovery: 'Définir la récupération après sinistre',
+      callexternalcanister: 'Appeler un canister',
+      createexternalcanister: 'Créer un canister',
     },
   },
   cycle_obtain_strategies: {

@@ -1,14 +1,8 @@
 //! CLI arguments for `dfx-orbit review list`.
 
-use clap::Parser;
-use orbit_station_api::{ListRequestsInput, SortDirection};
-
 use super::external_canister_operations;
-
-// TODO: Ideas what we could filter by:
-// - Filter by status: -> Only the ones which are in Created
-// - Filter by times -> There are four times that could be set
-// - Filter by request ids
+use clap::Parser;
+use station_api::{ListRequestsInput, ListRequestsSortBy, SortDirection};
 
 /// Reviews the next request.
 #[derive(Debug, Parser)]
@@ -34,9 +28,7 @@ impl From<ReviewListArgs> for ListRequestsInput {
             created_from_dt: None,
             created_to_dt: None,
             paginate: None,
-            sort_by: Some(orbit_station_api::ListRequestsSortBy::CreatedAt(
-                SortDirection::Asc,
-            )),
+            sort_by: Some(ListRequestsSortBy::CreatedAt(SortDirection::Asc)),
             only_approvable: args.only_approvable,
             with_evaluation_results: true,
         }

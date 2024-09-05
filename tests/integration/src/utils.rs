@@ -1,9 +1,11 @@
 use crate::setup::WALLET_ADMIN_USER;
 use candid::Principal;
+use flate2::{write::GzEncoder, Compression};
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
+use sha2::Digest;
 use station_api::{
     AccountDTO, AddAccountOperationInput, AddUserOperationInput, AllowDTO, ApiErrorDTO,
     CreateRequestInput, CreateRequestResponse, GetPermissionResponse, GetRequestInput,
@@ -13,6 +15,7 @@ use station_api::{
     SetDisasterRecoveryOperationInput, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
     SystemInfoDTO, SystemInfoResponse, UserDTO, UserSpecifierDTO, UserStatusDTO, UuidDTO,
 };
+use std::io::Write;
 use std::time::Duration;
 use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
 
@@ -212,11 +215,11 @@ pub fn wait_for_request_with_extra_ticks(
     request: RequestDTO,
     extra_ticks: u64,
 ) -> Result<RequestDTO, Option<RequestStatusDTO>> {
-    // wait for the request to be approved (timer's period is 5 seconds)
-    env.advance_time(Duration::from_secs(5));
+    // wait for the request to be approved
+    env.advance_time(Duration::from_secs(2));
     env.tick();
-    // wait for the request to be processing (timer's period is 5 seconds)
-    env.advance_time(Duration::from_secs(5));
+    // wait for the request to be processing
+    env.advance_time(Duration::from_secs(2));
     env.tick();
     for _ in 0..extra_ticks {
         env.tick();
@@ -658,4 +661,48 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
             panic!("request must be AddAccount");
         }
     }
+}
+
+/// Compresses the given data to a gzip format.
+pub fn compress_to_gzip(data: &[u8]) -> Vec<u8> {
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::best());
+    encoder.write_all(data).expect("Failed to write data");
+    encoder.finish().expect("Failed to finish compression")
+}
+
+/// Creates a file in the `assets` folder with the given name and content.
+pub fn create_file(name: &str, content: &[u8]) {
+    let current_dir = std::env::current_dir().expect("Failed to get current directory");
+    let relative_path = std::path::Path::new("assets").join(name);
+    let absolute_path = current_dir.join(relative_path);
+
+    if let Some(parent_dir) = absolute_path.parent() {
+        std::fs::create_dir_all(parent_dir).expect("Failed to create directories");
+    }
+
+    std::fs::write(&absolute_path, content).expect("Failed to write file");
+}
+
+/// Reads the content of a file in the `assets` folder with the given name.
+pub fn read_file(name: &str) -> Option<Vec<u8>> {
+    let current_dir = std::env::current_dir().expect("Failed to get current directory");
+    let relative_path = std::path::Path::new("assets").join(name);
+    let absolute_path = current_dir.join(relative_path);
+
+    if !absolute_path.exists() {
+        return None;
+    }
+
+    std::fs::read(absolute_path).ok()
+}
+
+/// Converts the given data to a SHA-256 hash and returns it as a hex string.
+pub fn sha256_hex(data: &[u8]) -> String {
+    let mut hasher = sha2::Sha256::new();
+
+    hasher.update(data);
+
+    let result = hasher.finalize();
+
+    hex::encode(result)
 }
