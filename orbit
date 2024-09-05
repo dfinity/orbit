@@ -165,7 +165,8 @@ function install_control_panel() {
   dfx canister create --specified-id $CANISTER_ID_CONTROL_PANEL control_panel
   dfx build control_panel
   dfx canister install control_panel
-  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = blob \"$station_wasm_module_bytes\"; })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = opt blob \"$station_wasm_module_bytes\"; })")
 }
 
 function setup_control_panel() {
@@ -183,7 +184,8 @@ function upgrade_control_panel() {
 
   dfx build control_panel
   dfx canister install control_panel --mode upgrade --yes
-  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = blob \"$station_wasm_module_bytes\"; })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = opt blob \"$station_wasm_module_bytes\"; })")
 }
 
 function uninstall_app_wallet() {
