@@ -8,8 +8,9 @@ use crate::{
             UserResourceAction,
         },
         Account, AccountKey, AddAccountOperation, AddAccountOperationInput,
-        AddAddressBookEntryOperation, AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
-        AddRequestPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
+        AddAddressBookEntryOperation, AddAddressBookEntryOperationInput, AddAssetOperation,
+        AddAssetOperationInput, AddRequestPolicyOperation, AddRequestPolicyOperationInput,
+        AddUserOperation, AddUserOperationInput, AddressBookEntry, Asset,
         CallExternalCanisterOperation, CallExternalCanisterOperationInput, CanisterInstallMode,
         CanisterInstallModeArgs, CanisterMethod, CanisterReinstallModeArgs,
         CanisterUpgradeModeArgs, ChangeExternalCanisterOperation,
@@ -32,8 +33,8 @@ use crate::{
         TransferOperation, User,
     },
     repositories::{
-        AccountRepository, AddressBookRepository, UserRepository, ACCOUNT_REPOSITORY,
-        USER_GROUP_REPOSITORY,
+        AccountRepository, AddressBookRepository, AssetRepository, UserRepository,
+        ACCOUNT_REPOSITORY, USER_GROUP_REPOSITORY,
     },
 };
 use orbit_essentials::repository::Repository;
@@ -1120,6 +1121,39 @@ impl From<station_api::ManageSystemInfoOperationDTO> for ManageSystemInfoOperati
     }
 }
 
+impl AddAssetOperation {
+    pub fn to_dto(self, asset: Option<Asset>) -> station_api::AddAssetOperationDTO {
+        station_api::AddAssetOperationDTO {
+            asset: asset.map(|asset| asset.into()),
+            input: station_api::AddAssetOperationInput {
+                name: self.input.name,
+                blockchain: self.input.blockchain.to_string(),
+                standards: self.input.standards.iter().map(|s| s.to_string()).collect(),
+                symbol: self.input.symbol,
+                decimals: self.input.decimals,
+                metadata: self.input.metadata.into_vec_dto(),
+            },
+        }
+    }
+}
+
+impl From<station_api::AddAssetOperationInput> for AddAssetOperationInput {
+    fn from(input: station_api::AddAssetOperationInput) -> AddAssetOperationInput {
+        AddAssetOperationInput {
+            name: input.name,
+            symbol: input.symbol,
+            decimals: input.decimals,
+            metadata: input.metadata.into(),
+            blockchain: input.blockchain.parse().expect("Invalid blockchain"),
+            standards: input
+                .standards
+                .iter()
+                .map(|s| s.parse().expect("Invalid standard"))
+                .collect(),
+        }
+    }
+}
+
 impl From<RequestOperation> for RequestOperationDTO {
     fn from(operation: RequestOperation) -> RequestOperationDTO {
         match operation {
@@ -1212,6 +1246,13 @@ impl From<RequestOperation> for RequestOperationDTO {
             }
             RequestOperation::ManageSystemInfo(operation) => {
                 RequestOperationDTO::ManageSystemInfo(Box::new(operation.into()))
+            }
+            RequestOperation::AddAsset(operation) => {
+                let asset = operation
+                    .asset_id
+                    .and_then(|id| AssetRepository::default().get(&id));
+
+                RequestOperationDTO::AddAsset(Box::new(operation.to_dto(asset)))
             }
         }
     }
@@ -1392,6 +1433,9 @@ impl RequestOperation {
             }
             RequestOperation::ManageSystemInfo(_) => {
                 vec![Resource::System(SystemResourceAction::ManageSystemInfo)]
+            }
+            RequestOperation::AddAsset(_) => {
+                vec![Resource::Asset(ResourceAction::Create)]
             }
         }
     }

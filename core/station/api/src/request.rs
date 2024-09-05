@@ -3,13 +3,13 @@ use super::{
 };
 use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
-    AddAddressBookEntryOperationInput, AddUserGroupOperationDTO, AddUserGroupOperationInput,
-    AddUserOperationDTO, AddUserOperationInput, CallExternalCanisterOperationDTO,
-    CallExternalCanisterOperationInput, ChangeExternalCanisterOperationDTO,
-    ChangeExternalCanisterOperationInput, ConfigureExternalCanisterOperationDTO,
-    ConfigureExternalCanisterOperationInput, CreateExternalCanisterOperationDTO,
-    CreateExternalCanisterOperationInput, DisplayUserDTO, EditAccountOperationDTO,
-    EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
+    AddAddressBookEntryOperationInput, AddAssetOperationDTO, AddUserGroupOperationDTO,
+    AddUserGroupOperationInput, AddUserOperationDTO, AddUserOperationInput,
+    CallExternalCanisterOperationDTO, CallExternalCanisterOperationInput,
+    ChangeExternalCanisterOperationDTO, ChangeExternalCanisterOperationInput,
+    ConfigureExternalCanisterOperationDTO, ConfigureExternalCanisterOperationInput,
+    CreateExternalCanisterOperationDTO, CreateExternalCanisterOperationInput, DisplayUserDTO,
+    EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
     EditPermissionOperationDTO, EditPermissionOperationInput, EditUserGroupOperationDTO,
     EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput,
     FundExternalCanisterOperationDTO, FundExternalCanisterOperationInput,
@@ -83,6 +83,7 @@ pub enum RequestOperationDTO {
     EditRequestPolicy(Box<EditRequestPolicyOperationDTO>),
     RemoveRequestPolicy(Box<RemoveRequestPolicyOperationDTO>),
     ManageSystemInfo(Box<ManageSystemInfoOperationDTO>),
+    AddAsset(Box<AddAssetOperationDTO>),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -137,6 +138,7 @@ pub enum RequestOperationTypeDTO {
     RemoveRequestPolicy,
     ManageSystemInfo,
     ConfigureExternalCanister,
+    AddAsset,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

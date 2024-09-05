@@ -50,7 +50,7 @@ pub enum ResourceSpecifier {
     Resource(Resource),
 }
 
-#[storable(skip_deserialize = true)]
+#[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, strum::VariantNames)]
 #[strum(serialize_all = "PascalCase")]
 pub enum RequestSpecifier {

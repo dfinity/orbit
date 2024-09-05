@@ -3,7 +3,7 @@ use super::{
     request_policy_rule::{RequestPolicyRule, RequestPolicyRuleInput},
     request_specifier::RequestSpecifier,
     resource::{Resource, ValidationMethodResourceTarget},
-    AccountId, AddressBookEntryId, Blockchain, BlockchainStandard, ChangeMetadata,
+    AccountId, AddressBookEntryId, AssetId, Blockchain, BlockchainStandard, ChangeMetadata,
     CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
     ExternalCanisterState, MetadataItem, UserGroupId, UserId, UserStatus,
 };
@@ -16,7 +16,7 @@ use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::{storable, types::UUID};
 use std::fmt::Display;
 
-#[storable(skip_deserialize = true)]
+#[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, strum::VariantNames)]
 #[strum(serialize_all = "PascalCase")]
 pub enum RequestOperation {
@@ -43,6 +43,9 @@ pub enum RequestOperation {
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
     ManageSystemInfo(ManageSystemInfoOperation),
     SetDisasterRecovery(SetDisasterRecoveryOperation),
+    AddAsset(AddAssetOperation),
+    // EditAsset,
+    // RemoveAsset,
 }
 
 impl Display for RequestOperation {
@@ -73,8 +76,27 @@ impl Display for RequestOperation {
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
             RequestOperation::ManageSystemInfo(_) => write!(f, "manage_system_info"),
             RequestOperation::SetDisasterRecovery(_) => write!(f, "set_disaster_recovery"),
+            RequestOperation::AddAsset(_) => write!(f, "add_asset"),
         }
     }
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddAssetOperation {
+    pub asset_id: Option<AssetId>,
+    pub input: AddAssetOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddAssetOperationInput {
+    pub name: String,
+    pub symbol: String,
+    pub decimals: u32,
+    pub metadata: Metadata,
+    pub blockchain: Blockchain,
+    pub standards: Vec<BlockchainStandard>,
 }
 
 #[storable]

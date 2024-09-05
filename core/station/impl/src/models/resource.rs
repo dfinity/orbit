@@ -7,6 +7,7 @@ use orbit_essentials::{
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
+use crate::core::validation::EnsureAsset;
 use crate::{
     core::validation::{
         EnsureAccount, EnsureAddressBookEntry, EnsureNotification, EnsureRequest,
@@ -19,7 +20,7 @@ use crate::{
 /// The deserile implementation is available in the migration module for the `Resource` enum, this is
 /// because the enum had a backward incompatible change in the past and the migration module is handling
 /// the deserialization of the old data.
-#[storable(skip_deserialize = true)]
+#[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, strum::VariantNames)]
 #[strum(serialize_all = "PascalCase")]
 pub enum Resource {
@@ -33,6 +34,7 @@ pub enum Resource {
     System(SystemResourceAction),
     User(UserResourceAction),
     UserGroup(ResourceAction),
+    Asset(ResourceAction),
 }
 
 impl ModelValidator<ValidationError> for Resource {
@@ -104,6 +106,14 @@ impl ModelValidator<ValidationError> for Resource {
                 | ResourceAction::Update(resource_id)
                 | ResourceAction::Delete(resource_id) => {
                     EnsureUserGroup::resource_id_exists(resource_id)?
+                }
+            },
+            Resource::Asset(action) => match action {
+                ResourceAction::List | ResourceAction::Create => (),
+                ResourceAction::Read(resource_id)
+                | ResourceAction::Update(resource_id)
+                | ResourceAction::Delete(resource_id) => {
+                    EnsureAsset::resource_id_exists(resource_id)?
                 }
             },
         }
@@ -614,6 +624,38 @@ impl Resource {
                     vec![Resource::UserGroup(ResourceAction::Delete(ResourceId::Any))]
                 }
             },
+
+            Resource::Asset(action) => match action {
+                ResourceAction::Create => vec![Resource::Asset(ResourceAction::Create)],
+                ResourceAction::Delete(ResourceId::Id(id)) => {
+                    vec![
+                        Resource::Asset(ResourceAction::Delete(ResourceId::Id(*id))),
+                        Resource::Asset(ResourceAction::Delete(ResourceId::Any)),
+                    ]
+                }
+                ResourceAction::List => vec![Resource::Asset(ResourceAction::List)],
+                ResourceAction::Read(ResourceId::Id(id)) => {
+                    vec![
+                        Resource::Asset(ResourceAction::Read(ResourceId::Id(*id))),
+                        Resource::Asset(ResourceAction::Read(ResourceId::Any)),
+                    ]
+                }
+                ResourceAction::Update(ResourceId::Id(id)) => {
+                    vec![
+                        Resource::Asset(ResourceAction::Update(ResourceId::Id(*id))),
+                        Resource::Asset(ResourceAction::Update(ResourceId::Any)),
+                    ]
+                }
+                ResourceAction::Update(ResourceId::Any) => {
+                    vec![Resource::Asset(ResourceAction::Update(ResourceId::Any))]
+                }
+                ResourceAction::Read(ResourceId::Any) => {
+                    vec![Resource::Asset(ResourceAction::Read(ResourceId::Any))]
+                }
+                ResourceAction::Delete(ResourceId::Any) => {
+                    vec![Resource::Asset(ResourceAction::Delete(ResourceId::Any))]
+                }
+            },
         }
     }
 }
@@ -633,6 +675,7 @@ impl Display for Resource {
             Resource::System(action) => write!(f, "System({})", action),
             Resource::User(action) => write!(f, "User({})", action),
             Resource::UserGroup(action) => write!(f, "UserGroup({})", action),
+            Resource::Asset(action) => write!(f, "Asset({})", action),
         }
     }
 }

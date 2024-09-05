@@ -12,8 +12,8 @@ use crate::{
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, request_policy::REQUEST_POLICY_REPOSITORY,
-        ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, NOTIFICATION_REPOSITORY, REQUEST_REPOSITORY,
-        USER_GROUP_REPOSITORY, USER_REPOSITORY,
+        ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, NOTIFICATION_REPOSITORY,
+        REQUEST_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     services::SYSTEM_SERVICE,
 };
@@ -227,3 +227,18 @@ impl EnsureIdExists<UUID> for EnsureNotification {
 }
 
 impl EnsureResourceIdExists for EnsureNotification {}
+
+pub struct EnsureAsset {}
+
+impl EnsureIdExists<UUID> for EnsureAsset {
+    fn id_exists(id: &UUID) -> Result<(), RecordValidationError> {
+        ensure_entry_exists(ASSET_REPOSITORY.to_owned(), *id).ok_or(
+            RecordValidationError::NotFound {
+                model_name: "Asset".to_string(),
+                id: Uuid::from_bytes(*id).hyphenated().to_string(),
+            },
+        )
+    }
+}
+
+impl EnsureResourceIdExists for EnsureAsset {}

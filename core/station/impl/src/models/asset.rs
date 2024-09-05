@@ -46,6 +46,22 @@ impl ModelKey<AssetId> for Asset {
     }
 }
 
+// impl Asset {
+//     pub const ADDRESS_RANGE: (u16, u16) = (1, 255);
+//     pub const ADDRESS_OWNER_RANGE: (u16, u16) = (1, 255);
+//     pub const MAX_LABELS: usize = 10;
+//     pub const MAX_LABEL_LENGTH: usize = 150;
+
+//     /// Creates a new address_book_entry key from the given key components.
+//     pub fn key(id: AssetId) -> AssetKey {
+//         AssetKey { id }
+//     }
+
+//     pub fn to_key(&self) -> AssetKey {
+//         Self::key(self.id)
+//     }
+// }
+
 impl Hash for Asset {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.blockchain.hash(state);

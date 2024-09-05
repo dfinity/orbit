@@ -18,6 +18,7 @@ use std::sync::Arc;
 
 mod add_account;
 mod add_address_book_entry;
+mod add_asset;
 mod add_request_policy;
 mod add_user;
 mod add_user_group;
@@ -362,6 +363,9 @@ impl RequestFactory {
             RequestOperation::ManageSystemInfo(operation) => Box::new(
                 manage_system_info::ManageSystemInfoRequestExecute::new(request, operation),
             ),
+            RequestOperation::AddAsset(operation) => {
+                Box::new(add_asset::AddAssetRequestExecute::new(request, operation))
+            }
         }
     }
 }

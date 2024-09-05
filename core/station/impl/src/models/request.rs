@@ -248,6 +248,7 @@ fn validate_request_operation_foreign_keys(
                 EnsureUserGroup::id_exists(&committee.user_group_id)?;
             }
         }
+        RequestOperation::AddAsset(_) => (),
     }
     Ok(())
 }
