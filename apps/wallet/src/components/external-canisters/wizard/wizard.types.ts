@@ -9,8 +9,8 @@ export enum CanisterWizardSetupStep {
 }
 
 export interface ApprovalPolicyModel {
-  id?: UUID;
-  rule: RequestPolicyRule;
+  policy_id?: UUID;
+  rule?: RequestPolicyRule;
 }
 
 export interface CanisterWizardModel {

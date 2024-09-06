@@ -290,3 +290,17 @@ export const parseLocationQuery = (query: LocationQuery): Record<string, string[
 
   return result;
 };
+
+export const parseToBigIntOrUndefined = (
+  value: string | undefined | bigint,
+): bigint | undefined => {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim() !== '' ? BigInt(value) : undefined;
+  }
+
+  return value;
+};

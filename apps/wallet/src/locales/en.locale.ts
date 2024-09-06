@@ -94,6 +94,8 @@ export default {
       verify_instructions:
         'To verify the update, open the terminal and follow the instructions bellow:',
     },
+    no_data: 'No data available.',
+    no_matching_results: 'No matching results found for `{search}`.',
   },
   alpha_warning: {
     version: 'This is an alpha version.',
@@ -399,6 +401,13 @@ export default {
     use_existing: 'Use existing',
     create_new: 'Create new',
     initial_cycles: 'Initial Cycles',
+    target_canister: 'Target Canister',
+    config_read_permission: 'View',
+    config_read_permission_hint: 'View only access to the canister.',
+    config_change_permission: 'Changes',
+    config_change_permission_hint: 'Access to change the canister settings.',
+    config_change_approval_policy: 'Changes',
+    config_change_approval_policy_hint: 'Approval policy to change the canister settings.',
   },
   terms: {
     active: 'Active',

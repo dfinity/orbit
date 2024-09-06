@@ -7,7 +7,7 @@
     scrollable
     :max-width="props.dialogMaxWidth"
   >
-    <DataLoader :load="load" @loading="loading = $event">
+    <DataLoader :load="load" @loading="loading = $event" @loaded="wizard = $event">
       <template #error="{ errorMsg, errorDetails }">
         <ErrorCard
           data-test-id="canister-setup-error-card"
@@ -71,6 +71,7 @@ import {
   ConfigureExternalCanisterSettingsInput,
   CreateExternalCanisterOperationInput,
   Request,
+  RequestPolicyRule,
 } from '~/generated/station/station.did';
 import { mapExternalCanisterStateEnumToVariant } from '~/mappers/external-canister.mapper';
 import { useStationStore } from '~/stores/station.store';
@@ -115,7 +116,7 @@ const dialogTitle = computed(() =>
 );
 
 const load = async () => {
-  if (props.canisterId === undefined) {
+  if (!props.canisterId) {
     return useDefaultExternalCanisterSetupWizardModel({
       prefilledUserIds: [station.user.id],
     });
@@ -160,13 +161,16 @@ const saveChangesToExistingExternalCanister = async (canisterId: Principal): Pro
       calls: [],
     },
   ];
+
   settings.request_policies = [
     {
       calls: [],
-      change: wizard.value.approvalPolicy.change.map(item => ({
-        policy_id: [],
-        rule: item.rule,
-      })),
+      change: wizard.value.approvalPolicy.change
+        .filter(item => item.rule !== undefined)
+        .map(item => ({
+          policy_id: item.policy_id ? [item.policy_id] : [],
+          rule: item.rule as RequestPolicyRule,
+        })),
     },
   ];
 
@@ -190,10 +194,12 @@ const createNewExternalCanister = async (): Promise<Request> => {
   };
   changes.request_policies = {
     calls: [],
-    change: wizard.value.approvalPolicy.change.map(item => ({
-      policy_id: [],
-      rule: item.rule,
-    })),
+    change: wizard.value.approvalPolicy.change
+      .filter(item => item.rule !== undefined)
+      .map(item => ({
+        policy_id: [],
+        rule: item.rule as RequestPolicyRule,
+      })),
   };
   if (wizard.value.configuration.canisterId) {
     changes.kind = {

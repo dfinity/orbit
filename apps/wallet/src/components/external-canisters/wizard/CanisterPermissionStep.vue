@@ -4,8 +4,8 @@
       <VCard flat>
         <VCardTitle data-test-id="read-permission">
           <TextLabel
-            :label="$t('app.account_dialog_access_read')"
-            :tooltip="$t('app.account_dialog_access_read_hint')"
+            :label="$t('external_canisters.config_read_permission')"
+            :tooltip="$t('external_canisters.config_read_permission_hint')"
           />
         </VCardTitle>
         <VCardText class="py-0">
@@ -18,8 +18,8 @@
       <VCard flat>
         <VCardTitle data-test-id="change-permission">
           <TextLabel
-            :label="$t('app.account_dialog_access_configuration')"
-            :tooltip="$t('app.account_dialog_access_configuration_hint')"
+            :label="$t('external_canisters.config_change_permission')"
+            :tooltip="$t('external_canisters.config_change_permission_hint')"
           />
         </VCardTitle>
         <VCardText class="py-0">

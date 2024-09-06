@@ -14,6 +14,12 @@ vi.mock('~/services/station.service', () => {
     getExternalCanisterByCanisterId: vi
       .fn()
       .mockImplementation(() => Promise.reject(new Error('Failed to load canister'))),
+    fetchExternalCanisterFilters: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        labels: [['production']],
+        names: [],
+      }),
+    ),
   };
 
   return {
@@ -50,7 +56,7 @@ describe('CanisterSetupDialog', () => {
     const wrapper = mount(CanisterSetupDialog, {
       props: {
         modelValue: true,
-        canisterId: Principal.anonymous(),
+        canisterId: undefined,
       },
     });
 

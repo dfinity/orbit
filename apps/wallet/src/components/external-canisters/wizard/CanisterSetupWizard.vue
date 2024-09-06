@@ -20,7 +20,10 @@
                 <template #icon>{{ CanisterWizardSetupStep.Configuration }}</template>
               </VStepperItem>
               <VDivider />
-              <VStepperItem :value="CanisterWizardSetupStep.Permission" :title="$t('terms.access')">
+              <VStepperItem
+                :value="CanisterWizardSetupStep.Permission"
+                :title="$t('terms.permissions')"
+              >
                 <template #icon>{{ CanisterWizardSetupStep.Permission }}</template>
               </VStepperItem>
               <VDivider />
@@ -127,7 +130,9 @@ const showSubmit = computed(
 );
 const isCreationMode = computed(() => !props.modelValue.configuration.id);
 const fieldsWithErrors = ref<string[]>([]);
-const hasConfigurationErrors = computed(() => fieldsWithErrors.value.includes('name'));
+const hasConfigurationErrors = computed(
+  () => fieldsWithErrors.value.includes('name') || fieldsWithErrors.value.includes('canister_id'),
+);
 
 const model = computed({
   get: () => props.modelValue,
