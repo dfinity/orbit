@@ -52,12 +52,11 @@ impl CanisterService {
 
         let mut config = canister_config().unwrap_or_default();
 
-        if !input.upgrader_wasm_module.is_empty() {
-            config.upgrader_wasm_module = input.upgrader_wasm_module;
+        if let Some(upgrader_wasm_module) = input.upgrader_wasm_module {
+            config.upgrader_wasm_module = upgrader_wasm_module;
         }
-
-        if !input.station_wasm_module.is_empty() {
-            config.station_wasm_module = input.station_wasm_module;
+        if let Some(station_wasm_module) = input.station_wasm_module {
+            config.station_wasm_module = station_wasm_module;
         }
         write_canister_config(config);
 

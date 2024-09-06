@@ -248,9 +248,9 @@ type CanDeployStationResult = variant {
 // The canister modules required for the control panel.
 type UploadCanisterModulesInput = record {
   // The upgrader wasm module to use for the station canister.
-  upgrader_wasm_module : blob;
+  upgrader_wasm_module : opt blob;
   // The station wasm module to use.
-  station_wasm_module : blob;
+  station_wasm_module : opt blob;
 };
 
 // The result of uploading canister modules.

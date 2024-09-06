@@ -1,10 +1,12 @@
 use crate::interfaces::{
     NnsIndexCanisterInitPayload, NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload,
 };
-use crate::utils::{controller_test_id, minter_test_id, set_controllers, NNS_ROOT_CANISTER_ID};
+use crate::utils::{
+    controller_test_id, minter_test_id, set_controllers, upload_canister_modules,
+    NNS_ROOT_CANISTER_ID,
+};
 use crate::{CanisterIds, TestEnv};
 use candid::{CandidType, Encode, Principal};
-use control_panel_api::UploadCanisterModulesInput;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{query_candid_as, PocketIc, PocketIcBuilder};
 use serde::Serialize;
@@ -235,29 +237,7 @@ fn install_canisters(
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let station_wasm = get_canister_wasm("station").to_vec();
     if config.upload_canister_modules {
-        let upload_canister_modules_args = UploadCanisterModulesInput {
-            station_wasm_module: station_wasm.to_owned(),
-            upgrader_wasm_module: vec![],
-        };
-        env.update_call(
-            control_panel,
-            controller,
-            "upload_canister_modules",
-            Encode!(&upload_canister_modules_args).unwrap(),
-        )
-        .unwrap();
-
-        let upload_canister_modules_args = UploadCanisterModulesInput {
-            station_wasm_module: vec![],
-            upgrader_wasm_module: upgrader_wasm.to_owned(),
-        };
-        env.update_call(
-            control_panel,
-            controller,
-            "upload_canister_modules",
-            Encode!(&upload_canister_modules_args).unwrap(),
-        )
-        .unwrap();
+        upload_canister_modules(env, control_panel, controller);
     }
 
     let station_init_args = SystemInstallArg::Init(SystemInitArg {
