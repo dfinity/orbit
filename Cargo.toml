@@ -52,7 +52,6 @@ ic-asset-certification = { git = "https://github.com/dfinity/response-verificati
 ic-certification = { git = "https://github.com/dfinity/response-verification", rev = "eefc99e2a0041ae46873864e6e2f7aa8506a361f" }
 ic-certified-assets = { git = "https://github.com/dfinity/sdk.git", rev = "75c080ebae22a70578c06ddf1eda0b18ef091845" }
 ic-http-certification = { git = "https://github.com/dfinity/response-verification", rev = "eefc99e2a0041ae46873864e6e2f7aa8506a361f" }
-ic-representation-independent-hash = { git = "https://github.com/dfinity/response-verification", rev = "eefc99e2a0041ae46873864e6e2f7aa8506a361f" }
 ic-cdk = "0.13.2"
 ic-cdk-macros = "0.9"
 ic-cdk-timers = "0.7.0"
