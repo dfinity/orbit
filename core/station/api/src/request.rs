@@ -170,6 +170,9 @@ pub enum ListRequestsOperationTypeDTO {
     ManageSystemInfo,
     SetDisasterRecovery,
     ConfigureExternalCanister(Option<Principal>),
+    AddAsset,
+    EditAsset,
+    RemoveAsset,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

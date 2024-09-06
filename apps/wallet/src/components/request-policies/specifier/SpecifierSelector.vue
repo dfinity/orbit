@@ -92,6 +92,9 @@ const componentsMap: {
   CallExternalCanister: UnsupportedSpecifier,
   SetDisasterRecovery: UnsupportedSpecifier,
   FundExternalCanister: UnsupportedSpecifier,
+  AddAsset: UnsupportedSpecifier,
+  RemoveAsset: UnsupportedSpecifier,
+  EditAsset: UnsupportedSpecifier,
 };
 
 function isKeyOfRequestSpecifier(key: string): key is keyof RequestSpecifier {
@@ -246,6 +249,15 @@ watch(
         break;
       case RequestSpecifierEnum.SetDisasterRecovery:
         model.value = { [specifier.value]: null };
+        break;
+      case RequestSpecifierEnum.AddAsset:
+        model.value = { [specifier.value]: null };
+        break;
+      case RequestSpecifierEnum.EditAsset:
+        model.value = { [specifier.value]: { Any: null } };
+        break;
+      case RequestSpecifierEnum.RemoveAsset:
+        model.value = { [specifier.value]: { Any: null } };
         break;
       default:
         unreachable(specifier.value);

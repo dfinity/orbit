@@ -297,6 +297,9 @@ const componentsMap: {
   ConfigureExternalCanister: UnsupportedOperation,
   SetDisasterRecovery: UnsupportedOperation,
   FundExternalCanister: UnsupportedOperation,
+  AddAsset: UnsupportedOperation,
+  EditAsset: UnsupportedOperation,
+  RemoveAsset: UnsupportedOperation,
 };
 
 defineEmits<{

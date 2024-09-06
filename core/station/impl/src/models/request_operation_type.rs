@@ -65,6 +65,9 @@ pub enum ListRequestsOperationType {
     EditAddressBookEntry,
     RemoveAddressBookEntry,
     ManageSystemInfo,
+    AddAsset,
+    EditAsset,
+    RemoveAsset,
 }
 
 impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
@@ -166,6 +169,15 @@ impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
             }
             ListRequestsOperationType::ManageSystemInfo => {
                 matches!(self, RequestOperationFilterType::ManageSystemInfo)
+            }
+            ListRequestsOperationType::AddAsset => {
+                matches!(self, RequestOperationFilterType::AddAsset)
+            }
+            ListRequestsOperationType::EditAsset => {
+                matches!(self, RequestOperationFilterType::EditAsset)
+            }
+            ListRequestsOperationType::RemoveAsset => {
+                matches!(self, RequestOperationFilterType::RemoveAsset)
             }
         }
     }

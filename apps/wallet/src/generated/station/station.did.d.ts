@@ -705,15 +705,18 @@ export interface ListRequestsInput {
   'only_approvable' : boolean,
   'created_from_dt' : [] | [TimestampRFC3339],
 }
-export type ListRequestsOperationType = { 'AddUserGroup' : null } |
+export type ListRequestsOperationType = { 'RemoveAsset' : null } |
+  { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
   { 'ConfigureExternalCanister' : [] | [Principal] } |
   { 'ChangeExternalCanister' : [] | [Principal] } |
   { 'AddUser' : null } |
+  { 'EditAsset' : null } |
   { 'EditUserGroup' : null } |
   { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
+  { 'AddAsset' : null } |
   { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |

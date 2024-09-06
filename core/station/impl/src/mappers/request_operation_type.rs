@@ -78,6 +78,15 @@ impl From<station_api::ListRequestsOperationTypeDTO> for ListRequestsOperationTy
             station_api::ListRequestsOperationTypeDTO::SetDisasterRecovery => {
                 ListRequestsOperationType::SetDisasterRecovery
             }
+            station_api::ListRequestsOperationTypeDTO::AddAsset => {
+                ListRequestsOperationType::AddAsset
+            }
+            station_api::ListRequestsOperationTypeDTO::EditAsset => {
+                ListRequestsOperationType::EditAsset
+            }
+            station_api::ListRequestsOperationTypeDTO::RemoveAsset => {
+                ListRequestsOperationType::RemoveAsset
+            }
         }
     }
 }

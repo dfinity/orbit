@@ -43,6 +43,10 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.Notification;
   }
 
+  if (variantIs(resource, 'Asset')) {
+    return ResourceTypeEnum.Asset;
+  }
+
   return unreachable(resource);
 };
 

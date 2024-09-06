@@ -881,15 +881,18 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const ListRequestsOperationType = IDL.Variant({
+    'RemoveAsset' : IDL.Null,
     'AddUserGroup' : IDL.Null,
     'EditPermission' : IDL.Null,
     'ConfigureExternalCanister' : IDL.Opt(IDL.Principal),
     'ChangeExternalCanister' : IDL.Opt(IDL.Principal),
     'AddUser' : IDL.Null,
+    'EditAsset' : IDL.Null,
     'EditUserGroup' : IDL.Null,
     'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
+    'AddAsset' : IDL.Null,
     'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,

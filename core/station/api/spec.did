@@ -1106,6 +1106,12 @@ type ListRequestsOperationType = variant {
   ManageSystemInfo;
   // An operation for setting disaster recovery config.
   SetDisasterRecovery;
+  // An operation for adding an asset.
+  AddAsset;
+  // An operation for editing an asset.
+  EditAsset;
+  // An operation for removing an asset.
+  RemoveAsset;
 };
 
 // The direction to use for sorting.
