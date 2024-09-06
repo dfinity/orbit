@@ -1,4 +1,5 @@
 use super::CallContext;
+use crate::controllers::certify_metrics;
 use crate::{core::ic_cdk, SERVICE_NAME};
 use orbit_essentials::{
     api::ApiResult,
@@ -67,6 +68,7 @@ where
             .with(&labels! { "status" => status, "method" => called_method })
             .inc();
     });
+    certify_metrics();
 }
 
 /// Trap the execution of the canister call if the caller is not an authorized admin

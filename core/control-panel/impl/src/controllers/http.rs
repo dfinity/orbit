@@ -1,115 +1,97 @@
 use crate::core::metrics::METRIC_ACTIVE_USERS;
-use crate::services::{UserService, USER_SERVICE};
+use crate::core::middlewares::use_canister_call_metric;
+use crate::services::USER_SERVICE;
 use crate::{
-    core::ic_cdk::api::{canister_balance, time},
+    core::ic_cdk::api::{
+        canister_balance, data_certificate, print, set_certified_data, time, trap,
+    },
     SERVICE_NAME,
 };
-use ic_cdk_macros::query;
-use lazy_static::lazy_static;
-use orbit_essentials::api::{HeaderField, HttpRequest, HttpResponse};
-use orbit_essentials::http::add_skip_certification_headers;
+use ic_cdk_macros::{query, update};
+use ic_http_certification::{HttpRequest, HttpResponse};
+use orbit_essentials::api::ApiResult;
+use orbit_essentials::http::{certify_assets, serve_asset};
 use orbit_essentials::metrics::with_metrics_registry;
-use std::sync::Arc;
+use orbit_essentials::with_middleware;
 
-// Canister entrypoints for the controller.
-#[query(name = "http_request", decoding_quota = 10000)]
-async fn http_request(request: HttpRequest) -> HttpResponse {
-    let mut resp = CONTROLLER.router(request).await;
-    add_skip_certification_headers(&mut resp);
-    resp
+// no-op endpoint to refresh cycles balance in metrics
+#[update]
+async fn ping() {
+    let _ = do_ping().await;
 }
 
-// Controller initialization and implementation.
-lazy_static! {
-    static ref CONTROLLER: HttpController = HttpController::new(Arc::clone(&USER_SERVICE));
+// it is important to collect metrics here to refresh cycles balance in metrics
+#[with_middleware(tail = use_canister_call_metric("ping", &result))]
+async fn do_ping() -> ApiResult<()> {
+    Ok(())
 }
 
-#[derive(Debug)]
-pub struct HttpController {
-    user_service: Arc<UserService>,
+#[query(decoding_quota = 10000)]
+fn http_request(req: HttpRequest) -> HttpResponse {
+    let res = serve_asset(&req, data_certificate());
+    match res {
+        Ok(response) => response,
+        Err(err) => trap(err),
+    }
 }
 
-impl HttpController {
-    fn new(user_service: Arc<UserService>) -> Self {
-        Self { user_service }
-    }
+// Certification
+pub fn certify_metrics() {
+    // Trigger active users metric update.
+    METRIC_ACTIVE_USERS.with(|metric| metric.borrow_mut().refresh(time()));
 
-    async fn router(&self, request: HttpRequest) -> HttpResponse {
-        if request.url == "/metrics" || request.url == "/metrics/" {
-            return self.metrics(request).await;
+    // Add dynamic metrics, dropped after the request since query calls don't save state changes.
+    with_metrics_registry(SERVICE_NAME, |registry| {
+        registry
+            .gauge_mut(
+                "canister_cycles_balance",
+                "cycles balance available to the canister",
+            )
+            .set(canister_balance() as f64);
+    });
+    with_metrics_registry(SERVICE_NAME, |registry| {
+        registry
+            .gauge_mut(
+                "metrics_timestamp",
+                "UNIX timestamp in nanoseconds when the metrics were exported",
+            )
+            .set(time() as f64);
+    });
+    let metrics_contents =
+        with_metrics_registry(SERVICE_NAME, |registry| registry.export_metrics());
+    let res = certify_assets(vec![
+        (
+            "/metrics".to_string(),
+            metrics_contents.unwrap_or_else(|e| e.to_string().as_bytes().to_vec()),
+        ),
+        ("/metrics/sd".to_string(), metrics_service_discovery()),
+    ]);
+    match res {
+        Ok(certified_data) => {
+            set_certified_data(&certified_data);
         }
-
-        if request.url == "/metrics/sd" || request.url == "/metrics/sd/" {
-            return self.metrics_service_discovery(request).await;
-        }
-
-        return HttpResponse {
-            status_code: 404,
-            headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
-            body: "404 Not Found".as_bytes().to_owned(),
-        };
-    }
-
-    /// Returns all deployed station hosts for Prometheus service discovery.
-    ///
-    /// As defined by https://prometheus.io/docs/prometheus/latest/configuration/configuration/#http_sd_config
-    async fn metrics_service_discovery(&self, request: HttpRequest) -> HttpResponse {
-        if request.method.to_lowercase() != "get" {
-            return HttpResponse {
-                status_code: 405,
-                headers: vec![HeaderField("Allow".into(), "GET".into())],
-                body: "405 Method Not Allowed".as_bytes().to_owned(),
-            };
-        }
-
-        let station_hosts = self
-            .user_service
-            .get_all_deployed_stations()
-            .iter()
-            .map(|station| format!("{}.raw.icp0.io", station.to_text()))
-            .collect::<Vec<String>>();
-
-        let body = format!(
-            r#"[{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics","dapp":"orbit"}}}}]"#,
-            station_hosts.join("\", \"")
-        );
-
-        HttpResponse {
-            status_code: 200,
-            headers: vec![HeaderField(
-                "Content-Type".into(),
-                "application/json".into(),
-            )],
-            body: body.as_bytes().to_owned(),
+        Err(err) => {
+            print(err);
         }
     }
+}
 
-    async fn metrics(&self, request: HttpRequest) -> HttpResponse {
-        if request.method.to_lowercase() != "get" {
-            return HttpResponse {
-                status_code: 405,
-                headers: vec![HeaderField("Allow".into(), "GET".into())],
-                body: "405 Method Not Allowed".as_bytes().to_owned(),
-            };
-        }
+/// Returns all deployed station hosts for Prometheus service discovery.
+///
+/// As defined by https://prometheus.io/docs/prometheus/latest/configuration/configuration/#http_sd_config
+fn metrics_service_discovery() -> Vec<u8> {
+    let station_hosts = USER_SERVICE
+        .get_all_deployed_stations()
+        .iter()
+        .map(|station| format!("{}.raw.icp0.io", station.to_text()))
+        .collect::<Vec<String>>();
 
-        // Trigger active users metric update.
-        METRIC_ACTIVE_USERS.with(|metric| metric.borrow_mut().refresh(time()));
-
-        // Add dynamic metrics, dropped after the request since query calls don't save state changes.
-        with_metrics_registry(SERVICE_NAME, |registry| {
-            registry
-                .gauge_mut(
-                    "canister_cycles_balance",
-                    "cycles balance available to the canister",
-                )
-                .set(canister_balance() as f64);
-        });
-
-        with_metrics_registry(SERVICE_NAME, |registry| {
-            registry.export_metrics_as_http_response()
-        })
-    }
+    format!(
+        r#"[{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics","dapp":"orbit"}}}}]"#,
+        station_hosts.join("\", \"")
+    )
+    .as_bytes()
+    .to_owned()
 }
 
 #[cfg(test)]
@@ -119,35 +101,18 @@ mod tests {
     use candid::Principal;
     use orbit_essentials::repository::Repository;
 
-    #[tokio::test]
-    async fn test_service_discovery() {
+    #[test]
+    fn test_service_discovery() {
         let mut user = mock_user();
         user.deployed_stations = vec![Principal::from_slice(&[0; 29])];
         let station_host = format!("{}.raw.icp0.io", user.deployed_stations[0].to_text());
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
-        let controller = HttpController::new(Arc::new(UserService::default()));
+        let response = metrics_service_discovery();
 
-        let request = HttpRequest {
-            method: "GET".into(),
-            url: "/metrics/sd".into(),
-            headers: vec![],
-            body: vec![],
-        };
-
-        let response = controller.metrics_service_discovery(request).await;
-
-        assert_eq!(response.status_code, 200);
         assert_eq!(
-            response.headers,
-            vec![HeaderField(
-                "Content-Type".into(),
-                "application/json".into()
-            )]
-        );
-        assert_eq!(
-            response.body,
+            response,
             format!(
                 r#"[{{"targets": ["{}"],"labels": {{"__metrics_path__":"/metrics","dapp":"orbit"}}}}]"#,
                 station_host
