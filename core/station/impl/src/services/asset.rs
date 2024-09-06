@@ -1,16 +1,24 @@
 use std::sync::Arc;
 
 use crate::{
+    core::{authorization::Authorization, utils::retain_accessible_resources, CallContext},
     errors::AssetError,
     models::{
-        AddAssetOperationInput, Asset, AssetId, EditAssetOperationInput, RemoveAssetOperationInput,
+        resource::{Resource, ResourceAction, ResourceId},
+        AddAssetOperationInput, Asset, AssetCallerPrivileges, AssetId, EditAssetOperationInput,
+        RemoveAssetOperationInput,
     },
     repositories::{AssetRepository, ASSET_REPOSITORY},
 };
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    api::ServiceResult, model::ModelValidator, repository::Repository, utils::generate_uuid_v4,
+    api::ServiceResult,
+    model::ModelValidator,
+    pagination::{paginated_items, PaginatedData, PaginatedItemsArgs},
+    repository::Repository,
+    utils::generate_uuid_v4,
 };
+use station_api::ListAssetsInput;
 use uuid::Uuid;
 
 lazy_static! {
@@ -24,8 +32,8 @@ pub struct AssetService {
 }
 
 impl AssetService {
-    pub const DEFAULT_ENTRIES_LIMIT: u16 = 100;
-    pub const MAX_LIST_ENTRIES_LIMIT: u16 = 1000;
+    pub const DEFAULT_LIST_ASSETS_LIMIT: u16 = 100;
+    pub const MAX_LIST_ASSETS_LIMIT: u16 = 1000;
 
     pub fn new(asset_repository: Arc<AssetRepository>) -> Self {
         Self { asset_repository }
@@ -101,6 +109,51 @@ impl AssetService {
         self.asset_repository.remove(&input.asset_id);
 
         Ok(asset)
+    }
+
+    pub async fn get_caller_privileges_for_asset(
+        &self,
+        asset_id: &AssetId,
+        ctx: &CallContext,
+    ) -> ServiceResult<AssetCallerPrivileges> {
+        Ok(AssetCallerPrivileges {
+            id: *asset_id,
+            can_edit: Authorization::is_allowed(
+                ctx,
+                &Resource::Asset(ResourceAction::Update(ResourceId::Id(*asset_id))),
+            ),
+            can_delete: Authorization::is_allowed(
+                ctx,
+                &Resource::Asset(ResourceAction::Delete(ResourceId::Id(*asset_id))),
+            ),
+        })
+    }
+
+    pub fn list(
+        &self,
+        input: ListAssetsInput,
+        ctx: Option<&CallContext>,
+    ) -> ServiceResult<PaginatedData<Asset>> {
+        let mut assets = self.asset_repository.list();
+
+        if let Some(ctx) = ctx {
+            // filter out assets that the caller does not have access to read
+            retain_accessible_resources(ctx, &mut assets, |asset| {
+                Resource::Asset(crate::models::resource::ResourceAction::Read(
+                    crate::models::resource::ResourceId::Id(asset.id),
+                ))
+            });
+        }
+
+        let result = paginated_items(PaginatedItemsArgs {
+            offset: input.paginate.to_owned().and_then(|p| p.offset),
+            limit: input.paginate.and_then(|p| p.limit),
+            default_limit: Some(Self::DEFAULT_LIST_ASSETS_LIMIT),
+            max_limit: Some(Self::MAX_LIST_ASSETS_LIMIT),
+            items: &assets,
+        })?;
+
+        Ok(result)
     }
 }
 

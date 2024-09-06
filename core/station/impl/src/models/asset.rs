@@ -60,6 +60,13 @@ impl Hash for Asset {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct AssetCallerPrivileges {
+    pub id: AssetId,
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AssetEntryKey {

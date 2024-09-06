@@ -137,6 +137,16 @@ impl From<&station_api::GetUserGroupInput> for Resource {
     }
 }
 
+impl From<&station_api::GetAssetInput> for Resource {
+    fn from(input: &station_api::GetAssetInput) -> Self {
+        Resource::Asset(ResourceAction::Read(ResourceId::Id(
+            *HelperMapper::to_uuid(input.asset_id.to_owned())
+                .expect("Invalid asset id")
+                .as_bytes(),
+        )))
+    }
+}
+
 impl From<&station_api::SubmitRequestApprovalInput> for Resource {
     fn from(input: &station_api::SubmitRequestApprovalInput) -> Self {
         Resource::Request(RequestResourceAction::Read(ResourceId::Id(

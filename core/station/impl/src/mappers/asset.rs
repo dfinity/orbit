@@ -1,6 +1,7 @@
+use station_api::AssetCallerPrivilegesDTO;
 use uuid::Uuid;
 
-use crate::models::Asset;
+use crate::models::{Asset, AssetCallerPrivileges};
 
 impl From<Asset> for station_api::AssetDTO {
     fn from(asset: Asset) -> Self {
@@ -12,6 +13,16 @@ impl From<Asset> for station_api::AssetDTO {
             name: asset.name,
             metadata: asset.metadata.into_vec_dto(),
             decimals: asset.decimals,
+        }
+    }
+}
+
+impl From<AssetCallerPrivileges> for AssetCallerPrivilegesDTO {
+    fn from(input: AssetCallerPrivileges) -> AssetCallerPrivilegesDTO {
+        AssetCallerPrivilegesDTO {
+            id: Uuid::from_bytes(input.id).hyphenated().to_string(),
+            can_edit: input.can_edit,
+            can_delete: input.can_delete,
         }
     }
 }

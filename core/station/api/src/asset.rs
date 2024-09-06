@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::Deserialize;
 
-use crate::{ChangeMetadataDTO, MetadataDTO, UuidDTO};
+use crate::{ChangeMetadataDTO, MetadataDTO, PaginationInput, UuidDTO};
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct AssetDTO {
@@ -63,4 +63,35 @@ pub struct RemoveAssetOperationDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RemoveAssetOperationInput {
     pub asset_id: UuidDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ListAssetsInput {
+    pub paginate: Option<PaginationInput>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ListAssetsResponse {
+    pub assets: Vec<AssetDTO>,
+    pub next_offset: Option<u64>,
+    pub total: u64,
+    pub privileges: Vec<AssetCallerPrivilegesDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct AssetCallerPrivilegesDTO {
+    pub id: UuidDTO,
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct GetAssetInput {
+    pub asset_id: UuidDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct GetAssetResponse {
+    pub asset: AssetDTO,
+    pub privileges: AssetCallerPrivilegesDTO,
 }
