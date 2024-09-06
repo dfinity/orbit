@@ -11,7 +11,7 @@ use station_api::RequestOperationInput;
 
 /// Request permission.
 #[derive(Debug, Clone, Subcommand)]
-#[command(version, about, long_about = None)]
+#[clap(version, about, long_about = None)]
 pub enum RequestPermissionArgs {
     /// Request permission to read permission(s)
     ReadPermissions(RequestPermissionReadPermissionsArgs),

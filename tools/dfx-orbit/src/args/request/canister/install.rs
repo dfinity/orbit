@@ -1,16 +1,14 @@
 //! Arguments for `dfx orbit canister change wasm`.
 
+use crate::DfxOrbit;
 use clap::{Parser, ValueEnum};
 use station_api::{
     CanisterInstallMode, ChangeExternalCanisterOperationInput, RequestOperationInput,
 };
 
-use crate::DfxOrbit;
-
 /// Requests that a canister be installed or updated.  Equivalent to `station_api::CanisterInstallMode`.
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterInstallArgs {
-    // TODO: Poll, waiting for the request to be accepted.
     /// The canister name or ID.
     canister: String,
     /// The installation mode.
@@ -33,29 +31,22 @@ impl RequestCanisterInstallArgs {
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
-        let RequestCanisterInstallArgs {
-            canister,
-            mode,
-            wasm,
-            arg,
-            arg_file,
-        } = self;
-        let canister_id = dfx_orbit.canister_id(&canister)?;
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
 
         let operation = {
-            let module = std::fs::read(wasm)
+            let module = std::fs::read(self.wasm)
                 .expect("Could not read Wasm file")
                 .to_vec();
-            let arg = if let Some(file) = arg_file {
+            let arg = if let Some(file) = self.arg_file {
                 Some(
                     std::fs::read(file)
                         .expect("Could not read argument file")
                         .to_vec(),
                 )
             } else {
-                arg.map(|arg| arg.as_bytes().to_vec())
+                self.arg.map(|arg| arg.as_bytes().to_vec())
             };
-            let mode = mode.into();
+            let mode = self.mode.into();
             ChangeExternalCanisterOperationInput {
                 canister_id,
                 mode,

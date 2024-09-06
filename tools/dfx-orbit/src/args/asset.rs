@@ -3,9 +3,9 @@ use clap::{Parser, Subcommand};
 
 /// Station management commands.
 #[derive(Debug, Clone, Parser)]
-#[command(version, about, long_about = None)]
+#[clap(version, about, long_about = None)]
 pub struct AssetArgs {
-    #[command(subcommand)]
+    #[clap(subcommand)]
     pub(crate) action: AssetArgsAction,
 }
 
@@ -79,6 +79,6 @@ pub struct AssetCheckArgs {
     pub(crate) files: Vec<String>,
 
     /// Automatically approve the request, if the request's evidence matches the local evidence
-    #[clap(long)]
+    #[clap(short = 'a', long)]
     pub(crate) then_approve: bool,
 }

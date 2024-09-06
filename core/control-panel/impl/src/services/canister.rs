@@ -51,8 +51,12 @@ impl CanisterService {
         self.assert_controller(&CallContext::get(), "upload_canister_modules".to_string())?;
 
         let mut config = canister_config().unwrap_or_default();
-        config.upgrader_wasm_module = input.upgrader_wasm_module;
-        config.station_wasm_module = input.station_wasm_module;
+        if let Some(upgrader_wasm_module) = input.upgrader_wasm_module {
+            config.upgrader_wasm_module = upgrader_wasm_module;
+        }
+        if let Some(station_wasm_module) = input.station_wasm_module {
+            config.station_wasm_module = station_wasm_module;
+        }
         write_canister_config(config);
 
         Ok(())
