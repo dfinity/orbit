@@ -246,8 +246,8 @@ export const idlFactory = ({ IDL }) => {
     'Err' : ApiError,
   });
   const UploadCanisterModulesInput = IDL.Record({
-    'station_wasm_module' : IDL.Vec(IDL.Nat8),
-    'upgrader_wasm_module' : IDL.Vec(IDL.Nat8),
+    'station_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'upgrader_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
   const UploadUploadCanisterModulesInputResult = IDL.Variant({
     'Ok' : IDL.Null,

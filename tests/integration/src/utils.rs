@@ -1,5 +1,6 @@
-use crate::setup::WALLET_ADMIN_USER;
+use crate::setup::{get_canister_wasm, WALLET_ADMIN_USER};
 use candid::Principal;
+use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
@@ -704,6 +705,40 @@ pub fn sha256_hex(data: &[u8]) -> String {
     let result = hasher.finalize();
 
     hex::encode(result)
+}
+
+pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, controller: Principal) {
+    // upload upgrader
+    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
+    let upload_canister_modules_args = UploadCanisterModulesInput {
+        station_wasm_module: None,
+        upgrader_wasm_module: Some(upgrader_wasm.to_owned()),
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        env,
+        control_panel_id,
+        controller,
+        "upload_canister_modules",
+        (upload_canister_modules_args.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap();
+
+    // upload station
+    let station_wasm = get_canister_wasm("station").to_vec();
+    let upload_canister_modules_args = UploadCanisterModulesInput {
+        station_wasm_module: Some(station_wasm.to_owned()),
+        upgrader_wasm_module: None,
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        env,
+        control_panel_id,
+        controller,
+        "upload_canister_modules",
+        (upload_canister_modules_args.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap();
 }
 
 pub fn bump_time_to_avoid_ratelimit(env: &PocketIc) {

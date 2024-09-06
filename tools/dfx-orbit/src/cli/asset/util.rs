@@ -1,9 +1,5 @@
-use std::path::{Path, PathBuf};
-
 use crate::DfxOrbit;
-
-use super::AssetAgent;
-use anyhow::{anyhow, bail};
+use anyhow::bail;
 use candid::Principal;
 use dfx_core::config::model::dfinity::CanisterTypeProperties;
 use ic_certified_assets::types::{GrantPermissionArguments, Permission};
@@ -11,6 +7,7 @@ use station_api::{
     CallExternalCanisterOperationInput, CanisterMethodDTO, CreateRequestInput,
     CreateRequestResponse, RequestOperationInput,
 };
+use std::path::{Path, PathBuf};
 
 impl DfxOrbit {
     /// Request from the station to grant the `Prepare` permission for the asset canister
@@ -53,18 +50,7 @@ impl DfxOrbit {
 
     pub fn as_path_bufs(&self, canister: &str, paths: &[String]) -> anyhow::Result<Vec<PathBuf>> {
         if paths.is_empty() {
-            let config = self.interface.config().ok_or_else(|| {
-                anyhow!("Could not read \"dfx.json\". Are you in the correct directory?")
-            })?;
-
-            let canister_config = config
-                .get_config()
-                .canisters
-                .as_ref()
-                .ok_or_else(|| anyhow!("No canisters defined in this \"dfx.json\""))?
-                .get(canister)
-                .ok_or_else(|| anyhow!("Could not find {canister} in \"dfx.json\""))?;
-
+            let canister_config = self.get_canister_config(canister)?;
             let CanisterTypeProperties::Assets { source, .. } = &canister_config.type_specific
             else {
                 bail!("Canister {canister} is not an asset canister");
@@ -77,19 +63,5 @@ impl DfxOrbit {
 
     pub(crate) fn as_paths(paths: &[PathBuf]) -> Vec<&Path> {
         paths.iter().map(|pathbuf| pathbuf.as_path()).collect()
-    }
-}
-
-impl AssetAgent<'_> {
-    // TODO: Turn into a functionality
-    pub fn request_prepare_permission_payload(
-        canister: Principal,
-    ) -> Result<Vec<u8>, candid::Error> {
-        let args = GrantPermissionArguments {
-            to_principal: canister,
-            permission: Permission::Prepare,
-        };
-
-        candid::encode_one(args)
     }
 }
