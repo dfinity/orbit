@@ -282,6 +282,13 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::ManageSystemInfo => {
                 station_api::RequestSpecifierDTO::ManageSystemInfo
             }
+            RequestSpecifier::AddAsset => station_api::RequestSpecifierDTO::AddAsset,
+            RequestSpecifier::EditAsset(resource_ids) => {
+                station_api::RequestSpecifierDTO::EditAsset(resource_ids.into())
+            }
+            RequestSpecifier::RemoveAsset(resource_ids) => {
+                station_api::RequestSpecifierDTO::RemoveAsset(resource_ids.into())
+            }
         }
     }
 }
@@ -346,6 +353,13 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             }
             station_api::RequestSpecifierDTO::ManageSystemInfo => {
                 RequestSpecifier::ManageSystemInfo
+            }
+            station_api::RequestSpecifierDTO::AddAsset => RequestSpecifier::AddAsset,
+            station_api::RequestSpecifierDTO::EditAsset(resource_ids) => {
+                RequestSpecifier::EditAsset(resource_ids.into())
+            }
+            station_api::RequestSpecifierDTO::RemoveAsset(resource_ids) => {
+                RequestSpecifier::RemoveAsset(resource_ids.into())
             }
         }
     }
@@ -492,6 +506,22 @@ impl RequestSpecifier {
                 ResourceIds::Ids(ids) => ids
                     .iter()
                     .map(|id| Resource::UserGroup(ResourceAction::Delete(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
+
+            RequestSpecifier::AddAsset => vec![Resource::Asset(ResourceAction::Create)],
+            RequestSpecifier::EditAsset(resource_ids) => match resource_ids {
+                ResourceIds::Any => vec![Resource::Asset(ResourceAction::Update(ResourceId::Any))],
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::Asset(ResourceAction::Update(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
+            RequestSpecifier::RemoveAsset(resource_ids) => match resource_ids {
+                ResourceIds::Any => vec![Resource::Asset(ResourceAction::Delete(ResourceId::Any))],
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::Asset(ResourceAction::Delete(ResourceId::Id(*id))))
                     .collect::<_>(),
             },
         }

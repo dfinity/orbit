@@ -255,5 +255,18 @@ pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPoli
             }),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
+        // create, edit, and remove assets
+        (
+            RequestSpecifier::AddAsset,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        (
+            RequestSpecifier::EditAsset(ResourceIds::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        (
+            RequestSpecifier::RemoveAsset(ResourceIds::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
     ]
 }
