@@ -668,4 +668,6 @@ service : () -> {
   can_deploy_station : () -> (CanDeployStationResult) query;
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
+  // no-op endpoint to refresh cycles balance in metrics
+  ping : () -> ();
 };

@@ -249,6 +249,7 @@ export interface _SERVICE {
     [NextWasmModuleVersionInput],
     NextWasmModuleVersionResult
   >,
+  'ping' : ActorMethod<[], undefined>,
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
   'search_registry' : ActorMethod<[SearchRegistryInput], SearchRegistryResult>,
   'set_user_active' : ActorMethod<[], SetUserActiveResult>,
