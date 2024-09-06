@@ -66,9 +66,11 @@
         </VMenu>
         <VBtn
           v-if="props.create"
+          data-test-id="create-item-btn"
           color="primary"
           :icon="mdiPlus"
           variant="tonal"
+          :disabled="!hasSearchValue"
           size="small"
           @click.stop="selectItem({ text: search, value: transform(search) })"
         />
@@ -123,11 +125,6 @@ const props = withDefaults(
      */
     transform?: (item: string) => V;
     /**
-     * The function to filter the items based on the search term, defaults to filter items that
-     * start with the search term canonically.
-     */
-    filter?: (term: string, items: SelectItem<V>[]) => SelectItem<V>[];
-    /**
      * The function to fetch items based on the search term, defaults to fetch items from the `items` prop.
      */
     fetchItems?: (term: string) => Promise<SelectItem<V>[]> | SelectItem<V>[];
@@ -146,8 +143,6 @@ const props = withDefaults(
     density: 'compact',
     items: () => [],
     transform: (item: string) => item as unknown as V,
-    filter: (term: string, items: SelectItem<V>[]) =>
-      items.filter(item => item.text.toLowerCase().startsWith(term.toLowerCase())),
     fetchItems: undefined,
   },
 );
@@ -186,12 +181,12 @@ const unselectItem = (itemToRemove: SelectItem<V>): void => {
   model.value = model.value.filter((value, _) => value !== itemToRemove.value);
 };
 
-const fetchItems = async (term: string): Promise<SelectItem<V>[]> => {
+const lookupItems = async (term: string): Promise<SelectItem<V>[]> => {
   try {
     loading.value = true;
 
-    if (!props.fetchItems) {
-      return unselectedItems.value;
+    if (props.fetchItems) {
+      return await props.fetchItems(term);
     }
 
     if (!term) {
@@ -199,9 +194,11 @@ const fetchItems = async (term: string): Promise<SelectItem<V>[]> => {
       return noDataItems.value;
     }
 
-    return await props.fetchItems(term);
+    return unselectedItems.value.filter(item =>
+      item.text.toLowerCase().startsWith(term.toLowerCase()),
+    );
   } catch (error) {
-    logger.error('Failed to fetch items', error);
+    logger.error('Failed to lookup items', error);
 
     return noDataItems.value;
   } finally {
@@ -212,7 +209,7 @@ const fetchItems = async (term: string): Promise<SelectItem<V>[]> => {
 const triggerSearch = throttle(async () => {
   try {
     const term = search.value;
-    const fetchedItems = await fetchItems(term);
+    const fetchedItems = await lookupItems(term);
 
     updateUnselectedItems(fetchedItems);
   } catch (error) {
@@ -253,14 +250,17 @@ watch(
 watch(
   () => model.value,
   (selection, previous) => {
-    const entries: SelectItem<V>[] = [];
-    const allItems = [...unselectedItems.value, ...selectedItems.value];
+    const allItems = Array.from(
+      new Set([...unselectedItems.value, ...props.items, ...selectedItems.value]),
+    );
+
     const removedValues =
       previous?.filter(
         previousItem => !selection.find(selectedItem => selectedItem === previousItem),
       ) ?? [];
-
     const itemsRemoved = allItems.filter(item => removedValues.includes(item.value));
+
+    const entries: SelectItem<V>[] = [];
     for (const selectedItem of selection) {
       const item = allItems.find(item => item.value === selectedItem);
 

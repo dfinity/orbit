@@ -69,10 +69,9 @@ export interface CsvTable {
 }
 
 export enum CyclesUnit {
-  Trillion = 'T',
-  Billion = 'B',
-  Million = 'M',
-  Thousand = 'K',
+  Trillion = 'TC',
+  Billion = 'BC',
+  Million = 'MC',
   // Can be used to display cycles in the smallest unit.
   Smallest = 'e8s',
 }

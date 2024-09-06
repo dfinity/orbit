@@ -21,7 +21,7 @@ describe('CyclesInput', () => {
     const displayInput = input.findComponent({ name: 'VTextField' });
 
     expect(displayInput.props('modelValue')).toEqual(BigInt(1_000_000));
-    expect(input.props('modelValue')).toContain(BigInt(1_000_000));
+    expect(input.props('modelValue')).toEqual(BigInt(1_000_000));
   });
 
   it('renders with cycles in the given unit', async () => {

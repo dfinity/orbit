@@ -399,6 +399,14 @@ export default {
     no_withdraw_request_found_search: 'Nenhum pedido de retirada encontrado para a pesquisa.',
     add_station_list_item: 'Adicionar carteira',
   },
+  cycles: {
+    units: {
+      tc: 'TC',
+      bc: 'Bilhōes',
+      mc: 'Milhōes',
+      e8s: 'e8s',
+    },
+  },
   external_canisters: {
     add_new_label: 'Adicionar novo rótulo',
     use_existing: 'Usar existente',

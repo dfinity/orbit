@@ -396,6 +396,14 @@ export default {
     no_withdraw_request_found_search: 'No withdraw request found for the search criteria.',
     add_station_list_item: 'Add wallet',
   },
+  cycles: {
+    units: {
+      tc: 'TC',
+      bc: 'Billion',
+      mc: 'Million',
+      e8s: 'e8s',
+    },
+  },
   external_canisters: {
     add_new_label: 'Add new label',
     use_existing: 'Use existing',

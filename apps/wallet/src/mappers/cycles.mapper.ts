@@ -13,8 +13,6 @@ export const toCyclesUnit = (cycles: bigint, unit: CyclesUnit): bigint => {
       return cycles / BigInt(1_000_000_000);
     case CyclesUnit.Million:
       return cycles / BigInt(1_000_000);
-    case CyclesUnit.Thousand:
-      return cycles / BigInt(1_000);
     case CyclesUnit.Smallest:
       return cycles;
     default:
@@ -30,8 +28,6 @@ export const fromCyclesUnit = (cycles: bigint, unit: CyclesUnit): bigint => {
       return cycles * BigInt(1_000_000_000);
     case CyclesUnit.Million:
       return cycles * BigInt(1_000_000);
-    case CyclesUnit.Thousand:
-      return cycles * BigInt(1_000);
     case CyclesUnit.Smallest:
       return cycles;
     default:

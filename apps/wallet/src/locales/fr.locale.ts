@@ -402,6 +402,14 @@ export default {
     no_withdraw_request_found_search: 'Pas de demande retrait trouvé pour ce critère.',
     add_station_list_item: 'Ajouter un portefeuille',
   },
+  cycles: {
+    units: {
+      tc: 'TC',
+      bc: 'Milliard',
+      mc: 'Million',
+      e8s: 'e8s',
+    },
+  },
   external_canisters: {
     add_new_label: 'Ajouter un nouveau étiquette',
     use_existing: 'Utiliser un existant',
