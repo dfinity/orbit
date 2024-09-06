@@ -15,10 +15,10 @@ use crate::{
     EditUserOperationInput, FundExternalCanisterOperationDTO, FundExternalCanisterOperationInput,
     ManageSystemInfoOperationDTO, ManageSystemInfoOperationInput, PaginationInput,
     RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
-    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
-    RequestPolicyRuleDTO, RequestSpecifierDTO, SetDisasterRecoveryOperationDTO,
-    SetDisasterRecoveryOperationInput, SortDirection, SystemUpgradeOperationDTO,
-    SystemUpgradeOperationInput, UuidDTO,
+    RemoveAssetOperationDTO, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
+    RequestEvaluationResultDTO, RequestPolicyRuleDTO, RequestSpecifierDTO,
+    SetDisasterRecoveryOperationDTO, SetDisasterRecoveryOperationInput, SortDirection,
+    SystemUpgradeOperationDTO, SystemUpgradeOperationInput, UuidDTO,
 };
 use candid::{CandidType, Deserialize, Principal};
 
@@ -85,6 +85,7 @@ pub enum RequestOperationDTO {
     ManageSystemInfo(Box<ManageSystemInfoOperationDTO>),
     AddAsset(Box<AddAssetOperationDTO>),
     EditAsset(Box<EditAssetOperationDTO>),
+    RemoveAsset(Box<RemoveAssetOperationDTO>),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -141,6 +142,7 @@ pub enum RequestOperationTypeDTO {
     ConfigureExternalCanister,
     AddAsset,
     EditAsset,
+    RemoveAsset,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

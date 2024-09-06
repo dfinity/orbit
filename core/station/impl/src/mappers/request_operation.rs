@@ -27,10 +27,11 @@ use crate::{
         ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterChangeRequestPolicyRuleInput,
         ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput,
         FundExternalCanisterOperation, ManageSystemInfoOperation, ManageSystemInfoOperationInput,
-        RemoveAddressBookEntryOperation, RemoveRequestPolicyOperation,
-        RemoveRequestPolicyOperationInput, RemoveUserGroupOperation, RequestOperation,
-        SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput, SystemUpgradeOperation,
-        SystemUpgradeOperationInput, SystemUpgradeTarget, TransferOperation, User,
+        RemoveAddressBookEntryOperation, RemoveAssetOperation, RemoveAssetOperationInput,
+        RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
+        RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
+        SystemUpgradeOperation, SystemUpgradeOperationInput, SystemUpgradeTarget,
+        TransferOperation, User,
     },
     repositories::{
         AccountRepository, AddressBookRepository, AssetRepository, UserRepository,
@@ -1208,6 +1209,32 @@ impl From<station_api::EditAssetOperationInput> for EditAssetOperationInput {
     }
 }
 
+impl From<RemoveAssetOperation> for station_api::RemoveAssetOperationDTO {
+    fn from(operation: RemoveAssetOperation) -> station_api::RemoveAssetOperationDTO {
+        station_api::RemoveAssetOperationDTO {
+            input: operation.input.into(),
+        }
+    }
+}
+
+impl From<RemoveAssetOperationInput> for station_api::RemoveAssetOperationInput {
+    fn from(input: RemoveAssetOperationInput) -> station_api::RemoveAssetOperationInput {
+        station_api::RemoveAssetOperationInput {
+            asset_id: Uuid::from_bytes(input.asset_id).hyphenated().to_string(),
+        }
+    }
+}
+
+impl From<station_api::RemoveAssetOperationInput> for RemoveAssetOperationInput {
+    fn from(input: station_api::RemoveAssetOperationInput) -> RemoveAssetOperationInput {
+        RemoveAssetOperationInput {
+            asset_id: *HelperMapper::to_uuid(input.asset_id)
+                .expect("Invalid asset id")
+                .as_bytes(),
+        }
+    }
+}
+
 impl From<RequestOperation> for RequestOperationDTO {
     fn from(operation: RequestOperation) -> RequestOperationDTO {
         match operation {
@@ -1310,6 +1337,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             }
             RequestOperation::EditAsset(operation) => {
                 RequestOperationDTO::EditAsset(Box::new(operation.into()))
+            }
+            RequestOperation::RemoveAsset(operation) => {
+                RequestOperationDTO::RemoveAsset(Box::new(operation.into()))
             }
         }
     }
@@ -1498,6 +1528,12 @@ impl RequestOperation {
                 vec![
                     Resource::Asset(ResourceAction::Update(ResourceId::Id(input.asset_id))),
                     Resource::Asset(ResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            RequestOperation::RemoveAsset(RemoveAssetOperation { input }) => {
+                vec![
+                    Resource::Asset(ResourceAction::Delete(ResourceId::Id(input.asset_id))),
+                    Resource::Asset(ResourceAction::Delete(ResourceId::Any)),
                 ]
             }
         }

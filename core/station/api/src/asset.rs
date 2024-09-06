@@ -1,10 +1,12 @@
 use candid::CandidType;
 use serde::Deserialize;
 
-use crate::{ChangeMetadataDTO, MetadataDTO};
+use crate::{ChangeMetadataDTO, MetadataDTO, UuidDTO};
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct AssetDTO {
+    /// The asset identifier, which is a UUID.
+    pub id: UuidDTO,
     /// The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
     pub blockchain: String,
     /// The asset symbol (e.g. `ICP`, `BTC`, `ETH`, etc.)
@@ -44,11 +46,21 @@ pub struct EditAssetOperationDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct EditAssetOperationInput {
-    pub asset_id: String,
+    pub asset_id: UuidDTO,
     pub name: Option<String>,
     pub blockchain: Option<String>,
     pub standards: Option<Vec<String>>,
     pub symbol: Option<String>,
     pub decimals: Option<u32>,
     pub change_metadata: Option<ChangeMetadataDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct RemoveAssetOperationDTO {
+    pub input: RemoveAssetOperationInput,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct RemoveAssetOperationInput {
+    pub asset_id: UuidDTO,
 }

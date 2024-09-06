@@ -252,6 +252,9 @@ fn validate_request_operation_foreign_keys(
         RequestOperation::EditAsset(op) => {
             EnsureAsset::id_exists(&op.input.asset_id)?;
         }
+        RequestOperation::RemoveAsset(op) => {
+            EnsureAsset::id_exists(&op.input.asset_id)?;
+        }
     }
     Ok(())
 }

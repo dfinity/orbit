@@ -30,6 +30,7 @@ pub enum RequestOperationFilterType {
     FundExternalCanister(Principal),
     AddAsset,
     EditAsset,
+    RemoveAsset,
 }
 
 impl From<RequestOperation> for RequestOperationFilterType {
@@ -84,6 +85,7 @@ impl From<RequestOperation> for RequestOperationFilterType {
             }
             RequestOperation::AddAsset(_) => RequestOperationFilterType::AddAsset,
             RequestOperation::EditAsset(_) => RequestOperationFilterType::EditAsset,
+            RequestOperation::RemoveAsset(_) => RequestOperationFilterType::RemoveAsset,
         }
     }
 }

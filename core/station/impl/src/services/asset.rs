@@ -2,7 +2,9 @@ use std::sync::Arc;
 
 use crate::{
     errors::AssetError,
-    models::{AddAssetOperationInput, Asset, AssetId, EditAssetOperationInput},
+    models::{
+        AddAssetOperationInput, Asset, AssetId, EditAssetOperationInput, RemoveAssetOperationInput,
+    },
     repositories::{AssetRepository, ASSET_REPOSITORY},
 };
 use lazy_static::lazy_static;
@@ -59,7 +61,7 @@ impl AssetService {
         Ok(asset)
     }
 
-    pub async fn edit(&self, input: EditAssetOperationInput) -> ServiceResult<Asset> {
+    pub fn edit(&self, input: EditAssetOperationInput) -> ServiceResult<Asset> {
         let mut asset = self.get(&input.asset_id)?;
 
         if let Some(name) = input.name {
@@ -89,6 +91,14 @@ impl AssetService {
         asset.validate()?;
 
         self.asset_repository.insert(asset.id, asset.clone());
+
+        Ok(asset)
+    }
+
+    pub fn remove(&self, input: RemoveAssetOperationInput) -> ServiceResult<Asset> {
+        let asset = self.get(&input.asset_id)?;
+
+        self.asset_repository.remove(&input.asset_id);
 
         Ok(asset)
     }

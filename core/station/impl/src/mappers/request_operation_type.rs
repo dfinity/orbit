@@ -130,6 +130,7 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             }
             RequestOperationTypeDTO::AddAsset => RequestOperationType::AddAsset,
             RequestOperationTypeDTO::EditAsset => RequestOperationType::EditAsset,
+            RequestOperationTypeDTO::RemoveAsset => RequestOperationType::RemoveAsset,
         }
     }
 }
@@ -182,6 +183,7 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             }
             RequestOperationType::AddAsset => RequestOperationTypeDTO::AddAsset,
             RequestOperationType::EditAsset => RequestOperationTypeDTO::EditAsset,
+            RequestOperationType::RemoveAsset => RequestOperationTypeDTO::RemoveAsset,
         }
     }
 }
@@ -222,6 +224,7 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::SetDisasterRecovery(_) => RequestOperationType::SetDisasterRecovery,
             RequestOperation::AddAsset(_) => RequestOperationType::AddAsset,
             RequestOperation::EditAsset(_) => RequestOperationType::EditAsset,
+            RequestOperation::RemoveAsset(_) => RequestOperationType::RemoveAsset,
         }
     }
 }

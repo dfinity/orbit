@@ -36,6 +36,7 @@ mod edit_user_group;
 mod fund_external_canister;
 mod manage_system_info;
 mod remove_address_book_entry;
+mod remove_asset;
 mod remove_request_policy;
 mod remove_user_group;
 mod set_disaster_recovery;
@@ -370,6 +371,9 @@ impl RequestFactory {
             RequestOperation::EditAsset(operation) => {
                 Box::new(edit_asset::EditAssetRequestExecute::new(request, operation))
             }
+            RequestOperation::RemoveAsset(operation) => Box::new(
+                remove_asset::RemoveAssetRequestExecute::new(request, operation),
+            ),
         }
     }
 }

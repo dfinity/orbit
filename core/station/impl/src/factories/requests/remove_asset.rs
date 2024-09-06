@@ -1,35 +1,35 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{EditAssetOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{RemoveAssetOperation, Request, RequestExecutionPlan, RequestOperation},
     services::AssetService,
 };
 use async_trait::async_trait;
 use orbit_essentials::types::UUID;
 
-pub struct EditAssetRequestCreate {}
+pub struct RemoveAssetRequestCreate {}
 
 #[async_trait]
-impl Create<station_api::EditAssetOperationInput> for EditAssetRequestCreate {
+impl Create<station_api::RemoveAssetOperationInput> for RemoveAssetRequestCreate {
     async fn create(
         &self,
         request_id: UUID,
         requested_by_user: UUID,
         input: station_api::CreateRequestInput,
-        operation_input: station_api::EditAssetOperationInput,
+        operation_input: station_api::RemoveAssetOperationInput,
     ) -> Result<Request, RequestError> {
         let request = Request::new(
             request_id,
             requested_by_user,
             Request::default_expiration_dt_ns(),
-            RequestOperation::EditAsset(EditAssetOperation {
+            RequestOperation::RemoveAsset(RemoveAssetOperation {
                 input: operation_input.into(),
             }),
             input
                 .execution_plan
                 .map(Into::into)
                 .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "Edit asset".to_string()),
+            input.title.unwrap_or_else(|| "Remove asset".to_string()),
             input.summary,
         );
 
@@ -37,14 +37,14 @@ impl Create<station_api::EditAssetOperationInput> for EditAssetRequestCreate {
     }
 }
 
-pub struct EditAssetRequestExecute<'p, 'o> {
+pub struct RemoveAssetRequestExecute<'p, 'o> {
     request: &'p Request,
-    operation: &'o EditAssetOperation,
+    operation: &'o RemoveAssetOperation,
     asset_service: AssetService,
 }
 
-impl<'p, 'o> EditAssetRequestExecute<'p, 'o> {
-    pub fn new(request: &'p Request, operation: &'o EditAssetOperation) -> Self {
+impl<'p, 'o> RemoveAssetRequestExecute<'p, 'o> {
+    pub fn new(request: &'p Request, operation: &'o RemoveAssetOperation) -> Self {
         Self {
             request,
             operation,
@@ -54,12 +54,12 @@ impl<'p, 'o> EditAssetRequestExecute<'p, 'o> {
 }
 
 #[async_trait]
-impl Execute for EditAssetRequestExecute<'_, '_> {
+impl Execute for RemoveAssetRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         self.asset_service
-            .edit(self.operation.input.clone())
+            .remove(self.operation.input.clone())
             .map_err(|e| RequestExecuteError::Failed {
-                reason: format!("Failed to edit asset: {}", e),
+                reason: format!("Failed to remove asset: {}", e),
             })?;
 
         Ok(RequestExecuteStage::Completed(

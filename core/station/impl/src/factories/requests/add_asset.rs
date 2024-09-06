@@ -30,9 +30,7 @@ impl Create<station_api::AddAssetOperationInput> for AddAssetRequestCreate {
                 .execution_plan
                 .map(Into::into)
                 .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Account creation".to_string()),
+            input.title.unwrap_or_else(|| "Asset creation".to_string()),
             input.summary,
         );
 
