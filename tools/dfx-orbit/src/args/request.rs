@@ -46,7 +46,7 @@ impl RequestArgs {
     ) -> anyhow::Result<CreateRequestInput> {
         let operation = match self.action {
             RequestArgsActions::Canister(canister_args) => {
-                canister_args.into_create_request_input(dfx_orbit)?
+                canister_args.into_request(dfx_orbit).await?
             }
             RequestArgsActions::Asset(asset_args) => {
                 asset_args.into_create_request_input(dfx_orbit).await?

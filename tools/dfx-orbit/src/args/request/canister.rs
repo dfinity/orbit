@@ -2,6 +2,7 @@
 
 use crate::DfxOrbit;
 use anyhow::{bail, Context};
+use candid::Principal;
 use clap::{Parser, Subcommand, ValueEnum};
 use sha2::{Digest, Sha256};
 use slog::{info, Logger};
@@ -10,6 +11,7 @@ use station_api::{
     ChangeExternalCanisterOperationInput, GetRequestResponse, RequestOperationDTO,
     RequestOperationInput,
 };
+use std::collections::BTreeSet;
 
 // TODO: Support Canister create + integration test
 // TODO: Canister get response functionality
@@ -29,31 +31,30 @@ pub enum RequestCanisterActionArgs {
     Install(RequestCanisterInstallArgs),
     /// Request to call a canister method
     Call(RequestCanisterCallArgs),
+    /// Update a canister's settings (i.e its controller, compute allocation, or memory allocation.)
+    UpdateSettings(RequestCanisterUpdateSettingsArgs),
 }
 
 impl RequestCanisterArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    pub(crate) fn into_create_request_input(
+    pub(crate) async fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
-        self.action.into_create_request_input(dfx_orbit)
+        self.action.into_create_request_input(dfx_orbit).await
     }
 }
 
 impl RequestCanisterActionArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    pub(crate) fn into_create_request_input(
+    pub(crate) async fn into_create_request_input(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         match self {
-            RequestCanisterActionArgs::Install(change_args) => {
-                change_args.into_create_request_input(dfx_orbit)
-            }
-            RequestCanisterActionArgs::Call(call_args) => {
-                call_args.into_create_request_input(dfx_orbit)
-            }
+            RequestCanisterActionArgs::Install(args) => args.into_request(dfx_orbit),
+            RequestCanisterActionArgs::Call(args) => args.into_request(dfx_orbit),
+            RequestCanisterActionArgs::UpdateSettings(args) => args.into_request(dfx_orbit).await,
         }
     }
 }
@@ -80,7 +81,7 @@ pub struct RequestCanisterCallArgs {
 
 impl RequestCanisterCallArgs {
     /// Converts the CLI arg stype into the equivalent Orbit API type.
-    pub(crate) fn into_create_request_input(
+    pub(crate) fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
@@ -163,7 +164,7 @@ pub struct RequestCanisterInstallArgs {
 
 impl RequestCanisterInstallArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    pub(crate) fn into_create_request_input(
+    pub(crate) fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
@@ -264,6 +265,59 @@ impl From<CanisterInstallMode> for CanisterInstallModeArgs {
             CanisterInstallMode::Upgrade => Self::Upgrade,
         }
     }
+}
+
+#[derive(Debug, Clone, Parser)]
+pub struct RequestCanisterUpdateSettingsArgs {
+    /// The canister name or ID.
+    canister: String,
+
+    /// Add a principal to the list of controllers of the canister
+    #[clap(long)]
+    pub(crate) add_controller: Vec<Principal>,
+
+    /// Removes a principal from the list of controllers of the canister
+    #[clap(long)]
+    pub(crate) remove_controller: Vec<Principal>,
+}
+
+impl RequestCanisterUpdateSettingsArgs {
+    pub(crate) async fn into_request(
+        self,
+        dfx_orbit: &DfxOrbit,
+    ) -> anyhow::Result<RequestOperationInput> {
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
+        let controllers = get_new_controller_set(
+            &dfx_orbit,
+            canister_id,
+            self.add_controller,
+            self.remove_controller,
+        )
+        .await?;
+        todo!()
+    }
+}
+
+async fn get_new_controller_set(
+    dfx_orbit: &DfxOrbit,
+    canister_id: Principal,
+    add: Vec<Principal>,
+    remove: Vec<Principal>,
+) -> anyhow::Result<Vec<Principal>> {
+    // Transform into maps to deduplicates
+    let old_controllers = dfx_orbit.get_controllers(canister_id).await?;
+    let controllers = old_controllers
+        .iter()
+        .chain(add.iter())
+        .collect::<BTreeSet<_>>();
+    let remove = remove.iter().collect::<BTreeSet<_>>();
+
+    let new_controllers = controllers
+        .difference(&remove)
+        .map(|&&v| v)
+        .collect::<Vec<_>>();
+
+    Ok(new_controllers)
 }
 
 fn candid_from_string_or_file(
