@@ -64,6 +64,18 @@ export interface AddAddressBookEntryOperationInput {
   'address' : string,
   'address_owner' : string,
 }
+export interface AddAssetOperation {
+  'asset' : [] | [Asset],
+  'input' : AddAssetOperationInput,
+}
+export interface AddAssetOperationInput {
+  'decimals' : number,
+  'standards' : Array<string>,
+  'metadata' : Array<AssetMetadata>,
+  'name' : string,
+  'blockchain' : string,
+  'symbol' : AssetSymbol,
+}
 export interface AddRequestPolicyOperation {
   'input' : AddRequestPolicyOperationInput,
   'policy_id' : [] | [UUID],
@@ -109,11 +121,18 @@ export interface Allow {
   'users' : Array<UUID>,
 }
 export interface Asset {
+  'id' : UUID,
+  'decimals' : number,
   'standards' : Array<string>,
   'metadata' : Array<AssetMetadata>,
   'name' : string,
   'blockchain' : string,
   'symbol' : AssetSymbol,
+}
+export interface AssetCallerPrivileges {
+  'id' : UUID,
+  'can_delete' : boolean,
+  'can_edit' : boolean,
 }
 export interface AssetMetadata { 'key' : string, 'value' : string }
 export type AssetSymbol = string;
@@ -194,6 +213,9 @@ export interface ChangeExternalCanisterOperationInput {
   'canister_id' : Principal,
   'module' : Uint8Array | number[],
 }
+export type ChangeMetadata = { 'OverrideSpecifiedBy' : Array<AssetMetadata> } |
+  { 'RemoveKeys' : Array<string> } |
+  { 'ReplaceAllBy' : Array<AssetMetadata> };
 export type ConfigureExternalCanisterOperation = ConfigureExternalCanisterOperationInput;
 export interface ConfigureExternalCanisterOperationInput {
   'kind' : ConfigureExternalCanisterOperationKind,
@@ -297,6 +319,16 @@ export interface EditAddressBookEntryOperationInput {
   'change_metadata' : [] | [ChangeAddressBookMetadata],
   'address_book_entry_id' : UUID,
   'address_owner' : [] | [string],
+}
+export interface EditAssetOperation { 'input' : EditAssetOperationInput }
+export interface EditAssetOperationInput {
+  'decimals' : [] | [number],
+  'standards' : [] | [Array<string>],
+  'name' : [] | [string],
+  'blockchain' : [] | [string],
+  'change_metadata' : [] | [ChangeMetadata],
+  'asset_id' : UUID,
+  'symbol' : [] | [AssetSymbol],
 }
 export interface EditPermissionOperation {
   'input' : EditPermissionOperationInput,
@@ -465,6 +497,11 @@ export type GetAddressBookEntryResult = {
     }
   } |
   { 'Err' : Error };
+export interface GetAssetInput { 'asset_id' : UUID }
+export type GetAssetResult = {
+    'Ok' : { 'privileges' : AssetCallerPrivileges, 'asset' : Asset }
+  } |
+  { 'Err' : Error };
 export interface GetExternalCanisterFiltersInput {
   'with_labels' : [] | [boolean],
   'with_name' : [] | [{ 'prefix' : [] | [string] }],
@@ -588,6 +625,16 @@ export type ListAddressBookEntriesResult = {
       'total' : bigint,
       'privileges' : Array<AddressBookEntryCallerPrivileges>,
       'address_book_entries' : Array<AddressBookEntry>,
+      'next_offset' : [] | [bigint],
+    }
+  } |
+  { 'Err' : Error };
+export interface ListAssetsInput { 'paginate' : [] | [PaginationInput] }
+export type ListAssetsResult = {
+    'Ok' : {
+      'total' : bigint,
+      'privileges' : Array<AssetCallerPrivileges>,
+      'assets' : Array<Asset>,
       'next_offset' : [] | [bigint],
     }
   } |
@@ -804,6 +851,8 @@ export interface RemoveAddressBookEntryOperation {
 export interface RemoveAddressBookEntryOperationInput {
   'address_book_entry_id' : UUID,
 }
+export interface RemoveAssetOperation { 'input' : RemoveAssetOperationInput }
+export interface RemoveAssetOperationInput { 'asset_id' : UUID }
 export interface RemoveRequestPolicyOperation {
   'input' : RemoveRequestPolicyOperationInput,
 }
@@ -850,15 +899,18 @@ export interface RequestEvaluationResult {
 }
 export type RequestExecutionSchedule = { 'Immediate' : null } |
   { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
-export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
+export type RequestOperation = { 'RemoveAsset' : RemoveAssetOperation } |
+  { 'AddUserGroup' : AddUserGroupOperation } |
   { 'EditPermission' : EditPermissionOperation } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperation } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperation } |
   { 'AddUser' : AddUserOperation } |
+  { 'EditAsset' : EditAssetOperation } |
   { 'EditUserGroup' : EditUserGroupOperation } |
   { 'SetDisasterRecovery' : SetDisasterRecoveryOperation } |
   { 'EditRequestPolicy' : EditRequestPolicyOperation } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperation } |
+  { 'AddAsset' : AddAssetOperation } |
   { 'SystemUpgrade' : SystemUpgradeOperation } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperation } |
@@ -898,15 +950,18 @@ export type RequestOperationInput = {
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
   { 'CallExternalCanister' : CallExternalCanisterOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
-export type RequestOperationType = { 'AddUserGroup' : null } |
+export type RequestOperationType = { 'RemoveAsset' : null } |
+  { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
   { 'ConfigureExternalCanister' : null } |
   { 'ChangeExternalCanister' : null } |
   { 'AddUser' : null } |
+  { 'EditAsset' : null } |
   { 'EditUserGroup' : null } |
   { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : null } |
   { 'RemoveRequestPolicy' : null } |
+  { 'AddAsset' : null } |
   { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : null } |
   { 'CreateExternalCanister' : null } |
@@ -947,14 +1002,17 @@ export interface RequestPolicyRuleResult {
 }
 export type RequestResourceAction = { 'List' : null } |
   { 'Read' : ResourceId };
-export type RequestSpecifier = { 'AddUserGroup' : null } |
+export type RequestSpecifier = { 'RemoveAsset' : ResourceIds } |
+  { 'AddUserGroup' : null } |
   { 'EditPermission' : ResourceSpecifier } |
   { 'ChangeExternalCanister' : ExternalCanisterId } |
   { 'AddUser' : null } |
+  { 'EditAsset' : ResourceIds } |
   { 'EditUserGroup' : ResourceIds } |
   { 'SetDisasterRecovery' : null } |
   { 'EditRequestPolicy' : ResourceIds } |
   { 'RemoveRequestPolicy' : ResourceIds } |
+  { 'AddAsset' : null } |
   { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : ResourceIds } |
   { 'CreateExternalCanister' : null } |
@@ -992,6 +1050,7 @@ export type Resource = { 'Request' : RequestResourceAction } |
   { 'ExternalCanister' : ExternalCanisterResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
+  { 'Asset' : ResourceAction } |
   { 'UserGroup' : ResourceAction } |
   { 'Permission' : PermissionResourceAction } |
   { 'RequestPolicy' : ResourceAction };
@@ -1177,6 +1236,7 @@ export interface _SERVICE {
     [GetAddressBookEntryInput],
     GetAddressBookEntryResult
   >,
+  'get_asset' : ActorMethod<[GetAssetInput], GetAssetResult>,
   'get_external_canister' : ActorMethod<
     [GetExternalCanisterInput],
     GetExternalCanisterResult
@@ -1209,6 +1269,7 @@ export interface _SERVICE {
     [ListAddressBookEntriesInput],
     ListAddressBookEntriesResult
   >,
+  'list_assets' : ActorMethod<[ListAssetsInput], ListAssetsResult>,
   'list_external_canisters' : ActorMethod<
     [ListExternalCanistersInput],
     ListExternalCanistersResult

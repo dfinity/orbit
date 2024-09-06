@@ -70,6 +70,8 @@ export const idlFactory = ({ IDL }) => {
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AssetSymbol = IDL.Text;
   const Asset = IDL.Record({
+    'id' : UUID,
+    'decimals' : IDL.Nat32,
     'standards' : IDL.Vec(IDL.Text),
     'metadata' : IDL.Vec(AssetMetadata),
     'name' : IDL.Text,
@@ -166,6 +168,7 @@ export const idlFactory = ({ IDL }) => {
     'ExternalCanister' : ExternalCanisterResourceAction,
     'Account' : AccountResourceAction,
     'AddressBook' : ResourceAction,
+    'Asset' : ResourceAction,
     'UserGroup' : ResourceAction,
     'Permission' : PermissionResourceAction,
     'RequestPolicy' : ResourceAction,
@@ -301,20 +304,23 @@ export const idlFactory = ({ IDL }) => {
   const SetDisasterRecoveryOperationInput = IDL.Record({
     'committee' : IDL.Opt(DisasterRecoveryCommittee),
   });
+  const ResourceIds = IDL.Variant({ 'Any' : IDL.Null, 'Ids' : IDL.Vec(UUID) });
   const ResourceSpecifier = IDL.Variant({
     'Any' : IDL.Null,
     'Resource' : Resource,
   });
-  const ResourceIds = IDL.Variant({ 'Any' : IDL.Null, 'Ids' : IDL.Vec(UUID) });
   const RequestSpecifier = IDL.Variant({
+    'RemoveAsset' : ResourceIds,
     'AddUserGroup' : IDL.Null,
     'EditPermission' : ResourceSpecifier,
     'ChangeExternalCanister' : ExternalCanisterId,
     'AddUser' : IDL.Null,
+    'EditAsset' : ResourceIds,
     'EditUserGroup' : ResourceIds,
     'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : ResourceIds,
     'RemoveRequestPolicy' : ResourceIds,
+    'AddAsset' : IDL.Null,
     'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : ResourceIds,
     'CreateExternalCanister' : IDL.Null,
@@ -500,6 +506,10 @@ export const idlFactory = ({ IDL }) => {
     'Created' : IDL.Null,
     'Completed' : IDL.Record({ 'completed_at' : TimestampRFC3339 }),
   });
+  const RemoveAssetOperationInput = IDL.Record({ 'asset_id' : UUID });
+  const RemoveAssetOperation = IDL.Record({
+    'input' : RemoveAssetOperationInput,
+  });
   const UserGroup = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });
   const AddUserGroupOperation = IDL.Record({
     'user_group' : IDL.Opt(UserGroup),
@@ -528,6 +538,21 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Opt(User),
     'input' : AddUserOperationInput,
   });
+  const ChangeMetadata = IDL.Variant({
+    'OverrideSpecifiedBy' : IDL.Vec(AssetMetadata),
+    'RemoveKeys' : IDL.Vec(IDL.Text),
+    'ReplaceAllBy' : IDL.Vec(AssetMetadata),
+  });
+  const EditAssetOperationInput = IDL.Record({
+    'decimals' : IDL.Opt(IDL.Nat32),
+    'standards' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'name' : IDL.Opt(IDL.Text),
+    'blockchain' : IDL.Opt(IDL.Text),
+    'change_metadata' : IDL.Opt(ChangeMetadata),
+    'asset_id' : UUID,
+    'symbol' : IDL.Opt(AssetSymbol),
+  });
+  const EditAssetOperation = IDL.Record({ 'input' : EditAssetOperationInput });
   const EditUserGroupOperation = IDL.Record({
     'input' : EditUserGroupOperationInput,
   });
@@ -539,6 +564,18 @@ export const idlFactory = ({ IDL }) => {
   });
   const RemoveRequestPolicyOperation = IDL.Record({
     'input' : RemoveRequestPolicyOperationInput,
+  });
+  const AddAssetOperationInput = IDL.Record({
+    'decimals' : IDL.Nat32,
+    'standards' : IDL.Vec(IDL.Text),
+    'metadata' : IDL.Vec(AssetMetadata),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'symbol' : AssetSymbol,
+  });
+  const AddAssetOperation = IDL.Record({
+    'asset' : IDL.Opt(Asset),
+    'input' : AddAssetOperationInput,
   });
   const SystemUpgradeOperation = IDL.Record({
     'module_checksum' : Sha256Hash,
@@ -622,15 +659,18 @@ export const idlFactory = ({ IDL }) => {
     'input' : AddAccountOperationInput,
   });
   const RequestOperation = IDL.Variant({
+    'RemoveAsset' : RemoveAssetOperation,
     'AddUserGroup' : AddUserGroupOperation,
     'EditPermission' : EditPermissionOperation,
     'ConfigureExternalCanister' : ConfigureExternalCanisterOperation,
     'ChangeExternalCanister' : ChangeExternalCanisterOperation,
     'AddUser' : AddUserOperation,
+    'EditAsset' : EditAssetOperation,
     'EditUserGroup' : EditUserGroupOperation,
     'SetDisasterRecovery' : SetDisasterRecoveryOperation,
     'EditRequestPolicy' : EditRequestPolicyOperation,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperation,
+    'AddAsset' : AddAssetOperation,
     'SystemUpgrade' : SystemUpgradeOperation,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
     'CreateExternalCanister' : CreateExternalCanisterOperation,
@@ -762,6 +802,19 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({
       'privileges' : AddressBookEntryCallerPrivileges,
       'address_book_entry' : AddressBookEntry,
+    }),
+    'Err' : Error,
+  });
+  const GetAssetInput = IDL.Record({ 'asset_id' : UUID });
+  const AssetCallerPrivileges = IDL.Record({
+    'id' : UUID,
+    'can_delete' : IDL.Bool,
+    'can_edit' : IDL.Bool,
+  });
+  const GetAssetResult = IDL.Variant({
+    'Ok' : IDL.Record({
+      'privileges' : AssetCallerPrivileges,
+      'asset' : Asset,
     }),
     'Err' : Error,
   });
@@ -1022,6 +1075,16 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
+  const ListAssetsInput = IDL.Record({ 'paginate' : IDL.Opt(PaginationInput) });
+  const ListAssetsResult = IDL.Variant({
+    'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
+      'privileges' : IDL.Vec(AssetCallerPrivileges),
+      'assets' : IDL.Vec(Asset),
+      'next_offset' : IDL.Opt(IDL.Nat64),
+    }),
+    'Err' : Error,
+  });
   const SortByDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
   const ListExternalCanistersSortInput = IDL.Variant({
     'Name' : SortByDirection,
@@ -1057,15 +1120,18 @@ export const idlFactory = ({ IDL }) => {
     'notification_type' : IDL.Opt(NotificationTypeInput),
   });
   const RequestOperationType = IDL.Variant({
+    'RemoveAsset' : IDL.Null,
     'AddUserGroup' : IDL.Null,
     'EditPermission' : IDL.Null,
     'ConfigureExternalCanister' : IDL.Null,
     'ChangeExternalCanister' : IDL.Null,
     'AddUser' : IDL.Null,
+    'EditAsset' : IDL.Null,
     'EditUserGroup' : IDL.Null,
     'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
+    'AddAsset' : IDL.Null,
     'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
@@ -1308,6 +1374,7 @@ export const idlFactory = ({ IDL }) => {
         [GetAddressBookEntryResult],
         ['query'],
       ),
+    'get_asset' : IDL.Func([GetAssetInput], [GetAssetResult], ['query']),
     'get_external_canister' : IDL.Func(
         [GetExternalCanisterInput],
         [GetExternalCanisterResult],
@@ -1362,6 +1429,7 @@ export const idlFactory = ({ IDL }) => {
         [ListAddressBookEntriesResult],
         ['query'],
       ),
+    'list_assets' : IDL.Func([ListAssetsInput], [ListAssetsResult], ['query']),
     'list_external_canisters' : IDL.Func(
         [ListExternalCanistersInput],
         [ListExternalCanistersResult],
