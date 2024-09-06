@@ -1,6 +1,6 @@
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
-use ic_asset_certification::{Asset, AssetConfig, AssetEncoding, AssetRouter};
+use ic_asset_certification::{Asset, AssetConfig, AssetEncoding, AssetFallbackConfig, AssetRouter};
 use ic_certification::HashTree;
 use ic_http_certification::{HeaderField, HttpCertificationTree, HttpRequest, HttpResponse};
 use serde::Serialize;
@@ -98,10 +98,24 @@ pub fn certify_assets(static_assets: Vec<(String, Vec<u8>)>) -> Result<Vec<u8>, 
             aliased_by: vec![],
             encodings: encodings.clone(),
         },
+        AssetConfig::File {
+            path: "/".to_string(),
+            content_type: Some("text/plain".to_string()),
+            headers: get_asset_headers(vec![(
+                "cache-control".to_string(),
+                "public, no-cache, no-store".to_string(),
+            )]),
+            fallback_for: vec![AssetFallbackConfig {
+                scope: "/".to_string(),
+            }],
+            aliased_by: vec![],
+            encodings: encodings.clone(),
+        },
     ];
 
     // 2. Collect all assets.
     let mut assets = Vec::new();
+    assets.push(Asset::new("/", "404 Not Found".as_bytes().to_owned()));
     for (path, contents) in static_assets {
         assets.push(Asset::new(path, contents));
     }

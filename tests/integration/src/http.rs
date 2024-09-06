@@ -52,13 +52,22 @@ fn test_http_request_decoding_quota() {
     test_candid_decoding_quota(&env, canister_ids.control_panel);
 }
 
-fn fetch_asset(canister_id: Principal, port: u16, path: &str, expected: Vec<&str>) {
+fn fetch_asset(
+    canister_id: Principal,
+    port: u16,
+    path: &str,
+    expected_headers: Vec<(&str, &str)>,
+    expected_body_chunks: Vec<&str>,
+) {
     let client = reqwest::blocking::Client::new();
     let url = format!("http://{}.localhost:{}{}", canister_id, port, path);
     let res = client.get(url).send().unwrap();
+    for (name, value) in expected_headers {
+        assert_eq!(res.headers().get(name).unwrap(), value);
+    }
     let page = String::from_utf8(res.bytes().unwrap().to_vec()).unwrap();
-    for exp in expected {
-        assert!(page.contains(exp));
+    for chunk in expected_body_chunks {
+        assert!(page.contains(chunk));
     }
 }
 
@@ -75,8 +84,24 @@ fn test_asset_certification() {
     fetch_asset(
         canister_ids.station,
         port,
+        "/foo",
+        vec![("content-type", "text/plain")],
+        vec!["404 Not Found"],
+    );
+    fetch_asset(
+        canister_ids.station,
+        port,
         "/metrics",
+        vec![("content-type", "text/plain")],
         vec!["# HELP station_total_users The total number of users that are registered, labeled by their status.", "# HELP station_metrics_timestamp UNIX timestamp in nanoseconds when the metrics were exported"],
     );
-    fetch_asset(canister_ids.control_panel, port, "/metrics", vec!["# HELP control_panel_active_users Total number of active users in the system, labeled by the time interval."]);
+    fetch_asset(
+        canister_ids.control_panel,
+        port,
+        "/foo",
+        vec![("content-type", "text/plain")],
+        vec!["404 Not Found"],
+    );
+    fetch_asset(canister_ids.control_panel, port, "/metrics", vec![("content-type", "text/plain")], vec!["# HELP control_panel_active_users Total number of active users in the system, labeled by the time interval."]);
+    fetch_asset(canister_ids.control_panel, port, "/metrics/sd", vec![("content-type", "application/json")], vec!["[{\"targets\": [\"\"],\"labels\": {\"__metrics_path__\":\"/metrics\",\"dapp\":\"orbit\"}}]"]);
 }
