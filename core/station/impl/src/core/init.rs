@@ -165,6 +165,27 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Any)),
         ),
+        // assets
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Create),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::List),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Read(ResourceId::Any)),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Update(ResourceId::Any)),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Delete(ResourceId::Any)),
+        ),
     ];
 
 }
