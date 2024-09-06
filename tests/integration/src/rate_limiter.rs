@@ -1,103 +1,69 @@
-use crate::interfaces::{default_account, send_icp_to_account, ICP};
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{
-    bump_time_to_avoid_ratelimit, execute_request, submit_request_raw, user_test_id,
-};
-use crate::CanisterIds;
-use crate::TestEnv;
-use ic_ledger_types::AccountIdentifier;
+use crate::utils::{bump_time_to_avoid_ratelimit, submit_request_raw};
+use crate::{CanisterIds, TestEnv};
+use candid::Principal;
 use orbit_essentials::api::ApiResult;
-use pocket_ic::update_candid_as;
-use pocket_ic::PocketIc;
+use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
-    AddAccountOperationInput, AllowDTO, MeResponse, RequestOperationDTO, RequestOperationInput,
-    SystemUpgradeOperationInput, SystemUpgradeTargetDTO, TransferOperationInput,
+    AddAccountOperationInput, AllowDTO, CallExternalCanisterOperationInput, CanisterMethodDTO,
+    MeResponse, RequestOperationInput,
 };
 
-const CHEAP_RATE_LIMIT: u64 = 2000;
-const EXPENSIVE_RATE_LIMIT: u64 = 2;
+const REQUEST_RATE_LIMITER_MAX_COUNT: u64 = 2000; // 2000 requests per 5mins
+const REQUEST_RATE_LIMITER_MAX_SIZE: u64 = 10_000_000; // total request size of 10MB per 5mins
 
 #[test]
-fn cheap_rate_limiter() {
+fn test_request_count_rate_limiter() {
     let TestEnv {
-        env,
-        canister_ids,
-        controller,
-        ..
+        env, canister_ids, ..
     } = setup_new_env();
 
     let res: (ApiResult<MeResponse>,) =
         update_candid_as(&env, canister_ids.station, WALLET_ADMIN_USER, "me", ()).unwrap();
     let user_dto = res.0.unwrap().me;
 
-    let add_account_operation_input = AddAccountOperationInput {
-        name: "test".to_string(),
-        blockchain: "icp".to_string(),
-        standard: "native".to_string(),
-        read_permission: AllowDTO {
+    test_rate_limit(&env, canister_ids, REQUEST_RATE_LIMITER_MAX_COUNT, |i| {
+        let default_permission = AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
             users: vec![user_dto.id.clone()],
-        },
-        configs_permission: AllowDTO {
-            auth_scope: station_api::AuthScopeDTO::Restricted,
-            user_groups: vec![],
-            users: vec![user_dto.id.clone()],
-        },
-        transfer_permission: AllowDTO {
-            auth_scope: station_api::AuthScopeDTO::Restricted,
-            user_groups: vec![],
-            users: vec![user_dto.id.clone()],
-        },
-        transfer_request_policy: None,
-        configs_request_policy: None,
-        metadata: vec![],
-    };
-    let request = execute_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        RequestOperationInput::AddAccount(add_account_operation_input),
-    )
-    .unwrap();
-    let account_dto = match request.operation {
-        RequestOperationDTO::AddAccount(add_account) => add_account.account.unwrap(),
-        _ => {
-            panic!("Unexpected request operation: {:?}", request.operation);
-        }
-    };
-
-    // send ICP to orbit station account
-    let account_address = AccountIdentifier::from_hex(&account_dto.address).unwrap();
-    send_icp_to_account(&env, controller, account_address, 100_000_000, 0, None).unwrap();
-
-    test_rate_limit(&env, canister_ids, CHEAP_RATE_LIMIT, |_| {
-        let beneficiary_id = user_test_id(1);
-        let transfer_operation_input = TransferOperationInput {
-            from_account_id: account_dto.id.clone(),
-            to: default_account(beneficiary_id),
-            amount: ICP.into(),
-            fee: None,
-            metadata: vec![],
-            network: None,
         };
-        RequestOperationInput::Transfer(transfer_operation_input)
+        let add_account_operation_input = AddAccountOperationInput {
+            name: format!("test{}", i),
+            blockchain: "icp".to_string(),
+            standard: "native".to_string(),
+            read_permission: default_permission.clone(),
+            configs_permission: default_permission.clone(),
+            transfer_permission: default_permission,
+            transfer_request_policy: None,
+            configs_request_policy: None,
+            metadata: vec![],
+        };
+        RequestOperationInput::AddAccount(add_account_operation_input)
     });
 }
 
 #[test]
-fn expensive_rate_limiter() {
+fn test_request_size_rate_limiter() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
 
-    test_rate_limit(&env, canister_ids, EXPENSIVE_RATE_LIMIT, |_| {
-        let system_upgrade_operation_input = SystemUpgradeOperationInput {
-            target: SystemUpgradeTargetDTO::UpgradeStation,
-            module: vec![],
-            arg: None,
+    let request_count = 10;
+    let reqest_size = 1_000_000;
+    assert_eq!(REQUEST_RATE_LIMITER_MAX_SIZE, request_count * reqest_size);
+    test_rate_limit(&env, canister_ids, request_count, |_| {
+        let arg_length = (reqest_size - 100) as usize; // all requests have a default size of 100
+        let call_external_canister_operation_input = CallExternalCanisterOperationInput {
+            validation_method: None,
+            execution_method: CanisterMethodDTO {
+                canister_id: Principal::anonymous(),
+                method_name: "foo".to_string(),
+            },
+            arg: Some(vec![42; arg_length]),
+            execution_method_cycles: None,
         };
-        RequestOperationInput::SystemUpgrade(system_upgrade_operation_input)
+        RequestOperationInput::CallExternalCanister(call_external_canister_operation_input)
     });
 }
 

@@ -1,43 +1,58 @@
-use crate::models::rate_limiter::RequestRateLimiterType;
+use crate::models::rate_limiter::RequestRateLimiterSize;
 use station_api::RequestOperationInput;
 
-impl From<&RequestOperationInput> for RequestRateLimiterType {
-    fn from(input: &RequestOperationInput) -> RequestRateLimiterType {
+impl From<&RequestOperationInput> for RequestRateLimiterSize {
+    fn from(input: &RequestOperationInput) -> RequestRateLimiterSize {
         match input {
-            RequestOperationInput::Transfer(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::AddAccount(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::EditAccount(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::AddAddressBookEntry(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::EditAddressBookEntry(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::RemoveAddressBookEntry(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::AddUser(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::EditUser(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::AddUserGroup(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::EditUserGroup(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::RemoveUserGroup(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::SystemUpgrade(_) => RequestRateLimiterType::Expensive,
-            RequestOperationInput::SetDisasterRecovery(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::ChangeExternalCanister(_) => RequestRateLimiterType::Expensive,
-            RequestOperationInput::CreateExternalCanister(_) => RequestRateLimiterType::Expensive,
-            RequestOperationInput::ConfigureExternalCanister(_) => {
-                RequestRateLimiterType::Expensive
+            RequestOperationInput::Transfer(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::AddAccount(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::EditAccount(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::AddAddressBookEntry(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::EditAddressBookEntry(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::RemoveAddressBookEntry(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::AddUser(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::EditUser(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::AddUserGroup(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::EditUserGroup(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::RemoveUserGroup(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::SystemUpgrade(system_upgrade) => {
+                let size = 100
+                    + system_upgrade.module.len() as u64
+                    + system_upgrade
+                        .arg
+                        .as_ref()
+                        .map(|x| x.len() as u64)
+                        .unwrap_or_default();
+                RequestRateLimiterSize(size)
             }
-            RequestOperationInput::CallExternalCanister(_) => RequestRateLimiterType::Expensive,
-            RequestOperationInput::FundExternalCanister(_) => RequestRateLimiterType::Expensive,
-            RequestOperationInput::EditPermission(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::AddRequestPolicy(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::EditRequestPolicy(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::RemoveRequestPolicy(_) => RequestRateLimiterType::Cheap,
-            RequestOperationInput::ManageSystemInfo(_) => RequestRateLimiterType::Cheap,
+            RequestOperationInput::SetDisasterRecovery(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::ChangeExternalCanister(change_external_canister) => {
+                let size = 100
+                    + change_external_canister.module.len() as u64
+                    + change_external_canister
+                        .arg
+                        .as_ref()
+                        .map(|x| x.len() as u64)
+                        .unwrap_or_default();
+                RequestRateLimiterSize(size)
+            }
+            RequestOperationInput::CreateExternalCanister(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::ConfigureExternalCanister(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::CallExternalCanister(call_external_canister) => {
+                let size = 100
+                    + call_external_canister
+                        .arg
+                        .as_ref()
+                        .map(|x| x.len() as u64)
+                        .unwrap_or_default();
+                RequestRateLimiterSize(size)
+            }
+            RequestOperationInput::FundExternalCanister(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::EditPermission(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::AddRequestPolicy(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::EditRequestPolicy(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::RemoveRequestPolicy(_) => RequestRateLimiterSize(100),
+            RequestOperationInput::ManageSystemInfo(_) => RequestRateLimiterSize(100),
         }
-    }
-}
-
-pub fn request_rate_limiter_type_max_count(
-    create_request_limiter_type: RequestRateLimiterType,
-) -> u64 {
-    match create_request_limiter_type {
-        RequestRateLimiterType::Cheap => 2000,
-        RequestRateLimiterType::Expensive => 2,
     }
 }
