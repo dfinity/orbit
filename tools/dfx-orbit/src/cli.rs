@@ -69,10 +69,6 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             );
 
             let verified = verify_args.verify(&dfx_orbit, &request).await;
-            match &verified {
-                Ok(()) => println!("Verification successful!"),
-                Err(err) => println!("Verification failed: {err}"),
-            }
             verify_args
                 .conditionally_execute_actions(&dfx_orbit, verified)
                 .await?;

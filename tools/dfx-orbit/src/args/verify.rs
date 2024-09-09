@@ -56,23 +56,29 @@ impl VerifyArgs {
     ) -> anyhow::Result<()> {
         match verified {
             Ok(()) => {
-                println!("Verification successful!");
                 if self.and_approve {
-                    dfx_core::cli::ask_for_consent("Do you want to approve the request?")?;
+                    dfx_core::cli::ask_for_consent(
+                        "Verification successful, approve the request?",
+                    )?;
                     dfx_orbit
                         .station
                         .approve(self.request_id.clone(), None)
                         .await?;
+                } else {
+                    println!("Verification successful!");
                 }
             }
             Err(err) => {
-                println!("Verification failed: {err}");
                 if self.or_reject {
-                    dfx_core::cli::ask_for_consent("Do you want to reject the request?")?;
+                    dfx_core::cli::ask_for_consent(&format!(
+                        "Verification failed: {err}. Reject the request?"
+                    ))?;
                     dfx_orbit
                         .station
                         .reject(self.request_id.clone(), None)
                         .await?;
+                } else {
+                    println!("Verification failed!");
                 };
 
                 return Err(err);
