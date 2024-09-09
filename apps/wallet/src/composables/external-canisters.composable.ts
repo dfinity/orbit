@@ -2,8 +2,10 @@ import { Principal } from '@dfinity/principal';
 import { ComputedRef, computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { LocationQuery, useRouter } from 'vue-router';
+import { CanisterWizardModel } from '~/components/external-canisters/wizard/wizard.types';
 import { useAutocomplete } from '~/composables/autocomplete.composable';
 import logger from '~/core/logger.core';
+import { UUID } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
 import { SelectItem } from '~/types/helper.types';
 import { ExternalCanisterStateEnum } from '~/types/station.types';
@@ -163,4 +165,40 @@ export const useExternalCanistersAutocomplete = () => {
   });
 
   return autocomplete;
+};
+
+export const useDefaultExternalCanisterSetupWizardModel = ({
+  prefilledUserIds,
+}: {
+  prefilledUserIds?: UUID[];
+} = {}): CanisterWizardModel => {
+  return {
+    configuration: {
+      name: '',
+      description: '',
+      labels: [],
+      state: ExternalCanisterStateEnum.Active,
+    },
+    permission: {
+      read: {
+        auth_scope: { Restricted: null },
+        user_groups: [],
+        users: prefilledUserIds ? prefilledUserIds : [],
+      },
+      change: {
+        auth_scope: { Restricted: null },
+        user_groups: [],
+        users: prefilledUserIds ? prefilledUserIds : [],
+      },
+    },
+    approvalPolicy: {
+      change: [],
+    },
+  };
+};
+
+export const useLoadExternaLCanisterSetupWizardModel = async (
+  _canisterId: Principal,
+): Promise<CanisterWizardModel> => {
+  throw new Error('Not implemented');
 };
