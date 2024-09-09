@@ -68,7 +68,7 @@
       </VRadioGroup>
       <div v-if="creationModeKind === 'existing'">
         <VTextField
-          v-model="model.canisterId"
+          v-model="canisterIdInput"
           name="canister_id"
           :label="$t('terms.canister_id')"
           variant="filled"
@@ -89,6 +89,7 @@
 </template>
 
 <script lang="ts" setup>
+import { Principal } from '@dfinity/principal';
 import { mdiCogs, mdiDatabase, mdiIdentifier, mdiLabel, mdiText } from '@mdi/js';
 import { computed, onBeforeMount, ref, watch } from 'vue';
 import {
@@ -106,10 +107,10 @@ import SuggestiveAutocomplete from '~/components/inputs/SuggestiveAutocomplete.v
 import { useExternalCanistersStates } from '~/composables/external-canisters.composable';
 import logger from '~/core/logger.core';
 import { useStationStore } from '~/stores/station.store';
+import { CyclesUnit } from '~/types/app.types';
 import { SelectItem } from '~/types/helper.types';
 import { requiredRule, validCanisterId } from '~/utils/form.utils';
 import { CanisterConfigurationModel } from './wizard.types';
-import { CyclesUnit } from '~/types/app.types';
 
 const props = withDefaults(
   defineProps<{
@@ -137,6 +138,38 @@ const isCreationMode = computed(() => !model.value.id);
 const availableStates = useExternalCanistersStates();
 const creationModeKind = ref<'existing' | 'new'>(model.value.canisterId ? 'existing' : 'new');
 const availableLabels = ref<SelectItem<string>[]>([]);
+const canisterIdInput = ref<string | undefined>(model.value.canisterId?.toText());
+
+watch(canisterIdInput, newValue => {
+  try {
+    newValue = newValue?.trim();
+
+    if (!newValue) {
+      throw new Error('Empty canisterId');
+    }
+
+    model.value = {
+      ...model.value,
+      canisterId: Principal.fromText(newValue),
+    };
+  } catch (_) {
+    // Unset the canisterId if the input is invalid or empty
+    model.value = {
+      ...model.value,
+      canisterId: undefined,
+    };
+  }
+});
+
+watch(
+  () => model.value.canisterId,
+  updatedCanisterId => {
+    if (updatedCanisterId) {
+      canisterIdInput.value = updatedCanisterId.toText();
+    }
+  },
+  { immediate: true },
+);
 
 watch(
   () => creationModeKind.value,
