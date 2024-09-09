@@ -76,7 +76,9 @@ const dropdownLabel = computed(() => props.label ?? i18n.t('terms.labels'));
 
 onMounted(async () => {
   try {
-    const result = await station.service.fetchExternalCanisterFilters();
+    const result = await station.service.fetchExternalCanisterFilters({
+      with_labels: true,
+    });
     const labels = result.labels?.[0] ?? [];
     items.value = labels.map((label: string) => ({ value: label, text: label }));
   } catch (error) {
