@@ -1,7 +1,10 @@
 use std::sync::Arc;
 
 use crate::{
-    core::{authorization::Authorization, utils::retain_accessible_resources, CallContext},
+    core::{
+        authorization::Authorization, generate_uuid_v4, utils::retain_accessible_resources,
+        CallContext,
+    },
     errors::AssetError,
     models::{
         resource::{Resource, ResourceAction, ResourceId},
@@ -16,7 +19,6 @@ use orbit_essentials::{
     model::ModelValidator,
     pagination::{paginated_items, PaginatedData, PaginatedItemsArgs},
     repository::Repository,
-    utils::generate_uuid_v4,
 };
 use station_api::ListAssetsInput;
 use uuid::Uuid;
@@ -158,4 +160,103 @@ impl AssetService {
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use orbit_essentials::repository::Repository;
+    use station_api::ListAssetsInput;
+
+    use crate::{
+        models::{asset_test_utils::mock_asset, AddAssetOperationInput, BlockchainStandard},
+        repositories::ASSET_REPOSITORY,
+    };
+
+    use super::AssetService;
+
+    #[tokio::test]
+    async fn test_asset_creation() {
+        let service = AssetService::default();
+
+        service
+            .create(AddAssetOperationInput {
+                blockchain: crate::models::Blockchain::InternetComputer,
+                standards: vec![BlockchainStandard::Native],
+                decimals: 8,
+                metadata: Default::default(),
+                name: "ICP".to_string(),
+                symbol: "ICP".to_string(),
+            })
+            .await
+            .expect("Failed to create asset");
+
+        let assets = ASSET_REPOSITORY.list();
+
+        assert_eq!(assets.len(), 1);
+        assert_eq!(assets[0].name, "ICP");
+    }
+
+    #[tokio::test]
+    async fn test_asset_edit() {
+        let service = AssetService::default();
+        let mut mock_asset = mock_asset();
+        mock_asset.name = "Bitcoin".to_string();
+        ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
+
+        service
+            .edit(crate::models::EditAssetOperationInput {
+                asset_id: mock_asset.id,
+                name: Some("Internet Computer".to_string()),
+                symbol: Some("ICP".to_string()),
+                decimals: Some(8),
+                change_metadata: None,
+                blockchain: None,
+                standards: None,
+            })
+            .expect("Failed to edit asset");
+
+        let assets = ASSET_REPOSITORY.list();
+
+        assert_eq!(assets.len(), 1);
+        assert_eq!(assets[0].name, "Internet Computer");
+    }
+
+    #[tokio::test]
+    async fn test_asset_remove() {
+        let service = AssetService::default();
+        let mock_asset = mock_asset();
+        ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
+
+        service
+            .remove(crate::models::RemoveAssetOperationInput {
+                asset_id: mock_asset.id,
+            })
+            .expect("Failed to remove asset");
+
+        let assets = ASSET_REPOSITORY.list();
+
+        assert_eq!(assets.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_asset_list() {
+        let service = AssetService::default();
+        let mock_asset = mock_asset();
+        ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
+
+        let assets = service
+            .list(ListAssetsInput { paginate: None }, None)
+            .expect("Failed to list assets");
+
+        assert_eq!(assets.items.len(), 1);
+        assert_eq!(assets.items[0].name, "Internet Computer");
+    }
+
+    #[tokio::test]
+    async fn test_asset_get() {
+        let service = AssetService::default();
+        let mock_asset = mock_asset();
+        ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
+
+        let asset = service.get(&mock_asset.id).expect("Failed to get asset");
+
+        assert_eq!(asset.name, "Internet Computer");
+    }
+}
