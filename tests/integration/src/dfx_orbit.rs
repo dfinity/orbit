@@ -54,8 +54,11 @@ const IDENTITY_JSON: &str = "
 /// to allow testing more fine grained controls
 #[derive(Debug, Clone, Default)]
 struct DfxOrbitTestConfig {
-    /// Sets the asset canisters to be defined in the dfx.json, maps name tp list of paths
+    // TODO: Settable network name
+    /// Sets the asset canisters to be defined in the dfx.json, maps name to list of paths
     asset_canisters: BTreeMap<String, Vec<String>>,
+    /// Mapping of canister names to their principal ids
+    canister_ids: Vec<(String, Principal)>,
 }
 
 fn dfx_orbit_test<F>(env: &mut PocketIc, config: DfxOrbitTestConfig, test_func: F) -> F::Output
@@ -105,7 +108,8 @@ where
         *port.borrow()
     });
 
-    setup_test_dfx_json(tmp_dir.path(), config);
+    setup_test_dfx_json(tmp_dir.path(), &config);
+    setup_test_canister_ids_json(tmp_dir.path(), &config);
     setup_identity(tmp_dir.path());
 
     // Start the live environment
@@ -139,14 +143,14 @@ fn setup_identity(dfx_root: &Path) {
 }
 
 /// Sets up a custom `dfx.json` from the provided `config`
-fn setup_test_dfx_json(dfx_root: &Path, config: DfxOrbitTestConfig) {
+fn setup_test_dfx_json(dfx_root: &Path, config: &DfxOrbitTestConfig) {
     let port = PORT.with(|port| *port.borrow());
     let dfx_json = test_dfx_json_from_template(config, port);
     std::fs::write(dfx_root.join("dfx.json"), dfx_json).unwrap();
 }
 
 /// Generate a custom `dfx.json` from the provided `config`
-fn test_dfx_json_from_template(config: DfxOrbitTestConfig, port: u16) -> String {
+fn test_dfx_json_from_template(config: &DfxOrbitTestConfig, port: u16) -> String {
     let asset_canisters = config
         .asset_canisters
         .iter()
@@ -179,6 +183,22 @@ fn test_dfx_json_from_template(config: DfxOrbitTestConfig, port: u16) -> String 
             }}
         }}"
     )
+}
+
+fn setup_test_canister_ids_json(dfx_root: &Path, config: &DfxOrbitTestConfig) {
+    let canister_ids = test_canister_ids_json(config);
+    dbg!(&canister_ids);
+    std::fs::write(dfx_root.join("canister_ids.json"), canister_ids).unwrap();
+}
+
+/// Generate a custom canister_ids.json to lookup from
+fn test_canister_ids_json(config: &DfxOrbitTestConfig) -> String {
+    let canisters = config
+        .canister_ids
+        .iter()
+        .map(|(name, principal)| format!("\"{name}\": {{\"test\": \"{principal}\"}}"))
+        .join(",");
+    format!("{{ {canisters} }}")
 }
 
 /// Setup the station agent for the test

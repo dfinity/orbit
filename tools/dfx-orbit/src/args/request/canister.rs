@@ -23,7 +23,7 @@ use std::collections::BTreeSet;
 pub struct RequestCanisterArgs {
     /// The operation to request
     #[clap(subcommand)]
-    action: RequestCanisterActionArgs,
+    pub action: RequestCanisterActionArgs,
 }
 
 #[derive(Debug, Clone, Subcommand)]
@@ -43,13 +43,13 @@ impl RequestCanisterArgs {
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
-        self.action.into_create_request_input(dfx_orbit).await
+        self.action.into_request(dfx_orbit).await
     }
 }
 
 impl RequestCanisterActionArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    pub(crate) async fn into_create_request_input(
+    pub(crate) async fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
@@ -65,20 +65,23 @@ impl RequestCanisterActionArgs {
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterCallArgs {
     /// The canister name or ID.
-    canister: String,
+    pub canister: String,
     /// The name of the method to call.
-    method_name: String,
-    /// The argument to pass to the method.
-    argument: Option<String>,
+    pub method_name: String,
+    /// The candid argument to pass to the method.
+    pub argument: Option<String>,
     // TODO: The format of the argument.
     // #[clap(short, long)]
     // r#type: Option<CandidFormat>,
-    /// Pass the argument as a file.
+    /// Pass the argument as a candid encoded file.
     #[clap(short = 'f', long, conflicts_with = "argument")]
-    arg_file: Option<String>,
+    pub arg_file: Option<String>,
+    /// Pass the argument as a raw hex string.
+    #[clap(short = 'f', long, conflicts_with = "argument, arg_file")]
+    pub raw_arg: Option<String>,
     /// Specifies the amount of cycles to send on the call.
     #[clap(short, long)]
-    with_cycles: Option<u64>,
+    pub with_cycles: Option<u64>,
 }
 
 impl RequestCanisterCallArgs {
@@ -88,7 +91,7 @@ impl RequestCanisterCallArgs {
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         let canister_id = dfx_orbit.canister_id(&self.canister)?;
-        let arg = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+        let arg = parse_arguments(&self.argument, &self.arg_file, &self.raw_arg)?;
 
         Ok(RequestOperationInput::CallExternalCanister(
             CallExternalCanisterOperationInput {
@@ -109,7 +112,7 @@ impl RequestCanisterCallArgs {
         request: &GetRequestResponse,
     ) -> anyhow::Result<()> {
         let canister_id = dfx_orbit.canister_id(&self.canister)?;
-        let arg = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+        let arg = parse_arguments(&self.argument, &self.arg_file, &self.raw_arg)?;
         let arg_checksum = arg.map(|arg| hex::encode(Sha256::digest(arg)));
 
         let RequestOperationDTO::CallExternalCanister(op) = &request.request.operation else {
@@ -232,7 +235,7 @@ impl RequestCanisterInstallArgs {
         let module = std::fs::read(&self.wasm)
             .with_context(|| "Could not read Wasm file")?
             .to_vec();
-        let args = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+        let args = parse_arguments(&self.argument, &self.arg_file, &None)?;
 
         Ok((module, args))
     }
@@ -374,13 +377,15 @@ async fn get_new_controller_set(
     Ok(new_controllers)
 }
 
-fn candid_from_string_or_file(
+fn parse_arguments(
     arg_string: &Option<String>,
     arg_path: &Option<String>,
+    raw_arg: &Option<String>,
 ) -> anyhow::Result<Option<Vec<u8>>> {
     // TODO: It would be really nice to be able to use `blob_from_arguments(..)` here, as in dfx, to get all the nice things such as help composing the argument.
     // First try to read the argument file, if it was provided
-    Ok(arg_path
+
+    let candid = arg_path
         .as_ref()
         .map(std::fs::read_to_string)
         .transpose()?
@@ -392,7 +397,11 @@ fn candid_from_string_or_file(
                 .with_context(|| "Invalid Candid values".to_string())?
                 .to_bytes()
         })
-        .transpose()?)
+        .transpose()?;
+
+    let raw_arg = raw_arg.as_ref().map(hex::decode).transpose()?;
+    let arg = candid.or(raw_arg);
+    Ok(arg)
 }
 
 fn log_hashes(logger: &Logger, name: &str, local: &Option<String>, remote: &Option<String>) {

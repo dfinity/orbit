@@ -76,7 +76,10 @@ fn assets_upload() {
         String::from("test_asset_upload"),
         vec![asset_dir.path().to_str().unwrap().to_string()],
     );
-    let config = DfxOrbitTestConfig { asset_canisters };
+    let config = DfxOrbitTestConfig {
+        asset_canisters,
+        ..Default::default()
+    };
 
     dfx_orbit_test(&mut env, config, async {
         // Setup the station agent

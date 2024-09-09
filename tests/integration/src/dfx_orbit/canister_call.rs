@@ -10,10 +10,13 @@ use crate::{
     CanisterIds, TestEnv,
 };
 use candid::Principal;
+use dfx_orbit::args::request::{
+    canister::{RequestCanisterActionArgs, RequestCanisterArgs, RequestCanisterCallArgs},
+    RequestArgs, RequestArgsActions,
+};
 use pocket_ic::PocketIc;
 use station_api::{
-    AddRequestPolicyOperationInput, AuthScopeDTO, CallExternalCanisterOperationInput,
-    CallExternalCanisterResourceTargetDTO, CanisterMethodDTO, CreateRequestInput,
+    AddRequestPolicyOperationInput, AuthScopeDTO, CallExternalCanisterResourceTargetDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO,
     ExternalCanisterResourceActionDTO, QuorumDTO, RequestApprovalStatusDTO, RequestOperationInput,
     RequestPolicyRuleDTO, RequestSpecifierDTO, ResourceDTO, UserSpecifierDTO,
@@ -38,33 +41,37 @@ fn canister_call() {
     permit_call_operation(&env, &canister_ids);
     set_four_eyes_on_call(&env, &canister_ids);
 
-    let request_counter_canister_set = CreateRequestInput {
-        operation: RequestOperationInput::CallExternalCanister(
-            CallExternalCanisterOperationInput {
-                validation_method: None,
-                execution_method: CanisterMethodDTO {
-                    canister_id,
-                    method_name: String::from("set"),
-                },
-                arg: Some(42_u32.to_le_bytes().to_vec()),
-                execution_method_cycles: None,
-            },
-        ),
-        title: None,
-        summary: None,
-        execution_plan: None,
+    let inner_args = RequestCanisterCallArgs {
+        canister: String::from("counter"),
+        method_name: String::from("set"),
+        argument: None,
+        arg_file: None,
+        raw_arg: Some(String::from("2a000000")),
+        with_cycles: None,
     };
 
-    let request = dfx_orbit_test(&mut env, DfxOrbitTestConfig::default(), async {
+    let config = DfxOrbitTestConfig {
+        canister_ids: vec![(String::from("counter"), canister_id.clone())],
+        ..Default::default()
+    };
+
+    let request = dfx_orbit_test(&mut env, config, async {
         // Setup the station agent
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
         // Call the counter canister
-        let request = dfx_orbit
-            .station
-            .request(request_counter_canister_set.clone())
-            .await
-            .unwrap();
+        let request = RequestArgs {
+            title: None,
+            summary: None,
+            action: RequestArgsActions::Canister(RequestCanisterArgs {
+                action: RequestCanisterActionArgs::Call(inner_args),
+            }),
+        }
+        .into_request(&dfx_orbit)
+        .await
+        .unwrap();
+
+        let request = dfx_orbit.station.request(request.clone()).await.unwrap();
 
         request.request
     });

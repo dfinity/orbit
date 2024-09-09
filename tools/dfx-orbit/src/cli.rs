@@ -49,7 +49,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
         DfxOrbitSubcommands::Request(request_args) => {
             let request = dfx_orbit
                 .station
-                .request(request_args.into_create_request_input(&dfx_orbit).await?)
+                .request(request_args.into_request(&dfx_orbit).await?)
                 .await?;
             dfx_orbit.print_create_request_info(&request);
 
