@@ -3,6 +3,7 @@ import {
   compactArray,
   isSemanticVersion,
   parseLocationQuery,
+  parseToBigIntOrUndefined,
   removeBasePathFromPathname,
   throttle,
   toArrayBuffer,
@@ -210,6 +211,38 @@ describe('Location query utils', () => {
         arg2: ['value1', 'value2'],
         arg6: ['value1', 'value2'],
       });
+    });
+  });
+});
+
+describe('BigInt utils', () => {
+  describe('parseToBigIntOrUndefined', () => {
+    it('null returns undefined', () => {
+      expect(parseToBigIntOrUndefined(null)).toBeUndefined();
+    });
+
+    it('undefined returns undefined', () => {
+      expect(parseToBigIntOrUndefined(undefined)).toBeUndefined();
+    });
+
+    it('string returns BigInt', () => {
+      expect(parseToBigIntOrUndefined('100')).toBe(BigInt(100));
+    });
+
+    it('number returns BigInt', () => {
+      expect(parseToBigIntOrUndefined(100)).toBe(BigInt(100));
+    });
+
+    it('bigint returns BigInt', () => {
+      expect(parseToBigIntOrUndefined(BigInt(100))).toBe(BigInt(100));
+    });
+
+    it('invalid string returns undefined', () => {
+      expect(parseToBigIntOrUndefined('invalid')).toBeUndefined();
+    });
+
+    it('empty string returns undefined', () => {
+      expect(parseToBigIntOrUndefined('')).toBeUndefined();
     });
   });
 });

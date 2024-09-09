@@ -96,6 +96,9 @@ export default {
       verify_instructions:
         'Pour vérifier la mise à jour, ouvrez le terminal et suivez les instructions ci-dessous:',
     },
+    no_data: 'Pas de données disponibles.',
+    no_matching_results: 'Pas de résultats correspondants trouvés pour `{search}`.',
+    add_new_label: 'Ajouter une nouvelle étiquette: {label}',
   },
   alpha_warning: {
     version: 'Ceci est une version alpha.',
@@ -400,11 +403,34 @@ export default {
     no_withdraw_request_found_search: 'Pas de demande retrait trouvé pour ce critère.',
     add_station_list_item: 'Ajouter un portefeuille',
   },
+  cycles: {
+    units: {
+      tc: 'TC',
+      bc: 'Milliard',
+      mc: 'Million',
+      e8s: 'e8s',
+    },
+  },
+  external_canisters: {
+    add_new_label: 'Ajouter un nouveau étiquette',
+    use_existing: 'Utiliser un existant',
+    create_new: 'Créer un nouveau',
+    initial_cycles: 'Cycles initiaux',
+    target_canister: 'Canister cible',
+    config_read_permission: 'Lecture',
+    config_read_permission_hint: 'Accès pour lire les paramètres du canister.',
+    config_change_permission: 'Changement',
+    config_change_permission_hint: 'Accès pour changer les paramètres du canister.',
+    config_change_approval_policy: 'Changement',
+    config_change_approval_policy_hint:
+      'Politique qui doit être approuvée pour changer les paramètres.',
+  },
   terms: {
     active: 'Actif',
     archived: 'Archivé',
     canisters: 'Canisters',
     canister: 'Canister',
+    description: 'Description',
     labels: 'Étiquettes',
     change: 'Changement',
     quorum: 'Quorum',
