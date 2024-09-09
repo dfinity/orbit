@@ -40,7 +40,7 @@
               "
             />
           </template>
-          <VList density="compact" base-color="white">
+          <VList v-if="showDropdown" density="compact" base-color="white">
             <VListItem v-if="loading" class="text-center">
               <VProgressCircular indeterminate size="24" />
             </VListItem>
@@ -55,11 +55,21 @@
                   <div><VIcon :icon="mdiPlusCircle" size="x-small" /></div>
                 </VListItemTitle>
               </VListItem>
-              <VListItem v-if="!unselectedItems.length" class="text-center">
-                <VListItemTitle>
-                  <span v-if="search.length">{{ $t('app.no_matching_results', { search }) }}</span>
-                  <span v-else>{{ $t('app.no_data') }}</span>
+              <VListItem
+                v-if="!unselectedItems.length"
+                class="text-center"
+                @click="
+                  search.length ? selectItem({ text: search, value: transform(search) }) : undefined
+                "
+              >
+                <VListItemTitle v-if="search.length && !props.create">
+                  {{ $t('app.no_matching_results', { search }) }}
                 </VListItemTitle>
+                <VListItemTitle v-else-if="search.length" class="d-flex flex-nowrap ga-2">
+                  <div class="flex-grow-1">{{ $t('app.add_new_label', { label: search }) }}</div>
+                  <div><VIcon :icon="mdiPlusCircle" size="x-small" /></div>
+                </VListItemTitle>
+                <VListItemTitle v-else>{{ $t('app.no_data') }}</VListItemTitle>
               </VListItem>
             </template>
           </VList>
@@ -70,7 +80,7 @@
           color="primary"
           :icon="mdiPlus"
           variant="tonal"
-          :disabled="!hasSearchValue"
+          :disabled="!canAddNewItem"
           size="small"
           @click.stop="selectItem({ text: search, value: transform(search) })"
         />
@@ -128,6 +138,9 @@ const props = withDefaults(
      * The function to fetch items based on the search term, defaults to fetch items from the `items` prop.
      */
     fetchItems?: (term: string) => Promise<SelectItem<V>[]> | SelectItem<V>[];
+    /**
+     * The placeholder text for the input.
+     */
     variant?: 'underlined' | 'outlined' | 'filled';
     density?: 'comfortable' | 'compact' | 'default';
   }>(),
@@ -223,8 +236,18 @@ const updateUnselectedItems = (items: SelectItem<V>[]): void => {
     item => !selectedItems.value.find(selectedItem => selectedItem.value === item.value),
   );
 
-  unselectedItems.value = entries;
+  unselectedItems.value = entries.sort((a, b) => a.text.localeCompare(b.text));
 };
+
+const canAddNewItem = computed(
+  () =>
+    props.create &&
+    hasSearchValue.value &&
+    !selectedItems.value.find(item => item.text === search.value),
+);
+const showDropdown = computed(
+  () => unselectedItems.value.length > 0 || (hasSearchValue.value && canAddNewItem.value),
+);
 
 watch(
   () => search.value,
@@ -272,7 +295,7 @@ watch(
       }
     }
 
-    selectedItems.value = entries;
+    selectedItems.value = entries.sort((a, b) => a.text.localeCompare(b.text));
     unselectedItems.value = unselectedItems.value.filter(
       item => !selection.find(selectedItem => selectedItem === item.value),
     );

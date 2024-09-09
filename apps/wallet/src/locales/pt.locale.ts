@@ -97,6 +97,7 @@ export default {
     },
     no_data: 'Nenhum dado disponível.',
     no_matching_results: 'Nenhum resultado encontrado para `{search}`.',
+    add_new_label: 'Adicionar novo rótulo: {label}',
   },
   alpha_warning: {
     version: 'Esta é uma versão alfa.',

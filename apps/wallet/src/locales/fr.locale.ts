@@ -98,6 +98,7 @@ export default {
     },
     no_data: 'Pas de données disponibles.',
     no_matching_results: 'Pas de résultats correspondants trouvés pour `{search}`.',
+    add_new_label: 'Ajouter une nouvelle étiquette: {label}',
   },
   alpha_warning: {
     version: 'Ceci est une version alpha.',
