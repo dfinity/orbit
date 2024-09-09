@@ -417,6 +417,13 @@ export default {
     config_change_permission_hint: 'Access to change the canister settings.',
     config_change_approval_policy: 'Changes',
     config_change_approval_policy_hint: 'Approval policy to change the canister settings.',
+    loading_error: 'Failed to load canister information, please try again.',
+    not_found: 'Canister not found.',
+    not_found_description: 'The canister you are looking for does not exist.',
+    ic_settings: 'IC Settings',
+    add_cycles: 'Add Cycles',
+    configuration: 'Configuration',
+    unlink: 'Unlink',
   },
   terms: {
     active: 'Active',

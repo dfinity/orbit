@@ -14,3 +14,17 @@ export const mapExternalCanisterStateEnumToVariant = (
 
   return unreachable(state);
 };
+
+export const mapExternalCanisterStateVariantToEnum = (
+  state: ExternalCanisterState,
+): ExternalCanisterStateEnum => {
+  if ('Active' in state) {
+    return ExternalCanisterStateEnum.Active;
+  }
+
+  if ('Archived' in state) {
+    return ExternalCanisterStateEnum.Archived;
+  }
+
+  return unreachable(state);
+};

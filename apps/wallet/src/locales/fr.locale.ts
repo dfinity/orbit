@@ -424,6 +424,13 @@ export default {
     config_change_approval_policy: 'Changement',
     config_change_approval_policy_hint:
       'Politique qui doit être approuvée pour changer les paramètres.',
+    loading_error: 'Erreur de chargement du canister, veuillez essayer de nouveau.',
+    not_found: 'Canister non trouvé.',
+    not_found_description: 'Le canister que vous cherchez n a pas été trouvé.',
+    ic_settings: 'Paramètres IC',
+    add_cycles: 'Ajouter des cycles',
+    configuration: 'Configuration',
+    unlink: 'Dissocier',
   },
   terms: {
     active: 'Actif',

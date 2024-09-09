@@ -420,6 +420,13 @@ export default {
     config_change_permission_hint: 'Acesso para alterar as configurações do canister.',
     config_change_approval_policy: 'Alteraçōes',
     config_change_approval_policy_hint: 'Regra de aprovação para alteraçōes do canister.',
+    loading_error: 'Erro ao carregar o canister, por favor, tente novamente.',
+    not_found: 'Canister não encontrado.',
+    not_found_description: 'O canister que está a tentar aceder não existe.',
+    ic_settings: 'Configuraçōes do IC',
+    add_cycles: 'Adicionar ciclos',
+    configuration: 'Configuração',
+    unlink: 'Dessaociar',
   },
   terms: {
     active: 'Ativo',

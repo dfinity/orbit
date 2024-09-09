@@ -75,7 +75,7 @@
                       (_: unknown, { item }: any) => {
                         $router.push({
                           name: Routes.ExternalCanister,
-                          params: { id: item.canister_id },
+                          params: { cid: item.canister_id },
                         });
                       }
                     "
