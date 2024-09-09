@@ -1,7 +1,7 @@
-import { TransferStatus } from '~/generated/station/station.did';
-import { AccountTransferStatus } from '~/types/station.types';
 import type { IDL as CandidIDL } from '@dfinity/candid';
 import { LocationQuery, LocationQueryValue } from 'vue-router';
+import { TransferStatus } from '~/generated/station/station.did';
+import { AccountTransferStatus } from '~/types/station.types';
 
 export const timer = (
   cb: () => void,
@@ -291,16 +291,30 @@ export const parseLocationQuery = (query: LocationQuery): Record<string, string[
   return result;
 };
 
+/**
+ * Parses a value to a BigInt or returns undefined if the value is not a valid BigInt.
+ *
+ * @param value The value to parse.
+ * @returns The parsed BigInt value or undefined if the value is not a valid BigInt.
+ */
 export const parseToBigIntOrUndefined = (
-  value: string | undefined | bigint,
+  value: string | number | bigint | null | undefined,
 ): bigint | undefined => {
-  if (value === undefined || value === null) {
+  try {
+    if (value === undefined || value === null) {
+      return undefined;
+    }
+
+    if (typeof value === 'bigint') {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return value.trim() !== '' ? BigInt(value) : undefined;
+    }
+
+    return BigInt(value);
+  } catch (error) {
     return undefined;
   }
-
-  if (typeof value === 'string') {
-    return value.trim() !== '' ? BigInt(value) : undefined;
-  }
-
-  return value;
 };
