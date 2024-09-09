@@ -26,6 +26,9 @@ mod canister_call;
 mod me;
 mod review;
 
+// TODO: Integration test for update settings
+// TODO: Use the arguments in the system tests to cover more code of the actual tool
+
 thread_local! {static PORT: RefCell<u16> = const { RefCell::new(4943) };}
 static AGENT_MUTEX: Mutex<()> = Mutex::new(());
 

@@ -51,7 +51,7 @@ impl VerifyArgs {
 
         let verified = match self.action {
             VerifyArgsAction::Asset(args) => args.verify(dfx_orbit, &request).await,
-            VerifyArgsAction::Canister(args) => args.verify(dfx_orbit, &request),
+            VerifyArgsAction::Canister(args) => args.verify(dfx_orbit, &request).await,
         };
 
         match verified {

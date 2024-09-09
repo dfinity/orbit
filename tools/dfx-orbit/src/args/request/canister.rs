@@ -8,13 +8,15 @@ use sha2::{Digest, Sha256};
 use slog::{info, Logger};
 use station_api::{
     CallExternalCanisterOperationInput, CanisterInstallMode, CanisterMethodDTO,
-    ChangeExternalCanisterOperationInput, GetRequestResponse, RequestOperationDTO,
-    RequestOperationInput,
+    ChangeExternalCanisterOperationInput, ConfigureExternalCanisterOperationInput,
+    ConfigureExternalCanisterOperationKindDTO, DefiniteCanisterSettingsInput, GetRequestResponse,
+    RequestOperationDTO, RequestOperationInput,
 };
 use std::collections::BTreeSet;
 
 // TODO: Support Canister create + integration test
 // TODO: Canister get response functionality
+// ^ Utility function to get the latests response directly printed, to get UX similar to dfx canister call
 
 /// Request canister operations through Orbit
 #[derive(Debug, Clone, Parser)]
@@ -288,13 +290,65 @@ impl RequestCanisterUpdateSettingsArgs {
     ) -> anyhow::Result<RequestOperationInput> {
         let canister_id = dfx_orbit.canister_id(&self.canister)?;
         let controllers = get_new_controller_set(
-            &dfx_orbit,
+            dfx_orbit,
             canister_id,
             self.add_controller,
             self.remove_controller,
         )
         .await?;
-        todo!()
+
+        let operations = ConfigureExternalCanisterOperationInput {
+            canister_id,
+            kind: ConfigureExternalCanisterOperationKindDTO::NativeSettings(
+                DefiniteCanisterSettingsInput {
+                    controllers: Some(controllers),
+                    compute_allocation: None,
+                    memory_allocation: None,
+                    freezing_threshold: None,
+                    reserved_cycles_limit: None,
+                },
+            ),
+        };
+
+        Ok(RequestOperationInput::ConfigureExternalCanister(operations))
+    }
+
+    pub(crate) async fn verify(
+        &self,
+        dfx_orbit: &DfxOrbit,
+        request: &GetRequestResponse,
+    ) -> anyhow::Result<()> {
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
+        let controllers = get_new_controller_set(
+            dfx_orbit,
+            canister_id,
+            self.add_controller.clone(),
+            self.remove_controller.clone(),
+        )
+        .await?;
+
+        let RequestOperationDTO::ConfigureExternalCanister(op) = &request.request.operation else {
+            bail!("This request is not a configure external canister request");
+        };
+        if op.canister_id != canister_id {
+            bail!(
+                "Mismatch of canister ids: request: {}, local: {}",
+                op.canister_id,
+                canister_id
+            );
+        }
+        let ConfigureExternalCanisterOperationKindDTO::NativeSettings(op) = &op.kind else {
+            bail!("This request is not a native setting request");
+        };
+        if op.controllers.as_ref() != Some(&controllers) {
+            bail!(
+                "Mismatch in the controller sets: request: {:?}, local {:?}",
+                op.controllers,
+                controllers
+            );
+        }
+
+        Ok(())
     }
 }
 
