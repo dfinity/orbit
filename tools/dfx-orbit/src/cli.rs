@@ -11,6 +11,7 @@ use crate::{
 };
 use anyhow::Context;
 use slog::trace;
+use station_api::GetRequestInput;
 
 /// A command line tool for interacting with Orbit on the Internet Computer.
 pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
@@ -55,9 +56,27 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
             Ok(())
         }
         DfxOrbitSubcommands::Verify(verify_args) => {
-            verify_args.verify(&dfx_orbit).await?;
+            let request = dfx_orbit
+                .station
+                .review_id(GetRequestInput {
+                    request_id: verify_args.request_id.clone(),
+                })
+                .await?;
 
-            println!("Request passes verification");
+            println!(
+                "{}",
+                dfx_orbit.display_get_request_response(request.clone())?
+            );
+
+            let verified = verify_args.verify(&dfx_orbit, &request).await;
+            match &verified {
+                Ok(()) => println!("Verification successful!"),
+                Err(err) => println!("Verification failed: {err}"),
+            }
+            verify_args
+                .conditionally_execute_actions(&dfx_orbit, verified)
+                .await?;
+
             Ok(())
         }
         DfxOrbitSubcommands::Review(review_args) => dfx_orbit.exec_review(review_args).await,

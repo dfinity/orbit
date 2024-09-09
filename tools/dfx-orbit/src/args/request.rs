@@ -22,7 +22,6 @@ pub struct RequestArgs {
     #[clap(long)]
     summary: Option<String>,
 
-    // TODO: Summary file as an alternative to summary
     #[clap(subcommand)]
     action: RequestArgsActions,
 }

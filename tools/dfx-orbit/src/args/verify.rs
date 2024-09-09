@@ -5,7 +5,7 @@ use crate::DfxOrbit;
 use asset::VerifyAssetArgs;
 use canister::VerifyCanisterArgs;
 use clap::{Parser, Subcommand};
-use station_api::GetRequestInput;
+use station_api::GetRequestResponse;
 
 #[derive(Debug, Clone, Parser)]
 pub struct VerifyArgs {
@@ -33,45 +33,51 @@ pub enum VerifyArgsAction {
 }
 
 impl VerifyArgs {
-    pub(crate) async fn verify(self, dfx_orbit: &DfxOrbit) -> anyhow::Result<()> {
-        // TODO: Move fetching the request and displaying it up a level
-        let request = dfx_orbit
-            .station
-            .review_id(GetRequestInput {
-                request_id: self.request_id.clone(),
-            })
-            .await?;
-
-        println!(
-            "{}",
-            dfx_orbit.display_get_request_response(request.clone())?
-        );
+    pub(crate) async fn verify(
+        &self,
+        dfx_orbit: &DfxOrbit,
+        request: &GetRequestResponse,
+    ) -> anyhow::Result<()> {
         // TODO: Don't allow non-pending requests to be verified, since they might no longer be
         // verifiable after the execution
 
-        let verified = match self.action {
-            VerifyArgsAction::Asset(args) => args.verify(dfx_orbit, &request).await,
-            VerifyArgsAction::Canister(args) => args.verify(dfx_orbit, &request).await,
+        match &self.action {
+            VerifyArgsAction::Asset(args) => args.verify(dfx_orbit, request).await?,
+            VerifyArgsAction::Canister(args) => args.verify(dfx_orbit, request).await?,
         };
 
+        Ok(())
+    }
+
+    pub(crate) async fn conditionally_execute_actions(
+        &self,
+        dfx_orbit: &DfxOrbit,
+        verified: anyhow::Result<()>,
+    ) -> anyhow::Result<()> {
         match verified {
             Ok(()) => {
                 println!("Verification successful!");
                 if self.and_approve {
                     dfx_core::cli::ask_for_consent("Do you want to approve the request?")?;
-                    dfx_orbit.station.approve(self.request_id, None).await?;
+                    dfx_orbit
+                        .station
+                        .approve(self.request_id.clone(), None)
+                        .await?;
                 }
             }
             Err(err) => {
                 println!("Verification failed: {err}");
                 if self.or_reject {
                     dfx_core::cli::ask_for_consent("Do you want to reject the request?")?;
-                    dfx_orbit.station.reject(self.request_id, None).await?;
+                    dfx_orbit
+                        .station
+                        .reject(self.request_id.clone(), None)
+                        .await?;
                 };
 
                 return Err(err);
             }
-        }
+        };
 
         Ok(())
     }

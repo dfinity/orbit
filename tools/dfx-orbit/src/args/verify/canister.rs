@@ -28,11 +28,11 @@ pub enum VerifyCanisterActionArgs {
 
 impl VerifyCanisterArgs {
     pub(crate) async fn verify(
-        self,
+        &self,
         dfx_orbit: &DfxOrbit,
         request: &GetRequestResponse,
     ) -> anyhow::Result<()> {
-        match self.action {
+        match &self.action {
             VerifyCanisterActionArgs::Install(args) => args.verify(dfx_orbit, request)?,
             VerifyCanisterActionArgs::Call(args) => args.verify(dfx_orbit, request)?,
             VerifyCanisterActionArgs::UpdateSettings(args) => {

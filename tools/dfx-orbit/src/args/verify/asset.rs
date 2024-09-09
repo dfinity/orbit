@@ -20,11 +20,11 @@ pub enum VerifyAssetActionArgs {
 
 impl VerifyAssetArgs {
     pub(crate) async fn verify(
-        self,
+        &self,
         dfx_orbit: &DfxOrbit,
         request: &GetRequestResponse,
     ) -> anyhow::Result<()> {
-        match self.action {
+        match &self.action {
             VerifyAssetActionArgs::Upload(args) => args.verify(dfx_orbit, request).await?,
         }
 
