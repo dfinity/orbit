@@ -199,7 +199,9 @@ async fn setup_dfx_orbit(station_id: Principal) -> DfxOrbit {
         network: String::from("test"),
         url: format!("http://localhost:{}", port),
     };
-    DfxOrbit::new(orbit_agent, config, logger).await.unwrap()
+    DfxOrbit::new(orbit_agent, config, None, logger)
+        .await
+        .unwrap()
 }
 
 /// Create the dfx user's identities and add them to the station

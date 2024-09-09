@@ -5,10 +5,7 @@ use candid::{Nat, Principal};
 use ic_certified_assets::types::CommitProposedBatchArguments;
 use serde_bytes::ByteBuf;
 use slog::{info, warn};
-use station_api::{
-    CallExternalCanisterOperationInput, CanisterMethodDTO, CreateRequestInput,
-    CreateRequestResponse, RequestOperationInput,
-};
+use station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput};
 use std::path::Path;
 
 impl DfxOrbit {
@@ -41,38 +38,25 @@ impl DfxOrbit {
         Ok((batch_id, evidence))
     }
 
-    pub async fn request_commit_batch(
-        &self,
+    pub fn commit_batch_input(
         canister_id: Principal,
         batch_id: Nat,
         evidence: ByteBuf,
-        title: Option<String>,
-        summary: Option<String>,
-    ) -> anyhow::Result<CreateRequestResponse> {
+    ) -> anyhow::Result<RequestOperationInput> {
         let args = CommitProposedBatchArguments { batch_id, evidence };
         let arg = candid::encode_one(args)?;
 
-        let response = self
-            .station
-            .request(CreateRequestInput {
-                operation: RequestOperationInput::CallExternalCanister(
-                    CallExternalCanisterOperationInput {
-                        validation_method: None,
-                        execution_method: CanisterMethodDTO {
-                            canister_id,
-                            method_name: String::from("commit_proposed_batch"),
-                        },
-                        arg: Some(arg),
-                        execution_method_cycles: None,
-                    },
-                ),
-                title,
-                summary,
-                execution_plan: None,
-            })
-            .await?;
-
-        Ok(response)
+        Ok(RequestOperationInput::CallExternalCanister(
+            CallExternalCanisterOperationInput {
+                validation_method: None,
+                execution_method: CanisterMethodDTO {
+                    canister_id,
+                    method_name: String::from("commit_proposed_batch"),
+                },
+                arg: Some(arg),
+                execution_method_cycles: None,
+            },
+        ))
     }
 }
 
