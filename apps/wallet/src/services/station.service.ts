@@ -8,6 +8,7 @@ import {
   AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
+  CanisterStatusResult,
   Capabilities,
   ConfigureExternalCanisterSettingsInput,
   CreateExternalCanisterOperationInput,
@@ -553,6 +554,18 @@ export class StationService {
       labels: labels ? [labels] : [],
       addresses: addresses ? [addresses] : [],
       ids: ids ? [ids] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getExternalCanisterStatus(canisterId: Principal): Promise<ExtractOk<CanisterStatusResult>> {
+    const result = await this.actor.canister_status({
+      canister_id: canisterId,
     });
 
     if (variantIs(result, 'Err')) {

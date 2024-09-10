@@ -1,7 +1,10 @@
+import { Certificate, HttpAgent, LookupStatus } from '@dfinity/agent';
 import type { IDL as CandidIDL } from '@dfinity/candid';
+import { Principal } from '@dfinity/principal';
 import { LocationQuery, LocationQueryValue } from 'vue-router';
 import { TransferStatus } from '~/generated/station/station.did';
 import { AccountTransferStatus } from '~/types/station.types';
+import { arrayBufferToHex } from '~/utils/crypto.utils';
 
 export const timer = (
   cb: () => void,
@@ -318,3 +321,37 @@ export const parseToBigIntOrUndefined = (
     return undefined;
   }
 };
+
+export async function fetchCanisterModuleHash(
+  agent: HttpAgent,
+  canisterId: Principal,
+): Promise<string | null> {
+  const encoder = new TextEncoder();
+  const moduleHashPath: ArrayBuffer[] = [
+    encoder.encode('canister'),
+    canisterId.toUint8Array(),
+    encoder.encode('module_hash'),
+  ];
+
+  const state = await agent.readState(canisterId, {
+    paths: [moduleHashPath],
+  });
+
+  const certificate = await Certificate.create({
+    canisterId,
+    certificate: state.certificate,
+    rootKey: agent.rootKey,
+  });
+
+  const moduleHash = certificate.lookup(moduleHashPath);
+
+  if (moduleHash.status !== LookupStatus.Found) {
+    return null;
+  }
+
+  if (!(moduleHash.value instanceof ArrayBuffer)) {
+    throw new Error('Module hash value is not an ArrayBuffer');
+  }
+
+  return arrayBufferToHex(moduleHash.value);
+}

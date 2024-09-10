@@ -424,9 +424,12 @@ export default {
     not_found: 'Canister não encontrado.',
     not_found_description: 'O canister que está a tentar aceder não existe.',
     ic_settings: 'Configuraçōes do IC',
-    add_cycles: 'Adicionar ciclos',
+    top_up: 'Recarregar',
     configuration: 'Configuração',
     unlink: 'Dessaociar',
+    perform_call: 'Realizar chamada',
+    module_hash: 'Hash do módulo',
+    cycles: 'Ciclos',
   },
   terms: {
     active: 'Ativo',
