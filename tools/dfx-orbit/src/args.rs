@@ -1,19 +1,18 @@
 //! Command line interface for `dfx-orbit`.
-pub mod asset;
 pub mod request;
 pub mod review;
 pub mod station;
+pub mod verify;
 
-use asset::AssetArgs;
 use clap::{Parser, Subcommand};
 use request::RequestArgs;
 use review::ReviewArgs;
 use station::StationArgs;
+use verify::VerifyArgs;
 
 /// Manages Orbit on the Internet Computer.
-// TODO: Better version information
 #[derive(Parser, Debug)]
-#[clap(version, about, long_about = None)]
+#[clap(version, about)]
 pub struct DfxOrbitArgs {
     /// Increase verbosity level
     #[clap(short, long, action = clap::ArgAction::Count, conflicts_with = "quiet")]
@@ -26,6 +25,11 @@ pub struct DfxOrbitArgs {
     /// Name of the station to execute the command on. (Uses default station if unspecified)
     #[clap(short, long)]
     pub(crate) station: Option<String>,
+
+    // TODO: Allow to specify --network, to overwrite the network specified by the station
+    /// The user identity to run this command as
+    #[clap(short, long)]
+    pub(crate) identity: Option<String>,
 
     /// Manage Orbit stations.
     #[clap(subcommand)]
@@ -41,10 +45,17 @@ pub enum DfxOrbitSubcommands {
     Station(StationArgs),
     /// Make requests to Orbit
     Request(RequestArgs),
+    /// Verify requests
+    Verify(VerifyArgs),
     /// View and decide on requests.
     Review(ReviewArgs),
-    /// Manage assets stored in an asset canister through Orbit
-    Asset(AssetArgs),
     /// Gets the caller's profile on an Orbit station.
-    Me,
+    Me(MeArgs),
+}
+
+#[derive(Debug, Clone, Parser)]
+pub struct MeArgs {
+    /// Return output as JSON
+    #[clap(short, long)]
+    pub(crate) json: bool,
 }

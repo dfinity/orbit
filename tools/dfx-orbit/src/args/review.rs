@@ -10,7 +10,7 @@ use next::ReviewNextArgs;
 use station_api::ListRequestsOperationTypeDTO;
 
 /// Station management commands.
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct ReviewArgs {
     /// Return output as JSON
     #[clap(short, long)]
@@ -20,7 +20,7 @@ pub struct ReviewArgs {
     pub(crate) action: ReviewActionArgs,
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(Debug, Clone, Subcommand)]
 pub enum ReviewActionArgs {
     /// List requests
     List(ReviewListArgs),
@@ -30,7 +30,6 @@ pub enum ReviewActionArgs {
     Id(ReviewIdArgs),
 }
 
-// FIXME: Using this list doesn't seem to work.
 fn external_canister_operations() -> Vec<ListRequestsOperationTypeDTO> {
     vec![
         ListRequestsOperationTypeDTO::ChangeExternalCanister(None),

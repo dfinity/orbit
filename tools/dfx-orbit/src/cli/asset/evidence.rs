@@ -5,52 +5,42 @@ use candid::{Nat, Principal};
 use ic_certified_assets::types::CommitProposedBatchArguments;
 use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
-use station_api::{CanisterMethodDTO, GetRequestInput, RequestOperationDTO};
+use station_api::{CanisterMethodDTO, GetRequestResponse, RequestOperationDTO};
 use std::path::Path;
 
 impl DfxOrbit {
-    /// Check that the locally computed evidence will lead to the correcst sha256 checksum
-    /// of the args of the request
-    pub async fn check_evidence(
-        &self,
+    pub fn check_evidence(
+        request: &GetRequestResponse,
         canister_id: Principal,
-        request_id: String,
         batch_id: Nat,
         evidence: String,
     ) -> anyhow::Result<()> {
-        let request = self
-            .station
-            .review_id(GetRequestInput {
-                request_id: request_id.clone(),
-            })
-            .await?;
-
         // Check:
         // - Request is actually a CallExternalCanister
         // - Target is the canister we are expecting
         // - Method is `propose_commit_batch`
         // - `arg_checksum` exists
-        let RequestOperationDTO::CallExternalCanister(request) = request.request.operation else {
-            bail!("{} is not an external canister request. Are you sure you have the correct request id?", {request_id});
+        let RequestOperationDTO::CallExternalCanister(request) = &request.request.operation else {
+            bail!("{} is not an external canister request. Are you sure you have the correct request id?", {&request.request.id});
         };
         let CanisterMethodDTO {
             canister_id: request_canister_id,
             method_name,
-        } = request.execution_method;
-        if request_canister_id != canister_id {
+        } = &request.execution_method;
+        if *request_canister_id != canister_id {
             bail!(
                 "Canister id of the request {} does not match canister id of asset canister {}",
                 request_canister_id,
                 canister_id
             );
         }
-        if &method_name != "commit_proposed_batch" {
+        if method_name != "commit_proposed_batch" {
             bail!(
                 "Method name if the request is not \"commit_proposed_batch\", but instead \"{}\"",
                 method_name
             );
         }
-        let Some(remote_checksum) = request.arg_checksum else {
+        let Some(remote_checksum) = &request.arg_checksum else {
             bail!("The request has no arguments. This likely means that is is malformed.");
         };
 
@@ -63,7 +53,7 @@ impl DfxOrbit {
         let arg = candid::encode_one(args)?;
         let local_checksum = hex::encode(Sha256::digest(arg));
 
-        if local_checksum != remote_checksum {
+        if &local_checksum != remote_checksum {
             bail!("Local evidence does not match expected arguments");
         }
 

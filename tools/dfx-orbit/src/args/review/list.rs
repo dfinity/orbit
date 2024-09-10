@@ -4,8 +4,9 @@ use super::external_canister_operations;
 use clap::Parser;
 use station_api::{ListRequestsInput, ListRequestsSortBy, SortDirection};
 
+// TODO: Filter by open only
 /// Reviews the next request.
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct ReviewListArgs {
     /// Show all request types, not only the ones related to canister management
     #[clap(short, long)]

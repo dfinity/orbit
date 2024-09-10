@@ -8,11 +8,12 @@ use crate::{
     utils::execute_request,
     CanisterIds, TestEnv,
 };
+use dfx_orbit::DfxOrbit;
 use pocket_ic::PocketIc;
 use rand::{thread_rng, Rng};
 use station_api::{
-    AddRequestPolicyOperationInput, CallExternalCanisterResourceTargetDTO,
-    ExecutionMethodResourceTargetDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    AddRequestPolicyOperationInput, CallExternalCanisterResourceTargetDTO, CreateRequestInput,
+    ExecutionMethodResourceTargetDTO, GetRequestInput, RequestOperationInput, RequestPolicyRuleDTO,
     RequestSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 use std::{
@@ -30,7 +31,7 @@ fn assets_upload() {
         ..
     } = setup_new_env();
 
-    let (_dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
+    let (dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
 
     // Install the assets canister under orbit control
     let asset_canister = create_canister(&mut env, canister_ids.station);
@@ -83,9 +84,17 @@ fn assets_upload() {
 
         // As dfx user: Request to have Prepare permission for asset_canister
         let _response = dfx_orbit
-            .request_prepare_permission(asset_canister, None, None)
+            .station
+            .request(CreateRequestInput {
+                operation: DfxOrbit::grant_permission_request(asset_canister, dfx_principal)
+                    .unwrap(),
+                title: None,
+                summary: None,
+                execution_plan: None,
+            })
             .await
             .unwrap();
+
         tokio::time::sleep(Duration::from_secs(1)).await;
 
         // Test that we can retreive the sources from `dfx.json`
@@ -100,26 +109,32 @@ fn assets_upload() {
             .upload(asset_canister, &sources_path, false)
             .await
             .unwrap();
+
         let response = dfx_orbit
-            .request_commit_batch(
-                asset_canister,
-                batch_id.clone(),
-                evidence.clone(),
-                None,
-                None,
-            )
+            .station
+            .request(CreateRequestInput {
+                operation: DfxOrbit::commit_batch_input(
+                    asset_canister,
+                    batch_id.clone(),
+                    evidence.clone(),
+                )
+                .unwrap(),
+                title: None,
+                summary: None,
+                execution_plan: None,
+            })
             .await
             .unwrap();
 
         // Check whether the request passes the asset check
-        dfx_orbit
-            .check_evidence(
-                asset_canister,
-                response.request.id,
-                batch_id,
-                hex::encode(evidence),
-            )
+        let response = dfx_orbit
+            .station
+            .review_id(GetRequestInput {
+                request_id: response.request.id,
+            })
             .await
+            .unwrap();
+        DfxOrbit::check_evidence(&response, asset_canister, batch_id, hex::encode(evidence))
             .unwrap();
 
         // NOTE: We need to wait until the certified state becomes available.
