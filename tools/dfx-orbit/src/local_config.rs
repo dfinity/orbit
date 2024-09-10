@@ -59,20 +59,21 @@ impl OrbitExtensionAgent {
     }
 
     /// Lists all Orbit stations in the local dfx configuration.
-    pub fn list_stations(&self) -> Vec<String> {
+    pub fn list_stations(&self) -> anyhow::Result<Vec<String>> {
         // Get all entries in the station dir that are valid station configs.
+        let default_station = self.default_station_name()?;
         let stations_dir = self.stations_dir().expect("Failed to get stations dir");
-        stations_dir
+        let stations = stations_dir
             .entries()
-            .expect("Failed to read stations dir")
+            .with_context(|| "Failed to read stations dir")?
             // Filter out directory entries that could not be read.  (Maybe we have no permissions to access the file or something like that?)
             .filter_map(|entry| entry.ok())
             // Filter out entries that are not files.
             .filter(|dir_entry| {
                 dir_entry
                     .file_type()
-                    .expect("Failed to get file type")
-                    .is_file()
+                    .map(|entry| entry.is_file())
+                    .unwrap_or(false)
             })
             // Filter out entries that don't have the .json suffix.  Return the filename without the suffix.  This is the station name.
             .filter_map(|dir_entry| {
@@ -84,7 +85,14 @@ impl OrbitExtensionAgent {
             })
             // Filter out entries that are not valid station configs.
             .filter(|station_name| self.station(station_name).is_ok())
-            .collect()
+            // Add a little tick next to the station name if it is the default station
+            .map(|name| match &default_station {
+                Some(default_name) if default_name == &name => format!("{} (*)", name),
+                _ => name,
+            })
+            .collect();
+
+        Ok(stations)
     }
 
     /// Adds a new Orbit station to the local dfx configuration.
