@@ -187,6 +187,30 @@ const router = createRouter({
                 },
               },
             },
+            {
+              path: ':cid',
+              name: Routes.ExternalCanister,
+              component: () => import('~/pages/ExternalCanisterDetailPage.vue'),
+              props: () => {
+                return {
+                  breadcrumbs: [
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    {
+                      title: i18n.global.t('navigation.external_canisters'),
+                      to: { name: Routes.ExternalCanisters },
+                    },
+                  ],
+                };
+              },
+              meta: {
+                auth: {
+                  check: {
+                    session: RequiredSessionState.ConnectedToStation,
+                    privileges: [Privilege.ListExternalCanisters],
+                  },
+                },
+              },
+            },
           ],
         },
         {
