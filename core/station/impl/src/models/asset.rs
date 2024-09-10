@@ -109,15 +109,23 @@ fn validate_decimals(decimals: u32) -> ModelValidatorResult<AssetError> {
     Ok(())
 }
 
-fn validate_uniqueness(symbol: &str, blockchain: &Blockchain) -> ModelValidatorResult<AssetError> {
-    if ASSET_REPOSITORY.exists_unique(blockchain.to_string().as_str(), symbol) {
-        Err(AssetError::AlreadyExists {
-            symbol: symbol.to_string(),
-            blockchain: blockchain.to_string(),
-        })
-    } else {
-        Ok(())
+fn validate_uniqueness(
+    asset_id: &AssetId,
+    symbol: &str,
+    blockchain: &Blockchain,
+) -> ModelValidatorResult<AssetError> {
+    if let Some(existing_asset_id) =
+        ASSET_REPOSITORY.exists_unique(blockchain.to_string().as_str(), symbol)
+    {
+        if existing_asset_id != *asset_id {
+            return Err(AssetError::AlreadyExists {
+                symbol: symbol.to_string(),
+                blockchain: blockchain.to_string(),
+            });
+        }
     }
+
+    Ok(())
 }
 
 impl ModelValidator<AssetError> for Asset {
@@ -125,7 +133,7 @@ impl ModelValidator<AssetError> for Asset {
         validate_symbol(&self.symbol)?;
         validate_name(&self.name)?;
         validate_decimals(self.decimals)?;
-        validate_uniqueness(&self.symbol, &self.blockchain)?;
+        validate_uniqueness(&self.id, &self.symbol, &self.blockchain)?;
 
         self.metadata.validate()?;
 
