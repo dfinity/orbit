@@ -5,7 +5,7 @@ use orbit_essentials::{
 };
 
 use super::{Blockchain, BlockchainStandard};
-use crate::{errors::AssetError, models::Metadata};
+use crate::{errors::AssetError, models::Metadata, repositories::ASSET_REPOSITORY};
 use std::{
     collections::BTreeSet,
     hash::{Hash, Hasher},
@@ -109,11 +109,23 @@ fn validate_decimals(decimals: u32) -> ModelValidatorResult<AssetError> {
     Ok(())
 }
 
+fn validate_uniqueness(symbol: &str, blockchain: &Blockchain) -> ModelValidatorResult<AssetError> {
+    if ASSET_REPOSITORY.exists_unique(blockchain.to_string().as_str(), symbol) {
+        Err(AssetError::AlreadyExists {
+            symbol: symbol.to_string(),
+            blockchain: blockchain.to_string(),
+        })
+    } else {
+        Ok(())
+    }
+}
+
 impl ModelValidator<AssetError> for Asset {
     fn validate(&self) -> ModelValidatorResult<AssetError> {
         validate_symbol(&self.symbol)?;
         validate_name(&self.name)?;
         validate_decimals(self.decimals)?;
+        validate_uniqueness(&self.symbol, &self.blockchain)?;
 
         self.metadata.validate()?;
 

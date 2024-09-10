@@ -175,6 +175,12 @@ impl AssetRepository {
             });
         });
     }
+
+    pub fn exists_unique(&self, blockchain: &str, symbol: &str) -> bool {
+        let key = UniqueIndexKey::AssetSymbolBlockchain(symbol.to_string(), blockchain.to_string());
+
+        self.unique_index.get(&key).is_some()
+    }
 }
 
 #[cfg(test)]

@@ -3,22 +3,23 @@ use super::{
 };
 use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
-    AddAddressBookEntryOperationInput, AddAssetOperationDTO, AddUserGroupOperationDTO,
-    AddUserGroupOperationInput, AddUserOperationDTO, AddUserOperationInput,
-    CallExternalCanisterOperationDTO, CallExternalCanisterOperationInput,
+    AddAddressBookEntryOperationInput, AddAssetOperationDTO, AddAssetOperationInput,
+    AddUserGroupOperationDTO, AddUserGroupOperationInput, AddUserOperationDTO,
+    AddUserOperationInput, CallExternalCanisterOperationDTO, CallExternalCanisterOperationInput,
     ChangeExternalCanisterOperationDTO, ChangeExternalCanisterOperationInput,
     ConfigureExternalCanisterOperationDTO, ConfigureExternalCanisterOperationInput,
     CreateExternalCanisterOperationDTO, CreateExternalCanisterOperationInput, DisplayUserDTO,
     EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
-    EditAssetOperationDTO, EditPermissionOperationDTO, EditPermissionOperationInput,
-    EditUserGroupOperationDTO, EditUserGroupOperationInput, EditUserOperationDTO,
-    EditUserOperationInput, FundExternalCanisterOperationDTO, FundExternalCanisterOperationInput,
-    ManageSystemInfoOperationDTO, ManageSystemInfoOperationInput, PaginationInput,
-    RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
-    RemoveAssetOperationDTO, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
-    RequestEvaluationResultDTO, RequestPolicyRuleDTO, RequestSpecifierDTO,
-    SetDisasterRecoveryOperationDTO, SetDisasterRecoveryOperationInput, SortDirection,
-    SystemUpgradeOperationDTO, SystemUpgradeOperationInput, UuidDTO,
+    EditAssetOperationDTO, EditAssetOperationInput, EditPermissionOperationDTO,
+    EditPermissionOperationInput, EditUserGroupOperationDTO, EditUserGroupOperationInput,
+    EditUserOperationDTO, EditUserOperationInput, FundExternalCanisterOperationDTO,
+    FundExternalCanisterOperationInput, ManageSystemInfoOperationDTO,
+    ManageSystemInfoOperationInput, PaginationInput, RemoveAddressBookEntryOperationDTO,
+    RemoveAddressBookEntryOperationInput, RemoveAssetOperationDTO, RemoveAssetOperationInput,
+    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
+    RequestPolicyRuleDTO, RequestSpecifierDTO, SetDisasterRecoveryOperationDTO,
+    SetDisasterRecoveryOperationInput, SortDirection, SystemUpgradeOperationDTO,
+    SystemUpgradeOperationInput, UuidDTO,
 };
 use candid::{CandidType, Deserialize, Principal};
 
@@ -113,6 +114,9 @@ pub enum RequestOperationInput {
     EditRequestPolicy(EditRequestPolicyOperationInput),
     RemoveRequestPolicy(RemoveRequestPolicyOperationInput),
     ManageSystemInfo(ManageSystemInfoOperationInput),
+    AddAsset(AddAssetOperationInput),
+    EditAsset(EditAssetOperationInput),
+    RemoveAsset(RemoveAssetOperationInput),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

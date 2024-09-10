@@ -200,6 +200,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
             .with_user_groups(new_records)
             .with_accounts(new_records)
             .with_address_book_entries(new_records)
+            .with_assets(new_records)
             .with_request_policy_updates(new_records)
             .with_station_updates(0)
             .with_upgrader_updates(0)

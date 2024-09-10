@@ -250,6 +250,24 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
+            RequestOperationInput::AddAsset(operation) => {
+                let creator = Box::new(add_asset::AddAssetRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+            RequestOperationInput::EditAsset(operation) => {
+                let creator = Box::new(edit_asset::EditAssetRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+            RequestOperationInput::RemoveAsset(operation) => {
+                let creator = Box::new(remove_asset::RemoveAssetRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
         }
     }
 

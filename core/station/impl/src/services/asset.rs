@@ -259,4 +259,45 @@ mod tests {
 
         assert_eq!(asset.name, "Internet Computer");
     }
+
+    #[tokio::test]
+    async fn test_asset_uniqueness() {
+        let service = AssetService::default();
+
+        service
+            .create(AddAssetOperationInput {
+                blockchain: crate::models::Blockchain::InternetComputer,
+                standards: vec![BlockchainStandard::Native],
+                decimals: 8,
+                metadata: Default::default(),
+                name: "ICP".to_string(),
+                symbol: "ICP".to_string(),
+            })
+            .await
+            .expect("Failed to create asset");
+
+        service
+            .create(AddAssetOperationInput {
+                blockchain: crate::models::Blockchain::InternetComputer,
+                standards: vec![BlockchainStandard::Native],
+                decimals: 8,
+                metadata: Default::default(),
+                name: "ICP".to_string(),
+                symbol: "ICP".to_string(),
+            })
+            .await
+            .expect_err("Asset with the same symbol and blockchain should not be allowed");
+
+        service
+            .create(AddAssetOperationInput {
+                blockchain: crate::models::Blockchain::InternetComputer,
+                standards: vec![BlockchainStandard::Native],
+                decimals: 8,
+                metadata: Default::default(),
+                name: "ICP".to_string(),
+                symbol: "ICP2".to_string(),
+            })
+            .await
+            .expect("Failed to create asset");
+    }
 }

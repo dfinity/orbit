@@ -290,6 +290,21 @@ impl From<&station_api::CreateRequestInput> for Resource {
             RequestOperationInput::ManageSystemInfo(_) => {
                 Resource::System(SystemResourceAction::ManageSystemInfo)
             }
+            RequestOperationInput::AddAsset(_) => Resource::Asset(ResourceAction::Create),
+            RequestOperationInput::EditAsset(input) => {
+                Resource::Asset(ResourceAction::Update(ResourceId::Id(
+                    *HelperMapper::to_uuid(input.asset_id.to_owned())
+                        .expect("Invalid asset id")
+                        .as_bytes(),
+                )))
+            }
+            RequestOperationInput::RemoveAsset(input) => {
+                Resource::Asset(ResourceAction::Delete(ResourceId::Id(
+                    *HelperMapper::to_uuid(input.asset_id.to_owned())
+                        .expect("Invalid asset id")
+                        .as_bytes(),
+                )))
+            }
         }
     }
 }
