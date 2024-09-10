@@ -929,16 +929,19 @@ export type RequestOperation = { 'RemoveAsset' : RemoveAssetOperation } |
   { 'CallExternalCanister' : CallExternalCanisterOperation } |
   { 'AddAccount' : AddAccountOperation };
 export type RequestOperationInput = {
-    'AddUserGroup' : AddUserGroupOperationInput
+    'RemoveAsset' : RemoveAssetOperationInput
   } |
+  { 'AddUserGroup' : AddUserGroupOperationInput } |
   { 'EditPermission' : EditPermissionOperationInput } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperationInput } |
   { 'AddUser' : AddUserOperationInput } |
+  { 'EditAsset' : EditAssetOperationInput } |
   { 'EditUserGroup' : EditUserGroupOperationInput } |
   { 'SetDisasterRecovery' : SetDisasterRecoveryOperationInput } |
   { 'EditRequestPolicy' : EditRequestPolicyOperationInput } |
   { 'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput } |
+  { 'AddAsset' : AddAssetOperationInput } |
   { 'SystemUpgrade' : SystemUpgradeOperationInput } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperationInput } |

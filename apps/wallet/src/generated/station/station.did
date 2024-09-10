@@ -920,6 +920,12 @@ type RequestOperationInput = variant {
   RemoveRequestPolicy : RemoveRequestPolicyOperationInput;
   // An operation for managing system info.
   ManageSystemInfo : ManageSystemInfoOperationInput;
+  // An operation for adding a new asset.
+  AddAsset : AddAssetOperationInput;
+  // An operation for editing an existing asset.
+  EditAsset : EditAssetOperationInput;
+  // An operation for removing an existing asset.
+  RemoveAsset : RemoveAssetOperationInput;
 };
 
 type RequestOperationType = variant {
