@@ -15,6 +15,8 @@ use tabled::{
     Table,
 };
 
+// TODO: Factor this out into multiple files
+
 impl DfxOrbit {
     pub(crate) fn display_list(&self, data: ListRequestsResponse) -> String {
         let add_info = data
@@ -232,6 +234,8 @@ fn display_poll_state_overiew<W: Write>(
             EvaluationStatusDTO::Pending => "Pending",
         };
         writeln!(writer, "Poll State: {status}")?;
+
+        display_evaluated_rule(writer, &result.evaluated_rule, &approval_status)?;
     }
 
     Ok(())
@@ -243,50 +247,67 @@ fn display_evaluated_rule<W: Write>(
     status: &BTreeMap<String, RequestApprovalStatusDTO>,
 ) -> anyhow::Result<()> {
     match rule {
-        EvaluatedRequestPolicyRuleDTO::AutoApproved => todo!(),
+        EvaluatedRequestPolicyRuleDTO::AutoApproved => {
+            writeln!(writer, "The request will be auto-approved")?
+        }
         EvaluatedRequestPolicyRuleDTO::QuorumPercentage {
             total_possible_approvers,
             min_approved,
             approvers,
-        } => todo!(),
+        } => display_quorum_state(
+            writer,
+            *total_possible_approvers,
+            *min_approved,
+            approvers,
+            status,
+        )?,
         EvaluatedRequestPolicyRuleDTO::Quorum {
             total_possible_approvers,
             min_approved,
             approvers,
-        } => todo!(),
-        EvaluatedRequestPolicyRuleDTO::AllowListedByMetadata { metadata } => todo!(),
-        EvaluatedRequestPolicyRuleDTO::AllowListed => todo!(),
-        EvaluatedRequestPolicyRuleDTO::AnyOf(rule) => todo!(),
-        EvaluatedRequestPolicyRuleDTO::AllOf(rule) => todo!(),
-        EvaluatedRequestPolicyRuleDTO::Not(rule) => todo!(),
+        } => display_quorum_state(
+            writer,
+            *total_possible_approvers,
+            *min_approved,
+            approvers,
+            status,
+        )?,
+        EvaluatedRequestPolicyRuleDTO::AllowListedByMetadata { .. } => (),
+        EvaluatedRequestPolicyRuleDTO::AllowListed => {
+            writeln!(writer, "The request is allow-listed")?
+        }
+        EvaluatedRequestPolicyRuleDTO::AnyOf(_rule) => (),
+        EvaluatedRequestPolicyRuleDTO::AllOf(_rule) => (),
+        EvaluatedRequestPolicyRuleDTO::Not(_rule) => (),
     }
-    todo!()
+
+    Ok(())
 }
 
 fn display_quorum_state<W: Write>(
     writer: &mut W,
-    elligible: u32,
-    required: u32,
+    elligible: usize,
+    required: usize,
     approvers: &[String],
     status: &BTreeMap<String, RequestApprovalStatusDTO>,
 ) -> anyhow::Result<()> {
-    writeln!(writer, "Number of elligible voters: {elligible}")?;
-    writeln!(writer, "Necessary quorum: {required}")?;
-    writeln!(writer, "Voted: {}", approvers.len())?;
+    write!(writer, "Number of elligible voters: {elligible},")?;
+    write!(writer, " necessary quorum: {required},")?;
+    write!(writer, " voted: {},", approvers.len())?;
 
     let approved = approvers
         .iter()
         .filter_map(|voter| status.get(voter))
         .filter(|&status| status == &RequestApprovalStatusDTO::Approved)
         .count();
-    writeln!(writer, "Approved: {approved}")?;
+    write!(writer, " approved: {approved},")?;
 
     let rejected = approvers
         .iter()
         .filter_map(|voter| status.get(voter))
         .filter(|&status| status == &RequestApprovalStatusDTO::Rejected)
         .count();
-    writeln!(writer, "Rejected: {rejected}")?;
+    writeln!(writer, " rejected: {rejected}")?;
 
     Ok(())
 }
