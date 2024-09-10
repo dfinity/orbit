@@ -430,6 +430,7 @@ export default {
     perform_call: 'Realizar chamada',
     module_hash: 'Hash do módulo',
     cycles: 'Ciclos',
+    not_controller: 'Não é controlador',
   },
   terms: {
     active: 'Ativo',

@@ -434,6 +434,7 @@ export default {
     perform_call: 'Effectuer un appel',
     module_hash: 'Module Hash',
     cycles: 'Cycles',
+    not_controller: 'Pas de contrôleur',
   },
   terms: {
     active: 'Actif',
