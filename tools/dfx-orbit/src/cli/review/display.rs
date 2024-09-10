@@ -2,8 +2,9 @@ use crate::DfxOrbit;
 use candid::Principal;
 use station_api::{
     CallExternalCanisterOperationDTO, CanisterInstallMode, ChangeExternalCanisterOperationDTO,
-    GetRequestResponse, ListRequestsResponse, RequestAdditionalInfoDTO, RequestApprovalDTO,
-    RequestApprovalStatusDTO, RequestDTO, RequestOperationDTO, RequestStatusDTO,
+    EvaluatedRequestPolicyRuleDTO, EvaluationStatusDTO, GetRequestResponse, ListRequestsResponse,
+    RequestAdditionalInfoDTO, RequestApprovalDTO, RequestApprovalStatusDTO, RequestDTO,
+    RequestOperationDTO, RequestStatusDTO,
 };
 use std::{
     collections::{BTreeMap, HashMap},
@@ -67,13 +68,19 @@ impl DfxOrbit {
             "Operation: {}",
             display_request_operation(&base_info.operation)
         )?;
+        writeln!(
+            output,
+            "Request URL: {}",
+            self.station.request_url(&base_info.id)
+        )?;
         writeln!(output, "Title: {}", base_info.title)?;
         if let Some(ref summary) = base_info.summary {
             writeln!(output, "Summary: {}", summary)?
         }
         writeln!(output, "Requested by: {}", add_info.requester_name)?;
 
-        display_approvers_and_rejecters(&mut output, &base_info, &add_info)?;
+        display_poll_state_overiew(&mut output, &base_info, &add_info)?;
+        display_approvers_and_rejectors(&mut output, &base_info, &add_info)?;
 
         writeln!(
             output,
@@ -175,7 +182,7 @@ impl DfxOrbit {
     }
 }
 
-fn display_approvers_and_rejecters<W: Write>(
+fn display_approvers_and_rejectors<W: Write>(
     writer: &mut W,
     base_info: &RequestDTO,
     add_info: &RequestAdditionalInfoDTO,
@@ -199,6 +206,87 @@ fn display_approvers_and_rejecters<W: Write>(
         write!(writer, "Rejected by: ")?;
         display_request_approvals(writer, rejectors, &usernames)?;
     }
+
+    Ok(())
+}
+
+fn display_poll_state_overiew<W: Write>(
+    writer: &mut W,
+    base_info: &RequestDTO,
+    add_info: &RequestAdditionalInfoDTO,
+) -> anyhow::Result<()> {
+    let Some(evaluation_result) = &add_info.evaluation_result else {
+        return Ok(());
+    };
+
+    let approval_status: BTreeMap<String, RequestApprovalStatusDTO> = base_info
+        .approvals
+        .iter()
+        .map(|approval| (approval.approver_id.clone(), approval.status.clone()))
+        .collect();
+
+    for result in &evaluation_result.policy_results {
+        let status = match result.status {
+            EvaluationStatusDTO::Approved => "Approved",
+            EvaluationStatusDTO::Rejected => "Rejected",
+            EvaluationStatusDTO::Pending => "Pending",
+        };
+        writeln!(writer, "Poll State: {status}")?;
+    }
+
+    Ok(())
+}
+
+fn display_evaluated_rule<W: Write>(
+    writer: &mut W,
+    rule: &EvaluatedRequestPolicyRuleDTO,
+    status: &BTreeMap<String, RequestApprovalStatusDTO>,
+) -> anyhow::Result<()> {
+    match rule {
+        EvaluatedRequestPolicyRuleDTO::AutoApproved => todo!(),
+        EvaluatedRequestPolicyRuleDTO::QuorumPercentage {
+            total_possible_approvers,
+            min_approved,
+            approvers,
+        } => todo!(),
+        EvaluatedRequestPolicyRuleDTO::Quorum {
+            total_possible_approvers,
+            min_approved,
+            approvers,
+        } => todo!(),
+        EvaluatedRequestPolicyRuleDTO::AllowListedByMetadata { metadata } => todo!(),
+        EvaluatedRequestPolicyRuleDTO::AllowListed => todo!(),
+        EvaluatedRequestPolicyRuleDTO::AnyOf(rule) => todo!(),
+        EvaluatedRequestPolicyRuleDTO::AllOf(rule) => todo!(),
+        EvaluatedRequestPolicyRuleDTO::Not(rule) => todo!(),
+    }
+    todo!()
+}
+
+fn display_quorum_state<W: Write>(
+    writer: &mut W,
+    elligible: u32,
+    required: u32,
+    approvers: &[String],
+    status: &BTreeMap<String, RequestApprovalStatusDTO>,
+) -> anyhow::Result<()> {
+    writeln!(writer, "Number of elligible voters: {elligible}")?;
+    writeln!(writer, "Necessary quorum: {required}")?;
+    writeln!(writer, "Voted: {}", approvers.len())?;
+
+    let approved = approvers
+        .iter()
+        .filter_map(|voter| status.get(voter))
+        .filter(|&status| status == &RequestApprovalStatusDTO::Approved)
+        .count();
+    writeln!(writer, "Approved: {approved}")?;
+
+    let rejected = approvers
+        .iter()
+        .filter_map(|voter| status.get(voter))
+        .filter(|&status| status == &RequestApprovalStatusDTO::Rejected)
+        .count();
+    writeln!(writer, "Rejected: {rejected}")?;
 
     Ok(())
 }

@@ -123,7 +123,7 @@ impl StationAgent {
     /// The URL for a request in the Orbit UI.
     pub fn request_url(&self, request_id: &str) -> String {
         format!(
-            "{}?reqid={}?sid={}",
+            "{}?reqid={}&sid={}",
             self.config.url,
             request_id,
             self.config.station_id.to_text()
