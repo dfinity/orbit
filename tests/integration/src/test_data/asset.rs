@@ -1,7 +1,9 @@
 use super::next_unique_id;
 use crate::utils::{submit_request, wait_for_request};
 use candid::Principal;
-use pocket_ic::PocketIc;
+use orbit_essentials::api::ApiResult;
+use pocket_ic::{query_candid_as, CallError, PocketIc};
+use station_api::{GetAssetInput, GetAssetResponse, ListAssetsInput, ListAssetsResponse};
 
 pub fn add_asset_with_input(
     env: &PocketIc,
@@ -90,4 +92,33 @@ pub fn remove_asset(
 
     wait_for_request(env, requester, station_canister_id, remove_asset_request)
         .expect("Failed to remove asset");
+}
+
+pub fn list_assets(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+) -> Result<(ApiResult<ListAssetsResponse>,), CallError> {
+    query_candid_as::<(ListAssetsInput,), (ApiResult<ListAssetsResponse>,)>(
+        env,
+        station_canister_id,
+        requester,
+        "list_assets",
+        (ListAssetsInput { paginate: None },),
+    )
+}
+
+pub fn get_asset(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+    asset_id: station_api::UuidDTO,
+) -> Result<(ApiResult<GetAssetResponse>,), CallError> {
+    query_candid_as::<(GetAssetInput,), (ApiResult<GetAssetResponse>,)>(
+        env,
+        station_canister_id,
+        requester,
+        "get_asset",
+        (GetAssetInput { asset_id },),
+    )
 }
