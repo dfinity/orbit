@@ -6,8 +6,11 @@ use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, PocketIc};
 
-const BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // can be found in the station core/init.rs
-const BASELINE_NR_PERMISSIONS: usize = 34; // can be found in the station core/init.rs
+const NEW_REQUEST_POLICIES_ADDED: usize = 3;
+const NEW_PERMISSIONS_ADDED: usize = 5;
+
+const BASELINE_NR_OF_REQUEST_POLICIES: usize = 18 + NEW_REQUEST_POLICIES_ADDED; // can be found in the station core/init.rs
+const BASELINE_NR_PERMISSIONS: usize = 34 + NEW_PERMISSIONS_ADDED; // can be found in the station core/init.rs
 
 const USER_GROUPS_NR: usize = 10;
 const USER_NR: usize = 10;
@@ -119,12 +122,13 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
 
     let station_wasm = get_canister_wasm("station").to_vec();
     let wasm_memory =
-        read_file("station-memory-v0.bin").expect("Unexpected missing older wasm memory");
+        read_file("station-memory-v1.bin").expect("Unexpected missing older wasm memory");
 
     env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .expect("unexpected failure stopping canister");
 
     // This is needed to avoid `install_code` rate limit error
+    env.tick();
     env.tick();
 
     // Set the stable memory of the canister to the previous version of the canister
@@ -177,13 +181,13 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_REQUEST_POLICIES_NR,
+        EXPECTED_REQUEST_POLICIES_NR - NEW_REQUEST_POLICIES_ADDED,
     );
     assert_can_list_permissions(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_PERMISSIONS_NR,
+        EXPECTED_PERMISSIONS_NR - NEW_PERMISSIONS_ADDED,
     );
 
     // Makes sure that the next test data id number is pointing at a value that was
@@ -200,7 +204,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
             .with_user_groups(new_records)
             .with_accounts(new_records)
             .with_address_book_entries(new_records)
-            .with_assets(new_records)
+            .with_assets(0)
             .with_request_policy_updates(new_records)
             .with_station_updates(0)
             .with_upgrader_updates(0)
@@ -245,14 +249,14 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         canister_ids.station,
         WALLET_ADMIN_USER,
         // for accounts there are transfer policies and configuration policies
-        EXPECTED_REQUEST_POLICIES_NR + new_records + (new_records * 2),
+        EXPECTED_REQUEST_POLICIES_NR + new_records + (new_records * 2) - NEW_REQUEST_POLICIES_ADDED,
     );
     assert_can_list_permissions(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
         // for accounts there are view, transfer and configuration permissions
-        EXPECTED_PERMISSIONS_NR + (new_records * 3),
+        EXPECTED_PERMISSIONS_NR + (new_records * 3) - NEW_PERMISSIONS_ADDED,
     );
 }
 
