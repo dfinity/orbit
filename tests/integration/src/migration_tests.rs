@@ -1,4 +1,5 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
+use crate::test_data::asset::list_assets;
 use crate::test_data::{set_test_data_id, StationDataGenerator};
 use crate::utils::{compress_to_gzip, create_file, read_file, NNS_ROOT_CANISTER_ID};
 use crate::TestEnv;
@@ -181,14 +182,16 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_REQUEST_POLICIES_NR - NEW_REQUEST_POLICIES_ADDED,
+        EXPECTED_REQUEST_POLICIES_NR,
     );
     assert_can_list_permissions(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_PERMISSIONS_NR - NEW_PERMISSIONS_ADDED,
+        EXPECTED_PERMISSIONS_NR,
     );
+
+    assert_has_icp_asset(&env, canister_ids.station, WALLET_ADMIN_USER);
 
     // Makes sure that the next test data id number is pointing at a value that was
     // not already used in the previous version
@@ -204,7 +207,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
             .with_user_groups(new_records)
             .with_accounts(new_records)
             .with_address_book_entries(new_records)
-            .with_assets(0)
+            .with_assets(new_records)
             .with_request_policy_updates(new_records)
             .with_station_updates(0)
             .with_upgrader_updates(0)
@@ -249,14 +252,22 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         canister_ids.station,
         WALLET_ADMIN_USER,
         // for accounts there are transfer policies and configuration policies
-        EXPECTED_REQUEST_POLICIES_NR + new_records + (new_records * 2) - NEW_REQUEST_POLICIES_ADDED,
+        EXPECTED_REQUEST_POLICIES_NR + new_records + (new_records * 2),
     );
     assert_can_list_permissions(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
         // for accounts there are view, transfer and configuration permissions
-        EXPECTED_PERMISSIONS_NR + (new_records * 3) - NEW_PERMISSIONS_ADDED,
+        EXPECTED_PERMISSIONS_NR + (new_records * 3),
+    );
+
+    assert_can_list_assets(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        // there should be one asset here already: ICP
+        new_records + 1,
     );
 }
 
@@ -459,4 +470,42 @@ fn assert_can_list_permissions(
     let res = res.0.unwrap();
 
     assert_eq!(res.total as usize, expected);
+}
+
+fn assert_can_list_assets(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    expected: usize,
+) {
+    let res: (ApiResult<station_api::ListAssetsResponse>,) = update_candid_as(
+        env,
+        station_id,
+        requester,
+        "list_assets",
+        (station_api::ListAssetsInput {
+            paginate: Some(station_api::PaginationInput {
+                offset: Some(0),
+                limit: Some(25),
+            }),
+        },),
+    )
+    .unwrap();
+
+    let res = res.0.unwrap();
+
+    assert_eq!(res.total as usize, expected);
+}
+
+fn assert_has_icp_asset(env: &PocketIc, station_id: Principal, requester: Principal) {
+    let assets = list_assets(env, station_id, requester)
+        .expect("Failed to query list assets")
+        .0
+        .expect("Failed to list assets");
+
+    assert!(assets.assets.len() == 1);
+    assert_eq!(assets.assets[0].symbol, "ICP");
+    assert_eq!(assets.assets[0].name, "Internet Computer");
+    assert_eq!(&assets.assets[0].blockchain, "icp");
+    assert_eq!(assets.assets[0].standards, vec!["native"]);
 }
