@@ -1404,7 +1404,6 @@ export const idlFactory = ({ IDL }) => {
         [NotifyFailedStationUpgradeResult],
         [],
       ),
-    'ping' : IDL.Func([], [], []),
     'submit_request_approval' : IDL.Func(
         [SubmitRequestApprovalInput],
         [SubmitRequestApprovalResult],

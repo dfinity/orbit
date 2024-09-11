@@ -1237,7 +1237,6 @@ export interface _SERVICE {
     [NotifyFailedStationUpgradeInput],
     NotifyFailedStationUpgradeResult
   >,
-  'ping' : ActorMethod<[], undefined>,
   'submit_request_approval' : ActorMethod<
     [SubmitRequestApprovalInput],
     SubmitRequestApprovalResult

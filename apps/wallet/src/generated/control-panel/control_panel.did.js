@@ -304,7 +304,6 @@ export const idlFactory = ({ IDL }) => {
         [NextWasmModuleVersionResult],
         ['query'],
       ),
-    'ping' : IDL.Func([], [], []),
     'register_user' : IDL.Func([RegisterUserInput], [RegisterUserResult], []),
     'search_registry' : IDL.Func(
         [SearchRegistryInput],
