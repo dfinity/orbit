@@ -6,7 +6,8 @@ use ic_agent::{agent::UpdateBuilder, Agent};
 use station_api::{
     ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetNextApprovableRequestInput,
     GetNextApprovableRequestResponse, GetRequestInput, GetRequestResponse, ListRequestsInput,
-    ListRequestsResponse, MeResponse, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
+    ListRequestsResponse, MeResponse, RequestApprovalStatusDTO, SubmitRequestApprovalInput,
+    SubmitRequestApprovalResponse,
 };
 
 mod config;
@@ -37,6 +38,34 @@ impl StationAgent {
     ) -> StationAgentResult<SubmitRequestApprovalResponse> {
         self.update_orbit_typed("submit_request_approval", args)
             .await
+    }
+
+    pub async fn approve(
+        &self,
+        request_id: String,
+        reason: Option<String>,
+    ) -> StationAgentResult<()> {
+        self.submit(SubmitRequestApprovalInput {
+            decision: RequestApprovalStatusDTO::Approved,
+            request_id,
+            reason,
+        })
+        .await?;
+        Ok(())
+    }
+
+    pub async fn reject(
+        &self,
+        request_id: String,
+        reason: Option<String>,
+    ) -> StationAgentResult<()> {
+        self.submit(SubmitRequestApprovalInput {
+            decision: RequestApprovalStatusDTO::Rejected,
+            request_id,
+            reason,
+        })
+        .await?;
+        Ok(())
     }
 
     pub async fn me(&self) -> StationAgentResult<MeResponse> {

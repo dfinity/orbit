@@ -3,49 +3,31 @@ use anyhow::bail;
 use candid::Principal;
 use dfx_core::config::model::dfinity::CanisterTypeProperties;
 use ic_certified_assets::types::{GrantPermissionArguments, Permission};
-use station_api::{
-    CallExternalCanisterOperationInput, CanisterMethodDTO, CreateRequestInput,
-    CreateRequestResponse, RequestOperationInput,
-};
+use station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput};
 use std::path::{Path, PathBuf};
 
 impl DfxOrbit {
-    /// Request from the station to grant the `Prepare` permission for the asset canister
-    pub async fn request_prepare_permission(
-        &self,
-        canister_id: Principal,
-        title: Option<String>,
-        summary: Option<String>,
-    ) -> anyhow::Result<CreateRequestResponse> {
-        let me = self.own_principal()?;
-
+    pub fn grant_permission_request(
+        asset_canister: Principal,
+        to_principal: Principal,
+    ) -> anyhow::Result<RequestOperationInput> {
         let args = GrantPermissionArguments {
-            to_principal: me,
+            to_principal,
             permission: Permission::Prepare,
         };
         let arg = candid::encode_one(args)?;
 
-        let response = self
-            .station
-            .request(CreateRequestInput {
-                operation: RequestOperationInput::CallExternalCanister(
-                    CallExternalCanisterOperationInput {
-                        validation_method: None,
-                        execution_method: CanisterMethodDTO {
-                            canister_id,
-                            method_name: String::from("grant_permission"),
-                        },
-                        arg: Some(arg),
-                        execution_method_cycles: None,
-                    },
-                ),
-                title,
-                summary,
-                execution_plan: None,
-            })
-            .await?;
-
-        Ok(response)
+        Ok(RequestOperationInput::CallExternalCanister(
+            CallExternalCanisterOperationInput {
+                validation_method: None,
+                execution_method: CanisterMethodDTO {
+                    canister_id: asset_canister,
+                    method_name: String::from("grant_permission"),
+                },
+                arg: Some(arg),
+                execution_method_cycles: None,
+            },
+        ))
     }
 
     pub fn as_path_bufs(&self, canister: &str, paths: &[String]) -> anyhow::Result<Vec<PathBuf>> {

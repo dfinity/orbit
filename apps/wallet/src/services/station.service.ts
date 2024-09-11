@@ -8,7 +8,9 @@ import {
   AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
+  CanisterStatusResult,
   Capabilities,
+  ConfigureExternalCanisterSettingsInput,
   CreateExternalCanisterOperationInput,
   CreateRequestInput,
   DisasterRecoveryCommittee,
@@ -561,6 +563,18 @@ export class StationService {
     return result.Ok;
   }
 
+  async getExternalCanisterStatus(canisterId: Principal): Promise<ExtractOk<CanisterStatusResult>> {
+    const result = await this.actor.canister_status({
+      canister_id: canisterId,
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
   async getExternalCanisterByCanisterId(
     canisterId: Principal,
     verifiedCall = false,
@@ -757,6 +771,46 @@ export class StationService {
 
   async createRequest(input: CreateRequestInput): Promise<Request> {
     const result = await this.actor.create_request(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async addExternalCanister(input: CreateExternalCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { CreateExternalCanister: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async editExternalCanisterSettings(
+    canisterId: Principal,
+    input: ConfigureExternalCanisterSettingsInput,
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        ConfigureExternalCanister: {
+          canister_id: canisterId,
+          kind: {
+            Settings: input,
+          },
+        },
+      },
+    });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;

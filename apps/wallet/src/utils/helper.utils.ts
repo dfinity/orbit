@@ -1,7 +1,10 @@
+import { Certificate, HttpAgent, LookupStatus } from '@dfinity/agent';
+import type { IDL as CandidIDL } from '@dfinity/candid';
+import { Principal } from '@dfinity/principal';
+import { LocationQuery, LocationQueryValue } from 'vue-router';
 import { TransferStatus } from '~/generated/station/station.did';
 import { AccountTransferStatus } from '~/types/station.types';
-import type { IDL as CandidIDL } from '@dfinity/candid';
-import { LocationQuery, LocationQueryValue } from 'vue-router';
+import { arrayBufferToHex } from '~/utils/crypto.utils';
 
 export const timer = (
   cb: () => void,
@@ -290,3 +293,65 @@ export const parseLocationQuery = (query: LocationQuery): Record<string, string[
 
   return result;
 };
+
+/**
+ * Parses a value to a BigInt or returns undefined if the value is not a valid BigInt.
+ *
+ * @param value The value to parse.
+ * @returns The parsed BigInt value or undefined if the value is not a valid BigInt.
+ */
+export const parseToBigIntOrUndefined = (
+  value: string | number | bigint | null | undefined,
+): bigint | undefined => {
+  try {
+    if (value === undefined || value === null) {
+      return undefined;
+    }
+
+    if (typeof value === 'bigint') {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return value.trim() !== '' ? BigInt(value) : undefined;
+    }
+
+    return BigInt(value);
+  } catch (error) {
+    return undefined;
+  }
+};
+
+export async function fetchCanisterModuleHash(
+  agent: HttpAgent,
+  canisterId: Principal,
+): Promise<string | null> {
+  const encoder = new TextEncoder();
+  const moduleHashPath: ArrayBuffer[] = [
+    encoder.encode('canister'),
+    canisterId.toUint8Array(),
+    encoder.encode('module_hash'),
+  ];
+
+  const state = await agent.readState(canisterId, {
+    paths: [moduleHashPath],
+  });
+
+  const certificate = await Certificate.create({
+    canisterId,
+    certificate: state.certificate,
+    rootKey: agent.rootKey,
+  });
+
+  const moduleHash = certificate.lookup(moduleHashPath);
+
+  if (moduleHash.status !== LookupStatus.Found) {
+    return null;
+  }
+
+  if (!(moduleHash.value instanceof ArrayBuffer)) {
+    throw new Error('Module hash value is not an ArrayBuffer');
+  }
+
+  return arrayBufferToHex(moduleHash.value);
+}

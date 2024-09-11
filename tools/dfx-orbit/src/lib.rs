@@ -41,13 +41,19 @@ pub struct DfxOrbit {
 }
 
 impl DfxOrbit {
-    /// Creates a new agent for communicating with the default station.
+    /// Creates a new agent for communicating with a station.
+    ///
+    /// # Arguments
+    ///
+    /// - `config`: [`StationConfig`] describing the station
+    /// - `with_identity`: If given, tries to load that specific identity, (default otherwise)
     pub async fn new(
         mut agent: OrbitExtensionAgent,
         config: StationConfig,
+        with_identity: Option<String>,
         logger: Logger,
     ) -> anyhow::Result<Self> {
-        let interface = agent.dfx_interface(&config.network).await?;
+        let interface = agent.dfx_interface(&config.network, with_identity).await?;
 
         Ok(Self {
             station: StationAgent::new(interface.agent().clone(), config),
