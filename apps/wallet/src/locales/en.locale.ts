@@ -428,6 +428,8 @@ export default {
     module_hash: 'Module Hash',
     cycles: 'Cycles',
     not_controller: 'Not controller',
+    install: 'Install',
+    send_cycles: 'Send Cycles',
   },
   terms: {
     active: 'Active',

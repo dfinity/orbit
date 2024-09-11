@@ -21,6 +21,7 @@ import {
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
+  FundExternalCanisterOperationInput,
   GetAccountInput,
   GetAccountResult,
   GetAddressBookEntryInput,
@@ -561,6 +562,23 @@ export class StationService {
     }
 
     return result.Ok;
+  }
+
+  async fundExternalCanister(input: FundExternalCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        FundExternalCanister: input,
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
   }
 
   async getExternalCanisterStatus(canisterId: Principal): Promise<ExtractOk<CanisterStatusResult>> {

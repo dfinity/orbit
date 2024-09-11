@@ -7,8 +7,13 @@
       :label="props.label"
       :variant="props.variant"
       :density="props.density"
+      :readonly="props.readonly"
       type="number"
-      :rules="[intNumberRangeRule(props.label ?? 'cycles', 1, Number.MAX_SAFE_INTEGER)]"
+      :rules="
+        props.required
+          ? [requiredRule, intNumberRangeRule(props.label ?? 'cycles', 1, Number.MAX_SAFE_INTEGER)]
+          : [intNumberRangeRule(props.label ?? 'cycles', 1, Number.MAX_SAFE_INTEGER)]
+      "
       :prepend-icon="mdiDatabaseRefresh"
     />
     <div>
@@ -18,6 +23,7 @@
         :items="availableUnits"
         item-value="value"
         item-title="text"
+        :readonly="props.readonly"
         :variant="props.variant"
         :density="props.density"
       />
@@ -32,7 +38,7 @@ import { useI18n } from 'vue-i18n';
 import { VSelect, VTextField } from 'vuetify/components';
 import { fromCyclesUnit, toCyclesUnit } from '~/mappers/cycles.mapper';
 import { CyclesUnit } from '~/types/app.types';
-import { intNumberRangeRule } from '~/utils/form.utils';
+import { intNumberRangeRule, requiredRule } from '~/utils/form.utils';
 import { parseToBigIntOrUndefined } from '~/utils/helper.utils';
 
 const props = withDefaults(
@@ -41,7 +47,9 @@ const props = withDefaults(
     unit?: CyclesUnit;
     label?: string;
     name?: string;
+    readonly?: boolean;
     units?: CyclesUnit[];
+    required?: boolean;
     variant?: 'underlined' | 'outlined' | 'filled';
     density?: 'comfortable' | 'compact' | 'default';
   }>(),
@@ -50,6 +58,8 @@ const props = withDefaults(
     unit: CyclesUnit.Smallest,
     label: undefined,
     name: undefined,
+    readonly: false,
+    required: false,
     units: () => Object.values(CyclesUnit),
     variant: 'filled',
     density: 'comfortable',

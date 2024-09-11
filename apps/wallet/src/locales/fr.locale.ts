@@ -435,6 +435,8 @@ export default {
     module_hash: 'Module Hash',
     cycles: 'Cycles',
     not_controller: 'Pas de contrôleur',
+    install: 'Installer',
+    send_cycles: 'Envoyer des cycles',
   },
   terms: {
     active: 'Actif',

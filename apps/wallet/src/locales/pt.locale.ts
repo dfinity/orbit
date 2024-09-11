@@ -431,6 +431,8 @@ export default {
     module_hash: 'Hash do módulo',
     cycles: 'Ciclos',
     not_controller: 'Não é controlador',
+    install: 'Instalar',
+    send_cycles: 'Enviar ciclos',
   },
   terms: {
     active: 'Ativo',
