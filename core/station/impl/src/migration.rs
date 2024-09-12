@@ -7,7 +7,7 @@ use uuid::Uuid;
 use crate::core::ic_cdk::api::trap;
 use crate::core::{read_system_info, write_system_info};
 
-use crate::models::permission::{AuthScope, Permission};
+use crate::models::permission::AuthScope;
 use crate::models::request_specifier::RequestSpecifier;
 use crate::models::resource::{
     Resource, ResourceAction, ResourceId, ResourceIds, SystemResourceAction,
