@@ -1,10 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    core::{
-        authorization::Authorization, generate_uuid_v4, utils::retain_accessible_resources,
-        CallContext,
-    },
+    core::{authorization::Authorization, utils::retain_accessible_resources, CallContext},
     errors::AssetError,
     models::{
         resource::{Resource, ResourceAction, ResourceId},
@@ -52,8 +49,8 @@ impl AssetService {
         Ok(asset)
     }
 
-    pub async fn create(&self, input: AddAssetOperationInput) -> ServiceResult<Asset> {
-        let id = generate_uuid_v4().await;
+    pub fn create(&self, input: AddAssetOperationInput) -> ServiceResult<Asset> {
+        let id = Uuid::new_v4();
         let asset = Asset {
             id: *id.as_bytes(),
             blockchain: input.blockchain,
@@ -184,7 +181,6 @@ mod tests {
                 name: "ICP".to_string(),
                 symbol: "ICP".to_string(),
             })
-            .await
             .expect("Failed to create asset");
 
         let assets = ASSET_REPOSITORY.list();
@@ -273,7 +269,6 @@ mod tests {
                 name: "ICP".to_string(),
                 symbol: "ICP".to_string(),
             })
-            .await
             .expect("Failed to create asset");
 
         service
@@ -285,7 +280,6 @@ mod tests {
                 name: "ICP".to_string(),
                 symbol: "ICP".to_string(),
             })
-            .await
             .expect_err("Asset with the same symbol and blockchain should not be allowed");
 
         service
@@ -297,7 +291,6 @@ mod tests {
                 name: "ICP".to_string(),
                 symbol: "ICP2".to_string(),
             })
-            .await
             .expect("Failed to create asset");
     }
 }
