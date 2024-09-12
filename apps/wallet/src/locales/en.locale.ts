@@ -726,6 +726,7 @@ export default {
     select_resource: 'Resource Type',
     resources: {
       account: 'Account',
+      asset: 'Asset',
       user: 'User',
       usergroup: 'User Group',
       permission: 'Access Policy',
