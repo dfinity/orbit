@@ -4,10 +4,11 @@
       <VRow>
         <VCol cols="12" class="pb-0">
           <CanisterIdField
-            v-show="props.display.canisterId || !model.canisterId"
+            v-if="props.display.canisterId || !model.canisterId"
             v-model="model.canisterId"
             name="canister_id"
             :readonly="props.readonly"
+            required
           />
         </VCol>
         <VCol>
@@ -18,6 +19,8 @@
             :unit="CyclesUnit.Billion"
             :readonly="props.readonly"
             required
+            :hint="$t('external_canisters.top_up_hint')"
+            @keydown.enter.stop.prevent="submit"
           />
         </VCol>
       </VRow>
@@ -39,7 +42,6 @@ const props = withDefaults(
   defineProps<{
     modelValue: CanisterTopUpModel;
     triggerSubmit?: boolean;
-    saving?: boolean;
     readonly?: boolean;
     display?: {
       canisterId: boolean;
@@ -47,7 +49,6 @@ const props = withDefaults(
   }>(),
   {
     readonly: false,
-    saving: false,
     triggerSubmit: false,
     display: () => ({
       canisterId: true,
@@ -61,7 +62,7 @@ const emit = defineEmits<{
   (event: 'submit', payload: CanisterTopUpModel): void;
 }>();
 
-const form = ref<VFormValidation | null>(null);
+const form = ref<VFormValidation>();
 const valid = ref(true);
 const fieldsWithErrors = ref<string[]>([]);
 
@@ -75,13 +76,10 @@ const triggerSubmit = computed({
   set: value => emit('update:triggerSubmit', value),
 });
 
-watch(
-  () => valid.value,
-  () => emit('valid', valid.value),
-);
+watch(valid, newValid => emit('valid', newValid), { immediate: true });
 
 watch(
-  () => model.value,
+  () => form.value?.errors,
   _ => {
     valid.value = form.value?.isValid ?? false;
     fieldsWithErrors.value = form.value?.errors.map(error => error.id) ?? [];
@@ -89,8 +87,8 @@ watch(
   { deep: true },
 );
 
-watch(triggerSubmit, value => {
-  if (value) {
+watch(triggerSubmit, shouldTrigger => {
+  if (shouldTrigger) {
     emit('update:triggerSubmit', false);
 
     submit();
@@ -103,13 +101,12 @@ const revalidate = async (): Promise<boolean> => {
     : { valid: false, errors: [] };
 
   valid.value = isValid;
-
   fieldsWithErrors.value = errors.map(error => error.id);
 
   return isValid;
 };
 
-const submit = async () => {
+const submit = async (): Promise<void> => {
   const isValid = await revalidate();
 
   if (isValid) {

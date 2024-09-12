@@ -437,6 +437,7 @@ export default {
     not_controller: 'Pas de contrôleur',
     install: 'Installer',
     send_cycles: 'Envoyer des cycles',
+    top_up_hint: 'Montant de cycles à ajouter au canister cible.',
   },
   terms: {
     active: 'Actif',

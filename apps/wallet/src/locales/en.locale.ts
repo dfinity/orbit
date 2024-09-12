@@ -430,6 +430,7 @@ export default {
     not_controller: 'Not controller',
     install: 'Install',
     send_cycles: 'Send Cycles',
+    top_up_hint: 'Amount of cycles to add to the target canister.',
   },
   terms: {
     active: 'Active',

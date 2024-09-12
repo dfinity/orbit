@@ -433,6 +433,7 @@ export default {
     not_controller: 'Não é controlador',
     install: 'Instalar',
     send_cycles: 'Enviar ciclos',
+    top_up_hint: 'Ciclos a adicionar ao canister de destino.',
   },
   terms: {
     active: 'Ativo',

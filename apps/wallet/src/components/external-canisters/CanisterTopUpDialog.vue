@@ -6,6 +6,7 @@
     transition="dialog-bottom-transition"
     scrollable
     :max-width="props.dialogMaxWidth"
+    target=""
   >
     <VCard data-test-id="canister-top-up-card">
       <VToolbar color="background">
@@ -16,34 +17,29 @@
       </VToolbar>
       <VDivider />
 
-      <VCardText v-if="loading" class="py-8">
-        <LoadingMessage />
+      <VCardText>
+        <CanisterTopUpForm
+          v-model="topUpModel"
+          v-model:trigger-submit="triggerFormSubmit"
+          :display="{ canisterId: props.canisterId === undefined }"
+          @submit="submit"
+          @valid="valid = $event"
+        />
       </VCardText>
-
-      <template v-else>
-        <VCardText>
-          <CanisterTopUpForm
-            v-model="topUpModel"
-            v-model:trigger-submit="triggerFormSubmit"
-            :display="{ canisterId: props.canisterId === undefined }"
-            @submit="submit"
-          />
-        </VCardText>
-        <VDivider />
-        <VCardActions class="pa-3">
-          <VSpacer />
-          <VBtn
-            :disabled="!canSave"
-            :loading="submitting"
-            color="primary"
-            variant="elevated"
-            data-test-id="canister-top-up-save-button"
-            @click="triggerFormSubmit = true"
-          >
-            {{ $t('external_canisters.send_cycles') }}
-          </VBtn>
-        </VCardActions>
-      </template>
+      <VDivider />
+      <VCardActions class="pa-3">
+        <VSpacer />
+        <VBtn
+          :disabled="!canSave"
+          :loading="submitting"
+          color="primary"
+          variant="elevated"
+          data-test-id="canister-top-up-save-button"
+          @click="triggerFormSubmit = true"
+        >
+          {{ $t('external_canisters.send_cycles') }}
+        </VBtn>
+      </VCardActions>
     </VCard>
   </VDialog>
 </template>
@@ -70,7 +66,6 @@ import {
 import logger from '~/core/logger.core';
 import { useStationStore } from '~/stores/station.store';
 import { assertAndReturn } from '~/utils/helper.utils';
-import LoadingMessage from '../LoadingMessage.vue';
 import CanisterTopUpForm from './CanisterTopUpForm.vue';
 import { CanisterTopUpModel } from './external-canisters.types';
 
@@ -94,11 +89,10 @@ const emit = defineEmits<{
 }>();
 
 const i18n = useI18n();
-const loading = ref(false);
 const valid = ref(true);
 const station = useStationStore();
 const submitting = ref(false);
-const canClose = computed(() => !loading.value && !submitting.value);
+const canClose = computed(() => !submitting.value);
 const dialogTitle = computed(() => props.title || i18n.t('external_canisters.top_up'));
 
 const buildModel = (): CanisterTopUpModel => ({
@@ -118,7 +112,7 @@ const open = computed({
 });
 
 const triggerFormSubmit = ref(false);
-const canSave = computed(() => valid.value && !loading.value);
+const canSave = computed(() => valid.value);
 const topUpModel = ref(buildModel()) as Ref<CanisterTopUpModel>;
 
 const submit = async (input: CanisterTopUpModel) => {

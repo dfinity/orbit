@@ -9,6 +9,8 @@
       :density="props.density"
       :readonly="props.readonly"
       type="number"
+      :hint="props.hint"
+      :persistent-hint="!!props.hint"
       :rules="
         props.required
           ? [requiredRule, intNumberRangeRule(props.label ?? 'cycles', 1, Number.MAX_SAFE_INTEGER)]
@@ -50,6 +52,7 @@ const props = withDefaults(
     readonly?: boolean;
     units?: CyclesUnit[];
     required?: boolean;
+    hint?: string;
     variant?: 'underlined' | 'outlined' | 'filled';
     density?: 'comfortable' | 'compact' | 'default';
   }>(),
@@ -60,6 +63,7 @@ const props = withDefaults(
     name: undefined,
     readonly: false,
     required: false,
+    hint: undefined,
     units: () => Object.values(CyclesUnit),
     variant: 'filled',
     density: 'comfortable',
