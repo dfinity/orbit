@@ -286,12 +286,12 @@ fn display_evaluated_rule<W: Write>(
 
 fn display_quorum_state<W: Write>(
     writer: &mut W,
-    elligible: usize,
+    eligible: usize,
     required: usize,
     approvers: &[String],
     status: &BTreeMap<String, RequestApprovalStatusDTO>,
 ) -> anyhow::Result<()> {
-    write!(writer, "Number of elligible voters: {elligible},")?;
+    write!(writer, "Number of eligible voters: {eligible},")?;
     write!(writer, " necessary quorum: {required},")?;
     write!(writer, " voted: {},", approvers.len())?;
 
