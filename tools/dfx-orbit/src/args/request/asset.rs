@@ -1,7 +1,10 @@
 use crate::DfxOrbit;
+use anyhow::bail;
 use candid::Principal;
 use clap::{Parser, Subcommand};
-use station_api::RequestOperationInput;
+use ic_certified_assets::types::{GrantPermissionArguments, Permission};
+use sha2::{Digest, Sha256};
+use station_api::{GetRequestResponse, RequestOperationDTO, RequestOperationInput};
 
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetArgs {
@@ -19,7 +22,7 @@ pub enum RequestAssetActionArgs {
 }
 
 impl RequestAssetArgs {
-    pub(crate) async fn into_create_request_input(
+    pub(crate) async fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
@@ -45,9 +48,46 @@ impl RequestAssetPreparePermissionArgs {
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         let me = dfx_orbit.own_principal()?;
-        let target_principal = self.id.unwrap_or(me);
+        let to_principal = self.id.unwrap_or(me);
         let asset_canister = dfx_orbit.canister_id(&self.canister)?;
-        DfxOrbit::grant_permission_request(asset_canister, target_principal)
+        DfxOrbit::grant_permission_request(asset_canister, to_principal)
+    }
+
+    pub(crate) fn verify(
+        &self,
+        dfx_orbit: &DfxOrbit,
+        request: &GetRequestResponse,
+    ) -> anyhow::Result<()> {
+        let RequestOperationDTO::CallExternalCanister(operation) = &request.request.operation
+        else {
+            bail!("The request is not a call external canister request");
+        };
+
+        let asset_canister = dfx_orbit.canister_id(&self.canister)?;
+        if operation.execution_method.canister_id != asset_canister {
+            bail!(
+                "The request targets an unexpected canister. Expected: {}, actual: {}",
+                asset_canister,
+                operation.execution_method.canister_id
+            );
+        }
+        if &operation.execution_method.method_name != "grant_permission" {
+            bail!(
+                "The method of this request is not \"grant_permission\" but \"{}\" instead",
+                operation.execution_method.method_name
+            );
+        }
+
+        let me = dfx_orbit.own_principal()?;
+        let to_principal = self.id.unwrap_or(me);
+        let args = GrantPermissionArguments {
+            to_principal,
+            permission: Permission::Prepare,
+        };
+        let arg = candid::encode_one(args)?;
+        let computed_arg_checksum = hex::encode(Sha256::digest(arg).to_vec());
+
+        todo!()
     }
 }
 

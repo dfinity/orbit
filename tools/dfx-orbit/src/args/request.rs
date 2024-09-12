@@ -44,11 +44,9 @@ impl RequestArgs {
             RequestArgsActions::Canister(canister_args) => {
                 canister_args.into_request(dfx_orbit).await?
             }
-            RequestArgsActions::Asset(asset_args) => {
-                asset_args.into_create_request_input(dfx_orbit).await?
-            }
+            RequestArgsActions::Asset(asset_args) => asset_args.into_request(dfx_orbit).await?,
             RequestArgsActions::Permission(permission_args) => {
-                permission_args.into_create_request_input(dfx_orbit)?
+                permission_args.into_request(dfx_orbit)?
             }
         };
 

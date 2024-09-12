@@ -6,6 +6,7 @@ use ic_certified_assets::types::{GrantPermissionArguments, Permission};
 use station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput};
 use std::path::{Path, PathBuf};
 
+// TODO: Move this into the into_request of the Arg
 impl DfxOrbit {
     pub fn grant_permission_request(
         asset_canister: Principal,
