@@ -10,17 +10,20 @@ use crate::{
     CanisterIds, TestEnv,
 };
 use candid::Principal;
-use dfx_orbit::args::request::{
-    canister::{RequestCanisterActionArgs, RequestCanisterArgs, RequestCanisterCallArgs},
-    RequestArgs, RequestArgsActions,
+use dfx_orbit::args::{
+    request::{
+        canister::{RequestCanisterActionArgs, RequestCanisterArgs, RequestCanisterCallArgs},
+        RequestArgs, RequestArgsActions,
+    },
+    verify::{VerifyArgs, VerifyArgsAction, VerifyCanisterActionArgs, VerifyCanisterArgs},
 };
 use pocket_ic::PocketIc;
 use station_api::{
     AddRequestPolicyOperationInput, AuthScopeDTO, CallExternalCanisterResourceTargetDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO,
-    ExternalCanisterResourceActionDTO, QuorumDTO, RequestApprovalStatusDTO, RequestOperationInput,
-    RequestPolicyRuleDTO, RequestSpecifierDTO, ResourceDTO, UserSpecifierDTO,
-    ValidationMethodResourceTargetDTO,
+    ExternalCanisterResourceActionDTO, GetRequestInput, QuorumDTO, RequestApprovalStatusDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO, ResourceDTO,
+    UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 
 /// Test a canister call through orbit using the station agent
@@ -64,7 +67,7 @@ fn canister_call() {
             title: None,
             summary: None,
             action: RequestArgsActions::Canister(RequestCanisterArgs {
-                action: RequestCanisterActionArgs::Call(inner_args),
+                action: RequestCanisterActionArgs::Call(inner_args.clone()),
             }),
         }
         .into_request(&dfx_orbit)
@@ -72,6 +75,27 @@ fn canister_call() {
         .unwrap();
 
         let request = dfx_orbit.station.request(request.clone()).await.unwrap();
+
+        // Check that the request verifies
+        let req_response = dfx_orbit
+            .station
+            .review_id(GetRequestInput {
+                request_id: request.request.id.clone(),
+            })
+            .await
+            .unwrap();
+
+        VerifyArgs {
+            request_id: request.request.id.clone(),
+            and_approve: false,
+            or_reject: false,
+            action: VerifyArgsAction::Canister(VerifyCanisterArgs {
+                action: VerifyCanisterActionArgs::Call(inner_args),
+            }),
+        }
+        .verify(&dfx_orbit, &req_response)
+        .await
+        .unwrap();
 
         request.request
     });
@@ -93,8 +117,6 @@ fn canister_call() {
     let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
     assert_eq!(ctr, 42_u32.to_le_bytes());
 }
-
-// TODO: Test with insufficient permissions
 
 /// Allow anyone to create change canister requests
 pub(crate) fn permit_call_operation(env: &PocketIc, canister_ids: &CanisterIds) {

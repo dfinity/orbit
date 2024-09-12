@@ -12,7 +12,7 @@ use crate::{
 pub struct VerifyCanisterArgs {
     /// The operation to verify
     #[clap(subcommand)]
-    pub(crate) action: VerifyCanisterActionArgs,
+    pub action: VerifyCanisterActionArgs,
 }
 
 #[derive(Debug, Clone, Subcommand)]

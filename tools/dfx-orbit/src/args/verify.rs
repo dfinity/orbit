@@ -3,25 +3,25 @@ mod canister;
 
 use crate::DfxOrbit;
 use asset::VerifyAssetArgs;
-use canister::VerifyCanisterArgs;
+pub use canister::{VerifyCanisterActionArgs, VerifyCanisterArgs};
 use clap::{Parser, Subcommand};
 use station_api::GetRequestResponse;
 
 #[derive(Debug, Clone, Parser)]
 pub struct VerifyArgs {
     /// The ID of the request to verify
-    pub(crate) request_id: String,
+    pub request_id: String,
 
     /// Approve the request, if the validation succeeds
     #[clap(short = 'a', long)]
-    pub(crate) and_approve: bool,
+    pub and_approve: bool,
     /// Reject the request, if the validation fails
     #[clap(short = 'r', long)]
-    pub(crate) or_reject: bool,
+    pub or_reject: bool,
 
     /// The type of request to verify
     #[clap(subcommand)]
-    pub(crate) action: VerifyArgsAction,
+    pub action: VerifyArgsAction,
 }
 
 #[derive(Debug, Clone, Subcommand)]
@@ -33,7 +33,7 @@ pub enum VerifyArgsAction {
 }
 
 impl VerifyArgs {
-    pub(crate) async fn verify(
+    pub async fn verify(
         &self,
         dfx_orbit: &DfxOrbit,
         request: &GetRequestResponse,
