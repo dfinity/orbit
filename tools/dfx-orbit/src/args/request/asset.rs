@@ -1,4 +1,5 @@
 use crate::DfxOrbit;
+use candid::Principal;
 use clap::{Parser, Subcommand};
 use station_api::RequestOperationInput;
 
@@ -23,10 +24,8 @@ impl RequestAssetArgs {
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         match self.action {
-            RequestAssetActionArgs::PreparePermission(args) => {
-                args.into_create_request_input(dfx_orbit)
-            }
-            RequestAssetActionArgs::Upload(args) => args.into_create_request_input(dfx_orbit).await,
+            RequestAssetActionArgs::PreparePermission(args) => args.into_request(dfx_orbit),
+            RequestAssetActionArgs::Upload(args) => args.into_request(dfx_orbit).await,
         }
     }
 }
@@ -35,18 +34,20 @@ impl RequestAssetArgs {
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetPreparePermissionArgs {
     /// The name of the asset canister targeted by this action
-    pub(crate) canister: String,
-    // TODO: Allow to specify principal to use instead of self
+    pub canister: String,
+    /// The principal to grant the prepare permission to (defaults to self)
+    pub id: Option<Principal>,
 }
 
 impl RequestAssetPreparePermissionArgs {
-    pub(crate) fn into_create_request_input(
+    pub(crate) fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         let me = dfx_orbit.own_principal()?;
+        let target_principal = self.id.unwrap_or(me);
         let asset_canister = dfx_orbit.canister_id(&self.canister)?;
-        DfxOrbit::grant_permission_request(asset_canister, me)
+        DfxOrbit::grant_permission_request(asset_canister, target_principal)
     }
 }
 
@@ -64,7 +65,7 @@ pub struct RequestAssetUploadArgs {
 }
 
 impl RequestAssetUploadArgs {
-    pub(crate) async fn into_create_request_input(
+    pub(crate) async fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
