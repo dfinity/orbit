@@ -1,4 +1,5 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
+use crate::test_data::asset::list_assets;
 use crate::test_data::{set_test_data_id, StationDataGenerator};
 use crate::utils::{compress_to_gzip, create_file, read_file, NNS_ROOT_CANISTER_ID};
 use crate::TestEnv;
@@ -6,8 +7,11 @@ use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, PocketIc};
 
-const BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // can be found in the station core/init.rs
-const BASELINE_NR_PERMISSIONS: usize = 34; // can be found in the station core/init.rs
+const NEW_REQUEST_POLICIES_ADDED: usize = 3;
+const NEW_PERMISSIONS_ADDED: usize = 5;
+
+const BASELINE_NR_OF_REQUEST_POLICIES: usize = 18 + NEW_REQUEST_POLICIES_ADDED; // can be found in the station core/init.rs
+const BASELINE_NR_PERMISSIONS: usize = 34 + NEW_PERMISSIONS_ADDED; // can be found in the station core/init.rs
 
 const USER_GROUPS_NR: usize = 10;
 const USER_NR: usize = 10;
@@ -119,12 +123,13 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
 
     let station_wasm = get_canister_wasm("station").to_vec();
     let wasm_memory =
-        read_file("station-memory-v0.bin").expect("Unexpected missing older wasm memory");
+        read_file("station-memory-v1.bin").expect("Unexpected missing older wasm memory");
 
     env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .expect("unexpected failure stopping canister");
 
     // This is needed to avoid `install_code` rate limit error
+    env.tick();
     env.tick();
 
     // Set the stable memory of the canister to the previous version of the canister
@@ -186,6 +191,8 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         EXPECTED_PERMISSIONS_NR,
     );
 
+    assert_has_icp_asset(&env, canister_ids.station, WALLET_ADMIN_USER);
+
     // Makes sure that the next test data id number is pointing at a value that was
     // not already used in the previous version
     set_test_data_id(9_999);
@@ -200,6 +207,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
             .with_user_groups(new_records)
             .with_accounts(new_records)
             .with_address_book_entries(new_records)
+            .with_assets(new_records)
             .with_request_policy_updates(new_records)
             .with_station_updates(0)
             .with_upgrader_updates(0)
@@ -252,6 +260,14 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         WALLET_ADMIN_USER,
         // for accounts there are view, transfer and configuration permissions
         EXPECTED_PERMISSIONS_NR + (new_records * 3),
+    );
+
+    assert_can_list_assets(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        // there should be one asset here already: ICP
+        new_records + 1,
     );
 }
 
@@ -454,4 +470,42 @@ fn assert_can_list_permissions(
     let res = res.0.unwrap();
 
     assert_eq!(res.total as usize, expected);
+}
+
+fn assert_can_list_assets(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    expected: usize,
+) {
+    let res: (ApiResult<station_api::ListAssetsResponse>,) = update_candid_as(
+        env,
+        station_id,
+        requester,
+        "list_assets",
+        (station_api::ListAssetsInput {
+            paginate: Some(station_api::PaginationInput {
+                offset: Some(0),
+                limit: Some(25),
+            }),
+        },),
+    )
+    .unwrap();
+
+    let res = res.0.unwrap();
+
+    assert_eq!(res.total as usize, expected);
+}
+
+fn assert_has_icp_asset(env: &PocketIc, station_id: Principal, requester: Principal) {
+    let assets = list_assets(env, station_id, requester)
+        .expect("Failed to query list assets")
+        .0
+        .expect("Failed to list assets");
+
+    assert!(assets.assets.len() == 1);
+    assert_eq!(assets.assets[0].symbol, "ICP");
+    assert_eq!(assets.assets[0].name, "Internet Computer");
+    assert_eq!(&assets.assets[0].blockchain, "icp");
+    assert_eq!(assets.assets[0].standards, vec!["native"]);
 }

@@ -86,19 +86,23 @@ impl UserGroup {
 
 impl Asset {
     /// Converts the asset to it's unique index by name.
-    fn to_unique_index_by_symbol_blockchain(&self) -> (UniqueIndexKey, UUID) {
+    fn to_unique_index(&self) -> (UniqueIndexKey, UUID) {
         (
-            UniqueIndexKey::AssetSymbolBlockchain(
-                self.symbol.to_uppercase(), // symbol is not case sensitive
-                self.blockchain.to_string(),
-            ),
+            Self::to_unique_index_by_symbol_blockchain(&self.symbol, self.blockchain.to_string()),
             self.id,
         )
     }
 
+    pub fn to_unique_index_by_symbol_blockchain(
+        symbol: &str,
+        blockchain: String,
+    ) -> UniqueIndexKey {
+        UniqueIndexKey::AssetSymbolBlockchain(symbol.to_uppercase(), blockchain.to_string())
+    }
+
     /// Extracts all unique indexes for the asset.
     pub fn to_unique_indexes(&self) -> Vec<(UniqueIndexKey, UUID)> {
-        vec![self.to_unique_index_by_symbol_blockchain()]
+        vec![self.to_unique_index()]
     }
 }
 

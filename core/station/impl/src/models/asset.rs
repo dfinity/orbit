@@ -5,7 +5,7 @@ use orbit_essentials::{
 };
 
 use super::{Blockchain, BlockchainStandard};
-use crate::{errors::AssetError, models::Metadata};
+use crate::{errors::AssetError, models::Metadata, repositories::ASSET_REPOSITORY};
 use std::{
     collections::BTreeSet,
     hash::{Hash, Hasher},
@@ -60,6 +60,13 @@ impl Hash for Asset {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct AssetCallerPrivileges {
+    pub id: AssetId,
+    pub can_edit: bool,
+    pub can_delete: bool,
+}
+
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AssetEntryKey {
@@ -102,11 +109,31 @@ fn validate_decimals(decimals: u32) -> ModelValidatorResult<AssetError> {
     Ok(())
 }
 
+fn validate_uniqueness(
+    asset_id: &AssetId,
+    symbol: &str,
+    blockchain: &Blockchain,
+) -> ModelValidatorResult<AssetError> {
+    if let Some(existing_asset_id) =
+        ASSET_REPOSITORY.exists_unique(blockchain.to_string().as_str(), symbol)
+    {
+        if existing_asset_id != *asset_id {
+            return Err(AssetError::AlreadyExists {
+                symbol: symbol.to_string(),
+                blockchain: blockchain.to_string(),
+            });
+        }
+    }
+
+    Ok(())
+}
+
 impl ModelValidator<AssetError> for Asset {
     fn validate(&self) -> ModelValidatorResult<AssetError> {
         validate_symbol(&self.symbol)?;
         validate_name(&self.name)?;
         validate_decimals(self.decimals)?;
+        validate_uniqueness(&self.id, &self.symbol, &self.blockchain)?;
 
         self.metadata.validate()?;
 
@@ -138,6 +165,8 @@ pub mod asset_test_utils {
 
 #[cfg(test)]
 mod test {
+
+    use orbit_essentials::repository::Repository;
 
     use super::*;
 
@@ -172,5 +201,24 @@ mod test {
 
         asset.decimals = Asset::DECIMALS_RANGE.1 + 1;
         assert!(asset.validate().is_err());
+    }
+
+    #[test]
+    fn test_validate_uniqueness() {
+        let mut asset = asset_test_utils::mock_asset();
+        assert!(asset.validate().is_ok());
+
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+
+        // this passes uniqueness test because the asset id is the same
+        assert!(asset.validate().is_ok());
+
+        // this fails uniqueness test because the asset id is different
+        asset.id = [1; 16];
+
+        assert!(matches!(
+            asset.validate().expect_err("Asset should not be unique"),
+            AssetError::AlreadyExists { .. }
+        ));
     }
 }

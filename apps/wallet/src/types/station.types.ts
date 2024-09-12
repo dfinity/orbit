@@ -107,6 +107,9 @@ export enum RequestSpecifierEnum {
   CallExternalCanister = 'CallExternalCanister',
   FundExternalCanister = 'FundExternalCanister',
   SetDisasterRecovery = 'SetDisasterRecovery',
+  AddAsset = 'AddAsset',
+  EditAsset = 'EditAsset',
+  RemoveAsset = 'RemoveAsset',
 }
 
 export enum RequestPolicyRuleEnum {
@@ -168,4 +171,7 @@ export enum RequestOperationEnum {
   ConfigureExternalCanister = 'ConfigureExternalCanister',
   FundExternalCanister = 'FundExternalCanister',
   SetDisasterRecovery = 'SetDisasterRecovery',
+  AddAsset = 'AddAsset',
+  EditAsset = 'EditAsset',
+  RemoveAsset = 'RemoveAsset',
 }

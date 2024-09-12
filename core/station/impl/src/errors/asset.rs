@@ -5,6 +5,12 @@ use thiserror::Error;
 /// Container for asset errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum AssetError {
+    /// The asset was not found.
+    #[error("The asset with id {id} was not found.")]
+    NotFound {
+        /// The asset id.
+        id: String,
+    },
     /// Invalid decimals value.
     #[error(r#"Decimals must be between {min} and {max}."#)]
     InvalidDecimals { min: u32, max: u32 },
@@ -23,6 +29,14 @@ pub enum AssetError {
     /// The asset has failed validation.
     #[error(r#"The account has failed validation."#)]
     ValidationError { info: String },
+    /// The asset is not unique.
+    #[error(r#"The asset already exists."#)]
+    AlreadyExists {
+        /// The asset symbol.
+        symbol: String,
+        /// The asset blockchain.
+        blockchain: String,
+    },
 }
 
 impl DetailableError for AssetError {
@@ -65,6 +79,15 @@ impl DetailableError for AssetError {
             } => {
                 details.insert("min_length".to_string(), min_length.to_string());
                 details.insert("max_length".to_string(), max_length.to_string());
+                Some(details)
+            }
+            AssetError::NotFound { id } => {
+                details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
+            AssetError::AlreadyExists { symbol, blockchain } => {
+                details.insert("symbol".to_string(), symbol.to_string());
+                details.insert("blockchain".to_string(), blockchain.to_string());
                 Some(details)
             }
         }

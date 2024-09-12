@@ -326,7 +326,7 @@ impl ExternalCanisterService {
             },
         );
 
-        // filter out requests that the caller does not have access to read
+        // filter out external canisters that the caller does not have access to read
         retain_accessible_resources(ctx, &mut found_ids, |id| {
             Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
                 ExternalCanisterId::Canister(*id),
