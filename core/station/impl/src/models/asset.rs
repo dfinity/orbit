@@ -166,6 +166,8 @@ pub mod asset_test_utils {
 #[cfg(test)]
 mod test {
 
+    use orbit_essentials::repository::Repository;
+
     use super::*;
 
     #[test]
@@ -199,5 +201,24 @@ mod test {
 
         asset.decimals = Asset::DECIMALS_RANGE.1 + 1;
         assert!(asset.validate().is_err());
+    }
+
+    #[test]
+    fn test_validate_uniqueness() {
+        let mut asset = asset_test_utils::mock_asset();
+        assert!(asset.validate().is_ok());
+
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+
+        // this passes uniqueness test because the asset id is the same
+        assert!(asset.validate().is_ok());
+
+        // this fails uniqueness test because the asset id is different
+        asset.id = [1; 16];
+
+        assert!(matches!(
+            asset.validate().expect_err("Asset should not be unique"),
+            AssetError::AlreadyExists { .. }
+        ));
     }
 }

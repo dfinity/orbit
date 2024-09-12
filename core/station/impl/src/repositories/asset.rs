@@ -177,7 +177,7 @@ impl AssetRepository {
     }
 
     pub fn exists_unique(&self, blockchain: &str, symbol: &str) -> Option<AssetId> {
-        let key = UniqueIndexKey::AssetSymbolBlockchain(symbol.to_string(), blockchain.to_string());
+        let key = Asset::to_unique_index_by_symbol_blockchain(symbol, blockchain.to_owned());
 
         self.unique_index.get(&key)
     }
@@ -200,5 +200,25 @@ mod tests {
         assert!(repository.get(&asset.id).is_some());
         assert!(repository.remove(&asset.id).is_some());
         assert!(repository.get(&asset.id).is_none());
+    }
+
+    #[test]
+    fn test_unqiueness() {
+        let repository = AssetRepository::default();
+        let asset = asset_test_utils::mock_asset();
+
+        assert!(repository
+            .exists_unique(&asset.blockchain.to_string(), &asset.symbol)
+            .is_none());
+
+        repository.insert(asset.id.to_owned(), asset.clone());
+
+        assert!(repository.exists_unique("icp", "icp").is_some());
+
+        assert!(repository.exists_unique("icp", "ICP").is_some());
+
+        assert!(repository.exists_unique("icp", "ICP2").is_none());
+
+        assert!(repository.exists_unique("eth", "ICP").is_none());
     }
 }
