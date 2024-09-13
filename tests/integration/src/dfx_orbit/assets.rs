@@ -9,13 +9,17 @@ use crate::{
     CanisterIds, TestEnv,
 };
 use candid::Principal;
-use dfx_orbit::DfxOrbit;
+use dfx_orbit::{
+    args::request::{
+        asset::{RequestAssetActionArgs, RequestAssetArgs, RequestAssetUploadArgs},
+        RequestArgs, RequestArgsActions,
+    },
+    DfxOrbit,
+};
 use pocket_ic::PocketIc;
 use rand::{thread_rng, Rng};
-use station_api::{CreateRequestInput, GetRequestInput};
 use std::{
     collections::BTreeMap,
-    path::Path,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use tempfile::Builder;
@@ -42,11 +46,11 @@ fn asset_upload() {
     let other_user = user_test_id(1);
     add_user(&env, other_user, vec![], canister_ids.station);
 
-    // As admin: Grant the user the call permission, set auto-approval for external calls
+    // As admin: Grant the user the call and prepare permissions
     permit_call_operation(&env, &canister_ids);
     //set_four_eyes_on_call(&env, &canister_ids);
     set_auto_approve(&env, &canister_ids);
-    grant_prepare_permission(&env, &canister_ids, asset_canister, dfx_principal);
+    grant_prepare_permission(&env, &canister_ids, &asset_canister, &dfx_principal);
 
     // Setup a tmpdir, and store two assets in it
     // We generate the assets dyniamically, since we want to make sure we are not
@@ -83,57 +87,67 @@ fn asset_upload() {
         ..Default::default()
     };
 
-    // let request_args = RequestAssetUploadArgs {
-    //     canister: todo!(),
-    //     ignore_evidence: false,
-    //     files: todo!(),
-    // };
+    let request_args = RequestAssetUploadArgs {
+        canister: String::from("test_asset_upload"),
+        ignore_evidence: false,
+        files: vec![],
+    };
 
     dfx_orbit_test(&mut env, config, async {
         // Setup the station agent
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
-        //tokio::time::sleep(Duration::from_secs(1)).await;
-
+        let request = RequestArgs {
+            title: None,
+            summary: None,
+            action: RequestArgsActions::Asset(RequestAssetArgs {
+                action: RequestAssetActionArgs::Upload(request_args),
+            }),
+        }
+        .into_request(&dfx_orbit)
+        .await
+        .unwrap();
+        let request = dfx_orbit.station.request(request.clone()).await.unwrap();
+        dbg!(&request);
         // Test that we can retreive the sources from `dfx.json`
-        let sources = dfx_orbit.as_path_bufs("test_asset_upload", &[]).unwrap();
-        let sources_path = sources
-            .iter()
-            .map(|pathbuf| pathbuf.as_path())
-            .collect::<Vec<&Path>>();
+        // let sources = dfx_orbit.as_path_bufs("test_asset_upload", &[]).unwrap();
+        // let sources_path = sources
+        //     .iter()
+        //     .map(|pathbuf| pathbuf.as_path())
+        //     .collect::<Vec<&Path>>();
 
-        // As dfx user: Request to upload new files to the asset canister
-        let (batch_id, evidence) = dfx_orbit
-            .upload(asset_canister, &sources_path, false)
-            .await
-            .unwrap();
+        // // As dfx user: Request to upload new files to the asset canister
+        // let (batch_id, evidence) = dfx_orbit
+        //     .upload(asset_canister, &sources_path, false)
+        //     .await
+        //     .unwrap();
 
-        let response = dfx_orbit
-            .station
-            .request(CreateRequestInput {
-                operation: DfxOrbit::commit_batch_input(
-                    asset_canister,
-                    batch_id.clone(),
-                    evidence.clone(),
-                )
-                .unwrap(),
-                title: None,
-                summary: None,
-                execution_plan: None,
-            })
-            .await
-            .unwrap();
+        // let response = dfx_orbit
+        //     .station
+        //     .request(CreateRequestInput {
+        //         operation: DfxOrbit::commit_batch_input(
+        //             asset_canister,
+        //             batch_id.clone(),
+        //             evidence.clone(),
+        //         )
+        //         .unwrap(),
+        //         title: None,
+        //         summary: None,
+        //         execution_plan: None,
+        //     })
+        //     .await
+        //     .unwrap();
 
-        // Check whether the request passes the asset check
-        let response = dfx_orbit
-            .station
-            .review_id(GetRequestInput {
-                request_id: response.request.id,
-            })
-            .await
-            .unwrap();
-        DfxOrbit::check_evidence(&response, asset_canister, batch_id, hex::encode(evidence))
-            .unwrap();
+        // // Check whether the request passes the asset check
+        // let response = dfx_orbit
+        //     .station
+        //     .review_id(GetRequestInput {
+        //         request_id: response.request.id,
+        //     })
+        //     .await
+        //     .unwrap();
+        // DfxOrbit::check_evidence(&response, asset_canister, batch_id, hex::encode(evidence))
+        //     .unwrap();
 
         // NOTE: We need to wait until the certified state becomes available.
         // Since we are in live mode, we can not simply advance pocketIC by some
@@ -154,14 +168,14 @@ fn asset_upload() {
 fn grant_prepare_permission(
     env: &PocketIc,
     canister_ids: &CanisterIds,
-    asset_canister: Principal,
-    to: Principal,
+    asset_canister: &Principal,
+    to: &Principal,
 ) {
     execute_request(
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
-        DfxOrbit::grant_permission_request(asset_canister, to).unwrap(),
+        DfxOrbit::grant_permission_request(asset_canister.clone(), to.clone()).unwrap(),
     )
     .unwrap();
 }

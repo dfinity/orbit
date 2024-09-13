@@ -9,7 +9,7 @@ use station_api::{GetRequestResponse, RequestOperationDTO, RequestOperationInput
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetArgs {
     #[clap(subcommand)]
-    pub(crate) action: RequestAssetActionArgs,
+    pub action: RequestAssetActionArgs,
 }
 
 #[derive(Debug, Clone, Subcommand)]
