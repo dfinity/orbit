@@ -60,7 +60,7 @@ pub fn setup_new_env() -> TestEnv {
 
 pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
     let path = env::var_os("POCKET_IC_BIN")
-        .expect("POCKET_IC_BIN is not set")
+        .expect("The environment variable POCKET_IC_BIN containing the absolute path to the PocketIC binary is not set")
         .clone()
         .into_string()
         .expect("Invalid string path");
@@ -69,7 +69,7 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
         println!("
         Could not find the PocketIC binary to run canister integration tests.
 
-        I looked for it at {:?}. You can specify another (static) path with the environment variable POCKET_IC_BIN.
+        I looked for it at {:?}. You can specify another absolute path with the environment variable POCKET_IC_BIN.
 
         Running the testing script will automatically set the POCKET_IC_BIN environment variable:
             ./scripts/run-integration-tests.sh
