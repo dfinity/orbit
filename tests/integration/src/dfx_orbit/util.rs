@@ -82,3 +82,23 @@ pub(super) fn permit_list_reads(env: &PocketIc, canister_ids: &CanisterIds) {
     });
     execute_request(env, WALLET_ADMIN_USER, canister_ids.station, add_permission).unwrap();
 }
+
+pub(super) fn set_auto_approve(env: &PocketIc, canister_ids: &CanisterIds) {
+    let add_request_policy =
+        RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
+            specifier: RequestSpecifierDTO::CallExternalCanister(
+                CallExternalCanisterResourceTargetDTO {
+                    validation_method: ValidationMethodResourceTargetDTO::No,
+                    execution_method: ExecutionMethodResourceTargetDTO::Any,
+                },
+            ),
+            rule: RequestPolicyRuleDTO::AutoApproved,
+        });
+    execute_request(
+        env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        add_request_policy,
+    )
+    .unwrap();
+}

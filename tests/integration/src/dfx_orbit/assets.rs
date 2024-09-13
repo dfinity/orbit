@@ -1,21 +1,18 @@
 use super::{
     setup::{dfx_orbit_test, setup_dfx_user, DfxOrbitTestConfig},
-    util::permit_call_operation,
+    util::{permit_call_operation, set_auto_approve},
 };
 use crate::{
     dfx_orbit::{setup::setup_dfx_orbit, util::fetch_asset},
     setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER},
-    utils::execute_request,
+    utils::{add_user, execute_request, user_test_id},
     CanisterIds, TestEnv,
 };
+use candid::Principal;
 use dfx_orbit::DfxOrbit;
 use pocket_ic::PocketIc;
 use rand::{thread_rng, Rng};
-use station_api::{
-    AddRequestPolicyOperationInput, CallExternalCanisterResourceTargetDTO, CreateRequestInput,
-    ExecutionMethodResourceTargetDTO, GetRequestInput, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, ValidationMethodResourceTargetDTO,
-};
+use station_api::{CreateRequestInput, GetRequestInput};
 use std::{
     collections::BTreeMap,
     path::Path,
@@ -24,14 +21,12 @@ use std::{
 use tempfile::Builder;
 
 #[test]
-fn assets_upload() {
+fn asset_upload() {
     let TestEnv {
         mut env,
         canister_ids,
         ..
     } = setup_new_env();
-
-    let (dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
 
     // Install the assets canister under orbit control
     let asset_canister = create_canister(&mut env, canister_ids.station);
@@ -43,9 +38,15 @@ fn assets_upload() {
         Some(canister_ids.station),
     );
 
+    let (dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
+    let other_user = user_test_id(1);
+    add_user(&env, other_user, vec![], canister_ids.station);
+
     // As admin: Grant the user the call permission, set auto-approval for external calls
     permit_call_operation(&env, &canister_ids);
+    //set_four_eyes_on_call(&env, &canister_ids);
     set_auto_approve(&env, &canister_ids);
+    grant_prepare_permission(&env, &canister_ids, asset_canister, dfx_principal);
 
     // Setup a tmpdir, and store two assets in it
     // We generate the assets dyniamically, since we want to make sure we are not
@@ -78,27 +79,21 @@ fn assets_upload() {
     );
     let config = DfxOrbitTestConfig {
         asset_canisters,
+        canister_ids: vec![(String::from("test_asset_upload"), asset_canister.clone())],
         ..Default::default()
     };
+
+    // let request_args = RequestAssetUploadArgs {
+    //     canister: todo!(),
+    //     ignore_evidence: false,
+    //     files: todo!(),
+    // };
 
     dfx_orbit_test(&mut env, config, async {
         // Setup the station agent
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
-        // As dfx user: Request to have Prepare permission for asset_canister
-        let _response = dfx_orbit
-            .station
-            .request(CreateRequestInput {
-                operation: DfxOrbit::grant_permission_request(asset_canister, dfx_principal)
-                    .unwrap(),
-                title: None,
-                summary: None,
-                execution_plan: None,
-            })
-            .await
-            .unwrap();
-
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        //tokio::time::sleep(Duration::from_secs(1)).await;
 
         // Test that we can retreive the sources from `dfx.json`
         let sources = dfx_orbit.as_path_bufs("test_asset_upload", &[]).unwrap();
@@ -156,23 +151,30 @@ fn assets_upload() {
     });
 }
 
-/// Set four eyes principle for canister calls
-pub(crate) fn set_auto_approve(env: &PocketIc, canister_ids: &CanisterIds) {
-    let add_request_policy =
-        RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
-            specifier: RequestSpecifierDTO::CallExternalCanister(
-                CallExternalCanisterResourceTargetDTO {
-                    validation_method: ValidationMethodResourceTargetDTO::No,
-                    execution_method: ExecutionMethodResourceTargetDTO::Any,
-                },
-            ),
-            rule: RequestPolicyRuleDTO::AutoApproved,
-        });
+fn grant_prepare_permission(
+    env: &PocketIc,
+    canister_ids: &CanisterIds,
+    asset_canister: Principal,
+    to: Principal,
+) {
     execute_request(
-        env,
+        &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
-        add_request_policy,
+        DfxOrbit::grant_permission_request(asset_canister, to).unwrap(),
     )
     .unwrap();
 }
+
+// As dfx user: Request to have Prepare permission for asset_canister
+// let _response = dfx_orbit
+//     .station
+//     .request(CreateRequestInput {
+//         operation: DfxOrbit::grant_permission_request(asset_canister, dfx_principal)
+//             .unwrap(),
+//         title: None,
+//         summary: None,
+//         execution_plan: None,
+//     })
+//     .await
+//     .unwrap();

@@ -38,6 +38,11 @@ fn canister_call() {
     permit_call_operation(&env, &canister_ids);
     set_four_eyes_on_call(&env, &canister_ids);
 
+    let config = DfxOrbitTestConfig {
+        canister_ids: vec![(String::from("counter"), canister_id.clone())],
+        ..Default::default()
+    };
+
     let inner_args = RequestCanisterCallArgs {
         canister: String::from("counter"),
         method_name: String::from("set"),
@@ -45,11 +50,6 @@ fn canister_call() {
         arg_file: None,
         raw_arg: Some(String::from("2a000000")),
         with_cycles: None,
-    };
-
-    let config = DfxOrbitTestConfig {
-        canister_ids: vec![(String::from("counter"), canister_id.clone())],
-        ..Default::default()
     };
 
     let request = dfx_orbit_test(&mut env, config, async {

@@ -42,7 +42,7 @@ const IDENTITY_JSON: &str = "
 /// to allow testing more fine grained controls
 #[derive(Debug, Clone, Default)]
 pub(super) struct DfxOrbitTestConfig {
-    // TODO: Settable network name
+    // TODO: Set network name
     /// Sets the asset canisters to be defined in the dfx.json, maps name to list of paths
     pub(super) asset_canisters: BTreeMap<String, Vec<String>>,
     /// Mapping of canister names to their principal ids

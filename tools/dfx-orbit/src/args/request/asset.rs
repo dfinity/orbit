@@ -98,14 +98,14 @@ impl RequestAssetPreparePermissionArgs {
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetUploadArgs {
     /// The name of the asset canister targeted by this action
-    pub(crate) canister: String,
+    pub canister: String,
 
     /// Do not abort the upload, if the evidence does not match between local and remote calculation
     #[clap(long)]
-    pub(crate) ignore_evidence: bool,
+    pub ignore_evidence: bool,
 
     /// The source directories to upload (multiple values possible)
-    pub(crate) files: Vec<String>,
+    pub files: Vec<String>,
 }
 
 impl RequestAssetUploadArgs {
