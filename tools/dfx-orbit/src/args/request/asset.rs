@@ -85,9 +85,13 @@ impl RequestAssetPreparePermissionArgs {
             permission: Permission::Prepare,
         };
         let arg = candid::encode_one(args)?;
-        let computed_arg_checksum = hex::encode(Sha256::digest(arg).to_vec());
+        let computed_arg_checksum = hex::encode(Sha256::digest(arg));
 
-        todo!()
+        if operation.arg_checksum != Some(computed_arg_checksum) {
+            bail!("Argument checksum does not match");
+        }
+
+        Ok(())
     }
 }
 

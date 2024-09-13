@@ -1,4 +1,4 @@
-use crate::DfxOrbit;
+use crate::{args::request::asset::RequestAssetPreparePermissionArgs, DfxOrbit};
 use candid::Nat;
 use clap::{Parser, Subcommand};
 use station_api::GetRequestResponse;
@@ -13,9 +13,10 @@ pub struct VerifyAssetArgs {
 #[derive(Debug, Clone, Subcommand)]
 #[clap(version, about, long_about = None)]
 pub enum VerifyAssetActionArgs {
-    // TODO: Verify Request Permission
     /// Upload assets to an asset canister
     Upload(VerifyAssetUploadArgs),
+    /// Request to grant this user Prepare permission for the asset canister
+    PreparePermission(RequestAssetPreparePermissionArgs),
 }
 
 impl VerifyAssetArgs {
@@ -26,6 +27,7 @@ impl VerifyAssetArgs {
     ) -> anyhow::Result<()> {
         match &self.action {
             VerifyAssetActionArgs::Upload(args) => args.verify(dfx_orbit, request).await?,
+            VerifyAssetActionArgs::PreparePermission(args) => args.verify(dfx_orbit, request)?,
         }
 
         Ok(())
