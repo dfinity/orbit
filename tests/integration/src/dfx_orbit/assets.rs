@@ -1,6 +1,6 @@
 use super::{
     setup::{dfx_orbit_test, setup_dfx_user, DfxOrbitTestConfig},
-    util::{permit_call_operation, set_auto_approve},
+    util::{permit_call_operation, set_auto_approve, set_four_eyes_on_call},
 };
 use crate::{
     dfx_orbit::{setup::setup_dfx_orbit, util::fetch_asset},
@@ -8,22 +8,31 @@ use crate::{
     utils::{add_user, execute_request, user_test_id},
     CanisterIds, TestEnv,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use dfx_orbit::{
-    args::request::{
-        asset::{RequestAssetActionArgs, RequestAssetArgs, RequestAssetUploadArgs},
-        RequestArgs, RequestArgsActions,
+    args::{
+        request::{
+            asset::{RequestAssetActionArgs, RequestAssetArgs, RequestAssetUploadArgs},
+            RequestArgs, RequestArgsActions,
+        },
+        verify::{
+            VerifyArgs, VerifyArgsAction, VerifyAssetActionArgs, VerifyAssetArgs,
+            VerifyAssetUploadArgs,
+        },
     },
     DfxOrbit,
 };
 use pocket_ic::PocketIc;
 use rand::{thread_rng, Rng};
+use station_api::GetRequestInput;
 use std::{
     collections::BTreeMap,
     path::PathBuf,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use tempfile::Builder;
+
+const ASSET_CANISTER_NAME: &str = "test_asset_upload";
 
 #[test]
 fn asset_upload() {
@@ -49,17 +58,17 @@ fn asset_upload() {
 
     let mut asset_canisters = BTreeMap::new();
     asset_canisters.insert(
-        String::from("test_asset_upload"),
+        ASSET_CANISTER_NAME.into(),
         vec![asset_dir.to_str().unwrap().to_string()],
     );
     let config = DfxOrbitTestConfig {
         asset_canisters,
-        canister_ids: vec![(String::from("test_asset_upload"), asset_canister.clone())],
+        canister_ids: vec![(ASSET_CANISTER_NAME.into(), asset_canister.clone())],
         ..Default::default()
     };
 
     let request_args = RequestAssetUploadArgs {
-        canister: String::from("test_asset_upload"),
+        canister: ASSET_CANISTER_NAME.into(),
         ignore_evidence: false,
         files: vec![],
     };
@@ -80,17 +89,6 @@ fn asset_upload() {
         .unwrap();
         let _ = dfx_orbit.station.request(request.clone()).await.unwrap();
 
-        // // Check whether the request passes the asset check
-        // let response = dfx_orbit
-        //     .station
-        //     .review_id(GetRequestInput {
-        //         request_id: response.request.id,
-        //     })
-        //     .await
-        //     .unwrap();
-        // DfxOrbit::check_evidence(&response, asset_canister, batch_id, hex::encode(evidence))
-        //     .unwrap();
-
         // NOTE: We need to wait until the certified state becomes available.
         // Since we are in live mode, we can not simply advance pocketIC by some
         // ticks, but actially need to wait.
@@ -105,13 +103,96 @@ fn asset_upload() {
     });
 }
 
+#[test]
+fn asset_validation() {
+    let TestEnv {
+        mut env,
+        canister_ids,
+        ..
+    } = setup_new_env();
+
+    let asset_canister = setup_asset_canister(&mut env, &canister_ids);
+
+    let (dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
+    let other_user = user_test_id(1);
+    add_user(&env, other_user, vec![], canister_ids.station);
+
+    // As admin: Grant the user the call and prepare permissions
+    permit_call_operation(&env, &canister_ids);
+    set_four_eyes_on_call(&env, &canister_ids);
+    grant_prepare_permission(&env, &canister_ids, &asset_canister, &dfx_principal);
+
+    let (asset_dir, _) = setup_assets();
+
+    let mut asset_canisters = BTreeMap::new();
+    asset_canisters.insert(
+        ASSET_CANISTER_NAME.into(),
+        vec![asset_dir.to_str().unwrap().to_string()],
+    );
+    let config = DfxOrbitTestConfig {
+        asset_canisters,
+        canister_ids: vec![(ASSET_CANISTER_NAME.into(), asset_canister.clone())],
+        ..Default::default()
+    };
+
+    let request_args = RequestAssetUploadArgs {
+        canister: ASSET_CANISTER_NAME.into(),
+        ignore_evidence: false,
+        files: vec![],
+    };
+
+    let verify_args = VerifyAssetUploadArgs {
+        canister: ASSET_CANISTER_NAME.into(),
+        batch_id: Nat::from(1u64),
+        files: vec![],
+    };
+
+    dfx_orbit_test(&mut env, config, async {
+        // Setup the station agent
+        let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
+
+        let request = RequestArgs {
+            title: None,
+            summary: None,
+            action: RequestArgsActions::Asset(RequestAssetArgs {
+                action: RequestAssetActionArgs::Upload(request_args),
+            }),
+        }
+        .into_request(&dfx_orbit)
+        .await
+        .unwrap();
+        let request = dfx_orbit.station.request(request.clone()).await.unwrap();
+
+        // Check that the request verifies
+        let req_response = dfx_orbit
+            .station
+            .review_id(GetRequestInput {
+                request_id: request.request.id.clone(),
+            })
+            .await
+            .unwrap();
+        VerifyArgs {
+            request_id: request.request.id,
+            and_approve: false,
+            or_reject: false,
+            action: VerifyArgsAction::Asset(VerifyAssetArgs {
+                action: VerifyAssetActionArgs::Upload(verify_args),
+            }),
+        }
+        .verify(&dfx_orbit, &req_response)
+        .await
+        .unwrap();
+    });
+}
+
+/// Setup a tmpdir, and store assets in it
+///
+/// We generate the assets dyniamically, since we want to make sure we are not
+/// fetching old assets
+/// NOTE: Currently, the local asset computation skips hidden files while the
+/// remote version does not. This creates an issue if we just used tempdir(), as that
+/// uses `.` prefix.
 fn setup_assets() -> (PathBuf, BTreeMap<String, String>) {
-    // Setup a tmpdir, and store two assets in it
-    // We generate the assets dyniamically, since we want to make sure we are not
-    // fetching old assets
-    // NOTE: Currently, the local asset computation skips hidden files while the
-    // remote version does not. This creates an issue if we just used tempdir(), as that
-    // uses `.` prefix.
     let asset_dir = Builder::new().prefix("asset").tempdir().unwrap();
     let mut assets = BTreeMap::new();
 
@@ -168,16 +249,3 @@ fn grant_prepare_permission(
     )
     .unwrap();
 }
-
-// As dfx user: Request to have Prepare permission for asset_canister
-// let _response = dfx_orbit
-//     .station
-//     .request(CreateRequestInput {
-//         operation: DfxOrbit::grant_permission_request(asset_canister, dfx_principal)
-//             .unwrap(),
-//         title: None,
-//         summary: None,
-//         execution_plan: None,
-//     })
-//     .await
-//     .unwrap();
