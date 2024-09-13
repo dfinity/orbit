@@ -10,8 +10,10 @@ use station_api::{
 use crate::{
     dfx_orbit::{
         canister_call::{permit_call_operation, set_four_eyes_on_call},
-        dfx_orbit_test, setup_counter_canister, setup_dfx_orbit, DfxOrbitTestConfig,
-        TEST_PRINCIPAL,
+        setup::{
+            dfx_orbit_test, setup_counter_canister, setup_dfx_orbit, DfxOrbitTestConfig,
+            TEST_PRINCIPAL,
+        },
     },
     setup::{setup_new_env, WALLET_ADMIN_USER},
     utils::{

@@ -1,9 +1,6 @@
-use super::DfxOrbitTestConfig;
+use super::setup::{dfx_orbit_test, setup_dfx_user, DfxOrbitTestConfig};
 use crate::{
-    dfx_orbit::{
-        canister_call::permit_call_operation, dfx_orbit_test, fetch_asset, setup_dfx_orbit,
-        setup_dfx_user,
-    },
+    dfx_orbit::{canister_call::permit_call_operation, setup::setup_dfx_orbit, util::fetch_asset},
     setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER},
     utils::execute_request,
     CanisterIds, TestEnv,
