@@ -20,7 +20,7 @@ describe('CyclesInput', () => {
     });
     const displayInput = input.findComponent({ name: 'VTextField' });
 
-    expect(displayInput.props('modelValue')).toEqual(BigInt(1_000_000));
+    expect(displayInput.props('modelValue')).toEqual(1_000_000);
     expect(input.props('modelValue')).toEqual(BigInt(1_000_000));
   });
 
@@ -33,7 +33,7 @@ describe('CyclesInput', () => {
     });
     const displayInput = input.findComponent({ name: 'VTextField' });
 
-    expect(displayInput.props('modelValue')).toEqual(BigInt(1));
+    expect(displayInput.props('modelValue')).toEqual(1);
     expect(input.props('modelValue')).toEqual(BigInt(1_000_000));
   });
 
@@ -46,12 +46,15 @@ describe('CyclesInput', () => {
     });
     const displayInput = input.findComponent({ name: 'VTextField' });
 
-    expect(displayInput.props('modelValue')).toEqual(BigInt(1));
+    expect(displayInput.props('modelValue')).toEqual(1);
     expect(input.props('modelValue')).toEqual(BigInt(1_000_000_000));
 
-    await displayInput.setValue(BigInt(2));
+    await displayInput.setValue(2);
 
-    expect(displayInput.props('modelValue')).toEqual(BigInt(2));
-    expect(input.emitted('update:modelValue')).toEqual([[BigInt(2_000_000_000)]]);
+    expect(displayInput.props('modelValue')).toEqual(2);
+    expect(input.emitted('update:modelValue')).toEqual([
+      [BigInt(2_000_000_000)],
+      [BigInt(2_000_000_000)],
+    ]);
   });
 });
