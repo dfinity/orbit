@@ -244,18 +244,12 @@
                             v-if="
                               toCyclesUnit(
                                 canisterDetails.status.value.cycles,
-                                CyclesUnit.Billion,
-                              ) !== BigInt(0)
+                                CyclesUnit.Trillion,
+                              ) !== 0
                             "
                           >
                             {{
-                              formatBalance(
-                                toCyclesUnit(
-                                  canisterDetails.status.value.cycles,
-                                  CyclesUnit.Billion,
-                                ),
-                                3,
-                              )
+                              toCyclesUnit(canisterDetails.status.value.cycles, CyclesUnit.Trillion)
                             }}
                             {{ $t('cycles.units.tc') }}
                           </template>
@@ -334,7 +328,7 @@ import { Privilege } from '~/types/auth.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
 import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
-import { fetchCanisterModuleHash, formatBalance } from '~/utils/helper.utils';
+import { fetchCanisterModuleHash } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,

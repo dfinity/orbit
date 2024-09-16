@@ -603,6 +603,9 @@ export default {
       requiredIntNumber: 'Este campo deve conter um número inteiro.',
       intNumberRange: '{field} deve estar entre {min} e {max}.',
       validEmail: 'Este campo deve conter um email válido.',
+      requiredNumber: 'Este campo deve conter um número.',
+      numberRange: 'Este campo deve estar entre {min} e {max}.',
+      invalidDecimalPlaces: 'Este campo deve ter no máximo {decimals} casas decimais.',
     },
   },
   navigation: {

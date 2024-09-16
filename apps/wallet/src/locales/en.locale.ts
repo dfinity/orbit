@@ -601,6 +601,9 @@ export default {
       requiredIntNumber: 'This field must be a valid integer number.',
       intNumberRange: '{field} must be between {min} and {max}.',
       validEmail: 'This field must be a valid email address.',
+      requiredNumber: 'This field must be a valid number.',
+      numberRange: 'This field must be between {min} and {max}.',
+      invalidDecimalPlaces: 'This field must have a maximum of {decimals} decimal places.',
     },
   },
   navigation: {

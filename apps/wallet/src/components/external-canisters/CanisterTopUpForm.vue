@@ -16,7 +16,7 @@
             v-model="model.cycles"
             :label="$t('external_canisters.cycles')"
             name="cycles"
-            :unit="CyclesUnit.Billion"
+            :unit="CyclesUnit.Trillion"
             :readonly="props.readonly"
             required
             :hint="$t('external_canisters.top_up_hint')"
