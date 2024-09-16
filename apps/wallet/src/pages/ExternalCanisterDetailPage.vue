@@ -38,7 +38,6 @@
               <CanisterSetupDialog
                 v-model:open="dialogs.settings"
                 :canister-id="canister.canister_id"
-                :dialog-max-width="800"
               />
             </template>
             <VMenu v-if="privileges.can_change">
@@ -59,7 +58,10 @@
                     <div><VIcon :icon="mdiDatabase" size="x-small" /></div>
                   </VListItemTitle>
                 </VListItem>
-                <VListItem v-if="canisterDetails.status.value" @click="dialogs.icSettings = true">
+                <VListItem
+                  :disabled="!canisterDetails.status.value"
+                  @click="dialogs.icSettings = true"
+                >
                   <VListItemTitle class="d-flex flex-nowrap ga-2">
                     <div class="flex-grow-1">{{ $t('external_canisters.ic_settings') }}</div>
                     <div><VIcon :icon="mdiInfinity" size="x-small" /></div>
@@ -69,7 +71,7 @@
                 <VListItem @click="dialogs.unlink = true">
                   <VListItemTitle color="warning" class="d-flex flex-nowrap ga-2 text-error">
                     <div class="flex-grow-1">{{ $t('external_canisters.unlink') }}</div>
-                    <div><VIcon :icon="mdiDatabaseEyeOff" size="x-small" /></div>
+                    <div><VIcon :icon="mdiDatabaseOff" size="x-small" /></div>
                   </VListItemTitle>
                 </VListItem>
               </VList>
@@ -106,7 +108,7 @@
             </div>
           </template>
           <template v-if="privileges.can_call.length" #actions>
-            <VBtn size="default" color="primary">
+            <VBtn size="default" color="primary" @click="dialogs.call = true">
               {{ $t('external_canisters.perform_call') }}
             </VBtn>
           </template>
@@ -164,6 +166,18 @@
                     <VListItem class="pt-0 px-0">
                       <VListItemTitle class="font-weight-bold">
                         {{ $t(`external_canisters.module_hash`) }}
+                        <VBtn
+                          v-if="privileges.can_change"
+                          size="small"
+                          density="compact"
+                          color="default"
+                          variant="tonal"
+                          class="ml-1 px-2"
+                          :append-icon="mdiDatabaseCog"
+                          @click="dialogs.install = true"
+                        >
+                          {{ $t('external_canisters.install') }}
+                        </VBtn>
                       </VListItemTitle>
                       <VListItemSubtitle>
                         <VProgressCircular
@@ -195,16 +209,24 @@
                     <VListItem class="pt-0 px-0">
                       <VListItemTitle class="font-weight-bold">
                         {{ $t(`external_canisters.cycles`) }}
-                        <VBtn
-                          size="small"
-                          density="compact"
-                          color="default"
-                          variant="tonal"
-                          class="ml-1 px-2"
-                          :append-icon="mdiDatabaseArrowUp"
-                        >
-                          {{ $t('external_canisters.top_up') }}
-                        </VBtn>
+                        <template v-if="privileges.can_fund">
+                          <CanisterTopUpDialog
+                            v-model:open="dialogs.topUp"
+                            :canister-id="canister.canister_id"
+                          />
+
+                          <VBtn
+                            size="small"
+                            density="compact"
+                            color="default"
+                            variant="tonal"
+                            class="ml-1 px-2"
+                            :append-icon="mdiDatabaseArrowUp"
+                            @click="dialogs.topUp = true"
+                          >
+                            {{ $t('external_canisters.top_up') }}
+                          </VBtn>
+                        </template>
                       </VListItemTitle>
                       <VListItemSubtitle>
                         <VProgressCircular
@@ -222,18 +244,12 @@
                             v-if="
                               toCyclesUnit(
                                 canisterDetails.status.value.cycles,
-                                CyclesUnit.Billion,
-                              ) !== BigInt(0)
+                                CyclesUnit.Trillion,
+                              ) !== 0
                             "
                           >
                             {{
-                              formatBalance(
-                                toCyclesUnit(
-                                  canisterDetails.status.value.cycles,
-                                  CyclesUnit.Billion,
-                                ),
-                                3,
-                              )
+                              toCyclesUnit(canisterDetails.status.value.cycles, CyclesUnit.Trillion)
                             }}
                             {{ $t('cycles.units.tc') }}
                           </template>
@@ -261,7 +277,8 @@ import {
   mdiContentCopy,
   mdiDatabase,
   mdiDatabaseArrowUp,
-  mdiDatabaseEyeOff,
+  mdiDatabaseCog,
+  mdiDatabaseOff,
   mdiInfinity,
   mdiOpenInNew,
 } from '@mdi/js';
@@ -290,6 +307,7 @@ import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
 import BtnCanisterSetup from '~/components/external-canisters/BtnCanisterSetup.vue';
 import CanisterSetupDialog from '~/components/external-canisters/CanisterSetupDialog.vue';
+import CanisterTopUpDialog from '~/components/external-canisters/CanisterTopUpDialog.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
@@ -310,7 +328,7 @@ import { Privilege } from '~/types/auth.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
 import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
-import { fetchCanisterModuleHash, formatBalance } from '~/utils/helper.utils';
+import { fetchCanisterModuleHash } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,
@@ -343,7 +361,15 @@ const buildDefaultPrivileges = (): ExternalCanisterCallerPrivileges => ({
   can_call: [],
 });
 
-const dialogs = ref({ settings: false, unlink: false, icSettings: false });
+const dialogs = ref({
+  settings: false,
+  unlink: false,
+  icSettings: false,
+  install: false,
+  topUp: false,
+  call: false,
+});
+
 const privileges = ref<ExternalCanisterCallerPrivileges>(buildDefaultPrivileges());
 const loading = ref(false);
 const station = useStationStore();

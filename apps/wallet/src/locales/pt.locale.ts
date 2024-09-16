@@ -431,6 +431,9 @@ export default {
     module_hash: 'Hash do módulo',
     cycles: 'Ciclos',
     not_controller: 'Não é controlador',
+    install: 'Instalar',
+    send_cycles: 'Enviar ciclos',
+    top_up_hint: 'Ciclos a adicionar ao canister de destino.',
   },
   terms: {
     active: 'Ativo',
@@ -600,6 +603,9 @@ export default {
       requiredIntNumber: 'Este campo deve conter um número inteiro.',
       intNumberRange: '{field} deve estar entre {min} e {max}.',
       validEmail: 'Este campo deve conter um email válido.',
+      requiredNumber: 'Este campo deve conter um número.',
+      numberRange: 'Este campo deve estar entre {min} e {max}.',
+      invalidDecimalPlaces: 'Este campo deve ter no máximo {decimals} casas decimais.',
     },
   },
   navigation: {

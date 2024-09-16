@@ -322,6 +322,24 @@ export const parseToBigIntOrUndefined = (
   }
 };
 
+export const parseToNumberOrUndefined = (
+  value: string | number | null | undefined,
+): number | undefined => {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim() !== '' ? Number(value) : undefined;
+  }
+
+  return Number(value);
+};
+
 export async function fetchCanisterModuleHash(
   agent: HttpAgent,
   canisterId: Principal,

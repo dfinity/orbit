@@ -83,7 +83,7 @@
         v-else
         v-model="model.maybe_with_initial_cycles"
         name="initial_cycles"
-        :unit="CyclesUnit.Billion"
+        :unit="CyclesUnit.Trillion"
         :label="$t('external_canisters.initial_cycles')"
       />
     </VCol>

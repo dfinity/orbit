@@ -435,6 +435,9 @@ export default {
     module_hash: 'Module Hash',
     cycles: 'Cycles',
     not_controller: 'Pas de contrôleur',
+    install: 'Installer',
+    send_cycles: 'Envoyer des cycles',
+    top_up_hint: 'Montant de cycles à ajouter au canister cible.',
   },
   terms: {
     active: 'Actif',
@@ -604,6 +607,9 @@ export default {
       requiredIntNumber: 'Ce champ doit contenir un nombre entier valide.',
       intNumberRange: 'Le champ {field} doit contenir une valeur valide entre {min} et {max}.',
       validEmail: 'Ce champ doit contenir une adresse email valide.',
+      requiredNumber: 'Ce champ doit contenir un nombre valide.',
+      numberRange: 'Le champ doit contenir une valeur valide entre {min} et {max}.',
+      invalidDecimalPlaces: 'Ce champ doit contenir un maximum de {decimals} décimales.',
     },
   },
   navigation: {
