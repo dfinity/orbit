@@ -29,6 +29,17 @@
       :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
     />
+    <VCheckbox
+      v-if="
+        (userWasActive && status === UserStatusType.Inactive) ||
+        model.cancelPendingRequests !== undefined
+      "
+      v-model="model.cancelPendingRequests"
+      :label="$t('app.user_cancel_pending_requests')"
+      density="comfortable"
+      :variant="isViewMode ? 'plain' : 'filled'"
+      :disabled="isViewMode"
+    />
     <UserGroupAutocomplete
       v-model="userGroups"
       name="groups"
@@ -125,11 +136,20 @@ import { VFormValidation } from '~/types/helper.types';
 import { UserStatusType } from '~/types/station.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 import AddPrincipalForm from './AddPrincipalForm.vue';
-import { VAlert, VAutocomplete, VBtn, VForm, VSpacer, VTextField } from 'vuetify/components';
+import {
+  VAlert,
+  VAutocomplete,
+  VBtn,
+  VCheckbox,
+  VForm,
+  VSpacer,
+  VTextField,
+} from 'vuetify/components';
+import { variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(
   defineProps<{
-    modelValue: Partial<User>;
+    modelValue: Partial<User & { cancelPendingRequests?: boolean }>;
     valid?: boolean;
     triggerSubmit?: boolean;
     mode?: 'view' | 'edit';
@@ -148,6 +168,9 @@ const emit = defineEmits<{
   (event: 'submit', payload: Partial<User>): void;
 }>();
 
+const userWasActive = ref(
+  props.modelValue.status ? variantIs(props.modelValue.status, 'Active') : false,
+);
 const i18n = useI18n();
 const app = useAppStore();
 const form = ref<VFormValidation | null>(null);

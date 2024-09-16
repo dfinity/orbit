@@ -97,6 +97,7 @@ export default {
     no_data: 'No data available.',
     no_matching_results: 'No matching results found for `{search}`.',
     add_new_label: 'Add new label: {label}',
+    user_cancel_pending_requests: 'Cancel all pending requests from this user.',
   },
   alpha_warning: {
     version: 'This is an alpha version.',
