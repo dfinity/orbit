@@ -1,6 +1,7 @@
 use crate::{
     core::{
         authorization::Authorization,
+        ic_cdk::next_time,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext,
     },
@@ -8,10 +9,12 @@ use crate::{
     mappers::{authorization::USER_PRIVILEGES, HelperMapper, UserMapper},
     models::{
         resource::{Resource, ResourceId, UserResourceAction},
-        AddUserOperationInput, EditUserOperationInput, User, UserCallerPrivileges, UserGroupId,
-        UserId, UserStatus, ADMIN_GROUP_ID,
+        AddUserOperationInput, EditUserOperationInput, RequestStatus, RequestStatusCode, User,
+        UserCallerPrivileges, UserGroupId, UserId, UserStatus, ADMIN_GROUP_ID,
     },
-    repositories::{UserRepository, UserWhereClause},
+    repositories::{
+        RequestRepository, UserRepository, UserWhereClause, REQUEST_REPOSITORY, USER_REPOSITORY,
+    },
 };
 use candid::Principal;
 use lazy_static::lazy_static;
@@ -23,21 +26,30 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 lazy_static! {
-    pub static ref USER_SERVICE: Arc<UserService> =
-        Arc::new(UserService::new(UserRepository::default()));
+    pub static ref USER_SERVICE: Arc<UserService> = Arc::new(UserService::new(
+        Arc::clone(&REQUEST_REPOSITORY),
+        Arc::clone(&USER_REPOSITORY)
+    ));
 }
 
 #[derive(Default, Debug)]
 pub struct UserService {
-    user_repository: UserRepository,
+    request_repository: Arc<RequestRepository>,
+    user_repository: Arc<UserRepository>,
 }
 
 impl UserService {
     pub const DEFAULT_USER_LIST_LIMIT: u16 = 100;
     pub const MAX_USER_LIST_LIMIT: u16 = 1000;
 
-    pub fn new(user_repository: UserRepository) -> Self {
-        Self { user_repository }
+    pub fn new(
+        request_repository: Arc<RequestRepository>,
+        user_repository: Arc<UserRepository>,
+    ) -> Self {
+        Self {
+            request_repository,
+            user_repository,
+        }
     }
 
     /// Returns the user associated with the given user id.
@@ -129,10 +141,31 @@ impl UserService {
             self.assert_name_has_no_associated_user(name, Some(user.id))?;
         }
 
+        let cancel_pending_requests = input.cancel_pending_requests;
+
         user.update_with(input)?;
         user.validate()?;
 
         self.user_repository.insert(user.to_key(), user.to_owned());
+
+        if let Some(true) = cancel_pending_requests {
+            let pending_requests: Vec<_> = self
+                .request_repository
+                .find_by_status(RequestStatusCode::Created, None, None)
+                .into_iter()
+                .filter(|r| r.requested_by == user.id)
+                .collect();
+            for request in pending_requests {
+                assert_eq!(request.status, RequestStatus::Created);
+                self.request_repository
+                    .cancel_request(
+                        request,
+                        "The request has been cancelled by an `EditUserOperation`.".to_string(),
+                        next_time(),
+                    )
+                    .await;
+            }
+        }
 
         Ok(user)
     }
@@ -461,6 +494,7 @@ mod tests {
             identities: None,
             groups: None,
             status: None,
+            cancel_pending_requests: None,
         };
 
         let result = USER_SERVICE.edit_user(input).await;
@@ -487,6 +521,7 @@ mod tests {
             groups: None,
             name: None,
             status: None,
+            cancel_pending_requests: None,
         };
 
         let result = ctx.service.edit_user(input).await;
@@ -512,6 +547,7 @@ mod tests {
             groups: None,
             name: None,
             status: None,
+            cancel_pending_requests: None,
         };
 
         let result = USER_SERVICE.edit_user(input).await;

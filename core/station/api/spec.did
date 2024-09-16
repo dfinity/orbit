@@ -501,6 +501,8 @@ type EditUserOperationInput = record {
   groups : opt vec UUID;
   // The status of the user (e.g. `Active`).
   status : opt UserStatus;
+  // Cancel all pending (request status `Created`) requests for this user.
+  cancel_pending_requests : opt bool;
 };
 
 type EditUserOperation = record {

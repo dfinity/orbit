@@ -213,6 +213,7 @@ pub struct EditUserOperationInput {
     pub identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<UUID>>,
     pub status: Option<UserStatus>,
+    pub cancel_pending_requests: Option<bool>,
 }
 
 #[storable]
