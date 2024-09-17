@@ -18,10 +18,10 @@ base64 = { workspace = true }
 candid = { workspace = true }
 convert_case = { workspace = true }
 getrandom = { workspace = true, features = ['custom'] }
+ic-asset-certification = { workspace = true }
 ic-cdk = { workspace = true }
 ic-certification = { workspace = true }
 ic-http-certification = { workspace = true }
-ic-representation-independent-hash = { workspace = true }
 ic-stable-structures = { workspace = true }
 orbit-essentials-macros = { path = '../orbit-essentials-macros', version = '0.0.2-alpha.3' }
 prometheus = { workspace = true }
