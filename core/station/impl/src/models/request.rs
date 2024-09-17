@@ -647,6 +647,7 @@ mod tests {
                     name: None,
                     identities: None,
                     status: None,
+                    cancel_pending_requests: None,
                 },
             },
         ))

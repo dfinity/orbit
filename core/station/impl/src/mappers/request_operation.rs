@@ -270,6 +270,7 @@ impl From<EditUserOperation> for EditUserOperationDTO {
                         .collect()
                 }),
                 status: operation.input.status.map(|status| status.into()),
+                cancel_pending_requests: operation.input.cancel_pending_requests,
             },
         }
     }
@@ -313,6 +314,7 @@ impl From<station_api::EditUserOperationInput> for EditUserOperationInput {
                     .collect()
             }),
             status: input.status.map(|status| status.into()),
+            cancel_pending_requests: input.cancel_pending_requests,
         }
     }
 }

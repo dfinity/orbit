@@ -15,7 +15,8 @@ use crate::{
             request_index::RequestIndexFields, request_resource_index::RequestResourceIndexCriteria,
         },
         resource::Resource,
-        ListRequestsOperationType, Request, RequestId, RequestKey, RequestStatusCode,
+        ListRequestsOperationType, Request, RequestId, RequestKey, RequestStatus,
+        RequestStatusCode,
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -385,6 +386,19 @@ impl RequestRepository {
         });
 
         Ok(entries.into_iter().map(|(id, _)| id).collect())
+    }
+
+    pub fn cancel_request(
+        &self,
+        mut request: Request,
+        reason: String,
+        request_cancellation_time: u64,
+    ) {
+        request.status = RequestStatus::Cancelled {
+            reason: Some(reason),
+        };
+        request.last_modification_timestamp = request_cancellation_time;
+        self.insert(request.to_key(), request.to_owned());
     }
 
     #[cfg(test)]
