@@ -6,7 +6,6 @@
     transition="dialog-bottom-transition"
     scrollable
     :max-width="props.dialogMaxWidth"
-    target=""
   >
     <VCard data-test-id="canister-top-up-card">
       <VToolbar color="background">

@@ -6,7 +6,6 @@
     transition="dialog-bottom-transition"
     scrollable
     :max-width="props.dialogMaxWidth"
-    target=""
   >
     <VCard data-test-id="canister-unlink-card">
       <VToolbar color="background">
@@ -51,6 +50,7 @@ import { Principal } from '@dfinity/principal';
 import { mdiClose } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import {
   VBtn,
   VCard,
@@ -67,8 +67,10 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
+import { Routes } from '~/configs/routes.config';
 import logger from '~/core/logger.core';
 import { useStationStore } from '~/stores/station.store';
+import { variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -93,12 +95,17 @@ const props = withDefaults(
      * The title of the dialog, if not provided, it will default to the locale key of `external_canisters.unlink_title`.
      */
     title?: string;
+    /**
+     * Redirect when unlink is successful.
+     */
+    redirect?: boolean;
   }>(),
   {
     open: false,
     softDelete: true,
     dialogMaxWidth: 800,
     title: undefined,
+    redirect: true,
   },
 );
 
@@ -108,6 +115,7 @@ const submitting = ref(false);
 const canClose = computed(() => !submitting.value);
 const dialogTitle = computed(() => props.title || i18n.t('external_canisters.unlink_title'));
 const softDelete = ref(props.softDelete);
+const router = useRouter();
 
 const emit = defineEmits<{
   (event: 'update:open', payload: boolean): void;
@@ -130,6 +138,11 @@ const submit = async (): Promise<void> => {
     useOnSuccessfulOperation(request);
 
     open.value = false;
+
+    // Redirect to the external canisters page if the request is marked as approved directly.
+    if (props.redirect && variantIs(request.status, 'Approved')) {
+      await router.push({ name: Routes.ExternalCanisters });
+    }
   } catch (error) {
     logger.error('Failed to submit unlink canister request', error);
 
