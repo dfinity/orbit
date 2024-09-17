@@ -10,6 +10,7 @@ import {
   AddUserOperationInput,
   CanisterStatusResult,
   Capabilities,
+  ConfigureExternalCanisterOperationKind,
   ConfigureExternalCanisterSettingsInput,
   CreateExternalCanisterOperationInput,
   CreateRequestInput,
@@ -571,6 +572,34 @@ export class StationService {
       summary: [],
       operation: {
         FundExternalCanister: input,
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async unlinkExternalCanister(input: {
+    canisterId: Principal;
+    softDelete?: boolean;
+  }): Promise<Request> {
+    const shouldSoftDelete = input.softDelete ?? true;
+    const operationKind: ConfigureExternalCanisterOperationKind = shouldSoftDelete
+      ? { SoftDelete: null }
+      : { Delete: null };
+
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        ConfigureExternalCanister: {
+          canister_id: input.canisterId,
+          kind: operationKind,
+        },
       },
     });
 

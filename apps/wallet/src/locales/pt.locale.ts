@@ -428,6 +428,8 @@ export default {
     top_up: 'Recarregar',
     configuration: 'Configuração',
     unlink: 'Dessaociar',
+    unlink_title: 'Desassociar Canister',
+    unlink_soft_delete: 'Mantém o canister no Internet Computer, apenas remove a sua referência.',
     perform_call: 'Realizar chamada',
     module_hash: 'Hash do módulo',
     cycles: 'Ciclos',

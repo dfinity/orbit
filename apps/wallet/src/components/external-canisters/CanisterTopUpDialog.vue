@@ -6,7 +6,6 @@
     transition="dialog-bottom-transition"
     scrollable
     :max-width="props.dialogMaxWidth"
-    target=""
   >
     <VCard data-test-id="canister-top-up-card">
       <VToolbar color="background">
@@ -129,6 +128,8 @@ const submit = async (input: CanisterTopUpModel) => {
     });
 
     useOnSuccessfulOperation(request);
+
+    open.value = false;
   } catch (error) {
     logger.error('Failed to submit fund request', error);
 

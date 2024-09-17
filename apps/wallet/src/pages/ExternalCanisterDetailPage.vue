@@ -39,6 +39,10 @@
                 v-model:open="dialogs.settings"
                 :canister-id="canister.canister_id"
               />
+              <CanisterUnlinkDialog
+                v-model:open="dialogs.unlink"
+                :canister-id="canister.canister_id"
+              />
             </template>
             <VMenu v-if="privileges.can_change">
               <template #activator="{ props: menuProps }">
@@ -308,6 +312,7 @@ import TextOverflow from '~/components/TextOverflow.vue';
 import BtnCanisterSetup from '~/components/external-canisters/BtnCanisterSetup.vue';
 import CanisterSetupDialog from '~/components/external-canisters/CanisterSetupDialog.vue';
 import CanisterTopUpDialog from '~/components/external-canisters/CanisterTopUpDialog.vue';
+import CanisterUnlinkDialog from '~/components/external-canisters/CanisterUnlinkDialog.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
