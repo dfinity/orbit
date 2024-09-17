@@ -8,7 +8,7 @@
     :max-width="props.dialogMaxWidth"
     target=""
   >
-    <VCard data-test-id="canister-top-up-card">
+    <VCard data-test-id="canister-unlink-card">
       <VToolbar color="background">
         <VToolbarTitle>
           {{ dialogTitle }}
@@ -18,26 +18,29 @@
       <VDivider />
 
       <VCardText>
-        <CanisterTopUpForm
-          v-model="topUpModel"
-          v-model:trigger-submit="triggerFormSubmit"
-          :display="{ canisterId: props.canisterId === undefined }"
-          @submit="submit"
-          @valid="valid = $event"
+        {{ $t('app.dialog_confirmation_question') }}
+
+        <VSwitch
+          v-model="softDelete"
+          class="my-4"
+          name="soft_delete"
+          :label="$t('external_canisters.unlink_soft_delete')"
+          hide-details
+          inset
+          color="success"
         />
       </VCardText>
       <VDivider />
       <VCardActions class="pa-3">
         <VSpacer />
         <VBtn
-          :disabled="!canSave"
           :loading="submitting"
           color="primary"
           variant="elevated"
-          data-test-id="canister-top-up-save-button"
-          @click="triggerFormSubmit = true"
+          data-test-id="canister-unlink-save-button"
+          @click="submit"
         >
-          {{ $t('external_canisters.send_cycles') }}
+          {{ $t('external_canisters.unlink') }}
         </VBtn>
       </VCardActions>
     </VCard>
@@ -46,7 +49,7 @@
 <script lang="ts" setup>
 import { Principal } from '@dfinity/principal';
 import { mdiClose } from '@mdi/js';
-import { Ref, computed, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   VBtn,
@@ -56,6 +59,7 @@ import {
   VDialog,
   VDivider,
   VSpacer,
+  VSwitch,
   VToolbar,
   VToolbarTitle,
 } from 'vuetify/components';
@@ -65,74 +69,69 @@ import {
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
 import { useStationStore } from '~/stores/station.store';
-import { assertAndReturn } from '~/utils/helper.utils';
-import CanisterTopUpForm from './CanisterTopUpForm.vue';
-import { CanisterTopUpModel } from './external-canisters.types';
 
 const props = withDefaults(
   defineProps<{
+    /**
+     * Whether the dialog is open or not.
+     */
     open?: boolean;
-    canisterId?: Principal;
+    /**
+     * The canister ID to target the unlink operation.
+     */
+    canisterId: Principal;
+    /**
+     * Wether or not to also delete the canister from the Internet Computer Subnet, or just delete the local reference
+     * to it in the Orbit Station.
+     */
+    softDelete?: boolean;
+    /**
+     * The maximum width of the dialog.
+     */
     dialogMaxWidth?: number;
+    /**
+     * The title of the dialog, if not provided, it will default to the locale key of `external_canisters.unlink_title`.
+     */
     title?: string;
   }>(),
   {
     open: false,
-    canisterId: undefined,
+    softDelete: true,
     dialogMaxWidth: 800,
     title: undefined,
   },
 );
 
+const i18n = useI18n();
+const station = useStationStore();
+const submitting = ref(false);
+const canClose = computed(() => !submitting.value);
+const dialogTitle = computed(() => props.title || i18n.t('external_canisters.unlink_title'));
+const softDelete = ref(props.softDelete);
+
 const emit = defineEmits<{
   (event: 'update:open', payload: boolean): void;
 }>();
 
-const i18n = useI18n();
-const valid = ref(true);
-const station = useStationStore();
-const submitting = ref(false);
-const canClose = computed(() => !submitting.value);
-const dialogTitle = computed(() => props.title || i18n.t('external_canisters.top_up'));
-
-const buildModel = (): CanisterTopUpModel => ({
-  canisterId: props.canisterId,
-  cycles: undefined,
-});
-
 const open = computed({
   get: () => props.open,
-  set: value => {
-    if (!value) {
-      topUpModel.value = buildModel();
-    }
-
-    emit('update:open', value);
-  },
+  set: value => emit('update:open', value),
 });
 
-const triggerFormSubmit = ref(false);
-const canSave = computed(() => valid.value);
-const topUpModel = ref(buildModel()) as Ref<CanisterTopUpModel>;
-
-const submit = async (input: CanisterTopUpModel) => {
+const submit = async (): Promise<void> => {
   try {
     submitting.value = true;
 
-    const request = await station.service.fundExternalCanister({
-      canister_id: assertAndReturn(input.canisterId, 'canisterId'),
-      kind: {
-        Send: {
-          cycles: assertAndReturn(input.cycles, 'cycles'),
-        },
-      },
+    const request = await station.service.unlinkExternalCanister({
+      canisterId: props.canisterId,
+      softDelete: softDelete.value,
     });
 
     useOnSuccessfulOperation(request);
 
     open.value = false;
   } catch (error) {
-    logger.error('Failed to submit fund request', error);
+    logger.error('Failed to submit unlink canister request', error);
 
     useOnFailedOperation();
   } finally {

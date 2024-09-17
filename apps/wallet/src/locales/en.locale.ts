@@ -425,6 +425,8 @@ export default {
     top_up: 'Top Up',
     configuration: 'Configuration',
     unlink: 'Unlink',
+    unlink_title: 'Unlink Canister',
+    unlink_soft_delete: "Keep the canister on the Intenret Computer, only removes it's reference.",
     perform_call: 'Call',
     module_hash: 'Module Hash',
     cycles: 'Cycles',

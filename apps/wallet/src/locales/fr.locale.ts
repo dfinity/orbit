@@ -432,6 +432,8 @@ export default {
     top_up: 'Recharger',
     configuration: 'Configuration',
     unlink: 'Dissocier',
+    unlink_title: 'Dissocier le Canister',
+    unlink_soft_delete: 'Gardez le canister sur l ordinateur, supprime seulement sa référence.',
     perform_call: 'Effectuer un appel',
     module_hash: 'Module Hash',
     cycles: 'Cycles',
