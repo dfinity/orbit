@@ -29,9 +29,11 @@ impl Job {
         );
 
         for request in requests.into_iter() {
-            self.request_repository
-                .cancel_request(request, "The request has expired".to_string(), next_time())
-                .await;
+            self.request_repository.cancel_request(
+                request,
+                "The request has expired".to_string(),
+                next_time(),
+            );
         }
 
         true

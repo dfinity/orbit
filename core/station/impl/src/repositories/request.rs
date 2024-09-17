@@ -388,7 +388,7 @@ impl RequestRepository {
         Ok(entries.into_iter().map(|(id, _)| id).collect())
     }
 
-    pub async fn cancel_request(
+    pub fn cancel_request(
         &self,
         mut request: Request,
         reason: String,

@@ -157,13 +157,11 @@ impl UserService {
                 .collect();
             for request in pending_requests {
                 assert_eq!(request.status, RequestStatus::Created);
-                self.request_repository
-                    .cancel_request(
-                        request,
-                        "The request has been cancelled by an `EditUserOperation`.".to_string(),
-                        next_time(),
-                    )
-                    .await;
+                self.request_repository.cancel_request(
+                    request,
+                    "The request has been cancelled by an `EditUserOperation`.".to_string(),
+                    next_time(),
+                );
             }
         }
 
