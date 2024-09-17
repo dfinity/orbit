@@ -131,6 +131,7 @@ jobs:
           path: tests/integration/wasms
       - name: Run integration tests
         run: |
+          export TEST_THREADS=4
           ./scripts/run-integration-tests.sh 2> logs.txt
           grep "rng succesfully initialized" logs.txt
           ! grep "canister reports healthy already before its initialization has finished" logs.txt
