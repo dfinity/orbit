@@ -426,7 +426,7 @@ export default {
     configuration: 'Configuration',
     unlink: 'Unlink',
     unlink_title: 'Unlink Canister',
-    unlink_soft_delete: "Keep the canister on the Intenret Computer, only removes it's reference.",
+    unlink_soft_delete: "Keep the canister on the Internet Computer, only remove its reference.",
     perform_call: 'Call',
     module_hash: 'Module Hash',
     cycles: 'Cycles',
