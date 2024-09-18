@@ -67,16 +67,15 @@ fn asset_upload() {
         ..Default::default()
     };
 
-    let request_args = RequestAssetUploadArgs {
-        canister: ASSET_CANISTER_NAME.into(),
-        ignore_evidence: false,
-        files: vec![],
-    };
-
     dfx_orbit_test(&mut env, config, async {
         // Setup the station agent
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
 
+        let request_args = RequestAssetUploadArgs {
+            canister: ASSET_CANISTER_NAME.into(),
+            ignore_evidence: false,
+            files: vec![],
+        };
         let request = RequestArgs {
             title: None,
             summary: None,
@@ -135,21 +134,15 @@ fn asset_validation() {
         ..Default::default()
     };
 
-    let request_args = RequestAssetUploadArgs {
-        canister: ASSET_CANISTER_NAME.into(),
-        ignore_evidence: false,
-        files: vec![],
-    };
-
-    let verify_args = VerifyAssetUploadArgs {
-        canister: ASSET_CANISTER_NAME.into(),
-        batch_id: Nat::from(1u64),
-        files: vec![],
-    };
-
     dfx_orbit_test(&mut env, config, async {
         // Setup the station agent
         let dfx_orbit = setup_dfx_orbit(canister_ids.station).await;
+
+        let request_args = RequestAssetUploadArgs {
+            canister: ASSET_CANISTER_NAME.into(),
+            ignore_evidence: false,
+            files: vec![],
+        };
 
         let request = RequestArgs {
             title: None,
@@ -164,6 +157,11 @@ fn asset_validation() {
         let request = dfx_orbit.station.request(request.clone()).await.unwrap();
 
         // Check that the request verifies
+        let verify_args = VerifyAssetUploadArgs {
+            canister: ASSET_CANISTER_NAME.into(),
+            batch_id: Nat::from(1u64),
+            files: vec![],
+        };
         let req_response = dfx_orbit
             .station
             .review_id(GetRequestInput {
@@ -245,7 +243,7 @@ fn grant_prepare_permission(
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
-        DfxOrbit::grant_permission_request(asset_canister.clone(), to.clone()).unwrap(),
+        DfxOrbit::grant_prepare_permission_request(asset_canister.clone(), to.clone()).unwrap(),
     )
     .unwrap();
 }
