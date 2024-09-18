@@ -2,13 +2,13 @@ use crate::DfxOrbit;
 use anyhow::bail;
 use candid::Principal;
 use dfx_core::config::model::dfinity::CanisterTypeProperties;
-use ic_certified_assets::types::{GrantPermissionArguments, Permission};
+use ic_certified_assets::types::{GrantPermissionArguments, Permission, RevokePermissionArguments};
 use station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput};
 use std::path::{Path, PathBuf};
 
 // TODO: Move this into the into_request of the Arg
 impl DfxOrbit {
-    pub fn grant_permission_request(
+    pub fn grant_prepare_permission_request(
         asset_canister: Principal,
         to_principal: Principal,
     ) -> anyhow::Result<RequestOperationInput> {
@@ -24,6 +24,29 @@ impl DfxOrbit {
                 execution_method: CanisterMethodDTO {
                     canister_id: asset_canister,
                     method_name: String::from("grant_permission"),
+                },
+                arg: Some(arg),
+                execution_method_cycles: None,
+            },
+        ))
+    }
+
+    pub fn revoke_prepare_permissions_request(
+        asset_canister: Principal,
+        of_principal: Principal,
+    ) -> anyhow::Result<RequestOperationInput> {
+        let args = RevokePermissionArguments {
+            of_principal,
+            permission: Permission::Prepare,
+        };
+        let arg = candid::encode_one(args)?;
+
+        Ok(RequestOperationInput::CallExternalCanister(
+            CallExternalCanisterOperationInput {
+                validation_method: None,
+                execution_method: CanisterMethodDTO {
+                    canister_id: asset_canister,
+                    method_name: String::from("revoke_permission"),
                 },
                 arg: Some(arg),
                 execution_method_cycles: None,

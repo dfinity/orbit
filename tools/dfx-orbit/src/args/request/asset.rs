@@ -33,13 +33,13 @@ impl RequestAssetArgs {
     }
 }
 
-// TODO: Verification call for this request
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetPreparePermissionArgs {
     /// The name of the asset canister targeted by this action
     pub canister: String,
     /// The principal to grant the prepare permission to (defaults to self)
     pub id: Option<Principal>,
+    // TODO: Ability to revoke
 }
 
 impl RequestAssetPreparePermissionArgs {
@@ -50,7 +50,7 @@ impl RequestAssetPreparePermissionArgs {
         let me = dfx_orbit.own_principal()?;
         let to_principal = self.id.unwrap_or(me);
         let asset_canister = dfx_orbit.canister_id(&self.canister)?;
-        DfxOrbit::grant_permission_request(asset_canister, to_principal)
+        DfxOrbit::grant_prepare_permission_request(asset_canister, to_principal)
     }
 
     pub(crate) fn verify(
@@ -106,6 +106,7 @@ pub struct RequestAssetUploadArgs {
 
     /// The source directories to upload (multiple values possible)
     pub files: Vec<String>,
+    // TODO: Cancel upload request
 }
 
 impl RequestAssetUploadArgs {
