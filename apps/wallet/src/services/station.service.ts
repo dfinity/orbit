@@ -5,6 +5,7 @@ import {
   AccountBalance,
   AddAccountOperationInput,
   AddAddressBookEntryOperationInput,
+  AddAssetOperationInput,
   AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
@@ -13,6 +14,7 @@ import {
   DisasterRecoveryCommittee,
   EditAccountOperationInput,
   EditAddressBookEntryOperationInput,
+  EditAssetOperationInput,
   EditPermissionOperationInput,
   EditRequestPolicyOperationInput,
   EditUserGroupOperationInput,
@@ -22,6 +24,8 @@ import {
   GetAccountResult,
   GetAddressBookEntryInput,
   GetAddressBookEntryResult,
+  GetAssetInput,
+  GetAssetResult,
   GetNextApprovableRequestResult,
   GetPermissionInput,
   GetPermissionResult,
@@ -36,6 +40,7 @@ import {
   ListAccountTransfersInput,
   ListAccountsResult,
   ListAddressBookEntriesResult,
+  ListAssetsResult,
   ListNotificationsInput,
   ListPermissionsInput,
   ListPermissionsResult,
@@ -48,6 +53,7 @@ import {
   MarkNotificationsReadInput,
   Notification,
   PaginationInput,
+  RemoveAssetOperationInput,
   RemoveUserGroupOperationInput,
   Request,
   SubmitRequestApprovalInput,
@@ -67,6 +73,7 @@ import {
   GetNextApprovableRequestArgs,
   ListAccountsArgs,
   ListAddressBookEntriesArgs,
+  ListAssetsArgs,
   ListRequestsArgs,
 } from '~/types/station.types';
 import { transformIdlWithOnlyVerifiedCalls, variantIs } from '~/utils/helper.utils';
@@ -554,6 +561,82 @@ export class StationService {
     }
 
     return result.Ok;
+  }
+
+  async getAsset(input: GetAssetInput, verifiedCall = false): Promise<ExtractOk<GetAssetResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_asset(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+  async listAssets(
+    { limit, offset }: ListAssetsArgs = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListAssetsResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_assets({
+      paginate: [
+        {
+          limit: limit !== undefined ? [limit] : [],
+          offset: offset !== undefined ? [BigInt(offset)] : [],
+        },
+      ],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async addAsset(input: AddAssetOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddAsset: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async editAsset(input: EditAssetOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditAsset: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async removeAsset(input: RemoveAssetOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { RemoveAsset: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
   }
 
   async getAccount(

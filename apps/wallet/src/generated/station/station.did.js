@@ -78,10 +78,20 @@ export const idlFactory = ({ IDL }) => {
     'blockchain' : IDL.Text,
     'symbol' : AssetSymbol,
   });
+  const StandardData = IDL.Record({
+    'supported_operations' : IDL.Vec(IDL.Text),
+    'required_metadata_fields' : IDL.Vec(IDL.Text),
+    'standard' : IDL.Text,
+  });
+  const SupportedBlockchain = IDL.Record({
+    'blockchain' : IDL.Text,
+    'supported_standards' : IDL.Vec(StandardData),
+  });
   const Capabilities = IDL.Record({
     'name' : IDL.Text,
     'version' : IDL.Text,
     'supported_assets' : IDL.Vec(Asset),
+    'supported_blockchains' : IDL.Vec(SupportedBlockchain),
   });
   const CapabilitiesResult = IDL.Variant({
     'Ok' : IDL.Record({ 'capabilities' : Capabilities }),
@@ -1297,8 +1307,10 @@ export const idlFactory = ({ IDL }) => {
     'ListUserGroups' : IDL.Null,
     'AddUser' : IDL.Null,
     'ListUsers' : IDL.Null,
+    'AddAsset' : IDL.Null,
     'SystemUpgrade' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
+    'ListAssets' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,

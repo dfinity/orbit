@@ -123,6 +123,7 @@ const initialStoreState = (): StationStoreState => {
         name: '',
         version: '',
         supported_assets: [],
+        supported_blockchains: [],
       },
       cycleObtainStrategy: { Disabled: null },
     },

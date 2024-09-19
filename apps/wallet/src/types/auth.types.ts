@@ -15,6 +15,8 @@ export enum Privilege {
   ListRequests = 'ListRequests',
   SystemUpgrade = 'SystemUpgrade',
   ManageSystemInfo = 'ManageSystemInfo',
+  ListAssets = 'ListAssets',
+  AddAsset = 'AddAsset',
 }
 
 export enum RequiredSessionState {

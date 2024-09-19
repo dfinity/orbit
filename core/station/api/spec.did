@@ -1684,6 +1684,24 @@ type Asset = record {
   decimals : nat32;
 };
 
+// Describes a standard suported by a blockchain.
+type StandardData = record {
+  // The standard name.
+  standard : text;
+  // Required metadata fields for the standard (e.g. `["ledger_canister_id"]`).
+  required_metadata_fields : vec text;
+  // Supported operations for the standard (e.g. `["transfer", "list_transfers", "balance"]`).
+  supported_operations : vec text;
+};
+
+// Describes a blockchain and its standards supported by the station.
+type SupportedBlockchain = record {
+  // The blockchain name.
+  blockchain : text;
+  // The supported standards for the blockchain.
+  supported_standards : vec StandardData;
+};
+
 // A record type that is used to show the current capabilities of the station.
 type Capabilities = record {
   // The name of the station.
@@ -1692,6 +1710,8 @@ type Capabilities = record {
   version : text;
   // The list of supported assets.
   supported_assets : vec Asset;
+  // The list of supported blockchains and standards.
+  supported_blockchains : vec SupportedBlockchain;
 };
 
 // Result type for getting the current config.
@@ -2261,6 +2281,8 @@ type UserPrivilege = variant {
   ListRequests;
   CreateExternalCanister;
   ListExternalCanisters;
+  ListAssets;
+  AddAsset;
 };
 
 type MeResult = variant {

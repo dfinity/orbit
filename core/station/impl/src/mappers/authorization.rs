@@ -1,7 +1,6 @@
 use super::HelperMapper;
 use crate::{
-    core::ic_cdk::api::trap,
-    core::CallContext,
+    core::{ic_cdk::api::trap, CallContext},
     models::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget, ExternalCanisterId,
@@ -17,7 +16,7 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 18] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 20] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
     UserPrivilege::ManageSystemInfo,
@@ -36,6 +35,8 @@ pub const USER_PRIVILEGES: [UserPrivilege; 18] = [
     UserPrivilege::ListRequests,
     UserPrivilege::CreateExternalCanister,
     UserPrivilege::ListExternalCanisters,
+    UserPrivilege::AddAsset,
+    UserPrivilege::ListAssets,
 ];
 
 impl From<UserPrivilege> for Resource {
@@ -65,6 +66,8 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::ListExternalCanisters => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::List)
             }
+            UserPrivilege::AddAsset => Resource::Asset(ResourceAction::Create),
+            UserPrivilege::ListAssets => Resource::Asset(ResourceAction::List),
         }
     }
 }

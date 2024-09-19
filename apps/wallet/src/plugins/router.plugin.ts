@@ -337,6 +337,29 @@ const router = createRouter({
                 },
               },
             },
+            {
+              path: 'assets',
+              name: Routes.Assets,
+              component: () => import('~/pages/AssetsPage.vue'),
+              props: () => {
+                return {
+                  title: i18n.global.t('pages.assets.title'),
+                  breadcrumbs: [
+                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                    { title: i18n.global.t('navigation.settings') },
+                    { title: i18n.global.t('navigation.assets') },
+                  ],
+                };
+              },
+              meta: {
+                auth: {
+                  check: {
+                    session: RequiredSessionState.ConnectedToStation,
+                    privileges: [Privilege.ListAssets],
+                  },
+                },
+              },
+            },
           ],
         },
         {
