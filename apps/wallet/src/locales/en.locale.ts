@@ -94,6 +94,7 @@ export default {
       verify_instructions:
         'To verify the update, open the terminal and follow the instructions bellow:',
     },
+    asset: 'Asset',
   },
   alpha_warning: {
     version: 'This is an alpha version.',
@@ -162,6 +163,7 @@ export default {
       system: 'System',
       transfers: 'Transfers',
       users: 'Users',
+      assets: 'Assets',
     },
     headers: {
       id: 'ID',
@@ -273,6 +275,18 @@ export default {
       managesysteminfo: {
         title: 'Manage system info',
         request_title: 'Manage system info request',
+      },
+      addasset: {
+        title: 'Add asset',
+        request_title: 'Add asset request',
+      },
+      editasset: {
+        title: 'Edit asset',
+        request_title: 'Edit asset request',
+      },
+      removeasset: {
+        title: 'Remove asset',
+        request_title: 'Remove asset request',
       },
       unknown: {
         title: 'Unknown',
@@ -538,6 +552,9 @@ export default {
     version: 'Version',
     continue: 'Continue',
     cycle_obtain_strategy: 'Wallet top-up method',
+    symbol: 'Symbol',
+    standards: 'Standards',
+    assets: 'Assets',
   },
   forms: {
     create: 'Create',
@@ -574,6 +591,7 @@ export default {
     transfer_requests: 'Transfer Requests',
     permissions: 'Permissions',
     request_policies: 'Request Policies',
+    assets: 'Assets',
   },
   pages: {
     accounts: {
@@ -686,6 +704,17 @@ export default {
       title: 'Request Policies',
       create_label: 'Add Policy',
       dialog_title: 'Policy',
+    },
+    assets: {
+      title: 'Assets',
+      btn_new_entry: 'New asset',
+      no_results_found: 'No assets found.',
+      error_fetching_assets: 'Error fetching assets, please try again.',
+      forms: {
+        ledger_canister_id: 'Ledger Canister ID',
+        index_canister_id: 'Index Canister ID',
+        decimals: 'Decimals',
+      },
     },
     not_found: {
       title: 'Whoops, 404',
@@ -804,6 +833,9 @@ export default {
       setdisasterrecovery: 'Configure disaster recovery',
       callexternalcanister: 'Call canister',
       createexternalcanister: 'Create canister',
+      addasset: 'Add asset',
+      editasset: 'Edit asset',
+      removeasset: 'Remove asset',
     },
   },
   cycle_obtain_strategies: {

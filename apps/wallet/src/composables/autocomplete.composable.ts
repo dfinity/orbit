@@ -101,3 +101,18 @@ export const useAddressBookAutocomplete = () => {
 
   return autocomplete;
 };
+
+export const useAssetAutocomplete = () => {
+  const station = useStationStore();
+
+  const autocomplete = useAutocomplete(async () => {
+    const results = await station.service.listAssets({
+      limit: 100,
+      offset: 0,
+    });
+
+    return results.assets;
+  });
+
+  return autocomplete;
+};

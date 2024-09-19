@@ -13,6 +13,22 @@ pub enum BlockchainStandard {
     ERC20,
 }
 
+impl BlockchainStandard {
+    pub fn get_required_metadata(&self) -> Vec<String> {
+        match self {
+            BlockchainStandard::Native => vec![
+                "ledger_canister_id".to_string(),
+                "index_canister_id".to_string(),
+            ],
+            BlockchainStandard::ICRC1 => vec![
+                "ledger_canister_id".to_string(),
+                "index_canister_id".to_string(),
+            ],
+            BlockchainStandard::ERC20 => vec!["contract_address".to_string()],
+        }
+    }
+}
+
 impl FromStr for BlockchainStandard {
     type Err = ();
 

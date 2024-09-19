@@ -193,6 +193,7 @@ export interface Capabilities {
   'name' : string,
   'version' : string,
   'supported_assets' : Array<Asset>,
+  'supported_blockchains' : Array<SupportedBlockchain>,
 }
 export type CapabilitiesResult = { 'Ok' : { 'capabilities' : Capabilities } } |
   { 'Err' : Error };
@@ -1080,6 +1081,11 @@ export interface SetDisasterRecoveryOperationInput {
 export type Sha256Hash = string;
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
+export interface StandardData {
+  'supported_operations' : Array<string>,
+  'required_metadata_fields' : Array<string>,
+  'standard' : string,
+}
 export interface SubmitRequestApprovalInput {
   'request_id' : UUID,
   'decision' : RequestApprovalStatus,
@@ -1093,6 +1099,10 @@ export type SubmitRequestApprovalResult = {
     }
   } |
   { 'Err' : Error };
+export interface SupportedBlockchain {
+  'blockchain' : string,
+  'supported_standards' : Array<StandardData>,
+}
 export interface SystemInfo {
   'disaster_recovery' : [] | [DisasterRecovery],
   'name' : string,
@@ -1206,8 +1216,10 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
   { 'ListUsers' : null } |
+  { 'AddAsset' : null } |
   { 'SystemUpgrade' : null } |
   { 'CreateExternalCanister' : null } |
+  { 'ListAssets' : null } |
   { 'ManageSystemInfo' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'ListAccounts' : null } |

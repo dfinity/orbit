@@ -16,7 +16,7 @@ use crate::{
         SystemUpgradeTarget,
     },
     repositories::{
-        permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY,
+        permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY, REQUEST_REPOSITORY,
         USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     services::{
@@ -339,6 +339,7 @@ impl SystemService {
         USER_GROUP_REPOSITORY.build_cache();
         USER_REPOSITORY.build_cache();
         PERMISSION_REPOSITORY.build_cache();
+        ASSET_REPOSITORY.build_cache();
     }
 
     /// Initializes the canister with the given owners and settings.
@@ -489,12 +490,10 @@ impl SystemService {
 }
 
 mod init_canister_sync_handlers {
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeMap, BTreeSet};
 
     use crate::core::ic_cdk::{api::print, next_time};
-    use crate::models::{
-        AddUserOperationInput, Asset, Blockchain, BlockchainStandard, Metadata, UserStatus,
-    };
+    use crate::models::{AddUserOperationInput, Asset, Blockchain, Metadata, UserStatus};
     use crate::repositories::ASSET_REPOSITORY;
     use crate::services::USER_SERVICE;
     use crate::{
@@ -522,15 +521,25 @@ mod init_canister_sync_handlers {
     pub fn add_initial_assets() {
         let initial_assets: Vec<Asset> = vec![Asset {
             blockchain: Blockchain::InternetComputer,
-            standards: BTreeSet::from([BlockchainStandard::Native]),
+            standards: BTreeSet::from([]),
             symbol: "ICP".to_string(),
             name: "Internet Computer".to_string(),
-            metadata: Metadata::default(),
+            metadata: Metadata::new(BTreeMap::from([
+                (
+                    "ledger_canister_id".to_string(),
+                    "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+                ),
+                (
+                    "index_canister_id".to_string(),
+                    "qhbym-qaaaa-aaaaa-aaafq-cai".to_string(),
+                ),
+            ])),
             decimals: 8,
             id: Uuid::new_v4().as_bytes().to_owned(),
         }];
 
         for asset in initial_assets {
+            ic_cdk::api::print(format!("Adding initial asset: {}", asset.name));
             ASSET_REPOSITORY.insert(asset.key(), asset);
         }
     }

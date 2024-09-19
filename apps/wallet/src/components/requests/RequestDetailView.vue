@@ -239,6 +239,7 @@ import RequestMetadata from './RequestMetadata.vue';
 import RequestStatusChip from './RequestStatusChip.vue';
 import AddAccountOperation from './operations/AddAccountOperation.vue';
 import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperation.vue';
+import AddAssetOperation from './operations/AddAssetOperation.vue';
 import AddRequestPolicyOperation from './operations/AddRequestPolicyOperation.vue';
 import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
 import AddUserOperation from './operations/AddUserOperation.vue';
@@ -255,6 +256,8 @@ import RemoveRequestPolicyOperation from './operations/RemoveRequestPolicyOperat
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
 import UnsupportedOperation from './operations/UnsupportedOperation.vue';
+import EditAssetOperation from './operations/EditAssetOperation.vue';
+import RemoveAssetOperation from './operations/RemoveAssetOperation.vue';
 
 const i18n = useI18n();
 
@@ -291,15 +294,17 @@ const componentsMap: {
   SystemUpgrade: SystemUpgradeOperation,
   EditPermission: EditPermissionOperation,
   ManageSystemInfo: ManageSystemInfoOperation,
+  AddAsset: AddAssetOperation,
+  EditAsset: EditAssetOperation,
+  RemoveAsset: RemoveAssetOperation,
+
+  // below variants are not supported yet
   ChangeExternalCanister: UnsupportedOperation,
   CreateExternalCanister: UnsupportedOperation,
   CallExternalCanister: UnsupportedOperation,
   ConfigureExternalCanister: UnsupportedOperation,
   SetDisasterRecovery: UnsupportedOperation,
   FundExternalCanister: UnsupportedOperation,
-  AddAsset: UnsupportedOperation,
-  EditAsset: UnsupportedOperation,
-  RemoveAsset: UnsupportedOperation,
 };
 
 defineEmits<{

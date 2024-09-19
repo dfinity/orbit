@@ -112,6 +112,8 @@ pub enum UserPrivilege {
     ListRequests,
     CreateExternalCanister,
     ListExternalCanisters,
+    ListAssets,
+    AddAsset,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

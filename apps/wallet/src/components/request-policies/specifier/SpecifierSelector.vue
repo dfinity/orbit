@@ -37,6 +37,7 @@ import UserGroupSpecifier from './UserGroupSpecifier.vue';
 import UserSpecifier from './UserSpecifier.vue';
 import UnsupportedSpecifier from './UnsupportedSpecifier.vue';
 import { VAutocomplete } from 'vuetify/components';
+import AssetSpecifier from './AssetSpecifier.vue';
 
 const input = withDefaults(
   defineProps<{
@@ -70,6 +71,8 @@ const componentsMap: {
 } = {
   AddUser: null,
   AddUserGroup: null,
+  AddAsset: null,
+
   AddAccount: null,
   AddRequestPolicy: null,
   AddAddressBookEntry: null,
@@ -83,6 +86,9 @@ const componentsMap: {
   EditUser: UserSpecifier,
   EditAddressBookEntry: AddressBookEntrySpecifier,
   RemoveAddressBookEntry: AddressBookEntrySpecifier,
+  EditAsset: AssetSpecifier,
+  RemoveAsset: AssetSpecifier,
+
   // below variants are not supported yet
   EditPermission: UnsupportedSpecifier,
   EditRequestPolicy: UnsupportedSpecifier,
@@ -92,9 +98,6 @@ const componentsMap: {
   CallExternalCanister: UnsupportedSpecifier,
   SetDisasterRecovery: UnsupportedSpecifier,
   FundExternalCanister: UnsupportedSpecifier,
-  AddAsset: UnsupportedSpecifier,
-  RemoveAsset: UnsupportedSpecifier,
-  EditAsset: UnsupportedSpecifier,
 };
 
 function isKeyOfRequestSpecifier(key: string): key is keyof RequestSpecifier {
