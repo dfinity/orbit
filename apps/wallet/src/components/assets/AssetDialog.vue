@@ -43,6 +43,7 @@
             color="primary"
             variant="elevated"
             @click="triggerSubmit = true"
+            data-test-id="save-asset"
           >
             {{ props.assetId.value ? $t('terms.save') : $t('terms.create') }}
           </VBtn>
