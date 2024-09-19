@@ -539,7 +539,7 @@ mod init_canister_sync_handlers {
         }];
 
         for asset in initial_assets {
-            ic_cdk::api::print(format!("Adding initial asset: {}", asset.name));
+            print(format!("Adding initial asset: {}", asset.name));
             ASSET_REPOSITORY.insert(asset.key(), asset);
         }
     }
