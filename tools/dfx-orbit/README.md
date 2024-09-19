@@ -65,7 +65,7 @@ Tell the command line tool where to find the orbit station:
 - Copy the wallet ID
 - Store the station details locally. If your wallet is called `shiny` and is running locally, the command is:
   ```
-  dfx-orbit station add shiny --station-id "$WALLET_ID" --network local --url https://orbitwallet.io
+  dfx-orbit station add shiny --station-id "$WALLET_ID" --network ic
   ```
 - Verify that the station is in your list of stations:
   ```
@@ -103,15 +103,6 @@ Initially you are likely to have only permission to see your own profile:
   "Capabilities"
 ]
 ```
-
-Without permission to make and view requests, you will not be able to do much. It is recommended to make a `Developer` group with the following permissions:
-
-| Name in UI   | Privilege in `dfx-orbit me` | Name in error messages | Used for                         |
-| ------------ | --------------------------- | ---------------------- | -------------------------------- |
-| Request/List | `ListRequests`              | `Request(List)`        | `dfx-orbit review list`          |
-| Request/Read | Not Shown                   | `Request(Read(Id))`    | `dfx-orbit review id REQUEST_ID` |
-
-TODO: It would be nice to be able to link directly to a permission. E.g. this could open the permissions page and focus on one specific permission: https://orbitwallet.io/en/settings/user-groups/permissions#Request/List
 
 ## Make canister calls with Orbit
 
@@ -180,7 +171,7 @@ If not, please transfer the control of the canister to the orbit station.
 Note: Uploaded assets are not published. They are only prepared for release.
 
 ```
-dfx-orbit asset request-prepare-permission frontend
+dfx-orbit request asset prepare-permission frontend
 ```
 
 In case you want to verify, whether you have the `Prepare` permission on the asset canister,
@@ -202,7 +193,7 @@ dfx identity get-principal
 A developer may upload one or more directories of HTTP assets with:
 
 ```
-dfx-orbit asset upload CANISTER_NAME SOME_DIR/ OTHER_DIR/
+dfx-orbit request asset upload CANISTER_NAME SOME_DIR/ OTHER_DIR/
 ```
 
 This will upload the assets to the asset canister and then request the orbit station to publish
@@ -213,11 +204,8 @@ the assets.
 After the request has been made, the reviewers can locally verify the request:
 
 ```
-dfx-orbit asset check --then-approve CANISTER REQUEST_ID BATCH_ID SOME_DIR/ OTHER_DIR/
+dfx-orbit verify asset upload CANISTER REQUEST_ID BATCH_ID SOME_DIR/ OTHER_DIR/
 ```
-
-The exact command is printed in the output of `dfx-orbit asset upload` and must be distributed
-from the proposer to the verifiers.
 
 > The verifiers needs to have the same set of data as was used in the request.
 > How the verifier accomplishes this is outside the scope of this document.

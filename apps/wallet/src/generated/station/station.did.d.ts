@@ -360,6 +360,7 @@ export interface EditUserOperationInput {
   'id' : UUID,
   'status' : [] | [UserStatus],
   'groups' : [] | [Array<UUID>],
+  'cancel_pending_requests' : [] | [boolean],
   'name' : [] | [string],
   'identities' : [] | [Array<Principal>],
 }

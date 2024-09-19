@@ -1,10 +1,12 @@
 use crate::interfaces::{
     NnsIndexCanisterInitPayload, NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload,
 };
-use crate::utils::{controller_test_id, minter_test_id, set_controllers, NNS_ROOT_CANISTER_ID};
+use crate::utils::{
+    controller_test_id, minter_test_id, set_controllers, upload_canister_modules,
+    NNS_ROOT_CANISTER_ID,
+};
 use crate::{CanisterIds, TestEnv};
 use candid::{CandidType, Encode, Principal};
-use control_panel_api::UploadCanisterModulesInput;
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{query_candid_as, PocketIc, PocketIcBuilder};
 use serde::Serialize;
@@ -15,8 +17,6 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
-
-static POCKET_IC_BIN: &str = "./pocket-ic";
 
 pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
 pub static CANISTER_INITIAL_CYCLES: u128 = 100_000_000_000_000;
@@ -59,26 +59,21 @@ pub fn setup_new_env() -> TestEnv {
 }
 
 pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
-    let path = match env::var_os("POCKET_IC_BIN") {
-        None => {
-            env::set_var("POCKET_IC_BIN", POCKET_IC_BIN);
-            POCKET_IC_BIN.to_string()
-        }
-        Some(path) => path
-            .clone()
-            .into_string()
-            .unwrap_or_else(|_| panic!("Invalid string path for {path:?}")),
-    };
+    let path = env::var_os("POCKET_IC_BIN")
+        .expect("The environment variable POCKET_IC_BIN containing the absolute path to the PocketIC binary is not set")
+        .clone()
+        .into_string()
+        .expect("Invalid string path");
 
     if !Path::new(&path).exists() {
         println!("
         Could not find the PocketIC binary to run canister integration tests.
 
-        I looked for it at {:?}. You can specify another path with the environment variable POCKET_IC_BIN (note that I run from {:?}).
+        I looked for it at {:?}. You can specify another absolute path with the environment variable POCKET_IC_BIN.
 
-        Running the testing script will automatically place the PocketIC binary at the right place to be run without setting the POCKET_IC_BIN environment variable:
+        Running the testing script will automatically set the POCKET_IC_BIN environment variable:
             ./scripts/run-integration-tests.sh
-        ", &path, &env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_| "an unknown directory".to_string()));
+        ", &path);
     }
 
     let mut env = PocketIcBuilder::new()
@@ -235,17 +230,7 @@ fn install_canisters(
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let station_wasm = get_canister_wasm("station").to_vec();
     if config.upload_canister_modules {
-        let upload_canister_modules_args = UploadCanisterModulesInput {
-            station_wasm_module: station_wasm.to_owned(),
-            upgrader_wasm_module: upgrader_wasm.to_owned(),
-        };
-        env.update_call(
-            control_panel,
-            controller,
-            "upload_canister_modules",
-            Encode!(&upload_canister_modules_args).unwrap(),
-        )
-        .unwrap();
+        upload_canister_modules(env, control_panel, controller);
     }
 
     let station_init_args = SystemInstallArg::Init(SystemInitArg {

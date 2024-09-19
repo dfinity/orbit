@@ -9,7 +9,11 @@ import {
   AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
+  CanisterStatusResult,
   Capabilities,
+  ConfigureExternalCanisterOperationKind,
+  ConfigureExternalCanisterSettingsInput,
+  CreateExternalCanisterOperationInput,
   CreateRequestInput,
   DisasterRecoveryCommittee,
   EditAccountOperationInput,
@@ -20,12 +24,15 @@ import {
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
+  FundExternalCanisterOperationInput,
   GetAccountInput,
   GetAccountResult,
   GetAddressBookEntryInput,
   GetAddressBookEntryResult,
   GetAssetInput,
   GetAssetResult,
+  GetExternalCanisterFiltersResult,
+  GetExternalCanisterResult,
   GetNextApprovableRequestResult,
   GetPermissionInput,
   GetPermissionResult,
@@ -41,6 +48,7 @@ import {
   ListAccountsResult,
   ListAddressBookEntriesResult,
   ListAssetsResult,
+  ListExternalCanistersResult,
   ListNotificationsInput,
   ListPermissionsInput,
   ListPermissionsResult,
@@ -74,6 +82,7 @@ import {
   ListAccountsArgs,
   ListAddressBookEntriesArgs,
   ListAssetsArgs,
+  ListExternalCanistersArgs,
   ListRequestsArgs,
 } from '~/types/station.types';
 import { transformIdlWithOnlyVerifiedCalls, variantIs } from '~/utils/helper.utils';
@@ -566,13 +575,13 @@ export class StationService {
   async getAsset(input: GetAssetInput, verifiedCall = false): Promise<ExtractOk<GetAssetResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
     const result = await actor.get_asset(input);
-
     if (variantIs(result, 'Err')) {
       throw result.Err;
     }
 
     return result.Ok;
   }
+
   async listAssets(
     { limit, offset }: ListAssetsArgs = {},
     verifiedCall = false,
@@ -630,6 +639,142 @@ export class StationService {
       title: [],
       summary: [],
       operation: { RemoveAsset: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async fundExternalCanister(input: FundExternalCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        FundExternalCanister: input,
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async unlinkExternalCanister(input: {
+    canisterId: Principal;
+    softDelete?: boolean;
+  }): Promise<Request> {
+    const shouldSoftDelete = input.softDelete ?? true;
+    const operationKind: ConfigureExternalCanisterOperationKind = shouldSoftDelete
+      ? { SoftDelete: null }
+      : { Delete: null };
+
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        ConfigureExternalCanister: {
+          canister_id: input.canisterId,
+          kind: operationKind,
+        },
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async getExternalCanisterStatus(canisterId: Principal): Promise<ExtractOk<CanisterStatusResult>> {
+    const result = await this.actor.canister_status({
+      canister_id: canisterId,
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getExternalCanisterByCanisterId(
+    canisterId: Principal,
+    verifiedCall = false,
+  ): Promise<ExtractOk<GetExternalCanisterResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_external_canister({
+      canister_id: canisterId,
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async listExternalCanisters(
+    { states, labels, canisterIds, limit, offset, sortBy }: ListExternalCanistersArgs = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListExternalCanistersResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_external_canisters({
+      canister_ids: canisterIds ? [canisterIds] : [],
+      labels: labels ? [labels] : [],
+      states: states ? [states] : [],
+      sort_by: sortBy ? [sortBy] : [],
+      paginate: [
+        {
+          limit: limit ? [limit] : [],
+          offset: offset ? [BigInt(offset)] : [],
+        },
+      ],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async fetchExternalCanisterFilters(
+    args: {
+      with_labels?: boolean;
+      with_name?: string;
+    } = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<GetExternalCanisterFiltersResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_external_canister_filters({
+      with_labels: args.with_labels !== undefined ? [args.with_labels] : [],
+      with_name:
+        args.with_name !== undefined
+          ? [{ prefix: args.with_name.length ? [args.with_name] : [] }]
+          : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async addCanister(input: CreateExternalCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { CreateExternalCanister: input },
     });
 
     if (variantIs(result, 'Err')) {
@@ -756,6 +901,46 @@ export class StationService {
 
   async createRequest(input: CreateRequestInput): Promise<Request> {
     const result = await this.actor.create_request(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async addExternalCanister(input: CreateExternalCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { CreateExternalCanister: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async editExternalCanisterSettings(
+    canisterId: Principal,
+    input: ConfigureExternalCanisterSettingsInput,
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        ConfigureExternalCanister: {
+          canister_id: canisterId,
+          kind: {
+            Settings: input,
+          },
+        },
+      },
+    });
 
     if (variantIs(result, 'Err')) {
       throw result.Err;

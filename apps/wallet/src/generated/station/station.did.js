@@ -430,6 +430,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : UUID,
     'status' : IDL.Opt(UserStatus),
     'groups' : IDL.Opt(IDL.Vec(UUID)),
+    'cancel_pending_requests' : IDL.Opt(IDL.Bool),
     'name' : IDL.Opt(IDL.Text),
     'identities' : IDL.Opt(IDL.Vec(IDL.Principal)),
   });

@@ -1,5 +1,6 @@
-use crate::setup::WALLET_ADMIN_USER;
+use crate::setup::{get_canister_wasm, WALLET_ADMIN_USER};
 use candid::Principal;
+use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
@@ -215,13 +216,9 @@ pub fn wait_for_request_with_extra_ticks(
     request: RequestDTO,
     extra_ticks: u64,
 ) -> Result<RequestDTO, Option<RequestStatusDTO>> {
-    // wait for the request to be approved
-    env.advance_time(Duration::from_secs(2));
-    env.tick();
-    // wait for the request to be processing
-    env.advance_time(Duration::from_secs(2));
-    env.tick();
     for _ in 0..extra_ticks {
+        // timer's period for processing requests is 5 seconds
+        env.advance_time(Duration::from_secs(5));
         env.tick();
     }
     // wait for the request to be completed
@@ -233,6 +230,9 @@ pub fn wait_for_request_with_extra_ticks(
         if is_request_evaluated(new_request.clone()) {
             return Err(Some(new_request.status));
         }
+        // timer's period for processing requests is 5 seconds
+        env.advance_time(Duration::from_secs(5));
+        env.tick();
     }
     Err(None)
 }
@@ -705,4 +705,43 @@ pub fn sha256_hex(data: &[u8]) -> String {
     let result = hasher.finalize();
 
     hex::encode(result)
+}
+
+pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, controller: Principal) {
+    // upload upgrader
+    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
+    let upload_canister_modules_args = UploadCanisterModulesInput {
+        station_wasm_module: None,
+        upgrader_wasm_module: Some(upgrader_wasm.to_owned()),
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        env,
+        control_panel_id,
+        controller,
+        "upload_canister_modules",
+        (upload_canister_modules_args.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap();
+
+    // upload station
+    let station_wasm = get_canister_wasm("station").to_vec();
+    let upload_canister_modules_args = UploadCanisterModulesInput {
+        station_wasm_module: Some(station_wasm.to_owned()),
+        upgrader_wasm_module: None,
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        env,
+        control_panel_id,
+        controller,
+        "upload_canister_modules",
+        (upload_canister_modules_args.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap();
+}
+
+pub fn bump_time_to_avoid_ratelimit(env: &PocketIc) {
+    // the rate limiter aggregation window is 300s and resolution is 10s
+    env.advance_time(Duration::from_secs(300 + 10));
 }

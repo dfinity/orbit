@@ -1,6 +1,6 @@
 //! Placeholders for the proposed dfx extension API methods.
 use anyhow::Context;
-use dfx_core::interface::dfx::DfxInterface;
+use dfx_core::interface::{builder::IdentityPicker, dfx::DfxInterface};
 
 use std::path::PathBuf;
 
@@ -94,12 +94,17 @@ impl OrbitExtensionAgent {
     }
 
     /// Gets the dfx_core interface
-    pub async fn dfx_interface(&mut self) -> anyhow::Result<DfxInterface> {
-        let network_name = self
-            .station_or_default(None)
-            .with_context(|| "Failed to get station")?
-            .network;
-        let interface_builder = DfxInterface::builder().with_network_named(&network_name);
+    pub(crate) async fn dfx_interface(
+        &mut self,
+        network_name: &str,
+        identity: Option<String>,
+    ) -> anyhow::Result<DfxInterface> {
+        let identity = identity
+            .map(IdentityPicker::Named)
+            .unwrap_or(IdentityPicker::Selected);
+        let interface_builder = DfxInterface::builder()
+            .with_identity(identity)
+            .with_network_named(network_name);
         let interface = interface_builder.build().await?;
         if !interface.network_descriptor().is_ic {
             interface.agent().fetch_root_key().await?;

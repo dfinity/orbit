@@ -97,7 +97,7 @@ const props = toRefs(input);
 const valid = ref(true);
 const loading = ref(false);
 const saving = ref(false);
-const user: Ref<Partial<User>> = ref({});
+const user: Ref<Partial<User & { cancelPendingRequests?: boolean }>> = ref({});
 const openModel = computed({
   get: () => props.open.value,
   set: value => emit('update:open', value),
@@ -143,6 +143,8 @@ const save = async (): Promise<void> => {
         identities: [assertAndReturn(user.value.identities, 'identities')],
         name: [assertAndReturn(user.value.name, 'name')],
         status: [assertAndReturn(user.value.status, 'status')],
+        cancel_pending_requests:
+          user.value.cancelPendingRequests !== undefined ? [user.value.cancelPendingRequests] : [],
       });
 
       useOnSuccessfulOperation(request);

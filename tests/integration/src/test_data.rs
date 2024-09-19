@@ -5,6 +5,7 @@ use pocket_ic::PocketIc;
 use system_upgrade::perform_upgrader_update;
 
 use crate::setup::get_canister_wasm;
+use crate::utils::bump_time_to_avoid_ratelimit;
 
 pub mod account;
 pub mod address_book;
@@ -143,6 +144,8 @@ impl<'a> StationDataGenerator<'a> {
 
     fn increment_request_count(&mut self) {
         self.count_requests += 1;
+
+        bump_time_to_avoid_ratelimit(self.env);
     }
 
     pub fn generate(&mut self) {

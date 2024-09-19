@@ -9,6 +9,7 @@ pub struct ReviewIdArgs {
     pub(crate) request_id: String,
     /// Prompt the user to approve the request
     #[clap(
+        short,
         long,
         action,
         value_name = "REASON",
@@ -18,6 +19,7 @@ pub struct ReviewIdArgs {
     pub(crate) approve: Option<Option<String>>,
     /// Prompt the user to reject the request
     #[clap(
+        short,
         long,
         action,
         value_name = "REASON",

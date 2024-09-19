@@ -44,6 +44,7 @@ pub fn edit_user_name(
             identities: None,
             groups: None,
             status: None,
+            cancel_pending_requests: None,
         });
 
     let edit_user_request = submit_request(env, requester, station_canister_id, edit_user);

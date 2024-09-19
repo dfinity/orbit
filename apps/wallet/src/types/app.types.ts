@@ -67,3 +67,11 @@ export interface CsvTable {
   headers: CsvRow;
   rows: CsvRow[];
 }
+
+export enum CyclesUnit {
+  Trillion = 'TC',
+  Billion = 'BC',
+  Million = 'MC',
+  // Can be used to display cycles in the smallest unit.
+  Smallest = 'e8s',
+}

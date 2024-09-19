@@ -1,11 +1,12 @@
 import {
   mdiBookOpenVariant,
   mdiCogs,
+  mdiDatabase,
   mdiFormatListText,
   mdiPlusBox,
   mdiWalletBifold,
 } from '@mdi/js';
-import { App, computed, Ref, ref, watch } from 'vue';
+import { App, Ref, computed, ref, watch } from 'vue';
 import { RouteRecordRaw } from 'vue-router';
 import { Routes } from '~/configs/routes.config';
 import { logger } from '~/core/logger.core';
@@ -77,6 +78,19 @@ const sections = (): NavigationSections => ({
         route: Routes.AddressBook,
       },
       icon: mdiBookOpenVariant,
+    },
+    {
+      name: 'external_canisters',
+      localeKey: 'navigation.external_canisters',
+      action: {
+        type: NavigationActionType.To,
+        handle: route => (route.params.locale ? `/${route.params.locale}/canisters` : '/canisters'),
+      },
+      auth: {
+        type: NavigastionAuthType.Route,
+        route: Routes.ExternalCanisters,
+      },
+      icon: mdiDatabase,
     },
     {
       name: 'settings',

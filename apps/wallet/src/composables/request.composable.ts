@@ -46,6 +46,19 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
     });
   }
 
+  if (hasRequiredPrivilege({ anyOf: [Privilege.ListExternalCanisters] })) {
+    domains.value.push({
+      id: RequestDomains.ExternalCanisters,
+      types: [
+        { CreateExternalCanister: null },
+        { FundExternalCanister: [] },
+        { ConfigureExternalCanister: [] },
+        { CallExternalCanister: [] },
+        { ChangeExternalCanister: [] },
+      ],
+    });
+  }
+
   if (hasRequiredPrivilege({ anyOf: [Privilege.ListAddressBookEntries] })) {
     domains.value.push({
       id: RequestDomains.AddressBook,

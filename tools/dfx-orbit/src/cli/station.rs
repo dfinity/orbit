@@ -35,20 +35,30 @@ pub fn exec(orbit_agent: OrbitExtensionAgent, args: StationArgs) -> anyhow::Resu
         }
         StationArgs::Show(show_args) => {
             let station = orbit_agent
-                .station_or_default(show_args.name.as_deref())
+                .station_or_default(&show_args.name)
                 .with_context(|| "Failed to get station from local dfx config")?;
-            let json = serde_json::to_string_pretty(&station)
-                .with_context(|| "Failed to serialize station")?;
-            println!("{json}");
+            if show_args.json {
+                let json = serde_json::to_string_pretty(&station)
+                    .with_context(|| "Failed to serialize station")?;
+                println!("{json}");
+            } else {
+                println!("{}", station);
+            }
         }
         StationArgs::Remove(remove_args) => {
             orbit_agent
                 .remove_station(&remove_args.name)
                 .with_context(|| "Failed to remove station from local dfx config")?;
         }
-        StationArgs::Rename(rename_args) => {
+        StationArgs::Edit(rename_args) => {
             orbit_agent
-                .rename_station(&rename_args.old, &rename_args.new)
+                .edit_station(
+                    &rename_args.station,
+                    rename_args.rename,
+                    rename_args.station_id,
+                    rename_args.network,
+                    rename_args.url,
+                )
                 .with_context(|| "Failed to rename station in local dfx config")?;
         }
     }

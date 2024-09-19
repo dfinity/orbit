@@ -5,6 +5,8 @@ pub use constants::*;
 
 pub mod cache;
 
+pub mod limiter;
+
 mod memory;
 pub use memory::*;
 

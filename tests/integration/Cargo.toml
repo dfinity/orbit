@@ -7,7 +7,7 @@ edition = '2021'
 [dependencies]
 candid = { workspace = true }
 candid_parser = { workspace = true }
-dfx-orbit = { path = '../../tools/dfx-orbit', version = '0.3.0' }
+dfx-orbit = { path = '../../tools/dfx-orbit', version = '0.4.0' }
 flate2 = { workspace = true }
 hex = { workspace = true }
 orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alpha.4' }
@@ -22,6 +22,9 @@ rand_chacha = { workspace = true }
 reqwest = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true, features = ['derive'] }
+slog = { workspace = true }
+slog-async = { workspace = true }
+slog-term = { workspace = true }
 tempfile = { workspace = true }
 tokio.workspace = true
 uuid = { workspace = true }

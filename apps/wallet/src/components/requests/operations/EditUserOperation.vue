@@ -41,7 +41,7 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
-const formValue: Ref<Partial<User>> = ref({});
+const formValue: Ref<Partial<User & { cancelPendingRequests?: boolean }>> = ref({});
 
 onBeforeMount(() => {
   const user: Partial<User> = {};
@@ -57,6 +57,12 @@ onBeforeMount(() => {
     user.identities = props.operation.input.identities[0];
   }
 
-  formValue.value = user;
+  formValue.value = {
+    ...user,
+    cancelPendingRequests:
+      props.operation.input.cancel_pending_requests?.[0] !== undefined
+        ? props.operation.input.cancel_pending_requests[0]
+        : undefined,
+  };
 });
 </script>

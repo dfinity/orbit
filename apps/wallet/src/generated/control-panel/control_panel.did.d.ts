@@ -178,8 +178,8 @@ export interface UpdateWaitingListInput {
 export type UpdateWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface UploadCanisterModulesInput {
-  'station_wasm_module' : Uint8Array | number[],
-  'upgrader_wasm_module' : Uint8Array | number[],
+  'station_wasm_module' : [] | [Uint8Array | number[]],
+  'upgrader_wasm_module' : [] | [Uint8Array | number[]],
 }
 export type UploadUploadCanisterModulesInputResult = { 'Ok' : null } |
   { 'Err' : ApiError };

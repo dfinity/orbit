@@ -1,11 +1,6 @@
 use crate::jobs::JobType;
-use crate::{
-    core::ic_cdk::next_time,
-    models::{RequestStatus, RequestStatusCode},
-    repositories::RequestRepository,
-};
+use crate::{core::ic_cdk::next_time, models::RequestStatusCode, repositories::RequestRepository};
 use async_trait::async_trait;
-use orbit_essentials::repository::Repository;
 
 use super::{scheduler::Scheduler, ScheduledJob};
 
@@ -27,19 +22,18 @@ impl Job {
     /// Cancel the requests that have expired while still pending.
     async fn cancel_requests(&self) -> bool {
         let current_time = next_time();
-        let mut requests = self.request_repository.find_by_status_and_expiration_dt(
+        let requests = self.request_repository.find_by_status_and_expiration_dt(
             RequestStatusCode::Created,
             None,
             Some(current_time),
         );
 
-        for request in requests.iter_mut() {
-            request.status = RequestStatus::Cancelled {
-                reason: Some("The request has expired".to_string()),
-            };
-            request.last_modification_timestamp = next_time();
-            self.request_repository
-                .insert(request.to_key(), request.to_owned());
+        for request in requests.into_iter() {
+            self.request_repository.cancel_request(
+                request,
+                "The request has expired".to_string(),
+                next_time(),
+            );
         }
 
         true

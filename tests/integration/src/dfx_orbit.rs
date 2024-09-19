@@ -69,11 +69,6 @@ where
     let current_dir = std::env::current_dir().unwrap();
     let current_config_root = std::env::var(DFX_ROOT).ok();
 
-    // There might be other (non dfx-orbit) tests running in parallel.
-    // If we change the current_dir, these tests might no longer be able to find the ic-pocket binary
-    // We set the env var for IC pocket here, such that they still can find it.
-    std::env::set_var("POCKET_IC_BIN", &current_dir);
-
     // Create a temporary directory and change to it
     let tmp_dir = tempdir().unwrap();
     std::env::set_current_dir(tmp_dir.path()).unwrap();
@@ -180,19 +175,28 @@ fn test_dfx_json_from_template(config: DfxOrbitTestConfig, port: u16) -> String 
 
 /// Setup the station agent for the test
 async fn setup_dfx_orbit(station_id: Principal) -> DfxOrbit {
+    // Setup a logger with highest log level. Capture logging by test harness
+    use slog::Drain;
+    let decorator = slog_term::PlainDecorator::new(slog_term::TestStdoutWriter);
+    let drain = slog_term::FullFormat::new(decorator)
+        .build()
+        .filter_level(slog::Level::Trace)
+        .fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+    let logger = slog::Logger::root(drain, slog::o!());
+
     let port = PORT.with(|port| *port.borrow());
 
     let orbit_agent = OrbitExtensionAgent::new().unwrap();
-    orbit_agent
-        .add_station(StationConfig {
-            name: String::from("Test"),
-            station_id,
-            network: String::from("test"),
-            url: format!("http://localhost:{}", port),
-        })
-        .unwrap();
-
-    DfxOrbit::new(orbit_agent).await.unwrap()
+    let config = StationConfig {
+        name: String::from("Test"),
+        station_id,
+        network: String::from("test"),
+        url: format!("http://localhost:{}", port),
+    };
+    DfxOrbit::new(orbit_agent, config, None, logger)
+        .await
+        .unwrap()
 }
 
 /// Create the dfx user's identities and add them to the station
