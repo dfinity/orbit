@@ -336,12 +336,18 @@ export const idlFactory = ({ IDL }) => {
     'policy_id' : UUID,
   });
   const RemoveRequestPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
+  const WasmModuleExtraChunks = IDL.Record({
+    'wasm_module_hash' : IDL.Vec(IDL.Nat8),
+    'chunk_hashes_list' : IDL.Vec(IDL.Vec(IDL.Nat8)),
+    'store_canister' : IDL.Principal,
+  });
   const SystemUpgradeTarget = IDL.Variant({
     'UpgradeUpgrader' : IDL.Null,
     'UpgradeStation' : IDL.Null,
   });
   const SystemUpgradeOperationInput = IDL.Record({
     'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'module_extra_chunks' : IDL.Opt(WasmModuleExtraChunks),
     'target' : SystemUpgradeTarget,
     'module' : IDL.Vec(IDL.Nat8),
   });
