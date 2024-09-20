@@ -46,14 +46,14 @@ fn upload_canister_chunks_to_asset_canister(
         None,
     );
 
-    // get station wasm
-    let station_wasm = get_canister_wasm(canister_name).to_vec();
+    // get canister wasm
+    let canister_wasm = get_canister_wasm(canister_name).to_vec();
     let mut hasher = Sha256::new();
-    hasher.update(&station_wasm);
-    let station_wasm_hash = hasher.finalize().to_vec();
+    hasher.update(&canister_wasm);
+    let canister_wasm_hash = hasher.finalize().to_vec();
 
-    // chunk station
-    let mut chunks = station_wasm.chunks(chunk_len);
+    // chunk canister
+    let mut chunks = canister_wasm.chunks(chunk_len);
     let base_chunk: &[u8] = chunks.next().unwrap();
     assert!(!base_chunk.is_empty());
     let chunks: Vec<&[u8]> = chunks.collect();
@@ -82,7 +82,7 @@ fn upload_canister_chunks_to_asset_canister(
     let module_extra_chunks = WasmModuleExtraChunks {
         store_canister: asset_canister_id,
         chunk_hashes_list: chunks.iter().map(|c| hash(c.to_vec())).collect(),
-        wasm_module_hash: station_wasm_hash,
+        wasm_module_hash: canister_wasm_hash,
     };
 
     (base_chunk.to_vec(), module_extra_chunks)
