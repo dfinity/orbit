@@ -1,6 +1,7 @@
 use crate::setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    execute_request_with_extra_ticks, get_core_canister_health_status, get_system_info,
+    execute_request, execute_request_with_extra_ticks, get_core_canister_health_status,
+    get_system_info,
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{CandidType, Encode, Principal};
@@ -270,6 +271,43 @@ fn failed_station_upgrade_from_chunks() {
         station_upgrade_operation,
         &format!("failed to install code from chunks: Error from Wasm chunk store: Wasm module hash {:?} does not match given hash WasmHash({:?}).", actual_wasm_module_hash, module_extra_chunks.wasm_module_hash)
     );
+}
+
+#[test]
+fn upgrader_upgrade_from_chunks() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    // submit invalid upgrader upgrade request
+    let module_extra_chunks = WasmModuleExtraChunks {
+        store_canister: canister_ids.station,
+        chunk_hashes_list: vec![],
+        wasm_module_hash: vec![],
+    };
+    let upgrader_upgrade_operation =
+        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+            target: SystemUpgradeTargetDTO::UpgradeUpgrader,
+            module: vec![],
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: None,
+        });
+    let request_status = execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        upgrader_upgrade_operation,
+    )
+    .unwrap_err()
+    .unwrap();
+
+    // check that the station upgrade request is failed
+    match request_status {
+        RequestStatusDTO::Failed { reason } => assert!(reason
+            .unwrap()
+            .contains("Installing upgrader from chunks is not supported.")),
+        _ => panic!("Unexpected request status: {:?}", request_status),
+    };
 }
 
 #[test]
