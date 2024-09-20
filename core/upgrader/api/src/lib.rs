@@ -3,9 +3,19 @@ use station_api::TimestampRfc3339;
 pub use station_api::{MetadataDTO, UuidDTO};
 
 #[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize, PartialEq)]
+pub struct WasmModuleExtraChunks {
+    pub store_canister: Principal,
+    // TODO: deserialize_with
+    pub chunk_hashes_list: Vec<Vec<u8>>,
+    #[serde(with = "serde_bytes")]
+    pub wasm_module_hash: Vec<u8>,
+}
+
+#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize, PartialEq)]
 pub struct UpgradeParams {
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     #[serde(with = "serde_bytes")]
     pub arg: Vec<u8>,
 }

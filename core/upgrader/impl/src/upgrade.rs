@@ -5,15 +5,18 @@ use crate::{
 };
 use anyhow::{anyhow, Context};
 use async_trait::async_trait;
-use candid::Principal;
+use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::api::management_canister::main::{
-    self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
+    self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode, ChunkHash,
+    ClearChunkStoreArgument, InstallChunkedCodeArgument, InstallCodeArgument, UploadChunkArgument,
 };
 use mockall::automock;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::{call, print};
+use sha2::{Digest, Sha256};
 use station_api::NotifyFailedStationUpgradeInput;
 use std::sync::Arc;
+use upgrader_api::WasmModuleExtraChunks;
 
 #[derive(Debug, thiserror::Error)]
 pub enum UpgradeError {
@@ -27,6 +30,7 @@ pub enum UpgradeError {
 
 pub struct UpgradeParams {
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     pub arg: Vec<u8>,
     pub install_mode: CanisterInstallMode,
 }
@@ -48,21 +52,118 @@ impl Upgrader {
     }
 }
 
+// asset canister argument types
+
+#[derive(CandidType)]
+struct GetArg {
+    pub key: String,
+    pub accept_encodings: Vec<String>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct EncodedAsset {
+    #[serde(with = "serde_bytes")]
+    pub content: Vec<u8>,
+    pub content_type: String,
+    pub content_encoding: String,
+    pub total_length: candid::Nat,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
+    pub sha256: Option<Vec<u8>>,
+}
+
+// uploads a wasm chunk to the ICP chunk store
+async fn upload_chunk(
+    target_canister: Principal,
+    chunk: Vec<u8>,
+    expected_hash: &[u8],
+) -> Result<(), UpgradeError> {
+    let actual_hash = mgmt::upload_chunk(UploadChunkArgument {
+        canister_id: target_canister,
+        chunk,
+    })
+    .await
+    .map_err(|(_, err)| anyhow!("failed to upload chunk: {err}"))?
+    .0;
+    if actual_hash.hash != *expected_hash {
+        return Err(UpgradeError::UnexpectedError(anyhow!(
+            "chunk hash mismatch (expected hash: {}, actual hash: {})",
+            hex::encode(expected_hash),
+            hex::encode(&actual_hash.hash)
+        )));
+    }
+    Ok(())
+}
+
 #[async_trait]
 impl Upgrade for Upgrader {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        let id = self
+        let target_canister = self
             .target
-            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?
+            .0;
 
-        mgmt::install_code(InstallCodeArgument {
-            mode: ps.install_mode,
-            canister_id: id.0,
-            wasm_module: ps.module,
-            arg: ps.arg,
-        })
-        .await
-        .map_err(|(_, err)| anyhow!("failed to install code: {err}"))?;
+        if let Some(mut module_extra_chunks) = ps.module_extra_chunks {
+            // clear the ICP chunk store of the target canister
+            mgmt::clear_chunk_store(ClearChunkStoreArgument {
+                canister_id: target_canister,
+            })
+            .await
+            .map_err(|(_, err)| anyhow!("failed to clear chunk store: {err}"))?;
+            // upload the provided module as the first chunk
+            // to the ICP chunk store of the target canister
+            let mut hasher = Sha256::new();
+            hasher.update(ps.module.clone());
+            let module_hash = hasher.finalize().to_vec();
+            upload_chunk(target_canister, ps.module, &module_hash).await?;
+            // fetch all extra chunks from the asset store canister
+            // and upload them to the ICP chunk store of the target canister
+            for hash in &module_extra_chunks.chunk_hashes_list {
+                let asset = call::<_, (EncodedAsset,)>(
+                    module_extra_chunks.store_canister,
+                    "get",
+                    (GetArg {
+                        key: hex::encode(hash),
+                        accept_encodings: vec!["identity".to_string()],
+                    },),
+                )
+                .await
+                .map_err(|(_, err)| anyhow!("failed to fetch chunk: {err}"))?
+                .0;
+                if asset.content.len() != asset.total_length {
+                    return Err(UpgradeError::UnexpectedError(anyhow!(
+                        "failed to fetch chunk (expected length: {}, actual length: {})",
+                        asset.total_length,
+                        asset.content.len()
+                    )));
+                }
+                upload_chunk(target_canister, asset.content, hash).await?;
+            }
+            // install target canister from chunks stored in the ICP chunk store of the target canister
+            let mut chunk_hashes_list = vec![module_hash];
+            chunk_hashes_list.append(&mut module_extra_chunks.chunk_hashes_list);
+            mgmt::install_chunked_code(InstallChunkedCodeArgument {
+                mode: ps.install_mode,
+                target_canister,
+                store_canister: Some(target_canister),
+                chunk_hashes_list: chunk_hashes_list
+                    .into_iter()
+                    .map(|hash| ChunkHash { hash })
+                    .collect(),
+                wasm_module_hash: module_extra_chunks.wasm_module_hash,
+                arg: ps.arg,
+            })
+            .await
+            .map_err(|(_, err)| anyhow!("failed to install code from chunks: {err}"))?;
+        } else {
+            mgmt::install_code(InstallCodeArgument {
+                mode: ps.install_mode,
+                canister_id: target_canister,
+                wasm_module: ps.module,
+                arg: ps.arg,
+            })
+            .await
+            .map_err(|(_, err)| anyhow!("failed to install code: {err}"))?;
+        }
 
         Ok(())
     }

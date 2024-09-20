@@ -89,7 +89,11 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
                 let arg = self.operation.input.arg.as_ref().unwrap_or(&default_arg);
                 let out = self
                     .system_service
-                    .upgrade_station(&self.operation.input.module, arg)
+                    .upgrade_station(
+                        &self.operation.input.module,
+                        &self.operation.input.module_extra_chunks,
+                        arg,
+                    )
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
                         reason: format!("failed to upgrade station: {}", err),

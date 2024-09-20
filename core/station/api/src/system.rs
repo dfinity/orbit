@@ -112,10 +112,20 @@ pub enum SystemUpgradeTargetDTO {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct WasmModuleExtraChunks {
+    pub store_canister: Principal,
+    // TODO: deserialize_with
+    pub chunk_hashes_list: Vec<Vec<u8>>,
+    #[serde(with = "serde_bytes")]
+    pub wasm_module_hash: Vec<u8>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct SystemUpgradeOperationInput {
     pub target: SystemUpgradeTargetDTO,
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
 }

@@ -59,6 +59,7 @@ fn cancel_pending_requests() {
     let station_upgrade = RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
         target: SystemUpgradeTargetDTO::UpgradeStation,
         module: vec![],
+        module_extra_chunks: None,
         arg: None,
     });
     let mut alice_request_dtos = vec![];

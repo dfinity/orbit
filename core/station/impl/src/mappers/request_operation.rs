@@ -29,7 +29,7 @@ use crate::{
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
         RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
         SystemUpgradeOperation, SystemUpgradeOperationInput, SystemUpgradeTarget,
-        TransferOperation, User,
+        TransferOperation, User, WasmModuleExtraChunks,
     },
     repositories::{
         AccountRepository, AddressBookRepository, UserRepository, ACCOUNT_REPOSITORY,
@@ -345,11 +345,42 @@ impl From<station_api::SystemUpgradeTargetDTO> for SystemUpgradeTarget {
     }
 }
 
+impl From<WasmModuleExtraChunks> for station_api::WasmModuleExtraChunks {
+    fn from(input: WasmModuleExtraChunks) -> station_api::WasmModuleExtraChunks {
+        station_api::WasmModuleExtraChunks {
+            store_canister: input.store_canister,
+            chunk_hashes_list: input.chunk_hashes_list,
+            wasm_module_hash: input.wasm_module_hash,
+        }
+    }
+}
+
+impl From<WasmModuleExtraChunks> for upgrader_api::WasmModuleExtraChunks {
+    fn from(input: WasmModuleExtraChunks) -> upgrader_api::WasmModuleExtraChunks {
+        upgrader_api::WasmModuleExtraChunks {
+            store_canister: input.store_canister,
+            chunk_hashes_list: input.chunk_hashes_list,
+            wasm_module_hash: input.wasm_module_hash,
+        }
+    }
+}
+
+impl From<station_api::WasmModuleExtraChunks> for WasmModuleExtraChunks {
+    fn from(input: station_api::WasmModuleExtraChunks) -> WasmModuleExtraChunks {
+        WasmModuleExtraChunks {
+            store_canister: input.store_canister,
+            chunk_hashes_list: input.chunk_hashes_list,
+            wasm_module_hash: input.wasm_module_hash,
+        }
+    }
+}
+
 impl From<SystemUpgradeOperationInput> for station_api::SystemUpgradeOperationInput {
     fn from(input: SystemUpgradeOperationInput) -> station_api::SystemUpgradeOperationInput {
         station_api::SystemUpgradeOperationInput {
             target: input.target.into(),
             module: input.module,
+            module_extra_chunks: input.module_extra_chunks.map(|c| c.into()),
             arg: input.arg,
         }
     }
@@ -360,6 +391,7 @@ impl From<station_api::SystemUpgradeOperationInput> for SystemUpgradeOperationIn
         SystemUpgradeOperationInput {
             target: input.target.into(),
             module: input.module,
+            module_extra_chunks: input.module_extra_chunks.map(|c| c.into()),
             arg: input.arg,
         }
     }
