@@ -301,7 +301,7 @@ fn upgrader_upgrade_from_chunks() {
     .unwrap_err()
     .unwrap();
 
-    // check that the station upgrade request is failed
+    // check that the upgrader upgrade request is failed
     match request_status {
         RequestStatusDTO::Failed { reason } => assert!(reason
             .unwrap()
