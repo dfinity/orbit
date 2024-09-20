@@ -80,7 +80,7 @@ impl Execute for ChangeExternalCanisterRequestExecute<'_, '_> {
                 self.operation.input.canister_id,
                 self.operation.input.mode.clone(),
                 &self.operation.input.module,
-                None,
+                &None,
                 self.operation.input.arg.clone(),
             )
             .await

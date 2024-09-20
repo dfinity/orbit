@@ -28,7 +28,7 @@ impl ChangeCanisterService {
         canister_id: Principal,
         mode: CanisterInstallMode,
         module: &[u8],
-        module_extra_chunks: Option<WasmModuleExtraChunks>,
+        module_extra_chunks: &Option<WasmModuleExtraChunks>,
         arg: Option<Vec<u8>>,
     ) -> ServiceResult<(), ChangeCanisterError> {
         use candid::Encode;
@@ -61,7 +61,7 @@ impl ChangeCanisterService {
             canister_id,
             mode.into(),
             module.to_owned(),
-            module_extra_chunks.map(|c| c.into()),
+            module_extra_chunks.as_ref().map(|c| c.clone().into()),
             arg.unwrap_or(default_bytes),
         )
         .await

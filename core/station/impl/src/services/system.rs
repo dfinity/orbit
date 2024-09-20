@@ -166,7 +166,7 @@ impl SystemService {
     pub async fn upgrade_upgrader(
         &self,
         module: &[u8],
-        module_extra_chunks: Option<WasmModuleExtraChunks>,
+        module_extra_chunks: &Option<WasmModuleExtraChunks>,
         arg: Option<Vec<u8>>,
     ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();

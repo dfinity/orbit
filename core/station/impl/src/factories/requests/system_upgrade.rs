@@ -114,7 +114,7 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
                 self.system_service
                     .upgrade_upgrader(
                         &self.operation.input.module,
-                        self.operation.input.module_extra_chunks.clone(),
+                        &self.operation.input.module_extra_chunks,
                         self.operation.input.arg.clone(),
                     )
                     .await
