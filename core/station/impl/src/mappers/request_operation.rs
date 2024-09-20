@@ -345,29 +345,19 @@ impl From<station_api::SystemUpgradeTargetDTO> for SystemUpgradeTarget {
     }
 }
 
-impl From<WasmModuleExtraChunks> for station_api::WasmModuleExtraChunks {
-    fn from(input: WasmModuleExtraChunks) -> station_api::WasmModuleExtraChunks {
-        station_api::WasmModuleExtraChunks {
-            store_canister: input.store_canister,
-            chunk_hashes_list: input.chunk_hashes_list,
-            wasm_module_hash: input.wasm_module_hash,
-        }
-    }
-}
-
-impl From<WasmModuleExtraChunks> for upgrader_api::WasmModuleExtraChunks {
-    fn from(input: WasmModuleExtraChunks) -> upgrader_api::WasmModuleExtraChunks {
-        upgrader_api::WasmModuleExtraChunks {
-            store_canister: input.store_canister,
-            chunk_hashes_list: input.chunk_hashes_list,
-            wasm_module_hash: input.wasm_module_hash,
-        }
-    }
-}
-
-impl From<station_api::WasmModuleExtraChunks> for WasmModuleExtraChunks {
-    fn from(input: station_api::WasmModuleExtraChunks) -> WasmModuleExtraChunks {
+impl From<orbit_essentials::types::WasmModuleExtraChunks> for WasmModuleExtraChunks {
+    fn from(input: orbit_essentials::types::WasmModuleExtraChunks) -> WasmModuleExtraChunks {
         WasmModuleExtraChunks {
+            store_canister: input.store_canister,
+            chunk_hashes_list: input.chunk_hashes_list,
+            wasm_module_hash: input.wasm_module_hash,
+        }
+    }
+}
+
+impl From<WasmModuleExtraChunks> for orbit_essentials::types::WasmModuleExtraChunks {
+    fn from(input: WasmModuleExtraChunks) -> orbit_essentials::types::WasmModuleExtraChunks {
+        orbit_essentials::types::WasmModuleExtraChunks {
             store_canister: input.store_canister,
             chunk_hashes_list: input.chunk_hashes_list,
             wasm_module_hash: input.wasm_module_hash,

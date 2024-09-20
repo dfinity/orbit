@@ -1,17 +1,9 @@
 use candid::{CandidType, Deserialize, Principal};
+use orbit_essentials::types::WasmModuleExtraChunks;
 use station_api::TimestampRfc3339;
 pub use station_api::{MetadataDTO, UuidDTO};
 
-#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize, PartialEq)]
-pub struct WasmModuleExtraChunks {
-    pub store_canister: Principal,
-    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_vec_blob")]
-    pub chunk_hashes_list: Vec<Vec<u8>>,
-    #[serde(with = "serde_bytes")]
-    pub wasm_module_hash: Vec<u8>,
-}
-
-#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]
 pub struct UpgradeParams {
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,

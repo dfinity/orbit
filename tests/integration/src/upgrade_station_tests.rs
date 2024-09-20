@@ -6,12 +6,12 @@ use crate::utils::{
 use crate::{CanisterIds, TestEnv};
 use candid::{CandidType, Encode, Principal};
 use orbit_essentials::api::ApiResult;
+use orbit_essentials::types::WasmModuleExtraChunks;
 use pocket_ic::{update_candid_as, PocketIc};
 use sha2::{Digest, Sha256};
 use station_api::{
     HealthStatus, NotifyFailedStationUpgradeInput, RequestOperationInput, RequestStatusDTO,
     SystemInstall, SystemUpgrade, SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
-    WasmModuleExtraChunks,
 };
 
 const EXTRA_TICKS: u64 = 50;

@@ -1,6 +1,7 @@
 use super::TimestampRfc3339;
 use crate::{DisasterRecoveryCommitteeDTO, MetadataDTO, Sha256HashDTO, UuidDTO};
 use candid::{CandidType, Deserialize, Principal};
+use orbit_essentials::types::WasmModuleExtraChunks;
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct SystemInfoDTO {
@@ -109,15 +110,6 @@ pub enum HealthStatus {
 pub enum SystemUpgradeTargetDTO {
     UpgradeStation,
     UpgradeUpgrader,
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct WasmModuleExtraChunks {
-    pub store_canister: Principal,
-    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_vec_blob")]
-    pub chunk_hashes_list: Vec<Vec<u8>>,
-    #[serde(with = "serde_bytes")]
-    pub wasm_module_hash: Vec<u8>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
