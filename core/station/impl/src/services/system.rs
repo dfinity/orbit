@@ -163,13 +163,19 @@ impl SystemService {
     }
 
     /// Execute an upgrade of the upgrader canister.
-    pub async fn upgrade_upgrader(&self, module: &[u8], arg: Option<Vec<u8>>) -> ServiceResult<()> {
+    pub async fn upgrade_upgrader(
+        &self,
+        module: &[u8],
+        module_extra_chunks: Option<WasmModuleExtraChunks>,
+        arg: Option<Vec<u8>>,
+    ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
         self.change_canister_service
             .install_canister(
                 upgrader_canister_id,
                 CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}),
                 module,
+                module_extra_chunks,
                 arg,
             )
             .await

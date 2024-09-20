@@ -111,20 +111,15 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
             }
 
             SystemUpgradeTarget::UpgradeUpgrader => {
-                if self.operation.input.module_extra_chunks.is_some() {
-                    return Err(RequestExecuteError::Failed {
-                        reason: "Installing upgrader from chunks is not supported.".to_string(),
-                    });
-                }
-
                 self.system_service
                     .upgrade_upgrader(
                         &self.operation.input.module,
+                        self.operation.input.module_extra_chunks.clone(),
                         self.operation.input.arg.clone(),
                     )
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
-                        reason: format!("failed to upgrade upgrader: {}", err),
+                        reason: format!("failed to upgrade upgrader: {} ({:?})", err, err.details),
                     })?;
 
                 // The upgrader might have just gained the ability to perform disaster recovery, so sync it now.

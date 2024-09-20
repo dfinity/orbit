@@ -1,11 +1,12 @@
-use crate::{errors::ChangeCanisterError, models::CanisterInstallMode};
-use candid::Principal;
-use ic_cdk::api::management_canister::{
-    main::{self as mgmt, InstallCodeArgument},
-    provisional::CanisterIdRecord,
+use crate::{
+    errors::ChangeCanisterError,
+    models::{CanisterInstallMode, WasmModuleExtraChunks},
 };
+use candid::Principal;
+use ic_cdk::api::management_canister::{main as mgmt, provisional::CanisterIdRecord};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
+use orbit_essentials::install_chunked_code::install_chunked_code;
 use std::sync::Arc;
 
 lazy_static! {
@@ -27,6 +28,7 @@ impl ChangeCanisterService {
         canister_id: Principal,
         mode: CanisterInstallMode,
         module: &[u8],
+        module_extra_chunks: Option<WasmModuleExtraChunks>,
         arg: Option<Vec<u8>>,
     ) -> ServiceResult<(), ChangeCanisterError> {
         use candid::Encode;
@@ -55,16 +57,15 @@ impl ChangeCanisterService {
 
         // Install or upgrade canister
         let default_bytes = Encode!(&()).unwrap();
-        let install_code_result = mgmt::install_code(InstallCodeArgument {
-            mode: mode.into(),
-            canister_id: canister_id.to_owned(),
-            wasm_module: module.to_owned(),
-            arg: arg.unwrap_or(default_bytes),
-        })
+        let install_code_result = install_chunked_code(
+            canister_id,
+            mode.into(),
+            module.to_owned(),
+            module_extra_chunks.map(|c| c.into()),
+            arg.unwrap_or(default_bytes),
+        )
         .await
-        .map_err(|(_, err)| ChangeCanisterError::Failed {
-            reason: err.to_string(),
-        });
+        .map_err(|err| ChangeCanisterError::Failed { reason: err });
 
         // Restart canister (regardless of whether the upgrade succeeded or not)
         mgmt::start_canister(CanisterIdRecord {
