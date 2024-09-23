@@ -100,12 +100,12 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
     }
 }
 
-pub fn create_canister(env: &mut PocketIc, controller: Principal) -> Principal {
+pub fn create_canister(env: &PocketIc, controller: Principal) -> Principal {
     create_canister_with_cycles(env, controller, CANISTER_INITIAL_CYCLES)
 }
 
 pub fn create_canister_with_cycles(
-    env: &mut PocketIc,
+    env: &PocketIc,
     controller: Principal,
     cycles: u128,
 ) -> Principal {

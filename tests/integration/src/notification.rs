@@ -23,6 +23,7 @@ fn notification_authorization() {
     let change_canister_operation_input = SystemUpgradeOperationInput {
         target: SystemUpgradeTargetDTO::UpgradeUpgrader,
         module: vec![],
+        module_extra_chunks: None,
         arg: None,
     };
     let request_status = execute_request_with_extra_ticks(

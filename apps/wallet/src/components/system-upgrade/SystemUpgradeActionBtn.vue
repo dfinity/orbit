@@ -160,6 +160,8 @@ const submitUpgrade = async (model: SystemUpgradeFormProps['modelValue']): Promi
           ? [new Uint8Array(hexStringToArrayBuffer(model.wasmInitArg))]
           : [],
       module: new Uint8Array(fileBuffer),
+      // TODO: Add support for extra chunks once the control-panel supports it
+      module_extra_chunks: [],
       target: assertAndReturn(model.target, 'model.target is required'),
     },
     {
