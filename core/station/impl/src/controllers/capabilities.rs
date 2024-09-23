@@ -51,11 +51,10 @@ impl CapabilitiesController {
                         supported_standards: suported_blockchain
                             .supported_standards
                             .iter()
-                            .map(|data| StandardDataDTO {
-                                required_metadata_fields: data.standard.get_required_metadata(),
-                                standard: data.standard.to_string(),
-                                supported_operations: data
-                                    .standard
+                            .map(|standard| StandardDataDTO {
+                                required_metadata_fields: standard.get_required_metadata(),
+                                standard: standard.to_string(),
+                                supported_operations: standard
                                     .get_supported_operations()
                                     .iter()
                                     .map(|operation| operation.to_string())
