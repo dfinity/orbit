@@ -52,10 +52,11 @@ impl CapabilitiesController {
                             .supported_standards
                             .iter()
                             .map(|data| StandardDataDTO {
-                                required_metadata_fields: data.required_metadata_fields.clone(),
+                                required_metadata_fields: data.standard.get_required_metadata(),
                                 standard: data.standard.to_string(),
                                 supported_operations: data
-                                    .supported_operations
+                                    .standard
+                                    .get_supported_operations()
                                     .iter()
                                     .map(|operation| operation.to_string())
                                     .collect(),
