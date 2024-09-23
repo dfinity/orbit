@@ -8,26 +8,22 @@
     </RequestOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" indeterminate />
-  <AddressBookForm v-else :model-value="formValue" mode="view" />
+  <AssetForm v-else :model-value="formValue" mode="view" />
 </template>
 
 <script setup lang="ts">
 import { Ref, computed, onBeforeMount, ref } from 'vue';
-import AddressBookForm from '~/components/address-book/AddressBookForm.vue';
 import logger from '~/core/logger.core';
-import {
-  AddressBookEntry,
-  Request,
-  RemoveAddressBookEntryOperation,
-} from '~/generated/station/station.did';
+import { Asset, RemoveAssetOperation, Request } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
+import AssetForm from '~/components/assets/AssetForm.vue';
 import { VProgressCircular } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{
     request: Request;
-    operation: RemoveAddressBookEntryOperation;
+    operation: RemoveAssetOperation;
     mode?: 'list' | 'detail';
   }>(),
   {
@@ -36,35 +32,43 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
-const formValue: Ref<Partial<AddressBookEntry>> = ref({});
+const formValue: Ref<Partial<Asset>> = ref({});
 const loading = ref(false);
+const assetLoadingFailed = ref(false);
 const station = useStationStore();
 
 const fetchDetails = async () => {
+  assetLoadingFailed.value = false;
   try {
     if (loading.value || isListMode.value) {
       return;
     }
 
     loading.value = true;
-    const currentEntry = await station.service.getAddressBookEntry(
-      {
-        address_book_entry_id: props.operation.input.address_book_entry_id,
-      },
-      true,
-    );
+    const currentEntry: Partial<Asset> = await station.service
+      .getAsset(
+        {
+          asset_id: props.operation.input.asset_id,
+        },
+        true,
+      )
+      .then(response => response.asset)
+      .catch(() => ({
+        id: props.operation.input.asset_id,
+      }));
 
-    formValue.value = currentEntry.address_book_entry;
+    formValue.value = currentEntry;
   } catch (e) {
-    logger.error('Failed to fetch address book entry details', e);
+    logger.error('Failed to fetch asset details', e);
+    assetLoadingFailed.value = true;
   } finally {
     loading.value = false;
   }
 };
 
 onBeforeMount(() => {
-  const entry: Partial<AddressBookEntry> = {};
-  entry.id = props.operation.input.address_book_entry_id;
+  const entry: Partial<Asset> = {};
+  entry.id = props.operation.input.asset_id;
 
   formValue.value = entry;
 

@@ -71,6 +71,7 @@ export enum RequestDomains {
   Transfers = 'transfers',
   Users = 'users',
   System = 'system',
+  Assets = 'assets',
 }
 
 export interface ListAccountsArgs {
@@ -136,6 +137,11 @@ export interface ListAddressBookEntriesArgs {
   blockchain?: string;
   labels?: [];
   ids?: UUID[];
+}
+
+export interface ListAssetsArgs {
+  limit?: number;
+  offset?: number;
 }
 
 export type MetadataItem = { key: string; value: string };

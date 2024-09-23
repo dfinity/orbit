@@ -13,6 +13,49 @@ pub enum BlockchainStandard {
     ERC20,
 }
 
+pub enum StandardOperation {
+    Balance,
+    Transfer,
+    ListTransfers,
+}
+impl std::fmt::Display for StandardOperation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            StandardOperation::Balance => write!(f, "balance"),
+            StandardOperation::Transfer => write!(f, "transfer"),
+            StandardOperation::ListTransfers => write!(f, "list_transfers"),
+        }
+    }
+}
+
+impl BlockchainStandard {
+    pub fn get_required_metadata(&self) -> Vec<String> {
+        match self {
+            BlockchainStandard::Native => vec![
+                "ledger_canister_id".to_string(),
+                "index_canister_id".to_string(),
+            ],
+            BlockchainStandard::ICRC1 => vec![
+                "ledger_canister_id".to_string(),
+                "index_canister_id".to_string(),
+            ],
+            BlockchainStandard::ERC20 => vec!["contract_address".to_string()],
+        }
+    }
+
+    pub fn get_supported_operations(&self) -> Vec<StandardOperation> {
+        match self {
+            BlockchainStandard::Native => vec![
+                StandardOperation::Balance,
+                StandardOperation::Transfer,
+                StandardOperation::ListTransfers,
+            ],
+            BlockchainStandard::ICRC1 => vec![],
+            BlockchainStandard::ERC20 => vec![],
+        }
+    }
+}
+
 impl FromStr for BlockchainStandard {
     type Err = ();
 

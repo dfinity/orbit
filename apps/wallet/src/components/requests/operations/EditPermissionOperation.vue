@@ -11,7 +11,7 @@
       </template>
     </RequestOperationListRow>
   </div>
-  <VProgressCircular v-else-if="loading" />
+  <VProgressCircular v-else-if="loading" indeterminate />
   <PermissionForm v-else :model-value="permission" mode="view" />
 </template>
 

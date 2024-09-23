@@ -95,6 +95,7 @@ export default {
       verify_instructions:
         'Para verificar a atualização, abra o terminal e siga as instruções abaixo:',
     },
+    assets: 'Ativos',
   },
   alpha_warning: {
     version: 'Esta é uma versão alfa.',
@@ -171,6 +172,7 @@ export default {
       system: 'Sistema',
       transfers: 'Transferências',
       users: 'Usuários',
+      assets: 'Ativos',
     },
     download: {
       user_group: 'Grupos de usuários',
@@ -282,6 +284,18 @@ export default {
       managesysteminfo: {
         title: 'Gerir informações do sistema',
         request_title: 'Pedido de alteração de informações do sistema',
+      },
+      addasset: {
+        title: 'Adicionar ativo',
+        request_title: 'Pedido de adição de ativo',
+      },
+      editasset: {
+        title: 'Editar ativo',
+        request_title: 'Pedido de alteração de ativo',
+      },
+      removeasset: {
+        title: 'Remover ativo',
+        request_title: 'Pedido de remoção de ativo',
       },
       unknown: {
         title: 'Desconhecido',
@@ -540,6 +554,9 @@ export default {
     version: 'Versão',
     continue: 'Continuar',
     cycle_obtain_strategy: 'Método de recarga da carteira',
+    symbol: 'Símbolo',
+    standards: 'Padrões',
+    assets: 'Ativos',
   },
   forms: {
     create: 'Criar',
@@ -576,6 +593,7 @@ export default {
     transfer_requests: 'Pedidos de transferência',
     permissions: 'Permissões',
     request_policies: 'Regras de aprovação',
+    assets: 'Ativos',
   },
   pages: {
     accounts: {
@@ -694,6 +712,17 @@ export default {
       create_label: 'Criar Regra',
       dialog_title: 'Regra',
     },
+    assets: {
+      title: 'Ativos',
+      btn_new_entry: 'Novo ativo',
+      no_results_found: 'Nenhum ativo encontrado.',
+      error_fetching_assets: 'Erro ao carregar os ativos, por favor, tente novamente.',
+      forms: {
+        ledger_canister_id: 'ID do canister de contabilidade',
+        index_canister_id: 'ID do canister de índice',
+        decimals: 'Decimais',
+      },
+    },
     not_found: {
       title: 'Ups, 404',
       subtitle: 'A página que está a tentar aceder não existe.',
@@ -733,6 +762,7 @@ export default {
     select_resource: 'Selecione o tipo de recurso',
     resources: {
       account: 'Conta',
+      asset: 'Ativo',
       user: 'Usuário',
       usergroup: 'Grupo de usuários',
       permission: 'Regra de acesso',
@@ -809,6 +839,9 @@ export default {
       fundexternalcanister: 'Financiar canister',
       setdisasterrecovery: 'Recuperação de sistema',
       callexternalcanister: 'Interagir com canister',
+      addasset: 'Adicionar ativo',
+      editasset: 'Editar ativo',
+      removeasset: 'Remover ativo',
     },
   },
   cycle_obtain_strategies: {

@@ -96,6 +96,7 @@ export default {
       verify_instructions:
         'Pour vérifier la mise à jour, ouvrez le terminal et suivez les instructions ci-dessous:',
     },
+    asset: 'Actif',
   },
   alpha_warning: {
     version: 'Ceci est une version alpha.',
@@ -172,6 +173,7 @@ export default {
       system: 'Système',
       transfers: 'Transferts',
       users: 'Usagers',
+      assets: 'Actifs',
     },
     headers: {
       id: 'ID',
@@ -283,6 +285,18 @@ export default {
       managesysteminfo: {
         title: 'Gérer les informations système',
         request_title: 'Demande de gérer les informations système',
+      },
+      addasset: {
+        title: 'Ajouter un actif',
+        request_title: 'Demande d ajouter un actif',
+      },
+      editasset: {
+        title: 'Modifier un actif',
+        request_title: 'Demande de modifier un actif',
+      },
+      removeasset: {
+        title: 'Supprimer un actif',
+        request_title: 'Demande de supprimer un actif',
       },
       unknown: {
         title: 'Inconnu',
@@ -543,6 +557,9 @@ export default {
     version: 'Version',
     continue: 'Continuer',
     cycle_obtain_strategy: 'Méthode de recharge du portefeuille',
+    symbol: 'Symbole',
+    standards: 'Standards',
+    assets: 'Actifs',
   },
   forms: {
     create: 'Créer',
@@ -579,6 +596,7 @@ export default {
     transfer_requests: 'Demandes de Transfert',
     permissions: "Polices d'Accés",
     request_policies: "Polices d'Aprobation",
+    assets: 'Actifs',
   },
   pages: {
     accounts: {
@@ -697,6 +715,17 @@ export default {
       create_label: 'Ajouter un police',
       dialog_title: 'Police',
     },
+    assets: {
+      title: 'Actifs',
+      btn_new_asset: 'Nouvel Actif',
+      no_results_found: 'Pas d actif trouvé.',
+      error_fetching_assets: 'Erreur lors du chargement des actifs, veuillez essayer de nouveau.',
+      forms: {
+        ledger_canister_id: 'ID du Canister Ledger',
+        index_canister_id: 'ID du Canister Index',
+        decimals: 'Décimales',
+      },
+    },
     not_found: {
       title: 'Oulala, 404',
       subtitle: "La page que vous cherchez n'existe pas.",
@@ -736,6 +765,7 @@ export default {
     select_resource: 'Type de Resource',
     resources: {
       account: 'Compte',
+      asset: 'Actif',
       user: 'Usager',
       usergroup: "Groupe d'Usagers",
       permission: "Police d'Accés",
@@ -813,6 +843,9 @@ export default {
       setdisasterrecovery: 'Définir la récupération après sinistre',
       callexternalcanister: 'Appeler un canister',
       createexternalcanister: 'Créer un canister',
+      addasset: 'Ajouter un actif',
+      editasset: 'Modifier un actif',
+      removeasset: 'Éffacer un actif',
     },
   },
   cycle_obtain_strategies: {

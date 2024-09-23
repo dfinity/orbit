@@ -13,7 +13,9 @@ pub use call_context::*;
 
 pub mod middlewares;
 pub mod observer;
+pub mod standards;
 pub mod validation;
+pub use standards::*;
 
 #[cfg(not(test))]
 pub use orbit_essentials::cdk as ic_cdk;
