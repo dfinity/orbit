@@ -112,21 +112,6 @@ const fetchDetails = async () => {
 };
 
 onBeforeMount(() => {
-  // const entry: Partial<Asset> = {};
-  // entry.id = props.operation.input.asset_id;
-
-  // if (props.operation.input.symbol?.[0]) {
-  //   entry.symbol = props.operation.input.symbol[0];
-  // }
-  // if (props.operation.input.name?.[0]) {
-  //   entry.name = props.operation.input.name[0];
-  // }
-  // if (props.operation.input.standards?.[0]) {
-  //   entry.standards = props.operation.input.standards[0];
-  // }
-  // if (props.operation.input.blockchain?.[0]) {
-  //   entry.blockchain = props.operation.input.blockchain[0];
-  // }
 
   const symbol = props.operation.input.symbol?.length > 0 ? props.operation.input.symbol[0] : '';
   const name = props.operation.input.name?.length > 0 ? props.operation.input.name[0] : '';
