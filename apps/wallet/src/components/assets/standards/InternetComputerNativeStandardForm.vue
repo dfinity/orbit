@@ -1,7 +1,7 @@
 <template>
   <VTextField
-    name="metadata_ledger_canister_id"
     v-model="ledgerId"
+    name="metadata_ledger_canister_id"
     :label="$t('pages.assets.forms.ledger_canister_id')"
     variant="filled"
     density="comfortable"
@@ -10,8 +10,8 @@
     :rules="[requiredRule, validCanisterId]"
   />
   <VTextField
-    name="metadata_index_canister_id"
     v-model="indexId"
+    name="metadata_index_canister_id"
     :label="$t('pages.assets.forms.index_canister_id')"
     variant="filled"
     density="comfortable"

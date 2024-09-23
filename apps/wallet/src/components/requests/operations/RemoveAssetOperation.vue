@@ -7,7 +7,7 @@
       </template>
     </RequestOperationListRow>
   </div>
-  <VProgressCircular indeterminate v-else-if="loading" />
+  <VProgressCircular v-else-if="loading" indeterminate />
   <AssetForm v-else :model-value="formValue" mode="view" />
 </template>
 

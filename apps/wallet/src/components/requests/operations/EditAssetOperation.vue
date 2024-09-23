@@ -11,7 +11,7 @@
       <template #content> {{ blockchain_standards }} </template>
     </RequestOperationListRow>
   </div>
-  <VProgressCircular indeterminate v-else-if="loading" />
+  <VProgressCircular v-else-if="loading" indeterminate />
   <AssetForm v-else :model-value="formValue" mode="view" />
 </template>
 
@@ -112,7 +112,6 @@ const fetchDetails = async () => {
 };
 
 onBeforeMount(() => {
-
   const symbol = props.operation.input.symbol?.length > 0 ? props.operation.input.symbol[0] : '';
   const name = props.operation.input.name?.length > 0 ? props.operation.input.name[0] : '';
   const blockchain =
