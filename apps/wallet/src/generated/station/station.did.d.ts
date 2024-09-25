@@ -1063,6 +1063,7 @@ export interface SystemUpgradeOperation {
 }
 export interface SystemUpgradeOperationInput {
   'arg' : [] | [Uint8Array | number[]],
+  'module_extra_chunks' : [] | [WasmModuleExtraChunks],
   'target' : SystemUpgradeTarget,
   'module' : Uint8Array | number[],
 }
@@ -1165,6 +1166,11 @@ export type UserStatus = { 'Inactive' : null } |
   { 'Active' : null };
 export type ValidationMethodResourceTarget = { 'No' : null } |
   { 'ValidationMethod' : CanisterMethod };
+export interface WasmModuleExtraChunks {
+  'wasm_module_hash' : Uint8Array | number[],
+  'chunk_hashes_list' : Array<Uint8Array | number[]>,
+  'store_canister' : Principal,
+}
 export interface _SERVICE {
   'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
