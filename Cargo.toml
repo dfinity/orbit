@@ -55,7 +55,7 @@ ic-representation-independent-hash = { git = "https://github.com/dfinity/respons
 ic-cdk = "0.13.2"
 ic-cdk-macros = "0.9"
 ic-cdk-timers = "0.7.0"
-ic-ledger-types = "0.10.0"
+ic-ledger-types = "0.12.0"
 ic-stable-structures = "0.6.4"
 ic-utils = { git = "https://github.com/dfinity/agent-rs.git", rev = "be929fd7967249c879f48f2f494cbfc5805a7d98" }
 itertools = "0.13.0"
