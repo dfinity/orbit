@@ -7,7 +7,6 @@ members = [
     "core/station/impl",
     "core/upgrader/api",
     "core/upgrader/impl",
-    "libs/canfund",
     "libs/orbit-essentials",
     "libs/orbit-essentials-macros",
     "libs/orbit-essentials-macros-tests",
@@ -36,6 +35,7 @@ byteorder = "1.5"
 canbench-rs = "0.1.1"
 candid = "0.10.3"
 candid_parser = "0.1.3"
+canfund = "0.2.0"
 cap-std = "3.1.0"
 clap = { version = "4.5.7", features = ["derive"] }
 dateparser = "0.2"
