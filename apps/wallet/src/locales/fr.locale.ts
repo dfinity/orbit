@@ -1,6 +1,7 @@
 export default {
   app: {
     title: 'Portefeuille {app}',
+    name: 'Orbit Wallet',
     action_save_failed: "Échec de sauvegarde de l'action, veuillez essayer de nouveau.",
     action_save_success: "Sauvegarde de l'action réussie.",
     session_load_error: 'Échec du chargement votre session, veuillez essayer de nouveau.',
@@ -441,6 +442,26 @@ export default {
     install: 'Installer',
     send_cycles: 'Envoyer des cycles',
     top_up_hint: 'Montant de cycles à ajouter au canister cible.',
+    add_controller: 'Ajouter un contrôleur',
+    no_controllers: 'Pas de contrôleurs',
+    self_controller: 'Contrôleur de soi',
+    non_orbit_controllers_warning:
+      'Cette configuration ajoute des contrôleurs supplémentaires au canister cible, utilisez avec prudence.',
+    native_settings: {
+      freezing_threshold: 'Seuil de gel',
+      freezing_threshold_hint:
+        'Le nombre de secondes pendant lesquelles le canister sera mis dans un état gelé avant d être nettoyé par le réseau.',
+      controllers: 'Contrôleurs',
+      controllers_hint: 'La liste des principaux qui peuvent contrôler le canister.',
+      memory_allocation: 'Allocation de mémoire',
+      memory_allocation_hint:
+        'La quantité maximale de mémoire que le canister peut utiliser, cela réserve également la mémoire dans le sous-réseau.',
+      compute_allocation: 'Allocation de calcul',
+      compute_allocation_hint: 'Le pourcentage de calcul de sous-réseau réservé pour le canister.',
+      reserved_cycles_limit: 'Limite de cycles réservés',
+      reserved_cycles_limit_hint:
+        'Nombre de cycles que le canister peut allouer, les opérations qui allouent de la mémoire ou du calcul échoueront si la limite est atteinte.',
+    },
   },
   terms: {
     active: 'Actif',
