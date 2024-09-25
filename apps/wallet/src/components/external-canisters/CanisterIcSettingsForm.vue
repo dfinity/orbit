@@ -30,28 +30,33 @@
           <VTable v-if="model.controllers && model.controllers.length" density="compact" hover>
             <tbody>
               <tr v-for="(controller, idx) in model.controllers" :key="idx">
-                <td class="px-1 w-100">
+                <td class="pa-2 w-100">
                   <span v-if="station.canisterId === controller.toText()">
                     ({{ $t('app.name') }})
                   </span>
                   <span v-else-if="model.canisterId?.toText() === controller.toText()">
                     ({{ $t('external_canisters.self_controller') }})
                   </span>
-                  <TextOverflow :text="controller.toText()" :max-length="64" />
+                  <div :class="{ 'd-inline': !app.isMobile }">
+                    <TextOverflow
+                      :text="controller.toText()"
+                      :max-length="app.isMobile ? 24 : 64"
+                    />
 
-                  <VBtn
-                    size="x-small"
-                    variant="text"
-                    :icon="mdiContentCopy"
-                    @click="
-                      copyToClipboard({
-                        textToCopy: controller.toText(),
-                        sendNotification: true,
-                      })
-                    "
-                  />
+                    <VBtn
+                      size="x-small"
+                      variant="text"
+                      :icon="mdiContentCopy"
+                      @click="
+                        copyToClipboard({
+                          textToCopy: controller.toText(),
+                          sendNotification: true,
+                        })
+                      "
+                    />
+                  </div>
                 </td>
-                <td v-if="!props.readonly" class="px-1 d-flex flex-column align-end justify-center">
+                <td v-if="!props.readonly" class="px-1 min-height-100 text-right">
                   <VBtn
                     size="small"
                     variant="text"
@@ -188,6 +193,7 @@ import { numberRangeRule, requiredRule, uniqueRule, validPrincipalRule } from '~
 import TextOverflow from '../TextOverflow.vue';
 import CanisterIdField from '../inputs/CanisterIdField.vue';
 import { CanisterIcSettingsModel } from './external-canisters.types';
+import { useAppStore } from '~/stores/app.store';
 
 const props = withDefaults(
   defineProps<{
@@ -218,6 +224,7 @@ const form = ref<VFormValidation>();
 const valid = ref(true);
 const fieldsWithErrors = ref<string[]>([]);
 const newController = ref<string>('');
+const app = useAppStore();
 const station = useStationStore();
 const initialModel = ref<string>('');
 
