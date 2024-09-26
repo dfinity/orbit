@@ -887,14 +887,17 @@ mod tests {
         USER_REPOSITORY.insert(no_access_user.to_key(), no_access_user.clone());
 
         let asset = ASSET_SERVICE
-            .create(AddAssetOperationInput {
-                name: "foo".to_string(),
-                symbol: "FOO".to_string(),
-                decimals: 18,
-                metadata: Metadata::default(),
-                blockchain: Blockchain::InternetComputer,
-                standards: vec![TokenStandard::InternetComputerNative],
-            })
+            .create(
+                AddAssetOperationInput {
+                    name: "foo".to_string(),
+                    symbol: "FOO".to_string(),
+                    decimals: 18,
+                    metadata: Metadata::default(),
+                    blockchain: Blockchain::InternetComputer,
+                    standards: vec![TokenStandard::InternetComputerNative],
+                },
+                None,
+            )
             .expect("Failed to create asset");
 
         // create account

@@ -278,6 +278,12 @@ impl SystemService {
             let admin_count = init.admins.len() as u16;
             let quorum = calc_initial_quorum(admin_count, init.quorum);
 
+            // if provided, creates the initial assets
+            if let Some(assets) = init.assets {
+                print("Adding initial assets");
+                install_canister_handlers::set_initial_assets(assets).await?;
+            }
+
             // if provided, creates the initial accounts
             if let Some(accounts) = init.accounts {
                 print("Adding initial accounts");
@@ -580,12 +586,12 @@ mod install_canister_handlers {
     use crate::models::permission::Allow;
     use crate::models::request_specifier::UserSpecifier;
     use crate::models::{
-        AddAccountOperationInput, AddRequestPolicyOperationInput, CycleObtainStrategy,
-        EditPermissionOperationInput, RequestPolicyRule, ADMIN_GROUP_ID,
+        AddAccountOperationInput, AddAssetOperationInput, AddRequestPolicyOperationInput,
+        CycleObtainStrategy, EditPermissionOperationInput, RequestPolicyRule, ADMIN_GROUP_ID,
     };
     use crate::services::permission::PERMISSION_SERVICE;
-    use crate::services::ACCOUNT_SERVICE;
     use crate::services::REQUEST_POLICY_SERVICE;
+    use crate::services::{ACCOUNT_SERVICE, ASSET_SERVICE};
     use candid::{Encode, Principal};
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
     use canfund::manager::RegisterOpts;
@@ -594,7 +600,7 @@ mod install_canister_handlers {
     use ic_cdk::id;
 
     use orbit_essentials::types::UUID;
-    use station_api::{InitAccountInput, SystemInit};
+    use station_api::{InitAccountInput, InitAssetInput, SystemInit};
     use std::cell::RefCell;
 
     use super::SYSTEM_SERVICE;
@@ -645,10 +651,15 @@ mod install_canister_handlers {
             .map(|account| {
                 let input = AddAccountOperationInput {
                     name: account.name,
-                    blockchain: BlockchainMapper::to_blockchain(account.blockchain.clone())
-                        .expect("Invalid blockchain"),
-                    standard: BlockchainMapper::to_blockchain_standard(account.standard)
-                        .expect("Invalid blockchain standard"),
+                    assets: account
+                        .assets
+                        .into_iter()
+                        .map(|asset| {
+                            *HelperMapper::to_uuid(asset)
+                                .expect("Invalid UUID")
+                                .as_bytes()
+                        })
+                        .collect(),
                     metadata: account.metadata.into(),
                     transfer_request_policy: Some(RequestPolicyRule::Quorum(
                         UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
@@ -677,6 +688,45 @@ mod install_canister_handlers {
                 .create_account(new_account, with_account_id)
                 .await
                 .map_err(|e| format!("Failed to add account: {:?}", e))?;
+        }
+
+        Ok(())
+    }
+    // Registers the initial accounts of the canister during the canister initialization.
+    pub async fn set_initial_assets(assets: Vec<InitAssetInput>) -> Result<(), String> {
+        let add_assets = assets
+            .into_iter()
+            .map(|asset| {
+                let input = AddAssetOperationInput {
+                    name: asset.name,
+                    blockchain: BlockchainMapper::to_blockchain(asset.blockchain.clone())
+                        .expect("Invalid blockchain"),
+                    standards: asset
+                        .standards
+                        .iter()
+                        .map(|standard| {
+                            BlockchainMapper::to_blockchain_standard(standard.clone())
+                                .expect("Invalid blockchain standard")
+                        })
+                        .collect(),
+                    decimals: asset.decimals,
+                    symbol: asset.symbol,
+                    metadata: asset.metadata.into(),
+                };
+
+                (
+                    input,
+                    asset
+                        .id
+                        .map(|id| *HelperMapper::to_uuid(id).expect("Invalid UUID").as_bytes()),
+                )
+            })
+            .collect::<Vec<(AddAssetOperationInput, Option<UUID>)>>();
+
+        for (new_asset, with_asset_id) in add_assets {
+            ASSET_SERVICE
+                .create(new_asset, with_asset_id)
+                .map_err(|e| format!("Failed to add asset: {:?}", e))?;
         }
 
         Ok(())
@@ -810,6 +860,7 @@ mod tests {
                 upgrader: station_api::SystemUpgraderInput::WasmModule(vec![]),
                 fallback_controller: None,
                 accounts: None,
+                assets: None,
             })
             .await;
 

@@ -473,14 +473,17 @@ mod tests {
         disable_mock_resource_validation();
 
         let asset = AssetService::default()
-            .create(AddAssetOperationInput {
-                name: "a".to_owned(),
-                symbol: "a".to_owned(),
-                decimals: 0,
-                metadata: Metadata::default(),
-                blockchain: Blockchain::InternetComputer,
-                standards: vec![TokenStandard::InternetComputerNative],
-            })
+            .create(
+                AddAssetOperationInput {
+                    name: "a".to_owned(),
+                    symbol: "a".to_owned(),
+                    decimals: 0,
+                    metadata: Metadata::default(),
+                    blockchain: Blockchain::InternetComputer,
+                    standards: vec![TokenStandard::InternetComputerNative],
+                },
+                None,
+            )
             .expect("Failed to create asset");
 
         let account_service = AccountService::default();
