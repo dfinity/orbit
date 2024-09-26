@@ -1,11 +1,11 @@
 import { Principal } from '@dfinity/principal';
 import { describe, expect, it } from 'vitest';
 import { mount } from '~/test.utils';
-import CanisterIcSettingsForm from './CanisterIcSettingsForm.vue';
+import CanisterInstallForm from './CanisterInstallForm.vue';
 
-describe('CanisterIcSettingsForm', () => {
+describe('CanisterInstallForm', () => {
   it('hides the canisterId when display is set to false', () => {
-    const form = mount(CanisterIcSettingsForm, {
+    const form = mount(CanisterInstallForm, {
       props: {
         modelValue: { canisterId: Principal.anonymous() },
         display: { canisterId: false },
@@ -17,7 +17,7 @@ describe('CanisterIcSettingsForm', () => {
   });
 
   it('shows the canisterId when display is set to true', () => {
-    const form = mount(CanisterIcSettingsForm, {
+    const form = mount(CanisterInstallForm, {
       props: {
         modelValue: { canisterId: Principal.anonymous() },
         display: { canisterId: true },
