@@ -153,9 +153,8 @@ pub struct RequestCanisterInstallArgs {
     /// The canister name or ID.
     canister: String,
     /// The installation mode.
-    #[clap(long, value_enum, rename_all = "kebab-case", default_value = "install")]
+    #[clap(long, value_enum, rename_all = "kebab-case")]
     mode: CanisterInstallModeArgs,
-    // TODO: On verify, allow a --wasm-hash instead
     /// The path to the wasm file to install (can also be a wasm.gz).
     #[clap(short, long)]
     wasm: String,

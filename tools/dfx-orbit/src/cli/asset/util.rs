@@ -6,7 +6,7 @@ use ic_certified_assets::types::{GrantPermissionArguments, Permission, RevokePer
 use station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput};
 use std::path::{Path, PathBuf};
 
-// TODO: Move this into the into_request of the Arg
+// TODO: Remove these, once they are no longer needed
 impl DfxOrbit {
     pub fn grant_prepare_permission_request(
         asset_canister: Principal,

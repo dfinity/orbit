@@ -1,7 +1,7 @@
 use crate::DfxOrbit;
 use anyhow::bail;
 use candid::Principal;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use ic_certified_assets::types::{GrantPermissionArguments, Permission};
 use sha2::{Digest, Sha256};
 use station_api::{GetRequestResponse, RequestOperationDTO, RequestOperationInput};
@@ -16,7 +16,7 @@ pub struct RequestAssetArgs {
 #[clap(version, about, long_about = None)]
 pub enum RequestAssetActionArgs {
     /// Request to grant this user Prepare permission for the asset canister
-    PreparePermission(RequestAssetPreparePermissionArgs),
+    PreparePermission(RequestAssetPermissionArgs),
     /// Upload assets to an asset canister
     Upload(RequestAssetUploadArgs),
 }
@@ -34,21 +34,26 @@ impl RequestAssetArgs {
 }
 
 #[derive(Debug, Clone, Parser)]
-pub struct RequestAssetPreparePermissionArgs {
+pub struct RequestAssetPermissionArgs {
     /// The name of the asset canister targeted by this action
     pub canister: String,
+    /// The type of permission to grant / revoke
+    pub permission: AssetPermissionTypeArgs,
     /// The principal to grant the prepare permission to (defaults to self)
-    pub id: Option<Principal>,
-    // TODO: Ability to revoke
+    #[clap(short, long)]
+    pub target: Option<Principal>,
+    /// Request to revoke (rather than grant) the permission
+    #[clap(short, long)]
+    pub revoke: bool,
 }
 
-impl RequestAssetPreparePermissionArgs {
+impl RequestAssetPermissionArgs {
     pub(crate) fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         let me = dfx_orbit.own_principal()?;
-        let to_principal = self.id.unwrap_or(me);
+        let to_principal = self.target.unwrap_or(me);
         let asset_canister = dfx_orbit.canister_id(&self.canister)?;
         DfxOrbit::grant_prepare_permission_request(asset_canister, to_principal)
     }
@@ -79,7 +84,7 @@ impl RequestAssetPreparePermissionArgs {
         }
 
         let me = dfx_orbit.own_principal()?;
-        let to_principal = self.id.unwrap_or(me);
+        let to_principal = self.target.unwrap_or(me);
         let args = GrantPermissionArguments {
             to_principal,
             permission: Permission::Prepare,
@@ -95,6 +100,28 @@ impl RequestAssetPreparePermissionArgs {
     }
 }
 
+/// Canister installation mode equivalent to `dfx canister install --mode XXX` and `orbit_station_api::CanisterInstallMode`.
+#[derive(Copy, Clone, Eq, PartialEq, Debug, ValueEnum)]
+pub enum AssetPermissionTypeArgs {
+    /// Permission to prepare asset upload (is needed by the uploading developer)
+    Prepare,
+    /// Permission to commit a batch (should only be granted to the orbit station itself)
+    Commit,
+    /// Permission to grant and revovoke the other permissions
+    /// (should not be needed if the orbit station is the controller) of the asset cansister
+    ManagePermissions,
+}
+
+impl From<AssetPermissionTypeArgs> for Permission {
+    fn from(value: AssetPermissionTypeArgs) -> Self {
+        match value {
+            AssetPermissionTypeArgs::Prepare => Permission::Prepare,
+            AssetPermissionTypeArgs::Commit => Permission::Commit,
+            AssetPermissionTypeArgs::ManagePermissions => Permission::ManagePermissions,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetUploadArgs {
     /// The name of the asset canister targeted by this action
@@ -105,8 +132,8 @@ pub struct RequestAssetUploadArgs {
     pub ignore_evidence: bool,
 
     /// The source directories to upload (multiple values possible)
+    #[clap(short, long)]
     pub files: Vec<String>,
-    // TODO: Cancel upload request
 }
 
 impl RequestAssetUploadArgs {
@@ -127,3 +154,5 @@ impl RequestAssetUploadArgs {
         DfxOrbit::commit_batch_input(canister_id, batch_id, evidence)
     }
 }
+
+// TODO: Request commit with --evidence and --cancel
