@@ -14,6 +14,7 @@ import {
   ConfigureExternalCanisterSettingsInput,
   CreateExternalCanisterOperationInput,
   CreateRequestInput,
+  DefiniteCanisterSettingsInput,
   DisasterRecoveryCommittee,
   EditAccountOperationInput,
   EditAddressBookEntryOperationInput,
@@ -572,6 +573,29 @@ export class StationService {
       summary: [],
       operation: {
         FundExternalCanister: input,
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async editCanisterIcSettings(
+    canisterId: Principal,
+    input: DefiniteCanisterSettingsInput,
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        ConfigureExternalCanister: {
+          canister_id: canisterId,
+          kind: { NativeSettings: input },
+        },
       },
     });
 
