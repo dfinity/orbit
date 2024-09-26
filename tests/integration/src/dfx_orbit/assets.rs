@@ -34,7 +34,7 @@ fn assets_upload() {
     let (dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
 
     // Install the assets canister under orbit control
-    let asset_canister = create_canister(&mut env, canister_ids.station);
+    let asset_canister = create_canister(&env, canister_ids.station);
     let asset_canister_wasm = get_canister_wasm("assetstorage");
     env.install_canister(
         asset_canister,

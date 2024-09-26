@@ -25,13 +25,11 @@ use station_api::{
 #[test]
 fn successful_four_eyes_upgrade() {
     let TestEnv {
-        mut env,
-        canister_ids,
-        ..
+        env, canister_ids, ..
     } = setup_new_env();
 
     // create and install the counter canister
-    let canister_id = create_canister(&mut env, canister_ids.station);
+    let canister_id = create_canister(&env, canister_ids.station);
     let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
     let mut sha256 = Sha256::new();
     sha256.update(module_bytes.clone());
@@ -195,13 +193,11 @@ fn successful_four_eyes_upgrade() {
 #[test]
 fn upgrade_reinstall_list_test() {
     let TestEnv {
-        mut env,
-        canister_ids,
-        ..
+        env, canister_ids, ..
     } = setup_new_env();
 
     // create and install the counter canister
-    let canister_id = create_canister(&mut env, canister_ids.station);
+    let canister_id = create_canister(&env, canister_ids.station);
     let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
     let mut sha256 = Sha256::new();
     sha256.update(module_bytes.clone());
@@ -630,13 +626,11 @@ fn call_external_canister_test() {
     const T: u128 = 1_000_000_000_000;
 
     let TestEnv {
-        mut env,
-        canister_ids,
-        ..
+        env, canister_ids, ..
     } = setup_new_env();
 
     // create and install the counter canister (validation)
-    let validation_canister_id = create_canister(&mut env, Principal::anonymous());
+    let validation_canister_id = create_canister(&env, Principal::anonymous());
     let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
     let mut sha256 = Sha256::new();
     sha256.update(module_bytes.clone());
@@ -644,7 +638,7 @@ fn call_external_canister_test() {
     env.install_canister(validation_canister_id, module_bytes.clone(), vec![], None);
 
     // create and install the counter canister (execution)
-    let execution_canister_id = create_canister(&mut env, Principal::anonymous());
+    let execution_canister_id = create_canister(&env, Principal::anonymous());
     let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
     env.install_canister(execution_canister_id, module_bytes.clone(), vec![], None);
 

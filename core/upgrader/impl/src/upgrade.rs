@@ -7,11 +7,13 @@ use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use candid::Principal;
 use ic_cdk::api::management_canister::main::{
-    self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode, InstallCodeArgument,
+    self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode,
 };
 use mockall::automock;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::{call, print};
+use orbit_essentials::install_chunked_code::install_chunked_code;
+use orbit_essentials::types::WasmModuleExtraChunks;
 use station_api::NotifyFailedStationUpgradeInput;
 use std::sync::Arc;
 
@@ -27,6 +29,7 @@ pub enum UpgradeError {
 
 pub struct UpgradeParams {
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     pub arg: Vec<u8>,
     pub install_mode: CanisterInstallMode,
 }
@@ -51,20 +54,20 @@ impl Upgrader {
 #[async_trait]
 impl Upgrade for Upgrader {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        let id = self
+        let target_canister = self
             .target
-            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+            .with(|id| id.borrow().get(&()).context("canister id not set"))?
+            .0;
 
-        mgmt::install_code(InstallCodeArgument {
-            mode: ps.install_mode,
-            canister_id: id.0,
-            wasm_module: ps.module,
-            arg: ps.arg,
-        })
+        install_chunked_code(
+            target_canister,
+            ps.install_mode,
+            ps.module,
+            ps.module_extra_chunks,
+            ps.arg,
+        )
         .await
-        .map_err(|(_, err)| anyhow!("failed to install code: {err}"))?;
-
-        Ok(())
+        .map_err(|e| anyhow!(e).into())
     }
 }
 

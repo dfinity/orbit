@@ -18,6 +18,7 @@ pub fn perform_upgrader_update(
             station_api::SystemUpgradeOperationInput {
                 target: station_api::SystemUpgradeTargetDTO::UpgradeUpgrader,
                 module: upgrader_wasm.clone(),
+                module_extra_chunks: None,
                 arg: None,
             },
         ),
@@ -46,6 +47,7 @@ pub fn perform_station_update(
             station_api::SystemUpgradeOperationInput {
                 target: station_api::SystemUpgradeTargetDTO::UpgradeStation,
                 module: station_wasm.clone(),
+                module_extra_chunks: None,
                 arg: None,
             },
         ),

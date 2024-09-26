@@ -262,11 +262,20 @@ pub enum SystemUpgradeTarget {
 }
 
 #[storable]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct WasmModuleExtraChunks {
+    pub store_canister: Principal,
+    pub chunk_hashes_list: Vec<Vec<u8>>,
+    pub wasm_module_hash: Vec<u8>,
+}
+
+#[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct SystemUpgradeOperationInput {
     pub target: SystemUpgradeTarget,
     /// The module is only available while the operation is not finalized.
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     pub arg: Option<Vec<u8>>,
 }
 
