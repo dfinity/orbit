@@ -88,8 +88,10 @@ impl DisasterRecoveryController {
         if !is_controller(&caller) {
             Err(UpgraderApiError::NotController)?
         } else {
-            self.disaster_recovery_service
-                .set_accounts(input.accounts.into_iter().map(Into::into).collect())
+            self.disaster_recovery_service.set_accounts(
+                input.accounts.into_iter().map(Into::into).collect(),
+                input.assets.into_iter().map(Into::into).collect(),
+            )
         }
     }
 

@@ -162,7 +162,7 @@ mod tests {
     use station_api::ListAssetsInput;
 
     use crate::{
-        models::{asset_test_utils::mock_asset, AddAssetOperationInput, BlockchainStandard},
+        models::{asset_test_utils::mock_asset, AddAssetOperationInput, TokenStandard},
         repositories::ASSET_REPOSITORY,
     };
 
@@ -175,7 +175,7 @@ mod tests {
         service
             .create(AddAssetOperationInput {
                 blockchain: crate::models::Blockchain::InternetComputer,
-                standards: vec![BlockchainStandard::Native],
+                standards: vec![TokenStandard::InternetComputerNative],
                 decimals: 8,
                 metadata: Default::default(),
                 name: "ICP".to_string(),
@@ -263,7 +263,7 @@ mod tests {
         service
             .create(AddAssetOperationInput {
                 blockchain: crate::models::Blockchain::InternetComputer,
-                standards: vec![BlockchainStandard::Native],
+                standards: vec![TokenStandard::InternetComputerNative],
                 decimals: 8,
                 metadata: Default::default(),
                 name: "ICP".to_string(),
@@ -274,7 +274,7 @@ mod tests {
         service
             .create(AddAssetOperationInput {
                 blockchain: crate::models::Blockchain::InternetComputer,
-                standards: vec![BlockchainStandard::Native],
+                standards: vec![TokenStandard::InternetComputerNative],
                 decimals: 8,
                 metadata: Default::default(),
                 name: "ICP".to_string(),
@@ -285,7 +285,7 @@ mod tests {
         service
             .create(AddAssetOperationInput {
                 blockchain: crate::models::Blockchain::InternetComputer,
-                standards: vec![BlockchainStandard::Native],
+                standards: vec![TokenStandard::InternetComputerNative],
                 decimals: 8,
                 metadata: Default::default(),
                 name: "ICP".to_string(),

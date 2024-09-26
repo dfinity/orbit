@@ -14,16 +14,35 @@ pub struct AccountCallerPrivilegesDTO {
 pub struct AccountDTO {
     pub id: UuidDTO,
     pub name: String,
-    pub address: String,
-    pub blockchain: String,
-    pub standard: String,
-    pub symbol: String,
-    pub decimals: u32,
-    pub balance: Option<AccountBalanceInfoDTO>,
+    pub assets: Vec<AccountAssetDTO>,
+    pub addresses: Vec<AccountAddressDTO>,
     pub metadata: Vec<MetadataDTO>,
     pub transfer_request_policy: Option<RequestPolicyRuleDTO>,
     pub configs_request_policy: Option<RequestPolicyRuleDTO>,
     pub last_modification_timestamp: String,
+}
+
+pub type AccountSeedDTO = [u8; 16];
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+
+pub struct ExtraDataDTO {
+    pub key: String,
+    pub text_value: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct AccountAssetDTO {
+    pub asset_id: UuidDTO,
+    pub balance: Option<AccountBalanceDTO>,
+    pub data: Vec<ExtraDataDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct AccountAddressDTO {
+    pub address: String,
+    pub format: String,
+    pub data: Vec<ExtraDataDTO>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -45,8 +64,7 @@ pub struct EditAccountOperationDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AddAccountOperationInput {
     pub name: String,
-    pub blockchain: String,
-    pub standard: String,
+    pub assets: Vec<UuidDTO>,
     pub metadata: Vec<MetadataDTO>,
     pub read_permission: AllowDTO,
     pub configs_permission: AllowDTO,

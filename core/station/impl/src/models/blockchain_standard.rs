@@ -1,18 +1,42 @@
-use candid::CandidType;
 use orbit_essentials::storable;
 use std::{
     fmt::{Display, Formatter},
     str::FromStr,
 };
 
+use super::AddressFormat;
+
 #[storable]
-#[derive(CandidType, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum BlockchainStandard {
-    Native,
-    ICRC1,
-    ERC20,
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct TokenStandardInfo {
+    pub name: String,
+    pub address_formats: Vec<AddressFormat>,
 }
 
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum TokenStandard {
+    InternetComputerNative,
+    ICRC1,
+    // ERC20,
+}
+
+impl TokenStandard {
+    pub fn get_info(&self) -> TokenStandardInfo {
+        match self {
+            TokenStandard::InternetComputerNative => TokenStandardInfo {
+                name: "icp_native".to_owned(),
+                address_formats: vec![AddressFormat::ICPAccountIdentifier],
+            },
+            TokenStandard::ICRC1 => TokenStandardInfo {
+                name: "icrc1".to_owned(),
+                address_formats: vec![AddressFormat::ICRC1Account],
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum StandardOperation {
     Balance,
     Transfer,
@@ -28,53 +52,48 @@ impl std::fmt::Display for StandardOperation {
     }
 }
 
-impl BlockchainStandard {
+impl TokenStandard {
+    pub const METADATA_KEY_LEDGER_CANISTER_ID: &'static str = "ledger_canister_id";
+    pub const METADATA_KEY_INDEX_CANISTER_ID: &'static str = "index_canister_id";
+
     pub fn get_required_metadata(&self) -> Vec<String> {
         match self {
-            BlockchainStandard::Native => vec![
-                "ledger_canister_id".to_string(),
-                "index_canister_id".to_string(),
+            TokenStandard::ICRC1 | TokenStandard::InternetComputerNative => vec![
+                Self::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                Self::METADATA_KEY_INDEX_CANISTER_ID.to_string(),
             ],
-            BlockchainStandard::ICRC1 => vec![
-                "ledger_canister_id".to_string(),
-                "index_canister_id".to_string(),
-            ],
-            BlockchainStandard::ERC20 => vec!["contract_address".to_string()],
         }
     }
 
     pub fn get_supported_operations(&self) -> Vec<StandardOperation> {
         match self {
-            BlockchainStandard::Native => vec![
+            TokenStandard::InternetComputerNative => vec![
                 StandardOperation::Balance,
                 StandardOperation::Transfer,
                 StandardOperation::ListTransfers,
             ],
-            BlockchainStandard::ICRC1 => vec![],
-            BlockchainStandard::ERC20 => vec![],
+            TokenStandard::ICRC1 => vec![],
         }
     }
 }
 
-impl FromStr for BlockchainStandard {
+impl FromStr for TokenStandard {
     type Err = ();
 
-    fn from_str(variant: &str) -> Result<BlockchainStandard, Self::Err> {
+    fn from_str(variant: &str) -> Result<TokenStandard, Self::Err> {
         match variant {
-            "native" => Ok(BlockchainStandard::Native),
-            "icrc1" => Ok(BlockchainStandard::ICRC1),
-            "erc20" => Ok(BlockchainStandard::ERC20),
+            "native" => Ok(TokenStandard::InternetComputerNative),
+            "icrc1" => Ok(TokenStandard::ICRC1),
             _ => Err(()),
         }
     }
 }
 
-impl Display for BlockchainStandard {
+impl Display for TokenStandard {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            BlockchainStandard::Native => write!(f, "native"),
-            BlockchainStandard::ERC20 => write!(f, "erc20"),
-            BlockchainStandard::ICRC1 => write!(f, "icrc1"),
+            TokenStandard::InternetComputerNative => write!(f, "native"),
+            TokenStandard::ICRC1 => write!(f, "icrc1"),
         }
     }
 }
@@ -85,20 +104,15 @@ mod tests {
 
     #[test]
     fn blockchain_standard_match_string_representation() {
-        assert_eq!(BlockchainStandard::Native.to_string(), "native");
+        assert_eq!(TokenStandard::InternetComputerNative.to_string(), "native");
         assert_eq!(
-            BlockchainStandard::from_str("native").unwrap(),
-            BlockchainStandard::Native
+            TokenStandard::from_str("native").unwrap(),
+            TokenStandard::InternetComputerNative
         );
-        assert_eq!(BlockchainStandard::ICRC1.to_string(), "icrc1");
+        assert_eq!(TokenStandard::ICRC1.to_string(), "icrc1");
         assert_eq!(
-            BlockchainStandard::from_str("icrc1").unwrap(),
-            BlockchainStandard::ICRC1
-        );
-        assert_eq!(BlockchainStandard::ERC20.to_string(), "erc20");
-        assert_eq!(
-            BlockchainStandard::from_str("erc20").unwrap(),
-            BlockchainStandard::ERC20
+            TokenStandard::from_str("icrc1").unwrap(),
+            TokenStandard::ICRC1
         );
     }
 }

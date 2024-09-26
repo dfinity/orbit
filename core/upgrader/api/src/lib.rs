@@ -1,5 +1,5 @@
 use candid::{CandidType, Deserialize, Principal};
-use station_api::TimestampRfc3339;
+use station_api::{AccountSeedDTO, TimestampRfc3339};
 pub use station_api::{MetadataDTO, UuidDTO};
 
 #[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize, PartialEq)]
@@ -41,21 +41,36 @@ pub struct DisasterRecoveryCommittee {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct Asset {
+    /// The asset id, which is a UUID.
+    pub id: UuidDTO,
+    /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
+    pub name: String,
+    /// The asset symbol (e.g. `ICP`, `BTC`, `ETH`, etc.)
+    pub symbol: String,
+    /// The number of decimal places that the asset supports (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
+    pub decimals: u32,
+    /// The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+    pub blockchain: String,
+    // The asset standard that is supported (e.g. `erc20`, `native`, etc.), canonically
+    // represented as a lowercase string with spaces replaced with underscores.
+    pub standards: Vec<String>,
+    /// The account metadata, which is a list of key-value pairs,
+    /// where the key is unique and the first entry in the tuple,
+    /// and the value is the second entry in the tuple.
+    pub metadata: Vec<MetadataDTO>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Account {
     /// The account id, which is a UUID.
     pub id: UuidDTO,
-    /// The blockchain type (e.g. `icp`, `eth`, `btc`)
-    pub blockchain: String,
-    /// The account address (e.g. `0x1234`, etc.)
-    pub address: String,
-    /// The blockchain standard (e.g. `native`, `icrc1`, `erc20`, etc.)
-    pub standard: String,
-    /// The asset symbol (e.g. `ICP`, `ETH`, `BTC`, etc.)
-    pub symbol: String,
-    /// The asset decimals (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
-    pub decimals: u32,
-    /// The account name (e.g. `My Main Account`)
+    /// The seed for address generation.
+    pub seed: AccountSeedDTO,
+    /// The account name.
     pub name: String,
+    /// The account assets.
+    pub assets: Vec<UuidDTO>,
     /// The account metadata, which is a list of key-value pairs,
     /// where the key is unique and the first entry in the tuple,
     /// and the value is the second entry in the tuple.
@@ -90,6 +105,7 @@ pub struct SetDisasterRecoveryCommitteeInput {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct SetDisasterRecoveryAccountsInput {
     pub accounts: Vec<Account>,
+    pub assets: Vec<Asset>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

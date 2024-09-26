@@ -1,4 +1,4 @@
-use super::{AccountId, UserId};
+use super::{AccountId, AssetId, TokenStandard, UserId};
 use crate::core::ic_cdk::next_time;
 use crate::core::validation::{EnsureAccount, EnsureIdExists, EnsureRequest, EnsureUser};
 use crate::errors::{RecordValidationError, TransferError};
@@ -58,6 +58,10 @@ pub struct Transfer {
     pub initiator_user: UserId,
     /// The account id that the transfer is from.
     pub from_account: AccountId,
+    /// The asset id that the transfer is from.
+    pub from_asset: AssetId,
+    /// The token standard that the transfer is associated with.
+    pub with_standard: TokenStandard,
     /// The destination address of the transfer.
     pub to_address: String,
     /// The current status of the transfer.
@@ -114,6 +118,8 @@ impl Transfer {
         transfer_id: UUID,
         initiator_user: UUID,
         from_account: UUID,
+        from_asset: UUID,
+        with_standard: TokenStandard,
         to_address: String,
         metadata: Metadata,
         amount: candid::Nat,
@@ -126,6 +132,8 @@ impl Transfer {
             id: transfer_id,
             initiator_user,
             from_account,
+            from_asset,
+            with_standard,
             to_address,
             request_id,
             status: TransferStatus::Created,
@@ -318,6 +326,8 @@ pub mod transfer_test_utils {
             id: *Uuid::new_v4().as_bytes(),
             initiator_user: [0; 16],
             from_account: [0; 16],
+            from_asset: [0; 16],
+            with_standard: TokenStandard::InternetComputerNative,
             request_id: [2; 16],
             to_address: "x".repeat(255),
             status: TransferStatus::Created,

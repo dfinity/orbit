@@ -3,9 +3,9 @@ use super::{
     request_policy_rule::{RequestPolicyRule, RequestPolicyRuleInput},
     request_specifier::RequestSpecifier,
     resource::{Resource, ValidationMethodResourceTarget},
-    AccountId, AddressBookEntryId, AssetId, Blockchain, BlockchainStandard, ChangeMetadata,
+    AccountId, AddressBookEntryId, AddressFormat, AssetId, Blockchain, ChangeMetadata,
     CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
-    ExternalCanisterState, MetadataItem, UserGroupId, UserId, UserStatus,
+    ExternalCanisterState, MetadataItem, TokenStandard, UserGroupId, UserId, UserStatus,
 };
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ValidationError;
@@ -98,7 +98,7 @@ pub struct AddAssetOperationInput {
     pub decimals: u32,
     pub metadata: Metadata,
     pub blockchain: Blockchain,
-    pub standards: Vec<BlockchainStandard>,
+    pub standards: Vec<TokenStandard>,
 }
 
 #[storable]
@@ -116,7 +116,7 @@ pub struct EditAssetOperationInput {
     pub decimals: Option<u32>,
     pub change_metadata: Option<ChangeMetadata>,
     pub blockchain: Option<Blockchain>,
-    pub standards: Option<Vec<BlockchainStandard>>,
+    pub standards: Option<Vec<TokenStandard>>,
 }
 
 #[storable]
@@ -143,6 +143,8 @@ pub struct TransferOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferOperationInput {
     pub from_account_id: AccountId,
+    pub from_asset_id: AssetId,
+    pub with_standard: TokenStandard,
     pub to: String,
     pub amount: candid::Nat,
     pub metadata: Metadata,
@@ -162,8 +164,9 @@ pub struct AddAccountOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAccountOperationInput {
     pub name: String,
-    pub blockchain: Blockchain,
-    pub standard: BlockchainStandard,
+    // pub blockchain: Blockchain,
+    // pub standard: TokenStandard,
+    pub assets: Vec<AssetId>,
     pub metadata: Metadata,
     pub read_permission: Allow,
     pub configs_permission: Allow,
@@ -203,6 +206,7 @@ pub struct AddAddressBookEntryOperation {
 pub struct AddAddressBookEntryOperationInput {
     pub address_owner: String,
     pub address: String,
+    pub address_format: AddressFormat,
     pub blockchain: Blockchain,
     #[serde(default)]
     pub labels: Vec<String>,

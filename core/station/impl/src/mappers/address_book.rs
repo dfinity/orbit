@@ -41,6 +41,7 @@ impl AddressBookMapper {
             id: entry_id,
             address_owner: input.address_owner,
             address: input.address,
+            address_format: input.address_format,
             blockchain: input.blockchain,
             labels: input.labels,
             metadata: input.metadata.into(),

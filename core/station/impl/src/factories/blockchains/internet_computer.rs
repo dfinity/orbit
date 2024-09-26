@@ -8,7 +8,8 @@ use crate::{
     errors::BlockchainApiError,
     mappers::HelperMapper,
     models::{
-        Account, AccountId, Blockchain, BlockchainStandard, Metadata, Transfer, METADATA_MEMO_KEY,
+        Account, AccountAddress, AccountSeed, AddressFormat, Asset, Blockchain, Metadata,
+        TokenStandard, Transfer, METADATA_MEMO_KEY,
     },
 };
 use async_trait::async_trait;
@@ -67,7 +68,7 @@ pub struct SubmitTransferResponse {
 
 impl InternetComputer {
     pub const BLOCKCHAIN: Blockchain = Blockchain::InternetComputer;
-    pub const STANDARD: BlockchainStandard = BlockchainStandard::Native;
+    pub const STANDARD: TokenStandard = TokenStandard::InternetComputerNative;
     pub const ICP_LEDGER_CANISTER_ID: &'static str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
     pub const DECIMALS: u32 = 8;
     pub const MAIN_NETWORK: InternetComputerNetwork = InternetComputerNetwork::Mainnet;
@@ -78,13 +79,13 @@ impl InternetComputer {
         }
     }
 
-    /// Generates the corresponded subaccount id for the given station_account id.
+    /// Generates the corresponded subaccount id for the given seed.
     ///
     /// The subaccount id is a 32 bytes array that is used to identify a station_account in the ICP ledger.
-    pub fn subaccount_from_station_account_id(station_account_id: &AccountId) -> [u8; 32] {
-        let len = station_account_id.len();
+    pub fn subaccount_from_seed(seed: &[u8; 16]) -> [u8; 32] {
+        let len = seed.len();
         let mut subaccount_id = [0u8; 32];
-        subaccount_id[0..len].copy_from_slice(&station_account_id[0..len]);
+        subaccount_id[0..len].copy_from_slice(&seed[0..len]);
 
         subaccount_id
     }
@@ -103,11 +104,8 @@ impl InternetComputer {
     /// of the station canister id and the station_account uuid as the subaccount id.
     ///
     /// The station_account account id is used to identify a station_account in the ICP ledger.
-    pub fn station_account_to_ledger_account(
-        &self,
-        station_account_id: &AccountId,
-    ) -> AccountIdentifier {
-        let subaccount = InternetComputer::subaccount_from_station_account_id(station_account_id);
+    pub fn station_account_to_ledger_account(&self, seed: &AccountSeed) -> AccountIdentifier {
+        let subaccount = InternetComputer::subaccount_from_seed(seed);
 
         AccountIdentifier::new(&self.station_canister_id, &Subaccount(subaccount))
     }
@@ -115,25 +113,25 @@ impl InternetComputer {
     /// Generates the corresponded ledger address for the given station_account id.
     ///
     /// This address is used for token transfers.
-    pub fn station_account_address(&self, station_account_id: &AccountId) -> String {
-        let account = self.station_account_to_ledger_account(station_account_id);
+    pub fn station_account_address(&self, seed: &AccountSeed) -> String {
+        let account = self.station_account_to_ledger_account(seed);
 
         account.to_hex()
     }
 
     /// Returns the latest balance of the given station_account.
-    pub async fn balance(&self, station_account: &Account) -> BlockchainApiResult<u64> {
+    pub async fn balance_of_account_identifier(
+        &self,
+        asset: &Asset,
+        account: &AccountIdentifier,
+    ) -> BlockchainApiResult<u64> {
         let balance = account_balance(
             Self::ledger_canister_id(),
-            AccountBalanceArgs {
-                account: self.station_account_to_ledger_account(&station_account.id),
-            },
+            AccountBalanceArgs { account: *account },
         )
         .await
         .map_err(|_| BlockchainApiError::FetchBalanceFailed {
-            account_id: Uuid::from_bytes(station_account.id)
-                .hyphenated()
-                .to_string(),
+            asset_id: Uuid::from_bytes(asset.id).hyphenated().to_string(),
         })?;
 
         Ok(balance.e8s())
@@ -175,9 +173,9 @@ impl InternetComputer {
                 created_at_time: Some(Timestamp {
                     timestamp_nanos: current_time,
                 }),
-                from_subaccount: Some(Subaccount(
-                    InternetComputer::subaccount_from_station_account_id(&station_account.id),
-                )),
+                from_subaccount: Some(Subaccount(InternetComputer::subaccount_from_seed(
+                    &station_account.id,
+                ))),
                 memo: Memo(memo),
                 to: to_address,
             },
@@ -250,14 +248,50 @@ impl InternetComputer {
 
 #[async_trait]
 impl BlockchainApi for InternetComputer {
-    async fn generate_address(&self, station_account: &Account) -> BlockchainApiResult<String> {
-        Ok(self.station_account_address(&station_account.id))
+    async fn generate_address(
+        &self,
+        seed: &AccountSeed,
+    ) -> BlockchainApiResult<Vec<AccountAddress>> {
+        Ok(vec![AccountAddress {
+            address: self.station_account_address(seed),
+            format: AddressFormat::ICPAccountIdentifier,
+            data: vec![],
+        }])
     }
 
-    async fn balance(&self, station_account: &Account) -> BlockchainApiResult<BigUint> {
-        let balance = self.balance(station_account).await?;
+    async fn balance(
+        &self,
+        asset: &Asset,
+        account_address: &AccountAddress,
+    ) -> BlockchainApiResult<BigUint> {
+        match account_address.format {
+            AddressFormat::ICPAccountIdentifier => {
+                let balance = self
+                    .balance_of_account_identifier(
+                        asset,
+                        &AccountIdentifier::from_hex(&account_address.address).map_err(
+                            |error| BlockchainApiError::InvalidToAddress {
+                                address: account_address.address.clone(),
+                                error,
+                            },
+                        )?,
+                    )
+                    .await?;
 
-        Ok(BigUint::from(balance))
+                Ok(BigUint::from(balance))
+            }
+            AddressFormat::ICRC1Account => todo!(),
+            AddressFormat::EthereumAddress
+            | AddressFormat::BitcoinAddressP2WPKH
+            | AddressFormat::BitcoinAddressP2TR => Err(BlockchainApiError::InvalidAddressFormat {
+                found: account_address.format.to_string(),
+                expected: [
+                    AddressFormat::ICPAccountIdentifier.to_string(),
+                    AddressFormat::ICRC1Account.to_string(),
+                ]
+                .join(","),
+            })?,
+        }
     }
 
     async fn decimals(&self, _station_account: &Account) -> BlockchainApiResult<u32> {

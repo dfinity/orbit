@@ -7,7 +7,7 @@ use crate::core::validation::{
 use crate::errors::ValidationError;
 use crate::models::resource::{CallExternalCanisterResourceTarget, ExternalCanisterId};
 use crate::models::user::User;
-use crate::repositories::ADDRESS_BOOK_REPOSITORY;
+use crate::repositories::{ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY};
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
@@ -247,13 +247,24 @@ impl Match<RequestHasMetadata> for AddressBookMetadataMatcher {
         Ok(match request.operation.to_owned() {
             RequestOperation::Transfer(transfer) => {
                 if let Ok(account) = ACCOUNT_SERVICE.get_account(&transfer.input.from_account_id) {
-                    if let Some(address_book_entry) = ADDRESS_BOOK_REPOSITORY
-                        .find_by_address(account.blockchain, transfer.input.to)
-                    {
-                        address_book_entry.metadata.contains(&metadata)
-                    } else {
-                        false
+                    let mut found = false;
+
+                    for account_asset in account.assets {
+                        let Some(asset) = ASSET_REPOSITORY.get(&account_asset.asset_id) else {
+                            continue;
+                        };
+
+                        if let Some(address_book_entry) = ADDRESS_BOOK_REPOSITORY
+                            .find_by_address(asset.blockchain, transfer.input.to.clone())
+                        {
+                            if address_book_entry.metadata.contains(&metadata) {
+                                found = true;
+                                break;
+                            }
+                        }
                     }
+
+                    found
                 } else {
                     false
                 }

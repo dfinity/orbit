@@ -9,7 +9,7 @@ use crate::{
     models::{
         Account, Request, RequestOperation, RequestStatus, Transfer, TransferId, TransferStatus,
     },
-    repositories::{AccountRepository, RequestRepository, TransferRepository},
+    repositories::{AccountRepository, AssetRepository, RequestRepository, TransferRepository},
     services::RequestService,
 };
 use async_trait::async_trait;
@@ -24,6 +24,7 @@ use uuid::Uuid;
 pub struct Job {
     transfer_repository: TransferRepository,
     account_repository: AccountRepository,
+    asset_repository: AssetRepository,
     request_repository: RequestRepository,
     request_service: RequestService,
 }
@@ -195,10 +196,21 @@ impl Job {
                 ),
             })?;
 
-        let blockchain_api = BlockchainApiFactory::build(&account.blockchain, &account.standard)
-            .map_err(|e| TransferError::ExecutionError {
-                reason: format!("Failed to build blockchain api: {}", e),
-            })?;
+        let asset = self.asset_repository.get(&transfer.from_asset).ok_or(
+            TransferError::ValidationError {
+                info: format!(
+                    "Transfer asset not found for id {}",
+                    Uuid::from_bytes(transfer.from_asset).hyphenated()
+                ),
+            },
+        )?;
+
+        let blockchain_api =
+            BlockchainApiFactory::build(&asset.blockchain, &transfer.with_standard).map_err(
+                |e| TransferError::ExecutionError {
+                    reason: format!("Failed to build blockchain api: {}", e),
+                },
+            )?;
 
         match blockchain_api.submit_transaction(&account, &transfer).await {
             Ok(details) => Ok((transfer, details)),

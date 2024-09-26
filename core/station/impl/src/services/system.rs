@@ -186,9 +186,7 @@ impl SystemService {
                     cmc: Arc::new(IcCyclesMintingCanister::new(
                         MAINNET_CYCLES_MINTING_CANISTER_ID,
                     )),
-                    from_subaccount: Subaccount(
-                        InternetComputer::subaccount_from_station_account_id(account_id),
-                    ),
+                    from_subaccount: Subaccount(InternetComputer::subaccount_from_seed(account_id)),
                 }),
                 top_up_self: true,
             }),

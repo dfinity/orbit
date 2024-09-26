@@ -29,6 +29,7 @@ pub struct AddAddressBookEntryOperationDTO {
 pub struct AddAddressBookEntryOperationInput {
     pub address_owner: String,
     pub address: String,
+    pub address_format: String,
     pub blockchain: String,
     pub metadata: Vec<MetadataDTO>,
     pub labels: Vec<String>,

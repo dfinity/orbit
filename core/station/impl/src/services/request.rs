@@ -473,16 +473,16 @@ mod tests {
             resource::ResourceIds,
             user_test_utils::mock_user,
             AddAccountOperationInput, AddAddressBookEntryOperation,
-            AddAddressBookEntryOperationInput, AddUserOperation, AddUserOperationInput, Blockchain,
-            BlockchainStandard, Metadata, Percentage, RequestApproval, RequestOperation,
-            RequestPolicy, RequestStatus, TransferOperation, TransferOperationInput, User,
-            UserGroup, UserStatus, ADMIN_GROUP_ID,
+            AddAddressBookEntryOperationInput, AddAssetOperationInput, AddUserOperation,
+            AddUserOperationInput, AddressFormat, Blockchain, Metadata, Percentage,
+            RequestApproval, RequestOperation, RequestPolicy, RequestStatus, TokenStandard,
+            TransferOperation, TransferOperationInput, User, UserGroup, UserStatus, ADMIN_GROUP_ID,
         },
         repositories::{
             request_policy::REQUEST_POLICY_REPOSITORY, AccountRepository, NOTIFICATION_REPOSITORY,
             USER_GROUP_REPOSITORY, USER_REPOSITORY,
         },
-        services::AccountService,
+        services::{AccountService, ASSET_SERVICE},
     };
     use candid::Principal;
     use orbit_essentials::model::ModelKey;
@@ -543,6 +543,8 @@ mod tests {
             fee: None,
             input: TransferOperationInput {
                 from_account_id: *account_id.as_bytes(),
+                from_asset_id: [1; 16],
+                with_standard: TokenStandard::InternetComputerNative,
                 amount: candid::Nat(100u32.into()),
                 fee: None,
                 metadata: Metadata::default(),
@@ -574,6 +576,8 @@ mod tests {
             fee: None,
             input: TransferOperationInput {
                 from_account_id: *account_id.as_bytes(),
+                from_asset_id: [1; 16],
+                with_standard: TokenStandard::InternetComputerNative,
                 amount: candid::Nat(100u32.into()),
                 fee: None,
                 metadata: Metadata::default(),
@@ -656,6 +660,8 @@ mod tests {
                             from_account_id: Uuid::from_bytes(account.id.to_owned())
                                 .hyphenated()
                                 .to_string(),
+                            from_asset_id: Uuid::from_bytes([1; 16]).hyphenated().to_string(),
+                            with_standard: TokenStandard::InternetComputerNative.to_string(),
                             amount: candid::Nat(100u32.into()),
                             fee: None,
                             metadata: vec![],
@@ -703,6 +709,7 @@ mod tests {
                             blockchain: "icp".to_owned(),
                             metadata: vec![],
                             labels: vec![],
+                            address_format: AddressFormat::ICPAccountIdentifier.to_string(),
                         },
                     ),
                     title: None,
@@ -748,6 +755,7 @@ mod tests {
                 blockchain: Blockchain::InternetComputer,
                 metadata: vec![],
                 labels: vec![],
+                address_format: AddressFormat::ICPAccountIdentifier,
             },
         });
         request.approvals = vec![
@@ -815,6 +823,8 @@ mod tests {
             fee: None,
             input: TransferOperationInput {
                 from_account_id: [9; 16],
+                from_asset_id: [1; 16],
+                with_standard: TokenStandard::InternetComputerNative,
                 amount: candid::Nat(100u32.into()),
                 fee: None,
                 metadata: Metadata::default(),
@@ -876,6 +886,17 @@ mod tests {
         no_access_user.identities = vec![Principal::from_slice(&[2; 29])];
         USER_REPOSITORY.insert(no_access_user.to_key(), no_access_user.clone());
 
+        let asset = ASSET_SERVICE
+            .create(AddAssetOperationInput {
+                name: "foo".to_string(),
+                symbol: "FOO".to_string(),
+                decimals: 18,
+                metadata: Metadata::default(),
+                blockchain: Blockchain::InternetComputer,
+                standards: vec![TokenStandard::InternetComputerNative],
+            })
+            .expect("Failed to create asset");
+
         // create account
         let account_owners = vec![ctx.caller_user.id, transfer_requester_user.id];
         let account = ctx
@@ -883,8 +904,9 @@ mod tests {
             .create_account(
                 AddAccountOperationInput {
                     name: "foo".to_string(),
-                    blockchain: Blockchain::InternetComputer,
-                    standard: BlockchainStandard::Native,
+                    assets: vec![asset.id],
+                    // blockchain: Blockchain::InternetComputer,
+                    // standard: TokenStandard::InternetComputerNative,
                     metadata: Metadata::default(),
                     transfer_request_policy: Some(RequestPolicyRule::QuorumPercentage(
                         UserSpecifier::Id(vec![ctx.caller_user.id, transfer_requester_user.id]),
@@ -932,6 +954,8 @@ mod tests {
                     fee: None,
                     input: TransferOperationInput {
                         from_account_id: account.id,
+                        from_asset_id: asset.id,
+                        with_standard: TokenStandard::InternetComputerNative,
                         amount: candid::Nat(100u32.into()),
                         fee: None,
                         metadata: Metadata::default(),

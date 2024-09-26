@@ -3,7 +3,7 @@ use std::{cell::RefCell, collections::HashMap, sync::Arc};
 use crate::{
     errors::UpgraderApiError,
     model::{
-        DisasterRecoveryInProgressLog, DisasterRecoveryResultLog, DisasterRecoveryStartLog,
+        Asset, DisasterRecoveryInProgressLog, DisasterRecoveryResultLog, DisasterRecoveryStartLog,
         LogEntryType, RequestDisasterRecoveryLog, SetAccountsLog, SetCommitteeLog,
     },
     services::LOGGER_SERVICE,
@@ -126,7 +126,7 @@ impl DisasterRecoveryService {
         Ok(())
     }
 
-    pub fn set_accounts(&self, accounts: Vec<Account>) -> ServiceResult {
+    pub fn set_accounts(&self, accounts: Vec<Account>, assets: Vec<Asset>) -> ServiceResult {
         let mut value = self.storage.get();
 
         if let RecoveryStatus::InProgress { since } = &value.recovery_status {
@@ -145,10 +145,14 @@ impl DisasterRecoveryService {
         }
 
         value.accounts = accounts.clone();
+        value.assets = assets.clone();
+
         self.storage.set(value);
 
-        self.logger
-            .log(LogEntryType::SetAccounts(SetAccountsLog { accounts }));
+        self.logger.log(LogEntryType::SetAccounts(SetAccountsLog {
+            accounts,
+            assets,
+        }));
 
         Ok(())
     }
@@ -376,7 +380,7 @@ mod test {
 
     use crate::{
         model::{
-            test::{mock_accounts, mock_committee},
+            test::{mock_accounts, mock_assets, mock_committee},
             InstallMode, RecoveryEvaluationResult, RecoveryResult, RecoveryStatus,
             StationRecoveryRequest,
         },
@@ -732,7 +736,7 @@ mod test {
         storage.set(value);
 
         let error = DISASTER_RECOVERY_SERVICE
-            .set_accounts(mock_accounts())
+            .set_accounts(mock_accounts(), mock_assets())
             .expect_err("Setting committee during recovery should fail");
 
         assert_eq!(error.code, "DISASTER_RECOVERY_IN_PROGRESS".to_string(),);
