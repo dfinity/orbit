@@ -1,9 +1,9 @@
 use crate::{
-    core::ic_cdk::api::time,
+    core::ic_cdk::api::{time, trap},
     core::limiter::Limiter,
     core::middlewares::{authorize, call_context, use_canister_call_metric},
     core::CallContext,
-    errors::RequestError,
+    errors::{RequestError, RequestExecuteError},
     mappers::HelperMapper,
     models::rate_limiter::{RequestRateLimiterKey, RequestRateLimiterSize},
     models::resource::{RequestResourceAction, Resource},
@@ -12,6 +12,7 @@ use crate::{
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ApiResult;
+use orbit_essentials::types::UUID;
 use orbit_essentials::with_middleware;
 use station_api::{
     CreateRequestInput, CreateRequestResponse, GetNextApprovableRequestInput,
@@ -52,6 +53,11 @@ async fn submit_request_approval(
 #[update(name = "create_request")]
 async fn create_request(input: CreateRequestInput) -> ApiResult<CreateRequestResponse> {
     CONTROLLER.create_request(input).await
+}
+
+#[update(name = "try_execute_request", hidden = true)]
+async fn try_execute_request(id: UUID) -> Result<(), RequestExecuteError> {
+    CONTROLLER.try_execute_request(id).await
 }
 
 const RATE_LIMITER_RESOLUTION: Duration = Duration::from_secs(10);
@@ -261,5 +267,14 @@ impl RequestController {
             privileges: privileges.into(),
             additional_info: additional_info.into(),
         })
+    }
+
+    // No authorization middleware as the caller is checked to be the station canister.
+    async fn try_execute_request(&self, id: UUID) -> Result<(), RequestExecuteError> {
+        let ctx = call_context();
+        if !ctx.caller_is_self() {
+            trap("The method `try_execute_request` can only be called by the station canister.");
+        }
+        self.request_service.try_execute_request(id).await
     }
 }
