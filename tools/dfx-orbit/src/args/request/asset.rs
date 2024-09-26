@@ -2,9 +2,12 @@ use crate::DfxOrbit;
 use anyhow::bail;
 use candid::Principal;
 use clap::{Parser, Subcommand, ValueEnum};
-use ic_certified_assets::types::{GrantPermissionArguments, Permission};
+use ic_certified_assets::types::{GrantPermissionArguments, Permission, RevokePermissionArguments};
 use sha2::{Digest, Sha256};
-use station_api::{GetRequestResponse, RequestOperationDTO, RequestOperationInput};
+use station_api::{
+    CallExternalCanisterOperationInput, CanisterMethodDTO, GetRequestResponse, RequestOperationDTO,
+    RequestOperationInput,
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetArgs {
@@ -15,8 +18,8 @@ pub struct RequestAssetArgs {
 #[derive(Debug, Clone, Subcommand)]
 #[clap(version, about, long_about = None)]
 pub enum RequestAssetActionArgs {
-    /// Request to grant this user Prepare permission for the asset canister
-    PreparePermission(RequestAssetPermissionArgs),
+    /// Request to grant a user permissions for an asset canister
+    Permission(RequestAssetPermissionArgs),
     /// Upload assets to an asset canister
     Upload(RequestAssetUploadArgs),
 }
@@ -27,7 +30,7 @@ impl RequestAssetArgs {
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         match self.action {
-            RequestAssetActionArgs::PreparePermission(args) => args.into_request(dfx_orbit),
+            RequestAssetActionArgs::Permission(args) => args.into_request(dfx_orbit),
             RequestAssetActionArgs::Upload(args) => args.into_request(dfx_orbit).await,
         }
     }
@@ -53,9 +56,20 @@ impl RequestAssetPermissionArgs {
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         let me = dfx_orbit.own_principal()?;
-        let to_principal = self.target.unwrap_or(me);
+        let target = self.target.unwrap_or(me);
         let asset_canister = dfx_orbit.canister_id(&self.canister)?;
-        DfxOrbit::grant_prepare_permission_request(asset_canister, to_principal)
+
+        Ok(RequestOperationInput::CallExternalCanister(
+            CallExternalCanisterOperationInput {
+                validation_method: None,
+                execution_method: CanisterMethodDTO {
+                    canister_id: asset_canister,
+                    method_name: self.method_name(),
+                },
+                arg: Some(self.encoded_args(target)?),
+                execution_method_cycles: None,
+            },
+        ))
     }
 
     pub(crate) fn verify(
@@ -76,20 +90,19 @@ impl RequestAssetPermissionArgs {
                 operation.execution_method.canister_id
             );
         }
-        if &operation.execution_method.method_name != "grant_permission" {
+
+        let expected_method = self.method_name();
+        if operation.execution_method.method_name != expected_method {
             bail!(
-                "The method of this request is not \"grant_permission\" but \"{}\" instead",
+                "The method of this request is not \"{}\" but \"{}\" instead",
+                expected_method,
                 operation.execution_method.method_name
             );
         }
 
         let me = dfx_orbit.own_principal()?;
-        let to_principal = self.target.unwrap_or(me);
-        let args = GrantPermissionArguments {
-            to_principal,
-            permission: Permission::Prepare,
-        };
-        let arg = candid::encode_one(args)?;
+        let target = self.target.unwrap_or(me);
+        let arg = self.encoded_args(target)?;
         let computed_arg_checksum = hex::encode(Sha256::digest(arg));
 
         if operation.arg_checksum != Some(computed_arg_checksum) {
@@ -97,6 +110,32 @@ impl RequestAssetPermissionArgs {
         }
 
         Ok(())
+    }
+
+    fn method_name(&self) -> String {
+        match self.revoke {
+            false => String::from("grant_permission"),
+            true => String::from("revoke_permission"),
+        }
+    }
+
+    fn encoded_args(&self, target: Principal) -> anyhow::Result<Vec<u8>> {
+        match self.revoke {
+            false => {
+                let arg = GrantPermissionArguments {
+                    to_principal: target,
+                    permission: self.permission.into(),
+                };
+                Ok(candid::encode_one(arg)?)
+            }
+            true => {
+                let arg = RevokePermissionArguments {
+                    of_principal: target,
+                    permission: self.permission.into(),
+                };
+                Ok(candid::encode_one(arg)?)
+            }
+        }
     }
 }
 
@@ -107,8 +146,8 @@ pub enum AssetPermissionTypeArgs {
     Prepare,
     /// Permission to commit a batch (should only be granted to the orbit station itself)
     Commit,
-    /// Permission to grant and revovoke the other permissions
-    /// (should not be needed if the orbit station is the controller) of the asset cansister
+    /// Permission to grant and revoke the other permissions of the asset cansister
+    /// (should not be needed if the orbit station is the controller)
     ManagePermissions,
 }
 

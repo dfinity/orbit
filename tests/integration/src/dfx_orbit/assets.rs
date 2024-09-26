@@ -9,22 +9,21 @@ use crate::{
     CanisterIds, TestEnv,
 };
 use candid::{Nat, Principal};
-use dfx_orbit::{
-    args::{
-        request::{
-            asset::{RequestAssetActionArgs, RequestAssetArgs, RequestAssetUploadArgs},
-            RequestArgs, RequestArgsActions,
-        },
-        verify::{
-            VerifyArgs, VerifyArgsAction, VerifyAssetActionArgs, VerifyAssetArgs,
-            VerifyAssetUploadArgs,
-        },
+use dfx_orbit::args::{
+    request::{
+        asset::{RequestAssetActionArgs, RequestAssetArgs, RequestAssetUploadArgs},
+        RequestArgs, RequestArgsActions,
     },
-    DfxOrbit,
+    verify::{
+        VerifyArgs, VerifyArgsAction, VerifyAssetActionArgs, VerifyAssetArgs, VerifyAssetUploadArgs,
+    },
 };
+use ic_certified_assets::types::{GrantPermissionArguments, Permission};
 use pocket_ic::PocketIc;
 use rand::{thread_rng, Rng};
-use station_api::GetRequestInput;
+use station_api::{
+    CallExternalCanisterOperationInput, CanisterMethodDTO, GetRequestInput, RequestOperationInput,
+};
 use std::{
     collections::BTreeMap,
     path::PathBuf,
@@ -52,7 +51,7 @@ fn asset_upload() {
     permit_call_operation(&env, &canister_ids);
     //set_four_eyes_on_call(&env, &canister_ids);
     set_auto_approve(&env, &canister_ids);
-    grant_prepare_permission(&env, &canister_ids, &asset_canister, &dfx_principal);
+    grant_prepare_permission(&env, &canister_ids, asset_canister, dfx_principal);
 
     let (asset_dir, assets) = setup_assets();
 
@@ -119,7 +118,7 @@ fn asset_validation() {
     // As admin: Grant the user the call and prepare permissions
     permit_call_operation(&env, &canister_ids);
     set_four_eyes_on_call(&env, &canister_ids);
-    grant_prepare_permission(&env, &canister_ids, &asset_canister, &dfx_principal);
+    grant_prepare_permission(&env, &canister_ids, asset_canister, dfx_principal);
 
     let (asset_dir, _) = setup_assets();
 
@@ -236,14 +235,24 @@ fn setup_asset_canister(env: &mut PocketIc, canister_ids: &CanisterIds) -> Princ
 fn grant_prepare_permission(
     env: &PocketIc,
     canister_ids: &CanisterIds,
-    asset_canister: &Principal,
-    to: &Principal,
+    asset_canister: Principal,
+    to_principal: Principal,
 ) {
-    execute_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        DfxOrbit::grant_prepare_permission_request(asset_canister.clone(), to.clone()).unwrap(),
-    )
-    .unwrap();
+    let arg = GrantPermissionArguments {
+        to_principal,
+        permission: Permission::Prepare,
+    };
+    let arg = candid::encode_one(arg).unwrap();
+
+    let request = RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
+        validation_method: None,
+        execution_method: CanisterMethodDTO {
+            canister_id: asset_canister,
+            method_name: String::from("grant_permission"),
+        },
+        arg: Some(arg),
+        execution_method_cycles: None,
+    });
+
+    execute_request(&env, WALLET_ADMIN_USER, canister_ids.station, request).unwrap();
 }

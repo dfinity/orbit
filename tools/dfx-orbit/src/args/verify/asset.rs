@@ -15,8 +15,8 @@ pub struct VerifyAssetArgs {
 pub enum VerifyAssetActionArgs {
     /// Upload assets to an asset canister
     Upload(VerifyAssetUploadArgs),
-    /// Request to grant this user Prepare permission for the asset canister
-    PreparePermission(RequestAssetPermissionArgs),
+    /// Request to grant a user permissions for an asset canister
+    Permission(RequestAssetPermissionArgs),
 }
 
 impl VerifyAssetArgs {
@@ -27,7 +27,7 @@ impl VerifyAssetArgs {
     ) -> anyhow::Result<()> {
         match &self.action {
             VerifyAssetActionArgs::Upload(args) => args.verify(dfx_orbit, request).await?,
-            VerifyAssetActionArgs::PreparePermission(args) => args.verify(dfx_orbit, request)?,
+            VerifyAssetActionArgs::Permission(args) => args.verify(dfx_orbit, request)?,
         }
 
         Ok(())
