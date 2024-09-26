@@ -443,7 +443,7 @@ export default {
     native_settings: {
       freezing_threshold: 'Freezing Threshold',
       freezing_threshold_hint:
-        'The number of seconds the canister will be put in a frozen state before its cleaned by the network.',
+        'The number of seconds the canister will be put in a frozen state before it's cleaned by the network.',
       controllers: 'Controllers',
       controllers_hint: 'The list of principals that can control the canister.',
       memory_allocation: 'Memory Allocation',
