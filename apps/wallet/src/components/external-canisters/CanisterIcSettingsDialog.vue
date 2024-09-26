@@ -137,12 +137,12 @@ const submit = async (input: CanisterIcSettingsModel) => {
 
     const previousControllers = new Set();
     props.canisterSettings?.controllers?.forEach(controller => {
-      previousControllers.add(controller.toUint8Array());
+      previousControllers.add(controller.toText());
     });
 
     const hasUpdatedControllers =
       props.canisterSettings?.controllers.length !== input.controllers?.length ||
-      input.controllers?.some(controller => !previousControllers.has(controller.toUint8Array()));
+      input.controllers?.some(controller => !previousControllers.has(controller.toText()));
 
     const request = await station.service.editCanisterIcSettings(
       assertAndReturn(input.canisterId, 'Canister ID is required'),

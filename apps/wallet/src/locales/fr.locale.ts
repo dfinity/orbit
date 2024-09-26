@@ -462,8 +462,22 @@ export default {
       reserved_cycles_limit_hint:
         'Nombre de cycles que le canister peut allouer, les opérations qui allouent de la mémoire ou du calcul échoueront si la limite est atteinte.',
     },
+    wasm_module: 'Module WASM',
+    wasm_args: 'Arguments',
+    wasm_args_optional: 'Arguments (optionnel)',
+    wasm_args_invalid_format: 'Format d argument invalide',
+    wasm_args_formats: {
+      hex: 'Hex',
+      candid: 'Candid',
+    },
+    install_mode: {
+      reinstall: 'Réinstaller',
+      upgrade: 'Mettre à jour',
+      install: 'Installer',
+    },
   },
   terms: {
+    mode: 'Mode',
     active: 'Actif',
     archived: 'Archivé',
     canisters: 'Canisters',

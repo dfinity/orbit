@@ -456,8 +456,22 @@ export default {
       reserved_cycles_limit_hint:
         'Number of cycles the canister can allocate, operations that allocate memory or compute will fail if the limit is reached.',
     },
+    wasm_module: 'WASM Module',
+    wasm_args: 'Arguments',
+    wasm_args_optional: 'Arguments (optional)',
+    wasm_args_invalid_format: 'Invalid argument format',
+    wasm_args_formats: {
+      hex: 'Hex',
+      candid: 'Candid',
+    },
+    install_mode: {
+      reinstall: 'Reinstall',
+      upgrade: 'Upgrade',
+      install: 'Install',
+    },
   },
   terms: {
+    mode: 'Mode',
     active: 'Active',
     archived: 'Archived',
     canisters: 'Canisters',
