@@ -8,6 +8,7 @@
           v-if="props.interactive"
           :icon="!removeUndefinedOrNull ? mdiEye : mdiEyeOff"
           size="small"
+          data-test-id="toggle-remove-undefined-or-null"
           density="comfortable"
           @click="removeUndefinedOrNull = !removeUndefinedOrNull"
         />
@@ -18,13 +19,21 @@
       <pre class="text-body-2">{{ normalizedDataShown }}</pre>
     </VCardText>
     <VDivider v-if="hasMoreRows" />
-    <VBtn v-if="addShowMoreButton" size="x-small" variant="tonal" block @click="showAll = true">
+    <VBtn
+      v-if="addShowMoreButton"
+      size="x-small"
+      data-test-id="show-more-btn"
+      variant="tonal"
+      block
+      @click="showAll = true"
+    >
       {{ $t('terms.more') }}
     </VBtn>
     <VBtn
       v-else-if="addShowLessButton"
       size="x-small"
       variant="tonal"
+      data-test-id="show-less-btn"
       block
       @click="showAll = false"
     >
