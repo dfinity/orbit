@@ -186,6 +186,7 @@ import {
   VTextField,
 } from 'vuetify/components';
 import logger from '~/core/logger.core';
+import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import { VFormValidation } from '~/types/helper.types';
 import { copyToClipboard } from '~/utils/app.utils';
@@ -193,7 +194,6 @@ import { numberRangeRule, requiredRule, uniqueRule, validPrincipalRule } from '~
 import TextOverflow from '../TextOverflow.vue';
 import CanisterIdField from '../inputs/CanisterIdField.vue';
 import { CanisterIcSettingsModel } from './external-canisters.types';
-import { useAppStore } from '~/stores/app.store';
 
 const props = withDefaults(
   defineProps<{

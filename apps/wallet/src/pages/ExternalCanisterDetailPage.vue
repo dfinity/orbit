@@ -183,18 +183,30 @@
                     <VListItem class="pt-0 px-0">
                       <VListItemTitle class="font-weight-bold">
                         {{ $t(`external_canisters.module_hash`) }}
-                        <VBtn
-                          v-if="privileges.can_change"
-                          size="small"
-                          density="compact"
-                          color="default"
-                          variant="tonal"
-                          class="ml-1 px-2"
-                          :append-icon="mdiDatabaseCog"
-                          @click="dialogs.install = true"
-                        >
-                          {{ $t('external_canisters.install') }}
-                        </VBtn>
+                        <template v-if="privileges.can_change">
+                          <CanisterInstallDialog
+                            :key="canisterDetails.moduleHash.value?.toString()"
+                            v-model:open="dialogs.install"
+                            :canister-id="canister.canister_id"
+                            :canister-module-hash="
+                              canisterDetails.moduleHash.value !== null
+                                ? canisterDetails.moduleHash.value
+                                : undefined
+                            "
+                          />
+                          <VBtn
+                            size="small"
+                            density="compact"
+                            color="default"
+                            variant="tonal"
+                            class="ml-1 px-2"
+                            :disabled="canisterDetails.moduleHash.loading"
+                            :append-icon="mdiDatabaseCog"
+                            @click="dialogs.install = true"
+                          >
+                            {{ $t('external_canisters.install') }}
+                          </VBtn>
+                        </template>
                       </VListItemTitle>
                       <VListItemSubtitle>
                         <VProgressCircular
@@ -324,6 +336,7 @@ import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
 import BtnCanisterSetup from '~/components/external-canisters/BtnCanisterSetup.vue';
 import CanisterIcSettingsDialog from '~/components/external-canisters/CanisterIcSettingsDialog.vue';
+import CanisterInstallDialog from '~/components/external-canisters/CanisterInstallDialog.vue';
 import CanisterSetupDialog from '~/components/external-canisters/CanisterSetupDialog.vue';
 import CanisterTopUpDialog from '~/components/external-canisters/CanisterTopUpDialog.vue';
 import CanisterUnlinkDialog from '~/components/external-canisters/CanisterUnlinkDialog.vue';
