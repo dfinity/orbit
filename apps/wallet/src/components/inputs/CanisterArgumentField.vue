@@ -37,7 +37,7 @@ import { useI18n } from 'vue-i18n';
 import { VBtn, VBtnToggle, VIcon, VTextarea } from 'vuetify/components';
 import { SelectItem } from '~/types/helper.types';
 import { hexStringToArrayBuffer } from '~/utils/crypto.utils';
-import { requiredRule } from '~/utils/form.utils';
+import { isHexRule, requiredRule } from '~/utils/form.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -118,9 +118,15 @@ const parseArgumentRule = async (value: unknown): Promise<string | boolean> => {
     let parsedArgument: Uint8Array;
 
     switch (selectedParseFormat.value) {
-      case 'hex':
+      case 'hex': {
+        const hexValidation = isHexRule(rawArgument);
+        if (hexValidation !== true) {
+          throw new Error(hexValidation);
+        }
+
         parsedArgument = new Uint8Array(hexStringToArrayBuffer(rawArgument));
         break;
+      }
       case 'candid':
       default:
         throw new Error('Not implemented');

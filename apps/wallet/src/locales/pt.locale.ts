@@ -645,6 +645,7 @@ export default {
       requiredNumber: 'Este campo deve conter um número.',
       numberRange: 'Este campo deve estar entre {min} e {max}.',
       invalidDecimalPlaces: 'Este campo deve ter no máximo {decimals} casas decimais.',
+      isHex: 'Este campo deve conter um valor hexadecimal válido.',
     },
   },
   navigation: {

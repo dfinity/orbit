@@ -643,6 +643,7 @@ export default {
       requiredNumber: 'This field must be a valid number.',
       numberRange: 'This field must be between {min} and {max}.',
       invalidDecimalPlaces: 'This field must have a maximum of {decimals} decimal places.',
+      isHex: 'This field must be a valid hexadecimal value.',
     },
   },
   navigation: {
