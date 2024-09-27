@@ -43,6 +43,19 @@
                 v-model:open="dialogs.unlink"
                 :canister-id="canister.canister_id"
               />
+              <CanisterIcSettingsDialog
+                v-if="canisterDetails.status.value"
+                v-model:open="dialogs.icSettings"
+                :canister-id="canister.canister_id"
+                :canister-settings="{
+                  compute_allocation: canisterDetails.status.value.settings.compute_allocation,
+                  controllers: canisterDetails.status.value.settings.controllers as Principal[],
+                  freezing_threshold: canisterDetails.status.value.settings.freezing_threshold,
+                  memory_allocation: canisterDetails.status.value.settings.memory_allocation,
+                  reserved_cycles_limit:
+                    canisterDetails.status.value.settings.reserved_cycles_limit,
+                }"
+              />
             </template>
             <VMenu v-if="privileges.can_change">
               <template #activator="{ props: menuProps }">
@@ -310,6 +323,7 @@ import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
 import BtnCanisterSetup from '~/components/external-canisters/BtnCanisterSetup.vue';
+import CanisterIcSettingsDialog from '~/components/external-canisters/CanisterIcSettingsDialog.vue';
 import CanisterSetupDialog from '~/components/external-canisters/CanisterSetupDialog.vue';
 import CanisterTopUpDialog from '~/components/external-canisters/CanisterTopUpDialog.vue';
 import CanisterUnlinkDialog from '~/components/external-canisters/CanisterUnlinkDialog.vue';

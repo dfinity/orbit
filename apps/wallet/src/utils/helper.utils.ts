@@ -323,7 +323,7 @@ export const parseToBigIntOrUndefined = (
 };
 
 export const parseToNumberOrUndefined = (
-  value: string | number | null | undefined,
+  value: string | number | bigint | null | undefined,
 ): number | undefined => {
   if (value === undefined || value === null) {
     return undefined;
@@ -335,6 +335,10 @@ export const parseToNumberOrUndefined = (
 
   if (typeof value === 'string') {
     return value.trim() !== '' ? Number(value) : undefined;
+  }
+
+  if (typeof value === 'bigint') {
+    return Number(value);
   }
 
   return Number(value);
