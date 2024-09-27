@@ -1,6 +1,6 @@
 use crate::DfxOrbit;
 use anyhow::bail;
-use candid::Principal;
+use candid::{Nat, Principal};
 use clap::{Parser, Subcommand, ValueEnum};
 use ic_certified_assets::types::{GrantPermissionArguments, Permission, RevokePermissionArguments};
 use sha2::{Digest, Sha256};
@@ -22,6 +22,8 @@ pub enum RequestAssetActionArgs {
     Permission(RequestAssetPermissionArgs),
     /// Upload assets to an asset canister
     Upload(RequestAssetUploadArgs),
+    ///  Commit to a prepared batch
+    Commit(RequestAssetCommitArgs),
 }
 
 impl RequestAssetArgs {
@@ -32,6 +34,7 @@ impl RequestAssetArgs {
         match self.action {
             RequestAssetActionArgs::Permission(args) => args.into_request(dfx_orbit),
             RequestAssetActionArgs::Upload(args) => args.into_request(dfx_orbit).await,
+            RequestAssetActionArgs::Commit(args) => todo!(),
         }
     }
 }
@@ -170,7 +173,8 @@ pub struct RequestAssetUploadArgs {
     #[clap(long)]
     pub ignore_evidence: bool,
 
-    /// The source directories to upload (multiple values possible)
+    /// The source directories to upload
+    /// (multiple values possible, picks up sources from dfx.json by default)
     #[clap(short, long)]
     pub files: Vec<String>,
 }
@@ -194,4 +198,24 @@ impl RequestAssetUploadArgs {
     }
 }
 
-// TODO: Request commit with --evidence and --cancel
+#[derive(Debug, Clone, Parser)]
+pub struct RequestAssetCommitArgs {
+    /// The name of the asset canister targeted by this action
+    pub canister: String,
+
+    /// The batch ID to commit to
+    pub batch_id: Nat,
+
+    /// Provide the evidence string manually rather than recomputing it
+    #[clap(short, long, conflicts_with = "files")]
+    pub evidence: Option<String>,
+
+    /// The source directories to upload
+    /// (multiple values possible, picks up sources from dfx.json by default)
+    #[clap(short, long, conflicts_with = "evidence")]
+    pub files: Vec<String>,
+
+    /// Only print computed evidence and terminate
+    #[clap(long)]
+    pub dry_run: bool,
+}
