@@ -20,10 +20,11 @@ pub struct RequestAssetArgs {
 pub enum RequestAssetActionArgs {
     /// Request to grant a user permissions for an asset canister
     Permission(RequestAssetPermissionArgs),
-    /// Upload assets to an asset canister
+    /// Upload assets to an asset canister, and then request to commit to it
     Upload(RequestAssetUploadArgs),
-    ///  Commit to a prepared batch
+    /// Commit to an already prepared batch
     Commit(RequestAssetCommitArgs),
+    // TODO: Cancel batch
 }
 
 impl RequestAssetArgs {
@@ -34,7 +35,7 @@ impl RequestAssetArgs {
         match self.action {
             RequestAssetActionArgs::Permission(args) => args.into_request(dfx_orbit),
             RequestAssetActionArgs::Upload(args) => args.into_request(dfx_orbit).await,
-            RequestAssetActionArgs::Commit(args) => todo!(),
+            RequestAssetActionArgs::Commit(args) => args.into_request(dfx_orbit).await,
         }
     }
 }
@@ -218,4 +219,29 @@ pub struct RequestAssetCommitArgs {
     /// Only print computed evidence and terminate
     #[clap(long)]
     pub dry_run: bool,
+}
+
+impl RequestAssetCommitArgs {
+    async fn into_request(self, dfx_orbit: &DfxOrbit) -> anyhow::Result<RequestOperationInput> {
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
+        let asset_agent = dfx_orbit.asset_agent(canister_id)?;
+
+        let evidence = match self.evidence {
+            Some(evidence) => evidence,
+            None => {
+                let pathbufs = dfx_orbit.as_path_bufs(&self.canister, &self.files)?;
+                let paths = DfxOrbit::as_paths(&pathbufs);
+                asset_agent.compute_evidence(&paths).await?
+            }
+        };
+        println!("Batch id: {}", self.batch_id);
+        println!("Evidence: {evidence}");
+
+        if self.dry_run {
+            bail!("Dry-run: aborting commit");
+        }
+
+        let evidence = hex::decode(evidence)?.into();
+        DfxOrbit::commit_batch_input(canister_id, self.batch_id, evidence)
+    }
 }
