@@ -17,7 +17,13 @@ pub struct VerifyCanisterArgs {
 
 impl std::fmt::Display for VerifyCanisterArgs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        match &self.action {
+            VerifyCanisterActionArgs::Install(args) => write!(f, "install {}", args),
+            VerifyCanisterActionArgs::Call(args) => write!(f, "call {}", args),
+            VerifyCanisterActionArgs::UpdateSettings(args) => {
+                write!(f, "update-settings {}", args)
+            }
+        }
     }
 }
 

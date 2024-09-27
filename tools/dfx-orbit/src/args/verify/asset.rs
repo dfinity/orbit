@@ -12,7 +12,10 @@ pub struct VerifyAssetArgs {
 
 impl std::fmt::Display for VerifyAssetArgs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        todo!()
+        match &self.action {
+            VerifyAssetActionArgs::Upload(args) => write!(f, "upload {}", args),
+            VerifyAssetActionArgs::Permission(args) => write!(f, "permission {}", args),
+        }
     }
 }
 
@@ -50,6 +53,18 @@ pub struct VerifyAssetUploadArgs {
 
     /// The source directories of the asset upload (multiple values possible)
     pub files: Vec<String>,
+}
+
+impl std::fmt::Display for VerifyAssetUploadArgs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "canister {}", self.canister)?;
+        write!(f, " batch_id {}", self.batch_id)?;
+        for file in &self.files {
+            write!(f, " --files {}", file)?;
+        }
+
+        Ok(())
+    }
 }
 
 impl VerifyAssetUploadArgs {

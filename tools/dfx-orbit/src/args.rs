@@ -71,11 +71,11 @@ pub enum DfxOrbitSubcommands {
 impl std::fmt::Display for DfxOrbitSubcommands {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DfxOrbitSubcommands::Station(_station_args) => write!(f, "[TODO]"),
-            DfxOrbitSubcommands::Request(_request_args) => write!(f, "[TODO]"),
-            DfxOrbitSubcommands::Verify(_verify_args) => write!(f, "[TODO]"),
-            DfxOrbitSubcommands::Review(_review_args) => write!(f, "[TODO]"),
-            DfxOrbitSubcommands::Me(me_args) => me_args.fmt(f),
+            DfxOrbitSubcommands::Station(_args) => write!(f, "station [TODO]"),
+            DfxOrbitSubcommands::Request(_args) => write!(f, "request [TODO]"),
+            DfxOrbitSubcommands::Verify(args) => write!(f, "verify {}", args),
+            DfxOrbitSubcommands::Review(_args) => write!(f, "review [TODO]"),
+            DfxOrbitSubcommands::Me(args) => write!(f, " me {}", args),
         }
     }
 }
@@ -89,6 +89,9 @@ pub struct MeArgs {
 
 impl std::fmt::Display for MeArgs {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "me")
+        if self.json {
+            write!(f, "--json")?;
+        }
+        Ok(())
     }
 }

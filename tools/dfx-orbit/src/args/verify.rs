@@ -107,8 +107,8 @@ pub enum VerifyArgsAction {
 impl std::fmt::Display for VerifyArgsAction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            VerifyArgsAction::Asset(args) => args.fmt(f),
-            VerifyArgsAction::Canister(args) => args.fmt(f),
+            VerifyArgsAction::Asset(args) => write!(f, "asset {}", args),
+            VerifyArgsAction::Canister(args) => write!(f, "canister {}", args),
         }
     }
 }

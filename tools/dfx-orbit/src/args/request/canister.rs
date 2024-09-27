@@ -84,6 +84,27 @@ pub struct RequestCanisterCallArgs {
     pub with_cycles: Option<u64>,
 }
 
+impl std::fmt::Display for RequestCanisterCallArgs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.canister)?;
+        write!(f, " {}", self.method_name)?;
+        if let Some(argument) = &self.argument {
+            write!(f, " --argument {}", argument)?;
+        }
+        if let Some(arg_file) = &self.arg_file {
+            write!(f, " --arg-file {}", arg_file)?;
+        }
+        if let Some(raw_arg) = &self.raw_arg {
+            write!(f, " --raw-arg {}", raw_arg)?;
+        }
+        if let Some(with_cycles) = &self.with_cycles {
+            write!(f, " --with-cycles {}", with_cycles)?;
+        }
+
+        Ok(())
+    }
+}
+
 impl RequestCanisterCallArgs {
     /// Converts the CLI arg stype into the equivalent Orbit API type.
     pub(crate) fn into_request(
@@ -164,6 +185,22 @@ pub struct RequestCanisterInstallArgs {
     /// The path to a file containing the argument to pass to the canister.
     #[clap(short = 'f', long, conflicts_with = "arg")]
     arg_file: Option<String>,
+}
+
+impl std::fmt::Display for RequestCanisterInstallArgs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.canister)?;
+        write!(f, " --mode {}", self.mode)?;
+        write!(f, " --wasm {}", self.wasm)?;
+        if let Some(argument) = &self.argument {
+            write!(f, " --argument {}", argument)?;
+        }
+        if let Some(arg_file) = &self.arg_file {
+            write!(f, " --arg-file {}", arg_file)?;
+        }
+
+        Ok(())
+    }
 }
 
 impl RequestCanisterInstallArgs {
@@ -251,6 +288,16 @@ pub enum CanisterInstallModeArgs {
     Upgrade,
 }
 
+impl std::fmt::Display for CanisterInstallModeArgs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CanisterInstallModeArgs::Install => write!(f, "install"),
+            CanisterInstallModeArgs::Reinstall => write!(f, "reinstall"),
+            CanisterInstallModeArgs::Upgrade => write!(f, "upgrade"),
+        }
+    }
+}
+
 impl From<CanisterInstallModeArgs> for CanisterInstallMode {
     fn from(mode: CanisterInstallModeArgs) -> Self {
         match mode {
@@ -283,6 +330,20 @@ pub struct RequestCanisterUpdateSettingsArgs {
     /// Removes a principal from the list of controllers of the canister
     #[clap(long)]
     pub(crate) remove_controller: Vec<Principal>,
+}
+
+impl std::fmt::Display for RequestCanisterUpdateSettingsArgs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.canister)?;
+        for controller in &self.add_controller {
+            write!(f, " --add-controller {}", controller)?;
+        }
+        for controller in &self.remove_controller {
+            write!(f, " --remove-controller {}", controller)?;
+        }
+
+        Ok(())
+    }
 }
 
 impl RequestCanisterUpdateSettingsArgs {
