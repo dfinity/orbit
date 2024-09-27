@@ -15,18 +15,6 @@ pub struct VerifyCanisterArgs {
     pub action: VerifyCanisterActionArgs,
 }
 
-impl std::fmt::Display for VerifyCanisterArgs {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.action {
-            VerifyCanisterActionArgs::Install(args) => write!(f, "install {}", args),
-            VerifyCanisterActionArgs::Call(args) => write!(f, "call {}", args),
-            VerifyCanisterActionArgs::UpdateSettings(args) => {
-                write!(f, "update-settings {}", args)
-            }
-        }
-    }
-}
-
 #[derive(Debug, Clone, Subcommand)]
 #[clap(version, about, long_about = None)]
 pub enum VerifyCanisterActionArgs {

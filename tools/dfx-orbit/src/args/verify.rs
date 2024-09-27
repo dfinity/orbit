@@ -24,21 +24,6 @@ pub struct VerifyArgs {
     pub action: VerifyArgsAction,
 }
 
-impl std::fmt::Display for VerifyArgs {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "verify {}", self.request_id)?;
-        if self.and_approve {
-            write!(f, " --and-approve")?;
-        }
-        if self.or_reject {
-            write!(f, " --or-reject")?;
-        }
-        write!(f, " {}", self.action)?;
-
-        Ok(())
-    }
-}
-
 impl VerifyArgs {
     pub async fn verify(
         &self,
@@ -102,13 +87,4 @@ pub enum VerifyArgsAction {
     Asset(VerifyAssetArgs),
     /// Request canister operations through Orbit
     Canister(VerifyCanisterArgs),
-}
-
-impl std::fmt::Display for VerifyArgsAction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            VerifyArgsAction::Asset(args) => write!(f, "asset {}", args),
-            VerifyArgsAction::Canister(args) => write!(f, "canister {}", args),
-        }
-    }
 }

@@ -50,21 +50,6 @@ pub struct RequestAssetPermissionArgs {
     pub revoke: bool,
 }
 
-impl std::fmt::Display for RequestAssetPermissionArgs {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, " {}", self.canister)?;
-        write!(f, " {}", self.permission)?;
-        if let Some(target) = &self.target {
-            write!(f, " --target {}", target)?;
-        }
-        if self.revoke {
-            write!(f, " --revoke")?;
-        }
-
-        Ok(())
-    }
-}
-
 impl RequestAssetPermissionArgs {
     pub(crate) fn into_request(
         self,
@@ -176,16 +161,6 @@ impl From<AssetPermissionTypeArgs> for Permission {
     }
 }
 
-impl std::fmt::Display for AssetPermissionTypeArgs {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            AssetPermissionTypeArgs::Prepare => write!(f, "prepare"),
-            AssetPermissionTypeArgs::Commit => write!(f, "commit"),
-            AssetPermissionTypeArgs::ManagePermissions => write!(f, "manage_permissions"),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetUploadArgs {
     /// The name of the asset canister targeted by this action
@@ -198,20 +173,6 @@ pub struct RequestAssetUploadArgs {
     /// The source directories to upload (multiple values possible)
     #[clap(short, long)]
     pub files: Vec<String>,
-}
-
-impl std::fmt::Display for RequestAssetUploadArgs {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, " {}", self.canister)?;
-        if self.ignore_evidence {
-            write!(f, " --ignore-evidence")?;
-        }
-        for file in &self.files {
-            write!(f, " --files {}", file)?;
-        }
-
-        Ok(())
-    }
 }
 
 impl RequestAssetUploadArgs {
