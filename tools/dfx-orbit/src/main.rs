@@ -8,6 +8,7 @@ use tokio::runtime::Builder;
 
 fn main() {
     let args = DfxOrbitArgs::parse();
+    //print!("Args: {}", args);
     let runtime = Builder::new_current_thread()
         .enable_all()
         .build()

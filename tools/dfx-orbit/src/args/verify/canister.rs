@@ -15,6 +15,12 @@ pub struct VerifyCanisterArgs {
     pub action: VerifyCanisterActionArgs,
 }
 
+impl std::fmt::Display for VerifyCanisterArgs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
 #[derive(Debug, Clone, Subcommand)]
 #[clap(version, about, long_about = None)]
 pub enum VerifyCanisterActionArgs {

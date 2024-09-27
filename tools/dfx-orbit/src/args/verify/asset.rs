@@ -10,6 +10,12 @@ pub struct VerifyAssetArgs {
     pub action: VerifyAssetActionArgs,
 }
 
+impl std::fmt::Display for VerifyAssetArgs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
 #[derive(Debug, Clone, Subcommand)]
 #[clap(version, about, long_about = None)]
 pub enum VerifyAssetActionArgs {

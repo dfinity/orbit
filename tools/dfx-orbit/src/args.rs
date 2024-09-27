@@ -36,6 +36,21 @@ pub struct DfxOrbitArgs {
     pub(crate) command: DfxOrbitSubcommands,
 }
 
+impl std::fmt::Display for DfxOrbitArgs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "dfx-orbit")?;
+
+        if let Some(station) = &self.station {
+            write!(f, " --station {}", station)?;
+        }
+        if let Some(identity) = &self.identity {
+            write!(f, " --identity {}", identity)?;
+        }
+        write!(f, " {}", self.command)?;
+        Ok(())
+    }
+}
+
 /// CLI commands for managing Orbit on the Internet Computer.
 #[derive(Debug, Subcommand)]
 #[clap(version, about, long_about = None)]
@@ -53,9 +68,27 @@ pub enum DfxOrbitSubcommands {
     Me(MeArgs),
 }
 
+impl std::fmt::Display for DfxOrbitSubcommands {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DfxOrbitSubcommands::Station(_station_args) => write!(f, "[TODO]"),
+            DfxOrbitSubcommands::Request(_request_args) => write!(f, "[TODO]"),
+            DfxOrbitSubcommands::Verify(_verify_args) => write!(f, "[TODO]"),
+            DfxOrbitSubcommands::Review(_review_args) => write!(f, "[TODO]"),
+            DfxOrbitSubcommands::Me(me_args) => me_args.fmt(f),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Parser)]
 pub struct MeArgs {
     /// Return output as JSON
     #[clap(short, long)]
     pub(crate) json: bool,
+}
+
+impl std::fmt::Display for MeArgs {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "me")
+    }
 }
