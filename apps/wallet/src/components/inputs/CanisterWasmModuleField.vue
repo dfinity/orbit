@@ -80,9 +80,5 @@ const updateComputedCanisterModule = async () => {
   }
 };
 
-watch(
-  () => wasmModuleFile.value,
-  () => updateComputedCanisterModule(),
-  { deep: true },
-);
+watch(wasmModuleFile, () => updateComputedCanisterModule(), { deep: true });
 </script>
