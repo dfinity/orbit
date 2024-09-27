@@ -294,16 +294,19 @@ mod test {
     use crate::jobs::scheduler::Scheduler;
     use crate::jobs::{execute_created_transfers, execute_scheduled_requests};
     use crate::models::account_test_utils::mock_account;
+    use crate::models::asset_test_utils::mock_asset;
     use crate::models::transfer_test_utils::mock_transfer;
-    use crate::models::{Account, RequestStatus};
+    use crate::models::{Account, AccountAsset, RequestStatus};
     use crate::repositories::{
-        RequestRepository, TransferRepository, ACCOUNT_REPOSITORY, TRANSFER_REPOSITORY,
+        RequestRepository, TransferRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY,
+        TRANSFER_REPOSITORY,
     };
     use crate::{
         jobs::{cancel_expired_requests, to_coarse_time, JobStateDatabase, ScheduledJob},
         models::{request_test_utils::mock_request, Request},
         repositories::REQUEST_REPOSITORY,
     };
+    use orbit_essentials::model::ModelKey;
     use orbit_essentials::repository::Repository;
 
     #[tokio::test]
@@ -481,9 +484,17 @@ mod test {
         let expiration_coarse =
             to_coarse_time(expiration, cancel_expired_requests::Job::JOB_TOLERANCE_NS);
 
+        let asset = mock_asset();
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+
         // create one account so transfer requests dont fail
         let account = Account {
             id: [1; 16],
+            assets: vec![AccountAsset {
+                asset_id: asset.id,
+                balance: None,
+                data: vec![],
+            }],
             ..mock_account()
         };
         ACCOUNT_REPOSITORY.insert(account.to_key(), account);

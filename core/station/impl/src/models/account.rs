@@ -276,6 +276,21 @@ mod tests {
     use super::account_test_utils::mock_account;
     use super::*;
 
+    const VALID_ACCOUNT_IDENTIFIER: &str =
+        "5c76bc95e544204de4928e4d901e52b49df248b9c346807040e7af75aa61f4b3";
+
+    #[test]
+    fn fail_address_format_invalid() {
+        let format = AddressFormat::ICPAccountIdentifier;
+
+        format
+            .validate_address("foo")
+            .expect_err("foo is not a valid AccountIdentifier");
+
+        format
+            .validate_address(VALID_ACCOUNT_IDENTIFIER)
+            .expect("The address is valid");
+    }
     #[test]
     fn fail_address_length_invalid() {
         let mut account_address: AccountAddress = AccountAddress {
@@ -307,11 +322,6 @@ mod tests {
                 max_length: 255
             }
         );
-
-        account_address.address = "a".to_string();
-
-        let result = account_address.validate();
-        assert!(result.is_ok());
     }
 
     #[test]
@@ -348,6 +358,8 @@ mod tests {
 pub mod account_test_utils {
     use super::*;
     use crate::repositories::ACCOUNT_REPOSITORY;
+    use candid::Principal;
+    use ic_ledger_types::Subaccount;
     use orbit_essentials::repository::Repository;
     use uuid::Uuid;
 
@@ -371,7 +383,8 @@ pub mod account_test_utils {
             }],
 
             addresses: vec![AccountAddress {
-                address: "foo".to_string(),
+                address: AccountIdentifier::new(&Principal::anonymous(), &Subaccount([0; 32]))
+                    .to_hex(),
                 format: AddressFormat::ICPAccountIdentifier,
                 data: vec![ExtraData {
                     key: "foo".to_string(),

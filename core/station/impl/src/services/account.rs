@@ -511,12 +511,13 @@ impl AccountService {
 #[cfg(test)]
 mod tests {
     use candid::Principal;
+    use orbit_essentials::model::ModelKey;
 
     use super::*;
     use crate::{
         core::{test_utils, validation::disable_mock_resource_validation, CallContext},
         models::{
-            account_test_utils::mock_account, permission::Allow,
+            account_test_utils::mock_account, asset_test_utils::mock_asset, permission::Allow,
             request_policy_rule::RequestPolicyRule, request_specifier::UserSpecifier,
             user_test_utils::mock_user, AddAccountOperation, AddAccountOperationInput, Metadata,
             User,
@@ -781,6 +782,9 @@ mod tests {
         disable_mock_resource_validation();
 
         let account = mock_account();
+
+        let asset = mock_asset();
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
 
         ctx.repository.insert(account.to_key(), account.clone());
 

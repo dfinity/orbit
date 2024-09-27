@@ -721,7 +721,7 @@ pub mod request_test_utils {
                     metadata: Metadata::default(),
                     to: "0x1234".to_string(),
                     from_account_id: [1; 16],
-                    from_asset_id: [1; 16],
+                    from_asset_id: [0; 16],
                     with_standard: TokenStandard::InternetComputerNative,
                 },
             }),
