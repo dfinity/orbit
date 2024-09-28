@@ -43,6 +43,19 @@
                 v-model:open="dialogs.unlink"
                 :canister-id="canister.canister_id"
               />
+              <CanisterIcSettingsDialog
+                v-if="canisterDetails.status.value"
+                v-model:open="dialogs.icSettings"
+                :canister-id="canister.canister_id"
+                :canister-settings="{
+                  compute_allocation: canisterDetails.status.value.settings.compute_allocation,
+                  controllers: canisterDetails.status.value.settings.controllers as Principal[],
+                  freezing_threshold: canisterDetails.status.value.settings.freezing_threshold,
+                  memory_allocation: canisterDetails.status.value.settings.memory_allocation,
+                  reserved_cycles_limit:
+                    canisterDetails.status.value.settings.reserved_cycles_limit,
+                }"
+              />
             </template>
             <VMenu v-if="privileges.can_change">
               <template #activator="{ props: menuProps }">
@@ -170,18 +183,30 @@
                     <VListItem class="pt-0 px-0">
                       <VListItemTitle class="font-weight-bold">
                         {{ $t(`external_canisters.module_hash`) }}
-                        <VBtn
-                          v-if="privileges.can_change"
-                          size="small"
-                          density="compact"
-                          color="default"
-                          variant="tonal"
-                          class="ml-1 px-2"
-                          :append-icon="mdiDatabaseCog"
-                          @click="dialogs.install = true"
-                        >
-                          {{ $t('external_canisters.install') }}
-                        </VBtn>
+                        <template v-if="privileges.can_change">
+                          <CanisterInstallDialog
+                            :key="canisterDetails.moduleHash.value?.toString()"
+                            v-model:open="dialogs.install"
+                            :canister-id="canister.canister_id"
+                            :canister-module-hash="
+                              canisterDetails.moduleHash.value !== null
+                                ? canisterDetails.moduleHash.value
+                                : undefined
+                            "
+                          />
+                          <VBtn
+                            size="small"
+                            density="compact"
+                            color="default"
+                            variant="tonal"
+                            class="ml-1 px-2"
+                            :disabled="canisterDetails.moduleHash.loading"
+                            :append-icon="mdiDatabaseCog"
+                            @click="dialogs.install = true"
+                          >
+                            {{ $t('external_canisters.install') }}
+                          </VBtn>
+                        </template>
                       </VListItemTitle>
                       <VListItemSubtitle>
                         <VProgressCircular
@@ -310,6 +335,8 @@ import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
 import BtnCanisterSetup from '~/components/external-canisters/BtnCanisterSetup.vue';
+import CanisterIcSettingsDialog from '~/components/external-canisters/CanisterIcSettingsDialog.vue';
+import CanisterInstallDialog from '~/components/external-canisters/CanisterInstallDialog.vue';
 import CanisterSetupDialog from '~/components/external-canisters/CanisterSetupDialog.vue';
 import CanisterTopUpDialog from '~/components/external-canisters/CanisterTopUpDialog.vue';
 import CanisterUnlinkDialog from '~/components/external-canisters/CanisterUnlinkDialog.vue';

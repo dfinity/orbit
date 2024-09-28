@@ -1,6 +1,7 @@
 export default {
   app: {
     title: '{app} Carteira',
+    name: 'Orbit Wallet',
     action_save_failed: 'Erro ao gravar a ação, por favor, tente novamente.',
     action_save_success: 'Ação gravada com sucesso.',
     session_load_error: 'Erro ao inicializar a sessão, por favor, tente novamente.',
@@ -437,8 +438,43 @@ export default {
     install: 'Instalar',
     send_cycles: 'Enviar ciclos',
     top_up_hint: 'Ciclos a adicionar ao canister de destino.',
+    add_controller: 'Adicionar controlador',
+    no_controllers: 'Nenhum controlador.',
+    self_controller: 'Controlador próprio',
+    non_orbit_controllers_warning:
+      'Esta configuração adiciona controladores adicionais ao canister de destino, use com cuidado.',
+    native_settings: {
+      freezing_threshold: 'Limite de congelamento',
+      freezing_threshold_hint:
+        'O número de segundos que o canister será colocado em um estado congelado antes de ser limpo pela rede.',
+      controllers: 'Controladores',
+      controllers_hint: 'A lista de principais que podem controlar o canister.',
+      memory_allocation: 'Alocação de memória',
+      memory_allocation_hint:
+        'A quantidade máxima de memória que o canister pode usar, isso também reserva a memória na sub-rede.',
+      compute_allocation: 'Alocação de computação',
+      compute_allocation_hint:
+        'A porcentagem de computação de sub-rede que é reservada para o canister.',
+      reserved_cycles_limit: 'Limite de ciclos reservados',
+      reserved_cycles_limit_hint:
+        'Número de ciclos que o canister pode alocar, operações que alocam memória ou computação falharão se o limite for atingido.',
+    },
+    wasm_module: 'Módulo WASM',
+    wasm_args: 'Argumentos',
+    wasm_args_optional: 'Argumentos (opcional)',
+    wasm_args_invalid_format: 'Formato de argumento inválido',
+    wasm_args_formats: {
+      hex: 'Hex',
+      candid: 'Candid',
+    },
+    install_mode: {
+      reinstall: 'Reinstalar',
+      upgrade: 'Atualizar',
+      install: 'Instalar',
+    },
   },
   terms: {
+    mode: 'Modo',
     active: 'Ativo',
     archived: 'Arquivado',
     canisters: 'Canisters',
@@ -609,6 +645,7 @@ export default {
       requiredNumber: 'Este campo deve conter um número.',
       numberRange: 'Este campo deve estar entre {min} e {max}.',
       invalidDecimalPlaces: 'Este campo deve ter no máximo {decimals} casas decimais.',
+      isHex: 'Este campo deve conter um valor hexadecimal válido.',
     },
   },
   navigation: {

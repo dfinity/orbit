@@ -1,6 +1,7 @@
 export default {
   app: {
     title: '{app} Wallet',
+    name: 'Orbit Wallet',
     action_save_failed: 'Failed to save action, please try again.',
     action_save_success: 'Action successfully saved.',
     session_load_error: 'Failed to load your session, please try again.',
@@ -434,8 +435,43 @@ export default {
     install: 'Install',
     send_cycles: 'Send Cycles',
     top_up_hint: 'Amount of cycles to add to the target canister.',
+    add_controller: 'Add controller',
+    no_controllers: 'No controllers',
+    self_controller: 'Self controlled',
+    non_orbit_controllers_warning:
+      'This configuration sets additional controllers to the target canister, use with caution.',
+    native_settings: {
+      freezing_threshold: 'Freezing Threshold',
+      freezing_threshold_hint:
+        "The number of seconds the canister will be put in a frozen state before it's cleaned by the network.",
+      controllers: 'Controllers',
+      controllers_hint: 'The list of principals that can control the canister.',
+      memory_allocation: 'Memory Allocation',
+      memory_allocation_hint:
+        'The maximum amount of memory the canister can use, this also reserves the memory in the subnet.',
+      compute_allocation: 'Compute Allocation',
+      compute_allocation_hint:
+        'The percentage of subnet compute that is reserved for the canister.',
+      reserved_cycles_limit: 'Reserved Cycles Limit',
+      reserved_cycles_limit_hint:
+        'Number of cycles the canister can allocate, operations that allocate memory or compute will fail if the limit is reached.',
+    },
+    wasm_module: 'WASM Module',
+    wasm_args: 'Arguments',
+    wasm_args_optional: 'Arguments (optional)',
+    wasm_args_invalid_format: 'Invalid argument format',
+    wasm_args_formats: {
+      hex: 'Hex',
+      candid: 'Candid',
+    },
+    install_mode: {
+      reinstall: 'Reinstall',
+      upgrade: 'Upgrade',
+      install: 'Install',
+    },
   },
   terms: {
+    mode: 'Mode',
     active: 'Active',
     archived: 'Archived',
     canisters: 'Canisters',
@@ -607,6 +643,7 @@ export default {
       requiredNumber: 'This field must be a valid number.',
       numberRange: 'This field must be between {min} and {max}.',
       invalidDecimalPlaces: 'This field must have a maximum of {decimals} decimal places.',
+      isHex: 'This field must be a valid hexadecimal value.',
     },
   },
   navigation: {
