@@ -1,8 +1,9 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    add_user, bump_time_to_avoid_ratelimit, canister_status, execute_request, get_request,
-    submit_request, submit_request_approval, submit_request_raw, submit_request_with_expected_trap,
-    update_raw, user_test_id, wait_for_request, COUNTER_WAT,
+    add_user, bump_time_to_avoid_ratelimit, canister_status, execute_request,
+    get_core_canister_health_status, get_request, submit_request, submit_request_approval,
+    submit_request_raw, submit_request_with_expected_trap, update_raw, user_test_id,
+    wait_for_request, COUNTER_WAT,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -16,11 +17,12 @@ use station_api::{
     ChangeExternalCanisterOperationInput, CreateExternalCanisterOperationInput,
     CreateExternalCanisterOperationKindCreateNewDTO, CreateExternalCanisterOperationKindDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
-    ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput, ListRequestsInput,
-    ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO, RequestApprovalStatusDTO,
-    RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
-    RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
+    ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput, HealthStatus,
+    ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
+    RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    RequestSpecifierDTO, RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
+use std::str::FromStr;
 
 #[test]
 fn successful_four_eyes_upgrade() {
@@ -1134,4 +1136,128 @@ fn call_external_canister_test() {
         execution_method_reply,
         Some(hex::decode("4449444c016b01bc8a017101000004676f6f64").unwrap())
     );
+}
+
+#[test]
+fn create_external_canister_with_too_many_cycles() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let create_canister_operation = |name: &str, initial_cycles| {
+        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
+            kind: CreateExternalCanisterOperationKindDTO::CreateNew(
+                CreateExternalCanisterOperationKindCreateNewDTO { initial_cycles },
+            ),
+            name: name.to_string(),
+            description: None,
+            labels: None,
+            permissions: ExternalCanisterPermissionsInput {
+                calls: vec![],
+                read: AllowDTO {
+                    auth_scope: station_api::AuthScopeDTO::Restricted,
+                    user_groups: vec![],
+                    users: vec![],
+                },
+                change: AllowDTO {
+                    auth_scope: station_api::AuthScopeDTO::Restricted,
+                    user_groups: vec![],
+                    users: vec![],
+                },
+            },
+            request_policies: ExternalCanisterRequestPoliciesInput {
+                change: Vec::new(),
+                calls: vec![],
+            },
+        })
+    };
+
+    // request to create a test canister with 1T cycles (this should succeed)
+    let create_test_canister_operation = create_canister_operation("test", Some(1_000_000_000_000));
+
+    // request to create a canister with more cycles than the station has (this should fail)
+    let station_cycles = env.cycle_balance(canister_ids.station);
+    let create_rich_canister_operation =
+        create_canister_operation("rich", Some(2 * station_cycles as u64));
+
+    // submit requests for creating the test canister and a canister with too many cycles
+    // to be executed concurrently
+    let test_canister_request = submit_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        create_test_canister_operation,
+    );
+    let rich_canister_request = submit_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        create_rich_canister_operation,
+    );
+
+    // admin cannot trigger requests via the private `try_execute_request` endpoint
+    let test_canister_request_id = uuid::Uuid::from_str(&test_canister_request.id).unwrap();
+    let bytes = Encode!(&test_canister_request_id.as_bytes()).unwrap();
+    let err = update_raw(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "try_execute_request",
+        bytes,
+    )
+    .unwrap_err();
+    assert!(err
+        .description
+        .contains("The method `try_execute_request` can only be called by the station canister."));
+
+    // wait for the requests to be executed
+    let test_canister_request = wait_for_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        test_canister_request,
+    )
+    .unwrap();
+    let rich_canister_request_status = wait_for_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        rich_canister_request,
+    )
+    .unwrap_err()
+    .unwrap();
+
+    // the test canister with 1T cycles should be successfully created
+    match test_canister_request.status {
+        RequestStatusDTO::Completed { .. } => (),
+        _ => panic!(
+            "Unexpected request status: {:?}",
+            test_canister_request.status
+        ),
+    };
+    // check the test canister status on behalf of the station and ensure that the canister is empty
+    let canister_id = match test_canister_request.operation {
+        RequestOperationDTO::CreateExternalCanister(operation) => operation.canister_id.unwrap(),
+        _ => panic!(
+            "Unexpected request operation type: {:?}",
+            test_canister_request.operation
+        ),
+    };
+    let status = canister_status(&env, Some(canister_ids.station), canister_id);
+    assert_eq!(status.module_hash, None);
+
+    // the canister with too many cycles failed to be created because the station would be out of cycles
+    match rich_canister_request_status {
+        RequestStatusDTO::Failed { reason } => {
+            assert_eq!(reason.unwrap(), format!("Request execution failed due to internal error: `IC0504: Error from Canister {}: Canister {} is out of cycles`.", canister_ids.station, canister_ids.station));
+        }
+        _ => panic!(
+            "Unexpected request status: {:?}",
+            rich_canister_request_status
+        ),
+    };
+    // the station should still be healthy
+    let health_status =
+        get_core_canister_health_status(&env, WALLET_ADMIN_USER, canister_ids.station);
+    assert_eq!(health_status, HealthStatus::Healthy);
 }
