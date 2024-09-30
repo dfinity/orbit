@@ -70,16 +70,16 @@ mod tests {
 
     #[test]
     fn test_canister_config() {
-        let config = CanisterConfig::new(Vec::new(), Vec::new());
+        let config = CanisterConfig::new(Vec::new(), Vec::new(), None);
         write_canister_config(config.clone());
         assert_eq!(canister_config(), Some(config));
     }
 
     #[test]
     fn test_update_canister_config() {
-        let config = CanisterConfig::new(Vec::new(), Vec::new());
+        let config = CanisterConfig::new(Vec::new(), Vec::new(), None);
         write_canister_config(config.clone());
-        let new_config = CanisterConfig::new(vec![1], vec![2]);
+        let new_config = CanisterConfig::new(vec![1], vec![2], None);
         write_canister_config(new_config.clone());
         assert_eq!(canister_config(), Some(new_config));
     }

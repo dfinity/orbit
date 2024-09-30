@@ -1,12 +1,14 @@
-use crate::setup::{get_canister_wasm, WALLET_ADMIN_USER};
-use candid::Principal;
+use crate::setup::{create_canister, get_canister_wasm, WALLET_ADMIN_USER};
+use candid::{CandidType, Encode, Principal};
 use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
+use orbit_essentials::types::WasmModuleExtraChunks;
 use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
 use sha2::Digest;
+use sha2::Sha256;
 use station_api::{
     AccountDTO, AddAccountOperationInput, AddUserOperationInput, AllowDTO, ApiErrorDTO,
     CreateRequestInput, CreateRequestResponse, GetPermissionResponse, GetRequestInput,
@@ -711,8 +713,9 @@ pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, cont
     // upload upgrader
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let upload_canister_modules_args = UploadCanisterModulesInput {
-        station_wasm_module: None,
         upgrader_wasm_module: Some(upgrader_wasm.to_owned()),
+        station_wasm_module: None,
+        station_wasm_module_extra_chunks: None,
     };
     let res: (ApiResult<()>,) = update_candid_as(
         env,
@@ -725,10 +728,12 @@ pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, cont
     res.0.unwrap();
 
     // upload station
-    let station_wasm = get_canister_wasm("station").to_vec();
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(env, "station", 200_000);
     let upload_canister_modules_args = UploadCanisterModulesInput {
-        station_wasm_module: Some(station_wasm.to_owned()),
         upgrader_wasm_module: None,
+        station_wasm_module: Some(base_chunk),
+        station_wasm_module_extra_chunks: Some(Some(module_extra_chunks)),
     };
     let res: (ApiResult<()>,) = update_candid_as(
         env,
@@ -744,4 +749,75 @@ pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, cont
 pub fn bump_time_to_avoid_ratelimit(env: &PocketIc) {
     // the rate limiter aggregation window is 300s and resolution is 10s
     env.advance_time(Duration::from_secs(300 + 10));
+}
+
+#[derive(CandidType)]
+struct StoreArg {
+    pub key: String,
+    pub content: Vec<u8>,
+    pub content_type: String,
+    pub content_encoding: String,
+    pub sha256: Option<Vec<u8>>,
+}
+
+fn hash(data: Vec<u8>) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    hasher.finalize().to_vec()
+}
+
+pub fn upload_canister_chunks_to_asset_canister(
+    env: &PocketIc,
+    canister_name: &str,
+    chunk_len: usize,
+) -> (Vec<u8>, WasmModuleExtraChunks) {
+    // create and install the asset canister
+    let asset_canister_id = create_canister(env, Principal::anonymous());
+    env.install_canister(
+        asset_canister_id,
+        get_canister_wasm("assetstorage"),
+        Encode!(&()).unwrap(),
+        None,
+    );
+
+    // get canister wasm
+    let canister_wasm = get_canister_wasm(canister_name).to_vec();
+    let mut hasher = Sha256::new();
+    hasher.update(&canister_wasm);
+    let canister_wasm_hash = hasher.finalize().to_vec();
+
+    // chunk canister
+    let mut chunks = canister_wasm.chunks(chunk_len);
+    let base_chunk: &[u8] = chunks.next().unwrap();
+    assert!(!base_chunk.is_empty());
+    let chunks: Vec<&[u8]> = chunks.collect();
+    assert!(chunks.len() >= 2);
+
+    // upload chunks to asset canister
+    for chunk in &chunks {
+        let chunk_hash = hash(chunk.to_vec());
+        let store_arg = StoreArg {
+            key: hex::encode(chunk_hash.clone()),
+            content: chunk.to_vec(),
+            content_type: "application/octet-stream".to_string(),
+            content_encoding: "identity".to_string(),
+            sha256: Some(chunk_hash),
+        };
+        update_candid_as::<_, ((),)>(
+            env,
+            asset_canister_id,
+            Principal::anonymous(),
+            "store",
+            (store_arg,),
+        )
+        .unwrap();
+    }
+
+    let module_extra_chunks = WasmModuleExtraChunks {
+        store_canister: asset_canister_id,
+        chunk_hashes_list: chunks.iter().map(|c| hash(c.to_vec())).collect(),
+        wasm_module_hash: canister_wasm_hash,
+    };
+
+    (base_chunk.to_vec(), module_extra_chunks)
 }

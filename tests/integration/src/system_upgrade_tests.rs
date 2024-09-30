@@ -1,14 +1,12 @@
-use crate::setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
+use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     execute_request, execute_request_with_extra_ticks, get_core_canister_health_status,
-    get_system_info,
+    get_system_info, upload_canister_chunks_to_asset_canister,
 };
 use crate::{CanisterIds, TestEnv};
-use candid::{CandidType, Encode, Principal};
+use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
-use orbit_essentials::types::WasmModuleExtraChunks;
 use pocket_ic::{update_candid_as, PocketIc};
-use sha2::{Digest, Sha256};
 use station_api::{
     HealthStatus, NotifyFailedStationUpgradeInput, RequestOperationInput, RequestStatusDTO,
     SystemInstall, SystemUpgrade, SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
@@ -16,77 +14,6 @@ use station_api::{
 use upgrader_api::InitArg;
 
 const EXTRA_TICKS: u64 = 50;
-
-#[derive(CandidType)]
-struct StoreArg {
-    pub key: String,
-    pub content: Vec<u8>,
-    pub content_type: String,
-    pub content_encoding: String,
-    pub sha256: Option<Vec<u8>>,
-}
-
-fn hash(data: Vec<u8>) -> Vec<u8> {
-    let mut hasher = Sha256::new();
-    hasher.update(data);
-    hasher.finalize().to_vec()
-}
-
-fn upload_canister_chunks_to_asset_canister(
-    env: &PocketIc,
-    canister_name: &str,
-    chunk_len: usize,
-) -> (Vec<u8>, WasmModuleExtraChunks) {
-    // create and install the asset canister
-    let asset_canister_id = create_canister(env, Principal::anonymous());
-    env.install_canister(
-        asset_canister_id,
-        get_canister_wasm("assetstorage"),
-        Encode!(&()).unwrap(),
-        None,
-    );
-
-    // get canister wasm
-    let canister_wasm = get_canister_wasm(canister_name).to_vec();
-    let mut hasher = Sha256::new();
-    hasher.update(&canister_wasm);
-    let canister_wasm_hash = hasher.finalize().to_vec();
-
-    // chunk canister
-    let mut chunks = canister_wasm.chunks(chunk_len);
-    let base_chunk: &[u8] = chunks.next().unwrap();
-    assert!(!base_chunk.is_empty());
-    let chunks: Vec<&[u8]> = chunks.collect();
-    assert!(chunks.len() >= 2);
-
-    // upload chunks to asset canister
-    for chunk in &chunks {
-        let chunk_hash = hash(chunk.to_vec());
-        let store_arg = StoreArg {
-            key: hex::encode(chunk_hash.clone()),
-            content: chunk.to_vec(),
-            content_type: "application/octet-stream".to_string(),
-            content_encoding: "identity".to_string(),
-            sha256: Some(chunk_hash),
-        };
-        update_candid_as::<_, ((),)>(
-            env,
-            asset_canister_id,
-            Principal::anonymous(),
-            "store",
-            (store_arg,),
-        )
-        .unwrap();
-    }
-
-    let module_extra_chunks = WasmModuleExtraChunks {
-        store_canister: asset_canister_id,
-        chunk_hashes_list: chunks.iter().map(|c| hash(c.to_vec())).collect(),
-        wasm_module_hash: canister_wasm_hash,
-    };
-
-    (base_chunk.to_vec(), module_extra_chunks)
-}
 
 fn do_successful_station_upgrade(
     env: &PocketIc,
