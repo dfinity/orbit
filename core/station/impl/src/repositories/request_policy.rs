@@ -1,4 +1,6 @@
-use super::indexes::request_policy_resource_index::RequestPolicyResourceIndexRepository;
+use super::indexes::request_policy_resource_index::{
+    ExternalCanisterPoliciesList, RequestPolicyResourceIndexRepository,
+};
 use crate::{
     core::{
         metrics::REQUEST_POLICY_METRICS, with_memory_manager, Memory, REQUEST_POLICIES_MEMORY_ID,
@@ -116,7 +118,10 @@ impl RequestPolicyRepository {
     ///
     /// - `Change` related policies.
     /// - `Call` related policies.
-    pub fn find_external_canister_policies(&self, canister_id: &Principal) -> Vec<UUID> {
+    pub fn find_external_canister_policies(
+        &self,
+        canister_id: &Principal,
+    ) -> ExternalCanisterPoliciesList {
         self.resource_index
             .find_external_canister_policies(canister_id)
     }

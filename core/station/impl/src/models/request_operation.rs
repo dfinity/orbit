@@ -348,10 +348,18 @@ pub struct ChangeExternalCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ExternalCanisterPermissionsInput {
+pub struct ExternalCanisterPermissionsCreateInput {
     pub read: Allow,
     pub change: Allow,
     pub calls: Vec<ExternalCanisterCallPermission>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterPermissionsUpdateInput {
+    pub read: Option<Allow>,
+    pub change: Option<Allow>,
+    pub calls: Option<Vec<ExternalCanisterCallPermission>>,
 }
 
 #[storable]
@@ -373,8 +381,8 @@ pub struct ExternalCanisterChangeRequestPolicyRuleInput {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ExternalCanisterRequestPoliciesInput {
-    pub change: Vec<ExternalCanisterChangeRequestPolicyRuleInput>,
-    pub calls: Vec<ExternalCanisterCallRequestPolicyRuleInput>,
+    pub change: Option<Vec<ExternalCanisterChangeRequestPolicyRuleInput>>,
+    pub calls: Option<Vec<ExternalCanisterCallRequestPolicyRuleInput>>,
 }
 
 #[storable]
@@ -403,7 +411,7 @@ pub struct CreateExternalCanisterOperationInput {
     pub name: String,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
-    pub permissions: ExternalCanisterPermissionsInput,
+    pub permissions: ExternalCanisterPermissionsCreateInput,
     pub request_policies: ExternalCanisterRequestPoliciesInput,
 }
 
@@ -470,7 +478,7 @@ pub struct ConfigureExternalCanisterSettingsInput {
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
     pub state: Option<ExternalCanisterState>,
-    pub permissions: Option<ExternalCanisterPermissionsInput>,
+    pub permissions: Option<ExternalCanisterPermissionsUpdateInput>,
     pub request_policies: Option<ExternalCanisterRequestPoliciesInput>,
 }
 

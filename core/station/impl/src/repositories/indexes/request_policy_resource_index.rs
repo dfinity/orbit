@@ -84,6 +84,36 @@ impl IndexRepository<RequestPolicyResourceIndex, UUID> for RequestPolicyResource
     }
 }
 
+#[derive(Clone, Default)]
+pub struct ExternalCanisterPoliciesList {
+    pub change: HashSet<UUID>,
+    pub calls: HashSet<UUID>,
+}
+
+impl ExternalCanisterPoliciesList {
+    pub fn new() -> Self {
+        Self {
+            change: HashSet::new(),
+            calls: HashSet::new(),
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.change.len() + self.calls.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.change.is_empty() && self.calls.is_empty()
+    }
+
+    pub fn all(&self) -> HashSet<UUID> {
+        let mut all = HashSet::new();
+        all.extend(self.change.iter());
+        all.extend(self.calls.iter());
+        all
+    }
+}
+
 impl RequestPolicyResourceIndexRepository {
     /// Finds all external canister policies related to the specified canister id.
     ///
@@ -91,11 +121,14 @@ impl RequestPolicyResourceIndexRepository {
     ///
     /// - `Change` related policies.
     /// - `Call` related policies.
-    pub fn find_external_canister_policies(&self, canister_id: &Principal) -> Vec<UUID> {
+    pub fn find_external_canister_policies(
+        &self,
+        canister_id: &Principal,
+    ) -> ExternalCanisterPoliciesList {
         DB.with(|db| {
-            let mut policies = Vec::new();
+            let mut policies = ExternalCanisterPoliciesList::new();
             // Find all change related policies for the specified canister id.
-            policies.extend(
+            policies.change.extend(
                 db.borrow()
                     .range(
                         (RequestPolicyResourceIndex {
@@ -119,7 +152,7 @@ impl RequestPolicyResourceIndexRepository {
             );
 
             // Find all call related policies for the specified canister id.
-            policies.extend(
+            policies.calls.extend(
                 db.borrow()
                 .range(
                     (RequestPolicyResourceIndex {

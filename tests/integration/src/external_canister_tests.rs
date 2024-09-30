@@ -17,7 +17,7 @@ use station_api::{
     ChangeExternalCanisterOperationInput, CreateExternalCanisterOperationInput,
     CreateExternalCanisterOperationKindCreateNewDTO, CreateExternalCanisterOperationKindDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
-    ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput, HealthStatus,
+    ExternalCanisterPermissionsCreateInput, ExternalCanisterRequestPoliciesInput, HealthStatus,
     ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
     RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
     RequestSpecifierDTO, RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
@@ -379,7 +379,7 @@ fn create_external_canister_and_check_status() {
             name: "test".to_string(),
             description: None,
             labels: None,
-            permissions: ExternalCanisterPermissionsInput {
+            permissions: ExternalCanisterPermissionsCreateInput {
                 calls: vec![],
                 read: AllowDTO {
                     auth_scope: station_api::AuthScopeDTO::Restricted,
@@ -393,8 +393,8 @@ fn create_external_canister_and_check_status() {
                 },
             },
             request_policies: ExternalCanisterRequestPoliciesInput {
-                change: Vec::new(),
-                calls: vec![],
+                change: None,
+                calls: None,
             },
         });
     let trap_message = submit_request_with_expected_trap(
@@ -1152,7 +1152,7 @@ fn create_external_canister_with_too_many_cycles() {
             name: name.to_string(),
             description: None,
             labels: None,
-            permissions: ExternalCanisterPermissionsInput {
+            permissions: ExternalCanisterPermissionsCreateInput {
                 calls: vec![],
                 read: AllowDTO {
                     auth_scope: station_api::AuthScopeDTO::Restricted,
@@ -1166,8 +1166,8 @@ fn create_external_canister_with_too_many_cycles() {
                 },
             },
             request_policies: ExternalCanisterRequestPoliciesInput {
-                change: Vec::new(),
-                calls: vec![],
+                change: None,
+                calls: None,
             },
         })
     };
