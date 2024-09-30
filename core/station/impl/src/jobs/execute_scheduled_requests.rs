@@ -30,19 +30,31 @@ impl ScheduledJob for Job {
 impl Job {
     pub const MAX_BATCH_SIZE: usize = 20;
 
+    /// The maximum number of processing requests must be smaller than 500 (queue capacity between any pair of canisters)
+    /// and we also leave some slack.
+    pub const MAX_PROCESSING_REQUESTS: usize = 400;
+
     /// Processes all the requests that have been approved but are not yet executed.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` requests at once.
+    ///
+    /// At any point in time, at most `MAX_PROCESSING_REQUESTS` requests can be processing at the same time.
     async fn execute_scheduled_requests(&self) -> bool {
         let current_time = next_time();
         let mut requests = self
             .request_repository
             .find_scheduled(None, Some(current_time));
 
-        let processing_all_requests = requests.len() <= Self::MAX_BATCH_SIZE;
+        let num_processing_requests = self.request_repository.get_num_processing();
+        let batch_size = std::cmp::min(
+            Self::MAX_PROCESSING_REQUESTS.saturating_sub(num_processing_requests),
+            Self::MAX_BATCH_SIZE,
+        );
+
+        let processing_all_requests = requests.len() <= batch_size;
 
         // truncate the list to avoid processing too many requests at once
-        requests.truncate(Self::MAX_BATCH_SIZE);
+        requests.truncate(batch_size);
 
         // update the status of the requests to avoid processing them again
         for request in requests.iter_mut() {

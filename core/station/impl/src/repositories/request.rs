@@ -231,6 +231,13 @@ impl RequestRepository {
             .collect::<Vec<Request>>()
     }
 
+    /// Get the number of all processing requests.
+    pub fn get_num_processing(&self) -> usize {
+        self.index
+            .find_by_status(RequestStatusCode::Processing, None)
+            .len()
+    }
+
     /// Get the list of Resource for a request id.
     pub fn get_resources(&self, request_id: &RequestId) -> Vec<Resource> {
         self.resource_index
