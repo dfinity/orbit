@@ -2,13 +2,16 @@ use super::{scheduler::Scheduler, JobType, ScheduledJob};
 use crate::{
     core::ic_cdk::next_time,
     errors::RequestExecuteError,
-    factories::requests::{RequestExecuteStage, RequestFactory},
     models::{Request, RequestStatus},
     repositories::RequestRepository,
     services::RequestService,
 };
 use async_trait::async_trait;
 use futures::future;
+#[cfg(test)]
+use orbit_essentials::cdk::api::call::RejectionCode;
+#[cfg(not(test))]
+use orbit_essentials::cdk::{call, id};
 use orbit_essentials::repository::Repository;
 
 #[derive(Debug, Default)]
@@ -80,10 +83,7 @@ impl Job {
         // update the status of the requests
         for (pos, result) in results.iter().enumerate() {
             match result {
-                Ok(request) => {
-                    self.request_repository
-                        .insert(request.to_key(), request.to_owned());
-                }
+                Ok(()) => (),
                 Err(e) => {
                     let request_failed_time = next_time();
                     let request = requests[pos].clone();
@@ -100,32 +100,18 @@ impl Job {
     /// Executes a single request.
     ///
     /// This function will handle the request execution for the given operation type.
-    async fn execute_request(&self, mut request: Request) -> Result<Request, RequestExecuteError> {
-        let executor = RequestFactory::executor(&request);
-
-        let execute_state = executor.execute().await?;
-
-        drop(executor);
-
-        let request_execution_time = next_time();
-
-        request.status = match execute_state {
-            RequestExecuteStage::Completed(_) => RequestStatus::Completed {
-                completed_at: request_execution_time,
-            },
-            RequestExecuteStage::Processing(_) => RequestStatus::Processing {
-                started_at: request_execution_time,
-            },
-        };
-
-        request.operation = match execute_state {
-            RequestExecuteStage::Completed(operation) => operation,
-            RequestExecuteStage::Processing(operation) => operation,
-        };
-
-        request.last_modification_timestamp = request_execution_time;
-
-        Ok(request)
+    /// In production, the actual request execution is wrapped inside an inter-canister call
+    /// to catch traps and report them as `RequestExecuteError::InternalError`.
+    async fn execute_request(&self, request: Request) -> Result<(), RequestExecuteError> {
+        #[cfg(not(test))]
+        let res = call::<_, (_,)>(id(), "try_execute_request", (request.id,)).await;
+        #[cfg(test)]
+        let res: Result<_, (RejectionCode, String)> =
+            Ok((self.request_service.try_execute_request(request.id).await,));
+        match res {
+            Ok(res) => res.0,
+            Err((_code, msg)) => Err(RequestExecuteError::InternalError { reason: msg }),
+        }
     }
 }
 
