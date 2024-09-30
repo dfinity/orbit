@@ -2,7 +2,7 @@ use crate::{core::ic_cdk::api::canister_balance, SERVICE_NAME};
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 use orbit_essentials::api::{HeaderField, HttpRequest, HttpResponse};
-use orbit_essentials::http::add_skip_certification_headers;
+use orbit_essentials::http::{add_skip_certification_headers, not_found, parse_path};
 use orbit_essentials::metrics::with_metrics_registry;
 
 // Canister entrypoints for the controller.
@@ -27,15 +27,13 @@ impl HttpController {
     }
 
     async fn router(&self, request: HttpRequest) -> HttpResponse {
-        if request.url == "/metrics" || request.url == "/metrics/" {
-            return self.metrics(request).await;
+        match parse_path(&request.url) {
+            Some(path) => match path.trim_end_matches('/') {
+                "/metrics" => self.metrics(request).await,
+                _ => not_found(),
+            },
+            None => not_found(),
         }
-
-        return HttpResponse {
-            status_code: 404,
-            headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
-            body: "404 Not Found".as_bytes().to_owned(),
-        };
     }
 
     async fn metrics(&self, request: HttpRequest) -> HttpResponse {
