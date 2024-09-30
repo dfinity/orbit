@@ -1,11 +1,12 @@
 use crate::{
+    core::ic_cdk::api::call::arg_data_raw_size,
     core::ic_cdk::api::time,
     core::limiter::Limiter,
     core::middlewares::{authorize, call_context, use_canister_call_metric},
     core::CallContext,
     errors::RequestError,
     mappers::HelperMapper,
-    models::rate_limiter::{RequestRateLimiterKey, RequestRateLimiterSize},
+    models::rate_limiter::RequestRateLimiterKey,
     models::resource::{RequestResourceAction, Resource},
     services::{RequestService, REQUEST_SERVICE},
 };
@@ -51,13 +52,13 @@ async fn submit_request_approval(
 
 #[update(name = "create_request")]
 async fn create_request(input: CreateRequestInput) -> ApiResult<CreateRequestResponse> {
-    CONTROLLER.create_request(input).await
+    CONTROLLER.create_request(input, arg_data_raw_size()).await
 }
 
 const RATE_LIMITER_RESOLUTION: Duration = Duration::from_secs(10);
 const RATE_LIMITER_TIME_WINDOW: Duration = Duration::from_secs(300);
-const REQUEST_RATE_LIMITER_MAX_COUNT: u64 = 2000; // 2000 requests per 5mins
-const REQUEST_RATE_LIMITER_MAX_SIZE: u64 = 10_000_000; // total request size of 10MB per 5mins
+const REQUEST_RATE_LIMITER_MAX_COUNT: usize = 2000; // 2000 requests per 5mins
+const REQUEST_RATE_LIMITER_MAX_SIZE: usize = 10_000_000; // total request size of 10MB per 5mins
 
 thread_local! {
     static REQUEST_COUNT_RATE_LIMITER: RefCell<HashMap<RequestRateLimiterKey, Limiter>> = RefCell::new(HashMap::new());
@@ -66,9 +67,9 @@ thread_local! {
 
 fn rate_limit(
     limiters: &mut HashMap<RequestRateLimiterKey, Limiter>,
-    max_value: u64,
+    max_value: usize,
     key: &RequestRateLimiterKey,
-    value: u64,
+    value: usize,
 ) -> ApiResult<()> {
     let now = UNIX_EPOCH + Duration::from_nanos(time());
     let limiter = match limiters.get_mut(key) {
@@ -91,7 +92,7 @@ fn rate_limit(
     Ok(())
 }
 
-async fn rate_limit_create_request(ctx: &CallContext, input: &CreateRequestInput) -> ApiResult<()> {
+async fn rate_limit_create_request(ctx: &CallContext, msg_arg_data_size: usize) -> ApiResult<()> {
     let user_id = ctx.user().map(|u| u.id);
 
     let request_rate_limiter_key = RequestRateLimiterKey { user_id };
@@ -103,13 +104,12 @@ async fn rate_limit_create_request(ctx: &CallContext, input: &CreateRequestInput
             1,
         )
     })?;
-    let request_size: RequestRateLimiterSize = (&input.operation).into();
     REQUEST_SIZE_RATE_LIMITER.with(|l| {
         rate_limit(
             &mut l.borrow_mut(),
             REQUEST_RATE_LIMITER_MAX_SIZE,
             &request_rate_limiter_key,
-            request_size.0,
+            msg_arg_data_size,
         )
     })
 }
@@ -131,11 +131,15 @@ impl RequestController {
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     #[with_middleware(tail = use_canister_call_metric("create_request", &result))]
-    async fn create_request(&self, input: CreateRequestInput) -> ApiResult<CreateRequestResponse> {
+    async fn create_request(
+        &self,
+        input: CreateRequestInput,
+        msg_arg_data_size: usize,
+    ) -> ApiResult<CreateRequestResponse> {
         let ctx = &call_context();
 
         // rate-limiting
-        rate_limit_create_request(ctx, &input).await?;
+        rate_limit_create_request(ctx, msg_arg_data_size).await?;
 
         let request = self.request_service.create_request(input, ctx).await?;
         let privileges = self

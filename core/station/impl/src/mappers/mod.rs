@@ -58,5 +58,3 @@ pub mod metadata;
 pub mod resource;
 
 pub mod authorization;
-
-pub mod rate_limiter;
