@@ -1180,7 +1180,7 @@ fn create_external_canister_with_too_many_cycles() {
     let create_rich_canister_operation =
         create_canister_operation("rich", Some(2 * station_cycles as u64));
 
-    // submit requests for creating the test canister and a canister with two many cycles
+    // submit requests for creating the test canister and a canister with too many cycles
     // to be executed concurrently
     let test_canister_request = submit_request(
         &env,
@@ -1230,8 +1230,21 @@ fn create_external_canister_with_too_many_cycles() {
     // the test canister with 1T cycles should be successfully created
     match test_canister_request.status {
         RequestStatusDTO::Completed { .. } => (),
-        _ => panic!("Request should be completed."),
+        _ => panic!(
+            "Unexpected request status: {:?}",
+            test_canister_request.status
+        ),
     };
+    // check the test canister status on behalf of the station and ensure that the canister is empty
+    let canister_id = match test_canister_request.operation {
+        RequestOperationDTO::CreateExternalCanister(operation) => operation.canister_id.unwrap(),
+        _ => panic!(
+            "Unexpected request operation type: {:?}",
+            test_canister_request.operation
+        ),
+    };
+    let status = canister_status(&env, Some(canister_ids.station), canister_id);
+    assert_eq!(status.module_hash, None);
 
     // the canister with too many cycles failed to be created because the station would be out of cycles
     match rich_canister_request_status {
@@ -1243,20 +1256,8 @@ fn create_external_canister_with_too_many_cycles() {
             rich_canister_request_status
         ),
     };
-
     // the station should still be healthy
     let health_status =
         get_core_canister_health_status(&env, WALLET_ADMIN_USER, canister_ids.station);
     assert_eq!(health_status, HealthStatus::Healthy);
-
-    // check canister status on behalf of the station and ensure that the canister is empty
-    let canister_id = match test_canister_request.operation {
-        RequestOperationDTO::CreateExternalCanister(operation) => operation.canister_id.unwrap(),
-        _ => panic!(
-            "Unexpected request operation type: {:?}",
-            test_canister_request.operation
-        ),
-    };
-    let status = canister_status(&env, Some(canister_ids.station), canister_id);
-    assert_eq!(status.module_hash, None);
 }
