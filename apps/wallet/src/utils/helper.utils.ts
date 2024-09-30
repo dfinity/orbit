@@ -407,7 +407,17 @@ export const transformData = (
     transformBufferAsHex = true,
   } = opts;
 
+  const seen = new WeakSet();
   const normalize = (data: unknown): unknown => {
+    // Handles circular references by returning a string '[Circular Reference]' when a circular reference is found.
+    if (typeof data === 'object' && data !== null) {
+      if (seen.has(data)) {
+        return '[Circular Reference]';
+      }
+
+      seen.add(data);
+    }
+
     if (data === null || data === undefined) {
       return removeUndefinedOrNull ? undefined : data;
     }
