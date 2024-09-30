@@ -80,17 +80,11 @@ mod tests {
 
     #[test]
     fn test_parse_path() {
-        assert_eq!(
-            parse_path(&"/long/path?param".to_string()),
-            Some("/long/path")
-        );
-        assert_eq!(parse_path(&"/path?query=1".to_string()), Some("/path"));
-        assert_eq!(
-            parse_path(&"/path#unwanted".to_string()),
-            Some("/path#unwanted")
-        );
-        assert_eq!(parse_path(&"/".to_string()), Some("/"));
-        assert_eq!(parse_path(&"".to_string()), Some(""));
+        assert_eq!(parse_path(&"/long/path?param"), Some("/long/path"));
+        assert_eq!(parse_path(&"/path?query=1"), Some("/path"));
+        assert_eq!(parse_path(&"/path#unwanted"), Some("/path#unwanted"));
+        assert_eq!(parse_path(&"/"), Some("/"));
+        assert_eq!(parse_path(&""), Some(""));
     }
 
     #[test]
