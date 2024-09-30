@@ -44,12 +44,7 @@ pub struct CreateExternalCanisterOperationInput {
     pub request_policies: ExternalCanisterRequestPoliciesInput,
 }
 
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct ExternalCanisterPermissionsCreateInput {
-    pub read: AllowDTO,
-    pub change: AllowDTO,
-    pub calls: Vec<ExternalCanisterCallPermissionDTO>,
-}
+pub type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissionsDTO;
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalCanisterPermissionsUpdateInput {
