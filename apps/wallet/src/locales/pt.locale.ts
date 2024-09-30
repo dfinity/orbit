@@ -289,6 +289,30 @@ export default {
         title: 'Gerir informações do sistema',
         request_title: 'Pedido de alteração de informações do sistema',
       },
+      createexternalcanister: {
+        title: 'Criar canister',
+        request_title: 'Pedido de criação de canister',
+      },
+      changeexternalcanister: {
+        title: 'Alterar canister',
+        request_title: 'Pedido de alteração de canister',
+      },
+      callexternalcanister: {
+        title: 'Chamar canister',
+        request_title: 'Pedido de chamada de canister',
+      },
+      fundexternalcanister: {
+        title: 'Recarregar canister',
+        request_title: 'Pedido de recarga de canister',
+      },
+      configureexternalcanister: {
+        title: 'Configurar canister',
+        request_title: 'Pedido de configuração de canister',
+      },
+      setdisasterrecovery: {
+        title: 'Configurar recuperação de desastres',
+        request_title: 'Pedido de configuração de recuperação de desastres',
+      },
       unknown: {
         title: 'Desconhecido',
         request_title: 'Pedido desconhecido',
@@ -474,6 +498,9 @@ export default {
     },
   },
   terms: {
+    more: 'Mais',
+    less: 'Menos',
+    data: 'Dados',
     mode: 'Modo',
     active: 'Ativo',
     archived: 'Arquivado',

@@ -377,3 +377,158 @@ export async function fetchCanisterModuleHash(
 
   return arrayBufferToHex(moduleHash.value);
 }
+
+/**
+ * Transforms the input data to a new value where all complex objects are transformed to a JSON serializable format.
+ *
+ * @param input - The input data to transform.
+ * @param opts - The options for the transformation.
+ *
+ * @param opts.removeUndefinedOrNull - If true, removes all undefined and null values from the input.
+ * @param opts.removeEmptyArrays - If true, removes all empty arrays from the input.
+ * @param opts.removeFunctions - If true, removes all functions from the input.
+ * @param opts.transformBufferAsHex - If true, transforms all ArrayBuffer values to hex strings.
+ *
+ * @returns The transformed data.
+ */
+export const transformData = (
+  input: unknown,
+  opts: {
+    removeUndefinedOrNull?: boolean;
+    removeEmptyLists?: boolean;
+    removeFunctions?: boolean;
+    transformBufferAsHex?: boolean;
+  } = {},
+): unknown => {
+  const {
+    removeEmptyLists = false,
+    removeUndefinedOrNull = true,
+    removeFunctions = true,
+    transformBufferAsHex = true,
+  } = opts;
+
+  const seen = new WeakSet();
+  const normalize = (data: unknown): unknown => {
+    // Handles circular references by returning a string '[Circular Reference]' when a circular reference is found.
+    if (typeof data === 'object' && data !== null) {
+      if (seen.has(data)) {
+        return '[Circular Reference]';
+      }
+
+      seen.add(data);
+    }
+
+    if (data === null || data === undefined) {
+      return removeUndefinedOrNull ? undefined : data;
+    }
+
+    if (typeof data === 'function') {
+      return !removeFunctions ? '[Function]' : undefined;
+    }
+
+    if (typeof data === 'bigint') {
+      return Number(data);
+    }
+
+    if (data instanceof Principal) {
+      return data.toText();
+    }
+
+    if (data instanceof Date) {
+      return data.toISOString();
+    }
+
+    if (data instanceof ArrayBuffer) {
+      if (removeEmptyLists && data.byteLength === 0) {
+        return undefined;
+      }
+
+      return transformBufferAsHex ? arrayBufferToHex(data) : Array.from(new Uint8Array(data));
+    }
+
+    if (data instanceof Uint8Array) {
+      if (removeEmptyLists && data.length === 0) {
+        return undefined;
+      }
+
+      return Array.from(data);
+    }
+
+    if (Array.isArray(data)) {
+      if (removeEmptyLists && data.length === 0) {
+        return undefined;
+      }
+
+      return data
+        .map(value => normalize(value))
+        .filter(data => (removeUndefinedOrNull ? data !== undefined : true));
+    }
+
+    if (data instanceof Map) {
+      const result: Record<string, unknown> = {};
+
+      data.forEach((value, key) => {
+        if (removeUndefinedOrNull && (value === null || value === undefined)) {
+          return;
+        }
+
+        result[key] = normalize(value);
+      });
+
+      if (removeEmptyLists && Object.keys(result).length === 0) {
+        return undefined;
+      }
+
+      return result;
+    }
+
+    if (data instanceof Set) {
+      if (removeEmptyLists && data.size === 0) {
+        return undefined;
+      }
+
+      return Array.from(data)
+        .map(value => normalize(value))
+        .filter(data => (removeUndefinedOrNull ? data !== undefined : true));
+    }
+
+    if (data instanceof Object) {
+      const result: Record<string, unknown> = {};
+
+      Object.entries(data).forEach(([key, value]) => {
+        if (removeUndefinedOrNull && (value === null || value === undefined)) {
+          return;
+        }
+
+        result[key] = normalize(value);
+      });
+
+      if (removeEmptyLists && Object.keys(result).length === 0) {
+        return undefined;
+      }
+
+      return result;
+    }
+
+    return data;
+  };
+
+  const normalizedInput = normalize(input);
+
+  if (typeof normalizedInput === 'object' || Array.isArray(normalizedInput)) {
+    const plainJson = JSON.parse(
+      JSON.stringify(normalizedInput, (_, value) => {
+        // Json stringify takes care of removing all keys with undefined values, so we only need to remove null values.
+        if (removeUndefinedOrNull && value === null) {
+          return undefined;
+        }
+
+        return value;
+      }),
+    );
+
+    return plainJson;
+  }
+
+  return normalizedInput;
+};
