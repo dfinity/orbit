@@ -2,7 +2,9 @@ use crate::DfxOrbit;
 use anyhow::bail;
 use candid::{Nat, Principal};
 use clap::{Parser, Subcommand, ValueEnum};
-use ic_certified_assets::types::{GrantPermissionArguments, Permission, RevokePermissionArguments};
+use ic_certified_assets::types::{
+    DeleteBatchArguments, GrantPermissionArguments, Permission, RevokePermissionArguments,
+};
 use sha2::{Digest, Sha256};
 use station_api::{
     CallExternalCanisterOperationInput, CanisterMethodDTO, GetRequestResponse, RequestOperationDTO,
@@ -24,7 +26,8 @@ pub enum RequestAssetActionArgs {
     Upload(RequestAssetUploadArgs),
     /// Commit to an already prepared batch
     Commit(RequestAssetCommitArgs),
-    // TODO: Cancel batch
+    /// Cancel an upload
+    CancelUpload(RequestAssetCancelUploadArgs),
 }
 
 impl RequestAssetArgs {
@@ -36,6 +39,7 @@ impl RequestAssetArgs {
             RequestAssetActionArgs::Permission(args) => args.into_request(dfx_orbit),
             RequestAssetActionArgs::Upload(args) => args.into_request(dfx_orbit).await,
             RequestAssetActionArgs::Commit(args) => args.into_request(dfx_orbit).await,
+            RequestAssetActionArgs::CancelUpload(args) => args.into_request(dfx_orbit),
         }
     }
 }
@@ -81,37 +85,20 @@ impl RequestAssetPermissionArgs {
         dfx_orbit: &DfxOrbit,
         request: &GetRequestResponse,
     ) -> anyhow::Result<()> {
-        let RequestOperationDTO::CallExternalCanister(operation) = &request.request.operation
-        else {
-            bail!("The request is not a call external canister request");
-        };
-
         let asset_canister = dfx_orbit.canister_id(&self.canister)?;
-        if operation.execution_method.canister_id != asset_canister {
-            bail!(
-                "The request targets an unexpected canister. Expected: {}, actual: {}",
-                asset_canister,
-                operation.execution_method.canister_id
-            );
-        }
-
         let expected_method = self.method_name();
-        if operation.execution_method.method_name != expected_method {
-            bail!(
-                "The method of this request is not \"{}\" but \"{}\" instead",
-                expected_method,
-                operation.execution_method.method_name
-            );
-        }
 
         let me = dfx_orbit.own_principal()?;
         let target = self.target.unwrap_or(me);
         let arg = self.encoded_args(target)?;
         let computed_arg_checksum = hex::encode(Sha256::digest(arg));
 
-        if operation.arg_checksum != Some(computed_arg_checksum) {
-            bail!("Argument checksum does not match");
-        }
+        verify_call(
+            request,
+            &asset_canister,
+            &expected_method,
+            &Some(computed_arg_checksum),
+        )?;
 
         Ok(())
     }
@@ -244,4 +231,70 @@ impl RequestAssetCommitArgs {
         let evidence = hex::decode(evidence)?.into();
         DfxOrbit::commit_batch_input(canister_id, self.batch_id, evidence)
     }
+}
+
+#[derive(Debug, Clone, Parser)]
+pub struct RequestAssetCancelUploadArgs {
+    /// The name of the asset canister targeted by this action
+    pub canister: String,
+
+    /// The batch ID to ccancel
+    pub batch_id: Nat,
+}
+
+impl RequestAssetCancelUploadArgs {
+    fn into_request(self, dfx_orbit: &DfxOrbit) -> anyhow::Result<RequestOperationInput> {
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
+        DfxOrbit::cancel_batch_input(canister_id, self.batch_id)
+    }
+
+    pub(crate) fn verify(
+        &self,
+        dfx_orbit: &DfxOrbit,
+        request: &GetRequestResponse,
+    ) -> anyhow::Result<()> {
+        let asset_canister = dfx_orbit.canister_id(&self.canister)?;
+        let args = DeleteBatchArguments {
+            batch_id: self.batch_id.clone(),
+        };
+        let encoded_args: String = hex::encode(candid::encode_one(args)?);
+
+        verify_call(
+            request,
+            &asset_canister,
+            "delete_batch",
+            &Some(encoded_args),
+        )?;
+        Ok(())
+    }
+}
+
+fn verify_call(
+    request: &GetRequestResponse,
+    expected_canister_id: &Principal,
+    expected_method: &str,
+    expected_arg_checksum: &Option<String>,
+) -> anyhow::Result<()> {
+    let RequestOperationDTO::CallExternalCanister(operation) = &request.request.operation else {
+        bail!("The request is not a call external canister request");
+    };
+    if &operation.execution_method.canister_id != expected_canister_id {
+        bail!(
+            "The request targets an unexpected canister. Expected: {}, actual: {}",
+            expected_canister_id,
+            operation.execution_method.canister_id
+        );
+    }
+    if operation.execution_method.method_name != expected_method {
+        bail!(
+            "The method of this request is not \"{}\" but \"{}\" instead",
+            expected_method,
+            operation.execution_method.method_name
+        );
+    }
+    if &operation.arg_checksum != expected_arg_checksum {
+        bail!("Argument checksum does not match");
+    }
+
+    Ok(())
 }
