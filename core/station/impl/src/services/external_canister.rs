@@ -633,12 +633,6 @@ impl ExternalCanisterService {
             for updated_change_policy in updated_change_policies {
                 match updated_change_policy.policy_id {
                     Some(policy_id) => {
-                        if !current_policies.change.contains(&policy_id) {
-                            return Err(ExternalCanisterError::NotFound {
-                                id: Uuid::from_bytes(policy_id).hyphenated().to_string(),
-                            })?;
-                        }
-
                         self.request_policy_service.edit_request_policy(
                             EditRequestPolicyOperationInput {
                                 policy_id,
@@ -682,12 +676,6 @@ impl ExternalCanisterService {
             for updated_call_policy in updated_call_policies {
                 match updated_call_policy.policy_id {
                     Some(policy_id) => {
-                        if !current_policies.calls.contains(&policy_id) {
-                            return Err(ExternalCanisterError::NotFound {
-                                id: Uuid::from_bytes(policy_id).hyphenated().to_string(),
-                            })?;
-                        }
-
                         self.request_policy_service.edit_request_policy(
                             EditRequestPolicyOperationInput {
                                 policy_id,
