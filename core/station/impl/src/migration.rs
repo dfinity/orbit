@@ -46,6 +46,8 @@ impl MigrationHandler {
         let stored_version = system_info.get_stable_memory_version();
 
         if stored_version == STABLE_MEMORY_VERSION {
+            // Run the post-run checks that need to be run on every upgrade.
+            post_run();
             return;
         }
 
@@ -61,7 +63,21 @@ impl MigrationHandler {
         // Update the stable memory version to the latest version.
         system_info.set_stable_memory_version(STABLE_MEMORY_VERSION);
         write_system_info(system_info);
+
+        // Run the post-run checks that need to be run on every upgrade.
+        post_run();
     }
+}
+
+/// If there is a check that needs to be run on every upgrade, regardless if the memory version has changed,
+/// it should be added here.
+fn post_run() {
+    // Deserialization of the all requests to make sure an incompatible memory will panic and avoids
+    // putting the station in an inconsistent state.
+    //
+    // This is a temporary addition only for the next release since we've added a breaking change to
+    // the `ConfigureExternalCanisterSettingsInput` which was a new API not yet used in production.
+    REQUEST_REPOSITORY.rebuild();
 }
 
 /// The migration to apply to the station canister stable memory.
