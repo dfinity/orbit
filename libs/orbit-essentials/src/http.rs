@@ -91,7 +91,6 @@ mod tests {
     fn test_cbor_encode() {
         let value = "test";
         let encoded = cbor_encode(&value);
-        println!("{:?}", encoded);
         assert_eq!(encoded, [217, 217, 247, 100, 116, 101, 115, 116]);
     }
 }
