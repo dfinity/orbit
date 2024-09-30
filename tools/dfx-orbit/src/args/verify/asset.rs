@@ -40,9 +40,12 @@ pub struct VerifyAssetUploadArgs {
     pub canister: String,
 
     /// The batch ID to commit to
+    #[clap(short, long)]
     pub batch_id: Nat,
 
-    /// The source directories of the asset upload (multiple values possible)
+    /// The source directories to upload
+    /// (multiple values possible, picks up sources from dfx.json by default)
+    #[clap(short, long)]
     pub files: Vec<String>,
 }
 
