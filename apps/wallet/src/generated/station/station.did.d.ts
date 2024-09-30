@@ -204,7 +204,7 @@ export type ConfigureExternalCanisterOperationKind = { 'SoftDelete' : null } |
   { 'Delete' : null } |
   { 'NativeSettings' : DefiniteCanisterSettingsInput };
 export interface ConfigureExternalCanisterSettingsInput {
-  'permissions' : [] | [ExternalCanisterPermissionsInput],
+  'permissions' : [] | [ExternalCanisterPermissionsUpdateInput],
   'name' : [] | [string],
   'labels' : [] | [Array<string>],
   'description' : [] | [string],
@@ -216,7 +216,7 @@ export interface CreateExternalCanisterOperation {
   'input' : CreateExternalCanisterOperationInput,
 }
 export interface CreateExternalCanisterOperationInput {
-  'permissions' : ExternalCanisterPermissionsInput,
+  'permissions' : ExternalCanisterPermissionsCreateInput,
   'kind' : CreateExternalCanisterOperationKind,
   'name' : string,
   'labels' : [] | [Array<string>],
@@ -420,14 +420,19 @@ export interface ExternalCanisterPermissions {
   'read' : Allow,
   'change' : Allow,
 }
-export type ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
+export type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
+export interface ExternalCanisterPermissionsUpdateInput {
+  'calls' : [] | [Array<ExternalCanisterCallPermission>],
+  'read' : [] | [Allow],
+  'change' : [] | [Allow],
+}
 export interface ExternalCanisterRequestPolicies {
   'calls' : Array<ExternalCanisterCallRequestPolicyRule>,
   'change' : Array<ExternalCanisterChangeRequestPolicyRule>,
 }
 export interface ExternalCanisterRequestPoliciesInput {
-  'calls' : Array<ExternalCanisterCallRequestPolicyRuleInput>,
-  'change' : Array<ExternalCanisterChangeRequestPolicyRuleInput>,
+  'calls' : [] | [Array<ExternalCanisterCallRequestPolicyRuleInput>],
+  'change' : [] | [Array<ExternalCanisterChangeRequestPolicyRuleInput>],
 }
 export type ExternalCanisterResourceAction = {
     'Call' : CallExternalCanisterResourceTarget

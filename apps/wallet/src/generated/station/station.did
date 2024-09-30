@@ -653,7 +653,7 @@ type CreateExternalCanisterOperationInput = record {
   // The labels of the external canister.
   labels : opt vec text;
   // What operations are allowed on the canister.
-  permissions : ExternalCanisterPermissionsInput;
+  permissions : ExternalCanisterPermissionsCreateInput;
   // The request policies for the canister.
   request_policies : ExternalCanisterRequestPoliciesInput;
 };
@@ -665,7 +665,7 @@ type ConfigureExternalCanisterSettingsInput = record {
   // The labels of the external canister.
   labels : opt vec text;
   // What operations are allowed on the canister.
-  permissions : opt ExternalCanisterPermissionsInput;
+  permissions : opt ExternalCanisterPermissionsUpdateInput;
   // The request policies for the canister.
   request_policies : opt ExternalCanisterRequestPoliciesInput;
   // The state of the external canister.
@@ -2310,8 +2310,21 @@ type ExternalCanisterPermissions = record {
   calls : vec ExternalCanisterCallPermission;
 };
 
+// The create input type for setting the permissions for the external canister.
+type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
+
 // The input type for setting the permissions for the external canister.
-type ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
+type ExternalCanisterPermissionsUpdateInput = record {
+  // Who can read information about the canister (e.g. canister status),
+  // changes to this permission can be made by the `change` permission.
+  read : opt Allow;
+  // Who can make changes to the canister, includes:
+  // - changing the permissions
+  // - install operations
+  change : opt Allow;
+  // The permissions for the calling methods on the canister.
+  calls : opt vec ExternalCanisterCallPermission;
+};
 
 // The request policy rules for the external canister.
 type ExternalCanisterRequestPolicies = record {
@@ -2324,9 +2337,9 @@ type ExternalCanisterRequestPolicies = record {
 // The input type for setting the request policies for the external canister.
 type ExternalCanisterRequestPoliciesInput = record {
   // The request policy rules for the canister change operation.
-  change : vec ExternalCanisterChangeRequestPolicyRuleInput;
+  change : opt vec ExternalCanisterChangeRequestPolicyRuleInput;
   // The request policy rules for the calling methods on the canister.
-  calls : vec ExternalCanisterCallRequestPolicyRuleInput;
+  calls : opt vec ExternalCanisterCallRequestPolicyRuleInput;
 };
 
 // An external canister that the station can interact with.

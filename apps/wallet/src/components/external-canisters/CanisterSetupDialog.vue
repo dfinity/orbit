@@ -156,21 +156,23 @@ const saveChangesToExistingExternalCanister = async (canisterId: Principal): Pro
     : [''];
   settings.permissions = [
     {
-      read: assertAndReturn(wizard.value.permission.read, 'read permission'),
-      change: assertAndReturn(wizard.value.permission.change, 'change permission'),
-      calls: [],
+      read: [assertAndReturn(wizard.value.permission.read, 'read permission')],
+      change: [assertAndReturn(wizard.value.permission.change, 'change permission')],
+      calls: [], // optional field, not updating calls through this dialog
     },
   ];
 
   settings.request_policies = [
     {
-      calls: [],
-      change: wizard.value.approvalPolicy.change
-        .filter(item => item.rule !== undefined)
-        .map(item => ({
-          policy_id: item.policy_id ? [item.policy_id] : [],
-          rule: item.rule as RequestPolicyRule,
-        })),
+      calls: [], // optional field, not updating calls through this dialog
+      change: [
+        wizard.value.approvalPolicy.change
+          .filter(item => item.rule !== undefined)
+          .map(item => ({
+            policy_id: item.policy_id ? [item.policy_id] : [],
+            rule: item.rule as RequestPolicyRule,
+          })),
+      ],
     },
   ];
 
@@ -194,12 +196,14 @@ const createNewExternalCanister = async (): Promise<Request> => {
   };
   changes.request_policies = {
     calls: [],
-    change: wizard.value.approvalPolicy.change
-      .filter(item => item.rule !== undefined)
-      .map(item => ({
-        policy_id: [],
-        rule: item.rule as RequestPolicyRule,
-      })),
+    change: [
+      wizard.value.approvalPolicy.change
+        .filter(item => item.rule !== undefined)
+        .map(item => ({
+          policy_id: [],
+          rule: item.rule as RequestPolicyRule,
+        })),
+    ],
   };
   if (wizard.value.configuration.canisterId) {
     changes.kind = {

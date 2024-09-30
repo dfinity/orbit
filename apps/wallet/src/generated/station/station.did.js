@@ -191,12 +191,11 @@ export const idlFactory = ({ IDL }) => {
     'allow' : Allow,
     'validation_method' : ValidationMethodResourceTarget,
   });
-  const ExternalCanisterPermissions = IDL.Record({
-    'calls' : IDL.Vec(ExternalCanisterCallPermission),
-    'read' : Allow,
-    'change' : Allow,
+  const ExternalCanisterPermissionsUpdateInput = IDL.Record({
+    'calls' : IDL.Opt(IDL.Vec(ExternalCanisterCallPermission)),
+    'read' : IDL.Opt(Allow),
+    'change' : IDL.Opt(Allow),
   });
-  const ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -237,15 +236,15 @@ export const idlFactory = ({ IDL }) => {
     'policy_id' : IDL.Opt(UUID),
   });
   const ExternalCanisterRequestPoliciesInput = IDL.Record({
-    'calls' : IDL.Vec(ExternalCanisterCallRequestPolicyRuleInput),
-    'change' : IDL.Vec(ExternalCanisterChangeRequestPolicyRuleInput),
+    'calls' : IDL.Opt(IDL.Vec(ExternalCanisterCallRequestPolicyRuleInput)),
+    'change' : IDL.Opt(IDL.Vec(ExternalCanisterChangeRequestPolicyRuleInput)),
   });
   const ExternalCanisterState = IDL.Variant({
     'Active' : IDL.Null,
     'Archived' : IDL.Null,
   });
   const ConfigureExternalCanisterSettingsInput = IDL.Record({
-    'permissions' : IDL.Opt(ExternalCanisterPermissionsInput),
+    'permissions' : IDL.Opt(ExternalCanisterPermissionsUpdateInput),
     'name' : IDL.Opt(IDL.Text),
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'description' : IDL.Opt(IDL.Text),
@@ -354,6 +353,12 @@ export const idlFactory = ({ IDL }) => {
   const RemoveAddressBookEntryOperationInput = IDL.Record({
     'address_book_entry_id' : UUID,
   });
+  const ExternalCanisterPermissions = IDL.Record({
+    'calls' : IDL.Vec(ExternalCanisterCallPermission),
+    'read' : Allow,
+    'change' : Allow,
+  });
+  const ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
   const CreateExternalCanisterOperationKindAddExisting = IDL.Record({
     'canister_id' : IDL.Principal,
   });
@@ -365,7 +370,7 @@ export const idlFactory = ({ IDL }) => {
     'CreateNew' : CreateExternalCanisterOperationKindCreateNew,
   });
   const CreateExternalCanisterOperationInput = IDL.Record({
-    'permissions' : ExternalCanisterPermissionsInput,
+    'permissions' : ExternalCanisterPermissionsCreateInput,
     'kind' : CreateExternalCanisterOperationKind,
     'name' : IDL.Text,
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
