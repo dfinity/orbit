@@ -11,7 +11,7 @@
         :model-value="modelValue.includes(item.key)"
         :label="item.text"
         hide-details
-        class="checkbox-compact-small"
+        class="d-flex checkbox-compact-small"
         density="compact"
         @update:model-value="toggle(item.key)"
       />

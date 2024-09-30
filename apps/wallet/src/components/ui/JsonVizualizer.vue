@@ -1,7 +1,7 @@
 <template>
   <VCard variant="outlined" density="compact" class="border-dashed">
     <slot name="header" :interactive="props.interactive">
-      <VToolbar density="compact" class="background-effect">
+      <VToolbar height="48" density="compact" class="background-effect">
         <VToolbarTitle class="text-body-2 font-weight-bold">{{ $t('terms.data') }}</VToolbarTitle>
         <VSpacer />
         <VBtn
@@ -16,7 +16,7 @@
       <VDivider />
     </slot>
     <VCardText class="px-4 py-2 background-effect">
-      <pre class="text-body-2">{{ normalizedDataShown }}</pre>
+      <pre class="text-body-2 text-break">{{ normalizedDataShown }}</pre>
     </VCardText>
     <VDivider v-if="hasMoreRows" />
     <VBtn

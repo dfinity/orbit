@@ -15,18 +15,19 @@
       @opened="emit('opened', request)"
       @closed="emit('closed', request)"
     />
-    <VListItem
+    <div
       v-if="!props.requests.length && !props.hideNotFound"
+      class="d-block"
       data-test-id="requests-empty-list"
     >
       {{ notFoundText }}
-    </VListItem>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { VListItem, VProgressLinear } from 'vuetify/components';
+import { VProgressLinear } from 'vuetify/components';
 import {
   Request,
   RequestAdditionalInfo,
