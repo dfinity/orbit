@@ -28,8 +28,8 @@ impl HttpController {
 
     async fn router(&self, request: HttpRequest) -> HttpResponse {
         match parse_path(&request.url) {
-            Some(url) => match url {
-                "/metrics" | "/metrics/" => self.metrics(request).await,
+            Some(path) => match path.trim_end_matches('/') {
+                "/metrics" => self.metrics(request).await,
                 _ => not_found(),
             },
             None => not_found(),
