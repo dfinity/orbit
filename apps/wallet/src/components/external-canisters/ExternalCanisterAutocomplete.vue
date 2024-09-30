@@ -1,27 +1,25 @@
 <template>
-  <div class="d-flex flex-column">
+  <div class="d-flex flex-column ga-1">
     <label class="d-flex ga-1 align-center">
       <VIcon v-if="props.prependIcon" :icon="props.prependIcon" size="small" />
       {{ dropdownLabel }}
     </label>
-    <div class="d-flex flex-column mt-1 flex-wrap">
-      <VAutocomplete
-        v-model="model"
-        v-model:search="searchTerm"
-        v-model:items="availableItems"
-        :placeholder="props.placeholder"
-        :multiple="props.multiple"
-        item-value="value"
-        item-title="text"
-        :variant="props.variant"
-        :density="props.density"
-        :readonly="props.readonly"
-        :disabled="props.disabled"
-        :rules="props.rules"
-        chips
-        closable-chips
-      />
-    </div>
+    <VAutocomplete
+      v-model="model"
+      v-model:search="searchTerm"
+      v-model:items="availableItems"
+      :placeholder="props.placeholder"
+      :multiple="props.multiple"
+      item-value="value"
+      item-title="text"
+      :variant="props.variant"
+      :density="props.density"
+      :readonly="props.readonly"
+      :disabled="props.disabled"
+      :rules="props.rules"
+      chips
+      closable-chips
+    />
   </div>
 </template>
 

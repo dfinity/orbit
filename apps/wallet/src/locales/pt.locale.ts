@@ -289,6 +289,30 @@ export default {
         title: 'Gerir informações do sistema',
         request_title: 'Pedido de alteração de informações do sistema',
       },
+      createexternalcanister: {
+        title: 'Criar canister',
+        request_title: 'Pedido de criação de canister',
+      },
+      changeexternalcanister: {
+        title: 'Alterar canister',
+        request_title: 'Pedido de alteração de canister',
+      },
+      callexternalcanister: {
+        title: 'Chamar canister',
+        request_title: 'Pedido de chamada de canister',
+      },
+      fundexternalcanister: {
+        title: 'Recarregar canister',
+        request_title: 'Pedido de recarga de canister',
+      },
+      configureexternalcanister: {
+        title: 'Configurar canister',
+        request_title: 'Pedido de configuração de canister',
+      },
+      setdisasterrecovery: {
+        title: 'Configurar recuperação de desastres',
+        request_title: 'Pedido de configuração de recuperação de desastres',
+      },
       unknown: {
         title: 'Desconhecido',
         request_title: 'Pedido desconhecido',
@@ -459,8 +483,25 @@ export default {
       reserved_cycles_limit_hint:
         'Número de ciclos que o canister pode alocar, operações que alocam memória ou computação falharão se o limite for atingido.',
     },
+    wasm_module: 'Módulo WASM',
+    wasm_args: 'Argumentos',
+    wasm_args_optional: 'Argumentos (opcional)',
+    wasm_args_invalid_format: 'Formato de argumento inválido',
+    wasm_args_formats: {
+      hex: 'Hex',
+      candid: 'Candid',
+    },
+    install_mode: {
+      reinstall: 'Reinstalar',
+      upgrade: 'Atualizar',
+      install: 'Instalar',
+    },
   },
   terms: {
+    more: 'Mais',
+    less: 'Menos',
+    data: 'Dados',
+    mode: 'Modo',
     active: 'Ativo',
     archived: 'Arquivado',
     canisters: 'Canisters',
@@ -631,6 +672,7 @@ export default {
       requiredNumber: 'Este campo deve conter um número.',
       numberRange: 'Este campo deve estar entre {min} e {max}.',
       invalidDecimalPlaces: 'Este campo deve ter no máximo {decimals} casas decimais.',
+      isHex: 'Este campo deve conter um valor hexadecimal válido.',
     },
   },
   navigation: {

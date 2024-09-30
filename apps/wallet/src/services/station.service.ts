@@ -10,6 +10,7 @@ import {
   AddUserOperationInput,
   CanisterStatusResult,
   Capabilities,
+  ChangeExternalCanisterOperationInput,
   ConfigureExternalCanisterOperationKind,
   ConfigureExternalCanisterSettingsInput,
   CreateExternalCanisterOperationInput,
@@ -596,6 +597,26 @@ export class StationService {
           canister_id: canisterId,
           kind: { NativeSettings: input },
         },
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async changeExternalCanister(
+    input: ChangeExternalCanisterOperationInput,
+    opts: { comment?: string } = {},
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: opts.comment ? [opts.comment] : [],
+      operation: {
+        ChangeExternalCanister: input,
       },
     });
 

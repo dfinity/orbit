@@ -70,6 +70,10 @@ impl CallContext {
         self.user.as_ref()
     }
 
+    pub fn caller_is_self(&self) -> bool {
+        self.caller == self_canister_id()
+    }
+
     pub fn caller_is_controller_or_self(&self) -> bool {
         self.caller == self_canister_id() || is_controller(&self.caller)
     }

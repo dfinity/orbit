@@ -18,6 +18,24 @@ export const requiredRule = (value: unknown): string | boolean => {
   return true;
 };
 
+export const isHexRule = (value: unknown): string | true => {
+  const hasValue = !!value;
+  if (!hasValue) {
+    // this rule only applies if there is a value
+    return true;
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error('isHexRule only applies to strings');
+  }
+
+  if (!/^([A-Fa-f0-9]{2})+$/.test(value)) {
+    return i18n.global.t('forms.rules.isHex');
+  }
+
+  return true;
+};
+
 export const intNumberRangeRule = (
   field: string,
   min: number,

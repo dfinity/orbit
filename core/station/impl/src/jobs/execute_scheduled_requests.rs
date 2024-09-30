@@ -2,13 +2,16 @@ use super::{scheduler::Scheduler, JobType, ScheduledJob};
 use crate::{
     core::ic_cdk::next_time,
     errors::RequestExecuteError,
-    factories::requests::{RequestExecuteStage, RequestFactory},
     models::{Request, RequestStatus},
     repositories::RequestRepository,
     services::RequestService,
 };
 use async_trait::async_trait;
 use futures::future;
+#[cfg(test)]
+use orbit_essentials::cdk::api::call::RejectionCode;
+#[cfg(not(test))]
+use orbit_essentials::cdk::{call, id};
 use orbit_essentials::repository::Repository;
 
 #[derive(Debug, Default)]
@@ -30,19 +33,31 @@ impl ScheduledJob for Job {
 impl Job {
     pub const MAX_BATCH_SIZE: usize = 20;
 
+    /// The maximum number of processing requests must be smaller than 500 (queue capacity between any pair of canisters)
+    /// and we also leave some slack.
+    pub const MAX_PROCESSING_REQUESTS: usize = 400;
+
     /// Processes all the requests that have been approved but are not yet executed.
     ///
     /// This function will process a maximum of `MAX_BATCH_SIZE` requests at once.
+    ///
+    /// At any point in time, at most `MAX_PROCESSING_REQUESTS` requests can be processing at the same time.
     async fn execute_scheduled_requests(&self) -> bool {
         let current_time = next_time();
         let mut requests = self
             .request_repository
             .find_scheduled(None, Some(current_time));
 
-        let processing_all_requests = requests.len() <= Self::MAX_BATCH_SIZE;
+        let num_processing_requests = self.request_repository.get_num_processing();
+        let batch_size = std::cmp::min(
+            Self::MAX_PROCESSING_REQUESTS.saturating_sub(num_processing_requests),
+            Self::MAX_BATCH_SIZE,
+        );
+
+        let processing_all_requests = requests.len() <= batch_size;
 
         // truncate the list to avoid processing too many requests at once
-        requests.truncate(Self::MAX_BATCH_SIZE);
+        requests.truncate(batch_size);
 
         // update the status of the requests to avoid processing them again
         for request in requests.iter_mut() {
@@ -68,10 +83,7 @@ impl Job {
         // update the status of the requests
         for (pos, result) in results.iter().enumerate() {
             match result {
-                Ok(request) => {
-                    self.request_repository
-                        .insert(request.to_key(), request.to_owned());
-                }
+                Ok(()) => (),
                 Err(e) => {
                     let request_failed_time = next_time();
                     let request = requests[pos].clone();
@@ -88,32 +100,18 @@ impl Job {
     /// Executes a single request.
     ///
     /// This function will handle the request execution for the given operation type.
-    async fn execute_request(&self, mut request: Request) -> Result<Request, RequestExecuteError> {
-        let executor = RequestFactory::executor(&request);
-
-        let execute_state = executor.execute().await?;
-
-        drop(executor);
-
-        let request_execution_time = next_time();
-
-        request.status = match execute_state {
-            RequestExecuteStage::Completed(_) => RequestStatus::Completed {
-                completed_at: request_execution_time,
-            },
-            RequestExecuteStage::Processing(_) => RequestStatus::Processing {
-                started_at: request_execution_time,
-            },
-        };
-
-        request.operation = match execute_state {
-            RequestExecuteStage::Completed(operation) => operation,
-            RequestExecuteStage::Processing(operation) => operation,
-        };
-
-        request.last_modification_timestamp = request_execution_time;
-
-        Ok(request)
+    /// In production, the actual request execution is wrapped inside an inter-canister call
+    /// to catch traps and report them as `RequestExecuteError::InternalError`.
+    async fn execute_request(&self, request: Request) -> Result<(), RequestExecuteError> {
+        #[cfg(not(test))]
+        let res = call::<_, (_,)>(id(), "try_execute_request", (request.id,)).await;
+        #[cfg(test)]
+        let res: Result<_, (RejectionCode, String)> =
+            Ok((self.request_service.try_execute_request(request.id).await,));
+        match res {
+            Ok(res) => res.0,
+            Err((_code, msg)) => Err(RequestExecuteError::InternalError { reason: msg }),
+        }
     }
 }
 

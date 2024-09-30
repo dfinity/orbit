@@ -1,16 +1,16 @@
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{bump_time_to_avoid_ratelimit, submit_request_raw};
 use crate::{CanisterIds, TestEnv};
-use candid::Principal;
+use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
     AddAccountOperationInput, AllowDTO, CallExternalCanisterOperationInput, CanisterMethodDTO,
-    MeResponse, RequestOperationInput,
+    CreateRequestInput, MeResponse, RequestExecutionScheduleDTO, RequestOperationInput,
 };
 
-const REQUEST_RATE_LIMITER_MAX_COUNT: u64 = 2000; // 2000 requests per 5mins
-const REQUEST_RATE_LIMITER_MAX_SIZE: u64 = 10_000_000; // total request size of 10MB per 5mins
+const REQUEST_RATE_LIMITER_MAX_COUNT: usize = 2000; // 2000 requests per 5mins
+const REQUEST_RATE_LIMITER_MAX_SIZE: usize = 10_000_000; // total request size of 10MB per 5mins
 
 #[test]
 fn test_request_count_rate_limiter() {
@@ -50,10 +50,12 @@ fn test_request_size_rate_limiter() {
     } = setup_new_env();
 
     let request_count = 10;
-    let reqest_size = 1_000_000;
-    assert_eq!(REQUEST_RATE_LIMITER_MAX_SIZE, request_count * reqest_size);
+    let request_size = 1_000_000;
+    assert_eq!(REQUEST_RATE_LIMITER_MAX_SIZE, request_count * request_size);
     test_rate_limit(&env, canister_ids, request_count, |_| {
-        let arg_length = (reqest_size - 100) as usize; // all requests have a default size of 100
+        // the rate limiter uses the binary size of the (candid-encoded) argument
+        // and thus we need to subtract the (estimated) overhead here
+        let arg_length = request_size - 2000;
         let call_external_canister_operation_input = CallExternalCanisterOperationInput {
             validation_method: None,
             execution_method: CanisterMethodDTO {
@@ -63,13 +65,23 @@ fn test_request_size_rate_limiter() {
             arg: Some(vec![42; arg_length]),
             execution_method_cycles: None,
         };
-        RequestOperationInput::CallExternalCanister(call_external_canister_operation_input)
+        let operation =
+            RequestOperationInput::CallExternalCanister(call_external_canister_operation_input);
+        let create_request_input = CreateRequestInput {
+            operation: operation.clone(),
+            title: None,
+            summary: None,
+            execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
+        };
+        let bytes = Encode!(&create_request_input).unwrap();
+        assert!(arg_length <= bytes.len() && bytes.len() <= request_size);
+        operation
     });
 }
 
-fn test_rate_limit<F>(env: &PocketIc, canister_ids: CanisterIds, rate_limit: u64, f: F)
+fn test_rate_limit<F>(env: &PocketIc, canister_ids: CanisterIds, rate_limit: usize, f: F)
 where
-    F: FnOnce(u64) -> RequestOperationInput + Copy,
+    F: FnOnce(usize) -> RequestOperationInput + Copy,
 {
     for _ in 0..2 {
         bump_time_to_avoid_ratelimit(env);

@@ -1,11 +1,12 @@
 use crate::{
     core::{
         authorization::Authorization,
+        ic_cdk::next_time,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         CallContext,
     },
-    errors::RequestError,
-    factories::requests::RequestFactory,
+    errors::{RequestError, RequestExecuteError},
+    factories::requests::{RequestExecuteStage, RequestFactory},
     mappers::HelperMapper,
     models::{
         resource::{RequestResourceAction, Resource, ResourceId},
@@ -455,6 +456,51 @@ impl RequestService {
             .insert(request.to_key(), request.to_owned());
 
         self.failed_request_hook(&request).await;
+    }
+
+    pub async fn try_execute_request(&self, id: UUID) -> Result<(), RequestExecuteError> {
+        let mut request =
+            self.get_request(&id)
+                .map_err(|e| RequestExecuteError::InternalError {
+                    reason: e.to_string(),
+                })?;
+
+        if !matches!(request.status, RequestStatus::Processing { .. }) {
+            let reason = format!(
+                "The request {} is not processing and thus cannot be executed.",
+                Uuid::from_bytes(id.to_owned()).hyphenated()
+            );
+            return Err(RequestExecuteError::InternalError { reason });
+        }
+
+        let executor = RequestFactory::executor(&request);
+
+        let execute_state = executor.execute().await?;
+
+        drop(executor);
+
+        let request_execution_time = next_time();
+
+        request.status = match execute_state {
+            RequestExecuteStage::Completed(_) => RequestStatus::Completed {
+                completed_at: request_execution_time,
+            },
+            RequestExecuteStage::Processing(_) => RequestStatus::Processing {
+                started_at: request_execution_time,
+            },
+        };
+
+        request.operation = match execute_state {
+            RequestExecuteStage::Completed(operation) => operation,
+            RequestExecuteStage::Processing(operation) => operation,
+        };
+
+        request.last_modification_timestamp = request_execution_time;
+
+        self.request_repository
+            .insert(request.to_key(), request.to_owned());
+
+        Ok(())
     }
 }
 
