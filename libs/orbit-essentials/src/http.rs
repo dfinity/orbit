@@ -61,3 +61,37 @@ fn cbor_encode(value: &impl Serialize) -> Vec<u8> {
 pub fn certified_data_for_skip_certification() -> [u8; 32] {
     skip_certification_asset_tree().digest()
 }
+
+pub fn not_found() -> HttpResponse {
+    HttpResponse {
+        status_code: 404,
+        headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
+        body: "404 Not Found".as_bytes().to_owned(),
+    }
+}
+
+pub fn parse_path(url: &String) -> Option<&str> {
+    url.split('?').next()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_path() {
+        assert_eq!(parse_path(&"/long/path?param".to_string()), Some("/long/path"));
+        assert_eq!(parse_path(&"/path?query=1".to_string()), Some("/path"));
+        assert_eq!(parse_path(&"/path#unwanted".to_string()), Some("/path#unwanted"));
+        assert_eq!(parse_path(&"/".to_string()), Some("/"));
+        assert_eq!(parse_path(&"".to_string()), Some(""));
+    }
+
+    #[test]
+    fn test_cbor_encode() {
+        let value = "test";
+        let encoded = cbor_encode(&value);
+        println!("{:?}", encoded);
+        assert_eq!(encoded, [217, 217, 247, 100, 116, 101, 115, 116]);
+    }
+}

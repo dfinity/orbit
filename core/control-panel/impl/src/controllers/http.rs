@@ -7,7 +7,7 @@ use crate::{
 use ic_cdk_macros::query;
 use lazy_static::lazy_static;
 use orbit_essentials::api::{HeaderField, HttpRequest, HttpResponse};
-use orbit_essentials::http::add_skip_certification_headers;
+use orbit_essentials::http::{add_skip_certification_headers, not_found, parse_path};
 use orbit_essentials::metrics::with_metrics_registry;
 use std::sync::Arc;
 
@@ -35,19 +35,14 @@ impl HttpController {
     }
 
     async fn router(&self, request: HttpRequest) -> HttpResponse {
-        if request.url == "/metrics" || request.url == "/metrics/" {
-            return self.metrics(request).await;
+        match parse_path(&request.url) {
+            Some(url) => match url {
+                "/metrics" | "/metrics/" => self.metrics(request).await,
+                "/metrics/sd" | "/metrics/sd/" => self.metrics_service_discovery(request).await,
+                _ => not_found(),
+            },
+            None => not_found(),
         }
-
-        if request.url == "/metrics/sd" || request.url == "/metrics/sd/" {
-            return self.metrics_service_discovery(request).await;
-        }
-
-        return HttpResponse {
-            status_code: 404,
-            headers: vec![HeaderField("Content-Type".into(), "text/plain".into())],
-            body: "404 Not Found".as_bytes().to_owned(),
-        };
     }
 
     /// Returns all deployed station hosts for Prometheus service discovery.
