@@ -55,7 +55,10 @@ fn test_http_request_deconding_quota() {
 
 fn fetch_asset(canister_id: Principal, port: u16, path: &str, expected: &str) {
     let client = reqwest::blocking::Client::new();
-    let url = format!("http://localhost:{}{}?canisterId={}", port, path, canister_id);
+    let url = format!(
+        "http://localhost:{}{}?canisterId={}",
+        port, path, canister_id
+    );
     let res = client.get(url).send().unwrap();
     let page = String::from_utf8(res.bytes().unwrap().to_vec()).unwrap();
     assert!(page.contains(expected));

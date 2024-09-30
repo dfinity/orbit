@@ -70,7 +70,7 @@ pub fn not_found() -> HttpResponse {
     }
 }
 
-pub fn parse_path(url: &String) -> Option<&str> {
+pub fn parse_path(url: &str) -> Option<&str> {
     url.split('?').next()
 }
 
@@ -80,9 +80,15 @@ mod tests {
 
     #[test]
     fn test_parse_path() {
-        assert_eq!(parse_path(&"/long/path?param".to_string()), Some("/long/path"));
+        assert_eq!(
+            parse_path(&"/long/path?param".to_string()),
+            Some("/long/path")
+        );
         assert_eq!(parse_path(&"/path?query=1".to_string()), Some("/path"));
-        assert_eq!(parse_path(&"/path#unwanted".to_string()), Some("/path#unwanted"));
+        assert_eq!(
+            parse_path(&"/path#unwanted".to_string()),
+            Some("/path#unwanted")
+        );
         assert_eq!(parse_path(&"/".to_string()), Some("/"));
         assert_eq!(parse_path(&"".to_string()), Some(""));
     }
