@@ -2322,7 +2322,7 @@ type ExternalCanisterPermissionsUpdateInput = record {
   // - changing the permissions
   // - install operations
   change : opt Allow;
-  // The permissions for the calling methods on the canister.
+  // The permissions for calling methods on the canister.
   calls : opt vec ExternalCanisterCallPermission;
 };
 
