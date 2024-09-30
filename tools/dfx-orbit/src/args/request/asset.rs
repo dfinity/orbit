@@ -192,6 +192,7 @@ pub struct RequestAssetCommitArgs {
     pub canister: String,
 
     /// The batch ID to commit to
+    #[clap(short, long)]
     pub batch_id: Nat,
 
     /// Provide the evidence string manually rather than recomputing it
@@ -238,7 +239,8 @@ pub struct RequestAssetCancelUploadArgs {
     /// The name of the asset canister targeted by this action
     pub canister: String,
 
-    /// The batch ID to ccancel
+    /// The batch ID to cancel
+    #[clap(short, long)]
     pub batch_id: Nat,
 }
 
