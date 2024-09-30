@@ -45,6 +45,7 @@ use station_api::{
     GetExternalCanisterFiltersInput, GetExternalCanisterFiltersResponseNameEntry,
     ListExternalCanistersInput,
 };
+use std::collections::HashSet;
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -614,14 +615,14 @@ impl ExternalCanisterService {
 
         // manage the policies for the `Change` requests
         if let Some(updated_change_policies) = input.change {
+            let update_existing_policy_ids = updated_change_policies
+                .iter()
+                .filter_map(|policy| policy.policy_id)
+                .collect::<HashSet<UUID>>();
             let policies_to_remove = current_policies
                 .change
                 .iter()
-                .filter(|policy_id| {
-                    !updated_change_policies
-                        .iter()
-                        .any(|policy| policy.policy_id == Some(**policy_id))
-                })
+                .filter(|policy_id| !update_existing_policy_ids.contains(*policy_id))
                 .collect::<Vec<&UUID>>();
 
             for policy_id in policies_to_remove {
@@ -633,13 +634,9 @@ impl ExternalCanisterService {
                 match updated_change_policy.policy_id {
                     Some(policy_id) => {
                         if !current_policies.change.contains(&policy_id) {
-                            print(format!(
-                                "Policy with id {} not found for external canister {}",
-                                Uuid::from_bytes(policy_id).hyphenated(),
-                                external_canister.canister_id.to_text()
-                            ));
-
-                            continue;
+                            return Err(ExternalCanisterError::NotFound {
+                                id: Uuid::from_bytes(policy_id).hyphenated().to_string(),
+                            })?;
                         }
 
                         self.request_policy_service.edit_request_policy(
@@ -666,14 +663,14 @@ impl ExternalCanisterService {
 
         // manage the policies for the `Call` requests
         if let Some(updated_call_policies) = input.calls {
+            let update_existing_policy_ids = updated_call_policies
+                .iter()
+                .filter_map(|policy| policy.policy_id)
+                .collect::<HashSet<UUID>>();
             let policies_to_remove = current_policies
                 .calls
                 .iter()
-                .filter(|policy_id| {
-                    !updated_call_policies
-                        .iter()
-                        .any(|policy| policy.policy_id == Some(**policy_id))
-                })
+                .filter(|policy_id| !update_existing_policy_ids.contains(*policy_id))
                 .collect::<Vec<&UUID>>();
 
             for policy_id in policies_to_remove {
@@ -686,13 +683,9 @@ impl ExternalCanisterService {
                 match updated_call_policy.policy_id {
                     Some(policy_id) => {
                         if !current_policies.calls.contains(&policy_id) {
-                            print(format!(
-                                "Policy with id {} not found for external canister {}",
-                                Uuid::from_bytes(policy_id).hyphenated(),
-                                external_canister.canister_id.to_text()
-                            ));
-
-                            continue;
+                            return Err(ExternalCanisterError::NotFound {
+                                id: Uuid::from_bytes(policy_id).hyphenated().to_string(),
+                            })?;
                         }
 
                         self.request_policy_service.edit_request_policy(
