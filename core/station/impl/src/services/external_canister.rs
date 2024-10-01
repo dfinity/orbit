@@ -903,12 +903,14 @@ impl ExternalCanisterService {
                 }
                 ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
                     // removes the all call permissions associated with the methods specified of the external canister
-                    for method in &methods {
-                        self.permission_repository
-                            .find_external_canister_call_permissions(&external_canister.canister_id)
-                            .iter()
-                            .filter(|permission| {
-                                if let Resource::ExternalCanister(
+                    let methods: HashSet<_> = methods.iter().cloned().collect();
+                    self.permission_repository
+                        .find_external_canister_call_permissions(&external_canister.canister_id)
+                        .iter()
+                        .filter(|permission| {
+                            matches!(
+                                &permission.resource,
+                                Resource::ExternalCanister(
                                     ExternalCanisterResourceAction::Call(
                                         CallExternalCanisterResourceTarget {
                                             execution_method:
@@ -921,18 +923,13 @@ impl ExternalCanisterService {
                                             validation_method: _,
                                         },
                                     ),
-                                ) = &permission.resource
-                                {
-                                    method_name == method
-                                } else {
-                                    false
-                                }
-                            })
-                            .for_each(|permission| {
-                                self.permission_service
-                                    .remove_permission(&permission.resource);
-                            });
-                    }
+                                ) if methods.contains(method_name)
+                            )
+                        })
+                        .for_each(|permission| {
+                            self.permission_service
+                                .remove_permission(&permission.resource);
+                        });
                 }
             }
         }
