@@ -5,13 +5,13 @@ use crate::models::request_specifier::RequestSpecifier;
 use crate::models::resource::{ExternalCanisterResourceAction, Resource, SystemResourceAction};
 use crate::models::{
     Account, AccountKey, AddressBookEntry, AddressBookEntryKey, ExternalCanister,
-    ExternalCanisterKey, Request, RequestKey, RequestOperation, RequestPolicy, User, UserGroup,
-    UserKey,
+    ExternalCanisterKey, ListRequestsOperationType, Request, RequestKey, RequestOperation,
+    RequestPolicy, User, UserGroup, UserKey,
 };
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
 use crate::repositories::{
     AccountRepository, AddressBookRepository, ExternalCanisterRepository, RequestPolicyRepository,
-    RequestRepository, UserGroupRepository, UserRepository, ACCOUNT_REPOSITORY,
+    RequestRepository, RequestWhereClause, UserGroupRepository, UserRepository, ACCOUNT_REPOSITORY,
     ADDRESS_BOOK_REPOSITORY, EXTERNAL_CANISTER_REPOSITORY, REQUEST_POLICY_REPOSITORY,
     USER_GROUP_REPOSITORY, USER_REPOSITORY,
 };
@@ -76,8 +76,25 @@ fn post_run() {
     // putting the station in an inconsistent state.
     //
     // This is a temporary addition only for the next release since we've added a breaking change to
-    // the `ConfigureExternalCanisterSettingsInput` which was a new API not yet used in production.
-    REQUEST_REPOSITORY.rebuild();
+    // the `ConfigureExternalCanisterSettingsInput` and `CreateExternalCanister` which had a new API
+    // not yet used in production.
+    let where_clause = RequestWhereClause {
+        operation_types: vec![
+            ListRequestsOperationType::CreateExternalCanister,
+            ListRequestsOperationType::ConfigureExternalCanister(None),
+        ],
+        ..Default::default()
+    };
+
+    let ids = REQUEST_REPOSITORY
+        .find_ids_where(where_clause, None)
+        .expect("Failed to search for requests with the external canister operation types");
+
+    for id in ids {
+        REQUEST_REPOSITORY
+            .get(&RequestKey { id })
+            .expect("Failed to deserialize the request from the stable memory");
+    }
 }
 
 /// The migration to apply to the station canister stable memory.
