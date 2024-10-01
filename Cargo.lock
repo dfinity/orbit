@@ -1205,7 +1205,7 @@ dependencies = [
 [[package]]
 name = "dfx-core"
 version = "0.0.1"
-source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
+source = "git+https://github.com/dfinity/sdk.git?rev=6dd3f036eb5dfb1adb9d3709b286648d241313cc#6dd3f036eb5dfb1adb9d3709b286648d241313cc"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -2144,13 +2144,13 @@ dependencies = [
 [[package]]
 name = "ic-asset"
 version = "0.20.0"
-source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
+source = "git+https://github.com/dfinity/sdk.git?rev=6dd3f036eb5dfb1adb9d3709b286648d241313cc#6dd3f036eb5dfb1adb9d3709b286648d241313cc"
 dependencies = [
  "backoff",
  "brotli",
  "candid",
  "derivative",
- "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845)",
+ "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?rev=6dd3f036eb5dfb1adb9d3709b286648d241313cc)",
  "flate2",
  "futures",
  "futures-intrusive",
@@ -2312,7 +2312,7 @@ dependencies = [
 [[package]]
 name = "ic-certified-assets"
 version = "0.2.5"
-source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
+source = "git+https://github.com/dfinity/sdk.git?rev=6dd3f036eb5dfb1adb9d3709b286648d241313cc#6dd3f036eb5dfb1adb9d3709b286648d241313cc"
 dependencies = [
  "base64 0.13.1",
  "candid",
