@@ -843,10 +843,7 @@ impl ExternalCanisterService {
                 ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
                     calls,
                 ) => {
-                    let update_call_methods = calls.iter().fold(HashSet::new(), |mut acc, call| {
-                        acc.insert(call.execution_method.clone());
-                        acc
-                    });
+                    let update_call_methods: HashSet<_> = calls.iter().map(|call| call.execution_method).collect();
 
                     // removes all existing call permissions of the updated methods
                     self.permission_repository
