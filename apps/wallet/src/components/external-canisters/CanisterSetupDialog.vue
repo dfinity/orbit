@@ -147,6 +147,7 @@ const save = async (): Promise<void> => {
 
 const saveChangesToExistingExternalCanister = async (canisterId: Principal): Promise<Request> => {
   const settings: Partial<ConfigureExternalCanisterSettingsInput> = {};
+  settings.name = [assertAndReturn(wizard.value.configuration.name, 'name')];
   settings.labels = wizard.value.configuration.labels ? [wizard.value.configuration.labels] : [];
   settings.state = wizard.value.configuration.state
     ? [mapExternalCanisterStateEnumToVariant(wizard.value.configuration.state)]

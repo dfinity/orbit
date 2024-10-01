@@ -76,13 +76,9 @@ fn post_run() {
     // putting the station in an inconsistent state.
     //
     // This is a temporary addition only for the next release since we've added a breaking change to
-    // the `ConfigureExternalCanisterSettingsInput` and `CreateExternalCanister` which had a new API
-    // not yet used in production.
+    // the `ConfigureExternalCanisterSettingsInput` which had a new API not yet used in production.
     let where_clause = RequestWhereClause {
-        operation_types: vec![
-            ListRequestsOperationType::CreateExternalCanister,
-            ListRequestsOperationType::ConfigureExternalCanister(None),
-        ],
+        operation_types: vec![ListRequestsOperationType::ConfigureExternalCanister(None)],
         ..Default::default()
     };
 

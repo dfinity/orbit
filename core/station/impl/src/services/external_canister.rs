@@ -481,7 +481,7 @@ impl ExternalCanisterService {
         &self,
         input: CreateExternalCanisterOperationInput,
     ) -> ServiceResult<ExternalCanister> {
-        self.check_unique_name(input.name.clone().as_str(), None)?;
+        self.check_unique_name(input.name.as_str(), None)?;
         let external_canister = match &input.kind {
             CreateExternalCanisterOperationKind::CreateNew(opts) => {
                 let mut external_canister = ExternalCanisterMapper::from_create_input(
@@ -553,6 +553,10 @@ impl ExternalCanisterService {
         input: ConfigureExternalCanisterSettingsInput,
     ) -> ServiceResult<ExternalCanister> {
         let mut external_canister = self.get_external_canister(id)?;
+
+        if let Some(name) = &input.name {
+            self.check_unique_name(name.as_str(), Some(external_canister.id))?;
+        }
 
         external_canister.update_with(input.clone());
         external_canister.validate()?;
@@ -1617,6 +1621,132 @@ mod tests {
 
         assert_eq!(policies.calls.len(), 1);
         assert_eq!(policies.change.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn external_canister_name_is_unique() {
+        setup();
+        let _ = EXTERNAL_CANISTER_SERVICE
+            .add_external_canister(CreateExternalCanisterOperationInput {
+                name: "test".to_string(),
+                description: None,
+                labels: None,
+                permissions: ExternalCanisterPermissionsCreateInput {
+                    read: Allow::authenticated(),
+                    change: Allow::authenticated(),
+                    calls: Vec::new(),
+                },
+                request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                    change: Vec::new(),
+                    calls: Vec::new(),
+                },
+                kind: CreateExternalCanisterOperationKind::AddExisting(
+                    CreateExternalCanisterOperationKindAddExisting {
+                        canister_id: Principal::from_slice(&[10; 29]),
+                    },
+                ),
+            })
+            .await
+            .unwrap();
+
+        let result = EXTERNAL_CANISTER_SERVICE
+            .add_external_canister(CreateExternalCanisterOperationInput {
+                name: "test".to_string(),
+                description: None,
+                labels: None,
+                permissions: ExternalCanisterPermissionsCreateInput {
+                    read: Allow::authenticated(),
+                    change: Allow::authenticated(),
+                    calls: Vec::new(),
+                },
+                request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                    change: Vec::new(),
+                    calls: Vec::new(),
+                },
+                kind: CreateExternalCanisterOperationKind::AddExisting(
+                    CreateExternalCanisterOperationKindAddExisting {
+                        canister_id: Principal::from_slice(&[11; 29]),
+                    },
+                ),
+            })
+            .await;
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            ApiError::from(ExternalCanisterError::ValidationError {
+                info: "The name 'test' is already in use.".to_string()
+            })
+        );
+    }
+
+    #[tokio::test]
+    async fn edits_to_external_canister_name_still_checks_uniqueness() {
+        setup();
+
+        let mut external_canisters = Vec::new();
+        for i in 0..2 {
+            external_canisters.push(
+                EXTERNAL_CANISTER_SERVICE
+                    .add_external_canister(CreateExternalCanisterOperationInput {
+                        name: format!("test{}", i),
+                        description: None,
+                        labels: None,
+                        permissions: ExternalCanisterPermissionsCreateInput {
+                            read: Allow::authenticated(),
+                            change: Allow::authenticated(),
+                            calls: Vec::new(),
+                        },
+                        request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                            change: Vec::new(),
+                            calls: Vec::new(),
+                        },
+                        kind: CreateExternalCanisterOperationKind::AddExisting(
+                            CreateExternalCanisterOperationKindAddExisting {
+                                canister_id: Principal::from_slice(&[i; 29]),
+                            },
+                        ),
+                    })
+                    .await
+                    .unwrap(),
+            );
+        }
+
+        let edit_same_is_ok = EXTERNAL_CANISTER_SERVICE
+            .edit_external_canister(
+                &external_canisters[0].id,
+                ConfigureExternalCanisterSettingsInput {
+                    name: Some(external_canisters[0].name.to_string()),
+                    description: None,
+                    labels: None,
+                    state: None,
+                    permissions: None,
+                    request_policies: None,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(edit_same_is_ok.name, external_canisters[0].name);
+
+        let edit_non_unique_name_fails = EXTERNAL_CANISTER_SERVICE.edit_external_canister(
+            &external_canisters[0].id,
+            ConfigureExternalCanisterSettingsInput {
+                name: Some("test1".to_string()),
+                description: None,
+                labels: None,
+                state: None,
+                permissions: None,
+                request_policies: None,
+            },
+        );
+
+        assert!(edit_non_unique_name_fails.is_err());
+        assert_eq!(
+            edit_non_unique_name_fails.unwrap_err(),
+            ApiError::from(ExternalCanisterError::ValidationError {
+                info: "The name 'test1' is already in use.".to_string()
+            })
+        );
     }
 }
 
