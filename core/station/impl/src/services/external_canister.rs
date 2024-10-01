@@ -7,6 +7,7 @@ use crate::core::validation::EnsureExternalCanister;
 use crate::core::CallContext;
 use crate::errors::ExternalCanisterError;
 use crate::mappers::ExternalCanisterMapper;
+use crate::models::permission::Permission;
 use crate::models::request_specifier::RequestSpecifier;
 use crate::models::resource::{
     CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget, ExternalCanisterId,
@@ -806,39 +807,12 @@ impl ExternalCanisterService {
         if let Some(calls_permissions) = input.calls {
             match calls_permissions {
                 ExternalCanisterChangeCallPermissionsInput::ReplaceAllBy(calls) => {
-                    // removes all existing call permissions
-                    self.permission_repository
-                        .find_external_canister_call_permissions(&external_canister.canister_id)
-                        .iter()
-                        .for_each(|permission| {
-                            self.permission_service
-                                .remove_permission(&permission.resource);
-                        });
-
-                    // adds the new call permissions
-                    for call in calls {
-                        let call_resource =
-                            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                                CallExternalCanisterResourceTarget {
-                                    execution_method:
-                                        ExecutionMethodResourceTarget::ExecutionMethod(
-                                            CanisterMethod {
-                                                canister_id: external_canister.canister_id,
-                                                method_name: call.execution_method,
-                                            },
-                                        ),
-                                    validation_method: call.validation_method,
-                                },
-                            ));
-
-                        self.permission_service
-                            .edit_permission(EditPermissionOperationInput {
-                                auth_scope: Some(call.allow.auth_scope),
-                                users: Some(call.allow.users),
-                                user_groups: Some(call.allow.user_groups),
-                                resource: call_resource.clone(),
-                            })?;
-                    }
+                    self.maybe_mutate_canister_calls_permissions(
+                        external_canister,
+                        &calls,
+                        // always remove all existing call permissions to override them
+                        |_| true,
+                    )?;
                 }
                 ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
                     calls,
@@ -848,11 +822,10 @@ impl ExternalCanisterService {
                         .map(|call| call.execution_method.clone())
                         .collect();
 
-                    // removes all existing call permissions of the updated methods
-                    self.permission_repository
-                        .find_external_canister_call_permissions(&external_canister.canister_id)
-                        .iter()
-                        .filter(|permission| {
+                    self.maybe_mutate_canister_calls_permissions(
+                        external_canister,
+                        &calls,
+                        |permission| {
                             matches!(
                                 &permission.resource,
                                 Resource::ExternalCanister(
@@ -870,36 +843,8 @@ impl ExternalCanisterService {
                                     ),
                                 ) if update_call_methods.contains(method_name)
                             )
-                        })
-                        .for_each(|permission| {
-                            self.permission_service
-                                .remove_permission(&permission.resource);
-                        });
-
-                    // adds the new call permissions
-                    for call in calls {
-                        let call_resource =
-                            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                                CallExternalCanisterResourceTarget {
-                                    execution_method:
-                                        ExecutionMethodResourceTarget::ExecutionMethod(
-                                            CanisterMethod {
-                                                canister_id: external_canister.canister_id,
-                                                method_name: call.execution_method,
-                                            },
-                                        ),
-                                    validation_method: call.validation_method,
-                                },
-                            ));
-
-                        self.permission_service
-                            .edit_permission(EditPermissionOperationInput {
-                                auth_scope: Some(call.allow.auth_scope),
-                                users: Some(call.allow.users),
-                                user_groups: Some(call.allow.user_groups),
-                                resource: call_resource.clone(),
-                            })?;
-                    }
+                        },
+                    )?;
                 }
                 ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
                     // removes the all call permissions associated with the methods specified of the external canister
@@ -932,6 +877,55 @@ impl ExternalCanisterService {
                         });
                 }
             }
+        }
+
+        Ok(())
+    }
+
+    pub fn maybe_mutate_canister_calls_permissions<F>(
+        &self,
+        external_canister: &ExternalCanister,
+        updated_calls: &[ExternalCanisterCallPermission],
+        is_affected_permission: F,
+    ) -> ServiceResult<()>
+    where
+        F: Fn(&Permission) -> bool,
+    {
+        let current_calls_permissions = self
+            .permission_repository
+            .find_external_canister_call_permissions(&external_canister.canister_id);
+
+        // first remove all existing call permissions that are affected by the updated permission set
+        for permission in current_calls_permissions
+            .iter()
+            .filter(|permission| is_affected_permission(permission))
+        {
+            self.permission_service
+                .remove_permission(&permission.resource);
+        }
+
+        // adds the new call permissions
+        for updated_call_permission in updated_calls {
+            let updated_call_permission = updated_call_permission.clone();
+            let call_resource = Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                CallExternalCanisterResourceTarget {
+                    execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                        CanisterMethod {
+                            canister_id: external_canister.canister_id,
+                            method_name: updated_call_permission.execution_method,
+                        },
+                    ),
+                    validation_method: updated_call_permission.validation_method,
+                },
+            ));
+
+            self.permission_service
+                .edit_permission(EditPermissionOperationInput {
+                    auth_scope: Some(updated_call_permission.allow.auth_scope),
+                    users: Some(updated_call_permission.allow.users),
+                    user_groups: Some(updated_call_permission.allow.user_groups),
+                    resource: call_resource,
+                })?;
         }
 
         Ok(())
