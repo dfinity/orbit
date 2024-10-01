@@ -620,8 +620,8 @@ impl From<station_api::ExternalCanisterChangeCallRequestPoliciesInput>
             station_api::ExternalCanisterChangeCallRequestPoliciesInput::ReplaceAllBy(input) => {
                 ExternalCanisterChangeCallRequestPoliciesInput::ReplaceAllBy(input.into_iter().map(Into::into).collect())
             }
-            station_api::ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByMethods(input) => {
-                ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByMethods(input.into_iter().map(Into::into).collect())
+            station_api::ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionMethods(input) => {
+                ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionMethods(input.into_iter().map(Into::into).collect())
             }
             station_api::ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids) => {
                 ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids.into_iter().map(|id| *HelperMapper::to_uuid(id).expect("Invalid policy id").as_bytes()).collect())
@@ -640,8 +640,8 @@ impl From<ExternalCanisterChangeCallRequestPoliciesInput>
             ExternalCanisterChangeCallRequestPoliciesInput::ReplaceAllBy(input) => {
                 station_api::ExternalCanisterChangeCallRequestPoliciesInput::ReplaceAllBy(input.into_iter().map(Into::into).collect())
             }
-            ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByMethods(input) => {
-                station_api::ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByMethods(input.into_iter().map(Into::into).collect())
+            ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionMethods(input) => {
+                station_api::ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionMethods(input.into_iter().map(Into::into).collect())
             }
             ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids) => {
                 station_api::ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids.into_iter().map(|id| Uuid::from_bytes(id).hyphenated().to_string()).collect())
@@ -742,13 +742,13 @@ impl From<station_api::ExternalCanisterChangeCallPermissionsInput>
                     input.into_iter().map(Into::into).collect(),
                 )
             }
-            station_api::ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByMethods(
+            station_api::ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
                 input,
-            ) => ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByMethods(
+            ) => ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
                 input.into_iter().map(Into::into).collect(),
             ),
-            station_api::ExternalCanisterChangeCallPermissionsInput::RemoveByMethods(methods) => {
-                ExternalCanisterChangeCallPermissionsInput::RemoveByMethods(
+            station_api::ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
+                ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(
                     methods.into_iter().map(Into::into).collect(),
                 )
             }
@@ -768,13 +768,13 @@ impl From<ExternalCanisterChangeCallPermissionsInput>
                     input.into_iter().map(Into::into).collect(),
                 )
             }
-            ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByMethods(input) => {
-                station_api::ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByMethods(
+            ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(input) => {
+                station_api::ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
                     input.into_iter().map(Into::into).collect(),
                 )
             }
-            ExternalCanisterChangeCallPermissionsInput::RemoveByMethods(methods) => {
-                station_api::ExternalCanisterChangeCallPermissionsInput::RemoveByMethods(
+            ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
+                station_api::ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(
                     methods.into_iter().map(Into::into).collect(),
                 )
             }

@@ -56,8 +56,8 @@ pub struct ExternalCanisterPermissionsUpdateInput {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ExternalCanisterChangeCallPermissionsInput {
     ReplaceAllBy(Vec<ExternalCanisterCallPermissionDTO>),
-    OverrideSpecifiedByMethods(Vec<ExternalCanisterCallPermissionDTO>),
-    RemoveByMethods(Vec<String>),
+    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallPermissionDTO>),
+    RemoveByExecutionMethods(Vec<String>),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -199,7 +199,7 @@ pub struct ExternalCanisterRequestPoliciesUpdateInput {
 pub enum ExternalCanisterChangeCallRequestPoliciesInput {
     ReplaceAllBy(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
     RemoveByPolicyIds(Vec<UuidDTO>),
-    OverrideSpecifiedByMethods(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
+    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

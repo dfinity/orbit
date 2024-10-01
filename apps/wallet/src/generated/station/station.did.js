@@ -192,8 +192,10 @@ export const idlFactory = ({ IDL }) => {
     'validation_method' : ValidationMethodResourceTarget,
   });
   const ExternalCanisterChangeCallPermissionsInput = IDL.Variant({
-    'RemoveByMethods' : IDL.Vec(IDL.Text),
-    'OverrideSpecifiedByMethods' : IDL.Vec(ExternalCanisterCallPermission),
+    'OverrideSpecifiedByExecutionMethods' : IDL.Vec(
+      ExternalCanisterCallPermission
+    ),
+    'RemoveByExecutionMethods' : IDL.Vec(IDL.Text),
     'ReplaceAllBy' : IDL.Vec(ExternalCanisterCallPermission),
   });
   const ExternalCanisterPermissionsUpdateInput = IDL.Record({
@@ -238,7 +240,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ExternalCanisterChangeCallRequestPoliciesInput = IDL.Variant({
     'RemoveByPolicyIds' : IDL.Vec(UUID),
-    'OverrideSpecifiedByMethods' : IDL.Vec(
+    'OverrideSpecifiedByExecutionMethods' : IDL.Vec(
       ExternalCanisterCallRequestPolicyRuleInput
     ),
     'ReplaceAllBy' : IDL.Vec(ExternalCanisterCallRequestPolicyRuleInput),

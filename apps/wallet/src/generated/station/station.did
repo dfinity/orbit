@@ -2318,10 +2318,10 @@ type ExternalCanisterChangeCallPermissionsInput = variant {
   // Replaces all the call permissions with the provided list, if the list is empty
   // all the call permissions will be removed.
   ReplaceAllBy : vec ExternalCanisterCallPermission;
-  // Override the call permissions from the specified methods.
-  OverrideSpecifiedByMethods : vec ExternalCanisterCallPermission;
-  // Remove call permissions of the specified methods.
-  RemoveByMethods : vec text;
+  // Override the call permissions from the specified execution methods.
+  OverrideSpecifiedByExecutionMethods : vec ExternalCanisterCallPermission;
+  // Remove call permissions of the specified execution methods.
+  RemoveByExecutionMethods : vec text;
 };
 
 // The input type for setting the permissions for the external canister.
@@ -2358,8 +2358,8 @@ type ExternalCanisterChangeCallRequestPoliciesInput = variant {
   ReplaceAllBy : vec ExternalCanisterCallRequestPolicyRuleInput;
   // Remove call request policies by the provided ids.
   RemoveByPolicyIds : vec UUID;
-  // Override the request policies for the specified methods.
-  OverrideSpecifiedByMethods : vec ExternalCanisterCallRequestPolicyRuleInput;
+  // Override the request policies for the specified execution methods.
+  OverrideSpecifiedByExecutionMethods : vec ExternalCanisterCallRequestPolicyRuleInput;
 };
 
 // The input type for setting the request policies for an existing external canister.

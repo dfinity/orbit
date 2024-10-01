@@ -406,15 +406,17 @@ export interface ExternalCanisterCallerPrivileges {
   'can_fund' : boolean,
 }
 export type ExternalCanisterChangeCallPermissionsInput = {
-    'RemoveByMethods' : Array<string>
+    'OverrideSpecifiedByExecutionMethods' : Array<
+      ExternalCanisterCallPermission
+    >
   } |
-  { 'OverrideSpecifiedByMethods' : Array<ExternalCanisterCallPermission> } |
+  { 'RemoveByExecutionMethods' : Array<string> } |
   { 'ReplaceAllBy' : Array<ExternalCanisterCallPermission> };
 export type ExternalCanisterChangeCallRequestPoliciesInput = {
     'RemoveByPolicyIds' : Array<UUID>
   } |
   {
-    'OverrideSpecifiedByMethods' : Array<
+    'OverrideSpecifiedByExecutionMethods' : Array<
       ExternalCanisterCallRequestPolicyRuleInput
     >
   } |

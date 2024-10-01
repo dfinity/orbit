@@ -366,8 +366,8 @@ pub struct ExternalCanisterPermissionsUpdateInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ExternalCanisterChangeCallPermissionsInput {
     ReplaceAllBy(Vec<ExternalCanisterCallPermission>),
-    OverrideSpecifiedByMethods(Vec<ExternalCanisterCallPermission>),
-    RemoveByMethods(Vec<String>),
+    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallPermission>),
+    RemoveByExecutionMethods(Vec<String>),
 }
 
 #[storable]
@@ -405,7 +405,7 @@ pub struct ExternalCanisterRequestPoliciesUpdateInput {
 pub enum ExternalCanisterChangeCallRequestPoliciesInput {
     ReplaceAllBy(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
     RemoveByPolicyIds(Vec<UUID>),
-    OverrideSpecifiedByMethods(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
+    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
 }
 
 #[storable]

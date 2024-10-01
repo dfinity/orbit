@@ -640,7 +640,7 @@ impl ExternalCanisterService {
                         &current_policies.calls,
                         calls,
                     )?,
-                ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByMethods(
+                ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionMethods(
                     calls,
                 ) => {
                     // first aggregates the calls by the execution method
@@ -840,7 +840,9 @@ impl ExternalCanisterService {
                             })?;
                     }
                 }
-                ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByMethods(calls) => {
+                ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
+                    calls,
+                ) => {
                     let update_call_methods = calls.iter().fold(HashSet::new(), |mut acc, call| {
                         acc.insert(call.execution_method.clone());
                         acc
@@ -901,7 +903,7 @@ impl ExternalCanisterService {
                             })?;
                     }
                 }
-                ExternalCanisterChangeCallPermissionsInput::RemoveByMethods(methods) => {
+                ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
                     // removes the all call permissions associated with the methods specified of the external canister
                     for method in &methods {
                         self.permission_repository
