@@ -843,32 +843,33 @@ impl ExternalCanisterService {
                 ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
                     calls,
                 ) => {
-                    let update_call_methods: HashSet<_> = calls.iter().map(|call| call.execution_method).collect();
+                    let update_call_methods: HashSet<_> = calls
+                        .iter()
+                        .map(|call| call.execution_method.clone())
+                        .collect();
 
                     // removes all existing call permissions of the updated methods
                     self.permission_repository
                         .find_external_canister_call_permissions(&external_canister.canister_id)
                         .iter()
                         .filter(|permission| {
-                            if let Resource::ExternalCanister(
-                                ExternalCanisterResourceAction::Call(
-                                    CallExternalCanisterResourceTarget {
-                                        execution_method:
-                                            ExecutionMethodResourceTarget::ExecutionMethod(
-                                                CanisterMethod {
-                                                    canister_id: _,
-                                                    method_name,
-                                                },
-                                            ),
-                                        validation_method: _,
-                                    },
-                                ),
-                            ) = &permission.resource
-                            {
-                                update_call_methods.contains(method_name)
-                            } else {
-                                false
-                            }
+                            matches!(
+                                &permission.resource,
+                                Resource::ExternalCanister(
+                                    ExternalCanisterResourceAction::Call(
+                                        CallExternalCanisterResourceTarget {
+                                            execution_method:
+                                                ExecutionMethodResourceTarget::ExecutionMethod(
+                                                    CanisterMethod {
+                                                        canister_id: _,
+                                                        method_name,
+                                                    },
+                                                ),
+                                            validation_method: _,
+                                        },
+                                    ),
+                                ) if update_call_methods.contains(method_name)
+                            )
                         })
                         .for_each(|permission| {
                             self.permission_service
