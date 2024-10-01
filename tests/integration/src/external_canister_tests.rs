@@ -17,8 +17,8 @@ use station_api::{
     ChangeExternalCanisterOperationInput, CreateExternalCanisterOperationInput,
     CreateExternalCanisterOperationKindCreateNewDTO, CreateExternalCanisterOperationKindDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
-    ExternalCanisterPermissionsCreateInput, ExternalCanisterRequestPoliciesInput, HealthStatus,
-    ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
+    ExternalCanisterPermissionsCreateInput, ExternalCanisterRequestPoliciesCreateInput,
+    HealthStatus, ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
     RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
     RequestSpecifierDTO, RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
@@ -392,9 +392,9 @@ fn create_external_canister_and_check_status() {
                     users: vec![],
                 },
             },
-            request_policies: ExternalCanisterRequestPoliciesInput {
-                change: None,
-                calls: None,
+            request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                change: vec![],
+                calls: vec![],
             },
         });
     let trap_message = submit_request_with_expected_trap(
@@ -1165,9 +1165,9 @@ fn create_external_canister_with_too_many_cycles() {
                     users: vec![],
                 },
             },
-            request_policies: ExternalCanisterRequestPoliciesInput {
-                change: None,
-                calls: None,
+            request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                change: vec![],
+                calls: vec![],
             },
         })
     };

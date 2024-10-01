@@ -41,7 +41,7 @@ pub struct CreateExternalCanisterOperationInput {
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
     pub permissions: ExternalCanisterPermissionsCreateInput,
-    pub request_policies: ExternalCanisterRequestPoliciesInput,
+    pub request_policies: ExternalCanisterRequestPoliciesCreateInput,
 }
 
 pub type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissionsDTO;
@@ -50,7 +50,14 @@ pub type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissionsDTO
 pub struct ExternalCanisterPermissionsUpdateInput {
     pub read: Option<AllowDTO>,
     pub change: Option<AllowDTO>,
-    pub calls: Option<Vec<ExternalCanisterCallPermissionDTO>>,
+    pub calls: Option<ExternalCanisterChangeCallPermissionsInput>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum ExternalCanisterChangeCallPermissionsInput {
+    ReplaceAllBy(Vec<ExternalCanisterCallPermissionDTO>),
+    OverrideSpecifiedByMethods(Vec<ExternalCanisterCallPermissionDTO>),
+    RemoveByMethods(Vec<String>),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -92,7 +99,7 @@ pub struct ConfigureExternalCanisterSettingsInput {
     pub labels: Option<Vec<String>>,
     pub state: Option<ExternalCanisterStateDTO>,
     pub permissions: Option<ExternalCanisterPermissionsUpdateInput>,
-    pub request_policies: Option<ExternalCanisterRequestPoliciesInput>,
+    pub request_policies: Option<ExternalCanisterRequestPoliciesUpdateInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -177,9 +184,22 @@ pub struct ExternalCanisterRequestPoliciesDTO {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct ExternalCanisterRequestPoliciesInput {
+pub struct ExternalCanisterRequestPoliciesCreateInput {
+    pub change: Vec<ExternalCanisterChangeRequestPolicyRuleInput>,
+    pub calls: Vec<ExternalCanisterCallRequestPolicyRuleInput>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterRequestPoliciesUpdateInput {
     pub change: Option<Vec<ExternalCanisterChangeRequestPolicyRuleInput>>,
-    pub calls: Option<Vec<ExternalCanisterCallRequestPolicyRuleInput>>,
+    pub calls: Option<ExternalCanisterChangeCallRequestPoliciesInput>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum ExternalCanisterChangeCallRequestPoliciesInput {
+    ReplaceAllBy(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
+    RemoveByPolicyIds(Vec<UuidDTO>),
+    OverrideSpecifiedByMethods(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

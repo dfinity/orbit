@@ -86,15 +86,15 @@ impl IndexRepository<RequestPolicyResourceIndex, UUID> for RequestPolicyResource
 
 #[derive(Clone, Default)]
 pub struct ExternalCanisterPoliciesList {
-    pub change: HashSet<UUID>,
-    pub calls: HashSet<UUID>,
+    pub change: Vec<UUID>,
+    pub calls: Vec<UUID>,
 }
 
 impl ExternalCanisterPoliciesList {
     pub fn new() -> Self {
         Self {
-            change: HashSet::new(),
-            calls: HashSet::new(),
+            change: Vec::new(),
+            calls: Vec::new(),
         }
     }
 
@@ -106,8 +106,8 @@ impl ExternalCanisterPoliciesList {
         self.change.is_empty() && self.calls.is_empty()
     }
 
-    pub fn all(&self) -> HashSet<UUID> {
-        let mut all = HashSet::new();
+    pub fn all(&self) -> Vec<UUID> {
+        let mut all = Vec::new();
         all.extend(self.change.iter());
         all.extend(self.calls.iter());
         all
@@ -189,6 +189,49 @@ impl RequestPolicyResourceIndexRepository {
             );
 
             policies
+        })
+    }
+
+    // Find all external canister call policies related to the specified canister id and execution method.
+    pub fn find_external_canister_call_policies_by_execution_method(
+        &self,
+        canister_id: &Principal,
+        execution_method: &String,
+    ) -> Vec<UUID> {
+        DB.with(|db| {
+            db.borrow()
+                .range(
+                    (RequestPolicyResourceIndex {
+                        resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                            CallExternalCanisterResourceTarget {
+                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                    CanisterMethod {
+                                        canister_id: *canister_id,
+                                        method_name: execution_method.clone(),
+                                    },
+                                ),
+                                validation_method: ValidationMethodResourceTarget::No,
+                            },
+                        )),
+                        policy_id: [u8::MIN; 16],
+                    })..,
+                )
+                .take_while(|(index, _)| {
+                    matches!(
+                        &index.resource,
+                        Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                            CallExternalCanisterResourceTarget {
+                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                    CanisterMethod { canister_id: id, method_name: method }
+                                ),
+                                ..
+                            }
+                        ))
+                        if id == canister_id && execution_method == method
+                    )
+                })
+                .map(|(index, _)| index.policy_id)
+                .collect::<Vec<UUID>>()
         })
     }
 }
@@ -280,5 +323,35 @@ mod tests {
         let policies = repository.find_external_canister_policies(&Principal::from_slice(&[1; 29]));
 
         assert_eq!(policies.len(), 5);
+    }
+
+    #[test]
+    fn test_find_external_canister_call_policies_by_execution_method() {
+        let repository = RequestPolicyResourceIndexRepository::default();
+        for i in 0..10 {
+            let index = RequestPolicyResourceIndex {
+                resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                    CallExternalCanisterResourceTarget {
+                        execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                            CanisterMethod {
+                                canister_id: Principal::management_canister(),
+                                method_name: format!("method_{}", i),
+                            },
+                        ),
+                        validation_method: ValidationMethodResourceTarget::No,
+                    },
+                )),
+                policy_id: [i; 16],
+            };
+
+            repository.insert(index);
+        }
+
+        let policies = repository.find_external_canister_call_policies_by_execution_method(
+            &Principal::management_canister(),
+            &"method_1".to_string(),
+        );
+
+        assert_eq!(policies.len(), 1);
     }
 }

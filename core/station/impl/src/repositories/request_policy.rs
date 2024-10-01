@@ -125,6 +125,16 @@ impl RequestPolicyRepository {
         self.resource_index
             .find_external_canister_policies(canister_id)
     }
+
+    /// Finds all external canister call policies related to the specified canister id and execution method.
+    pub fn find_external_canister_call_policies_by_execution_method(
+        &self,
+        canister_id: &Principal,
+        execution_method: &String,
+    ) -> Vec<UUID> {
+        self.resource_index
+            .find_external_canister_call_policies_by_execution_method(canister_id, execution_method)
+    }
 }
 
 #[cfg(test)]

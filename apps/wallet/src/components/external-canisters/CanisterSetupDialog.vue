@@ -196,14 +196,12 @@ const createNewExternalCanister = async (): Promise<Request> => {
   };
   changes.request_policies = {
     calls: [],
-    change: [
-      wizard.value.approvalPolicy.change
-        .filter(item => item.rule !== undefined)
-        .map(item => ({
-          policy_id: [],
-          rule: item.rule as RequestPolicyRule,
-        })),
-    ],
+    change: wizard.value.approvalPolicy.change
+      .filter(item => item.rule !== undefined)
+      .map(item => ({
+        policy_id: [],
+        rule: item.rule as RequestPolicyRule,
+      })),
   };
   if (wizard.value.configuration.canisterId) {
     changes.kind = {
