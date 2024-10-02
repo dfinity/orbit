@@ -1,3 +1,35 @@
+## 0.0.2-alpha.7 (2024-10-02)
+
+
+### 🚀 Features
+
+- **station:** notify failed station upgrade
+
+- **station:** rate limiter for request creation
+
+- **station:** add ability to cancel pending requests to EditUserOperation
+
+- **station,upgrader:** support large station and upgrader wasm
+
+- **station:** external canister input to accept opt policies and permissions by type
+
+- **station:** large WASM support for external canisters
+
+
+### 🩹 Fixes
+
+- **station:** bound the maximum number of processing requests
+
+- **http:** improve route matching to fix mac subdomain resolution issue
+
+
+### ❤️  Thank You
+
+- Jan Hrubes
+- Kepler Vital
+- Leon Tan
+- mraszyk
+
 ## 0.0.2-alpha.6 (2024-08-26)
 
 
