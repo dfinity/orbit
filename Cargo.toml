@@ -48,9 +48,9 @@ getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
 # The ic-agent matches the one sed by bthe 
 ic-agent = { git = "https://github.com/dfinity/agent-rs.git", rev = "be929fd7967249c879f48f2f494cbfc5805a7d98" }
-ic-asset = { git = "https://github.com/dfinity/sdk.git", rev = "5949a567782c8101a70dbfec030f41a921073fb4" }
+ic-asset = { git = "https://github.com/dfinity/sdk.git", rev = "bb5f8b58afa94b1950f5e1a750e0491457ad88d1" }
 ic-certification = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
-ic-certified-assets = { git = "https://github.com/dfinity/sdk.git", rev = "5949a567782c8101a70dbfec030f41a921073fb4" }
+ic-certified-assets = { git = "https://github.com/dfinity/sdk.git", rev = "bb5f8b58afa94b1950f5e1a750e0491457ad88d1" }
 ic-http-certification = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
 ic-representation-independent-hash = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
 ic-cdk = "0.13.2"
