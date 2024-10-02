@@ -28,16 +28,24 @@ type TriggerUpgradeError = variant {
 // Metadata for an account in the station canister.
 type Metadata = record { key : text; value : text };
 
+// Backup of Asset in the station canister.
+type Asset = record {
+  id : text;
+  name : text;
+  symbol : text;
+  decimals : nat32;
+  blockchain : text;
+  standards : vec text;
+  metadata : vec Metadata;
+};
+
 // Backup of Account in the station canister.
 type Account = record {
   id : text;
-  decimals : nat32;
-  metadata : vec Metadata;
   name : text;
-  blockchain : text;
-  address : text;
-  standard : text;
-  symbol : text;
+  seed : blob;
+  assets : vec text;
+  metadata : vec Metadata;
 };
 
 // Backup of admin user in the station canister.
@@ -108,6 +116,7 @@ type SetDisasterRecoveryCommitteeInput = record {
 // when accounts are added.
 type SetDisasterRecoveryAccountsInput = record {
   accounts : vec Account;
+  assets : vec Asset;
 };
 
 // Request to trigger disaster recovery. Requests are stored in the Upgrader

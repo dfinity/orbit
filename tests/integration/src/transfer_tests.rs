@@ -2,7 +2,7 @@ use crate::interfaces::{
     default_account, get_icp_balance, send_icp, send_icp_to_account, ICP, ICP_FEE,
 };
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::user_test_id;
+use crate::utils::{get_icp_account_identifier, get_icp_asset, user_test_id};
 use crate::TestEnv;
 use ic_ledger_types::AccountIdentifier;
 use orbit_essentials::api::ApiResult;
@@ -32,11 +32,12 @@ fn make_transfer_successful() {
         update_candid_as(&env, canister_ids.station, WALLET_ADMIN_USER, "me", ()).unwrap();
     let user_dto = res.0.unwrap().me;
 
+    let icp_asset = get_icp_asset(&env, canister_ids.station, WALLET_ADMIN_USER);
+
     // create account
     let create_account_args = AddAccountOperationInput {
         name: "test".to_string(),
-        blockchain: "icp".to_string(),
-        standard: "native".to_string(),
+        assets: vec![icp_asset.id.clone()],
         read_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
@@ -133,7 +134,10 @@ fn make_transfer_successful() {
     assert_eq!(user_balance, ICP + 2 * ICP_FEE);
 
     // send ICP to orbit station account
-    let account_address = AccountIdentifier::from_hex(&account_dto.address).unwrap();
+    let account_address = AccountIdentifier::from_hex(
+        &get_icp_account_identifier(&account_dto.addresses).expect("no icp address found"),
+    )
+    .unwrap();
     send_icp_to_account(
         &env,
         WALLET_ADMIN_USER,
@@ -155,6 +159,8 @@ fn make_transfer_successful() {
     // make transfer request to beneficiary
     let transfer = TransferOperationInput {
         from_account_id: account_dto.id.clone(),
+        from_asset_id: icp_asset.id.clone(),
+        with_standard: "icp_native".to_string(),
         to: default_account(beneficiary_id),
         amount: ICP.into(),
         fee: None,

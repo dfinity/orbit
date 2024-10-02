@@ -164,8 +164,6 @@ pub struct AddAccountOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAccountOperationInput {
     pub name: String,
-    // pub blockchain: Blockchain,
-    // pub standard: TokenStandard,
     pub assets: Vec<AssetId>,
     pub metadata: Metadata,
     pub read_permission: Allow,
@@ -185,6 +183,7 @@ pub struct EditAccountOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccountOperationInput {
     pub account_id: AccountId,
+    // todo: edit assets
     pub name: Option<String>,
     pub read_permission: Option<Allow>,
     pub configs_permission: Option<Allow>,

@@ -908,8 +908,6 @@ mod tests {
                 AddAccountOperationInput {
                     name: "foo".to_string(),
                     assets: vec![asset.id],
-                    // blockchain: Blockchain::InternetComputer,
-                    // standard: TokenStandard::InternetComputerNative,
                     metadata: Metadata::default(),
                     transfer_request_policy: Some(RequestPolicyRule::QuorumPercentage(
                         UserSpecifier::Id(vec![ctx.caller_user.id, transfer_requester_user.id]),

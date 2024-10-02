@@ -5,7 +5,7 @@ use crate::{
     errors::MapperError,
     models::{
         Account, AccountAddress, AccountAsset, AccountBalance, AccountCallerPrivileges, AccountId,
-        AccountSeed, AddAccountOperationInput, AddressFormat, ExtraData,
+        AccountSeed, AddAccountOperationInput, AddressFormat,
     },
     repositories::{request_policy::REQUEST_POLICY_REPOSITORY, ASSET_REPOSITORY},
 };
@@ -105,7 +105,6 @@ impl AccountMapper {
                 .map(|asset_id| AccountAsset {
                     asset_id: *asset_id,
                     balance: None,
-                    data: vec![],
                 })
                 .collect(),
             transfer_request_policy_id: None,
@@ -142,7 +141,6 @@ impl AccountMapper {
             balance: account_asset
                 .balance
                 .map(|balance| Self::to_balance_dto(balance, decimals, account_id)),
-            data: account_asset.data.into_iter().map(|d| d.into()).collect(),
         }
     }
 }
@@ -163,30 +161,11 @@ impl From<AccountCallerPrivileges> for station_api::AccountCallerPrivilegesDTO {
     }
 }
 
-impl From<ExtraData> for station_api::ExtraDataDTO {
-    fn from(value: ExtraData) -> Self {
-        Self {
-            key: value.key,
-            text_value: value.text_value,
-        }
-    }
-}
-
-impl From<station_api::ExtraDataDTO> for ExtraData {
-    fn from(value: station_api::ExtraDataDTO) -> Self {
-        Self {
-            key: value.key,
-            text_value: value.text_value,
-        }
-    }
-}
-
 impl From<AccountAddress> for station_api::AccountAddressDTO {
     fn from(account_address: AccountAddress) -> Self {
         Self {
             address: account_address.address,
             format: account_address.format.to_string(),
-            data: account_address.data.into_iter().map(|d| d.into()).collect(),
         }
     }
 }
@@ -197,7 +176,6 @@ impl From<station_api::AccountAddressDTO> for AccountAddress {
             address: address.address,
             format: AddressFormat::from_str(address.format.as_str())
                 .expect("Failed to convert string to AddressFormat"),
-            data: address.data.into_iter().map(|d| d.into()).collect(),
         }
     }
 }

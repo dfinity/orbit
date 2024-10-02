@@ -1,4 +1,4 @@
-use crate::setup::WALLET_ADMIN_USER;
+use crate::{setup::WALLET_ADMIN_USER, test_data::asset::list_assets};
 use candid::Principal;
 use flate2::{write::GzEncoder, Compression};
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
@@ -565,11 +565,12 @@ pub fn get_account_transfer_permission(
 }
 
 pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDTO) -> AccountDTO {
+    let icp = get_icp_asset(env, station_id, WALLET_ADMIN_USER);
+
     // create account
     let create_account_args = AddAccountOperationInput {
         name: "test".to_string(),
-        blockchain: "icp".to_string(),
-        standard: "native".to_string(),
+        assets: vec![icp.id.clone()],
         read_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
@@ -661,6 +662,28 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
             panic!("request must be AddAccount");
         }
     }
+}
+
+pub fn get_icp_asset(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+) -> station_api::AssetDTO {
+    list_assets(env, station_canister_id, requester)
+        .expect("Failed to query list_assets")
+        .0
+        .expect("Failed to list assets")
+        .assets
+        .into_iter()
+        .find(|asset| asset.symbol == "ICP")
+        .expect("Failed to find ICP asset")
+}
+
+pub fn get_icp_account_identifier(addresses: &[station_api::AccountAddressDTO]) -> Option<String> {
+    addresses
+        .iter()
+        .find(|a| a.format == "icp_account_identifier")
+        .map(|a| a.address.clone())
 }
 
 /// Compresses the given data to a gzip format.

@@ -74,7 +74,7 @@ pub struct InitAccountInput {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct InitAssetInput {
-    pub id: Option<UuidDTO>,
+    pub id: UuidDTO,
     pub name: String,
     pub blockchain: String,
     pub standards: Vec<String>,

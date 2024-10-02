@@ -255,7 +255,6 @@ impl BlockchainApi for InternetComputer {
         Ok(vec![AccountAddress {
             address: self.station_account_address(seed),
             format: AddressFormat::ICPAccountIdentifier,
-            data: vec![],
         }])
     }
 

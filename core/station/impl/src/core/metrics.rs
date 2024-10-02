@@ -589,7 +589,6 @@ mod tests {
         account.assets = vec![AccountAsset {
             asset_id: asset.key(),
             balance: None,
-            data: vec![],
         }];
         ACCOUNT_REPOSITORY.insert(account.to_key(), account);
 
@@ -605,7 +604,6 @@ mod tests {
         account.assets = vec![AccountAsset {
             asset_id: asset.key(),
             balance: None,
-            data: vec![],
         }];
         account.name = "Test2".to_string();
 
@@ -680,7 +678,6 @@ mod tests {
                 balance: Nat::from(1_000_000_000u64),
                 last_modification_timestamp: 0,
             }),
-            data: vec![],
         }];
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
@@ -702,7 +699,6 @@ mod tests {
                 balance: Nat::from(10_000_000_000u64),
                 last_modification_timestamp: 0,
             }),
-            data: vec![],
         }];
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
@@ -721,7 +717,6 @@ mod tests {
                 balance: Nat::from(100_000_000u64),
                 last_modification_timestamp: 0,
             }),
-            data: vec![],
         }];
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());

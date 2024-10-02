@@ -68,42 +68,18 @@ impl ModelKey<AccountKey> for Account {
     }
 }
 
-// #[storable]
-// #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-// pub enum ExtraDataValue {
-//     Nat(u128),
-//     Blob(Vec<u8>),
-// }
-
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ExtraData {
-    pub key: String,
-    pub text_value: String,
-    // pub data: Option<ExtraDataValue>,
-}
-
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AccountAsset {
     pub asset_id: AssetId,
     pub balance: Option<AccountBalance>,
-    pub data: Vec<ExtraData>,
 }
-
-// #[storable]
-// #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-// pub struct AccountAddressData {
-//     pub key: String,
-//     pub text_value: String,
-// }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AccountAddress {
     pub address: String,
     pub format: AddressFormat,
-    pub data: Vec<ExtraData>,
 }
 
 #[storable]
@@ -164,8 +140,6 @@ impl AddressFormat {
 
 impl AccountAddress {
     const ADDRESS_RANGE: (u8, u8) = (1, 255);
-    const DATA_KEY_RANGE: (u8, u8) = (1, 255);
-    const DATA_TEXT_VALUE_RANGE: (u8, u8) = (1, 255);
 }
 
 impl ModelValidator<AccountError> for AccountAddress {
@@ -180,25 +154,6 @@ impl ModelValidator<AccountError> for AccountAddress {
         }
 
         self.format.validate_address(&self.address)?;
-
-        for data in &self.data {
-            if (data.key.len() < AccountAddress::DATA_KEY_RANGE.0 as usize)
-                || (data.key.len() > AccountAddress::DATA_KEY_RANGE.1 as usize)
-            {
-                return Err(AccountError::ValidationError {
-                    info: "Account address data key length must be between 1 and 255".to_string(),
-                });
-            }
-
-            if (data.text_value.len() < AccountAddress::DATA_TEXT_VALUE_RANGE.0 as usize)
-                || (data.text_value.len() > AccountAddress::DATA_TEXT_VALUE_RANGE.1 as usize)
-            {
-                return Err(AccountError::ValidationError {
-                    info: "Account address data text value length must be between 1 and 255"
-                        .to_string(),
-                });
-            }
-        }
 
         Ok(())
     }
@@ -296,7 +251,6 @@ mod tests {
         let mut account_address: AccountAddress = AccountAddress {
             address: "".to_string(),
             format: AddressFormat::ICPAccountIdentifier,
-            data: vec![],
         };
 
         let result = account_address.validate();
@@ -375,22 +329,12 @@ pub mod account_test_utils {
             assets: vec![AccountAsset {
                 asset_id: [0; 16],
                 balance: None,
-                data: vec![ExtraData {
-                    key: "foo".to_string(),
-                    text_value: "bar".to_string(),
-                    // data: None,
-                }],
             }],
 
             addresses: vec![AccountAddress {
                 address: AccountIdentifier::new(&Principal::anonymous(), &Subaccount([0; 32]))
                     .to_hex(),
                 format: AddressFormat::ICPAccountIdentifier,
-                data: vec![ExtraData {
-                    key: "foo".to_string(),
-                    text_value: "bar".to_string(),
-                    // data: None,
-                }],
             }],
 
             last_modification_timestamp: 0,

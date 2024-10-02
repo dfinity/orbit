@@ -47,7 +47,7 @@ fn asset_uniqeness_test() {
         station_api::AddAssetOperationInput {
             name: "asset".to_string(),
             blockchain: "icp".to_string(),
-            standards: vec!["native".to_string()],
+            standards: vec!["icp_native".to_string()],
             metadata: Vec::new(),
             symbol: "SYM".to_string(),
             decimals: 8,
@@ -61,7 +61,7 @@ fn asset_uniqeness_test() {
         station_api::AddAssetOperationInput {
             name: "asset".to_string(),
             blockchain: "icp".to_string(),
-            standards: vec!["native".to_string()],
+            standards: vec!["icp_native".to_string()],
             metadata: Vec::new(),
             symbol: "SYM".to_string(),
             decimals: 8,
@@ -83,7 +83,7 @@ fn asset_permission_test() {
         station_api::AddAssetOperationInput {
             name: "asset".to_string(),
             blockchain: "icp".to_string(),
-            standards: vec!["native".to_string()],
+            standards: vec!["icp_native".to_string()],
             metadata: Vec::new(),
             symbol: "SYM".to_string(),
             decimals: 8,

@@ -82,7 +82,7 @@ impl FromStr for TokenStandard {
 
     fn from_str(variant: &str) -> Result<TokenStandard, Self::Err> {
         match variant {
-            "native" => Ok(TokenStandard::InternetComputerNative),
+            "icp_native" => Ok(TokenStandard::InternetComputerNative),
             "icrc1" => Ok(TokenStandard::ICRC1),
             _ => Err(()),
         }
@@ -92,7 +92,7 @@ impl FromStr for TokenStandard {
 impl Display for TokenStandard {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            TokenStandard::InternetComputerNative => write!(f, "native"),
+            TokenStandard::InternetComputerNative => write!(f, "icp_native"),
             TokenStandard::ICRC1 => write!(f, "icrc1"),
         }
     }
@@ -104,9 +104,12 @@ mod tests {
 
     #[test]
     fn blockchain_standard_match_string_representation() {
-        assert_eq!(TokenStandard::InternetComputerNative.to_string(), "native");
         assert_eq!(
-            TokenStandard::from_str("native").unwrap(),
+            TokenStandard::InternetComputerNative.to_string(),
+            "icp_native"
+        );
+        assert_eq!(
+            TokenStandard::from_str("icp_native").unwrap(),
             TokenStandard::InternetComputerNative
         );
         assert_eq!(TokenStandard::ICRC1.to_string(), "icrc1");

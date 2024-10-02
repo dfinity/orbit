@@ -328,7 +328,11 @@ impl From<upgrader_api::Account> for Account {
             assets: value
                 .assets
                 .into_iter()
-                .map(|a| *HelperMapper::to_uuid(a).unwrap().as_bytes())
+                .map(|asset_id| {
+                    *HelperMapper::to_uuid(asset_id)
+                        .expect("Invalid asset ID")
+                        .as_bytes()
+                })
                 .collect(),
             seed: value.seed,
             name: value.name,
@@ -346,7 +350,7 @@ impl From<Account> for upgrader_api::Account {
             assets: value
                 .assets
                 .into_iter()
-                .map(|a| Uuid::from_bytes(a).hyphenated().to_string())
+                .map(|asset_id| Uuid::from_bytes(asset_id).hyphenated().to_string())
                 .collect(),
             metadata: value
                 .metadata
@@ -462,7 +466,7 @@ pub mod test {
                 symbol: "ICP".to_owned(),
                 decimals: 8,
                 blockchain: "icp".to_owned(),
-                standards: vec!["native".to_owned()],
+                standards: vec!["icp_native".to_owned()],
                 metadata: vec![],
             },
             Asset {

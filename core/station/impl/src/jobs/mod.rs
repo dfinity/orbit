@@ -493,7 +493,6 @@ mod test {
             assets: vec![AccountAsset {
                 asset_id: asset.id,
                 balance: None,
-                data: vec![],
             }],
             ..mock_account()
         };

@@ -237,6 +237,18 @@ fn install_canisters(
     if config.upload_canister_modules {
         let upload_canister_modules_args = UploadCanisterModulesInput {
             station_wasm_module: station_wasm.to_owned(),
+            upgrader_wasm_module: vec![],
+        };
+        env.update_call(
+            control_panel,
+            controller,
+            "upload_canister_modules",
+            Encode!(&upload_canister_modules_args).unwrap(),
+        )
+        .unwrap();
+
+        let upload_canister_modules_args = UploadCanisterModulesInput {
+            station_wasm_module: vec![],
             upgrader_wasm_module: upgrader_wasm.to_owned(),
         };
         env.update_call(
@@ -254,6 +266,7 @@ fn install_canisters(
             identity: WALLET_ADMIN_USER,
             name: "station-admin".to_string(),
         }],
+        assets: None,
         quorum: Some(1),
         upgrader: station_api::SystemUpgraderInput::WasmModule(upgrader_wasm),
         fallback_controller: config.fallback_controller,

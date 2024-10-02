@@ -1,5 +1,5 @@
 use super::next_unique_id;
-use crate::utils::{submit_request, wait_for_request};
+use crate::utils::{get_icp_asset, submit_request, wait_for_request};
 use candid::Principal;
 use pocket_ic::PocketIc;
 
@@ -8,6 +8,8 @@ pub fn add_account(
     station_canister_id: Principal,
     requester: Principal,
 ) -> station_api::AccountDTO {
+    let icp_asset = get_icp_asset(env, station_canister_id, requester);
+
     let next_id = next_unique_id();
     let add_account_request = submit_request(
         env,
@@ -15,8 +17,7 @@ pub fn add_account(
         station_canister_id,
         station_api::RequestOperationInput::AddAccount(station_api::AddAccountOperationInput {
             name: format!("account-{}", next_id),
-            blockchain: "icp".to_string(),
-            standard: "native".to_string(),
+            assets: vec![icp_asset.id],
             metadata: Vec::new(),
             configs_permission: station_api::AllowDTO {
                 auth_scope: station_api::AuthScopeDTO::Authenticated,

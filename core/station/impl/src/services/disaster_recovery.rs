@@ -49,7 +49,11 @@ impl DisasterRecoveryService {
                         assets: account
                             .assets
                             .iter()
-                            .map(|a| Uuid::from_bytes(a.asset_id).hyphenated().to_string())
+                            .map(|account_asset| {
+                                Uuid::from_bytes(account_asset.asset_id)
+                                    .hyphenated()
+                                    .to_string()
+                            })
                             .collect(),
                         name: account.name.clone(),
                         metadata: account.metadata.clone().into(),

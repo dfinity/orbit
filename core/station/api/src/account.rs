@@ -25,24 +25,15 @@ pub struct AccountDTO {
 pub type AccountSeedDTO = [u8; 16];
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-
-pub struct ExtraDataDTO {
-    pub key: String,
-    pub text_value: String,
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AccountAssetDTO {
     pub asset_id: UuidDTO,
     pub balance: Option<AccountBalanceDTO>,
-    pub data: Vec<ExtraDataDTO>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AccountAddressDTO {
     pub address: String,
     pub format: String,
-    pub data: Vec<ExtraDataDTO>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

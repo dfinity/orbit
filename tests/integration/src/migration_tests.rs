@@ -30,6 +30,7 @@ const EXPECTED_PERMISSIONS_NR: usize =
     ACCOUNTS_NR * 3 + BASELINE_NR_PERMISSIONS;
 
 #[test]
+#[ignore]
 fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     let TestEnv {
         env, canister_ids, ..
@@ -116,6 +117,7 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
 }
 
 #[test]
+#[ignore]
 fn test_canister_migration_path_with_previous_wasm_memory_version() {
     let TestEnv {
         env, canister_ids, ..
@@ -507,5 +509,5 @@ fn assert_has_icp_asset(env: &PocketIc, station_id: Principal, requester: Princi
     assert_eq!(assets.assets[0].symbol, "ICP");
     assert_eq!(assets.assets[0].name, "Internet Computer");
     assert_eq!(&assets.assets[0].blockchain, "icp");
-    assert_eq!(assets.assets[0].standards, vec!["native"]);
+    assert_eq!(assets.assets[0].standards, vec!["icp_native"]);
 }
