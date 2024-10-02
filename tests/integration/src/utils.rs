@@ -728,8 +728,9 @@ pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, cont
     res.0.unwrap();
 
     // upload station
+    let station_wasm = get_canister_wasm("station");
     let (base_chunk, module_extra_chunks) =
-        upload_canister_chunks_to_asset_canister(env, "station", 200_000);
+        upload_canister_chunks_to_asset_canister(env, station_wasm, 200_000);
     let upload_canister_modules_args = UploadCanisterModulesInput {
         upgrader_wasm_module: None,
         station_wasm_module: Some(base_chunk),
@@ -768,7 +769,7 @@ fn hash(data: Vec<u8>) -> Vec<u8> {
 
 pub fn upload_canister_chunks_to_asset_canister(
     env: &PocketIc,
-    canister_name: &str,
+    canister_wasm: Vec<u8>,
     chunk_len: usize,
 ) -> (Vec<u8>, WasmModuleExtraChunks) {
     // create and install the asset canister
@@ -780,8 +781,7 @@ pub fn upload_canister_chunks_to_asset_canister(
         None,
     );
 
-    // get canister wasm
-    let canister_wasm = get_canister_wasm(canister_name).to_vec();
+    // get canister wasm hash
     let mut hasher = Sha256::new();
     hasher.update(&canister_wasm);
     let canister_wasm_hash = hasher.finalize().to_vec();

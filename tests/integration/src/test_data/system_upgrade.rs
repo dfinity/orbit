@@ -54,7 +54,7 @@ pub fn perform_station_update(
     );
 
     // wait with extra ticks since the canister is stopped by the upgrade process
-    for _ in 0..10 {
+    for _ in 0..20 {
         env.tick();
         env.advance_time(Duration::from_secs(1));
     }

@@ -199,8 +199,9 @@ fn system_upgrade_from_chunks() {
         ),
     ] {
         // upload chunks to asset canister
+        let canister_wasm = get_canister_wasm(canister_name).to_vec();
         let (base_chunk, mut module_extra_chunks) =
-            upload_canister_chunks_to_asset_canister(&env, canister_name, chunk_len);
+            upload_canister_chunks_to_asset_canister(&env, canister_wasm, chunk_len);
 
         // create system upgrade request from chunks
         let system_upgrade_operation =

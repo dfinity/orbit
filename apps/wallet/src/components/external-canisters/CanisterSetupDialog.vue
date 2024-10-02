@@ -147,6 +147,7 @@ const save = async (): Promise<void> => {
 
 const saveChangesToExistingExternalCanister = async (canisterId: Principal): Promise<Request> => {
   const settings: Partial<ConfigureExternalCanisterSettingsInput> = {};
+  settings.name = [assertAndReturn(wizard.value.configuration.name, 'name')];
   settings.labels = wizard.value.configuration.labels ? [wizard.value.configuration.labels] : [];
   settings.state = wizard.value.configuration.state
     ? [mapExternalCanisterStateEnumToVariant(wizard.value.configuration.state)]
@@ -156,21 +157,23 @@ const saveChangesToExistingExternalCanister = async (canisterId: Principal): Pro
     : [''];
   settings.permissions = [
     {
-      read: assertAndReturn(wizard.value.permission.read, 'read permission'),
-      change: assertAndReturn(wizard.value.permission.change, 'change permission'),
-      calls: [],
+      read: [assertAndReturn(wizard.value.permission.read, 'read permission')],
+      change: [assertAndReturn(wizard.value.permission.change, 'change permission')],
+      calls: [], // optional field, not updating calls through this dialog
     },
   ];
 
   settings.request_policies = [
     {
-      calls: [],
-      change: wizard.value.approvalPolicy.change
-        .filter(item => item.rule !== undefined)
-        .map(item => ({
-          policy_id: item.policy_id ? [item.policy_id] : [],
-          rule: item.rule as RequestPolicyRule,
-        })),
+      calls: [], // optional field, not updating calls through this dialog
+      change: [
+        wizard.value.approvalPolicy.change
+          .filter(item => item.rule !== undefined)
+          .map(item => ({
+            policy_id: item.policy_id ? [item.policy_id] : [],
+            rule: item.rule as RequestPolicyRule,
+          })),
+      ],
     },
   ];
 
