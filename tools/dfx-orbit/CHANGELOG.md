@@ -1,3 +1,22 @@
+## 0.4.0 (2024-10-02)
+
+
+### 🚀 Features
+
+- **dfx-orbit:** dfx-orbitv0.3
+
+- **dfx-orbit:** dfx-orbit version 0.4
+
+- **station:** large WASM support for external canisters
+
+
+### ❤️  Thank You
+
+- Jan Hrubes
+- Kepler Vital
+- Leon Tan
+- mraszyk
+
 ## 0.3.0 (2024-08-26)
 
 
