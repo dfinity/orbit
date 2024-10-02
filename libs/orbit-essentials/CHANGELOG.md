@@ -1,3 +1,25 @@
+## 0.0.2-alpha.5 (2024-10-02)
+
+
+### 🚀 Features
+
+- **station,upgrader:** support large station and upgrader wasm
+
+- **station:** external canister input to accept opt policies and permissions by type
+
+
+### 🩹 Fixes
+
+- **http:** improve route matching to fix mac subdomain resolution issue
+
+
+### ❤️  Thank You
+
+- Jan Hrubes
+- Kepler Vital
+- Leon Tan
+- mraszyk
+
 ## 0.0.2-alpha.4 (2024-08-26)
 
 

@@ -65,30 +65,12 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
-    },
-    "canfund": {
-      "currentVersion": "0.0.2-alpha.3",
-      "dependentProjects": [
-        {
-          "source": "control-panel",
-          "target": "canfund",
-          "type": "static",
-          "dependencyCollection": "dependencies"
-        },
-        {
-          "source": "station",
-          "target": "canfund",
-          "type": "static",
-          "dependencyCollection": "dependencies"
-        }
-      ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.5"
     },
     "control-panel": {
       "currentVersion": "0.0.2-alpha.5",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.6"
     },
     "control-panel-api": {
       "currentVersion": "0.0.2-alpha.3",
@@ -111,12 +93,12 @@
     "upgrader": {
       "currentVersion": "0.0.2-alpha.3",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.4"
     },
     "station": {
       "currentVersion": "0.0.2-alpha.6",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.7"
     },
     "upgrader-api": {
       "currentVersion": "0.0.2-alpha.4",
@@ -140,13 +122,19 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.5"
     },
     "station-api": {
       "currentVersion": "0.0.2-alpha.5",
       "dependentProjects": [
         {
           "source": "control-panel",
+          "target": "station-api",
+          "type": "static",
+          "dependencyCollection": "dependencies"
+        },
+        {
+          "source": "upgrader",
           "target": "station-api",
           "type": "static",
           "dependencyCollection": "dependencies"
@@ -176,10 +164,10 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.0.2-alpha.6"
     },
     "dfx-orbit": {
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.3.0",
       "dependentProjects": [
         {
           "source": "integration-tests",
@@ -188,22 +176,78 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.4.0"
     },
     "wallet-dapp": {
-      "currentVersion": "0.0.2-alpha.8",
+      "currentVersion": "0.0.2-alpha.9",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.9"
+      "newVersion": "0.0.2-alpha.10"
     }
   },
   "changes": {
-    "wallet-dapp": {
+    "orbit-essentials": {
       "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.9",
-        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.9",
+        "rawVersion": "0.0.2-alpha.5",
+        "gitTag": "@orbit/orbit-essentials-v0.0.2-alpha.5",
         "isPrerelease": true
       },
-      "contents": "## 0.0.2-alpha.9 (2024-08-27)\n\n\n### 🚀 Features\n\n- **wallet:** show global external canister permissions\n\n\n### 🩹 Fixes\n\n- **release:** compat file includes correct api version\n\n\n### ❤️  Thank You\n\n- Kepler Vital"
+      "contents": "## 0.0.2-alpha.5 (2024-10-02)\n\n\n### 🚀 Features\n\n- **station,upgrader:** support large station and upgrader wasm\n\n- **station:** external canister input to accept opt policies and permissions by type\n\n\n### 🩹 Fixes\n\n- **http:** improve route matching to fix mac subdomain resolution issue\n\n\n### ❤️  Thank You\n\n- Jan Hrubes\n- Kepler Vital\n- Leon Tan\n- mraszyk"
+    },
+    "control-panel": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.6",
+        "gitTag": "@orbit/control-panel-v0.0.2-alpha.6",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.6 (2024-10-02)\n\n\n### 🩹 Fixes\n\n- **http:** improve route matching to fix mac subdomain resolution issue\n\n\n### ❤️  Thank You\n\n- Jan Hrubes\n- Kepler Vital\n- Leon Tan\n- mraszyk"
+    },
+    "upgrader": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.4",
+        "gitTag": "@orbit/upgrader-v0.0.2-alpha.4",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.4 (2024-10-02)\n\n\n### 🚀 Features\n\n- **station:** notify failed station upgrade\n\n- **station,upgrader:** support large station and upgrader wasm\n\n\n### ❤️  Thank You\n\n- Jan Hrubes\n- Kepler Vital\n- Leon Tan\n- mraszyk\n- olaszakos"
+    },
+    "station": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.7",
+        "gitTag": "@orbit/station-v0.0.2-alpha.7",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.7 (2024-10-02)\n\n\n### 🚀 Features\n\n- **station:** notify failed station upgrade\n\n- **station:** rate limiter for request creation\n\n- **station:** add ability to cancel pending requests to EditUserOperation\n\n- **station,upgrader:** support large station and upgrader wasm\n\n- **station:** external canister input to accept opt policies and permissions by type\n\n- **station:** large WASM support for external canisters\n\n\n### 🩹 Fixes\n\n- **station:** bound the maximum number of processing requests\n\n- **http:** improve route matching to fix mac subdomain resolution issue\n\n\n### ❤️  Thank You\n\n- Jan Hrubes\n- Kepler Vital\n- Leon Tan\n- mraszyk"
+    },
+    "upgrader-api": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.5",
+        "gitTag": "@orbit/upgrader-api-v0.0.2-alpha.5",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.5 (2024-10-02)\n\n\n### 🚀 Features\n\n- **station,upgrader:** support large station and upgrader wasm\n\n\n### ❤️  Thank You\n\n- Jan Hrubes\n- Kepler Vital\n- Leon Tan\n- mraszyk\n- olaszakos"
+    },
+    "station-api": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.6",
+        "gitTag": "@orbit/station-api-v0.0.2-alpha.6",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.6 (2024-10-02)\n\n\n### 🚀 Features\n\n- **station:** notify failed station upgrade\n\n- **station:** add ability to cancel pending requests to EditUserOperation\n\n- **station,upgrader:** support large station and upgrader wasm\n\n- **station:** external canister input to accept opt policies and permissions by type\n\n- **station:** large WASM support for external canisters\n\n\n### ❤️  Thank You\n\n- Jan Hrubes\n- Kepler Vital\n- Leon Tan\n- mraszyk"
+    },
+    "wallet-dapp": {
+      "releaseVersion": {
+        "rawVersion": "0.0.2-alpha.10",
+        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.10",
+        "isPrerelease": true
+      },
+      "contents": "## 0.0.2-alpha.10 (2024-10-02)\n\n\n### 🚀 Features\n\n- **station:** notify failed station upgrade\n\n- **wallet:** external canisters list page\n\n- **wallet:** add external canister setup wizard\n\n- **wallet:** bootstrap external canister detail page\n\n- **wallet:** add canister top up dialog\n\n- **station:** add ability to cancel pending requests to EditUserOperation\n\n- **wallet:** add canister unlink dialog\n\n- **station,upgrader:** support large station and upgrader wasm\n\n- **wallet:** add canister ic settings dialog\n\n- **wallet:** add canister install dialog\n\n- **wallet:** add default json visualizer to unknown operations\n\n- **station:** external canister input to accept opt policies and permissions by type\n\n- **station:** large WASM support for external canisters\n\n\n### ❤️  Thank You\n\n- Jan Hrubes\n- Kepler Vital\n- Leon Tan\n- mraszyk"
+    },
+    "dfx-orbit": {
+      "releaseVersion": {
+        "rawVersion": "0.4.0",
+        "gitTag": "@orbit/dfx-orbit-v0.4.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.4.0 (2024-10-02)\n\n\n### 🚀 Features\n\n- **dfx-orbit:** dfx-orbitv0.3\n\n- **dfx-orbit:** dfx-orbit version 0.4\n\n- **station:** large WASM support for external canisters\n\n\n### ❤️  Thank You\n\n- Jan Hrubes\n- Kepler Vital\n- Leon Tan\n- mraszyk"
     }
   }
 }
