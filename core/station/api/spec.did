@@ -608,6 +608,8 @@ type ChangeExternalCanisterOperationInput = record {
   mode : CanisterInstallMode;
   // The wasm module to install.
   module : blob;
+  // Additional wasm module chunks to append to the wasm module.
+  module_extra_chunks : opt WasmModuleExtraChunks;
   // The initial argument passed to the new wasm module.
   arg : opt blob;
 };

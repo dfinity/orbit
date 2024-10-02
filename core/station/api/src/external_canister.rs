@@ -3,6 +3,8 @@ use crate::{
     SortDirection, TimestampRfc3339, UuidDTO, ValidationMethodResourceTargetDTO,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
+use orbit_essentials::types::WasmModuleExtraChunks;
+
 // Taken from https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-create_canister
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct DefiniteCanisterSettingsInput {
@@ -72,6 +74,7 @@ pub struct ChangeExternalCanisterOperationInput {
     pub mode: CanisterInstallMode,
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
 }

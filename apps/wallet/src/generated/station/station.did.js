@@ -282,6 +282,11 @@ export const idlFactory = ({ IDL }) => {
     'kind' : ConfigureExternalCanisterOperationKind,
     'canister_id' : IDL.Principal,
   });
+  const WasmModuleExtraChunks = IDL.Record({
+    'wasm_module_hash' : IDL.Vec(IDL.Nat8),
+    'chunk_hashes_list' : IDL.Vec(IDL.Vec(IDL.Nat8)),
+    'store_canister' : IDL.Principal,
+  });
   const CanisterInstallMode = IDL.Variant({
     'reinstall' : IDL.Null,
     'upgrade' : IDL.Null,
@@ -289,6 +294,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChangeExternalCanisterOperationInput = IDL.Record({
     'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'module_extra_chunks' : IDL.Opt(WasmModuleExtraChunks),
     'mode' : CanisterInstallMode,
     'canister_id' : IDL.Principal,
     'module' : IDL.Vec(IDL.Nat8),
@@ -349,11 +355,6 @@ export const idlFactory = ({ IDL }) => {
     'policy_id' : UUID,
   });
   const RemoveRequestPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
-  const WasmModuleExtraChunks = IDL.Record({
-    'wasm_module_hash' : IDL.Vec(IDL.Nat8),
-    'chunk_hashes_list' : IDL.Vec(IDL.Vec(IDL.Nat8)),
-    'store_canister' : IDL.Principal,
-  });
   const SystemUpgradeTarget = IDL.Variant({
     'UpgradeUpgrader' : IDL.Null,
     'UpgradeStation' : IDL.Null,

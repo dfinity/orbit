@@ -484,6 +484,7 @@ impl From<ChangeExternalCanisterOperationInput>
             canister_id: input.canister_id,
             mode: input.mode.into(),
             module: input.module,
+            module_extra_chunks: input.module_extra_chunks.map(|c| c.into()),
             arg: input.arg,
         }
     }
@@ -499,6 +500,7 @@ impl From<station_api::ChangeExternalCanisterOperationInput>
             canister_id: input.canister_id,
             mode: input.mode.into(),
             module: input.module,
+            module_extra_chunks: input.module_extra_chunks.map(|c| c.into()),
             arg: input.arg,
         }
     }
