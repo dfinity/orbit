@@ -1,3 +1,42 @@
+## 0.0.2-alpha.10 (2024-10-02)
+
+
+### 🚀 Features
+
+- **station:** notify failed station upgrade
+
+- **wallet:** external canisters list page
+
+- **wallet:** add external canister setup wizard
+
+- **wallet:** bootstrap external canister detail page
+
+- **wallet:** add canister top up dialog
+
+- **station:** add ability to cancel pending requests to EditUserOperation
+
+- **wallet:** add canister unlink dialog
+
+- **station,upgrader:** support large station and upgrader wasm
+
+- **wallet:** add canister ic settings dialog
+
+- **wallet:** add canister install dialog
+
+- **wallet:** add default json visualizer to unknown operations
+
+- **station:** external canister input to accept opt policies and permissions by type
+
+- **station:** large WASM support for external canisters
+
+
+### ❤️  Thank You
+
+- Jan Hrubes
+- Kepler Vital
+- Leon Tan
+- mraszyk
+
 ## 0.0.2-alpha.9 (2024-08-27)
 
 
