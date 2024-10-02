@@ -190,6 +190,7 @@ export interface ChangeExternalCanisterOperation {
 }
 export interface ChangeExternalCanisterOperationInput {
   'arg' : [] | [Uint8Array | number[]],
+  'module_extra_chunks' : [] | [WasmModuleExtraChunks],
   'mode' : CanisterInstallMode,
   'canister_id' : Principal,
   'module' : Uint8Array | number[],
