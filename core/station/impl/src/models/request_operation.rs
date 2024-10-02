@@ -335,6 +335,7 @@ pub struct ChangeExternalCanisterOperationInput {
     pub canister_id: Principal,
     pub mode: CanisterInstallMode,
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     pub arg: Option<Vec<u8>>,
 }
 

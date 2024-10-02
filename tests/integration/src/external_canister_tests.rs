@@ -2,8 +2,8 @@ use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     add_user, bump_time_to_avoid_ratelimit, canister_status, execute_request,
     get_core_canister_health_status, get_request, submit_request, submit_request_approval,
-    submit_request_raw, submit_request_with_expected_trap, update_raw, user_test_id,
-    wait_for_request, COUNTER_WAT,
+    submit_request_raw, submit_request_with_expected_trap, update_raw,
+    upload_canister_chunks_to_asset_canister, user_test_id, wait_for_request, COUNTER_WAT,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -58,11 +58,16 @@ fn successful_four_eyes_upgrade() {
     add_user(&env, user_b, vec![], canister_ids.station);
 
     // submitting canister upgrade request fails due to insufficient permissions to create change canister requests
+    let chunk_len = module_bytes.len() / 3;
+    assert!(0 < chunk_len && chunk_len < 1_000_000);
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(&env, module_bytes, chunk_len);
     let change_canister_operation =
         RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
             mode: CanisterInstallMode::Upgrade,
-            module: module_bytes.clone(),
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
             arg: None,
         });
     let trap_message = submit_request_with_expected_trap(
@@ -227,11 +232,16 @@ fn upgrade_reinstall_list_test() {
     assert_eq!(ctr, 2_u32.to_le_bytes());
 
     // submit canister upgrade request
+    let chunk_len = module_bytes.len() / 3;
+    assert!(0 < chunk_len && chunk_len < 1_000_000);
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(&env, module_bytes, chunk_len);
     let change_canister_operation =
         RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
             mode: CanisterInstallMode::Upgrade,
-            module: module_bytes.clone(),
+            module: base_chunk.clone(),
+            module_extra_chunks: Some(module_extra_chunks.clone()),
             arg: None,
         });
     execute_request(
@@ -255,7 +265,8 @@ fn upgrade_reinstall_list_test() {
         RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
             mode: CanisterInstallMode::Reinstall,
-            module: module_bytes,
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
             arg: None,
         });
     execute_request(
