@@ -28,6 +28,7 @@ pub enum AccountError {
     /// The address format is unknown to the system.
     #[error(r#"The given address format is unknown to the system."#)]
     UnknownAddressFormat { address_format: String },
+    /// The address is invalid.
     #[error(r#"The given address {address} does not comply with {address_format}"#)]
     InvalidAddress {
         address: String,

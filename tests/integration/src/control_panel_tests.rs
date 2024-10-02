@@ -538,7 +538,6 @@ fn upload_canister_modules_authorization() {
         ..
     } = setup_new_env();
 
-    // let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let station_wasm = get_canister_wasm("station").to_vec();
     let upload_canister_modules_args = UploadCanisterModulesInput {
         station_wasm_module: station_wasm.to_owned(),

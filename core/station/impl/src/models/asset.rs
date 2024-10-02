@@ -19,7 +19,7 @@ pub struct Asset {
     pub id: AssetId,
     /// The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
     pub blockchain: Blockchain,
-    // The asset standard that is supported (e.g. `erc20`, `native`, etc.), canonically
+    // The asset standard that is supported (e.g. `erc20`, `icp_native`, etc.), canonically
     // represented as a lowercase string with spaces replaced with underscores.
     pub standards: BTreeSet<TokenStandard>,
     /// The asset symbol (e.g. `ICP`, `BTC`, `ETH`, etc.)

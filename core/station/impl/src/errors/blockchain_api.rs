@@ -8,7 +8,7 @@ pub enum BlockchainApiError {
     /// Failed to fetch latest asset balance.
     #[error(r#"Failed to fetch latest asset balance."#)]
     FetchBalanceFailed { asset_id: String },
-    /// Failed to fetch latest asset balance.
+    /// Invalid address format.
     #[error(r#"Invalid address format. Found {found}, expected {expected}"#)]
     InvalidAddressFormat { found: String, expected: String },
     /// The transaction failed to be submitted.

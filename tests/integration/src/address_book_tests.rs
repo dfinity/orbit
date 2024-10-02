@@ -300,8 +300,6 @@ fn check_address_book_for_transfer() {
         _ => panic!("unexpected request operation"),
     };
 
-    println!("admin account: {:?}", admin_account);
-
     let icp_address = get_icp_account_identifier(&admin_account.addresses).expect("no icp address");
 
     // send ICP to admin user's station account
