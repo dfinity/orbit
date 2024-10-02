@@ -101,6 +101,12 @@ pub mod mocks {
             IC_CANISTER_BALANCE.with(|b| *b.borrow())
         }
 
+        pub mod call {
+            pub fn arg_data_raw_size() -> usize {
+                42
+            }
+        }
+
         pub mod management_canister {
             pub mod main {
                 use ic_cdk::api::call::CallResult;
