@@ -11,6 +11,7 @@ pub mod api;
 pub mod cdk;
 pub mod deserialize;
 pub mod http;
+pub mod install_chunked_code;
 pub mod metrics;
 pub mod model;
 pub mod repository;

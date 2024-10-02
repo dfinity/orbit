@@ -34,7 +34,7 @@ slog-async.workspace = true
 tabled.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ['rt'] }
-station-api = { path = '../../core/station/api', version = '0.0.2-alpha.5' }
+station-api = { path = '../../core/station/api', version = '0.0.2-alpha.6' }
 
 [lib]
 doctest = false

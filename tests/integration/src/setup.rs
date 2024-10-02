@@ -18,8 +18,6 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
 
-static POCKET_IC_BIN: &str = "./pocket-ic";
-
 pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
 pub static CANISTER_INITIAL_CYCLES: u128 = 100_000_000_000_000;
 
@@ -61,26 +59,21 @@ pub fn setup_new_env() -> TestEnv {
 }
 
 pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
-    let path = match env::var_os("POCKET_IC_BIN") {
-        None => {
-            env::set_var("POCKET_IC_BIN", POCKET_IC_BIN);
-            POCKET_IC_BIN.to_string()
-        }
-        Some(path) => path
-            .clone()
-            .into_string()
-            .unwrap_or_else(|_| panic!("Invalid string path for {path:?}")),
-    };
+    let path = env::var_os("POCKET_IC_BIN")
+        .expect("The environment variable POCKET_IC_BIN containing the absolute path to the PocketIC binary is not set")
+        .clone()
+        .into_string()
+        .expect("Invalid string path");
 
     if !Path::new(&path).exists() {
         println!("
         Could not find the PocketIC binary to run canister integration tests.
 
-        I looked for it at {:?}. You can specify another path with the environment variable POCKET_IC_BIN (note that I run from {:?}).
+        I looked for it at {:?}. You can specify another absolute path with the environment variable POCKET_IC_BIN.
 
-        Running the testing script will automatically place the PocketIC binary at the right place to be run without setting the POCKET_IC_BIN environment variable:
+        Running the testing script will automatically set the POCKET_IC_BIN environment variable:
             ./scripts/run-integration-tests.sh
-        ", &path, &env::current_dir().map(|x| x.display().to_string()).unwrap_or_else(|_| "an unknown directory".to_string()));
+        ", &path);
     }
 
     let mut env = PocketIcBuilder::new()
@@ -107,12 +100,12 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
     }
 }
 
-pub fn create_canister(env: &mut PocketIc, controller: Principal) -> Principal {
+pub fn create_canister(env: &PocketIc, controller: Principal) -> Principal {
     create_canister_with_cycles(env, controller, CANISTER_INITIAL_CYCLES)
 }
 
 pub fn create_canister_with_cycles(
-    env: &mut PocketIc,
+    env: &PocketIc,
     controller: Principal,
     cycles: u128,
 ) -> Principal {

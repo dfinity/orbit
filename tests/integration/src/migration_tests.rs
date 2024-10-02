@@ -126,6 +126,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
 
     // This is needed to avoid `install_code` rate limit error
     env.tick();
+    env.tick();
 
     // Set the stable memory of the canister to the previous version of the canister
     env.set_stable_memory(

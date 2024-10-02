@@ -63,15 +63,6 @@ where
     // can run in parllel. Hopefully we will be able to fix this in the future.
     let _crit = AGENT_MUTEX.lock().unwrap();
 
-    // Store current dir and DFX_CONFIG_ROOT
-    let current_dir = std::env::current_dir().unwrap();
-    let current_config_root = std::env::var(DFX_ROOT).ok();
-
-    // There might be other (non dfx-orbit) tests running in parallel.
-    // If we change the current_dir, these tests might no longer be able to find the ic-pocket binary
-    // We set the env var for IC pocket here, such that they still can find it.
-    std::env::set_var("POCKET_IC_BIN", &current_dir);
-
     // Create a temporary directory and change to it
     let tmp_dir = tempdir().unwrap();
     std::env::set_current_dir(tmp_dir.path()).unwrap();
@@ -113,12 +104,6 @@ where
 
     // Stop the live environment
     env.stop_live();
-
-    // Restore current dir and DFX_CONFIG_ROOT
-    std::env::set_current_dir(current_dir).unwrap();
-    if let Some(root) = current_config_root {
-        std::env::set_var(DFX_ROOT, root)
-    }
 
     result
 }
@@ -200,7 +185,7 @@ pub(super) async fn setup_dfx_orbit(station_id: Principal) -> DfxOrbit {
     let decorator = slog_term::PlainDecorator::new(slog_term::TestStdoutWriter);
     let drain = slog_term::FullFormat::new(decorator)
         .build()
-        .filter_level(slog::Level::Trace)
+        .filter_level(slog::Level::Debug)
         .fuse();
     let drain = slog_async::Async::new(drain).build().fuse();
     let logger = slog::Logger::root(drain, slog::o!());

@@ -17,7 +17,7 @@ pub enum ExternalCanisterError {
     #[error(r#"The external canister operation failed due to {reason}"#)]
     Failed { reason: String },
     /// The external canister has failed validation.
-    #[error(r#"The external canister has failed validation."#)]
+    #[error(r#"The external canister has failed validation with reason `{info}`."#)]
     ValidationError { info: String },
 }
 
@@ -49,6 +49,9 @@ impl From<ExternalCanisterValidationError> for ExternalCanisterError {
         match err {
             ExternalCanisterValidationError::InvalidExternalCanister { principal } => {
                 ExternalCanisterError::InvalidExternalCanister { principal }
+            }
+            ExternalCanisterValidationError::ValidationError { info } => {
+                ExternalCanisterError::ValidationError { info }
             }
         }
     }

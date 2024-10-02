@@ -180,6 +180,7 @@ impl RequestCanisterInstallArgs {
             canister_id,
             mode,
             module,
+            module_extra_chunks: None,
             arg,
         };
         Ok(RequestOperationInput::ChangeExternalCanister(operation))

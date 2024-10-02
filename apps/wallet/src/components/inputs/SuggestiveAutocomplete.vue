@@ -40,7 +40,7 @@
               "
             />
           </template>
-          <VList v-if="showDropdown" density="compact" base-color="white">
+          <VList v-if="showDropdown" density="compact">
             <VListItem v-if="loading" class="text-center">
               <VProgressCircular indeterminate size="24" />
             </VListItem>

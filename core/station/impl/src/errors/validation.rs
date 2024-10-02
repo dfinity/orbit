@@ -59,10 +59,12 @@ impl DetailableError for RecordValidationError {
     }
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Eq, PartialEq)]
 pub enum ExternalCanisterValidationError {
     #[error(r#"The principal {principal} is an invalid external canister."#)]
     InvalidExternalCanister { principal: Principal },
+    #[error(r#"The external canister has failed validation with reason `{info}`."#)]
+    ValidationError { info: String },
 }
 
 impl DetailableError for ExternalCanisterValidationError {
@@ -72,6 +74,10 @@ impl DetailableError for ExternalCanisterValidationError {
         match self {
             ExternalCanisterValidationError::InvalidExternalCanister { principal } => {
                 details.insert("principal".to_string(), principal.to_string());
+                Some(details)
+            }
+            ExternalCanisterValidationError::ValidationError { info } => {
+                details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
         }

@@ -501,6 +501,8 @@ type EditUserOperationInput = record {
   groups : opt vec UUID;
   // The status of the user (e.g. `Active`).
   status : opt UserStatus;
+  // Cancel all pending (request status `Created`) requests for this user.
+  cancel_pending_requests : opt bool;
 };
 
 type EditUserOperation = record {
@@ -553,11 +555,22 @@ type SystemUpgradeTarget = variant {
   UpgradeUpgrader;
 };
 
+type WasmModuleExtraChunks = record {
+  // The asset canister from which the chunks are to be retrieved.
+  store_canister : principal;
+  // The list of chunk hashes in the order they should be appended to the wasm module.
+  chunk_hashes_list : vec blob;
+  // The hash of the assembled wasm module.
+  wasm_module_hash : blob;
+};
+
 type SystemUpgradeOperationInput = record {
   // The target to change.
   target : SystemUpgradeTarget;
   // The wasm module to install.
   module : blob;
+  // Additional wasm module chunks to append to the wasm module.
+  module_extra_chunks : opt WasmModuleExtraChunks;
   // The initial argument passed to the new wasm module.
   arg : opt blob;
 };
@@ -595,6 +608,8 @@ type ChangeExternalCanisterOperationInput = record {
   mode : CanisterInstallMode;
   // The wasm module to install.
   module : blob;
+  // Additional wasm module chunks to append to the wasm module.
+  module_extra_chunks : opt WasmModuleExtraChunks;
   // The initial argument passed to the new wasm module.
   arg : opt blob;
 };
@@ -640,9 +655,9 @@ type CreateExternalCanisterOperationInput = record {
   // The labels of the external canister.
   labels : opt vec text;
   // What operations are allowed on the canister.
-  permissions : ExternalCanisterPermissionsInput;
+  permissions : ExternalCanisterPermissionsCreateInput;
   // The request policies for the canister.
-  request_policies : ExternalCanisterRequestPoliciesInput;
+  request_policies : ExternalCanisterRequestPoliciesCreateInput;
 };
 
 type ConfigureExternalCanisterSettingsInput = record {
@@ -652,9 +667,9 @@ type ConfigureExternalCanisterSettingsInput = record {
   // The labels of the external canister.
   labels : opt vec text;
   // What operations are allowed on the canister.
-  permissions : opt ExternalCanisterPermissionsInput;
+  permissions : opt ExternalCanisterPermissionsUpdateInput;
   // The request policies for the canister.
-  request_policies : opt ExternalCanisterRequestPoliciesInput;
+  request_policies : opt ExternalCanisterRequestPoliciesUpdateInput;
   // The state of the external canister.
   state : opt ExternalCanisterState;
 };
@@ -2297,8 +2312,32 @@ type ExternalCanisterPermissions = record {
   calls : vec ExternalCanisterCallPermission;
 };
 
+// The create input type for setting the permissions for the external canister.
+type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
+
+// The input type for setting call permissions of an existing external canister.
+type ExternalCanisterChangeCallPermissionsInput = variant {
+  // Replaces all the call permissions with the provided list, if the list is empty
+  // all the call permissions will be removed.
+  ReplaceAllBy : vec ExternalCanisterCallPermission;
+  // Override the call permissions from the specified execution methods.
+  OverrideSpecifiedByExecutionMethods : vec ExternalCanisterCallPermission;
+  // Remove call permissions of the specified execution methods.
+  RemoveByExecutionMethods : vec text;
+};
+
 // The input type for setting the permissions for the external canister.
-type ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
+type ExternalCanisterPermissionsUpdateInput = record {
+  // Who can read information about the canister (e.g. canister status),
+  // changes to this permission can be made by the `change` permission.
+  read : opt Allow;
+  // Who can make changes to the canister, includes:
+  // - changing the permissions
+  // - install operations
+  change : opt Allow;
+  // The permissions for calling methods on the canister.
+  calls : opt ExternalCanisterChangeCallPermissionsInput;
+};
 
 // The request policy rules for the external canister.
 type ExternalCanisterRequestPolicies = record {
@@ -2308,12 +2347,29 @@ type ExternalCanisterRequestPolicies = record {
   calls : vec ExternalCanisterCallRequestPolicyRule;
 };
 
-// The input type for setting the request policies for the external canister.
-type ExternalCanisterRequestPoliciesInput = record {
+// The input type for setting the request policies for a new external canister.
+type ExternalCanisterRequestPoliciesCreateInput = record {
   // The request policy rules for the canister change operation.
   change : vec ExternalCanisterChangeRequestPolicyRuleInput;
   // The request policy rules for the calling methods on the canister.
   calls : vec ExternalCanisterCallRequestPolicyRuleInput;
+};
+
+type ExternalCanisterChangeCallRequestPoliciesInput = variant {
+  // Replaces all the call request policies with the provided list.
+  ReplaceAllBy : vec ExternalCanisterCallRequestPolicyRuleInput;
+  // Remove call request policies by the provided ids.
+  RemoveByPolicyIds : vec UUID;
+  // Override the request policies for the specified execution methods.
+  OverrideSpecifiedByExecutionMethods : vec ExternalCanisterCallRequestPolicyRuleInput;
+};
+
+// The input type for setting the request policies for an existing external canister.
+type ExternalCanisterRequestPoliciesUpdateInput = record {
+  // The request policy rules for the canister change operation.
+  change : opt vec ExternalCanisterChangeRequestPolicyRuleInput;
+  // The request policy rules for the calling methods on the canister.
+  calls : opt ExternalCanisterChangeCallRequestPoliciesInput;
 };
 
 // An external canister that the station can interact with.

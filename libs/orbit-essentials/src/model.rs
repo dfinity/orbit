@@ -8,6 +8,18 @@ pub trait ModelValidator<Err = ApiError> {
     fn validate(&self) -> ModelValidatorResult<Err>;
 }
 
+#[derive(Debug, Clone)]
+pub struct ContextualModel<M, C = ()> {
+    pub model: M,
+    pub context: C,
+}
+
+impl<M, C> ContextualModel<M, C> {
+    pub fn new(model: M, context: C) -> Self {
+        Self { model, context }
+    }
+}
+
 /// A trait for models to expose their key.
 pub trait ModelKey<Key = UUID> {
     fn key(&self) -> Key;

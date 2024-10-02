@@ -36,9 +36,13 @@ impl Create<SystemUpgradeOperationInput> for SystemUpgradeRequestCreate {
                     hasher.finalize().to_vec()
                 }),
                 module_checksum: {
-                    let mut hasher = Sha256::new();
-                    hasher.update(&operation_input.module);
-                    hasher.finalize().to_vec()
+                    if let Some(ref module_extra_chunks) = operation_input.module_extra_chunks {
+                        module_extra_chunks.wasm_module_hash.clone()
+                    } else {
+                        let mut hasher = Sha256::new();
+                        hasher.update(&operation_input.module);
+                        hasher.finalize().to_vec()
+                    }
                 },
                 input: operation_input.into(),
             }),
@@ -89,7 +93,11 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
                 let arg = self.operation.input.arg.as_ref().unwrap_or(&default_arg);
                 let out = self
                     .system_service
-                    .upgrade_station(&self.operation.input.module, arg)
+                    .upgrade_station(
+                        &self.operation.input.module,
+                        &self.operation.input.module_extra_chunks,
+                        arg,
+                    )
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
                         reason: format!("failed to upgrade station: {}", err),
@@ -110,11 +118,12 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
                 self.system_service
                     .upgrade_upgrader(
                         &self.operation.input.module,
+                        &self.operation.input.module_extra_chunks,
                         self.operation.input.arg.clone(),
                     )
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
-                        reason: format!("failed to upgrade upgrader: {}", err),
+                        reason: format!("failed to upgrade upgrader: {} ({:?})", err, err.details),
                     })?;
 
                 // The upgrader might have just gained the ability to perform disaster recovery, so sync it now.

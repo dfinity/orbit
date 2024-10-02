@@ -1,6 +1,7 @@
 export default {
   app: {
     title: '{app} Carteira',
+    name: 'Orbit Wallet',
     action_save_failed: 'Erro ao gravar a ação, por favor, tente novamente.',
     action_save_success: 'Ação gravada com sucesso.',
     session_load_error: 'Erro ao inicializar a sessão, por favor, tente novamente.',
@@ -98,6 +99,7 @@ export default {
     no_data: 'Nenhum dado disponível.',
     no_matching_results: 'Nenhum resultado encontrado para `{search}`.',
     add_new_label: 'Adicionar novo rótulo: {label}',
+    user_cancel_pending_requests: 'Cancelar todos os pedidos pendentes deste usuário.',
   },
   alpha_warning: {
     version: 'Esta é uma versão alfa.',
@@ -287,6 +289,30 @@ export default {
         title: 'Gerir informações do sistema',
         request_title: 'Pedido de alteração de informações do sistema',
       },
+      createexternalcanister: {
+        title: 'Criar canister',
+        request_title: 'Pedido de criação de canister',
+      },
+      changeexternalcanister: {
+        title: 'Alterar canister',
+        request_title: 'Pedido de alteração de canister',
+      },
+      callexternalcanister: {
+        title: 'Chamar canister',
+        request_title: 'Pedido de chamada de canister',
+      },
+      fundexternalcanister: {
+        title: 'Recarregar canister',
+        request_title: 'Pedido de recarga de canister',
+      },
+      configureexternalcanister: {
+        title: 'Configurar canister',
+        request_title: 'Pedido de configuração de canister',
+      },
+      setdisasterrecovery: {
+        title: 'Configurar recuperação de desastres',
+        request_title: 'Pedido de configuração de recuperação de desastres',
+      },
       unknown: {
         title: 'Desconhecido',
         request_title: 'Pedido desconhecido',
@@ -420,8 +446,62 @@ export default {
     config_change_permission_hint: 'Acesso para alterar as configurações do canister.',
     config_change_approval_policy: 'Alteraçōes',
     config_change_approval_policy_hint: 'Regra de aprovação para alteraçōes do canister.',
+    loading_error: 'Erro ao carregar o canister, por favor, tente novamente.',
+    not_found: 'Canister não encontrado.',
+    not_found_description: 'O canister que está a tentar aceder não existe.',
+    ic_settings: 'Configuraçōes do IC',
+    top_up: 'Recarregar',
+    configuration: 'Configuração',
+    unlink: 'Dessaociar',
+    unlink_title: 'Desassociar Canister',
+    unlink_soft_delete: 'Mantém o canister no Internet Computer, apenas remove a sua referência.',
+    perform_call: 'Realizar chamada',
+    module_hash: 'Hash do módulo',
+    cycles: 'Ciclos',
+    not_controller: 'Não é controlador',
+    install: 'Instalar',
+    send_cycles: 'Enviar ciclos',
+    top_up_hint: 'Ciclos a adicionar ao canister de destino.',
+    add_controller: 'Adicionar controlador',
+    no_controllers: 'Nenhum controlador.',
+    self_controller: 'Controlador próprio',
+    non_orbit_controllers_warning:
+      'Esta configuração adiciona controladores adicionais ao canister de destino, use com cuidado.',
+    native_settings: {
+      freezing_threshold: 'Limite de congelamento',
+      freezing_threshold_hint:
+        'O número de segundos que o canister será colocado em um estado congelado antes de ser limpo pela rede.',
+      controllers: 'Controladores',
+      controllers_hint: 'A lista de principais que podem controlar o canister.',
+      memory_allocation: 'Alocação de memória',
+      memory_allocation_hint:
+        'A quantidade máxima de memória que o canister pode usar, isso também reserva a memória na sub-rede.',
+      compute_allocation: 'Alocação de computação',
+      compute_allocation_hint:
+        'A porcentagem de computação de sub-rede que é reservada para o canister.',
+      reserved_cycles_limit: 'Limite de ciclos reservados',
+      reserved_cycles_limit_hint:
+        'Número de ciclos que o canister pode alocar, operações que alocam memória ou computação falharão se o limite for atingido.',
+    },
+    wasm_module: 'Módulo WASM',
+    wasm_args: 'Argumentos',
+    wasm_args_optional: 'Argumentos (opcional)',
+    wasm_args_invalid_format: 'Formato de argumento inválido',
+    wasm_args_formats: {
+      hex: 'Hex',
+      candid: 'Candid',
+    },
+    install_mode: {
+      reinstall: 'Reinstalar',
+      upgrade: 'Atualizar',
+      install: 'Instalar',
+    },
   },
   terms: {
+    more: 'Mais',
+    less: 'Menos',
+    data: 'Dados',
+    mode: 'Modo',
     active: 'Ativo',
     archived: 'Arquivado',
     canisters: 'Canisters',
@@ -589,6 +669,10 @@ export default {
       requiredIntNumber: 'Este campo deve conter um número inteiro.',
       intNumberRange: '{field} deve estar entre {min} e {max}.',
       validEmail: 'Este campo deve conter um email válido.',
+      requiredNumber: 'Este campo deve conter um número.',
+      numberRange: 'Este campo deve estar entre {min} e {max}.',
+      invalidDecimalPlaces: 'Este campo deve ter no máximo {decimals} casas decimais.',
+      isHex: 'Este campo deve conter um valor hexadecimal válido.',
     },
   },
   navigation: {

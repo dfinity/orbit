@@ -6,6 +6,7 @@ import { CanisterWizardModel } from '~/components/external-canisters/wizard/wiza
 import { useAutocomplete } from '~/composables/autocomplete.composable';
 import logger from '~/core/logger.core';
 import { UUID } from '~/generated/station/station.did';
+import { mapExternalCanisterStateVariantToEnum } from '~/mappers/external-canister.mapper';
 import { useStationStore } from '~/stores/station.store';
 import { SelectItem } from '~/types/helper.types';
 import { ExternalCanisterStateEnum } from '~/types/station.types';
@@ -198,7 +199,28 @@ export const useDefaultExternalCanisterSetupWizardModel = ({
 };
 
 export const useLoadExternaLCanisterSetupWizardModel = async (
-  _canisterId: Principal,
+  canisterId: Principal,
 ): Promise<CanisterWizardModel> => {
-  throw new Error('Not implemented');
+  const station = useStationStore();
+  const { canister } = await station.service.getExternalCanisterByCanisterId(canisterId, true);
+
+  return {
+    configuration: {
+      id: canister.id,
+      canisterId: canister.canister_id,
+      name: canister.name,
+      description: canister.description?.[0] ? canister.description[0] : undefined,
+      labels: canister.labels,
+      state: mapExternalCanisterStateVariantToEnum(canister.state),
+      createdAt: canister.created_at,
+      modifiedAt: canister.modified_at?.[0] ?? '',
+    },
+    permission: {
+      read: canister.permissions.read,
+      change: canister.permissions.change,
+    },
+    approvalPolicy: {
+      change: canister.request_policies.change,
+    },
+  };
 };

@@ -8,10 +8,14 @@ import {
   AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
+  CanisterStatusResult,
   Capabilities,
+  ChangeExternalCanisterOperationInput,
+  ConfigureExternalCanisterOperationKind,
   ConfigureExternalCanisterSettingsInput,
   CreateExternalCanisterOperationInput,
   CreateRequestInput,
+  DefiniteCanisterSettingsInput,
   DisasterRecoveryCommittee,
   EditAccountOperationInput,
   EditAddressBookEntryOperationInput,
@@ -20,6 +24,7 @@ import {
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
+  FundExternalCanisterOperationInput,
   GetAccountInput,
   GetAccountResult,
   GetAddressBookEntryInput,
@@ -553,6 +558,106 @@ export class StationService {
       labels: labels ? [labels] : [],
       addresses: addresses ? [addresses] : [],
       ids: ids ? [ids] : [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async fundExternalCanister(input: FundExternalCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        FundExternalCanister: input,
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async editCanisterIcSettings(
+    canisterId: Principal,
+    input: DefiniteCanisterSettingsInput,
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        ConfigureExternalCanister: {
+          canister_id: canisterId,
+          kind: { NativeSettings: input },
+        },
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async changeExternalCanister(
+    input: ChangeExternalCanisterOperationInput,
+    opts: { comment?: string } = {},
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: opts.comment ? [opts.comment] : [],
+      operation: {
+        ChangeExternalCanister: input,
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async unlinkExternalCanister(input: {
+    canisterId: Principal;
+    softDelete?: boolean;
+  }): Promise<Request> {
+    const shouldSoftDelete = input.softDelete ?? true;
+    const operationKind: ConfigureExternalCanisterOperationKind = shouldSoftDelete
+      ? { SoftDelete: null }
+      : { Delete: null };
+
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: {
+        ConfigureExternalCanister: {
+          canister_id: input.canisterId,
+          kind: operationKind,
+        },
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async getExternalCanisterStatus(canisterId: Principal): Promise<ExtractOk<CanisterStatusResult>> {
+    const result = await this.actor.canister_status({
+      canister_id: canisterId,
     });
 
     if (variantIs(result, 'Err')) {

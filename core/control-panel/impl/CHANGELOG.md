@@ -1,3 +1,18 @@
+## 0.0.2-alpha.6 (2024-10-02)
+
+
+### 🩹 Fixes
+
+- **http:** improve route matching to fix mac subdomain resolution issue
+
+
+### ❤️  Thank You
+
+- Jan Hrubes
+- Kepler Vital
+- Leon Tan
+- mraszyk
+
 ## 0.0.2-alpha.5 (2024-08-26)
 
 

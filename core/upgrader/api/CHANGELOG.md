@@ -1,3 +1,19 @@
+## 0.0.2-alpha.5 (2024-10-02)
+
+
+### 🚀 Features
+
+- **station,upgrader:** support large station and upgrader wasm
+
+
+### ❤️  Thank You
+
+- Jan Hrubes
+- Kepler Vital
+- Leon Tan
+- mraszyk
+- olaszakos
+
 ## 0.0.2-alpha.4 (2024-07-04)
 
 

@@ -2,9 +2,10 @@
   <VRow class="py-2">
     <VCol v-if="model.id" cols="12" class="pt-0 pb-0">
       <VTextField
-        v-model="model.id"
+        v-model="model.canisterId"
         name="id"
         :prepend-icon="mdiIdentifier"
+        class="pt-4 pb-2"
         :label="$t('terms.id')"
         variant="plain"
         density="comfortable"
@@ -39,6 +40,7 @@
       <SuggestiveAutocomplete
         v-model="model.labels"
         :icon="mdiLabel"
+        :readonly="isViewMode"
         :items="availableLabels"
         :label="$t('terms.labels')"
         :placeholder="$t('external_canisters.add_new_label')"
@@ -81,7 +83,7 @@
         v-else
         v-model="model.maybe_with_initial_cycles"
         name="initial_cycles"
-        :unit="CyclesUnit.Billion"
+        :unit="CyclesUnit.Trillion"
         :label="$t('external_canisters.initial_cycles')"
       />
     </VCol>

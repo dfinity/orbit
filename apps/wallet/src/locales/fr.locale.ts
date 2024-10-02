@@ -1,6 +1,7 @@
 export default {
   app: {
     title: 'Portefeuille {app}',
+    name: 'Orbit Wallet',
     action_save_failed: "Échec de sauvegarde de l'action, veuillez essayer de nouveau.",
     action_save_success: "Sauvegarde de l'action réussie.",
     session_load_error: 'Échec du chargement votre session, veuillez essayer de nouveau.',
@@ -99,6 +100,7 @@ export default {
     no_data: 'Pas de données disponibles.',
     no_matching_results: 'Pas de résultats correspondants trouvés pour `{search}`.',
     add_new_label: 'Ajouter une nouvelle étiquette: {label}',
+    user_cancel_pending_requests: 'Annuler toutes les demandes en attente de cet usager.',
   },
   alpha_warning: {
     version: 'Ceci est une version alpha.',
@@ -288,6 +290,30 @@ export default {
         title: 'Gérer les informations système',
         request_title: 'Demande de gérer les informations système',
       },
+      createexternalcanister: {
+        title: 'Créer un canister',
+        request_title: 'Demande de création de canister',
+      },
+      changeexternalcanister: {
+        title: 'Changer un canister',
+        request_title: 'Demande de changement de canister',
+      },
+      callexternalcanister: {
+        title: 'Appeler un canister',
+        request_title: 'Demande d appel de canister',
+      },
+      fundexternalcanister: {
+        title: 'Recharger un canister',
+        request_title: 'Demande de rechargement de canister',
+      },
+      configureexternalcanister: {
+        title: 'Configurer un canister',
+        request_title: 'Demande de configuration de canister',
+      },
+      setdisasterrecovery: {
+        title: 'Éditer la sauvegarde',
+        request_title: 'Demande d édition de sauvegarde',
+      },
       unknown: {
         title: 'Inconnu',
         request_title: 'Demande Inconnue',
@@ -424,8 +450,61 @@ export default {
     config_change_approval_policy: 'Changement',
     config_change_approval_policy_hint:
       'Politique qui doit être approuvée pour changer les paramètres.',
+    loading_error: 'Erreur de chargement du canister, veuillez essayer de nouveau.',
+    not_found: 'Canister non trouvé.',
+    not_found_description: 'Le canister que vous cherchez n a pas été trouvé.',
+    ic_settings: 'Paramètres IC',
+    top_up: 'Recharger',
+    configuration: 'Configuration',
+    unlink: 'Dissocier',
+    unlink_title: 'Dissocier le Canister',
+    unlink_soft_delete: 'Gardez le canister sur l ordinateur, supprime seulement sa référence.',
+    perform_call: 'Effectuer un appel',
+    module_hash: 'Module Hash',
+    cycles: 'Cycles',
+    not_controller: 'Pas de contrôleur',
+    install: 'Installer',
+    send_cycles: 'Envoyer des cycles',
+    top_up_hint: 'Montant de cycles à ajouter au canister cible.',
+    add_controller: 'Ajouter un contrôleur',
+    no_controllers: 'Pas de contrôleurs',
+    self_controller: 'Contrôleur de soi',
+    non_orbit_controllers_warning:
+      'Cette configuration ajoute des contrôleurs supplémentaires au canister cible, utilisez avec prudence.',
+    native_settings: {
+      freezing_threshold: 'Seuil de gel',
+      freezing_threshold_hint:
+        'Le nombre de secondes pendant lesquelles le canister sera mis dans un état gelé avant d être nettoyé par le réseau.',
+      controllers: 'Contrôleurs',
+      controllers_hint: 'La liste des principaux qui peuvent contrôler le canister.',
+      memory_allocation: 'Allocation de mémoire',
+      memory_allocation_hint:
+        'La quantité maximale de mémoire que le canister peut utiliser, cela réserve également la mémoire dans le sous-réseau.',
+      compute_allocation: 'Allocation de calcul',
+      compute_allocation_hint: 'Le pourcentage de calcul de sous-réseau réservé pour le canister.',
+      reserved_cycles_limit: 'Limite de cycles réservés',
+      reserved_cycles_limit_hint:
+        'Nombre de cycles que le canister peut allouer, les opérations qui allouent de la mémoire ou du calcul échoueront si la limite est atteinte.',
+    },
+    wasm_module: 'Module WASM',
+    wasm_args: 'Arguments',
+    wasm_args_optional: 'Arguments (optionnel)',
+    wasm_args_invalid_format: 'Format d argument invalide',
+    wasm_args_formats: {
+      hex: 'Hex',
+      candid: 'Candid',
+    },
+    install_mode: {
+      reinstall: 'Réinstaller',
+      upgrade: 'Mettre à jour',
+      install: 'Installer',
+    },
   },
   terms: {
+    more: 'Plus',
+    less: 'Moins',
+    data: 'Données',
+    mode: 'Mode',
     active: 'Actif',
     archived: 'Archivé',
     canisters: 'Canisters',
@@ -593,6 +672,10 @@ export default {
       requiredIntNumber: 'Ce champ doit contenir un nombre entier valide.',
       intNumberRange: 'Le champ {field} doit contenir une valeur valide entre {min} et {max}.',
       validEmail: 'Ce champ doit contenir une adresse email valide.',
+      requiredNumber: 'Ce champ doit contenir un nombre valide.',
+      numberRange: 'Le champ doit contenir une valeur valide entre {min} et {max}.',
+      invalidDecimalPlaces: 'Ce champ doit contenir un maximum de {decimals} décimales.',
+      isHex: 'Ce champ doit contenir une valeur hexadécimale valide.',
     },
   },
   navigation: {

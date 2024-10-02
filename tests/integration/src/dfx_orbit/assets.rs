@@ -49,7 +49,6 @@ fn asset_upload() {
 
     // As admin: Grant the user the call and prepare permissions
     permit_call_operation(&env, &canister_ids);
-    //set_four_eyes_on_call(&env, &canister_ids);
     set_auto_approve(&env, &canister_ids);
     grant_prepare_permission(&env, &canister_ids, asset_canister, dfx_principal);
 
