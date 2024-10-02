@@ -61,8 +61,7 @@ fn asset_upload() {
     );
     let config = DfxOrbitTestConfig {
         asset_canisters,
-        canister_ids: vec![(ASSET_CANISTER_NAME.into(), asset_canister.clone())],
-        ..Default::default()
+        canister_ids: vec![(ASSET_CANISTER_NAME.into(), asset_canister)],
     };
 
     dfx_orbit_test(&mut env, config, async {
@@ -128,8 +127,7 @@ fn asset_validation() {
     );
     let config = DfxOrbitTestConfig {
         asset_canisters,
-        canister_ids: vec![(ASSET_CANISTER_NAME.into(), asset_canister.clone())],
-        ..Default::default()
+        canister_ids: vec![(ASSET_CANISTER_NAME.into(), asset_canister)],
     };
 
     dfx_orbit_test(&mut env, config, async {
@@ -253,5 +251,5 @@ fn grant_prepare_permission(
         execution_method_cycles: None,
     });
 
-    execute_request(&env, WALLET_ADMIN_USER, canister_ids.station, request).unwrap();
+    execute_request(env, WALLET_ADMIN_USER, canister_ids.station, request).unwrap();
 }

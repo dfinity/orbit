@@ -39,7 +39,7 @@ fn canister_call() {
     set_four_eyes_on_call(&env, &canister_ids);
 
     let config = DfxOrbitTestConfig {
-        canister_ids: vec![(String::from("counter"), canister_id.clone())],
+        canister_ids: vec![(String::from("counter"), canister_id)],
         ..Default::default()
     };
 
