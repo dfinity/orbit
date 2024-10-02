@@ -3,8 +3,8 @@ use super::{
     request_policy_rule::{RequestPolicyRule, RequestPolicyRuleInput},
     request_specifier::RequestSpecifier,
     resource::{Resource, ValidationMethodResourceTarget},
-    AccountId, AddressBookEntryId, AddressFormat, AssetId, Blockchain, ChangeMetadata,
-    CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
+    AccountAsset, AccountId, AddressBookEntryId, AddressFormat, AssetId, Blockchain,
+    ChangeMetadata, CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
     ExternalCanisterState, MetadataItem, TokenStandard, UserGroupId, UserId, UserStatus,
 };
 use crate::core::validation::EnsureExternalCanister;
@@ -181,9 +181,52 @@ pub struct EditAccountOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ChangeAssets {
+    ReplaceWith {
+        assets: Vec<AssetId>,
+    },
+    Change {
+        add_assets: Vec<AssetId>,
+        remove_assets: Vec<AssetId>,
+    },
+}
+
+impl ChangeAssets {
+    pub fn apply(&self, assets: &mut Vec<AccountAsset>) {
+        match self {
+            ChangeAssets::ReplaceWith { assets: new_assets } => {
+                *assets = new_assets
+                    .iter()
+                    .map(|asset_id| AccountAsset {
+                        asset_id: *asset_id,
+                        balance: None,
+                    })
+                    .collect();
+            }
+            ChangeAssets::Change {
+                add_assets,
+                remove_assets,
+            } => {
+                for asset_id in add_assets {
+                    if !assets.iter().any(|a| a.asset_id == *asset_id) {
+                        assets.push(AccountAsset {
+                            asset_id: *asset_id,
+                            balance: None,
+                        });
+                    }
+                }
+
+                assets.retain(|a| !remove_assets.contains(&a.asset_id));
+            }
+        }
+    }
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccountOperationInput {
     pub account_id: AccountId,
-    // todo: edit assets
+    pub change_assets: Option<ChangeAssets>,
     pub name: Option<String>,
     pub read_permission: Option<Allow>,
     pub configs_permission: Option<Allow>,

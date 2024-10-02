@@ -161,6 +161,18 @@ pub mod asset_test_utils {
             metadata: Metadata::default(),
         }
     }
+
+    pub fn mock_asset_b() -> Asset {
+        Asset {
+            id: [1; 16],
+            blockchain: Blockchain::InternetComputer,
+            standards: BTreeSet::from([TokenStandard::InternetComputerNative]),
+            symbol: "TEST".to_string(),
+            name: "Other Test Asset".to_string(),
+            decimals: 8,
+            metadata: Metadata::default(),
+        }
+    }
 }
 
 #[cfg(test)]

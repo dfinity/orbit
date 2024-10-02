@@ -150,6 +150,10 @@ impl From<EditAccountOperation> for EditAccountOperationDTO {
                     .hyphenated()
                     .to_string(),
                 name: operation.input.name,
+                change_assets: operation
+                    .input
+                    .change_assets
+                    .map(|change_assets| change_assets.into()),
                 read_permission: operation.input.read_permission.map(|policy| policy.into()),
                 transfer_permission: operation
                     .input
@@ -178,6 +182,9 @@ impl From<station_api::EditAccountOperationInput> for EditAccountOperationInput 
             account_id: *HelperMapper::to_uuid(input.account_id)
                 .expect("Invalid account id")
                 .as_bytes(),
+            change_assets: input
+                .change_assets
+                .map(|change_assets| change_assets.into()),
             name: input.name,
             read_permission: input.read_permission.map(|policy| policy.into()),
             transfer_permission: input.transfer_permission.map(|policy| policy.into()),

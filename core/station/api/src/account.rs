@@ -36,10 +36,22 @@ pub struct AccountAddressDTO {
     pub format: String,
 }
 
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub enum ChangeAssets {
+    ReplaceWith {
+        assets: Vec<UuidDTO>,
+    },
+    Change {
+        add_assets: Vec<UuidDTO>,
+        remove_assets: Vec<UuidDTO>,
+    },
+}
+
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct EditAccountOperationInput {
     pub account_id: UuidDTO,
     pub name: Option<String>,
+    pub change_assets: Option<ChangeAssets>,
     pub read_permission: Option<AllowDTO>,
     pub configs_permission: Option<AllowDTO>,
     pub transfer_permission: Option<AllowDTO>,

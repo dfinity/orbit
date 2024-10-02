@@ -1,7 +1,7 @@
 use super::request_policy_rule::{RequestEvaluationResult, RequestPolicyRuleInput};
 use super::{
-    DisplayUser, EvaluationStatus, RequestApproval, RequestApprovalStatus, RequestOperation,
-    RequestStatus, UserId, UserKey,
+    ChangeAssets, DisplayUser, EvaluationStatus, RequestApproval, RequestApprovalStatus,
+    RequestOperation, RequestStatus, UserId, UserKey,
 };
 use crate::core::evaluation::{
     Evaluate, REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR, REQUEST_POLICY_RULE_EVALUATOR,
@@ -175,6 +175,19 @@ fn validate_request_operation_foreign_keys(
                 &op.input.transfer_request_policy
             {
                 policy_rule.validate()?;
+            }
+
+            if let Some(ChangeAssets::ReplaceWith { assets }) = &op.input.change_assets {
+                EnsureAsset::id_list_exists(assets)?;
+            }
+
+            if let Some(ChangeAssets::Change {
+                add_assets,
+                remove_assets,
+            }) = &op.input.change_assets
+            {
+                EnsureAsset::id_list_exists(add_assets)?;
+                EnsureAsset::id_list_exists(remove_assets)?;
             }
         }
         RequestOperation::AddAddressBookEntry(_) => (),
@@ -420,9 +433,11 @@ mod tests {
     use crate::core::validation::disable_mock_resource_validation;
     use crate::models::permission::Allow;
     use crate::models::{
-        AddAccountOperationInput, AddAssetOperationInput, AddUserOperation, AddUserOperationInput,
-        Blockchain, Metadata, TokenStandard, TransferOperation, TransferOperationInput,
+        Account, AccountKey, AddAccountOperationInput, AddAssetOperationInput, AddUserOperation,
+        AddUserOperationInput, Blockchain, Metadata, TokenStandard, TransferOperation,
+        TransferOperationInput,
     };
+    use crate::repositories::ACCOUNT_REPOSITORY;
     use crate::services::{AccountService, AssetService};
 
     use super::request_test_utils::mock_request;
@@ -630,6 +645,7 @@ mod tests {
             crate::models::EditAccountOperation {
                 input: crate::models::EditAccountOperationInput {
                     account_id: [0; 16],
+                    change_assets: None,
                     read_permission: None,
                     configs_permission: None,
                     transfer_permission: None,
@@ -640,6 +656,41 @@ mod tests {
             },
         ))
         .expect_err("Invalid account id should fail");
+
+        ACCOUNT_REPOSITORY.insert(
+            AccountKey { id: [0; 16] },
+            Account {
+                id: [0; 16],
+                name: "a".to_owned(),
+                seed: [0; 16],
+                assets: vec![],
+                addresses: vec![],
+                metadata: Metadata::default(),
+                transfer_request_policy_id: None,
+                configs_request_policy_id: None,
+                last_modification_timestamp: 0,
+            },
+        );
+
+        validate_request_operation_foreign_keys(&RequestOperation::EditAccount(
+            crate::models::EditAccountOperation {
+                input: crate::models::EditAccountOperationInput {
+                    account_id: [0; 16],
+                    change_assets: Some(ChangeAssets::ReplaceWith {
+                        assets: vec![[0; 16]],
+                    }),
+                    read_permission: None,
+                    configs_permission: None,
+                    transfer_permission: None,
+                    configs_request_policy: None,
+                    transfer_request_policy: None,
+                    name: None,
+                },
+            },
+        ))
+        .expect_err("Invalid asset id should fail");
+
+        ACCOUNT_REPOSITORY.clear();
 
         validate_request_operation_foreign_keys(&RequestOperation::EditAddressBookEntry(
             crate::models::EditAddressBookEntryOperation {

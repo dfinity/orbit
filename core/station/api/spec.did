@@ -359,12 +359,27 @@ type TransferOperation = record {
   fee : opt nat;
 };
 
+// Mutate the list of assets.
+type ChangeAssets = variant {
+  // Replace all current assets with the specified list.
+  ReplaceWith : record {
+    assets : vec UUID;
+  };
+  // Change the list of assets by adding and removing assets.
+  Change : record {
+    add_assets : vec UUID;
+    remove_assets : vec UUID;
+  };
+};
+
 // Input type for editing an account through a request.
 type EditAccountOperationInput = record {
   // The account id that will be edited.
   account_id : UUID;
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
+  // Mutate the list of assets.
+  change_assets : opt ChangeAssets;
   // Who can read the account information.
   read_permission : opt Allow;
   // Who can request configuration changes to the account.

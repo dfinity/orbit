@@ -216,6 +216,15 @@ impl<'a> StationDataGenerator<'a> {
                     format!("{}_edited", account.name),
                 );
                 self.increment_request_count();
+
+                account::edit_account_assets(
+                    self.env,
+                    self.station_canister_id,
+                    self.requester,
+                    account.id.clone(),
+                    station_api::ChangeAssets::ReplaceWith { assets: vec![] },
+                );
+                self.increment_request_count();
             }
         }
 

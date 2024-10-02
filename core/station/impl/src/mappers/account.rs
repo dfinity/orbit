@@ -5,7 +5,7 @@ use crate::{
     errors::MapperError,
     models::{
         Account, AccountAddress, AccountAsset, AccountBalance, AccountCallerPrivileges, AccountId,
-        AccountSeed, AddAccountOperationInput, AddressFormat,
+        AccountSeed, AddAccountOperationInput, AddressFormat, ChangeAssets,
     },
     repositories::{request_policy::REQUEST_POLICY_REPOSITORY, ASSET_REPOSITORY},
 };
@@ -45,21 +45,6 @@ impl AccountMapper {
                 })
                 .collect(),
 
-            // decimals: account.decimals,
-            // balance: match account.balance {
-            //     Some(balance) => Some(AccountBalanceInfoDTO {
-            //         balance: balance.balance,
-            //         decimals: account.decimals,
-            //         last_update_timestamp: timestamp_to_rfc3339(
-            //             &balance.last_modification_timestamp,
-            //         ),
-            //     }),
-            //     None => None,
-            // },
-            // symbol: account.symbol,
-            // address: account.address,
-            // standard: account.standard.to_string(),
-            // blockchain: account.blockchain.to_string(),
             metadata: account.metadata.into_vec_dto(),
             transfer_request_policy: account.transfer_request_policy_id.and_then(|policy_id| {
                 REQUEST_POLICY_REPOSITORY
@@ -180,26 +165,54 @@ impl From<station_api::AccountAddressDTO> for AccountAddress {
     }
 }
 
-// impl From<AccountAsset> for station_api::AccountAssetDTO {
-//     fn from(account_asset: AccountAsset) -> Self {
-//         Self {
-//             asset_id: Uuid::from_bytes(account_asset.asset_id)
-//                 .hyphenated()
-//                 .to_string(),
-//             balance: account_asset.balance.map(|b| AccountMapper::to_balance_dto(b, account_asset., account_id)
-//             data: account_asset.data.into_iter().map(|d| d.into()).collect(),
-//         }
-//     }
-// }
+impl From<ChangeAssets> for station_api::ChangeAssets {
+    fn from(change_assets: ChangeAssets) -> Self {
+        match change_assets {
+            ChangeAssets::ReplaceWith { assets } => station_api::ChangeAssets::ReplaceWith {
+                assets: assets
+                    .iter()
+                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                    .collect(),
+            },
+            ChangeAssets::Change {
+                add_assets,
+                remove_assets,
+            } => station_api::ChangeAssets::Change {
+                add_assets: add_assets
+                    .iter()
+                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                    .collect(),
+                remove_assets: remove_assets
+                    .iter()
+                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                    .collect(),
+            },
+        }
+    }
+}
 
-// impl From<station_api::AccountAssetDTO> for AccountAsset {
-//     fn from(asset: station_api::AccountAssetDTO) -> Self {
-//         Self {
-//             asset_id: *Uuid::from_str(asset.asset_id.as_str())
-//                 .expect("Failed to convert string to Uuid")
-//                 .as_bytes(),
-//             balance: asset.balance.map(|b| b.into()),
-//             data: asset.data.into_iter().map(|d| d.into()).collect(),
-//         }
-//     }
-// }
+impl From<station_api::ChangeAssets> for ChangeAssets {
+    fn from(change_assets: station_api::ChangeAssets) -> Self {
+        match change_assets {
+            station_api::ChangeAssets::ReplaceWith { assets } => ChangeAssets::ReplaceWith {
+                assets: assets
+                    .iter()
+                    .map(|id| *Uuid::from_str(id).expect("Invalid asset ID").as_bytes())
+                    .collect(),
+            },
+            station_api::ChangeAssets::Change {
+                add_assets,
+                remove_assets,
+            } => ChangeAssets::Change {
+                add_assets: add_assets
+                    .iter()
+                    .map(|id| *Uuid::from_str(id).expect("Invalid asset ID").as_bytes())
+                    .collect(),
+                remove_assets: remove_assets
+                    .iter()
+                    .map(|id| *Uuid::from_str(id).expect("Invalid asset ID").as_bytes())
+                    .collect(),
+            },
+        }
+    }
+}

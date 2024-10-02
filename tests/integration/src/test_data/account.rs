@@ -2,6 +2,7 @@ use super::next_unique_id;
 use crate::utils::{get_icp_asset, submit_request, wait_for_request};
 use candid::Principal;
 use pocket_ic::PocketIc;
+use station_api::ChangeAssets;
 
 pub fn add_account(
     env: &PocketIc,
@@ -67,6 +68,34 @@ pub fn edit_account_name(
         station_api::RequestOperationInput::EditAccount(station_api::EditAccountOperationInput {
             account_id,
             name: Some(name),
+            change_assets: None,
+            configs_permission: None,
+            read_permission: None,
+            transfer_permission: None,
+            configs_request_policy: None,
+            transfer_request_policy: None,
+        }),
+    );
+
+    wait_for_request(env, requester, station_canister_id, edit_account_request)
+        .expect("Failed to edit account");
+}
+
+pub fn edit_account_assets(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+    account_id: station_api::UuidDTO,
+    change_assets: ChangeAssets,
+) {
+    let edit_account_request = submit_request(
+        env,
+        requester,
+        station_canister_id,
+        station_api::RequestOperationInput::EditAccount(station_api::EditAccountOperationInput {
+            account_id,
+            name: None,
+            change_assets: Some(change_assets),
             configs_permission: None,
             read_permission: None,
             transfer_permission: None,

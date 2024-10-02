@@ -15,8 +15,9 @@ use crate::{
         request_specifier::RequestSpecifier,
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
-        AddRequestPolicyOperationInput, Blockchain, CycleObtainStrategy, EditAccountOperationInput,
-        EditPermissionOperationInput, MetadataItem, StandardOperation, TokenStandard,
+        AddRequestPolicyOperationInput, AddressFormat, Blockchain, CycleObtainStrategy,
+        EditAccountOperationInput, EditPermissionOperationInput, MetadataItem, StandardOperation,
+        TokenStandard,
     },
     repositories::{
         AccountRepository, AccountWhereClause, AssetRepository, ACCOUNT_REPOSITORY,
@@ -323,6 +324,30 @@ impl AccountService {
             }
         }
 
+        if let Some(change_assets) = input.change_assets {
+            change_assets.apply(&mut account.assets);
+
+            // get all supported address formats of the account
+            let current_address_formats: Vec<AddressFormat> = account
+                .assets
+                .iter()
+                // get all assets
+                .filter_map(|account_asset| self.asset_repository.get(&account_asset.asset_id))
+                .flat_map(|assets| {
+                    assets
+                        .standards
+                        .into_iter()
+                        // of each standard of each asset, get all supported address formats
+                        .flat_map(|standard| standard.get_info().address_formats)
+                })
+                .collect();
+
+            // remove addresses which don't belong to any account_assets any more
+            account.addresses.retain(|account_address| {
+                current_address_formats.contains(&account_address.format)
+            });
+        }
+
         if let Some(RequestPolicyRuleInput::Set(criteria)) = &input.transfer_request_policy {
             criteria.validate()?;
         };
@@ -517,16 +542,20 @@ mod tests {
     use crate::{
         core::{test_utils, validation::disable_mock_resource_validation, CallContext},
         models::{
-            account_test_utils::mock_account, asset_test_utils::mock_asset, permission::Allow,
-            request_policy_rule::RequestPolicyRule, request_specifier::UserSpecifier,
-            user_test_utils::mock_user, AddAccountOperation, AddAccountOperationInput, Metadata,
-            User,
+            account_test_utils::mock_account,
+            asset_test_utils::{mock_asset, mock_asset_b},
+            permission::Allow,
+            request_policy_rule::RequestPolicyRule,
+            request_specifier::UserSpecifier,
+            user_test_utils::mock_user,
+            AddAccountOperation, AddAccountOperationInput, ChangeAssets, Metadata, User,
         },
         repositories::UserRepository,
     };
 
     struct TestContext {
         repository: AccountRepository,
+        asset_repository: AssetRepository,
         service: AccountService,
         caller_user: User,
     }
@@ -543,6 +572,7 @@ mod tests {
         TestContext {
             repository: AccountRepository::default(),
             service: AccountService::default(),
+            asset_repository: AssetRepository::default(),
             caller_user: user,
         }
     }
@@ -733,6 +763,7 @@ mod tests {
         let operation = EditAccountOperationInput {
             account_id: account.id,
             name: Some("test_edit".to_string()),
+            change_assets: None,
             read_permission: None,
             transfer_permission: None,
             configs_permission: None,
@@ -750,6 +781,89 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn edit_account_assets() {
+        let ctx = setup();
+
+        let asset_a = mock_asset();
+        ctx.asset_repository.insert(asset_a.key(), asset_a.clone());
+
+        let asset_b = mock_asset_b();
+        ctx.asset_repository.insert(asset_b.key(), asset_b.clone());
+
+        let mut account = mock_account();
+        account.assets = vec![];
+        account.addresses = vec![];
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let operation = EditAccountOperationInput {
+            account_id: account.id,
+            name: None,
+            change_assets: Some(ChangeAssets::Change {
+                add_assets: vec![asset_a.id],
+                remove_assets: vec![],
+            }),
+            read_permission: None,
+            transfer_permission: None,
+            configs_permission: None,
+            transfer_request_policy: None,
+            configs_request_policy: None,
+        };
+
+        let updated_account = ctx
+            .service
+            .edit_account(operation)
+            .await
+            .expect("edit account should be successful");
+        assert_eq!(updated_account.assets.len(), 1);
+        assert_eq!(updated_account.assets[0].asset_id, asset_a.id);
+
+        let operation = EditAccountOperationInput {
+            account_id: account.id,
+            name: None,
+            change_assets: Some(ChangeAssets::Change {
+                add_assets: vec![asset_b.id],
+                remove_assets: vec![asset_a.id],
+            }),
+            read_permission: None,
+            transfer_permission: None,
+            configs_permission: None,
+            transfer_request_policy: None,
+            configs_request_policy: None,
+        };
+
+        let updated_account = ctx
+            .service
+            .edit_account(operation)
+            .await
+            .expect("edit account should be successful");
+        assert_eq!(updated_account.assets.len(), 1);
+        assert_eq!(updated_account.assets[0].asset_id, asset_b.id);
+
+        let operation = EditAccountOperationInput {
+            account_id: account.id,
+            name: None,
+            change_assets: Some(ChangeAssets::ReplaceWith {
+                assets: vec![asset_a.id, asset_b.id],
+            }),
+            read_permission: None,
+            transfer_permission: None,
+            configs_permission: None,
+            transfer_request_policy: None,
+            configs_request_policy: None,
+        };
+
+        let updated_account = ctx
+            .service
+            .edit_account(operation)
+            .await
+            .expect("edit account should be successful");
+
+        assert_eq!(updated_account.assets.len(), 2);
+        assert_eq!(updated_account.assets[0].asset_id, asset_a.id);
+        assert_eq!(updated_account.assets[1].asset_id, asset_b.id);
+    }
+
+    #[tokio::test]
     async fn edit_account_with_duplicate_name_should_fail() {
         let ctx = setup();
         let mut account = mock_account();
@@ -763,6 +877,7 @@ mod tests {
         let operation = EditAccountOperationInput {
             account_id: account.id,
             name: Some("bar".to_string()),
+            change_assets: None,
             read_permission: None,
             transfer_permission: None,
             configs_permission: None,
@@ -791,6 +906,7 @@ mod tests {
         let base_input = EditAccountOperationInput {
             account_id: account.id,
             name: Some("test_edit".to_string()),
+            change_assets: None,
             read_permission: None,
             transfer_permission: None,
             configs_permission: None,
