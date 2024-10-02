@@ -43,6 +43,9 @@ impl From<ExternalCanisterValidationError> for RequestPolicyError {
                     info: format!("Invalid external canister {}", principal),
                 }
             }
+            ExternalCanisterValidationError::ValidationError { info } => {
+                RequestPolicyError::ValidationError { info }
+            }
         }
     }
 }

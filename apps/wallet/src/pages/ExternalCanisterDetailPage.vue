@@ -200,7 +200,7 @@
                             color="default"
                             variant="tonal"
                             class="ml-1 px-2"
-                            :disabled="canisterDetails.moduleHash.loading"
+                            :disabled="!canisterDetails.status.value"
                             :append-icon="mdiDatabaseCog"
                             @click="dialogs.install = true"
                           >

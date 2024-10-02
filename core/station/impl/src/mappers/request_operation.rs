@@ -23,8 +23,10 @@ use crate::{
         EditPermissionOperationInput, EditRequestPolicyOperation, EditRequestPolicyOperationInput,
         EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
         ExternalCanisterCallPermission, ExternalCanisterCallRequestPolicyRuleInput,
-        ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsInput,
-        ExternalCanisterRequestPoliciesInput, FundExternalCanisterOperation,
+        ExternalCanisterChangeCallPermissionsInput, ExternalCanisterChangeCallRequestPoliciesInput,
+        ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
+        ExternalCanisterPermissionsUpdateInput, ExternalCanisterRequestPoliciesCreateInput,
+        ExternalCanisterRequestPoliciesUpdateInput, FundExternalCanisterOperation,
         ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
         RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
@@ -578,6 +580,76 @@ impl From<DefiniteCanisterSettingsInput> for station_api::DefiniteCanisterSettin
     }
 }
 
+impl From<station_api::ExternalCanisterRequestPoliciesUpdateInput>
+    for ExternalCanisterRequestPoliciesUpdateInput
+{
+    fn from(
+        input: station_api::ExternalCanisterRequestPoliciesUpdateInput,
+    ) -> ExternalCanisterRequestPoliciesUpdateInput {
+        ExternalCanisterRequestPoliciesUpdateInput {
+            change: input
+                .change
+                .map(|change| change.into_iter().map(Into::into).collect()),
+            calls: input.calls.map(Into::into),
+        }
+    }
+}
+
+impl From<ExternalCanisterRequestPoliciesUpdateInput>
+    for station_api::ExternalCanisterRequestPoliciesUpdateInput
+{
+    fn from(
+        input: ExternalCanisterRequestPoliciesUpdateInput,
+    ) -> station_api::ExternalCanisterRequestPoliciesUpdateInput {
+        station_api::ExternalCanisterRequestPoliciesUpdateInput {
+            change: input
+                .change
+                .map(|change| change.into_iter().map(Into::into).collect()),
+            calls: input.calls.map(Into::into),
+        }
+    }
+}
+
+impl From<station_api::ExternalCanisterChangeCallRequestPoliciesInput>
+    for ExternalCanisterChangeCallRequestPoliciesInput
+{
+    fn from(
+        input: station_api::ExternalCanisterChangeCallRequestPoliciesInput,
+    ) -> ExternalCanisterChangeCallRequestPoliciesInput {
+        match input {
+            station_api::ExternalCanisterChangeCallRequestPoliciesInput::ReplaceAllBy(input) => {
+                ExternalCanisterChangeCallRequestPoliciesInput::ReplaceAllBy(input.into_iter().map(Into::into).collect())
+            }
+            station_api::ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionMethods(input) => {
+                ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionMethods(input.into_iter().map(Into::into).collect())
+            }
+            station_api::ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids) => {
+                ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids.into_iter().map(|id| *HelperMapper::to_uuid(id).expect("Invalid policy id").as_bytes()).collect())
+            }
+        }
+    }
+}
+
+impl From<ExternalCanisterChangeCallRequestPoliciesInput>
+    for station_api::ExternalCanisterChangeCallRequestPoliciesInput
+{
+    fn from(
+        input: ExternalCanisterChangeCallRequestPoliciesInput,
+    ) -> station_api::ExternalCanisterChangeCallRequestPoliciesInput {
+        match input {
+            ExternalCanisterChangeCallRequestPoliciesInput::ReplaceAllBy(input) => {
+                station_api::ExternalCanisterChangeCallRequestPoliciesInput::ReplaceAllBy(input.into_iter().map(Into::into).collect())
+            }
+            ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionMethods(input) => {
+                station_api::ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionMethods(input.into_iter().map(Into::into).collect())
+            }
+            ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids) => {
+                station_api::ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids.into_iter().map(|id| Uuid::from_bytes(id).hyphenated().to_string()).collect())
+            }
+        }
+    }
+}
+
 impl From<station_api::ExternalCanisterCallPermissionDTO> for ExternalCanisterCallPermission {
     fn from(
         input: station_api::ExternalCanisterCallPermissionDTO,
@@ -602,11 +674,13 @@ impl From<ExternalCanisterCallPermission> for station_api::ExternalCanisterCallP
     }
 }
 
-impl From<station_api::ExternalCanisterPermissionsInput> for ExternalCanisterPermissionsInput {
+impl From<station_api::ExternalCanisterPermissionsCreateInput>
+    for ExternalCanisterPermissionsCreateInput
+{
     fn from(
-        input: station_api::ExternalCanisterPermissionsInput,
-    ) -> ExternalCanisterPermissionsInput {
-        ExternalCanisterPermissionsInput {
+        input: station_api::ExternalCanisterPermissionsCreateInput,
+    ) -> ExternalCanisterPermissionsCreateInput {
+        ExternalCanisterPermissionsCreateInput {
             read: input.read.into(),
             change: input.change.into(),
             calls: input.calls.into_iter().map(Into::into).collect(),
@@ -614,14 +688,96 @@ impl From<station_api::ExternalCanisterPermissionsInput> for ExternalCanisterPer
     }
 }
 
-impl From<ExternalCanisterPermissionsInput> for station_api::ExternalCanisterPermissionsInput {
+impl From<ExternalCanisterPermissionsCreateInput>
+    for station_api::ExternalCanisterPermissionsCreateInput
+{
     fn from(
-        input: ExternalCanisterPermissionsInput,
-    ) -> station_api::ExternalCanisterPermissionsInput {
-        station_api::ExternalCanisterPermissionsInput {
+        input: ExternalCanisterPermissionsCreateInput,
+    ) -> station_api::ExternalCanisterPermissionsCreateInput {
+        station_api::ExternalCanisterPermissionsCreateInput {
             read: input.read.into(),
             change: input.change.into(),
             calls: input.calls.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<station_api::ExternalCanisterPermissionsUpdateInput>
+    for ExternalCanisterPermissionsUpdateInput
+{
+    fn from(
+        input: station_api::ExternalCanisterPermissionsUpdateInput,
+    ) -> ExternalCanisterPermissionsUpdateInput {
+        ExternalCanisterPermissionsUpdateInput {
+            read: input.read.map(|read| read.into()),
+            change: input.change.map(|change| change.into()),
+            calls: input.calls.map(Into::into),
+        }
+    }
+}
+
+impl From<ExternalCanisterPermissionsUpdateInput>
+    for station_api::ExternalCanisterPermissionsUpdateInput
+{
+    fn from(
+        input: ExternalCanisterPermissionsUpdateInput,
+    ) -> station_api::ExternalCanisterPermissionsUpdateInput {
+        station_api::ExternalCanisterPermissionsUpdateInput {
+            read: input.read.map(|read| read.into()),
+            change: input.change.map(|change| change.into()),
+            calls: input.calls.map(Into::into),
+        }
+    }
+}
+
+impl From<station_api::ExternalCanisterChangeCallPermissionsInput>
+    for ExternalCanisterChangeCallPermissionsInput
+{
+    fn from(
+        input: station_api::ExternalCanisterChangeCallPermissionsInput,
+    ) -> ExternalCanisterChangeCallPermissionsInput {
+        match input {
+            station_api::ExternalCanisterChangeCallPermissionsInput::ReplaceAllBy(input) => {
+                ExternalCanisterChangeCallPermissionsInput::ReplaceAllBy(
+                    input.into_iter().map(Into::into).collect(),
+                )
+            }
+            station_api::ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
+                input,
+            ) => ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
+                input.into_iter().map(Into::into).collect(),
+            ),
+            station_api::ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
+                ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(
+                    methods.into_iter().map(Into::into).collect(),
+                )
+            }
+        }
+    }
+}
+
+impl From<ExternalCanisterChangeCallPermissionsInput>
+    for station_api::ExternalCanisterChangeCallPermissionsInput
+{
+    fn from(
+        input: ExternalCanisterChangeCallPermissionsInput,
+    ) -> station_api::ExternalCanisterChangeCallPermissionsInput {
+        match input {
+            ExternalCanisterChangeCallPermissionsInput::ReplaceAllBy(input) => {
+                station_api::ExternalCanisterChangeCallPermissionsInput::ReplaceAllBy(
+                    input.into_iter().map(Into::into).collect(),
+                )
+            }
+            ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(input) => {
+                station_api::ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
+                    input.into_iter().map(Into::into).collect(),
+                )
+            }
+            ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
+                station_api::ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(
+                    methods.into_iter().map(Into::into).collect(),
+                )
+            }
         }
     }
 }
@@ -694,26 +850,26 @@ impl From<ExternalCanisterChangeRequestPolicyRuleInput>
     }
 }
 
-impl From<station_api::ExternalCanisterRequestPoliciesInput>
-    for ExternalCanisterRequestPoliciesInput
+impl From<station_api::ExternalCanisterRequestPoliciesCreateInput>
+    for ExternalCanisterRequestPoliciesCreateInput
 {
     fn from(
-        input: station_api::ExternalCanisterRequestPoliciesInput,
-    ) -> ExternalCanisterRequestPoliciesInput {
-        ExternalCanisterRequestPoliciesInput {
+        input: station_api::ExternalCanisterRequestPoliciesCreateInput,
+    ) -> ExternalCanisterRequestPoliciesCreateInput {
+        ExternalCanisterRequestPoliciesCreateInput {
             change: input.change.into_iter().map(Into::into).collect(),
             calls: input.calls.into_iter().map(Into::into).collect(),
         }
     }
 }
 
-impl From<ExternalCanisterRequestPoliciesInput>
-    for station_api::ExternalCanisterRequestPoliciesInput
+impl From<ExternalCanisterRequestPoliciesCreateInput>
+    for station_api::ExternalCanisterRequestPoliciesCreateInput
 {
     fn from(
-        input: ExternalCanisterRequestPoliciesInput,
-    ) -> station_api::ExternalCanisterRequestPoliciesInput {
-        station_api::ExternalCanisterRequestPoliciesInput {
+        input: ExternalCanisterRequestPoliciesCreateInput,
+    ) -> station_api::ExternalCanisterRequestPoliciesCreateInput {
+        station_api::ExternalCanisterRequestPoliciesCreateInput {
             change: input.change.into_iter().map(Into::into).collect(),
             calls: input.calls.into_iter().map(Into::into).collect(),
         }
