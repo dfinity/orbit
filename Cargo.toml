@@ -40,7 +40,7 @@ cap-std = "3.1.0"
 ciborium = "0.2.2"
 clap = { version = "4.5.7", features = ["derive"] }
 dateparser = "0.2"
-dfx-core = { git = "https://github.com/dfinity/sdk.git", tag = "0.22.0" }
+dfx-core = { git = "https://github.com/dfinity/sdk.git", rev = "bb5f8b58afa94b1950f5e1a750e0491457ad88d1" }
 flate2 = "1.0"
 convert_case = "0.6"
 futures = "0.3"
