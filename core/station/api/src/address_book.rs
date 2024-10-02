@@ -6,6 +6,7 @@ pub struct AddressBookEntryDTO {
     pub id: UuidDTO,
     pub address_owner: String,
     pub address: String,
+    pub address_format: String,
     pub blockchain: String,
     pub labels: Vec<String>,
     pub metadata: Vec<MetadataDTO>,
