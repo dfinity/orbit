@@ -328,7 +328,8 @@ mod tests {
     #[test]
     fn test_find_external_canister_call_policies_by_execution_method() {
         let repository = RequestPolicyResourceIndexRepository::default();
-        for i in 0..10 {
+        let mut expected_method_ids = Vec::new();
+        for i in 0..20 {
             let index = RequestPolicyResourceIndex {
                 resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
                     CallExternalCanisterResourceTarget {
@@ -338,20 +339,36 @@ mod tests {
                                 method_name: format!("method_{}", i),
                             },
                         ),
-                        validation_method: ValidationMethodResourceTarget::No,
+                        validation_method: if i % 2 == 0 {
+                            ValidationMethodResourceTarget::No
+                        } else {
+                            ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
+                                canister_id: Principal::management_canister(),
+                                method_name: format!("validation_method_{}", i),
+                            })
+                        },
                     },
                 )),
                 policy_id: [i; 16],
             };
 
             repository.insert(index);
+
+            if i % 2 == 0 {
+                expected_method_ids.push([i; 16]);
+            }
         }
 
-        let policies = repository.find_external_canister_call_policies_by_execution_method(
-            &Principal::management_canister(),
-            &"method_1".to_string(),
-        );
+        expected_method_ids.reverse();
 
-        assert_eq!(policies.len(), 1);
+        for i in (0..20).step_by(2) {
+            let policies = repository.find_external_canister_call_policies_by_execution_method(
+                &Principal::management_canister(),
+                &format!("method_{}", i),
+            );
+
+            assert_eq!(policies.len(), 1);
+            assert_eq!(policies[0], expected_method_ids.pop().unwrap());
+        }
     }
 }

@@ -1,7 +1,7 @@
 use super::request_policy_rule::{RequestEvaluationResult, RequestPolicyRuleInput};
 use super::{
-    DisplayUser, EvaluationStatus, RequestApproval, RequestApprovalStatus, RequestOperation,
-    RequestStatus, UserId, UserKey,
+    ConfigureExternalCanisterOperationKind, DisplayUser, EvaluationStatus, RequestApproval,
+    RequestApprovalStatus, RequestOperation, RequestStatus, UserId, UserKey,
 };
 use crate::core::evaluation::{
     Evaluate, REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR, REQUEST_POLICY_RULE_EVALUATOR,
@@ -20,7 +20,7 @@ use crate::errors::{EvaluateError, RequestError, ValidationError};
 use crate::models::resource::{ExecutionMethodResourceTarget, ValidationMethodResourceTarget};
 use crate::repositories::USER_REPOSITORY;
 use candid::{CandidType, Deserialize};
-use orbit_essentials::model::ModelKey;
+use orbit_essentials::model::{ContextualModel, ModelKey};
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
 use orbit_essentials::{
@@ -214,9 +214,19 @@ fn validate_request_operation_foreign_keys(
         }
         RequestOperation::SystemUpgrade(_) => (),
         RequestOperation::ChangeExternalCanister(_) => (),
-        RequestOperation::ConfigureExternalCanister(_) => (),
+        RequestOperation::ConfigureExternalCanister(op) => {
+            let canister_id = op.canister_id;
+            if let ConfigureExternalCanisterOperationKind::Settings(settings) = &op.kind {
+                if let Some(updated_request_policies) = &settings.request_policies {
+                    ContextualModel::new(updated_request_policies.clone(), canister_id)
+                        .validate()?;
+                }
+            }
+        }
         RequestOperation::FundExternalCanister(_) => (),
-        RequestOperation::CreateExternalCanister(_) => (),
+        RequestOperation::CreateExternalCanister(op) => {
+            op.input.validate()?;
+        }
         RequestOperation::CallExternalCanister(op) => {
             let validation_method_target: ValidationMethodResourceTarget =
                 op.input.validation_method.clone().into();
