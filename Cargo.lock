@@ -838,15 +838,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1462739cb27611015575c0c11df5df7601141071f07518d56fcc1be504cbec97"
 
 [[package]]
-name = "cmake"
-version = "0.1.51"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb1e43aa7fd152b1f968787f7dbcdeb306d1867ff373c69955211876c053f91a"
-dependencies = [
- "cc",
-]
-
-[[package]]
 name = "codespan-reporting"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1162,50 +1153,7 @@ checksum = "339544cc9e2c4dc3fc7149fd630c5f22263a4fdf18a98afd0075784968b5cf00"
 [[package]]
 name = "dfx-core"
 version = "0.0.1"
-source = "git+https://github.com/dfinity/sdk.git?tag=0.22.0#d0c8be188d1a19c1908f148e3bc5331b62de780a"
-dependencies = [
- "aes-gcm",
- "argon2",
- "backoff",
- "bip32",
- "byte-unit",
- "bytes",
- "candid",
- "clap",
- "dialoguer",
- "directories-next",
- "dunce",
- "flate2",
- "handlebars",
- "hex",
- "humantime-serde",
- "ic-agent",
- "ic-identity-hsm",
- "ic-utils",
- "k256 0.11.6",
- "keyring",
- "lazy_static",
- "reqwest",
- "ring 0.16.20",
- "schemars",
- "sec1 0.3.0",
- "semver",
- "serde",
- "serde_json",
- "sha2 0.10.8",
- "slog",
- "tar",
- "tempfile",
- "thiserror",
- "time",
- "tiny-bip39",
- "url",
-]
-
-[[package]]
-name = "dfx-core"
-version = "0.0.1"
-source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
+source = "git+https://github.com/dfinity/sdk.git?rev=bb5f8b58afa94b1950f5e1a750e0491457ad88d1#bb5f8b58afa94b1950f5e1a750e0491457ad88d1"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -1256,7 +1204,7 @@ dependencies = [
  "ciborium",
  "clap",
  "dateparser",
- "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?tag=0.22.0)",
+ "dfx-core",
  "hex",
  "ic-agent",
  "ic-asset",
@@ -1595,7 +1543,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "324a1be68054ef05ad64b861cc9eaf1d623d2d8cb25b4bf2cb9cdd902b4bf253"
 dependencies = [
  "crc32fast",
- "libz-ng-sys",
  "miniz_oxide 0.8.0",
 ]
 
@@ -2144,13 +2091,13 @@ dependencies = [
 [[package]]
 name = "ic-asset"
 version = "0.20.0"
-source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
+source = "git+https://github.com/dfinity/sdk.git?rev=bb5f8b58afa94b1950f5e1a750e0491457ad88d1#bb5f8b58afa94b1950f5e1a750e0491457ad88d1"
 dependencies = [
  "backoff",
  "brotli",
  "candid",
  "derivative",
- "dfx-core 0.0.1 (git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845)",
+ "dfx-core",
  "flate2",
  "futures",
  "futures-intrusive",
@@ -2312,7 +2259,7 @@ dependencies = [
 [[package]]
 name = "ic-certified-assets"
 version = "0.2.5"
-source = "git+https://github.com/dfinity/sdk.git?rev=75c080ebae22a70578c06ddf1eda0b18ef091845#75c080ebae22a70578c06ddf1eda0b18ef091845"
+source = "git+https://github.com/dfinity/sdk.git?rev=bb5f8b58afa94b1950f5e1a750e0491457ad88d1#bb5f8b58afa94b1950f5e1a750e0491457ad88d1"
 dependencies = [
  "base64 0.13.1",
  "candid",
@@ -2805,16 +2752,6 @@ dependencies = [
  "bitflags 2.6.0",
  "libc",
  "redox_syscall 0.5.3",
-]
-
-[[package]]
-name = "libz-ng-sys"
-version = "1.1.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4436751a01da56f1277f323c80d584ffad94a3d14aecd959dd0dff75aa73a438"
-dependencies = [
- "cmake",
- "libc",
 ]
 
 [[package]]
