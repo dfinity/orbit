@@ -13,8 +13,8 @@ use crate::models::resource::{
     Resource, ResourceAction, ResourceId, ResourceIds, SystemResourceAction,
 };
 use crate::models::{
-    AddRequestPolicyOperationInput, Asset, Blockchain, TokenStandard,
-    EditPermissionOperationInput, Metadata,
+    AddRequestPolicyOperationInput, Asset, Blockchain, EditPermissionOperationInput, Metadata,
+    TokenStandard,
 };
 use crate::repositories::permission::PERMISSION_REPOSITORY;
 use crate::repositories::{
