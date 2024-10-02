@@ -191,12 +191,18 @@ export const idlFactory = ({ IDL }) => {
     'allow' : Allow,
     'validation_method' : ValidationMethodResourceTarget,
   });
-  const ExternalCanisterPermissions = IDL.Record({
-    'calls' : IDL.Vec(ExternalCanisterCallPermission),
-    'read' : Allow,
-    'change' : Allow,
+  const ExternalCanisterChangeCallPermissionsInput = IDL.Variant({
+    'OverrideSpecifiedByExecutionMethods' : IDL.Vec(
+      ExternalCanisterCallPermission
+    ),
+    'RemoveByExecutionMethods' : IDL.Vec(IDL.Text),
+    'ReplaceAllBy' : IDL.Vec(ExternalCanisterCallPermission),
   });
-  const ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
+  const ExternalCanisterPermissionsUpdateInput = IDL.Record({
+    'calls' : IDL.Opt(ExternalCanisterChangeCallPermissionsInput),
+    'read' : IDL.Opt(Allow),
+    'change' : IDL.Opt(Allow),
+  });
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
     'Any' : IDL.Null,
@@ -232,24 +238,31 @@ export const idlFactory = ({ IDL }) => {
     'validation_method' : ValidationMethodResourceTarget,
     'policy_id' : IDL.Opt(UUID),
   });
+  const ExternalCanisterChangeCallRequestPoliciesInput = IDL.Variant({
+    'RemoveByPolicyIds' : IDL.Vec(UUID),
+    'OverrideSpecifiedByExecutionMethods' : IDL.Vec(
+      ExternalCanisterCallRequestPolicyRuleInput
+    ),
+    'ReplaceAllBy' : IDL.Vec(ExternalCanisterCallRequestPolicyRuleInput),
+  });
   const ExternalCanisterChangeRequestPolicyRuleInput = IDL.Record({
     'rule' : RequestPolicyRule,
     'policy_id' : IDL.Opt(UUID),
   });
-  const ExternalCanisterRequestPoliciesInput = IDL.Record({
-    'calls' : IDL.Vec(ExternalCanisterCallRequestPolicyRuleInput),
-    'change' : IDL.Vec(ExternalCanisterChangeRequestPolicyRuleInput),
+  const ExternalCanisterRequestPoliciesUpdateInput = IDL.Record({
+    'calls' : IDL.Opt(ExternalCanisterChangeCallRequestPoliciesInput),
+    'change' : IDL.Opt(IDL.Vec(ExternalCanisterChangeRequestPolicyRuleInput)),
   });
   const ExternalCanisterState = IDL.Variant({
     'Active' : IDL.Null,
     'Archived' : IDL.Null,
   });
   const ConfigureExternalCanisterSettingsInput = IDL.Record({
-    'permissions' : IDL.Opt(ExternalCanisterPermissionsInput),
+    'permissions' : IDL.Opt(ExternalCanisterPermissionsUpdateInput),
     'name' : IDL.Opt(IDL.Text),
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'description' : IDL.Opt(IDL.Text),
-    'request_policies' : IDL.Opt(ExternalCanisterRequestPoliciesInput),
+    'request_policies' : IDL.Opt(ExternalCanisterRequestPoliciesUpdateInput),
     'state' : IDL.Opt(ExternalCanisterState),
   });
   const DefiniteCanisterSettingsInput = IDL.Record({
@@ -355,6 +368,12 @@ export const idlFactory = ({ IDL }) => {
   const RemoveAddressBookEntryOperationInput = IDL.Record({
     'address_book_entry_id' : UUID,
   });
+  const ExternalCanisterPermissions = IDL.Record({
+    'calls' : IDL.Vec(ExternalCanisterCallPermission),
+    'read' : Allow,
+    'change' : Allow,
+  });
+  const ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
   const CreateExternalCanisterOperationKindAddExisting = IDL.Record({
     'canister_id' : IDL.Principal,
   });
@@ -365,13 +384,17 @@ export const idlFactory = ({ IDL }) => {
     'AddExisting' : CreateExternalCanisterOperationKindAddExisting,
     'CreateNew' : CreateExternalCanisterOperationKindCreateNew,
   });
+  const ExternalCanisterRequestPoliciesCreateInput = IDL.Record({
+    'calls' : IDL.Vec(ExternalCanisterCallRequestPolicyRuleInput),
+    'change' : IDL.Vec(ExternalCanisterChangeRequestPolicyRuleInput),
+  });
   const CreateExternalCanisterOperationInput = IDL.Record({
-    'permissions' : ExternalCanisterPermissionsInput,
+    'permissions' : ExternalCanisterPermissionsCreateInput,
     'kind' : CreateExternalCanisterOperationKind,
     'name' : IDL.Text,
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'description' : IDL.Opt(IDL.Text),
-    'request_policies' : ExternalCanisterRequestPoliciesInput,
+    'request_policies' : ExternalCanisterRequestPoliciesCreateInput,
   });
   const ChangeAddressBookMetadata = IDL.Variant({
     'OverrideSpecifiedBy' : IDL.Vec(AddressBookMetadata),

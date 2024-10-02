@@ -17,8 +17,8 @@ use station_api::{
     ChangeExternalCanisterOperationInput, CreateExternalCanisterOperationInput,
     CreateExternalCanisterOperationKindCreateNewDTO, CreateExternalCanisterOperationKindDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
-    ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput, HealthStatus,
-    ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
+    ExternalCanisterPermissionsCreateInput, ExternalCanisterRequestPoliciesCreateInput,
+    HealthStatus, ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
     RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
     RequestSpecifierDTO, RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
@@ -390,7 +390,7 @@ fn create_external_canister_and_check_status() {
             name: "test".to_string(),
             description: None,
             labels: None,
-            permissions: ExternalCanisterPermissionsInput {
+            permissions: ExternalCanisterPermissionsCreateInput {
                 calls: vec![],
                 read: AllowDTO {
                     auth_scope: station_api::AuthScopeDTO::Restricted,
@@ -403,8 +403,8 @@ fn create_external_canister_and_check_status() {
                     users: vec![],
                 },
             },
-            request_policies: ExternalCanisterRequestPoliciesInput {
-                change: Vec::new(),
+            request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                change: vec![],
                 calls: vec![],
             },
         });
@@ -1163,7 +1163,7 @@ fn create_external_canister_with_too_many_cycles() {
             name: name.to_string(),
             description: None,
             labels: None,
-            permissions: ExternalCanisterPermissionsInput {
+            permissions: ExternalCanisterPermissionsCreateInput {
                 calls: vec![],
                 read: AllowDTO {
                     auth_scope: station_api::AuthScopeDTO::Restricted,
@@ -1176,8 +1176,8 @@ fn create_external_canister_with_too_many_cycles() {
                     users: vec![],
                 },
             },
-            request_policies: ExternalCanisterRequestPoliciesInput {
-                change: Vec::new(),
+            request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                change: vec![],
                 calls: vec![],
             },
         })

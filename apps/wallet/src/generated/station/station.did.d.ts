@@ -205,11 +205,11 @@ export type ConfigureExternalCanisterOperationKind = { 'SoftDelete' : null } |
   { 'Delete' : null } |
   { 'NativeSettings' : DefiniteCanisterSettingsInput };
 export interface ConfigureExternalCanisterSettingsInput {
-  'permissions' : [] | [ExternalCanisterPermissionsInput],
+  'permissions' : [] | [ExternalCanisterPermissionsUpdateInput],
   'name' : [] | [string],
   'labels' : [] | [Array<string>],
   'description' : [] | [string],
-  'request_policies' : [] | [ExternalCanisterRequestPoliciesInput],
+  'request_policies' : [] | [ExternalCanisterRequestPoliciesUpdateInput],
   'state' : [] | [ExternalCanisterState],
 }
 export interface CreateExternalCanisterOperation {
@@ -217,12 +217,12 @@ export interface CreateExternalCanisterOperation {
   'input' : CreateExternalCanisterOperationInput,
 }
 export interface CreateExternalCanisterOperationInput {
-  'permissions' : ExternalCanisterPermissionsInput,
+  'permissions' : ExternalCanisterPermissionsCreateInput,
   'kind' : CreateExternalCanisterOperationKind,
   'name' : string,
   'labels' : [] | [Array<string>],
   'description' : [] | [string],
-  'request_policies' : ExternalCanisterRequestPoliciesInput,
+  'request_policies' : ExternalCanisterRequestPoliciesCreateInput,
 }
 export type CreateExternalCanisterOperationKind = {
     'AddExisting' : CreateExternalCanisterOperationKindAddExisting
@@ -406,6 +406,22 @@ export interface ExternalCanisterCallerPrivileges {
   'can_call' : Array<ExternalCanisterCallerMethodsPrivileges>,
   'can_fund' : boolean,
 }
+export type ExternalCanisterChangeCallPermissionsInput = {
+    'OverrideSpecifiedByExecutionMethods' : Array<
+      ExternalCanisterCallPermission
+    >
+  } |
+  { 'RemoveByExecutionMethods' : Array<string> } |
+  { 'ReplaceAllBy' : Array<ExternalCanisterCallPermission> };
+export type ExternalCanisterChangeCallRequestPoliciesInput = {
+    'RemoveByPolicyIds' : Array<UUID>
+  } |
+  {
+    'OverrideSpecifiedByExecutionMethods' : Array<
+      ExternalCanisterCallRequestPolicyRuleInput
+    >
+  } |
+  { 'ReplaceAllBy' : Array<ExternalCanisterCallRequestPolicyRuleInput> };
 export interface ExternalCanisterChangeRequestPolicyRule {
   'rule' : RequestPolicyRule,
   'policy_id' : UUID,
@@ -421,14 +437,23 @@ export interface ExternalCanisterPermissions {
   'read' : Allow,
   'change' : Allow,
 }
-export type ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
+export type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
+export interface ExternalCanisterPermissionsUpdateInput {
+  'calls' : [] | [ExternalCanisterChangeCallPermissionsInput],
+  'read' : [] | [Allow],
+  'change' : [] | [Allow],
+}
 export interface ExternalCanisterRequestPolicies {
   'calls' : Array<ExternalCanisterCallRequestPolicyRule>,
   'change' : Array<ExternalCanisterChangeRequestPolicyRule>,
 }
-export interface ExternalCanisterRequestPoliciesInput {
+export interface ExternalCanisterRequestPoliciesCreateInput {
   'calls' : Array<ExternalCanisterCallRequestPolicyRuleInput>,
   'change' : Array<ExternalCanisterChangeRequestPolicyRuleInput>,
+}
+export interface ExternalCanisterRequestPoliciesUpdateInput {
+  'calls' : [] | [ExternalCanisterChangeCallRequestPoliciesInput],
+  'change' : [] | [Array<ExternalCanisterChangeRequestPolicyRuleInput>],
 }
 export type ExternalCanisterResourceAction = {
     'Call' : CallExternalCanisterResourceTarget

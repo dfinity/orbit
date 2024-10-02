@@ -92,6 +92,9 @@ impl From<ExternalCanisterValidationError> for RequestError {
                     info: format!("Invalid external canister {}", principal),
                 }
             }
+            ExternalCanisterValidationError::ValidationError { info } => {
+                RequestError::ValidationError { info }
+            }
         }
     }
 }

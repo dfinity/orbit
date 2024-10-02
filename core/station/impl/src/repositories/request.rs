@@ -418,7 +418,7 @@ impl RequestRepository {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct RequestWhereClause {
     pub created_dt_from: Option<Timestamp>,
     pub created_dt_to: Option<Timestamp>,
