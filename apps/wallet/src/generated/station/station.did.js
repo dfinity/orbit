@@ -2,18 +2,29 @@ export const idlFactory = ({ IDL }) => {
   const RequestPolicyRule = IDL.Rec();
   const RequestPolicyRuleResult = IDL.Rec();
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
+  const UUID = IDL.Text;
+  const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const InitAssetInput = IDL.Record({
+    'id' : UUID,
+    'decimals' : IDL.Nat32,
+    'standards' : IDL.Vec(IDL.Text),
+    'metadata' : IDL.Vec(AssetMetadata),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'symbol' : IDL.Text,
+  });
   const SystemUpgraderInput = IDL.Variant({
     'Id' : IDL.Principal,
     'WasmModule' : IDL.Vec(IDL.Nat8),
   });
-  const UUID = IDL.Text;
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const AccountSeed = IDL.Vec(IDL.Nat8);
   const InitAccountInput = IDL.Record({
     'id' : IDL.Opt(UUID),
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
-    'blockchain' : IDL.Text,
-    'standard' : IDL.Text,
+    'assets' : IDL.Vec(UUID),
+    'seed' : AccountSeed,
   });
   const AdminInitInput = IDL.Record({
     'name' : IDL.Text,
@@ -21,6 +32,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
+    'assets' : IDL.Opt(IDL.Vec(InitAssetInput)),
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
     'accounts' : IDL.Opt(IDL.Vec(InitAccountInput)),
@@ -67,7 +79,6 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : CanisterStatusResponse,
     'Err' : Error,
   });
-  const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AssetSymbol = IDL.Text;
   const Asset = IDL.Record({
     'id' : UUID,
@@ -447,14 +458,23 @@ export const idlFactory = ({ IDL }) => {
   const TransferOperationInput = IDL.Record({
     'to' : IDL.Text,
     'fee' : IDL.Opt(IDL.Nat),
+    'with_standard' : IDL.Text,
     'from_account_id' : UUID,
     'metadata' : IDL.Vec(TransferMetadata),
     'network' : IDL.Opt(Network),
     'amount' : IDL.Nat,
+    'from_asset_id' : UUID,
   });
   const RequestPolicyRuleInput = IDL.Variant({
     'Set' : RequestPolicyRule,
     'Remove' : IDL.Null,
+  });
+  const ChangeAssets = IDL.Variant({
+    'ReplaceWith' : IDL.Record({ 'assets' : IDL.Vec(UUID) }),
+    'Change' : IDL.Record({
+      'add_assets' : IDL.Vec(UUID),
+      'remove_assets' : IDL.Vec(UUID),
+    }),
   });
   const EditAccountOperationInput = IDL.Record({
     'account_id' : UUID,
@@ -462,6 +482,7 @@ export const idlFactory = ({ IDL }) => {
     'read_permission' : IDL.Opt(Allow),
     'configs_permission' : IDL.Opt(Allow),
     'name' : IDL.Opt(IDL.Text),
+    'change_assets' : IDL.Opt(ChangeAssets),
     'transfer_request_policy' : IDL.Opt(RequestPolicyRuleInput),
     'transfer_permission' : IDL.Opt(Allow),
   });
@@ -470,6 +491,7 @@ export const idlFactory = ({ IDL }) => {
     'labels' : IDL.Vec(IDL.Text),
     'blockchain' : IDL.Text,
     'address' : IDL.Text,
+    'address_format' : IDL.Text,
     'address_owner' : IDL.Text,
   });
   const AddRequestPolicyOperationInput = IDL.Record({
@@ -489,10 +511,9 @@ export const idlFactory = ({ IDL }) => {
     'configs_permission' : Allow,
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
-    'blockchain' : IDL.Text,
+    'assets' : IDL.Vec(UUID),
     'transfer_request_policy' : IDL.Opt(RequestPolicyRule),
     'transfer_permission' : Allow,
-    'standard' : IDL.Text,
   });
   const RequestOperationInput = IDL.Variant({
     'RemoveAsset' : RemoveAssetOperationInput,
@@ -610,24 +631,29 @@ export const idlFactory = ({ IDL }) => {
   const ManageSystemInfoOperation = IDL.Record({
     'input' : ManageSystemInfoOperationInput,
   });
-  const AccountBalanceInfo = IDL.Record({
+  const AccountBalance = IDL.Record({
+    'account_id' : UUID,
     'decimals' : IDL.Nat32,
     'balance' : IDL.Nat,
     'last_update_timestamp' : TimestampRFC3339,
   });
+  const AccountAsset = IDL.Record({
+    'balance' : IDL.Opt(AccountBalance),
+    'asset_id' : UUID,
+  });
+  const AccountAddress = IDL.Record({
+    'address' : IDL.Text,
+    'format' : IDL.Text,
+  });
   const Account = IDL.Record({
     'id' : UUID,
     'configs_request_policy' : IDL.Opt(RequestPolicyRule),
-    'decimals' : IDL.Nat32,
-    'balance' : IDL.Opt(AccountBalanceInfo),
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
-    'blockchain' : IDL.Text,
-    'address' : IDL.Text,
+    'assets' : IDL.Vec(AccountAsset),
+    'addresses' : IDL.Vec(AccountAddress),
     'transfer_request_policy' : IDL.Opt(RequestPolicyRule),
     'last_modification_timestamp' : TimestampRFC3339,
-    'standard' : IDL.Text,
-    'symbol' : AssetSymbol,
   });
   const TransferOperation = IDL.Record({
     'fee' : IDL.Opt(IDL.Nat),
@@ -779,12 +805,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const FetchAccountBalancesInput = IDL.Record({
     'account_ids' : IDL.Vec(UUID),
-  });
-  const AccountBalance = IDL.Record({
-    'account_id' : UUID,
-    'decimals' : IDL.Nat32,
-    'balance' : IDL.Nat,
-    'last_update_timestamp' : TimestampRFC3339,
   });
   const FetchAccountBalancesResult = IDL.Variant({
     'Ok' : IDL.Record({ 'balances' : IDL.Vec(AccountBalance) }),
@@ -1500,18 +1520,29 @@ export const idlFactory = ({ IDL }) => {
 };
 export const init = ({ IDL }) => {
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
+  const UUID = IDL.Text;
+  const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const InitAssetInput = IDL.Record({
+    'id' : UUID,
+    'decimals' : IDL.Nat32,
+    'standards' : IDL.Vec(IDL.Text),
+    'metadata' : IDL.Vec(AssetMetadata),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'symbol' : IDL.Text,
+  });
   const SystemUpgraderInput = IDL.Variant({
     'Id' : IDL.Principal,
     'WasmModule' : IDL.Vec(IDL.Nat8),
   });
-  const UUID = IDL.Text;
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const AccountSeed = IDL.Vec(IDL.Nat8);
   const InitAccountInput = IDL.Record({
     'id' : IDL.Opt(UUID),
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
-    'blockchain' : IDL.Text,
-    'standard' : IDL.Text,
+    'assets' : IDL.Vec(UUID),
+    'seed' : AccountSeed,
   });
   const AdminInitInput = IDL.Record({
     'name' : IDL.Text,
@@ -1519,6 +1550,7 @@ export const init = ({ IDL }) => {
   });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
+    'assets' : IDL.Opt(IDL.Vec(InitAssetInput)),
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
     'accounts' : IDL.Opt(IDL.Vec(InitAccountInput)),

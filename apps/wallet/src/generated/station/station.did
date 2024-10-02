@@ -325,6 +325,10 @@ type RequestApproval = record {
 type TransferOperationInput = record {
   // The account id to use for the transaction.
   from_account_id : UUID;
+  // The asset id to transfer.
+  from_asset_id : UUID;
+  // The standard to use for the transfer.
+  with_standard : text;
   // The amount to transfer.
   amount : nat;
   // The destination address of the transaction (e.g. "1BvBMSE...").
@@ -355,12 +359,27 @@ type TransferOperation = record {
   fee : opt nat;
 };
 
+// Mutate the list of assets.
+type ChangeAssets = variant {
+  // Replace all current assets with the specified list.
+  ReplaceWith : record {
+    assets : vec UUID;
+  };
+  // Change the list of assets by adding and removing assets.
+  Change : record {
+    add_assets : vec UUID;
+    remove_assets : vec UUID;
+  };
+};
+
 // Input type for editing an account through a request.
 type EditAccountOperationInput = record {
   // The account id that will be edited.
   account_id : UUID;
   // A friendly name for the account (e.g. "My Account").
   name : opt text;
+  // Mutate the list of assets.
+  change_assets : opt ChangeAssets;
   // Who can read the account information.
   read_permission : opt Allow;
   // Who can request configuration changes to the account.
@@ -382,10 +401,8 @@ type EditAccountOperation = record {
 type AddAccountOperationInput = record {
   // A friendly name for the account (e.g. "My Account").
   name : text;
-  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
-  blockchain : text;
-  // The asset standard for this account (e.g. `native`, `erc20`, etc.).
-  standard : text;
+  // The assets to add to the account.
+  assets : vec UUID;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec AccountMetadata;
   // Who can read the account information.
@@ -420,6 +437,8 @@ type AddAddressBookEntryOperationInput = record {
   address_owner : text;
   // The actual address.
   address : text;
+  // The format of the address, eg. icp_account_identifier
+  address_format : text;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
   // Metadata associated with the address book entry (e.g. `{"kyc": "true"}`).
@@ -1491,21 +1510,15 @@ type AccountCallerPrivileges = record {
 type Account = record {
   // The internal account id.
   id : UUID;
-  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
-  blockchain : text;
-  // The asset symbol, e.g. "ICP" or "BTC".
-  symbol : AssetSymbol;
-  // The asset standard that is supported (e.g. `erc20`, etc.), canonically represented as a lowercase string
-  // with spaces replaced with underscores.
-  standard : text;
-  // The address of the account (e.g. "0x1234").
-  address : text;
-  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
-  decimals : nat32;
+
+  // The list of assets supported by this account.
+  assets : vec AccountAsset;
+
+  // The list of addresses associated with the account.
+  addresses : vec AccountAddress;
+
   // A friendly name for the account.
   name : text;
-  // Account balance when available.
-  balance : opt AccountBalanceInfo;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec AccountMetadata;
   // The transfer approval policy for the account.
@@ -1518,6 +1531,25 @@ type Account = record {
   configs_request_policy : opt RequestPolicyRule;
   // The time at which the account was created or last modified (e.g. "2021-01-01T00:00:00Z").
   last_modification_timestamp : TimestampRFC3339;
+};
+
+// The seed used to derive the addresses of the account.
+type AccountSeed = blob;
+
+// Record type to describe an address of an account.
+type AccountAddress = record {
+  // The address.
+  address : text;
+  // The format of the address, eg. icp_account_identifier.
+  format : text;
+};
+
+// Record type to describe an asset of an account.
+type AccountAsset = record {
+  // The asset id.
+  asset_id : UUID;
+  // The balance of the asset.
+  balance : opt AccountBalance;
 };
 
 // Input type for getting a account.
@@ -2318,11 +2350,29 @@ type InitAccountInput = record {
   // A friendly name for the account (e.g. "My Account").
   name : text;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
-  blockchain : text;
+  seed : AccountSeed;
   // The asset standard for this account (e.g. `native`, `erc20`, etc.).
-  standard : text;
+  assets : vec UUID;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec AccountMetadata;
+};
+
+// The initial assets to create when initializing the canister for the first time, e.g., after disaster recovery.
+type InitAssetInput = record {
+  // The UUID of the asset, if not provided a new UUID will be generated.
+  id : UUID;
+  // The name of the asset.
+  name : text;
+  // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+  blockchain : text;
+  // The standards this asset supports.
+  standards : vec text;
+  // The asset symbol, e.g. "ICP" or "BTC".
+  symbol : text;
+  // The number of decimals used to format the asset balance.
+  decimals : nat32;
+  // Metadata associated with the asset.
+  metadata : vec AssetMetadata;
 };
 
 // The init configuration for the canister.
@@ -2341,6 +2391,8 @@ type SystemInit = record {
   fallback_controller : opt principal;
   // Optional initial accounts to create.
   accounts : opt vec InitAccountInput;
+  // Optional initial assets to create.
+  assets : opt vec InitAssetInput;
 };
 
 // The upgrade configuration for the canister.
