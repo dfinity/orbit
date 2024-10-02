@@ -1,4 +1,9 @@
+import { IDL } from '@dfinity/candid';
+import { Principal } from '@dfinity/principal';
 import { describe, expect, it, vi } from 'vitest';
+import { LocationQuery } from 'vue-router';
+import { idlFactory } from '~/generated/control-panel';
+import { arrayBufferToHex, hexStringToArrayBuffer } from '~/utils/crypto.utils';
 import {
   compactArray,
   isSemanticVersion,
@@ -7,12 +12,10 @@ import {
   removeBasePathFromPathname,
   throttle,
   toArrayBuffer,
+  transformData,
   transformIdlWithOnlyVerifiedCalls,
   variantIs,
 } from './helper.utils';
-import { idlFactory } from '~/generated/control-panel';
-import { IDL } from '@dfinity/candid';
-import { LocationQuery } from 'vue-router';
 
 describe('Core utils', () => {
   describe('throttle', () => {
@@ -243,6 +246,84 @@ describe('BigInt utils', () => {
 
     it('empty string returns undefined', () => {
       expect(parseToBigIntOrUndefined('')).toBeUndefined();
+    });
+  });
+});
+
+describe('Transformations', () => {
+  describe('transformData', () => {
+    it('transforms complex object and keeps undefined keys', () => {
+      expect(
+        transformData(
+          {
+            date: new Date(Date.parse('2024-09-27')),
+            bigint: BigInt(100),
+            uint8array: new Uint8Array([1, 2, 3]),
+            arrayBuffer: hexStringToArrayBuffer('6963'),
+            emptyArray: [],
+            function: () => {},
+            principal: Principal.fromText('rwlgt-iiaaa-aaaaa-aaaaa-cai'),
+            map: new Map([['key', 'value']]),
+            set: new Set(['value']),
+            object: { key: 'value', emptyArray: [] },
+          },
+          { removeFunctions: false },
+        ),
+      ).toStrictEqual({
+        date: new Date(Date.parse('2024-09-27')).toISOString(),
+        bigint: Number(BigInt(100)),
+        uint8array: Array.from(new Uint8Array([1, 2, 3])),
+        arrayBuffer: arrayBufferToHex(hexStringToArrayBuffer('6963')),
+        emptyArray: [],
+        function: '[Function]',
+        principal: 'rwlgt-iiaaa-aaaaa-aaaaa-cai',
+        map: { key: 'value' },
+        set: ['value'],
+        object: { key: 'value', emptyArray: [] },
+      });
+    });
+
+    it('transforms complex object and drops empty fields', () => {
+      expect(
+        transformData(
+          [
+            {
+              date: new Date(Date.parse('2024-09-27')),
+              bigint: BigInt(100),
+              uint8array: new Uint8Array([1, 2, 3]),
+              arrayBuffer: hexStringToArrayBuffer('6963'),
+              emptyArray: [],
+              null: null,
+              function: () => {},
+              principal: Principal.fromText('rwlgt-iiaaa-aaaaa-aaaaa-cai'),
+              map: new Map([['key', 'value']]),
+              set: new Set(['value']),
+              object: { key: 'value', emptyArray: [] },
+            },
+            null,
+          ],
+          { removeEmptyLists: true, removeUndefinedOrNull: true, removeFunctions: true },
+        ),
+      ).toStrictEqual([
+        {
+          date: new Date(Date.parse('2024-09-27')).toISOString(),
+          bigint: Number(BigInt(100)),
+          uint8array: Array.from(new Uint8Array([1, 2, 3])),
+          arrayBuffer: arrayBufferToHex(hexStringToArrayBuffer('6963')),
+          principal: 'rwlgt-iiaaa-aaaaa-aaaaa-cai',
+          map: { key: 'value' },
+          set: ['value'],
+          object: { key: 'value' },
+        },
+      ]);
+    });
+
+    it('primitive types are kept on the top level', () => {
+      expect(transformData('string')).toBe('string');
+      expect(transformData(100)).toBe(100);
+      expect(transformData(BigInt(100))).toBe(100);
+      expect(transformData(true)).toBe(true);
+      expect(transformData(false)).toBe(false);
     });
   });
 });

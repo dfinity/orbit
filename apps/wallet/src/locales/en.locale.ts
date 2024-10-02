@@ -280,6 +280,30 @@ export default {
         title: 'Manage system info',
         request_title: 'Manage system info request',
       },
+      createexternalcanister: {
+        title: 'Create canister',
+        request_title: 'Create canister request',
+      },
+      changeexternalcanister: {
+        title: 'Change canister',
+        request_title: 'Change canister request',
+      },
+      callexternalcanister: {
+        title: 'Call canister',
+        request_title: 'Call canister request',
+      },
+      fundexternalcanister: {
+        title: 'Top-up canister',
+        request_title: 'Top-up canister request',
+      },
+      configureexternalcanister: {
+        title: 'Configure canister',
+        request_title: 'Configure canister request',
+      },
+      setdisasterrecovery: {
+        title: 'Edit disaster recovery',
+        request_title: 'Edit disaster recovery request',
+      },
       unknown: {
         title: 'Unknown',
         request_title: 'Unknown request',
@@ -471,6 +495,9 @@ export default {
     },
   },
   terms: {
+    more: 'More',
+    less: 'Less',
+    data: 'data',
     mode: 'Mode',
     active: 'Active',
     archived: 'Archived',

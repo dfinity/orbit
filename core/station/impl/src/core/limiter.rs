@@ -7,7 +7,7 @@ use std::{
 #[derive(Debug)]
 pub struct Limiter {
     time_windows: VecDeque<TimeWindowCount>,
-    total_count: u64,
+    total_count: usize,
     resolution: Duration,
     max_age: Duration,
 }
@@ -24,7 +24,7 @@ impl Limiter {
 
     /// Record an event at time `now`. It's expected
     /// that `now` is monotonically non-decreasing.
-    pub fn add(&mut self, now: SystemTime, count: u64) {
+    pub fn add(&mut self, now: SystemTime, count: usize) {
         self.purge_old(now);
 
         let window = self.time_to_window(now);
@@ -66,7 +66,7 @@ impl Limiter {
     }
 
     /// Return the total count in the last `self.max_age` period.
-    pub fn get_count(&self) -> u64 {
+    pub fn get_count(&self) -> usize {
         self.total_count
     }
 
@@ -80,7 +80,7 @@ type TimeWindow = u32;
 #[derive(Debug)]
 struct TimeWindowCount {
     window: TimeWindow,
-    count: u64,
+    count: usize,
 }
 
 #[cfg(test)]
