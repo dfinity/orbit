@@ -184,7 +184,7 @@ function deploy_control_panel() {
 
   exec_function "build_wasms"
 
-  echo "Building the control_panel wasm..."
+  echo "Preparing the control_panel wasm..."
 
   if should_build_artifacts || [ ! -f ./artifacts/control-panel/control_panel.wasm.gz ]; then
     ./scripts/docker-build.sh --control-panel
