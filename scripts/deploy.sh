@@ -248,7 +248,6 @@ function deploy_app_wallet() {
   if [ $canister_id_exit_code -ne 0 ]; then
     echo "Canister 'app_wallet' does not exist, creating and installing..."
 
-    dfx canister create app_wallet --network $network --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
     BUILD_MODE=$network dfx deploy --network $network app_wallet --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
   else
     echo "Deploying the app_wallet canister to the '$network' network is not yet supported automatically."
