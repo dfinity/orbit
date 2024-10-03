@@ -108,6 +108,7 @@ export interface AddressBookEntry {
   'blockchain' : string,
   'address' : string,
   'last_modification_timestamp' : string,
+  'address_format' : string,
   'address_owner' : string,
 }
 export interface AddressBookEntryCallerPrivileges {

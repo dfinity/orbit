@@ -1626,6 +1626,8 @@ type AddressBookEntry = record {
   address_owner : text;
   // The actual address.
   address : text;
+  // The address format (e.g. "icp_account_identifier").
+  address_format : text;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
   blockchain : text;
   // Metadata associated with the address book entry (e.g. `{"kyc": "true"}`).

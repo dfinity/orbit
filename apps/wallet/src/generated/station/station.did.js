@@ -672,6 +672,7 @@ export const idlFactory = ({ IDL }) => {
     'blockchain' : IDL.Text,
     'address' : IDL.Text,
     'last_modification_timestamp' : IDL.Text,
+    'address_format' : IDL.Text,
     'address_owner' : IDL.Text,
   });
   const AddAddressBookEntryOperation = IDL.Record({
