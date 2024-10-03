@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eEuo pipefail
 
-# Wether or not to reuse the artifacts that are already built
+# Whether or not to reuse the artifacts that are already built
 REUSE_ARTIFACTS=${REUSE_ARTIFACTS:-"false"}
 
 #############################################
