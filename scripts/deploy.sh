@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -eEuo pipefail
 
+# Wether or not to reuse the artifacts that are already built
+REUSE_ARTIFACTS=${REUSE_ARTIFACTS:-"false"}
+
 #############################################
 # USAGE                                     #
 #############################################
@@ -110,11 +113,26 @@ function get_subnet_type() {
 # UTILS                                     #
 #############################################
 
-function build_wasms() {
-  echo "Building the WASMs for the station and upgrader canisters."
+function should_build_artifacts() {
+  if [ "${REUSE_ARTIFACTS,,}" == "true" ] || [ "${REUSE_ARTIFACTS}" == "1" ]; then
+    return 1 # 1 means "false" in shell scripting
+  fi
 
-  ./scripts/generate-wasm.sh station
-  ./scripts/generate-wasm.sh upgrader
+  return 0 # 0 means "true" in shell scripting
+}
+
+function build_wasms() {
+  echo "Preparing the WASMs for the station and upgrader canisters."
+
+  if should_build_artifacts || [ ! -f ./artifacts/station/station.wasm.gz ]; then
+    ./scripts/docker-build.sh --station
+  fi
+
+  if should_build_artifacts || [ ! -f ./artifacts/upgrader/upgrader.wasm.gz ]; then
+    ./scripts/docker-build.sh --upgrader
+  fi
+
+  echo "Station and upgrader WASMs are ready."
 }
 
 function setup_cycles_wallet() {
@@ -168,11 +186,13 @@ function deploy_control_panel() {
 
   echo "Building the control_panel wasm..."
 
-  ./scripts/generate-wasm.sh control-panel
+  if should_build_artifacts || [ ! -f ./artifacts/control-panel/control_panel.wasm.gz ]; then
+    ./scripts/docker-build.sh --control-panel
+  fi
 
   # Read the WASM files and convert them to hex format
-  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
-  station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/station.wasm.gz | sed 's/../\\&/g')
+  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/upgrader/upgrader.wasm.gz | sed 's/../\\&/g')
+  station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/station/station.wasm.gz | sed 's/../\\&/g')
 
   set +e # Disable 'exit on error'
   canister_id_output=$(dfx canister id control_panel --network $network 2>&1)
@@ -183,7 +203,7 @@ function deploy_control_panel() {
     echo "Canister 'control_panel' does not exist, creating and installing..."
 
     dfx canister create control_panel --network $network --with-cycles 5000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
-    dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz
+    dfx canister install control_panel --network $network --wasm ./artifacts/control-panel/control_panel.wasm.gz
   else
     echo "Canister 'control_panel' already exists with ID: $canister_id_output"
 
@@ -191,10 +211,10 @@ function deploy_control_panel() {
 
     if [ "$module_hash" == "None" ]; then
       echo "Installing the wasm module to the control_panel canister..."
-      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode install
+      dfx canister install control_panel --network $network --wasm ./artifacts/control-panel/control_panel.wasm.gz --mode install
     else
       echo "Upgrading the wasm module to the control_panel canister..."
-      dfx canister install control_panel --network $network --wasm ./wasms/control_panel.wasm.gz --mode upgrade --yes
+      dfx canister install control_panel --network $network --wasm ./artifacts/control-panel/control_panel.wasm.gz --mode upgrade --yes
     fi
   fi
 
@@ -209,7 +229,34 @@ function deploy_app_wallet() {
 
   echo "Deploying the Orbit Wallet to the '$network' network."
 
-  BUILD_MODE=$network dfx deploy --network $network app_wallet --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+  if should_build_artifacts || [ ! -f ./artifacts/wallet-dapp/wallet-dapp.tar.gz ]; then
+    ./scripts/docker-build.sh --wallet-dapp
+  fi
+
+  if [ -d ./artifacts/wallet-dapp/dist ]; then
+    rm -rf ./artifacts/wallet-dapp/dist
+  fi
+
+  mkdir -p ./artifacts/wallet-dapp/dist
+  tar -xvf ./artifacts/wallet-dapp/wallet-dapp.tar.gz -C ./artifacts/wallet-dapp/dist
+
+  set +e # Disable 'exit on error'
+  canister_id_output=$(dfx canister id app_wallet --network $network 2>&1)
+  canister_id_exit_code=$?
+  set -e # Re-enable 'exit on error'
+
+  if [ $canister_id_exit_code -ne 0 ]; then
+    echo "Canister 'app_wallet' does not exist, creating and installing..."
+
+    dfx canister create app_wallet --network $network --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+    BUILD_MODE=$network dfx deploy --network $network app_wallet --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+  else
+    echo "Deploying the app_wallet canister to the '$network' network is not yet supported automatically."
+    echo
+    echo "Please deploy the app_wallet canister manually using the following command:"
+    echo "icx-asset --pem YOUR_IDENTITY_PEM_PATH --replica TARGET_REPLICA_HTTP sync --no-delete $canister_id_output artifacts/wallet-dapp/dist"
+    echo
+  fi
 }
 
 #############################################
@@ -266,5 +313,7 @@ while [[ $# -gt 0 ]]; do
   fi
   exec_function deploy_control_panel
   exec_function deploy_app_wallet
+  echo
+  echo -e "\e[1;32mDeployment completed successfully to the '$(get_network)' network.\e[0m"
   echo
 done
