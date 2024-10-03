@@ -19,6 +19,7 @@ use station_api::{
     SystemInfoDTO, SystemInfoResponse, UserDTO, UserSpecifierDTO, UserStatusDTO, UuidDTO,
 };
 use std::io::Write;
+use std::path::PathBuf;
 use std::time::Duration;
 use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
 
@@ -674,9 +675,8 @@ pub fn compress_to_gzip(data: &[u8]) -> Vec<u8> {
 
 /// Creates a file in the `assets` folder with the given name and content.
 pub fn create_file(name: &str, content: &[u8]) {
-    let current_dir = std::env::current_dir().expect("Failed to get current directory");
     let relative_path = std::path::Path::new("assets").join(name);
-    let absolute_path = current_dir.join(relative_path);
+    let absolute_path = test_dir().join(relative_path);
 
     if let Some(parent_dir) = absolute_path.parent() {
         std::fs::create_dir_all(parent_dir).expect("Failed to create directories");
@@ -687,15 +687,18 @@ pub fn create_file(name: &str, content: &[u8]) {
 
 /// Reads the content of a file in the `assets` folder with the given name.
 pub fn read_file(name: &str) -> Option<Vec<u8>> {
-    let current_dir = std::env::current_dir().expect("Failed to get current directory");
     let relative_path = std::path::Path::new("assets").join(name);
-    let absolute_path = current_dir.join(relative_path);
+    let absolute_path = test_dir().join(relative_path);
 
     if !absolute_path.exists() {
         return None;
     }
 
     std::fs::read(absolute_path).ok()
+}
+
+fn test_dir() -> PathBuf {
+    PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to get CARGO_MANIFEST_DIR"))
 }
 
 /// Converts the given data to a SHA-256 hash and returns it as a hex string.
