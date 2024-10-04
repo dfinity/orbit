@@ -97,6 +97,15 @@ function setup_enviroment() {
   pnpm install
 
   setup_cycles_wallet
+
+  if ! command -v icx-asset >/dev/null 2>&1; then
+    echo "icx-asset not found, installing..."
+
+    cargo install --git https://github.com/dfinity/sdk.git --rev ff35958 icx-asset
+
+    echo "icx-asset installed successfully."
+
+  fi
 }
 
 function get_network() {
