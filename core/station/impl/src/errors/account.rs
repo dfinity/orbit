@@ -9,7 +9,7 @@ pub enum AccountError {
     #[error(r#"The requested account was not found."#)]
     AccountNotFound { id: String },
     /// The associated asset does not exist.
-    #[error(r#"The associated asset does not exist."#)]
+    #[error(r#"The associated asset `{id}` does not exist."#)]
     AssetDoesNotExist { id: String },
     /// The given blockchain is unknown to the system.
     #[error(r#"The given blockchain is unknown to the system."#)]
