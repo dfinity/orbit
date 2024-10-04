@@ -212,7 +212,7 @@ function build_wasms() {
 function setup_cycles_wallet() {
   local network="$(get_network)"
 
-  cycles_wallet_id_output=$(dfx identity get-wallet --network $network 2>&1 || echo "")
+  cycles_wallet_id_output=$(dfx identity get-wallet --network $network 2>/dev/null || echo "")
 
   if [ -z "$cycles_wallet_id_output" ]; then
     echo "Cycles wallet does not exist, using the default mainnet wallet for the deployment."
@@ -232,7 +232,7 @@ function reset_control_panel() {
   echo "Resetting the \"$network\" network..."
   echo "This will remove the code and data for the control_panel canister."
 
-  canister_id_output=$(dfx canister id control_panel --network $network 2>&1 || echo "")
+  canister_id_output=$(dfx canister id control_panel --network $network 2>/dev/null || echo "")
 
   if [ -n "$canister_id_output" ]; then
     echo "Canister 'control_panel' exists with ID: $canister_id_output"
@@ -262,7 +262,7 @@ function deploy_control_panel() {
   upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/upgrader/upgrader.wasm.gz | sed 's/../\\&/g')
   station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/station/station.wasm.gz | sed 's/../\\&/g')
 
-  canister_id_output=$(dfx canister id control_panel --network $network 2>&1 || echo "")
+  canister_id_output=$(dfx canister id control_panel --network $network 2>/dev/null || echo "")
 
   if [ -z "$canister_id_output" ]; then
     echo "Canister 'control_panel' does not exist, creating and installing..."
