@@ -181,7 +181,7 @@ fn asset_validation() {
 
 /// Setup a tmpdir, and store assets in it
 ///
-/// We generate the assets dyniamically, since we want to make sure we are not
+/// We generate the assets dynamically, since we want to make sure we are not
 /// fetching old assets
 /// NOTE: Currently, the local asset computation skips hidden files while the
 /// remote version does not. This creates an issue if we just used tempdir(), as that
