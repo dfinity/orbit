@@ -20,14 +20,14 @@ use std::sync::Arc;
 
 /// Argument taken by `create_canister` endpoint of the CMC.
 #[derive(candid::CandidType, serde::Serialize)]
-pub struct CreateCanister {
+struct CreateCanister {
     pub subnet_selection: Option<SubnetSelection>,
     pub settings: Option<CanisterSettings>,
 }
 
 /// Error for create_canister endpoint
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize)]
-pub enum CreateCanisterError {
+enum CreateCanisterError {
     Refunded {
         refund_amount: u128,
         create_error: String,
