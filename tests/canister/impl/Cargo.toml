@@ -1,0 +1,19 @@
+[package]
+name = 'test_canister'
+include = ['src', 'Cargo.toml']
+version = '0.0.1'
+authors.workspace = true
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+homepage.workspace = true
+
+[lib]
+crate-type = ['cdylib']
+bench = false
+
+[dependencies]
+candid = { workspace = true }
+futures = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }

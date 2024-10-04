@@ -11,6 +11,7 @@ members = [
     "libs/orbit-essentials-macros",
     "libs/orbit-essentials-macros-tests",
     "tests/integration",
+    "tests/canister/impl",
     "tools/dfx-orbit",
 ]
 
