@@ -2,7 +2,7 @@ use super::AssetAgent;
 use crate::DfxOrbit;
 use anyhow::bail;
 use candid::{Nat, Principal};
-use ic_certified_assets::types::CommitProposedBatchArguments;
+use ic_certified_assets::types::{CommitProposedBatchArguments, DeleteBatchArguments};
 use serde_bytes::ByteBuf;
 use slog::{info, warn};
 use station_api::{CallExternalCanisterOperationInput, CanisterMethodDTO, RequestOperationInput};
@@ -52,6 +52,26 @@ impl DfxOrbit {
                 execution_method: CanisterMethodDTO {
                     canister_id,
                     method_name: String::from("commit_proposed_batch"),
+                },
+                arg: Some(arg),
+                execution_method_cycles: None,
+            },
+        ))
+    }
+
+    pub fn cancel_batch_input(
+        canister_id: Principal,
+        batch_id: Nat,
+    ) -> anyhow::Result<RequestOperationInput> {
+        let args = DeleteBatchArguments { batch_id };
+        let arg = candid::encode_one(args)?;
+
+        Ok(RequestOperationInput::CallExternalCanister(
+            CallExternalCanisterOperationInput {
+                validation_method: None,
+                execution_method: CanisterMethodDTO {
+                    canister_id,
+                    method_name: String::from("delete_batch"),
                 },
                 arg: Some(arg),
                 execution_method_cycles: None,

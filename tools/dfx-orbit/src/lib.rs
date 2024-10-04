@@ -10,7 +10,7 @@ pub mod dfx_extension_api;
 pub mod local_config;
 pub mod station_agent;
 
-use anyhow::anyhow;
+use anyhow::{anyhow, bail, Context};
 use candid::Principal;
 pub use cli::asset::AssetAgent;
 use dfx_core::{
@@ -71,8 +71,14 @@ impl DfxOrbit {
             self.interface.config(),
         )?;
 
-        let canister_id = Principal::from_text(canister_name)
-            .or_else(|_| canister_id_store.get(canister_name))?;
+        let canister_id = Principal::from_text(canister_name).or_else(|_| {
+            canister_id_store.get(canister_name).with_context(|| {
+                format!(
+                    "Failed to look up principal id for canister named \"{}\"",
+                    canister_name
+                )
+            })
+        })?;
 
         Ok(canister_id)
     }
@@ -133,5 +139,29 @@ impl DfxOrbit {
             .ok_or_else(|| anyhow!("Could not find {canister} in \"dfx.json\""))?;
 
         Ok(canister_config.clone())
+    }
+
+    pub async fn get_controllers(&self, canister_id: Principal) -> anyhow::Result<Vec<Principal>> {
+        let blob = self
+            .interface
+            .agent()
+            .read_state_canister_info(canister_id, "controllers")
+            .await?;
+        let value: ciborium::Value = ciborium::from_reader(&blob[..])?;
+        let ciborium::Value::Array(array) = value else {
+            bail!("Expected an array as result from controllers endpoint")
+        };
+        let result = array
+            .into_iter()
+            .map(|value| match value {
+                ciborium::Value::Bytes(bytes) => Principal::try_from(bytes)
+                    .with_context(|| String::from("Failed to parse principal")),
+                _ => Err(anyhow!(
+                    "Controllers array contained values that are not bytes"
+                )),
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(result)
     }
 }
