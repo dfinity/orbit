@@ -260,6 +260,8 @@ type UploadCanisterModulesInput = record {
   upgrader_wasm_module : opt blob;
   // The station wasm module to use.
   station_wasm_module : opt blob;
+  // Optional extra chunks of the station canister wasm module.
+  station_wasm_module_extra_chunks : opt opt WasmModuleExtraChunks;
 };
 
 // The result of uploading canister modules.

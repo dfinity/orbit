@@ -178,6 +178,7 @@ export interface UpdateWaitingListInput {
 export type UpdateWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface UploadCanisterModulesInput {
+  'station_wasm_module_extra_chunks' : [] | [[] | [WasmModuleExtraChunks]],
   'station_wasm_module' : [] | [Uint8Array | number[]],
   'upgrader_wasm_module' : [] | [Uint8Array | number[]],
 }

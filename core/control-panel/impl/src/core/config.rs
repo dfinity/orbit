@@ -3,7 +3,7 @@ use crate::core::ic_cdk::api::time;
 use crate::SYSTEM_VERSION;
 use ic_stable_structures::{storable::Bound, Storable};
 use orbit_essentials::storable;
-use orbit_essentials::types::Timestamp;
+use orbit_essentials::types::{Timestamp, WasmModuleExtraChunks};
 use std::borrow::Cow;
 
 #[storable]
@@ -14,6 +14,9 @@ pub struct CanisterConfig {
 
     /// The station canister wasm module that will be used to deploy new stations.
     pub station_wasm_module: Vec<u8>,
+
+    /// Optional extra chunks of the station canister wasm module.
+    pub station_wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
 
     /// Last time the canister was upgraded or initialized.
     pub last_upgrade_timestamp: Timestamp,
@@ -27,6 +30,7 @@ impl Default for CanisterConfig {
         Self {
             upgrader_wasm_module: vec![],
             station_wasm_module: vec![],
+            station_wasm_module_extra_chunks: None,
             last_upgrade_timestamp: time(),
             version: None,
         }
@@ -34,10 +38,15 @@ impl Default for CanisterConfig {
 }
 
 impl CanisterConfig {
-    pub fn new(upgrader_wasm_module: Vec<u8>, station_wasm_module: Vec<u8>) -> Self {
+    pub fn new(
+        upgrader_wasm_module: Vec<u8>,
+        station_wasm_module: Vec<u8>,
+        station_wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
+    ) -> Self {
         Self {
             upgrader_wasm_module,
             station_wasm_module,
+            station_wasm_module_extra_chunks,
             last_upgrade_timestamp: time(),
             version: Some(SYSTEM_VERSION.to_string()),
         }
