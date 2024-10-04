@@ -33,7 +33,7 @@ watch(
       requestId.value = null;
     }
 
-    const id = Array.isArray(queryParam) ? queryParam?.[0] ?? '' : queryParam;
+    const id = Array.isArray(queryParam) ? (queryParam?.[0] ?? '') : queryParam;
 
     requestId.value = isValidUUID(`${id}`) ? id : null;
   },

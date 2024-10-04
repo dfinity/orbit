@@ -67,6 +67,28 @@ command.action(async options => {
 
   console.log('Generating changelogs...');
 
+  // TODO: Remove this workaround when the issue is fixed in NX CLI.
+  //
+  // NX has a bug that is not removing dependent projects from the list of dependent projects when they are ignored.
+  // This is a workaround for that issue.
+  const ignoredProjects = new Set([
+    'integration-tests',
+    'orbit-essentials-macros-tests',
+    'test_canister',
+  ]);
+  Object.entries(projectsVersionData).forEach(([projectName, projectVersionData]) => {
+    if (projectVersionData.dependentProjects.length) {
+      projectsVersionData[projectName].dependentProjects =
+        projectVersionData.dependentProjects.filter(dependentProject => {
+          if (dependentProject.source) {
+            return !ignoredProjects.has(dependentProject.source);
+          }
+
+          return true;
+        });
+    }
+  });
+
   const { projectChangelogs } = await releaseChangelog({
     versionData: projectsVersionData,
     verbose: options.verbose,

@@ -16,12 +16,11 @@
     "releaseTagPattern": "@orbit/{projectName}-v{version}",
     "projects": [
       "libs/*",
-      "!libs/orbit-essentials-macros-tests",
       "core/**",
       "apps/**",
       "tools/**",
-      "tests/**",
-      "!tests/integration"
+      "!libs/orbit-essentials-macros-tests",
+      "!tests/**"
     ]
   },
   "namedInputs": {
