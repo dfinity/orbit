@@ -7,6 +7,7 @@ use crate::{
     SERVICE_NAME,
 };
 use orbit_essentials::{
+    cdk::api::print,
     metrics::{labels, ApplicationGaugeMetric, ApplicationGaugeVecMetric, ApplicationMetric},
     utils::amount_to_f64,
 };
@@ -15,6 +16,7 @@ use orbit_essentials::{
     repository::Repository,
 };
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
+use uuid::Uuid;
 
 use super::observer::Observer;
 
@@ -355,6 +357,11 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
         for account in accounts {
             for account_asset in &account.assets {
                 let Some(asset) = ASSET_REPOSITORY.get(&account_asset.asset_id) else {
+                    print(format!(
+                        "Asset `{}` not found in account `{}`",
+                        Uuid::from_bytes(account_asset.asset_id).hyphenated(),
+                        Uuid::from_bytes(account.id).hyphenated()
+                    ));
                     continue;
                 };
 
@@ -393,6 +400,12 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
 
         for account_asset in &current.assets {
             let Some(asset) = ASSET_REPOSITORY.get(&account_asset.asset_id) else {
+                print(format!(
+                    "Asset `{}` not found in account `{}`",
+                    Uuid::from_bytes(account_asset.asset_id).hyphenated(),
+                    Uuid::from_bytes(current.id).hyphenated()
+                ));
+
                 continue;
             };
 
