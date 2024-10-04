@@ -210,12 +210,14 @@ export interface WasmModuleRegistryEntryDependency {
   'version' : string,
 }
 export interface WasmModuleRegistryEntryValue {
+  'module_extra_chunks' : [] | [WasmModuleExtraChunks],
   'version' : string,
   'dependencies' : Array<WasmModuleRegistryEntryDependency>,
   'wasm_artifact_id' : UUID,
 }
 export interface WasmModuleRegistryEntryValueInput {
   'wasm_module' : Uint8Array | number[],
+  'module_extra_chunks' : [] | [WasmModuleExtraChunks],
   'version' : string,
   'dependencies' : Array<WasmModuleRegistryEntryDependency>,
 }

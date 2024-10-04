@@ -4,7 +4,7 @@ use crate::{core::ic_cdk::next_time, errors::RegistryError};
 use orbit_essentials::model::{ModelKey, ModelValidator, ModelValidatorResult};
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
-use orbit_essentials::types::{Timestamp, UUID};
+use orbit_essentials::types::{Timestamp, WasmModuleExtraChunks, UUID};
 use std::collections::{BTreeMap, HashSet};
 use std::fmt::Display;
 use uuid::Uuid;
@@ -124,6 +124,7 @@ pub struct WasmModuleRegistryValue {
     ///
     /// - There can be up to 25 dependencies per wasm module.
     pub dependencies: Vec<WasmModuleRegistryEntryDependency>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
 }
 
 #[storable]
@@ -189,6 +190,7 @@ impl RegistryEntry {
                 wasm_artifact_id: [0; 16],
                 version: Default::default(),
                 dependencies: Default::default(),
+                module_extra_chunks: None,
             }),
             metadata: Default::default(),
             created_at: next_time(),
@@ -632,6 +634,7 @@ pub mod registry_entry_test_utils {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
             version: "1.0.0".to_string(),
             dependencies: Vec::new(),
+            module_extra_chunks: None,
         })
     }
 }
@@ -840,6 +843,7 @@ mod tests {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
             version: version.to_string(),
             dependencies: Vec::new(),
+            module_extra_chunks: None,
         });
 
         assert!(entry.validate().is_err());
@@ -855,6 +859,7 @@ mod tests {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
             version: version.to_string(),
             dependencies: Vec::new(),
+            module_extra_chunks: None,
         });
 
         entry.validate().unwrap();
@@ -874,6 +879,7 @@ mod tests {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
             version: "1.0.0".to_string(),
             dependencies,
+            module_extra_chunks: None,
         });
 
         assert!(entry.validate().is_err());
@@ -891,6 +897,7 @@ mod tests {
                 wasm_artifact_id: *Uuid::new_v4().as_bytes(),
                 version: version.to_string(),
                 dependencies: Vec::new(),
+                module_extra_chunks: None,
             });
 
             REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
@@ -907,6 +914,7 @@ mod tests {
                     version,
                 })
                 .collect(),
+            module_extra_chunks: None,
         });
 
         entry.validate().unwrap();
@@ -927,6 +935,7 @@ mod tests {
                 name: package.fullname(),
                 version: "1.0.0".to_string(),
             }],
+            module_extra_chunks: None,
         });
 
         package.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
@@ -936,6 +945,7 @@ mod tests {
                 name: sub_package.fullname(),
                 version: "1.0.0".to_string(),
             }],
+            module_extra_chunks: None,
         });
 
         REGISTRY_REPOSITORY.insert(sub_package.id, sub_package.clone());
@@ -961,6 +971,7 @@ mod tests {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
             version: "1.0.0".to_string(),
             dependencies: Vec::new(),
+            module_extra_chunks: None,
         });
 
         sub_package.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
@@ -970,6 +981,7 @@ mod tests {
                 name: sub_sub_package.fullname(),
                 version: "1.0.0".to_string(),
             }],
+            module_extra_chunks: None,
         });
 
         package.value = RegistryValue::WasmModule(WasmModuleRegistryValue {
@@ -979,6 +991,7 @@ mod tests {
                 name: sub_package.fullname(),
                 version: "1.0.0".to_string(),
             }],
+            module_extra_chunks: None,
         });
 
         REGISTRY_REPOSITORY.insert(sub_sub_package.id, sub_sub_package.clone());

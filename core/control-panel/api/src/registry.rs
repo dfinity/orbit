@@ -1,5 +1,6 @@
 use crate::{MetadataDTO, PaginationInput, SortDirection, TimestampRfc3339, UuidDTO};
 use candid::{CandidType, Deserialize};
+use orbit_essentials::types::WasmModuleExtraChunks;
 
 #[derive(CandidType, Deserialize, serde::Serialize, Debug, Clone, Eq, PartialEq)]
 pub struct WasmModuleRegistryEntryDependencyDTO {
@@ -12,6 +13,7 @@ pub struct WasmModuleRegistryEntryValueDTO {
     pub wasm_artifact_id: UuidDTO,
     pub version: String,
     pub dependencies: Vec<WasmModuleRegistryEntryDependencyDTO>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
 }
 
 #[derive(CandidType, Deserialize, serde::Serialize, Clone, Debug, Eq, PartialEq)]
@@ -20,6 +22,7 @@ pub struct WasmModuleRegistryEntryValueInput {
     pub wasm_module: Vec<u8>,
     pub version: String,
     pub dependencies: Vec<WasmModuleRegistryEntryDependencyDTO>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
 }
 
 #[derive(CandidType, Deserialize, serde::Serialize, Clone, Debug, Eq, PartialEq)]

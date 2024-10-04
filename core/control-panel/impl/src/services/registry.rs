@@ -137,6 +137,7 @@ impl RegistryService {
                         .iter()
                         .map(|dep| dep.clone().into())
                         .collect(),
+                    module_extra_chunks: module.module_extra_chunks.clone(),
                 });
             }
         };
@@ -189,6 +190,7 @@ impl RegistryService {
                         .iter()
                         .map(|dep| dep.clone().into())
                         .collect(),
+                    module_extra_chunks: module.module_extra_chunks.clone(),
                 });
 
                 new_artifact_id = Some(artifact_id);
@@ -318,7 +320,9 @@ mod tests {
     use crate::models::{
         registry_entry_test_utils::create_registry_entry, WasmModuleRegistryValue,
     };
+    use candid::Principal;
     use control_panel_api::RegistryEntryValueKindDTO;
+    use orbit_essentials::types::WasmModuleExtraChunks;
 
     #[test]
     fn test_search_by_name_and_kind_is_none() {
@@ -416,6 +420,7 @@ mod tests {
                 wasm_artifact_id: *Uuid::new_v4().as_bytes(),
                 version: format!("1.0.{}", i),
                 dependencies: Vec::new(),
+                module_extra_chunks: None,
             });
 
             REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
@@ -444,6 +449,7 @@ mod tests {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
             version: "1.0.0".to_string(),
             dependencies: Vec::new(),
+            module_extra_chunks: None,
         });
 
         REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
@@ -459,6 +465,7 @@ mod tests {
                     version: "1.0.0".to_string(),
                     wasm_module: [0, 1, 3].to_vec(),
                     dependencies: Vec::new(),
+                    module_extra_chunks: None,
                 },
             ),
         };
@@ -476,6 +483,7 @@ mod tests {
             wasm_artifact_id: *Uuid::new_v4().as_bytes(),
             version: "1.0.0".to_string(),
             dependencies: Vec::new(),
+            module_extra_chunks: None,
         });
         entry.tags = vec![LATEST_TAG.to_string()];
 
@@ -492,6 +500,7 @@ mod tests {
                     version: "1.0.1".to_string(),
                     wasm_module: [0, 1, 3].to_vec(),
                     dependencies: Vec::new(),
+                    module_extra_chunks: None,
                 },
             ),
         };
@@ -524,12 +533,18 @@ mod tests {
                     version: "1.0.0".to_string(),
                     wasm_module: [0, 1].to_vec(),
                     dependencies: Vec::new(),
+                    module_extra_chunks: None,
                 },
             ),
         };
 
         let entry = REGISTRY_SERVICE.create(create_input).unwrap();
 
+        let module_extra_chunks = WasmModuleExtraChunks {
+            store_canister: Principal::management_canister(),
+            chunk_hashes_list: vec![],
+            wasm_module_hash: vec![],
+        };
         let input = RegistryEntryUpdateInput {
             description: Some("This is a test description for the module.".to_string()),
             tags: Some(vec!["tag".to_string()]),
@@ -540,6 +555,7 @@ mod tests {
                     version: "1.0.1".to_string(),
                     wasm_module: [0, 1, 3].to_vec(),
                     dependencies: Vec::new(),
+                    module_extra_chunks: Some(module_extra_chunks.clone()),
                 },
             )),
         };
@@ -558,6 +574,7 @@ mod tests {
             RegistryValue::WasmModule(wasm_module) => {
                 assert_eq!(wasm_module.version, "1.0.1");
                 assert_eq!(wasm_module.dependencies.len(), 0);
+                assert_eq!(wasm_module.module_extra_chunks, Some(module_extra_chunks));
             }
         }
     }
@@ -571,6 +588,7 @@ mod tests {
                 wasm_artifact_id: *Uuid::new_v4().as_bytes(),
                 version: format!("1.0.{}", i),
                 dependencies: Vec::new(),
+                module_extra_chunks: None,
             });
 
             REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
@@ -598,6 +616,7 @@ mod tests {
                 wasm_artifact_id: *Uuid::new_v4().as_bytes(),
                 version: format!("1.0.{}", i),
                 dependencies: Vec::new(),
+                module_extra_chunks: None,
             });
 
             REGISTRY_REPOSITORY.insert(entry.id, entry.clone());
