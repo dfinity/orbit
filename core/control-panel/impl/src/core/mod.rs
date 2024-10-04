@@ -49,7 +49,7 @@ pub mod test_utils {
     }
 
     pub fn init_canister_config() {
-        let config = CanisterConfig::new(Vec::new(), Vec::new());
+        let config = CanisterConfig::new(Vec::new(), Vec::new(), None);
         write_canister_config(config);
     }
 }

@@ -512,8 +512,9 @@ fn upload_canister_modules_authorization() {
     upload_canister_modules(&env, canister_ids.control_panel, controller);
 
     let upload_canister_modules_args = UploadCanisterModulesInput {
-        station_wasm_module: None,
         upgrader_wasm_module: None,
+        station_wasm_module: None,
+        station_wasm_module_extra_chunks: None,
     };
     let res: (ApiResult<()>,) = update_candid_as(
         &env,
