@@ -245,12 +245,23 @@ type CanDeployStationResult = variant {
   Err : ApiError;
 };
 
+type WasmModuleExtraChunks = record {
+  // The asset canister from which the chunks are to be retrieved.
+  store_canister : principal;
+  // The list of chunk hashes in the order they should be appended to the wasm module.
+  chunk_hashes_list : vec blob;
+  // The hash of the assembled wasm module.
+  wasm_module_hash : blob;
+};
+
 // The canister modules required for the control panel.
 type UploadCanisterModulesInput = record {
   // The upgrader wasm module to use for the station canister.
   upgrader_wasm_module : opt blob;
   // The station wasm module to use.
   station_wasm_module : opt blob;
+  // Optional extra chunks of the station canister wasm module.
+  station_wasm_module_extra_chunks : opt opt WasmModuleExtraChunks;
 };
 
 // The result of uploading canister modules.
@@ -417,6 +428,8 @@ type WasmModuleRegistryEntryValue = record {
   //
   // This registry ids should only reference registry entries that are of type `WasmModule`, others will be ignored.
   dependencies : vec WasmModuleRegistryEntryDependency;
+  // Optional extra chunks of the wasm module that are stored in an asset canister referenced in the record `WasmModuleExtraChunks`.
+  module_extra_chunks : opt WasmModuleExtraChunks;
 };
 
 // The search registry filter options.
@@ -535,6 +548,8 @@ type WasmModuleRegistryEntryValueInput = record {
   version : text;
   // The dependencies of the wasm module, which are other wasm modules that this wasm module depends on.
   dependencies : vec WasmModuleRegistryEntryDependency;
+  // Optional extra chunks of the wasm module that are stored in an asset canister referenced in the record `WasmModuleExtraChunks`.
+  module_extra_chunks : opt WasmModuleExtraChunks;
 };
 
 // The input for adding a registry entry.

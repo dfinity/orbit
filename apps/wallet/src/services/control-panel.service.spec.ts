@@ -17,6 +17,7 @@ const mockWasmModuleEntry = (name: string, version: string): RegistryEntry => ({
       dependencies: [],
       version,
       wasm_artifact_id: '',
+      module_extra_chunks: [],
     },
   },
 });

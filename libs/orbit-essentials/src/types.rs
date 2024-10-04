@@ -1,7 +1,7 @@
 use candid::{CandidType, Deserialize, Principal};
 use serde::Serialize;
 
-#[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct WasmModuleExtraChunks {
     pub store_canister: Principal,
     #[serde(deserialize_with = "crate::deserialize::deserialize_vec_blob")]

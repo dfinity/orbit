@@ -178,6 +178,7 @@ export interface UpdateWaitingListInput {
 export type UpdateWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface UploadCanisterModulesInput {
+  'station_wasm_module_extra_chunks' : [] | [[] | [WasmModuleExtraChunks]],
   'station_wasm_module' : [] | [Uint8Array | number[]],
   'upgrader_wasm_module' : [] | [Uint8Array | number[]],
 }
@@ -199,17 +200,24 @@ export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
   { 'Approved' : null } |
   { 'Denylisted' : null } |
   { 'Pending' : null };
+export interface WasmModuleExtraChunks {
+  'wasm_module_hash' : Uint8Array | number[],
+  'chunk_hashes_list' : Array<Uint8Array | number[]>,
+  'store_canister' : Principal,
+}
 export interface WasmModuleRegistryEntryDependency {
   'name' : string,
   'version' : string,
 }
 export interface WasmModuleRegistryEntryValue {
+  'module_extra_chunks' : [] | [WasmModuleExtraChunks],
   'version' : string,
   'dependencies' : Array<WasmModuleRegistryEntryDependency>,
   'wasm_artifact_id' : UUID,
 }
 export interface WasmModuleRegistryEntryValueInput {
   'wasm_module' : Uint8Array | number[],
+  'module_extra_chunks' : [] | [WasmModuleExtraChunks],
   'version' : string,
   'dependencies' : Array<WasmModuleRegistryEntryDependency>,
 }
