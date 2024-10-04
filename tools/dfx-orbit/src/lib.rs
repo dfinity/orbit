@@ -5,6 +5,7 @@
 //#![deny(clippy::unwrap_used)]
 
 pub mod args;
+pub mod asset;
 pub mod cli;
 pub mod dfx;
 pub mod local_config;

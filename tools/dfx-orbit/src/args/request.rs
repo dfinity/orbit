@@ -1,10 +1,8 @@
 //! Defines the command line arguments for `dfx-orbit request`.  These correspond to Orbit station `create_request` API calls.
-pub mod asset;
 pub mod canister;
 pub mod permission;
 
-use crate::DfxOrbit;
-use asset::RequestAssetArgs;
+use crate::{asset::RequestAssetArgs, DfxOrbit};
 use canister::RequestCanisterArgs;
 use clap::{Parser, Subcommand};
 use permission::RequestPermissionArgs;

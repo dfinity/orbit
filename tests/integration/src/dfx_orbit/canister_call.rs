@@ -16,7 +16,10 @@ use dfx_orbit::args::{
         canister::{RequestCanisterActionArgs, RequestCanisterArgs, RequestCanisterCallArgs},
         RequestArgs, RequestArgsActions,
     },
-    verify::{VerifyArgs, VerifyArgsAction, VerifyCanisterActionArgs, VerifyCanisterArgs},
+    verify::{
+        canister::{VerifyCanisterActionArgs, VerifyCanisterArgs},
+        VerifyArgs, VerifyArgsAction,
+    },
 };
 use station_api::{GetRequestInput, RequestApprovalStatusDTO};
 
