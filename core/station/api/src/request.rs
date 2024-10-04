@@ -46,7 +46,7 @@ pub enum RequestStatusCodeDTO {
     Failed = 7,
 }
 
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum RequestApprovalStatusDTO {
     Approved,
     Rejected,

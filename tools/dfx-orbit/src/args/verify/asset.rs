@@ -1,4 +1,7 @@
-use crate::DfxOrbit;
+use crate::{
+    args::request::asset::{RequestAssetCancelUploadArgs, RequestAssetPermissionArgs},
+    DfxOrbit,
+};
 use candid::Nat;
 use clap::{Parser, Subcommand};
 use station_api::GetRequestResponse;
@@ -7,25 +10,30 @@ use station_api::GetRequestResponse;
 pub struct VerifyAssetArgs {
     /// The operation to verify
     #[clap(subcommand)]
-    pub(crate) action: VerifyAssetActionArgs,
+    pub action: VerifyAssetActionArgs,
 }
 
 #[derive(Debug, Clone, Subcommand)]
 #[clap(version, about, long_about = None)]
 pub enum VerifyAssetActionArgs {
-    // TODO: Verify Request Permission
+    /// Request to grant a user permissions for an asset canister
+    Permission(RequestAssetPermissionArgs),
     /// Upload assets to an asset canister
     Upload(VerifyAssetUploadArgs),
+    /// Cancel an uppload
+    CancelUpload(RequestAssetCancelUploadArgs),
 }
 
 impl VerifyAssetArgs {
     pub(crate) async fn verify(
-        self,
+        &self,
         dfx_orbit: &DfxOrbit,
         request: &GetRequestResponse,
     ) -> anyhow::Result<()> {
-        match self.action {
+        match &self.action {
             VerifyAssetActionArgs::Upload(args) => args.verify(dfx_orbit, request).await?,
+            VerifyAssetActionArgs::Permission(args) => args.verify(dfx_orbit, request)?,
+            VerifyAssetActionArgs::CancelUpload(args) => args.verify(dfx_orbit, request)?,
         }
 
         Ok(())
@@ -35,13 +43,16 @@ impl VerifyAssetArgs {
 #[derive(Debug, Clone, Parser)]
 pub struct VerifyAssetUploadArgs {
     /// The name of the asset canister targeted by this action
-    pub(crate) canister: String,
+    pub canister: String,
 
     /// The batch ID to commit to
-    pub(crate) batch_id: Nat,
+    #[clap(short, long)]
+    pub batch_id: Nat,
 
-    /// The source directories of the asset upload (multiple values possible)
-    pub(crate) files: Vec<String>,
+    /// The source directories to upload
+    /// (multiple values possible, picks up sources from dfx.json by default)
+    #[clap(short, long)]
+    pub files: Vec<String>,
 }
 
 impl VerifyAssetUploadArgs {

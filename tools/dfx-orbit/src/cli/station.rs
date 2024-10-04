@@ -15,7 +15,7 @@ pub fn exec(orbit_agent: OrbitExtensionAgent, args: StationArgs) -> anyhow::Resu
                 .with_context(|| "Failed to add station to local dfx config")?;
         }
         StationArgs::List(_list_args) => {
-            let stations = orbit_agent.list_stations();
+            let stations = orbit_agent.list_stations()?;
             let ans = ListResponse { stations };
             // Note: The formatted ans is a sequence of complete lines, so an additional newline, as provided by println, is not needed.
             print!("{ans}");

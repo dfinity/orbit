@@ -63,17 +63,19 @@ Tell the command line tool where to find the orbit station:
 - Log in to Orbit.
 - Navigate to station settings.
 - Copy the wallet ID
-- Store the station details locally. If your wallet is called `shiny` and is running locally, the command is:
+- Store the station details locally.
+
   ```
-  dfx-orbit station add shiny --station-id "$WALLET_ID" --network ic
+  dfx-orbit station add [STATION_NAME] --station-id [STATION_ID] --network ic
   ```
+
 - Verify that the station is in your list of stations:
   ```
   dfx-orbit station list
   ```
 - If you have multiple stations, set this as your default:
   ```
-  dfx-orbit station use shiny
+  dfx-orbit station use [STATION_NAME]
   ```
 - Show the station details
   ```
@@ -87,22 +89,6 @@ Tell the command line tool where to find the orbit station:
   ```
   dfx-orbit me
   ```
-
-### Grant permission to make requests
-
-You can check which permissions you have with:
-
-```
-dfx-orbit me | jq .Ok.privileges
-```
-
-Initially you are likely to have only permission to see your own profile:
-
-```
-[
-  "Capabilities"
-]
-```
 
 ## Make canister calls with Orbit
 
@@ -141,24 +127,18 @@ dfx canister info MY_CANISTER --network MY_CANISTER_NETWORK
 
 ### Upgrade canisters
 
-#### Request permission to make upgrade requests
-
-This will allow you to propose upgrades to `MY_CANISTER`:
-
-```
-dfx-orbit request permission upgrade-canister MY_CANISTER
-```
-
-This will create an Orbit request. Once approved you will be able to propose canister upgrades.
-
-> :warning: **The Orbit GUI does not currently show this proposal unless you enter the proposal URL directly, under /en/settings/requests?reqid=THE_ID**
-
 #### Request a canister upgrade
 
-Suppose that you have built a new Wasm and put a copy at `./MY-CANISTER.wasm.gz`. To upgrade your canister to the new Wasm:
+Suppose that you have built a new Wasm. To upgrade your canister to the new Wasm:
 
 ```
-dfx-orbit request canister install --mode upgrade MY_CANISTER --wasm ./MY-CANISTER.wasm.gz
+dfx-orbit request canister install --mode upgrade [CANISTER_NAME] --wasm [WASM_PATH]
+```
+
+Then a verifier can verify this request, using:
+
+```
+dfx-orbit verify [REQUEST_ID] canister install --mode upgrade [CANISTER_NAME] --wasm [WASM_PATH]
 ```
 
 ### Upload assets to a canister
@@ -171,7 +151,13 @@ If not, please transfer the control of the canister to the orbit station.
 Note: Uploaded assets are not published. They are only prepared for release.
 
 ```
-dfx-orbit request asset prepare-permission frontend
+dfx-orbit request asset permission [CANISTER_NAME] prepare
+```
+
+Similarly, you can validate a request using
+
+```
+dfx-orbit verify [REQUEST_ID] asset permission [CANISTER_NAME] prepare
 ```
 
 In case you want to verify, whether you have the `Prepare` permission on the asset canister,
@@ -193,7 +179,7 @@ dfx identity get-principal
 A developer may upload one or more directories of HTTP assets with:
 
 ```
-dfx-orbit request asset upload CANISTER_NAME SOME_DIR/ OTHER_DIR/
+dfx-orbit request asset upload [CANISTER_NAME] --files [SOME_DIR]
 ```
 
 This will upload the assets to the asset canister and then request the orbit station to publish
@@ -204,7 +190,7 @@ the assets.
 After the request has been made, the reviewers can locally verify the request:
 
 ```
-dfx-orbit verify asset upload CANISTER REQUEST_ID BATCH_ID SOME_DIR/ OTHER_DIR/
+dfx-orbit verify [REQUEST_ID ] asset upload CANISTER --batch-id [BATCH_ID] --files [SOME_DIR]
 ```
 
 > The verifiers needs to have the same set of data as was used in the request.
