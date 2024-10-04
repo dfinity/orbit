@@ -6,13 +6,14 @@
 
 pub mod args;
 pub mod cli;
-pub mod dfx_extension_api;
+pub mod dfx;
 pub mod local_config;
 pub mod station;
 
 use anyhow::{anyhow, bail, Context};
 use candid::Principal;
 pub use cli::asset::AssetAgent;
+use dfx::OrbitExtensionAgent;
 use dfx_core::{
     config::model::{
         canister_id_store::CanisterIdStore,
@@ -20,7 +21,6 @@ use dfx_core::{
     },
     DfxInterface,
 };
-use dfx_extension_api::OrbitExtensionAgent;
 use ic_utils::{canister::CanisterBuilder, Canister};
 use slog::Logger;
 use station::StationConfig;

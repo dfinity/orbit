@@ -6,7 +6,7 @@ pub(crate) mod station;
 
 use crate::{
     args::{DfxOrbitArgs, DfxOrbitSubcommands},
-    dfx_extension_api::OrbitExtensionAgent,
+    dfx::OrbitExtensionAgent,
     DfxOrbit,
 };
 use anyhow::Context;

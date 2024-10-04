@@ -1,10 +1,9 @@
 //! Implements the dfx extension CLI commands for managing stations.
-use anyhow::Context;
-
 use crate::{
     args::station::{ListResponse, StationArgs},
-    dfx_extension_api::OrbitExtensionAgent,
+    dfx::OrbitExtensionAgent,
 };
+use anyhow::Context;
 
 /// Implements CLI commands for managing Orbit stations.
 pub fn exec(orbit_agent: OrbitExtensionAgent, args: StationArgs) -> anyhow::Result<()> {
