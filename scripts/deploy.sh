@@ -319,7 +319,7 @@ function deploy_app_wallet() {
   canister_id_exit_code=$?
   set -e # Re-enable 'exit on error'
 
-  if [ $canister_id_exit_code -ne 0 ]; then
+  if [ -z "$canister_id_output" ]; then
     echo "Canister 'app_wallet' does not exist, creating and installing..."
 
     BUILD_MODE=$network dfx deploy --network $network app_wallet --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
