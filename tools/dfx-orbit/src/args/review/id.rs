@@ -8,24 +8,10 @@ pub struct ReviewIdArgs {
     /// The ID of the request to review.
     pub(crate) request_id: String,
     /// Prompt the user to approve the request
-    #[clap(
-        short,
-        long,
-        action,
-        value_name = "REASON",
-        conflicts_with = "reject",
-        default_missing_value = "None"
-    )]
+    #[clap(short, long, action, value_name = "REASON", conflicts_with = "reject")]
     pub(crate) approve: Option<Option<String>>,
     /// Prompt the user to reject the request
-    #[clap(
-        short,
-        long,
-        action,
-        value_name = "REASON",
-        conflicts_with = "approve",
-        default_missing_value = "None"
-    )]
+    #[clap(short, long, action, value_name = "REASON", conflicts_with = "approve")]
     pub(crate) reject: Option<Option<String>>,
 }
 
