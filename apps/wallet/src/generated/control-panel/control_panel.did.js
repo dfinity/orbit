@@ -252,11 +252,6 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Null,
     'Err' : ApiError,
   });
-  const WasmModuleExtraChunks = IDL.Record({
-    'wasm_module_hash' : IDL.Vec(IDL.Nat8),
-    'chunk_hashes_list' : IDL.Vec(IDL.Vec(IDL.Nat8)),
-    'store_canister' : IDL.Principal,
-  });
   const UploadCanisterModulesInput = IDL.Record({
     'station_wasm_module_extra_chunks' : IDL.Opt(
       IDL.Opt(WasmModuleExtraChunks)
