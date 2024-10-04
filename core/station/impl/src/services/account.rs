@@ -34,7 +34,7 @@ use orbit_essentials::{
     api::ServiceResult, model::ModelValidator, repository::Repository, types::UUID,
 };
 use station_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput};
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 use uuid::Uuid;
 
 use super::SYSTEM_SERVICE;
@@ -156,7 +156,9 @@ impl AccountService {
         let mut new_account =
             AccountMapper::from_create_input(input.to_owned(), *uuid.as_bytes(), None)?;
 
-        for asset_id in input.assets.iter() {
+        let dedulicated_asset_ids = input.assets.iter().cloned().collect::<HashSet<_>>();
+
+        for asset_id in dedulicated_asset_ids.iter() {
             let asset = self.asset_repository.get(asset_id).ok_or_else(|| {
                 AccountError::ValidationError {
                     info: format!(
@@ -441,7 +443,7 @@ impl AccountService {
             .account_ids
             .iter()
             .map(|id| HelperMapper::to_uuid(id.clone()))
-            .collect::<Result<Vec<Uuid>, _>>()?;
+            .collect::<Result<HashSet<Uuid>, _>>()?;
 
         let accounts = self
             .account_repository

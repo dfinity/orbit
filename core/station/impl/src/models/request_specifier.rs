@@ -10,10 +10,12 @@ use crate::models::user::User;
 use crate::repositories::{ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY};
 use crate::services::ACCOUNT_SERVICE;
 use crate::{errors::MatchError, repositories::USER_REPOSITORY};
+use orbit_essentials::cdk::api::print;
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
 use orbit_essentials::types::UUID;
+use uuid::Uuid;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -251,6 +253,12 @@ impl Match<RequestHasMetadata> for AddressBookMetadataMatcher {
 
                     for account_asset in account.assets {
                         let Some(asset) = ASSET_REPOSITORY.get(&account_asset.asset_id) else {
+                            print(format!(
+                                "Could not load asset `{}` in account `{}`",
+                                Uuid::from_bytes(account_asset.asset_id).hyphenated(),
+                                Uuid::from_bytes(account.id).hyphenated(),
+                            ));
+
                             continue;
                         };
 

@@ -11,13 +11,13 @@ use crate::{
     factories::blockchains::InternetComputer,
     models::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
-        CanisterInstallMode, CanisterUpgradeModeArgs, CycleObtainStrategy,
+        AccountKey, CanisterInstallMode, CanisterUpgradeModeArgs, CycleObtainStrategy,
         ManageSystemInfoOperationInput, RequestId, RequestKey, RequestOperation, RequestStatus,
         SystemUpgradeTarget,
     },
     repositories::{
-        permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY, REQUEST_REPOSITORY,
-        USER_GROUP_REPOSITORY, USER_REPOSITORY,
+        permission::PERMISSION_REPOSITORY, RequestRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY,
+        REQUEST_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     services::{
         change_canister::{ChangeCanisterService, CHANGE_CANISTER_SERVICE},
@@ -180,16 +180,29 @@ impl SystemService {
     ) -> Option<ObtainCyclesOptions> {
         match strategy {
             CycleObtainStrategy::Disabled => None,
-            CycleObtainStrategy::MintFromNativeToken { account_id } => Some(ObtainCyclesOptions {
-                obtain_cycles: Arc::new(MintCycles {
-                    ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
-                    cmc: Arc::new(IcCyclesMintingCanister::new(
-                        MAINNET_CYCLES_MINTING_CANISTER_ID,
-                    )),
-                    from_subaccount: Subaccount(InternetComputer::subaccount_from_seed(account_id)),
-                }),
-                top_up_self: true,
-            }),
+            CycleObtainStrategy::MintFromNativeToken { account_id } => {
+                if let Some(account) = ACCOUNT_REPOSITORY.get(&AccountKey { id: *account_id }) {
+                    Some(ObtainCyclesOptions {
+                        obtain_cycles: Arc::new(MintCycles {
+                            ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
+                            cmc: Arc::new(IcCyclesMintingCanister::new(
+                                MAINNET_CYCLES_MINTING_CANISTER_ID,
+                            )),
+                            from_subaccount: Subaccount(InternetComputer::subaccount_from_seed(
+                                &account.seed,
+                            )),
+                        }),
+                        top_up_self: true,
+                    })
+                } else {
+                    print(format!(
+                        "Account with id `{}` not found, cannot create ObtainCyclesOptions",
+                        Uuid::from_bytes(*account_id).hyphenated()
+                    ));
+
+                    None
+                }
+            }
         }
     }
     #[cfg(target_arch = "wasm32")]
@@ -726,6 +739,12 @@ mod install_canister_handlers {
                             ));
                         } else {
                             // the asset does not exist and it could not be recreated, skip
+
+                            print(format!(
+                                "Asset {} could not be recreated and does not exist in the existing assets, skipping",
+                                asset_id_str
+                            ));
+
                             continue;
                         }
                     }

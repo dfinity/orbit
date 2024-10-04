@@ -174,7 +174,7 @@ impl InternetComputer {
                     timestamp_nanos: current_time,
                 }),
                 from_subaccount: Some(Subaccount(InternetComputer::subaccount_from_seed(
-                    &station_account.id,
+                    &station_account.seed,
                 ))),
                 memo: Memo(memo),
                 to: to_address,

@@ -19,6 +19,7 @@ use orbit_essentials::{
 use station_api::EvaluationSummaryReasonDTO;
 use std::{cmp, hash::Hash};
 use std::{collections::HashSet, sync::Arc};
+use uuid::Uuid;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -419,6 +420,12 @@ impl
                             for account_asset in account.assets {
                                 let Some(asset) = ASSET_REPOSITORY.get(&account_asset.asset_id)
                                 else {
+                                    print(format!(
+                                        "Asset `{}` not found in account `{}`.",
+                                        Uuid::from_bytes(account_asset.asset_id).hyphenated(),
+                                        Uuid::from_bytes(account.id).hyphenated()
+                                    ));
+
                                     continue;
                                 };
 

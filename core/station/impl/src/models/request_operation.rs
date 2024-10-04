@@ -14,7 +14,7 @@ use candid::Principal;
 use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::{storable, types::UUID};
-use std::fmt::Display;
+use std::{collections::HashSet, fmt::Display};
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, strum::VariantNames)]
@@ -207,8 +207,9 @@ impl ChangeAssets {
                 add_assets,
                 remove_assets,
             } => {
+                let existing_assets: HashSet<_> = assets.iter().map(|a| a.asset_id).collect();
                 for asset_id in add_assets {
-                    if !assets.iter().any(|a| a.asset_id == *asset_id) {
+                    if !existing_assets.contains(asset_id) {
                         assets.push(AccountAsset {
                             asset_id: *asset_id,
                             balance: None,
@@ -667,4 +668,43 @@ pub struct ManageSystemInfoOperationInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ManageSystemInfoOperation {
     pub input: ManageSystemInfoOperationInput,
+}
+
+#[cfg(test)]
+mod test {
+    use crate::models::AccountAsset;
+
+    use super::ChangeAssets;
+
+    #[test]
+    fn test_change_assets() {
+        let mut assets: Vec<AccountAsset> = [[3; 16], [9; 16], [10; 16], [11; 16], [13; 16]]
+            .into_iter()
+            .map(|id| AccountAsset {
+                asset_id: id,
+                balance: None,
+            })
+            .collect();
+
+        ChangeAssets::Change {
+            // 3 already exists, should not be added twice
+            add_assets: vec![[0; 16], [1; 16], [2; 16], [3; 16]],
+            // 12 doesn't exist, should not be in an issue
+            remove_assets: vec![[10; 16], [11; 16], [12; 16]],
+        }
+        .apply(&mut assets);
+
+        assert_eq!(assets.len(), 5 + 3 - 2);
+
+        assert!(!assets.iter().any(|a| a.asset_id == [10; 16]));
+        assert!(!assets.iter().any(|a| a.asset_id == [11; 16]));
+        assert!(!assets.iter().any(|a| a.asset_id == [12; 16]));
+
+        assert!(assets.iter().any(|a| a.asset_id == [0; 16]));
+        assert!(assets.iter().any(|a| a.asset_id == [1; 16]));
+        assert!(assets.iter().any(|a| a.asset_id == [2; 16]));
+        assert!(assets.iter().any(|a| a.asset_id == [3; 16]));
+
+        assert_eq!(assets.iter().filter(|a| a.asset_id == [3; 16]).count(), 1);
+    }
 }

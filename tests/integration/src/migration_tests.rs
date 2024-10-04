@@ -29,6 +29,7 @@ const EXPECTED_PERMISSIONS_NR: usize =
     // for accounts there are view, transfer and configuration permissions
     ACCOUNTS_NR * 3 + BASELINE_NR_PERMISSIONS;
 
+// todo: reenable when migrations are implemented
 #[test]
 #[ignore]
 fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
@@ -116,6 +117,7 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     );
 }
 
+// todo: reenable when migrations are implemented
 #[test]
 #[ignore]
 fn test_canister_migration_path_with_previous_wasm_memory_version() {
