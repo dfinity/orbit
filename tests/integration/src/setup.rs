@@ -8,7 +8,7 @@ use crate::utils::{
 use crate::{CanisterIds, TestEnv};
 use candid::{CandidType, Encode, Principal};
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
-use pocket_ic::{query_candid_as, PocketIc, PocketIcBuilder};
+use pocket_ic::{query_candid_as, update_candid_as, PocketIc, PocketIcBuilder};
 use serde::Serialize;
 use station_api::{AdminInitInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
 use std::collections::{HashMap, HashSet};
@@ -20,6 +20,24 @@ use std::time::{Duration, SystemTime};
 
 pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
 pub static CANISTER_INITIAL_CYCLES: u128 = 100_000_000_000_000;
+
+#[derive(CandidType, Serialize)]
+enum UpdateSubnetTypeArgs {
+    Add(String),
+    //Remove(String),
+}
+
+#[derive(CandidType, Serialize)]
+struct SubnetListWithType {
+    pub subnets: Vec<Principal>,
+    pub subnet_type: String,
+}
+
+#[derive(CandidType, Serialize)]
+enum ChangeSubnetTypeAssignmentArgs {
+    Add(SubnetListWithType),
+    //Remove(SubnetListWithType),
+}
 
 #[derive(Serialize, CandidType, Clone, Debug, PartialEq, Eq)]
 pub enum ExchangeRateCanister {
@@ -78,8 +96,9 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
 
     let mut env = PocketIcBuilder::new()
         .with_nns_subnet()
-        .with_application_subnet()
         .with_ii_subnet()
+        .with_fiduciary_subnet()
+        .with_application_subnet()
         .build();
 
     // If we set the time to SystemTime::now, and then progress pocketIC a couple ticks
@@ -205,6 +224,30 @@ fn install_canisters(
         Encode!(&cmc_init_args).unwrap(),
         Some(controller),
     );
+    // add fiduciary subnet to CMC
+    let update_subnet_type_args = UpdateSubnetTypeArgs::Add("fiduciary".to_string());
+    update_candid_as::<_, ((),)>(
+        env,
+        cmc_canister_id,
+        nns_governance_canister_id,
+        "update_subnet_type",
+        (update_subnet_type_args,),
+    )
+    .unwrap();
+    let fiduciary_subnet_id = env.topology().get_fiduciary().unwrap();
+    let change_subnet_type_assignment_args =
+        ChangeSubnetTypeAssignmentArgs::Add(SubnetListWithType {
+            subnets: vec![fiduciary_subnet_id],
+            subnet_type: "fiduciary".to_string(),
+        });
+    update_candid_as::<_, ((),)>(
+        env,
+        cmc_canister_id,
+        nns_governance_canister_id,
+        "change_subnet_type_assignment",
+        (change_subnet_type_assignment_args,),
+    )
+    .unwrap();
 
     let control_panel = create_canister_with_cycles(
         env,

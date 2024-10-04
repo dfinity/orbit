@@ -114,6 +114,7 @@ fn successful_monitors_stations_and_tops_up() {
             username: "admin".to_string(),
         }],
         associate_with_caller: Some(AssociateWithCallerInput { labels: Vec::new() }),
+        subnet_selection: None,
     };
 
     // deploy user station
@@ -205,7 +206,7 @@ fn can_mint_cycles_to_top_up_self() {
         controller,
         ..
     } = setup_new_env_with_config(SetupConfig {
-        start_cycles: Some(500_000_000_000),
+        start_cycles: Some(2_000_000_000_000),
         ..Default::default()
     });
 
