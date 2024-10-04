@@ -165,9 +165,18 @@ jobs:
   prod-deployment-test:
     name: 'prod-deployment-test:required'
     runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged # Enable Docker in Docker
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+      - name: 'Setup Docker'
+        run: |
+          docker info # Check if Docker is running
       - name: 'Setup pnpm'
         uses: pnpm/action-setup@v3
         with:
@@ -186,6 +195,7 @@ jobs:
         run: |
           echo y | ./scripts/deploy.sh --local # install
           curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"
+          export REUSE_ARTIFACTS=true
           echo y | ./scripts/deploy.sh --local # upgrade
           curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"
           echo y | ./scripts/deploy.sh --local reset # uninstall and install

@@ -67,8 +67,6 @@ jobs:
         uses: actions/checkout@v4
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@main
-        with:
-          dfx-version: '0.19.0'
       - name: 'Run dfx generate'
         run: |
           dfx generate control_panel

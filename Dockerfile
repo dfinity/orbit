@@ -1,3 +1,6 @@
+# Define the BUILD_MODE argument with a default value of "production"
+ARG BUILD_MODE=production
+
 # Operating system with basic tools
 FROM --platform=linux/amd64 ubuntu@sha256:bbf3d1baa208b7649d1d0264ef7d522e1dc0deeeaaf6085bf8e4618867f03494 as base
 SHELL ["bash", "-c"]
@@ -14,9 +17,11 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
 FROM base as builder
 SHELL ["bash", "-c"]
 WORKDIR /code
+ARG BUILD_MODE
 ENV RUSTUP_HOME=/opt/rustup \
     CARGO_HOME=/opt/cargo \
-    FNM_DIR=/opt/fnm
+    FNM_DIR=/opt/fnm \
+    BUILD_MODE=${BUILD_MODE}
 # Path modifications need to be done in separate ENV statements
 ENV PATH=$CARGO_HOME/bin:$PATH
 ENV PATH=$FNM_DIR/bin:$PATH
@@ -49,7 +54,7 @@ LABEL io.icp.artifactType="canister" \
       io.icp.artifactName="upgrader"
 RUN eval "$(fnm env)" && \
     fnm use && \
-    BUILD_MODE=production npx nx run upgrader:create-artifacts
+    npx nx run upgrader:create-artifacts
 
 # Build the Orbit Station Canister
 FROM builder as build_station
@@ -59,7 +64,7 @@ LABEL io.icp.artifactType="canister" \
       io.icp.artifactName="station"
 RUN eval "$(fnm env)" && \
     fnm use && \
-    BUILD_MODE=production npx nx run station:create-artifacts
+    npx nx run station:create-artifacts
 
 # Build the Orbit Control Panel
 FROM builder as build_control_panel
@@ -69,7 +74,7 @@ LABEL io.icp.artifactType="canister" \
       io.icp.artifactName="control-panel"
 RUN eval "$(fnm env)" && \
     fnm use && \
-    BUILD_MODE=production npx nx run control-panel:create-artifacts
+    npx nx run control-panel:create-artifacts
 
 # Build the Orbit Wallet Frontend Assets
 FROM builder as build_wallet_dapp
@@ -79,4 +84,4 @@ LABEL io.icp.artifactType="canister" \
       io.icp.artifactName="wallet-dapp"
 RUN eval "$(fnm env)" && \
     fnm use && \
-    BUILD_MODE=production npx nx run wallet-dapp:create-artifacts
+    npx nx run wallet-dapp:create-artifacts

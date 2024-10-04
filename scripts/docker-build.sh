@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -eEuo pipefail
 
+# Set the build mode to production by default
+BUILD_MODE=${BUILD_MODE:-"production"}
+
 #############################################
 # USAGE                                     #
 #############################################
@@ -52,7 +55,8 @@ function deterministic_build() {
   local target=$2
 
   # Build the canister
-  docker build -t orbit-$project_name --target $target .
+  docker build --build-arg BUILD_MODE=$BUILD_MODE -t orbit-$project_name --target $target .
+   
 
   # Create a container to extract the generated artifacts
   docker create --name orbit-$project_name-container orbit-$project_name
