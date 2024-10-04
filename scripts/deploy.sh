@@ -157,7 +157,7 @@ function set_identity_pem_path() {
   local identity_store_path=${DFX_DEFAULT_IDENTITY_STORE_PATH}
 
   if [ -z "$IDENTITY_PEM_PATH" ]; then
-    local identity_pem_path="${identity_store_path}/identity_name/${identity_name}.pem"
+    local identity_pem_path="${identity_store_path}/${identity_name}/${identity_name}.pem"
 
     # Check if the identity pem file exists, else fallback to the id.pem filename
     if [ ! -f "$identity_pem_path" ]; then
