@@ -135,7 +135,7 @@ Suppose that you have built a new Wasm. To upgrade your canister to the new Wasm
 dfx-orbit request canister install --mode upgrade [CANISTER_NAME] --wasm [WASM_PATH]
 ```
 
-Then a verifier can verify this reqeust, using:
+Then a verifier can verify this request, using:
 
 ```
 dfx-orbit verify [REQUEST_ID] canister install --mode upgrade [CANISTER_NAME] --wasm [WASM_PATH]
