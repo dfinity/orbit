@@ -49,10 +49,15 @@ impl AssetService {
         Ok(asset)
     }
 
-    pub fn create(&self, input: AddAssetOperationInput) -> ServiceResult<Asset> {
-        let id = Uuid::new_v4();
+    pub fn create(
+        &self,
+        input: AddAssetOperationInput,
+        with_asset_id: Option<AssetId>,
+    ) -> ServiceResult<Asset> {
+        let id = with_asset_id.unwrap_or(*Uuid::new_v4().as_bytes());
+
         let asset = Asset {
-            id: *id.as_bytes(),
+            id,
             blockchain: input.blockchain,
             standards: input.standards.into_iter().collect(),
             symbol: input.symbol,
@@ -162,7 +167,7 @@ mod tests {
     use station_api::ListAssetsInput;
 
     use crate::{
-        models::{asset_test_utils::mock_asset, AddAssetOperationInput, BlockchainStandard},
+        models::{asset_test_utils::mock_asset, AddAssetOperationInput, TokenStandard},
         repositories::ASSET_REPOSITORY,
     };
 
@@ -173,14 +178,17 @@ mod tests {
         let service = AssetService::default();
 
         service
-            .create(AddAssetOperationInput {
-                blockchain: crate::models::Blockchain::InternetComputer,
-                standards: vec![BlockchainStandard::Native],
-                decimals: 8,
-                metadata: Default::default(),
-                name: "ICP".to_string(),
-                symbol: "ICP".to_string(),
-            })
+            .create(
+                AddAssetOperationInput {
+                    blockchain: crate::models::Blockchain::InternetComputer,
+                    standards: vec![TokenStandard::InternetComputerNative],
+                    decimals: 8,
+                    metadata: Default::default(),
+                    name: "ICP".to_string(),
+                    symbol: "ICP".to_string(),
+                },
+                None,
+            )
             .expect("Failed to create asset");
 
         let assets = ASSET_REPOSITORY.list();
@@ -261,36 +269,45 @@ mod tests {
         let service = AssetService::default();
 
         service
-            .create(AddAssetOperationInput {
-                blockchain: crate::models::Blockchain::InternetComputer,
-                standards: vec![BlockchainStandard::Native],
-                decimals: 8,
-                metadata: Default::default(),
-                name: "ICP".to_string(),
-                symbol: "ICP".to_string(),
-            })
+            .create(
+                AddAssetOperationInput {
+                    blockchain: crate::models::Blockchain::InternetComputer,
+                    standards: vec![TokenStandard::InternetComputerNative],
+                    decimals: 8,
+                    metadata: Default::default(),
+                    name: "ICP".to_string(),
+                    symbol: "ICP".to_string(),
+                },
+                None,
+            )
             .expect("Failed to create asset");
 
         service
-            .create(AddAssetOperationInput {
-                blockchain: crate::models::Blockchain::InternetComputer,
-                standards: vec![BlockchainStandard::Native],
-                decimals: 8,
-                metadata: Default::default(),
-                name: "ICP".to_string(),
-                symbol: "ICP".to_string(),
-            })
+            .create(
+                AddAssetOperationInput {
+                    blockchain: crate::models::Blockchain::InternetComputer,
+                    standards: vec![TokenStandard::InternetComputerNative],
+                    decimals: 8,
+                    metadata: Default::default(),
+                    name: "ICP".to_string(),
+                    symbol: "ICP".to_string(),
+                },
+                None,
+            )
             .expect_err("Asset with the same symbol and blockchain should not be allowed");
 
         service
-            .create(AddAssetOperationInput {
-                blockchain: crate::models::Blockchain::InternetComputer,
-                standards: vec![BlockchainStandard::Native],
-                decimals: 8,
-                metadata: Default::default(),
-                name: "ICP".to_string(),
-                symbol: "ICP2".to_string(),
-            })
+            .create(
+                AddAssetOperationInput {
+                    blockchain: crate::models::Blockchain::InternetComputer,
+                    standards: vec![TokenStandard::InternetComputerNative],
+                    decimals: 8,
+                    metadata: Default::default(),
+                    name: "ICP".to_string(),
+                    symbol: "ICP2".to_string(),
+                },
+                None,
+            )
             .expect("Failed to create asset");
     }
 }

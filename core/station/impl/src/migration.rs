@@ -13,8 +13,8 @@ use crate::models::resource::{
     Resource, ResourceAction, ResourceId, ResourceIds, SystemResourceAction,
 };
 use crate::models::{
-    AddRequestPolicyOperationInput, Asset, Blockchain, BlockchainStandard,
-    EditPermissionOperationInput, Metadata,
+    AddRequestPolicyOperationInput, Asset, Blockchain, EditPermissionOperationInput, Metadata,
+    TokenStandard,
 };
 use crate::repositories::permission::PERMISSION_REPOSITORY;
 use crate::repositories::{
@@ -136,7 +136,7 @@ fn apply_migration() {
         id: Uuid::new_v4().as_bytes().to_owned(),
         metadata: Metadata::default(),
         name: "Internet Computer".to_string(),
-        standards: BTreeSet::from([BlockchainStandard::Native]),
+        standards: BTreeSet::from([TokenStandard::InternetComputerNative]),
         symbol: "ICP".to_string(),
     };
 

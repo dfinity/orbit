@@ -3,9 +3,9 @@ use super::{
     request_policy_rule::{RequestPolicyRule, RequestPolicyRuleInput},
     request_specifier::RequestSpecifier,
     resource::{Resource, ValidationMethodResourceTarget},
-    AccountId, AddressBookEntryId, AssetId, Blockchain, BlockchainStandard, ChangeMetadata,
-    CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
-    ExternalCanisterState, MetadataItem, UserGroupId, UserId, UserStatus,
+    AccountAsset, AccountId, AddressBookEntryId, AddressFormat, AssetId, Blockchain,
+    ChangeMetadata, CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
+    ExternalCanisterState, MetadataItem, TokenStandard, UserGroupId, UserId, UserStatus,
 };
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ValidationError;
@@ -14,7 +14,7 @@ use candid::Principal;
 use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::{storable, types::UUID};
-use std::fmt::Display;
+use std::{collections::HashSet, fmt::Display};
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, strum::VariantNames)]
@@ -98,7 +98,7 @@ pub struct AddAssetOperationInput {
     pub decimals: u32,
     pub metadata: Metadata,
     pub blockchain: Blockchain,
-    pub standards: Vec<BlockchainStandard>,
+    pub standards: Vec<TokenStandard>,
 }
 
 #[storable]
@@ -116,7 +116,7 @@ pub struct EditAssetOperationInput {
     pub decimals: Option<u32>,
     pub change_metadata: Option<ChangeMetadata>,
     pub blockchain: Option<Blockchain>,
-    pub standards: Option<Vec<BlockchainStandard>>,
+    pub standards: Option<Vec<TokenStandard>>,
 }
 
 #[storable]
@@ -143,6 +143,8 @@ pub struct TransferOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferOperationInput {
     pub from_account_id: AccountId,
+    pub from_asset_id: AssetId,
+    pub with_standard: TokenStandard,
     pub to: String,
     pub amount: candid::Nat,
     pub metadata: Metadata,
@@ -162,8 +164,7 @@ pub struct AddAccountOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAccountOperationInput {
     pub name: String,
-    pub blockchain: Blockchain,
-    pub standard: BlockchainStandard,
+    pub assets: Vec<AssetId>,
     pub metadata: Metadata,
     pub read_permission: Allow,
     pub configs_permission: Allow,
@@ -180,8 +181,53 @@ pub struct EditAccountOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ChangeAssets {
+    ReplaceWith {
+        assets: Vec<AssetId>,
+    },
+    Change {
+        add_assets: Vec<AssetId>,
+        remove_assets: Vec<AssetId>,
+    },
+}
+
+impl ChangeAssets {
+    pub fn apply(&self, assets: &mut Vec<AccountAsset>) {
+        match self {
+            ChangeAssets::ReplaceWith { assets: new_assets } => {
+                *assets = new_assets
+                    .iter()
+                    .map(|asset_id| AccountAsset {
+                        asset_id: *asset_id,
+                        balance: None,
+                    })
+                    .collect();
+            }
+            ChangeAssets::Change {
+                add_assets,
+                remove_assets,
+            } => {
+                let existing_assets: HashSet<_> = assets.iter().map(|a| a.asset_id).collect();
+                for asset_id in add_assets {
+                    if !existing_assets.contains(asset_id) {
+                        assets.push(AccountAsset {
+                            asset_id: *asset_id,
+                            balance: None,
+                        });
+                    }
+                }
+
+                assets.retain(|a| !remove_assets.contains(&a.asset_id));
+            }
+        }
+    }
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct EditAccountOperationInput {
     pub account_id: AccountId,
+    pub change_assets: Option<ChangeAssets>,
     pub name: Option<String>,
     pub read_permission: Option<Allow>,
     pub configs_permission: Option<Allow>,
@@ -203,6 +249,7 @@ pub struct AddAddressBookEntryOperation {
 pub struct AddAddressBookEntryOperationInput {
     pub address_owner: String,
     pub address: String,
+    pub address_format: AddressFormat,
     pub blockchain: Blockchain,
     #[serde(default)]
     pub labels: Vec<String>,
@@ -621,4 +668,43 @@ pub struct ManageSystemInfoOperationInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ManageSystemInfoOperation {
     pub input: ManageSystemInfoOperationInput,
+}
+
+#[cfg(test)]
+mod test {
+    use crate::models::AccountAsset;
+
+    use super::ChangeAssets;
+
+    #[test]
+    fn test_change_assets() {
+        let mut assets: Vec<AccountAsset> = [[3; 16], [9; 16], [10; 16], [11; 16], [13; 16]]
+            .into_iter()
+            .map(|id| AccountAsset {
+                asset_id: id,
+                balance: None,
+            })
+            .collect();
+
+        ChangeAssets::Change {
+            // 3 already exists, should not be added twice
+            add_assets: vec![[0; 16], [1; 16], [2; 16], [3; 16]],
+            // 12 doesn't exist, should not be in an issue
+            remove_assets: vec![[10; 16], [11; 16], [12; 16]],
+        }
+        .apply(&mut assets);
+
+        assert_eq!(assets.len(), 5 + 3 - 2);
+
+        assert!(!assets.iter().any(|a| a.asset_id == [10; 16]));
+        assert!(!assets.iter().any(|a| a.asset_id == [11; 16]));
+        assert!(!assets.iter().any(|a| a.asset_id == [12; 16]));
+
+        assert!(assets.iter().any(|a| a.asset_id == [0; 16]));
+        assert!(assets.iter().any(|a| a.asset_id == [1; 16]));
+        assert!(assets.iter().any(|a| a.asset_id == [2; 16]));
+        assert!(assets.iter().any(|a| a.asset_id == [3; 16]));
+
+        assert_eq!(assets.iter().filter(|a| a.asset_id == [3; 16]).count(), 1);
+    }
 }

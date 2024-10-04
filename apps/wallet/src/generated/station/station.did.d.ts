@@ -5,16 +5,17 @@ import type { IDL } from '@dfinity/candid';
 export interface Account {
   'id' : UUID,
   'configs_request_policy' : [] | [RequestPolicyRule],
-  'decimals' : number,
-  'balance' : [] | [AccountBalanceInfo],
   'metadata' : Array<AccountMetadata>,
   'name' : string,
-  'blockchain' : string,
-  'address' : string,
+  'assets' : Array<AccountAsset>,
+  'addresses' : Array<AccountAddress>,
   'transfer_request_policy' : [] | [RequestPolicyRule],
   'last_modification_timestamp' : TimestampRFC3339,
-  'standard' : string,
-  'symbol' : AssetSymbol,
+}
+export interface AccountAddress { 'address' : string, 'format' : string }
+export interface AccountAsset {
+  'balance' : [] | [AccountBalance],
+  'asset_id' : UUID,
 }
 export interface AccountBalance {
   'account_id' : UUID,
@@ -38,6 +39,7 @@ export type AccountResourceAction = { 'List' : null } |
   { 'Create' : null } |
   { 'Transfer' : ResourceId } |
   { 'Update' : ResourceId };
+export type AccountSeed = Uint8Array | number[];
 export interface AddAccountOperation {
   'account' : [] | [Account],
   'input' : AddAccountOperationInput,
@@ -48,10 +50,9 @@ export interface AddAccountOperationInput {
   'configs_permission' : Allow,
   'metadata' : Array<AccountMetadata>,
   'name' : string,
-  'blockchain' : string,
+  'assets' : Array<UUID>,
   'transfer_request_policy' : [] | [RequestPolicyRule],
   'transfer_permission' : Allow,
-  'standard' : string,
 }
 export interface AddAddressBookEntryOperation {
   'address_book_entry' : [] | [AddressBookEntry],
@@ -62,6 +63,7 @@ export interface AddAddressBookEntryOperationInput {
   'labels' : Array<string>,
   'blockchain' : string,
   'address' : string,
+  'address_format' : string,
   'address_owner' : string,
 }
 export interface AddAssetOperation {
@@ -106,6 +108,7 @@ export interface AddressBookEntry {
   'blockchain' : string,
   'address' : string,
   'last_modification_timestamp' : string,
+  'address_format' : string,
   'address_owner' : string,
 }
 export interface AddressBookEntryCallerPrivileges {
@@ -202,6 +205,8 @@ export type ChangeAddressBookMetadata = {
   } |
   { 'RemoveKeys' : Array<string> } |
   { 'ReplaceAllBy' : Array<AddressBookMetadata> };
+export type ChangeAssets = { 'ReplaceWith' : { 'assets' : Array<UUID> } } |
+  { 'Change' : { 'add_assets' : Array<UUID>, 'remove_assets' : Array<UUID> } };
 export interface ChangeExternalCanisterOperation {
   'mode' : CanisterInstallMode,
   'canister_id' : Principal,
@@ -309,6 +314,7 @@ export interface EditAccountOperationInput {
   'read_permission' : [] | [Allow],
   'configs_permission' : [] | [Allow],
   'name' : [] | [string],
+  'change_assets' : [] | [ChangeAssets],
   'transfer_request_policy' : [] | [RequestPolicyRuleInput],
   'transfer_permission' : [] | [Allow],
 }
@@ -588,8 +594,17 @@ export interface InitAccountInput {
   'id' : [] | [UUID],
   'metadata' : Array<AccountMetadata>,
   'name' : string,
+  'assets' : Array<UUID>,
+  'seed' : AccountSeed,
+}
+export interface InitAssetInput {
+  'id' : UUID,
+  'decimals' : number,
+  'standards' : Array<string>,
+  'metadata' : Array<AssetMetadata>,
+  'name' : string,
   'blockchain' : string,
-  'standard' : string,
+  'symbol' : string,
 }
 export interface ListAccountTransfersInput {
   'account_id' : UUID,
@@ -1117,6 +1132,7 @@ export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
   { 'Err' : Error };
 export interface SystemInit {
   'name' : string,
+  'assets' : [] | [Array<InitAssetInput>],
   'fallback_controller' : [] | [Principal],
   'upgrader' : SystemUpgraderInput,
   'accounts' : [] | [Array<InitAccountInput>],
@@ -1175,10 +1191,12 @@ export interface TransferOperation {
 export interface TransferOperationInput {
   'to' : string,
   'fee' : [] | [bigint],
+  'with_standard' : string,
   'from_account_id' : UUID,
   'metadata' : Array<TransferMetadata>,
   'network' : [] | [Network],
   'amount' : bigint,
+  'from_asset_id' : UUID,
 }
 export type TransferStatus = { 'Failed' : { 'reason' : string } } |
   { 'Processing' : { 'started_at' : TimestampRFC3339 } } |

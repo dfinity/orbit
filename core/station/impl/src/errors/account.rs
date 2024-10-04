@@ -8,6 +8,9 @@ pub enum AccountError {
     /// The requested account was not found.
     #[error(r#"The requested account was not found."#)]
     AccountNotFound { id: String },
+    /// The associated asset does not exist.
+    #[error(r#"The associated asset `{id}` does not exist."#)]
+    AssetDoesNotExist { id: String },
     /// The given blockchain is unknown to the system.
     #[error(r#"The given blockchain is unknown to the system."#)]
     UnknownBlockchain { blockchain: String },
@@ -22,6 +25,15 @@ pub enum AccountError {
         r#"The account address is out of range, it must be between {min_length} and {max_length}."#
     )]
     InvalidAddressLength { min_length: u8, max_length: u8 },
+    /// The address format is unknown to the system.
+    #[error(r#"The given address format is unknown to the system."#)]
+    UnknownAddressFormat { address_format: String },
+    /// The address is invalid.
+    #[error(r#"The given address {address} does not comply with {address_format}"#)]
+    InvalidAddress {
+        address: String,
+        address_format: String,
+    },
     /// The account owners selection is out of range.
     #[error(r#"The account owners selection is out of range, it must be between {min_owners} and {max_owners}."#)]
     InvalidOwnersRange { min_owners: u8, max_owners: u8 },

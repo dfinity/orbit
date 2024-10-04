@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use super::{blockchain::BlockchainMapper, HelperMapper};
 use crate::{
     models::{
@@ -10,7 +12,7 @@ use crate::{
         Account, AccountKey, AddAccountOperation, AddAccountOperationInput,
         AddAddressBookEntryOperation, AddAddressBookEntryOperationInput, AddAssetOperation,
         AddAssetOperationInput, AddRequestPolicyOperation, AddRequestPolicyOperationInput,
-        AddUserOperation, AddUserOperationInput, AddressBookEntry, Asset,
+        AddUserOperation, AddUserOperationInput, AddressBookEntry, AddressFormat, Asset,
         CallExternalCanisterOperation, CallExternalCanisterOperationInput, CanisterInstallMode,
         CanisterInstallModeArgs, CanisterMethod, CanisterReinstallModeArgs,
         CanisterUpgradeModeArgs, ChangeExternalCanisterOperation,
@@ -60,6 +62,10 @@ impl TransferOperation {
                 from_account_id: Uuid::from_bytes(self.input.from_account_id)
                     .hyphenated()
                     .to_string(),
+                from_asset_id: Uuid::from_bytes(self.input.from_asset_id)
+                    .hyphenated()
+                    .to_string(),
+                with_standard: self.input.with_standard.to_string(),
                 amount: self.input.amount,
                 to: self.input.to,
                 fee: self.input.fee,
@@ -83,8 +89,12 @@ impl AddAccountOperation {
             account: account.map(|account: Account| account.to_dto()),
             input: station_api::AddAccountOperationInput {
                 name: self.input.name,
-                blockchain: self.input.blockchain.to_string(),
-                standard: self.input.standard.to_string(),
+                assets: self
+                    .input
+                    .assets
+                    .into_iter()
+                    .map(|id| Uuid::from_bytes(id).hyphenated().to_string())
+                    .collect(),
                 metadata: self.input.metadata.into_vec_dto(),
                 read_permission: self.input.read_permission.into(),
                 transfer_permission: self.input.transfer_permission.into(),
@@ -113,10 +123,15 @@ impl From<station_api::AddAccountOperationInput> for AddAccountOperationInput {
     fn from(input: station_api::AddAccountOperationInput) -> AddAccountOperationInput {
         AddAccountOperationInput {
             name: input.name,
-            blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
-                .expect("Invalid blockchain"),
-            standard: BlockchainMapper::to_blockchain_standard(input.standard)
-                .expect("Invalid blockchain standard"),
+            assets: input
+                .assets
+                .iter()
+                .map(|id| {
+                    *HelperMapper::to_uuid(id.clone())
+                        .expect("Invalid asset id")
+                        .as_bytes()
+                })
+                .collect(),
             metadata: input.metadata.into(),
             read_permission: input.read_permission.into(),
             configs_permission: input.configs_permission.into(),
@@ -135,6 +150,10 @@ impl From<EditAccountOperation> for EditAccountOperationDTO {
                     .hyphenated()
                     .to_string(),
                 name: operation.input.name,
+                change_assets: operation
+                    .input
+                    .change_assets
+                    .map(|change_assets| change_assets.into()),
                 read_permission: operation.input.read_permission.map(|policy| policy.into()),
                 transfer_permission: operation
                     .input
@@ -163,6 +182,9 @@ impl From<station_api::EditAccountOperationInput> for EditAccountOperationInput 
             account_id: *HelperMapper::to_uuid(input.account_id)
                 .expect("Invalid account id")
                 .as_bytes(),
+            change_assets: input
+                .change_assets
+                .map(|change_assets| change_assets.into()),
             name: input.name,
             read_permission: input.read_permission.map(|policy| policy.into()),
             transfer_permission: input.transfer_permission.map(|policy| policy.into()),
@@ -184,6 +206,7 @@ impl AddAddressBookEntryOperation {
             input: station_api::AddAddressBookEntryOperationInput {
                 address_owner: self.input.address_owner,
                 address: self.input.address,
+                address_format: self.input.address_format.to_string(),
                 blockchain: self.input.blockchain.to_string(),
                 metadata: self.input.metadata.into_iter().map(Into::into).collect(),
                 labels: self.input.labels,
@@ -198,6 +221,8 @@ impl From<station_api::AddAddressBookEntryOperationInput> for AddAddressBookEntr
     ) -> AddAddressBookEntryOperationInput {
         AddAddressBookEntryOperationInput {
             address_owner: input.address_owner,
+            address_format: AddressFormat::from_str(&input.address_format)
+                .expect("Invalid address format"),
             address: input.address,
             blockchain: BlockchainMapper::to_blockchain(input.blockchain.clone())
                 .expect("Invalid blockchain"),

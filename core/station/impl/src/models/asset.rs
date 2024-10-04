@@ -4,7 +4,7 @@ use orbit_essentials::{
     types::UUID,
 };
 
-use super::{Blockchain, BlockchainStandard};
+use super::{Blockchain, TokenStandard};
 use crate::{errors::AssetError, models::Metadata, repositories::ASSET_REPOSITORY};
 use std::{
     collections::BTreeSet,
@@ -19,9 +19,9 @@ pub struct Asset {
     pub id: AssetId,
     /// The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
     pub blockchain: Blockchain,
-    // The asset standard that is supported (e.g. `erc20`, `native`, etc.), canonically
+    // The asset standard that is supported (e.g. `erc20`, `icp_native`, etc.), canonically
     // represented as a lowercase string with spaces replaced with underscores.
-    pub standards: BTreeSet<BlockchainStandard>,
+    pub standards: BTreeSet<TokenStandard>,
     /// The asset symbol (e.g. `ICP`, `BTC`, `ETH`, etc.)
     pub symbol: String,
     /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
@@ -146,7 +146,7 @@ pub mod asset_test_utils {
 
     use std::collections::BTreeSet;
 
-    use crate::models::{Blockchain, BlockchainStandard, Metadata};
+    use crate::models::{Blockchain, Metadata, TokenStandard};
 
     use super::Asset;
 
@@ -154,9 +154,21 @@ pub mod asset_test_utils {
         Asset {
             id: [0; 16],
             blockchain: Blockchain::InternetComputer,
-            standards: BTreeSet::from([BlockchainStandard::Native]),
+            standards: BTreeSet::from([TokenStandard::InternetComputerNative]),
             symbol: "ICP".to_string(),
             name: "Internet Computer".to_string(),
+            decimals: 8,
+            metadata: Metadata::default(),
+        }
+    }
+
+    pub fn mock_asset_b() -> Asset {
+        Asset {
+            id: [1; 16],
+            blockchain: Blockchain::InternetComputer,
+            standards: BTreeSet::from([TokenStandard::InternetComputerNative]),
+            symbol: "TEST".to_string(),
+            name: "Other Test Asset".to_string(),
             decimals: 8,
             metadata: Metadata::default(),
         }

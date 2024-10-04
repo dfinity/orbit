@@ -2,7 +2,7 @@ use crate::upgrader_ic_cdk::api::time;
 use orbit_essentials::{storable, types::Timestamp, utils::timestamp_to_rfc3339};
 use serde::Serialize;
 
-use super::{Account, AdminUser, DisasterRecoveryCommittee, RecoveryResult};
+use super::{Account, AdminUser, Asset, DisasterRecoveryCommittee, RecoveryResult};
 
 #[derive(Serialize)]
 pub enum UpgradeResultLog {
@@ -18,6 +18,7 @@ pub struct SetCommitteeLog {
 #[derive(Serialize)]
 pub struct SetAccountsLog {
     pub accounts: Vec<Account>,
+    pub assets: Vec<Asset>,
 }
 
 #[derive(Serialize)]
@@ -96,7 +97,11 @@ impl LogEntryType {
                 data.committee.quorum
             ),
             LogEntryType::SetAccounts(data) => {
-                format!("Set {} disaster recovery account(s)", data.accounts.len())
+                format!(
+                    "Set {} disaster recovery account(s) and {} asset(s)",
+                    data.accounts.len(),
+                    data.assets.len()
+                )
             }
             LogEntryType::RequestDisasterRecovery(data) => format!(
                 "{} requested disaster recovery with wasm hash {} and arg hash {}",

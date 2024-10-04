@@ -59,7 +59,7 @@ impl Execute for AddAssetRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
         let asset = self
             .asset_service
-            .create(self.operation.input.clone())
+            .create(self.operation.input.clone(), None)
             .map_err(|e| RequestExecuteError::Failed {
                 reason: format!("Failed to create asset: {}", e),
             })?;

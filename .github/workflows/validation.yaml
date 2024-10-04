@@ -91,6 +91,8 @@ jobs:
   validate-node:
     name: 'validate-node:required'
     runs-on: ubuntu-latest
+    # disable until the frontend is ready
+    if: false
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4

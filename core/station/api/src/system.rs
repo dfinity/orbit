@@ -1,5 +1,5 @@
 use super::TimestampRfc3339;
-use crate::{DisasterRecoveryCommitteeDTO, MetadataDTO, Sha256HashDTO, UuidDTO};
+use crate::{AccountSeedDTO, DisasterRecoveryCommitteeDTO, MetadataDTO, Sha256HashDTO, UuidDTO};
 use candid::{CandidType, Deserialize, Principal};
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
@@ -67,9 +67,20 @@ pub enum SystemUpgraderInput {
 pub struct InitAccountInput {
     pub id: Option<UuidDTO>,
     pub name: String,
-    pub blockchain: String,
-    pub standard: String,
+    pub seed: AccountSeedDTO,
+    pub assets: Vec<UuidDTO>,
     pub metadata: Vec<MetadataDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct InitAssetInput {
+    pub id: UuidDTO,
+    pub name: String,
+    pub blockchain: String,
+    pub standards: Vec<String>,
+    pub metadata: Vec<MetadataDTO>,
+    pub symbol: String,
+    pub decimals: u32,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
@@ -86,6 +97,8 @@ pub struct SystemInit {
     pub fallback_controller: Option<Principal>,
     /// Optionally set the initial accounts.
     pub accounts: Option<Vec<InitAccountInput>>,
+    /// Optionally set the initial accounts.
+    pub assets: Option<Vec<InitAssetInput>>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]

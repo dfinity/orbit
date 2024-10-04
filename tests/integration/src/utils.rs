@@ -1,5 +1,7 @@
-use crate::setup::WALLET_ADMIN_USER;
+use crate::setup::{get_canister_wasm, WALLET_ADMIN_USER};
+use crate::test_data::asset::list_assets;
 use candid::Principal;
+use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
@@ -565,11 +567,12 @@ pub fn get_account_transfer_permission(
 }
 
 pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDTO) -> AccountDTO {
+    let icp = get_icp_asset(env, station_id, WALLET_ADMIN_USER);
+
     // create account
     let create_account_args = AddAccountOperationInput {
         name: "test".to_string(),
-        blockchain: "icp".to_string(),
-        standard: "native".to_string(),
+        assets: vec![icp.id.clone()],
         read_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
@@ -663,6 +666,28 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
     }
 }
 
+pub fn get_icp_asset(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+) -> station_api::AssetDTO {
+    list_assets(env, station_canister_id, requester)
+        .expect("Failed to query list_assets")
+        .0
+        .expect("Failed to list assets")
+        .assets
+        .into_iter()
+        .find(|asset| asset.symbol == "ICP")
+        .expect("Failed to find ICP asset")
+}
+
+pub fn get_icp_account_identifier(addresses: &[station_api::AccountAddressDTO]) -> Option<String> {
+    addresses
+        .iter()
+        .find(|a| a.format == "icp_account_identifier")
+        .map(|a| a.address.clone())
+}
+
 /// Compresses the given data to a gzip format.
 pub fn compress_to_gzip(data: &[u8]) -> Vec<u8> {
     let mut encoder = GzEncoder::new(Vec::new(), Compression::best());
@@ -705,4 +730,38 @@ pub fn sha256_hex(data: &[u8]) -> String {
     let result = hasher.finalize();
 
     hex::encode(result)
+}
+
+pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, controller: Principal) {
+    // upload upgrader
+    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
+    let upload_canister_modules_args = UploadCanisterModulesInput {
+        station_wasm_module: None,
+        upgrader_wasm_module: Some(upgrader_wasm.to_owned()),
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        env,
+        control_panel_id,
+        controller,
+        "upload_canister_modules",
+        (upload_canister_modules_args.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap();
+
+    // upload station
+    let station_wasm = get_canister_wasm("station").to_vec();
+    let upload_canister_modules_args = UploadCanisterModulesInput {
+        station_wasm_module: Some(station_wasm.to_owned()),
+        upgrader_wasm_module: None,
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        env,
+        control_panel_id,
+        controller,
+        "upload_canister_modules",
+        (upload_canister_modules_args.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap();
 }
