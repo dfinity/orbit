@@ -60,7 +60,7 @@ jobs:
         run: |
           echo y | ./scripts/deploy.sh --local # install
           curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"
-          echo y | ./scripts/deploy.sh --local # upgrade
+          REUSE_ARTIFACTS=true echo y | ./scripts/deploy.sh --local # upgrade
           curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"
-          echo y | ./scripts/deploy.sh --local reset # uninstall and install
+          REUSE_ARTIFACTS=true echo y | ./scripts/deploy.sh --local reset # uninstall and install
           curl "http://$(dfx canister id app_wallet).localhost:4943/" | grep "<title>Orbit Wallet</title>"
