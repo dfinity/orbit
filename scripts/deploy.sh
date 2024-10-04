@@ -4,6 +4,15 @@ set -eEuo pipefail
 # Whether or not to reuse the artifacts that are already built
 REUSE_ARTIFACTS=${REUSE_ARTIFACTS:-"false"}
 
+# Default identity store path
+DFX_DEFAULT_IDENTITY_STORE_PATH=${DFX_DEFAULT_IDENTITY_STORE_PATH:-"$HOME/.config/dfx/identity"}
+
+# Identity PEM path to use for the deployment of the asset canister files
+IDENTITY_PEM_PATH=${IDENTITY_PEM_PATH:-""}
+
+# Path to the dfx.json file
+DFX_JSON_PATH=${DFX_JSON_PATH:-"dfx.json"}
+
 #############################################
 # USAGE                                     #
 #############################################
@@ -40,6 +49,8 @@ function identity_warning_confirmation() {
     echo "Deployment cancelled."
     exit 1
   fi
+
+  set_identity_pem_path "$identity"
 }
 
 function usage() {
@@ -52,7 +63,6 @@ Usage:
 Options:
   --local Deploys Orbit to the local network (If 'reset' is specified, the control-panel will be reset)
   --playground Deploys Orbit to the playground network (If 'reset' is specified, the control-panel will be reset)
-  --testing Performs a testing deployment of Orbit to the IC
   --staging Performs a staging deployment of Orbit to the IC
   --production Performs a production deployment of Orbit to the IC
 EOF
@@ -109,6 +119,59 @@ function get_subnet_type() {
   fi
 }
 
+function get_replica_url() {
+  local network=$(get_network)
+  local result
+
+  # Extract the first provider or bind using jq
+  result=$(jq -r --arg network "$network" \
+    '.networks[$network] | 
+    if .providers then .providers[0] 
+    elif .bind then "http://" + .bind 
+    else null 
+    end' "$DFX_JSON_PATH")
+
+  if [ -z "$result" ] || [ "$result" == "null" ]; then
+    echo -e "\e[1;31m"
+    echo "ERROR: Replica URL not found for the network: $network"
+    echo "Please make sure the dfx.json file is correctly configured."
+    echo -e "\e[0m"
+
+    exit 1
+  else
+    echo "$result"
+  fi
+}
+
+function set_identity_pem_path() {
+  local identity_name=$1
+  local identity_store_path=${DFX_DEFAULT_IDENTITY_STORE_PATH}
+
+  if [ -z "$IDENTITY_PEM_PATH" ]; then
+    local identity_pem_path="${identity_store_path}/identity_name/${identity_name}.pem"
+
+    # Check if the identity pem file exists, else fallback to the id.pem filename
+    if [ ! -f "$identity_pem_path" ]; then
+      identity_pem_path="${identity_store_path}/${identity_name}/identity.pem"
+    fi
+
+    if [ ! -f "$identity_pem_path" ]; then
+      identity_pem_path="${identity_store_path}/${identity_name}/id.pem"
+    fi
+
+    export IDENTITY_PEM_PATH=$identity_pem_path
+  fi
+
+  if [ ! -f "$IDENTITY_PEM_PATH" ]; then
+    echo -e "\e[1;31m"
+    echo "ERROR: Identity PEM file not found for the identity: $identity_name"
+    echo "Please make sure the identity is available in the default identity store path: $identity_store_path"
+    echo -e "\e[0m"
+
+    exit 1
+  fi
+}
+
 #############################################
 # UTILS                                     #
 #############################################
@@ -124,12 +187,14 @@ function should_build_artifacts() {
 function build_wasms() {
   echo "Preparing the WASMs for the station and upgrader canisters."
 
+  local network=$(get_network)
+
   if should_build_artifacts || [ ! -f ./artifacts/station/station.wasm.gz ]; then
-    ./scripts/docker-build.sh --station
+    BUILD_MODE=$network ./scripts/docker-build.sh --station
   fi
 
   if should_build_artifacts || [ ! -f ./artifacts/upgrader/upgrader.wasm.gz ]; then
-    ./scripts/docker-build.sh --upgrader
+    BUILD_MODE=$network ./scripts/docker-build.sh --upgrader
   fi
 
   echo "Station and upgrader WASMs are ready."
@@ -187,7 +252,7 @@ function deploy_control_panel() {
   echo "Preparing the control_panel wasm..."
 
   if should_build_artifacts || [ ! -f ./artifacts/control-panel/control_panel.wasm.gz ]; then
-    ./scripts/docker-build.sh --control-panel
+    BUILD_MODE=$network ./scripts/docker-build.sh --control-panel
   fi
 
   # Read the WASM files and convert them to hex format
@@ -230,7 +295,7 @@ function deploy_app_wallet() {
   echo "Deploying the Orbit Wallet to the '$network' network."
 
   if should_build_artifacts || [ ! -f ./artifacts/wallet-dapp/wallet-dapp.tar.gz ]; then
-    ./scripts/docker-build.sh --wallet-dapp
+    BUILD_MODE=$network ./scripts/docker-build.sh --wallet-dapp
   fi
 
   if [ -d ./artifacts/wallet-dapp/dist ]; then
@@ -250,11 +315,11 @@ function deploy_app_wallet() {
 
     BUILD_MODE=$network dfx deploy --network $network app_wallet --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
   else
-    echo "Deploying the app_wallet canister to the '$network' network is not yet supported automatically."
+    echo "Canister 'app_wallet' already exists with ID: $canister_id_output"
     echo
-    echo "Please deploy the app_wallet canister manually using the following command:"
-    echo "icx-asset --pem YOUR_IDENTITY_PEM_PATH --replica TARGET_REPLICA_HTTP sync --no-delete $canister_id_output artifacts/wallet-dapp/dist"
-    echo
+    echo "Uploading assets to the app_wallet canister..."
+
+    icx-asset --pem $IDENTITY_PEM_PATH --replica $(get_replica_url) sync --no-delete $canister_id_output artifacts/wallet-dapp/dist
   fi
 }
 
@@ -280,21 +345,17 @@ while [[ $# -gt 0 ]]; do
     shift
     set_network "local"
     ;;
-  --production)
+  --playground)
     shift
-    set_network production
+    set_network playground
     ;;
   --staging)
     shift
     set_network staging
     ;;
-  --testing)
+  --production)
     shift
-    set_network testing
-    ;;
-  --playground)
-    shift
-    set_network playground
+    set_network production
     ;;
   *)
     echo "ERROR: unknown argument $1"
