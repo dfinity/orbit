@@ -1,5 +1,6 @@
 use super::{UserService, UserStationService};
 use crate::{
+    core::ic_cdk::api::canister_balance,
     core::{
         canister_config, CallContext, CMC_CANISTER_ID, INITIAL_STATION_CYCLES, NNS_ROOT_CANISTER_ID,
     },
@@ -17,6 +18,8 @@ use orbit_essentials::cdk::api::call::call_with_payment128;
 use orbit_essentials::cdk::api::management_canister::main::CanisterSettings;
 use orbit_essentials::install_chunked_code::install_chunked_code;
 use std::sync::Arc;
+
+const MIN_BALANCE_FOR_DEPLOY_STATION: u64 = 50_000_000_000_000; // 50T cycles
 
 /// Argument taken by `create_canister` endpoint of the CMC.
 #[derive(candid::CandidType, serde::Serialize)]
@@ -64,6 +67,14 @@ impl DeployService {
         input: DeployStationInput,
         ctx: &CallContext,
     ) -> ServiceResult<Principal> {
+        if canister_balance() < MIN_BALANCE_FOR_DEPLOY_STATION {
+            let err = DeployError::Failed {
+                reason: "Control panel has insufficient cycles balance to deploy a station"
+                    .to_string(),
+            };
+            return Err(err.into());
+        }
+
         let user = self.user_service.get_user_by_identity(&ctx.caller(), ctx)?;
         let config = canister_config().ok_or(DeployError::Failed {
             reason: "Canister config not initialized.".to_string(),

@@ -648,3 +648,75 @@ fn deploy_user_station_to_different_subnet() {
 
     check_station_controllers(&env, newly_created_user_station, user_id);
 }
+
+#[test]
+fn insufficient_control_panel_cycles() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let mut i = 0;
+    loop {
+        let user_id = user_test_id(i);
+        i += 1;
+
+        // register user
+        let register_args = RegisterUserInput { station: None };
+        let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
+            &env,
+            canister_ids.control_panel,
+            user_id,
+            "register_user",
+            (register_args,),
+        )
+        .unwrap();
+        let user_dto = res.0.unwrap().user;
+        assert_eq!(user_dto.identity, user_id);
+
+        // approve user
+        let update_waiting_list_args = UpdateWaitingListInput {
+            users: vec![user_id],
+            new_status: UserSubscriptionStatusDTO::Approved,
+        };
+        let res: (ApiResult<()>,) = update_candid_as(
+            &env,
+            canister_ids.control_panel,
+            controller_test_id(),
+            "update_waiting_list",
+            (update_waiting_list_args,),
+        )
+        .unwrap();
+        res.0.unwrap();
+
+        // deploy station
+        let deploy_station_args = DeployStationInput {
+            name: format!("station_{}", i),
+            admins: vec![DeployStationAdminUserInput {
+                identity: user_id,
+                username: "admin".to_string(),
+            }],
+            associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+            subnet_selection: None,
+        };
+
+        let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
+            &env,
+            canister_ids.control_panel,
+            user_id,
+            "deploy_station",
+            (deploy_station_args,),
+        )
+        .unwrap();
+        if let Err(e) = res.0 {
+            assert!(e
+                .details
+                .unwrap()
+                .get("reason")
+                .unwrap()
+                .contains("Control panel has insufficient cycles balance to deploy a station"));
+            // control panel does not deploy station if balance < 50T and station deployment takes 2.5T cycles
+            assert!(env.cycle_balance(canister_ids.control_panel) >= 47_500_000_000_000);
+            break;
+        }
+    }
+}
