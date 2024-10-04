@@ -714,8 +714,17 @@ fn insufficient_control_panel_cycles() {
                 .get("reason")
                 .unwrap()
                 .contains("Control panel has insufficient cycles balance to deploy a station"));
-            // control panel does not deploy station if balance < 50T and station deployment takes 2.5T cycles
-            assert!(env.cycle_balance(canister_ids.control_panel) >= 47_500_000_000_000);
+            let station_status = env
+                .canister_status(canister_ids.control_panel, Some(controller_test_id()))
+                .unwrap();
+            let min_balance_for_deploy_station = station_status.idle_cycles_burned_per_day
+                * station_status.settings.freezing_threshold
+                * 2_u64
+                / 86_400_u64;
+            // control panel does not deploy station if balance < `min_balance_for_deploy_station` + `INITIAL_STATION_CYCLES` and station deployment takes `INITIAL_STATION_CYCLES`
+            assert!(
+                env.cycle_balance(canister_ids.control_panel) >= min_balance_for_deploy_station
+            );
             break;
         }
     }
