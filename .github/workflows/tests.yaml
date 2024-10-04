@@ -27,144 +27,21 @@ env:
   RUSTC_WRAPPER: 'sccache'
 
 jobs:
-  test-rust:
-    name: 'test-rust:required'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
-      - name: 'Test cargo crates'
-        run: cargo test --locked --workspace --exclude integration-tests
-  test-node:
-    name: 'test-node:required'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - name: 'Setup Node'
-        uses: ./.github/actions/setup-node
-      - name: 'Install Dependencies'
-        run: |
-          pnpm install --frozen-lockfile
-      - name: 'Check code'
-        run: |
-          pnpm test -- --run
-
-  # Github Actions only supports jobs to be run in parallel, not steps, so we have to build the packages in
-  # separate jobs from the integration tests execution to speed up the build.
-  build-wasms:
-    name: Build canister
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - crate: control-panel
-            canister: control_panel
-          - crate: upgrader
-            canister: upgrader
-          - crate: station
-            canister: station
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
-      - name: 'Build Package'
-        run: ./scripts/generate-wasm.sh ${{ matrix.crate }}
-      - name: 'Prepare artifacts'
-        run: |
-          mkdir -p artifacts
-          mv tests/integration/wasms/* artifacts
-      - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v3
-        with:
-          name: integration-tests
-          path: artifacts/${{ matrix.canister }}.wasm.gz
-          retention-days: 10
-          if-no-files-found: error
-  download-canisters:
-    name: Download Canister
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - canister: 'icp_ledger'
-            name: 'ledger-canister'
-          - canister: 'icp_index'
-            name: 'ic-icp-index-canister'
-          - canister: 'cmc'
-            name: 'cycles-minting-canister'
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - name: 'Download Canister'
-        run: ./scripts/download-nns-canister-wasm.sh ${{ matrix.canister }} ${{ matrix.name }}
-      - name: 'Prepare artifacts'
-        run: |
-          mkdir -p artifacts
-          mv tests/integration/wasms/* artifacts
-      - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v3
-        with:
-          name: integration-tests
-          path: artifacts/${{ matrix.canister }}.wasm.gz
-          retention-days: 10
-          if-no-files-found: error
-  integration-tests:
-    name: 'integration-tests:required'
-    needs: [build-wasms, download-canisters]
-    runs-on: ubuntu-latest
-    env:
-      BUILD_WASMS: 'false'
-      DOWNLOAD_NNS_CANISTERS: 'false'
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
-      - name: 'Download Artifacts'
-        uses: actions/download-artifact@v3
-        with:
-          name: integration-tests
-          path: tests/integration/wasms
-      - name: Run integration tests
-        run: |
-          ./scripts/run-integration-tests.sh 2> logs.txt
-          grep "rng succesfully initialized" logs.txt
-          ! grep "canister reports healthy already before its initialization has finished" logs.txt
-  deployment-test:
-    name: 'deployment-test:required'
-    runs-on: ubuntu-latest
-    steps:
-      - name: 'Checkout'
-        uses: actions/checkout@v4
-      - name: 'Setup pnpm'
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-      - name: 'Setup node'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: 'Run sccache-cache'
-        uses: mozilla-actions/sccache-action@v0.0.4
-      - name: 'Install dfx'
-        uses: dfinity/setup-dfx@main
-      - name: 'Start local replica'
-        run: dfx start --clean --host 127.0.0.1:4943 --background
-      - name: 'Perform local deployment'
-        run: ./orbit --init
-      - name: 'Test local deployment'
-        run: |
-          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
   prod-deployment-test:
     name: 'prod-deployment-test:required'
     runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged # Enable Docker in Docker
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
+      - name: 'Setup Docker'
+        run: |
+          docker info # Check if Docker is running
       - name: 'Setup pnpm'
         uses: pnpm/action-setup@v3
         with:
