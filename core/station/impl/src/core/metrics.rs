@@ -1,3 +1,4 @@
+use crate::core::ic_cdk::api::print;
 use crate::{
     models::{Account, AddressBookEntry, Asset, Request, RequestPolicy, Transfer, User, UserGroup},
     repositories::{
@@ -7,7 +8,6 @@ use crate::{
     SERVICE_NAME,
 };
 use orbit_essentials::{
-    cdk::api::print,
     metrics::{labels, ApplicationGaugeMetric, ApplicationGaugeVecMetric, ApplicationMetric},
     utils::amount_to_f64,
 };
