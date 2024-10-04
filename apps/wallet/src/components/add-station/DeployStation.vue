@@ -273,6 +273,8 @@ const deployInitialStation = async (): Promise<void> => {
           labels: [CONTROL_PANEL_USER_STATION_LABEL],
         },
       ],
+      // TODO: Make use of the subnet selection feature
+      subnet_selection: [],
     });
     const [controlPanelUser, userStations] = await Promise.all([
       controlPanelService.getCurrentUser(),
