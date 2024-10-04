@@ -9,9 +9,11 @@ use control_panel_api::{
     DeployStationResponse, ListUserStationsInput, ManageUserStationsInput, RegisterUserInput,
     RegisterUserResponse, UpdateWaitingListInput, UserStationDTO, UserSubscriptionStatusDTO,
 };
-use control_panel_api::{ListUserStationsResponse, UploadCanisterModulesInput};
+use control_panel_api::{
+    ListUserStationsResponse, SubnetFilter, SubnetSelection, UploadCanisterModulesInput,
+};
 use orbit_essentials::api::ApiResult;
-use pocket_ic::update_candid_as;
+use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{HealthStatus, SystemInfoResponse};
 
 #[test]
@@ -152,6 +154,7 @@ fn deploy_user_station() {
             username: "admin".to_string(),
         }],
         associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+        subnet_selection: None,
     };
 
     // user can't deploy station before being approved
@@ -183,6 +186,7 @@ fn deploy_user_station() {
             username: "admin".to_string(),
         }],
         associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+        subnet_selection: None,
     };
 
     // user can't deploy station before being approved
@@ -229,6 +233,7 @@ fn deploy_user_station() {
             username: "admin".to_string(),
         }],
         associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+        subnet_selection: None,
     };
 
     // deploy user station
@@ -285,16 +290,20 @@ fn deploy_user_station() {
     let health_status = res.0;
     assert_eq!(health_status, HealthStatus::Healthy);
 
+    check_station_controllers(&env, newly_created_user_station, user_id);
+}
+
+fn check_station_controllers(env: &PocketIc, station: Principal, user_id: Principal) {
     // the control panel should set the newly deployed station's controllers
     // to be the upgrader canister and the NNS root canister;
     // first get the upgrader canister ID
     let res: (ApiResult<SystemInfoResponse>,) =
-        update_candid_as(&env, newly_created_user_station, user_id, "system_info", ()).unwrap();
+        update_candid_as(env, station, user_id, "system_info", ()).unwrap();
     let upgrader_canister_id = res.0.unwrap().system.upgrader_id;
     // now get the canister status from the management canister on behalf of the upgrader canister
     // (note that only controllers can invoke the canister status management canister method)
     let canister_status = env
-        .canister_status(newly_created_user_station, Some(upgrader_canister_id))
+        .canister_status(station, Some(upgrader_canister_id))
         .unwrap();
     // assert that the set of controllers is equal to {upgrader_canister_id, NNS_ROOT_CANISTER_ID}
     let station_controllers = canister_status.settings.controllers;
@@ -350,6 +359,7 @@ fn deploy_too_many_stations() {
                 username: "admin".to_string(),
             }],
             associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+            subnet_selection: None,
         };
 
         let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
@@ -397,6 +407,7 @@ fn deploy_too_many_stations() {
             username: "admin".to_string(),
         }],
         associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+        subnet_selection: None,
     };
 
     // deploying an additional station should fail nonetheless
@@ -462,6 +473,7 @@ fn no_upload_canister_modules() {
             username: "admin".to_string(),
         }],
         associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+        subnet_selection: None,
     };
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
@@ -488,6 +500,7 @@ fn no_upload_canister_modules() {
             username: "admin".to_string(),
         }],
         associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+        subnet_selection: None,
     };
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
@@ -533,4 +546,99 @@ fn upload_canister_modules_authorization() {
         error.details.unwrap().get("method").unwrap(),
         "upload_canister_modules"
     );
+}
+
+#[test]
+fn deploy_user_station_to_different_subnet() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let user_id = user_test_id(0);
+
+    // register user
+    let register_args = RegisterUserInput { station: None };
+    let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "register_user",
+        (register_args,),
+    )
+    .unwrap();
+    let user_dto = res.0.unwrap().user;
+    assert_eq!(user_dto.identity, user_id);
+
+    // subscribe to waiting list
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "subscribe_to_waiting_list",
+        ("john@example.com".to_string(),),
+    )
+    .unwrap();
+    res.0.unwrap();
+
+    // approve user
+    let update_waiting_list_args = UpdateWaitingListInput {
+        users: vec![user_id],
+        new_status: UserSubscriptionStatusDTO::Approved,
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        controller_test_id(),
+        "update_waiting_list",
+        (update_waiting_list_args,),
+    )
+    .unwrap();
+    res.0.unwrap();
+
+    // deploy user station
+    let deploy_station_args = DeployStationInput {
+        name: "station".to_string(),
+        admins: vec![DeployStationAdminUserInput {
+            identity: user_id,
+            username: "admin".to_string(),
+        }],
+        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+        subnet_selection: Some(SubnetSelection::Filter(SubnetFilter {
+            subnet_type: Some("fiduciary".to_string()),
+        })),
+    };
+    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
+        &env,
+        canister_ids.control_panel,
+        user_id,
+        "deploy_station",
+        (deploy_station_args,),
+    )
+    .unwrap();
+    let newly_created_user_station = res.0.unwrap().canister_id;
+
+    // check that the station has been deployed to the fiduciary subnet
+    assert_eq!(env.get_subnet(newly_created_user_station).unwrap(), env.topology().get_fiduciary().unwrap());
+    // which is different from the subnet to which the control panel is deployed
+    assert_ne!(env.get_subnet(newly_created_user_station).unwrap(), env.get_subnet(canister_ids.control_panel).unwrap());
+
+    // wait until the station is healthy
+    let rounds_required_for_station_initialization = 5;
+    for _ in 0..rounds_required_for_station_initialization {
+        env.tick();
+    }
+
+    // the newly created station should be healthy at this point
+    let res: (HealthStatus,) = update_candid_as(
+        &env,
+        newly_created_user_station,
+        user_id,
+        "health_status",
+        (),
+    )
+    .unwrap();
+    let health_status = res.0;
+    assert_eq!(health_status, HealthStatus::Healthy);
+
+    check_station_controllers(&env, newly_created_user_station, user_id);
 }

@@ -114,6 +114,7 @@ fn successful_monitors_stations_and_tops_up() {
             username: "admin".to_string(),
         }],
         associate_with_caller: Some(AssociateWithCallerInput { labels: Vec::new() }),
+        subnet_selection: None,
     };
 
     // deploy user station

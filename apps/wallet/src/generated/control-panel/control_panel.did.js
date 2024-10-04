@@ -82,12 +82,18 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
+  const SubnetFilter = IDL.Record({ 'subnet_type' : IDL.Opt(IDL.Text) });
+  const SubnetSelection = IDL.Variant({
+    'Filter' : SubnetFilter,
+    'Subnet' : IDL.Record({ 'subnet' : IDL.Principal }),
+  });
   const DeployStationAdminUserInput = IDL.Record({
     'username' : IDL.Text,
     'identity' : IDL.Principal,
   });
   const DeployStationInput = IDL.Record({
     'name' : IDL.Text,
+    'subnet_selection' : IDL.Opt(SubnetSelection),
     'admins' : IDL.Vec(DeployStationAdminUserInput),
     'associate_with_caller' : IDL.Opt(
       IDL.Record({ 'labels' : IDL.Vec(IDL.Text) })

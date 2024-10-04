@@ -1,18 +1,38 @@
 use super::{UserService, UserStationService};
 use crate::{
-    core::{canister_config, CallContext, INITIAL_STATION_CYCLES, NNS_ROOT_CANISTER_ID},
+    core::{
+        canister_config, CallContext, CMC_CANISTER_ID, INITIAL_STATION_CYCLES, NNS_ROOT_CANISTER_ID,
+    },
     errors::{DeployError, UserError},
     models::{CanDeployStation, UserStation},
     services::{USER_SERVICE, USER_STATION_SERVICE},
 };
 use candid::{Encode, Principal};
-use control_panel_api::DeployStationInput;
+use control_panel_api::{DeployStationInput, SubnetSelection};
 use ic_cdk::api::id as self_canister_id;
 use ic_cdk::api::management_canister::main::{self as mgmt};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
+use orbit_essentials::cdk::api::call::call_with_payment128;
+use orbit_essentials::cdk::api::management_canister::main::CanisterSettings;
 use orbit_essentials::install_chunked_code::install_chunked_code;
 use std::sync::Arc;
+
+/// Argument taken by `create_canister` endpoint of the CMC.
+#[derive(candid::CandidType, serde::Serialize)]
+pub struct CreateCanister {
+    pub subnet_selection: Option<SubnetSelection>,
+    pub settings: Option<CanisterSettings>,
+}
+
+/// Error for create_canister endpoint
+#[derive(candid::CandidType, candid::Deserialize, serde::Serialize)]
+pub enum CreateCanisterError {
+    Refunded {
+        refund_amount: u128,
+        create_error: String,
+    },
+}
 
 lazy_static! {
     pub static ref DEPLOY_SERVICE: Arc<DeployService> = Arc::new(DeployService::new(
@@ -66,20 +86,44 @@ impl DeployService {
         }
 
         // Creates the station canister with some initial cycles
-        let (station_canister,) = mgmt::create_canister(
-            mgmt::CreateCanisterArgument { settings: None },
-            INITIAL_STATION_CYCLES,
-        )
-        .await
-        .map_err(|(_, err)| DeployError::Failed {
-            reason: err.to_string(),
-        })?;
+        let station_canister = if let Some(subnet_selection) = input.subnet_selection {
+            let create_canister = CreateCanister {
+                subnet_selection: Some(subnet_selection),
+                settings: None,
+            };
+            call_with_payment128::<_, (Result<Principal, CreateCanisterError>,)>(
+                CMC_CANISTER_ID,
+                "create_canister",
+                (create_canister,),
+                INITIAL_STATION_CYCLES,
+            )
+            .await
+            .map(|res| res.0)
+            .map_err(|(_, err)| DeployError::Failed {
+                reason: err.to_string(),
+            })?
+            .map_err(
+                |CreateCanisterError::Refunded { create_error, .. }| DeployError::Failed {
+                    reason: create_error,
+                },
+            )?
+        } else {
+            mgmt::create_canister(
+                mgmt::CreateCanisterArgument { settings: None },
+                INITIAL_STATION_CYCLES,
+            )
+            .await
+            .map(|res| res.0.canister_id)
+            .map_err(|(_, err)| DeployError::Failed {
+                reason: err.to_string(),
+            })?
+        };
 
         // Adds the station canister as a controller of itself so that it can change its own settings
         mgmt::update_settings(mgmt::UpdateSettingsArgument {
-            canister_id: station_canister.canister_id,
+            canister_id: station_canister,
             settings: mgmt::CanisterSettings {
-                controllers: Some(vec![self_canister_id(), station_canister.canister_id]),
+                controllers: Some(vec![self_canister_id(), station_canister]),
                 ..Default::default()
             },
         })
@@ -112,7 +156,7 @@ impl DeployService {
                 reason: err.to_string(),
             })?;
         install_chunked_code(
-            station_canister.canister_id,
+            station_canister,
             mgmt::CanisterInstallMode::Install,
             station_wasm_module,
             station_wasm_module_extra_chunks,
@@ -122,7 +166,7 @@ impl DeployService {
         .map_err(|err| DeployError::Failed { reason: err })?;
 
         self.user_service
-            .add_deployed_station(&user.id, station_canister.canister_id, ctx)
+            .add_deployed_station(&user.id, station_canister, ctx)
             .await?;
 
         // Adds the deployed station to the user
@@ -130,7 +174,7 @@ impl DeployService {
             self.user_station_service.add_stations(
                 &user.id,
                 vec![UserStation {
-                    canister_id: station_canister.canister_id,
+                    canister_id: station_canister,
                     name: input.name,
                     labels: info.labels,
                 }],
@@ -138,6 +182,6 @@ impl DeployService {
             )?;
         }
 
-        Ok(station_canister.canister_id)
+        Ok(station_canister)
     }
 }
