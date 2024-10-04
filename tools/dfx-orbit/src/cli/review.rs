@@ -1,79 +1,85 @@
-mod display;
-
-use crate::{
-    args::review::{ReviewActionArgs, ReviewArgs},
-    DfxOrbit,
+use crate::DfxOrbit;
+use candid::Principal;
+use station_api::{
+    CallExternalCanisterOperationDTO, CanisterInstallMode, ChangeExternalCanisterOperationDTO,
 };
-use serde::Serialize;
-use slog::{info, warn};
-use station_api::{RequestApprovalStatusDTO, RequestStatusDTO, SubmitRequestApprovalInput};
+use std::fmt::Write;
+
+// TODO: Factor this out into multiple files
 
 impl DfxOrbit {
-    pub(crate) async fn exec_review(&self, args: ReviewArgs) -> anyhow::Result<()> {
-        let as_json = args.json;
+    pub(crate) fn display_change_canister_operation(
+        &self,
+        output: &mut String,
+        op: &ChangeExternalCanisterOperationDTO,
+    ) -> anyhow::Result<()> {
+        writeln!(output, "=== Change External Canister ===")?;
+        writeln!(
+            output,
+            "Target: {}",
+            self.try_reverse_lookup(&op.canister_id)
+        )?;
 
-        match args.action {
-            ReviewActionArgs::List(args) => {
-                let response = self.station.review_list(args.into()).await?;
+        let mode = match op.mode {
+            CanisterInstallMode::Install => "Install",
+            CanisterInstallMode::Reinstall => "Reinstall",
+            CanisterInstallMode::Upgrade => "Upgrade",
+        };
+        writeln!(output, "Mode: {}", mode)?;
 
-                if as_json {
-                    print_as_json(&response)?;
-                } else {
-                    println!("{}", self.display_list(response));
-                }
-                Ok(())
+        writeln!(output, "Module checksum: {}", &op.module_checksum)?;
+        if let Some(arg_checksum) = &op.arg_checksum {
+            writeln!(output, "Argument checksum: {}", arg_checksum)?;
+        }
+        Ok(())
+    }
+
+    pub(crate) fn display_call_canister_operation(
+        &self,
+        output: &mut String,
+        op: &CallExternalCanisterOperationDTO,
+    ) -> anyhow::Result<()> {
+        writeln!(output, "=== Call External Canister ===")?;
+        writeln!(
+            output,
+            "Execution method: \"{}\" of {}",
+            op.execution_method.method_name,
+            self.try_reverse_lookup(&op.execution_method.canister_id)
+        )?;
+        if let Some(validation_method) = &op.validation_method {
+            writeln!(
+                output,
+                "Validation method: \"{}\" of {}",
+                validation_method.method_name,
+                self.try_reverse_lookup(&validation_method.canister_id)
+            )?
+        }
+        if let Some(checksum) = &op.arg_checksum {
+            writeln!(output, "Argument checksum: {}", checksum)?
+        }
+        if let Some(args) = &op.arg_rendering {
+            writeln!(output, "Argument: {}", args)?
+        }
+        if let Some(cycles) = &op.execution_method_cycles {
+            writeln!(output, "Execution method cycles: {}", cycles)?
+        }
+        if let Some(reply) = &op.execution_method_reply {
+            match candid_parser::IDLArgs::from_bytes(reply) {
+                // TODO: Check if we can get the type information from somewhere to annotate this with types
+                Ok(response) => writeln!(output, "Execution response: {}", response),
+                Err(_) => writeln!(output, "FAILED TO PARSE EXECUTION RESPONSE"),
+            }?;
+        }
+
+        Ok(())
+    }
+
+    fn try_reverse_lookup(&self, canister_id: &Principal) -> String {
+        match self.canister_name(canister_id).ok() {
+            Some(canister_name) => {
+                format!("{} ({})", canister_name, canister_id)
             }
-            ReviewActionArgs::Next(args) => {
-                let request = self.station.review_next(args.into()).await?;
-
-                let Some(request) = request else {
-                    return Ok(());
-                };
-                if as_json {
-                    print_as_json(&request)?;
-                } else {
-                    println!("{}", self.display_get_request_response(request)?)
-                }
-
-                Ok(())
-            }
-            ReviewActionArgs::Id(args) => {
-                let request = self.station.review_id(args.clone().into()).await?;
-                if as_json {
-                    print_as_json(&request)?;
-                } else {
-                    println!("{}", self.display_get_request_response(request.clone())?)
-                }
-
-                if let RequestStatusDTO::Created = request.request.status {
-                    if let Ok(submit) = SubmitRequestApprovalInput::try_from(args) {
-                        let action = match submit.decision {
-                            RequestApprovalStatusDTO::Approved => "approve",
-                            RequestApprovalStatusDTO::Rejected => "reject",
-                        };
-                        dfx_core::cli::ask_for_consent(&format!(
-                            "Would you like to {action} this request?"
-                        ))?;
-                        self.station.submit(submit).await?;
-                        info!(self.logger, "Submitted response");
-                    };
-                } else if args.approve.is_some() || args.reject.is_some() {
-                    warn!(
-                        self.logger,
-                        "Can't approve/reject request. Only requests that are pending can be approved or rejected.",
-                    );
-                }
-
-                Ok(())
-            }
+            None => format!("{}", canister_id),
         }
     }
-}
-
-fn print_as_json<D>(data: D) -> anyhow::Result<()>
-where
-    D: Serialize,
-{
-    println!("{}", serde_json::to_string_pretty(&data)?);
-    Ok(())
 }

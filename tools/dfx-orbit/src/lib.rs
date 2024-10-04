@@ -8,6 +8,7 @@ pub mod args;
 pub mod cli;
 pub mod dfx;
 pub mod local_config;
+pub mod review;
 pub mod station;
 
 use anyhow::{anyhow, bail, Context};

@@ -1,14 +1,14 @@
 //! Command line interface for `dfx-orbit`.
 pub mod request;
-pub mod review;
 pub mod station;
 pub mod verify;
 
 use clap::{Parser, Subcommand};
 use request::RequestArgs;
-use review::ReviewArgs;
 use station::StationArgs;
 use verify::VerifyArgs;
+
+use crate::review::args::ReviewArgs;
 
 /// Manages Orbit on the Internet Computer.
 #[derive(Parser, Debug)]
