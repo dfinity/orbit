@@ -190,7 +190,7 @@ the assets.
 After the request has been made, the reviewers can locally verify the request:
 
 ```
-dfx-orbit verify [REQUEST_ID ]asset upload CANISTER --bacth-d [BATCH_ID] --files [SOME_DIR]
+dfx-orbit verify [REQUEST_ID ] asset upload CANISTER --batch-id [BATCH_ID] --files [SOME_DIR]
 ```
 
 > The verifiers needs to have the same set of data as was used in the request.
