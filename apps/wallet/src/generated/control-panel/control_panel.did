@@ -445,6 +445,8 @@ type WasmModuleRegistryEntryValue = record {
   //
   // This registry ids should only reference registry entries that are of type `WasmModule`, others will be ignored.
   dependencies : vec WasmModuleRegistryEntryDependency;
+  // Optional extra chunks of the wasm module that are stored in an asset canister referenced in the record `WasmModuleExtraChunks`.
+  module_extra_chunks : opt WasmModuleExtraChunks;
 };
 
 // The search registry filter options.
@@ -563,6 +565,8 @@ type WasmModuleRegistryEntryValueInput = record {
   version : text;
   // The dependencies of the wasm module, which are other wasm modules that this wasm module depends on.
   dependencies : vec WasmModuleRegistryEntryDependency;
+  // Optional extra chunks of the wasm module that are stored in an asset canister referenced in the record `WasmModuleExtraChunks`.
+  module_extra_chunks : opt WasmModuleExtraChunks;
 };
 
 // The input for adding a registry entry.
