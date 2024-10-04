@@ -222,6 +222,19 @@ type DeployStationAdminUserInput = record {
   identity : principal;
 };
 
+type SubnetFilter = record {
+  subnet_type : opt text;
+};
+
+type SubnetSelection = variant {
+  // Choose a specific subnet
+  Subnet : record {
+    subnet : principal;
+  };
+  // Choose a random subnet that fulfills the specified properties
+  Filter : SubnetFilter;
+};
+
 // The input for deploying a station canister.
 type DeployStationInput = record {
   // The station name to use.
@@ -235,6 +248,10 @@ type DeployStationInput = record {
     // The labels to associate with the station for the caller.
     labels : vec text;
   };
+  // The subnet to which the station should be deployed.
+  //
+  // By default, the station is deployed to the same subnet as the control panel.
+  subnet_selection : opt SubnetSelection;
 };
 
 // The result of checking if the caller can deploy a station canister.

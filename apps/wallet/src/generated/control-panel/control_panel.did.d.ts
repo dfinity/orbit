@@ -35,6 +35,7 @@ export interface DeployStationAdminUserInput {
 }
 export interface DeployStationInput {
   'name' : string,
+  'subnet_selection' : [] | [SubnetSelection],
   'admins' : Array<DeployStationAdminUserInput>,
   'associate_with_caller' : [] | [{ 'labels' : Array<string> }],
 }
@@ -163,6 +164,9 @@ export type Sha256Hex = string;
 export type SortDirection = { 'Asc' : null } |
   { 'Desc' : null };
 export type StationID = Principal;
+export interface SubnetFilter { 'subnet_type' : [] | [string] }
+export type SubnetSelection = { 'Filter' : SubnetFilter } |
+  { 'Subnet' : { 'subnet' : Principal } };
 export type SubscribeToWaitingListResult = { 'Ok' : null } |
   { 'Err' : ApiError };
 export interface SubscribedUser {
