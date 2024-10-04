@@ -129,6 +129,9 @@ jobs:
         with:
           name: integration-tests
           path: tests/integration/wasms
+      - name: Build test canister
+        run: |
+          ./scripts/generate-wasm.sh test_canister
       - name: Run integration tests
         run: |
           ./scripts/run-integration-tests.sh 2> logs.txt
