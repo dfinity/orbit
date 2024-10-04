@@ -167,7 +167,7 @@
       "newVersion": "0.0.2-alpha.6"
     },
     "dfx-orbit": {
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.3.0",
       "dependentProjects": [
         {
           "source": "integration-tests",
