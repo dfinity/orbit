@@ -101,7 +101,7 @@ function setup_enviroment() {
   if ! command -v icx-asset >/dev/null 2>&1; then
     echo "icx-asset not found, installing..."
 
-    cargo install --git https://github.com/dfinity/sdk.git --rev ff35958 icx-asset
+    cargo install icx-asset --version 0.21.0
 
     echo "icx-asset installed successfully."
 
@@ -212,12 +212,9 @@ function build_wasms() {
 function setup_cycles_wallet() {
   local network="$(get_network)"
 
-  set +e # Disable 'exit on error'
-  cycles_wallet_id_output=$(dfx identity get-wallet --network $network 2>&1)
-  cycles_wallet_id_exit_code=$?
-  set -e # Re-enable 'exit on error'
+  cycles_wallet_id_output=$(dfx identity get-wallet --network $network 2>&1 || echo "")
 
-  if [ $cycles_wallet_id_exit_code -ne 0 ]; then
+  if [ -z "$cycles_wallet_id_output" ]; then
     echo "Cycles wallet does not exist, using the default mainnet wallet for the deployment."
     cycles_wallet_id=$(dfx identity get-wallet --network ic)
     dfx identity set-wallet "$cycles_wallet_id" --network $network
@@ -235,12 +232,9 @@ function reset_control_panel() {
   echo "Resetting the \"$network\" network..."
   echo "This will remove the code and data for the control_panel canister."
 
-  set +e # Disable 'exit on error'
-  canister_id_output=$(dfx canister id control_panel --network $network 2>&1)
-  canister_id_exit_code=$?
-  set -e # Re-enable 'exit on error'
+  canister_id_output=$(dfx canister id control_panel --network $network 2>&1 || echo "")
 
-  if [ $canister_id_exit_code -eq 0 ]; then
+  if [ -n "$canister_id_output" ]; then
     echo "Canister 'control_panel' exists with ID: $canister_id_output"
     echo "Uninstalling code from the control_panel..."
 
@@ -268,12 +262,9 @@ function deploy_control_panel() {
   upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/upgrader/upgrader.wasm.gz | sed 's/../\\&/g')
   station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/station/station.wasm.gz | sed 's/../\\&/g')
 
-  set +e # Disable 'exit on error'
-  canister_id_output=$(dfx canister id control_panel --network $network 2>&1)
-  canister_id_exit_code=$?
-  set -e # Re-enable 'exit on error'
+  canister_id_output=$(dfx canister id control_panel --network $network 2>&1 || echo "")
 
-  if [ $canister_id_exit_code -ne 0 ]; then
+  if [ -z "$canister_id_output" ]; then
     echo "Canister 'control_panel' does not exist, creating and installing..."
 
     dfx canister create control_panel --network $network --with-cycles 5000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
@@ -314,10 +305,7 @@ function deploy_app_wallet() {
   mkdir -p ./artifacts/wallet-dapp/dist
   tar -xvf ./artifacts/wallet-dapp/wallet-dapp.tar.gz -C ./artifacts/wallet-dapp/dist
 
-  set +e # Disable 'exit on error'
-  canister_id_output=$(dfx canister id app_wallet --network $network 2>&1)
-  canister_id_exit_code=$?
-  set -e # Re-enable 'exit on error'
+  canister_id_output=$(dfx canister id app_wallet --network $network 2>/dev/null || echo "")
 
   if [ -z "$canister_id_output" ]; then
     echo "Canister 'app_wallet' does not exist, creating and installing..."
