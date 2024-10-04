@@ -618,9 +618,15 @@ fn deploy_user_station_to_different_subnet() {
     let newly_created_user_station = res.0.unwrap().canister_id;
 
     // check that the station has been deployed to the fiduciary subnet
-    assert_eq!(env.get_subnet(newly_created_user_station).unwrap(), env.topology().get_fiduciary().unwrap());
+    assert_eq!(
+        env.get_subnet(newly_created_user_station).unwrap(),
+        env.topology().get_fiduciary().unwrap()
+    );
     // which is different from the subnet to which the control panel is deployed
-    assert_ne!(env.get_subnet(newly_created_user_station).unwrap(), env.get_subnet(canister_ids.control_panel).unwrap());
+    assert_ne!(
+        env.get_subnet(newly_created_user_station).unwrap(),
+        env.get_subnet(canister_ids.control_panel).unwrap()
+    );
 
     // wait until the station is healthy
     let rounds_required_for_station_initialization = 5;
