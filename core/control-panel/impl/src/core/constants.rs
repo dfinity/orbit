@@ -25,7 +25,7 @@ pub const CANISTER_CONFIG_STATE_SIZE: u32 = WASM_PAGE_SIZE * CANISTER_CONFIG_TOT
 pub const MAX_WASM_PAGES: u64 = MAX_STABLE_MEMORY_SIZE / WASM_PAGE_SIZE as u64;
 
 /// The initial cycle balance to set for new station canisters.
-pub const INITIAL_STATION_CYCLES: u128 = 1_250_000_000_000;
+pub const INITIAL_STATION_CYCLES: u128 = 2_500_000_000_000;
 
 /// The nanoseconds equivalent of one hour.
 pub const ONE_HOUR_NS: u64 = 60 * 60 * 1_000_000_000;
@@ -41,6 +41,9 @@ pub const ONE_MONTH_NS: u64 = 30 * ONE_DAY_NS;
 
 /// The NNS Root canister id added to station and upgrader canisters as a recovery method.
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
+
+/// The CMC canister is used to deploy the station canister on a subnet of choice.
+pub const CMC_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 4, 1, 1]);
 
 #[cfg(test)]
 mod tests {

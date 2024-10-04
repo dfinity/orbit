@@ -13,10 +13,25 @@ pub struct AssociateWithCallerInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct SubnetFilter {
+    pub subnet_type: Option<String>,
+}
+
+/// Options to select subnets when creating a canister
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub enum SubnetSelection {
+    /// Choose a random subnet that satisfies the specified properties
+    Filter(SubnetFilter),
+    /// Choose a specific subnet
+    Subnet { subnet: Principal },
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct DeployStationInput {
     pub name: String,
     pub admins: Vec<DeployStationAdminUserInput>,
     pub associate_with_caller: Option<AssociateWithCallerInput>,
+    pub subnet_selection: Option<SubnetSelection>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
