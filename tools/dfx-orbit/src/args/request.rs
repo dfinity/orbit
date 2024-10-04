@@ -16,15 +16,14 @@ use station_api::CreateRequestInput;
 pub struct RequestArgs {
     /// Title of the request
     #[clap(long)]
-    title: Option<String>,
+    pub title: Option<String>,
 
     /// Summary of the request
     #[clap(long)]
-    summary: Option<String>,
+    pub summary: Option<String>,
 
-    // TODO: Summary file as an alternative to summary
     #[clap(subcommand)]
-    action: RequestArgsActions,
+    pub action: RequestArgsActions,
 }
 
 #[derive(Debug, Clone, Subcommand)]
@@ -40,19 +39,14 @@ pub enum RequestArgsActions {
 }
 
 impl RequestArgs {
-    pub(crate) async fn into_create_request_input(
-        self,
-        dfx_orbit: &DfxOrbit,
-    ) -> anyhow::Result<CreateRequestInput> {
+    pub async fn into_request(self, dfx_orbit: &DfxOrbit) -> anyhow::Result<CreateRequestInput> {
         let operation = match self.action {
             RequestArgsActions::Canister(canister_args) => {
-                canister_args.into_create_request_input(dfx_orbit)?
+                canister_args.into_request(dfx_orbit).await?
             }
-            RequestArgsActions::Asset(asset_args) => {
-                asset_args.into_create_request_input(dfx_orbit).await?
-            }
+            RequestArgsActions::Asset(asset_args) => asset_args.into_request(dfx_orbit).await?,
             RequestArgsActions::Permission(permission_args) => {
-                permission_args.into_create_request_input(dfx_orbit)?
+                permission_args.into_request(dfx_orbit)?
             }
         };
 

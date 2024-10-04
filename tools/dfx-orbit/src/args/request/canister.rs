@@ -2,28 +2,28 @@
 
 use crate::DfxOrbit;
 use anyhow::{bail, Context};
+use candid::Principal;
 use clap::{Parser, Subcommand, ValueEnum};
 use sha2::{Digest, Sha256};
 use slog::{info, Logger};
 use station_api::{
     CallExternalCanisterOperationInput, CanisterInstallMode, CanisterMethodDTO,
-    ChangeExternalCanisterOperationInput, GetRequestResponse, RequestOperationDTO,
-    RequestOperationInput,
+    ChangeExternalCanisterOperationInput, ConfigureExternalCanisterOperationInput,
+    ConfigureExternalCanisterOperationKindDTO, DefiniteCanisterSettingsInput, GetRequestResponse,
+    RequestOperationDTO, RequestOperationInput,
 };
+use std::collections::BTreeSet;
 
 // TODO: Support Canister create + integration test
 // TODO: Canister get response functionality
-
-// TODO: Support Canister create + integration test
-// TODO: Support Canister install check
-// TODO: Canister get response functionality
+// ^ Utility function to get the latests response directly printed, to get UX similar to dfx canister call
 
 /// Request canister operations through Orbit
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterArgs {
     /// The operation to request
     #[clap(subcommand)]
-    action: RequestCanisterActionArgs,
+    pub action: RequestCanisterActionArgs,
 }
 
 #[derive(Debug, Clone, Subcommand)]
@@ -33,31 +33,30 @@ pub enum RequestCanisterActionArgs {
     Install(RequestCanisterInstallArgs),
     /// Request to call a canister method
     Call(RequestCanisterCallArgs),
+    /// Update a canister's settings (i.e its controller, compute allocation, or memory allocation.)
+    UpdateSettings(RequestCanisterUpdateSettingsArgs),
 }
 
 impl RequestCanisterArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    pub(crate) fn into_create_request_input(
+    pub(crate) async fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
-        self.action.into_create_request_input(dfx_orbit)
+        self.action.into_request(dfx_orbit).await
     }
 }
 
 impl RequestCanisterActionArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    pub(crate) fn into_create_request_input(
+    pub(crate) async fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         match self {
-            RequestCanisterActionArgs::Install(change_args) => {
-                change_args.into_create_request_input(dfx_orbit)
-            }
-            RequestCanisterActionArgs::Call(call_args) => {
-                call_args.into_create_request_input(dfx_orbit)
-            }
+            RequestCanisterActionArgs::Install(args) => args.into_request(dfx_orbit),
+            RequestCanisterActionArgs::Call(args) => args.into_request(dfx_orbit),
+            RequestCanisterActionArgs::UpdateSettings(args) => args.into_request(dfx_orbit).await,
         }
     }
 }
@@ -66,30 +65,33 @@ impl RequestCanisterActionArgs {
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterCallArgs {
     /// The canister name or ID.
-    canister: String,
+    pub canister: String,
     /// The name of the method to call.
-    method_name: String,
-    /// The argument to pass to the method.
-    argument: Option<String>,
+    pub method_name: String,
+    /// The candid argument to pass to the method.
+    pub argument: Option<String>,
     // TODO: The format of the argument.
     // #[clap(short, long)]
     // r#type: Option<CandidFormat>,
-    /// Pass the argument as a file.
+    /// Pass the argument as a candid encoded file.
     #[clap(short = 'f', long, conflicts_with = "argument")]
-    arg_file: Option<String>,
+    pub arg_file: Option<String>,
+    /// Pass the argument as a raw hex string.
+    #[clap(short = 'f', long, conflicts_with = "argument, arg_file")]
+    pub raw_arg: Option<String>,
     /// Specifies the amount of cycles to send on the call.
     #[clap(short, long)]
-    with_cycles: Option<u64>,
+    pub with_cycles: Option<u64>,
 }
 
 impl RequestCanisterCallArgs {
     /// Converts the CLI arg stype into the equivalent Orbit API type.
-    pub(crate) fn into_create_request_input(
+    pub(crate) fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         let canister_id = dfx_orbit.canister_id(&self.canister)?;
-        let arg = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+        let arg = parse_arguments(&self.argument, &self.arg_file, &self.raw_arg)?;
 
         Ok(RequestOperationInput::CallExternalCanister(
             CallExternalCanisterOperationInput {
@@ -110,7 +112,7 @@ impl RequestCanisterCallArgs {
         request: &GetRequestResponse,
     ) -> anyhow::Result<()> {
         let canister_id = dfx_orbit.canister_id(&self.canister)?;
-        let arg = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+        let arg = parse_arguments(&self.argument, &self.arg_file, &self.raw_arg)?;
         let arg_checksum = arg.map(|arg| hex::encode(Sha256::digest(arg)));
 
         let RequestOperationDTO::CallExternalCanister(op) = &request.request.operation else {
@@ -151,9 +153,8 @@ pub struct RequestCanisterInstallArgs {
     /// The canister name or ID.
     canister: String,
     /// The installation mode.
-    #[clap(long, value_enum, rename_all = "kebab-case", default_value = "install")]
+    #[clap(long, value_enum, rename_all = "kebab-case")]
     mode: CanisterInstallModeArgs,
-    // TODO: On verify, allow a --wasm-hash instead
     /// The path to the wasm file to install (can also be a wasm.gz).
     #[clap(short, long)]
     wasm: String,
@@ -167,7 +168,7 @@ pub struct RequestCanisterInstallArgs {
 
 impl RequestCanisterInstallArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    pub(crate) fn into_create_request_input(
+    pub(crate) fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
@@ -234,7 +235,7 @@ impl RequestCanisterInstallArgs {
         let module = std::fs::read(&self.wasm)
             .with_context(|| "Could not read Wasm file")?
             .to_vec();
-        let args = candid_from_string_or_file(&self.argument, &self.arg_file)?;
+        let args = parse_arguments(&self.argument, &self.arg_file, &None)?;
 
         Ok((module, args))
     }
@@ -271,13 +272,120 @@ impl From<CanisterInstallMode> for CanisterInstallModeArgs {
     }
 }
 
-fn candid_from_string_or_file(
+#[derive(Debug, Clone, Parser)]
+pub struct RequestCanisterUpdateSettingsArgs {
+    /// The canister name or ID.
+    canister: String,
+
+    /// Add a principal to the list of controllers of the canister
+    #[clap(long)]
+    pub(crate) add_controller: Vec<Principal>,
+
+    /// Removes a principal from the list of controllers of the canister
+    #[clap(long)]
+    pub(crate) remove_controller: Vec<Principal>,
+}
+
+impl RequestCanisterUpdateSettingsArgs {
+    pub(crate) async fn into_request(
+        self,
+        dfx_orbit: &DfxOrbit,
+    ) -> anyhow::Result<RequestOperationInput> {
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
+        let controllers = get_new_controller_set(
+            dfx_orbit,
+            canister_id,
+            self.add_controller,
+            self.remove_controller,
+        )
+        .await?;
+
+        let operations = ConfigureExternalCanisterOperationInput {
+            canister_id,
+            kind: ConfigureExternalCanisterOperationKindDTO::NativeSettings(
+                DefiniteCanisterSettingsInput {
+                    controllers: Some(controllers),
+                    compute_allocation: None,
+                    memory_allocation: None,
+                    freezing_threshold: None,
+                    reserved_cycles_limit: None,
+                },
+            ),
+        };
+
+        Ok(RequestOperationInput::ConfigureExternalCanister(operations))
+    }
+
+    pub(crate) async fn verify(
+        &self,
+        dfx_orbit: &DfxOrbit,
+        request: &GetRequestResponse,
+    ) -> anyhow::Result<()> {
+        let canister_id = dfx_orbit.canister_id(&self.canister)?;
+        let controllers = get_new_controller_set(
+            dfx_orbit,
+            canister_id,
+            self.add_controller.clone(),
+            self.remove_controller.clone(),
+        )
+        .await?;
+
+        let RequestOperationDTO::ConfigureExternalCanister(op) = &request.request.operation else {
+            bail!("This request is not a configure external canister request");
+        };
+        if op.canister_id != canister_id {
+            bail!(
+                "Mismatch of canister ids: request: {}, local: {}",
+                op.canister_id,
+                canister_id
+            );
+        }
+        let ConfigureExternalCanisterOperationKindDTO::NativeSettings(op) = &op.kind else {
+            bail!("This request is not a native setting request");
+        };
+        if op.controllers.as_ref() != Some(&controllers) {
+            bail!(
+                "Mismatch in the controller sets: request: {:?}, local {:?}",
+                op.controllers,
+                controllers
+            );
+        }
+
+        Ok(())
+    }
+}
+
+async fn get_new_controller_set(
+    dfx_orbit: &DfxOrbit,
+    canister_id: Principal,
+    add: Vec<Principal>,
+    remove: Vec<Principal>,
+) -> anyhow::Result<Vec<Principal>> {
+    // Transform into maps to deduplicates
+    let old_controllers = dfx_orbit.get_controllers(canister_id).await?;
+    let controllers = old_controllers
+        .iter()
+        .chain(add.iter())
+        .collect::<BTreeSet<_>>();
+    let remove = remove.iter().collect::<BTreeSet<_>>();
+
+    let new_controllers = controllers
+        .difference(&remove)
+        .map(|&&v| v)
+        .collect::<Vec<_>>();
+
+    Ok(new_controllers)
+}
+
+fn parse_arguments(
     arg_string: &Option<String>,
     arg_path: &Option<String>,
+    raw_arg: &Option<String>,
 ) -> anyhow::Result<Option<Vec<u8>>> {
     // TODO: It would be really nice to be able to use `blob_from_arguments(..)` here, as in dfx, to get all the nice things such as help composing the argument.
     // First try to read the argument file, if it was provided
-    Ok(arg_path
+
+    let candid = arg_path
         .as_ref()
         .map(std::fs::read_to_string)
         .transpose()?
@@ -289,7 +397,11 @@ fn candid_from_string_or_file(
                 .with_context(|| "Invalid Candid values".to_string())?
                 .to_bytes()
         })
-        .transpose()?)
+        .transpose()?;
+
+    let raw_arg = raw_arg.as_ref().map(hex::decode).transpose()?;
+    let arg = candid.or(raw_arg);
+    Ok(arg)
 }
 
 fn log_hashes(logger: &Logger, name: &str, local: &Option<String>, remote: &Option<String>) {

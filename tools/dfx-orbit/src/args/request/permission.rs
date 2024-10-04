@@ -25,7 +25,7 @@ pub enum RequestPermissionArgs {
 
 impl RequestPermissionArgs {
     /// Converts the CLI arg type into the equivalent Orbit API type.
-    pub(crate) fn into_create_request_input(
+    pub(crate) fn into_request(
         self,
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
