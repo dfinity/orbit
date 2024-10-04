@@ -179,7 +179,7 @@ dfx identity get-principal
 A developer may upload one or more directories of HTTP assets with:
 
 ```
-dfx-orbit request asset upload [CANISTER_NAME]  --files [SOME_DIR]
+dfx-orbit request asset upload [CANISTER_NAME] --files [SOME_DIR]
 ```
 
 This will upload the assets to the asset canister and then request the orbit station to publish
