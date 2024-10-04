@@ -8,7 +8,7 @@ pub mod args;
 pub mod cli;
 pub mod dfx_extension_api;
 pub mod local_config;
-pub mod station_agent;
+pub mod station;
 
 use anyhow::{anyhow, bail, Context};
 use candid::Principal;
@@ -23,11 +23,11 @@ use dfx_core::{
 use dfx_extension_api::OrbitExtensionAgent;
 use ic_utils::{canister::CanisterBuilder, Canister};
 use slog::Logger;
-use station_agent::StationConfig;
+use station::StationConfig;
 use station_api::CreateRequestResponse;
 use std::sync::Arc;
 
-pub use station_agent::StationAgent;
+pub use station::StationAgent;
 
 pub struct DfxOrbit {
     // The station agent that handles communication with the station

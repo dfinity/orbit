@@ -1,5 +1,5 @@
 //! dfx-orbit station management commands
-use crate::station_agent::StationConfig;
+use crate::station::StationConfig;
 use candid::Principal;
 use clap::{Parser, Subcommand};
 use std::fmt::{self, Display, Formatter};

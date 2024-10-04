@@ -1,6 +1,6 @@
 //! A dfx and IC agent for communicating with an Orbit station.
 
-pub use crate::station_agent::{config::StationConfig, error::StationAgentResult};
+pub use crate::station::{config::StationConfig, error::StationAgentResult};
 use candid::CandidType;
 use ic_agent::{agent::UpdateBuilder, Agent};
 use station_api::{
