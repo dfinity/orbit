@@ -12,7 +12,7 @@ pub mod local_config;
 mod me;
 pub mod permission;
 pub mod review;
-mod station;
+pub mod station;
 mod util;
 
 use anyhow::{anyhow, bail, Context};
@@ -27,10 +27,9 @@ use dfx_core::{
 };
 use ic_utils::{canister::CanisterBuilder, Canister};
 use slog::Logger;
+use station::agent::{StationAgent, StationConfig};
 use station_api::CreateRequestResponse;
 use std::sync::Arc;
-
-pub use station::agent::{StationAgent, StationConfig};
 
 pub struct DfxOrbit {
     // The station agent that handles communication with the station

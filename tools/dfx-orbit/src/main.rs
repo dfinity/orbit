@@ -3,18 +3,17 @@
 //! Note: This will initially be a standalone executable, but will be converted into a dfx extension once the dfx subcommand extension framework is well defined.
 
 use clap::Parser;
-use dfx_orbit::{self as lib, args::DfxOrbitArgs};
+use dfx_orbit::args::DfxOrbitArgs;
 use tokio::runtime::Builder;
 
 fn main() {
     let args = DfxOrbitArgs::parse();
-    //print!("Args: {}", args);
     let runtime = Builder::new_current_thread()
         .enable_all()
         .build()
         .expect("Unable to create a runtime");
     runtime.block_on(async {
-        if let Err(err) = lib::args::exec(args).await {
+        if let Err(err) = args.execute().await {
             println!("Failed to execute command: {}", err);
             std::process::exit(1);
         }

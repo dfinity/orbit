@@ -84,6 +84,83 @@ pub enum RequestArgsActions {
     Permission(RequestPermissionArgs),
 }
 
+#[derive(Debug, Clone, Subcommand)]
+pub enum VerifyArgsAction {
+    /// Manage assets stored in an asset canister through Orbit
+    Asset(VerifyAssetArgs),
+    /// Request canister operations through Orbit
+    Canister(VerifyCanisterArgs),
+}
+
+impl DfxOrbitArgs {
+    /// A command line tool for interacting with Orbit on the Internet Computer.
+    pub async fn execute(self) -> anyhow::Result<()> {
+        let logger = init_logger(self.verbose, self.quiet)?;
+        trace!(logger, "Calling tool with arguments:\n{:#?}", self);
+
+        let orbit_agent = OrbitExtensionAgent::new()?;
+
+        // We don't need to instanciate a StationAgent to execute this command directly on the orbit agent
+        if let DfxOrbitSubcommands::Station(station_args) = self.command {
+            station_args.execute(orbit_agent)?;
+            return Ok(());
+        };
+
+        let config = match self.station {
+            Some(station_name) => orbit_agent.station(&station_name)?,
+            None => orbit_agent
+                .default_station()?
+                .ok_or_else(|| anyhow::format_err!("No default station specified"))?,
+        };
+
+        let dfx_orbit = DfxOrbit::new(orbit_agent, config, self.identity, logger).await?;
+
+        match self.command {
+            // Nicer display, json optional
+            DfxOrbitSubcommands::Me(args) => {
+                let ans = dfx_orbit.station.me().await?;
+                if args.json {
+                    println!("{}", serde_json::to_string_pretty(&ans)?);
+                } else {
+                    println!("{}", dfx_orbit.display_me(ans)?);
+                }
+                Ok(())
+            }
+            DfxOrbitSubcommands::Request(request_args) => {
+                let request = dfx_orbit
+                    .station
+                    .request(request_args.into_request(&dfx_orbit).await?)
+                    .await?;
+                dfx_orbit.print_create_request_info(&request);
+
+                Ok(())
+            }
+            DfxOrbitSubcommands::Verify(verify_args) => {
+                let request = dfx_orbit
+                    .station
+                    .review_id(GetRequestInput {
+                        request_id: verify_args.request_id.clone(),
+                    })
+                    .await?;
+
+                println!(
+                    "{}",
+                    dfx_orbit.display_get_request_response(request.clone())?
+                );
+
+                let verified = verify_args.verify(&dfx_orbit, &request).await;
+                verify_args
+                    .conditionally_execute_actions(&dfx_orbit, verified)
+                    .await?;
+
+                Ok(())
+            }
+            DfxOrbitSubcommands::Review(review_args) => dfx_orbit.exec_review(review_args).await,
+            DfxOrbitSubcommands::Station(_) => unreachable!(),
+        }
+    }
+}
+
 impl RequestArgs {
     pub async fn into_request(self, dfx_orbit: &DfxOrbit) -> anyhow::Result<CreateRequestInput> {
         let operation = match self.action {
@@ -139,7 +216,7 @@ impl VerifyArgs {
         Ok(())
     }
 
-    pub(crate) async fn conditionally_execute_actions(
+    async fn conditionally_execute_actions(
         &self,
         dfx_orbit: &DfxOrbit,
         verified: anyhow::Result<()>,
@@ -176,80 +253,5 @@ impl VerifyArgs {
         };
 
         Ok(())
-    }
-}
-
-#[derive(Debug, Clone, Subcommand)]
-pub enum VerifyArgsAction {
-    /// Manage assets stored in an asset canister through Orbit
-    Asset(VerifyAssetArgs),
-    /// Request canister operations through Orbit
-    Canister(VerifyCanisterArgs),
-}
-
-/// A command line tool for interacting with Orbit on the Internet Computer.
-pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
-    let logger = init_logger(args.verbose, args.quiet)?;
-    trace!(logger, "Calling tool with arguments:\n{:#?}", args);
-
-    let orbit_agent = OrbitExtensionAgent::new()?;
-
-    // We don't need to instanciate a StationAgent to execute this command directly on the orbit agent
-    if let DfxOrbitSubcommands::Station(station_args) = args.command {
-        crate::station::exec(orbit_agent, station_args)?;
-        return Ok(());
-    };
-
-    let config = match args.station {
-        Some(station_name) => orbit_agent.station(&station_name)?,
-        None => orbit_agent
-            .default_station()?
-            .ok_or_else(|| anyhow::format_err!("No default station specified"))?,
-    };
-
-    let dfx_orbit = DfxOrbit::new(orbit_agent, config, args.identity, logger).await?;
-
-    match args.command {
-        // Nicer display, json optional
-        DfxOrbitSubcommands::Me(args) => {
-            let ans = dfx_orbit.station.me().await?;
-            if args.json {
-                println!("{}", serde_json::to_string_pretty(&ans)?);
-            } else {
-                println!("{}", dfx_orbit.display_me(ans)?);
-            }
-            Ok(())
-        }
-        DfxOrbitSubcommands::Request(request_args) => {
-            let request = dfx_orbit
-                .station
-                .request(request_args.into_request(&dfx_orbit).await?)
-                .await?;
-            dfx_orbit.print_create_request_info(&request);
-
-            Ok(())
-        }
-        DfxOrbitSubcommands::Verify(verify_args) => {
-            let request = dfx_orbit
-                .station
-                .review_id(GetRequestInput {
-                    request_id: verify_args.request_id.clone(),
-                })
-                .await?;
-
-            println!(
-                "{}",
-                dfx_orbit.display_get_request_response(request.clone())?
-            );
-
-            let verified = verify_args.verify(&dfx_orbit, &request).await;
-            verify_args
-                .conditionally_execute_actions(&dfx_orbit, verified)
-                .await?;
-
-            Ok(())
-        }
-        DfxOrbitSubcommands::Review(review_args) => dfx_orbit.exec_review(review_args).await,
-        DfxOrbitSubcommands::Station(_) => unreachable!(),
     }
 }
