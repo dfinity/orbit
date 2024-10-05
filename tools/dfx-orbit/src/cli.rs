@@ -1,5 +1,4 @@
 //! Implementation of the `dfx-orbit` commands.
-pub(crate) mod asset;
 pub(crate) mod me;
 pub(crate) mod review;
 pub(crate) mod station;

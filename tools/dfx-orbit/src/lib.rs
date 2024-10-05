@@ -6,6 +6,7 @@
 
 pub mod args;
 pub mod asset;
+pub mod canister;
 pub mod cli;
 pub mod dfx;
 pub mod local_config;

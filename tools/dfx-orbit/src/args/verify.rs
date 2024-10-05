@@ -1,7 +1,4 @@
-pub mod canister;
-
-use crate::{asset::VerifyAssetArgs, DfxOrbit};
-use canister::VerifyCanisterArgs;
+use crate::{asset::VerifyAssetArgs, canister::VerifyCanisterArgs, DfxOrbit};
 use clap::{Parser, Subcommand};
 use station_api::GetRequestResponse;
 
