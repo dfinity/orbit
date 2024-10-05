@@ -4,7 +4,7 @@ use crate::{
     CanisterIds,
 };
 use candid::Principal;
-use dfx_orbit::{dfx::OrbitExtensionAgent, station::StationConfig, DfxOrbit};
+use dfx_orbit::{dfx::OrbitExtensionAgent, station::agent::StationConfig, DfxOrbit};
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use rand::Rng;

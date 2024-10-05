@@ -1,3 +1,5 @@
+use super::util::parse_arguments;
+use crate::{canister::util::log_hashes, DfxOrbit};
 use anyhow::bail;
 use clap::Parser;
 use sha2::{Digest, Sha256};
@@ -5,10 +7,6 @@ use station_api::{
     CallExternalCanisterOperationInput, CanisterMethodDTO, GetRequestResponse, RequestOperationDTO,
     RequestOperationInput,
 };
-
-use crate::{canister::util::log_hashes, DfxOrbit};
-
-use super::util::parse_arguments;
 
 /// Requests that a call be made to a canister.
 #[derive(Debug, Clone, Parser)]

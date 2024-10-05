@@ -25,11 +25,11 @@ use dfx_core::{
 };
 use ic_utils::{canister::CanisterBuilder, Canister};
 use slog::Logger;
-use station::StationConfig;
+use station::agent::StationConfig;
 use station_api::CreateRequestResponse;
 use std::sync::Arc;
 
-pub use station::StationAgent;
+pub use station::agent::StationAgent;
 
 pub struct DfxOrbit {
     // The station agent that handles communication with the station

@@ -1,7 +1,6 @@
 //! Implementation of the `dfx-orbit` commands.
 pub(crate) mod me;
 pub(crate) mod review;
-pub(crate) mod station;
 
 use crate::{
     args::{DfxOrbitArgs, DfxOrbitSubcommands},
@@ -21,7 +20,7 @@ pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
 
     // We don't need to instanciate a StationAgent to execute this command directly on the orbit agent
     if let DfxOrbitSubcommands::Station(station_args) = args.command {
-        station::exec(orbit_agent, station_args)?;
+        crate::station::exec(orbit_agent, station_args)?;
         return Ok(());
     };
 

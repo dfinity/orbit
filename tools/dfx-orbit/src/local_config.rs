@@ -1,5 +1,5 @@
 //! Local dfx configuration of Orbit stations.
-use crate::{dfx::OrbitExtensionAgent, station::StationConfig};
+use crate::{dfx::OrbitExtensionAgent, station::agent::StationConfig};
 use anyhow::Context;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
