@@ -1,16 +1,17 @@
-//! Command line interface for `dfx-orbit`.
-pub mod request;
-pub mod verify;
-
 use crate::{
-    dfx::OrbitExtensionAgent, me::MeArgs, review::args::ReviewArgs, station::StationArgs,
-    util::init_logger, DfxOrbit,
+    asset::{RequestAssetArgs, VerifyAssetArgs},
+    canister::{RequestCanisterArgs, VerifyCanisterArgs},
+    dfx::OrbitExtensionAgent,
+    me::MeArgs,
+    permission::RequestPermissionArgs,
+    review::args::ReviewArgs,
+    station::StationArgs,
+    util::init_logger,
+    DfxOrbit,
 };
 use clap::{Parser, Subcommand};
-use request::RequestArgs;
 use slog::trace;
-use station_api::GetRequestInput;
-use verify::VerifyArgs;
+use station_api::{CreateRequestInput, GetRequestInput, GetRequestResponse};
 
 /// Manages Orbit on the Internet Computer.
 #[derive(Parser, Debug)]
@@ -53,6 +54,137 @@ pub enum DfxOrbitSubcommands {
     Review(ReviewArgs),
     /// Gets the caller's profile on an Orbit station.
     Me(MeArgs),
+}
+
+/// Request canister changes.
+#[derive(Debug, Clone, Parser)]
+#[clap(version, about, long_about = None)]
+pub struct RequestArgs {
+    /// Title of the request
+    #[clap(long)]
+    pub title: Option<String>,
+
+    /// Summary of the request
+    #[clap(long)]
+    pub summary: Option<String>,
+
+    #[clap(subcommand)]
+    pub action: RequestArgsActions,
+}
+
+#[derive(Debug, Clone, Subcommand)]
+#[clap(version, about, long_about = None)]
+pub enum RequestArgsActions {
+    /// Manage assets stored in an asset canister through Orbit
+    Asset(RequestAssetArgs),
+    /// Request canister operations through Orbit
+    Canister(RequestCanisterArgs),
+    /// Request permissions
+    #[clap(subcommand)]
+    Permission(RequestPermissionArgs),
+}
+
+impl RequestArgs {
+    pub async fn into_request(self, dfx_orbit: &DfxOrbit) -> anyhow::Result<CreateRequestInput> {
+        let operation = match self.action {
+            RequestArgsActions::Canister(canister_args) => {
+                canister_args.into_request(dfx_orbit).await?
+            }
+            RequestArgsActions::Asset(asset_args) => asset_args.into_request(dfx_orbit).await?,
+            RequestArgsActions::Permission(permission_args) => {
+                permission_args.into_request(dfx_orbit)?
+            }
+        };
+
+        Ok(CreateRequestInput {
+            operation,
+            title: self.title,
+            summary: self.summary,
+            execution_plan: None,
+        })
+    }
+}
+
+#[derive(Debug, Clone, Parser)]
+pub struct VerifyArgs {
+    /// The ID of the request to verify
+    pub request_id: String,
+
+    /// Approve the request, if the validation succeeds
+    #[clap(short = 'a', long)]
+    pub and_approve: bool,
+    /// Reject the request, if the validation fails
+    #[clap(short = 'r', long)]
+    pub or_reject: bool,
+
+    /// The type of request to verify
+    #[clap(subcommand)]
+    pub action: VerifyArgsAction,
+}
+
+impl VerifyArgs {
+    pub async fn verify(
+        &self,
+        dfx_orbit: &DfxOrbit,
+        request: &GetRequestResponse,
+    ) -> anyhow::Result<()> {
+        // TODO: Don't allow non-pending requests to be verified, since they might no longer be
+        // verifiable after the execution
+
+        match &self.action {
+            VerifyArgsAction::Asset(args) => args.verify(dfx_orbit, request).await?,
+            VerifyArgsAction::Canister(args) => args.verify(dfx_orbit, request).await?,
+        };
+
+        Ok(())
+    }
+
+    pub(crate) async fn conditionally_execute_actions(
+        &self,
+        dfx_orbit: &DfxOrbit,
+        verified: anyhow::Result<()>,
+    ) -> anyhow::Result<()> {
+        match verified {
+            Ok(()) => {
+                if self.and_approve {
+                    dfx_core::cli::ask_for_consent(
+                        "Verification successful, approve the request?",
+                    )?;
+                    dfx_orbit
+                        .station
+                        .approve(self.request_id.clone(), None)
+                        .await?;
+                } else {
+                    println!("Verification successful!");
+                }
+            }
+            Err(err) => {
+                if self.or_reject {
+                    dfx_core::cli::ask_for_consent(&format!(
+                        "Verification failed: {err}. Reject the request?"
+                    ))?;
+                    dfx_orbit
+                        .station
+                        .reject(self.request_id.clone(), None)
+                        .await?;
+                } else {
+                    println!("Verification failed!");
+                };
+
+                return Err(err);
+            }
+        };
+
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, Subcommand)]
+pub enum VerifyArgsAction {
+    /// Manage assets stored in an asset canister through Orbit
+    Asset(VerifyAssetArgs),
+    /// Request canister operations through Orbit
+    Canister(VerifyCanisterArgs),
 }
 
 /// A command line tool for interacting with Orbit on the Internet Computer.

@@ -1,8 +1,8 @@
-//! Library for interacting with Orbit on the Internet Computer.
+#![deny(unsafe_code, clippy::unwrap_used, clippy::expect_used)]
 //#![warn(missing_docs)]
-//#![warn(clippy::missing_docs_in_private_items)]
 //#![deny(clippy::panic)]
-//#![deny(clippy::unwrap_used)]
+
+//! Library for interacting with Orbit on the Internet Computer.
 
 pub mod args;
 pub mod asset;
@@ -10,8 +10,9 @@ pub mod canister;
 pub mod dfx;
 pub mod local_config;
 mod me;
+pub mod permission;
 pub mod review;
-pub mod station;
+mod station;
 mod util;
 
 use anyhow::{anyhow, bail, Context};
@@ -26,11 +27,10 @@ use dfx_core::{
 };
 use ic_utils::{canister::CanisterBuilder, Canister};
 use slog::Logger;
-use station::agent::StationConfig;
 use station_api::CreateRequestResponse;
 use std::sync::Arc;
 
-pub use station::agent::StationAgent;
+pub use station::agent::{StationAgent, StationConfig};
 
 pub struct DfxOrbit {
     // The station agent that handles communication with the station
