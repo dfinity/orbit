@@ -12,6 +12,7 @@ pub mod dfx;
 pub mod local_config;
 pub mod review;
 pub mod station;
+mod util;
 
 use anyhow::{anyhow, bail, Context};
 use candid::Principal;

@@ -1,13 +1,11 @@
-use std::path::Path;
-
+use crate::DfxOrbit;
 use anyhow::bail;
 use candid::{Nat, Principal};
 use ic_utils::Canister;
 use serde_bytes::ByteBuf;
 use slog::Logger;
 use station_api::{GetRequestResponse, RequestOperationDTO};
-
-use crate::DfxOrbit;
+use std::path::Path;
 
 pub(super) fn verify_call(
     request: &GetRequestResponse,

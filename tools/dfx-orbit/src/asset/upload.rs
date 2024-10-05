@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use crate::DfxOrbit;
 use anyhow::bail;
 use candid::{Nat, Principal};
@@ -12,6 +10,7 @@ use station_api::{
     CallExternalCanisterOperationInput, CanisterMethodDTO, GetRequestResponse, RequestOperationDTO,
     RequestOperationInput,
 };
+use std::path::Path;
 
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetUploadArgs {

@@ -1,6 +1,5 @@
 //! Implementation of the `dfx-orbit` commands.
 pub(crate) mod me;
-pub(crate) mod review;
 
 use crate::{
     args::{DfxOrbitArgs, DfxOrbitSubcommands},

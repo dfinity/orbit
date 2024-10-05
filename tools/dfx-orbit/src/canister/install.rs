@@ -1,15 +1,13 @@
+use super::util::parse_arguments;
+use crate::{canister::util::log_hashes, DfxOrbit};
 use anyhow::{bail, Context};
 use clap::{Parser, ValueEnum};
 use sha2::{Digest, Sha256};
 use station_api::{
-    CanisterInstallMode, ChangeExternalCanisterOperationInput, GetRequestResponse,
-    RequestOperationDTO, RequestOperationInput,
+    CanisterInstallMode, ChangeExternalCanisterOperationDTO, ChangeExternalCanisterOperationInput,
+    GetRequestResponse, RequestOperationDTO, RequestOperationInput,
 };
-
-use crate::{canister::util::log_hashes, DfxOrbit};
-
-use super::util::parse_arguments;
-
+use std::fmt::Write;
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterInstallArgs {
@@ -132,5 +130,33 @@ impl From<CanisterInstallMode> for CanisterInstallModeArgs {
             CanisterInstallMode::Reinstall => Self::Reinstall,
             CanisterInstallMode::Upgrade => Self::Upgrade,
         }
+    }
+}
+
+impl DfxOrbit {
+    pub(crate) fn display_change_canister_operation(
+        &self,
+        output: &mut String,
+        op: &ChangeExternalCanisterOperationDTO,
+    ) -> anyhow::Result<()> {
+        writeln!(output, "=== Change External Canister ===")?;
+        writeln!(
+            output,
+            "Target: {}",
+            self.try_reverse_lookup(&op.canister_id)
+        )?;
+
+        let mode = match op.mode {
+            CanisterInstallMode::Install => "Install",
+            CanisterInstallMode::Reinstall => "Reinstall",
+            CanisterInstallMode::Upgrade => "Upgrade",
+        };
+        writeln!(output, "Mode: {}", mode)?;
+
+        writeln!(output, "Module checksum: {}", &op.module_checksum)?;
+        if let Some(arg_checksum) = &op.arg_checksum {
+            writeln!(output, "Argument checksum: {}", arg_checksum)?;
+        }
+        Ok(())
     }
 }

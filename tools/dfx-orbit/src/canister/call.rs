@@ -4,9 +4,10 @@ use anyhow::bail;
 use clap::Parser;
 use sha2::{Digest, Sha256};
 use station_api::{
-    CallExternalCanisterOperationInput, CanisterMethodDTO, GetRequestResponse, RequestOperationDTO,
-    RequestOperationInput,
+    CallExternalCanisterOperationDTO, CallExternalCanisterOperationInput, CanisterMethodDTO,
+    GetRequestResponse, RequestOperationDTO, RequestOperationInput,
 };
+use std::fmt::Write;
 
 /// Requests that a call be made to a canister.
 #[derive(Debug, Clone, Parser)]
@@ -88,6 +89,48 @@ impl RequestCanisterCallArgs {
         }
         if op.execution_method_cycles != self.with_cycles {
             bail!("Attached cycles do not match");
+        }
+
+        Ok(())
+    }
+}
+
+impl DfxOrbit {
+    pub(crate) fn display_call_canister_operation(
+        &self,
+        output: &mut String,
+        op: &CallExternalCanisterOperationDTO,
+    ) -> anyhow::Result<()> {
+        writeln!(output, "=== Call External Canister ===")?;
+        writeln!(
+            output,
+            "Execution method: \"{}\" of {}",
+            op.execution_method.method_name,
+            self.try_reverse_lookup(&op.execution_method.canister_id)
+        )?;
+        if let Some(validation_method) = &op.validation_method {
+            writeln!(
+                output,
+                "Validation method: \"{}\" of {}",
+                validation_method.method_name,
+                self.try_reverse_lookup(&validation_method.canister_id)
+            )?
+        }
+        if let Some(checksum) = &op.arg_checksum {
+            writeln!(output, "Argument checksum: {}", checksum)?
+        }
+        if let Some(args) = &op.arg_rendering {
+            writeln!(output, "Argument: {}", args)?
+        }
+        if let Some(cycles) = &op.execution_method_cycles {
+            writeln!(output, "Execution method cycles: {}", cycles)?
+        }
+        if let Some(reply) = &op.execution_method_reply {
+            match candid_parser::IDLArgs::from_bytes(reply) {
+                // TODO: Check if we can get the type information from somewhere to annotate this with types
+                Ok(response) => writeln!(output, "Execution response: {}", response),
+                Err(_) => writeln!(output, "FAILED TO PARSE EXECUTION RESPONSE"),
+            }?;
         }
 
         Ok(())
