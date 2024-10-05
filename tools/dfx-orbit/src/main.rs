@@ -14,7 +14,7 @@ fn main() {
         .build()
         .expect("Unable to create a runtime");
     runtime.block_on(async {
-        if let Err(err) = lib::cli::exec(args).await {
+        if let Err(err) = lib::args::exec(args).await {
             println!("Failed to execute command: {}", err);
             std::process::exit(1);
         }

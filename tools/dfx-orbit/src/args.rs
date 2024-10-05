@@ -2,11 +2,15 @@
 pub mod request;
 pub mod verify;
 
+use crate::{
+    dfx::OrbitExtensionAgent, me::MeArgs, review::args::ReviewArgs, station::StationArgs,
+    util::init_logger, DfxOrbit,
+};
 use clap::{Parser, Subcommand};
 use request::RequestArgs;
+use slog::trace;
+use station_api::GetRequestInput;
 use verify::VerifyArgs;
-
-use crate::{review::args::ReviewArgs, station::StationArgs};
 
 /// Manages Orbit on the Internet Computer.
 #[derive(Parser, Debug)]
@@ -51,9 +55,69 @@ pub enum DfxOrbitSubcommands {
     Me(MeArgs),
 }
 
-#[derive(Debug, Clone, Parser)]
-pub struct MeArgs {
-    /// Return output as JSON
-    #[clap(short, long)]
-    pub(crate) json: bool,
+/// A command line tool for interacting with Orbit on the Internet Computer.
+pub async fn exec(args: DfxOrbitArgs) -> anyhow::Result<()> {
+    let logger = init_logger(args.verbose, args.quiet)?;
+    trace!(logger, "Calling tool with arguments:\n{:#?}", args);
+
+    let orbit_agent = OrbitExtensionAgent::new()?;
+
+    // We don't need to instanciate a StationAgent to execute this command directly on the orbit agent
+    if let DfxOrbitSubcommands::Station(station_args) = args.command {
+        crate::station::exec(orbit_agent, station_args)?;
+        return Ok(());
+    };
+
+    let config = match args.station {
+        Some(station_name) => orbit_agent.station(&station_name)?,
+        None => orbit_agent
+            .default_station()?
+            .ok_or_else(|| anyhow::format_err!("No default station specified"))?,
+    };
+
+    let dfx_orbit = DfxOrbit::new(orbit_agent, config, args.identity, logger).await?;
+
+    match args.command {
+        // Nicer display, json optional
+        DfxOrbitSubcommands::Me(args) => {
+            let ans = dfx_orbit.station.me().await?;
+            if args.json {
+                println!("{}", serde_json::to_string_pretty(&ans)?);
+            } else {
+                println!("{}", dfx_orbit.display_me(ans)?);
+            }
+            Ok(())
+        }
+        DfxOrbitSubcommands::Request(request_args) => {
+            let request = dfx_orbit
+                .station
+                .request(request_args.into_request(&dfx_orbit).await?)
+                .await?;
+            dfx_orbit.print_create_request_info(&request);
+
+            Ok(())
+        }
+        DfxOrbitSubcommands::Verify(verify_args) => {
+            let request = dfx_orbit
+                .station
+                .review_id(GetRequestInput {
+                    request_id: verify_args.request_id.clone(),
+                })
+                .await?;
+
+            println!(
+                "{}",
+                dfx_orbit.display_get_request_response(request.clone())?
+            );
+
+            let verified = verify_args.verify(&dfx_orbit, &request).await;
+            verify_args
+                .conditionally_execute_actions(&dfx_orbit, verified)
+                .await?;
+
+            Ok(())
+        }
+        DfxOrbitSubcommands::Review(review_args) => dfx_orbit.exec_review(review_args).await,
+        DfxOrbitSubcommands::Station(_) => unreachable!(),
+    }
 }
