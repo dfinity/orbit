@@ -14,7 +14,6 @@ pub mod station;
 
 use anyhow::{anyhow, bail, Context};
 use candid::Principal;
-pub use cli::asset::AssetAgent;
 use dfx::OrbitExtensionAgent;
 use dfx_core::{
     config::model::{
