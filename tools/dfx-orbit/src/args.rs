@@ -4,7 +4,7 @@ use crate::{
     dfx::OrbitExtensionAgent,
     me::MeArgs,
     permission::RequestPermissionArgs,
-    review::args::ReviewArgs,
+    review::ReviewArgs,
     station::StationArgs,
     util::init_logger,
     DfxOrbit,
@@ -155,7 +155,7 @@ impl DfxOrbitArgs {
 
                 Ok(())
             }
-            DfxOrbitSubcommands::Review(review_args) => dfx_orbit.exec_review(review_args).await,
+            DfxOrbitSubcommands::Review(review_args) => review_args.execute(&dfx_orbit).await,
             DfxOrbitSubcommands::Station(_) => unreachable!(),
         }
     }

@@ -1,16 +1,19 @@
 use crate::DfxOrbit;
-use cancel::RequestAssetCancelUploadArgs;
 use clap::{Parser, Subcommand};
-use commit::RequestAssetCommitArgs;
-use permission::RequestAssetPermissionArgs;
 use station_api::{GetRequestResponse, RequestOperationInput};
-use upload::{RequestAssetUploadArgs, VerifyAssetUploadArgs};
 
 mod cancel;
 mod commit;
 mod permission;
-pub mod upload;
+mod upload;
 mod util;
+
+pub use self::{
+    cancel::RequestAssetCancelUploadArgs,
+    commit::RequestAssetCommitArgs,
+    permission::RequestAssetPermissionArgs,
+    upload::{RequestAssetUploadArgs, VerifyAssetUploadArgs},
+};
 
 #[derive(Debug, Clone, Parser)]
 pub struct RequestAssetArgs {

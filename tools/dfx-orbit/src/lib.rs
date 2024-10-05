@@ -27,7 +27,7 @@ use dfx_core::{
 };
 use ic_utils::{canister::CanisterBuilder, Canister};
 use slog::Logger;
-use station::agent::{StationAgent, StationConfig};
+use station::{StationAgent, StationConfig};
 use station_api::CreateRequestResponse;
 use std::sync::Arc;
 

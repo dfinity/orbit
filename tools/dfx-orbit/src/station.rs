@@ -1,15 +1,16 @@
 //! A dfx and IC agent for communicating with an Orbit station.
 
-pub mod agent;
-pub mod config;
+mod agent;
+mod config;
 mod error;
 
-use self::agent::StationConfig;
 use crate::dfx::OrbitExtensionAgent;
 use anyhow::Context;
 use candid::Principal;
 use clap::{Parser, Subcommand};
 use std::fmt::{self, Display, Formatter};
+
+pub use self::agent::{StationAgent, StationAgentResult, StationConfig};
 
 /// Station management commands
 #[derive(Debug, Subcommand)]

@@ -1,10 +1,11 @@
+use super::{AGENT_MUTEX, DFX_ROOT, PORT};
 use crate::{
     setup::create_canister,
     utils::{add_user_with_name, update_raw, COUNTER_WAT},
     CanisterIds,
 };
 use candid::Principal;
-use dfx_orbit::{dfx::OrbitExtensionAgent, station::agent::StationConfig, DfxOrbit};
+use dfx_orbit::{dfx::OrbitExtensionAgent, station::StationConfig, DfxOrbit};
 use itertools::Itertools;
 use pocket_ic::PocketIc;
 use rand::Rng;
@@ -18,8 +19,6 @@ use std::{
 };
 use tempfile::tempdir;
 use tokio::runtime::Runtime;
-
-use super::{AGENT_MUTEX, DFX_ROOT, PORT};
 
 //TODO: Generate these on the fly during tests
 pub(super) const TEST_PRINCIPAL: &str =

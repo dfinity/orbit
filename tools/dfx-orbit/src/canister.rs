@@ -1,13 +1,13 @@
 use crate::DfxOrbit;
-use call::RequestCanisterCallArgs;
 use clap::{Parser, Subcommand};
-use install::RequestCanisterInstallArgs;
 use station_api::{GetRequestResponse, RequestOperationInput};
 
-pub mod call;
-pub mod install;
+mod call;
+mod install;
 mod settings;
 mod util;
+
+pub use self::{call::RequestCanisterCallArgs, install::RequestCanisterInstallArgs};
 
 // TODO: Support Canister create + integration test
 // TODO: Canister get response functionality

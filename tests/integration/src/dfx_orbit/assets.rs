@@ -12,8 +12,8 @@ use candid::{Nat, Principal};
 use dfx_orbit::{
     args::{RequestArgs, RequestArgsActions, VerifyArgs, VerifyArgsAction},
     asset::{
-        upload::{RequestAssetUploadArgs, VerifyAssetUploadArgs},
         RequestAssetActionArgs, RequestAssetArgs, VerifyAssetActionArgs, VerifyAssetArgs,
+        {RequestAssetUploadArgs, VerifyAssetUploadArgs},
     },
 };
 use ic_certified_assets::types::{GrantPermissionArguments, Permission};

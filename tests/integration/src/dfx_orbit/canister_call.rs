@@ -14,7 +14,7 @@ use candid::Principal;
 use dfx_orbit::{
     args::{RequestArgs, RequestArgsActions, VerifyArgs, VerifyArgsAction},
     canister::{
-        call::RequestCanisterCallArgs, RequestCanisterActionArgs, RequestCanisterArgs,
+        RequestCanisterActionArgs, RequestCanisterArgs, RequestCanisterCallArgs,
         VerifyCanisterActionArgs, VerifyCanisterArgs,
     },
 };
