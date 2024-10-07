@@ -9,13 +9,11 @@ use crate::{
     CanisterIds, TestEnv,
 };
 use candid::{Nat, Principal};
-use dfx_orbit::args::{
-    request::{
-        asset::{RequestAssetActionArgs, RequestAssetArgs, RequestAssetUploadArgs},
-        RequestArgs, RequestArgsActions,
-    },
-    verify::{
-        VerifyArgs, VerifyArgsAction, VerifyAssetActionArgs, VerifyAssetArgs, VerifyAssetUploadArgs,
+use dfx_orbit::{
+    args::{RequestArgs, RequestArgsActions, VerifyArgs, VerifyArgsAction},
+    asset::{
+        RequestAssetActionArgs, RequestAssetArgs, VerifyAssetActionArgs, VerifyAssetArgs,
+        {RequestAssetUploadArgs, VerifyAssetUploadArgs},
     },
 };
 use ic_certified_assets::types::{GrantPermissionArguments, Permission};

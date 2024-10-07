@@ -1,5 +1,5 @@
 //! Local dfx configuration of Orbit stations.
-use crate::{dfx_extension_api::OrbitExtensionAgent, station_agent::StationConfig};
+use crate::{dfx::OrbitExtensionAgent, station::StationConfig};
 use anyhow::Context;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
@@ -62,7 +62,9 @@ impl OrbitExtensionAgent {
     pub fn list_stations(&self) -> anyhow::Result<Vec<String>> {
         // Get all entries in the station dir that are valid station configs.
         let default_station = self.default_station_name()?;
-        let stations_dir = self.stations_dir().expect("Failed to get stations dir");
+        let stations_dir = self
+            .stations_dir()
+            .with_context(|| "Failed to get stations dir")?;
         let stations = stations_dir
             .entries()
             .with_context(|| "Failed to read stations dir")?
@@ -105,7 +107,8 @@ impl OrbitExtensionAgent {
         let station: StationConfig = args.into();
         let station_file = self.create_station_file(&station.name)?;
         station_file.set_len(0)?;
-        serde_json::to_writer_pretty(station_file, &station).expect("Failed to write station file");
+        serde_json::to_writer_pretty(station_file, &station)
+            .with_context(|| "Failed to write station file")?;
 
         if self.default_station_name()?.is_none() {
             self.set_default_station(Some(station.name.to_owned()))?;

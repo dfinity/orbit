@@ -1,7 +1,6 @@
-use std::fmt;
-
 use candid::Principal;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 /// Configuration for a given station that lives in e.g. ~/.config/dfx/orbit/stations/<station_name>.json
 #[derive(Debug, Serialize, Deserialize)]
