@@ -28,7 +28,7 @@ watch(
       return;
     }
 
-    const newId = Array.isArray(queryParam) ? queryParam?.[0] ?? '' : queryParam;
+    const newId = Array.isArray(queryParam) ? (queryParam?.[0] ?? '') : queryParam;
 
     if (newId !== stationId.value) {
       stationId.value = newId;
