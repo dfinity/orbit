@@ -193,13 +193,20 @@ fn display_evaluated_rule<W: Write>(
             approvers,
             status,
         )?,
-        EvaluatedRequestPolicyRuleDTO::AllowListedByMetadata { .. } => (),
+        EvaluatedRequestPolicyRuleDTO::AllowListedByMetadata { metadata } => writeln!(
+            writer,
+            "By evaluating metadata: {}: {}",
+            metadata.key, metadata.value
+        )?,
         EvaluatedRequestPolicyRuleDTO::AllowListed => {
             writeln!(writer, "The request is allow-listed")?
         }
-        EvaluatedRequestPolicyRuleDTO::AnyOf(_rule) => (),
-        EvaluatedRequestPolicyRuleDTO::AllOf(_rule) => (),
-        EvaluatedRequestPolicyRuleDTO::Not(_rule) => (),
+        // TODO: Implement nested rules (requires some refactoring in this file)
+        EvaluatedRequestPolicyRuleDTO::AnyOf(_)
+        | EvaluatedRequestPolicyRuleDTO::AllOf(_)
+        | EvaluatedRequestPolicyRuleDTO::Not(_) => {
+            writeln!(writer, "Displaying nested rules is currently unsupported")?
+        }
     }
 
     Ok(())
