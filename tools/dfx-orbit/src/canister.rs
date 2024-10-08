@@ -7,7 +7,10 @@ mod install;
 mod settings;
 mod util;
 
-pub use self::{call::RequestCanisterCallArgs, install::RequestCanisterInstallArgs};
+pub use self::{
+    call::RequestCanisterCallArgs, install::CanisterInstallModeArgs,
+    install::RequestCanisterInstallArgs,
+};
 
 // TODO: Support Canister create + integration test
 // TODO: Canister get response functionality
@@ -48,7 +51,7 @@ impl RequestCanisterActionArgs {
         dfx_orbit: &DfxOrbit,
     ) -> anyhow::Result<RequestOperationInput> {
         match self {
-            RequestCanisterActionArgs::Install(args) => args.into_request(dfx_orbit),
+            RequestCanisterActionArgs::Install(args) => args.into_request(dfx_orbit).await,
             RequestCanisterActionArgs::Call(args) => args.into_request(dfx_orbit),
             //RequestCanisterActionArgs::UpdateSettings(args) => args.into_request(dfx_orbit).await,
         }
