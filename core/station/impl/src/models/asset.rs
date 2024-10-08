@@ -144,7 +144,7 @@ impl ModelValidator<AssetError> for Asset {
 #[cfg(any(test, feature = "canbench"))]
 pub mod asset_test_utils {
 
-    use std::collections::BTreeSet;
+    use std::collections::{BTreeMap, BTreeSet};
 
     use crate::models::{Blockchain, Metadata, TokenStandard};
 
@@ -157,8 +157,17 @@ pub mod asset_test_utils {
             standards: BTreeSet::from([TokenStandard::InternetComputerNative]),
             symbol: "ICP".to_string(),
             name: "Internet Computer".to_string(),
+            metadata: Metadata::new(BTreeMap::from([
+                (
+                    "ledger_canister_id".to_string(),
+                    "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+                ),
+                (
+                    "index_canister_id".to_string(),
+                    "qhbym-qaaaa-aaaaa-aaafq-cai".to_string(),
+                ),
+            ])),
             decimals: 8,
-            metadata: Metadata::default(),
         }
     }
 

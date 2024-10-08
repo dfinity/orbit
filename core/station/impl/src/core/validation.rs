@@ -5,7 +5,6 @@ use std::cell::RefCell;
 
 use crate::{
     errors::{ExternalCanisterValidationError, RecordValidationError},
-    factories::blockchains::InternetComputer,
     models::{
         resource::{Resource, ResourceId, ResourceIds},
         AccountKey, AddressBookEntryKey, NotificationKey, RequestKey, UserKey,
@@ -18,6 +17,7 @@ use crate::{
     services::SYSTEM_SERVICE,
 };
 use candid::Principal;
+use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use ic_stable_structures::{Memory, Storable};
 #[cfg(not(test))]
 pub use orbit_essentials::cdk as ic_cdk;
@@ -199,9 +199,10 @@ impl EnsureExternalCanister {
     pub fn is_external_canister(
         principal: Principal,
     ) -> Result<(), ExternalCanisterValidationError> {
+        // todo: look into Asset repository and exclude the ledger_canister_id's
         if principal == Principal::management_canister()
             || principal == ic_cdk::api::id()
-            || principal == InternetComputer::ledger_canister_id()
+            || principal == MAINNET_LEDGER_CANISTER_ID
             || principal == SYSTEM_SERVICE.get_upgrader_canister_id()
         {
             return Err(ExternalCanisterValidationError::InvalidExternalCanister { principal });

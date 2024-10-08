@@ -67,12 +67,11 @@ impl TokenStandard {
 
     pub fn get_supported_operations(&self) -> Vec<StandardOperation> {
         match self {
-            TokenStandard::InternetComputerNative => vec![
+            TokenStandard::InternetComputerNative | TokenStandard::ICRC1 => vec![
                 StandardOperation::Balance,
                 StandardOperation::Transfer,
                 StandardOperation::ListTransfers,
             ],
-            TokenStandard::ICRC1 => vec![],
         }
     }
 }

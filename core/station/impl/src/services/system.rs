@@ -541,7 +541,10 @@ mod init_canister_sync_handlers {
     pub fn add_initial_assets() {
         let initial_assets: Vec<Asset> = vec![Asset {
             blockchain: Blockchain::InternetComputer,
-            standards: BTreeSet::from([TokenStandard::InternetComputerNative]),
+            standards: BTreeSet::from([
+                TokenStandard::InternetComputerNative,
+                TokenStandard::ICRC1,
+            ]),
             symbol: "ICP".to_string(),
             name: "Internet Computer".to_string(),
             metadata: Metadata::new(BTreeMap::from([

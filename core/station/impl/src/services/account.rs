@@ -172,7 +172,15 @@ impl AccountService {
                 let blockchain_api =
                     BlockchainApiFactory::build(&asset.blockchain.clone(), &standard.clone())?;
 
-                let account_addresses = blockchain_api.generate_address(&new_account.seed).await?;
+                let mut account_addresses = Vec::new();
+
+                for address_format in standard.get_info().address_formats.into_iter() {
+                    let address = blockchain_api
+                        .generate_address(&new_account.seed, address_format.clone())
+                        .await?;
+
+                    account_addresses.push(address);
+                }
 
                 new_account.addresses.extend(account_addresses);
             }
@@ -553,6 +561,7 @@ mod tests {
             AddAccountOperation, AddAccountOperationInput, ChangeAssets, Metadata, User,
         },
         repositories::UserRepository,
+        services::ASSET_SERVICE,
     };
 
     struct TestContext {
@@ -961,5 +970,41 @@ mod tests {
             })
             .await
             .expect_err("transfer_request_policy should be invalid");
+    }
+
+    #[tokio::test]
+    async fn can_add_icrc1_asset() {
+        disable_mock_resource_validation();
+
+        let asset = ASSET_SERVICE
+            .create(
+                crate::models::AddAssetOperationInput {
+                    name: "Test ICRC1 token".to_owned(),
+                    symbol: "TEST".to_owned(),
+                    decimals: 4,
+                    metadata: Metadata::default(),
+                    blockchain: Blockchain::InternetComputer,
+                    standards: vec![TokenStandard::ICRC1],
+                },
+                None,
+            )
+            .expect("asset creation should be successful");
+
+        ACCOUNT_SERVICE
+            .create_account(
+                AddAccountOperationInput {
+                    name: "Test account".to_owned(),
+                    assets: vec![asset.id],
+                    metadata: Metadata::default(),
+                    read_permission: Allow::authenticated(),
+                    configs_permission: Allow::authenticated(),
+                    transfer_permission: Allow::authenticated(),
+                    configs_request_policy: Some(RequestPolicyRule::AutoApproved),
+                    transfer_request_policy: Some(RequestPolicyRule::AutoApproved),
+                },
+                None,
+            )
+            .await
+            .expect("account creation should be successful");
     }
 }

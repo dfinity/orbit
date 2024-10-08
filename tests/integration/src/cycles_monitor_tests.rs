@@ -237,7 +237,7 @@ fn can_mint_cycles_to_top_up_self() {
     )
     .unwrap();
 
-    send_icp_to_account(&env, controller, account_id, 100 * ICP, 0, None).unwrap();
+    send_icp_to_account(&env, controller, account_id, 100 * ICP, 0, None, None).unwrap();
     let pre_account_balance = get_icp_account_balance(&env, account_id);
     let pre_cycle_balance = env.cycle_balance(canister_ids.station);
     assert_eq!(pre_account_balance, 100 * ICP);

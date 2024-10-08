@@ -311,6 +311,7 @@ fn check_address_book_for_transfer() {
         ICP + ICP_FEE,
         0,
         None,
+        None,
     )
     .unwrap();
 

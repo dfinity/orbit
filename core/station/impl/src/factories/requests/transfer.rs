@@ -7,10 +7,10 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        AccountKey, Metadata, Request, RequestExecutionPlan, RequestOperation, TokenStandard,
-        Transfer, TransferOperation, TransferOperationInput,
+        Metadata, Request, RequestExecutionPlan, RequestOperation, TokenStandard, Transfer,
+        TransferOperation, TransferOperationInput,
     },
-    repositories::{ACCOUNT_REPOSITORY, ASSET_REPOSITORY},
+    repositories::ASSET_REPOSITORY,
     services::TransferService,
 };
 use async_trait::async_trait;
@@ -100,17 +100,6 @@ impl<'p, 'o> TransferRequestExecute<'p, 'o> {
 #[async_trait]
 impl Execute for TransferRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
-        let account = ACCOUNT_REPOSITORY
-            .get(&AccountKey {
-                id: self.operation.input.from_account_id,
-            })
-            .ok_or(RequestExecuteError::Failed {
-                reason: format!(
-                    "Account {} does not exist.",
-                    Uuid::from_bytes(self.operation.input.from_account_id).hyphenated()
-                ),
-            })?;
-
         let asset = ASSET_REPOSITORY
             .get(&self.operation.input.from_asset_id)
             .ok_or(RequestExecuteError::Failed {
@@ -128,13 +117,12 @@ impl Execute for TransferRequestExecute<'_, '_> {
         let fee = match &self.operation.input.fee {
             Some(fee) => fee.clone(),
             None => {
-                let transaction_fee =
-                    blockchain_api
-                        .transaction_fee(&account)
-                        .await
-                        .map_err(|e| RequestExecuteError::Failed {
-                            reason: format!("Failed to fetch transaction fee: {}", e),
-                        })?;
+                let transaction_fee = blockchain_api
+                    .transaction_fee(&asset, self.operation.input.with_standard.clone())
+                    .await
+                    .map_err(|e| RequestExecuteError::Failed {
+                        reason: format!("Failed to fetch transaction fee: {}", e),
+                    })?;
 
                 candid::Nat(transaction_fee.fee)
             }

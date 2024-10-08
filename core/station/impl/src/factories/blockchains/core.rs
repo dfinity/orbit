@@ -2,7 +2,8 @@ use super::InternetComputer;
 use crate::{
     errors::FactoryError,
     models::{
-        Account, AccountAddress, AccountSeed, Asset, Blockchain, Metadata, TokenStandard, Transfer,
+        Account, AccountAddress, AccountSeed, AddressFormat, Asset, Blockchain, Metadata,
+        TokenStandard, Transfer,
     },
 };
 use async_trait::async_trait;
@@ -51,7 +52,11 @@ pub trait BlockchainApi: Send + Sync {
     /// Generates a new address for the given account.
     ///
     /// This address is used for token transfers.
-    async fn generate_address(&self, seed: &AccountSeed) -> Result<Vec<AccountAddress>, ApiError>;
+    async fn generate_address(
+        &self,
+        seed: &AccountSeed,
+        format: AddressFormat,
+    ) -> Result<AccountAddress, ApiError>;
 
     /// Returns the latest balance of the given account.
     async fn balance(&self, asset: &Asset, address: &AccountAddress) -> Result<BigUint, ApiError>;
@@ -62,7 +67,8 @@ pub trait BlockchainApi: Send + Sync {
     /// Returns the latest average transaction fee.
     async fn transaction_fee(
         &self,
-        account: &Account,
+        asset: &Asset,
+        standard: TokenStandard,
     ) -> Result<BlockchainTransactionFee, ApiError>;
 
     /// Returns the default network.
@@ -85,7 +91,8 @@ impl BlockchainApiFactory {
         standard: &TokenStandard,
     ) -> Result<Box<dyn BlockchainApi>, FactoryError> {
         match (blockchain, standard) {
-            (Blockchain::InternetComputer, TokenStandard::InternetComputerNative) => {
+            (Blockchain::InternetComputer, TokenStandard::InternetComputerNative)
+            | (Blockchain::InternetComputer, TokenStandard::ICRC1) => {
                 Ok(Box::new(InternetComputer::create()))
             }
             (blockchain, standard) => Err(FactoryError::UnsupportedBlockchainAccount {

@@ -130,7 +130,14 @@ impl AddressFormat {
                     address_format: self.to_string(),
                 })
                 .map(|_| ()),
-            AddressFormat::ICRC1Account => todo!(),
+            AddressFormat::ICRC1Account => {
+                icrc_ledger_types::icrc1::account::Account::from_str(address)
+                    .map_err(|_| AccountError::InvalidAddress {
+                        address: address.to_string(),
+                        address_format: self.to_string(),
+                    })
+                    .map(|_| ())
+            }
             AddressFormat::EthereumAddress => todo!(),
             AddressFormat::BitcoinAddressP2WPKH => todo!(),
             AddressFormat::BitcoinAddressP2TR => todo!(),
