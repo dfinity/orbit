@@ -1,7 +1,7 @@
 use std::{cell::RefCell, sync::Mutex};
 
 mod assets;
-mod canister_call;
+mod canister;
 mod me;
 mod review;
 mod setup;
