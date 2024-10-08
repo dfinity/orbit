@@ -460,6 +460,20 @@ export default {
     unlink_title: 'Dissocier le Canister',
     unlink_soft_delete: 'Gardez le canister sur l ordinateur, supprime seulement sa référence.',
     perform_call: 'Effectuer un appel',
+    call_configuration: {
+      title: 'Conditions d appel',
+      add_new: 'Ajouter un nouveau',
+      no_configuration:
+        'Aucune condition spécifique à la méthode n est définie pour ce canister, mais des définitions globales peuvent s appliquer.',
+      method_name: 'Nom de la méthode',
+      method_name_hint:
+        'Le nom de la méthode à appeler sur le canister ou `*` pour toutes les méthodes.',
+      validation_checks_title: 'Vérifications de validation (optionnel)',
+      validation_checks_description:
+        'Les vérifications de validation peuvent améliorer la sécurité de la méthode. Ils peuvent générer une erreur si la validation échoue ou renvoyer une chaîne d argument formatée pour le contexte de l examinateur si elle réussit.',
+      validation_method: 'Validation',
+      validation_method_required: 'Au moins une méthode de validation est requise.',
+    },
     module_hash: 'Module Hash',
     cycles: 'Cycles',
     not_controller: 'Pas de contrôleur',

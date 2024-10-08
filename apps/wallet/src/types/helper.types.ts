@@ -10,8 +10,11 @@ export interface LoadableItem<T> {
 export type FormValidationRuleFn = (value: unknown) => boolean | string;
 export type FormValidationRules = FormValidationRuleFn[];
 export type VFormValidation = {
-  validate: () => Promise<{ valid: boolean; errors: Array<{ id: string }> }>;
+  validate: () => Promise<{
+    valid: boolean;
+    errors: Array<{ id: string; errorMessages?: string[] }>;
+  }>;
   isValid: boolean;
-  errors: Array<{ id: string }>;
+  errors: Array<{ id: string; errorMessages?: string[] }>;
 };
 export type SelectItem<T = unknown> = { value: T; text: string };

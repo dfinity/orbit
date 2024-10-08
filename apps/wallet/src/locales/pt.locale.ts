@@ -456,6 +456,19 @@ export default {
     unlink_title: 'Desassociar Canister',
     unlink_soft_delete: 'Mantém o canister no Internet Computer, apenas remove a sua referência.',
     perform_call: 'Realizar chamada',
+    call_configuration: {
+      title: 'Condições de chamada',
+      add_new: 'Adicionar nova',
+      no_configuration:
+        'Não estão definidas condições específicas do método para este canister, mas as definições globais podem ser aplicadas.',
+      method_name: 'Nome do método',
+      method_name_hint: 'O nome do método a chamar no canister ou `*` para todos os métodos.',
+      validation_checks_title: 'Validações (opcional)',
+      validation_checks_description:
+        'As validações podem aumentar a segurança do método. Podem lançar um erro se a validação falhar ou retornar uma string de argumento formatada para o contexto do revisor se for bem-sucedida.',
+      validation_method: 'Validação',
+      validation_method_required: 'Pelo menos um método de validação é necessário.',
+    },
     module_hash: 'Hash do módulo',
     cycles: 'Ciclos',
     not_controller: 'Não é controlador',

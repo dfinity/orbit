@@ -1,6 +1,10 @@
-import { ExternalCanisterState } from '~/generated/station/station.did';
+import { Principal } from '@dfinity/principal';
+import {
+  ExternalCanisterState,
+  ValidationMethodResourceTarget,
+} from '~/generated/station/station.did';
 import { ExternalCanisterStateEnum } from '~/types/station.types';
-import { unreachable } from '~/utils/helper.utils';
+import { unreachable, variantIs } from '~/utils/helper.utils';
 
 export const mapExternalCanisterStateEnumToVariant = (
   state: ExternalCanisterStateEnum,
@@ -27,4 +31,21 @@ export const mapExternalCanisterStateVariantToEnum = (
   }
 
   return unreachable(state);
+};
+
+export const mapMethodCallConfigurationToKey = (config: {
+  executionMethod: string;
+  validationMethod: ValidationMethodResourceTarget;
+}): string => {
+  let key = `${config.executionMethod}::`;
+
+  if (variantIs(config.validationMethod, 'No')) {
+    key += 'no_validation';
+  }
+
+  if (variantIs(config.validationMethod, 'ValidationMethod')) {
+    key += `${config.validationMethod.ValidationMethod.method_name}::${config.validationMethod.ValidationMethod.canister_id.toText()}`;
+  }
+
+  return key;
 };

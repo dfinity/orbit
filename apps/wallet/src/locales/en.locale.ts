@@ -453,6 +453,31 @@ export default {
     unlink_title: 'Unlink Canister',
     unlink_soft_delete: 'Keep the canister on the Internet Computer, only remove its reference.',
     perform_call: 'Call',
+    call_configuration: {
+      title: 'Method call configurations',
+      config_dialog_title: 'Method call configuration',
+      add_new: 'Add new method',
+      no_configuration:
+        'No method-specific configurations are defined for this canister, but global definitions might apply.',
+      method_name: 'Method Name',
+      method_name_hint: 'The name of the method to call on the canister or `*` for all methods.',
+      method_call_permission: 'Permission',
+      method_call_permission_hint:
+        'The users who have permission to request the method call on the canister.',
+      method_call_approval_policy: 'Approval Policy',
+      method_call_approval_policy_hint:
+        'The approval policy rules that needs to be approved to call the method on the canister.',
+      advanced_validation: 'Payload validation (optional)',
+      advanced_validation_hint:
+        'Custom validation can enhance method security. They may throw an error if validation fails or return a formatted argument for reviewer context if successful.',
+      add_advanced_validation: 'Add advanced validation',
+      remove_advanced_validation: 'Remove advanced validation',
+      validation_method_name: 'Validation Method Name',
+      validation_method_name_hint:
+        'The name of the validation method, must be different from the execution method.',
+      validation_canister_id: 'Validation Canister ID',
+      validation_canister_id_hint: 'The canister ID that contains the validation method.',
+    },
     module_hash: 'Module Hash',
     cycles: 'Cycles',
     not_controller: 'Not controller',

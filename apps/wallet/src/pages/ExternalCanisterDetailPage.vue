@@ -124,8 +124,13 @@
               </div>
             </div>
           </template>
-          <template v-if="privileges.can_call.length" #actions>
-            <VBtn size="default" color="primary" @click="dialogs.call = true">
+          <template #actions>
+            <VBtn
+              v-if="privileges.can_call.length"
+              size="default"
+              color="primary"
+              @click="dialogs.call = true"
+            >
               {{ $t('external_canisters.perform_call') }}
             </VBtn>
           </template>
@@ -159,7 +164,12 @@
               class="d-flex flex-column-reverse flex-md-row align-md-start flex-no-wrap ga-4"
             >
               <div class="d-flex flex-column flex-grow-1 ga-4 align-self-stretch">
-                <!-- TODO: Manage call policies -->
+                <CanisterConfigureMethodCallList
+                  :canister-id="canister.canister_id"
+                  :request-policies="canister.request_policies.calls"
+                  :permissions="canister.permissions.calls"
+                  :readonly="!privileges.can_change"
+                />
               </div>
               <VCard class="d-flex flex-column" :width="app.isMobile ? '100%' : '272px'">
                 <VToolbar color="transparent" class="pr-4">
@@ -335,6 +345,7 @@ import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
 import BtnCanisterSetup from '~/components/external-canisters/BtnCanisterSetup.vue';
+import CanisterConfigureMethodCallList from '~/components/external-canisters/CanisterConfigureMethodCallList.vue';
 import CanisterIcSettingsDialog from '~/components/external-canisters/CanisterIcSettingsDialog.vue';
 import CanisterInstallDialog from '~/components/external-canisters/CanisterInstallDialog.vue';
 import CanisterSetupDialog from '~/components/external-canisters/CanisterSetupDialog.vue';

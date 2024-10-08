@@ -1,5 +1,10 @@
 import { Principal } from '@dfinity/principal';
-import { CanisterInstallMode } from '~/generated/station/station.did';
+import {
+  Allow,
+  CanisterInstallMode,
+  ExternalCanisterChangeRequestPolicyRuleInput,
+  ValidationMethodResourceTarget,
+} from '~/generated/station/station.did';
 
 export interface CanisterTopUpModel {
   canisterId?: Principal;
@@ -20,4 +25,21 @@ export interface CanisterInstallModel {
   wasmModule?: Uint8Array;
   wasmInstallArg?: Uint8Array;
   mode?: CanisterInstallMode;
+}
+
+export interface CanisterMethodCallConfigurationModel {
+  canisterId: Principal;
+  alreadyConfiguredMethods: CanisterConfiguredMethodCall[];
+  methodName?: string;
+  requestPolicies: Partial<ExternalCanisterChangeRequestPolicyRuleInput>[];
+  permission: Allow;
+  validationMethodName?: string;
+  validationCanisterId?: Principal;
+}
+
+export interface CanisterConfiguredMethodCall {
+  methodName: string;
+  permission?: Allow;
+  validationTarget: ValidationMethodResourceTarget;
+  requestPolicies: ExternalCanisterChangeRequestPolicyRuleInput[];
 }
