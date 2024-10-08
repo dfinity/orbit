@@ -332,6 +332,16 @@ impl ModelValidator<ExternalCanisterValidationError>
                     .iter()
                     .filter_map(|p| p.policy_id)
                     .collect::<Vec<_>>(),
+                ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(
+                    operations,
+                ) => operations
+                    .iter()
+                    .flat_map(|entry| entry
+                        .policies
+                        .iter()
+                        .flat_map(|policy| policy.policy_id)
+                    )
+                    .collect::<Vec<_>>(),
             };
 
             validate_calls_policies_are_associated_with_target_canister(canister_id, &policy_ids)?;

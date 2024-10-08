@@ -2315,6 +2315,18 @@ type ExternalCanisterPermissions = record {
 // The create input type for setting the permissions for the external canister.
 type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
 
+// The key-value pair that is used to represent the execution and validation method pair.
+type CanisterExecutionAndValidationMethodPair = record {
+  // The validation method that is used to validate the request and
+  // render the argument.
+  validation_method : ValidationMethodResourceTarget;
+  // The method that the caller can call on the external canister.
+  //
+  // The `*` method name is used to represent that the caller can
+  // call any method on the canister.
+  execution_method : text;
+};
+
 // The input type for setting call permissions of an existing external canister.
 type ExternalCanisterChangeCallPermissionsInput = variant {
   // Replaces all the call permissions with the provided list, if the list is empty
@@ -2324,6 +2336,14 @@ type ExternalCanisterChangeCallPermissionsInput = variant {
   OverrideSpecifiedByExecutionMethods : vec ExternalCanisterCallPermission;
   // Remove call permissions of the specified execution methods.
   RemoveByExecutionMethods : vec text;
+  // Override the permissions for the specified execution and validation method pairs.
+  OverrideSpecifiedByExecutionValidationMethodPairs : vec record {
+    // The method configuration that is used to represent the execution and validation method pair.
+    method_configuration : CanisterExecutionAndValidationMethodPair;
+    // If allow is not provided the call permission will be removed for the specified execution
+    // and validation method pair.
+    allow : opt Allow;
+  };
 };
 
 // The input type for setting the permissions for the external canister.
@@ -2362,6 +2382,14 @@ type ExternalCanisterChangeCallRequestPoliciesInput = variant {
   RemoveByPolicyIds : vec UUID;
   // Override the request policies for the specified execution methods.
   OverrideSpecifiedByExecutionMethods : vec ExternalCanisterCallRequestPolicyRuleInput;
+  // Override the request policies for the specified execution and validation method pairs.
+  OverrideSpecifiedByExecutionValidationMethodPairs : vec record {
+    // The method configuration that is used to represent the execution and validation method pair.
+    method_configuration : CanisterExecutionAndValidationMethodPair;
+    // The request policies to use for the method configuration, if the list is empty all the policies of
+    // the execution and validation method pair will be removed.
+    policies : vec ExternalCanisterChangeRequestPolicyRuleInput;
+  };
 };
 
 // The input type for setting the request policies for an existing external canister.

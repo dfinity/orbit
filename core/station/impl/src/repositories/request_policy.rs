@@ -7,7 +7,8 @@ use crate::{
     },
     models::{
         indexes::request_policy_resource_index::RequestPolicyResourceIndexCriteria,
-        resource::Resource, RequestPolicy,
+        resource::{Resource, ValidationMethodResourceTarget},
+        RequestPolicy,
     },
 };
 use candid::Principal;
@@ -134,6 +135,22 @@ impl RequestPolicyRepository {
     ) -> Vec<UUID> {
         self.resource_index
             .find_external_canister_call_policies_by_execution_method(canister_id, execution_method)
+    }
+
+    /// Finds all external canister call policies related to the specified canister id, execution method and
+    /// validation method.
+    pub fn find_external_canister_call_policies_by_execution_and_validation_method(
+        &self,
+        canister_id: &Principal,
+        execution_method: &str,
+        validation_method: &ValidationMethodResourceTarget,
+    ) -> Vec<UUID> {
+        self.resource_index
+            .find_external_canister_call_policies_by_execution_and_validation_method(
+                canister_id,
+                execution_method,
+                validation_method,
+            )
     }
 }
 

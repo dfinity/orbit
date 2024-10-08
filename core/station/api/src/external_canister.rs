@@ -56,10 +56,25 @@ pub struct ExternalCanisterPermissionsUpdateInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CanisterExecutionAndValidationMethodPairDTO {
+    pub validation_method: ValidationMethodResourceTargetDTO,
+    pub execution_method: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterCallPermissionMethodPairInput {
+    pub method_configuration: CanisterExecutionAndValidationMethodPairDTO,
+    pub allow: Option<AllowDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ExternalCanisterChangeCallPermissionsInput {
     ReplaceAllBy(Vec<ExternalCanisterCallPermissionDTO>),
     OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallPermissionDTO>),
     RemoveByExecutionMethods(Vec<String>),
+    OverrideSpecifiedByExecutionValidationMethodPairs(
+        Vec<ExternalCanisterCallPermissionMethodPairInput>,
+    ),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -199,10 +214,19 @@ pub struct ExternalCanisterRequestPoliciesUpdateInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterCallRequestPoliciesMethodPairInput {
+    pub method_configuration: CanisterExecutionAndValidationMethodPairDTO,
+    pub policies: Vec<ExternalCanisterChangeRequestPolicyRuleInput>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ExternalCanisterChangeCallRequestPoliciesInput {
     ReplaceAllBy(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
     RemoveByPolicyIds(Vec<UuidDTO>),
     OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
+    OverrideSpecifiedByExecutionValidationMethodPairs(
+        Vec<ExternalCanisterCallRequestPoliciesMethodPairInput>,
+    ),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

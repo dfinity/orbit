@@ -234,6 +234,48 @@ impl RequestPolicyResourceIndexRepository {
                 .collect::<Vec<UUID>>()
         })
     }
+
+    pub fn find_external_canister_call_policies_by_execution_and_validation_method(
+        &self,
+        canister_id: &Principal,
+        execution_method: &str,
+        validation_method: &ValidationMethodResourceTarget,
+    ) -> Vec<UUID> {
+        DB.with(|db| {
+            db.borrow()
+                .range(
+                    (RequestPolicyResourceIndex {
+                        resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                            CallExternalCanisterResourceTarget {
+                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                    CanisterMethod {
+                                        canister_id: *canister_id,
+                                        method_name: execution_method.to_string(),
+                                    },
+                                ),
+                                validation_method: validation_method.clone(),
+                            },
+                        )),
+                        policy_id: [u8::MIN; 16],
+                    })..(RequestPolicyResourceIndex {
+                        resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                            CallExternalCanisterResourceTarget {
+                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                                    CanisterMethod {
+                                        canister_id: *canister_id,
+                                        method_name: execution_method.to_string(),
+                                    },
+                                ),
+                                validation_method: validation_method.clone(),
+                            },
+                        )),
+                        policy_id: [u8::MIN; 16],
+                    }),
+                )
+                .map(|(index, _)| index.policy_id)
+                .collect::<Vec<UUID>>()
+        })
+    }
 }
 
 #[cfg(test)]

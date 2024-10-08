@@ -365,10 +365,27 @@ pub struct ExternalCanisterPermissionsUpdateInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CanisterExecutionAndValidationMethodPairInput {
+    pub validation_method: ValidationMethodResourceTarget,
+    pub execution_method: String,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallPermissionMethodPairInput {
+    pub method_configuration: CanisterExecutionAndValidationMethodPairInput,
+    pub allow: Option<Allow>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ExternalCanisterChangeCallPermissionsInput {
     ReplaceAllBy(Vec<ExternalCanisterCallPermission>),
     OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallPermission>),
     RemoveByExecutionMethods(Vec<String>),
+    OverrideSpecifiedByExecutionValidationMethodPairs(
+        Vec<ExternalCanisterCallPermissionMethodPairInput>,
+    ),
 }
 
 #[storable]
@@ -403,10 +420,20 @@ pub struct ExternalCanisterRequestPoliciesUpdateInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallRequestPoliciesMethodPairInput {
+    pub method_configuration: CanisterExecutionAndValidationMethodPairInput,
+    pub policies: Vec<ExternalCanisterChangeRequestPolicyRuleInput>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ExternalCanisterChangeCallRequestPoliciesInput {
     ReplaceAllBy(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
     RemoveByPolicyIds(Vec<UUID>),
     OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
+    OverrideSpecifiedByExecutionValidationMethodPairs(
+        Vec<ExternalCanisterCallRequestPoliciesMethodPairInput>,
+    ),
 }
 
 #[storable]

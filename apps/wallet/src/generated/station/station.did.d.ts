@@ -143,6 +143,10 @@ export interface CallExternalCanisterResourceTarget {
   'execution_method' : ExecutionMethodResourceTarget,
   'validation_method' : ValidationMethodResourceTarget,
 }
+export interface CanisterExecutionAndValidationMethodPair {
+  'execution_method' : string,
+  'validation_method' : ValidationMethodResourceTarget,
+}
 export type CanisterInstallMode = { 'reinstall' : null } |
   { 'upgrade' : null } |
   { 'install' : null };
@@ -412,6 +416,14 @@ export type ExternalCanisterChangeCallPermissionsInput = {
     >
   } |
   { 'RemoveByExecutionMethods' : Array<string> } |
+  {
+    'OverrideSpecifiedByExecutionValidationMethodPairs' : Array<
+      {
+        'allow' : [] | [Allow],
+        'method_configuration' : CanisterExecutionAndValidationMethodPair,
+      }
+    >
+  } |
   { 'ReplaceAllBy' : Array<ExternalCanisterCallPermission> };
 export type ExternalCanisterChangeCallRequestPoliciesInput = {
     'RemoveByPolicyIds' : Array<UUID>
@@ -419,6 +431,14 @@ export type ExternalCanisterChangeCallRequestPoliciesInput = {
   {
     'OverrideSpecifiedByExecutionMethods' : Array<
       ExternalCanisterCallRequestPolicyRuleInput
+    >
+  } |
+  {
+    'OverrideSpecifiedByExecutionValidationMethodPairs' : Array<
+      {
+        'method_configuration' : CanisterExecutionAndValidationMethodPair,
+        'policies' : Array<ExternalCanisterChangeRequestPolicyRuleInput>,
+      }
     >
   } |
   { 'ReplaceAllBy' : Array<ExternalCanisterCallRequestPolicyRuleInput> };

@@ -191,11 +191,21 @@ export const idlFactory = ({ IDL }) => {
     'allow' : Allow,
     'validation_method' : ValidationMethodResourceTarget,
   });
+  const CanisterExecutionAndValidationMethodPair = IDL.Record({
+    'execution_method' : IDL.Text,
+    'validation_method' : ValidationMethodResourceTarget,
+  });
   const ExternalCanisterChangeCallPermissionsInput = IDL.Variant({
     'OverrideSpecifiedByExecutionMethods' : IDL.Vec(
       ExternalCanisterCallPermission
     ),
     'RemoveByExecutionMethods' : IDL.Vec(IDL.Text),
+    'OverrideSpecifiedByExecutionValidationMethodPairs' : IDL.Vec(
+      IDL.Record({
+        'allow' : IDL.Opt(Allow),
+        'method_configuration' : CanisterExecutionAndValidationMethodPair,
+      })
+    ),
     'ReplaceAllBy' : IDL.Vec(ExternalCanisterCallPermission),
   });
   const ExternalCanisterPermissionsUpdateInput = IDL.Record({
@@ -238,16 +248,22 @@ export const idlFactory = ({ IDL }) => {
     'validation_method' : ValidationMethodResourceTarget,
     'policy_id' : IDL.Opt(UUID),
   });
+  const ExternalCanisterChangeRequestPolicyRuleInput = IDL.Record({
+    'rule' : RequestPolicyRule,
+    'policy_id' : IDL.Opt(UUID),
+  });
   const ExternalCanisterChangeCallRequestPoliciesInput = IDL.Variant({
     'RemoveByPolicyIds' : IDL.Vec(UUID),
     'OverrideSpecifiedByExecutionMethods' : IDL.Vec(
       ExternalCanisterCallRequestPolicyRuleInput
     ),
+    'OverrideSpecifiedByExecutionValidationMethodPairs' : IDL.Vec(
+      IDL.Record({
+        'method_configuration' : CanisterExecutionAndValidationMethodPair,
+        'policies' : IDL.Vec(ExternalCanisterChangeRequestPolicyRuleInput),
+      })
+    ),
     'ReplaceAllBy' : IDL.Vec(ExternalCanisterCallRequestPolicyRuleInput),
-  });
-  const ExternalCanisterChangeRequestPolicyRuleInput = IDL.Record({
-    'rule' : RequestPolicyRule,
-    'policy_id' : IDL.Opt(UUID),
   });
   const ExternalCanisterRequestPoliciesUpdateInput = IDL.Record({
     'calls' : IDL.Opt(ExternalCanisterChangeCallRequestPoliciesInput),

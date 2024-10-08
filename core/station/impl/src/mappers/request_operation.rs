@@ -10,7 +10,8 @@ use crate::{
         Account, AccountKey, AddAccountOperation, AddAccountOperationInput,
         AddAddressBookEntryOperation, AddAddressBookEntryOperationInput, AddRequestPolicyOperation,
         AddRequestPolicyOperationInput, AddUserOperation, AddUserOperationInput, AddressBookEntry,
-        CallExternalCanisterOperation, CallExternalCanisterOperationInput, CanisterInstallMode,
+        CallExternalCanisterOperation, CallExternalCanisterOperationInput,
+        CanisterExecutionAndValidationMethodPairInput, CanisterInstallMode,
         CanisterInstallModeArgs, CanisterMethod, CanisterReinstallModeArgs,
         CanisterUpgradeModeArgs, ChangeExternalCanisterOperation,
         ChangeExternalCanisterOperationInput, ConfigureExternalCanisterOperation,
@@ -22,8 +23,10 @@ use crate::{
         EditAccountOperationInput, EditAddressBookEntryOperation, EditPermissionOperation,
         EditPermissionOperationInput, EditRequestPolicyOperation, EditRequestPolicyOperationInput,
         EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
-        ExternalCanisterCallPermission, ExternalCanisterCallRequestPolicyRuleInput,
-        ExternalCanisterChangeCallPermissionsInput, ExternalCanisterChangeCallRequestPoliciesInput,
+        ExternalCanisterCallPermission, ExternalCanisterCallPermissionMethodPairInput,
+        ExternalCanisterCallRequestPoliciesMethodPairInput,
+        ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterChangeCallPermissionsInput,
+        ExternalCanisterChangeCallRequestPoliciesInput,
         ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
         ExternalCanisterPermissionsUpdateInput, ExternalCanisterRequestPoliciesCreateInput,
         ExternalCanisterRequestPoliciesUpdateInput, FundExternalCanisterOperation,
@@ -628,6 +631,9 @@ impl From<station_api::ExternalCanisterChangeCallRequestPoliciesInput>
             station_api::ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids) => {
                 ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids.into_iter().map(|id| *HelperMapper::to_uuid(id).expect("Invalid policy id").as_bytes()).collect())
             }
+            station_api::ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(input) => {
+                ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(input.into_iter().map(Into::into).collect())
+            }
         }
     }
 }
@@ -647,6 +653,9 @@ impl From<ExternalCanisterChangeCallRequestPoliciesInput>
             }
             ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids) => {
                 station_api::ExternalCanisterChangeCallRequestPoliciesInput::RemoveByPolicyIds(ids.into_iter().map(|id| Uuid::from_bytes(id).hyphenated().to_string()).collect())
+            }
+            ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(input) => {
+                station_api::ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(input.into_iter().map(Into::into).collect())
             }
         }
     }
@@ -732,6 +741,84 @@ impl From<ExternalCanisterPermissionsUpdateInput>
     }
 }
 
+impl From<station_api::CanisterExecutionAndValidationMethodPairDTO>
+    for CanisterExecutionAndValidationMethodPairInput
+{
+    fn from(
+        input: station_api::CanisterExecutionAndValidationMethodPairDTO,
+    ) -> CanisterExecutionAndValidationMethodPairInput {
+        CanisterExecutionAndValidationMethodPairInput {
+            execution_method: input.execution_method,
+            validation_method: input.validation_method.into(),
+        }
+    }
+}
+
+impl From<CanisterExecutionAndValidationMethodPairInput>
+    for station_api::CanisterExecutionAndValidationMethodPairDTO
+{
+    fn from(
+        input: CanisterExecutionAndValidationMethodPairInput,
+    ) -> station_api::CanisterExecutionAndValidationMethodPairDTO {
+        station_api::CanisterExecutionAndValidationMethodPairDTO {
+            execution_method: input.execution_method,
+            validation_method: input.validation_method.into(),
+        }
+    }
+}
+
+impl From<station_api::ExternalCanisterCallRequestPoliciesMethodPairInput>
+    for ExternalCanisterCallRequestPoliciesMethodPairInput
+{
+    fn from(
+        input: station_api::ExternalCanisterCallRequestPoliciesMethodPairInput,
+    ) -> ExternalCanisterCallRequestPoliciesMethodPairInput {
+        ExternalCanisterCallRequestPoliciesMethodPairInput {
+            method_configuration: input.method_configuration.into(),
+            policies: input.policies.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<ExternalCanisterCallRequestPoliciesMethodPairInput>
+    for station_api::ExternalCanisterCallRequestPoliciesMethodPairInput
+{
+    fn from(
+        input: ExternalCanisterCallRequestPoliciesMethodPairInput,
+    ) -> station_api::ExternalCanisterCallRequestPoliciesMethodPairInput {
+        station_api::ExternalCanisterCallRequestPoliciesMethodPairInput {
+            method_configuration: input.method_configuration.into(),
+            policies: input.policies.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<station_api::ExternalCanisterCallPermissionMethodPairInput>
+    for ExternalCanisterCallPermissionMethodPairInput
+{
+    fn from(
+        input: station_api::ExternalCanisterCallPermissionMethodPairInput,
+    ) -> ExternalCanisterCallPermissionMethodPairInput {
+        ExternalCanisterCallPermissionMethodPairInput {
+            method_configuration: input.method_configuration.into(),
+            allow: input.allow.map(Into::into),
+        }
+    }
+}
+
+impl From<ExternalCanisterCallPermissionMethodPairInput>
+    for station_api::ExternalCanisterCallPermissionMethodPairInput
+{
+    fn from(
+        input: ExternalCanisterCallPermissionMethodPairInput,
+    ) -> station_api::ExternalCanisterCallPermissionMethodPairInput {
+        station_api::ExternalCanisterCallPermissionMethodPairInput {
+            method_configuration: input.method_configuration.into(),
+            allow: input.allow.map(Into::into),
+        }
+    }
+}
+
 impl From<station_api::ExternalCanisterChangeCallPermissionsInput>
     for ExternalCanisterChangeCallPermissionsInput
 {
@@ -754,6 +841,11 @@ impl From<station_api::ExternalCanisterChangeCallPermissionsInput>
                     methods.into_iter().map(Into::into).collect(),
                 )
             }
+            station_api::ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionValidationMethodPairs(
+                input,
+            ) => ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionValidationMethodPairs(
+                input.into_iter().map(Into::into).collect(),
+            ),
         }
     }
 }
@@ -778,6 +870,11 @@ impl From<ExternalCanisterChangeCallPermissionsInput>
             ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
                 station_api::ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(
                     methods.into_iter().map(Into::into).collect(),
+                )
+            }
+            ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionValidationMethodPairs(input) => {
+                station_api::ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionValidationMethodPairs(
+                    input.into_iter().map(Into::into).collect(),
                 )
             }
         }
