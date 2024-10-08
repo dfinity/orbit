@@ -7,7 +7,10 @@ mod install;
 mod settings;
 mod util;
 
-pub use self::{call::RequestCanisterCallArgs, install::RequestCanisterInstallArgs};
+pub use self::{
+    call::RequestCanisterCallArgs,
+    install::{CanisterInstallModeArgs, RequestCanisterInstallArgs},
+};
 
 // TODO: Support Canister create + integration test
 // TODO: Canister get response functionality

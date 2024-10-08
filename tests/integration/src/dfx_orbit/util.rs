@@ -72,6 +72,40 @@ pub(super) fn set_four_eyes_on_call(env: &PocketIc, canister_ids: &CanisterIds) 
     .unwrap();
 }
 
+/// Allow anyone to create change canister requests
+pub(super) fn permit_change_operation(env: &PocketIc, canister_ids: &CanisterIds) {
+    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+        resource: ResourceDTO::ExternalCanister(ExternalCanisterResourceActionDTO::Change(
+            station_api::ExternalCanisterIdDTO::Any,
+        )),
+        auth_scope: Some(AuthScopeDTO::Authenticated),
+        user_groups: None,
+        users: None,
+    });
+    execute_request(env, WALLET_ADMIN_USER, canister_ids.station, add_permission).unwrap();
+}
+
+/// Set four eyes principle for canister change
+pub(super) fn set_four_eyes_on_change(env: &PocketIc, canister_ids: &CanisterIds) {
+    let add_request_policy =
+        RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
+            specifier: RequestSpecifierDTO::ChangeExternalCanister(
+                station_api::ExternalCanisterIdDTO::Any,
+            ),
+            rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
+                approvers: UserSpecifierDTO::Any,
+                min_approved: 2,
+            }),
+        });
+    execute_request(
+        env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        add_request_policy,
+    )
+    .unwrap();
+}
+
 /// Allow anyone to read request list
 pub(super) fn permit_list_reads(env: &PocketIc, canister_ids: &CanisterIds) {
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {

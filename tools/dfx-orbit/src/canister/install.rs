@@ -12,19 +12,19 @@ use std::fmt::Write;
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterInstallArgs {
     /// The canister name or ID.
-    canister: String,
+    pub canister: String,
     /// The installation mode.
     #[clap(long, value_enum, rename_all = "kebab-case")]
-    mode: CanisterInstallModeArgs,
+    pub mode: CanisterInstallModeArgs,
     /// The path to the wasm file to install (can also be a wasm.gz).
     #[clap(short, long)]
-    wasm: String,
+    pub wasm: String,
     /// The argument to pass to the canister.
     #[clap(short, long, conflicts_with = "arg_file")]
-    argument: Option<String>,
+    pub argument: Option<String>,
     /// The path to a file containing the argument to pass to the canister.
     #[clap(short = 'f', long, conflicts_with = "arg")]
-    arg_file: Option<String>,
+    pub arg_file: Option<String>,
 }
 
 impl RequestCanisterInstallArgs {
