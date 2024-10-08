@@ -32,9 +32,13 @@ impl Create<ChangeExternalCanisterOperationInput> for ChangeExternalCanisterRequ
                     hasher.finalize().to_vec()
                 }),
                 module_checksum: {
-                    let mut hasher = Sha256::new();
-                    hasher.update(&operation_input.module);
-                    hasher.finalize().to_vec()
+                    if let Some(ref module_extra_chunks) = operation_input.module_extra_chunks {
+                        module_extra_chunks.wasm_module_hash.clone()
+                    } else {
+                        let mut hasher = Sha256::new();
+                        hasher.update(&operation_input.module);
+                        hasher.finalize().to_vec()
+                    }
                 },
                 input: operation_input.into(),
             }),
