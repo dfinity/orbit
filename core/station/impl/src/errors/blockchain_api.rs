@@ -26,7 +26,7 @@ pub enum BlockchainApiError {
     /// The to address is invalid.
     #[error("The to address '{address}' is invalid: {error}")]
     InvalidToAddress { address: String, error: String },
-    /// Missing metadata key.
+    /// Missing asset.
     #[error(r#"Asset id '{asset_id}' not found."#)]
     MissingAsset { asset_id: String },
 }
