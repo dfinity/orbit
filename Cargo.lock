@@ -1212,6 +1212,7 @@ dependencies = [
  "ic-certified-assets",
  "ic-utils",
  "itertools 0.13.0",
+ "orbit-essentials",
  "serde",
  "serde_bytes",
  "serde_json",

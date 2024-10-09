@@ -27,6 +27,7 @@ ic-asset.workspace = true
 ic-certified-assets.workspace = true
 ic-utils.workspace = true
 itertools.workspace = true
+orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alpha.5' }
 sha2.workspace = true
 slog.workspace = true
 slog-term.workspace = true
