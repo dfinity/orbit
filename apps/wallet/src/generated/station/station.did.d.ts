@@ -126,8 +126,8 @@ export interface BasicUser {
   'name' : string,
 }
 export interface CallExternalCanisterOperation {
+  'arg' : [] | [Uint8Array | number[]],
   'execution_method' : CanisterMethod,
-  'with_details' : [] | [{ 'arg' : [] | [Uint8Array | number[]] }],
   'validation_method' : [] | [CanisterMethod],
   'arg_checksum' : [] | [Sha256Hash],
   'execution_method_cycles' : [] | [bigint],

@@ -1153,7 +1153,8 @@ impl From<CallExternalCanisterOperation> for CallExternalCanisterOperationDTO {
             arg_rendering: operation.arg_rendering,
             execution_method_cycles: operation.input.execution_method_cycles,
             execution_method_reply: operation.execution_method_reply,
-            with_details: None,
+            // By default this field is not set to avoid having responses that could be too large
+            arg: None,
         }
     }
 }

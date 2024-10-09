@@ -358,54 +358,7 @@ mod tests {
     }
 
     #[test]
-    fn test_find_external_canister_call_policies_by_execution_method() {
-        let repository = RequestPolicyResourceIndexRepository::default();
-        let mut expected_method_ids = Vec::new();
-        for i in 0..20 {
-            let index = RequestPolicyResourceIndex {
-                resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                    CallExternalCanisterResourceTarget {
-                        execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
-                            CanisterMethod {
-                                canister_id: Principal::management_canister(),
-                                method_name: format!("method_{}", i),
-                            },
-                        ),
-                        validation_method: if i % 2 == 0 {
-                            ValidationMethodResourceTarget::No
-                        } else {
-                            ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
-                                canister_id: Principal::management_canister(),
-                                method_name: format!("validation_method_{}", i),
-                            })
-                        },
-                    },
-                )),
-                policy_id: [i; 16],
-            };
-
-            repository.insert(index);
-
-            if i % 2 == 0 {
-                expected_method_ids.push([i; 16]);
-            }
-        }
-
-        expected_method_ids.reverse();
-
-        for i in (0..20).step_by(2) {
-            let policies = repository.find_external_canister_call_policies_by_execution_method(
-                &Principal::management_canister(),
-                &format!("method_{}", i),
-            );
-
-            assert_eq!(policies.len(), 1);
-            assert_eq!(policies[0], expected_method_ids.pop().unwrap());
-        }
-    }
-
-    #[test]
-    fn test_find_external_canister_call_policies_by_execution_and_validation_method() {
+    fn test_find_external_canister_call_policies_by_methods() {
         let repository = RequestPolicyResourceIndexRepository::default();
         let mut expected_method_ids = Vec::new();
         for i in 0..20 {
@@ -441,6 +394,17 @@ mod tests {
         expected_method_ids.reverse();
 
         for i in (1..20).step_by(2) {
+            let policies = repository.find_external_canister_call_policies_by_execution_method(
+                &Principal::management_canister(),
+                &format!("method_{}", i),
+            );
+
+            let expected_method_id = expected_method_ids.pop().unwrap();
+
+            assert_eq!(policies.len(), 1);
+            assert_eq!(policies[0], expected_method_id);
+
+            // and then find by validation method
             let policies = repository
                 .find_external_canister_call_policies_by_execution_and_validation_method(
                     &Principal::management_canister(),
@@ -452,7 +416,7 @@ mod tests {
                 );
 
             assert_eq!(policies.len(), 1);
-            assert_eq!(policies[0], expected_method_ids.pop().unwrap());
+            assert_eq!(policies[0], expected_method_id);
         }
 
         assert!(expected_method_ids.is_empty());

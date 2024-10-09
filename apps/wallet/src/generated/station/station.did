@@ -774,12 +774,9 @@ type CallExternalCanisterOperation = record {
   // The reply blob produced by a successful call of the execution method,
   // i.e., when the request is `Completed`.
   execution_method_reply : opt blob;
-  // Optional details about the call operation, this field is not populated in list responses, only
-  // when using `get_request` to avoid going over the response size limit.
-  with_details : opt record {
-    // The input argument blob sent to the execution method.
-    arg : opt blob;
-  };
+  // This field is not populated in list responses, only when using `get_request` and 
+  // setting `with_full_info` to `opt true` to avoid going over the response size limit.
+  arg : opt blob;
 };
 
 type EditPermissionOperationInput = record {
@@ -1183,11 +1180,11 @@ type ListRequestsResult = variant {
 type GetRequestInput = record {
   // The request id to retrieve.
   request_id : UUID;
-  // Fill in all the additional info about the request operation, request types such as Call External Canisters will
-  // include the request argument and reply blobs, this can be a large amount of data and could potentially exceed the
-  // response size limit.
+  // Fill in all the additional info about the request operation, request types such as `CallExternalCanisterOperation` 
+  // will include the request argument, this can be a large amount of data and could potentially exceed the response 
+  // size limit.
   //
-  // By default, this field is set to `true`.
+  // If not provided, this field defaults to `false` and the additional info is not included in the response.
   with_full_info : opt bool;
 };
 

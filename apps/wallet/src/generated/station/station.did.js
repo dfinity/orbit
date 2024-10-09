@@ -657,10 +657,8 @@ export const idlFactory = ({ IDL }) => {
     'input' : RemoveUserGroupOperationInput,
   });
   const CallExternalCanisterOperation = IDL.Record({
+    'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'execution_method' : CanisterMethod,
-    'with_details' : IDL.Opt(
-      IDL.Record({ 'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)) })
-    ),
     'validation_method' : IDL.Opt(CanisterMethod),
     'arg_checksum' : IDL.Opt(Sha256Hash),
     'execution_method_cycles' : IDL.Opt(IDL.Nat64),

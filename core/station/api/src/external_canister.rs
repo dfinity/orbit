@@ -144,12 +144,6 @@ pub struct CallExternalCanisterOperationInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct CallExternalCanisterOperationDetailsDTO {
-    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
-    pub arg: Option<Vec<u8>>,
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct CallExternalCanisterOperationDTO {
     pub validation_method: Option<CanisterMethodDTO>,
     pub execution_method: CanisterMethodDTO,
@@ -157,7 +151,8 @@ pub struct CallExternalCanisterOperationDTO {
     pub arg_rendering: Option<String>,
     pub execution_method_cycles: Option<u64>,
     pub execution_method_reply: Option<Vec<u8>>,
-    pub with_details: Option<CallExternalCanisterOperationDetailsDTO>,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
+    pub arg: Option<Vec<u8>>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
