@@ -110,6 +110,7 @@ describe('RequestDialog', () => {
     expect(services().station.getRequest).toHaveBeenCalledWith(
       {
         request_id: '123',
+        with_full_info: [],
       },
       true,
     );
