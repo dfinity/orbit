@@ -658,6 +658,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const CallExternalCanisterOperation = IDL.Record({
     'execution_method' : CanisterMethod,
+    'with_details' : IDL.Opt(
+      IDL.Record({ 'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)) })
+    ),
     'validation_method' : IDL.Opt(CanisterMethod),
     'arg_checksum' : IDL.Opt(Sha256Hash),
     'execution_method_cycles' : IDL.Opt(IDL.Nat64),
@@ -925,7 +928,10 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
-  const GetRequestInput = IDL.Record({ 'request_id' : UUID });
+  const GetRequestInput = IDL.Record({
+    'request_id' : UUID,
+    'with_full_info' : IDL.Opt(IDL.Bool),
+  });
   const GetRequestResult = IDL.Variant({
     'Ok' : GetRequestResultData,
     'Err' : Error,

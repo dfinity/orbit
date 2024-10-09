@@ -51,6 +51,7 @@ fn register_user_successful() {
     // check transfer request status
     let get_request_args = GetRequestInput {
         request_id: request_dto.id,
+        with_full_info: Some(false),
     };
     let res: (Result<GetRequestResponse, ApiErrorDTO>,) = update_candid_as(
         &env,

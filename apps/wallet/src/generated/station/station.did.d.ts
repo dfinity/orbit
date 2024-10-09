@@ -127,6 +127,7 @@ export interface BasicUser {
 }
 export interface CallExternalCanisterOperation {
   'execution_method' : CanisterMethod,
+  'with_details' : [] | [{ 'arg' : [] | [Uint8Array | number[]] }],
   'validation_method' : [] | [CanisterMethod],
   'arg_checksum' : [] | [Sha256Hash],
   'execution_method_cycles' : [] | [bigint],
@@ -547,7 +548,10 @@ export type GetPermissionResult = {
     }
   } |
   { 'Err' : Error };
-export interface GetRequestInput { 'request_id' : UUID }
+export interface GetRequestInput {
+  'request_id' : UUID,
+  'with_full_info' : [] | [boolean],
+}
 export interface GetRequestPolicyInput { 'id' : UUID }
 export type GetRequestPolicyResult = {
     'Ok' : {

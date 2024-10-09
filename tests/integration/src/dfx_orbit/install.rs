@@ -115,6 +115,7 @@ fn canister_install(use_chunks: bool) {
             .station
             .review_id(GetRequestInput {
                 request_id: request.request.id.clone(),
+                with_full_info: Some(false),
             })
             .await
             .unwrap();

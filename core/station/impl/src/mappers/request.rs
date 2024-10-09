@@ -9,7 +9,9 @@ use orbit_essentials::{
     types::{Timestamp, UUID},
     utils::{rfc3339_to_timestamp, timestamp_to_rfc3339},
 };
-use station_api::{RequestDTO, RequestExecutionScheduleDTO};
+use station_api::{
+    CallExternalCanisterOperationDTO, RequestDTO, RequestExecutionScheduleDTO, RequestOperationDTO,
+};
 use uuid::Uuid;
 
 impl Request {
@@ -45,6 +47,36 @@ impl Request {
             requested_by: Uuid::from_bytes(self.requested_by).hyphenated().to_string(),
             status: self.status.into(),
             operation: self.operation.into(),
+            title: self.title,
+            summary: self.summary,
+            expiration_dt: timestamp_to_rfc3339(&self.expiration_dt),
+            execution_plan: self.execution_plan.into(),
+            created_at: timestamp_to_rfc3339(&self.created_timestamp),
+            approvals: self
+                .approvals
+                .iter()
+                .map(|approval| approval.to_owned().into())
+                .collect(),
+        }
+    }
+
+    pub fn to_dto_with_full_info(self) -> RequestDTO {
+        RequestDTO {
+            id: Uuid::from_bytes(self.id).hyphenated().to_string(),
+            requested_by: Uuid::from_bytes(self.requested_by).hyphenated().to_string(),
+            status: self.status.into(),
+            operation: match self.operation {
+                RequestOperation::CallExternalCanister(operation) => {
+                    let arg = operation.input.arg.clone();
+                    let mut operation_dto: CallExternalCanisterOperationDTO = operation.into();
+
+                    operation_dto.with_details =
+                        Some(station_api::CallExternalCanisterOperationDetailsDTO { arg });
+
+                    RequestOperationDTO::CallExternalCanister(Box::new(operation_dto))
+                }
+                _ => self.operation.into(),
+            },
             title: self.title,
             summary: self.summary,
             expiration_dt: timestamp_to_rfc3339(&self.expiration_dt),
