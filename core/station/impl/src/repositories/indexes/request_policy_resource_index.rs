@@ -241,35 +241,25 @@ impl RequestPolicyResourceIndexRepository {
         execution_method: &str,
         validation_method: &ValidationMethodResourceTarget,
     ) -> Vec<UUID> {
+        let find_with_resource = Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+            CallExternalCanisterResourceTarget {
+                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(CanisterMethod {
+                    canister_id: *canister_id,
+                    method_name: execution_method.to_string(),
+                }),
+                validation_method: validation_method.clone(),
+            },
+        ));
+
         DB.with(|db| {
             db.borrow()
                 .range(
                     (RequestPolicyResourceIndex {
-                        resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                            CallExternalCanisterResourceTarget {
-                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
-                                    CanisterMethod {
-                                        canister_id: *canister_id,
-                                        method_name: execution_method.to_string(),
-                                    },
-                                ),
-                                validation_method: validation_method.clone(),
-                            },
-                        )),
+                        resource: find_with_resource.clone(),
                         policy_id: [u8::MIN; 16],
                     })..(RequestPolicyResourceIndex {
-                        resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
-                            CallExternalCanisterResourceTarget {
-                                execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
-                                    CanisterMethod {
-                                        canister_id: *canister_id,
-                                        method_name: execution_method.to_string(),
-                                    },
-                                ),
-                                validation_method: validation_method.clone(),
-                            },
-                        )),
-                        policy_id: [u8::MIN; 16],
+                        resource: find_with_resource,
+                        policy_id: [u8::MAX; 16],
                     }),
                 )
                 .map(|(index, _)| index.policy_id)
@@ -412,5 +402,59 @@ mod tests {
             assert_eq!(policies.len(), 1);
             assert_eq!(policies[0], expected_method_ids.pop().unwrap());
         }
+    }
+
+    #[test]
+    fn test_find_external_canister_call_policies_by_execution_and_validation_method() {
+        let repository = RequestPolicyResourceIndexRepository::default();
+        let mut expected_method_ids = Vec::new();
+        for i in 0..20 {
+            let index = RequestPolicyResourceIndex {
+                resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                    CallExternalCanisterResourceTarget {
+                        execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                            CanisterMethod {
+                                canister_id: Principal::management_canister(),
+                                method_name: format!("method_{}", i),
+                            },
+                        ),
+                        validation_method: if i % 2 == 0 {
+                            ValidationMethodResourceTarget::No
+                        } else {
+                            ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
+                                canister_id: Principal::management_canister(),
+                                method_name: format!("validation_method_{}", i),
+                            })
+                        },
+                    },
+                )),
+                policy_id: [i; 16],
+            };
+
+            repository.insert(index);
+
+            if i % 2 != 0 {
+                expected_method_ids.push([i; 16]);
+            }
+        }
+
+        expected_method_ids.reverse();
+
+        for i in (1..20).step_by(2) {
+            let policies = repository
+                .find_external_canister_call_policies_by_execution_and_validation_method(
+                    &Principal::management_canister(),
+                    &format!("method_{}", i),
+                    &ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
+                        canister_id: Principal::management_canister(),
+                        method_name: format!("validation_method_{}", i),
+                    }),
+                );
+
+            assert_eq!(policies.len(), 1);
+            assert_eq!(policies[0], expected_method_ids.pop().unwrap());
+        }
+
+        assert!(expected_method_ids.is_empty());
     }
 }

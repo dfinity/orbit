@@ -1233,7 +1233,10 @@ mod tests {
         models::{
             permission::{Allow, AuthScope},
             resource::ValidationMethodResourceTarget,
+            CanisterExecutionAndValidationMethodPairInput,
             CreateExternalCanisterOperationKindAddExisting, ExternalCanisterCallPermission,
+            ExternalCanisterCallPermissionMethodPairInput,
+            ExternalCanisterCallRequestPoliciesMethodPairInput,
             ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterChangeCallPermissionsInput,
             ExternalCanisterChangeCallRequestPoliciesInput,
             ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
@@ -1747,6 +1750,220 @@ mod tests {
             .find_external_canister_call_permissions(&updated_canister.canister_id);
 
         assert!(call_permission.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_edit_external_canister_only_overriding_method_pairs() {
+        setup();
+        let canister = EXTERNAL_CANISTER_SERVICE
+            .add_external_canister(CreateExternalCanisterOperationInput {
+                name: "test".to_string(),
+                description: None,
+                labels: None,
+                permissions: ExternalCanisterPermissionsCreateInput {
+                    read: Allow::authenticated(),
+                    change: Allow::authenticated(),
+                    calls: vec![
+                        ExternalCanisterCallPermission {
+                            allow: Allow::authenticated(),
+                            execution_method: "test".to_string(),
+                            validation_method: ValidationMethodResourceTarget::ValidationMethod(
+                                CanisterMethod {
+                                    canister_id: Principal::from_slice(&[10; 29]),
+                                    method_name: "validate_test".to_string(),
+                                },
+                            ),
+                        },
+                        ExternalCanisterCallPermission {
+                            allow: Allow::authenticated(),
+                            execution_method: "kept_method".to_string(),
+                            validation_method: ValidationMethodResourceTarget::No,
+                        },
+                    ],
+                },
+                request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                    change: Vec::new(),
+                    calls: vec![
+                        ExternalCanisterCallRequestPolicyRuleInput {
+                            policy_id: None,
+                            execution_method: "test".to_string(),
+                            validation_method: ValidationMethodResourceTarget::ValidationMethod(
+                                CanisterMethod {
+                                    canister_id: Principal::from_slice(&[10; 29]),
+                                    method_name: "validate_test".to_string(),
+                                },
+                            ),
+                            rule: RequestPolicyRule::AutoApproved,
+                        },
+                        ExternalCanisterCallRequestPolicyRuleInput {
+                            policy_id: None,
+                            execution_method: "kept_method".to_string(),
+                            validation_method: ValidationMethodResourceTarget::No,
+                            rule: RequestPolicyRule::AutoApproved,
+                        },
+                    ],
+                },
+                kind: CreateExternalCanisterOperationKind::AddExisting(
+                    CreateExternalCanisterOperationKindAddExisting {
+                        canister_id: Principal::from_slice(&[10; 29]),
+                    },
+                ),
+            })
+            .await
+            .unwrap();
+
+        // updates a single method pair and ensure the permission and policy are updated
+        let updated_method_pair = CanisterExecutionAndValidationMethodPairInput {
+            execution_method: "test".to_string(),
+            validation_method: ValidationMethodResourceTarget::ValidationMethod(CanisterMethod {
+                canister_id: canister.canister_id,
+                method_name: "validate_test".to_string(),
+            }),
+        };
+        let target_policy_id = REQUEST_POLICY_REPOSITORY
+            .find_external_canister_call_policies_by_execution_and_validation_method(
+                &canister.canister_id,
+                &updated_method_pair.execution_method,
+                &updated_method_pair.validation_method,
+            )
+            .pop()
+            .unwrap();
+
+        let updated_canister =
+            EXTERNAL_CANISTER_SERVICE
+                .edit_external_canister(
+                    &canister.id,
+                    ConfigureExternalCanisterSettingsInput {
+                        name: None,
+                        description: None,
+                        labels: None,
+                        state: None,
+                        permissions: Some(ExternalCanisterPermissionsUpdateInput {
+                            read: None,
+                            change: None,
+                            calls: Some(
+                                ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionValidationMethodPairs(
+                                    vec![ExternalCanisterCallPermissionMethodPairInput {
+                                        method_configuration: updated_method_pair.clone(),
+                                        allow: Some(Allow::public()),
+                                    }],
+                                ),
+                            ),
+                        }),
+                        request_policies: Some(ExternalCanisterRequestPoliciesUpdateInput {
+                            change: None,
+                            calls: Some(
+                                ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(
+                                    vec![ExternalCanisterCallRequestPoliciesMethodPairInput {
+                                        method_configuration: updated_method_pair.clone(),
+                                        policies: vec![ExternalCanisterChangeRequestPolicyRuleInput {
+                                            policy_id: Some(target_policy_id),
+                                            rule: RequestPolicyRule::Not(Box::new(RequestPolicyRule::AutoApproved)),
+                                        }],
+                                    }],
+                                ),
+                            ),
+                        }),
+                    },
+                )
+                .unwrap();
+
+        let permissions = PERMISSION_REPOSITORY
+            .find_external_canister_call_permissions(&updated_canister.canister_id);
+
+        assert_eq!(permissions.len(), 2);
+
+        let updated_permission = permissions
+            .iter()
+            .find(|permission| {
+                matches!(
+                    &permission.resource,
+                    Resource::ExternalCanister(
+                        ExternalCanisterResourceAction::Call(
+                            CallExternalCanisterResourceTarget {
+                                execution_method:
+                                    ExecutionMethodResourceTarget::ExecutionMethod(
+                                        CanisterMethod {
+                                            canister_id: _,
+                                            method_name,
+                                        },
+                                    ),
+                                validation_method: _,
+                            },
+                        ),
+                    ) if *method_name == updated_method_pair.execution_method
+                )
+            })
+            .unwrap();
+
+        assert_eq!(updated_permission.allow.auth_scope, AuthScope::Public);
+
+        let policies = EXTERNAL_CANISTER_SERVICE
+            .get_external_canister_request_policies(&updated_canister.canister_id)
+            .calls;
+
+        assert_eq!(policies.len(), 2);
+
+        let updated_policy = policies
+            .iter()
+            .find(|policy| {
+                policy.execution_method == updated_method_pair.execution_method
+                    && policy.validation_method == updated_method_pair.validation_method
+            })
+            .unwrap();
+
+        assert_eq!(
+            updated_policy.rule,
+            RequestPolicyRule::Not(Box::new(RequestPolicyRule::AutoApproved))
+        );
+
+        // updates the same method pair and ensure the permission and policy are removed
+        let updated_canister =
+            EXTERNAL_CANISTER_SERVICE
+                .edit_external_canister(
+                    &canister.id,
+                    ConfigureExternalCanisterSettingsInput {
+                        name: None,
+                        description: None,
+                        labels: None,
+                        state: None,
+                        permissions: Some(ExternalCanisterPermissionsUpdateInput {
+                            read: None,
+                            change: None,
+                            calls: Some(
+                                ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionValidationMethodPairs(
+                                    vec![ExternalCanisterCallPermissionMethodPairInput {
+                                        method_configuration: updated_method_pair.clone(),
+                                        allow: None,
+                                    }],
+                                ),
+                            ),
+                        }),
+                        request_policies: Some(ExternalCanisterRequestPoliciesUpdateInput {
+                            change: None,
+                            calls: Some(
+                                ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(
+                                    vec![ExternalCanisterCallRequestPoliciesMethodPairInput {
+                                        method_configuration: updated_method_pair.clone(),
+                                        policies: Vec::new(),
+                                    }],
+                                ),
+                            ),
+                        }),
+                    },
+                )
+                .unwrap();
+
+        let permissions = PERMISSION_REPOSITORY
+            .find_external_canister_call_permissions(&updated_canister.canister_id);
+
+        assert_eq!(permissions.len(), 1);
+
+        let policies = EXTERNAL_CANISTER_SERVICE
+            .get_external_canister_request_policies(&updated_canister.canister_id)
+            .calls;
+
+        assert_eq!(policies.len(), 1);
     }
 
     #[tokio::test]
