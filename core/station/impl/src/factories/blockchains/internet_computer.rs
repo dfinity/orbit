@@ -15,13 +15,14 @@ use crate::{
 };
 use async_trait::async_trait;
 use byteorder::{BigEndian, ByteOrder};
-use candid::Principal;
+use candid::{CandidType, Principal};
 use num_bigint::BigUint;
 use orbit_essentials::{
     api::ApiError,
     cdk::{self},
     repository::Repository,
 };
+use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use std::{
     fmt::{Display, Formatter},
@@ -63,11 +64,22 @@ pub struct SubmitTransferResponse {
     pub transaction_hash: Option<String>,
 }
 
+#[derive(CandidType, Deserialize)]
+pub struct ICPLedgerTransferFee {
+    pub e8s: u64,
+}
+#[derive(CandidType, Deserialize)]
+pub struct ICPLedgerTransferFeeResponse {
+    pub transfer_fee: ICPLedgerTransferFee,
+}
+
+#[derive(CandidType)]
+pub struct ICPLedgerTransferFeeInput {}
+
 impl InternetComputer {
     pub const BLOCKCHAIN: Blockchain = Blockchain::InternetComputer;
     pub const STANDARD: TokenStandard = TokenStandard::InternetComputerNative;
     pub const ICP_LEDGER_CANISTER_ID: &'static str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
-    pub const DECIMALS: u32 = 8;
     pub const MAIN_NETWORK: InternetComputerNetwork = InternetComputerNetwork::Mainnet;
 
     pub fn create() -> Self {
@@ -178,14 +190,6 @@ impl InternetComputer {
             .0;
 
         Ok(balance.0)
-    }
-
-    pub fn transaction_fee(&self) -> u64 {
-        ic_ledger_types::DEFAULT_FEE.e8s()
-    }
-
-    pub fn decimals(&self) -> u32 {
-        Self::DECIMALS
     }
 
     fn get_ledger_canister_id_from_metadata(metadata: &Metadata) -> BlockchainApiResult<Principal> {
@@ -487,20 +491,33 @@ impl BlockchainApi for InternetComputer {
         Ok(BigUint::from(0u64))
     }
 
-    async fn decimals(&self, _station_account: &Account) -> BlockchainApiResult<u32> {
-        Ok(self.decimals())
-    }
-
     async fn transaction_fee(
         &self,
         asset: &Asset,
         standard: TokenStandard,
     ) -> BlockchainApiResult<BlockchainTransactionFee> {
         match standard {
-            TokenStandard::InternetComputerNative => Ok(BlockchainTransactionFee {
-                fee: BigUint::from(self.transaction_fee()),
-                metadata: Metadata::default(),
-            }),
+            TokenStandard::InternetComputerNative => {
+                let ledger_canister_id =
+                    Self::get_ledger_canister_id_from_metadata(&asset.metadata)?;
+
+                let fee =
+                    ic_cdk::call::<(ICPLedgerTransferFeeInput,), (ICPLedgerTransferFeeResponse,)>(
+                        ledger_canister_id,
+                        "transfer_fee",
+                        (ICPLedgerTransferFeeInput {},),
+                    )
+                    .await
+                    .map_err(|err| BlockchainApiError::BlockchainNetworkError {
+                        info: format!("rejection_code: {:?}, err: {}", err.0, err.1),
+                    })?
+                    .0;
+
+                Ok(BlockchainTransactionFee {
+                    fee: fee.transfer_fee.e8s.into(),
+                    metadata: Metadata::default(),
+                })
+            }
             TokenStandard::ICRC1 => {
                 let ledger_canister_id =
                     Self::get_ledger_canister_id_from_metadata(&asset.metadata)?;

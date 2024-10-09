@@ -201,6 +201,10 @@ fn make_transfer_successful() {
     env.tick();
     env.tick();
     env.tick();
+    env.advance_time(Duration::from_secs(5));
+    env.tick();
+    env.tick();
+    env.tick();
 
     // check transfer request status
     let get_request_args = GetRequestInput {

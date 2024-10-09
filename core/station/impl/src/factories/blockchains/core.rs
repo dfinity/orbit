@@ -65,9 +65,6 @@ pub trait BlockchainApi: Send + Sync {
         addresses: &[AccountAddress],
     ) -> Result<BigUint, ApiError>;
 
-    /// Returns the decimals of the given account.
-    async fn decimals(&self, account: &Account) -> Result<u32, ApiError>;
-
     /// Returns the latest average transaction fee.
     async fn transaction_fee(
         &self,
