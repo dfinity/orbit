@@ -186,7 +186,7 @@ const loadRequest = async (): Promise<DataType> => {
     };
   } else {
     const result = await services().station.getRequest(
-      { request_id: currentRequestId.value! },
+      { request_id: currentRequestId.value!, with_full_info: [] },
       true,
     );
 
