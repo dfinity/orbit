@@ -205,12 +205,11 @@ impl Job {
             },
         )?;
 
-        let blockchain_api =
-            BlockchainApiFactory::build(&asset.blockchain, &transfer.with_standard).map_err(
-                |e| TransferError::ExecutionError {
-                    reason: format!("Failed to build blockchain api: {}", e),
-                },
-            )?;
+        let blockchain_api = BlockchainApiFactory::build(&asset.blockchain).map_err(|e| {
+            TransferError::ExecutionError {
+                reason: format!("Failed to build blockchain api: {}", e),
+            }
+        })?;
 
         match blockchain_api.submit_transaction(&account, &transfer).await {
             Ok(details) => Ok((transfer, details)),

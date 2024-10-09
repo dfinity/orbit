@@ -431,52 +431,60 @@ impl BlockchainApi for InternetComputer {
     async fn balance(
         &self,
         asset: &Asset,
-        account_address: &AccountAddress,
+        account_addresses: &[AccountAddress],
     ) -> BlockchainApiResult<BigUint> {
-        match account_address.format {
-            AddressFormat::ICPAccountIdentifier => {
-                let balance = self
-                    .balance_of_account_identifier(
-                        asset,
-                        &ic_ledger_types::AccountIdentifier::from_hex(&account_address.address)
-                            .map_err(|error| BlockchainApiError::InvalidToAddress {
-                                address: account_address.address.clone(),
-                                error,
-                            })?,
-                    )
-                    .await?;
+        // all matching addresses should resolve to the same balance, so pick the first one
 
-                Ok(BigUint::from(balance))
-            }
-            AddressFormat::ICRC1Account => {
-                let balance = self
-                    .balance_of_icrc1_account(
-                        asset,
-                        &icrc_ledger_types::icrc1::account::Account::from_str(
-                            &account_address.address,
+        for account_address in account_addresses {
+            match account_address.format {
+                AddressFormat::ICPAccountIdentifier => {
+                    let balance = self
+                        .balance_of_account_identifier(
+                            asset,
+                            &ic_ledger_types::AccountIdentifier::from_hex(&account_address.address)
+                                .map_err(|error| BlockchainApiError::InvalidToAddress {
+                                    address: account_address.address.clone(),
+                                    error,
+                                })?,
                         )
-                        .map_err(|error| {
-                            BlockchainApiError::InvalidToAddress {
-                                address: account_address.address.clone(),
-                                error: error.to_string(),
-                            }
-                        })?,
-                    )
-                    .await?;
+                        .await?;
 
-                Ok(balance)
+                    return Ok(BigUint::from(balance));
+                }
+                AddressFormat::ICRC1Account => {
+                    let balance = self
+                        .balance_of_icrc1_account(
+                            asset,
+                            &icrc_ledger_types::icrc1::account::Account::from_str(
+                                &account_address.address,
+                            )
+                            .map_err(|error| {
+                                BlockchainApiError::InvalidToAddress {
+                                    address: account_address.address.clone(),
+                                    error: error.to_string(),
+                                }
+                            })?,
+                        )
+                        .await?;
+
+                    return Ok(balance);
+                }
+                AddressFormat::EthereumAddress
+                | AddressFormat::BitcoinAddressP2WPKH
+                | AddressFormat::BitcoinAddressP2TR => {
+                    // these address formats are not supported for ICP
+                    continue;
+                }
             }
-            AddressFormat::EthereumAddress
-            | AddressFormat::BitcoinAddressP2WPKH
-            | AddressFormat::BitcoinAddressP2TR => Err(BlockchainApiError::InvalidAddressFormat {
-                found: account_address.format.to_string(),
-                expected: [
-                    AddressFormat::ICPAccountIdentifier.to_string(),
-                    AddressFormat::ICRC1Account.to_string(),
-                ]
-                .join(","),
-            })?,
         }
+
+        print(format!(
+            "Warning: no suitable address found for balance lookup in asset {} `{}`",
+            asset.name,
+            Uuid::from_bytes(asset.id).hyphenated()
+        ));
+
+        Ok(BigUint::from(0u64))
     }
 
     async fn decimals(&self, _station_account: &Account) -> BlockchainApiResult<u32> {

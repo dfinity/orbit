@@ -109,11 +109,11 @@ impl Execute for TransferRequestExecute<'_, '_> {
                 ),
             })?;
 
-        let blockchain_api =
-            BlockchainApiFactory::build(&asset.blockchain, &self.operation.input.with_standard)
-                .map_err(|e| RequestExecuteError::Failed {
-                    reason: format!("Failed to build blockchain api: {}", e),
-                })?;
+        let blockchain_api = BlockchainApiFactory::build(&asset.blockchain).map_err(|e| {
+            RequestExecuteError::Failed {
+                reason: format!("Failed to build blockchain api: {}", e),
+            }
+        })?;
         let fee = match &self.operation.input.fee {
             Some(fee) => fee.clone(),
             None => {

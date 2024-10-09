@@ -16,8 +16,7 @@ use crate::{
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
         Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
         AddRequestPolicyOperationInput, AddressFormat, Blockchain, CycleObtainStrategy,
-        EditAccountOperationInput, EditPermissionOperationInput, MetadataItem, StandardOperation,
-        TokenStandard,
+        EditAccountOperationInput, EditPermissionOperationInput, MetadataItem, TokenStandard,
     },
     repositories::{
         AccountRepository, AccountWhereClause, AssetRepository, ACCOUNT_REPOSITORY,
@@ -169,8 +168,7 @@ impl AccountService {
             })?;
 
             for standard in asset.standards.iter() {
-                let blockchain_api =
-                    BlockchainApiFactory::build(&asset.blockchain.clone(), &standard.clone())?;
+                let blockchain_api = BlockchainApiFactory::build(&asset.blockchain.clone())?;
 
                 let mut account_addresses = Vec::new();
 
@@ -473,61 +471,23 @@ impl AccountService {
                     continue;
                 };
 
-                let balance: AccountBalance = match (
-                    &account_asset.balance,
-                    balance_considered_fresh,
-                ) {
-                    (None, _) | (_, false) => {
-                        // find a standard that supports fetch balance operation
-                        let Some(standard) = asset.standards.iter().find(|standard| {
-                            standard
-                                .get_supported_operations()
-                                .contains(&StandardOperation::Balance)
-                        }) else {
-                            // Could not find a standard to fetch the balance.
-                            // This becomes normal there are assets that do not support fetching the balance.
-                            ic_cdk::println!(
-                                "Could not find a standard to fetch the balance in account {}({}) for asset {}({}) on {}",
-                                account.name,
-                                Uuid::from_bytes(account.id).hyphenated(),
-                                asset.symbol,
-                                asset.name,
-                                asset.blockchain.to_string()
-                            );
-                            continue;
-                        };
+                let balance: AccountBalance =
+                    match (&account_asset.balance, balance_considered_fresh) {
+                        (None, _) | (_, false) => {
+                            let blockchain_api = BlockchainApiFactory::build(&asset.blockchain)?;
+                            let fetched_balance =
+                                blockchain_api.balance(&asset, &account.addresses).await?;
+                            let new_balance = AccountBalance {
+                                balance: candid::Nat(fetched_balance),
+                                last_modification_timestamp: next_time(),
+                            };
 
-                        // get the supported address formats of the standard
-                        let standard_info = standard.get_info();
+                            account_asset.balance = Some(new_balance.clone());
 
-                        // find an address that is supported by the standard
-                        let Some(address) = account.addresses.iter().find(|address| {
-                            standard_info.address_formats.contains(&address.format)
-                        }) else {
-                            // could not find address for the standard to fetch the balance
-                            ic_cdk::println!(
-                                    "Could not find address for the standard {} to fetch the balance in account {}({})",
-                                    standard_info.name,
-                                    account.name,
-                                    Uuid::from_bytes(account.id).hyphenated()
-                                );
-                            continue;
-                        };
-
-                        let blockchain_api =
-                            BlockchainApiFactory::build(&asset.blockchain, standard)?;
-                        let fetched_balance = blockchain_api.balance(&asset, address).await?;
-                        let new_balance = AccountBalance {
-                            balance: candid::Nat(fetched_balance),
-                            last_modification_timestamp: next_time(),
-                        };
-
-                        account_asset.balance = Some(new_balance.clone());
-
-                        new_balance
-                    }
-                    (Some(balance), _) => balance.to_owned(),
-                };
+                            new_balance
+                        }
+                        (Some(balance), _) => balance.to_owned(),
+                    };
 
                 balances.push(AccountMapper::to_balance_dto(
                     balance,

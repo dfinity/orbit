@@ -59,7 +59,11 @@ pub trait BlockchainApi: Send + Sync {
     ) -> Result<AccountAddress, ApiError>;
 
     /// Returns the latest balance of the given account.
-    async fn balance(&self, asset: &Asset, address: &AccountAddress) -> Result<BigUint, ApiError>;
+    async fn balance(
+        &self,
+        asset: &Asset,
+        addresses: &[AccountAddress],
+    ) -> Result<BigUint, ApiError>;
 
     /// Returns the decimals of the given account.
     async fn decimals(&self, account: &Account) -> Result<u32, ApiError>;
@@ -86,18 +90,12 @@ pub trait BlockchainApi: Send + Sync {
 pub struct BlockchainApiFactory {}
 
 impl BlockchainApiFactory {
-    pub fn build(
-        blockchain: &Blockchain,
-        standard: &TokenStandard,
-    ) -> Result<Box<dyn BlockchainApi>, FactoryError> {
-        match (blockchain, standard) {
-            (Blockchain::InternetComputer, TokenStandard::InternetComputerNative)
-            | (Blockchain::InternetComputer, TokenStandard::ICRC1) => {
-                Ok(Box::new(InternetComputer::create()))
-            }
-            (blockchain, standard) => Err(FactoryError::UnsupportedBlockchainAccount {
+    pub fn build(blockchain: &Blockchain) -> Result<Box<dyn BlockchainApi>, FactoryError> {
+        match blockchain {
+            Blockchain::InternetComputer => Ok(Box::new(InternetComputer::create())),
+
+            blockchain => Err(FactoryError::UnsupportedBlockchain {
                 blockchain: blockchain.to_string(),
-                standard: standard.to_string(),
             }),
         }
     }
