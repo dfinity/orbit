@@ -2315,7 +2315,7 @@ type ExternalCanisterPermissions = record {
 // The create input type for setting the permissions for the external canister.
 type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
 
-// The key-value pair that is used to represent the execution and validation method pair.
+// The pair that is used to represent the execution and validation method.
 type CanisterExecutionAndValidationMethodPair = record {
   // The validation method that is used to validate the request and
   // render the argument.
