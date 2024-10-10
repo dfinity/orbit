@@ -225,6 +225,10 @@ pub fn wait_for_request_with_extra_ticks(
     // wait for the request to be processing
     env.advance_time(Duration::from_secs(2));
     env.tick();
+    // wait in case the request calls out to other canisters
+    env.advance_time(Duration::from_secs(2));
+    env.tick();
+
     for _ in 0..extra_ticks {
         env.tick();
     }
