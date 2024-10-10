@@ -1,8 +1,7 @@
 use crate::setup::{create_canister, get_canister_wasm, WALLET_ADMIN_USER};
-use crate::setup::{get_canister_wasm, WALLET_ADMIN_USER};
 use crate::test_data::asset::list_assets;
 use candid::Principal;
-use candid::{CandidType, Encode, Principal};
+use candid::{CandidType, Encode};
 use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;

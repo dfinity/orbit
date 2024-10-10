@@ -293,6 +293,7 @@ export default {
       removeasset: {
         title: 'Remove asset',
         request_title: 'Remove asset request',
+      },
       createexternalcanister: {
         title: 'Create canister',
         request_title: 'Create canister request',

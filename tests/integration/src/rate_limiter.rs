@@ -43,7 +43,7 @@ fn test_request_size_rate_limiter() {
     test_rate_limit(&env, canister_ids, request_count, |_| {
         // the rate limiter uses the binary size of the (candid-encoded) argument
         // and thus we need to subtract the (estimated) overhead here
-        let arg_length = request_size - 2150;
+        let arg_length = request_size - 2306;
         let call_external_canister_operation_input = CallExternalCanisterOperationInput {
             validation_method: None,
             execution_method: CanisterMethodDTO {
