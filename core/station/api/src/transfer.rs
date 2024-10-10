@@ -13,6 +13,8 @@ pub struct NetworkDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct TransferOperationInput {
     pub from_account_id: UuidDTO,
+    pub from_asset_id: UuidDTO,
+    pub with_standard: String,
     pub to: String,
     pub amount: candid::Nat,
     pub fee: Option<candid::Nat>,

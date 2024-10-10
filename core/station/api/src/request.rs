@@ -3,18 +3,19 @@ use super::{
 };
 use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
-    AddAddressBookEntryOperationInput, AddUserGroupOperationDTO, AddUserGroupOperationInput,
-    AddUserOperationDTO, AddUserOperationInput, CallExternalCanisterOperationDTO,
-    CallExternalCanisterOperationInput, ChangeExternalCanisterOperationDTO,
-    ChangeExternalCanisterOperationInput, ConfigureExternalCanisterOperationDTO,
-    ConfigureExternalCanisterOperationInput, CreateExternalCanisterOperationDTO,
-    CreateExternalCanisterOperationInput, DisplayUserDTO, EditAccountOperationDTO,
-    EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
-    EditPermissionOperationDTO, EditPermissionOperationInput, EditUserGroupOperationDTO,
-    EditUserGroupOperationInput, EditUserOperationDTO, EditUserOperationInput,
-    FundExternalCanisterOperationDTO, FundExternalCanisterOperationInput,
-    ManageSystemInfoOperationDTO, ManageSystemInfoOperationInput, PaginationInput,
-    RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
+    AddAddressBookEntryOperationInput, AddAssetOperationDTO, AddAssetOperationInput,
+    AddUserGroupOperationDTO, AddUserGroupOperationInput, AddUserOperationDTO,
+    AddUserOperationInput, CallExternalCanisterOperationDTO, CallExternalCanisterOperationInput,
+    ChangeExternalCanisterOperationDTO, ChangeExternalCanisterOperationInput,
+    ConfigureExternalCanisterOperationDTO, ConfigureExternalCanisterOperationInput,
+    CreateExternalCanisterOperationDTO, CreateExternalCanisterOperationInput, DisplayUserDTO,
+    EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
+    EditAssetOperationDTO, EditAssetOperationInput, EditPermissionOperationDTO,
+    EditPermissionOperationInput, EditUserGroupOperationDTO, EditUserGroupOperationInput,
+    EditUserOperationDTO, EditUserOperationInput, FundExternalCanisterOperationDTO,
+    FundExternalCanisterOperationInput, ManageSystemInfoOperationDTO,
+    ManageSystemInfoOperationInput, PaginationInput, RemoveAddressBookEntryOperationDTO,
+    RemoveAddressBookEntryOperationInput, RemoveAssetOperationDTO, RemoveAssetOperationInput,
     RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
     RequestPolicyRuleDTO, RequestSpecifierDTO, SetDisasterRecoveryOperationDTO,
     SetDisasterRecoveryOperationInput, SortDirection, SystemUpgradeOperationDTO,
@@ -83,6 +84,9 @@ pub enum RequestOperationDTO {
     EditRequestPolicy(Box<EditRequestPolicyOperationDTO>),
     RemoveRequestPolicy(Box<RemoveRequestPolicyOperationDTO>),
     ManageSystemInfo(Box<ManageSystemInfoOperationDTO>),
+    AddAsset(Box<AddAssetOperationDTO>),
+    EditAsset(Box<EditAssetOperationDTO>),
+    RemoveAsset(Box<RemoveAssetOperationDTO>),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -110,6 +114,9 @@ pub enum RequestOperationInput {
     EditRequestPolicy(EditRequestPolicyOperationInput),
     RemoveRequestPolicy(RemoveRequestPolicyOperationInput),
     ManageSystemInfo(ManageSystemInfoOperationInput),
+    AddAsset(AddAssetOperationInput),
+    EditAsset(EditAssetOperationInput),
+    RemoveAsset(RemoveAssetOperationInput),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -137,6 +144,9 @@ pub enum RequestOperationTypeDTO {
     RemoveRequestPolicy,
     ManageSystemInfo,
     ConfigureExternalCanister,
+    AddAsset,
+    EditAsset,
+    RemoveAsset,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -164,6 +174,9 @@ pub enum ListRequestsOperationTypeDTO {
     ManageSystemInfo,
     SetDisasterRecovery,
     ConfigureExternalCanister(Option<Principal>),
+    AddAsset,
+    EditAsset,
+    RemoveAsset,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

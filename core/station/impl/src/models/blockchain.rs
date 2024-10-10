@@ -1,4 +1,4 @@
-use super::BlockchainStandard;
+use super::TokenStandard;
 use candid::CandidType;
 use orbit_essentials::storable;
 use std::fmt::{Display, Formatter};
@@ -23,13 +23,13 @@ impl Blockchain {
     }
 
     /// The list of standards that the blockchain supports.
-    pub fn supported_standards(&self) -> Vec<BlockchainStandard> {
+    pub fn supported_standards(&self) -> Vec<TokenStandard> {
         match self {
             Blockchain::InternetComputer => {
-                vec![BlockchainStandard::Native, BlockchainStandard::ICRC1]
+                vec![TokenStandard::InternetComputerNative, TokenStandard::ICRC1]
             }
-            Blockchain::Ethereum => vec![BlockchainStandard::Native, BlockchainStandard::ERC20],
-            Blockchain::Bitcoin => vec![BlockchainStandard::Native],
+            Blockchain::Ethereum => vec![],
+            Blockchain::Bitcoin => vec![],
         }
     }
 }
@@ -85,18 +85,9 @@ mod tests {
     fn match_supported_standards() {
         assert!(Blockchain::InternetComputer
             .supported_standards()
-            .contains(&BlockchainStandard::Native));
+            .contains(&TokenStandard::InternetComputerNative));
         assert!(Blockchain::InternetComputer
             .supported_standards()
-            .contains(&BlockchainStandard::ICRC1));
-        assert!(Blockchain::Ethereum
-            .supported_standards()
-            .contains(&BlockchainStandard::Native));
-        assert!(Blockchain::Ethereum
-            .supported_standards()
-            .contains(&BlockchainStandard::ERC20));
-        assert!(Blockchain::Bitcoin
-            .supported_standards()
-            .contains(&BlockchainStandard::Native));
+            .contains(&TokenStandard::ICRC1));
     }
 }

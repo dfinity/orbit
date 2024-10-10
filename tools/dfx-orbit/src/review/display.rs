@@ -283,6 +283,9 @@ fn display_request_operation(op: &RequestOperationDTO) -> &'static str {
         RequestOperationDTO::EditRequestPolicy(_) => "EditRequestPolicy",
         RequestOperationDTO::RemoveRequestPolicy(_) => "RemoveRequestPolicy",
         RequestOperationDTO::ManageSystemInfo(_) => "ManageSystemInfo",
+        RequestOperationDTO::AddAsset(_) => "AddAsset",
+        RequestOperationDTO::EditAsset(_) => "EditAsset",
+        RequestOperationDTO::RemoveAsset(_) => "RemoveAsset",
     }
 }
 

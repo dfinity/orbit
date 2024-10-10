@@ -14,6 +14,7 @@ export enum Routes {
   Initialization = 'Initialization',
   AddStation = 'AddStation',
   Permissions = 'Permissions',
+  Assets = 'Assets',
   ExternalCanisters = 'ExternalCanisters',
   ExternalCanister = 'ExternalCanister',
   // Request Pages

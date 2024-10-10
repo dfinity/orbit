@@ -28,6 +28,9 @@ pub enum RequestSpecifierDTO {
     EditUserGroup(ResourceIdsDTO),
     RemoveUserGroup(ResourceIdsDTO),
     ManageSystemInfo,
+    AddAsset,
+    EditAsset(ResourceIdsDTO),
+    RemoveAsset(ResourceIdsDTO),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

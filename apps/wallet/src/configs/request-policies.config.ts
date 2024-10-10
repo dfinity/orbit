@@ -39,4 +39,7 @@ export const requestSpecifiersIncludedRules = (): Record<
   [RequestSpecifierEnum.CallExternalCanister]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.FundExternalCanister]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.SetDisasterRecovery]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.AddAsset]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.EditAsset]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.RemoveAsset]: [...defaultRequestPolicyRules],
 });

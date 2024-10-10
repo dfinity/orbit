@@ -46,6 +46,7 @@ import { KeysOfUnion } from '~/utils/helper.utils';
 import RequestStatusChip from './RequestStatusChip.vue';
 import ReviewRequestBtn from './ReviewRequestBtn.vue';
 import AddAccountOperation from './operations/AddAccountOperation.vue';
+import AddAssetOperation from './operations/AddAssetOperation.vue';
 import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperation.vue';
 import AddRequestPolicyOperation from './operations/AddRequestPolicyOperation.vue';
 import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
@@ -63,6 +64,8 @@ import RemoveRequestPolicyOperation from './operations/RemoveRequestPolicyOperat
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
 import UnsupportedOperation from './operations/UnsupportedOperation.vue';
+import EditAssetOperation from './operations/EditAssetOperation.vue';
+import RemoveAssetOperation from './operations/RemoveAssetOperation.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -97,6 +100,11 @@ const componentsMap: {
   SystemUpgrade: SystemUpgradeOperation,
   EditPermission: EditPermissionOperation,
   ManageSystemInfo: ManageSystemInfoOperation,
+  AddAsset: AddAssetOperation,
+  EditAsset: EditAssetOperation,
+  RemoveAsset: RemoveAssetOperation,
+
+  // below variants are not supported yet
   ChangeExternalCanister: UnsupportedOperation,
   CreateExternalCanister: UnsupportedOperation,
   CallExternalCanister: UnsupportedOperation,

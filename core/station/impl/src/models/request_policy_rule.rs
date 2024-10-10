@@ -8,14 +8,18 @@ use super::{
 use crate::{
     core::{ic_cdk::api::print, utils::calculate_minimum_threshold},
     errors::{MatchError, ValidationError},
-    repositories::{UserWhereClause, ADDRESS_BOOK_REPOSITORY, USER_REPOSITORY},
+    repositories::{UserWhereClause, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, USER_REPOSITORY},
     services::ACCOUNT_SERVICE,
 };
-use orbit_essentials::model::{ModelKey, ModelValidator, ModelValidatorResult};
 use orbit_essentials::storable;
+use orbit_essentials::{
+    model::{ModelKey, ModelValidator, ModelValidatorResult},
+    repository::Repository,
+};
 use station_api::EvaluationSummaryReasonDTO;
 use std::{cmp, hash::Hash};
 use std::{collections::HashSet, sync::Arc};
+use uuid::Uuid;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -413,14 +417,27 @@ impl
                             });
                         }
                         Ok(account) => {
-                            let is_in_address_book = ADDRESS_BOOK_REPOSITORY
-                                .exists(account.blockchain, transfer.input.to.clone());
+                            for account_asset in account.assets {
+                                let Some(asset) = ASSET_REPOSITORY.get(&account_asset.asset_id)
+                                else {
+                                    print(format!(
+                                        "Asset `{}` not found in account `{}`.",
+                                        Uuid::from_bytes(account_asset.asset_id).hyphenated(),
+                                        Uuid::from_bytes(account.id).hyphenated()
+                                    ));
 
-                            if is_in_address_book {
-                                return Ok(RequestPolicyRuleResult {
-                                    status: EvaluationStatus::Approved,
-                                    evaluated_rule: EvaluatedRequestPolicyRule::AllowListed,
-                                });
+                                    continue;
+                                };
+
+                                let is_in_address_book = ADDRESS_BOOK_REPOSITORY
+                                    .exists(asset.blockchain, transfer.input.to.clone());
+
+                                if is_in_address_book {
+                                    return Ok(RequestPolicyRuleResult {
+                                        status: EvaluationStatus::Approved,
+                                        evaluated_rule: EvaluatedRequestPolicyRule::AllowListed,
+                                    });
+                                }
                             }
                         }
                     }

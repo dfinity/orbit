@@ -71,6 +71,17 @@ export interface BufferedArchiveEntry {
   'anchor_number' : UserNumber,
   'timestamp' : Timestamp,
 }
+export interface CaptchaConfig {
+  'max_unsolved_captchas' : bigint,
+  'captcha_trigger' : {
+      'Dynamic' : {
+        'reference_rate_sampling_interval_s' : bigint,
+        'threshold_pct' : number,
+        'current_rate_sampling_interval_s' : bigint,
+      }
+    } |
+    { 'Static' : { 'CaptchaDisabled' : null } | { 'CaptchaEnabled' : null } },
+}
 export type CaptchaResult = ChallengeResult;
 export interface Challenge {
   'png_base64' : string,
@@ -178,9 +189,9 @@ export type IdentityRegisterError = { 'BadCaptcha' : null } |
   { 'InvalidMetadata' : string };
 export interface InternetIdentityInit {
   'assigned_user_number_range' : [] | [[bigint, bigint]],
-  'max_inflight_captchas' : [] | [bigint],
   'archive_config' : [] | [ArchiveConfig],
   'canister_creation_cycles_cost' : [] | [bigint],
+  'captcha_config' : [] | [CaptchaConfig],
   'register_rate_limit' : [] | [RateLimitConfig],
 }
 export interface InternetIdentityStats {
@@ -323,6 +334,7 @@ export interface _SERVICE {
       { 'Err' : AuthnMethodSecuritySettingsReplaceError }
   >,
   'captcha_create' : ActorMethod<[], { 'Ok' : Challenge } | { 'Err' : null }>,
+  'config' : ActorMethod<[], InternetIdentityInit>,
   'create_challenge' : ActorMethod<[], Challenge>,
   'deploy_archive' : ActorMethod<[Uint8Array | number[]], DeployArchiveResult>,
   'enter_device_registration_mode' : ActorMethod<[UserNumber], Timestamp>,
