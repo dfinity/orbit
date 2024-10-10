@@ -108,6 +108,7 @@ pub enum InstallMode {
 pub struct RequestDisasterRecoveryInput {
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     #[serde(with = "serde_bytes")]
     pub arg: Vec<u8>,
 

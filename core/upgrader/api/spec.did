@@ -128,6 +128,8 @@ type SetDisasterRecoveryAccountsInput = record {
 type RequestDisasterRecoveryInput = record {
   // The wasm module to be installed.
   module : blob;
+  // Additional wasm module chunks to append to the wasm module.
+  module_extra_chunks : opt WasmModuleExtraChunks;
   // The argument to be passed to the install function.
   arg : blob;
   // The install mode: Install, Upgrade, or Reinstall.

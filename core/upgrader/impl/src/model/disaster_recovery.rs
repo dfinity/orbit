@@ -4,7 +4,7 @@ use candid::Principal;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use orbit_essentials::{
     storable,
-    types::{Timestamp, UUID},
+    types::{Timestamp, WasmModuleExtraChunks, UUID},
     utils::timestamp_to_rfc3339,
 };
 use uuid::Uuid;
@@ -69,6 +69,8 @@ pub struct StationRecoveryRequest {
     pub user_id: UUID,
     /// The wasm module to be installed.
     pub wasm_module: Vec<u8>,
+    /// Optional extra chunks of the wasm module to be installed.
+    pub wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
     /// The SHA-256 hash of the wasm module.
     pub wasm_sha256: Vec<u8>,
     /// The install mode: upgrade or reinstall.
@@ -99,7 +101,7 @@ pub enum RecoveryEvaluationResult {
     /// There are active recovery requests, but there is no quorum yet.
     Unmet,
     /// There is a consensus on the recovery requests.
-    Met(StationRecoveryRequest),
+    Met(Box<StationRecoveryRequest>),
 }
 
 #[storable]
