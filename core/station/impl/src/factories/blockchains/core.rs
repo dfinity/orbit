@@ -2,7 +2,8 @@ use super::InternetComputer;
 use crate::{
     errors::FactoryError,
     models::{
-        Account, AccountAddress, AccountSeed, Asset, Blockchain, Metadata, TokenStandard, Transfer,
+        Account, AccountAddress, AccountSeed, AddressFormat, Asset, Blockchain, Metadata,
+        TokenStandard, Transfer,
     },
 };
 use async_trait::async_trait;
@@ -51,18 +52,24 @@ pub trait BlockchainApi: Send + Sync {
     /// Generates a new address for the given account.
     ///
     /// This address is used for token transfers.
-    async fn generate_address(&self, seed: &AccountSeed) -> Result<Vec<AccountAddress>, ApiError>;
+    async fn generate_address(
+        &self,
+        seed: &AccountSeed,
+        format: AddressFormat,
+    ) -> Result<AccountAddress, ApiError>;
 
     /// Returns the latest balance of the given account.
-    async fn balance(&self, asset: &Asset, address: &AccountAddress) -> Result<BigUint, ApiError>;
-
-    /// Returns the decimals of the given account.
-    async fn decimals(&self, account: &Account) -> Result<u32, ApiError>;
+    async fn balance(
+        &self,
+        asset: &Asset,
+        addresses: &[AccountAddress],
+    ) -> Result<BigUint, ApiError>;
 
     /// Returns the latest average transaction fee.
     async fn transaction_fee(
         &self,
-        account: &Account,
+        asset: &Asset,
+        standard: TokenStandard,
     ) -> Result<BlockchainTransactionFee, ApiError>;
 
     /// Returns the default network.
@@ -80,17 +87,12 @@ pub trait BlockchainApi: Send + Sync {
 pub struct BlockchainApiFactory {}
 
 impl BlockchainApiFactory {
-    pub fn build(
-        blockchain: &Blockchain,
-        standard: &TokenStandard,
-    ) -> Result<Box<dyn BlockchainApi>, FactoryError> {
-        match (blockchain, standard) {
-            (Blockchain::InternetComputer, TokenStandard::InternetComputerNative) => {
-                Ok(Box::new(InternetComputer::create()))
-            }
-            (blockchain, standard) => Err(FactoryError::UnsupportedBlockchainAccount {
+    pub fn build(blockchain: &Blockchain) -> Result<Box<dyn BlockchainApi>, FactoryError> {
+        match blockchain {
+            Blockchain::InternetComputer => Ok(Box::new(InternetComputer::create())),
+
+            blockchain => Err(FactoryError::UnsupportedBlockchain {
                 blockchain: blockchain.to_string(),
-                standard: standard.to_string(),
             }),
         }
     }

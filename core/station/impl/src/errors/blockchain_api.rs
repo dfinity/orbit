@@ -8,6 +8,12 @@ pub enum BlockchainApiError {
     /// Failed to fetch latest asset balance.
     #[error(r#"Failed to fetch latest asset balance."#)]
     FetchBalanceFailed { asset_id: String },
+    /// Missing metadata key.
+    #[error(r#"Metadata '{key}' not found."#)]
+    MissingMetadata { key: String },
+    /// Invalid metadata value.
+    #[error(r#"Metadata data value for key '{key}'"#)]
+    InvalidMetadata { key: String, value: String },
     /// Invalid address format.
     #[error(r#"Invalid address format. Found {found}, expected {expected}"#)]
     InvalidAddressFormat { found: String, expected: String },
@@ -20,6 +26,9 @@ pub enum BlockchainApiError {
     /// The to address is invalid.
     #[error("The to address '{address}' is invalid: {error}")]
     InvalidToAddress { address: String, error: String },
+    /// Missing asset.
+    #[error(r#"Asset id '{asset_id}' not found."#)]
+    MissingAsset { asset_id: String },
 }
 
 impl DetailableError for BlockchainApiError {
@@ -48,6 +57,19 @@ impl DetailableError for BlockchainApiError {
             BlockchainApiError::InvalidAddressFormat { found, expected } => {
                 details.insert("found".to_string(), found.to_string());
                 details.insert("expected".to_string(), expected.to_string());
+                Some(details)
+            }
+            BlockchainApiError::MissingMetadata { key } => {
+                details.insert("key".to_string(), key.to_string());
+                Some(details)
+            }
+            BlockchainApiError::InvalidMetadata { key, value } => {
+                details.insert("key".to_string(), key.to_string());
+                details.insert("value".to_string(), value.to_string());
+                Some(details)
+            }
+            BlockchainApiError::MissingAsset { asset_id } => {
+                details.insert("asset_id".to_string(), asset_id.to_string());
                 Some(details)
             }
         }
