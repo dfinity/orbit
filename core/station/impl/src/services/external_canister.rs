@@ -14,10 +14,11 @@ use crate::models::resource::{
     ExternalCanisterResourceAction, Resource, ValidationMethodResourceTarget,
 };
 use crate::models::{
-    AddRequestPolicyOperationInput, CanisterMethod, ConfigureExternalCanisterSettingsInput,
-    CreateExternalCanisterOperationInput, CreateExternalCanisterOperationKind,
-    DefiniteCanisterSettingsInput, EditPermissionOperationInput, EditRequestPolicyOperationInput,
-    ExternalCanister, ExternalCanisterAvailableFilters, ExternalCanisterCallPermission,
+    AddRequestPolicyOperationInput, CanisterExecutionAndValidationMethodPairInput, CanisterMethod,
+    ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
+    CreateExternalCanisterOperationKind, DefiniteCanisterSettingsInput,
+    EditPermissionOperationInput, EditRequestPolicyOperationInput, ExternalCanister,
+    ExternalCanisterAvailableFilters, ExternalCanisterCallPermission,
     ExternalCanisterCallRequestPolicyRule, ExternalCanisterCallRequestPolicyRuleInput,
     ExternalCanisterCallerMethodsPrivileges, ExternalCanisterCallerPrivileges,
     ExternalCanisterChangeCallPermissionsInput, ExternalCanisterChangeCallRequestPoliciesInput,
@@ -668,27 +669,32 @@ impl ExternalCanisterService {
                         calls,
                     )?,
                 ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(calls) => {
-                    for call in calls {
-                        let updated_policies = call.policies
-                            .iter()
-                            .map(|policy|
-                                ExternalCanisterCallRequestPolicyRuleInput {
-                                    policy_id: policy.policy_id,
-                                    rule: policy.rule.clone(),
-                                    execution_method: call.method_configuration.execution_method.clone(),
-                                    validation_method: call.method_configuration.validation_method.clone(),
-                                }
-                            ).collect::<Vec<ExternalCanisterCallRequestPolicyRuleInput>>();
+                    let mut calls_by_method_pairs: HashMap<CanisterExecutionAndValidationMethodPairInput, HashSet<ExternalCanisterCallRequestPolicyRuleInput>> = HashMap::new();
+                    calls.iter().for_each(|call| {
+                        let entries = calls_by_method_pairs
+                            .entry(call.method_configuration.clone())
+                            .or_default();
 
+                        call.policies.iter().for_each(|policy| {
+                            entries.insert(ExternalCanisterCallRequestPolicyRuleInput {
+                                policy_id: policy.policy_id,
+                                rule: policy.rule.clone(),
+                                execution_method: call.method_configuration.execution_method.clone(),
+                                validation_method: call.method_configuration.validation_method.clone(),
+                            });
+                        });
+                    });
+
+                    for (method_pair, calls) in calls_by_method_pairs {
                         self.maybe_mutate_canister_calls_request_policies(
                             external_canister,
                             &self.request_policy_repository
                             .find_external_canister_call_policies_by_execution_and_validation_method(
                                 &external_canister.canister_id,
-                                &call.method_configuration.execution_method,
-                                &call.method_configuration.validation_method
+                                &method_pair.execution_method,
+                                &method_pair.validation_method
                             ),
-                            &updated_policies,
+                            &calls.into_iter().collect::<Vec<_>>(),
                         )?;
                     }
                 }
