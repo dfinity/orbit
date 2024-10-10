@@ -698,19 +698,21 @@ impl ExternalCanisterService {
                     calls,
                 ) => {
                     // first aggregates the calls by the execution method
-                    let calls_by_execution_method = calls.iter().fold(
-                        HashMap::new(),
-                        |mut acc: HashMap<
-                            String,
-                            Vec<ExternalCanisterCallRequestPolicyRuleInput>,
-                        >,
-                         call| {
-                            acc.entry(call.execution_method.clone())
-                                .or_default()
-                                .push(call.clone());
-                            acc
-                        },
-                    );
+                    let mut calls_by_execution_method: HashMap<String, HashSet<ExternalCanisterCallRequestPolicyRuleInput>> = HashMap::new();
+                    calls.iter().for_each(|call| {
+                        let entries = calls_by_execution_method
+                            .entry(call.execution_method.clone())
+                            .or_default();
+
+                        call.policies.iter().for_each(|policy| {
+                            entries.insert(ExternalCanisterCallRequestPolicyRuleInput {
+                                policy_id: policy.policy_id,
+                                rule: policy.rule.clone(),
+                                execution_method: call.execution_method.clone(),
+                                validation_method: policy.validation_method.clone(),
+                            });
+                        });
+                    });
 
                     for (method, calls) in calls_by_execution_method {
                         self.maybe_mutate_canister_calls_request_policies(
@@ -721,7 +723,8 @@ impl ExternalCanisterService {
                                     &external_canister.canister_id,
                                     &method,
                                 ),
-                            &calls,
+
+                            &calls.into_iter().collect::<Vec<_>>(),
                         )?;
                     }
                 }
@@ -917,64 +920,47 @@ impl ExternalCanisterService {
                 ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
                     calls,
                 ) => {
-                    let update_call_methods: HashSet<_> = calls
-                        .iter()
-                        .map(|call| call.execution_method.clone())
-                        .collect();
+                    let mut calls_by_execution_method: HashMap<String, HashSet<ExternalCanisterCallPermission>> = HashMap::new();
+                    calls.iter().for_each(|call| {
+                        let entries = calls_by_execution_method
+                            .entry(call.execution_method.clone())
+                            .or_default();
 
-                    self.maybe_mutate_canister_calls_permissions(
-                        external_canister,
-                        &calls,
-                        |permission| {
-                            matches!(
-                                &permission.resource,
-                                Resource::ExternalCanister(
-                                    ExternalCanisterResourceAction::Call(
-                                        CallExternalCanisterResourceTarget {
-                                            execution_method:
-                                                ExecutionMethodResourceTarget::ExecutionMethod(
-                                                    CanisterMethod {
-                                                        canister_id: _,
-                                                        method_name,
-                                                    },
-                                                ),
-                                            validation_method: _,
-                                        },
-                                    ),
-                                ) if update_call_methods.contains(method_name)
-                            )
-                        },
-                    )?;
-                }
-                ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
-                    // removes the all call permissions associated with the methods specified of the external canister
-                    let methods: HashSet<_> = methods.iter().cloned().collect();
-                    self.permission_repository
-                        .find_external_canister_call_permissions(&external_canister.canister_id)
-                        .iter()
-                        .filter(|permission| {
-                            matches!(
-                                &permission.resource,
-                                Resource::ExternalCanister(
-                                    ExternalCanisterResourceAction::Call(
-                                        CallExternalCanisterResourceTarget {
-                                            execution_method:
-                                                ExecutionMethodResourceTarget::ExecutionMethod(
-                                                    CanisterMethod {
-                                                        canister_id: _,
-                                                        method_name,
-                                                    },
-                                                ),
-                                            validation_method: _,
-                                        },
-                                    ),
-                                ) if methods.contains(method_name)
-                            )
-                        })
-                        .for_each(|permission| {
-                            self.permission_service
-                                .remove_permission(&permission.resource);
+                        call.permissions.iter().for_each(|policy| {
+                            entries.insert(ExternalCanisterCallPermission {
+                                allow: policy.allow.clone(),
+                                execution_method: call.execution_method.clone(),
+                                validation_method: policy.validation_method.clone(),
+                            });
                         });
+                    });
+
+                    for (execution_method, calls) in calls_by_execution_method {
+                        self.maybe_mutate_canister_calls_permissions(
+                            external_canister,
+                            &calls.into_iter().collect::<Vec<_>>(),
+                            // always remove all existing call permissions to override them
+                            |permission| {
+                                matches!(
+                                    &permission.resource,
+                                    Resource::ExternalCanister(
+                                        ExternalCanisterResourceAction::Call(
+                                            CallExternalCanisterResourceTarget {
+                                                execution_method:
+                                                    ExecutionMethodResourceTarget::ExecutionMethod(
+                                                        CanisterMethod {
+                                                            canister_id: _,
+                                                            method_name,
+                                                        },
+                                                    ),
+                                                validation_method: _,
+                                            },
+                                        ),
+                                    ) if *method_name == execution_method
+                                )
+                            },
+                        )?;
+                    }
                 }
             }
         }
@@ -1235,9 +1221,14 @@ mod tests {
             resource::ValidationMethodResourceTarget,
             CanisterExecutionAndValidationMethodPairInput,
             CreateExternalCanisterOperationKindAddExisting, ExternalCanisterCallPermission,
+            ExternalCanisterCallPermissionExecMethodEntryInput,
+            ExternalCanisterCallPermissionExecMethodListInput,
             ExternalCanisterCallPermissionMethodPairInput,
+            ExternalCanisterCallRequestPoliciesExecMethodInput,
             ExternalCanisterCallRequestPoliciesMethodPairInput,
-            ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterChangeCallPermissionsInput,
+            ExternalCanisterCallRequestPolicyRuleInput,
+            ExternalCanisterCallRequestPolicyRuleValidationInput,
+            ExternalCanisterChangeCallPermissionsInput,
             ExternalCanisterChangeCallRequestPoliciesInput,
             ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
             ExternalCanisterRequestPoliciesCreateInput, RequestPolicyRule,
@@ -1776,7 +1767,17 @@ mod tests {
                         },
                         ExternalCanisterCallPermission {
                             allow: Allow::authenticated(),
-                            execution_method: "kept_method".to_string(),
+                            execution_method: "test".to_string(),
+                            validation_method: ValidationMethodResourceTarget::ValidationMethod(
+                                CanisterMethod {
+                                    canister_id: Principal::from_slice(&[10; 29]),
+                                    method_name: "validate_test_2".to_string(),
+                                },
+                            ),
+                        },
+                        ExternalCanisterCallPermission {
+                            allow: Allow::authenticated(),
+                            execution_method: "to_remove_method".to_string(),
                             validation_method: ValidationMethodResourceTarget::No,
                         },
                     ],
@@ -1797,7 +1798,18 @@ mod tests {
                         },
                         ExternalCanisterCallRequestPolicyRuleInput {
                             policy_id: None,
-                            execution_method: "kept_method".to_string(),
+                            execution_method: "test".to_string(),
+                            validation_method: ValidationMethodResourceTarget::ValidationMethod(
+                                CanisterMethod {
+                                    canister_id: Principal::from_slice(&[10; 29]),
+                                    method_name: "validate_test_2".to_string(),
+                                },
+                            ),
+                            rule: RequestPolicyRule::AutoApproved,
+                        },
+                        ExternalCanisterCallRequestPolicyRuleInput {
+                            policy_id: None,
+                            execution_method: "to_remove_method".to_string(),
                             validation_method: ValidationMethodResourceTarget::No,
                             rule: RequestPolicyRule::AutoApproved,
                         },
@@ -1819,6 +1831,10 @@ mod tests {
                 canister_id: canister.canister_id,
                 method_name: "validate_test".to_string(),
             }),
+        };
+        let to_remove_method_pair = CanisterExecutionAndValidationMethodPairInput {
+            execution_method: "to_remove_method".to_string(),
+            validation_method: ValidationMethodResourceTarget::No,
         };
         let target_policy_id = REQUEST_POLICY_REPOSITORY
             .find_external_canister_call_policies_by_execution_and_validation_method(
@@ -1871,7 +1887,7 @@ mod tests {
         let permissions = PERMISSION_REPOSITORY
             .find_external_canister_call_permissions(&updated_canister.canister_id);
 
-        assert_eq!(permissions.len(), 2);
+        assert_eq!(permissions.len(), 3);
 
         let updated_permission = permissions
             .iter()
@@ -1902,7 +1918,7 @@ mod tests {
             .get_external_canister_request_policies(&updated_canister.canister_id)
             .calls;
 
-        assert_eq!(policies.len(), 2);
+        assert_eq!(policies.len(), 3);
 
         let updated_policy = policies
             .iter()
@@ -1917,7 +1933,7 @@ mod tests {
             RequestPolicyRule::Not(Box::new(RequestPolicyRule::AutoApproved))
         );
 
-        // updates the same method pair and ensure the permission and policy are removed
+        // remove the method pair and ensure the permission and policy are removed
         let updated_canister =
             EXTERNAL_CANISTER_SERVICE
                 .edit_external_canister(
@@ -1933,7 +1949,7 @@ mod tests {
                             calls: Some(
                                 ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionValidationMethodPairs(
                                     vec![ExternalCanisterCallPermissionMethodPairInput {
-                                        method_configuration: updated_method_pair.clone(),
+                                        method_configuration: to_remove_method_pair.clone(),
                                         allow: None,
                                     }],
                                 ),
@@ -1944,8 +1960,63 @@ mod tests {
                             calls: Some(
                                 ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(
                                     vec![ExternalCanisterCallRequestPoliciesMethodPairInput {
-                                        method_configuration: updated_method_pair.clone(),
+                                        method_configuration: to_remove_method_pair.clone(),
                                         policies: Vec::new(),
+                                    }],
+                                ),
+                            ),
+                        }),
+                    },
+                )
+                .unwrap();
+
+        let permissions = PERMISSION_REPOSITORY
+            .find_external_canister_call_permissions(&updated_canister.canister_id);
+
+        assert_eq!(permissions.len(), 2);
+
+        let policies = EXTERNAL_CANISTER_SERVICE
+            .get_external_canister_request_policies(&updated_canister.canister_id)
+            .calls;
+
+        assert_eq!(policies.len(), 2);
+
+        // and finally update by the execution method only, which should override the list with the new values
+        let updated_canister =
+            EXTERNAL_CANISTER_SERVICE
+                .edit_external_canister(
+                    &canister.id,
+                    ConfigureExternalCanisterSettingsInput {
+                        name: None,
+                        description: None,
+                        labels: None,
+                        state: None,
+                        permissions: Some(ExternalCanisterPermissionsUpdateInput {
+                            read: None,
+                            change: None,
+                            calls: Some(
+                                ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
+                                    vec![ExternalCanisterCallPermissionExecMethodListInput {
+                                        execution_method: updated_method_pair.execution_method.to_string(),
+                                        permissions: vec![ExternalCanisterCallPermissionExecMethodEntryInput {
+                                            validation_method: ValidationMethodResourceTarget::No,
+                                            allow: Allow::public(),
+                                        }],
+                                    }],
+                                ),
+                            ),
+                        }),
+                        request_policies: Some(ExternalCanisterRequestPoliciesUpdateInput {
+                            change: None,
+                            calls: Some(
+                                ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionMethods(
+                                    vec![ExternalCanisterCallRequestPoliciesExecMethodInput {
+                                        execution_method: updated_method_pair.execution_method.to_string(),
+                                        policies: vec![ExternalCanisterCallRequestPolicyRuleValidationInput {
+                                            policy_id: None,
+                                            rule: RequestPolicyRule::AutoApproved,
+                                            validation_method: ValidationMethodResourceTarget::No,
+                                        }],
                                     }],
                                 ),
                             ),

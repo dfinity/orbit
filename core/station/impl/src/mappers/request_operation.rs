@@ -23,10 +23,14 @@ use crate::{
         EditAccountOperationInput, EditAddressBookEntryOperation, EditPermissionOperation,
         EditPermissionOperationInput, EditRequestPolicyOperation, EditRequestPolicyOperationInput,
         EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
-        ExternalCanisterCallPermission, ExternalCanisterCallPermissionMethodPairInput,
+        ExternalCanisterCallPermission, ExternalCanisterCallPermissionExecMethodEntryInput,
+        ExternalCanisterCallPermissionExecMethodListInput,
+        ExternalCanisterCallPermissionMethodPairInput,
+        ExternalCanisterCallRequestPoliciesExecMethodInput,
         ExternalCanisterCallRequestPoliciesMethodPairInput,
-        ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterChangeCallPermissionsInput,
-        ExternalCanisterChangeCallRequestPoliciesInput,
+        ExternalCanisterCallRequestPolicyRuleInput,
+        ExternalCanisterCallRequestPolicyRuleValidationInput,
+        ExternalCanisterChangeCallPermissionsInput, ExternalCanisterChangeCallRequestPoliciesInput,
         ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
         ExternalCanisterPermissionsUpdateInput, ExternalCanisterRequestPoliciesCreateInput,
         ExternalCanisterRequestPoliciesUpdateInput, FundExternalCanisterOperation,
@@ -819,6 +823,118 @@ impl From<ExternalCanisterCallPermissionMethodPairInput>
     }
 }
 
+impl From<station_api::ExternalCanisterCallRequestPolicyRuleValidationInput>
+    for ExternalCanisterCallRequestPolicyRuleValidationInput
+{
+    fn from(
+        input: station_api::ExternalCanisterCallRequestPolicyRuleValidationInput,
+    ) -> ExternalCanisterCallRequestPolicyRuleValidationInput {
+        ExternalCanisterCallRequestPolicyRuleValidationInput {
+            policy_id: input.policy_id.map(|policy_id| {
+                *HelperMapper::to_uuid(policy_id)
+                    .expect("Invalid policy id format")
+                    .as_bytes()
+            }),
+            rule: input.rule.into(),
+            validation_method: input.validation_method.into(),
+        }
+    }
+}
+
+impl From<ExternalCanisterCallRequestPolicyRuleValidationInput>
+    for station_api::ExternalCanisterCallRequestPolicyRuleValidationInput
+{
+    fn from(
+        input: ExternalCanisterCallRequestPolicyRuleValidationInput,
+    ) -> station_api::ExternalCanisterCallRequestPolicyRuleValidationInput {
+        station_api::ExternalCanisterCallRequestPolicyRuleValidationInput {
+            policy_id: input
+                .policy_id
+                .map(|policy_id| Uuid::from_bytes(policy_id).hyphenated().to_string()),
+            rule: input.rule.into(),
+            validation_method: input.validation_method.into(),
+        }
+    }
+}
+
+impl From<station_api::ExternalCanisterCallRequestPoliciesExecMethodInput>
+    for ExternalCanisterCallRequestPoliciesExecMethodInput
+{
+    fn from(
+        input: station_api::ExternalCanisterCallRequestPoliciesExecMethodInput,
+    ) -> ExternalCanisterCallRequestPoliciesExecMethodInput {
+        ExternalCanisterCallRequestPoliciesExecMethodInput {
+            execution_method: input.execution_method,
+            policies: input.policies.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<ExternalCanisterCallRequestPoliciesExecMethodInput>
+    for station_api::ExternalCanisterCallRequestPoliciesExecMethodInput
+{
+    fn from(
+        input: ExternalCanisterCallRequestPoliciesExecMethodInput,
+    ) -> station_api::ExternalCanisterCallRequestPoliciesExecMethodInput {
+        station_api::ExternalCanisterCallRequestPoliciesExecMethodInput {
+            execution_method: input.execution_method,
+            policies: input.policies.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<station_api::ExternalCanisterCallPermissionExecMethodEntryInput>
+    for ExternalCanisterCallPermissionExecMethodEntryInput
+{
+    fn from(
+        input: station_api::ExternalCanisterCallPermissionExecMethodEntryInput,
+    ) -> ExternalCanisterCallPermissionExecMethodEntryInput {
+        ExternalCanisterCallPermissionExecMethodEntryInput {
+            validation_method: input.validation_method.into(),
+            allow: input.allow.into(),
+        }
+    }
+}
+
+impl From<ExternalCanisterCallPermissionExecMethodEntryInput>
+    for station_api::ExternalCanisterCallPermissionExecMethodEntryInput
+{
+    fn from(
+        input: ExternalCanisterCallPermissionExecMethodEntryInput,
+    ) -> station_api::ExternalCanisterCallPermissionExecMethodEntryInput {
+        station_api::ExternalCanisterCallPermissionExecMethodEntryInput {
+            validation_method: input.validation_method.into(),
+            allow: input.allow.into(),
+        }
+    }
+}
+
+impl From<station_api::ExternalCanisterCallPermissionExecMethodListInput>
+    for ExternalCanisterCallPermissionExecMethodListInput
+{
+    fn from(
+        input: station_api::ExternalCanisterCallPermissionExecMethodListInput,
+    ) -> ExternalCanisterCallPermissionExecMethodListInput {
+        ExternalCanisterCallPermissionExecMethodListInput {
+            execution_method: input.execution_method,
+            permissions: input.permissions.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
+impl From<ExternalCanisterCallPermissionExecMethodListInput>
+    for station_api::ExternalCanisterCallPermissionExecMethodListInput
+{
+    fn from(
+        input: ExternalCanisterCallPermissionExecMethodListInput,
+    ) -> station_api::ExternalCanisterCallPermissionExecMethodListInput {
+        station_api::ExternalCanisterCallPermissionExecMethodListInput {
+            execution_method: input.execution_method,
+            permissions: input.permissions.into_iter().map(Into::into).collect(),
+        }
+    }
+}
+
 impl From<station_api::ExternalCanisterChangeCallPermissionsInput>
     for ExternalCanisterChangeCallPermissionsInput
 {
@@ -836,11 +952,6 @@ impl From<station_api::ExternalCanisterChangeCallPermissionsInput>
             ) => ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
                 input.into_iter().map(Into::into).collect(),
             ),
-            station_api::ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
-                ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(
-                    methods.into_iter().map(Into::into).collect(),
-                )
-            }
             station_api::ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionValidationMethodPairs(
                 input,
             ) => ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionValidationMethodPairs(
@@ -865,11 +976,6 @@ impl From<ExternalCanisterChangeCallPermissionsInput>
             ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(input) => {
                 station_api::ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
                     input.into_iter().map(Into::into).collect(),
-                )
-            }
-            ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(methods) => {
-                station_api::ExternalCanisterChangeCallPermissionsInput::RemoveByExecutionMethods(
-                    methods.into_iter().map(Into::into).collect(),
                 )
             }
             ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionValidationMethodPairs(input) => {

@@ -186,20 +186,27 @@ export const idlFactory = ({ IDL }) => {
     'auth_scope' : AuthScope,
     'users' : IDL.Vec(UUID),
   });
+  const CanisterExecutionAndValidationMethodPair = IDL.Record({
+    'execution_method' : IDL.Text,
+    'validation_method' : ValidationMethodResourceTarget,
+  });
   const ExternalCanisterCallPermission = IDL.Record({
     'execution_method' : IDL.Text,
     'allow' : Allow,
     'validation_method' : ValidationMethodResourceTarget,
   });
-  const CanisterExecutionAndValidationMethodPair = IDL.Record({
-    'execution_method' : IDL.Text,
-    'validation_method' : ValidationMethodResourceTarget,
-  });
   const ExternalCanisterChangeCallPermissionsInput = IDL.Variant({
     'OverrideSpecifiedByExecutionMethods' : IDL.Vec(
-      ExternalCanisterCallPermission
+      IDL.Record({
+        'execution_method' : IDL.Text,
+        'permissions' : IDL.Vec(
+          IDL.Record({
+            'allow' : Allow,
+            'validation_method' : ValidationMethodResourceTarget,
+          })
+        ),
+      })
     ),
-    'RemoveByExecutionMethods' : IDL.Vec(IDL.Text),
     'OverrideSpecifiedByExecutionValidationMethodPairs' : IDL.Vec(
       IDL.Record({
         'allow' : IDL.Opt(Allow),
@@ -242,20 +249,29 @@ export const idlFactory = ({ IDL }) => {
       'AllowListedByMetadata' : AddressBookMetadata,
     })
   );
+  const ExternalCanisterChangeRequestPolicyRuleInput = IDL.Record({
+    'rule' : RequestPolicyRule,
+    'policy_id' : IDL.Opt(UUID),
+  });
   const ExternalCanisterCallRequestPolicyRuleInput = IDL.Record({
     'execution_method' : IDL.Text,
     'rule' : RequestPolicyRule,
     'validation_method' : ValidationMethodResourceTarget,
     'policy_id' : IDL.Opt(UUID),
   });
-  const ExternalCanisterChangeRequestPolicyRuleInput = IDL.Record({
-    'rule' : RequestPolicyRule,
-    'policy_id' : IDL.Opt(UUID),
-  });
   const ExternalCanisterChangeCallRequestPoliciesInput = IDL.Variant({
     'RemoveByPolicyIds' : IDL.Vec(UUID),
     'OverrideSpecifiedByExecutionMethods' : IDL.Vec(
-      ExternalCanisterCallRequestPolicyRuleInput
+      IDL.Record({
+        'execution_method' : IDL.Text,
+        'policies' : IDL.Vec(
+          IDL.Record({
+            'rule' : RequestPolicyRule,
+            'validation_method' : ValidationMethodResourceTarget,
+            'policy_id' : IDL.Opt(UUID),
+          })
+        ),
+      })
     ),
     'OverrideSpecifiedByExecutionValidationMethodPairs' : IDL.Vec(
       IDL.Record({

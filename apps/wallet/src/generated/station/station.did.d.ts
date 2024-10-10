@@ -413,10 +413,17 @@ export interface ExternalCanisterCallerPrivileges {
 }
 export type ExternalCanisterChangeCallPermissionsInput = {
     'OverrideSpecifiedByExecutionMethods' : Array<
-      ExternalCanisterCallPermission
+      {
+        'execution_method' : string,
+        'permissions' : Array<
+          {
+            'allow' : Allow,
+            'validation_method' : ValidationMethodResourceTarget,
+          }
+        >,
+      }
     >
   } |
-  { 'RemoveByExecutionMethods' : Array<string> } |
   {
     'OverrideSpecifiedByExecutionValidationMethodPairs' : Array<
       {
@@ -431,7 +438,16 @@ export type ExternalCanisterChangeCallRequestPoliciesInput = {
   } |
   {
     'OverrideSpecifiedByExecutionMethods' : Array<
-      ExternalCanisterCallRequestPolicyRuleInput
+      {
+        'execution_method' : string,
+        'policies' : Array<
+          {
+            'rule' : RequestPolicyRule,
+            'validation_method' : ValidationMethodResourceTarget,
+            'policy_id' : [] | [UUID],
+          }
+        >,
+      }
     >
   } |
   {

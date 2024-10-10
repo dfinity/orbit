@@ -68,10 +68,21 @@ pub struct ExternalCanisterCallPermissionMethodPairInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterCallPermissionExecMethodEntryInput {
+    pub allow: AllowDTO,
+    pub validation_method: ValidationMethodResourceTargetDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterCallPermissionExecMethodListInput {
+    pub execution_method: String,
+    pub permissions: Vec<ExternalCanisterCallPermissionExecMethodEntryInput>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ExternalCanisterChangeCallPermissionsInput {
     ReplaceAllBy(Vec<ExternalCanisterCallPermissionDTO>),
-    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallPermissionDTO>),
-    RemoveByExecutionMethods(Vec<String>),
+    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallPermissionExecMethodListInput>),
     OverrideSpecifiedByExecutionValidationMethodPairs(
         Vec<ExternalCanisterCallPermissionMethodPairInput>,
     ),
@@ -222,10 +233,23 @@ pub struct ExternalCanisterCallRequestPoliciesMethodPairInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterCallRequestPolicyRuleValidationInput {
+    pub policy_id: Option<UuidDTO>,
+    pub rule: RequestPolicyRuleDTO,
+    pub validation_method: ValidationMethodResourceTargetDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct ExternalCanisterCallRequestPoliciesExecMethodInput {
+    pub execution_method: String,
+    pub policies: Vec<ExternalCanisterCallRequestPolicyRuleValidationInput>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum ExternalCanisterChangeCallRequestPoliciesInput {
     ReplaceAllBy(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
     RemoveByPolicyIds(Vec<UuidDTO>),
-    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
+    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallRequestPoliciesExecMethodInput>),
     OverrideSpecifiedByExecutionValidationMethodPairs(
         Vec<ExternalCanisterCallRequestPoliciesMethodPairInput>,
     ),

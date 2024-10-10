@@ -330,7 +330,7 @@ impl ModelValidator<ExternalCanisterValidationError>
                     policies,
                 ) => policies
                     .iter()
-                    .filter_map(|p| p.policy_id)
+                    .flat_map(|p| p.policies.iter().filter_map(|p| p.policy_id))
                     .collect::<Vec<_>>(),
                 ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(
                     operations,
