@@ -386,7 +386,7 @@ pub struct ExternalCanisterCallPermissionExecMethodEntryInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ExternalCanisterCallPermissionExecMethodListInput {
+pub struct ExternalCanisterCallPermissionsExecMethodInput {
     pub execution_method: String,
     pub permissions: Vec<ExternalCanisterCallPermissionExecMethodEntryInput>,
 }
@@ -395,7 +395,7 @@ pub struct ExternalCanisterCallPermissionExecMethodListInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ExternalCanisterChangeCallPermissionsInput {
     ReplaceAllBy(Vec<ExternalCanisterCallPermission>),
-    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallPermissionExecMethodListInput>),
+    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallPermissionsExecMethodInput>),
     OverrideSpecifiedByExecutionValidationMethodPairs(
         Vec<ExternalCanisterCallPermissionMethodPairInput>,
     ),

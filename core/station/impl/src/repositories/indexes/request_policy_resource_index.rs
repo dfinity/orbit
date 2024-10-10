@@ -428,6 +428,7 @@ mod tests {
         // then insert another policy with the same execution method but different validation method
         let execution_method_policy_first_policy_id = [1; 16];
         let execution_method_policy_second_policy_id = [20; 16];
+        let execution_method_policy_third_policy_id = [21; 16];
         repository.insert(RequestPolicyResourceIndex {
             resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
                 CallExternalCanisterResourceTarget {
@@ -446,6 +447,21 @@ mod tests {
                 },
             )),
             policy_id: execution_method_policy_second_policy_id,
+        });
+
+        repository.insert(RequestPolicyResourceIndex {
+            resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
+                CallExternalCanisterResourceTarget {
+                    execution_method: ExecutionMethodResourceTarget::ExecutionMethod(
+                        CanisterMethod {
+                            canister_id: Principal::management_canister(),
+                            method_name: "method_1".to_string(),
+                        },
+                    ),
+                    validation_method: ValidationMethodResourceTarget::No,
+                },
+            )),
+            policy_id: execution_method_policy_third_policy_id,
         });
 
         // and find it by the new validation method
@@ -476,18 +492,29 @@ mod tests {
         assert_eq!(policies.len(), 1);
         assert_eq!(policies[0], execution_method_policy_first_policy_id);
 
+        // and find it by the no validation method
+        let policies = repository
+            .find_external_canister_call_policies_by_execution_and_validation_method(
+                &Principal::management_canister(),
+                "method_1",
+                &ValidationMethodResourceTarget::No,
+            );
+
+        assert_eq!(policies.len(), 1);
+        assert_eq!(policies[0], execution_method_policy_third_policy_id);
+
         // and find both policies by the execution method
         let policies = repository.find_external_canister_call_policies_by_execution_method(
             &Principal::management_canister(),
             "method_1",
         );
 
-        assert_eq!(policies.len(), 2);
+        assert_eq!(policies.len(), 3);
         assert!(policies.contains(&execution_method_policy_first_policy_id));
         assert!(policies.contains(&execution_method_policy_second_policy_id));
 
         // and insert another policy for the same execution method and validation method combination
-        let execution_method_policy_third_policy_id = [21; 16];
+        let execution_method_policy_repeated_policy_id = [22; 16];
         repository.insert(RequestPolicyResourceIndex {
             resource: Resource::ExternalCanister(ExternalCanisterResourceAction::Call(
                 CallExternalCanisterResourceTarget {
@@ -505,7 +532,7 @@ mod tests {
                     ),
                 },
             )),
-            policy_id: execution_method_policy_third_policy_id,
+            policy_id: execution_method_policy_repeated_policy_id,
         });
 
         // and find the two policies with the same execution method and validation method combination
@@ -521,6 +548,6 @@ mod tests {
 
         assert_eq!(policies.len(), 2);
         assert!(policies.contains(&execution_method_policy_first_policy_id));
-        assert!(policies.contains(&execution_method_policy_third_policy_id));
+        assert!(policies.contains(&execution_method_policy_repeated_policy_id));
     }
 }

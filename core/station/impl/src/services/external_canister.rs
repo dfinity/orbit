@@ -669,13 +669,6 @@ impl ExternalCanisterService {
                     )?,
                 ExternalCanisterChangeCallRequestPoliciesInput::OverrideSpecifiedByExecutionValidationMethodPairs(calls) => {
                     for call in calls {
-                        let initial_policy_ids = self.request_policy_repository
-                            .find_external_canister_call_policies_by_execution_and_validation_method(
-                                &external_canister.canister_id,
-                                &call.method_configuration.execution_method,
-                                &call.method_configuration.validation_method
-                            );
-
                         let updated_policies = call.policies
                             .iter()
                             .map(|policy|
@@ -689,7 +682,12 @@ impl ExternalCanisterService {
 
                         self.maybe_mutate_canister_calls_request_policies(
                             external_canister,
-                            &initial_policy_ids,
+                            &self.request_policy_repository
+                            .find_external_canister_call_policies_by_execution_and_validation_method(
+                                &external_canister.canister_id,
+                                &call.method_configuration.execution_method,
+                                &call.method_configuration.validation_method
+                            ),
                             &updated_policies,
                         )?;
                     }
@@ -714,14 +712,14 @@ impl ExternalCanisterService {
                         });
                     });
 
-                    for (method, calls) in calls_by_execution_method {
+                    for (execution_method, calls) in calls_by_execution_method {
                         self.maybe_mutate_canister_calls_request_policies(
                             external_canister,
                             &self
                                 .request_policy_repository
                                 .find_external_canister_call_policies_by_execution_method(
                                     &external_canister.canister_id,
-                                    &method,
+                                    &execution_method,
                                 ),
 
                             &calls.into_iter().collect::<Vec<_>>(),
@@ -1222,8 +1220,8 @@ mod tests {
             CanisterExecutionAndValidationMethodPairInput,
             CreateExternalCanisterOperationKindAddExisting, ExternalCanisterCallPermission,
             ExternalCanisterCallPermissionExecMethodEntryInput,
-            ExternalCanisterCallPermissionExecMethodListInput,
             ExternalCanisterCallPermissionMethodPairInput,
+            ExternalCanisterCallPermissionsExecMethodInput,
             ExternalCanisterCallRequestPoliciesExecMethodInput,
             ExternalCanisterCallRequestPoliciesMethodPairInput,
             ExternalCanisterCallRequestPolicyRuleInput,
@@ -1996,7 +1994,7 @@ mod tests {
                             change: None,
                             calls: Some(
                                 ExternalCanisterChangeCallPermissionsInput::OverrideSpecifiedByExecutionMethods(
-                                    vec![ExternalCanisterCallPermissionExecMethodListInput {
+                                    vec![ExternalCanisterCallPermissionsExecMethodInput {
                                         execution_method: updated_method_pair.execution_method.to_string(),
                                         permissions: vec![ExternalCanisterCallPermissionExecMethodEntryInput {
                                             validation_method: ValidationMethodResourceTarget::No,

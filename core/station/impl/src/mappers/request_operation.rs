@@ -24,8 +24,8 @@ use crate::{
         EditPermissionOperationInput, EditRequestPolicyOperation, EditRequestPolicyOperationInput,
         EditUserGroupOperation, EditUserOperation, EditUserOperationInput,
         ExternalCanisterCallPermission, ExternalCanisterCallPermissionExecMethodEntryInput,
-        ExternalCanisterCallPermissionExecMethodListInput,
         ExternalCanisterCallPermissionMethodPairInput,
+        ExternalCanisterCallPermissionsExecMethodInput,
         ExternalCanisterCallRequestPoliciesExecMethodInput,
         ExternalCanisterCallRequestPoliciesMethodPairInput,
         ExternalCanisterCallRequestPolicyRuleInput,
@@ -909,26 +909,26 @@ impl From<ExternalCanisterCallPermissionExecMethodEntryInput>
     }
 }
 
-impl From<station_api::ExternalCanisterCallPermissionExecMethodListInput>
-    for ExternalCanisterCallPermissionExecMethodListInput
+impl From<station_api::ExternalCanisterCallPermissionsExecMethodInput>
+    for ExternalCanisterCallPermissionsExecMethodInput
 {
     fn from(
-        input: station_api::ExternalCanisterCallPermissionExecMethodListInput,
-    ) -> ExternalCanisterCallPermissionExecMethodListInput {
-        ExternalCanisterCallPermissionExecMethodListInput {
+        input: station_api::ExternalCanisterCallPermissionsExecMethodInput,
+    ) -> ExternalCanisterCallPermissionsExecMethodInput {
+        ExternalCanisterCallPermissionsExecMethodInput {
             execution_method: input.execution_method,
             permissions: input.permissions.into_iter().map(Into::into).collect(),
         }
     }
 }
 
-impl From<ExternalCanisterCallPermissionExecMethodListInput>
-    for station_api::ExternalCanisterCallPermissionExecMethodListInput
+impl From<ExternalCanisterCallPermissionsExecMethodInput>
+    for station_api::ExternalCanisterCallPermissionsExecMethodInput
 {
     fn from(
-        input: ExternalCanisterCallPermissionExecMethodListInput,
-    ) -> station_api::ExternalCanisterCallPermissionExecMethodListInput {
-        station_api::ExternalCanisterCallPermissionExecMethodListInput {
+        input: ExternalCanisterCallPermissionsExecMethodInput,
+    ) -> station_api::ExternalCanisterCallPermissionsExecMethodInput {
+        station_api::ExternalCanisterCallPermissionsExecMethodInput {
             execution_method: input.execution_method,
             permissions: input.permissions.into_iter().map(Into::into).collect(),
         }
