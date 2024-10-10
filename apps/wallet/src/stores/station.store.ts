@@ -298,8 +298,12 @@ export const useStationStore = defineStore('station', {
           router.push({
             path: url.pathname,
             query: Array.from(url.searchParams.entries()).reduce(
-              (acc: Record<string, string>, [key, value]) => {
-                acc[key] = value;
+              (acc: Record<string, string[]>, [key, value]) => {
+                if (!acc[key]) {
+                  acc[key] = [];
+                }
+
+                acc[key].push(value);
                 return acc;
               },
               {},

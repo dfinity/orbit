@@ -13,7 +13,7 @@ use crate::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
         AccountKey, CanisterInstallMode, CanisterUpgradeModeArgs, CycleObtainStrategy,
         ManageSystemInfoOperationInput, RequestId, RequestKey, RequestOperation, RequestStatus,
-        SystemUpgradeTarget,
+        SystemUpgradeTarget, WasmModuleExtraChunks,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, RequestRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY,
@@ -137,7 +137,12 @@ impl SystemService {
     }
 
     /// Execute an upgrade of the station by requesting the upgrader to perform it on our behalf.
-    pub async fn upgrade_station(&self, module: &[u8], arg: &[u8]) -> ServiceResult<()> {
+    pub async fn upgrade_station(
+        &self,
+        module: &[u8],
+        module_extra_chunks: &Option<WasmModuleExtraChunks>,
+        arg: &[u8],
+    ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
 
         ic_cdk::call(
@@ -145,6 +150,7 @@ impl SystemService {
             "trigger_upgrade",
             (UpgradeParams {
                 module: module.to_owned(),
+                module_extra_chunks: module_extra_chunks.clone().map(|c| c.into()),
                 arg: arg.to_owned(),
             },),
         )
@@ -157,13 +163,19 @@ impl SystemService {
     }
 
     /// Execute an upgrade of the upgrader canister.
-    pub async fn upgrade_upgrader(&self, module: &[u8], arg: Option<Vec<u8>>) -> ServiceResult<()> {
+    pub async fn upgrade_upgrader(
+        &self,
+        module: &[u8],
+        module_extra_chunks: &Option<WasmModuleExtraChunks>,
+        arg: Option<Vec<u8>>,
+    ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
         self.change_canister_service
             .install_canister(
                 upgrader_canister_id,
                 CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}),
                 module,
+                module_extra_chunks,
                 arg,
             )
             .await

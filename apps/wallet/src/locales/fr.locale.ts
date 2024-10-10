@@ -1,6 +1,7 @@
 export default {
   app: {
     title: 'Portefeuille {app}',
+    name: 'Orbit Wallet',
     action_save_failed: "Échec de sauvegarde de l'action, veuillez essayer de nouveau.",
     action_save_success: "Sauvegarde de l'action réussie.",
     session_load_error: 'Échec du chargement votre session, veuillez essayer de nouveau.',
@@ -97,6 +98,10 @@ export default {
         'Pour vérifier la mise à jour, ouvrez le terminal et suivez les instructions ci-dessous:',
     },
     asset: 'Actif',
+    no_data: 'Pas de données disponibles.',
+    no_matching_results: 'Pas de résultats correspondants trouvés pour `{search}`.',
+    add_new_label: 'Ajouter une nouvelle étiquette: {label}',
+    user_cancel_pending_requests: 'Annuler toutes les demandes en attente de cet usager.',
   },
   alpha_warning: {
     version: 'Ceci est une version alpha.',
@@ -174,6 +179,7 @@ export default {
       transfers: 'Transferts',
       users: 'Usagers',
       assets: 'Actifs',
+      external_canisters: 'Canisters',
     },
     headers: {
       id: 'ID',
@@ -297,6 +303,29 @@ export default {
       removeasset: {
         title: 'Supprimer un actif',
         request_title: 'Demande de supprimer un actif',
+      createexternalcanister: {
+        title: 'Créer un canister',
+        request_title: 'Demande de création de canister',
+      },
+      changeexternalcanister: {
+        title: 'Changer un canister',
+        request_title: 'Demande de changement de canister',
+      },
+      callexternalcanister: {
+        title: 'Appeler un canister',
+        request_title: 'Demande d appel de canister',
+      },
+      fundexternalcanister: {
+        title: 'Recharger un canister',
+        request_title: 'Demande de rechargement de canister',
+      },
+      configureexternalcanister: {
+        title: 'Configurer un canister',
+        request_title: 'Demande de configuration de canister',
+      },
+      setdisasterrecovery: {
+        title: 'Éditer la sauvegarde',
+        request_title: 'Demande d édition de sauvegarde',
       },
       unknown: {
         title: 'Inconnu',
@@ -413,7 +442,88 @@ export default {
     no_withdraw_request_found_search: 'Pas de demande retrait trouvé pour ce critère.',
     add_station_list_item: 'Ajouter un portefeuille',
   },
+  cycles: {
+    units: {
+      tc: 'TC',
+      bc: 'Milliard',
+      mc: 'Million',
+      e8s: 'e8s',
+    },
+  },
+  external_canisters: {
+    add_new_label: 'Ajouter un nouveau étiquette',
+    use_existing: 'Utiliser un existant',
+    create_new: 'Créer un nouveau',
+    initial_cycles: 'Cycles initiaux',
+    target_canister: 'Canister cible',
+    config_read_permission: 'Lecture',
+    config_read_permission_hint: 'Accès pour lire les paramètres du canister.',
+    config_change_permission: 'Changement',
+    config_change_permission_hint: 'Accès pour changer les paramètres du canister.',
+    config_change_approval_policy: 'Changement',
+    config_change_approval_policy_hint:
+      'Politique qui doit être approuvée pour changer les paramètres.',
+    loading_error: 'Erreur de chargement du canister, veuillez essayer de nouveau.',
+    not_found: 'Canister non trouvé.',
+    not_found_description: 'Le canister que vous cherchez n a pas été trouvé.',
+    ic_settings: 'Paramètres IC',
+    top_up: 'Recharger',
+    configuration: 'Configuration',
+    unlink: 'Dissocier',
+    unlink_title: 'Dissocier le Canister',
+    unlink_soft_delete: 'Gardez le canister sur l ordinateur, supprime seulement sa référence.',
+    perform_call: 'Effectuer un appel',
+    module_hash: 'Module Hash',
+    cycles: 'Cycles',
+    not_controller: 'Pas de contrôleur',
+    install: 'Installer',
+    send_cycles: 'Envoyer des cycles',
+    top_up_hint: 'Montant de cycles à ajouter au canister cible.',
+    add_controller: 'Ajouter un contrôleur',
+    no_controllers: 'Pas de contrôleurs',
+    self_controller: 'Contrôleur de soi',
+    non_orbit_controllers_warning:
+      'Cette configuration ajoute des contrôleurs supplémentaires au canister cible, utilisez avec prudence.',
+    native_settings: {
+      freezing_threshold: 'Seuil de gel',
+      freezing_threshold_hint:
+        'Le nombre de secondes pendant lesquelles le canister sera mis dans un état gelé avant d être nettoyé par le réseau.',
+      controllers: 'Contrôleurs',
+      controllers_hint: 'La liste des principaux qui peuvent contrôler le canister.',
+      memory_allocation: 'Allocation de mémoire',
+      memory_allocation_hint:
+        'La quantité maximale de mémoire que le canister peut utiliser, cela réserve également la mémoire dans le sous-réseau.',
+      compute_allocation: 'Allocation de calcul',
+      compute_allocation_hint: 'Le pourcentage de calcul de sous-réseau réservé pour le canister.',
+      reserved_cycles_limit: 'Limite de cycles réservés',
+      reserved_cycles_limit_hint:
+        'Nombre de cycles que le canister peut allouer, les opérations qui allouent de la mémoire ou du calcul échoueront si la limite est atteinte.',
+    },
+    wasm_module: 'Module WASM',
+    wasm_args: 'Arguments',
+    wasm_args_optional: 'Arguments (optionnel)',
+    wasm_args_invalid_format: 'Format d argument invalide',
+    wasm_args_formats: {
+      hex: 'Hex',
+      candid: 'Candid',
+    },
+    install_mode: {
+      reinstall: 'Réinstaller',
+      upgrade: 'Mettre à jour',
+      install: 'Installer',
+    },
+  },
   terms: {
+    more: 'Plus',
+    less: 'Moins',
+    data: 'Données',
+    mode: 'Mode',
+    active: 'Actif',
+    archived: 'Archivé',
+    canisters: 'Canisters',
+    canister: 'Canister',
+    description: 'Description',
+    labels: 'Étiquettes',
     change: 'Changement',
     quorum: 'Quorum',
     deposits: 'Deports',
@@ -578,6 +688,10 @@ export default {
       requiredIntNumber: 'Ce champ doit contenir un nombre entier valide.',
       intNumberRange: 'Le champ {field} doit contenir une valeur valide entre {min} et {max}.',
       validEmail: 'Ce champ doit contenir une adresse email valide.',
+      requiredNumber: 'Ce champ doit contenir un nombre valide.',
+      numberRange: 'Le champ doit contenir une valeur valide entre {min} et {max}.',
+      invalidDecimalPlaces: 'Ce champ doit contenir un maximum de {decimals} décimales.',
+      isHex: 'Ce champ doit contenir une valeur hexadécimale valide.',
     },
   },
   navigation: {
@@ -597,6 +711,7 @@ export default {
     permissions: "Polices d'Accés",
     request_policies: "Polices d'Aprobation",
     assets: 'Actifs',
+    external_canisters: 'Canisters',
   },
   pages: {
     accounts: {
@@ -644,6 +759,13 @@ export default {
       create_new_user_title: 'Créer un nouvel usager',
       btn_edit_title: "Modifier l'usager",
       error_fetching_users: 'Erreur du chargement des usagers, veuillez essayer de nouveau.',
+    },
+    external_canisters: {
+      title: 'Canisters',
+      btn_add_canister: 'Ajouter un canister',
+      add_new_canister_title: 'Ajouter un nouveau canister',
+      edit_canister_title: 'Modifier le canister',
+      error_fetching_canisters: 'Erreur du chargement des canisters, veuillez essayer de nouveau.',
     },
     user_groups: {
       title: "Group d'Usagers",

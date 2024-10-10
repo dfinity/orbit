@@ -7,7 +7,11 @@
     :class="{ 'br-on-background': props.mode === 'grid' }"
   >
     <VCardTitle class="text-body-2 font-weight-bold">
-      {{ $t(`requests.types.${requestType}.title`) }}
+      {{
+        $te(`requests.types.${requestType}.title`)
+          ? $t(`requests.types.${requestType}.title`)
+          : requestType
+      }}
     </VCardTitle>
     <VCardText class="px-4 pb-1">
       <component
@@ -129,7 +133,14 @@ const itemView = computed<{
     }
   }
 
-  return null;
+  // if no operation is found, show unsupported operation
+  const unknownOperationType = Object.keys(props.request.operation)?.[0];
+  return unknownOperationType
+    ? {
+        component: UnsupportedOperation,
+        operation: props.request.operation[unknownOperationType as keyof RequestOperation],
+      }
+    : null;
 });
 
 const requestType = computed(() => {
@@ -139,7 +150,7 @@ const requestType = computed(() => {
       return key.toLowerCase();
     }
   }
-
-  return 'unknown';
+  const unknownOperationType = Object.keys(props.request.operation)?.[0];
+  return unknownOperationType ?? 'unknown';
 });
 </script>

@@ -1,10 +1,16 @@
 export const idlFactory = ({ IDL }) => {
+  const WasmModuleExtraChunks = IDL.Record({
+    'wasm_module_hash' : IDL.Vec(IDL.Nat8),
+    'chunk_hashes_list' : IDL.Vec(IDL.Vec(IDL.Nat8)),
+    'store_canister' : IDL.Principal,
+  });
   const WasmModuleRegistryEntryDependency = IDL.Record({
     'name' : IDL.Text,
     'version' : IDL.Text,
   });
   const WasmModuleRegistryEntryValueInput = IDL.Record({
     'wasm_module' : IDL.Vec(IDL.Nat8),
+    'module_extra_chunks' : IDL.Opt(WasmModuleExtraChunks),
     'version' : IDL.Text,
     'dependencies' : IDL.Vec(WasmModuleRegistryEntryDependency),
   });
@@ -24,6 +30,7 @@ export const idlFactory = ({ IDL }) => {
   const UUID = IDL.Text;
   const TimestampRFC3339 = IDL.Text;
   const WasmModuleRegistryEntryValue = IDL.Record({
+    'module_extra_chunks' : IDL.Opt(WasmModuleExtraChunks),
     'version' : IDL.Text,
     'dependencies' : IDL.Vec(WasmModuleRegistryEntryDependency),
     'wasm_artifact_id' : UUID,
@@ -82,12 +89,18 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
+  const SubnetFilter = IDL.Record({ 'subnet_type' : IDL.Opt(IDL.Text) });
+  const SubnetSelection = IDL.Variant({
+    'Filter' : SubnetFilter,
+    'Subnet' : IDL.Record({ 'subnet' : IDL.Principal }),
+  });
   const DeployStationAdminUserInput = IDL.Record({
     'username' : IDL.Text,
     'identity' : IDL.Principal,
   });
   const DeployStationInput = IDL.Record({
     'name' : IDL.Text,
+    'subnet_selection' : IDL.Opt(SubnetSelection),
     'admins' : IDL.Vec(DeployStationAdminUserInput),
     'associate_with_caller' : IDL.Opt(
       IDL.Record({ 'labels' : IDL.Vec(IDL.Text) })
@@ -246,6 +259,9 @@ export const idlFactory = ({ IDL }) => {
     'Err' : ApiError,
   });
   const UploadCanisterModulesInput = IDL.Record({
+    'station_wasm_module_extra_chunks' : IDL.Opt(
+      IDL.Opt(WasmModuleExtraChunks)
+    ),
     'station_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'upgrader_wasm_module' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });

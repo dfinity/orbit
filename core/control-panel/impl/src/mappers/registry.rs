@@ -52,6 +52,7 @@ impl RegistryMapper {
                         .iter()
                         .map(|dep| dep.clone().into())
                         .collect(),
+                    module_extra_chunks: wasm_module.module_extra_chunks.clone(),
                 });
             }
         }
@@ -93,6 +94,7 @@ impl From<WasmModuleRegistryValue> for control_panel_api::WasmModuleRegistryEntr
             wasm_artifact_id: Uuid::from_bytes(value.wasm_artifact_id).to_string(),
             version: value.version,
             dependencies: value.dependencies.into_iter().map(Into::into).collect(),
+            module_extra_chunks: value.module_extra_chunks.clone(),
         }
     }
 }
@@ -184,6 +186,7 @@ mod tests {
                     version: "1.0.0".to_string(),
                     dependencies: vec![],
                     wasm_module: vec![],
+                    module_extra_chunks: None,
                 },
             ),
         };
@@ -208,6 +211,7 @@ mod tests {
                     version: "1.0.0".to_string(),
                     dependencies: vec![],
                     wasm_module: vec![],
+                    module_extra_chunks: None,
                 },
             ),
         };

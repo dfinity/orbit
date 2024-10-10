@@ -69,6 +69,7 @@ pub struct EditUserOperationInput {
     pub identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<String>>,
     pub status: Option<UserStatusDTO>,
+    pub cancel_pending_requests: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

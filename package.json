@@ -18,24 +18,21 @@
   },
   "packageManager": "pnpm@8.7.4",
   "devDependencies": {
-    "@monodon/rust": "1.4.0",
-    "@nx/js": "19.0.3",
-    "@nx/workspace": "19.0.3",
-    "@swc-node/register": "1.9.1",
-    "@swc/core": "1.5.5",
-    "@swc/helpers": "0.5.11",
+    "@monodon/rust": "2.0.0",
+    "@nx/devkit": "19.8.3",
+    "@nx/js": "19.8.3",
+    "@nx/workspace": "19.8.3",
     "@types/node": "20.11.25",
     "@typescript-eslint/eslint-plugin": "7.9.0",
     "@typescript-eslint/parser": "7.9.0",
     "@vitest/coverage-v8": "1.6.0",
     "concurrently": "8.2.2",
     "eslint-config-prettier": "9.1.0",
-    "nx": "19.0.3",
-    "prettier": "3.2.5",
-    "typescript": "5.4.5",
+    "nx": "19.8.3",
+    "prettier": "3.3.3",
+    "typescript": "5.6.2",
     "vite": "5.2.11",
     "vitest": "1.6.0",
-    "vue-tsc": "2.0.17",
-    "@nx/devkit": "19.0.3"
+    "vue-tsc": "2.1.6"
   }
 }

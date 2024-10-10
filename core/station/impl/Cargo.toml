@@ -2,7 +2,7 @@
 [package]
 name = 'station'
 include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.6'
+version = '0.0.2-alpha.7'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -23,10 +23,10 @@ async-trait = { workspace = true }
 byteorder = { workspace = true }
 canbench-rs = { workspace = true, optional = true }
 candid = { workspace = true }
-canfund = { path = '../../../libs/canfund', version = '0.0.2-alpha.3' }
+canfund = { workspace = true }
 futures = { workspace = true }
 hex = { workspace = true }
-orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.0.2-alpha.4' }
+orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.0.2-alpha.5' }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
@@ -41,8 +41,8 @@ sha2 = { workspace = true }
 strum = { version = '0.26', features = ['derive'] }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ['v4'] }
-station-api = { path = '../api', version = '0.0.2-alpha.5' }
-upgrader-api = { path = '../../upgrader/api', version = '0.0.2-alpha.4' }
+station-api = { path = '../api', version = '0.0.2-alpha.6' }
+upgrader-api = { path = '../../upgrader/api', version = '0.0.2-alpha.5' }
 
 [dev-dependencies]
 candid_parser = { workspace = true }

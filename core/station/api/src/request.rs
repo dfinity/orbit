@@ -47,7 +47,7 @@ pub enum RequestStatusCodeDTO {
     Failed = 7,
 }
 
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum RequestApprovalStatusDTO {
     Approved,
     Rejected,
@@ -240,6 +240,7 @@ pub struct SubmitRequestApprovalResponse {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetRequestInput {
     pub request_id: UuidDTO,
+    pub with_full_info: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

@@ -3,7 +3,11 @@
     <VToolbar color="background" height="auto">
       <VToolbarTitle class="flex">
         <span class="text-body-2 font-weight-light text-wrap">
-          {{ $t(`requests.types.${requestType}.request_title`) }}
+          {{
+            $te(`requests.types.${requestType}.request_title`)
+              ? $t(`requests.types.${requestType}.request_title`)
+              : requestType
+          }}
         </span>
         <br />
         <span v-if="props.request.title" class="text-wrap">
@@ -326,7 +330,14 @@ const detailView = computed<{
     }
   }
 
-  return null;
+  // if no operation is found, show unsupported operation
+  const unknownOperationType = Object.keys(props.request.operation)?.[0];
+  return unknownOperationType
+    ? {
+        component: UnsupportedOperation,
+        operation: props.request.operation[unknownOperationType as keyof RequestOperation],
+      }
+    : null;
 });
 
 const requestType = computed(() => {
@@ -337,7 +348,8 @@ const requestType = computed(() => {
     }
   }
 
-  return 'unknown';
+  const unknownOperationType = Object.keys(props.request.operation)?.[0];
+  return unknownOperationType ?? 'unknown';
 });
 
 const requestFailed = computed(() => {

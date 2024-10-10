@@ -1,24 +1,23 @@
 use candid::Principal;
-use pocket_ic::PocketIc;
+
 use station_api::{
-    AuthScopeDTO, CallExternalCanisterOperationInput, CanisterMethodDTO,
-    EditPermissionOperationInput, GetNextApprovableRequestInput, GetRequestInput,
-    ListRequestsInput, ListRequestsOperationTypeDTO, RequestApprovalStatusDTO,
-    RequestOperationInput, RequestResourceActionDTO, ResourceDTO, SubmitRequestApprovalInput,
+    CallExternalCanisterOperationInput, CanisterMethodDTO, GetNextApprovableRequestInput,
+    GetRequestInput, ListRequestsInput, ListRequestsOperationTypeDTO, RequestOperationInput,
 };
 
 use crate::{
     dfx_orbit::{
-        canister_call::{permit_call_operation, set_four_eyes_on_call},
-        dfx_orbit_test, setup_counter_canister, setup_dfx_orbit, DfxOrbitTestConfig,
-        TEST_PRINCIPAL,
+        setup::{
+            dfx_orbit_test, setup_counter_canister, setup_dfx_orbit, DfxOrbitTestConfig,
+            TEST_PRINCIPAL,
+        },
+        util::{permit_call_operation, permit_list_reads, set_four_eyes_on_call},
     },
-    setup::{setup_new_env, WALLET_ADMIN_USER},
+    setup::setup_new_env,
     utils::{
-        add_user, add_user_with_name, execute_request, submit_request, update_raw, user_test_id,
-        wait_for_request,
+        add_user, add_user_with_name, submit_request, update_raw, user_test_id, wait_for_request,
     },
-    CanisterIds, TestEnv,
+    TestEnv,
 };
 
 #[test]
@@ -116,6 +115,7 @@ fn review() {
             .station
             .review_id(GetRequestInput {
                 request_id: submitted_request.id.clone(),
+                with_full_info: Some(false),
             })
             .await
             .unwrap();
@@ -123,13 +123,9 @@ fn review() {
         assert_eq!(next_request.request.id, id_request.request.id);
 
         // Approve the request
-        let _response = dfx_orbit
+        dfx_orbit
             .station
-            .submit(SubmitRequestApprovalInput {
-                decision: RequestApprovalStatusDTO::Approved,
-                request_id: submitted_request.id,
-                reason: None,
-            })
+            .approve(submitted_request.id, None)
             .await
             .unwrap();
     });
@@ -144,15 +140,4 @@ fn review() {
 
     let ctr = update_raw(&env, canister_id, Principal::anonymous(), "read", vec![]).unwrap();
     assert_eq!(ctr, 42_u32.to_le_bytes());
-}
-
-/// Allow anyone to read request list
-pub(crate) fn permit_list_reads(env: &PocketIc, canister_ids: &CanisterIds) {
-    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: ResourceDTO::Request(RequestResourceActionDTO::List),
-        auth_scope: Some(AuthScopeDTO::Authenticated),
-        user_groups: None,
-        users: None,
-    });
-    execute_request(env, WALLET_ADMIN_USER, canister_ids.station, add_permission).unwrap();
 }

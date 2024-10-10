@@ -2,7 +2,7 @@
 [package]
 name = 'orbit-essentials'
 include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.4'
+version = '0.0.2-alpha.5'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -18,6 +18,7 @@ base64 = { workspace = true }
 candid = { workspace = true }
 convert_case = { workspace = true }
 getrandom = { workspace = true, features = ['custom'] }
+hex = { workspace = true }
 ic-cdk = { workspace = true }
 ic-certification = { workspace = true }
 ic-http-certification = { workspace = true }

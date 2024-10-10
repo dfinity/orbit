@@ -1,6 +1,7 @@
 use super::TimestampRfc3339;
 use crate::{AccountSeedDTO, DisasterRecoveryCommitteeDTO, MetadataDTO, Sha256HashDTO, UuidDTO};
 use candid::{CandidType, Deserialize, Principal};
+use orbit_essentials::types::WasmModuleExtraChunks;
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct SystemInfoDTO {
@@ -129,6 +130,7 @@ pub struct SystemUpgradeOperationInput {
     pub target: SystemUpgradeTargetDTO,
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
 }

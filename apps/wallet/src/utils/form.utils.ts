@@ -18,6 +18,24 @@ export const requiredRule = (value: unknown): string | boolean => {
   return true;
 };
 
+export const isHexRule = (value: unknown): string | true => {
+  const hasValue = !!value;
+  if (!hasValue) {
+    // this rule only applies if there is a value
+    return true;
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error('isHexRule only applies to strings');
+  }
+
+  if (!/^([A-Fa-f0-9]{2})+$/.test(value)) {
+    return i18n.global.t('forms.rules.isHex');
+  }
+
+  return true;
+};
+
 export const intNumberRangeRule = (
   field: string,
   min: number,
@@ -32,13 +50,46 @@ export const intNumberRangeRule = (
 
     const parsedValue = parseInt(`${value}`, 10);
 
-    if (isNaN(parsedValue)) {
+    if (isNaN(parsedValue) || Number(value) % 1 !== 0) {
       return i18n.global.t('forms.rules.requiredIntNumber');
     }
 
     return parsedValue >= min && parsedValue <= max
       ? true
       : i18n.global.t('forms.rules.intNumberRange', { field, min, max });
+  };
+};
+
+export const numberRangeRule = (opts: { decimals?: number; min?: number; max?: number } = {}) => {
+  return (value: unknown): string | boolean => {
+    const hasValue = !!value;
+    if (!hasValue) {
+      // this rule only applies if there is a value
+      return true;
+    }
+
+    const min = opts.min ?? Number.MIN_SAFE_INTEGER;
+    const max = opts.max ?? Number.MAX_SAFE_INTEGER;
+    const allowedDecimalPlaces = opts.decimals ?? 0;
+
+    const parsedValue = opts.decimals ? parseFloat(`${value}`) : parseInt(`${value}`, 10);
+    const parsedDecimalsLength = `${parsedValue}`.split('.')[1]?.length ?? 0;
+
+    if (isNaN(parsedValue)) {
+      return i18n.global.t('forms.rules.requiredNumber');
+    }
+
+    if (allowedDecimalPlaces <= 0 && Number(value) % 1 !== 0) {
+      return i18n.global.t('forms.rules.requiredIntNumber');
+    }
+
+    if (allowedDecimalPlaces > 0 && parsedDecimalsLength > allowedDecimalPlaces) {
+      return i18n.global.t('forms.rules.invalidDecimalPlaces', { decimals: allowedDecimalPlaces });
+    }
+
+    return parsedValue >= min && parsedValue <= max
+      ? true
+      : i18n.global.t('forms.rules.numberRange', { min, max });
   };
 };
 

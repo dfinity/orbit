@@ -314,6 +314,7 @@ pub struct EditUserOperationInput {
     pub identities: Option<Vec<Principal>>,
     pub groups: Option<Vec<UUID>>,
     pub status: Option<UserStatus>,
+    pub cancel_pending_requests: Option<bool>,
 }
 
 #[storable]
@@ -362,11 +363,20 @@ pub enum SystemUpgradeTarget {
 }
 
 #[storable]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct WasmModuleExtraChunks {
+    pub store_canister: Principal,
+    pub chunk_hashes_list: Vec<Vec<u8>>,
+    pub wasm_module_hash: Vec<u8>,
+}
+
+#[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct SystemUpgradeOperationInput {
     pub target: SystemUpgradeTarget,
     /// The module is only available while the operation is not finalized.
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     pub arg: Option<Vec<u8>>,
 }
 
@@ -426,6 +436,7 @@ pub struct ChangeExternalCanisterOperationInput {
     pub canister_id: Principal,
     pub mode: CanisterInstallMode,
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     pub arg: Option<Vec<u8>>,
 }
 
@@ -439,10 +450,56 @@ pub struct ChangeExternalCanisterOperation {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ExternalCanisterPermissionsInput {
+pub struct ExternalCanisterPermissionsCreateInput {
     pub read: Allow,
     pub change: Allow,
     pub calls: Vec<ExternalCanisterCallPermission>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterPermissionsUpdateInput {
+    pub read: Option<Allow>,
+    pub change: Option<Allow>,
+    pub calls: Option<ExternalCanisterChangeCallPermissionsInput>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct CanisterExecutionAndValidationMethodPairInput {
+    pub validation_method: ValidationMethodResourceTarget,
+    pub execution_method: String,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallPermissionMethodPairInput {
+    pub method_configuration: CanisterExecutionAndValidationMethodPairInput,
+    pub allow: Option<Allow>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallPermissionExecMethodEntryInput {
+    pub allow: Allow,
+    pub validation_method: ValidationMethodResourceTarget,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallPermissionsExecMethodInput {
+    pub execution_method: String,
+    pub permissions: Vec<ExternalCanisterCallPermissionExecMethodEntryInput>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ExternalCanisterChangeCallPermissionsInput {
+    ReplaceAllBy(Vec<ExternalCanisterCallPermission>),
+    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallPermissionsExecMethodInput>),
+    OverrideSpecifiedByExecutionValidationMethodPairs(
+        Vec<ExternalCanisterCallPermissionMethodPairInput>,
+    ),
 }
 
 #[storable]
@@ -463,9 +520,49 @@ pub struct ExternalCanisterChangeRequestPolicyRuleInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct ExternalCanisterRequestPoliciesInput {
+pub struct ExternalCanisterRequestPoliciesCreateInput {
     pub change: Vec<ExternalCanisterChangeRequestPolicyRuleInput>,
     pub calls: Vec<ExternalCanisterCallRequestPolicyRuleInput>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterRequestPoliciesUpdateInput {
+    pub change: Option<Vec<ExternalCanisterChangeRequestPolicyRuleInput>>,
+    pub calls: Option<ExternalCanisterChangeCallRequestPoliciesInput>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallRequestPoliciesMethodPairInput {
+    pub method_configuration: CanisterExecutionAndValidationMethodPairInput,
+    pub policies: Vec<ExternalCanisterChangeRequestPolicyRuleInput>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallRequestPolicyRuleValidationInput {
+    pub policy_id: Option<UUID>,
+    pub rule: RequestPolicyRule,
+    pub validation_method: ValidationMethodResourceTarget,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct ExternalCanisterCallRequestPoliciesExecMethodInput {
+    pub execution_method: String,
+    pub policies: Vec<ExternalCanisterCallRequestPolicyRuleValidationInput>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ExternalCanisterChangeCallRequestPoliciesInput {
+    ReplaceAllBy(Vec<ExternalCanisterCallRequestPolicyRuleInput>),
+    RemoveByPolicyIds(Vec<UUID>),
+    OverrideSpecifiedByExecutionMethods(Vec<ExternalCanisterCallRequestPoliciesExecMethodInput>),
+    OverrideSpecifiedByExecutionValidationMethodPairs(
+        Vec<ExternalCanisterCallRequestPoliciesMethodPairInput>,
+    ),
 }
 
 #[storable]
@@ -494,8 +591,8 @@ pub struct CreateExternalCanisterOperationInput {
     pub name: String,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
-    pub permissions: ExternalCanisterPermissionsInput,
-    pub request_policies: ExternalCanisterRequestPoliciesInput,
+    pub permissions: ExternalCanisterPermissionsCreateInput,
+    pub request_policies: ExternalCanisterRequestPoliciesCreateInput,
 }
 
 #[storable]
@@ -561,8 +658,8 @@ pub struct ConfigureExternalCanisterSettingsInput {
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
     pub state: Option<ExternalCanisterState>,
-    pub permissions: Option<ExternalCanisterPermissionsInput>,
-    pub request_policies: Option<ExternalCanisterRequestPoliciesInput>,
+    pub permissions: Option<ExternalCanisterPermissionsUpdateInput>,
+    pub request_policies: Option<ExternalCanisterRequestPoliciesUpdateInput>,
 }
 
 #[storable]

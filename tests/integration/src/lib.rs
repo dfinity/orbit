@@ -14,11 +14,13 @@ mod http;
 mod interfaces;
 mod migration_tests;
 mod notification;
+mod rate_limiter;
 mod register_tests;
 mod setup;
+mod system_upgrade_tests;
 mod test_data;
 mod transfer_tests;
-mod upgrade_station_tests;
+mod user;
 mod utils;
 
 pub struct TestEnv {

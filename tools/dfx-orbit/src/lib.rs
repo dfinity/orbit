@@ -1,24 +1,36 @@
-//! Library for interacting with Orbit on the Internet Computer.
+#![deny(unsafe_code, clippy::unwrap_used, clippy::expect_used)]
 //#![warn(missing_docs)]
-//#![warn(clippy::missing_docs_in_private_items)]
 //#![deny(clippy::panic)]
-//#![deny(clippy::unwrap_used)]
+
+//! Library for interacting with Orbit on the Internet Computer.
 
 pub mod args;
-pub mod cli;
-pub mod dfx_extension_api;
+pub mod asset;
+pub mod canister;
+pub mod dfx;
 pub mod local_config;
-pub mod station_agent;
+mod me;
+pub mod permission;
+pub mod review;
+pub mod station;
+mod util;
 
+use anyhow::{anyhow, bail, Context};
 use candid::Principal;
-use dfx_core::{config::model::canister_id_store::CanisterIdStore, DfxInterface};
-use dfx_extension_api::OrbitExtensionAgent;
+use dfx::OrbitExtensionAgent;
+use dfx_core::{
+    config::model::{
+        canister_id_store::CanisterIdStore,
+        dfinity::{Config, ConfigCanistersCanister},
+    },
+    DfxInterface,
+};
 use ic_utils::{canister::CanisterBuilder, Canister};
-use slog::{o, Drain, Logger};
+use slog::Logger;
+use station::{StationAgent, StationConfig};
 use station_api::CreateRequestResponse;
+use std::sync::Arc;
 
-pub use cli::asset::AssetAgent;
-pub use station_agent::StationAgent;
 pub struct DfxOrbit {
     // The station agent that handles communication with the station
     pub station: StationAgent,
@@ -31,17 +43,19 @@ pub struct DfxOrbit {
 }
 
 impl DfxOrbit {
-    /// Creates a new agent for communicating with the default station.
-    pub async fn new(mut agent: OrbitExtensionAgent) -> anyhow::Result<Self> {
-        let config = agent
-            .default_station()?
-            .ok_or_else(|| anyhow::format_err!("No default station specified"))?;
-        let interface = agent.dfx_interface().await?;
-
-        let decorator = slog_term::TermDecorator::new().build();
-        let drain = slog_term::FullFormat::new(decorator).build().fuse();
-        let drain = slog_async::Async::new(drain).build().fuse();
-        let logger = slog::Logger::root(drain, o!());
+    /// Creates a new agent for communicating with a station.
+    ///
+    /// # Arguments
+    ///
+    /// - `config`: [`StationConfig`] describing the station
+    /// - `with_identity`: If given, tries to load that specific identity, (default otherwise)
+    pub async fn new(
+        mut agent: OrbitExtensionAgent,
+        config: StationConfig,
+        with_identity: Option<String>,
+        logger: Logger,
+    ) -> anyhow::Result<Self> {
+        let interface = agent.dfx_interface(&config.network, with_identity).await?;
 
         Ok(Self {
             station: StationAgent::new(interface.agent().clone(), config),
@@ -59,10 +73,33 @@ impl DfxOrbit {
             self.interface.config(),
         )?;
 
-        let canister_id = Principal::from_text(canister_name)
-            .or_else(|_| canister_id_store.get(canister_name))?;
+        let canister_id = Principal::from_text(canister_name).or_else(|_| {
+            canister_id_store.get(canister_name).with_context(|| {
+                format!(
+                    "Failed to look up principal id for canister named \"{}\"",
+                    canister_name
+                )
+            })
+        })?;
 
         Ok(canister_id)
+    }
+
+    /// Gets the name of the canister given it's id
+    pub fn canister_name(&self, canister_id: &Principal) -> anyhow::Result<String> {
+        let canister_id_store = CanisterIdStore::new(
+            &self.logger,
+            self.interface.network_descriptor(),
+            self.interface.config(),
+        )?;
+
+        let canister_id = canister_id.to_string();
+        let canister_name = canister_id_store
+            .get_name(&canister_id)
+            .cloned()
+            .ok_or(anyhow!("Failed to find canister name"))?;
+
+        Ok(canister_name)
     }
 
     pub fn own_principal(&self) -> anyhow::Result<Principal> {
@@ -85,5 +122,48 @@ impl DfxOrbit {
         println!("Created request: {request_id}");
         println!("Request URL: {request_url}");
         println!("To view the request, run: dfx-orbit review id {request_id}");
+    }
+
+    pub fn get_config(&self) -> anyhow::Result<Arc<Config>> {
+        self.interface.config().ok_or_else(|| {
+            anyhow!("Could not read \"dfx.json\". Are you in the correct directory?")
+        })
+    }
+
+    pub fn get_canister_config(&self, canister: &str) -> anyhow::Result<ConfigCanistersCanister> {
+        let config = self.get_config()?;
+        let canister_config = config
+            .get_config()
+            .canisters
+            .as_ref()
+            .ok_or_else(|| anyhow!("No canisters defined in this \"dfx.json\""))?
+            .get(canister)
+            .ok_or_else(|| anyhow!("Could not find {canister} in \"dfx.json\""))?;
+
+        Ok(canister_config.clone())
+    }
+
+    pub async fn get_controllers(&self, canister_id: Principal) -> anyhow::Result<Vec<Principal>> {
+        let blob = self
+            .interface
+            .agent()
+            .read_state_canister_info(canister_id, "controllers")
+            .await?;
+        let value: ciborium::Value = ciborium::from_reader(&blob[..])?;
+        let ciborium::Value::Array(array) = value else {
+            bail!("Expected an array as result from controllers endpoint")
+        };
+        let result = array
+            .into_iter()
+            .map(|value| match value {
+                ciborium::Value::Bytes(bytes) => Principal::try_from(bytes)
+                    .with_context(|| String::from("Failed to parse principal")),
+                _ => Err(anyhow!(
+                    "Controllers array contained values that are not bytes"
+                )),
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(result)
     }
 }

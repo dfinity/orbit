@@ -1,14 +1,21 @@
+import { IDL } from '@dfinity/candid';
+import { Principal } from '@dfinity/principal';
 import { describe, expect, it, vi } from 'vitest';
+import { LocationQuery } from 'vue-router';
+import { idlFactory } from '~/generated/control-panel';
+import { arrayBufferToHex, hexStringToArrayBuffer } from '~/utils/crypto.utils';
 import {
+  compactArray,
   isSemanticVersion,
+  parseLocationQuery,
+  parseToBigIntOrUndefined,
   removeBasePathFromPathname,
   throttle,
   toArrayBuffer,
+  transformData,
   transformIdlWithOnlyVerifiedCalls,
   variantIs,
 } from './helper.utils';
-import { idlFactory } from '~/generated/control-panel';
-import { IDL } from '@dfinity/candid';
 
 describe('Core utils', () => {
   describe('throttle', () => {
@@ -159,6 +166,164 @@ describe('ArrayBuffer utils', () => {
 
       expect(output).toBeInstanceOf(ArrayBuffer);
       expect(new Uint8Array(output)).toEqual(new Uint8Array(input));
+    });
+  });
+});
+
+describe('Array utils', () => {
+  describe('compactArray', () => {
+    it('removes all null and undefined values from an array', () => {
+      const array = [1, null, 2, undefined, 3, 4, null, 5];
+      const result = compactArray(array);
+
+      expect(result).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('removes all null, undefined, and empty strings from an array', () => {
+      const array = [1, null, 2, undefined, 3, 4, null, 5, ''];
+      const result = compactArray(array, { removeEmptyStrings: true });
+
+      expect(result).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    it('only includes items that are in the set', () => {
+      const array = [1, 2, 3, 4, 5];
+      const include = new Set([1, 3, 5]);
+      const result = compactArray(array, { include });
+
+      expect(result).toEqual([1, 3, 5]);
+    });
+  });
+});
+
+describe('Location query utils', () => {
+  describe('parseLocationQuery', () => {
+    it('parses a location query object', () => {
+      const query: LocationQuery = {};
+      query.arg1 = 'value';
+      query.arg2 = ['value1', 'value2'];
+      query.arg3 = '';
+      query.arg4 = null;
+      query.arg5;
+      query.arg6 = ['value1', '', 'value2', null];
+
+      const result = parseLocationQuery(query);
+
+      expect(result).toEqual({
+        arg1: ['value'],
+        arg2: ['value1', 'value2'],
+        arg6: ['value1', 'value2'],
+      });
+    });
+  });
+});
+
+describe('BigInt utils', () => {
+  describe('parseToBigIntOrUndefined', () => {
+    it('null returns undefined', () => {
+      expect(parseToBigIntOrUndefined(null)).toBeUndefined();
+    });
+
+    it('undefined returns undefined', () => {
+      expect(parseToBigIntOrUndefined(undefined)).toBeUndefined();
+    });
+
+    it('string returns BigInt', () => {
+      expect(parseToBigIntOrUndefined('100')).toBe(BigInt(100));
+    });
+
+    it('number returns BigInt', () => {
+      expect(parseToBigIntOrUndefined(100)).toBe(BigInt(100));
+    });
+
+    it('bigint returns BigInt', () => {
+      expect(parseToBigIntOrUndefined(BigInt(100))).toBe(BigInt(100));
+    });
+
+    it('invalid string returns undefined', () => {
+      expect(parseToBigIntOrUndefined('invalid')).toBeUndefined();
+    });
+
+    it('empty string returns undefined', () => {
+      expect(parseToBigIntOrUndefined('')).toBeUndefined();
+    });
+  });
+});
+
+describe('Transformations', () => {
+  describe('transformData', () => {
+    it('transforms complex object and keeps undefined keys', () => {
+      expect(
+        transformData(
+          {
+            date: new Date(Date.parse('2024-09-27')),
+            bigint: BigInt(100),
+            uint8array: new Uint8Array([1, 2, 3]),
+            arrayBuffer: hexStringToArrayBuffer('6963'),
+            emptyArray: [],
+            function: () => {},
+            principal: Principal.fromText('rwlgt-iiaaa-aaaaa-aaaaa-cai'),
+            map: new Map([['key', 'value']]),
+            set: new Set(['value']),
+            object: { key: 'value', emptyArray: [] },
+          },
+          { removeFunctions: false },
+        ),
+      ).toStrictEqual({
+        date: new Date(Date.parse('2024-09-27')).toISOString(),
+        bigint: Number(BigInt(100)),
+        uint8array: Array.from(new Uint8Array([1, 2, 3])),
+        arrayBuffer: arrayBufferToHex(hexStringToArrayBuffer('6963')),
+        emptyArray: [],
+        function: '[Function]',
+        principal: 'rwlgt-iiaaa-aaaaa-aaaaa-cai',
+        map: { key: 'value' },
+        set: ['value'],
+        object: { key: 'value', emptyArray: [] },
+      });
+    });
+
+    it('transforms complex object and drops empty fields', () => {
+      expect(
+        transformData(
+          [
+            {
+              date: new Date(Date.parse('2024-09-27')),
+              bigint: BigInt(100),
+              uint8array: new Uint8Array([1, 2, 3]),
+              arrayBuffer: hexStringToArrayBuffer('6963'),
+              emptyArray: [],
+              null: null,
+              function: () => {},
+              principal: Principal.fromText('rwlgt-iiaaa-aaaaa-aaaaa-cai'),
+              map: new Map([['key', 'value']]),
+              set: new Set(['value']),
+              object: { key: 'value', emptyArray: [] },
+            },
+            null,
+          ],
+          { removeEmptyLists: true, removeUndefinedOrNull: true, removeFunctions: true },
+        ),
+      ).toStrictEqual([
+        {
+          date: new Date(Date.parse('2024-09-27')).toISOString(),
+          bigint: Number(BigInt(100)),
+          uint8array: Array.from(new Uint8Array([1, 2, 3])),
+          arrayBuffer: arrayBufferToHex(hexStringToArrayBuffer('6963')),
+          principal: 'rwlgt-iiaaa-aaaaa-aaaaa-cai',
+          map: { key: 'value' },
+          set: ['value'],
+          object: { key: 'value' },
+        },
+      ]);
+    });
+
+    it('primitive types are kept on the top level', () => {
+      expect(transformData('string')).toBe('string');
+      expect(transformData(100)).toBe(100);
+      expect(transformData(BigInt(100))).toBe(100);
+      expect(transformData(true)).toBe(true);
+      expect(transformData(false)).toBe(false);
     });
   });
 });

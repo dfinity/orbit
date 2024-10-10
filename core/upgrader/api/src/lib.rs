@@ -1,11 +1,14 @@
 use candid::{CandidType, Deserialize, Principal};
-use station_api::{AccountSeedDTO, TimestampRfc3339};
+use orbit_essentials::types::WasmModuleExtraChunks;
+use station_api::AccountSeedDTO;
+use station_api::TimestampRfc3339;
 pub use station_api::{MetadataDTO, UuidDTO};
 
-#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]
 pub struct UpgradeParams {
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
+    pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     #[serde(with = "serde_bytes")]
     pub arg: Vec<u8>,
 }

@@ -12,6 +12,9 @@ pub enum RequestError {
     /// You don't have access to the requested resource.
     #[error(r#"You don't have access to the requested resource."#)]
     Forbidden { request_id: String },
+    /// The request creation has been rate-limited.
+    #[error(r#"The request creation has been rate-limited."#)]
+    RateLimited,
     /// Requests that have already been completed cannot be modified.
     #[error(r#"This request was already completed, it cannot be modified."#)]
     NotAllowedModification { request_id: String },
@@ -88,6 +91,9 @@ impl From<ExternalCanisterValidationError> for RequestError {
                 RequestError::ValidationError {
                     info: format!("Invalid external canister {}", principal),
                 }
+            }
+            ExternalCanisterValidationError::ValidationError { info } => {
+                RequestError::ValidationError { info }
             }
         }
     }

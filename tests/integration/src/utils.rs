@@ -1,13 +1,17 @@
+use crate::setup::{create_canister, get_canister_wasm, WALLET_ADMIN_USER};
 use crate::setup::{get_canister_wasm, WALLET_ADMIN_USER};
 use crate::test_data::asset::list_assets;
 use candid::Principal;
+use candid::{CandidType, Encode, Principal};
 use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
+use orbit_essentials::types::WasmModuleExtraChunks;
 use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
 use sha2::Digest;
+use sha2::Sha256;
 use station_api::{
     AccountDTO, AddAccountOperationInput, AddUserOperationInput, AllowDTO, ApiErrorDTO,
     CreateRequestInput, CreateRequestResponse, FetchAccountBalancesInput,
@@ -20,6 +24,7 @@ use station_api::{
     UserStatusDTO, UuidDTO,
 };
 use std::io::Write;
+use std::path::PathBuf;
 use std::time::Duration;
 use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
 
@@ -121,6 +126,7 @@ pub fn get_request(
 ) -> RequestDTO {
     let get_request_args = GetRequestInput {
         request_id: request.id,
+        with_full_info: Some(false),
     };
     let res: (Result<GetRequestResponse, ApiErrorDTO>,) = update_candid_as(
         env,
@@ -230,6 +236,8 @@ pub fn wait_for_request_with_extra_ticks(
     env.tick();
 
     for _ in 0..extra_ticks {
+        // timer's period for processing requests is 5 seconds
+        env.advance_time(Duration::from_secs(5));
         env.tick();
     }
     // wait for the request to be completed
@@ -241,6 +249,9 @@ pub fn wait_for_request_with_extra_ticks(
         if is_request_evaluated(new_request.clone()) {
             return Err(Some(new_request.status));
         }
+        // timer's period for processing requests is 5 seconds
+        env.advance_time(Duration::from_secs(5));
+        env.tick();
     }
     Err(None)
 }
@@ -652,6 +663,7 @@ pub fn create_account(
     // fetch the created account id from the request
     let get_request_args = GetRequestInput {
         request_id: account_creation_request_dto.id,
+        with_full_info: Some(false),
     };
     let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
         env,
@@ -722,6 +734,7 @@ pub fn create_transfer(
     // check transfer request status
     let get_request_args = GetRequestInput {
         request_id: request_dto.id.clone(),
+        with_full_info: Some(false),
     };
     let res: (Result<GetRequestResponse, ApiErrorDTO>,) = update_candid_as(
         env,
@@ -821,9 +834,8 @@ pub fn compress_to_gzip(data: &[u8]) -> Vec<u8> {
 
 /// Creates a file in the `assets` folder with the given name and content.
 pub fn create_file(name: &str, content: &[u8]) {
-    let current_dir = std::env::current_dir().expect("Failed to get current directory");
     let relative_path = std::path::Path::new("assets").join(name);
-    let absolute_path = current_dir.join(relative_path);
+    let absolute_path = test_dir().join(relative_path);
 
     if let Some(parent_dir) = absolute_path.parent() {
         std::fs::create_dir_all(parent_dir).expect("Failed to create directories");
@@ -834,15 +846,18 @@ pub fn create_file(name: &str, content: &[u8]) {
 
 /// Reads the content of a file in the `assets` folder with the given name.
 pub fn read_file(name: &str) -> Option<Vec<u8>> {
-    let current_dir = std::env::current_dir().expect("Failed to get current directory");
     let relative_path = std::path::Path::new("assets").join(name);
-    let absolute_path = current_dir.join(relative_path);
+    let absolute_path = test_dir().join(relative_path);
 
     if !absolute_path.exists() {
         return None;
     }
 
     std::fs::read(absolute_path).ok()
+}
+
+fn test_dir() -> PathBuf {
+    PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to get CARGO_MANIFEST_DIR"))
 }
 
 /// Converts the given data to a SHA-256 hash and returns it as a hex string.
@@ -860,8 +875,9 @@ pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, cont
     // upload upgrader
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let upload_canister_modules_args = UploadCanisterModulesInput {
-        station_wasm_module: None,
         upgrader_wasm_module: Some(upgrader_wasm.to_owned()),
+        station_wasm_module: None,
+        station_wasm_module_extra_chunks: None,
     };
     let res: (ApiResult<()>,) = update_candid_as(
         env,
@@ -874,10 +890,14 @@ pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, cont
     res.0.unwrap();
 
     // upload station
-    let station_wasm = get_canister_wasm("station").to_vec();
+
+    let station_wasm = get_canister_wasm("station");
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(env, station_wasm, 200_000);
     let upload_canister_modules_args = UploadCanisterModulesInput {
-        station_wasm_module: Some(station_wasm.to_owned()),
         upgrader_wasm_module: None,
+        station_wasm_module: Some(base_chunk),
+        station_wasm_module_extra_chunks: Some(Some(module_extra_chunks)),
     };
     let res: (ApiResult<()>,) = update_candid_as(
         env,
@@ -888,4 +908,79 @@ pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, cont
     )
     .unwrap();
     res.0.unwrap();
+}
+
+pub fn bump_time_to_avoid_ratelimit(env: &PocketIc) {
+    // the rate limiter aggregation window is 300s and resolution is 10s
+    env.advance_time(Duration::from_secs(300 + 10));
+}
+
+#[derive(CandidType)]
+struct StoreArg {
+    pub key: String,
+    pub content: Vec<u8>,
+    pub content_type: String,
+    pub content_encoding: String,
+    pub sha256: Option<Vec<u8>>,
+}
+
+fn hash(data: Vec<u8>) -> Vec<u8> {
+    let mut hasher = Sha256::new();
+    hasher.update(data);
+    hasher.finalize().to_vec()
+}
+
+pub fn upload_canister_chunks_to_asset_canister(
+    env: &PocketIc,
+    canister_wasm: Vec<u8>,
+    chunk_len: usize,
+) -> (Vec<u8>, WasmModuleExtraChunks) {
+    // create and install the asset canister
+    let asset_canister_id = create_canister(env, Principal::anonymous());
+    env.install_canister(
+        asset_canister_id,
+        get_canister_wasm("assetstorage"),
+        Encode!(&()).unwrap(),
+        None,
+    );
+
+    // get canister wasm hash
+    let mut hasher = Sha256::new();
+    hasher.update(&canister_wasm);
+    let canister_wasm_hash = hasher.finalize().to_vec();
+
+    // chunk canister
+    let mut chunks = canister_wasm.chunks(chunk_len);
+    let base_chunk: &[u8] = chunks.next().unwrap();
+    assert!(!base_chunk.is_empty());
+    let chunks: Vec<&[u8]> = chunks.collect();
+    assert!(chunks.len() >= 2);
+
+    // upload chunks to asset canister
+    for chunk in &chunks {
+        let chunk_hash = hash(chunk.to_vec());
+        let store_arg = StoreArg {
+            key: hex::encode(chunk_hash.clone()),
+            content: chunk.to_vec(),
+            content_type: "application/octet-stream".to_string(),
+            content_encoding: "identity".to_string(),
+            sha256: Some(chunk_hash),
+        };
+        update_candid_as::<_, ((),)>(
+            env,
+            asset_canister_id,
+            Principal::anonymous(),
+            "store",
+            (store_arg,),
+        )
+        .unwrap();
+    }
+
+    let module_extra_chunks = WasmModuleExtraChunks {
+        store_canister: asset_canister_id,
+        chunk_hashes_list: chunks.iter().map(|c| hash(c.to_vec())).collect(),
+        wasm_module_hash: canister_wasm_hash,
+    };
+
+    (base_chunk.to_vec(), module_extra_chunks)
 }

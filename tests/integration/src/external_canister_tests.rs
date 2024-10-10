@@ -1,8 +1,9 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    add_user, canister_status, execute_request, get_request, submit_request,
-    submit_request_approval, submit_request_raw, submit_request_with_expected_trap, update_raw,
-    user_test_id, wait_for_request, COUNTER_WAT,
+    add_user, bump_time_to_avoid_ratelimit, canister_status, execute_request,
+    get_core_canister_health_status, get_request, submit_request, submit_request_approval,
+    submit_request_raw, submit_request_with_expected_trap, update_raw,
+    upload_canister_chunks_to_asset_canister, user_test_id, wait_for_request, COUNTER_WAT,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -16,22 +17,21 @@ use station_api::{
     ChangeExternalCanisterOperationInput, CreateExternalCanisterOperationInput,
     CreateExternalCanisterOperationKindCreateNewDTO, CreateExternalCanisterOperationKindDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
-    ExternalCanisterPermissionsInput, ExternalCanisterRequestPoliciesInput, ListRequestsInput,
-    ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO, RequestApprovalStatusDTO,
-    RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO, RequestSpecifierDTO,
-    RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
+    ExternalCanisterPermissionsCreateInput, ExternalCanisterRequestPoliciesCreateInput,
+    HealthStatus, ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
+    RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    RequestSpecifierDTO, RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
+use std::str::FromStr;
 
 #[test]
 fn successful_four_eyes_upgrade() {
     let TestEnv {
-        mut env,
-        canister_ids,
-        ..
+        env, canister_ids, ..
     } = setup_new_env();
 
     // create and install the counter canister
-    let canister_id = create_canister(&mut env, canister_ids.station);
+    let canister_id = create_canister(&env, canister_ids.station);
     let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
     let mut sha256 = Sha256::new();
     sha256.update(module_bytes.clone());
@@ -58,11 +58,16 @@ fn successful_four_eyes_upgrade() {
     add_user(&env, user_b, vec![], canister_ids.station);
 
     // submitting canister upgrade request fails due to insufficient permissions to create change canister requests
+    let chunk_len = module_bytes.len() / 3;
+    assert!(0 < chunk_len && chunk_len < 1_000_000);
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(&env, module_bytes, chunk_len);
     let change_canister_operation =
         RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
             mode: CanisterInstallMode::Upgrade,
-            module: module_bytes.clone(),
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
             arg: None,
         });
     let trap_message = submit_request_with_expected_trap(
@@ -195,13 +200,11 @@ fn successful_four_eyes_upgrade() {
 #[test]
 fn upgrade_reinstall_list_test() {
     let TestEnv {
-        mut env,
-        canister_ids,
-        ..
+        env, canister_ids, ..
     } = setup_new_env();
 
     // create and install the counter canister
-    let canister_id = create_canister(&mut env, canister_ids.station);
+    let canister_id = create_canister(&env, canister_ids.station);
     let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
     let mut sha256 = Sha256::new();
     sha256.update(module_bytes.clone());
@@ -229,11 +232,16 @@ fn upgrade_reinstall_list_test() {
     assert_eq!(ctr, 2_u32.to_le_bytes());
 
     // submit canister upgrade request
+    let chunk_len = module_bytes.len() / 3;
+    assert!(0 < chunk_len && chunk_len < 1_000_000);
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(&env, module_bytes, chunk_len);
     let change_canister_operation =
         RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
             mode: CanisterInstallMode::Upgrade,
-            module: module_bytes.clone(),
+            module: base_chunk.clone(),
+            module_extra_chunks: Some(module_extra_chunks.clone()),
             arg: None,
         });
     execute_request(
@@ -257,7 +265,8 @@ fn upgrade_reinstall_list_test() {
         RequestOperationInput::ChangeExternalCanister(ChangeExternalCanisterOperationInput {
             canister_id,
             mode: CanisterInstallMode::Reinstall,
-            module: module_bytes,
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
             arg: None,
         });
     execute_request(
@@ -381,7 +390,7 @@ fn create_external_canister_and_check_status() {
             name: "test".to_string(),
             description: None,
             labels: None,
-            permissions: ExternalCanisterPermissionsInput {
+            permissions: ExternalCanisterPermissionsCreateInput {
                 calls: vec![],
                 read: AllowDTO {
                     auth_scope: station_api::AuthScopeDTO::Restricted,
@@ -394,8 +403,8 @@ fn create_external_canister_and_check_status() {
                     users: vec![],
                 },
             },
-            request_policies: ExternalCanisterRequestPoliciesInput {
-                change: Vec::new(),
+            request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                change: vec![],
                 calls: vec![],
             },
         });
@@ -630,13 +639,11 @@ fn call_external_canister_test() {
     const T: u128 = 1_000_000_000_000;
 
     let TestEnv {
-        mut env,
-        canister_ids,
-        ..
+        env, canister_ids, ..
     } = setup_new_env();
 
     // create and install the counter canister (validation)
-    let validation_canister_id = create_canister(&mut env, Principal::anonymous());
+    let validation_canister_id = create_canister(&env, Principal::anonymous());
     let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
     let mut sha256 = Sha256::new();
     sha256.update(module_bytes.clone());
@@ -644,7 +651,7 @@ fn call_external_canister_test() {
     env.install_canister(validation_canister_id, module_bytes.clone(), vec![], None);
 
     // create and install the counter canister (execution)
-    let execution_canister_id = create_canister(&mut env, Principal::anonymous());
+    let execution_canister_id = create_canister(&env, Principal::anonymous());
     let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
     env.install_canister(execution_canister_id, module_bytes.clone(), vec![], None);
 
@@ -834,6 +841,8 @@ fn call_external_canister_test() {
     let cycles = env.cycle_balance(execution_canister_id);
     assert!((95 * T..=100 * T).contains(&cycles));
 
+    bump_time_to_avoid_ratelimit(&env);
+
     // submit a call external canister request with failing validation
     let failing_validation_call_canister_operation =
         RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
@@ -901,6 +910,8 @@ fn call_external_canister_test() {
     assert!(trap_message.contains(
         "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
     ));
+
+    bump_time_to_avoid_ratelimit(&env);
 
     // submit a request labeling the execution method as the validation method which is illegal given the permissions set so far
     let illegal_call_canister_operation =
@@ -987,6 +998,8 @@ fn call_external_canister_test() {
         add_request_policy,
     )
     .unwrap();
+
+    bump_time_to_avoid_ratelimit(&env);
 
     // submit the request to call the counter canister again
     let call_canister_operation_request = submit_request(
@@ -1134,4 +1147,128 @@ fn call_external_canister_test() {
         execution_method_reply,
         Some(hex::decode("4449444c016b01bc8a017101000004676f6f64").unwrap())
     );
+}
+
+#[test]
+fn create_external_canister_with_too_many_cycles() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let create_canister_operation = |name: &str, initial_cycles| {
+        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
+            kind: CreateExternalCanisterOperationKindDTO::CreateNew(
+                CreateExternalCanisterOperationKindCreateNewDTO { initial_cycles },
+            ),
+            name: name.to_string(),
+            description: None,
+            labels: None,
+            permissions: ExternalCanisterPermissionsCreateInput {
+                calls: vec![],
+                read: AllowDTO {
+                    auth_scope: station_api::AuthScopeDTO::Restricted,
+                    user_groups: vec![],
+                    users: vec![],
+                },
+                change: AllowDTO {
+                    auth_scope: station_api::AuthScopeDTO::Restricted,
+                    user_groups: vec![],
+                    users: vec![],
+                },
+            },
+            request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                change: vec![],
+                calls: vec![],
+            },
+        })
+    };
+
+    // request to create a test canister with 1T cycles (this should succeed)
+    let create_test_canister_operation = create_canister_operation("test", Some(1_000_000_000_000));
+
+    // request to create a canister with more cycles than the station has (this should fail)
+    let station_cycles = env.cycle_balance(canister_ids.station);
+    let create_rich_canister_operation =
+        create_canister_operation("rich", Some(2 * station_cycles as u64));
+
+    // submit requests for creating the test canister and a canister with too many cycles
+    // to be executed concurrently
+    let test_canister_request = submit_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        create_test_canister_operation,
+    );
+    let rich_canister_request = submit_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        create_rich_canister_operation,
+    );
+
+    // admin cannot trigger requests via the private `try_execute_request` endpoint
+    let test_canister_request_id = uuid::Uuid::from_str(&test_canister_request.id).unwrap();
+    let bytes = Encode!(&test_canister_request_id.as_bytes()).unwrap();
+    let err = update_raw(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "try_execute_request",
+        bytes,
+    )
+    .unwrap_err();
+    assert!(err
+        .description
+        .contains("The method `try_execute_request` can only be called by the station canister."));
+
+    // wait for the requests to be executed
+    let test_canister_request = wait_for_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        test_canister_request,
+    )
+    .unwrap();
+    let rich_canister_request_status = wait_for_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        rich_canister_request,
+    )
+    .unwrap_err()
+    .unwrap();
+
+    // the test canister with 1T cycles should be successfully created
+    match test_canister_request.status {
+        RequestStatusDTO::Completed { .. } => (),
+        _ => panic!(
+            "Unexpected request status: {:?}",
+            test_canister_request.status
+        ),
+    };
+    // check the test canister status on behalf of the station and ensure that the canister is empty
+    let canister_id = match test_canister_request.operation {
+        RequestOperationDTO::CreateExternalCanister(operation) => operation.canister_id.unwrap(),
+        _ => panic!(
+            "Unexpected request operation type: {:?}",
+            test_canister_request.operation
+        ),
+    };
+    let status = canister_status(&env, Some(canister_ids.station), canister_id);
+    assert_eq!(status.module_hash, None);
+
+    // the canister with too many cycles failed to be created because the station would be out of cycles
+    match rich_canister_request_status {
+        RequestStatusDTO::Failed { reason } => {
+            assert_eq!(reason.unwrap(), format!("Request execution failed due to internal error: `IC0504: Error from Canister {}: Canister {} is out of cycles`.", canister_ids.station, canister_ids.station));
+        }
+        _ => panic!(
+            "Unexpected request status: {:?}",
+            rich_canister_request_status
+        ),
+    };
+    // the station should still be healthy
+    let health_status =
+        get_core_canister_health_status(&env, WALLET_ADMIN_USER, canister_ids.station);
+    assert_eq!(health_status, HealthStatus::Healthy);
 }

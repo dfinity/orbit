@@ -58,6 +58,10 @@ impl CanisterService {
         if let Some(station_wasm_module) = input.station_wasm_module {
             config.station_wasm_module = station_wasm_module;
         }
+        if let Some(station_wasm_module_extra_chunks) = input.station_wasm_module_extra_chunks {
+            config.station_wasm_module_extra_chunks = station_wasm_module_extra_chunks;
+        }
+
         write_canister_config(config);
 
         Ok(())

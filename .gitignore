@@ -70,6 +70,7 @@ wasms/*.wasm.gz
 .canbench
 .canbench_output
 .nx/cache
+.nx/workspace-data
 /artifacts
 
 # The latest memory dump of the station will change every time the tests are run due to 

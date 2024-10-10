@@ -1,11 +1,14 @@
-use super::indexes::request_policy_resource_index::RequestPolicyResourceIndexRepository;
+use super::indexes::request_policy_resource_index::{
+    ExternalCanisterPoliciesList, RequestPolicyResourceIndexRepository,
+};
 use crate::{
     core::{
         metrics::REQUEST_POLICY_METRICS, with_memory_manager, Memory, REQUEST_POLICIES_MEMORY_ID,
     },
     models::{
         indexes::request_policy_resource_index::RequestPolicyResourceIndexCriteria,
-        resource::Resource, RequestPolicy,
+        resource::{Resource, ValidationMethodResourceTarget},
+        RequestPolicy,
     },
 };
 use candid::Principal;
@@ -116,9 +119,38 @@ impl RequestPolicyRepository {
     ///
     /// - `Change` related policies.
     /// - `Call` related policies.
-    pub fn find_external_canister_policies(&self, canister_id: &Principal) -> Vec<UUID> {
+    pub fn find_external_canister_policies(
+        &self,
+        canister_id: &Principal,
+    ) -> ExternalCanisterPoliciesList {
         self.resource_index
             .find_external_canister_policies(canister_id)
+    }
+
+    /// Finds all external canister call policies related to the specified canister id and execution method.
+    pub fn find_external_canister_call_policies_by_execution_method(
+        &self,
+        canister_id: &Principal,
+        execution_method: &str,
+    ) -> Vec<UUID> {
+        self.resource_index
+            .find_external_canister_call_policies_by_execution_method(canister_id, execution_method)
+    }
+
+    /// Finds all external canister call policies related to the specified canister id, execution method and
+    /// validation method.
+    pub fn find_external_canister_call_policies_by_execution_and_validation_method(
+        &self,
+        canister_id: &Principal,
+        execution_method: &str,
+        validation_method: &ValidationMethodResourceTarget,
+    ) -> Vec<UUID> {
+        self.resource_index
+            .find_external_canister_call_policies_by_execution_and_validation_method(
+                canister_id,
+                execution_method,
+                validation_method,
+            )
     }
 }
 

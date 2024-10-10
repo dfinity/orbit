@@ -1,6 +1,7 @@
 export default {
   app: {
     title: '{app} Wallet',
+    name: 'Orbit Wallet',
     action_save_failed: 'Failed to save action, please try again.',
     action_save_success: 'Action successfully saved.',
     session_load_error: 'Failed to load your session, please try again.',
@@ -95,6 +96,10 @@ export default {
         'To verify the update, open the terminal and follow the instructions bellow:',
     },
     asset: 'Asset',
+    no_data: 'No data available.',
+    no_matching_results: 'No matching results found for `{search}`.',
+    add_new_label: 'Add new label: {label}',
+    user_cancel_pending_requests: 'Cancel all pending requests from this user.',
   },
   alpha_warning: {
     version: 'This is an alpha version.',
@@ -164,6 +169,7 @@ export default {
       transfers: 'Transfers',
       users: 'Users',
       assets: 'Assets',
+      external_canisters: 'Canisters',
     },
     headers: {
       id: 'ID',
@@ -287,6 +293,29 @@ export default {
       removeasset: {
         title: 'Remove asset',
         request_title: 'Remove asset request',
+      createexternalcanister: {
+        title: 'Create canister',
+        request_title: 'Create canister request',
+      },
+      changeexternalcanister: {
+        title: 'Change canister',
+        request_title: 'Change canister request',
+      },
+      callexternalcanister: {
+        title: 'Call canister',
+        request_title: 'Call canister request',
+      },
+      fundexternalcanister: {
+        title: 'Top-up canister',
+        request_title: 'Top-up canister request',
+      },
+      configureexternalcanister: {
+        title: 'Configure canister',
+        request_title: 'Configure canister request',
+      },
+      setdisasterrecovery: {
+        title: 'Edit disaster recovery',
+        request_title: 'Edit disaster recovery request',
       },
       unknown: {
         title: 'Unknown',
@@ -407,7 +436,88 @@ export default {
     no_withdraw_request_found_search: 'No withdraw request found for the search criteria.',
     add_station_list_item: 'Add wallet',
   },
+  cycles: {
+    units: {
+      tc: 'TC',
+      bc: 'Billion',
+      mc: 'Million',
+      e8s: 'e8s',
+    },
+  },
+  external_canisters: {
+    add_new_label: 'Add new label',
+    use_existing: 'Use existing',
+    create_new: 'Create new',
+    initial_cycles: 'Initial Cycles',
+    target_canister: 'Target Canister',
+    config_read_permission: 'View',
+    config_read_permission_hint: 'View only access to the canister.',
+    config_change_permission: 'Changes',
+    config_change_permission_hint: 'Access to change the canister settings.',
+    config_change_approval_policy: 'Changes',
+    config_change_approval_policy_hint: 'Approval policy to change the canister settings.',
+    loading_error: 'Failed to load canister information, please try again.',
+    not_found: 'Canister not found.',
+    not_found_description: 'The canister you are looking for does not exist.',
+    ic_settings: 'IC Settings',
+    top_up: 'Top Up',
+    configuration: 'Configuration',
+    unlink: 'Unlink',
+    unlink_title: 'Unlink Canister',
+    unlink_soft_delete: 'Keep the canister on the Internet Computer, only remove its reference.',
+    perform_call: 'Call',
+    module_hash: 'Module Hash',
+    cycles: 'Cycles',
+    not_controller: 'Not controller',
+    install: 'Install',
+    send_cycles: 'Send Cycles',
+    top_up_hint: 'Amount of cycles to add to the target canister.',
+    add_controller: 'Add controller',
+    no_controllers: 'No controllers',
+    self_controller: 'Self controlled',
+    non_orbit_controllers_warning:
+      'This configuration sets additional controllers to the target canister, use with caution.',
+    native_settings: {
+      freezing_threshold: 'Freezing Threshold',
+      freezing_threshold_hint:
+        "The number of seconds the canister will be put in a frozen state before it's cleaned by the network.",
+      controllers: 'Controllers',
+      controllers_hint: 'The list of principals that can control the canister.',
+      memory_allocation: 'Memory Allocation',
+      memory_allocation_hint:
+        'The maximum amount of memory the canister can use, this also reserves the memory in the subnet.',
+      compute_allocation: 'Compute Allocation',
+      compute_allocation_hint:
+        'The percentage of subnet compute that is reserved for the canister.',
+      reserved_cycles_limit: 'Reserved Cycles Limit',
+      reserved_cycles_limit_hint:
+        'Number of cycles the canister can allocate, operations that allocate memory or compute will fail if the limit is reached.',
+    },
+    wasm_module: 'WASM Module',
+    wasm_args: 'Arguments',
+    wasm_args_optional: 'Arguments (optional)',
+    wasm_args_invalid_format: 'Invalid argument format',
+    wasm_args_formats: {
+      hex: 'Hex',
+      candid: 'Candid',
+    },
+    install_mode: {
+      reinstall: 'Reinstall',
+      upgrade: 'Upgrade',
+      install: 'Install',
+    },
+  },
   terms: {
+    more: 'More',
+    less: 'Less',
+    data: 'data',
+    mode: 'Mode',
+    active: 'Active',
+    archived: 'Archived',
+    canisters: 'Canisters',
+    labels: 'Labels',
+    canister: 'Canister',
+    description: 'Description',
     change: 'Change',
     quorum: 'Quorum',
     deposits: 'Deposits',
@@ -573,6 +683,10 @@ export default {
       requiredIntNumber: 'This field must be a valid integer number.',
       intNumberRange: '{field} must be between {min} and {max}.',
       validEmail: 'This field must be a valid email address.',
+      requiredNumber: 'This field must be a valid number.',
+      numberRange: 'This field must be between {min} and {max}.',
+      invalidDecimalPlaces: 'This field must have a maximum of {decimals} decimal places.',
+      isHex: 'This field must be a valid hexadecimal value.',
     },
   },
   navigation: {
@@ -592,6 +706,7 @@ export default {
     permissions: 'Permissions',
     request_policies: 'Request Policies',
     assets: 'Assets',
+    external_canisters: 'Canisters',
   },
   pages: {
     accounts: {
@@ -637,6 +752,13 @@ export default {
       create_new_user_title: 'Create new user',
       btn_edit_title: 'Edit user',
       error_fetching_users: 'Error fetching users, please try again.',
+    },
+    external_canisters: {
+      title: 'Canisters',
+      btn_add_canister: 'Add canister',
+      add_new_canister_title: 'Add new canister',
+      edit_canister_title: 'Canister Configuration',
+      error_fetching_canisters: 'Error fetching canisters, please try again.',
     },
     user_groups: {
       title: 'User Groups',

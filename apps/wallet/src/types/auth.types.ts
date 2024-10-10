@@ -17,6 +17,8 @@ export enum Privilege {
   ManageSystemInfo = 'ManageSystemInfo',
   ListAssets = 'ListAssets',
   AddAsset = 'AddAsset',
+  ListExternalCanisters = 'ListExternalCanisters',
+  CreateExternalCanister = 'CreateExternalCanister',
 }
 
 export enum RequiredSessionState {

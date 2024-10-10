@@ -1,7 +1,6 @@
 import { execSync } from 'child_process';
 import { createCommand } from 'commander';
-import { readFileSync } from 'fs';
-import { fileExists } from 'nx/src/utils/fileutils';
+import { existsSync, readFileSync } from 'fs';
 import { isAbsolute, join } from 'path';
 import configuration from '../config';
 import { capitalize, gitTagExists, targetExists } from '../utils';
@@ -30,7 +29,7 @@ command.action(async options => {
     throw new Error('Invalid release file path. Must be a JSON file.');
   }
 
-  if (!fileExists(releaseFilePath)) {
+  if (!existsSync(releaseFilePath)) {
     console.warn(`The release file at ${releaseFilePath} does not exist. Skipping release.`);
 
     return;

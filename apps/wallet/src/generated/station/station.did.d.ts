@@ -148,6 +148,7 @@ export interface BasicUser {
   'name' : string,
 }
 export interface CallExternalCanisterOperation {
+  'arg' : [] | [Uint8Array | number[]],
   'execution_method' : CanisterMethod,
   'validation_method' : [] | [CanisterMethod],
   'arg_checksum' : [] | [Sha256Hash],
@@ -163,6 +164,10 @@ export interface CallExternalCanisterOperationInput {
 }
 export interface CallExternalCanisterResourceTarget {
   'execution_method' : ExecutionMethodResourceTarget,
+  'validation_method' : ValidationMethodResourceTarget,
+}
+export interface CanisterExecutionAndValidationMethodPair {
+  'execution_method' : string,
   'validation_method' : ValidationMethodResourceTarget,
 }
 export type CanisterInstallMode = { 'reinstall' : null } |
@@ -215,6 +220,7 @@ export interface ChangeExternalCanisterOperation {
 }
 export interface ChangeExternalCanisterOperationInput {
   'arg' : [] | [Uint8Array | number[]],
+  'module_extra_chunks' : [] | [WasmModuleExtraChunks],
   'mode' : CanisterInstallMode,
   'canister_id' : Principal,
   'module' : Uint8Array | number[],
@@ -232,11 +238,11 @@ export type ConfigureExternalCanisterOperationKind = { 'SoftDelete' : null } |
   { 'Delete' : null } |
   { 'NativeSettings' : DefiniteCanisterSettingsInput };
 export interface ConfigureExternalCanisterSettingsInput {
-  'permissions' : [] | [ExternalCanisterPermissionsInput],
+  'permissions' : [] | [ExternalCanisterPermissionsUpdateInput],
   'name' : [] | [string],
   'labels' : [] | [Array<string>],
   'description' : [] | [string],
-  'request_policies' : [] | [ExternalCanisterRequestPoliciesInput],
+  'request_policies' : [] | [ExternalCanisterRequestPoliciesUpdateInput],
   'state' : [] | [ExternalCanisterState],
 }
 export interface CreateExternalCanisterOperation {
@@ -244,12 +250,12 @@ export interface CreateExternalCanisterOperation {
   'input' : CreateExternalCanisterOperationInput,
 }
 export interface CreateExternalCanisterOperationInput {
-  'permissions' : ExternalCanisterPermissionsInput,
+  'permissions' : ExternalCanisterPermissionsCreateInput,
   'kind' : CreateExternalCanisterOperationKind,
   'name' : string,
   'labels' : [] | [Array<string>],
   'description' : [] | [string],
-  'request_policies' : ExternalCanisterRequestPoliciesInput,
+  'request_policies' : ExternalCanisterRequestPoliciesCreateInput,
 }
 export type CreateExternalCanisterOperationKind = {
     'AddExisting' : CreateExternalCanisterOperationKindAddExisting
@@ -366,6 +372,7 @@ export interface EditUserOperationInput {
   'id' : UUID,
   'status' : [] | [UserStatus],
   'groups' : [] | [Array<UUID>],
+  'cancel_pending_requests' : [] | [boolean],
   'name' : [] | [string],
   'identities' : [] | [Array<Principal>],
 }
@@ -443,6 +450,54 @@ export interface ExternalCanisterCallerPrivileges {
   'can_call' : Array<ExternalCanisterCallerMethodsPrivileges>,
   'can_fund' : boolean,
 }
+export type ExternalCanisterChangeCallPermissionsInput = {
+    'OverrideSpecifiedByExecutionMethods' : Array<
+      {
+        'execution_method' : string,
+        'permissions' : Array<
+          {
+            'allow' : Allow,
+            'validation_method' : ValidationMethodResourceTarget,
+          }
+        >,
+      }
+    >
+  } |
+  {
+    'OverrideSpecifiedByExecutionValidationMethodPairs' : Array<
+      {
+        'allow' : [] | [Allow],
+        'method_configuration' : CanisterExecutionAndValidationMethodPair,
+      }
+    >
+  } |
+  { 'ReplaceAllBy' : Array<ExternalCanisterCallPermission> };
+export type ExternalCanisterChangeCallRequestPoliciesInput = {
+    'RemoveByPolicyIds' : Array<UUID>
+  } |
+  {
+    'OverrideSpecifiedByExecutionMethods' : Array<
+      {
+        'execution_method' : string,
+        'policies' : Array<
+          {
+            'rule' : RequestPolicyRule,
+            'validation_method' : ValidationMethodResourceTarget,
+            'policy_id' : [] | [UUID],
+          }
+        >,
+      }
+    >
+  } |
+  {
+    'OverrideSpecifiedByExecutionValidationMethodPairs' : Array<
+      {
+        'method_configuration' : CanisterExecutionAndValidationMethodPair,
+        'policies' : Array<ExternalCanisterChangeRequestPolicyRuleInput>,
+      }
+    >
+  } |
+  { 'ReplaceAllBy' : Array<ExternalCanisterCallRequestPolicyRuleInput> };
 export interface ExternalCanisterChangeRequestPolicyRule {
   'rule' : RequestPolicyRule,
   'policy_id' : UUID,
@@ -458,14 +513,23 @@ export interface ExternalCanisterPermissions {
   'read' : Allow,
   'change' : Allow,
 }
-export type ExternalCanisterPermissionsInput = ExternalCanisterPermissions;
+export type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
+export interface ExternalCanisterPermissionsUpdateInput {
+  'calls' : [] | [ExternalCanisterChangeCallPermissionsInput],
+  'read' : [] | [Allow],
+  'change' : [] | [Allow],
+}
 export interface ExternalCanisterRequestPolicies {
   'calls' : Array<ExternalCanisterCallRequestPolicyRule>,
   'change' : Array<ExternalCanisterChangeRequestPolicyRule>,
 }
-export interface ExternalCanisterRequestPoliciesInput {
+export interface ExternalCanisterRequestPoliciesCreateInput {
   'calls' : Array<ExternalCanisterCallRequestPolicyRuleInput>,
   'change' : Array<ExternalCanisterChangeRequestPolicyRuleInput>,
+}
+export interface ExternalCanisterRequestPoliciesUpdateInput {
+  'calls' : [] | [ExternalCanisterChangeCallRequestPoliciesInput],
+  'change' : [] | [Array<ExternalCanisterChangeRequestPolicyRuleInput>],
 }
 export type ExternalCanisterResourceAction = {
     'Call' : CallExternalCanisterResourceTarget
@@ -544,7 +608,10 @@ export type GetPermissionResult = {
     }
   } |
   { 'Err' : Error };
-export interface GetRequestInput { 'request_id' : UUID }
+export interface GetRequestInput {
+  'request_id' : UUID,
+  'with_full_info' : [] | [boolean],
+}
 export interface GetRequestPolicyInput { 'id' : UUID }
 export type GetRequestPolicyResult = {
     'Ok' : {
@@ -1153,6 +1220,7 @@ export interface SystemUpgradeOperation {
 }
 export interface SystemUpgradeOperationInput {
   'arg' : [] | [Uint8Array | number[]],
+  'module_extra_chunks' : [] | [WasmModuleExtraChunks],
   'target' : SystemUpgradeTarget,
   'module' : Uint8Array | number[],
 }
@@ -1259,6 +1327,11 @@ export type UserStatus = { 'Inactive' : null } |
   { 'Active' : null };
 export type ValidationMethodResourceTarget = { 'No' : null } |
   { 'ValidationMethod' : CanisterMethod };
+export interface WasmModuleExtraChunks {
+  'wasm_module_hash' : Uint8Array | number[],
+  'chunk_hashes_list' : Array<Uint8Array | number[]>,
+  'store_canister' : Principal,
+}
 export interface _SERVICE {
   'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,

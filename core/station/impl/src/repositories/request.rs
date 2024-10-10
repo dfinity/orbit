@@ -15,7 +15,8 @@ use crate::{
             request_index::RequestIndexFields, request_resource_index::RequestResourceIndexCriteria,
         },
         resource::Resource,
-        ListRequestsOperationType, Request, RequestId, RequestKey, RequestStatusCode,
+        ListRequestsOperationType, Request, RequestId, RequestKey, RequestStatus,
+        RequestStatusCode,
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -230,6 +231,13 @@ impl RequestRepository {
             .collect::<Vec<Request>>()
     }
 
+    /// Get the number of all processing requests.
+    pub fn get_num_processing(&self) -> usize {
+        self.index
+            .find_by_status(RequestStatusCode::Processing, None)
+            .len()
+    }
+
     /// Get the list of Resource for a request id.
     pub fn get_resources(&self, request_id: &RequestId) -> Vec<Resource> {
         self.resource_index
@@ -387,6 +395,19 @@ impl RequestRepository {
         Ok(entries.into_iter().map(|(id, _)| id).collect())
     }
 
+    pub fn cancel_request(
+        &self,
+        mut request: Request,
+        reason: String,
+        request_cancellation_time: u64,
+    ) {
+        request.status = RequestStatus::Cancelled {
+            reason: Some(reason),
+        };
+        request.last_modification_timestamp = request_cancellation_time;
+        self.insert(request.to_key(), request.to_owned());
+    }
+
     #[cfg(test)]
     pub fn with_empty_observers() -> Self {
         Self {
@@ -397,7 +418,7 @@ impl RequestRepository {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct RequestWhereClause {
     pub created_dt_from: Option<Timestamp>,
     pub created_dt_to: Option<Timestamp>,

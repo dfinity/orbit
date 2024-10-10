@@ -1,28 +1,25 @@
 use std::collections::BTreeSet;
 
+use crate::core::ic_cdk::api::trap;
+use crate::core::{read_system_info, write_system_info};
+use crate::models::request_specifier::RequestSpecifier;
+use crate::models::resource::{Resource, SystemResourceAction};
+use crate::repositories::permission::PERMISSION_REPOSITORY;
+use crate::repositories::{REQUEST_POLICY_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY};
+use crate::STABLE_MEMORY_VERSION;
 use orbit_essentials::model::ModelKey;
 use orbit_essentials::repository::Repository;
 use uuid::Uuid;
 
-use crate::core::ic_cdk::api::trap;
-use crate::core::{read_system_info, write_system_info};
-
 use crate::models::permission::AuthScope;
-use crate::models::request_specifier::RequestSpecifier;
-use crate::models::resource::{
-    Resource, ResourceAction, ResourceId, ResourceIds, SystemResourceAction,
-};
+use crate::models::resource::{ResourceAction, ResourceId, ResourceIds};
 use crate::models::{
     AddRequestPolicyOperationInput, Asset, Blockchain, EditPermissionOperationInput, Metadata,
     TokenStandard,
 };
-use crate::repositories::permission::PERMISSION_REPOSITORY;
-use crate::repositories::{
-    ASSET_REPOSITORY, REQUEST_POLICY_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
-};
+use crate::repositories::ASSET_REPOSITORY;
 use crate::services::permission::PERMISSION_SERVICE;
 use crate::services::REQUEST_POLICY_SERVICE;
-use crate::STABLE_MEMORY_VERSION;
 
 /// Handles stable memory schema migrations for the station canister.
 ///
@@ -42,6 +39,8 @@ impl MigrationHandler {
         let stored_version = system_info.get_stable_memory_version();
 
         if stored_version == STABLE_MEMORY_VERSION {
+            // Run the post-run checks that need to be run on every upgrade.
+            post_run();
             return;
         }
 
@@ -57,8 +56,15 @@ impl MigrationHandler {
         // Update the stable memory version to the latest version.
         system_info.set_stable_memory_version(STABLE_MEMORY_VERSION);
         write_system_info(system_info);
+
+        // Run the post-run checks that need to be run on every upgrade.
+        post_run();
     }
 }
+
+/// If there is a check that needs to be run on every upgrade, regardless if the memory version has changed,
+/// it should be added here.
+fn post_run() {}
 
 /// The migration to apply to the station canister stable memory.
 ///

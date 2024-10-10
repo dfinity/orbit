@@ -751,6 +751,7 @@ mod tests {
                 wasm_artifact_id: *Uuid::new_v4().as_bytes(),
                 version: format!("1.0.{}", i),
                 dependencies: Vec::new(),
+                module_extra_chunks: None,
             });
             entry.validate().unwrap();
 
