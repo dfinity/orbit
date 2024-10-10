@@ -512,6 +512,7 @@ mod tests {
         assert_eq!(policies.len(), 3);
         assert!(policies.contains(&execution_method_policy_first_policy_id));
         assert!(policies.contains(&execution_method_policy_second_policy_id));
+        assert!(policies.contains(&execution_method_policy_third_policy_id));
 
         // and insert another policy for the same execution method and validation method combination
         let execution_method_policy_repeated_policy_id = [22; 16];
