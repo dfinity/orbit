@@ -774,6 +774,9 @@ type CallExternalCanisterOperation = record {
   // The reply blob produced by a successful call of the execution method,
   // i.e., when the request is `Completed`.
   execution_method_reply : opt blob;
+  // This field is not populated in list responses, only when using `get_request` and
+  // setting `with_full_info` to `opt true` to avoid going over the response size limit.
+  arg : opt blob;
 };
 
 type EditPermissionOperationInput = record {
@@ -1177,6 +1180,12 @@ type ListRequestsResult = variant {
 type GetRequestInput = record {
   // The request id to retrieve.
   request_id : UUID;
+  // Fill in all the additional info about the request operation, request types such as `CallExternalCanisterOperation`
+  // will include the request argument, this can be a large amount of data and could potentially exceed the response
+  // size limit.
+  //
+  // If not provided, this field defaults to `false` and the additional info is not included in the response.
+  with_full_info : opt bool;
 };
 
 type GetRequestResultData = record {
@@ -2315,15 +2324,45 @@ type ExternalCanisterPermissions = record {
 // The create input type for setting the permissions for the external canister.
 type ExternalCanisterPermissionsCreateInput = ExternalCanisterPermissions;
 
+// The pair that is used to represent the execution and validation method.
+type CanisterExecutionAndValidationMethodPair = record {
+  // The validation method that is used to validate the request and
+  // render the argument.
+  validation_method : ValidationMethodResourceTarget;
+  // The method that the caller can call on the external canister.
+  //
+  // The `*` method name is used to represent that the caller can call any method on the canister.
+  execution_method : text;
+};
+
 // The input type for setting call permissions of an existing external canister.
 type ExternalCanisterChangeCallPermissionsInput = variant {
   // Replaces all the call permissions with the provided list, if the list is empty
   // all the call permissions will be removed.
   ReplaceAllBy : vec ExternalCanisterCallPermission;
   // Override the call permissions from the specified execution methods.
-  OverrideSpecifiedByExecutionMethods : vec ExternalCanisterCallPermission;
-  // Remove call permissions of the specified execution methods.
-  RemoveByExecutionMethods : vec text;
+  OverrideSpecifiedByExecutionMethods : vec record {
+    // The method that the caller can call on the external canister.
+    //
+    // The `*` method name is used to represent that the caller can call any method on the canister.
+    execution_method : text;
+    // The permissions associated with the execution method, if the list is empty all call permissions of the
+    // execution method will be removed.
+    permissions : vec record {
+      // Allowed users and user groups for the operation.
+      allow : Allow;
+      // The validation method that is used to validate the request and render the argument.
+      validation_method : ValidationMethodResourceTarget;
+    };
+  };
+  // Override the permissions for the specified execution and validation method pairs.
+  OverrideSpecifiedByExecutionValidationMethodPairs : vec record {
+    // The method configuration that is used to represent the execution and validation method pair.
+    method_configuration : CanisterExecutionAndValidationMethodPair;
+    // If allow is not provided the call permission will be removed for the specified execution
+    // and validation method pair.
+    allow : opt Allow;
+  };
 };
 
 // The input type for setting the permissions for the external canister.
@@ -2361,7 +2400,33 @@ type ExternalCanisterChangeCallRequestPoliciesInput = variant {
   // Remove call request policies by the provided ids.
   RemoveByPolicyIds : vec UUID;
   // Override the request policies for the specified execution methods.
-  OverrideSpecifiedByExecutionMethods : vec ExternalCanisterCallRequestPolicyRuleInput;
+  OverrideSpecifiedByExecutionMethods : vec record {
+    // The method that the caller can call on the external canister.
+    //
+    // The `*` method name is used to represent that the caller can call any method on the canister.
+    execution_method : text;
+    // The request policies associated with the execution method, if the list is empty all the policies of
+    // the execution method will be removed.
+    policies : vec record {
+      // The id of the request policy rule.
+      //
+      // If not provided a new entry will be created.
+      policy_id : opt UUID;
+      // The request policy rule for the canister call operation.
+      rule : RequestPolicyRule;
+      // The validation method that is used to match the policy against
+      // the permission of the resource.
+      validation_method : ValidationMethodResourceTarget;
+    };
+  };
+  // Override the request policies for the specified execution and validation method pairs.
+  OverrideSpecifiedByExecutionValidationMethodPairs : vec record {
+    // The method configuration that is used to represent the execution and validation method pair.
+    method_configuration : CanisterExecutionAndValidationMethodPair;
+    // The request policies to use for the method configuration, if the list is empty all the policies of
+    // the execution and validation method pair will be removed.
+    policies : vec ExternalCanisterChangeRequestPolicyRuleInput;
+  };
 };
 
 // The input type for setting the request policies for an existing external canister.

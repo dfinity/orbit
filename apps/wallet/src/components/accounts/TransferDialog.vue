@@ -151,6 +151,7 @@ const loadTransfer = async (): Promise<{
 
   const { request } = await stationService.getRequest({
     request_id: transfer.request_id,
+    with_full_info: [],
   });
 
   return { transfer, request };

@@ -1196,7 +1196,7 @@ dependencies = [
 
 [[package]]
 name = "dfx-orbit"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "candid",
@@ -1212,6 +1212,7 @@ dependencies = [
  "ic-certified-assets",
  "ic-utils",
  "itertools 0.13.0",
+ "orbit-essentials",
  "serde",
  "serde_bytes",
  "serde_json",

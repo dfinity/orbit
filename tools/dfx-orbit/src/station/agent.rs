@@ -1,6 +1,4 @@
-//! A dfx and IC agent for communicating with an Orbit station.
-
-pub use crate::station_agent::{config::StationConfig, error::StationAgentResult};
+pub use crate::station::{config::StationConfig, error::StationAgentResult};
 use candid::CandidType;
 use ic_agent::{agent::UpdateBuilder, Agent};
 use station_api::{
@@ -9,9 +7,6 @@ use station_api::{
     ListRequestsResponse, MeResponse, RequestApprovalStatusDTO, SubmitRequestApprovalInput,
     SubmitRequestApprovalResponse,
 };
-
-mod config;
-mod error;
 
 /// A dfx agent for communicating with a specific station.
 pub struct StationAgent {

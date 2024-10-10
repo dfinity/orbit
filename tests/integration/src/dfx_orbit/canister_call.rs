@@ -11,12 +11,12 @@ use crate::{
     TestEnv,
 };
 use candid::Principal;
-use dfx_orbit::args::{
-    request::{
-        canister::{RequestCanisterActionArgs, RequestCanisterArgs, RequestCanisterCallArgs},
-        RequestArgs, RequestArgsActions,
+use dfx_orbit::{
+    args::{RequestArgs, RequestArgsActions, VerifyArgs, VerifyArgsAction},
+    canister::{
+        RequestCanisterActionArgs, RequestCanisterArgs, RequestCanisterCallArgs,
+        VerifyCanisterActionArgs, VerifyCanisterArgs,
     },
-    verify::{VerifyArgs, VerifyArgsAction, VerifyCanisterActionArgs, VerifyCanisterArgs},
 };
 use station_api::{GetRequestInput, RequestApprovalStatusDTO};
 
@@ -75,6 +75,7 @@ fn canister_call() {
             .station
             .review_id(GetRequestInput {
                 request_id: request.request.id.clone(),
+                with_full_info: Some(false),
             })
             .await
             .unwrap();

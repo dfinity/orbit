@@ -227,6 +227,7 @@ pub struct SubmitRequestApprovalResponse {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct GetRequestInput {
     pub request_id: UuidDTO,
+    pub with_full_info: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

@@ -115,6 +115,7 @@ fn review() {
             .station
             .review_id(GetRequestInput {
                 request_id: submitted_request.id.clone(),
+                with_full_info: Some(false),
             })
             .await
             .unwrap();

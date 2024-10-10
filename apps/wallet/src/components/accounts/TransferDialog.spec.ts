@@ -146,6 +146,7 @@ describe('TransferDialog', () => {
     expect(services().station.getTransfer).toHaveBeenCalledWith('transfer-id');
     expect(services().station.getRequest).toHaveBeenCalledWith({
       request_id: 'request-id',
+      with_full_info: [],
     });
 
     const dataLoader = wrapper.findComponent({ name: 'DataLoader' });

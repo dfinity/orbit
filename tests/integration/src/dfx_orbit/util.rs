@@ -5,7 +5,7 @@ use candid::Principal;
 use pocket_ic::PocketIc;
 use station_api::{
     AddRequestPolicyOperationInput, AuthScopeDTO, CallExternalCanisterResourceTargetDTO,
-    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO,
+    EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
     ExternalCanisterResourceActionDTO, QuorumDTO, RequestOperationInput, RequestPolicyRuleDTO,
     RequestResourceActionDTO, RequestSpecifierDTO, ResourceDTO, UserSpecifierDTO,
     ValidationMethodResourceTargetDTO,
@@ -32,15 +32,9 @@ pub(super) async fn fetch_asset(canister_id: Principal, path: &str) -> Vec<u8> {
         .into()
 }
 
-/// Allow anyone to create change canister requests
-pub(super) fn permit_call_operation(env: &PocketIc, canister_ids: &CanisterIds) {
+fn permit_operation(env: &PocketIc, canister_ids: &CanisterIds, resource: ResourceDTO) {
     let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: ResourceDTO::ExternalCanister(ExternalCanisterResourceActionDTO::Call(
-            CallExternalCanisterResourceTargetDTO {
-                validation_method: ValidationMethodResourceTargetDTO::No,
-                execution_method: ExecutionMethodResourceTargetDTO::Any,
-            },
-        )),
+        resource,
         auth_scope: Some(AuthScopeDTO::Authenticated),
         user_groups: None,
         users: None,
@@ -48,16 +42,29 @@ pub(super) fn permit_call_operation(env: &PocketIc, canister_ids: &CanisterIds) 
     execute_request(env, WALLET_ADMIN_USER, canister_ids.station, add_permission).unwrap();
 }
 
-/// Set four eyes principle for canister calls
-pub(super) fn set_four_eyes_on_call(env: &PocketIc, canister_ids: &CanisterIds) {
+/// Allow anyone to create call canister requests
+pub(super) fn permit_call_operation(env: &PocketIc, canister_ids: &CanisterIds) {
+    let resource = ResourceDTO::ExternalCanister(ExternalCanisterResourceActionDTO::Call(
+        CallExternalCanisterResourceTargetDTO {
+            validation_method: ValidationMethodResourceTargetDTO::No,
+            execution_method: ExecutionMethodResourceTargetDTO::Any,
+        },
+    ));
+    permit_operation(env, canister_ids, resource);
+}
+
+/// Allow anyone to create change canister requests
+pub(super) fn permit_change_operation(env: &PocketIc, canister_ids: &CanisterIds) {
+    let resource = ResourceDTO::ExternalCanister(ExternalCanisterResourceActionDTO::Change(
+        ExternalCanisterIdDTO::Any,
+    ));
+    permit_operation(env, canister_ids, resource);
+}
+
+fn set_four_eyes_on(env: &PocketIc, canister_ids: &CanisterIds, specifier: RequestSpecifierDTO) {
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
-            specifier: RequestSpecifierDTO::CallExternalCanister(
-                CallExternalCanisterResourceTargetDTO {
-                    validation_method: ValidationMethodResourceTargetDTO::No,
-                    execution_method: ExecutionMethodResourceTargetDTO::Any,
-                },
-            ),
+            specifier,
             rule: RequestPolicyRuleDTO::Quorum(QuorumDTO {
                 approvers: UserSpecifierDTO::Any,
                 min_approved: 2,
@@ -70,6 +77,22 @@ pub(super) fn set_four_eyes_on_call(env: &PocketIc, canister_ids: &CanisterIds) 
         add_request_policy,
     )
     .unwrap();
+}
+
+/// Set four eyes principle for canister calls
+pub(super) fn set_four_eyes_on_call(env: &PocketIc, canister_ids: &CanisterIds) {
+    let specifier =
+        RequestSpecifierDTO::CallExternalCanister(CallExternalCanisterResourceTargetDTO {
+            validation_method: ValidationMethodResourceTargetDTO::No,
+            execution_method: ExecutionMethodResourceTargetDTO::Any,
+        });
+    set_four_eyes_on(env, canister_ids, specifier);
+}
+
+/// Set four eyes principle for changes to external canisters
+pub(super) fn set_four_eyes_on_change(env: &PocketIc, canister_ids: &CanisterIds) {
+    let specifier = RequestSpecifierDTO::ChangeExternalCanister(ExternalCanisterIdDTO::Any);
+    set_four_eyes_on(env, canister_ids, specifier);
 }
 
 /// Allow anyone to read request list

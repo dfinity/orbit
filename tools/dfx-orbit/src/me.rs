@@ -1,7 +1,15 @@
 use crate::DfxOrbit;
+use clap::Parser;
 use itertools::Itertools;
 use station_api::{MeResponse, UserPrivilege, UserStatusDTO};
 use std::fmt::Write;
+
+#[derive(Debug, Clone, Parser)]
+pub struct MeArgs {
+    /// Return output as JSON
+    #[clap(short, long)]
+    pub(crate) json: bool,
+}
 
 impl DfxOrbit {
     pub(crate) fn display_me(&self, response: MeResponse) -> anyhow::Result<String> {
