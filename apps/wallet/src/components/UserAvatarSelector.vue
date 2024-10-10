@@ -25,7 +25,7 @@
         <VListItemTitle>{{ $t('navigation.account_info_settings') }}</VListItemTitle>
       </VListItem>
       <VDivider />
-      <VListItem @click="session.signOut">
+      <VListItem @click="() => session.signOut()">
         <VListItemTitle>{{ $t('navigation.logout') }}</VListItemTitle>
       </VListItem>
     </VList>

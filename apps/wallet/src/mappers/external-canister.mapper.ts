@@ -1,4 +1,3 @@
-import { Principal } from '@dfinity/principal';
 import {
   ExternalCanisterState,
   ValidationMethodResourceTarget,

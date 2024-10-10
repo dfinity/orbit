@@ -10,7 +10,7 @@
     :density="props.density.value"
     :readonly="props.readonly.value"
     :disabled="props.disabled.value"
-    @update:search="autocomplete.search"
+    @update:search="autocomplete.search = $event"
   />
 </template>
 <script setup lang="ts">

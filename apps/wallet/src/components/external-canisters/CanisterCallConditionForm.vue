@@ -152,6 +152,7 @@
   </slot>
 </template>
 <script lang="ts" setup>
+import { Principal } from '@dfinity/principal';
 import { mdiCodeBraces, mdiMinus, mdiPlus, mdiTrashCan } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -161,7 +162,15 @@ import FormActions from '~/components/ui/FormActions.vue';
 import FormErrorsContainer from '~/components/ui/FormErrorsContainer.vue';
 import TextLabel from '~/components/ui/TextLabel.vue';
 import { FieldWithError, useForm } from '~/composables/forms.composable';
-import { useOnFailedOperation } from '~/composables/notifications.composable';
+import {
+  useOnFailedOperation,
+  useOnSuccessfulOperation,
+} from '~/composables/notifications.composable';
+import {
+  ExternalCanisterChangeCallPermissionsInput,
+  ExternalCanisterChangeCallRequestPoliciesInput,
+  ValidationMethodResourceTarget,
+} from '~/generated/station/station.did';
 import { mapMethodCallConfigurationToKey } from '~/mappers/external-canister.mapper';
 import { useStationStore } from '~/stores/station.store';
 import { requiredRule } from '~/utils/form.utils';
@@ -197,6 +206,19 @@ const i18n = useI18n();
 const station = useStationStore();
 const openCustomValidationConfigPanel = ref(false);
 const showAdvancedValidation = ref(false);
+
+const createValidationTarget = (
+  validationCanisterId?: Principal,
+  validationMethodName?: string,
+): ValidationMethodResourceTarget =>
+  validationCanisterId && validationMethodName
+    ? {
+        ValidationMethod: {
+          canister_id: validationCanisterId,
+          method_name: validationMethodName,
+        },
+      }
+    : { No: null };
 
 const { submit, edited, initialModel, additionalFieldErrors, submitting, valid, submitted } =
   useForm({
@@ -260,50 +282,105 @@ const { submit, edited, initialModel, additionalFieldErrors, submitting, valid, 
     submit: async (updatedModel: CanisterMethodCallConfigurationModel): Promise<void> => {
       try {
         const methodName = assertAndReturn(updatedModel.methodName, 'Method name is required');
-        const validationTarget =
-          updatedModel.validationCanisterId && updatedModel.validationMethodName
-            ? {
-                ValidationMethod: {
-                  canister_id: updatedModel.validationCanisterId,
-                  method_name: updatedModel.validationMethodName,
-                },
-              }
-            : { No: null };
-        const requestPolicies = updatedModel.requestPolicies
-          .filter(policy => !!policy.rule)
-          .map(policy => ({
-            execution_method: methodName,
-            rule: assertAndReturn(policy.rule, 'Policy rule must be defined'),
-            policy_id: policy.policy_id,
-            validation_method: validationTarget,
-          }));
+        const validationTarget = createValidationTarget(
+          updatedModel.validationCanisterId,
+          updatedModel.validationMethodName,
+        );
 
-        
+        const previousMethodName = initialModel.value.methodName ?? '';
+        const previousValidationTarget = createValidationTarget(
+          initialModel.value.validationCanisterId,
+          initialModel.value.validationMethodName,
+        );
 
-        // const request = await station.service.editExternalCanisterSettings(
-        //   updatedModel.canisterId,
-        //   {
-        //     // only call permissions and request policies are updated in this form, all other fields must be ignored
-        //     permissions: [
-        //       {
-        //         calls: [{ OverrideSpecifiedByExecutionMethods: updatedPermissions }],
-        //         change: [],
-        //         read: [],
-        //       },
-        //     ],
-        //     request_policies: [
-        //       {
-        //         calls: [{ OverrideSpecifiedByExecutionMethods: updatedRequestPolicies }],
-        //         change: [],
-        //       },
-        //     ],
-        //     name: [],
-        //     description: [],
-        //     labels: [],
-        //     state: [],
-        //   },
-        // );
-        // useOnSuccessfulOperation(request);
+        const isPreviousEntryRemoved =
+          previousMethodName?.length &&
+          (previousMethodName !== methodName ||
+            JSON.stringify(previousValidationTarget) !== JSON.stringify(validationTarget));
+
+        const request = await station.service.editExternalCanisterSettings(
+          updatedModel.canisterId,
+          {
+            // only call permissions and request policies are updated in this form, all other fields must be ignored
+            permissions: [
+              {
+                calls: [
+                  {
+                    OverrideSpecifiedByExecutionValidationMethodPairs: [
+                      {
+                        method_configuration: {
+                          execution_method: methodName,
+                          validation_method: validationTarget,
+                        },
+                        allow: [updatedModel.permission],
+                      },
+                      ...(isPreviousEntryRemoved
+                        ? ([
+                            {
+                              method_configuration: {
+                                execution_method: previousMethodName,
+                                validation_method: previousValidationTarget,
+                              },
+                              allow: [], // request for the removal of the previous entry
+                            },
+                          ] as Extract<
+                            ExternalCanisterChangeCallPermissionsInput,
+                            { OverrideSpecifiedByExecutionValidationMethodPairs: unknown }
+                          >['OverrideSpecifiedByExecutionValidationMethodPairs'])
+                        : []),
+                    ],
+                  },
+                ],
+                change: [],
+                read: [],
+              },
+            ],
+            request_policies: [
+              {
+                calls: [
+                  {
+                    OverrideSpecifiedByExecutionValidationMethodPairs: [
+                      {
+                        method_configuration: {
+                          execution_method: methodName,
+                          validation_method: validationTarget,
+                        },
+                        policies: updatedModel.requestPolicies
+                          .filter(policy => !!policy.rule)
+                          .map(policy => ({
+                            policy_id: policy.policy_id ?? [],
+                            rule: assertAndReturn(policy.rule, 'Policy rule must be defined'),
+                          })),
+                      },
+                      ...(isPreviousEntryRemoved
+                        ? ([
+                            {
+                              method_configuration: {
+                                execution_method: previousMethodName,
+                                validation_method: previousValidationTarget,
+                              },
+                              policies: [], // request for the removal of the previous entries
+                            },
+                          ] as Extract<
+                            ExternalCanisterChangeCallRequestPoliciesInput,
+                            { OverrideSpecifiedByExecutionValidationMethodPairs: unknown }
+                          >['OverrideSpecifiedByExecutionValidationMethodPairs'])
+                        : []),
+                    ],
+                  },
+                ],
+                change: [],
+              },
+            ],
+            // ignore all other fields in the model as they are not updated in this form
+            name: [],
+            description: [],
+            labels: [],
+            state: [],
+          },
+        );
+
+        useOnSuccessfulOperation(request);
       } catch (error) {
         useOnFailedOperation();
 
