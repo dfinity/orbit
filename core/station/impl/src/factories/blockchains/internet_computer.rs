@@ -491,6 +491,19 @@ impl BlockchainApi for InternetComputer {
         Ok(BigUint::from(0u64))
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
+    async fn transaction_fee(
+        &self,
+        _asset: &Asset,
+        _standard: TokenStandard,
+    ) -> BlockchainApiResult<BlockchainTransactionFee> {
+        Ok(BlockchainTransactionFee {
+            fee: 10_000u64.into(),
+            metadata: Metadata::default(),
+        })
+    }
+
+    #[cfg(target_arch = "wasm32")]
     async fn transaction_fee(
         &self,
         asset: &Asset,
