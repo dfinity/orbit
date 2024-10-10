@@ -131,7 +131,7 @@ impl RequestPolicyRepository {
     pub fn find_external_canister_call_policies_by_execution_method(
         &self,
         canister_id: &Principal,
-        execution_method: &String,
+        execution_method: &str,
     ) -> Vec<UUID> {
         self.resource_index
             .find_external_canister_call_policies_by_execution_method(canister_id, execution_method)
