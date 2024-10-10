@@ -294,6 +294,7 @@ pub fn get_system_info(
     user_id: Principal,
     station_canister_id: CanisterId,
 ) -> SystemInfoDTO {
+    await_station_healthy(env, station_canister_id);
     let res: (ApiResult<SystemInfoResponse>,) =
         update_candid_as(env, station_canister_id, user_id, "system_info", ()).unwrap();
     res.0.unwrap().system
@@ -823,4 +824,21 @@ pub fn upload_canister_chunks_to_asset_canister(
     };
 
     (base_chunk.to_vec(), module_extra_chunks)
+}
+
+pub(crate) fn await_station_healthy(env: &PocketIc, station_id: Principal) {
+    let max_rounds = 100;
+    for _ in 0..max_rounds {
+        env.tick();
+        let res: (station_api::HealthStatus,) =
+            query_candid_as(env, station_id, WALLET_ADMIN_USER, "health_status", ())
+                .expect("Unexpected error calling Station health_status");
+        if res.0 == station_api::HealthStatus::Healthy {
+            return;
+        }
+    }
+    panic!(
+        "Station did not become healthy within {} rounds.",
+        max_rounds
+    );
 }
