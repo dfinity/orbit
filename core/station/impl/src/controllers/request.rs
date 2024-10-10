@@ -179,8 +179,8 @@ impl RequestController {
 
         Ok(GetRequestResponse {
             request: match input.with_full_info {
-                None | Some(true) => request.to_dto_with_full_info(),
-                Some(false) => request.to_dto(),
+                None | Some(false) => request.to_dto(),
+                Some(true) => request.to_dto_with_full_info(),
             },
             privileges: privileges.into(),
             additional_info: additional_info.into(),
