@@ -121,6 +121,7 @@ pub fn get_request(
 ) -> RequestDTO {
     let get_request_args = GetRequestInput {
         request_id: request.id,
+        with_full_info: Some(false),
     };
     let res: (Result<GetRequestResponse, ApiErrorDTO>,) = update_candid_as(
         env,
@@ -636,6 +637,7 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
     // fetch the created account id from the request
     let get_request_args = GetRequestInput {
         request_id: account_creation_request_dto.id,
+        with_full_info: Some(false),
     };
     let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
         env,

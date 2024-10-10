@@ -160,6 +160,7 @@ fn asset_validation() {
             .station
             .review_id(GetRequestInput {
                 request_id: request.request.id.clone(),
+                with_full_info: Some(false),
             })
             .await
             .unwrap();
