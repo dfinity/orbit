@@ -1,5 +1,5 @@
 import { Principal } from '@dfinity/principal';
-import { ComputedRef, computed, ref } from 'vue';
+import { ComputedRef, computed, inject, provide, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { LocationQuery, useRouter } from 'vue-router';
 import { CanisterWizardModel } from '~/components/external-canisters/wizard/wizard.types';
@@ -292,4 +292,19 @@ export const useLoadExternalCanisterStatus = async (
 
     throw err;
   }
+};
+
+export const useExternalCanisterProvider = () => {
+  const register = (canisterId: string) => {
+    provide('externalCanisterId', canisterId);
+  };
+
+  const canisterId = computed(() => {
+    return inject<string | null>('externalCanisterId', null);
+  });
+
+  return {
+    register,
+    canisterId,
+  };
 };

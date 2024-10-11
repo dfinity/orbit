@@ -41,6 +41,7 @@
               :hide-not-found="props.hideNotFound"
               hide-headers
               :mode="app.isMobile ? 'list' : 'grid'"
+              :show-items-title="props.showItemsTitle"
               @approved="
                 disablePolling = false;
                 forceReload = true;
@@ -77,6 +78,7 @@ const props = withDefaults(
     loadErrorMsg?: string;
     hideNotFound?: boolean;
     statuses?: RequestStatusCode[];
+    showItemsTitle?: boolean;
   }>(),
   {
     title: undefined,
@@ -88,6 +90,7 @@ const props = withDefaults(
     seeAllLink: undefined,
     loadErrorMsg: undefined,
     hideNotFound: false,
+    showItemsTitle: true,
     statuses: () => [{ Created: null }],
   },
 );

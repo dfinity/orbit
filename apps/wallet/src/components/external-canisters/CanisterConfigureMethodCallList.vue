@@ -107,44 +107,11 @@
           <template v-if="variantIs(method.validationTarget, 'ValidationMethod')">
             <VDivider />
             <VCardText class="text-caption py-2">
-              <i18n-t
-                keypath="external_canisters.call_configuration.card_validation_method_description"
-                scope="global"
-              >
-                <template #method>
-                  <VChip label size="small" density="comfortable">
-                    <TextOverflow
-                      :max-length="64"
-                      :text="method.validationTarget.ValidationMethod.method_name"
-                    />
-                  </VChip>
-                </template>
-                <template #canister>
-                  <span>
-                    <VChip label size="small" density="comfortable">
-                      {{
-                        method.validationTarget.ValidationMethod.canister_id.toText() ===
-                        props.canisterId.toText()
-                          ? $t('terms.self').toLowerCase()
-                          : method.validationTarget.ValidationMethod.canister_id
-                      }}
-                    </VChip>
-
-                    <VBtn
-                      size="x-small"
-                      variant="text"
-                      density="comfortable"
-                      :icon="mdiContentCopy"
-                      @click="
-                        copyToClipboard({
-                          textToCopy: method.validationTarget.ValidationMethod.canister_id.toText(),
-                          sendNotification: true,
-                        })
-                      "
-                    />
-                  </span>
-                </template>
-              </i18n-t>
+              <ValidationMethodExplainer
+                :validation-method="method.validationTarget.ValidationMethod.method_name"
+                :validation-canister-id="method.validationTarget.ValidationMethod.canister_id"
+                :self-canister-id="props.canisterId"
+              />
             </VCardText>
           </template>
         </VCard>
@@ -157,13 +124,7 @@
 </template>
 <script setup lang="ts">
 import { Principal } from '@dfinity/principal';
-import {
-  mdiCodeBraces,
-  mdiContentCopy,
-  mdiDatabaseArrowLeftOutline,
-  mdiPencil,
-  mdiTrashCan,
-} from '@mdi/js';
+import { mdiCodeBraces, mdiDatabaseArrowLeftOutline, mdiPencil, mdiTrashCan } from '@mdi/js';
 import { onMounted, Ref, ref, toRefs, watch } from 'vue';
 import { VBtn, VDivider, VIcon } from 'vuetify/components';
 import {
@@ -176,12 +137,11 @@ import {
 } from '~/generated/station/station.did';
 import { mapConfiguredMethodCalls } from '~/mappers/external-canister.mapper';
 import { useStationStore } from '~/stores/station.store';
-import { copyToClipboard } from '~/utils/app.utils';
 import { assertAndReturn, variantIs } from '~/utils/helper.utils';
-import TextOverflow from '../TextOverflow.vue';
 import ActionBtn from '../buttons/ActionBtn.vue';
 import CanisterConfigureMethodCallDialog from './CanisterConfigureMethodCallDialog.vue';
 import { CanisterConfiguredMethodCall } from './external-canisters.types';
+import ValidationMethodExplainer from './ValidationMethodExplainer.vue';
 
 const props = withDefaults(
   defineProps<{

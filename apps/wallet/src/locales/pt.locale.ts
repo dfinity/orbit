@@ -458,6 +458,10 @@ export default {
     performed_calls: 'Chamadas realizadas',
     perform_call: {
       title: 'Executar Chamada',
+      reply_received: 'Resposta recebida',
+      attached_cycles: 'Ciclos anexados',
+      argument: 'Argumento',
+      argument_checksum: 'Checksum do argumento',
       method_name: 'Nome do Método',
       method_name_hint: 'O nome do método a ser chamado no canister.',
       method_args: 'Argumentos (opcional)',

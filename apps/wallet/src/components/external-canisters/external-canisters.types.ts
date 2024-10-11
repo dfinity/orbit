@@ -2,6 +2,7 @@ import { Principal } from '@dfinity/principal';
 import {
   Allow,
   CanisterInstallMode,
+  CanisterMethod,
   ExternalCanisterChangeRequestPolicyRuleInput,
   ValidationMethodResourceTarget,
 } from '~/generated/station/station.did';
@@ -51,4 +52,14 @@ export interface CanisterCallModel {
   requestComment?: string;
   cycles?: bigint;
   validationTarget?: ValidationMethodResourceTarget;
+}
+
+export interface CanisterCallReviewContext {
+  canisterId: Principal;
+  methodName: string;
+  arg?: Uint8Array;
+  cycles?: bigint;
+  validationMethod?: CanisterMethod;
+  argChecksum?: string;
+  reply?: Uint8Array;
 }

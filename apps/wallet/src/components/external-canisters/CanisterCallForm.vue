@@ -28,7 +28,7 @@
           />
         </VCol>
         <VCol cols="12" class="pb-0 px-6">
-          <CanisterArgumentField v-model="model.arg" name="argument" />
+          <CanisterArgumentField v-model="model.arg" name="argument" :readonly="readonly" />
         </VCol>
         <VCol v-if="hasConfiguredValidationMethods" cols="12" class="px-0 px-6">
           <VSelect

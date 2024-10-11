@@ -239,6 +239,14 @@ export const toArrayBuffer = (input: Uint8Array | number[]): ArrayBuffer => {
   return input instanceof Uint8Array ? input.buffer : new Uint8Array(input).buffer;
 };
 
+export const toUint8Array = (input: ArrayBuffer | number[] | Uint8Array): Uint8Array => {
+  if (input instanceof Uint8Array) {
+    return input;
+  }
+
+  return input instanceof ArrayBuffer ? new Uint8Array(input) : new Uint8Array(input);
+};
+
 /**
  * Removes all null and undefined values from an array and returns a new array.
  *

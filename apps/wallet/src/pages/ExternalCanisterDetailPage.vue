@@ -334,16 +334,18 @@
                   <RecentRequests
                     class="mb-4"
                     :title="$t('external_canisters.performed_calls')"
+                    :show-items-title="false"
                     :see-all-link="{
                       name: Routes.Requests,
                       query: {
                         group_by: RequestDomains.ExternalCanisters,
                         canister_id: canister.canister_id.toText(),
-                        statuses: ['Processing', 'Completed'],
+                        statuses: ['Processing', 'Completed', 'Failed'],
                       },
                     }"
+                    :sort-by="{ lastModified: 'desc' }"
                     :limit="1"
-                    :statuses="[{ Processing: null }, { Completed: null }]"
+                    :statuses="[{ Processing: null }, { Completed: null }, { Failed: null }]"
                     :types="[{ CallExternalCanister: [canister.canister_id] }]"
                     hide-not-found
                   />
@@ -368,8 +370,7 @@ import {
   mdiInfinity,
   mdiOpenInNew,
 } from '@mdi/js';
-import { watch } from 'vue';
-import { Ref, computed, ref } from 'vue';
+import { Ref, computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   VBtn,
@@ -404,6 +405,7 @@ import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
 import {
+  useExternalCanisterProvider,
   useLoadExternalCanisterModuleHash,
   useLoadExternalCanisterStatus,
 } from '~/composables/external-canisters.composable';
@@ -467,6 +469,7 @@ const dialogs = ref({
   call: false,
 });
 
+const { register } = useExternalCanisterProvider();
 const currentRouteCanisterId = computed(() => `${router.currentRoute.value.params.cid}`);
 const verifiedPageLoad = ref(false);
 const privileges = ref<ExternalCanisterCallerPrivileges>(buildDefaultPrivileges());
@@ -495,19 +498,26 @@ watch(
   { deep: true },
 );
 
-watch(currentRouteCanisterId, (current, previous) => {
-  if (current !== previous) {
-    // Reset the page state when the canister id changes.
-    loading.value = true;
-    verifiedPageLoad.value = false;
-    canisterDetails.value = {
-      moduleHash: { value: null, loading: false },
-      status: { value: null, loading: false },
-    };
-    privileges.value = buildDefaultPrivileges();
-    canister.value = null;
-  }
-});
+watch(
+  currentRouteCanisterId,
+  (current, previous) => {
+    if (current !== previous) {
+      // Reset the page state when the canister id changes.
+      loading.value = true;
+      verifiedPageLoad.value = false;
+      canisterDetails.value = {
+        moduleHash: { value: null, loading: false },
+        status: { value: null, loading: false },
+      };
+      privileges.value = buildDefaultPrivileges();
+      canister.value = null;
+
+      // Register the canister id for other components to use.
+      register(current);
+    }
+  },
+  { immediate: true },
+);
 
 const loadExternalCanisterStatus = debounce(
   (canisterId: Principal) => {
