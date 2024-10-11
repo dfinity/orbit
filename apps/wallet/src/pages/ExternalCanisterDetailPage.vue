@@ -188,137 +188,167 @@
                   @editing="disableRefresh = $event"
                 />
               </div>
-              <VCard class="d-flex flex-column" :min-width="app.isMobile ? '100%' : '272px'">
-                <VToolbar color="transparent" class="pr-4">
-                  <VToolbarTitle>
-                    {{ $t('terms.canister') }}
-                    <VBtn
-                      v-if="canister"
-                      size="x-small"
-                      variant="text"
-                      :icon="mdiOpenInNew"
-                      density="comfortable"
-                      class="ml-1"
-                      :href="`https://dashboard.internetcomputer.org/canister/${canister.canister_id.toText()}`"
-                      target="_blank"
-                    />
-                  </VToolbarTitle>
-                  <VIcon :icon="mdiDatabase" />
-                </VToolbar>
-                <VCardText class="pt-0 d-flex flex-column flex-grow-1">
-                  <VList lines="two" class="bg-transparent pt-0">
-                    <VListItem class="pt-0 px-0">
-                      <VListItemTitle class="font-weight-bold">
-                        {{ $t(`external_canisters.module_hash`) }}
-                        <template v-if="privileges.can_change">
-                          <CanisterInstallDialog
-                            :key="canisterDetails.moduleHash.value?.toString()"
-                            v-model:open="dialogs.install"
-                            :canister-id="canister.canister_id"
-                            :canister-module-hash="
-                              canisterDetails.moduleHash.value !== null
-                                ? canisterDetails.moduleHash.value
-                                : undefined
-                            "
+              <div
+                :style="{ 'min-width': app.isMobile ? '100%' : '272px' }"
+                class="d-flex flex-column ga-4"
+              >
+                <VCard class="d-flex flex-column" width="100%">
+                  <VToolbar color="transparent" class="pr-4">
+                    <VToolbarTitle>
+                      {{ $t('terms.canister') }}
+                      <VBtn
+                        v-if="canister"
+                        size="x-small"
+                        variant="text"
+                        :icon="mdiOpenInNew"
+                        density="comfortable"
+                        class="ml-1"
+                        :href="`https://dashboard.internetcomputer.org/canister/${canister.canister_id.toText()}`"
+                        target="_blank"
+                      />
+                    </VToolbarTitle>
+                    <VIcon :icon="mdiDatabase" />
+                  </VToolbar>
+                  <VCardText class="pt-0 d-flex flex-column flex-grow-1">
+                    <VList lines="two" class="bg-transparent pt-0">
+                      <VListItem class="pt-0 px-0">
+                        <VListItemTitle class="font-weight-bold">
+                          {{ $t(`external_canisters.module_hash`) }}
+                          <template v-if="privileges.can_change">
+                            <CanisterInstallDialog
+                              :key="canisterDetails.moduleHash.value?.toString()"
+                              v-model:open="dialogs.install"
+                              :canister-id="canister.canister_id"
+                              :canister-module-hash="
+                                canisterDetails.moduleHash.value !== null
+                                  ? canisterDetails.moduleHash.value
+                                  : undefined
+                              "
+                            />
+                            <VBtn
+                              size="small"
+                              density="compact"
+                              color="default"
+                              variant="tonal"
+                              class="ml-1 px-2"
+                              :disabled="!canisterDetails.status.value"
+                              :append-icon="mdiDatabaseCog"
+                              @click="dialogs.install = true"
+                            >
+                              {{ $t('external_canisters.install') }}
+                            </VBtn>
+                          </template>
+                        </VListItemTitle>
+                        <VListItemSubtitle>
+                          <VProgressCircular
+                            v-if="canisterDetails.moduleHash.loading"
+                            indeterminate
+                            color="primary"
+                            class="mt-2"
+                            size="16"
                           />
-                          <VBtn
-                            size="small"
-                            density="compact"
-                            color="default"
-                            variant="tonal"
-                            class="ml-1 px-2"
-                            :disabled="!canisterDetails.status.value"
-                            :append-icon="mdiDatabaseCog"
-                            @click="dialogs.install = true"
-                          >
-                            {{ $t('external_canisters.install') }}
-                          </VBtn>
-                        </template>
-                      </VListItemTitle>
-                      <VListItemSubtitle>
-                        <VProgressCircular
-                          v-if="canisterDetails.moduleHash.loading"
-                          indeterminate
-                          color="primary"
-                          class="mt-2"
-                          size="16"
-                        />
-                        <span v-else-if="!canisterDetails.moduleHash.value">
-                          {{ $t('terms.none') }}
-                        </span>
-                        <span v-else>
-                          <TextOverflow :max-length="24" :text="canisterDetails.moduleHash.value" />
-                          <VBtn
-                            size="small"
-                            variant="text"
-                            :icon="mdiContentCopy"
-                            @click="
-                              copyToClipboard({
-                                textToCopy: canisterDetails.moduleHash.value,
-                                sendNotification: true,
-                              })
-                            "
-                          />
-                        </span>
-                      </VListItemSubtitle>
-                    </VListItem>
-                    <VListItem class="pt-0 px-0">
-                      <VListItemTitle class="font-weight-bold">
-                        {{ $t(`external_canisters.cycles`) }}
-                        <template v-if="privileges.can_fund">
-                          <CanisterTopUpDialog
-                            v-model:open="dialogs.topUp"
-                            :canister-id="canister.canister_id"
-                          />
+                          <span v-else-if="!canisterDetails.moduleHash.value">
+                            {{ $t('terms.none') }}
+                          </span>
+                          <span v-else>
+                            <TextOverflow
+                              :max-length="24"
+                              :text="canisterDetails.moduleHash.value"
+                            />
+                            <VBtn
+                              size="small"
+                              variant="text"
+                              :icon="mdiContentCopy"
+                              @click="
+                                copyToClipboard({
+                                  textToCopy: canisterDetails.moduleHash.value,
+                                  sendNotification: true,
+                                })
+                              "
+                            />
+                          </span>
+                        </VListItemSubtitle>
+                      </VListItem>
+                      <VListItem class="pt-0 px-0">
+                        <VListItemTitle class="font-weight-bold">
+                          {{ $t(`external_canisters.cycles`) }}
+                          <template v-if="privileges.can_fund">
+                            <CanisterTopUpDialog
+                              v-model:open="dialogs.topUp"
+                              :canister-id="canister.canister_id"
+                            />
 
-                          <VBtn
-                            size="small"
-                            density="compact"
-                            color="default"
-                            variant="tonal"
-                            class="ml-1 px-2"
-                            :append-icon="mdiDatabaseArrowUp"
-                            @click="dialogs.topUp = true"
-                          >
-                            {{ $t('external_canisters.top_up') }}
-                          </VBtn>
-                        </template>
-                      </VListItemTitle>
-                      <VListItemSubtitle>
-                        <VProgressCircular
-                          v-if="canisterDetails.status.loading"
-                          indeterminate
-                          color="primary"
-                          class="mt-2"
-                          size="16"
-                        />
-                        <span v-else-if="canisterDetails.status.value == null">
-                          {{ $t('external_canisters.not_controller') }}
-                        </span>
-                        <span v-else>
-                          <template
-                            v-if="
-                              toCyclesUnit(
-                                canisterDetails.status.value.cycles,
-                                CyclesUnit.Trillion,
-                              ) !== 0
-                            "
-                          >
-                            {{
-                              toCyclesUnit(canisterDetails.status.value.cycles, CyclesUnit.Trillion)
-                            }}
-                            {{ $t('cycles.units.tc') }}
+                            <VBtn
+                              size="small"
+                              density="compact"
+                              color="default"
+                              variant="tonal"
+                              class="ml-1 px-2"
+                              :append-icon="mdiDatabaseArrowUp"
+                              @click="dialogs.topUp = true"
+                            >
+                              {{ $t('external_canisters.top_up') }}
+                            </VBtn>
                           </template>
-                          <template v-else>
-                            {{ canisterDetails.status.value.cycles }}
-                            {{ $t('cycles.units.e8s') }}
-                          </template>
-                        </span>
-                      </VListItemSubtitle>
-                    </VListItem>
-                  </VList>
-                </VCardText>
-              </VCard>
+                        </VListItemTitle>
+                        <VListItemSubtitle>
+                          <VProgressCircular
+                            v-if="canisterDetails.status.loading"
+                            indeterminate
+                            color="primary"
+                            class="mt-2"
+                            size="16"
+                          />
+                          <span v-else-if="canisterDetails.status.value == null">
+                            {{ $t('external_canisters.not_controller') }}
+                          </span>
+                          <span v-else>
+                            <template
+                              v-if="
+                                toCyclesUnit(
+                                  canisterDetails.status.value.cycles,
+                                  CyclesUnit.Trillion,
+                                ) !== 0
+                              "
+                            >
+                              {{
+                                toCyclesUnit(
+                                  canisterDetails.status.value.cycles,
+                                  CyclesUnit.Trillion,
+                                )
+                              }}
+                              {{ $t('cycles.units.tc') }}
+                            </template>
+                            <template v-else>
+                              {{ canisterDetails.status.value.cycles }}
+                              {{ $t('cycles.units.e8s') }}
+                            </template>
+                          </span>
+                        </VListItemSubtitle>
+                      </VListItem>
+                    </VList>
+                  </VCardText>
+                </VCard>
+
+                <AuthCheck :privileges="[Privilege.ListRequests]">
+                  <RecentRequests
+                    class="mb-4"
+                    :title="$t('external_canisters.performed_calls')"
+                    :see-all-link="{
+                      name: Routes.Requests,
+                      query: {
+                        group_by: RequestDomains.ExternalCanisters,
+                        canister_id: canister.canister_id.toText(),
+                        statuses: ['Processing', 'Completed'],
+                      },
+                    }"
+                    :limit="1"
+                    :statuses="[{ Processing: null }, { Completed: null }]"
+                    :types="[{ CallExternalCanister: [canister.canister_id] }]"
+                    hide-not-found
+                  />
+                </AuthCheck>
+              </div>
             </VCol>
           </VRow>
         </PageBody>

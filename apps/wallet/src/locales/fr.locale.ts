@@ -459,6 +459,7 @@ export default {
     unlink: 'Dissocier',
     unlink_title: 'Dissocier le Canister',
     unlink_soft_delete: 'Gardez le canister sur l ordinateur, supprime seulement sa référence.',
+    performed_calls: 'Appels effectués',
     perform_call: {
       title: 'Effectuer un Appel',
       method_name: 'Nom de la Méthode',

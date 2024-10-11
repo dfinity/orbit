@@ -455,6 +455,7 @@ export default {
     unlink: 'Dessaociar',
     unlink_title: 'Desassociar Canister',
     unlink_soft_delete: 'Mantém o canister no Internet Computer, apenas remove a sua referência.',
+    performed_calls: 'Chamadas realizadas',
     perform_call: {
       title: 'Executar Chamada',
       method_name: 'Nome do Método',

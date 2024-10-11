@@ -452,6 +452,7 @@ export default {
     unlink: 'Unlink',
     unlink_title: 'Unlink Canister',
     unlink_soft_delete: 'Keep the canister on the Internet Computer, only remove its reference.',
+    performed_calls: 'Performed calls',
     perform_call: {
       title: 'Perform Call',
       method_name: 'Method Name',

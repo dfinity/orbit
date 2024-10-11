@@ -2,7 +2,7 @@
   <DataLoader
     v-model:force-reload="forceReload"
     :load="fetchRecentRequests"
-    :error-msg="props.loadErrorMsg"
+    :error-msg="props.loadErrorMsg ?? $t('app.data_load_error')"
     :refresh-interval-ms="props.refreshIntervalMs"
     :disable-refresh="disablePolling"
   >
@@ -60,8 +60,7 @@ import { ref } from 'vue';
 import { RouteLocationRaw } from 'vue-router';
 import { VBtn, VCard, VCardText, VDivider, VList } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
-import { ListRequestsOperationType } from '~/generated/station/station.did';
-import { i18n } from '~/plugins/i18n.plugin';
+import { ListRequestsOperationType, RequestStatusCode } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import { ListRequestsArgs } from '~/types/station.types';
@@ -77,6 +76,7 @@ const props = withDefaults(
     refreshIntervalMs?: number;
     loadErrorMsg?: string;
     hideNotFound?: boolean;
+    statuses?: RequestStatusCode[];
   }>(),
   {
     title: undefined,
@@ -86,8 +86,9 @@ const props = withDefaults(
     }),
     refreshIntervalMs: 5000,
     seeAllLink: undefined,
-    loadErrorMsg: i18n.global.t('app.data_load_error'),
+    loadErrorMsg: undefined,
     hideNotFound: false,
+    statuses: () => [{ Created: null }],
   },
 );
 
@@ -102,7 +103,7 @@ const fetchRecentRequests = async (): ReturnType<typeof station.service.listRequ
   const result = await station.service.listRequests(
     {
       types: props.types,
-      statuses: [{ Created: null }],
+      statuses: props.statuses,
       limit: props.limit,
       sortBy: props.sortBy,
     },

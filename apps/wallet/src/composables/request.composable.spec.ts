@@ -44,7 +44,6 @@ describe('Request Composables', () => {
   it('should fill filters with router query params', () => {
     const vm = setupComponent(() => {
       const router = useRouter();
-      const domains = useAvailableDomains();
 
       router.currentRoute.value.query = {
         group_by: RequestDomains.System,
@@ -55,10 +54,10 @@ describe('Request Composables', () => {
         statuses: [RequestStatusEnum.Completed],
       } as StorableFilters;
 
-      return { filters: useSavedFilters(domains.value) };
+      return { filters: useSavedFilters() };
     });
 
-    expect(vm.filters.groupBy).toEqual(1);
+    expect(vm.filters.groupBy).toEqual(RequestDomains.System);
     expect(vm.filters.created.from).toEqual(new Date('2020-01-01'));
     expect(vm.filters.created.to).toEqual(new Date('2021-02-01'));
     expect(vm.filters.expires.from).toEqual(new Date('2020-01-01'));

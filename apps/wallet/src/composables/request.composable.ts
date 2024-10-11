@@ -1,3 +1,4 @@
+import { Principal } from '@dfinity/principal';
 import { ComputedRef, Ref, computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -89,10 +90,11 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
 };
 
 export type Filters = {
-  groupBy: number;
+  groupBy: RequestDomains;
   created: DateRangeModel;
   expires: DateRangeModel;
   statuses: RequestStatusEnum[];
+  canisterId?: Principal;
 };
 
 export type StorableFilters = {
@@ -102,6 +104,7 @@ export type StorableFilters = {
   expires_from?: string;
   expires_to?: string;
   statuses?: RequestStatusEnum[];
+  canister_id?: string;
 };
 
 export type FilterUtils = {
@@ -110,7 +113,7 @@ export type FilterUtils = {
 };
 
 const getDefaultFilters = (): Filters => ({
-  groupBy: 0,
+  groupBy: RequestDomains.All,
   created: {
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
@@ -120,6 +123,7 @@ const getDefaultFilters = (): Filters => ({
     to: undefined,
   },
   statuses: [RequestStatusEnum.Created],
+  canisterId: undefined,
 });
 
 export const useFilterUtils = (): FilterUtils => {
@@ -128,14 +132,15 @@ export const useFilterUtils = (): FilterUtils => {
   return {
     getDefaultFilters: getDefaultFilters,
     getQuery: (filters: Filters): StorableFilters => {
-      const { groupBy, created, expires, statuses } = filters;
+      const { groupBy, created, expires, statuses, canisterId } = filters;
       const storableFilters: StorableFilters = {
         created_from: created.from?.toISOString(),
         created_to: created.to?.toISOString(),
         expires_from: expires.from?.toISOString(),
         expires_to: expires.to?.toISOString(),
-        group_by: availableDomains.value.find((_, idx) => idx === groupBy)?.id,
+        group_by: availableDomains.value.find(domain => domain.id === groupBy)?.id,
         statuses: statuses,
+        canister_id: canisterId ? canisterId.toText() : undefined,
       };
 
       return storableFilters;
@@ -143,7 +148,7 @@ export const useFilterUtils = (): FilterUtils => {
   };
 };
 
-export const useSavedFilters = (availableDomains: AvailableDomain[]): Ref<Filters> => {
+export const useSavedFilters = (): Ref<Filters> => {
   const defaultFilters = useFilterUtils().getDefaultFilters();
   const app = useAppStore();
   const router = useRouter();
@@ -171,17 +176,32 @@ export const useSavedFilters = (availableDomains: AvailableDomain[]): Ref<Filter
       statuses = [statuses];
     }
 
-    let groupBy = defaultFilters.groupBy;
-    if (query?.group_by && availableDomains.findIndex(group => group.id === query.group_by) > -1) {
-      groupBy = availableDomains.findIndex(group => group.id === query.group_by);
-    }
+    const queryParamGroupBy =
+      query?.group_by && Array.isArray(query.group_by) ? query.group_by[0] : query.group_by;
+
+    const groupBy =
+      queryParamGroupBy &&
+      Object.values(RequestDomains).includes(queryParamGroupBy as RequestDomains)
+        ? queryParamGroupBy
+        : defaultFilters.groupBy;
+
+    const queryParamCanisterId =
+      query?.canister_id && Array.isArray(query.canister_id) && query.canister_id.length > 0
+        ? query.canister_id[0]
+        : query.canister_id;
+
+    const canisterId =
+      queryParamCanisterId && queryParamCanisterId?.trim().length
+        ? Principal.fromText(queryParamCanisterId?.trim())
+        : undefined;
 
     return ref({
       groupBy,
       created: createdDt,
       expires: expiresDt,
       statuses: Object.values(RequestStatusEnum).filter(status => statuses.includes(status)),
-    });
+      canisterId,
+    }) as Ref<Filters>;
   } catch (e) {
     logger.error('Failed to parse filters from query', e);
 
@@ -190,7 +210,7 @@ export const useSavedFilters = (availableDomains: AvailableDomain[]): Ref<Filter
       message: i18n.global.t('app.params_parse_error'),
     });
 
-    return ref(defaultFilters);
+    return ref(defaultFilters) as Ref<Filters>;
   }
 };
 
@@ -275,7 +295,7 @@ export const useDownloadItems = (
       downloads.value = [];
       return;
     }
-    const types = domains.value.find((_, idx) => idx === filters.value.groupBy)?.types ?? [];
+    const types = domains.value.find(domain => domain.id === filters.value.groupBy)?.types ?? [];
     if (!types.length) {
       types.push(...domains.value.map(d => d.types).flat());
     }
