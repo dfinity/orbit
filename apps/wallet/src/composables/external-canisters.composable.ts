@@ -4,13 +4,19 @@ import { useI18n } from 'vue-i18n';
 import { LocationQuery, useRouter } from 'vue-router';
 import { CanisterWizardModel } from '~/components/external-canisters/wizard/wizard.types';
 import { useAutocomplete } from '~/composables/autocomplete.composable';
+import { icAgent } from '~/core/ic-agent.core';
 import logger from '~/core/logger.core';
-import { UUID } from '~/generated/station/station.did';
+import { ApiError } from '~/generated/control-panel/control_panel.did';
+import {
+  CanisterStatusResult,
+  GetExternalCanisterResult,
+  UUID,
+} from '~/generated/station/station.did';
 import { mapExternalCanisterStateVariantToEnum } from '~/mappers/external-canister.mapper';
 import { useStationStore } from '~/stores/station.store';
-import { SelectItem } from '~/types/helper.types';
+import { ExtractOk, SelectItem } from '~/types/helper.types';
 import { ExternalCanisterStateEnum } from '~/types/station.types';
-import { compactArray, parseLocationQuery } from '~/utils/helper.utils';
+import { compactArray, fetchCanisterModuleHash, parseLocationQuery } from '~/utils/helper.utils';
 
 export type ExternalCanistersFilters = {
   name_prefix: string;
@@ -223,4 +229,67 @@ export const useLoadExternaLCanisterSetupWizardModel = async (
       change: canister.request_policies.change,
     },
   };
+};
+
+export const useLoadExternalCanister = (opts: {
+  canisterId: Principal;
+  verifiedCall?: boolean;
+}) => {
+  const verifiedCall = opts?.verifiedCall ?? false;
+  const canisterId = opts.canisterId;
+  const station = useStationStore();
+
+  const fetchExternalCanister = async (): Promise<
+    Partial<ExtractOk<GetExternalCanisterResult>>
+  > => {
+    try {
+      const result = await station.service.getExternalCanisterByCanisterId(
+        canisterId,
+        verifiedCall,
+      );
+
+      return result;
+    } catch (err) {
+      const error = err as ApiError;
+
+      if (error?.code && error.code === 'INVALID_EXTERNAL_CANISTER') {
+        return {
+          canister: undefined,
+          privileges: undefined,
+        };
+      }
+
+      logger.error('Failed to load external canister', error);
+
+      throw err;
+    }
+  };
+
+  return fetchExternalCanister;
+};
+
+export const useLoadExternalCanisterModuleHash = async (
+  canisterId: Principal,
+): Promise<string | null> => {
+  try {
+    return await fetchCanisterModuleHash(icAgent.get(), canisterId);
+  } catch (err) {
+    logger.error('Failed to load canister module hash', err);
+  }
+
+  return null;
+};
+
+export const useLoadExternalCanisterStatus = async (
+  canisterId: Principal,
+): Promise<ExtractOk<CanisterStatusResult>> => {
+  try {
+    const station = useStationStore();
+
+    return await station.service.getExternalCanisterStatus(canisterId);
+  } catch (err) {
+    logger.error('Failed to load canister status', err);
+
+    throw err;
+  }
 };

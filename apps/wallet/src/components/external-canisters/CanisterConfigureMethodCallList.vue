@@ -18,23 +18,138 @@
         variant="outlined"
         @click="openConfigureMethodCallDialog()"
       >
-        {{ $t('external_canisters.call_configuration.add_new') }}
+        {{ $t('external_canisters.call_configuration.add_new_method_pair') }}
       </VBtn>
     </header>
     <VDivider />
-    <div v-if="configuredMethodCalls.length" class="d-flex">
-      <div v-for="(method, idx) in configuredMethodCalls" :key="idx">
-        {{ method }}
-        <VBtn
-          v-if="!readonly"
-          size="small"
-          variant="outlined"
-          @click="openConfigureMethodCallDialog(idx)"
-        >
-          {{ $t('external_canisters.call_configuration.edit') }}
-        </VBtn>
-      </div>
-    </div>
+    <VRow v-if="configuredMethodCalls.length">
+      <VCol v-for="(method, idx) in configuredMethodCalls" :key="idx" cols="12" class="d-flex pb-0">
+        <VCard width="100%">
+          <VToolbar color="transparent" class="pr-4" density="compact">
+            <VToolbarTitle class="text-subtitle-1">
+              <VIcon :icon="mdiCodeBraces" size="small" />
+              {{ method.methodName }}
+            </VToolbarTitle>
+            <div v-if="!readonly" class="d-flex flex-nowrap gap-1">
+              <ActionBtn
+                size="small"
+                density="comfortable"
+                :icon="mdiTrashCan"
+                :submit="
+                  _ => {
+                    return station.service.editExternalCanisterSettings(props.canisterId, {
+                      description: [],
+                      labels: [],
+                      name: [],
+                      state: [],
+                      permissions: [
+                        {
+                          change: [],
+                          read: [],
+                          calls: [
+                            {
+                              OverrideSpecifiedByExecutionValidationMethodPairs: [
+                                {
+                                  method_configuration: {
+                                    execution_method: method.methodName,
+                                    validation_method: method.validationTarget,
+                                  },
+                                  allow: [],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                      request_policies: [
+                        {
+                          change: [],
+                          calls: [
+                            {
+                              OverrideSpecifiedByExecutionValidationMethodPairs: [
+                                {
+                                  method_configuration: {
+                                    execution_method: method.methodName,
+                                    validation_method: method.validationTarget,
+                                  },
+                                  policies: [],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    });
+                  }
+                "
+                @opened="emit('editing', true)"
+                @closed="emit('editing', false)"
+                @failed="useOnFailedOperation"
+                @submitted="
+                  request => {
+                    if (request && variantIs(request.status, 'Approved')) {
+                      removeConfiguredMethodCallsByIdx(idx);
+                    }
+
+                    useOnSuccessfulOperation(request);
+                  }
+                "
+              />
+              <VSpacer />
+              <VBtn
+                :icon="mdiPencil"
+                size="small"
+                density="comfortable"
+                @click="openConfigureMethodCallDialog(idx)"
+              />
+            </div>
+          </VToolbar>
+          <template v-if="variantIs(method.validationTarget, 'ValidationMethod')">
+            <VDivider />
+            <VCardText class="text-caption py-2">
+              <i18n-t
+                keypath="external_canisters.call_configuration.card_validation_method_description"
+                scope="global"
+              >
+                <template #method>
+                  <VChip label size="small" density="comfortable">
+                    <TextOverflow
+                      :max-length="64"
+                      :text="method.validationTarget.ValidationMethod.method_name"
+                    />
+                  </VChip>
+                </template>
+                <template #canister>
+                  <span>
+                    <VChip label size="small" density="comfortable">
+                      {{
+                        method.validationTarget.ValidationMethod.canister_id.toText() ===
+                        props.canisterId.toText()
+                          ? $t('terms.self').toLowerCase()
+                          : method.validationTarget.ValidationMethod.canister_id
+                      }}
+                    </VChip>
+
+                    <VBtn
+                      size="x-small"
+                      variant="text"
+                      density="comfortable"
+                      :icon="mdiContentCopy"
+                      @click="
+                        copyToClipboard({
+                          textToCopy: method.validationTarget.ValidationMethod.canister_id.toText(),
+                          sendNotification: true,
+                        })
+                      "
+                    />
+                  </span>
+                </template>
+              </i18n-t>
+            </VCardText>
+          </template>
+        </VCard>
+      </VCol>
+    </VRow>
     <p v-else>
       {{ $t('external_canisters.call_configuration.no_configuration') }}
     </p>
@@ -42,16 +157,29 @@
 </template>
 <script setup lang="ts">
 import { Principal } from '@dfinity/principal';
-import { mdiDatabaseArrowLeftOutline } from '@mdi/js';
-import { onMounted, Ref, ref, toRefs } from 'vue';
+import {
+  mdiCodeBraces,
+  mdiContentCopy,
+  mdiDatabaseArrowLeftOutline,
+  mdiPencil,
+  mdiTrashCan,
+} from '@mdi/js';
+import { onMounted, Ref, ref, toRefs, watch } from 'vue';
 import { VBtn, VDivider, VIcon } from 'vuetify/components';
+import {
+  useOnFailedOperation,
+  useOnSuccessfulOperation,
+} from '~/composables/notifications.composable';
 import {
   ExternalCanisterPermissions,
   ExternalCanisterRequestPolicies,
-  ValidationMethodResourceTarget,
 } from '~/generated/station/station.did';
-import { mapMethodCallConfigurationToKey } from '~/mappers/external-canister.mapper';
-import { assertAndReturn } from '~/utils/helper.utils';
+import { mapConfiguredMethodCalls } from '~/mappers/external-canister.mapper';
+import { useStationStore } from '~/stores/station.store';
+import { copyToClipboard } from '~/utils/app.utils';
+import { assertAndReturn, variantIs } from '~/utils/helper.utils';
+import TextOverflow from '../TextOverflow.vue';
+import ActionBtn from '../buttons/ActionBtn.vue';
 import CanisterConfigureMethodCallDialog from './CanisterConfigureMethodCallDialog.vue';
 import { CanisterConfiguredMethodCall } from './external-canisters.types';
 
@@ -86,17 +214,23 @@ const canisterConfigureMethodCallDialog = ref({
   alreadyConfiguredMethods: CanisterConfiguredMethodCall[];
 }>;
 
+const emit = defineEmits<{
+  (event: 'editing', payload: boolean): void;
+}>();
+
+const station = useStationStore();
 const configuredMethodCalls = ref([]) as Ref<CanisterConfiguredMethodCall[]>;
 
 const openConfigureMethodCallDialog = (idx?: number) => {
-  const method = idx
-    ? assertAndReturn(configuredMethodCalls.value[idx], 'configured method should exist')
-    : {
-        methodName: '',
-        requestPolicies: [],
-        permission: undefined,
-        validationTarget: { No: null },
-      };
+  const method =
+    idx !== undefined
+      ? assertAndReturn(configuredMethodCalls.value[idx], 'configured method should exist')
+      : {
+          methodName: '',
+          requestPolicies: [],
+          permission: undefined,
+          validationTarget: { No: null },
+        };
 
   canisterConfigureMethodCallDialog.value = {
     method,
@@ -105,60 +239,35 @@ const openConfigureMethodCallDialog = (idx?: number) => {
   };
 };
 
+watch(
+  () => canisterConfigureMethodCallDialog.value.open,
+  isEditing => {
+    emit('editing', isEditing);
+  },
+  { deep: true },
+);
+
 const syncConfiguredMethodCalls = () => {
-  const updatedConfiguredMethodCalls: Map<string, CanisterConfiguredMethodCall> = new Map();
-
-  const getOrDefault = (
-    methodName: string,
-    validationTarget: ValidationMethodResourceTarget,
-  ): CanisterConfiguredMethodCall =>
-    updatedConfiguredMethodCalls.get(
-      mapMethodCallConfigurationToKey({
-        executionMethod: methodName,
-        validationMethod: validationTarget,
-      }),
-    ) ?? {
-      methodName,
-      requestPolicies: [],
-      permission: undefined,
-      validationTarget,
-    };
-
-  for (const policy of props.requestPolicies) {
-    const methodCallEntry = getOrDefault(policy.execution_method, policy.validation_method);
-
-    methodCallEntry.requestPolicies.push({
-      rule: policy.rule,
-      policy_id: [policy.policy_id],
-    });
-
-    updatedConfiguredMethodCalls.set(
-      mapMethodCallConfigurationToKey({
-        executionMethod: policy.execution_method,
-        validationMethod: policy.validation_method,
-      }),
-      methodCallEntry,
-    );
-  }
-
-  for (const permission of props.permissions) {
-    const methodCallEntry = getOrDefault(permission.execution_method, permission.validation_method);
-
-    methodCallEntry.permission = permission.allow;
-
-    updatedConfiguredMethodCalls.set(
-      mapMethodCallConfigurationToKey({
-        executionMethod: permission.execution_method,
-        validationMethod: permission.validation_method,
-      }),
-      methodCallEntry,
-    );
-  }
-
-  configuredMethodCalls.value = Array.from(updatedConfiguredMethodCalls.values());
+  configuredMethodCalls.value = mapConfiguredMethodCalls({
+    requestPolicies: props.requestPolicies,
+    permissions: props.permissions,
+  });
 };
 
-onMounted(() => {
-  syncConfiguredMethodCalls();
-});
+// This is simply to make the UI more responsive in case the request is approved immediately
+const removeConfiguredMethodCallsByIdx = (idx: number) => {
+  configuredMethodCalls.value.splice(idx, 1);
+};
+
+watch(
+  () => props.requestPolicies,
+  () => syncConfiguredMethodCalls(),
+);
+
+watch(
+  () => props.permissions,
+  () => syncConfiguredMethodCalls(),
+);
+
+onMounted(() => syncConfiguredMethodCalls());
 </script>

@@ -1,6 +1,7 @@
 import { Certificate, HttpAgent, LookupStatus } from '@dfinity/agent';
 import type { IDL as CandidIDL } from '@dfinity/candid';
 import { Principal } from '@dfinity/principal';
+import { toRaw } from 'vue';
 import { LocationQuery, LocationQueryValue } from 'vue-router';
 import { TransferStatus } from '~/generated/station/station.did';
 import { AccountTransferStatus } from '~/types/station.types';
@@ -531,4 +532,72 @@ export const transformData = (
   }
 
   return normalizedInput;
+};
+
+/**
+ * Deep clones the input data using structured cloning, if Proxy objects are found they are
+ * transformed to plain objects.
+ */
+export function deepClone<T>(input: T): T {
+  const value = toRaw(input);
+
+  if (Array.isArray(value)) {
+    return value.map(deepClone) as T;
+  }
+
+  if (value === null) return null as T;
+
+  if (value instanceof Principal) {
+    return Principal.fromUint8Array(value.toUint8Array()) as T;
+  }
+
+  if (typeof value === 'object') {
+    const entries = Object.entries(value).map(([key, value]) => [key, deepClone(value)]);
+
+    return Object.fromEntries(entries);
+  }
+
+  return structuredClone(value);
+}
+
+/**
+ * Debounces a function and returns a promise that resolves with the result of the debounced function.
+ *
+ * @param debouncedFunction The function to debounce.
+ * @param wait The time to wait before calling the debounced function. @default 500
+ *
+ * @returns The debounced function.
+ */
+export const debounce = <T extends (...args: Parameters<T>) => ReturnType<T>>(
+  debouncedFunction: T,
+  wait: number = 500,
+  opts: { immediate?: boolean | number } = {},
+): ((...args: Parameters<T>) => Promise<Awaited<ReturnType<T>>>) => {
+  let timeout: NodeJS.Timeout | null = null;
+  let isFirstCall = true;
+  const immediateMs =
+    (typeof opts.immediate === 'number' && opts.immediate >= 0) || opts.immediate === true
+      ? Number(opts.immediate)
+      : false;
+
+  return (...args: Parameters<T>): Promise<Awaited<ReturnType<T>>> => {
+    const waitMs = isFirstCall && immediateMs !== false ? immediateMs : wait;
+    isFirstCall = false;
+
+    return new Promise((resolve, reject) => {
+      if (timeout) {
+        clearTimeout(timeout);
+      }
+
+      timeout = setTimeout(() => {
+        try {
+          const result = debouncedFunction(...args);
+
+          return Promise.resolve(result).then(resolve).catch(reject);
+        } catch (error) {
+          reject(error);
+        }
+      }, waitMs);
+    });
+  };
 };

@@ -43,3 +43,12 @@ export interface CanisterConfiguredMethodCall {
   validationTarget: ValidationMethodResourceTarget;
   requestPolicies: ExternalCanisterChangeRequestPolicyRuleInput[];
 }
+
+export interface CanisterCallModel {
+  canisterId?: Principal;
+  methodName?: string;
+  arg?: Uint8Array;
+  requestComment?: string;
+  cycles?: bigint;
+  validationTarget?: ValidationMethodResourceTarget;
+}

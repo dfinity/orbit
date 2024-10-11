@@ -1301,6 +1301,7 @@ export const idlFactory = ({ IDL }) => {
     'ListAddressBookEntries' : IDL.Null,
     'ListExternalCanisters' : IDL.Null,
     'ListRequests' : IDL.Null,
+    'CallAnyExternalCanister' : IDL.Null,
     'SystemInfo' : IDL.Null,
     'Capabilities' : IDL.Null,
     'AddAccount' : IDL.Null,

@@ -16,7 +16,7 @@
       </VToolbar>
       <VDivider />
 
-      <CanisterCallConditionForm
+      <CanisterConfigureMethodCallForm
         v-model="canisterConfigureMethodCallModel"
         @submitting="canClose = !$event"
         @submitted="open = false"
@@ -36,7 +36,7 @@
             </VBtn>
           </VCardActions>
         </template>
-      </CanisterCallConditionForm>
+      </CanisterConfigureMethodCallForm>
     </VCard>
   </VDialog>
 </template>
@@ -56,7 +56,7 @@ import {
   VToolbarTitle,
 } from 'vuetify/components';
 import { variantIs } from '~/utils/helper.utils';
-import CanisterCallConditionForm from './CanisterCallConditionForm.vue';
+import CanisterConfigureMethodCallForm from './CanisterConfigureMethodCallForm.vue';
 import {
   CanisterConfiguredMethodCall,
   CanisterMethodCallConfigurationModel,

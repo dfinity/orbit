@@ -1218,6 +1218,7 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListAddressBookEntries' : null } |
   { 'ListExternalCanisters' : null } |
   { 'ListRequests' : null } |
+  { 'CallAnyExternalCanister' : null } |
   { 'SystemInfo' : null } |
   { 'Capabilities' : null } |
   { 'AddAccount' : null };

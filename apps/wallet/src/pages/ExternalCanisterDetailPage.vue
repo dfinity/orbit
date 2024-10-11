@@ -1,16 +1,20 @@
 <template>
   <DataLoader
+    v-model:force-reload="forceReload"
     :load="loadExternalCanister"
-    @loading="loading = $event"
+    :refresh-interval-ms="5000"
+    :disable-refresh="disableRefresh"
     @loaded="
       () => {
-        // Load additional canister details, such as module hash and canister status.
-        loadCanisterDetails();
-        // Immediately after loading the canister with a query call,
-        // we perform an update call to make sure the data is not tampered with.
-        loadExternalCanister({
-          verifiedCall: true,
-        });
+        loading = false;
+        // Immediately after loading the canister with a query call, we mark the page to be verified next,
+        // this way all subsequent calls will be verified.
+        verifiedPageLoad = true;
+      }
+    "
+    @failed="
+      () => {
+        loading = false;
       }
     "
   >
@@ -124,14 +128,26 @@
               </div>
             </div>
           </template>
-          <template #actions>
-            <VBtn
-              v-if="privileges.can_call.length"
-              size="default"
-              color="primary"
-              @click="dialogs.call = true"
-            >
-              {{ $t('external_canisters.perform_call') }}
+          <template
+            v-if="
+              privileges.can_call.length ||
+              hasRequiredPrivilege({ anyOf: [Privilege.CallAnyExternalCanister] })
+            "
+            #actions
+          >
+            <CanisterCallDialog
+              :open="dialogs.call"
+              :canister-id="canister.canister_id"
+              :configured-methods="
+                mapConfiguredMethodCalls({
+                  requestPolicies: canister.request_policies.calls,
+                  permissions: canister.permissions.calls,
+                })
+              "
+              @update:open="dialogs.call = $event"
+            />
+            <VBtn size="default" color="primary" @click="dialogs.call = true">
+              {{ $t('external_canisters.perform_call.title') }}
             </VBtn>
           </template>
         </PageHeader>
@@ -169,9 +185,10 @@
                   :request-policies="canister.request_policies.calls"
                   :permissions="canister.permissions.calls"
                   :readonly="!privileges.can_change"
+                  @editing="disableRefresh = $event"
                 />
               </div>
-              <VCard class="d-flex flex-column" :width="app.isMobile ? '100%' : '272px'">
+              <VCard class="d-flex flex-column" :min-width="app.isMobile ? '100%' : '272px'">
                 <VToolbar color="transparent" class="pr-4">
                   <VToolbarTitle>
                     {{ $t('terms.canister') }}
@@ -321,6 +338,7 @@ import {
   mdiInfinity,
   mdiOpenInNew,
 } from '@mdi/js';
+import { watch } from 'vue';
 import { Ref, computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
@@ -345,6 +363,7 @@ import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
 import BtnCanisterSetup from '~/components/external-canisters/BtnCanisterSetup.vue';
+import CanisterCallDialog from '~/components/external-canisters/CanisterCallDialog.vue';
 import CanisterConfigureMethodCallList from '~/components/external-canisters/CanisterConfigureMethodCallList.vue';
 import CanisterIcSettingsDialog from '~/components/external-canisters/CanisterIcSettingsDialog.vue';
 import CanisterInstallDialog from '~/components/external-canisters/CanisterInstallDialog.vue';
@@ -354,8 +373,11 @@ import CanisterUnlinkDialog from '~/components/external-canisters/CanisterUnlink
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
+import {
+  useLoadExternalCanisterModuleHash,
+  useLoadExternalCanisterStatus,
+} from '~/composables/external-canisters.composable';
 import { Routes } from '~/configs/routes.config';
-import { icAgent } from '~/core/ic-agent.core';
 import logger from '~/core/logger.core';
 import { ApiError } from '~/generated/control-panel/control_panel.did';
 import {
@@ -364,6 +386,7 @@ import {
   ExternalCanisterCallerPrivileges,
 } from '~/generated/station/station.did';
 import { toCyclesUnit } from '~/mappers/cycles.mapper';
+import { mapConfiguredMethodCalls } from '~/mappers/external-canister.mapper';
 import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import { CyclesUnit, type PageProps } from '~/types/app.types';
@@ -371,7 +394,8 @@ import { Privilege } from '~/types/auth.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
 import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
-import { fetchCanisterModuleHash } from '~/utils/helper.utils';
+import { hasRequiredPrivilege } from '~/utils/auth.utils';
+import { debounce } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,
@@ -413,9 +437,13 @@ const dialogs = ref({
   call: false,
 });
 
+const currentRouteCanisterId = computed(() => `${router.currentRoute.value.params.cid}`);
+const verifiedPageLoad = ref(false);
 const privileges = ref<ExternalCanisterCallerPrivileges>(buildDefaultPrivileges());
 const loading = ref(false);
 const station = useStationStore();
+const disableRefresh = ref(false);
+const forceReload = ref(false);
 const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {
   const breadcrumbs = [...props.breadcrumbs];
 
@@ -428,20 +456,86 @@ const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {
   return breadcrumbs;
 });
 
-const loadExternalCanister = async (
-  opts: {
-    verifiedCall?: boolean;
-  } = {},
-): Promise<void> => {
+watch(
+  dialogs,
+  () => {
+    // Disable refresh when any dialog is open.
+    disableRefresh.value = Object.values(dialogs.value).some(open => open);
+  },
+  { deep: true },
+);
+
+watch(currentRouteCanisterId, (current, previous) => {
+  if (current !== previous) {
+    // Reset the page state when the canister id changes.
+    loading.value = true;
+    verifiedPageLoad.value = false;
+    canisterDetails.value = {
+      moduleHash: { value: null, loading: false },
+      status: { value: null, loading: false },
+    };
+    privileges.value = buildDefaultPrivileges();
+    canister.value = null;
+  }
+});
+
+const loadExternalCanisterStatus = debounce(
+  (canisterId: Principal) => {
+    canisterDetails.value.status.loading =
+      canisterDetails.value.status.value === null ? true : false;
+    useLoadExternalCanisterStatus(canisterId)
+      .then(status => {
+        canisterDetails.value.status.value = status;
+      })
+      .catch(err => {
+        logger.error('Failed to load external canister status', err);
+      })
+      .finally(() => {
+        canisterDetails.value.status.loading = false;
+      });
+  },
+  20_000, // A status call is a call through the station canister, to prevent high load we make less frequent calls.
+  { immediate: true },
+);
+
+const loadExternalCanisterModuleHash = debounce(
+  (canisterId: Principal) => {
+    canisterDetails.value.moduleHash.loading =
+      canisterDetails.value.moduleHash.value === null ? true : false;
+    useLoadExternalCanisterModuleHash(canisterId)
+      .then(moduleHash => {
+        canisterDetails.value.moduleHash.value = moduleHash;
+      })
+      .catch(err => {
+        logger.error('Failed to load external canister module hash', err);
+      })
+      .finally(() => {
+        canisterDetails.value.moduleHash.loading = false;
+      });
+  },
+  2_000, // Module hash loading is cheap and can be done with a status call to the IC.
+  { immediate: true },
+);
+
+const loadExternalCanister = async (): Promise<void> => {
   try {
-    const canisterId = Principal.fromText(`${router.currentRoute.value.params.cid}`);
+    const canisterId = Principal.fromText(currentRouteCanisterId.value);
     const result = await station.service.getExternalCanisterByCanisterId(
       canisterId,
-      opts?.verifiedCall,
+      verifiedPageLoad.value,
     );
+
+    if (disableRefresh.value) {
+      // If the page is disabled for refresh, we don't update the canister and privileges.
+      return;
+    }
 
     canister.value = result.canister;
     privileges.value = result.privileges;
+
+    // Load additional canister details, such as module hash and canister status.
+    loadExternalCanisterModuleHash(result.canister.canister_id);
+    loadExternalCanisterStatus(result.canister.canister_id);
   } catch (err) {
     const error = err as ApiError;
 
@@ -453,47 +547,6 @@ const loadExternalCanister = async (
     }
 
     logger.error('Failed to load external canister', error);
-  }
-};
-
-const loadCanisterDetails = (): void => {
-  loadCanisterModuleHash();
-  loadCanisterStatus();
-};
-
-const loadCanisterModuleHash = async (): Promise<void> => {
-  try {
-    if (!canister.value) {
-      return;
-    }
-
-    canisterDetails.value.moduleHash.loading = true;
-
-    canisterDetails.value.moduleHash.value = await fetchCanisterModuleHash(
-      icAgent.get(),
-      canister.value.canister_id,
-    );
-  } catch (err) {
-    logger.error('Failed to load canister module hash', err);
-  } finally {
-    canisterDetails.value.moduleHash.loading = false;
-  }
-};
-
-const loadCanisterStatus = async (): Promise<void> => {
-  try {
-    if (!canister.value) {
-      return;
-    }
-
-    canisterDetails.value.status.loading = true;
-    canisterDetails.value.status.value = await station.service.getExternalCanisterStatus(
-      canister.value.canister_id,
-    );
-  } catch (err) {
-    logger.error('Failed to load canister status', err);
-  } finally {
-    canisterDetails.value.status.loading = false;
   }
 };
 </script>

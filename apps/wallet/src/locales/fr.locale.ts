@@ -459,20 +459,52 @@ export default {
     unlink: 'Dissocier',
     unlink_title: 'Dissocier le Canister',
     unlink_soft_delete: 'Gardez le canister sur l ordinateur, supprime seulement sa référence.',
-    perform_call: 'Effectuer un appel',
+    perform_call: {
+      title: 'Effectuer un Appel',
+      method_name: 'Nom de la Méthode',
+      method_name_hint: 'Le nom de la méthode à appeler sur le canister.',
+      method_args: 'Arguments (optionnel)',
+      method_args_hint: 'Les arguments à transmettre à la méthode.',
+      attach_cycles: 'Attacher des Cycles (optionnel)',
+      attach_cycles_hint: "Le nombre de cycles à attacher à l'appel.",
+      validation_method: 'Méthode de Validation',
+      validation_method_hint: "La méthode pour valider l'appel.",
+      validation_method_item_remote: '{method} sur le canister "{canister}"',
+      validation_method_item_none: 'Pas de validation',
+      call_submit_failed:
+        "Échec de la demande d'appel, assurez-vous que vos arguments respectent la validation requise.",
+    },
     call_configuration: {
-      title: 'Conditions d appel',
-      add_new: 'Ajouter un nouveau',
+      title: "Configurations d'appel de méthode",
+      config_dialog_title: "Configuration d'appel de méthode",
+      add_new_method_pair: 'Ajouter une nouvelle méthode',
+      edit_method_pair: 'Éditer',
       no_configuration:
-        'Aucune condition spécifique à la méthode n est définie pour ce canister, mais des définitions globales peuvent s appliquer.',
-      method_name: 'Nom de la méthode',
+        "Aucune configuration spécifique pour la méthode n'est définie pour ce canister, mais des définitions globales peuvent s'appliquer.",
+      method_name: 'Nom de la Méthode',
       method_name_hint:
         'Le nom de la méthode à appeler sur le canister ou `*` pour toutes les méthodes.',
-      validation_checks_title: 'Vérifications de validation (optionnel)',
-      validation_checks_description:
-        'Les vérifications de validation peuvent améliorer la sécurité de la méthode. Ils peuvent générer une erreur si la validation échoue ou renvoyer une chaîne d argument formatée pour le contexte de l examinateur si elle réussit.',
-      validation_method: 'Validation',
-      validation_method_required: 'Au moins une méthode de validation est requise.',
+      method_call_permission: 'Permission',
+      method_call_permission_hint:
+        "Les utilisateurs qui ont la permission de demander l'appel de la méthode sur le canister.",
+      method_call_approval_policy: "Politique d'Approbation",
+      method_call_approval_policy_hint:
+        "Les règles de la politique d'approbation qui doivent être approuvées pour appeler la méthode sur le canister.",
+      advanced_validation: 'Validation de Payload (optionnel)',
+      advanced_validation_hint:
+        'Les validations personnalisées peuvent améliorer la sécurité de la méthode. Elles peuvent générer une erreur si la validation échoue ou renvoyer un argument formaté pour le contexte du réviseur si elle réussit.',
+      add_advanced_validation: 'Ajouter une validation avancée',
+      remove_advanced_validation: 'Retirer la validation avancée',
+      validation_method_name: 'Nom de la Méthode de Validation',
+      validation_method_name_hint:
+        "Le nom de la méthode de validation, doit être différent de la méthode d'exécution.",
+      validation_canister_id: 'ID du Canister de Validation',
+      validation_canister_id_hint: "L'ID du canister qui contient la méthode de validation.",
+      card_validation_method_description:
+        'Validé avec la méthode {method} sur le canister {canister}',
+      duplicated_configuration_error_type: 'Configuration dupliquée',
+      duplicated_method_call_configuration:
+        'Vous avez déjà une configuration pour cet appel de méthode, veuillez modifier celle existante.',
     },
     module_hash: 'Module Hash',
     cycles: 'Cycles',
@@ -515,6 +547,9 @@ export default {
     },
   },
   terms: {
+    execute: 'Exécuter',
+    error: 'Erreur',
+    self: 'Soi',
     more: 'Plus',
     less: 'Moins',
     data: 'Données',

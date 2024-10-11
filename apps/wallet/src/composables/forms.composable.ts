@@ -1,6 +1,7 @@
 import { computed, onMounted, Ref, ref, useSlots, useTemplateRef, watch } from 'vue';
 import logger from '~/core/logger.core';
 import { VFormValidation } from '~/types/helper.types';
+import { deepClone, transformData } from '~/utils/helper.utils';
 
 /**
  * A field with a list of error messages.
@@ -50,7 +51,7 @@ export const useForm = <T>(opts: {
   const submitting = ref(false);
   const edited = ref(false);
   const submitted = ref(false);
-  const initialModel = ref(JSON.parse(JSON.stringify(opts.model.value))) as Ref<T>;
+  const initialModel = ref(deepClone(opts.model.value)) as Ref<T>;
 
   const model = computed({
     get: () => opts.model.value,
@@ -64,7 +65,7 @@ export const useForm = <T>(opts: {
   const takeModelSnapshot =
     opts.takeModelSnapshot ??
     function (model: T) {
-      return JSON.stringify(model);
+      return JSON.stringify(transformData(model));
     };
 
   const additionalFieldErrors = computed(() => {
@@ -114,7 +115,7 @@ export const useForm = <T>(opts: {
       edited.value = false;
       modelSnapshot.value = takeModelSnapshot(model.value);
       submitted.value = true;
-      initialModel.value = JSON.parse(JSON.stringify(model.value));
+      initialModel.value = deepClone(model.value);
     } catch (error) {
       logger.error('Failed to submit form', error);
     } finally {
@@ -136,10 +137,10 @@ export const useForm = <T>(opts: {
 
   watch(
     () => form.value?.errors,
-    _ => {
+    errors => {
       valid.value = form.value?.isValid ?? false;
       fieldsWithErrors.value =
-        form.value?.errors.map(error => ({
+        errors?.map(error => ({
           field: error.id,
           errorMessages: error.errorMessages ?? [],
         })) ?? [];

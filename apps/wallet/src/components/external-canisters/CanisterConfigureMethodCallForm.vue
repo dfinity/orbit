@@ -239,7 +239,7 @@ const { submit, edited, initialModel, additionalFieldErrors, submitting, valid, 
               configuredMethod !==
               mapMethodCallConfigurationToKey({
                 executionMethod: initialModel.value.methodName ?? '',
-                validationMethod: initialModel.value.validationMethodName
+                validationMethod: !initialModel.value.validationMethodName
                   ? { No: null }
                   : {
                       ValidationMethod: {
@@ -255,7 +255,7 @@ const { submit, edited, initialModel, additionalFieldErrors, submitting, valid, 
           alreadyConfiguredMethods.includes(
             mapMethodCallConfigurationToKey({
               executionMethod: model.methodName,
-              validationMethod: model.validationMethodName
+              validationMethod: !model.validationMethodName
                 ? { No: null }
                 : {
                     ValidationMethod: {

@@ -1,13 +1,13 @@
 use super::HelperMapper;
 use crate::{
-    core::ic_cdk::api::trap,
-    core::CallContext,
+    core::{ic_cdk::api::trap, CallContext},
     models::{
         resource::{
-            AccountResourceAction, CallExternalCanisterResourceTarget, ExternalCanisterId,
-            ExternalCanisterResourceAction, NotificationResourceAction, PermissionResourceAction,
-            RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-            UserResourceAction,
+            AccountResourceAction, CallExternalCanisterResourceTarget,
+            ExecutionMethodResourceTarget, ExternalCanisterId, ExternalCanisterResourceAction,
+            NotificationResourceAction, PermissionResourceAction, RequestResourceAction, Resource,
+            ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+            ValidationMethodResourceTarget,
         },
         CanisterMethod, Transfer,
     },
@@ -17,7 +17,7 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 18] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 19] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
     UserPrivilege::ManageSystemInfo,
@@ -36,6 +36,7 @@ pub const USER_PRIVILEGES: [UserPrivilege; 18] = [
     UserPrivilege::ListRequests,
     UserPrivilege::CreateExternalCanister,
     UserPrivilege::ListExternalCanisters,
+    UserPrivilege::CallAnyExternalCanister,
 ];
 
 impl From<UserPrivilege> for Resource {
@@ -65,6 +66,12 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::ListExternalCanisters => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::List)
             }
+            UserPrivilege::CallAnyExternalCanister => Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Call(CallExternalCanisterResourceTarget {
+                    execution_method: ExecutionMethodResourceTarget::Any,
+                    validation_method: ValidationMethodResourceTarget::No,
+                }),
+            ),
         }
     }
 }
