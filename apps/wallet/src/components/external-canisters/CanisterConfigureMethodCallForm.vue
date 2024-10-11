@@ -348,7 +348,8 @@ const { submit, edited, initialModel, additionalFieldErrors, submitting, valid, 
                         policies: updatedModel.requestPolicies
                           .filter(policy => !!policy.rule)
                           .map(policy => ({
-                            policy_id: policy.policy_id ?? [],
+                            // if we are reusing the same policy from the previous entry, we must remove the policy_id
+                            policy_id: isPreviousEntryRemoved ? [] : (policy.policy_id ?? []),
                             rule: assertAndReturn(policy.rule, 'Policy rule must be defined'),
                           })),
                       },
