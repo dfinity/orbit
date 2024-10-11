@@ -7,8 +7,7 @@ use anyhow::{anyhow, Context};
 use async_trait::async_trait;
 use candid::Principal;
 use ic_cdk::api::management_canister::main::{
-    self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode, CanisterSettings,
-    UpdateSettingsArgument,
+    self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode,
 };
 use mockall::automock;
 use orbit_essentials::api::ApiResult;
@@ -82,27 +81,9 @@ impl<T: Upgrade> Upgrade for WithStop<T> {
             .1
             .with(|id| id.borrow().get(&()).context("canister id not set"))?;
 
-        if mgmt::stop_canister(CanisterIdRecord { canister_id: id.0 })
+        mgmt::stop_canister(CanisterIdRecord { canister_id: id.0 })
             .await
-            .is_err()
-        {
-            // set the target canister's compute allocation to 1
-            // so that it can more likely stop within timeout
-            // we ignore errors here since we can't do much
-            // if there's no compute allocation available on the subnet
-            let _ = mgmt::update_settings(UpdateSettingsArgument {
-                canister_id: id.0,
-                settings: CanisterSettings {
-                    compute_allocation: Some(1_u64.into()),
-                    ..Default::default()
-                },
-            })
-            .await;
-            // we retry the stop canister call in any case
-            mgmt::stop_canister(CanisterIdRecord { canister_id: id.0 })
-                .await
-                .map_err(|(_, err)| anyhow!("failed to stop canister: {err}"))?;
-        }
+            .map_err(|(_, err)| anyhow!("failed to stop canister: {err}"))?;
 
         self.0.upgrade(ps).await
     }
@@ -120,19 +101,6 @@ impl<T: Upgrade> Upgrade for WithStart<T> {
         let id = self
             .1
             .with(|id| id.borrow().get(&()).context("canister id not set"))?;
-
-        // reset the target canister's compute allocation back to 0
-        // so that we don't end up paying too much for the compute allocation
-        // this is unlikely to fail, but even if it did,
-        // the target canister can be upgraded again and then this call will be retried
-        let _ = mgmt::update_settings(UpdateSettingsArgument {
-            canister_id: id.0,
-            settings: CanisterSettings {
-                compute_allocation: Some(0_u64.into()),
-                ..Default::default()
-            },
-        })
-        .await;
 
         mgmt::start_canister(CanisterIdRecord { canister_id: id.0 })
             .await
