@@ -710,7 +710,6 @@ fn insufficient_control_panel_cycles() {
         )
         .unwrap();
         if let Err(e) = res.0 {
-            println!("err: {:?}", e);
             assert_eq!(
                 *e.details.unwrap().get("reason").unwrap(),
                 format!(
