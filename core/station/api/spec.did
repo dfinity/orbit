@@ -625,12 +625,30 @@ type ChangeExternalCanisterOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
+type SubnetFilter = record {
+  subnet_type : opt text;
+};
+
+type SubnetSelection = variant {
+  // Choose a specific subnet
+  Subnet : record {
+    subnet : principal;
+  };
+  // Choose a random subnet that fulfills the specified properties
+  Filter : SubnetFilter;
+};
+
 type CreateExternalCanisterOperationKindCreateNew = record {
   // The initial cycles to allocate to the canister.
   //
   // If not set, only the minimal amount of cycles required to create the
   // canister will be allocated.
   initial_cycles : opt nat64;
+
+  // The subnet to which the station should be deployed.
+  //
+  // By default, the station is deployed to the same subnet as the station.
+  subnet_selection : opt SubnetSelection;
 };
 
 type CreateExternalCanisterOperationKindAddExisting = record {

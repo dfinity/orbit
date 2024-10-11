@@ -9,10 +9,9 @@ use control_panel_api::{
     DeployStationResponse, ListUserStationsInput, ManageUserStationsInput, RegisterUserInput,
     RegisterUserResponse, UpdateWaitingListInput, UserStationDTO, UserSubscriptionStatusDTO,
 };
-use control_panel_api::{
-    ListUserStationsResponse, SubnetFilter, SubnetSelection, UploadCanisterModulesInput,
-};
+use control_panel_api::{ListUserStationsResponse, UploadCanisterModulesInput};
 use orbit_essentials::api::ApiResult;
+use orbit_essentials::cmc::{SubnetFilter, SubnetSelection};
 use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{HealthStatus, SystemInfoResponse};
 
@@ -653,7 +652,10 @@ fn deploy_user_station_to_different_subnet() {
 fn insufficient_control_panel_cycles() {
     let TestEnv {
         env, canister_ids, ..
-    } = setup_new_env();
+    } = setup_new_env_with_config(SetupConfig {
+        start_cycles: Some(10_000_000_000_000),
+        ..Default::default()
+    });
 
     let mut i = 0;
     loop {
@@ -708,12 +710,14 @@ fn insufficient_control_panel_cycles() {
         )
         .unwrap();
         if let Err(e) = res.0 {
-            assert!(e
-                .details
-                .unwrap()
-                .get("reason")
-                .unwrap()
-                .contains("Control panel has insufficient cycles balance to deploy a station"));
+            println!("err: {:?}", e);
+            assert_eq!(
+                *e.details.unwrap().get("reason").unwrap(),
+                format!(
+                    "Canister {} has insufficient cycles balance to transfer 2500000000000 cycles.",
+                    canister_ids.control_panel
+                )
+            );
             let station_status = env
                 .canister_status(canister_ids.control_panel, Some(controller_test_id()))
                 .unwrap();

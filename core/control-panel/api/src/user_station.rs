@@ -1,5 +1,6 @@
 use crate::UserSubscriptionStatusDTO;
 use candid::{CandidType, Deserialize, Principal};
+use orbit_essentials::cmc::SubnetSelection;
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct DeployStationAdminUserInput {
@@ -10,20 +11,6 @@ pub struct DeployStationAdminUserInput {
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct AssociateWithCallerInput {
     pub labels: Vec<String>,
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
-pub struct SubnetFilter {
-    pub subnet_type: Option<String>,
-}
-
-/// Options to select subnets when creating a canister
-#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
-pub enum SubnetSelection {
-    /// Choose a random subnet that satisfies the specified properties
-    Filter(SubnetFilter),
-    /// Choose a specific subnet
-    Subnet { subnet: Principal },
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]

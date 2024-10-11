@@ -9,6 +9,7 @@
 
 pub mod api;
 pub mod cdk;
+pub mod cmc;
 pub mod deserialize;
 pub mod http;
 pub mod install_chunked_code;
