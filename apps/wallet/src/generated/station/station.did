@@ -645,9 +645,9 @@ type CreateExternalCanisterOperationKindCreateNew = record {
   // canister will be allocated.
   initial_cycles : opt nat64;
 
-  // The subnet to which the station should be deployed.
+  // The subnet on which the canister should be created.
   //
-  // By default, the station is deployed to the same subnet as the station.
+  // By default, the canister is created on the same subnet as the station.
   subnet_selection : opt SubnetSelection;
 };
 
