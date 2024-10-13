@@ -30,6 +30,9 @@ pub use request_policy::*;
 pub mod request_evaluation_result;
 pub use request_evaluation_result::*;
 
+pub mod asset;
+pub use asset::*;
+
 pub mod permission;
 
 pub mod indexes;

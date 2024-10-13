@@ -1,5 +1,5 @@
 use crate::{
-    errors::{AccountError, AddressBookError, MetadataError, TransferError},
+    errors::{AccountError, AddressBookError, AssetError, MetadataError, TransferError},
     models::{ChangeMetadata, Metadata, MetadataItem},
 };
 
@@ -107,6 +107,14 @@ impl From<MetadataError> for AccountError {
 }
 
 impl From<MetadataError> for AddressBookError {
+    fn from(metadata_error: MetadataError) -> Self {
+        match metadata_error {
+            MetadataError::ValidationError { info: e } => Self::ValidationError { info: e },
+        }
+    }
+}
+
+impl From<MetadataError> for AssetError {
     fn from(metadata_error: MetadataError) -> Self {
         match metadata_error {
             MetadataError::ValidationError { info: e } => Self::ValidationError { info: e },

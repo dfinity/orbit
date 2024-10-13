@@ -5,6 +5,7 @@ import {
   AccountBalance,
   AddAccountOperationInput,
   AddAddressBookEntryOperationInput,
+  AddAssetOperationInput,
   AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
@@ -19,6 +20,7 @@ import {
   DisasterRecoveryCommittee,
   EditAccountOperationInput,
   EditAddressBookEntryOperationInput,
+  EditAssetOperationInput,
   EditPermissionOperationInput,
   EditRequestPolicyOperationInput,
   EditUserGroupOperationInput,
@@ -29,6 +31,8 @@ import {
   GetAccountResult,
   GetAddressBookEntryInput,
   GetAddressBookEntryResult,
+  GetAssetInput,
+  GetAssetResult,
   GetExternalCanisterFiltersResult,
   GetExternalCanisterResult,
   GetNextApprovableRequestResult,
@@ -45,6 +49,7 @@ import {
   ListAccountTransfersInput,
   ListAccountsResult,
   ListAddressBookEntriesResult,
+  ListAssetsResult,
   ListExternalCanistersResult,
   ListNotificationsInput,
   ListPermissionsInput,
@@ -58,6 +63,7 @@ import {
   MarkNotificationsReadInput,
   Notification,
   PaginationInput,
+  RemoveAssetOperationInput,
   RemoveUserGroupOperationInput,
   Request,
   SubmitRequestApprovalInput,
@@ -77,6 +83,7 @@ import {
   GetNextApprovableRequestArgs,
   ListAccountsArgs,
   ListAddressBookEntriesArgs,
+  ListAssetsArgs,
   ListExternalCanistersArgs,
   ListRequestsArgs,
 } from '~/types/station.types';
@@ -567,6 +574,17 @@ export class StationService {
     return result.Ok;
   }
 
+  async getAsset(input: GetAssetInput, verifiedCall = false): Promise<ExtractOk<GetAssetResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_asset(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
   async fundExternalCanister(input: FundExternalCanisterOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
@@ -667,6 +685,27 @@ export class StationService {
     return result.Ok;
   }
 
+  async listAssets(
+    { limit, offset }: ListAssetsArgs = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListAssetsResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_assets({
+      paginate: [
+        {
+          limit: limit !== undefined ? [limit] : [],
+          offset: offset !== undefined ? [BigInt(offset)] : [],
+        },
+      ],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
   async getExternalCanisterByCanisterId(
     canisterId: Principal,
     verifiedCall = false,
@@ -708,6 +747,21 @@ export class StationService {
     return result.Ok;
   }
 
+  async addAsset(input: AddAssetOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddAsset: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
   async fetchExternalCanisterFilters(
     args: {
       with_labels?: boolean;
@@ -737,6 +791,36 @@ export class StationService {
       title: [],
       summary: [],
       operation: { CreateExternalCanister: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async editAsset(input: EditAssetOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditAsset: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async removeAsset(input: RemoveAssetOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { RemoveAsset: input },
     });
 
     if (variantIs(result, 'Err')) {

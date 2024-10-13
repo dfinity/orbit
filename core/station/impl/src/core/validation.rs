@@ -5,19 +5,19 @@ use std::cell::RefCell;
 
 use crate::{
     errors::{ExternalCanisterValidationError, RecordValidationError},
-    factories::blockchains::InternetComputer,
     models::{
         resource::{Resource, ResourceId, ResourceIds},
         AccountKey, AddressBookEntryKey, NotificationKey, RequestKey, UserKey,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, request_policy::REQUEST_POLICY_REPOSITORY,
-        ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, NOTIFICATION_REPOSITORY, REQUEST_REPOSITORY,
-        USER_GROUP_REPOSITORY, USER_REPOSITORY,
+        ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, NOTIFICATION_REPOSITORY,
+        REQUEST_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     services::SYSTEM_SERVICE,
 };
 use candid::Principal;
+use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use ic_stable_structures::{Memory, Storable};
 #[cfg(not(test))]
 pub use orbit_essentials::cdk as ic_cdk;
@@ -199,9 +199,10 @@ impl EnsureExternalCanister {
     pub fn is_external_canister(
         principal: Principal,
     ) -> Result<(), ExternalCanisterValidationError> {
+        // todo: look into Asset repository and exclude the ledger_canister_id's
         if principal == Principal::management_canister()
             || principal == ic_cdk::api::id()
-            || principal == InternetComputer::ledger_canister_id()
+            || principal == MAINNET_LEDGER_CANISTER_ID
             || principal == SYSTEM_SERVICE.get_upgrader_canister_id()
         {
             return Err(ExternalCanisterValidationError::InvalidExternalCanister { principal });
@@ -227,3 +228,18 @@ impl EnsureIdExists<UUID> for EnsureNotification {
 }
 
 impl EnsureResourceIdExists for EnsureNotification {}
+
+pub struct EnsureAsset {}
+
+impl EnsureIdExists<UUID> for EnsureAsset {
+    fn id_exists(id: &UUID) -> Result<(), RecordValidationError> {
+        ensure_entry_exists(ASSET_REPOSITORY.to_owned(), *id).ok_or(
+            RecordValidationError::NotFound {
+                model_name: "Asset".to_string(),
+                id: Uuid::from_bytes(*id).hyphenated().to_string(),
+            },
+        )
+    }
+}
+
+impl EnsureResourceIdExists for EnsureAsset {}

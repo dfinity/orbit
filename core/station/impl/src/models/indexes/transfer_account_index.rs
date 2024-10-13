@@ -53,6 +53,8 @@ mod tests {
             request_id: [0; 16],
             fee: candid::Nat(BigUint::from(0u32)),
             from_account: [1; 16],
+            from_asset: [2; 16],
+            with_standard: crate::models::TokenStandard::InternetComputerNative,
             to_address: "0x1234".to_string(),
             status: TransferStatus::Created,
             initiator_user: [2; 16],

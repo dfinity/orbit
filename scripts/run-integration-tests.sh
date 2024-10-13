@@ -42,6 +42,7 @@ if [ $DOWNLOAD_NNS_CANISTERS == "true" ]; then
     ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister
     ./scripts/download-nns-canister-wasm.sh icp_index ic-icp-index-canister
     ./scripts/download-nns-canister-wasm.sh cmc cycles-minting-canister
+    ./scripts/download-nns-canister-wasm.sh icrc1_ledger ic-icrc1-ledger
 fi
 
 if [ $DOWNLOAD_ASSET_CANISTER == "true" ]; then

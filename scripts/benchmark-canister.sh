@@ -25,7 +25,7 @@ print_message "Benchmarking canister at $CANISTER_PATH"
 # Install canbench if not already installed
 if ! cargo install --list | grep -q canbench; then
   print_message "Installing canbench..."
-  cargo install canbench --version 0.1.4
+  cargo install canbench --version 0.1.5
 fi
 
 # Changes to the canister path

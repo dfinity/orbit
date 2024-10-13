@@ -30,6 +30,14 @@ impl HelperMapper {
                 nat: amount.to_string(),
             })
     }
+
+    pub fn nat_to_u128(amount: Nat) -> Result<u128, MapperError> {
+        (&amount.0)
+            .try_into()
+            .map_err(|_| MapperError::NatConversionError {
+                nat: amount.to_string(),
+            })
+    }
 }
 
 #[cfg(test)]

@@ -104,12 +104,15 @@ mod tests {
     use crate::{
         core::{test_utils, validation::disable_mock_resource_validation},
         models::{
-            account_test_utils::mock_account, request_test_utils::mock_request,
-            transfer_test_utils::mock_transfer, user_test_utils::mock_user, Account, User,
+            account_test_utils::mock_account, asset_test_utils::mock_asset, permission::Allow,
+            request_test_utils::mock_request, transfer_test_utils::mock_transfer,
+            user_test_utils::mock_user, Account, Metadata, User,
         },
         repositories::{
-            ACCOUNT_REPOSITORY, REQUEST_REPOSITORY, TRANSFER_REPOSITORY, USER_REPOSITORY,
+            ACCOUNT_REPOSITORY, ASSET_REPOSITORY, REQUEST_REPOSITORY, TRANSFER_REPOSITORY,
+            USER_REPOSITORY,
         },
+        services::ACCOUNT_SERVICE,
     };
     use candid::Principal;
 
@@ -121,7 +124,7 @@ mod tests {
         call_context: CallContext,
     }
 
-    fn setup() -> TestContext {
+    async fn setup() -> TestContext {
         test_utils::init_canister_system();
 
         let call_context = CallContext::new(Principal::from_slice(&[9; 29]));
@@ -130,9 +133,28 @@ mod tests {
 
         USER_REPOSITORY.insert(user.to_key(), user.clone());
 
+        let asset = mock_asset();
+
+        ASSET_REPOSITORY.insert(asset.id, asset.clone());
+
         let account = mock_account();
 
-        ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
+        ACCOUNT_SERVICE
+            .create_account(
+                crate::models::AddAccountOperationInput {
+                    name: "foo".to_owned(),
+                    assets: vec![asset.id],
+                    metadata: Metadata::default(),
+                    read_permission: Allow::default(),
+                    configs_permission: Allow::default(),
+                    transfer_permission: Allow::default(),
+                    configs_request_policy: None,
+                    transfer_request_policy: None,
+                },
+                Some(account.id),
+            )
+            .await
+            .expect("Failed to create account");
 
         let mut request = mock_request();
         request.id = [2; 16];
@@ -148,9 +170,9 @@ mod tests {
         }
     }
 
-    #[test]
-    fn add_transfer_successfully() {
-        let ctx = setup();
+    #[tokio::test]
+    async fn add_transfer_successfully() {
+        let ctx = setup().await;
 
         disable_mock_resource_validation();
 
@@ -163,9 +185,9 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    #[test]
-    fn fail_add_transfer_missing_initiator_user() {
-        let ctx = setup();
+    #[tokio::test]
+    async fn fail_add_transfer_missing_initiator_user() {
+        let ctx = setup().await;
 
         disable_mock_resource_validation();
 
@@ -185,9 +207,9 @@ mod tests {
         );
     }
 
-    #[test]
-    fn fail_add_transfer_missing_from_account() {
-        let ctx = setup();
+    #[tokio::test]
+    async fn fail_add_transfer_missing_from_account() {
+        let ctx = setup().await;
 
         disable_mock_resource_validation();
 
@@ -206,9 +228,9 @@ mod tests {
         );
     }
 
-    #[test]
-    fn fail_add_transfer_missing_request_id() {
-        let ctx = setup();
+    #[tokio::test]
+    async fn fail_add_transfer_missing_request_id() {
+        let ctx = setup().await;
 
         disable_mock_resource_validation();
 
@@ -226,9 +248,9 @@ mod tests {
         );
     }
 
-    #[test]
-    fn get_transfer() {
-        let ctx = setup();
+    #[tokio::test]
+    async fn get_transfer() {
+        let ctx = setup().await;
         let mut transfer = mock_transfer();
         transfer.from_account = ctx.account.id;
         transfer.initiator_user = ctx.caller_user.id;
@@ -240,9 +262,9 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    #[test]
-    fn fail_get_transfer_not_allowed() {
-        let ctx = setup();
+    #[tokio::test]
+    async fn fail_get_transfer_not_allowed() {
+        let ctx = setup().await;
         let mut user = mock_user();
         user.identities = vec![Principal::from_slice(&[10; 29])];
 

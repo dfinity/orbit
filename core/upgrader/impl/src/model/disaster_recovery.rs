@@ -246,21 +246,73 @@ impl From<AdminUser> for upgrader_api::AdminUser {
 
 #[storable]
 #[derive(Clone, Debug)]
+pub struct Asset {
+    /// The asset id, which is a UUID.
+    pub id: UUID,
+    /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
+    pub name: String,
+    /// The asset symbol (e.g. `ICP`, `BTC`, `ETH`, etc.)
+    pub symbol: String,
+    /// The number of decimal places that the asset supports (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
+    pub decimals: u32,
+    /// The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+    pub blockchain: String,
+    // The asset standard that is supported (e.g. `erc20`, `native`, etc.), canonically
+    // represented as a lowercase string with spaces replaced with underscores.
+    pub standards: Vec<String>,
+    /// The account metadata, which is a list of key-value pairs,
+    /// where the key is unique and the first entry in the tuple,
+    /// and the value is the second entry in the tuple.
+    pub metadata: Vec<Metadata>,
+}
+
+impl From<upgrader_api::Asset> for Asset {
+    fn from(value: upgrader_api::Asset) -> Self {
+        Asset {
+            id: *HelperMapper::to_uuid(value.id)
+                .expect("Invalid asset ID")
+                .as_bytes(),
+            name: value.name,
+            symbol: value.symbol,
+            decimals: value.decimals,
+            blockchain: value.blockchain,
+            standards: value.standards,
+            metadata: value.metadata.into_iter().map(Metadata::from).collect(),
+        }
+    }
+}
+
+impl From<Asset> for upgrader_api::Asset {
+    fn from(value: Asset) -> Self {
+        upgrader_api::Asset {
+            id: Uuid::from_bytes(value.id).hyphenated().to_string(),
+            name: value.name,
+            symbol: value.symbol,
+            decimals: value.decimals,
+            blockchain: value.blockchain,
+            standards: value.standards,
+            metadata: value
+                .metadata
+                .into_iter()
+                .map(upgrader_api::MetadataDTO::from)
+                .collect(),
+        }
+    }
+}
+
+type AccountSeed = [u8; 16];
+
+#[storable]
+#[derive(Clone, Debug)]
 pub struct Account {
     /// The account id, which is a UUID.
     pub id: UUID,
     /// The blockchain type (e.g. `icp`, `eth`, `btc`)
-    pub blockchain: String,
-    /// The account address (e.g. `0x1234`, etc.)
-    pub address: String,
-    /// The blockchain standard (e.g. `native`, `icrc1`, `erc20`, etc.)
-    pub standard: String,
-    /// The asset symbol (e.g. `ICP`, `ETH`, `BTC`, etc.)
-    pub symbol: String,
-    /// The asset decimals (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
-    pub decimals: u32,
-    /// The account name (e.g. `My Main Account`)
     pub name: String,
+    /// The address generation seed.
+    pub seed: AccountSeed,
+    /// Assets
+    pub assets: Vec<UUID>,
     /// The account metadata, which is a list of key-value pairs,
     /// where the key is unique and the first entry in the tuple,
     /// and the value is the second entry in the tuple.
@@ -273,11 +325,16 @@ impl From<upgrader_api::Account> for Account {
             id: *HelperMapper::to_uuid(value.id)
                 .expect("Invalid account ID")
                 .as_bytes(),
-            blockchain: value.blockchain,
-            address: value.address,
-            standard: value.standard,
-            symbol: value.symbol,
-            decimals: value.decimals,
+            assets: value
+                .assets
+                .into_iter()
+                .map(|asset_id| {
+                    *HelperMapper::to_uuid(asset_id)
+                        .expect("Invalid asset ID")
+                        .as_bytes()
+                })
+                .collect(),
+            seed: value.seed,
             name: value.name,
             metadata: value.metadata.into_iter().map(Metadata::from).collect(),
         }
@@ -288,12 +345,13 @@ impl From<Account> for upgrader_api::Account {
     fn from(value: Account) -> Self {
         upgrader_api::Account {
             id: Uuid::from_bytes(value.id).hyphenated().to_string(),
-            blockchain: value.blockchain,
-            address: value.address,
-            standard: value.standard,
-            symbol: value.symbol,
-            decimals: value.decimals,
             name: value.name,
+            seed: value.seed,
+            assets: value
+                .assets
+                .into_iter()
+                .map(|asset_id| Uuid::from_bytes(asset_id).hyphenated().to_string())
+                .collect(),
             metadata: value
                 .metadata
                 .into_iter()
@@ -307,6 +365,7 @@ impl From<Account> for upgrader_api::Account {
 #[derive(Clone, Debug)]
 pub struct DisasterRecovery {
     pub accounts: Vec<Account>,
+    pub assets: Vec<Asset>,
     pub committee: Option<DisasterRecoveryCommittee>,
 
     pub recovery_requests: Vec<StationRecoveryRequest>,
@@ -318,6 +377,7 @@ impl Default for DisasterRecovery {
     fn default() -> Self {
         DisasterRecovery {
             accounts: vec![],
+            assets: vec![],
             committee: None,
             recovery_requests: vec![],
             recovery_status: RecoveryStatus::Idle,
@@ -352,6 +412,8 @@ impl From<DisasterRecovery> for upgrader_api::GetDisasterRecoveryStateResponse {
 pub mod test {
     use candid::Principal;
 
+    use crate::model::Asset;
+
     use super::{Account, AdminUser, DisasterRecoveryCommittee};
 
     pub fn mock_committee() -> DisasterRecoveryCommittee {
@@ -381,22 +443,39 @@ pub mod test {
         vec![
             Account {
                 id: [1; 16],
-                blockchain: "icp".to_owned(),
-                address: "0x1234".to_owned(),
-                standard: "native".to_owned(),
-                symbol: "ICP".to_owned(),
-                decimals: 8,
+                assets: vec![[1; 16], [2; 16]],
+                seed: [0; 16],
                 name: "Main Account".to_owned(),
                 metadata: vec![],
             },
             Account {
                 id: [2; 16],
-                blockchain: "eth".to_owned(),
-                address: "0x5678".to_owned(),
-                standard: "erc20".to_owned(),
+                assets: vec![[1; 16]],
+                seed: [0; 16],
+                name: "Secondary Account".to_owned(),
+                metadata: vec![],
+            },
+        ]
+    }
+
+    pub fn mock_assets() -> Vec<Asset> {
+        vec![
+            Asset {
+                id: [1; 16],
+                name: "Internet Computer".to_owned(),
+                symbol: "ICP".to_owned(),
+                decimals: 8,
+                blockchain: "icp".to_owned(),
+                standards: vec!["icp_native".to_owned()],
+                metadata: vec![],
+            },
+            Asset {
+                id: [2; 16],
+                name: "Ethereum".to_owned(),
                 symbol: "ETH".to_owned(),
                 decimals: 18,
-                name: "Secondary Account".to_owned(),
+                blockchain: "eth".to_owned(),
+                standards: vec!["erc20".to_owned()],
                 metadata: vec![],
             },
         ]

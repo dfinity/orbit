@@ -1,7 +1,6 @@
 use super::HelperMapper;
 use crate::{
-    core::ic_cdk::api::trap,
-    core::CallContext,
+    core::{ic_cdk::api::trap, CallContext},
     models::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget, ExternalCanisterId,
@@ -17,7 +16,7 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 18] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 20] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
     UserPrivilege::ManageSystemInfo,
@@ -36,6 +35,8 @@ pub const USER_PRIVILEGES: [UserPrivilege; 18] = [
     UserPrivilege::ListRequests,
     UserPrivilege::CreateExternalCanister,
     UserPrivilege::ListExternalCanisters,
+    UserPrivilege::AddAsset,
+    UserPrivilege::ListAssets,
 ];
 
 impl From<UserPrivilege> for Resource {
@@ -65,6 +66,8 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::ListExternalCanisters => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::List)
             }
+            UserPrivilege::AddAsset => Resource::Asset(ResourceAction::Create),
+            UserPrivilege::ListAssets => Resource::Asset(ResourceAction::List),
         }
     }
 }
@@ -132,6 +135,16 @@ impl From<&station_api::GetUserGroupInput> for Resource {
         Resource::UserGroup(ResourceAction::Read(ResourceId::Id(
             *HelperMapper::to_uuid(input.user_group_id.to_owned())
                 .expect("Invalid user group id")
+                .as_bytes(),
+        )))
+    }
+}
+
+impl From<&station_api::GetAssetInput> for Resource {
+    fn from(input: &station_api::GetAssetInput) -> Self {
+        Resource::Asset(ResourceAction::Read(ResourceId::Id(
+            *HelperMapper::to_uuid(input.asset_id.to_owned())
+                .expect("Invalid asset id")
                 .as_bytes(),
         )))
     }
@@ -279,6 +292,21 @@ impl From<&station_api::CreateRequestInput> for Resource {
             }
             RequestOperationInput::ManageSystemInfo(_) => {
                 Resource::System(SystemResourceAction::ManageSystemInfo)
+            }
+            RequestOperationInput::AddAsset(_) => Resource::Asset(ResourceAction::Create),
+            RequestOperationInput::EditAsset(input) => {
+                Resource::Asset(ResourceAction::Update(ResourceId::Id(
+                    *HelperMapper::to_uuid(input.asset_id.to_owned())
+                        .expect("Invalid asset id")
+                        .as_bytes(),
+                )))
+            }
+            RequestOperationInput::RemoveAsset(input) => {
+                Resource::Asset(ResourceAction::Delete(ResourceId::Id(
+                    *HelperMapper::to_uuid(input.asset_id.to_owned())
+                        .expect("Invalid asset id")
+                        .as_bytes(),
+                )))
             }
         }
     }

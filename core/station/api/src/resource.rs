@@ -13,6 +13,7 @@ pub enum ResourceDTO {
     System(SystemResourceActionDTO),
     User(UserResourceActionDTO),
     UserGroup(ResourceActionDTO),
+    Asset(ResourceActionDTO),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

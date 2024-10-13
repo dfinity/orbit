@@ -209,6 +209,33 @@ type RateLimitConfig = record {
     max_tokens: nat64;
 };
 
+// Captcha configuration
+// Default:
+// - max_unsolved_captchas: 500
+// - captcha_trigger: Static, CaptchaEnabled
+type CaptchaConfig = record {
+    // Maximum number of unsolved captchas.
+    max_unsolved_captchas : nat64;
+    // Configuration for when captcha protection should kick in.
+    captcha_trigger: variant {
+      // Based on the rate of registrations compared to some reference time frame and allowing some leeway.
+      Dynamic: record {
+        // Percentage of increased registration rate observed in the current rate sampling interval (compared to
+        // reference rate) at which II will enable captcha for new registrations.
+        threshold_pct: nat16;
+        // Length of the interval in seconds used to sample the current rate of registrations.
+        current_rate_sampling_interval_s: nat64;
+        // Length of the interval in seconds used to sample the reference rate of registrations.
+        reference_rate_sampling_interval_s: nat64;
+      };
+      // Statically enable / disable captcha
+      Static: variant {
+        CaptchaEnabled;
+        CaptchaDisabled;
+      }
+    };
+};
+
 // Init arguments of II which can be supplied on install and upgrade.
 // Setting a value to null keeps the previous value.
 type InternetIdentityInit = record {
@@ -228,9 +255,8 @@ type InternetIdentityInit = record {
     canister_creation_cycles_cost : opt nat64;
     // Rate limit for the `register` call.
     register_rate_limit : opt RateLimitConfig;
-    // Maximum number of inflight captchas.
-    // Default: 500
-    max_inflight_captchas: opt nat64;
+    // Configuration of the captcha in the registration flow.
+    captcha_config: opt CaptchaConfig;
 };
 
 type ChallengeKey = text;
@@ -507,7 +533,9 @@ type SignedIdAlias = record {
 };
 
 service : (opt InternetIdentityInit) -> {
-    init_salt: () -> ();
+    // Legacy identity management API
+    // ==============================
+
     create_challenge : () -> (Challenge);
     register : (DeviceData, ChallengeResult, opt principal) -> (RegisterResponse);
     add : (UserNumber, DeviceData) -> ();
@@ -522,27 +550,14 @@ service : (opt InternetIdentityInit) -> {
     get_anchor_credentials : (UserNumber) -> (AnchorCredentials) query;
     get_anchor_info : (UserNumber) -> (IdentityAnchorInfo);
     get_principal : (UserNumber, FrontendHostname) -> (principal) query;
-    stats : () -> (InternetIdentityStats) query;
 
     enter_device_registration_mode : (UserNumber) -> (Timestamp);
     exit_device_registration_mode : (UserNumber) -> ();
     add_tentative_device : (UserNumber, DeviceData) -> (AddTentativeDeviceResponse);
     verify_tentative_device : (UserNumber, verification_code: text) -> (VerifyTentativeDeviceResponse);
 
-    prepare_delegation : (UserNumber, FrontendHostname, SessionKey, maxTimeToLive : opt nat64) -> (UserKey, Timestamp);
-    get_delegation: (UserNumber, FrontendHostname, SessionKey, Timestamp) -> (GetDelegationResponse) query;
-
-    http_request: (request: HttpRequest) -> (HttpResponse) query;
-    http_request_update: (request: HttpRequest) -> (HttpResponse);
-
-    deploy_archive: (wasm: blob) -> (DeployArchiveResult);
-    // Returns a batch of entries _sorted by sequence number_ to be archived.
-    // This is an update call because the archive information _must_ be certified.
-    // Only callable by this IIs archive canister.
-    fetch_entries: () -> (vec BufferedArchiveEntry);
-    acknowledge_entries: (sequence_number: nat64) -> ();
-
-    // V2 API
+    // V2 Identity Management API
+    // ==========================
     // WARNING: The following methods are experimental and may change in the future.
 
     // Creates a new captcha. The solution needs to be submitted using the
@@ -611,8 +626,32 @@ service : (opt InternetIdentityInit) -> {
     // Requires authentication.
     authn_method_confirm: (IdentityNumber, confirmation_code: text) -> (variant {Ok; Err: AuthnMethodConfirmationError;});
 
+    // Authentication protocol
+    // =======================
+    prepare_delegation : (UserNumber, FrontendHostname, SessionKey, maxTimeToLive : opt nat64) -> (UserKey, Timestamp);
+    get_delegation: (UserNumber, FrontendHostname, SessionKey, Timestamp) -> (GetDelegationResponse) query;
+
     // Attribute Sharing MVP API
+    // =========================
     // The methods below are used to generate ID-alias credentials during attribute sharing flow.
     prepare_id_alias : (PrepareIdAliasRequest) -> (variant {Ok: PreparedIdAlias; Err: PrepareIdAliasError;});
     get_id_alias : (GetIdAliasRequest) -> (variant {Ok: IdAliasCredentials; Err: GetIdAliasError;}) query;
+
+    // HTTP Gateway protocol
+    // =====================
+    http_request: (request: HttpRequest) -> (HttpResponse) query;
+    http_request_update: (request: HttpRequest) -> (HttpResponse);
+
+    // Internal Methods
+    // ================
+    init_salt: () -> ();
+    stats : () -> (InternetIdentityStats) query;
+    config : () -> (InternetIdentityInit) query;
+
+    deploy_archive: (wasm: blob) -> (DeployArchiveResult);
+    // Returns a batch of entries _sorted by sequence number_ to be archived.
+    // This is an update call because the archive information _must_ be certified.
+    // Only callable by this IIs archive canister.
+    fetch_entries: () -> (vec BufferedArchiveEntry);
+    acknowledge_entries: (sequence_number: nat64) -> ();
 }
