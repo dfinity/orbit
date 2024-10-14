@@ -22,7 +22,7 @@
       </VBtn>
     </header>
     <VDivider />
-    <VRow v-if="configuredMethodCalls.length">
+    <VRow v-if="configuredMethodCalls.length" data-test-id="method-list">
       <VCol v-for="(method, idx) in configuredMethodCalls" :key="idx" cols="12" class="d-flex pb-0">
         <VCard width="100%">
           <VToolbar color="transparent" class="pr-4" density="compact">
@@ -117,7 +117,7 @@
         </VCard>
       </VCol>
     </VRow>
-    <p v-else>
+    <p v-else data-test-id="empty-method-list">
       {{ $t('external_canisters.call_configuration.no_configuration') }}
     </p>
   </section>
