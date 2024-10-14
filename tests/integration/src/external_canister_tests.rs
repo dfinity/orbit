@@ -1261,7 +1261,6 @@ fn create_external_canister_with_too_many_cycles() {
     // the canister with too many cycles failed to be created because the station would be out of cycles
     match rich_canister_request_status {
         RequestStatusDTO::Failed { reason } => {
-            println!("reason: {:?}", reason);
             assert_eq!(reason.unwrap(), format!("Request execution failed due to `failed to add external canister: FAILED: The external canister operation failed due to Canister {} has insufficient cycles balance to transfer {} cycles.`.", canister_ids.station, 2 * station_cycles));
         }
         _ => panic!(

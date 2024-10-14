@@ -4,7 +4,7 @@ use ic_cdk::api::call::call_with_payment128;
 use ic_cdk::api::management_canister::main::{self as mgmt, CanisterSettings};
 use serde::Serialize;
 
-/// The CMC canister is used to deploy the station canister on a subnet of choice.
+/// The CMC canister is used to deploy a canister on a subnet of choice.
 const CMC_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 4, 1, 1]);
 
 #[derive(
@@ -14,7 +14,7 @@ pub struct SubnetFilter {
     pub subnet_type: Option<String>,
 }
 
-/// Options to select subnets when creating a canister
+/// Options to select subnets when creating a canister.
 #[derive(
     CandidType, Deserialize, Serialize, Clone, Debug, Hash, Eq, PartialEq, Ord, PartialOrd,
 )]
@@ -32,7 +32,7 @@ struct CreateCanister {
     pub settings: Option<CanisterSettings>,
 }
 
-/// Error for create_canister endpoint
+/// Error type for `create_canister` endpoint of the CMC.
 #[derive(candid::CandidType, candid::Deserialize, serde::Serialize)]
 enum CreateCanisterError {
     Refunded {
