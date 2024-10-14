@@ -4,13 +4,13 @@
     scope="global"
   >
     <template #method>
-      <VChip label size="small" density="comfortable">
+      <VChip label size="small" density="comfortable" data-test-id="target-method">
         <TextOverflow :max-length="64" :text="props.validationMethod" />
       </VChip>
     </template>
     <template #canister>
       <span>
-        <VChip label size="small" density="comfortable">
+        <VChip label size="small" density="comfortable" data-test-id="target-canister">
           {{
             props.validationCanisterId.toText() === props.selfCanisterId?.toText()
               ? $t('terms.self').toLowerCase()
