@@ -4825,9 +4825,12 @@ name = "test_canister"
 version = "0.0.1"
 dependencies = [
  "candid",
+ "candid_parser",
  "futures",
  "ic-cdk 0.13.5",
  "ic-cdk-macros 0.9.0",
+ "orbit-essentials",
+ "serde",
 ]
 
 [[package]]
