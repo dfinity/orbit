@@ -117,6 +117,7 @@
                   block
                   class="mt-2"
                   variant="tonal"
+                  data-test-id="add-advanced-validation"
                   :prepend-icon="mdiPlus"
                   @click.stop="addValidationMethod"
                 >
@@ -128,6 +129,7 @@
                   block
                   class="mt-2"
                   variant="tonal"
+                  data-test-id="remove-advanced-validation"
                   :prepend-icon="mdiTrashCan"
                   @click.stop="deleteValidatioNMethod"
                 >
