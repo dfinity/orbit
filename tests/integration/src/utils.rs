@@ -736,7 +736,7 @@ pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, cont
     // upload station
     let station_wasm = get_canister_wasm("station");
     let (base_chunk, module_extra_chunks) =
-        upload_canister_chunks_to_asset_canister(env, station_wasm, 200_000);
+        upload_canister_chunks_to_asset_canister(env, station_wasm, 500_000);
     let upload_canister_modules_args = UploadCanisterModulesInput {
         upgrader_wasm_module: None,
         station_wasm_module: Some(base_chunk),

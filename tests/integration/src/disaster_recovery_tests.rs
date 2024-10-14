@@ -537,7 +537,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
         .collect();
 
     let (base_chunk, module_extra_chunks) =
-        upload_canister_chunks_to_asset_canister(&env, station_wasm_module, 200_000);
+        upload_canister_chunks_to_asset_canister(&env, station_wasm_module, 500_000);
     let res: (ApiResult<()>,) = update_candid_as(
         &env,
         upgrader_id,
@@ -715,7 +715,7 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
 
     // 2. perform the disaster recovery request with the station wasm and using the same upgrader id
     let (base_chunk, module_extra_chunks) =
-        upload_canister_chunks_to_asset_canister(&env, station_wasm_module.clone(), 200_000);
+        upload_canister_chunks_to_asset_canister(&env, station_wasm_module.clone(), 500_000);
     let res: (ApiResult<()>,) = update_candid_as(
         &env,
         upgrader_id,
@@ -934,7 +934,7 @@ fn test_disaster_recovery_upgrade() {
     let station_init_arg = SystemInstall::Upgrade(SystemUpgrade { name: None });
     let new_wasm_module = get_canister_wasm("station");
     let (base_chunk, module_extra_chunks) =
-        upload_canister_chunks_to_asset_canister(&env, new_wasm_module, 200_000);
+        upload_canister_chunks_to_asset_canister(&env, new_wasm_module, 500_000);
     let good_request = upgrader_api::RequestDisasterRecoveryInput {
         module: base_chunk,
         module_extra_chunks: Some(module_extra_chunks),
@@ -977,7 +977,7 @@ fn test_disaster_recovery_failing() {
     // install with intentionally bad arg to fail
     let new_wasm_module = get_canister_wasm("station");
     let (base_chunk, module_extra_chunks) =
-        upload_canister_chunks_to_asset_canister(&env, new_wasm_module, 200_000);
+        upload_canister_chunks_to_asset_canister(&env, new_wasm_module, 500_000);
     let good_request = upgrader_api::RequestDisasterRecoveryInput {
         module: base_chunk,
         module_extra_chunks: Some(module_extra_chunks),
