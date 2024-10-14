@@ -140,6 +140,7 @@ impl DfxOrbitArgs {
                     .station
                     .review_id(GetRequestInput {
                         request_id: verify_args.request_id.clone(),
+                        with_full_info: Some(false),
                     })
                     .await?;
 

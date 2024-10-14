@@ -126,6 +126,7 @@ export interface BasicUser {
   'name' : string,
 }
 export interface CallExternalCanisterOperation {
+  'arg' : [] | [Uint8Array | number[]],
   'execution_method' : CanisterMethod,
   'validation_method' : [] | [CanisterMethod],
   'arg_checksum' : [] | [Sha256Hash],
@@ -141,6 +142,10 @@ export interface CallExternalCanisterOperationInput {
 }
 export interface CallExternalCanisterResourceTarget {
   'execution_method' : ExecutionMethodResourceTarget,
+  'validation_method' : ValidationMethodResourceTarget,
+}
+export interface CanisterExecutionAndValidationMethodPair {
+  'execution_method' : string,
   'validation_method' : ValidationMethodResourceTarget,
 }
 export type CanisterInstallMode = { 'reinstall' : null } |
@@ -408,17 +413,49 @@ export interface ExternalCanisterCallerPrivileges {
 }
 export type ExternalCanisterChangeCallPermissionsInput = {
     'OverrideSpecifiedByExecutionMethods' : Array<
-      ExternalCanisterCallPermission
+      {
+        'execution_method' : string,
+        'permissions' : Array<
+          {
+            'allow' : Allow,
+            'validation_method' : ValidationMethodResourceTarget,
+          }
+        >,
+      }
     >
   } |
-  { 'RemoveByExecutionMethods' : Array<string> } |
+  {
+    'OverrideSpecifiedByExecutionValidationMethodPairs' : Array<
+      {
+        'allow' : [] | [Allow],
+        'method_configuration' : CanisterExecutionAndValidationMethodPair,
+      }
+    >
+  } |
   { 'ReplaceAllBy' : Array<ExternalCanisterCallPermission> };
 export type ExternalCanisterChangeCallRequestPoliciesInput = {
     'RemoveByPolicyIds' : Array<UUID>
   } |
   {
     'OverrideSpecifiedByExecutionMethods' : Array<
-      ExternalCanisterCallRequestPolicyRuleInput
+      {
+        'execution_method' : string,
+        'policies' : Array<
+          {
+            'rule' : RequestPolicyRule,
+            'validation_method' : ValidationMethodResourceTarget,
+            'policy_id' : [] | [UUID],
+          }
+        >,
+      }
+    >
+  } |
+  {
+    'OverrideSpecifiedByExecutionValidationMethodPairs' : Array<
+      {
+        'method_configuration' : CanisterExecutionAndValidationMethodPair,
+        'policies' : Array<ExternalCanisterChangeRequestPolicyRuleInput>,
+      }
     >
   } |
   { 'ReplaceAllBy' : Array<ExternalCanisterCallRequestPolicyRuleInput> };
@@ -527,7 +564,10 @@ export type GetPermissionResult = {
     }
   } |
   { 'Err' : Error };
-export interface GetRequestInput { 'request_id' : UUID }
+export interface GetRequestInput {
+  'request_id' : UUID,
+  'with_full_info' : [] | [boolean],
+}
 export interface GetRequestPolicyInput { 'id' : UUID }
 export type GetRequestPolicyResult = {
     'Ok' : {

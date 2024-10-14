@@ -80,6 +80,7 @@ impl From<ReviewIdArgs> for GetRequestInput {
     fn from(args: ReviewIdArgs) -> Self {
         GetRequestInput {
             request_id: args.request_id,
+            with_full_info: Some(false),
         }
     }
 }
