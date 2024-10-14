@@ -711,6 +711,7 @@ mod tests {
             kind: CreateExternalCanisterOperationKind::CreateNew(
                 CreateExternalCanisterOperationKindCreateNew {
                     initial_cycles: None,
+                    subnet_selection: None,
                 },
             ),
             request_policies: ExternalCanisterRequestPoliciesCreateInput {

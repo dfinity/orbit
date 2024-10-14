@@ -9,6 +9,7 @@ use crate::TestEnv;
 use candid::{Encode, Principal};
 use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse};
 use orbit_essentials::api::ApiResult;
+use orbit_essentials::cmc::{SubnetFilter, SubnetSelection};
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{
@@ -385,6 +386,7 @@ fn create_external_canister_and_check_status() {
             kind: CreateExternalCanisterOperationKindDTO::CreateNew(
                 CreateExternalCanisterOperationKindCreateNewDTO {
                     initial_cycles: None,
+                    subnet_selection: None,
                 },
             ),
             name: "test".to_string(),
@@ -557,10 +559,6 @@ fn create_external_canister_and_check_status() {
             executed_request.operation
         ),
     };
-
-    // top up canister
-    assert_eq!(env.cycle_balance(canister_id), 0);
-    env.add_cycles(canister_id, 100_000_000_000_000);
 
     // check canister status on behalf of the station and ensure that the canister is empty
     let status = canister_status(&env, Some(canister_ids.station), canister_id);
@@ -1158,7 +1156,10 @@ fn create_external_canister_with_too_many_cycles() {
     let create_canister_operation = |name: &str, initial_cycles| {
         RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
             kind: CreateExternalCanisterOperationKindDTO::CreateNew(
-                CreateExternalCanisterOperationKindCreateNewDTO { initial_cycles },
+                CreateExternalCanisterOperationKindCreateNewDTO {
+                    initial_cycles,
+                    subnet_selection: None,
+                },
             ),
             name: name.to_string(),
             description: None,
@@ -1260,7 +1261,7 @@ fn create_external_canister_with_too_many_cycles() {
     // the canister with too many cycles failed to be created because the station would be out of cycles
     match rich_canister_request_status {
         RequestStatusDTO::Failed { reason } => {
-            assert_eq!(reason.unwrap(), format!("Request execution failed due to internal error: `IC0504: Error from Canister {}: Canister {} is out of cycles`.", canister_ids.station, canister_ids.station));
+            assert_eq!(reason.unwrap(), format!("Request execution failed due to `failed to add external canister: FAILED: The external canister operation failed due to Canister {} has insufficient cycles balance to transfer {} cycles.`.", canister_ids.station, 2 * station_cycles));
         }
         _ => panic!(
             "Unexpected request status: {:?}",
@@ -1271,4 +1272,74 @@ fn create_external_canister_with_too_many_cycles() {
     let health_status =
         get_core_canister_health_status(&env, WALLET_ADMIN_USER, canister_ids.station);
     assert_eq!(health_status, HealthStatus::Healthy);
+}
+
+#[test]
+fn create_external_canister_on_different_subnet() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    // create a canister on the fiduciary subnet
+    let subnet_selection = Some(SubnetSelection::Filter(SubnetFilter {
+        subnet_type: Some("fiduciary".to_string()),
+    }));
+    let create_canister_operation =
+        RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
+            kind: CreateExternalCanisterOperationKindDTO::CreateNew(
+                CreateExternalCanisterOperationKindCreateNewDTO {
+                    initial_cycles: None,
+                    subnet_selection,
+                },
+            ),
+            name: "test".to_string(),
+            description: None,
+            labels: None,
+            permissions: ExternalCanisterPermissionsCreateInput {
+                calls: vec![],
+                read: AllowDTO {
+                    auth_scope: station_api::AuthScopeDTO::Restricted,
+                    user_groups: vec![],
+                    users: vec![],
+                },
+                change: AllowDTO {
+                    auth_scope: station_api::AuthScopeDTO::Restricted,
+                    user_groups: vec![],
+                    users: vec![],
+                },
+            },
+            request_policies: ExternalCanisterRequestPoliciesCreateInput {
+                change: vec![],
+                calls: vec![],
+            },
+        });
+    let create_canister_request = execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        create_canister_operation,
+    )
+    .unwrap();
+    let canister_id = match create_canister_request.operation {
+        RequestOperationDTO::CreateExternalCanister(operation) => operation.canister_id.unwrap(),
+        _ => panic!(
+            "Unexpected request operation type: {:?}",
+            create_canister_request.operation
+        ),
+    };
+
+    // check canister status on behalf of the station and ensure that the canister is empty
+    let status = canister_status(&env, Some(canister_ids.station), canister_id);
+    assert_eq!(status.module_hash, None);
+
+    // check that the canister has been deployed to the fiduciary subnet
+    assert_eq!(
+        env.get_subnet(canister_id).unwrap(),
+        env.topology().get_fiduciary().unwrap()
+    );
+    // which is different from the subnet to which the station is deployed
+    assert_ne!(
+        env.get_subnet(canister_id).unwrap(),
+        env.get_subnet(canister_ids.control_panel).unwrap()
+    );
 }

@@ -409,8 +409,14 @@ export const idlFactory = ({ IDL }) => {
   const CreateExternalCanisterOperationKindAddExisting = IDL.Record({
     'canister_id' : IDL.Principal,
   });
+  const SubnetFilter = IDL.Record({ 'subnet_type' : IDL.Opt(IDL.Text) });
+  const SubnetSelection = IDL.Variant({
+    'Filter' : SubnetFilter,
+    'Subnet' : IDL.Record({ 'subnet' : IDL.Principal }),
+  });
   const CreateExternalCanisterOperationKindCreateNew = IDL.Record({
     'initial_cycles' : IDL.Opt(IDL.Nat64),
+    'subnet_selection' : IDL.Opt(SubnetSelection),
   });
   const CreateExternalCanisterOperationKind = IDL.Variant({
     'AddExisting' : CreateExternalCanisterOperationKindAddExisting,

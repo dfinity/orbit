@@ -216,6 +216,8 @@ const createNewExternalCanister = async (): Promise<Request> => {
         initial_cycles: wizard.value.configuration.maybe_with_initial_cycles
           ? [wizard.value.configuration.maybe_with_initial_cycles]
           : [],
+        // TODO: implement subnet selection
+        subnet_selection: [],
       },
     };
   }
