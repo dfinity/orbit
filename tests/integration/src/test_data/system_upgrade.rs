@@ -42,7 +42,7 @@ pub fn perform_station_update(
 ) {
     // upload chunks to asset canister
     let (base_chunk, module_extra_chunks) =
-        upload_canister_chunks_to_asset_canister(&env, station_wasm, 500_000);
+        upload_canister_chunks_to_asset_canister(env, station_wasm, 500_000);
 
     // create system upgrade request from chunks
     let system_upgrade_operation =
