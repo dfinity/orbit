@@ -29,7 +29,7 @@
 
       <slot name="top-actions"></slot>
     </VToolbar>
-    <VCardText class="px-4 pt-2 pb-0">
+    <VCardText class="px-6 pt-2 pb-0">
       <VContainer class="px-0 pb-0">
         <VRow v-if="props.request.summary?.[0]">
           <VCol cols="12" class="text-h6 font-weight-bold">
@@ -64,7 +64,7 @@
       </VContainer>
     </VCardText>
 
-    <VCardText v-if="props.details.can_approve || reason" class="px-4 pt-0">
+    <VCardText v-if="props.details.can_approve || reason" class="px-6 pt-0">
       <VTextarea
         v-model.trim="reason"
         data-test-id="request-details-comment"
@@ -77,83 +77,81 @@
       />
     </VCardText>
 
-    <VContainer class="pb-0">
-      <VExpansionPanels data-test-id="request-approvals-and-evaluation">
-        <VExpansionPanel :elevation="0">
-          <template #title>
-            <span class="text-body-1 font-weight-bold">{{
-              $t('requests.approvals_and_evaluation')
-            }}</span>
+    <VExpansionPanels data-test-id="request-approvals-and-evaluation">
+      <VExpansionPanel :elevation="0">
+        <template #title>
+          <span class="text-body-1 font-weight-bold">{{
+            $t('requests.approvals_and_evaluation')
+          }}</span>
+        </template>
+        <VExpansionPanelText>
+          <template v-if="evaulationSummary">
+            <div class="text-body-1 font-weight-bold">
+              {{ $t('terms.summary') }}
+            </div>
+            <div class="mb-6 text-medium-emphasis text-body-2">
+              {{ evaulationSummary }}
+            </div>
           </template>
-          <VExpansionPanelText>
-            <template v-if="evaulationSummary">
-              <div class="text-body-1 font-weight-bold">
-                {{ $t('terms.summary') }}
-              </div>
-              <div class="mb-6 text-medium-emphasis text-body-2">
-                {{ evaulationSummary }}
-              </div>
-            </template>
 
-            <table
-              v-if="approvals.length > 0"
-              class="approvers text-body-1"
-              data-test-id="request-approvals"
-            >
-              <thead>
-                <tr>
-                  <th class="pl-0">{{ $t('requests.approvals') }}</th>
-                  <th></th>
-                  <th class="d-none d-sm-table-cell"></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="approval in approvals" :key="approval.approver.id">
-                  <td class="pl-0">
-                    {{ approval.approver.name }}
-                  </td>
+          <table
+            v-if="approvals.length > 0"
+            class="approvers text-body-1"
+            data-test-id="request-approvals"
+          >
+            <thead>
+              <tr>
+                <th class="pl-0">{{ $t('requests.approvals') }}</th>
+                <th></th>
+                <th class="d-none d-sm-table-cell"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="approval in approvals" :key="approval.approver.id">
+                <td class="pl-0">
+                  {{ approval.approver.name }}
+                </td>
 
-                  <td>
-                    <RequestApprovalStatusChip
-                      :status="approval.approval.status"
-                      size="small"
-                      class="d-sm-none"
-                    />
-                    <p
-                      v-if="approval.approval.status_reason[0]"
-                      class="text-medium-emphasis text-body-2"
-                    >
-                      {{ approval.approval.status_reason[0] }}
-                    </p>
-                  </td>
-                  <td class="text-right d-none d-sm-table-cell">
-                    <RequestApprovalStatusChip
-                      :status="approval.approval.status"
-                      size="small"
-                      class="ml-2"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <template v-if="props.details.evaluationResult && policyResults">
-              <div class="text-body-1 font-weight-bold mt-4">
-                {{ $t('requests.evaluation.acceptance_rules') }}
-              </div>
-              <VList :density="'compact'" data-test-id="request-acceptance-rules">
-                <PolicyRuleResultView
-                  :evaluated-rule="policyResults.evaluated_rule"
-                  :status="policyResults.status"
-                  :request-approvals="props.request.approvals"
-                ></PolicyRuleResultView>
-              </VList>
-            </template>
-          </VExpansionPanelText>
-        </VExpansionPanel>
-      </VExpansionPanels>
-    </VContainer>
+                <td>
+                  <RequestApprovalStatusChip
+                    :status="approval.approval.status"
+                    size="small"
+                    class="d-sm-none"
+                  />
+                  <p
+                    v-if="approval.approval.status_reason[0]"
+                    class="text-medium-emphasis text-body-2"
+                  >
+                    {{ approval.approval.status_reason[0] }}
+                  </p>
+                </td>
+                <td class="text-right d-none d-sm-table-cell">
+                  <RequestApprovalStatusChip
+                    :status="approval.approval.status"
+                    size="small"
+                    class="ml-2"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <template v-if="props.details.evaluationResult && policyResults">
+            <div class="text-body-1 font-weight-bold mt-4">
+              {{ $t('requests.evaluation.acceptance_rules') }}
+            </div>
+            <VList :density="'compact'" data-test-id="request-acceptance-rules">
+              <PolicyRuleResultView
+                :evaluated-rule="policyResults.evaluated_rule"
+                :status="policyResults.status"
+                :request-approvals="props.request.approvals"
+              ></PolicyRuleResultView>
+            </VList>
+          </template>
+        </VExpansionPanelText>
+      </VExpansionPanel>
+    </VExpansionPanels>
 
-    <VContainer v-if="!!requestFailed" class="" data-test-id="request-details-failure">
+    <VContainer v-if="!!requestFailed" class="px-6" data-test-id="request-details-failure">
       <VRow>
         <VCol class="text-body-1 font-weight-bold pb-0">
           {{ $t('requests.failure_title') }}
@@ -166,8 +164,8 @@
       </VRow>
     </VContainer>
 
-    <VDivider class="mt-6" />
-    <VCardActions class="pa-4 d-flex flex-column-reverse flex-column flex-md-row ga-4">
+    <VDivider class="mt-4" />
+    <VCardActions class="py-4 px-6 d-flex flex-column-reverse flex-column flex-md-row ga-4">
       <RequestMetadata
         :request="props.request"
         :details="props.details"
@@ -200,7 +198,7 @@
         </template>
         <template v-else>
           <RequestStatusChip :status="request.status" />
-          <VDivider class="d-md-none mx-2" />
+          <VDivider class="d-md-none" />
         </template>
       </div>
     </VCardActions>
