@@ -15,6 +15,20 @@
         </VCol>
         <VCol cols="12" class="pb-0 px-6">
           <VCombobox
+            v-if="props.allowAnyMethod"
+            v-model="model.methodName"
+            density="comfortable"
+            :prepend-icon="mdiCodeBraces"
+            :readonly="readonly"
+            :items="availableExecutionMethods"
+            :label="$t('external_canisters.perform_call.method_name')"
+            :hint="$t('external_canisters.perform_call.method_name_hint')"
+            :rules="[requiredRule]"
+            name="method_name"
+            @keydown.enter.stop.prevent=""
+          />
+          <VSelect
+            v-else
             v-model="model.methodName"
             density="comfortable"
             :prepend-icon="mdiCodeBraces"
@@ -125,6 +139,7 @@ const props = withDefaults(
   defineProps<{
     modelValue: CanisterCallModel;
     allowedMethods?: CanisterAllowedMethod[];
+    allowAnyMethod?: boolean;
     readonly?: boolean;
     hide?: {
       canisterId?: boolean;
@@ -133,6 +148,7 @@ const props = withDefaults(
   {
     readonly: false,
     allowedMethods: () => [],
+    allowAnyMethod: false,
     hide: () => ({
       canisterId: false,
     }),

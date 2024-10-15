@@ -139,6 +139,9 @@
               :open="dialogs.call"
               :canister-id="canister.canister_id"
               :allowed-methods="mapAllowedCanisterMethods(privileges.can_call)"
+              :allow-any-method="
+                hasRequiredPrivilege({ anyOf: [Privilege.CallAnyExternalCanister] })
+              "
               @update:open="dialogs.call = $event"
             />
             <VBtn size="default" color="primary" @click="dialogs.call = true">

@@ -20,6 +20,7 @@
         v-model="canisterCallModel"
         :hide="{ canisterId: !!canisterCallModel.canisterId }"
         :allowed-methods="props.allowedMethods"
+        :allow-any-method="props.allowAnyMethod"
         @submitting="canClose = !$event"
         @submitted="open = false"
       >
@@ -56,12 +57,14 @@ const props = withDefaults(
     open?: boolean;
     canisterId: Principal;
     allowedMethods?: CanisterAllowedMethod[];
+    allowAnyMethod?: boolean;
     dialogMaxWidth?: number;
     title?: string;
   }>(),
   {
     open: false,
     allowedMethods: () => [],
+    allowAnyMethod: false,
     dialogMaxWidth: 800,
     title: undefined,
   },
