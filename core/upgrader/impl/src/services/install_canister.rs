@@ -1,8 +1,10 @@
 use crate::model::InstallMode;
 use async_trait::async_trait;
 use candid::Principal;
-use ic_cdk::api::management_canister::main::{self as mgmt, CanisterIdRecord, InstallCodeArgument};
+use ic_cdk::api::management_canister::main::{self as mgmt, CanisterIdRecord};
 use lazy_static::lazy_static;
+use orbit_essentials::install_chunked_code::install_chunked_code;
+use orbit_essentials::types::WasmModuleExtraChunks;
 use std::{collections::BTreeSet, sync::Arc};
 
 lazy_static! {
@@ -20,6 +22,7 @@ pub trait InstallCanister: Send + Sync {
         &self,
         canister_id: Principal,
         wasm_module: Vec<u8>,
+        wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
         arg: Vec<u8>,
         mode: InstallMode,
     ) -> Result<(), String>;
@@ -34,6 +37,7 @@ impl InstallCanister for StationDisasterRecoveryInstall {
         &self,
         canister_id: Principal,
         wasm_module: Vec<u8>,
+        wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
         arg: Vec<u8>,
         mode: InstallMode,
     ) -> Result<(), String> {
@@ -79,19 +83,15 @@ impl InstallCanister for StationDisasterRecoveryInstall {
             }
         }
 
-        mgmt::install_code(InstallCodeArgument {
-            mode: mode.into(),
+        install_chunked_code(
             canister_id,
+            mode.into(),
             wasm_module,
+            wasm_module_extra_chunks,
             arg,
-        })
+        )
         .await
-        .map_err(|(code, err)| {
-            format!(
-                "failed to {} canister: \"{}\", rejection code: {}",
-                mode, err, code as i32
-            )
-        })
+        .map_err(|err| format!("failed to {} canister: \"{}\"", mode, err,))
     }
 
     async fn start(&self, canister_id: Principal) -> Result<(), String> {

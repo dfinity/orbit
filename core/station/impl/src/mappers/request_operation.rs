@@ -1089,6 +1089,7 @@ impl From<station_api::CreateExternalCanisterOperationKindCreateNewDTO>
     ) -> CreateExternalCanisterOperationKindCreateNew {
         CreateExternalCanisterOperationKindCreateNew {
             initial_cycles: input.initial_cycles,
+            subnet_selection: input.subnet_selection,
         }
     }
 }
@@ -1101,6 +1102,7 @@ impl From<CreateExternalCanisterOperationKindCreateNew>
     ) -> station_api::CreateExternalCanisterOperationKindCreateNewDTO {
         station_api::CreateExternalCanisterOperationKindCreateNewDTO {
             initial_cycles: input.initial_cycles,
+            subnet_selection: input.subnet_selection,
         }
     }
 }

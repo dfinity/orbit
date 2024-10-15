@@ -12,6 +12,7 @@ use crate::errors::ValidationError;
 use crate::models::Metadata;
 use candid::Principal;
 use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
+use orbit_essentials::cmc::SubnetSelection;
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::{storable, types::UUID};
 use std::fmt::Display;
@@ -468,6 +469,7 @@ pub enum ExternalCanisterChangeCallRequestPoliciesInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct CreateExternalCanisterOperationKindCreateNew {
     pub initial_cycles: Option<u64>,
+    pub subnet_selection: Option<SubnetSelection>,
 }
 
 #[storable]

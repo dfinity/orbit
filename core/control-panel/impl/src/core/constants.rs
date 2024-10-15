@@ -42,9 +42,6 @@ pub const ONE_MONTH_NS: u64 = 30 * ONE_DAY_NS;
 /// The NNS Root canister id added to station and upgrader canisters as a recovery method.
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 
-/// The CMC canister is used to deploy the station canister on a subnet of choice.
-pub const CMC_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 4, 1, 1]);
-
 #[cfg(test)]
 mod tests {
     use super::*;

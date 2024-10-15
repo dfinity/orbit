@@ -3,6 +3,7 @@ use crate::{
     SortDirection, TimestampRfc3339, UuidDTO, ValidationMethodResourceTargetDTO,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
+use orbit_essentials::cmc::SubnetSelection;
 use orbit_essentials::types::WasmModuleExtraChunks;
 
 // Taken from https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-create_canister
@@ -23,6 +24,7 @@ pub struct DefiniteCanisterSettingsInput {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct CreateExternalCanisterOperationKindCreateNewDTO {
     pub initial_cycles: Option<u64>,
+    pub subnet_selection: Option<SubnetSelection>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
