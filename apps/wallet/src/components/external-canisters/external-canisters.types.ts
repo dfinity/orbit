@@ -38,10 +38,15 @@ export interface CanisterMethodCallConfigurationModel {
   validationCanisterId?: Principal;
 }
 
-export interface CanisterConfiguredMethodCall {
+export interface CanisterAllowedMethod {
   methodName: string;
-  permission?: Allow;
   validationTarget: ValidationMethodResourceTarget;
+}
+
+export interface CanisterConfiguredMethodCall extends CanisterAllowedMethod {
+  methodName: string;
+  validationTarget: ValidationMethodResourceTarget;
+  permission?: Allow;
   requestPolicies: ExternalCanisterChangeRequestPolicyRuleInput[];
 }
 

@@ -19,7 +19,7 @@
       <CanisterCallForm
         v-model="canisterCallModel"
         :hide="{ canisterId: !!canisterCallModel.canisterId }"
-        :configured-methods="props.configuredMethods"
+        :allowed-methods="props.allowedMethods"
         @submitting="canClose = !$event"
         @submitted="open = false"
       >
@@ -48,20 +48,20 @@ import { mdiClose } from '@mdi/js';
 import { Ref, computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VBtn, VCard, VDialog, VDivider, VToolbar, VToolbarTitle } from 'vuetify/components';
-import { CanisterCallModel, CanisterConfiguredMethodCall } from './external-canisters.types';
+import { CanisterCallModel, CanisterAllowedMethod } from './external-canisters.types';
 import CanisterCallForm from './CanisterCallForm.vue';
 
 const props = withDefaults(
   defineProps<{
     open?: boolean;
     canisterId: Principal;
-    configuredMethods?: CanisterConfiguredMethodCall[];
+    allowedMethods?: CanisterAllowedMethod[];
     dialogMaxWidth?: number;
     title?: string;
   }>(),
   {
     open: false,
-    configuredMethods: () => [],
+    allowedMethods: () => [],
     dialogMaxWidth: 800,
     title: undefined,
   },

@@ -1,5 +1,9 @@
-import { CanisterConfiguredMethodCall } from '~/components/external-canisters/external-canisters.types';
 import {
+  CanisterAllowedMethod,
+  CanisterConfiguredMethodCall,
+} from '~/components/external-canisters/external-canisters.types';
+import {
+  ExternalCanisterCallerPrivileges,
   ExternalCanisterPermissions,
   ExternalCanisterRequestPolicies,
   ExternalCanisterState,
@@ -52,10 +56,55 @@ export const mapMethodCallConfigurationToKey = (config: {
   return key;
 };
 
+export const mapAllowedCanisterMethods = (
+  methods: ExternalCanisterCallerPrivileges['can_call'],
+): CanisterAllowedMethod[] => {
+  const allowedMethod: Map<string, CanisterAllowedMethod> = new Map();
+
+  const getOrDefault = (
+    methodName: string,
+    validationTarget: ValidationMethodResourceTarget,
+  ): CanisterAllowedMethod =>
+    allowedMethod.get(
+      mapMethodCallConfigurationToKey({
+        executionMethod: methodName,
+        validationMethod: validationTarget,
+      }),
+    ) ?? {
+      methodName,
+      validationTarget,
+    };
+
+  for (const method of methods) {
+    const methodEntry = getOrDefault(method.execution_method, method.validation_method);
+
+    allowedMethod.set(
+      mapMethodCallConfigurationToKey({
+        executionMethod: method.execution_method,
+        validationMethod: method.validation_method,
+      }),
+      methodEntry,
+    );
+  }
+
+  return Array.from(allowedMethod.values()).sort((a, b) => {
+    if (
+      variantIs(a.validationTarget, 'ValidationMethod') &&
+      variantIs(b.validationTarget, 'ValidationMethod')
+    ) {
+      return a.validationTarget.ValidationMethod.method_name.localeCompare(
+        b.validationTarget.ValidationMethod.method_name,
+      );
+    }
+
+    return a.methodName.localeCompare(b.methodName);
+  });
+};
+
 export const mapConfiguredMethodCalls = (opts: {
-  requestPolicies: ExternalCanisterRequestPolicies['calls'];
-  permissions: ExternalCanisterPermissions['calls'];
-}) => {
+  requestPolicies?: ExternalCanisterRequestPolicies['calls'];
+  permissions?: ExternalCanisterPermissions['calls'];
+}): CanisterConfiguredMethodCall[] => {
   const configuredMethodCalls: Map<string, CanisterConfiguredMethodCall> = new Map();
 
   const getOrDefault = (
@@ -74,7 +123,7 @@ export const mapConfiguredMethodCalls = (opts: {
       validationTarget,
     };
 
-  for (const policy of opts.requestPolicies) {
+  for (const policy of opts.requestPolicies ?? []) {
     const methodCallEntry = getOrDefault(policy.execution_method, policy.validation_method);
 
     methodCallEntry.requestPolicies.push({
@@ -91,7 +140,7 @@ export const mapConfiguredMethodCalls = (opts: {
     );
   }
 
-  for (const permission of opts.permissions) {
+  for (const permission of opts.permissions ?? []) {
     const methodCallEntry = getOrDefault(permission.execution_method, permission.validation_method);
 
     methodCallEntry.permission = permission.allow;

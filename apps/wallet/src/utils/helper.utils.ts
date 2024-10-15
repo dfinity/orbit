@@ -244,7 +244,7 @@ export const toUint8Array = (input: ArrayBuffer | number[] | Uint8Array): Uint8A
     return input;
   }
 
-  return input instanceof ArrayBuffer ? new Uint8Array(input) : new Uint8Array(input);
+  return new Uint8Array(input);
 };
 
 /**

@@ -111,7 +111,7 @@ import { useStationStore } from '~/stores/station.store';
 import { requiredRule } from '~/utils/form.utils';
 import { assertAndReturn, variantIs } from '~/utils/helper.utils';
 import CanisterIdField from '../inputs/CanisterIdField.vue';
-import { CanisterCallModel, CanisterConfiguredMethodCall } from './external-canisters.types';
+import { CanisterCallModel, CanisterAllowedMethod } from './external-canisters.types';
 import CanisterArgumentField from '../inputs/CanisterArgumentField.vue';
 import { CyclesUnit } from '~/types/app.types';
 import CyclesInput from '../inputs/CyclesInput.vue';
@@ -119,11 +119,12 @@ import { ref } from 'vue';
 import { SelectItem } from '~/types/helper.types';
 import { ValidationMethodResourceTarget } from '~/generated/station/station.did';
 import { useI18n } from 'vue-i18n';
+import { isApiError } from '~/utils/app.utils';
 
 const props = withDefaults(
   defineProps<{
     modelValue: CanisterCallModel;
-    configuredMethods?: CanisterConfiguredMethodCall[];
+    allowedMethods?: CanisterAllowedMethod[];
     readonly?: boolean;
     hide?: {
       canisterId?: boolean;
@@ -131,7 +132,7 @@ const props = withDefaults(
   }>(),
   {
     readonly: false,
-    configuredMethods: () => [],
+    allowedMethods: () => [],
     hide: () => ({
       canisterId: false,
     }),
@@ -187,12 +188,22 @@ const { submit, edited, additionalFieldErrors, fieldsWithErrors, submitting, val
       } catch (error) {
         useOnFailedOperation();
 
+        const errorMessages = [];
+        if (isApiError(error) && error.code === 'VALIDATION_ERROR' && error.details?.[0]) {
+          const details = error.details[0];
+          for (const [_, errorMessage] of details) {
+            if (errorMessage && errorMessage.length) {
+              errorMessages.push(errorMessage);
+            }
+          }
+        }
+
+        if (!errorMessages.length) {
+          errorMessages.push(i18n.t('external_canisters.perform_call.call_submit_failed'));
+        }
+
         fieldsWithErrors.value = [
-          {
-            field: i18n.t('terms.error'),
-            errorMessages: [i18n.t('external_canisters.perform_call.call_submit_failed')],
-            isCustomValidation: true,
-          },
+          { field: i18n.t('terms.error'), errorMessages, isCustomValidation: true },
         ];
 
         throw error;
@@ -215,7 +226,7 @@ watch(
 );
 
 const availableExecutionMethods = computed<string[]>(() => {
-  const configuredMethods = props.configuredMethods
+  const configuredMethods = props.allowedMethods
     .map(method => method.methodName)
     .filter(methodName => !!methodName && methodName.trim().length && methodName !== '*');
 
@@ -229,7 +240,7 @@ const validationMethods = computed<SelectItem<ValidationMethodResourceTarget>[]>
     return [];
   }
 
-  const matchedValidationMethods = props.configuredMethods.filter(
+  const matchedValidationMethods = props.allowedMethods.filter(
     method => method.methodName === methodName,
   );
 

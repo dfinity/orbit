@@ -138,12 +138,7 @@
             <CanisterCallDialog
               :open="dialogs.call"
               :canister-id="canister.canister_id"
-              :configured-methods="
-                mapConfiguredMethodCalls({
-                  requestPolicies: canister.request_policies.calls,
-                  permissions: canister.permissions.calls,
-                })
-              "
+              :allowed-methods="mapAllowedCanisterMethods(privileges.can_call)"
               @update:open="dialogs.call = $event"
             />
             <VBtn size="default" color="primary" @click="dialogs.call = true">
@@ -418,7 +413,7 @@ import {
   ExternalCanisterCallerPrivileges,
 } from '~/generated/station/station.did';
 import { toCyclesUnit } from '~/mappers/cycles.mapper';
-import { mapConfiguredMethodCalls } from '~/mappers/external-canister.mapper';
+import { mapAllowedCanisterMethods } from '~/mappers/external-canister.mapper';
 import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import { CyclesUnit, type PageProps } from '~/types/app.types';
@@ -472,7 +467,7 @@ const dialogs = ref({
 const { register } = useExternalCanisterProvider();
 const currentRouteCanisterId = computed(() => `${router.currentRoute.value.params.cid}`);
 const verifiedPageLoad = ref(false);
-const privileges = ref<ExternalCanisterCallerPrivileges>(buildDefaultPrivileges());
+const privileges = ref(buildDefaultPrivileges()) as Ref<ExternalCanisterCallerPrivileges>;
 const loading = ref(false);
 const station = useStationStore();
 const disableRefresh = ref(false);
