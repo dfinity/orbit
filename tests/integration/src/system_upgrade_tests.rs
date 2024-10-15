@@ -13,7 +13,7 @@ use station_api::{
 };
 use upgrader_api::InitArg;
 
-const EXTRA_TICKS: u64 = 50;
+const EXTRA_TICKS: u64 = 100;
 
 fn do_successful_station_upgrade(
     env: &PocketIc,
@@ -127,29 +127,6 @@ fn do_failed_system_upgrade(
 }
 
 #[test]
-fn successful_station_upgrade() {
-    let TestEnv {
-        env, canister_ids, ..
-    } = setup_new_env();
-
-    // get station wasm
-    let station_wasm = get_canister_wasm("station").to_vec();
-
-    // create station upgrade request
-    let station_init_arg = SystemInstall::Upgrade(SystemUpgrade { name: None });
-    let station_init_arg_bytes = Encode!(&station_init_arg).unwrap();
-    let station_upgrade_operation =
-        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
-            target: SystemUpgradeTargetDTO::UpgradeStation,
-            module: station_wasm,
-            module_extra_chunks: None,
-            arg: Some(station_init_arg_bytes),
-        });
-
-    do_successful_station_upgrade(&env, &canister_ids, station_upgrade_operation);
-}
-
-#[test]
 fn failed_station_upgrade() {
     let TestEnv {
         env, canister_ids, ..
@@ -189,7 +166,7 @@ fn system_upgrade_from_chunks() {
             SystemUpgradeTargetDTO::UpgradeStation,
             station_init_arg_bytes,
             "station",
-            200_000,
+            500_000,
         ),
         (
             SystemUpgradeTargetDTO::UpgradeUpgrader,

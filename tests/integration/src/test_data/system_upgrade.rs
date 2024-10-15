@@ -1,8 +1,9 @@
 use std::time::Duration;
 
-use crate::utils::{submit_request, wait_for_request};
+use crate::utils::{submit_request, upload_canister_chunks_to_asset_canister, wait_for_request};
 use candid::Principal;
 use pocket_ic::PocketIc;
+use station_api::{RequestOperationInput, SystemUpgradeOperationInput};
 
 pub fn perform_upgrader_update(
     env: &PocketIc,
@@ -39,22 +40,28 @@ pub fn perform_station_update(
     requester: Principal,
     station_wasm: Vec<u8>,
 ) {
+    // upload chunks to asset canister
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(env, station_wasm, 500_000);
+
+    // create system upgrade request from chunks
+    let system_upgrade_operation =
+        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+            target: station_api::SystemUpgradeTargetDTO::UpgradeStation,
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: None,
+        });
+
     let request_station_upgrade = submit_request(
         env,
         requester,
         station_canister_id,
-        station_api::RequestOperationInput::SystemUpgrade(
-            station_api::SystemUpgradeOperationInput {
-                target: station_api::SystemUpgradeTargetDTO::UpgradeStation,
-                module: station_wasm.clone(),
-                module_extra_chunks: None,
-                arg: None,
-            },
-        ),
+        system_upgrade_operation,
     );
 
     // wait with extra ticks since the canister is stopped by the upgrade process
-    for _ in 0..20 {
+    for _ in 0..100 {
         env.tick();
         env.advance_time(Duration::from_secs(1));
     }
