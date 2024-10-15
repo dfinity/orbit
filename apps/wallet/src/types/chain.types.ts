@@ -5,7 +5,8 @@ export enum BlockchainType {
 }
 
 export enum BlockchainStandard {
-  Native = 'native',
+  Native = 'icp_native',
+  ICRC1 = 'icrc1',
 }
 
 export enum TokenSymbol {

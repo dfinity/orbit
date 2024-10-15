@@ -161,8 +161,9 @@ impl InternetComputer {
             },
         )
         .await
-        .map_err(|_| BlockchainApiError::FetchBalanceFailed {
+        .map_err(|e| BlockchainApiError::FetchBalanceFailed {
             asset_id: Uuid::from_bytes(asset.id).hyphenated().to_string(),
+            info: format!("Could not get balance of asset {}({}) with address {} from canister {}. Reason: {}", asset.name, Uuid::from_bytes(asset.id).hyphenated(), account_identifier.to_hex(), ledger_canister_id, e.1),
         })?;
 
         Ok(balance.e8s())
@@ -439,7 +440,18 @@ impl BlockchainApi for InternetComputer {
     ) -> BlockchainApiResult<BigUint> {
         // all matching addresses should resolve to the same balance, so pick the first one
 
+        let supported_formats = asset
+            .standards
+            .iter()
+            .flat_map(|s| s.get_info().address_formats.clone())
+            .collect::<Vec<AddressFormat>>();
+
         for account_address in account_addresses {
+            if !supported_formats.contains(&account_address.format) {
+                // filter out irrelevant addresses
+                continue;
+            }
+
             match account_address.format {
                 AddressFormat::ICPAccountIdentifier => {
                     let balance = self

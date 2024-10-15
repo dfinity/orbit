@@ -15,7 +15,7 @@
     <VCol cols="12" class="pt-4 pb-0">
       <TokenAutocomplete
         v-if="props.display.asset"
-        v-model="model.symbol"
+        v-model="model.assets"
         class="mb-2"
         :label="$t('terms.asset')"
         :prepend-icon="mdiBank"
@@ -24,6 +24,7 @@
         density="comfortable"
         :disabled="isViewMode || !!model.id"
         @selected-asset="onSelectedAsset"
+        :multiple="true"
       />
     </VCol>
     <VCol cols="12" class="pt-0 pb-4">
@@ -53,9 +54,7 @@ import { requiredRule } from '~/utils/form.utils';
 export interface AccountConfigurationModel {
   id: UUID;
   name: string;
-  blockchain: string;
-  standard: string;
-  symbol: string;
+  assets: UUID[];
   lastModified: TimestampRFC3339;
 }
 
@@ -89,14 +88,6 @@ const model = computed({
 });
 
 const onSelectedAsset = (asset?: Asset): void => {
-  if (asset) {
-    model.value.symbol = asset.symbol;
-    model.value.blockchain = asset.blockchain;
-    model.value.standard = asset.standards[0]; // todo: handle multiple standards
-  } else {
-    model.value.symbol = undefined;
-    model.value.blockchain = undefined;
-    model.value.standard = undefined;
-  }
+  model.value.assets = asset ? [asset] : [];
 };
 </script>

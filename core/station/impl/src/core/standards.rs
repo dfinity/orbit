@@ -11,7 +11,7 @@ lazy_static! {
     pub static ref SUPPORTED_BLOCKCHAINS: Vec<SupportedBlockchain> = {
         vec![SupportedBlockchain {
             blockchain: Blockchain::InternetComputer,
-            supported_standards: vec![TokenStandard::InternetComputerNative],
+            supported_standards: vec![TokenStandard::InternetComputerNative, TokenStandard::ICRC1],
         }]
     };
 }

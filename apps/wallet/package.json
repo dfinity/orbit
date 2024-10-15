@@ -24,11 +24,12 @@
     "format": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../../.prettierignore --write .\" \"eslint --ext .js,.vue,.ts,.cjs --fix .\""
   },
   "dependencies": {
-    "@dfinity/agent": "1.4.0",
-    "@dfinity/auth-client": "1.4.0",
-    "@dfinity/candid": "1.4.0",
-    "@dfinity/identity": "1.4.0",
-    "@dfinity/principal": "1.4.0",
+    "@dfinity/agent": "2.1.2",
+    "@dfinity/auth-client": "2.1.2",
+    "@dfinity/candid": "2.1.2",
+    "@dfinity/identity": "2.1.2",
+    "@dfinity/principal": "2.1.2",
+    "@dfinity/ledger-icrc": "2.6.1",
     "@mdi/font": "7.4.47",
     "@mdi/js": "7.4.47",
     "buffer": "6.0.3",

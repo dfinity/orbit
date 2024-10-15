@@ -1,20 +1,30 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { icAgent } from '~/core/ic-agent.core';
-import { idlFactory } from '~/generated/icp_index';
-import { _SERVICE } from '~/generated/icp_index/icp_index.did';
+import { idlFactory } from '~/generated/icrc1_index';
+import { _SERVICE } from '~/generated/icrc1_index/icrc1_index_canister.did';
 import { AccountIncomingTransfer, ChainApi, FetchTransfersInput } from '~/types/chain.types';
 import { nanoToJsDate } from '~/utils/date.utils';
-import { isValidSha256 } from '~/utils/helper.utils';
+import { decodeIcrcAccount, encodeIcrcAccount } from '@dfinity/ledger-icrc';
+import { Account } from '~/generated/icp_index/icp_index.did';
 
-export class ICNativeApi implements ChainApi {
+export class ICRC1Api implements ChainApi {
   private actor: ActorSubclass<_SERVICE>;
   static PAGE_SIZE = BigInt(100);
 
+  private account: Account;
+
   constructor(
-    private readonly address: string,
+    address: string,
     private readonly indexCanisterId: string,
     agent: HttpAgent = icAgent.get(),
   ) {
+    const icrc1Account = decodeIcrcAccount(address);
+
+    this.account = {
+      owner: icrc1Account.owner,
+      subaccount: icrc1Account.subaccount ? [icrc1Account.subaccount] : [],
+    };
+
     this.actor = Actor.createActor<_SERVICE>(idlFactory, {
       agent,
       canisterId: this.indexCanisterId,
@@ -22,11 +32,16 @@ export class ICNativeApi implements ChainApi {
   }
 
   isValidAddress(address: string): boolean {
-    return isValidSha256(address);
+    try {
+      decodeIcrcAccount(address);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async fetchBalance(): Promise<bigint> {
-    const balance = await this.actor.get_account_identifier_balance(this.address);
+    const balance = await this.actor.icrc1_balance_of(this.account);
 
     return balance;
   }
@@ -35,10 +50,10 @@ export class ICNativeApi implements ChainApi {
     input: FetchTransfersInput,
     startBlockId?: bigint,
   ): Promise<AccountIncomingTransfer[]> {
-    const result = await this.actor.get_account_identifier_transactions({
-      account_identifier: this.address,
+    const result = await this.actor.get_account_transactions({
+      account: this.account,
+      max_results: ICRC1Api.PAGE_SIZE,
       start: startBlockId ? [startBlockId] : [],
-      max_results: ICNativeApi.PAGE_SIZE,
     });
 
     if ('Err' in result) {
@@ -53,17 +68,21 @@ export class ICNativeApi implements ChainApi {
       nextTxId = lastTx.id;
     }
     response.transactions.forEach(tx => {
-      if ('Transfer' in tx.transaction.operation) {
-        const transferInfo = tx.transaction.operation.Transfer;
+      if (tx.transaction.transfer[0]) {
+        const transferInfo = tx.transaction.transfer[0];
 
         transfers.push({
-          from: transferInfo.from,
-          to: transferInfo.to,
-          amount: transferInfo.amount.e8s,
-          fee: transferInfo.fee.e8s,
-          created_at: tx.transaction.created_at_time?.[0]
-            ? nanoToJsDate(tx.transaction.created_at_time[0].timestamp_nanos)
-            : undefined,
+          from: encodeIcrcAccount({
+            owner: transferInfo.from.owner,
+            subaccount: transferInfo.from.subaccount[0],
+          }),
+          to: encodeIcrcAccount({
+            owner: transferInfo.to.owner,
+            subaccount: transferInfo.to.subaccount[0],
+          }),
+          amount: transferInfo.amount,
+          fee: transferInfo.fee[0] ?? 0n,
+          created_at: nanoToJsDate(tx.transaction.timestamp),
         });
       }
     });

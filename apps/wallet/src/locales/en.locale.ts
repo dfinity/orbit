@@ -109,7 +109,12 @@ export default {
     icp: {
       name: 'Internet Computer',
       standards: {
-        native: 'Native',
+        icp_native: 'ICP (Native)',
+        icrc1: 'ICRC-1',
+      },
+      formats: {
+        icp_account_identifier: 'ICP Native',
+        icrc1_account: 'ICRC-1',
       },
     },
     eth: {
@@ -693,6 +698,7 @@ export default {
   navigation: {
     home: 'Home',
     accounts: 'Accounts',
+    account: 'Account',
     address_book: 'Address Book',
     users: 'Users',
     settings: 'Settings',

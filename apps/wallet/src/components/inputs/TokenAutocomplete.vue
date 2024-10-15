@@ -22,7 +22,7 @@ import { FormValidationRuleFn } from '~/types/helper.types';
 
 const input = withDefaults(
   defineProps<{
-    modelValue?: string;
+    modelValue?: string | string[];
     label?: string;
     variant?: 'underlined' | 'outlined' | 'filled';
     density?: 'comfortable' | 'compact';
@@ -65,7 +65,7 @@ const emit = defineEmits<{
 
 const items = computed(() =>
   station.configuration.details.supported_assets.map(token => ({
-    value: token.symbol,
+    value: token.id,
     text: `${token.name} (${token.symbol})`,
   })),
 );

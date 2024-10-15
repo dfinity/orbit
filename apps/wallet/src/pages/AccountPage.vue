@@ -44,24 +44,10 @@
             </AccountSetupAction>
           </template>
           <template #subtitle>
-            <small><TextOverflow :max-length="32" :text="account.address" /></small>
-            <VBtn
-              size="x-small"
-              variant="text"
-              :icon="mdiContentCopy"
-              @click="
-                copyToClipboard({
-                  textToCopy: account.address,
-                  sendNotification: true,
-                })
-              "
-            />
+            <small><TextOverflow :max-length="32" :text="account.name" /></small>
           </template>
-          <template v-if="privileges.can_transfer" #actions>
-            <BatchTransfersActionBtn :account="account" variant="outlined" />
-            <TransferBtn :account="account" color="primary">
-              + {{ $t('pages.accounts.btn_new_transfer') }}
-            </TransferBtn>
+          <template v-if="privileges.can_edit" #actions>
+            <VBtn :text="`Add asset`" />
           </template>
         </PageHeader>
       </template>
@@ -84,71 +70,63 @@
                 class="d-flex flex-column-reverse flex-md-row ga-4 px-0 align-md-start pt-0"
               >
                 <div class="d-flex flex-column flex-grow-1 ga-4">
-                  <DataLoader
-                    v-slot="{ data, loading: loadingTransfers }"
-                    v-model:force-reload="forceReload"
-                    :load="loadTransfers"
-                    :refresh-interval-ms="10000"
+                  <VDataTable
+                    class="elevation-2 rounded"
+                    :loading="loading"
+                    :headers="headers"
+                    :items="account.assets"
+                    :items-per-page="-1"
+                    :hover="true"
+                    @click:row="
+                      (_: unknown, { item }: any) => {
+                        $router.push({
+                          name: Routes.AccountAsset,
+                          params: { assetId: item.asset_id },
+                        });
+                      }
+                    "
                   >
-                    <VProgressCircular v-if="loadingTransfers" indeterminate color="primary" />
-                    <VTable v-else-if="data" hover class="elevation-2 rounded">
-                      <thead>
-                        <tr>
-                          <th class="w-50 font-weight-bold">{{ $t('terms.time') }}</th>
-                          <th class="text-no-wrap font-weight-bold">
-                            {{ $t('app.destination_source') }}
-                          </th>
-                          <th class="text-no-wrap text-right font-weight-bold">
-                            {{ $t('app.amount_token', { token: account.symbol }) }}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr v-if="!data.length">
-                          <td colspan="4">{{ $t('app.no_transfers') }}</td>
-                        </tr>
-                        <tr v-for="(transfer, idx) in data" :key="idx">
-                          <td>
-                            {{
-                              `${transfer.created_at?.toLocaleDateString()} ${transfer.created_at?.toLocaleTimeString()}`
-                            }}
-                          </td>
-                          <td>
-                            <div class="d-flex flex-row align-center">
-                              <TextOverflow
-                                :text="isReceivedTransfer(transfer) ? transfer.from : transfer.to"
-                              />
-                              <VBtn
-                                size="x-small"
-                                variant="text"
-                                :icon="mdiContentCopy"
-                                @click="
-                                  copyToClipboard({
-                                    textToCopy: isReceivedTransfer(transfer)
-                                      ? transfer.from
-                                      : transfer.to,
-                                    sendNotification: true,
-                                  })
-                                "
-                              />
-                            </div>
-                          </td>
-                          <td class="d-flex flex-row ga-2 align-center justify-end">
-                            {{ formatBalance(transfer.amount, account.decimals) }}
-                            <VChip
-                              size="x-small"
-                              :color="isReceivedTransfer(transfer) ? 'success' : 'error'"
-                            >
-                              <VIcon
-                                size="default"
-                                :icon="isReceivedTransfer(transfer) ? mdiArrowDown : mdiArrowUp"
-                              />
-                            </VChip>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </VTable>
-                  </DataLoader>
+                    <template #bottom>
+                      <!--this hides the footer as pagination is not required-->
+                    </template>
+                    <template #header.balance="{ column }">
+                      <div class="d-flex justify-end">
+                        {{ column.title }}
+                      </div>
+                    </template>
+                    <template #item.address="{ item: account_asset }">
+                      <div v-for="account_address in assetAddresses(account_asset.asset_id)">
+                        <small>
+                          <TextOverflow :max-length="32" :text="account_address.address">
+                          </TextOverflow
+                        ></small>
+                      </div>
+                    </template>
+
+                    <template #item.symbol="{ item: asset }">
+                      <div class="d-flex align-center text-no-wrap">
+                        {{ assetById(asset.asset_id)?.symbol || '-' }}
+                      </div>
+                    </template>
+                    <template #item.name="{ item: asset }">
+                      {{ assetById(asset.asset_id)?.name || 'Unknown asset' }}
+                    </template>
+                    <template #item.balance="{ item: asset }">
+                      <div class="d-flex justify-end">
+                        {{
+                          asset.balance[0]
+                            ? formatBalance(asset.balance[0].balance, asset.balance[0].decimals)
+                            : ''
+                        }}
+                      </div>
+                    </template>
+
+                    <template #item.actions>
+                      <div class="d-flex justify-end">
+                        <VIcon :icon="mdiChevronRight" size="large" />
+                      </div>
+                    </template>
+                  </VDataTable>
                 </div>
                 <FiltersCard :title="$t('terms.filters')" :icon="mdiFilter">
                   <DateRange
@@ -179,34 +157,25 @@
 </template>
 
 <script lang="ts" setup>
-import {
-  mdiArrowDown,
-  mdiArrowUp,
-  mdiCalendar,
-  mdiContentCopy,
-  mdiFilter,
-  mdiTuneVariant,
-} from '@mdi/js';
+import { mdiCalendar, mdiChevronRight, mdiFilter, mdiTuneVariant } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import {
   VBtn,
-  VChip,
   VCol,
   VContainer,
+  VDataTable,
   VDivider,
   VIcon,
   VProgressCircular,
   VRow,
   VSpacer,
-  VTable,
 } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
 import AccountSetupAction from '~/components/accounts/AccountSetupAction.vue';
-import BatchTransfersActionBtn from '~/components/accounts/BatchTransfersActionBtn.vue';
-import TransferBtn from '~/components/accounts/TransferBtn.vue';
 import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
@@ -214,16 +183,38 @@ import RecentRequests from '~/components/requests/RecentRequests.vue';
 import FiltersCard from '~/components/ui/FiltersCard.vue';
 import { useFilterUtils, useSavedFilters } from '~/composables/account.composable';
 import { Routes } from '~/configs/routes.config';
-import { Account, AccountCallerPrivileges } from '~/generated/station/station.did';
-import { ChainApiFactory } from '~/services/chains';
+import {
+  Account,
+  AccountAddress,
+  AccountCallerPrivileges,
+  Asset,
+} from '~/generated/station/station.did';
+import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
-import type { PageProps } from '~/types/app.types';
-import type { AccountIncomingTransfer } from '~/types/chain.types';
+import type { PageProps, TableHeader } from '~/types/app.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
 import { RequestDomains } from '~/types/station.types';
-import { copyToClipboard } from '~/utils/app.utils';
-import { convertDate } from '~/utils/date.utils';
 import { formatBalance, throttle } from '~/utils/helper.utils';
+const i18n = useI18n();
+const app = useAppStore();
+const headers = computed<TableHeader[]>(() => {
+  if (app.isMobile) {
+    return [
+      { title: i18n.t('terms.name'), key: 'name', sortable: false },
+      { title: i18n.t('terms.symbol'), key: 'symbol', sortable: false },
+      { title: i18n.t('terms.balance'), key: 'balance', sortable: false },
+      { title: '', key: 'actions', sortable: false, headerProps: { class: 'w-0' } },
+    ];
+  }
+
+  return [
+    { title: i18n.t('terms.name'), key: 'name', sortable: false },
+    { title: i18n.t('terms.balance'), key: 'balance', sortable: false },
+    { title: i18n.t('terms.symbol'), key: 'symbol', sortable: false },
+    { title: i18n.t('terms.address'), key: 'address', sortable: false },
+    { title: '', key: 'actions', sortable: false, headerProps: { class: 'w-0' } },
+  ];
+});
 
 const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,
@@ -231,15 +222,7 @@ const props = withDefaults(defineProps<PageProps>(), {
 });
 const router = useRouter();
 const pageTitle = computed(() => {
-  if (account.value && account.value.balance[0]) {
-    return (
-      formatBalance(account.value.balance[0].balance, account.value.balance[0].decimals) +
-      ' ' +
-      account.value.symbol
-    );
-  }
-
-  return '-';
+  return account.value?.name;
 });
 const forceReload = ref(false);
 const disableRefresh = ref(false);
@@ -269,6 +252,30 @@ const saveFilters = (): void => {
   router.replace({ query: filterUtils.getQuery(filters.value) });
 };
 
+const assetById = (assetId: string): Asset | undefined => {
+  return station.configuration.details.supported_assets.find(token => token.id === assetId);
+};
+
+const assetAddresses = (assetId: string): AccountAddress[] => {
+  const asset = assetById(assetId);
+
+  if (!asset || !account.value) {
+    return [];
+  }
+
+  const supportedFormats = new Set(
+    station.configuration.details.supported_blockchains
+      .find(b => b.blockchain === asset.blockchain)
+      ?.supported_standards.filter(s => asset.standards.includes(s.standard))
+      .map(s => s.supported_address_formats)
+      .flat() || [],
+  );
+
+  return account.value.addresses.filter(account_address =>
+    supportedFormats.has(account_address.format),
+  );
+};
+
 watch(
   () => filters.value,
   () => {
@@ -277,30 +284,6 @@ watch(
   },
   { deep: true },
 );
-
-const isReceivedTransfer = (transfer: AccountIncomingTransfer): boolean => {
-  return transfer.to === account.value?.address;
-};
-
-const loadTransfers = async (): Promise<AccountIncomingTransfer[]> => {
-  if (!account.value) {
-    return [];
-  }
-
-  const chainApi = ChainApiFactory.create(account.value);
-  const transfers = await chainApi.fetchTransfers({
-    fromDt: convertDate(filters.value.created.from, {
-      time: 'start-of-day',
-      tz: 'local',
-    }),
-    toDt: convertDate(filters.value.created.to, {
-      time: 'end-of-day',
-      tz: 'local',
-    }),
-  });
-
-  return transfers;
-};
 
 let useVerifiedCall = false;
 
@@ -313,22 +296,6 @@ const loadAccount = async (): Promise<{
   useVerifiedCall = true;
 
   const account = result.account;
-
-  if (!account.balance.length) {
-    const balances = await station.service.fetchAccountBalances({
-      account_ids: [accountId],
-    });
-
-    if (balances.length) {
-      account.balance = [
-        {
-          balance: balances[0].balance,
-          decimals: balances[0].decimals,
-          last_update_timestamp: balances[0].last_update_timestamp,
-        },
-      ];
-    }
-  }
 
   station.trackAccountsBalance([account.id]);
   return { account, privileges: result.privileges };
