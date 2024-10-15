@@ -144,7 +144,12 @@
               "
               @update:open="dialogs.call = $event"
             />
-            <VBtn size="default" color="primary" @click="dialogs.call = true">
+            <VBtn
+              size="default"
+              color="primary"
+              :disabled="!canisterDetails.moduleHash.value"
+              @click="dialogs.call = true"
+            >
               {{ $t('external_canisters.perform_call.title') }}
             </VBtn>
           </template>
