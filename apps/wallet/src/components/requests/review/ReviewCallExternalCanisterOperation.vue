@@ -68,6 +68,14 @@
         />
       </VListItemSubtitle>
     </VListItem>
+    <VListItem v-if="props.fullReviewContext && review.argValidationRendering" class="px-0 mx-0">
+      <VListItemTitle class="font-weight-bold text-body-2">
+        {{ $t('external_canisters.perform_call.validated_argument') }}
+      </VListItemTitle>
+      <VListItemSubtitle>
+        <VTextarea :model-value="review.argValidationRendering" rows="1" readonly hide-details />
+      </VListItemSubtitle>
+    </VListItem>
     <VListItem v-if="props.fullReviewContext && review.arg" class="px-0 mx-0">
       <VListItemTitle class="font-weight-bold text-body-2">
         {{ $t('external_canisters.perform_call.argument') }}

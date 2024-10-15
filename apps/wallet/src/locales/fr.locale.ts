@@ -465,6 +465,7 @@ export default {
       reply_received: 'Réponse reçue',
       attached_cycles: 'Cycles attachés',
       argument: 'Argument',
+      validated_argument: 'Argument validé',
       argument_checksum: 'Checksum de l argument',
       method_name: 'Nom de la Méthode',
       method_name_hint: 'Le nom de la méthode à appeler sur le canister.',

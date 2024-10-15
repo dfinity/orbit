@@ -46,6 +46,7 @@ const fillReviewContext = (operation: CallExternalCanisterOperation): CanisterCa
       ? toUint8Array(operation.execution_method_reply[0])
       : undefined,
     arg: operation.arg?.[0] ? toUint8Array(operation.arg[0]) : undefined,
+    argValidationRendering: operation.arg_rendering?.[0],
   };
 };
 
