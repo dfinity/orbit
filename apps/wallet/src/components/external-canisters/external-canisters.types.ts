@@ -63,9 +63,11 @@ export interface CanisterCallReviewContext {
   canisterId: Principal;
   methodName: string;
   arg?: Uint8Array;
+  argHex?: string;
   argChecksum?: string;
   argValidationRendering?: string;
   cycles?: bigint;
   validationMethod?: CanisterMethod;
   reply?: Uint8Array;
+  replyHex?: string;
 }

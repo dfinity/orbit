@@ -20,6 +20,7 @@ import { useStationStore } from '~/stores/station.store';
 import { toUint8Array, variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 import ReviewCallExternalCanisterOperation from '../review/ReviewCallExternalCanisterOperation.vue';
+import { arrayBufferToHex } from '~/utils/crypto.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -42,11 +43,15 @@ const fillReviewContext = (operation: CallExternalCanisterOperation): CanisterCa
     methodName: operation.execution_method.method_name,
     cycles: operation.execution_method_cycles?.[0] ?? undefined,
     argChecksum: operation.arg_checksum?.[0] ?? undefined,
+    arg: operation.arg?.[0] ? toUint8Array(operation.arg[0]) : undefined,
+    argHex: operation.arg?.[0] ? arrayBufferToHex(toUint8Array(operation.arg[0])) : undefined,
+    argValidationRendering: operation.arg_rendering?.[0],
     reply: operation.execution_method_reply?.[0]
       ? toUint8Array(operation.execution_method_reply[0])
       : undefined,
-    arg: operation.arg?.[0] ? toUint8Array(operation.arg[0]) : undefined,
-    argValidationRendering: operation.arg_rendering?.[0],
+    replyHex: operation.execution_method_reply?.[0]
+      ? arrayBufferToHex(toUint8Array(operation.execution_method_reply[0]))
+      : undefined,
   };
 };
 

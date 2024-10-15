@@ -76,9 +76,10 @@
         <VTextarea :model-value="review.argValidationRendering" rows="1" readonly hide-details />
       </VListItemSubtitle>
     </VListItem>
-    <VListItem v-if="props.fullReviewContext && review.arg" class="px-0 mx-0">
+    <VListItem v-if="props.fullReviewContext && review.argHex" class="px-0 mx-0">
       <VListItemTitle class="font-weight-bold text-body-2">
         {{ $t('external_canisters.perform_call.argument') }}
+        ({{ $t('external_canisters.wasm_args_formats.hex').toLowerCase() }})
 
         <VBtn
           size="x-small"
@@ -86,19 +87,20 @@
           :icon="mdiContentCopy"
           @click="
             copyToClipboard({
-              textToCopy: `[${review.arg.toString()}]`,
+              textToCopy: review.argHex,
               sendNotification: true,
             })
           "
         />
       </VListItemTitle>
       <VListItemSubtitle>
-        <VTextarea :model-value="review.arg.toString()" rows="2" readonly hide-details />
+        <VTextarea :model-value="review.argHex" rows="2" readonly hide-details />
       </VListItemSubtitle>
     </VListItem>
-    <VListItem v-if="review.reply" class="px-0 mx-0">
+    <VListItem v-if="review.replyHex" class="px-0 mx-0">
       <VListItemTitle class="font-weight-bold text-body-2">
         {{ $t('external_canisters.perform_call.reply_received') }}
+        ({{ $t('external_canisters.wasm_args_formats.hex').toLowerCase() }})
 
         <VBtn
           size="x-small"
@@ -106,14 +108,14 @@
           :icon="mdiContentCopy"
           @click="
             copyToClipboard({
-              textToCopy: `[${review.reply.toString()}]`,
+              textToCopy: review.replyHex,
               sendNotification: true,
             })
           "
         />
       </VListItemTitle>
       <VListItemSubtitle v-if="props.fullReviewContext">
-        <VTextarea :model-value="review.reply.toString()" rows="2" readonly hide-details />
+        <VTextarea :model-value="review.replyHex" rows="2" readonly hide-details />
       </VListItemSubtitle>
     </VListItem>
   </VList>
