@@ -31,13 +31,16 @@ export class ICRC1Api implements ChainApi {
     });
   }
 
-  isValidAddress(address: string): boolean {
+  static isValidAddress(address: string): boolean {
     try {
       decodeIcrcAccount(address);
       return true;
     } catch {
       return false;
     }
+  }
+  isValidAddress(address: string): boolean {
+    return ICRC1Api.isValidAddress(address);
   }
 
   async fetchBalance(): Promise<bigint> {

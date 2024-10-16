@@ -9,6 +9,11 @@ export enum BlockchainStandard {
   ICRC1 = 'icrc1',
 }
 
+export enum AddressFormat {
+  ICPNative = 'icp_account_identifier',
+  ICRC1 = 'icrc1_account',
+}
+
 export enum TokenSymbol {
   ICP = 'ICP',
 }

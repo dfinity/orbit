@@ -331,10 +331,12 @@ impl InternetComputer {
                     error: error.to_string(),
                 })?;
 
+        let current_time = cdk::next_time();
+
         let transfer_args = icrc_ledger_types::icrc1::transfer::TransferArg {
             amount: station_transfer.amount,
             fee: Some(station_transfer.fee),
-            created_at_time: None,
+            created_at_time: Some(current_time),
             from_subaccount: Some(InternetComputer::subaccount_from_seed(
                 &station_account.seed,
             )),

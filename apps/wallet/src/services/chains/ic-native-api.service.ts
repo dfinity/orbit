@@ -21,8 +21,12 @@ export class ICNativeApi implements ChainApi {
     });
   }
 
-  isValidAddress(address: string): boolean {
+  static isValidAddress(address: string): boolean {
     return isValidSha256(address);
+  }
+
+  isValidAddress(address: string): boolean {
+    return ICNativeApi.isValidAddress(address);
   }
 
   async fetchBalance(): Promise<bigint> {

@@ -68,9 +68,9 @@
               />
             </div>
           </template>
-          <template v-if="privileges.can_transfer" #actions>
-            <BatchTransfersActionBtn :account="account" variant="outlined" />
-            <TransferBtn :account="account" color="primary">
+          <template v-if="privileges.can_transfer && asset" #actions>
+            <BatchTransfersActionBtn :account="account" variant="outlined" :asset="asset" />
+            <TransferBtn :account="account" color="primary" :asset="asset">
               + {{ $t('pages.accounts.btn_new_transfer') }}
             </TransferBtn>
           </template>
@@ -330,8 +330,8 @@ const loadTransfers = async (): Promise<AccountIncomingTransfer[]> => {
   ) {
     return [];
   }
-  const firstAddress = addresses.value[0];
-  const chainApi = ChainApiFactory.create(asset.value, firstAddress.standard, firstAddress.address);
+  // const firstAddress = addresses.value[0];
+  const chainApi = ChainApiFactory.create(asset.value, account.value.addresses);
   const transfers = await chainApi.fetchTransfers({
     fromDt: convertDate(filters.value.created.from, {
       time: 'start-of-day',
@@ -426,7 +426,7 @@ const loadAccount = async (): Promise<{
     }
   }
 
-  // station.trackAccountsBalance([account.id]);
+  station.trackAccountsBalance([account.id]);
   return { account, privileges: result.privileges };
 };
 </script>

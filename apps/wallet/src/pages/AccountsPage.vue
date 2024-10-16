@@ -157,8 +157,6 @@ const fetchList = useFetchList(
       useVerifiedCall,
     );
 
-    console.log(results);
-
     useVerifiedCall = true;
 
     station.trackAccountsBalance(results.accounts.map(account => account.id));
