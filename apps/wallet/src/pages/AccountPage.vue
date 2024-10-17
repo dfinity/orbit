@@ -47,7 +47,9 @@
             <small><TextOverflow :max-length="32" :text="account.name" /></small>
           </template>
           <template v-if="privileges.can_edit" #actions>
-            <VBtn :text="`Add asset`" />
+            <AddAccountAssetBtn :account="account" color="primary">
+              + {{ $t('pages.account.add_asset') }}
+            </AddAccountAssetBtn>
           </template>
         </PageHeader>
       </template>
@@ -176,6 +178,7 @@ import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
 import AccountSetupAction from '~/components/accounts/AccountSetupAction.vue';
+import AddAccountAssetBtn from '~/components/accounts/AddAccountAssetBtn.vue';
 import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';

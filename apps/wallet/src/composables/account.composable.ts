@@ -145,7 +145,7 @@ export const useLoadAccountSetupWizardModel = async (
       id: account.id,
       name: account.name,
       lastModified: account.last_modification_timestamp,
-      assets: account.assets.map(a => a.asset_id),
+      assets: account.assets.map(accountAsset => accountAsset.asset_id),
     },
     permission: {
       read,

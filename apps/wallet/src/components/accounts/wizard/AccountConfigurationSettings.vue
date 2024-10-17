@@ -15,7 +15,7 @@
     <VCol cols="12" class="pt-4 pb-0">
       <TokenAutocomplete
         v-if="props.display.asset"
-        v-model="model.assets"
+        v-model="assetIds"
         class="mb-2"
         :label="$t('terms.asset')"
         :prepend-icon="mdiBank"
@@ -23,9 +23,9 @@
         variant="filled"
         density="comfortable"
         :disabled="isViewMode || !!model.id"
-        @selected-asset="onSelectedAsset"
         :multiple="true"
       />
+      <!-- @selected-asset="onSelectedAsset" -->
     </VCol>
     <VCol cols="12" class="pt-0 pb-4">
       <VTextField
@@ -48,7 +48,7 @@ import { mdiBank, mdiIdentifier, mdiWallet } from '@mdi/js';
 import { computed } from 'vue';
 import { VCol, VRow, VTextField } from 'vuetify/components';
 import TokenAutocomplete from '~/components/inputs/TokenAutocomplete.vue';
-import { TimestampRFC3339, UUID, Asset } from '~/generated/station/station.did';
+import { TimestampRFC3339, UUID } from '~/generated/station/station.did';
 import { requiredRule } from '~/utils/form.utils';
 
 export interface AccountConfigurationModel {
@@ -82,12 +82,27 @@ const emit = defineEmits<{
 }>();
 
 const isViewMode = computed(() => props.mode === 'view');
+
 const model = computed({
   get: () => props.modelValue,
-  set: value => emit('update:modelValue', value),
+  set: value => {
+    console.log(value);
+
+    emit('update:modelValue', value);
+  },
 });
 
-const onSelectedAsset = (asset?: Asset): void => {
-  model.value.assets = asset ? [asset] : [];
-};
+const assetIds = computed({
+  get: () => props.modelValue.assets,
+  set: value => {
+    props.modelValue.assets = value;
+    console.log(value);
+
+    // emit('update:modelValue', props.modelValue);
+  },
+});
+
+// const onSelectedAsset = (asset?: Asset): void => {
+//   model.value.assets = asset ? [asset] : [];
+// };
 </script>

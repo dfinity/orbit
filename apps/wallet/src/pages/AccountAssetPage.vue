@@ -30,19 +30,6 @@
           <PageHeader :title="$t('pages.account.not_found')" :breadcrumbs="pageBreadcrumbs" />
         </div>
         <PageHeader v-else :title="pageTitle" :breadcrumbs="pageBreadcrumbs">
-          <template #title-toolbar>
-            <AccountSetupAction
-              :account-id="account.id"
-              class="px-1 mb-2"
-              size="small"
-              color="default"
-              variant="tonal"
-              :readonly="!privileges.can_edit"
-              :append-icon="mdiTuneVariant"
-            >
-              {{ $t('terms.settings') }}
-            </AccountSetupAction>
-          </template>
           <template #subtitle>
             <div v-for="accountAddress in addresses">
               <small
@@ -68,11 +55,47 @@
               />
             </div>
           </template>
-          <template v-if="privileges.can_transfer && asset" #actions>
-            <BatchTransfersActionBtn :account="account" variant="outlined" :asset="asset" />
-            <TransferBtn :account="account" color="primary" :asset="asset">
+          <template v-if="asset" #actions>
+            <BatchTransfersActionBtn
+              :account="account"
+              variant="outlined"
+              :asset="asset"
+              v-if="privileges.can_transfer"
+            />
+            <TransferBtn
+              :account="account"
+              color="primary"
+              :asset="asset"
+              v-if="privileges.can_transfer"
+            >
               + {{ $t('pages.accounts.btn_new_transfer') }}
             </TransferBtn>
+
+            <VMenu v-if="privileges.can_edit">
+              <template v-slot:activator="{ props }">
+                <VBtn
+                  :icon="mdiDotsVertical"
+                  color="primary-variant"
+                  density="comfortable"
+                  v-bind="props"
+                >
+                </VBtn>
+              </template>
+              <VList>
+                <VListItem
+                  v-if="privileges.can_edit"
+                  color="primary"
+                  variant="tonal"
+                  link
+                  @click="removeAssetDialog = true"
+                  :prepend-icon="mdiDelete"
+                >
+                  <VListItemTitle @click="removeAsset">{{
+                    $t('pages.account.remove_asset')
+                  }}</VListItemTitle>
+                </VListItem>
+              </VList>
+            </VMenu>
           </template>
         </PageHeader>
       </template>
@@ -187,6 +210,13 @@
       </template>
     </PageLayout>
   </DataLoader>
+
+  <RemoveAssetDialog
+    v-if="account && asset"
+    v-model:open="removeAssetDialog"
+    :account="account"
+    :asset="asset.id"
+  ></RemoveAssetDialog>
 </template>
 
 <script lang="ts" setup>
@@ -195,8 +225,9 @@ import {
   mdiArrowUp,
   mdiCalendar,
   mdiContentCopy,
+  mdiDelete,
+  mdiDotsVertical,
   mdiFilter,
-  mdiTuneVariant,
 } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -207,6 +238,10 @@ import {
   VContainer,
   VDivider,
   VIcon,
+  VList,
+  VListItem,
+  VListItemTitle,
+  VMenu,
   VProgressCircular,
   VRow,
   VSpacer,
@@ -215,8 +250,8 @@ import {
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
-import AccountSetupAction from '~/components/accounts/AccountSetupAction.vue';
 import BatchTransfersActionBtn from '~/components/accounts/BatchTransfersActionBtn.vue';
+import RemoveAssetDialog from '~/components/accounts/RemoveAssetDialog.vue';
 import TransferBtn from '~/components/accounts/TransferBtn.vue';
 import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
@@ -278,6 +313,7 @@ const privileges = ref<AccountCallerPrivileges>({
   can_transfer: false,
 });
 const loading = ref(false);
+const removeAssetDialog = ref(false);
 const station = useStationStore();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {

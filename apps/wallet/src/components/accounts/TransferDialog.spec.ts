@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mount } from '~/test.utils';
 import TransferDialog from './TransferDialog.vue';
-import { Account, GetRequestResult, Request, Transfer } from '~/generated/station/station.did';
+import {
+  Account,
+  Asset,
+  GetRequestResult,
+  Request,
+  Transfer,
+} from '~/generated/station/station.did';
 import { flushPromises } from '@vue/test-utils';
 import { services } from '~/plugins/services.plugin';
 import { ExtractOk } from '~/types/helper.types';
@@ -22,8 +28,8 @@ describe('TransferDialog', () => {
       props: {
         account: {
           id: '1',
-          decimals: 1,
         } as Account,
+        asset: {} as Asset,
         open: true,
       },
     });
@@ -35,8 +41,8 @@ describe('TransferDialog', () => {
       props: {
         account: {
           id: '1',
-          decimals: 1,
         } as Account,
+        asset: {} as Asset,
         open: true,
       },
     });
@@ -74,8 +80,8 @@ describe('TransferDialog', () => {
       props: {
         account: {
           id: '1',
-          decimals: 1,
         } as Account,
+        asset: {} as Asset,
         open: true,
       },
     });
@@ -133,8 +139,8 @@ describe('TransferDialog', () => {
       props: {
         account: {
           id: '1',
-          decimals: 2,
         } as Account,
+        asset: {} as Asset,
         open: true,
         transferId: 'transfer-id',
       },

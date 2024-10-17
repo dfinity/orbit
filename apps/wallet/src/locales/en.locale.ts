@@ -96,7 +96,7 @@ export default {
         'To verify the update, open the terminal and follow the instructions bellow:',
     },
     asset: 'Asset',
-    no_data: 'No data available.',
+    no_data: 'No data available',
     no_matching_results: 'No matching results found for `{search}`.',
     add_new_label: 'Add new label: {label}',
     user_cancel_pending_requests: 'Cancel all pending requests from this user.',
@@ -736,6 +736,11 @@ export default {
       csv_ignored_transfers_hint: 'Transfers with errors will be ignored.',
       csv_transfer_failed: 'Failed to process transfers, please try again.',
       csv_download_invalid: 'Download invalid',
+      add_asset: 'Add asset',
+      remove_asset: 'Remove asset',
+      no_assets_to_add: 'No assets available to add.',
+      remove_asset_confirm:
+        'Are you sure you want to remove this asset? Removing the asset does not affect the account balance. Re-adding the asset will restore access to the balance.',
     },
     address_book: {
       title: 'Address Book',
