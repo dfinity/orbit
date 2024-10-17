@@ -48,4 +48,8 @@ if [ $DOWNLOAD_ASSET_CANISTER == "true" ]; then
     ./scripts/download-asset-canister-wasm.sh
 fi
 
+# ungzip station wasm to make it a large WASM for integration tests
+gzip -d wasms/station.wasm.gz
+mv wasms/station.wasm wasms/station.wasm.gz
+
 cargo test --package integration-tests $TESTNAME -- --test-threads $TEST_THREADS --nocapture
