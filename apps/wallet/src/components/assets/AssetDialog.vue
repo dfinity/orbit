@@ -159,13 +159,33 @@ const save = async (): Promise<void> => {
       return;
     }
 
-    const request = await station.service.addAsset({
+    console.log({
       blockchain: assertAndReturn(asset.value.blockchain, 'blockchain'),
       metadata: asset.value.metadata ?? [],
       decimals: assertAndReturn(asset.value.decimals, 'decimals'),
       name: assertAndReturn(asset.value.name, 'name'),
       symbol: assertAndReturn(asset.value.symbol, 'symbol'),
       standards: assertAndReturn(asset.value.standards, 'standards'),
+    });
+
+    const request = await station.service.addAsset({
+      blockchain: assertAndReturn(asset.value.blockchain, 'blockchain'),
+      metadata: asset.value.metadata ?? [],
+      // metadata: [
+      //   {
+      //     key: 'ledger_canister_id',
+      //     value: 'bw4dl-smaaa-aaaaa-qaacq-cai',
+      //   },
+      //   {
+      //     key: 'index_canister_id',
+      //     value: 'br5f7-7uaaa-aaaaa-qaaca-cai',
+      //   },
+      // ],
+      decimals: assertAndReturn(asset.value.decimals, 'decimals'),
+      name: assertAndReturn(asset.value.name, 'name'),
+      symbol: assertAndReturn(asset.value.symbol, 'symbol'),
+      standards: assertAndReturn(asset.value.standards, 'standards'),
+      // standards: ['icrc1', 'icp_native'],
     });
     useOnSuccessfulOperation(request);
     openModel.value = false;

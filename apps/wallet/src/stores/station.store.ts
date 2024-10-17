@@ -21,7 +21,7 @@ import { services } from '~/plugins/services.plugin';
 import { StationService } from '~/services/station.service';
 import { useAppStore } from '~/stores/app.store';
 import { Privilege } from '~/types/auth.types';
-import { BlockchainStandard, BlockchainType } from '~/types/chain.types';
+import { BlockchainType } from '~/types/chain.types';
 import { LoadableItem } from '~/types/helper.types';
 import { computedStationName, isApiError, popRedirectToLocation } from '~/utils/app.utils';
 import { hasRequiredPrivilege } from '~/utils/auth.utils';
@@ -73,6 +73,10 @@ export const createUserInitialAccount = async (
   userId: UUID,
   station = useStationStore(),
 ): Promise<void> => {
+  const maybeIcpId = station.configuration.details.supported_assets.find(
+    asset => asset.blockchain == BlockchainType.InternetComputer && asset.symbol == 'ICP',
+  )?.id;
+
   await station.service.createRequest({
     title: [],
     summary: [],
@@ -80,8 +84,7 @@ export const createUserInitialAccount = async (
     operation: {
       AddAccount: {
         name: i18n.global.t('app.initial_account_name'),
-        blockchain: BlockchainType.InternetComputer,
-        standard: BlockchainStandard.Native,
+        assets: maybeIcpId ? [maybeIcpId] : [],
         metadata: [],
         read_permission: { auth_scope: { Restricted: null }, user_groups: [], users: [userId] },
         transfer_permission: {

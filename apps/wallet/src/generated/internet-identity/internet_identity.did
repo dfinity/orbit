@@ -429,21 +429,10 @@ type IdentityInfo = record {
 };
 
 type IdentityInfoError = variant {
-    /// The principal is not authorized to call this method with the given arguments.
+    // The principal is not authorized to call this method with the given arguments.
     Unauthorized: principal;
-    /// Internal canister error. See the error message for details.
+    // Internal canister error. See the error message for details.
     InternalCanisterError: text;
-};
-
-
-
-type IdentityRegisterError = variant {
-    // No more registrations are possible in this instance of the II service canister.
-    CanisterFull;
-    // The captcha check was not successful.
-    BadCaptcha;
-    // The metadata of the provided authentication method contains invalid entries.
-    InvalidMetadata: text;
 };
 
 type AuthnMethodAddError = variant {
@@ -458,51 +447,51 @@ type AuthnMethodReplaceError = variant {
 
 type AuthnMethodMetadataReplaceError = variant {
     InvalidMetadata: text;
-    /// No authentication method found with the given public key.
+    // No authentication method found with the given public key.
     AuthnMethodNotFound;
 };
 
 type AuthnMethodSecuritySettingsReplaceError = variant {
-    /// No authentication method found with the given public key.
+    // No authentication method found with the given public key.
     AuthnMethodNotFound;
 };
 
 type IdentityMetadataReplaceError = variant {
-    /// The principal is not authorized to call this method with the given arguments.
+    // The principal is not authorized to call this method with the given arguments.
     Unauthorized: principal;
-    /// The identity including the new metadata exceeds the maximum allowed size.
+    // The identity including the new metadata exceeds the maximum allowed size.
     StorageSpaceExceeded: record {space_available: nat64; space_required: nat64};
-    /// Internal canister error. See the error message for details.
+    // Internal canister error. See the error message for details.
     InternalCanisterError: text;
 };
 
 type PrepareIdAliasRequest = record {
-    /// Origin of the issuer in the attribute sharing flow.
+    // Origin of the issuer in the attribute sharing flow.
     issuer : FrontendHostname;
-    /// Origin of the relying party in the attribute sharing flow.
+    // Origin of the relying party in the attribute sharing flow.
     relying_party : FrontendHostname;
-    /// Identity for which the IdAlias should be generated.
+    // Identity for which the IdAlias should be generated.
     identity_number : IdentityNumber;
 };
 
 type PrepareIdAliasError = variant {
-    /// The principal is not authorized to call this method with the given arguments.
+    // The principal is not authorized to call this method with the given arguments.
     Unauthorized: principal;
-    /// Internal canister error. See the error message for details.
+    // Internal canister error. See the error message for details.
     InternalCanisterError: text;
 };
 
-/// The prepared id alias contains two (still unsigned) credentials in JWT format,
-/// certifying the id alias for the issuer resp. the relying party.
+// The prepared id alias contains two (still unsigned) credentials in JWT format,
+// certifying the id alias for the issuer resp. the relying party.
 type PreparedIdAlias = record {
     rp_id_alias_jwt : text;
     issuer_id_alias_jwt : text;
     canister_sig_pk_der : PublicKey;
 };
 
-/// The request to retrieve the actual signed id alias credentials.
-/// The field values should be equal to the values of corresponding
-/// fields from the preceding `PrepareIdAliasRequest` and `PrepareIdAliasResponse`.
+// The request to retrieve the actual signed id alias credentials.
+// The field values should be equal to the values of corresponding
+// fields from the preceding `PrepareIdAliasRequest` and `PrepareIdAliasResponse`.
 type GetIdAliasRequest = record {
     rp_id_alias_jwt : text;
     issuer : FrontendHostname;
@@ -512,15 +501,15 @@ type GetIdAliasRequest = record {
 };
 
 type GetIdAliasError = variant {
-    /// The principal is not authorized to call this method with the given arguments.
+    // The principal is not authorized to call this method with the given arguments.
     Unauthorized: principal;
-    /// The credential(s) are not available: may be expired or not prepared yet (call prepare_id_alias to prepare).
+    // The credential(s) are not available: may be expired or not prepared yet (call prepare_id_alias to prepare).
     NoSuchCredentials : text;
-    /// Internal canister error. See the error message for details.
+    // Internal canister error. See the error message for details.
     InternalCanisterError: text;
 };
 
-/// The signed id alias credentials for each involved party.
+// The signed id alias credentials for each involved party.
 type IdAliasCredentials = record {
     rp_id_alias_credential : SignedIdAlias;
     issuer_id_alias_credential : SignedIdAlias;
@@ -530,6 +519,72 @@ type SignedIdAlias = record {
     credential_jws : text;
     id_alias : principal;
     id_dapp : principal;
+};
+
+type IdRegNextStepResult = record {
+    // The next step in the registration flow
+    next_step: RegistrationFlowNextStep;
+};
+
+type IdRegStartError = variant {
+    // The method was called anonymously, which is not supported.
+    InvalidCaller;
+    // Too many registrations. Please try again later.
+    RateLimitExceeded;
+    // A registration flow is already in progress.
+    AlreadyInProgress;
+};
+
+// The next step in the registration flow:
+// - CheckCaptcha: supply the solution to the captcha using `check_captcha`
+// - Finish: finish the registration using `identity_registration_finish`
+type RegistrationFlowNextStep = variant {
+    // Supply the captcha solution using check_captcha
+    CheckCaptcha: record {
+        captcha_png_base64: text;
+    };
+    // Finish the registration using identity_registration_finish
+    Finish;
+};
+
+type CheckCaptchaArg = record {
+    solution : text;
+};
+
+type CheckCaptchaError = variant {
+    // The supplied solution was wrong. Try again with the new captcha.
+    WrongSolution: record {
+        new_captcha_png_base64: text;
+    };
+    // This call is unexpected, see next_step.
+    UnexpectedCall: record {
+        next_step: RegistrationFlowNextStep;
+    };
+    // No registration flow ongoing for the caller.
+    NoRegistrationFlow;
+};
+
+type IdRegFinishArg = record {
+    authn_method: AuthnMethodData;
+};
+
+type IdRegFinishResult = record {
+    identity_number: nat64;
+};
+
+type IdRegFinishError = variant {
+    // The configured maximum number of identities has been reached.
+    IdentityLimitReached;
+    // This call is unexpected, see next_step.
+    UnexpectedCall: record {
+        next_step: RegistrationFlowNextStep;
+    };
+    // No registration flow ongoing for the caller.
+    NoRegistrationFlow;
+    // The supplied authn_method is not valid.
+    InvalidAuthnMethod: text;
+    // Error while persisting the new identity.
+    StorageError: text;
 };
 
 service : (opt InternetIdentityInit) -> {
@@ -558,16 +613,17 @@ service : (opt InternetIdentityInit) -> {
 
     // V2 Identity Management API
     // ==========================
-    // WARNING: The following methods are experimental and may change in the future.
+    // WARNING: The following methods are experimental and may ch 0ange in the future.
 
-    // Creates a new captcha. The solution needs to be submitted using the
-    // `identity_register` call.
-    captcha_create: () -> (variant {Ok: Challenge; Err;});
+    // Starts the identity registration flow to create a new identity.
+    identity_registration_start: () -> (variant {Ok: IdRegNextStepResult; Err: IdRegStartError;});
 
-    // Registers a new identity with the given authn_method.
-    // A valid captcha solution to a previously generated captcha (using create_captcha) must be provided.
-    // The sender needs to match the supplied authn_method.
-    identity_register: (AuthnMethodData, CaptchaResult, opt principal) -> (variant {Ok: IdentityNumber; Err: IdentityRegisterError;});
+    // Check the captcha challenge
+    // If successful, the registration can be finished with `identity_registration_finish`.
+    check_captcha: (CheckCaptchaArg) -> (variant {Ok: IdRegNextStepResult; Err: CheckCaptchaError;});
+
+    // Starts the identity registration flow to create a new identity.
+    identity_registration_finish: (IdRegFinishArg) -> (variant {Ok: IdRegFinishResult; Err: IdRegFinishError;});
 
     // Returns information about the authentication methods of the identity with the given number.
     // Only returns the minimal information required for authentication without exposing any metadata such as aliases.

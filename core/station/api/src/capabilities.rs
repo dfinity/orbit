@@ -30,4 +30,5 @@ pub struct StandardDataDTO {
     pub standard: String,
     pub required_metadata_fields: Vec<String>,
     pub supported_operations: Vec<String>,
+    pub supported_address_formats: Vec<String>,
 }

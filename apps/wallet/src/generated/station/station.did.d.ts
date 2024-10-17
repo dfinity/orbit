@@ -1165,6 +1165,7 @@ export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
 export interface StandardData {
   'supported_operations' : Array<string>,
+  'supported_address_formats' : Array<string>,
   'required_metadata_fields' : Array<string>,
   'standard' : string,
 }

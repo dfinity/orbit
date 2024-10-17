@@ -14,9 +14,10 @@ use crate::{
         request_policy_rule::RequestPolicyRuleInput,
         request_specifier::RequestSpecifier,
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
-        Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
-        AddRequestPolicyOperationInput, AddressFormat, Blockchain, CycleObtainStrategy,
-        EditAccountOperationInput, EditPermissionOperationInput, MetadataItem, TokenStandard,
+        Account, AccountAddress, AccountBalance, AccountCallerPrivileges, AccountId,
+        AddAccountOperationInput, AddRequestPolicyOperationInput, AddressFormat, Blockchain,
+        CycleObtainStrategy, EditAccountOperationInput, EditPermissionOperationInput, MetadataItem,
+        TokenStandard,
     },
     repositories::{
         AccountRepository, AccountWhereClause, AssetRepository, ACCOUNT_REPOSITORY,
@@ -170,9 +171,21 @@ impl AccountService {
             for standard in asset.standards.iter() {
                 let blockchain_api = BlockchainApiFactory::build(&asset.blockchain.clone())?;
 
-                let mut account_addresses = Vec::new();
+                let mut account_addresses = Vec::<AccountAddress>::new();
 
                 for address_format in standard.get_info().address_formats.into_iter() {
+                    if account_addresses
+                        .iter()
+                        .any(|address| address.format == address_format)
+                        || new_account
+                            .addresses
+                            .iter()
+                            .any(|address| address.format == address_format)
+                    {
+                        // the account already has this address
+                        continue;
+                    }
+
                     let address = blockchain_api
                         .generate_address(&new_account.seed, address_format.clone())
                         .await?;
@@ -336,24 +349,50 @@ impl AccountService {
             change_assets.apply(&mut account.assets);
 
             // get all supported address formats of the account
-            let current_address_formats: Vec<AddressFormat> = account
-                .assets
-                .iter()
-                // get all assets
-                .filter_map(|account_asset| self.asset_repository.get(&account_asset.asset_id))
-                .flat_map(|assets| {
-                    assets
-                        .standards
-                        .into_iter()
-                        // of each standard of each asset, get all supported address formats
-                        .flat_map(|standard| standard.get_info().address_formats)
-                })
-                .collect();
+            let mut current_address_formats: HashSet<(Blockchain, AddressFormat)> = HashSet::new();
+
+            for account_asset in account.assets.iter() {
+                let Some(asset) = self.asset_repository.get(&account_asset.asset_id) else {
+                    ic_cdk::println!(
+                        "Asset `{}` does not exist in account `{}`",
+                        Uuid::from_bytes(account_asset.asset_id).hyphenated(),
+                        Uuid::from_bytes(account.id).hyphenated()
+                    );
+                    continue;
+                };
+
+                for standard in asset.standards.iter() {
+                    standard.get_info().address_formats.iter().for_each(|f| {
+                        current_address_formats.insert((asset.blockchain.clone(), f.to_owned()));
+                    });
+                }
+            }
 
             // remove addresses which don't belong to any account_assets any more
             account.addresses.retain(|account_address| {
-                current_address_formats.contains(&account_address.format)
+                current_address_formats
+                    .iter()
+                    .any(|(_, format)| &account_address.format == format)
             });
+
+            for (blockchain, address_format) in current_address_formats {
+                if account
+                    .addresses
+                    .iter()
+                    .any(|address| address.format == address_format)
+                {
+                    // the account already has this address
+                    continue;
+                }
+
+                let blockchain_api = BlockchainApiFactory::build(&blockchain)?;
+
+                let address = blockchain_api
+                    .generate_address(&account.seed, address_format.clone())
+                    .await?;
+
+                account.addresses.push(address);
+            }
         }
 
         if let Some(RequestPolicyRuleInput::Set(criteria)) = &input.transfer_request_policy {
