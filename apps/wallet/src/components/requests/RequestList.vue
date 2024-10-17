@@ -11,6 +11,7 @@
       :request="request"
       :details="getDetails(request)"
       :mode="props.mode"
+      :show-title="props.showItemsTitle"
       @approved="emit('approved', request)"
       @opened="emit('opened', request)"
       @closed="emit('closed', request)"
@@ -46,6 +47,7 @@ const props = withDefaults(
     loading?: boolean;
     hideNotFound?: boolean;
     mode?: 'list' | 'grid';
+    showItemsTitle?: boolean;
   }>(),
   {
     hideHeaders: false,
@@ -55,6 +57,7 @@ const props = withDefaults(
     loading: false,
     hideNotFound: false,
     mode: 'list',
+    showItemsTitle: true,
   },
 );
 

@@ -27,10 +27,10 @@
           <VContainer class="pa-0" fluid>
             <VRow v-if="shownRequestDomains.length > 1">
               <VCol cols="12">
-                <VSlideGroup v-model="filters.groupBy" show-arrows>
+                <VSlideGroup v-model="slideGroupIdIndex" show-arrows>
                   <VSlideGroupItem
-                    v-for="(domain, idx) in shownRequestDomains"
-                    :key="idx"
+                    v-for="domain in shownRequestDomains"
+                    :key="domain.id"
                     v-slot="{ isSelected, toggle }"
                   >
                     <VBtn
@@ -79,6 +79,12 @@
                     :label="$t('terms.expires')"
                     :prepend-icon="mdiCalendar"
                   />
+                  <CanisterIdField
+                    v-if="isExternalCanisterFilterGroup"
+                    v-model="filters.canisterId"
+                    prepend-inner-icon
+                    name="canister_id"
+                  />
                   <CheckboxSelect
                     v-model="filters.statuses"
                     :label="$t('terms.statuses')"
@@ -109,6 +115,7 @@
 </template>
 
 <script lang="ts" setup>
+import { Principal } from '@dfinity/principal';
 import { mdiCalendar, mdiCog, mdiFilter } from '@mdi/js';
 import { computed, Ref, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -126,6 +133,7 @@ import {
 } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
+import CanisterIdField from '~/components/inputs/CanisterIdField.vue';
 import CheckboxSelect from '~/components/inputs/CheckboxSelect.vue';
 import DateRange from '~/components/inputs/DateRange.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
@@ -150,7 +158,7 @@ import { useStationStore } from '~/stores/station.store';
 import type { PageProps } from '~/types/app.types';
 import { RequestDomains } from '~/types/station.types';
 import { convertDate } from '~/utils/date.utils';
-import { throttle } from '~/utils/helper.utils';
+import { throttle, variantIs } from '~/utils/helper.utils';
 
 export interface RequestsPageProps extends PageProps {
   domains?: RequestDomains[];
@@ -180,10 +188,22 @@ const shownRequestDomains = computed(() => {
 
   return availableDomains.value;
 });
+
 const requests: Ref<Request[]> = ref([]);
 const privileges = ref<RequestCallerPrivileges[]>([]);
 const additionals = ref<RequestAdditionalInfo[]>([]);
-const filters = useSavedFilters(shownRequestDomains.value);
+const filters = useSavedFilters();
+const slideGroupIdIndex = ref<number>(
+  availableDomains.value.findIndex(domain => domain.id === filters.value.groupBy),
+);
+
+watch(
+  slideGroupIdIndex,
+  index => {
+    filters.value.groupBy = availableDomains.value[index].id ?? RequestDomains.All;
+  },
+  { immediate: true },
+);
 
 const saveFilters = (): void => {
   router.replace({ query: filterUtils.getQuery(filters.value) });
@@ -220,7 +240,7 @@ const fetchList = useFetchList(
   async (offset, limit) => {
     const results = station.service.listRequests(
       {
-        types: shownRequestDomains.value.find((_, idx) => idx === filters.value.groupBy)?.types,
+        types: shownRequestDomains.value.find(domain => domain.id === filters.value.groupBy)?.types,
         created_dt: {
           fromDt: convertDate(filters.value.created.from, {
             time: 'start-of-day',
@@ -260,6 +280,44 @@ const fetchList = useFetchList(
   {
     pagination,
     getTotal: res => Number(res.total),
+  },
+);
+
+const isExternalCanisterFilterGroup = computed(
+  () => filters.value.groupBy === RequestDomains.ExternalCanisters,
+);
+
+watch(
+  () => filters.value.canisterId,
+  () => {
+    if (!isExternalCanisterFilterGroup.value) {
+      return;
+    }
+
+    availableDomains.value = availableDomains.value.map(domain => {
+      if (domain.id === RequestDomains.ExternalCanisters) {
+        for (const typeIndex in domain.types) {
+          let filterType = domain.types[typeIndex];
+          const filterBy: [] | [Principal] = filters.value.canisterId
+            ? [filters.value.canisterId]
+            : [];
+
+          if (variantIs(filterType, 'CallExternalCanister')) {
+            filterType = { CallExternalCanister: filterBy };
+          } else if (variantIs(filterType, 'ConfigureExternalCanister')) {
+            filterType = { ConfigureExternalCanister: filterBy };
+          } else if (variantIs(filterType, 'FundExternalCanister')) {
+            filterType = { FundExternalCanister: filterBy };
+          } else if (variantIs(filterType, 'ChangeExternalCanister')) {
+            filterType = { ChangeExternalCanister: filterBy };
+          }
+
+          domain.types[typeIndex] = filterType;
+        }
+      }
+
+      return domain;
+    });
   },
 );
 </script>

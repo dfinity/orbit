@@ -1,94 +1,97 @@
 <template>
-  <VChip
-    v-bind="$attrs"
-    :size="props.size"
-    :class="props.class"
-    :color="status.color"
-    variant="flat"
-    data-test-id="request-status-chip"
-  >
-    <slot>
-      {{ $t(`requests.status.${status.name}`) }}
-    </slot>
-  </VChip>
-  <template v-if="variantIs(props.status, 'Completed')">
-    <VTooltip
-      v-model="openDetails"
-      location="bottom"
-      :open-on-hover="false"
-      :open-on-click="true"
-      @click:outside="openDetails = false"
+  <div class="d-flex flex-nowrap">
+    <VChip
+      v-bind="$attrs"
+      :size="props.size"
+      :class="props.class"
+      :color="status.color"
+      variant="flat"
+      class="flex-grow-1"
+      data-test-id="request-status-chip"
     >
-      <template #activator="{ props: infoProps }">
-        <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
-      </template>
-      {{ $t('requests.processing_completed_at', { dt: props.status.Completed.completed_at }) }}
-    </VTooltip>
-  </template>
-  <template v-else-if="variantIs(props.status, 'Failed')">
-    <VTooltip
-      v-model="openDetails"
-      location="bottom"
-      :open-on-hover="false"
-      :open-on-click="true"
-      @click:outside="openDetails = false"
-    >
-      <template #activator="{ props: infoProps }">
-        <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
-      </template>
-      {{
-        props.status.Failed.reason?.[0]
-          ? props.status.Failed.reason[0]
-          : $t('requests.no_failed_reason')
-      }}
-    </VTooltip>
-  </template>
-  <template v-else-if="variantIs(props.status, 'Cancelled')">
-    <VTooltip
-      v-model="openDetails"
-      location="bottom"
-      :open-on-hover="false"
-      :open-on-click="true"
-      @click:outside="openDetails = false"
-    >
-      <template #activator="{ props: infoProps }">
-        <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
-      </template>
-      {{
-        props.status.Cancelled.reason?.[0]
-          ? props.status.Cancelled.reason[0]
-          : $t('requests.no_cancelled_reason')
-      }}
-    </VTooltip>
-  </template>
-  <template v-else-if="variantIs(props.status, 'Processing')">
-    <VTooltip
-      v-model="openDetails"
-      location="bottom"
-      :open-on-hover="false"
-      :open-on-click="true"
-      @click:outside="openDetails = false"
-    >
-      <template #activator="{ props: infoProps }">
-        <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
-      </template>
-      {{ $t('requests.processing_started_at', { dt: props.status.Processing.started_at }) }}
-    </VTooltip>
-  </template>
-  <template v-else-if="variantIs(props.status, 'Scheduled')">
-    <VTooltip
-      v-model="openDetails"
-      location="bottom"
-      :open-on-hover="false"
-      :open-on-click="true"
-      @click:outside="openDetails = false"
-    >
-      <template #activator="{ props: infoProps }">
-        <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
-      </template>
-      {{ $t('requests.processing_scheduled_at', { dt: props.status.Scheduled.scheduled_at }) }}
-    </VTooltip>
-  </template>
+      <slot>
+        {{ $t(`requests.status.${status.name}`) }}
+      </slot>
+    </VChip>
+    <template v-if="variantIs(props.status, 'Completed')">
+      <VTooltip
+        v-model="openDetails"
+        location="bottom"
+        :open-on-hover="false"
+        :open-on-click="true"
+        @click:outside="openDetails = false"
+      >
+        <template #activator="{ props: infoProps }">
+          <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
+        </template>
+        {{ $t('requests.processing_completed_at', { dt: props.status.Completed.completed_at }) }}
+      </VTooltip>
+    </template>
+    <template v-else-if="variantIs(props.status, 'Failed')">
+      <VTooltip
+        v-model="openDetails"
+        location="bottom"
+        :open-on-hover="false"
+        :open-on-click="true"
+        @click:outside="openDetails = false"
+      >
+        <template #activator="{ props: infoProps }">
+          <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
+        </template>
+        {{
+          props.status.Failed.reason?.[0]
+            ? props.status.Failed.reason[0]
+            : $t('requests.no_failed_reason')
+        }}
+      </VTooltip>
+    </template>
+    <template v-else-if="variantIs(props.status, 'Cancelled')">
+      <VTooltip
+        v-model="openDetails"
+        location="bottom"
+        :open-on-hover="false"
+        :open-on-click="true"
+        @click:outside="openDetails = false"
+      >
+        <template #activator="{ props: infoProps }">
+          <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
+        </template>
+        {{
+          props.status.Cancelled.reason?.[0]
+            ? props.status.Cancelled.reason[0]
+            : $t('requests.no_cancelled_reason')
+        }}
+      </VTooltip>
+    </template>
+    <template v-else-if="variantIs(props.status, 'Processing')">
+      <VTooltip
+        v-model="openDetails"
+        location="bottom"
+        :open-on-hover="false"
+        :open-on-click="true"
+        @click:outside="openDetails = false"
+      >
+        <template #activator="{ props: infoProps }">
+          <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
+        </template>
+        {{ $t('requests.processing_started_at', { dt: props.status.Processing.started_at }) }}
+      </VTooltip>
+    </template>
+    <template v-else-if="variantIs(props.status, 'Scheduled')">
+      <VTooltip
+        v-model="openDetails"
+        location="bottom"
+        :open-on-hover="false"
+        :open-on-click="true"
+        @click:outside="openDetails = false"
+      >
+        <template #activator="{ props: infoProps }">
+          <VBtn :icon="mdiInformationOutline" size="x-small" v-bind="infoProps" />
+        </template>
+        {{ $t('requests.processing_scheduled_at', { dt: props.status.Scheduled.scheduled_at }) }}
+      </VTooltip>
+    </template>
+  </div>
 </template>
 
 <script setup lang="ts">

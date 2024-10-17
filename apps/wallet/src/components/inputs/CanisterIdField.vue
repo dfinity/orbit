@@ -7,7 +7,8 @@
     :density="props.density"
     :readonly="props.readonly"
     :rules="props.required ? [requiredRule, validCanisterId] : [validCanisterId]"
-    :prepend-icon="mdiIdentifier"
+    :prepend-icon="!props.prependInnerIcon ? mdiIdentifier : undefined"
+    :prepend-inner-icon="props.prependInnerIcon ? mdiIdentifier : undefined"
   />
 </template>
 <script lang="ts" setup>
@@ -23,6 +24,7 @@ const props = withDefaults(
     readonly?: boolean;
     required?: boolean;
     name?: string;
+    prependInnerIcon?: boolean;
     density?: 'comfortable' | 'compact' | 'default';
     variant?: 'filled' | 'outlined' | 'plain' | 'solo' | 'underlined';
   }>(),
@@ -31,6 +33,7 @@ const props = withDefaults(
     readonly: false,
     required: false,
     name: undefined,
+    prependInnerIcon: false,
     density: 'comfortable',
     variant: 'filled',
   },

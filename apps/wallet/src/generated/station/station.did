@@ -2151,6 +2151,7 @@ type UserPrivilege = variant {
   ListRequests;
   CreateExternalCanister;
   ListExternalCanisters;
+  CallAnyExternalCanister;
 };
 
 type MeResult = variant {

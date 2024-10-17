@@ -35,13 +35,13 @@
         <VToolbarTitle
           :data-test-id="props.dataTestId ? `${props.dataTestId}-dialog-title` : undefined"
         >
-          {{ props.title }}
+          {{ translations.title }}
         </VToolbarTitle>
         <VBtn :disabled="loading" :icon="mdiClose" @click="close" />
       </VToolbar>
       <VCardText>
         <slot name="default" :model="{ value: intervalValue }" :loading="loading" :submit="submit">
-          <p>{{ props.content }}</p>
+          <p>{{ translations.content }}</p>
         </slot>
       </VCardText>
       <VDivider />
@@ -54,7 +54,7 @@
           :model="{ value: intervalValue }"
         >
           <VSpacer />
-          <VBtn variant="outlined" @click="close">{{ props.cancelText }}</VBtn>
+          <VBtn variant="outlined" @click="close">{{ translations.cancelText }}</VBtn>
           <VBtn
             :loading="loading"
             color="primary"
@@ -62,7 +62,7 @@
             data-test-id="action-btn-default-submit-btn"
             @click="submit"
           >
-            {{ props.confirmText }}
+            {{ translations.confirmText }}
           </VBtn>
         </slot>
       </VCardActions>
@@ -75,7 +75,6 @@ import { mdiClose } from '@mdi/js';
 import { Ref, computed, ref, watch } from 'vue';
 import { logger } from '~/core/logger.core';
 import { wait } from '~/utils/helper.utils';
-import { i18n } from '~/plugins/i18n.plugin';
 import {
   VBtn,
   VCard,
@@ -88,6 +87,7 @@ import {
   VToolbar,
   VToolbarTitle,
 } from 'vuetify/components';
+import { useI18n } from 'vue-i18n';
 
 const props = withDefaults(
   defineProps<{
@@ -120,10 +120,10 @@ const props = withDefaults(
     variant: 'flat',
     color: 'default',
     density: undefined,
-    title: i18n.global.t('app.dialog_confirmation_title'),
-    content: i18n.global.t('app.dialog_confirmation_question'),
-    cancelText: i18n.global.t('terms.cancel'),
-    confirmText: i18n.global.t('terms.confirm'),
+    title: undefined,
+    content: undefined,
+    cancelText: undefined,
+    confirmText: undefined,
     rounded: false,
     disabled: false,
     dialogMaxWidth: 800,
@@ -148,6 +148,14 @@ const emit = defineEmits<{
   (event: 'opened'): void;
   (event: 'update:modelValue', payload: M): void;
 }>();
+
+const i18n = useI18n();
+const translations = computed(() => ({
+  title: props.title || i18n.t('app.dialog_confirmation_title'),
+  content: props.content || i18n.t('app.dialog_confirmation_question'),
+  cancelText: props.cancelText || i18n.t('terms.cancel'),
+  confirmText: props.confirmText || i18n.t('terms.confirm'),
+}));
 
 // Generics infer the type in a wrong way with refs, so we need to cast it to the correct type
 // see: https://github.com/vuejs/core/issues/2136#issuecomment-908269949

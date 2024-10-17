@@ -164,8 +164,6 @@
         </VCol>
       </VRow>
     </VContainer>
-
-    <slot name="actions"> </slot>
   </VForm>
 </template>
 <script lang="ts" setup>

@@ -17,6 +17,7 @@ export enum Privilege {
   ManageSystemInfo = 'ManageSystemInfo',
   ListExternalCanisters = 'ListExternalCanisters',
   CreateExternalCanister = 'CreateExternalCanister',
+  CallAnyExternalCanister = 'CallAnyExternalCanister',
 }
 
 export enum RequiredSessionState {
