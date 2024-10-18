@@ -3,7 +3,6 @@
     v-model="openModel"
     :persistent="loading || approving"
     transition="dialog-bottom-transition"
-    scrollable
     :max-width="props.dialogMaxWidth.value"
   >
     <DataLoader

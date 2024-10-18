@@ -23,7 +23,7 @@
         :density="props.density"
         :variant="props.variant"
         :rules="[...(props.required ? [requiredRule] : []), parseArgumentRule]"
-        auto-grow
+        :rows="3"
         class="mt-0"
         v-bind="$attrs"
       />
