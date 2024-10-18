@@ -1,11 +1,12 @@
 use crate::setup::{create_canister, get_canister_wasm, WALLET_ADMIN_USER};
-use candid::{CandidType, Encode, Principal};
+use candid::{CandidType, Decode, Encode, Principal};
 use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
-use ic_cdk::api::management_canister::main::CanisterStatusResponse;
+use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse, Snapshot};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use orbit_essentials::types::WasmModuleExtraChunks;
+use pocket_ic::common::rest::RawEffectivePrincipal;
 use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
 use sha2::Digest;
 use sha2::Sha256;
@@ -843,4 +844,40 @@ pub(crate) fn await_station_healthy(env: &PocketIc, station_id: Principal) {
         "Station did not become healthy within {} rounds.",
         max_rounds
     );
+}
+
+pub(crate) fn deploy_test_canister(env: &PocketIc) -> Principal {
+    let test_canister = create_canister(env, WALLET_ADMIN_USER);
+    let test_canister_wasm = get_canister_wasm("test_canister");
+    env.install_canister(
+        test_canister,
+        test_canister_wasm,
+        vec![],
+        Some(WALLET_ADMIN_USER),
+    );
+    test_canister
+}
+
+pub(crate) fn list_canister_snapshots(
+    env: &PocketIc,
+    canister: Principal,
+    controller: Principal,
+) -> Vec<Snapshot> {
+    let list_snapshots_call_id = env
+        .submit_call_with_effective_principal(
+            Principal::management_canister(),
+            RawEffectivePrincipal::CanisterId(canister.as_slice().to_vec()),
+            controller,
+            "list_canister_snapshots",
+            Encode!(&CanisterIdRecord {
+                canister_id: canister
+            })
+            .unwrap(),
+        )
+        .unwrap();
+    let list_snapshots_result = env.await_call(list_snapshots_call_id).unwrap();
+    match list_snapshots_result {
+        WasmResult::Reply(data) => Decode!(&data, Vec<Snapshot>).unwrap(),
+        WasmResult::Reject(msg) => panic!("Unexpected reject: {}", msg),
+    }
 }

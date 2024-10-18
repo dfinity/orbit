@@ -45,10 +45,7 @@ impl RequestCanisterUpdateSettingsArgs {
             kind: ConfigureExternalCanisterOperationKindDTO::NativeSettings(
                 DefiniteCanisterSettingsInput {
                     controllers: Some(controllers),
-                    compute_allocation: None,
-                    memory_allocation: None,
-                    freezing_threshold: None,
-                    reserved_cycles_limit: None,
+                    ..Default::default()
                 },
             ),
         };

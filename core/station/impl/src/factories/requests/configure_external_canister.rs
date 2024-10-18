@@ -202,10 +202,7 @@ pub mod configure_external_canister_test_utils {
             kind: station_api::ConfigureExternalCanisterOperationKindDTO::NativeSettings(
                 station_api::DefiniteCanisterSettingsInput {
                     controllers: Some(vec![Principal::from_slice(&[1; 29])]),
-                    compute_allocation: None,
-                    memory_allocation: None,
-                    freezing_threshold: None,
-                    reserved_cycles_limit: None,
+                    ..Default::default()
                 },
             ),
         }

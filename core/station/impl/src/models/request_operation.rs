@@ -544,12 +544,23 @@ pub enum ConfigureExternalCanisterOperationKind {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum LogVisibility {
+    #[serde(rename = "public")]
+    Public,
+    #[serde(rename = "controllers")]
+    Controllers,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct DefiniteCanisterSettingsInput {
     pub controllers: Option<Vec<Principal>>,
     pub compute_allocation: Option<candid::Nat>,
     pub memory_allocation: Option<candid::Nat>,
     pub freezing_threshold: Option<candid::Nat>,
     pub reserved_cycles_limit: Option<candid::Nat>,
+    pub log_visibility: Option<LogVisibility>,
+    pub wasm_memory_limit: Option<candid::Nat>,
 }
 
 #[storable]

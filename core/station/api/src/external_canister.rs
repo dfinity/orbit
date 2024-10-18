@@ -7,7 +7,15 @@ use orbit_essentials::cmc::SubnetSelection;
 use orbit_essentials::types::WasmModuleExtraChunks;
 
 // Taken from https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-create_canister
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, Default)]
+pub enum LogVisibility {
+    #[serde(rename = "public")]
+    Public,
+    #[default]
+    #[serde(rename = "controllers")]
+    Controllers,
+}
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, Default)]
 pub struct DefiniteCanisterSettingsInput {
     /// Controllers of the canister.
     pub controllers: Option<Vec<Principal>>,
@@ -19,6 +27,10 @@ pub struct DefiniteCanisterSettingsInput {
     pub freezing_threshold: Option<Nat>,
     /// Reserved cycles limit.
     pub reserved_cycles_limit: Option<Nat>,
+    /// Log visibility.
+    pub log_visibility: Option<LogVisibility>,
+    /// Wasm memory limit.
+    pub wasm_memory_limit: Option<Nat>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

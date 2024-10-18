@@ -8,12 +8,12 @@ use crate::{
         ExternalCanisterChangeRequestPolicyRule, ExternalCanisterPermissions,
         ExternalCanisterRequestPolicies, ExternalCanisterState, FundExternalCanisterOperation,
         FundExternalCanisterOperationInput, FundExternalCanisterOperationKind,
-        FundExternalCanisterSendCyclesInput,
+        FundExternalCanisterSendCyclesInput, LogVisibility,
     },
     repositories::ExternalCanisterWhereClauseSort,
 };
 use candid::Principal;
-use ic_cdk::api::management_canister::main::CanisterSettings;
+use ic_cdk::api::management_canister::main::{self as mgmt};
 use orbit_essentials::{repository::SortDirection, utils::timestamp_to_rfc3339};
 use station_api::ExternalCanisterDTO;
 use uuid::Uuid;
@@ -141,14 +141,27 @@ impl From<ExternalCanisterCallerMethodsPrivileges>
     }
 }
 
-impl From<DefiniteCanisterSettingsInput> for CanisterSettings {
+impl From<LogVisibility> for mgmt::LogVisibility {
+    fn from(input: LogVisibility) -> Self {
+        match input {
+            LogVisibility::Public => mgmt::LogVisibility::Public,
+            LogVisibility::Controllers => mgmt::LogVisibility::Controllers,
+        }
+    }
+}
+
+impl From<DefiniteCanisterSettingsInput> for mgmt::CanisterSettings {
     fn from(input: DefiniteCanisterSettingsInput) -> Self {
-        CanisterSettings {
+        mgmt::CanisterSettings {
             controllers: input.controllers,
             compute_allocation: input.compute_allocation,
             freezing_threshold: input.freezing_threshold,
             memory_allocation: input.memory_allocation,
             reserved_cycles_limit: input.reserved_cycles_limit,
+            log_visibility: input
+                .log_visibility
+                .map(|log_visibility| log_visibility.into()),
+            wasm_memory_limit: input.wasm_memory_limit,
         }
     }
 }
@@ -185,6 +198,15 @@ impl From<station_api::ConfigureExternalCanisterOperationKindDTO>
     }
 }
 
+impl From<station_api::LogVisibility> for LogVisibility {
+    fn from(input: station_api::LogVisibility) -> Self {
+        match input {
+            station_api::LogVisibility::Public => LogVisibility::Public,
+            station_api::LogVisibility::Controllers => LogVisibility::Controllers,
+        }
+    }
+}
+
 impl From<station_api::DefiniteCanisterSettingsInput> for DefiniteCanisterSettingsInput {
     fn from(input: station_api::DefiniteCanisterSettingsInput) -> Self {
         DefiniteCanisterSettingsInput {
@@ -193,6 +215,10 @@ impl From<station_api::DefiniteCanisterSettingsInput> for DefiniteCanisterSettin
             freezing_threshold: input.freezing_threshold,
             memory_allocation: input.memory_allocation,
             reserved_cycles_limit: input.reserved_cycles_limit,
+            log_visibility: input
+                .log_visibility
+                .map(|log_visibility| log_visibility.into()),
+            wasm_memory_limit: input.wasm_memory_limit,
         }
     }
 }

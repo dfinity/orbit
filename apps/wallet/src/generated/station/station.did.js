@@ -32,10 +32,16 @@ export const idlFactory = ({ IDL }) => {
     'Init' : SystemInit,
   });
   const CanisterStatusInput = IDL.Record({ 'canister_id' : IDL.Principal });
+  const LogVisibility = IDL.Variant({
+    'controllers' : IDL.Null,
+    'public' : IDL.Null,
+  });
   const DefiniteCanisterSettings = IDL.Record({
     'freezing_threshold' : IDL.Nat,
     'controllers' : IDL.Vec(IDL.Principal),
     'reserved_cycles_limit' : IDL.Nat,
+    'log_visibility' : LogVisibility,
+    'wasm_memory_limit' : IDL.Nat,
     'memory_allocation' : IDL.Nat,
     'compute_allocation' : IDL.Nat,
   });
@@ -301,6 +307,8 @@ export const idlFactory = ({ IDL }) => {
     'freezing_threshold' : IDL.Opt(IDL.Nat),
     'controllers' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'reserved_cycles_limit' : IDL.Opt(IDL.Nat),
+    'log_visibility' : IDL.Opt(LogVisibility),
+    'wasm_memory_limit' : IDL.Opt(IDL.Nat),
     'memory_allocation' : IDL.Opt(IDL.Nat),
     'compute_allocation' : IDL.Opt(IDL.Nat),
   });
