@@ -5,8 +5,9 @@ use crate::utils::{
     add_user, advance_time_to_burn_cycles, await_station_healthy, deploy_test_canister,
     execute_request, get_account_read_permission, get_account_transfer_permission,
     get_account_update_permission, get_core_canister_health_status, get_request, get_system_info,
-    get_upgrader_disaster_recovery, get_upgrader_logs, get_user, set_disaster_recovery,
-    submit_request, upload_canister_chunks_to_asset_canister, user_test_id, NNS_ROOT_CANISTER_ID,
+    get_upgrader_disaster_recovery, get_upgrader_logs, get_user, list_canister_snapshots,
+    set_disaster_recovery, submit_request, upload_canister_chunks_to_asset_canister, user_test_id,
+    NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -1111,38 +1112,59 @@ fn test_disaster_recovery_unstoppable() {
 
     // force stop in disaster recovery
     disaster_recovery_request.force_stop = true;
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        upgrader_id,
-        WALLET_ADMIN_USER,
-        "request_disaster_recovery",
-        (disaster_recovery_request.clone(),),
-    )
-    .unwrap();
-    res.0.unwrap();
-    // start processing the mgmt canister call from upgrader to stop the station
-    env.tick();
 
-    // the station can't be stopped yet because it has an open call context
-    // with a pending down-stream call to the "expensive" method of the test canister
-    // now we advance time by 5 mins to time out (i.e., fail) the upgrader's call to stop the station
-    env.advance_time(Duration::from_secs(5 * 60));
+    // we perform successful disaster recovery with forced stop twice
+    // to test that snapshots can be taken multiple times
+    let mut snapshots = list_canister_snapshots(&env, canister_ids.station, upgrader_id);
+    assert!(snapshots.is_empty());
+    for i in 0..2 {
+        let new_name = format!("recovered-{}", i);
+        let station_init_arg = SystemInstall::Upgrade(SystemUpgrade {
+            name: Some(new_name.clone()),
+        });
+        disaster_recovery_request.arg = Encode!(&station_init_arg).unwrap();
+        let res: (ApiResult<()>,) = update_candid_as(
+            &env,
+            upgrader_id,
+            WALLET_ADMIN_USER,
+            "request_disaster_recovery",
+            (disaster_recovery_request.clone(),),
+        )
+        .unwrap();
+        res.0.unwrap();
+        // start processing the mgmt canister call from upgrader to stop the station
+        env.tick();
 
-    // disaster recovery should succeed now when forcing the station to stop
-    await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+        // the station can't be stopped yet because it has an open call context
+        // with a pending down-stream call to the "expensive" method of the test canister
+        // now we advance time by 5 mins to time out (i.e., fail) the upgrader's call to stop the station
+        env.advance_time(Duration::from_secs(5 * 60));
 
-    // the call request will be "Processing" forever since we deleted its call context during disaster recovery
-    let call_request_in_progress = get_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        call_canister_operation_request.clone(),
-    );
-    match call_request_in_progress.status {
-        RequestStatusDTO::Processing { .. } => (),
-        _ => panic!(
-            "Unexpected request status: {:?}",
-            call_request_in_progress.status
-        ),
-    };
+        // disaster recovery should succeed now when forcing the station to stop
+        await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+
+        // check that a snapshot has been taken
+        let current_snapshots = list_canister_snapshots(&env, canister_ids.station, upgrader_id);
+        assert_ne!(current_snapshots, snapshots);
+        snapshots = current_snapshots;
+
+        // check new station name set during disaster recovery
+        let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+        assert_eq!(system_info.name, new_name);
+
+        // the call request will be "Processing" forever since we deleted its call context during disaster recovery
+        let call_request_in_progress = get_request(
+            &env,
+            WALLET_ADMIN_USER,
+            canister_ids.station,
+            call_canister_operation_request.clone(),
+        );
+        match call_request_in_progress.status {
+            RequestStatusDTO::Processing { .. } => (),
+            _ => panic!(
+                "Unexpected request status: {:?}",
+                call_request_in_progress.status
+            ),
+        };
+    }
 }
