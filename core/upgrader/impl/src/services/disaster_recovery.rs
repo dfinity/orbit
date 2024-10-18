@@ -11,8 +11,8 @@ use crate::{
 };
 use candid::Principal;
 use ic_cdk::api::management_canister::main::{
-    list_canister_snapshots, load_canister_snapshot, stop_canister, take_canister_snapshot,
-    uninstall_code, CanisterIdRecord, LoadCanisterSnapshotArgs, TakeCanisterSnapshotArgs,
+    list_canister_snapshots, load_canister_snapshot, take_canister_snapshot, uninstall_code,
+    CanisterIdRecord, LoadCanisterSnapshotArgs, TakeCanisterSnapshotArgs,
 };
 use ic_stable_structures::memory_manager::MemoryId;
 use lazy_static::lazy_static;
@@ -293,11 +293,6 @@ impl DisasterRecoveryService {
                 .map_err(|(_code, msg)| msg)?
                 .0;
                 uninstall_code(CanisterIdRecord {
-                    canister_id: station_canister_id,
-                })
-                .await
-                .map_err(|(_code, msg)| msg)?;
-                stop_canister(CanisterIdRecord {
                     canister_id: station_canister_id,
                 })
                 .await
