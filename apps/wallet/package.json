@@ -29,7 +29,6 @@
     "@dfinity/candid": "1.4.0",
     "@dfinity/identity": "1.4.0",
     "@dfinity/principal": "1.4.0",
-    "@dfinity/didc": "0.0.1",
     "@mdi/font": "7.4.47",
     "@mdi/js": "7.4.47",
     "buffer": "6.0.3",
