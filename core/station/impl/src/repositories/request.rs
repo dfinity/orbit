@@ -386,8 +386,8 @@ impl RequestRepository {
                     station_api::SortDirection::Desc => b_id.cmp(a_id),
                 },
                 _ => match dir {
-                    station_api::SortDirection::Asc => ord.reverse(),
-                    station_api::SortDirection::Desc => ord,
+                    station_api::SortDirection::Asc => ord,
+                    station_api::SortDirection::Desc => ord.reverse(),
                 },
             }
         });

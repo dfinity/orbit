@@ -1,16 +1,20 @@
 <template>
   <DataLoader
+    v-model:force-reload="forceReload"
     :load="loadExternalCanister"
-    @loading="loading = $event"
+    :refresh-interval-ms="5000"
+    :disable-refresh="disableRefresh"
     @loaded="
       () => {
-        // Load additional canister details, such as module hash and canister status.
-        loadCanisterDetails();
-        // Immediately after loading the canister with a query call,
-        // we perform an update call to make sure the data is not tampered with.
-        loadExternalCanister({
-          verifiedCall: true,
-        });
+        loading = false;
+        // Immediately after loading the canister with a query call, we mark the page to be verified next,
+        // this way all subsequent calls will be verified.
+        verifiedPageLoad = true;
+      }
+    "
+    @failed="
+      () => {
+        loading = false;
       }
     "
   >
@@ -124,9 +128,29 @@
               </div>
             </div>
           </template>
-          <template v-if="privileges.can_call.length" #actions>
-            <VBtn size="default" color="primary" @click="dialogs.call = true">
-              {{ $t('external_canisters.perform_call') }}
+          <template
+            v-if="
+              privileges.can_call.length ||
+              hasRequiredPrivilege({ anyOf: [Privilege.CallAnyExternalCanister] })
+            "
+            #actions
+          >
+            <CanisterCallDialog
+              :open="dialogs.call"
+              :canister-id="canister.canister_id"
+              :allowed-methods="mapAllowedCanisterMethods(privileges.can_call)"
+              :allow-any-method="
+                hasRequiredPrivilege({ anyOf: [Privilege.CallAnyExternalCanister] })
+              "
+              @update:open="dialogs.call = $event"
+            />
+            <VBtn
+              size="default"
+              color="primary"
+              :disabled="!canisterDetails.moduleHash.value"
+              @click="dialogs.call = true"
+            >
+              {{ $t('external_canisters.perform_call.title') }}
             </VBtn>
           </template>
         </PageHeader>
@@ -159,139 +183,177 @@
               class="d-flex flex-column-reverse flex-md-row align-md-start flex-no-wrap ga-4"
             >
               <div class="d-flex flex-column flex-grow-1 ga-4 align-self-stretch">
-                <!-- TODO: Manage call policies -->
+                <CanisterConfigureMethodCallList
+                  :canister-id="canister.canister_id"
+                  :request-policies="canister.request_policies.calls"
+                  :permissions="canister.permissions.calls"
+                  :readonly="!privileges.can_change"
+                  @editing="disableRefresh = $event"
+                />
               </div>
-              <VCard class="d-flex flex-column" :width="app.isMobile ? '100%' : '272px'">
-                <VToolbar color="transparent" class="pr-4">
-                  <VToolbarTitle>
-                    {{ $t('terms.canister') }}
-                    <VBtn
-                      v-if="canister"
-                      size="x-small"
-                      variant="text"
-                      :icon="mdiOpenInNew"
-                      density="comfortable"
-                      class="ml-1"
-                      :href="`https://dashboard.internetcomputer.org/canister/${canister.canister_id.toText()}`"
-                      target="_blank"
-                    />
-                  </VToolbarTitle>
-                  <VIcon :icon="mdiDatabase" />
-                </VToolbar>
-                <VCardText class="pt-0 d-flex flex-column flex-grow-1">
-                  <VList lines="two" class="bg-transparent pt-0">
-                    <VListItem class="pt-0 px-0">
-                      <VListItemTitle class="font-weight-bold">
-                        {{ $t(`external_canisters.module_hash`) }}
-                        <template v-if="privileges.can_change">
-                          <CanisterInstallDialog
-                            :key="canisterDetails.moduleHash.value?.toString()"
-                            v-model:open="dialogs.install"
-                            :canister-id="canister.canister_id"
-                            :canister-module-hash="
-                              canisterDetails.moduleHash.value !== null
-                                ? canisterDetails.moduleHash.value
-                                : undefined
-                            "
+              <div
+                :style="{ 'min-width': app.isMobile ? '100%' : '272px' }"
+                class="d-flex flex-column ga-4"
+              >
+                <VCard class="d-flex flex-column" width="100%">
+                  <VToolbar color="transparent" class="pr-4">
+                    <VToolbarTitle>
+                      {{ $t('terms.canister') }}
+                      <VBtn
+                        v-if="canister"
+                        size="x-small"
+                        variant="text"
+                        :icon="mdiOpenInNew"
+                        density="comfortable"
+                        class="ml-1"
+                        :href="`https://dashboard.internetcomputer.org/canister/${canister.canister_id.toText()}`"
+                        target="_blank"
+                      />
+                    </VToolbarTitle>
+                    <VIcon :icon="mdiDatabase" />
+                  </VToolbar>
+                  <VCardText class="pt-0 d-flex flex-column flex-grow-1">
+                    <VList lines="two" class="bg-transparent pt-0">
+                      <VListItem class="pt-0 px-0">
+                        <VListItemTitle class="font-weight-bold">
+                          {{ $t(`external_canisters.module_hash`) }}
+                          <template v-if="privileges.can_change">
+                            <CanisterInstallDialog
+                              :key="canisterDetails.moduleHash.value?.toString()"
+                              v-model:open="dialogs.install"
+                              :canister-id="canister.canister_id"
+                              :canister-module-hash="
+                                canisterDetails.moduleHash.value !== null
+                                  ? canisterDetails.moduleHash.value
+                                  : undefined
+                              "
+                            />
+                            <VBtn
+                              size="small"
+                              density="compact"
+                              color="default"
+                              variant="tonal"
+                              class="ml-1 px-2"
+                              :disabled="!canisterDetails.status.value"
+                              :append-icon="mdiDatabaseCog"
+                              @click="dialogs.install = true"
+                            >
+                              {{ $t('external_canisters.install') }}
+                            </VBtn>
+                          </template>
+                        </VListItemTitle>
+                        <VListItemSubtitle>
+                          <VProgressCircular
+                            v-if="canisterDetails.moduleHash.loading"
+                            indeterminate
+                            color="primary"
+                            class="mt-2"
+                            size="16"
                           />
-                          <VBtn
-                            size="small"
-                            density="compact"
-                            color="default"
-                            variant="tonal"
-                            class="ml-1 px-2"
-                            :disabled="!canisterDetails.status.value"
-                            :append-icon="mdiDatabaseCog"
-                            @click="dialogs.install = true"
-                          >
-                            {{ $t('external_canisters.install') }}
-                          </VBtn>
-                        </template>
-                      </VListItemTitle>
-                      <VListItemSubtitle>
-                        <VProgressCircular
-                          v-if="canisterDetails.moduleHash.loading"
-                          indeterminate
-                          color="primary"
-                          class="mt-2"
-                          size="16"
-                        />
-                        <span v-else-if="!canisterDetails.moduleHash.value">
-                          {{ $t('terms.none') }}
-                        </span>
-                        <span v-else>
-                          <TextOverflow :max-length="24" :text="canisterDetails.moduleHash.value" />
-                          <VBtn
-                            size="small"
-                            variant="text"
-                            :icon="mdiContentCopy"
-                            @click="
-                              copyToClipboard({
-                                textToCopy: canisterDetails.moduleHash.value,
-                                sendNotification: true,
-                              })
-                            "
-                          />
-                        </span>
-                      </VListItemSubtitle>
-                    </VListItem>
-                    <VListItem class="pt-0 px-0">
-                      <VListItemTitle class="font-weight-bold">
-                        {{ $t(`external_canisters.cycles`) }}
-                        <template v-if="privileges.can_fund">
-                          <CanisterTopUpDialog
-                            v-model:open="dialogs.topUp"
-                            :canister-id="canister.canister_id"
-                          />
+                          <span v-else-if="!canisterDetails.moduleHash.value">
+                            {{ $t('terms.none') }}
+                          </span>
+                          <span v-else>
+                            <TextOverflow
+                              :max-length="24"
+                              :text="canisterDetails.moduleHash.value"
+                            />
+                            <VBtn
+                              size="small"
+                              variant="text"
+                              :icon="mdiContentCopy"
+                              @click="
+                                copyToClipboard({
+                                  textToCopy: canisterDetails.moduleHash.value,
+                                  sendNotification: true,
+                                })
+                              "
+                            />
+                          </span>
+                        </VListItemSubtitle>
+                      </VListItem>
+                      <VListItem class="pt-0 px-0">
+                        <VListItemTitle class="font-weight-bold">
+                          {{ $t(`external_canisters.cycles`) }}
+                          <template v-if="privileges.can_fund">
+                            <CanisterTopUpDialog
+                              v-model:open="dialogs.topUp"
+                              :canister-id="canister.canister_id"
+                            />
 
-                          <VBtn
-                            size="small"
-                            density="compact"
-                            color="default"
-                            variant="tonal"
-                            class="ml-1 px-2"
-                            :append-icon="mdiDatabaseArrowUp"
-                            @click="dialogs.topUp = true"
-                          >
-                            {{ $t('external_canisters.top_up') }}
-                          </VBtn>
-                        </template>
-                      </VListItemTitle>
-                      <VListItemSubtitle>
-                        <VProgressCircular
-                          v-if="canisterDetails.status.loading"
-                          indeterminate
-                          color="primary"
-                          class="mt-2"
-                          size="16"
-                        />
-                        <span v-else-if="canisterDetails.status.value == null">
-                          {{ $t('external_canisters.not_controller') }}
-                        </span>
-                        <span v-else>
-                          <template
-                            v-if="
-                              toCyclesUnit(
-                                canisterDetails.status.value.cycles,
-                                CyclesUnit.Trillion,
-                              ) !== 0
-                            "
-                          >
-                            {{
-                              toCyclesUnit(canisterDetails.status.value.cycles, CyclesUnit.Trillion)
-                            }}
-                            {{ $t('cycles.units.tc') }}
+                            <VBtn
+                              size="small"
+                              density="compact"
+                              color="default"
+                              variant="tonal"
+                              class="ml-1 px-2"
+                              :append-icon="mdiDatabaseArrowUp"
+                              @click="dialogs.topUp = true"
+                            >
+                              {{ $t('external_canisters.top_up') }}
+                            </VBtn>
                           </template>
-                          <template v-else>
-                            {{ canisterDetails.status.value.cycles }}
-                            {{ $t('cycles.units.e8s') }}
-                          </template>
-                        </span>
-                      </VListItemSubtitle>
-                    </VListItem>
-                  </VList>
-                </VCardText>
-              </VCard>
+                        </VListItemTitle>
+                        <VListItemSubtitle>
+                          <VProgressCircular
+                            v-if="canisterDetails.status.loading"
+                            indeterminate
+                            color="primary"
+                            class="mt-2"
+                            size="16"
+                          />
+                          <span v-else-if="canisterDetails.status.value == null">
+                            {{ $t('external_canisters.not_controller') }}
+                          </span>
+                          <span v-else>
+                            <template
+                              v-if="
+                                toCyclesUnit(
+                                  canisterDetails.status.value.cycles,
+                                  CyclesUnit.Trillion,
+                                ) !== 0
+                              "
+                            >
+                              {{
+                                toCyclesUnit(
+                                  canisterDetails.status.value.cycles,
+                                  CyclesUnit.Trillion,
+                                )
+                              }}
+                              {{ $t('cycles.units.tc') }}
+                            </template>
+                            <template v-else>
+                              {{ canisterDetails.status.value.cycles }}
+                              {{ $t('cycles.units.e8s') }}
+                            </template>
+                          </span>
+                        </VListItemSubtitle>
+                      </VListItem>
+                    </VList>
+                  </VCardText>
+                </VCard>
+
+                <AuthCheck :privileges="[Privilege.ListRequests]">
+                  <RecentRequests
+                    class="mb-4"
+                    :title="$t('external_canisters.performed_calls')"
+                    :show-items-title="false"
+                    :see-all-link="{
+                      name: Routes.Requests,
+                      query: {
+                        group_by: RequestDomains.ExternalCanisters,
+                        canister_id: canister.canister_id.toText(),
+                        statuses: ['Processing', 'Completed', 'Failed'],
+                      },
+                    }"
+                    :sort-by="{ lastModified: 'desc' }"
+                    :limit="1"
+                    :statuses="[{ Processing: null }, { Completed: null }, { Failed: null }]"
+                    :types="[{ CallExternalCanister: [canister.canister_id] }]"
+                    hide-not-found
+                  />
+                </AuthCheck>
+              </div>
             </VCol>
           </VRow>
         </PageBody>
@@ -311,7 +373,7 @@ import {
   mdiInfinity,
   mdiOpenInNew,
 } from '@mdi/js';
-import { Ref, computed, ref } from 'vue';
+import { Ref, computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   VBtn,
@@ -335,6 +397,8 @@ import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
 import BtnCanisterSetup from '~/components/external-canisters/BtnCanisterSetup.vue';
+import CanisterCallDialog from '~/components/external-canisters/CanisterCallDialog.vue';
+import CanisterConfigureMethodCallList from '~/components/external-canisters/CanisterConfigureMethodCallList.vue';
 import CanisterIcSettingsDialog from '~/components/external-canisters/CanisterIcSettingsDialog.vue';
 import CanisterInstallDialog from '~/components/external-canisters/CanisterInstallDialog.vue';
 import CanisterSetupDialog from '~/components/external-canisters/CanisterSetupDialog.vue';
@@ -343,8 +407,12 @@ import CanisterUnlinkDialog from '~/components/external-canisters/CanisterUnlink
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
+import {
+  useExternalCanisterProvider,
+  useLoadExternalCanisterModuleHash,
+  useLoadExternalCanisterStatus,
+} from '~/composables/external-canisters.composable';
 import { Routes } from '~/configs/routes.config';
-import { icAgent } from '~/core/ic-agent.core';
 import logger from '~/core/logger.core';
 import { ApiError } from '~/generated/control-panel/control_panel.did';
 import {
@@ -353,6 +421,7 @@ import {
   ExternalCanisterCallerPrivileges,
 } from '~/generated/station/station.did';
 import { toCyclesUnit } from '~/mappers/cycles.mapper';
+import { mapAllowedCanisterMethods } from '~/mappers/external-canister.mapper';
 import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import { CyclesUnit, type PageProps } from '~/types/app.types';
@@ -360,7 +429,8 @@ import { Privilege } from '~/types/auth.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
 import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
-import { fetchCanisterModuleHash } from '~/utils/helper.utils';
+import { hasRequiredPrivilege } from '~/utils/auth.utils';
+import { debounce } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,
@@ -402,9 +472,14 @@ const dialogs = ref({
   call: false,
 });
 
-const privileges = ref<ExternalCanisterCallerPrivileges>(buildDefaultPrivileges());
+const { register } = useExternalCanisterProvider();
+const currentRouteCanisterId = computed(() => `${router.currentRoute.value.params.cid}`);
+const verifiedPageLoad = ref(false);
+const privileges = ref(buildDefaultPrivileges()) as Ref<ExternalCanisterCallerPrivileges>;
 const loading = ref(false);
 const station = useStationStore();
+const disableRefresh = ref(false);
+const forceReload = ref(false);
 const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {
   const breadcrumbs = [...props.breadcrumbs];
 
@@ -417,20 +492,93 @@ const pageBreadcrumbs = computed<BreadCrumbItem[]>(() => {
   return breadcrumbs;
 });
 
-const loadExternalCanister = async (
-  opts: {
-    verifiedCall?: boolean;
-  } = {},
-): Promise<void> => {
+watch(
+  dialogs,
+  () => {
+    // Disable refresh when any dialog is open.
+    disableRefresh.value = Object.values(dialogs.value).some(open => open);
+  },
+  { deep: true },
+);
+
+watch(
+  currentRouteCanisterId,
+  (current, previous) => {
+    if (current !== previous) {
+      // Reset the page state when the canister id changes.
+      loading.value = true;
+      verifiedPageLoad.value = false;
+      canisterDetails.value = {
+        moduleHash: { value: null, loading: false },
+        status: { value: null, loading: false },
+      };
+      privileges.value = buildDefaultPrivileges();
+      canister.value = null;
+
+      // Register the canister id for other components to use.
+      register(current);
+    }
+  },
+  { immediate: true },
+);
+
+const loadExternalCanisterStatus = debounce(
+  (canisterId: Principal) => {
+    canisterDetails.value.status.loading =
+      canisterDetails.value.status.value === null ? true : false;
+    useLoadExternalCanisterStatus(canisterId)
+      .then(status => {
+        canisterDetails.value.status.value = status;
+      })
+      .catch(err => {
+        logger.error('Failed to load external canister status', err);
+      })
+      .finally(() => {
+        canisterDetails.value.status.loading = false;
+      });
+  },
+  20_000, // A status call is a call through the station canister, to prevent high load we make less frequent calls.
+  { immediate: true },
+);
+
+const loadExternalCanisterModuleHash = debounce(
+  (canisterId: Principal) => {
+    canisterDetails.value.moduleHash.loading =
+      canisterDetails.value.moduleHash.value === null ? true : false;
+    useLoadExternalCanisterModuleHash(canisterId)
+      .then(moduleHash => {
+        canisterDetails.value.moduleHash.value = moduleHash;
+      })
+      .catch(err => {
+        logger.error('Failed to load external canister module hash', err);
+      })
+      .finally(() => {
+        canisterDetails.value.moduleHash.loading = false;
+      });
+  },
+  2_000, // Module hash loading is cheap and can be done with a status call to the IC.
+  { immediate: true },
+);
+
+const loadExternalCanister = async (): Promise<void> => {
   try {
-    const canisterId = Principal.fromText(`${router.currentRoute.value.params.cid}`);
+    const canisterId = Principal.fromText(currentRouteCanisterId.value);
     const result = await station.service.getExternalCanisterByCanisterId(
       canisterId,
-      opts?.verifiedCall,
+      verifiedPageLoad.value,
     );
+
+    if (disableRefresh.value) {
+      // If the page is disabled for refresh, we don't update the canister and privileges.
+      return;
+    }
 
     canister.value = result.canister;
     privileges.value = result.privileges;
+
+    // Load additional canister details, such as module hash and canister status.
+    loadExternalCanisterModuleHash(result.canister.canister_id);
+    loadExternalCanisterStatus(result.canister.canister_id);
   } catch (err) {
     const error = err as ApiError;
 
@@ -442,47 +590,6 @@ const loadExternalCanister = async (
     }
 
     logger.error('Failed to load external canister', error);
-  }
-};
-
-const loadCanisterDetails = (): void => {
-  loadCanisterModuleHash();
-  loadCanisterStatus();
-};
-
-const loadCanisterModuleHash = async (): Promise<void> => {
-  try {
-    if (!canister.value) {
-      return;
-    }
-
-    canisterDetails.value.moduleHash.loading = true;
-
-    canisterDetails.value.moduleHash.value = await fetchCanisterModuleHash(
-      icAgent.get(),
-      canister.value.canister_id,
-    );
-  } catch (err) {
-    logger.error('Failed to load canister module hash', err);
-  } finally {
-    canisterDetails.value.moduleHash.loading = false;
-  }
-};
-
-const loadCanisterStatus = async (): Promise<void> => {
-  try {
-    if (!canister.value) {
-      return;
-    }
-
-    canisterDetails.value.status.loading = true;
-    canisterDetails.value.status.value = await station.service.getExternalCanisterStatus(
-      canister.value.canister_id,
-    );
-  } catch (err) {
-    logger.error('Failed to load canister status', err);
-  } finally {
-    canisterDetails.value.status.loading = false;
   }
 };
 </script>

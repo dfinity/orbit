@@ -12,11 +12,11 @@
   },
   "engines": {
     "node": "^20",
-    "pnpm": "^8",
+    "pnpm": "^9",
     "npm": "please use pnpm",
     "yarn": "please use pnpm"
   },
-  "packageManager": "pnpm@8.7.4",
+  "packageManager": "pnpm@9.12.2",
   "devDependencies": {
     "@monodon/rust": "2.0.0",
     "@nx/devkit": "19.8.3",

@@ -2,18 +2,18 @@
   <VCard
     :elevation="props.mode === 'grid' ? 0 : undefined"
     density="compact"
-    class="w-min-25"
+    :min-width="props.minWith"
     :rounded="props.mode === 'grid' ? 0 : undefined"
     :class="{ 'br-on-background': props.mode === 'grid' }"
   >
-    <VCardTitle class="text-body-2 font-weight-bold">
+    <VCardTitle v-if="props.showTitle" class="text-body-2 font-weight-bold">
       {{
         $te(`requests.types.${requestType}.title`)
           ? $t(`requests.types.${requestType}.title`)
           : requestType
       }}
     </VCardTitle>
-    <VCardText class="px-4 pb-1">
+    <VCardText class="px-4 py-1">
       <component
         :is="itemView?.component"
         v-if="itemView"
@@ -50,7 +50,7 @@ import AddAddressBookEntryOperation from './operations/AddAddressBookEntryOperat
 import AddRequestPolicyOperation from './operations/AddRequestPolicyOperation.vue';
 import AddUserGroupOperation from './operations/AddUserGroupOperation.vue';
 import AddUserOperation from './operations/AddUserOperation.vue';
-import SystemUpgradeOperation from './operations/SystemUpgradeOperation.vue';
+import CallExternalCanisterOperation from './operations/CallExternalCanisterOperation.vue';
 import EditAccountOperation from './operations/EditAccountOperation.vue';
 import EditAddressBookEntryOperation from './operations/EditAddressBookEntryOperation.vue';
 import EditPermissionOperation from './operations/EditPermissionOperation.vue';
@@ -61,6 +61,7 @@ import ManageSystemInfoOperation from './operations/ManageSystemInfoOperation.vu
 import RemoveAddressBookEntryOperation from './operations/RemoveAddressBookEntryOperation.vue';
 import RemoveRequestPolicyOperation from './operations/RemoveRequestPolicyOperation.vue';
 import RemoveUserGroupOperation from './operations/RemoveUserGroupOperation.vue';
+import SystemUpgradeOperation from './operations/SystemUpgradeOperation.vue';
 import TransferOperation from './operations/TransferOperation.vue';
 import UnsupportedOperation from './operations/UnsupportedOperation.vue';
 
@@ -70,10 +71,14 @@ const props = withDefaults(
     details: RequestDetails;
     hideColumnBorders?: boolean;
     mode?: 'list' | 'grid';
+    showTitle?: boolean;
+    minWith?: string;
   }>(),
   {
     hideColumnBorders: false,
     mode: 'list',
+    showTitle: true,
+    minWith: '240px',
   },
 );
 
@@ -97,9 +102,9 @@ const componentsMap: {
   SystemUpgrade: SystemUpgradeOperation,
   EditPermission: EditPermissionOperation,
   ManageSystemInfo: ManageSystemInfoOperation,
+  CallExternalCanister: CallExternalCanisterOperation,
   ChangeExternalCanister: UnsupportedOperation,
   CreateExternalCanister: UnsupportedOperation,
-  CallExternalCanister: UnsupportedOperation,
   ConfigureExternalCanister: UnsupportedOperation,
   SetDisasterRecovery: UnsupportedOperation,
   FundExternalCanister: UnsupportedOperation,
