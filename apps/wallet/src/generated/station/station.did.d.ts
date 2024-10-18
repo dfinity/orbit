@@ -1252,6 +1252,7 @@ export interface TransferListItem {
 export interface TransferMetadata { 'key' : string, 'value' : string }
 export interface TransferOperation {
   'fee' : [] | [bigint],
+  'from_asset' : Asset,
   'network' : Network,
   'transfer_id' : [] | [UUID],
   'from_account' : [] | [Account],

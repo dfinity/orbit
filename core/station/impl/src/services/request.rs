@@ -511,6 +511,7 @@ mod tests {
         core::test_utils,
         models::{
             account_test_utils::mock_account,
+            asset_test_utils::mock_asset,
             permission::Allow,
             request_policy_rule::RequestPolicyRule,
             request_policy_test_utils::mock_request_policy,
@@ -520,13 +521,13 @@ mod tests {
             user_test_utils::mock_user,
             AddAccountOperationInput, AddAddressBookEntryOperation,
             AddAddressBookEntryOperationInput, AddAssetOperationInput, AddUserOperation,
-            AddUserOperationInput, AddressFormat, Blockchain, Metadata, Percentage,
+            AddUserOperationInput, AddressFormat, Asset, Blockchain, Metadata, Percentage,
             RequestApproval, RequestOperation, RequestPolicy, RequestStatus, TokenStandard,
             TransferOperation, TransferOperationInput, User, UserGroup, UserStatus, ADMIN_GROUP_ID,
         },
         repositories::{
-            request_policy::REQUEST_POLICY_REPOSITORY, AccountRepository, NOTIFICATION_REPOSITORY,
-            USER_GROUP_REPOSITORY, USER_REPOSITORY,
+            request_policy::REQUEST_POLICY_REPOSITORY, AccountRepository, AssetRepository,
+            NOTIFICATION_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
         },
         services::{AccountService, ASSET_SERVICE},
     };
@@ -539,6 +540,7 @@ mod tests {
     struct TestContext {
         repository: RequestRepository,
         account_repository: AccountRepository,
+        asset_repository: AssetRepository,
         service: RequestService,
         caller_user: User,
         call_context: CallContext,
@@ -569,6 +571,7 @@ mod tests {
         TestContext {
             repository: RequestRepository::default(),
             account_repository: AccountRepository::default(),
+            asset_repository: AssetRepository::default(),
             service: RequestService::default(),
             account_service: AccountService::default(),
             caller_user: user,
@@ -597,6 +600,7 @@ mod tests {
                 network: "mainnet".to_string(),
                 to: "0x1234".to_string(),
             },
+            asset: mock_asset(),
         });
 
         ctx.account_repository
@@ -630,6 +634,7 @@ mod tests {
                 network: "mainnet".to_string(),
                 to: "0x1234".to_string(),
             },
+            asset: mock_asset(),
         });
         request.approvals = vec![];
         let mut request_policy = mock_request_policy();
@@ -683,6 +688,13 @@ mod tests {
         USER_REPOSITORY.insert(unrelated_user.to_key(), unrelated_user.clone());
 
         // creates the account for the transfer
+        let asset = Asset {
+            id: [1; 16],
+            ..mock_asset()
+        };
+
+        ctx.asset_repository.insert(asset.key(), asset.clone());
+
         let account = mock_account();
 
         ctx.account_repository
@@ -877,6 +889,7 @@ mod tests {
                 network: "mainnet".to_string(),
                 to: "0x1234".to_string(),
             },
+            asset: mock_asset(),
         });
         request.created_timestamp = 10;
         request.approvals = vec![];
@@ -1009,6 +1022,7 @@ mod tests {
                         network: "mainnet".to_string(),
                         to: "0x1234".to_string(),
                     },
+                    asset: mock_asset(),
                 });
                 transfer.created_timestamp = 10 + i as u64;
                 transfer.approvals = vec![RequestApproval {

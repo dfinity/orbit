@@ -12,7 +12,7 @@
     :disabled="props.disabled.value"
     :prepend-icon="props.prependIcon.value"
     :rules="props.rules.value"
-    @update:search="autocomplete.search"
+    @update:search="autocomplete.search = $event"
   />
 </template>
 <script setup lang="ts">

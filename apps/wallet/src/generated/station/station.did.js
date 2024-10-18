@@ -721,6 +721,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const TransferOperation = IDL.Record({
     'fee' : IDL.Opt(IDL.Nat),
+    'from_asset' : Asset,
     'network' : Network,
     'transfer_id' : IDL.Opt(UUID),
     'from_account' : IDL.Opt(Account),

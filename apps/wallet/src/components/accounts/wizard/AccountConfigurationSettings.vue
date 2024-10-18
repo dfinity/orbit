@@ -85,24 +85,13 @@ const isViewMode = computed(() => props.mode === 'view');
 
 const model = computed({
   get: () => props.modelValue,
-  set: value => {
-    console.log(value);
-
-    emit('update:modelValue', value);
-  },
+  set: value => emit('update:modelValue', value),
 });
 
 const assetIds = computed({
   get: () => props.modelValue.assets,
   set: value => {
     props.modelValue.assets = value;
-    console.log(value);
-
-    // emit('update:modelValue', props.modelValue);
   },
 });
-
-// const onSelectedAsset = (asset?: Asset): void => {
-//   model.value.assets = asset ? [asset] : [];
-// };
 </script>

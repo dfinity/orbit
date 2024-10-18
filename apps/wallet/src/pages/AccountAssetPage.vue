@@ -90,9 +90,7 @@
                   @click="removeAssetDialog = true"
                   :prepend-icon="mdiDelete"
                 >
-                  <VListItemTitle @click="removeAsset">{{
-                    $t('pages.account.remove_asset')
-                  }}</VListItemTitle>
+                  <VListItemTitle>{{ $t('pages.account.remove_asset') }}</VListItemTitle>
                 </VListItem>
               </VList>
             </VMenu>

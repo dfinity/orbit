@@ -12,6 +12,10 @@ import { flushPromises } from '@vue/test-utils';
 import { services } from '~/plugins/services.plugin';
 import { ExtractOk } from '~/types/helper.types';
 
+vi.mock('~/utils/asset.utils', () => ({
+  detectAddressStandard: vi.fn(() => 'icp_native'),
+}));
+
 vi.mock('~/services/station.service', () => ({
   StationService: vi.fn().mockImplementation(() => {
     return {
@@ -22,6 +26,16 @@ vi.mock('~/services/station.service', () => ({
   }),
 }));
 
+const mockAsset: Asset = {
+  blockchain: 'icp',
+  decimals: 2,
+  id: '1',
+  metadata: [],
+  name: 'ICP',
+  symbol: 'ICP',
+  standards: ['icp_native', 'icrc1'],
+};
+
 describe('TransferDialog', () => {
   it('renders correctly', () => {
     const wrapper = mount(TransferDialog, {
@@ -29,7 +43,7 @@ describe('TransferDialog', () => {
         account: {
           id: '1',
         } as Account,
-        asset: {} as Asset,
+        asset: mockAsset,
         open: true,
       },
     });
@@ -42,7 +56,7 @@ describe('TransferDialog', () => {
         account: {
           id: '1',
         } as Account,
-        asset: {} as Asset,
+        asset: mockAsset,
         open: true,
       },
     });
@@ -81,7 +95,7 @@ describe('TransferDialog', () => {
         account: {
           id: '1',
         } as Account,
-        asset: {} as Asset,
+        asset: mockAsset,
         open: true,
       },
     });
@@ -111,7 +125,7 @@ describe('TransferDialog', () => {
 
     expect(services().station.transfer).toHaveBeenCalledWith(
       expect.objectContaining({
-        amount: 10n,
+        amount: 100n, // decimals are 2
         to: 'destination address',
       }),
       'test summary',
@@ -140,7 +154,7 @@ describe('TransferDialog', () => {
         account: {
           id: '1',
         } as Account,
-        asset: {} as Asset,
+        asset: mockAsset,
         open: true,
         transferId: 'transfer-id',
       },

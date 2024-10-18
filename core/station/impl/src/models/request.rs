@@ -441,6 +441,7 @@ impl Request {
 #[cfg(test)]
 mod tests {
     use crate::core::validation::disable_mock_resource_validation;
+    use crate::models::asset_test_utils::mock_asset;
     use crate::models::permission::Allow;
     use crate::models::{
         Account, AccountKey, AddAccountOperationInput, AddAssetOperationInput, AddUserOperation,
@@ -543,6 +544,7 @@ mod tests {
                 from_asset_id: asset.id,
                 with_standard: TokenStandard::InternetComputerNative,
             },
+            asset,
         });
 
         let result = validate_request_operation_foreign_keys(&operation);
@@ -567,6 +569,7 @@ mod tests {
                 from_asset_id: [0; 16],
                 with_standard: TokenStandard::InternetComputerNative,
             },
+            asset: mock_asset(),
         }))
         .expect_err("Invalid account id should fail");
 
@@ -759,7 +762,8 @@ mod tests {
 pub mod request_test_utils {
     use super::*;
     use crate::models::{
-        Metadata, RequestApprovalStatus, TokenStandard, TransferOperation, TransferOperationInput,
+        asset_test_utils::mock_asset, Metadata, RequestApprovalStatus, TokenStandard,
+        TransferOperation, TransferOperationInput,
     };
     use num_bigint::BigUint;
     use uuid::Uuid;
@@ -786,6 +790,7 @@ pub mod request_test_utils {
                     from_asset_id: [0; 16],
                     with_standard: TokenStandard::InternetComputerNative,
                 },
+                asset: mock_asset(),
             }),
             approvals: vec![RequestApproval {
                 approver_id: [1; 16],

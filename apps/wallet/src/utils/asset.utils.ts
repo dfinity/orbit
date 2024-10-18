@@ -7,8 +7,8 @@ export function getAssetMetadata(asset: Asset, key: string): string | undefined 
   return asset.metadata.find(m => m.key === key)?.value;
 }
 
-export function detectAddressFormat(asset: Asset, address: string): string | undefined {
-  switch (asset.blockchain) {
+export function detectAddressFormat(blockchain: string, address: string): string | undefined {
+  switch (blockchain) {
     case BlockchainType.InternetComputer:
       if (ICNativeApi.isValidAddress(address)) {
         return AddressFormat.ICPNative;
@@ -21,7 +21,7 @@ export function detectAddressFormat(asset: Asset, address: string): string | und
     case BlockchainType.Ethereum:
       return;
     default:
-      throw new Error(`Blockchain not supported ${asset.blockchain}`);
+      throw new Error(`Blockchain not supported ${blockchain}`);
   }
 }
 
@@ -30,7 +30,7 @@ export function detectAddressStandard(
   address: string,
   supportedBlockchains: SupportedBlockchain[],
 ): StandardData | undefined {
-  const maybeFormat = detectAddressFormat(asset, address);
+  const maybeFormat = detectAddressFormat(asset.blockchain, address);
   if (!maybeFormat) {
     return;
   }
