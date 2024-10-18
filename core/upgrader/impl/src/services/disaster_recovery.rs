@@ -77,7 +77,7 @@ impl Drop for DisasterRecoveryReleaser {
 pub struct DisasterRecoveryStorage {}
 
 impl DisasterRecoveryStorage {
-    pub fn get(&self) -> DisasterRecovery {
+    fn get(&self) -> DisasterRecovery {
         STORAGE.with(|storage| storage.borrow().get(&()).unwrap_or_default())
     }
 
