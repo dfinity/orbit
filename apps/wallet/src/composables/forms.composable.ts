@@ -1,4 +1,4 @@
-import { computed, onMounted, Ref, ref, useSlots, useTemplateRef, watch } from 'vue';
+import { computed, onMounted, Ref, ref, useTemplateRef, watch } from 'vue';
 import logger from '~/core/logger.core';
 import { VFormValidation } from '~/types/helper.types';
 import { deepClone, transformData } from '~/utils/helper.utils';
@@ -43,7 +43,6 @@ export const useForm = <T>(opts: {
    */
   isValid?: (model: T) => Promise<FieldWithError[]> | FieldWithError[];
 }) => {
-  useSlots;
   const form = useTemplateRef<VFormValidation>(opts.formTemplateRef ?? 'form');
   const valid = ref(true);
   const fieldsWithErrors = ref<Array<FieldWithError>>([]);
