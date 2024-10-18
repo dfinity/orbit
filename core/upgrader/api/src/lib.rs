@@ -113,6 +113,8 @@ pub struct RequestDisasterRecoveryInput {
     pub arg: Vec<u8>,
 
     pub install_mode: InstallMode,
+
+    pub force_stop: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

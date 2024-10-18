@@ -10,15 +10,18 @@ use crate::{
     upgrader_ic_cdk::{api::time, spawn},
 };
 use candid::Principal;
+use ic_cdk::api::management_canister::main::{
+    list_canister_snapshots, load_canister_snapshot, stop_canister, take_canister_snapshot,
+    uninstall_code, CanisterIdRecord, LoadCanisterSnapshotArgs, TakeCanisterSnapshotArgs,
+};
 use ic_stable_structures::memory_manager::MemoryId;
 use lazy_static::lazy_static;
 use orbit_essentials::{api::ServiceResult, utils::sha256_hash};
 
 use crate::{
     model::{
-        Account, AdminUser, DisasterRecovery, DisasterRecoveryCommittee, InstallMode,
-        RecoveryEvaluationResult, RecoveryFailure, RecoveryResult, RecoveryStatus,
-        StationRecoveryRequest,
+        Account, AdminUser, DisasterRecovery, DisasterRecoveryCommittee, RecoveryEvaluationResult,
+        RecoveryFailure, RecoveryResult, RecoveryStatus, StationRecoveryRequest,
     },
     StableValue, MEMORY_ID_DISASTER_RECOVERY, MEMORY_MANAGER, TARGET_CANISTER_ID,
 };
@@ -55,25 +58,18 @@ pub struct DisasterRecoveryReleaser {
 
 impl Drop for DisasterRecoveryReleaser {
     fn drop(&mut self) {
-        let mut value = self.storage.get();
-
         let last_recovery_result =
             self.result
                 .take()
                 .unwrap_or(RecoveryResult::Failure(RecoveryFailure {
                     reason: "Recovery failed with unknown error".to_string(),
                 }));
-
-        value.last_recovery_result = Some(last_recovery_result.clone());
-        value.recovery_status = RecoveryStatus::Idle;
-
         self.logger.log(LogEntryType::DisasterRecoveryResult(
             DisasterRecoveryResultLog {
-                result: last_recovery_result,
+                result: last_recovery_result.clone(),
             },
         ));
-
-        self.storage.set(value);
+        self.storage.set_result(last_recovery_result);
     }
 }
 
@@ -87,6 +83,13 @@ impl DisasterRecoveryStorage {
 
     fn set(&self, value: DisasterRecovery) {
         STORAGE.with(|storage| storage.borrow_mut().insert((), value));
+    }
+
+    fn set_result(&self, result: RecoveryResult) {
+        let mut value = self.get();
+        value.last_recovery_result = Some(result);
+        value.recovery_status = RecoveryStatus::Idle;
+        self.set(value);
     }
 }
 
@@ -233,7 +236,7 @@ impl DisasterRecoveryService {
         installer: Arc<dyn InstallCanister>,
         logger: Arc<LoggerService>,
         request: StationRecoveryRequest,
-    ) {
+    ) -> Result<(), String> {
         let mut value = storage.get();
 
         logger.log(LogEntryType::DisasterRecoveryStart(
@@ -251,22 +254,16 @@ impl DisasterRecoveryService {
 
             if since + DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS > time() {
                 logger.log(LogEntryType::DisasterRecoveryInProgress(log));
-                return;
+                return Ok(());
             }
 
             logger.log(LogEntryType::DisasterRecoveryInProgressExpired(log));
             value.recovery_status = RecoveryStatus::Idle;
         }
 
-        let Some(station_canister_id) =
-            TARGET_CANISTER_ID.with(|id| id.borrow().get(&()).map(|id| id.0))
-        else {
-            value.last_recovery_result = Some(RecoveryResult::Failure(RecoveryFailure {
-                reason: "Station canister ID not set".to_string(),
-            }));
-            storage.set(value);
-            return;
-        };
+        let station_canister_id = TARGET_CANISTER_ID
+            .with(|id| id.borrow().get(&()).map(|id| id.0))
+            .ok_or("Station canister ID not set")?;
 
         value.recovery_status = RecoveryStatus::InProgress { since: time() };
         storage.set(value);
@@ -277,14 +274,47 @@ impl DisasterRecoveryService {
             logger: logger.clone(),
         };
 
-        // only stop for upgrade
-        if request.install_mode == InstallMode::Upgrade {
-            if let Err(err) = installer.stop(station_canister_id).await {
-                ic_cdk::print(err);
+        if let Err(err) = installer.stop(station_canister_id).await {
+            if request.force_stop {
+                let existing_snapshots = list_canister_snapshots(CanisterIdRecord {
+                    canister_id: station_canister_id,
+                })
+                .await
+                .map_err(|(_code, msg)| msg)?
+                .0;
+                let snapshot = take_canister_snapshot(TakeCanisterSnapshotArgs {
+                    canister_id: station_canister_id,
+                    replace_snapshot: existing_snapshots
+                        .into_iter()
+                        .next()
+                        .map(|snapshot| snapshot.id),
+                })
+                .await
+                .map_err(|(_code, msg)| msg)?
+                .0;
+                uninstall_code(CanisterIdRecord {
+                    canister_id: station_canister_id,
+                })
+                .await
+                .map_err(|(_code, msg)| msg)?;
+                stop_canister(CanisterIdRecord {
+                    canister_id: station_canister_id,
+                })
+                .await
+                .map_err(|(_code, msg)| msg)?;
+                load_canister_snapshot(LoadCanisterSnapshotArgs {
+                    canister_id: station_canister_id,
+                    snapshot_id: snapshot.id,
+                    sender_canister_version: None,
+                })
+                .await
+                .map_err(|(_code, msg)| msg)?;
+            } else {
+                return Err(err);
             }
         }
 
-        match installer
+        installer
             .install(
                 station_canister_id,
                 request.wasm_module,
@@ -292,22 +322,12 @@ impl DisasterRecoveryService {
                 request.arg,
                 request.install_mode,
             )
-            .await
-        {
-            Ok(_) => {
-                releaser.result = Some(RecoveryResult::Success);
-            }
-            Err(reason) => {
-                releaser.result = Some(RecoveryResult::Failure(RecoveryFailure { reason }));
-            }
-        }
+            .await?;
 
-        // only start for upgrade
-        if request.install_mode == InstallMode::Upgrade {
-            if let Err(err) = installer.start(station_canister_id).await {
-                ic_cdk::print(err);
-            }
-        }
+        installer.start(station_canister_id).await?;
+
+        releaser.result = Some(RecoveryResult::Success);
+        Ok(())
     }
 
     pub fn request_recovery(
@@ -332,6 +352,7 @@ impl DisasterRecoveryService {
                 arg: request.arg,
                 submitted_at: time(),
                 install_mode: request.install_mode.into(),
+                force_stop: request.force_stop,
             };
 
             // check if user had previous recovery request
@@ -365,7 +386,11 @@ impl DisasterRecoveryService {
             let logger = self.logger.clone();
 
             spawn(async move {
-                Self::do_recovery(storage, installer, logger, *request).await;
+                if let Err(reason) =
+                    Self::do_recovery(storage.clone(), installer, logger, *request).await
+                {
+                    storage.set_result(RecoveryResult::Failure(RecoveryFailure { reason }));
+                }
             });
         }
     }
@@ -489,6 +514,7 @@ mod test {
                 module: vec![4, 5, 6],
                 module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
+                force_stop: false,
             },
         );
         assert!(dr.storage.get().recovery_requests.is_empty());
@@ -501,6 +527,7 @@ mod test {
                 module: vec![4, 5, 6],
                 module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
+                force_stop: false,
             },
         );
 
@@ -517,6 +544,7 @@ mod test {
                 module: vec![4, 5, 6],
                 module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
+                force_stop: false,
             },
         );
 
@@ -531,6 +559,7 @@ mod test {
                 module: vec![4, 5, 6],
                 module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
+                force_stop: false,
             },
         );
 
@@ -567,6 +596,7 @@ mod test {
             arg: vec![7, 8, 9],
             arg_sha256: vec![10, 11, 12],
             submitted_at: 0,
+            force_stop: false,
         };
 
         // assert that during install the state is set to InProgress
@@ -587,7 +617,8 @@ mod test {
             logger.clone(),
             recovery_request.clone(),
         )
-        .await;
+        .await
+        .unwrap();
 
         // calls install in Idle state
         assert_eq!(
@@ -620,7 +651,8 @@ mod test {
             logger.clone(),
             recovery_request.clone(),
         )
-        .await;
+        .await
+        .unwrap();
 
         // does not call install in InProgress state
         assert_eq!(
@@ -646,6 +678,7 @@ mod test {
             arg: vec![7, 8, 9],
             arg_sha256: vec![10, 11, 12],
             submitted_at: 0,
+            force_stop: false,
         };
 
         let installer = Arc::new(TestInstaller::default());
@@ -656,12 +689,8 @@ mod test {
             logger.clone(),
             recovery_request.clone(),
         )
-        .await;
-
-        assert!(matches!(
-            storage.get().last_recovery_result,
-            Some(RecoveryResult::Failure(_))
-        ));
+        .await
+        .unwrap_err();
 
         assert!(matches!(
             storage.get().recovery_status,
@@ -687,6 +716,7 @@ mod test {
             arg: vec![7, 8, 9],
             arg_sha256: vec![10, 11, 12],
             submitted_at: 0,
+            force_stop: false,
         };
 
         let installer = Arc::new(PanickingTestInstaller::default());
@@ -700,7 +730,8 @@ mod test {
                 logger.clone(),
                 recovery_request.clone(),
             )
-            .await;
+            .await
+            .unwrap();
 
             // reset the hook
             let _ = take_hook();

@@ -2,23 +2,26 @@ use crate::setup::{
     get_canister_wasm, setup_new_env, setup_new_env_with_config, WALLET_ADMIN_USER,
 };
 use crate::utils::{
-    add_user, advance_time_to_burn_cycles, await_station_healthy, execute_request,
-    get_account_read_permission, get_account_transfer_permission, get_account_update_permission,
-    get_core_canister_health_status, get_system_info, get_upgrader_disaster_recovery,
-    get_upgrader_logs, get_user, set_disaster_recovery, upload_canister_chunks_to_asset_canister,
-    user_test_id, NNS_ROOT_CANISTER_ID,
+    add_user, advance_time_to_burn_cycles, await_station_healthy, deploy_test_canister,
+    execute_request, get_account_read_permission, get_account_transfer_permission,
+    get_account_update_permission, get_core_canister_health_status, get_request, get_system_info,
+    get_upgrader_disaster_recovery, get_upgrader_logs, get_user, set_disaster_recovery,
+    submit_request, upload_canister_chunks_to_asset_canister, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
+use ic_cdk::api::management_canister::main::CanisterStatusType;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::utils::sha256_hash;
 use pocket_ic::{query_candid_as, update_candid_as, PocketIc};
 use station_api::{
-    AddAccountOperationInput, AllowDTO, DisasterRecoveryCommitteeDTO, HealthStatus,
-    ListAccountsResponse, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
+    AddAccountOperationInput, AllowDTO, CallExternalCanisterOperationInput, CanisterMethodDTO,
+    DisasterRecoveryCommitteeDTO, HealthStatus, ListAccountsResponse, RequestOperationDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, RequestStatusDTO,
     SetDisasterRecoveryOperationInput, SystemInit, SystemInstall, SystemUpgrade,
 };
 use std::collections::BTreeMap;
+use std::time::Duration;
 use upgrader_api::{
     Account, AdminUser, DisasterRecoveryCommittee, GetDisasterRecoveryAccountsResponse,
     GetDisasterRecoveryCommitteeResponse, SetDisasterRecoveryAccountsInput,
@@ -363,6 +366,7 @@ fn test_disaster_recovery_flow() {
         })
         .unwrap(),
         install_mode: upgrader_api::InstallMode::Reinstall,
+        force_stop: false,
     };
 
     let bad_request = upgrader_api::RequestDisasterRecoveryInput {
@@ -370,6 +374,7 @@ fn test_disaster_recovery_flow() {
         module_extra_chunks: Some(module_extra_chunks),
         arg: vec![1, 2, 3],
         install_mode: upgrader_api::InstallMode::Reinstall,
+        force_stop: false,
     };
 
     let res: (ApiResult<()>,) = update_candid_as(
@@ -569,6 +574,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
             }))
             .unwrap(),
             install_mode: upgrader_api::InstallMode::Reinstall,
+            force_stop: false,
         },),
     )
     .expect("Unexpected failed update call to request disaster recovery");
@@ -737,6 +743,7 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
             }))
             .unwrap(),
             install_mode: upgrader_api::InstallMode::Reinstall,
+            force_stop: false,
         },),
     )
     .expect("Unexpected failed update call to request disaster recovery");
@@ -813,6 +820,7 @@ fn test_disaster_recovery_in_progress() {
         })
         .unwrap(),
         install_mode: upgrader_api::InstallMode::Reinstall,
+        force_stop: false,
     };
 
     let res: (ApiResult<()>,) = update_candid_as(
@@ -906,6 +914,7 @@ fn test_disaster_recovery_install() {
         })
         .unwrap(),
         install_mode: upgrader_api::InstallMode::Install,
+        force_stop: false,
     };
 
     let res: (ApiResult<()>,) = update_candid_as(
@@ -940,6 +949,7 @@ fn test_disaster_recovery_upgrade() {
         module_extra_chunks: Some(module_extra_chunks),
         arg: Encode!(&station_init_arg).unwrap(),
         install_mode: upgrader_api::InstallMode::Upgrade,
+        force_stop: false,
     };
 
     let res: (ApiResult<()>,) = update_candid_as(
@@ -983,6 +993,7 @@ fn test_disaster_recovery_failing() {
         module_extra_chunks: Some(module_extra_chunks),
         arg: Encode!(&arg).unwrap(),
         install_mode: upgrader_api::InstallMode::Upgrade,
+        force_stop: false,
     };
 
     let res: (ApiResult<()>,) = update_candid_as(
@@ -996,4 +1007,127 @@ fn test_disaster_recovery_failing() {
     res.0.expect("Failed to request disaster recovery");
 
     await_disaster_recovery_failure(&env, canister_ids.station, upgrader_id);
+}
+
+#[test]
+fn test_disaster_recovery_unstoppable() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+
+    let test_canister = deploy_test_canister(&env);
+
+    // submit request to call the "expensive" method on the test canister and make the request "Processing"
+    let execution_method = CanisterMethodDTO {
+        canister_id: test_canister,
+        method_name: "expensive".to_string(),
+    };
+    let call_canister_operation =
+        RequestOperationInput::CallExternalCanister(CallExternalCanisterOperationInput {
+            validation_method: None,
+            execution_method,
+            arg: Some(Encode!(&()).unwrap()),
+            execution_method_cycles: None,
+        });
+    let call_canister_operation_request = submit_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        call_canister_operation.clone(),
+    );
+    // timer's period for processing requests is 5 seconds
+    env.advance_time(Duration::from_secs(5));
+    env.tick();
+    let call_request_in_progress = get_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        call_canister_operation_request.clone(),
+    );
+    match call_request_in_progress.status {
+        RequestStatusDTO::Processing { .. } => (),
+        _ => panic!(
+            "Unexpected request status: {:?}",
+            call_request_in_progress.status
+        ),
+    };
+
+    // make disaster recovery upgrade of the station
+    let station_init_arg = SystemInstall::Upgrade(SystemUpgrade { name: None });
+    let new_wasm_module = get_canister_wasm("station");
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(&env, new_wasm_module, 500_000);
+    let mut disaster_recovery_request = upgrader_api::RequestDisasterRecoveryInput {
+        module: base_chunk,
+        module_extra_chunks: Some(module_extra_chunks),
+        arg: Encode!(&station_init_arg).unwrap(),
+        install_mode: upgrader_api::InstallMode::Upgrade,
+        force_stop: false,
+    };
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "request_disaster_recovery",
+        (disaster_recovery_request.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap();
+    // start processing the mgmt canister call from upgrader to stop the station
+    env.tick();
+
+    // the station should be "Stopping" by now
+    let station_status = env
+        .canister_status(canister_ids.station, Some(upgrader_id))
+        .unwrap();
+    assert_eq!(station_status.status, CanisterStatusType::Stopping);
+
+    // the station can't be stopped yet because it has an open call context
+    // with a pending down-stream call to the "expensive" method of the test canister
+    // now we advance time by 5 mins to time out (i.e., fail) the upgrader's call to stop the station
+    env.advance_time(Duration::from_secs(5 * 60));
+
+    // disaster recovery of the station fails because the station could not be stopped
+    await_disaster_recovery_failure(&env, canister_ids.station, upgrader_id);
+    let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
+    match dr_status.last_recovery_result {
+        Some(upgrader_api::RecoveryResult::Failure(err)) => {
+            assert!(err.reason.contains("Stop canister request timed out"))
+        }
+        _ => panic!(
+            "Unexpected last recovery result: {:?}",
+            dr_status.last_recovery_result
+        ),
+    };
+
+    // the station should still be "Stopping"
+    let station_status = env
+        .canister_status(canister_ids.station, Some(upgrader_id))
+        .unwrap();
+    assert_eq!(station_status.status, CanisterStatusType::Stopping);
+
+    // force stop in disaster recovery
+    disaster_recovery_request.force_stop = true;
+    let res: (ApiResult<()>,) = update_candid_as(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "request_disaster_recovery",
+        (disaster_recovery_request.clone(),),
+    )
+    .unwrap();
+    res.0.unwrap();
+    // start processing the mgmt canister call from upgrader to stop the station
+    env.tick();
+
+    // the station can't be stopped yet because it has an open call context
+    // with a pending down-stream call to the "expensive" method of the test canister
+    // now we advance time by 5 mins to time out (i.e., fail) the upgrader's call to stop the station
+    env.advance_time(Duration::from_secs(5 * 60));
+
+    // disaster recovery should succeed now when forcing the station to stop
+    // await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
 }

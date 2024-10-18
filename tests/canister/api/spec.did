@@ -1,3 +1,4 @@
 service : {
   call : (canister_id : principal, method_name : text, arg : blob, total_calls : nat64) -> ();
+  expensive : () -> ();
 }

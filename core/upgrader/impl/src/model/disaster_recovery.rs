@@ -81,6 +81,8 @@ pub struct StationRecoveryRequest {
     pub arg_sha256: Vec<u8>,
     /// Time in nanoseconds since the UNIX epoch when the request was submitted.
     pub submitted_at: Timestamp,
+    /// Should the station be forced to stop if the station is unstoppable.
+    pub force_stop: bool,
 }
 
 impl From<StationRecoveryRequest> for upgrader_api::StationRecoveryRequest {

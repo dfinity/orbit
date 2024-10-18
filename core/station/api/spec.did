@@ -2234,12 +2234,19 @@ type CanisterStatusInput = record {
   canister_id : principal;
 };
 
+type LogVisibility = variant {
+  public;
+  controllers;
+};
+
 type DefiniteCanisterSettings = record {
   controllers : vec principal;
   compute_allocation : nat;
   memory_allocation : nat;
   freezing_threshold : nat;
   reserved_cycles_limit : nat;
+  log_visibility : LogVisibility;
+  wasm_memory_limit : nat;
 };
 
 type DefiniteCanisterSettingsInput = record {
@@ -2248,6 +2255,8 @@ type DefiniteCanisterSettingsInput = record {
   memory_allocation : opt nat;
   freezing_threshold : opt nat;
   reserved_cycles_limit : opt nat;
+  log_visibility : opt LogVisibility;
+  wasm_memory_limit : opt nat;
 };
 
 type CanisterStatusResponse = record {

@@ -844,3 +844,15 @@ pub(crate) fn await_station_healthy(env: &PocketIc, station_id: Principal) {
         max_rounds
     );
 }
+
+pub(crate) fn deploy_test_canister(env: &PocketIc) -> Principal {
+    let test_canister = create_canister(env, WALLET_ADMIN_USER);
+    let test_canister_wasm = get_canister_wasm("test_canister");
+    env.install_canister(
+        test_canister,
+        test_canister_wasm,
+        vec![],
+        Some(WALLET_ADMIN_USER),
+    );
+    test_canister
+}
