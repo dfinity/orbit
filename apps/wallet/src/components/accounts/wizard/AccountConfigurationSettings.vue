@@ -89,9 +89,7 @@ const model = computed({
 });
 
 const assetIds = computed({
-  get: () => props.modelValue.assets,
-  set: value => {
-    props.modelValue.assets = value;
-  },
+  get: () => model.value.assets,
+  set: value => (model.value.assets = value),
 });
 </script>

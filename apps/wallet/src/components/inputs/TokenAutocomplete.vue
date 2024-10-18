@@ -43,6 +43,8 @@ const input = withDefaults(
     readonly: false,
     disabled: false,
     rules: undefined,
+    excludedIds: undefined,
+    noDataText: undefined,
   },
 );
 

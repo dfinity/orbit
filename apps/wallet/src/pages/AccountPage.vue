@@ -97,7 +97,10 @@
                       </div>
                     </template>
                     <template #item.address="{ item: account_asset }">
-                      <div v-for="account_address in assetAddresses(account_asset.asset_id)">
+                      <div
+                        v-for="account_address in assetAddresses(account_asset.asset_id)"
+                        :key="account_address.address"
+                      >
                         <small>
                           <TextOverflow :max-length="32" :text="account_address.address">
                           </TextOverflow

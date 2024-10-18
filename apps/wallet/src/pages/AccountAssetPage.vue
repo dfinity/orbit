@@ -31,7 +31,7 @@
         </div>
         <PageHeader v-else :title="pageTitle" :breadcrumbs="pageBreadcrumbs">
           <template #subtitle>
-            <div v-for="accountAddress in addresses">
+            <div v-for="accountAddress in addresses" :key="accountAddress.address">
               <small
                 ><VChip
                   size="x-small"
@@ -57,38 +57,39 @@
           </template>
           <template v-if="asset" #actions>
             <BatchTransfersActionBtn
+              v-if="privileges.can_transfer"
               :account="account"
               variant="outlined"
               :asset="asset"
-              v-if="privileges.can_transfer"
             />
             <TransferBtn
+              v-if="privileges.can_transfer"
               :account="account"
               color="primary"
               :asset="asset"
-              v-if="privileges.can_transfer"
             >
               + {{ $t('pages.accounts.btn_new_transfer') }}
             </TransferBtn>
 
             <VMenu v-if="privileges.can_edit">
-              <template v-slot:activator="{ props }">
+              <template #activator="{ props: activatorProps }">
                 <VBtn
                   :icon="mdiDotsVertical"
                   color="primary-variant"
                   density="comfortable"
-                  v-bind="props"
+                  v-bind="activatorProps"
                 >
                 </VBtn>
               </template>
               <VList>
                 <VListItem
                   v-if="privileges.can_edit"
+                  :key="account.id"
                   color="primary"
                   variant="tonal"
                   link
-                  @click="removeAssetDialog = true"
                   :prepend-icon="mdiDelete"
+                  @click="removeAssetDialog = true"
                 >
                   <VListItemTitle>{{ $t('pages.account.remove_asset') }}</VListItemTitle>
                 </VListItem>
@@ -435,7 +436,7 @@ const loadAccount = async (): Promise<{
     .filter(account_address => formats.some(f => f.format == account_address.format))
     .map(account_address => ({
       address: account_address.address,
-      standard: formats.find(f => f.format === account_address.format)?.standard!,
+      standard: formats.find(f => f.format === account_address.format)!.standard,
       format: account_address.format,
       blockchain: maybeAsset.blockchain,
     }));

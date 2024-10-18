@@ -7,7 +7,7 @@ import { ICRC1Api } from './icrc1-api.service';
 export class ChainApiFactory {
   static create(asset: Asset, addresses: AccountAddress[]): ChainApi {
     switch (asset.blockchain) {
-      case BlockchainType.InternetComputer:
+      case BlockchainType.InternetComputer: {
         const maybeIcpNativeAddress = addresses.find(a => a.format === AddressFormat.ICPNative);
         const maybeIcrc1Address = addresses.find(a => a.format === AddressFormat.ICRC1);
         const maybeIndexCanisterId = getAssetMetadata(asset, 'index_canister_id');
@@ -29,6 +29,7 @@ export class ChainApiFactory {
         }
 
         throw new Error(`Blockchain not supported: ${asset.blockchain}`);
+      }
       case BlockchainType.Bitcoin:
       case BlockchainType.Ethereum:
       default:
