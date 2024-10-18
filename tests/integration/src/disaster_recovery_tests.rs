@@ -1129,5 +1129,20 @@ fn test_disaster_recovery_unstoppable() {
     env.advance_time(Duration::from_secs(5 * 60));
 
     // disaster recovery should succeed now when forcing the station to stop
-    // await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+    await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+
+    // the call request will be "Processing" forever since we deleted its call context during disaster recovery
+    let call_request_in_progress = get_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        call_canister_operation_request.clone(),
+    );
+    match call_request_in_progress.status {
+        RequestStatusDTO::Processing { .. } => (),
+        _ => panic!(
+            "Unexpected request status: {:?}",
+            call_request_in_progress.status
+        ),
+    };
 }

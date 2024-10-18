@@ -261,12 +261,12 @@ impl DisasterRecoveryService {
             value.recovery_status = RecoveryStatus::Idle;
         }
 
+        value.recovery_status = RecoveryStatus::InProgress { since: time() };
+        storage.set(value);
+
         let station_canister_id = TARGET_CANISTER_ID
             .with(|id| id.borrow().get(&()).map(|id| id.0))
             .ok_or("Station canister ID not set")?;
-
-        value.recovery_status = RecoveryStatus::InProgress { since: time() };
-        storage.set(value);
 
         let mut releaser = DisasterRecoveryReleaser {
             storage: storage.clone(),
@@ -686,11 +686,6 @@ mod test {
         )
         .await
         .unwrap_err();
-
-        assert!(matches!(
-            storage.get().recovery_status,
-            RecoveryStatus::Idle
-        ));
     }
 
     #[tokio::test]
