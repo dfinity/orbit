@@ -928,6 +928,7 @@ export default {
       systemupgrade: 'Upgrade',
       change: 'Change',
       fund: 'Fund',
+      callcanister: 'Call',
     },
     allow: {
       public: 'Anyone',
