@@ -26,6 +26,7 @@
             v-model="transfer"
             v-model:trigger-submit="triggerSubmit"
             :account="props.account.value"
+            :asset="props.asset.value"
             :mode="props.readonly.value ? 'view' : 'edit'"
             @submit="save"
             @valid="valid = $event"
@@ -89,15 +90,18 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import logger from '~/core/logger.core';
-import { Account, Request, Transfer, UUID } from '~/generated/station/station.did';
+import { Account, Asset, Request, Transfer, UUID } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
 import { maybeTransformBlockchainAddress } from '~/utils/app.utils';
 import { assertAndReturn } from '~/utils/helper.utils';
 import TransferForm from './TransferForm.vue';
+import { detectAddressStandard } from '~/utils/asset.utils';
+import { useStationStore } from '~/stores/station.store';
 
 const input = withDefaults(
   defineProps<{
     account: Account;
+    asset: Asset;
     transferId?: UUID;
     open?: boolean;
     dialogMaxWidth?: number;
@@ -135,6 +139,8 @@ const summary = computed({
 
 const stationService = services().station;
 
+const stationStore = useStationStore();
+
 const loadTransfer = async (): Promise<{
   transfer: Partial<Transfer>;
   request: Partial<Request>;
@@ -171,14 +177,28 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
 
+    const toAddress = assertAndReturn(transfer.value.to, 'to');
+
+    const maybeStandard = detectAddressStandard(
+      props.asset.value,
+      toAddress,
+      stationStore.configuration.details.supported_blockchains,
+    );
+
+    if (!maybeStandard) {
+      throw new Error('Invalid address');
+    }
+
     const newRequest = await stationService.transfer(
       {
         from_account_id: assertAndReturn(transfer.value.from_account_id, 'from_account_id'),
+        from_asset_id: props.asset.value.id,
+        with_standard: maybeStandard.standard,
         amount: assertAndReturn(transfer.value.amount, 'amount'),
         to: maybeTransformBlockchainAddress(
-          props.account.value.blockchain,
-          props.account.value.standard,
-          assertAndReturn(transfer.value.to, 'to'),
+          props.asset.value.blockchain,
+          maybeStandard.standard,
+          toAddress,
         ),
         fee: transfer.value.fee ? [transfer.value.fee] : [],
         metadata: transfer.value.metadata ?? [],

@@ -5,7 +5,13 @@ export enum BlockchainType {
 }
 
 export enum BlockchainStandard {
-  Native = 'native',
+  Native = 'icp_native',
+  ICRC1 = 'icrc1',
+}
+
+export enum AddressFormat {
+  ICPNative = 'icp_account_identifier',
+  ICRC1 = 'icrc1_account',
 }
 
 export enum TokenSymbol {

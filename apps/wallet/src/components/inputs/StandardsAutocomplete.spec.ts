@@ -13,7 +13,7 @@ describe('StandardsAutocomplete', () => {
 
     expect(wrapper.exists()).toBe(true);
 
-    const autocomplete = wrapper.findComponent({ name: 'VCombobox' });
+    const autocomplete = wrapper.findComponent({ name: 'VSelect' });
     expect(autocomplete.exists()).toBe(true);
 
     expect(autocomplete.props('modelValue')).toEqual(['1']);
@@ -25,7 +25,7 @@ describe('StandardsAutocomplete', () => {
         blockchain: 'icp',
       },
     });
-    const autocomplete = wrapper.findComponent({ name: 'VCombobox' });
+    const autocomplete = wrapper.findComponent({ name: 'VSelect' });
 
     expect(autocomplete.exists()).toBe(true);
 

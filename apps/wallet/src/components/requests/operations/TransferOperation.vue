@@ -32,8 +32,8 @@
           />
         </div>
         <div class="d-flex align-center text-no-wrap flex-grow-1">
-          {{ account ? formatBalance(formValue.amount, account.decimals) : '-' }}
-          {{ account ? account.symbol : '' }}
+          {{ account ? formatBalance(formValue.amount, asset.decimals) : '-' }}
+          {{ account ? asset.symbol : '' }}
         </div>
       </div>
     </RequestOperationListRow>
@@ -46,7 +46,7 @@
       :prepend-icon="mdiWallet"
       readonly
     />
-    <TransferForm :model-value="formValue" :account="account" mode="view" />
+    <TransferForm :model-value="formValue" :account="account" mode="view" :asset="asset" />
   </div>
 </template>
 
@@ -75,6 +75,7 @@ const props = withDefaults(
 const isListMode = computed(() => props.mode === 'list');
 const formValue: Ref<Partial<Transfer>> = ref({});
 const account = computed(() => props.operation.from_account?.[0]);
+const asset = computed(() => props.operation.from_asset);
 
 onBeforeMount(() => {
   const transfer: Partial<Transfer> = {};

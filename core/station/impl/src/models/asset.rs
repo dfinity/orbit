@@ -14,7 +14,7 @@ use std::{
 pub type AssetId = UUID;
 
 #[storable]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Asset {
     pub id: AssetId,
     /// The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)

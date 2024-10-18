@@ -64,6 +64,7 @@ impl TransferOperation {
     pub fn to_dto(self, account: Option<Account>) -> TransferOperationDTO {
         TransferOperationDTO {
             from_account: account.map(|account| account.to_dto()),
+            from_asset: self.asset.into(),
             network: NetworkDTO {
                 id: self.input.network.clone(),
                 name: self.input.network.clone(),

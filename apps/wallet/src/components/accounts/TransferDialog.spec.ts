@@ -1,10 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mount } from '~/test.utils';
 import TransferDialog from './TransferDialog.vue';
-import { Account, GetRequestResult, Request, Transfer } from '~/generated/station/station.did';
+import {
+  Account,
+  Asset,
+  GetRequestResult,
+  Request,
+  Transfer,
+} from '~/generated/station/station.did';
 import { flushPromises } from '@vue/test-utils';
 import { services } from '~/plugins/services.plugin';
 import { ExtractOk } from '~/types/helper.types';
+
+vi.mock('~/utils/asset.utils', () => ({
+  detectAddressStandard: vi.fn(() => 'icp_native'),
+}));
 
 vi.mock('~/services/station.service', () => ({
   StationService: vi.fn().mockImplementation(() => {
@@ -16,14 +26,24 @@ vi.mock('~/services/station.service', () => ({
   }),
 }));
 
+const mockAsset: Asset = {
+  blockchain: 'icp',
+  decimals: 2,
+  id: '1',
+  metadata: [],
+  name: 'ICP',
+  symbol: 'ICP',
+  standards: ['icp_native', 'icrc1'],
+};
+
 describe('TransferDialog', () => {
   it('renders correctly', () => {
     const wrapper = mount(TransferDialog, {
       props: {
         account: {
           id: '1',
-          decimals: 1,
         } as Account,
+        asset: mockAsset,
         open: true,
       },
     });
@@ -35,8 +55,8 @@ describe('TransferDialog', () => {
       props: {
         account: {
           id: '1',
-          decimals: 1,
         } as Account,
+        asset: mockAsset,
         open: true,
       },
     });
@@ -74,8 +94,8 @@ describe('TransferDialog', () => {
       props: {
         account: {
           id: '1',
-          decimals: 1,
         } as Account,
+        asset: mockAsset,
         open: true,
       },
     });
@@ -105,7 +125,7 @@ describe('TransferDialog', () => {
 
     expect(services().station.transfer).toHaveBeenCalledWith(
       expect.objectContaining({
-        amount: 10n,
+        amount: 100n, // decimals are 2
         to: 'destination address',
       }),
       'test summary',
@@ -133,8 +153,8 @@ describe('TransferDialog', () => {
       props: {
         account: {
           id: '1',
-          decimals: 2,
         } as Account,
+        asset: mockAsset,
         open: true,
         transferId: 'transfer-id',
       },

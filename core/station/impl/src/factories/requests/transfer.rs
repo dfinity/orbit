@@ -36,11 +36,19 @@ impl Create<station_api::TransferOperationInput> for TransferRequestCreate {
                     info: format!("Invalid from_account_id: {}", e),
                 }
             })?;
-        let from_asset_id = HelperMapper::to_uuid(operation_input.from_asset_id).map_err(|e| {
-            RequestError::ValidationError {
+        let from_asset_id = HelperMapper::to_uuid(operation_input.from_asset_id.clone())
+            .map_err(|e| RequestError::ValidationError {
                 info: format!("Invalid from_asset_id: {}", e),
-            }
-        })?;
+            })?
+            .as_bytes()
+            .to_owned();
+
+        let asset = ASSET_REPOSITORY
+            .get(&from_asset_id)
+            .ok_or(RequestError::ValidationError {
+                info: format!("Asset {} does not exist.", operation_input.from_asset_id),
+            })?;
+
         let request = Request::new(
             request_id,
             requested_by_user,
@@ -48,9 +56,10 @@ impl Create<station_api::TransferOperationInput> for TransferRequestCreate {
             RequestOperation::Transfer(TransferOperation {
                 transfer_id: None,
                 fee: None,
+                asset,
                 input: TransferOperationInput {
                     from_account_id: *from_account_id.as_bytes(),
-                    from_asset_id: *from_asset_id.as_bytes(),
+                    from_asset_id,
                     with_standard: TokenStandard::from_str(&operation_input.with_standard)
                         .map_err(|_| RequestError::ValidationError {
                             info: "Invalid with_standard.".to_owned(),

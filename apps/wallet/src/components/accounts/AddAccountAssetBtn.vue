@@ -14,11 +14,9 @@
     <VIcon v-if="props.appendIcon.value" :icon="props.appendIcon.value" />
   </VBtn>
 
-  <TransferDialog
+  <AddAccountAssetDialog
     :account="props.account.value"
-    :asset="props.asset.value"
     :open="open"
-    :transfer-id="props.transferId.value"
     :readonly="props.readonly.value"
     @update:open="
       openEvent => {
@@ -32,14 +30,12 @@
 <script lang="ts" setup>
 import { ref, toRefs } from 'vue';
 import { VBtn } from 'vuetify/components';
-import TransferDialog from '~/components/accounts/TransferDialog.vue';
-import { Account, Asset, UUID } from '~/generated/station/station.did';
+import { Account } from '~/generated/station/station.did';
+import AddAccountAssetDialog from './AddAccountAssetDialog.vue';
 
 const input = withDefaults(
   defineProps<{
     account: Account;
-    asset: Asset;
-    transferId?: UUID;
     icon?: string;
     text?: string;
     size?: 'x-small' | 'small' | 'default' | 'medium' | 'large' | 'x-large';
@@ -49,7 +45,6 @@ const input = withDefaults(
     appendIcon?: string;
   }>(),
   {
-    transferId: undefined,
     icon: undefined,
     text: undefined,
     size: 'default',

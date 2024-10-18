@@ -7,7 +7,8 @@ use crate::{
         TRANSACTION_SUBMITTED_DETAILS_TRANSACTION_HASH_KEY,
     },
     models::{
-        Account, Request, RequestOperation, RequestStatus, Transfer, TransferId, TransferStatus,
+        Account, Asset, Request, RequestOperation, RequestStatus, Transfer, TransferId,
+        TransferStatus,
     },
     repositories::{AccountRepository, AssetRepository, RequestRepository, TransferRepository},
     services::RequestService,
@@ -111,7 +112,7 @@ impl Job {
         for (pos, result) in results.iter().enumerate() {
             match result {
                 Ok((transfer, details)) => {
-                    let mut transfer = transfer.clone();
+                    let (mut transfer, _account, asset) = transfer.clone();
                     let transfer_completed_time = next_time();
                     let maybe_transaction_hash = details
                         .details
@@ -134,6 +135,7 @@ impl Job {
                         if let RequestOperation::Transfer(transfer_operation) =
                             &mut request.operation
                         {
+                            transfer_operation.asset = asset;
                             transfer_operation.transfer_id = Some(transfer.id);
                             transfer_operation.fee = Some(transfer.fee);
                         }
@@ -185,7 +187,7 @@ impl Job {
     async fn execute_transfer(
         &self,
         transfer: Transfer,
-    ) -> Result<(Transfer, BlockchainTransactionSubmitted), TransferError> {
+    ) -> Result<((Transfer, Account, Asset), BlockchainTransactionSubmitted), TransferError> {
         let account = self
             .account_repository
             .get(&Account::key(transfer.from_account))
@@ -212,7 +214,7 @@ impl Job {
         })?;
 
         match blockchain_api.submit_transaction(&account, &transfer).await {
-            Ok(details) => Ok((transfer, details)),
+            Ok(details) => Ok(((transfer, account, asset), details)),
 
             Err(error) => Err(TransferError::ExecutionError {
                 reason: error.to_json_string(),

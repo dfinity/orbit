@@ -3,7 +3,7 @@ use super::{
     request_policy_rule::{RequestPolicyRule, RequestPolicyRuleInput},
     request_specifier::RequestSpecifier,
     resource::{Resource, ValidationMethodResourceTarget},
-    AccountAsset, AccountId, AddressBookEntryId, AddressFormat, AssetId, Blockchain,
+    AccountAsset, AccountId, AddressBookEntryId, AddressFormat, Asset, AssetId, Blockchain,
     ChangeMetadata, CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
     ExternalCanisterState, MetadataItem, TokenStandard, UserGroupId, UserId, UserStatus,
 };
@@ -136,6 +136,7 @@ pub struct RemoveAssetOperationInput {
 pub struct TransferOperation {
     pub transfer_id: Option<UUID>,
     pub input: TransferOperationInput,
+    pub asset: Asset,
     pub fee: Option<candid::Nat>,
 }
 

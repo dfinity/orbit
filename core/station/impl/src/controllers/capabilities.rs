@@ -59,6 +59,12 @@ impl CapabilitiesController {
                                     .iter()
                                     .map(|operation| operation.to_string())
                                     .collect(),
+                                supported_address_formats: standard
+                                    .get_info()
+                                    .address_formats
+                                    .iter()
+                                    .map(|format| format.to_string())
+                                    .collect(),
                             })
                             .collect(),
                     })
