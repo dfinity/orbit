@@ -545,9 +545,7 @@ pub enum ConfigureExternalCanisterOperationKind {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum LogVisibility {
-    #[serde(rename = "public")]
     Public,
-    #[serde(rename = "controllers")]
     Controllers,
 }
 
