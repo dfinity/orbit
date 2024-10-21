@@ -803,7 +803,7 @@ pub fn upload_canister_chunks_to_asset_canister(
     for chunk in &chunks {
         let chunk_hash = hash(chunk.to_vec());
         let store_arg = StoreArg {
-            key: hex::encode(chunk_hash.clone()),
+            key: format!("/{}", hex::encode(chunk_hash.clone())),
             content: chunk.to_vec(),
             content_type: "application/octet-stream".to_string(),
             content_encoding: "identity".to_string(),
