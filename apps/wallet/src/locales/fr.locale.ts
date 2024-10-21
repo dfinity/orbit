@@ -940,6 +940,7 @@ export default {
       systemupgrade: 'Mise à jour du système',
       change: 'Changement',
       fund: 'Financer',
+      callcanister: 'Appeler un canister',
     },
     allow: {
       public: "N'importe qui",
