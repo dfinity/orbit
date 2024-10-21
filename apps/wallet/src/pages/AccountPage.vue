@@ -43,9 +43,7 @@
               {{ $t('terms.settings') }}
             </AccountSetupAction>
           </template>
-          <template #subtitle>
-            <small><TextOverflow :max-length="32" :text="account.name" /></small>
-          </template>
+          <template #subtitle> </template>
           <template v-if="privileges.can_edit" #actions>
             <AddAccountAssetBtn :account="account" color="primary">
               + {{ $t('pages.account.add_asset') }}
@@ -60,7 +58,7 @@
             class="mb-4"
             :see-all-link="{
               name: Routes.Requests,
-              query: { group_by: RequestDomains.Transfers },
+              query: { group_by: RequestDomains.Accounts },
             }"
             :types="[{ Transfer: [account.id] }]"
             hide-not-found
