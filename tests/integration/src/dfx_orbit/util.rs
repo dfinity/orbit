@@ -63,7 +63,7 @@ pub(super) fn permit_change_operation(env: &PocketIc, canister_ids: &CanisterIds
 
 /// Allow anyone to read request list
 pub(super) fn permit_list_reads(env: &PocketIc, canister_ids: &CanisterIds) {
-    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+    let edit_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
         resource: ResourceDTO::Request(RequestResourceActionDTO::List),
         auth_scope: Some(AuthScopeDTO::Authenticated),
         user_groups: None,
