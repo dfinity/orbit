@@ -823,6 +823,14 @@ export type NotificationResourceAction = { 'List' : null } |
 export type NotificationStatus = { 'Read' : null } |
   { 'Sent' : null };
 export type NotificationType = {
+    'RequestAutoApproved' : {
+      'account_id' : [] | [UUID],
+      'request_id' : UUID,
+      'operation_type' : RequestOperationType,
+      'user_id' : [] | [UUID],
+    }
+  } |
+  {
     'RequestCreated' : {
       'account_id' : [] | [UUID],
       'request_id' : UUID,
@@ -845,7 +853,8 @@ export type NotificationType = {
       'reason' : [] | [string],
     }
   };
-export type NotificationTypeInput = { 'RequestCreated' : null } |
+export type NotificationTypeInput = { 'RequestAutoApproved' : null } |
+  { 'RequestCreated' : null } |
   { 'SystemMessage' : null };
 export interface NotifyFailedStationUpgradeInput { 'reason' : string }
 export type NotifyFailedStationUpgradeResult = { 'Ok' : null } |
