@@ -265,8 +265,8 @@ type CanDeployStationResult = variant {
 type WasmModuleExtraChunks = record {
   // The asset canister from which the chunks are to be retrieved.
   store_canister : principal;
-  // The list of chunk hashes in the order they should be appended to the wasm module.
-  chunk_hashes_list : vec blob;
+  // The name of the asset containing extra chunks in the asset canister.
+  extra_chunks_key : text;
   // The hash of the assembled wasm module.
   wasm_module_hash : blob;
 };

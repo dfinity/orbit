@@ -1239,8 +1239,8 @@ export type ValidationMethodResourceTarget = { 'No' : null } |
   { 'ValidationMethod' : CanisterMethod };
 export interface WasmModuleExtraChunks {
   'wasm_module_hash' : Uint8Array | number[],
-  'chunk_hashes_list' : Array<Uint8Array | number[]>,
   'store_canister' : Principal,
+  'extra_chunks_key' : string,
 }
 export interface _SERVICE {
   'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
