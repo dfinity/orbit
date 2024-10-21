@@ -3,6 +3,7 @@ import {
   CanisterConfiguredMethodCall,
 } from '~/components/external-canisters/external-canisters.types';
 import {
+  CallExternalCanisterResourceTarget,
   ExternalCanisterCallerPrivileges,
   ExternalCanisterPermissions,
   ExternalCanisterRequestPolicies,
@@ -167,4 +168,25 @@ export const mapConfiguredMethodCalls = (opts: {
 
     return a.methodName.localeCompare(b.methodName);
   });
+};
+
+export const mapCallExternalCanisterResourceTargetToKey = (
+  target: CallExternalCanisterResourceTarget,
+): string => {
+  let executionMethod = `execution_method::`;
+  let validationMethod = `validation_method::`;
+
+  if (variantIs(target.execution_method, 'Any')) {
+    executionMethod += 'any';
+  } else {
+    executionMethod += `${target.execution_method.ExecutionMethod.method_name}::${target.execution_method.ExecutionMethod.canister_id.toText()}`;
+  }
+
+  if (variantIs(target.validation_method, 'No')) {
+    validationMethod += 'no_validation';
+  } else {
+    validationMethod += `${target.validation_method.ValidationMethod.method_name}::${target.validation_method.ValidationMethod.canister_id.toText()}`;
+  }
+
+  return `${executionMethod}::${validationMethod}`;
 };
