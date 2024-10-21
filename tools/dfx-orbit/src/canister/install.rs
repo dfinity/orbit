@@ -9,6 +9,7 @@ use station_api::{
     CanisterInstallMode, ChangeExternalCanisterOperationDTO, ChangeExternalCanisterOperationInput,
     GetRequestResponse, RequestOperationDTO, RequestOperationInput,
 };
+use std::collections::HashMap;
 use std::fmt::Write;
 use std::path::PathBuf;
 
@@ -62,6 +63,7 @@ impl RequestCanisterInstallArgs {
 
         let (module, module_extra_chunks) = if let Some(ref asset_canister) = self.asset_canister {
             let asset_canister_id = dfx_orbit.canister_id(asset_canister)?;
+            let asset_agent = dfx_orbit.canister_agent(asset_canister_id)?;
 
             // compute module hash
             let canister_wasm_hash = hash(&module);
@@ -79,8 +81,12 @@ impl RequestCanisterInstallArgs {
                 .to_str()
                 .ok_or_else(|| anyhow!("The WASM file name cannot be converted to a String"))?
                 .to_string();
-            let paths = vec![path.as_path()];
-            dfx_orbit.upload(asset_canister_id, &paths, false).await?;
+            ic_asset::upload(
+                &asset_agent,
+                HashMap::from([(extra_chunks_key.clone(), path)]),
+                &dfx_orbit.logger,
+            )
+            .await?;
 
             (
                 vec![],
