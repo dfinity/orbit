@@ -69,7 +69,13 @@ pub(super) fn permit_list_reads(env: &PocketIc, canister_ids: &CanisterIds) {
         user_groups: None,
         users: None,
     });
-    execute_request(env, WALLET_ADMIN_USER, canister_ids.station, add_permission).unwrap();
+    execute_request(
+        env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        edit_permission,
+    )
+    .unwrap();
 }
 
 fn set_four_eyes_on(env: &PocketIc, canister_ids: &CanisterIds, specifier: RequestSpecifierDTO) {

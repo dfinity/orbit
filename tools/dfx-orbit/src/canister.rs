@@ -30,7 +30,7 @@ pub enum RequestCanisterActionArgs {
     Install(RequestCanisterInstallArgs),
     /// Request to call a canister method
     Call(RequestCanisterCallArgs),
-    // Update a canister's settings (i.e its controller, compute allocation, or memory allocation.)
+    /// Update a canister's settings (i.e its controller, compute allocation, or memory allocation.)
     UpdateSettings(RequestCanisterUpdateSettingsArgs),
 }
 
@@ -72,8 +72,8 @@ pub enum VerifyCanisterActionArgs {
     Install(RequestCanisterInstallArgs),
     /// Verify call a canister method
     Call(RequestCanisterCallArgs),
-    // Verify an update settings request
-    //UpdateSettings(RequestCanisterUpdateSettingsArgs),
+    /// Verify an update settings request
+    UpdateSettings(RequestCanisterUpdateSettingsArgs),
 }
 
 impl VerifyCanisterArgs {
@@ -85,9 +85,9 @@ impl VerifyCanisterArgs {
         match &self.action {
             VerifyCanisterActionArgs::Install(args) => args.verify(dfx_orbit, request)?,
             VerifyCanisterActionArgs::Call(args) => args.verify(dfx_orbit, request)?,
-            // VerifyCanisterActionArgs::UpdateSettings(args) => {
-            //     args.verify(dfx_orbit, request).await?
-            // }
+            VerifyCanisterActionArgs::UpdateSettings(args) => {
+                args.verify(dfx_orbit, request).await?
+            }
         }
 
         Ok(())
