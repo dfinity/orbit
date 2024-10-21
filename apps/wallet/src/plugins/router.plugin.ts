@@ -87,16 +87,7 @@ const router = createRouter({
             },
             {
               path: ':id',
-              name: Routes.Account,
-              component: () => import('~/pages/AccountPage.vue'),
-              props: () => {
-                return {
-                  breadcrumbs: [
-                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
-                    { title: i18n.global.t('navigation.accounts'), to: { name: Routes.Accounts } },
-                  ],
-                };
-              },
+              component: RouterView,
               meta: {
                 auth: {
                   check: {
@@ -105,6 +96,44 @@ const router = createRouter({
                   },
                 },
               },
+              children: [
+                {
+                  path: '',
+                  name: Routes.Account,
+                  component: () => import('~/pages/AccountPage.vue'),
+                  props: () => {
+                    return {
+                      breadcrumbs: [
+                        { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                        {
+                          title: i18n.global.t('navigation.accounts'),
+                          to: { name: Routes.Accounts },
+                        },
+                      ],
+                    };
+                  },
+                },
+                {
+                  path: ':assetId',
+                  name: Routes.AccountAsset,
+                  component: () => import('~/pages/AccountAssetPage.vue'),
+                  props: params => {
+                    return {
+                      breadcrumbs: [
+                        { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
+                        {
+                          title: i18n.global.t('navigation.accounts'),
+                          to: { name: Routes.Accounts },
+                        },
+                        {
+                          title: i18n.global.t('navigation.account'),
+                          to: { name: Routes.Account, params: { id: params.params.id } },
+                        },
+                      ],
+                    };
+                  },
+                },
+              ],
             },
           ],
         },

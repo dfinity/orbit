@@ -36,20 +36,14 @@
     />
 
     <InternetComputerNativeStandardForm
-      v-if="model.blockchain === 'icp' && model.standards && model.standards.includes('native')"
+      v-if="
+        model.blockchain === 'icp' &&
+        ((model.standards && model.standards.includes(BlockchainStandard.Native)) ||
+          (model.standards && model.standards.includes(BlockchainStandard.ICRC1)))
+      "
       v-model="model.metadata!"
       :readonly="isViewMode"
     ></InternetComputerNativeStandardForm>
-
-    <template v-else-if="model.blockchain && model.standards && model.standards.length > 0">
-      <!-- unknown standard -->
-      <MetadataField
-        v-model="model.metadata"
-        :label="$t('terms.metadata')"
-        :rules="[requiredRule]"
-        :disabled="isViewMode"
-      />
-    </template>
 
     <template v-if="model.blockchain && model.standards && model.standards.length > 0">
       <VTextField
@@ -83,6 +77,13 @@
         :prepend-icon="mdiDecimal"
         :rules="[requiredRule]"
       />
+
+      <MetadataField
+        v-model="model.metadata"
+        :label="$t('terms.metadata')"
+        :rules="[requiredRule]"
+        :disabled="isViewMode"
+      />
     </template>
   </VForm>
 </template>
@@ -98,6 +99,7 @@ import { VFormValidation } from '~/types/helper.types';
 import { requiredRule } from '~/utils/form.utils';
 import StandardsAutocomplete from '../inputs/StandardsAutocomplete.vue';
 import InternetComputerNativeStandardForm from './standards/InternetComputerNativeStandardForm.vue';
+import { BlockchainStandard } from '~/types/chain.types';
 
 export type AssetFormProps = {
   modelValue: Partial<Asset>;

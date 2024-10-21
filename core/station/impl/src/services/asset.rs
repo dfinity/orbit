@@ -8,7 +8,7 @@ use crate::{
         AddAssetOperationInput, Asset, AssetCallerPrivileges, AssetId, EditAssetOperationInput,
         RemoveAssetOperationInput,
     },
-    repositories::{AssetRepository, ASSET_REPOSITORY},
+    repositories::{AssetRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY},
 };
 use lazy_static::lazy_static;
 use orbit_essentials::{
@@ -110,6 +110,21 @@ impl AssetService {
     pub fn remove(&self, input: RemoveAssetOperationInput) -> ServiceResult<Asset> {
         let asset = self.get(&input.asset_id)?;
 
+        let accounts = ACCOUNT_REPOSITORY.list();
+
+        for account in accounts {
+            if account
+                .assets
+                .iter()
+                .any(|account_asset| account_asset.asset_id == asset.id)
+            {
+                return Err(AssetError::AssetInUse {
+                    id: Uuid::from_bytes(account.id).hyphenated().to_string(),
+                    resource: "account".to_string(),
+                })?;
+            }
+        }
+
         self.asset_repository.remove(&input.asset_id);
 
         Ok(asset)
@@ -167,8 +182,11 @@ mod tests {
     use station_api::ListAssetsInput;
 
     use crate::{
-        models::{asset_test_utils::mock_asset, AddAssetOperationInput, TokenStandard},
-        repositories::ASSET_REPOSITORY,
+        models::{
+            account_test_utils::mock_account, asset_test_utils::mock_asset, AddAssetOperationInput,
+            TokenStandard,
+        },
+        repositories::{ACCOUNT_REPOSITORY, ASSET_REPOSITORY},
     };
 
     use super::AssetService;
@@ -223,7 +241,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_asset_remove() {
+    async fn test_unused_asset_remove() {
         let service = AssetService::default();
         let mock_asset = mock_asset();
         ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
@@ -237,6 +255,27 @@ mod tests {
         let assets = ASSET_REPOSITORY.list();
 
         assert_eq!(assets.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_used_asset_remove_fails() {
+        let service = AssetService::default();
+        let mock_asset = mock_asset();
+        ASSET_REPOSITORY.insert(mock_asset.id, mock_asset.clone());
+
+        let mock_account = mock_account();
+
+        ACCOUNT_REPOSITORY.insert(mock_account.to_key(), mock_account.clone());
+
+        service
+            .remove(crate::models::RemoveAssetOperationInput {
+                asset_id: mock_asset.id,
+            })
+            .expect_err("Asset should not be removed");
+
+        let assets = ASSET_REPOSITORY.list();
+
+        assert_eq!(assets.len(), 1);
     }
 
     #[tokio::test]
