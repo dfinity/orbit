@@ -76,7 +76,7 @@ pub async fn install_chunked_code(
                 module_extra_chunks.store_canister,
                 "get",
                 (GetArg {
-                    key: hex::encode(hash),
+                    key: format!("/{}", hex::encode(hash)),
                     accept_encodings: vec!["identity".to_string()],
                 },),
             )
