@@ -15,15 +15,15 @@ use std::collections::BTreeSet;
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterUpdateSettingsArgs {
     /// The canister name or ID.
-    canister: String,
+    pub canister: String,
 
     /// Add a principal to the list of controllers of the canister
     #[clap(long)]
-    pub(crate) add_controller: Vec<Principal>,
+    pub add_controller: Vec<Principal>,
 
     /// Removes a principal from the list of controllers of the canister
     #[clap(long)]
-    pub(crate) remove_controller: Vec<Principal>,
+    pub remove_controller: Vec<Principal>,
 }
 
 impl RequestCanisterUpdateSettingsArgs {
@@ -101,7 +101,8 @@ async fn get_new_controller_set(
     add: Vec<Principal>,
     remove: Vec<Principal>,
 ) -> anyhow::Result<Vec<Principal>> {
-    // Transform into maps to deduplicates
+    // Transform into maps to deduplicate
+    dbg!("Fetching controllers for {}", canister_id.to_text());
     let old_controllers = dfx_orbit.get_controllers(canister_id).await?;
     let controllers = old_controllers
         .iter()

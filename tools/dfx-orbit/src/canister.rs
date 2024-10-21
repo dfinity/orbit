@@ -9,7 +9,7 @@ mod util;
 
 pub use self::{
     call::RequestCanisterCallArgs, install::CanisterInstallModeArgs,
-    install::RequestCanisterInstallArgs,
+    install::RequestCanisterInstallArgs, settings::RequestCanisterUpdateSettingsArgs,
 };
 
 // TODO: Support Canister create + integration test
@@ -31,7 +31,7 @@ pub enum RequestCanisterActionArgs {
     /// Request to call a canister method
     Call(RequestCanisterCallArgs),
     // Update a canister's settings (i.e its controller, compute allocation, or memory allocation.)
-    //UpdateSettings(RequestCanisterUpdateSettingsArgs),
+    UpdateSettings(RequestCanisterUpdateSettingsArgs),
 }
 
 impl RequestCanisterArgs {
@@ -53,7 +53,7 @@ impl RequestCanisterActionArgs {
         match self {
             RequestCanisterActionArgs::Install(args) => args.into_request(dfx_orbit).await,
             RequestCanisterActionArgs::Call(args) => args.into_request(dfx_orbit),
-            //RequestCanisterActionArgs::UpdateSettings(args) => args.into_request(dfx_orbit).await,
+            RequestCanisterActionArgs::UpdateSettings(args) => args.into_request(dfx_orbit).await,
         }
     }
 }
