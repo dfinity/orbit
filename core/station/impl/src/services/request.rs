@@ -9,10 +9,12 @@ use crate::{
     factories::requests::{RequestExecuteStage, RequestFactory},
     mappers::HelperMapper,
     models::{
+        request_operation::AddUserOperationInput,
         resource::{RequestResourceAction, Resource, ResourceId},
+        user_status::UserStatus,
         DisplayUser, NotificationType, Request, RequestAdditionalInfo, RequestApprovalStatus,
-        RequestCallerPrivileges, RequestCreatedNotification, RequestRejectedNotification,
-        RequestStatus, RequestStatusCode,
+        RequestAutoApprovedNotification, RequestCallerPrivileges, RequestCreatedNotification,
+        RequestRejectedNotification, RequestStatus, RequestStatusCode,
     },
     repositories::{
         EvaluationResultRepository, RequestRepository, RequestWhereClause,
@@ -316,7 +318,22 @@ impl RequestService {
         input: CreateRequestInput,
         ctx: &CallContext,
     ) -> ServiceResult<Request> {
-        let requester = self.user_service.get_user_by_identity(&ctx.caller())?;
+        let is_controller = ctx.caller_is_controller();
+        let requester = match self.user_service.get_user_by_identity(&ctx.caller()) {
+            Ok(user) => Ok(user),
+            Err(e) => {
+                if is_controller {
+                    self.user_service.add_user(AddUserOperationInput {
+                        groups: vec![],
+                        identities: vec![ctx.caller()],
+                        name: "controller".to_string(),
+                        status: UserStatus::Active,
+                    })
+                } else {
+                    Err(e)
+                }
+            }
+        }?;
         let mut request = RequestFactory::create_request(requester.id, input).await?;
 
         // Different request types may have different validation rules.
@@ -327,7 +344,15 @@ impl RequestService {
         self.request_repository
             .insert(request.to_key(), request.to_owned());
 
-        if request.can_approve(&requester.id) {
+        // Auto-approve the request if the caller is a controller of Orbit.
+        if is_controller {
+            request.add_approval(
+                requester.id,
+                RequestApprovalStatus::Approved,
+                Some(format!("Caller: {} is a controller of Orbit", ctx.caller())),
+            )?;
+            request.status = RequestStatus::Approved;
+        } else if request.can_approve(&requester.id) {
             request.add_approval(requester.id, RequestApprovalStatus::Approved, None)?;
         }
 
@@ -343,10 +368,11 @@ impl RequestService {
                 .insert(request.id, evaluation);
         }
 
-        if request.status == RequestStatus::Created {
-            self.created_request_hook(&request).await;
-        } else if request.status == RequestStatus::Rejected {
-            self.rejected_request_hook(&request).await;
+        match request.status {
+            RequestStatus::Created => self.created_request_hook(&request).await,
+            RequestStatus::Rejected => self.rejected_request_hook(&request).await,
+            RequestStatus::Approved => self.auto_approved_request_hook(&request).await,
+            _ => {}
         }
 
         Ok(request)
@@ -398,6 +424,35 @@ impl RequestService {
                 .send_notification(
                     approver,
                     NotificationType::RequestCreated(RequestCreatedNotification {
+                        request_id: request.id,
+                    }),
+                    request.title.to_owned(),
+                    request.summary.to_owned(),
+                )
+                .await;
+        }
+    }
+
+    // Notify all possible approvers that the request has been auto-approved.
+    async fn auto_approved_request_hook(&self, request: &Request) {
+        let mut possible_approvers = match request.find_all_possible_approvers().await {
+            Ok(approvers) => approvers,
+            Err(_) => {
+                print(format!(
+                    "Failed to find all possible approvers for request {}",
+                    Uuid::from_bytes(request.id).hyphenated()
+                ));
+                return;
+            }
+        };
+
+        possible_approvers.remove(&request.requested_by);
+
+        for approver in possible_approvers {
+            self.notification_service
+                .send_notification(
+                    approver,
+                    NotificationType::RequestAutoApproved(RequestAutoApprovedNotification {
                         request_id: request.id,
                     }),
                     request.title.to_owned(),
@@ -531,7 +586,7 @@ mod tests {
         services::AccountService,
     };
     use candid::Principal;
-    use orbit_essentials::model::ModelKey;
+    use orbit_essentials::{cdk::mocks::TEST_CONTROLLER_ID, model::ModelKey};
     use station_api::{
         ListRequestsOperationTypeDTO, RequestApprovalStatusDTO, RequestStatusCodeDTO,
     };
@@ -543,6 +598,13 @@ mod tests {
         caller_user: User,
         call_context: CallContext,
         account_service: AccountService,
+    }
+
+    impl TestContext {
+        fn with_call_context(mut self, caller: Principal) -> Self {
+            self.call_context = CallContext::new(caller);
+            self
+        }
     }
 
     fn setup() -> TestContext {
@@ -721,6 +783,35 @@ mod tests {
         let notifications = NOTIFICATION_REPOSITORY.list();
         assert_eq!(notifications.len(), 1);
         assert_eq!(notifications[0].target_user_id, related_user.id);
+    }
+
+    #[tokio::test]
+    async fn controllers_requests_are_auto_approved() {
+        let ctx: TestContext = setup().with_call_context(TEST_CONTROLLER_ID);
+
+        let request = ctx
+            .service
+            .create_request(
+                CreateRequestInput {
+                    operation: station_api::RequestOperationInput::ChangeExternalCanister(
+                        station_api::ChangeExternalCanisterOperationInput {
+                            canister_id: Principal::from_slice(&[1u8; 16]),
+                            mode: station_api::CanisterInstallMode::Upgrade,
+                            module: vec![],
+                            module_extra_chunks: None,
+                            arg: None,
+                        },
+                    ),
+                    title: None,
+                    summary: None,
+                    execution_plan: Some(station_api::RequestExecutionScheduleDTO::Immediate),
+                },
+                &ctx.call_context,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(request.status, RequestStatus::Approved);
     }
 
     #[tokio::test]

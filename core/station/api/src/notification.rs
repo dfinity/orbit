@@ -5,6 +5,7 @@ use std::fmt::{Display, Formatter};
 
 pub const SYSTEM_MESSAGE_NOTIFICATION_TYPE: &str = "system-message";
 pub const REQUEST_CREATED_NOTIFICATION_TYPE: &str = "request-created";
+pub const REQUEST_AUTO_APPROVED_NOTIFICATION_TYPE: &str = "request-auto-approved";
 pub const REQUEST_FAILED_NOTIFICATION_TYPE: &str = "request-failed";
 pub const REQUEST_REJECTED_NOTIFICATION_TYPE: &str = "request-rejected";
 
@@ -18,12 +19,21 @@ pub enum NotificationStatusDTO {
 pub enum NotificationTypeDTO {
     SystemMessage,
     RequestCreated(RequestCreatedNotificationDTO),
+    RequestAutoApproved(RequestAutoApprovedNotificationDTO),
     RequestFailed(RequestFailedNotificationDTO),
     RequestRejected(RequestRejectedNotificationDTO),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct RequestCreatedNotificationDTO {
+    pub request_id: UuidDTO,
+    pub operation_type: RequestOperationTypeDTO,
+    pub account_id: Option<UuidDTO>,
+    pub user_id: Option<UuidDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct RequestAutoApprovedNotificationDTO {
     pub request_id: UuidDTO,
     pub operation_type: RequestOperationTypeDTO,
     pub account_id: Option<UuidDTO>,
@@ -48,6 +58,7 @@ pub struct RequestRejectedNotificationDTO {
 pub enum NotificationTypeInput {
     SystemMessage,
     RequestCreated,
+    RequestAutoApproved,
 }
 
 impl Display for NotificationTypeInput {
@@ -58,6 +69,9 @@ impl Display for NotificationTypeInput {
             }
             NotificationTypeInput::RequestCreated => {
                 write!(f, "{}", REQUEST_CREATED_NOTIFICATION_TYPE)
+            }
+            NotificationTypeInput::RequestAutoApproved => {
+                write!(f, "{}", REQUEST_AUTO_APPROVED_NOTIFICATION_TYPE)
             }
         }
     }

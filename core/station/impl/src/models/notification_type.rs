@@ -1,8 +1,9 @@
 use orbit_essentials::storable;
 use orbit_essentials::types::UUID;
 use station_api::{
-    REQUEST_CREATED_NOTIFICATION_TYPE, REQUEST_FAILED_NOTIFICATION_TYPE,
-    REQUEST_REJECTED_NOTIFICATION_TYPE, SYSTEM_MESSAGE_NOTIFICATION_TYPE,
+    REQUEST_AUTO_APPROVED_NOTIFICATION_TYPE, REQUEST_CREATED_NOTIFICATION_TYPE,
+    REQUEST_FAILED_NOTIFICATION_TYPE, REQUEST_REJECTED_NOTIFICATION_TYPE,
+    SYSTEM_MESSAGE_NOTIFICATION_TYPE,
 };
 use std::fmt::{Display, Formatter};
 
@@ -11,6 +12,7 @@ use std::fmt::{Display, Formatter};
 pub enum NotificationType {
     SystemMessage,
     RequestCreated(RequestCreatedNotification),
+    RequestAutoApproved(RequestAutoApprovedNotification),
     RequestFailed(RequestFailedNotification),
     RequestRejected(RequestRejectedNotification),
 }
@@ -22,6 +24,7 @@ pub struct RequestNotification {
 }
 
 pub type RequestCreatedNotification = RequestNotification;
+pub type RequestAutoApprovedNotification = RequestNotification;
 pub type RequestFailedNotification = RequestNotification;
 pub type RequestRejectedNotification = RequestNotification;
 
@@ -31,6 +34,9 @@ impl Display for NotificationType {
             NotificationType::SystemMessage => write!(f, "{}", SYSTEM_MESSAGE_NOTIFICATION_TYPE),
             NotificationType::RequestCreated(_) => {
                 write!(f, "{}", REQUEST_CREATED_NOTIFICATION_TYPE)
+            }
+            NotificationType::RequestAutoApproved(_) => {
+                write!(f, "{}", REQUEST_AUTO_APPROVED_NOTIFICATION_TYPE)
             }
             NotificationType::RequestFailed(_) => {
                 write!(f, "{}", REQUEST_FAILED_NOTIFICATION_TYPE)
@@ -58,6 +64,14 @@ mod tests {
             })
             .to_string(),
             "request-created"
+        );
+
+        assert_eq!(
+            NotificationType::RequestAutoApproved(RequestAutoApprovedNotification {
+                request_id: [0; 16]
+            })
+            .to_string(),
+            "request-auto-approved"
         );
 
         assert_eq!(

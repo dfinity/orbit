@@ -13,6 +13,7 @@ pub mod limiter;
 mod memory;
 pub use memory::*;
 
+#[cfg(not(test))]
 mod call_context;
 pub use call_context::*;
 
@@ -24,6 +25,9 @@ pub mod validation;
 pub use orbit_essentials::cdk as ic_cdk;
 #[cfg(test)]
 pub use orbit_essentials::cdk::mocks as ic_cdk;
+
+#[cfg(test)]
+pub mod call_context;
 
 #[cfg(all(not(test), not(feature = "canbench")))]
 pub use orbit_essentials::timers as ic_timers;
