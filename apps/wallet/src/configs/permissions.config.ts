@@ -345,6 +345,16 @@ export const globalPermissions = (): AggregatedResoucePermissions[] => [
         allow: defaultAllowLevels(),
         canEdit: false,
       },
+      {
+        action: ResourceActionEnum.CallCanister,
+        resource: {
+          ExternalCanister: {
+            Call: { execution_method: { Any: null }, validation_method: { No: null } },
+          },
+        },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
     ],
     match(specifier: Resource, resource: Resource): boolean {
       if (variantIs(specifier, 'ExternalCanister') && variantIs(resource, 'ExternalCanister')) {

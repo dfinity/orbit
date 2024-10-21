@@ -926,6 +926,7 @@ export default {
       addressbook: 'Livro de endereços',
       managesysteminfo: 'Gerir informações do sistema',
       externalcanister: 'Canister gerenciado',
+      callcanister: 'Chamar canister',
     },
     actions: {
       list: 'Listar',

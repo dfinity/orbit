@@ -3,10 +3,9 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
-        ExternalCanisterId, ExternalCanisterResourceAction, PermissionResourceAction,
-        RequestResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
-        SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
+        AccountResourceAction, ExternalCanisterId, ExternalCanisterResourceAction,
+        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+        ResourceIds, SystemResourceAction, UserResourceAction,
     },
     ADMIN_GROUP_ID,
 };
@@ -145,7 +144,15 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::Account(AccountResourceAction::Read(ResourceId::Any)),
         ),
-        // create, change, call, and read external canister
+        // external canisters
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::List),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Any)),
+        ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Create),
@@ -156,15 +163,8 @@ lazy_static! {
         ),
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(CallExternalCanisterResourceTarget {
-              validation_method: ValidationMethodResourceTarget::No,
-              execution_method: ExecutionMethodResourceTarget::Any,
-            })),
-        ),
-        (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Any)),
-        ),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(ExternalCanisterId::Any)),
+        )
     ];
 
 }
@@ -239,7 +239,7 @@ pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPoli
             RequestSpecifier::RemoveUserGroup(ResourceIds::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
-        // create, change, and call external canister
+        // external canisters
         (
             RequestSpecifier::CreateExternalCanister,
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
@@ -249,10 +249,7 @@ pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPoli
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
         (
-            RequestSpecifier::CallExternalCanister(CallExternalCanisterResourceTarget {
-                validation_method: ValidationMethodResourceTarget::No,
-                execution_method: ExecutionMethodResourceTarget::Any,
-            }),
+            RequestSpecifier::FundExternalCanister(ExternalCanisterId::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
     ]
