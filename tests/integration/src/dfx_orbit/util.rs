@@ -1,15 +1,57 @@
+use std::time::{Duration, Instant};
+
 use crate::{setup::WALLET_ADMIN_USER, utils::execute_request, CanisterIds};
 
 use super::PORT;
 use candid::Principal;
+use dfx_orbit::DfxOrbit;
 use pocket_ic::PocketIc;
 use station_api::{
     AddRequestPolicyOperationInput, AuthScopeDTO, CallExternalCanisterResourceTargetDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
-    ExternalCanisterResourceActionDTO, QuorumDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestResourceActionDTO, RequestSpecifierDTO, ResourceDTO, UserSpecifierDTO,
-    ValidationMethodResourceTargetDTO,
+    ExternalCanisterResourceActionDTO, GetRequestInput, QuorumDTO, RequestOperationInput,
+    RequestPolicyRuleDTO, RequestResourceActionDTO, RequestSpecifierDTO, RequestStatusDTO,
+    ResourceDTO, UserSpecifierDTO, UuidDTO, ValidationMethodResourceTargetDTO,
 };
+
+/// Wait on a request to succeed (reach status completed)
+pub(super) async fn poll_request_completion(
+    dfx_orbit: &DfxOrbit,
+    request_id: UuidDTO,
+    timeout: Duration,
+) {
+    let timeout = Instant::now() + timeout;
+
+    loop {
+        let request = dfx_orbit
+            .station
+            .review_id(GetRequestInput {
+                request_id: request_id.clone(),
+                with_full_info: None,
+            })
+            .await
+            .unwrap();
+
+        match request.request.status {
+            RequestStatusDTO::Completed { .. } => return,
+            RequestStatusDTO::Rejected
+            | RequestStatusDTO::Cancelled { .. }
+            | RequestStatusDTO::Failed { .. } => {
+                panic!("Expected request {} to succeed", request_id)
+            }
+            RequestStatusDTO::Approved
+            | RequestStatusDTO::Created
+            | RequestStatusDTO::Scheduled { .. }
+            | RequestStatusDTO::Processing { .. } => (),
+        }
+
+        if Instant::now() > timeout {
+            panic!("Waiting for request {} to succeed timed out", request_id);
+        }
+
+        tokio::time::sleep(Duration::from_secs(1)).await
+    }
+}
 
 /// Fetches an asset from the local host and port
 ///
