@@ -1,15 +1,57 @@
+use std::time::{Duration, Instant};
+
 use crate::{setup::WALLET_ADMIN_USER, utils::execute_request, CanisterIds};
 
 use super::PORT;
 use candid::Principal;
+use dfx_orbit::DfxOrbit;
 use pocket_ic::PocketIc;
 use station_api::{
     AddRequestPolicyOperationInput, AuthScopeDTO, CallExternalCanisterResourceTargetDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
-    ExternalCanisterResourceActionDTO, QuorumDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestResourceActionDTO, RequestSpecifierDTO, ResourceDTO, UserSpecifierDTO,
-    ValidationMethodResourceTargetDTO,
+    ExternalCanisterResourceActionDTO, GetRequestInput, QuorumDTO, RequestOperationInput,
+    RequestPolicyRuleDTO, RequestResourceActionDTO, RequestSpecifierDTO, RequestStatusDTO,
+    ResourceDTO, UserSpecifierDTO, UuidDTO, ValidationMethodResourceTargetDTO,
 };
+
+/// Wait on a request to succeed (reach status completed)
+pub(super) async fn poll_request_completion(
+    dfx_orbit: &DfxOrbit,
+    request_id: UuidDTO,
+    timeout: Duration,
+) {
+    let timeout = Instant::now() + timeout;
+
+    loop {
+        let request = dfx_orbit
+            .station
+            .review_id(GetRequestInput {
+                request_id: request_id.clone(),
+                with_full_info: None,
+            })
+            .await
+            .unwrap();
+
+        match request.request.status {
+            RequestStatusDTO::Completed { .. } => return,
+            RequestStatusDTO::Rejected
+            | RequestStatusDTO::Cancelled { .. }
+            | RequestStatusDTO::Failed { .. } => {
+                panic!("Expected request {} to succeed", request_id)
+            }
+            RequestStatusDTO::Approved
+            | RequestStatusDTO::Created
+            | RequestStatusDTO::Scheduled { .. }
+            | RequestStatusDTO::Processing { .. } => (),
+        }
+
+        if Instant::now() > timeout {
+            panic!("Waiting for request {} to succeed timed out", request_id);
+        }
+
+        tokio::time::sleep(Duration::from_secs(1)).await
+    }
+}
 
 /// Fetches an asset from the local host and port
 ///
@@ -61,6 +103,23 @@ pub(super) fn permit_change_operation(env: &PocketIc, canister_ids: &CanisterIds
     permit_operation(env, canister_ids, resource);
 }
 
+/// Allow anyone to read request list
+pub(super) fn permit_list_reads(env: &PocketIc, canister_ids: &CanisterIds) {
+    let edit_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+        resource: ResourceDTO::Request(RequestResourceActionDTO::List),
+        auth_scope: Some(AuthScopeDTO::Authenticated),
+        user_groups: None,
+        users: None,
+    });
+    execute_request(
+        env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        edit_permission,
+    )
+    .unwrap();
+}
+
 fn set_four_eyes_on(env: &PocketIc, canister_ids: &CanisterIds, specifier: RequestSpecifierDTO) {
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
@@ -95,26 +154,14 @@ pub(super) fn set_four_eyes_on_change(env: &PocketIc, canister_ids: &CanisterIds
     set_four_eyes_on(env, canister_ids, specifier);
 }
 
-/// Allow anyone to read request list
-pub(super) fn permit_list_reads(env: &PocketIc, canister_ids: &CanisterIds) {
-    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: ResourceDTO::Request(RequestResourceActionDTO::List),
-        auth_scope: Some(AuthScopeDTO::Authenticated),
-        user_groups: None,
-        users: None,
-    });
-    execute_request(env, WALLET_ADMIN_USER, canister_ids.station, add_permission).unwrap();
-}
-
-pub(super) fn set_auto_approve(env: &PocketIc, canister_ids: &CanisterIds) {
+pub(super) fn set_auto_approve_on(
+    env: &PocketIc,
+    canister_ids: &CanisterIds,
+    specifier: RequestSpecifierDTO,
+) {
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
-            specifier: RequestSpecifierDTO::CallExternalCanister(
-                CallExternalCanisterResourceTargetDTO {
-                    validation_method: ValidationMethodResourceTargetDTO::No,
-                    execution_method: ExecutionMethodResourceTargetDTO::Any,
-                },
-            ),
+            specifier,
             rule: RequestPolicyRuleDTO::AutoApproved,
         });
     execute_request(
@@ -124,4 +171,18 @@ pub(super) fn set_auto_approve(env: &PocketIc, canister_ids: &CanisterIds) {
         add_request_policy,
     )
     .unwrap();
+}
+
+pub(super) fn set_auto_approve_on_call(env: &PocketIc, canister_ids: &CanisterIds) {
+    let specifier =
+        RequestSpecifierDTO::CallExternalCanister(CallExternalCanisterResourceTargetDTO {
+            validation_method: ValidationMethodResourceTargetDTO::No,
+            execution_method: ExecutionMethodResourceTargetDTO::Any,
+        });
+    set_auto_approve_on(env, canister_ids, specifier);
+}
+
+pub(super) fn set_auto_approve_on_change(env: &PocketIc, canister_ids: &CanisterIds) {
+    let specifier = RequestSpecifierDTO::ChangeExternalCanister(ExternalCanisterIdDTO::Any);
+    set_auto_approve_on(env, canister_ids, specifier);
 }
