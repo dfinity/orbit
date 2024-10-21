@@ -7,7 +7,12 @@ use ic_cdk::api::management_canister::main::{
 use ic_cdk::call;
 use sha2::{Digest, Sha256};
 
-const MAX_ICP_CHUNK_LEN: usize = 1 << 20;
+// ICP limits
+const MAX_WASM_CHUNK_LEN: usize = 1 << 20; // 1MiB
+const MAX_WASM_TOTAL_LEN: usize = 100 << 20; // 100MiB
+
+// Derived limits
+const MAX_WASM_CHUNK_CNT: usize = MAX_WASM_TOTAL_LEN / MAX_WASM_CHUNK_LEN + 1;
 
 // asset canister types
 
@@ -58,9 +63,16 @@ async fn fetch_extra_chunks(
     .await
     .map_err(|(_, err)| format!("failed to fetch asset: {err}"))?
     .0;
+    let max_wasm_total_len: candid::Nat = MAX_WASM_TOTAL_LEN.into();
+    if asset.total_length > max_wasm_total_len {
+        return Err(format!(
+            "Wasm extra chunks length {} exceeds the maximum wasm length {}",
+            asset.total_length, max_wasm_total_len,
+        ));
+    }
     let mut res = asset.content;
-    let mut idx = 1_u64;
-    while res.len() < asset.total_length {
+    let mut idx = 1;
+    while res.len() < asset.total_length && idx < MAX_WASM_CHUNK_CNT {
         let mut chunk = call::<_, (GetChunkResponse,)>(
             store_canister,
             "get_chunk",
@@ -77,14 +89,18 @@ async fn fetch_extra_chunks(
         res.append(&mut chunk.content);
         idx += 1;
     }
-    if res.len() != asset.total_length {
-        return Err(format!(
-            "total chunk length ({}) exceeds the total length claimed by the asset canister ({})",
-            res.len(),
-            asset.total_length
-        ));
+    let res_len: candid::Nat = res.len().into();
+    match res_len.cmp(&asset.total_length) {
+        std::cmp::Ordering::Less => Err(format!(
+            "The total number of wasm chunks must not exceed {}",
+            MAX_WASM_CHUNK_CNT
+        )),
+        std::cmp::Ordering::Equal => Ok(res),
+        std::cmp::Ordering::Greater => Err(format!(
+            "Wasm extra chunks length (at least {}) exceeds their total length claimed by the store canister ({})",
+            res_len, asset.total_length
+        )),
     }
-    Ok(res)
 }
 
 // uploads a wasm chunk to the ICP chunk store
@@ -134,7 +150,7 @@ pub async fn install_chunked_code(
         .await?;
         // upload extra chunks to the ICP chunk store of the target canister
         let mut chunk_hashes_list = vec![module_hash];
-        let chunks = extra_chunks.chunks(MAX_ICP_CHUNK_LEN);
+        let chunks = extra_chunks.chunks(MAX_WASM_CHUNK_LEN);
         for chunk in chunks {
             let chunk_hash = upload_chunk(target_canister, chunk.to_vec()).await?;
             chunk_hashes_list.push(chunk_hash);
