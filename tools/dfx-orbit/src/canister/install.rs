@@ -29,7 +29,7 @@ pub struct RequestCanisterInstallArgs {
     #[clap(short, long, conflicts_with = "arg_file")]
     pub argument: Option<String>,
     /// The path to a file containing the argument to pass to the canister.
-    #[clap(short = 'f', long, conflicts_with = "arg")]
+    #[clap(short = 'f', long, conflicts_with = "argument")]
     pub arg_file: Option<String>,
     /// The asset canister name or ID to upload module chunks to.
     #[clap(long)]
@@ -66,6 +66,13 @@ impl RequestCanisterInstallArgs {
         let mode = self.mode.into();
 
         let (module, module_extra_chunks) = if let Some(ref asset_canister) = self.asset_canister {
+            if self.max_chunk_len > Some(DEFAULT_MAX_CHUNK_LEN) {
+                bail!(
+                    "--max-chunk-len must not be larger than {}",
+                    DEFAULT_MAX_CHUNK_LEN
+                );
+            }
+
             let asset_canister_id = dfx_orbit.canister_id(asset_canister)?;
             let asset_agent = dfx_orbit.canister_agent(asset_canister_id)?;
 
