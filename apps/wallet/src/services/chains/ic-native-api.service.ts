@@ -1,23 +1,39 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { icAgent } from '~/core/ic-agent.core';
-import { idlFactory } from '~/generated/icp_index';
-import { _SERVICE } from '~/generated/icp_index/icp_index.did';
-import { AccountIncomingTransfer, ChainApi, FetchTransfersInput } from '~/types/chain.types';
+import { idlFactory as IcpIndexIdlFactory } from '~/generated/icp_index';
+import { idlFactory as IcpLedgerIdlFactory } from '~/generated/icp_ledger';
+import { _SERVICE as IcpIndexService } from '~/generated/icp_index/icp_index.did';
+import { _SERVICE as IcpLedgerService } from '~/generated/icp_ledger/icp_ledger.did';
+import {
+  AccountIncomingTransfer,
+  ChainApi,
+  ChainApiCapability,
+  FetchTransfersInput,
+} from '~/types/chain.types';
 import { nanoToJsDate } from '~/utils/date.utils';
-import { isValidSha256 } from '~/utils/helper.utils';
+import { hexStringToUin8Array, isValidSha256 } from '~/utils/helper.utils';
 
 export class ICNativeApi implements ChainApi {
-  private actor: ActorSubclass<_SERVICE>;
+  private indexActor: ActorSubclass<IcpIndexService> | null = null;
+  private ledgerActor: ActorSubclass<IcpLedgerService>;
   static PAGE_SIZE = BigInt(100);
 
   constructor(
     private readonly address: string,
-    private readonly indexCanisterId: string,
+    private readonly ledgerCanisterId: string,
+    private readonly indexCanisterId: string | undefined,
     agent: HttpAgent = icAgent.get(),
   ) {
-    this.actor = Actor.createActor<_SERVICE>(idlFactory, {
+    if (this.indexCanisterId) {
+      this.indexActor = Actor.createActor<IcpIndexService>(IcpIndexIdlFactory, {
+        agent,
+        canisterId: this.indexCanisterId,
+      });
+    }
+
+    this.ledgerActor = Actor.createActor<IcpLedgerService>(IcpLedgerIdlFactory, {
       agent,
-      canisterId: this.indexCanisterId,
+      canisterId: this.ledgerCanisterId,
     });
   }
 
@@ -30,16 +46,22 @@ export class ICNativeApi implements ChainApi {
   }
 
   async fetchBalance(): Promise<bigint> {
-    const balance = await this.actor.get_account_identifier_balance(this.address);
+    const balance = await this.ledgerActor.account_balance({
+      account: hexStringToUin8Array(this.address),
+    });
 
-    return balance;
+    return balance.e8s;
   }
 
   async fetchTransfers(
     input: FetchTransfersInput,
     startBlockId?: bigint,
   ): Promise<AccountIncomingTransfer[]> {
-    const result = await this.actor.get_account_identifier_transactions({
+    if (!this.indexActor) {
+      throw new Error('Cannot fetch balance without index canister id.');
+    }
+
+    const result = await this.indexActor.get_account_identifier_transactions({
       account_identifier: this.address,
       start: startBlockId ? [startBlockId] : [],
       max_results: ICNativeApi.PAGE_SIZE,
@@ -97,5 +119,12 @@ export class ICNativeApi implements ChainApi {
     });
 
     return transfers;
+  }
+
+  getCapabilities(): ChainApiCapability[] {
+    return [
+      ChainApiCapability.Balance, // balance always available due to ledger canister id mandatory
+      ...(this.indexActor ? [ChainApiCapability.Transfers] : []),
+    ];
   }
 }

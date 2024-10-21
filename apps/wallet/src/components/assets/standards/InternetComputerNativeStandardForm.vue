@@ -17,7 +17,7 @@
     density="comfortable"
     :disabled="props.readonly"
     :prepend-icon="mdiDatabase"
-    :rules="[requiredRule, validCanisterId]"
+    :rules="[validCanisterId]"
   />
 </template>
 <script lang="ts" setup>

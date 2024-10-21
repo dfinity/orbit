@@ -36,10 +36,17 @@ export interface FetchTransfersResponse {
   transfers: AccountIncomingTransfer[];
 }
 
+export enum ChainApiCapability {
+  Balance,
+  Transfers,
+}
+
 export interface ChainApi {
   fetchBalance(): Promise<bigint>;
 
   fetchTransfers(input: FetchTransfersInput): Promise<AccountIncomingTransfer[]>;
 
   isValidAddress(address: string): boolean;
+
+  getCapabilities(): ChainApiCapability[];
 }

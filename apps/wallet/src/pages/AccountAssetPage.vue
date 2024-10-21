@@ -118,6 +118,9 @@
               >
                 <div class="d-flex flex-column flex-grow-1 ga-4">
                   <DataLoader
+                    v-if="
+                      chainApi && chainApi.getCapabilities().includes(ChainApiCapability.Transfers)
+                    "
                     v-slot="{ data, loading: loadingTransfers }"
                     v-model:force-reload="forceReload"
                     :load="loadTransfers"
@@ -182,6 +185,22 @@
                       </tbody>
                     </VTable>
                   </DataLoader>
+
+                  <VAlert
+                    type="warning"
+                    variant="tonal"
+                    density="compact"
+                    class="mt-4"
+                    v-else-if="
+                      chainApi && !chainApi.getCapabilities().includes(ChainApiCapability.Transfers)
+                    "
+                  >
+                    {{ $t('pages.account.transfers_not_supported') }}
+
+                    <div v-if="asset?.blockchain === BlockchainType.InternetComputer">
+                      {{ $t('pages.account.add_index_canister_to_see_transactions') }}
+                    </div>
+                  </VAlert>
                 </div>
                 <FiltersCard :title="$t('terms.filters')" :icon="mdiFilter">
                   <DateRange
@@ -231,6 +250,7 @@ import {
 import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import {
+  VAlert,
   VBtn,
   VChip,
   VCol,
@@ -269,7 +289,11 @@ import {
 import { ChainApiFactory } from '~/services/chains';
 import { useStationStore } from '~/stores/station.store';
 import type { PageProps } from '~/types/app.types';
-import type { AccountIncomingTransfer } from '~/types/chain.types';
+import {
+  BlockchainType,
+  ChainApiCapability,
+  type AccountIncomingTransfer,
+} from '~/types/chain.types';
 import { BreadCrumbItem } from '~/types/navigation.types';
 import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
@@ -340,6 +364,13 @@ const saveFilters = (): void => {
   router.replace({ query: filterUtils.getQuery(filters.value) });
 };
 
+const chainApi = computed(() => {
+  if (!account.value || !asset.value) {
+    return null;
+  }
+  return ChainApiFactory.create(asset.value, account.value.addresses);
+});
+
 watch(
   () => filters.value,
   () => {
@@ -361,13 +392,13 @@ const loadTransfers = async (): Promise<AccountIncomingTransfer[]> => {
     !accountAsset.value ||
     !asset.value ||
     !addresses.value ||
-    !addresses.value[0]
+    !addresses.value[0] ||
+    !chainApi.value
   ) {
     return [];
   }
   // const firstAddress = addresses.value[0];
-  const chainApi = ChainApiFactory.create(asset.value, account.value.addresses);
-  const transfers = await chainApi.fetchTransfers({
+  const transfers = await chainApi.value.fetchTransfers({
     fromDt: convertDate(filters.value.created.from, {
       time: 'start-of-day',
       tz: 'local',

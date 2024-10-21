@@ -741,6 +741,9 @@ export default {
       no_assets_to_add: 'No assets available to add.',
       remove_asset_confirm:
         'Are you sure you want to remove this asset? Removing the asset does not affect the account balance. Re-adding the asset will restore access to the balance.',
+      transfers_not_supported: 'Transfers are not supported for this asset.',
+      add_index_canister_to_see_transactions:
+        'Consider adding the index canister to the asset to see transactions.',
     },
     address_book: {
       title: 'Address Book',

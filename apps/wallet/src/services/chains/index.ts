@@ -10,22 +10,31 @@ export class ChainApiFactory {
       case BlockchainType.InternetComputer: {
         const maybeIcpNativeAddress = addresses.find(a => a.format === AddressFormat.ICPNative);
         const maybeIcrc1Address = addresses.find(a => a.format === AddressFormat.ICRC1);
+        const maybeLedgerCanisterId = getAssetMetadata(asset, 'ledger_canister_id');
         const maybeIndexCanisterId = getAssetMetadata(asset, 'index_canister_id');
 
         if (
           asset.standards.includes(BlockchainStandard.Native) &&
           maybeIcpNativeAddress &&
-          maybeIndexCanisterId
+          maybeLedgerCanisterId
         ) {
-          return new ICNativeApi(maybeIcpNativeAddress.address, maybeIndexCanisterId);
+          return new ICNativeApi(
+            maybeIcpNativeAddress.address,
+            maybeLedgerCanisterId,
+            maybeIndexCanisterId,
+          );
         }
 
         if (
           asset.standards.includes(BlockchainStandard.ICRC1) &&
           maybeIcrc1Address &&
-          maybeIndexCanisterId
+          maybeLedgerCanisterId
         ) {
-          return new ICRC1Api(maybeIcrc1Address.address, maybeIndexCanisterId);
+          return new ICRC1Api(
+            maybeIcrc1Address.address,
+            maybeLedgerCanisterId,
+            maybeIndexCanisterId,
+          );
         }
 
         throw new Error(`Blockchain not supported: ${asset.blockchain}`);
@@ -35,26 +44,5 @@ export class ChainApiFactory {
       default:
         throw new Error(`Blockchain not supported: ${asset.blockchain}`);
     }
-
-    // const chainAndStandard = `${asset.blockchain}-${standard}`;
-
-    // switch (chainAndStandard) {
-    //   case `${BlockchainType.InternetComputer}-${BlockchainStandard.Native}`: {
-    //     const indexCanisterId = assertAndReturn(
-    //       getAssetMetadata(asset, 'index_canister_id'),
-    //       'Index canister id',
-    //     );
-    //     return new ICNativeApi(address, indexCanisterId);
-    //   }
-    //   case `${BlockchainType.InternetComputer}-${BlockchainStandard.ICRC1}`: {
-    //     const indexCanisterId = assertAndReturn(
-    //       getAssetMetadata(asset, 'index_canister_id'),
-    //       'Index canister id',
-    //     );
-    //     return new ICRC1Api(address, indexCanisterId);
-    //   }
-    //   default:
-    //     throw new Error(`Blockchain not supported ${chainAndStandard}`);
-    // }
   }
 }
