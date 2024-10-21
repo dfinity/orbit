@@ -22,7 +22,9 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::time::Duration;
 use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
+use uuid::Uuid;
 
+pub const ADMIN_GROUP_ID: Uuid = Uuid::from_u128(302240678275694148452352); // very first uuidv4 generated
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 
 pub const COUNTER_WAT: &str = r#"
@@ -843,4 +845,49 @@ pub(crate) fn await_station_healthy(env: &PocketIc, station_id: Principal) {
         "Station did not become healthy within {} rounds.",
         max_rounds
     );
+}
+
+pub(crate) fn add_external_canister_call_any_method_permission_and_approval(
+    env: &PocketIc,
+    station_id: Principal,
+    admin_id: Principal,
+    quorum: station_api::QuorumDTO,
+) {
+    // add the permissions for admins to call any external canister
+    execute_request(
+        &env,
+        admin_id,
+        station_id,
+        RequestOperationInput::EditPermission(station_api::EditPermissionOperationInput {
+            auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
+            users: None,
+            user_groups: None,
+            resource: station_api::ResourceDTO::ExternalCanister(
+                station_api::ExternalCanisterResourceActionDTO::Call(
+                    station_api::CallExternalCanisterResourceTargetDTO {
+                        execution_method: station_api::ExecutionMethodResourceTargetDTO::Any,
+                        validation_method: station_api::ValidationMethodResourceTargetDTO::No,
+                    },
+                ),
+            ),
+        }),
+    )
+    .expect("Failed to add permission to call external canister");
+
+    // automatically approve calls to external canisters
+    execute_request(
+        &env,
+        admin_id,
+        station_id,
+        RequestOperationInput::AddRequestPolicy(station_api::AddRequestPolicyOperationInput {
+            specifier: station_api::RequestSpecifierDTO::CallExternalCanister(
+                station_api::CallExternalCanisterResourceTargetDTO {
+                    execution_method: station_api::ExecutionMethodResourceTargetDTO::Any,
+                    validation_method: station_api::ValidationMethodResourceTargetDTO::No,
+                },
+            ),
+            rule: station_api::RequestPolicyRuleDTO::Quorum(quorum),
+        }),
+    )
+    .expect("Failed to add approval policy to call external canister");
 }

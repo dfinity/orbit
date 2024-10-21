@@ -1,5 +1,8 @@
 use crate::setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{bump_time_to_avoid_ratelimit, execute_request, submit_request_raw};
+use crate::utils::{
+    add_external_canister_call_any_method_permission_and_approval, bump_time_to_avoid_ratelimit,
+    execute_request, submit_request_raw,
+};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
@@ -37,43 +40,16 @@ fn test_request_size_rate_limiter() {
         env, canister_ids, ..
     } = setup_new_env();
 
-    // add the permissions to call any external canister
-    execute_request(
+    // add the permissions for admins to call any external canister
+    add_external_canister_call_any_method_permission_and_approval(
         &env,
-        WALLET_ADMIN_USER,
         canister_ids.station,
-        RequestOperationInput::EditPermission(station_api::EditPermissionOperationInput {
-            auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
-            users: None,
-            user_groups: None,
-            resource: station_api::ResourceDTO::ExternalCanister(
-                station_api::ExternalCanisterResourceActionDTO::Call(
-                    station_api::CallExternalCanisterResourceTargetDTO {
-                        execution_method: station_api::ExecutionMethodResourceTargetDTO::Any,
-                        validation_method: station_api::ValidationMethodResourceTargetDTO::No,
-                    },
-                ),
-            ),
-        }),
-    )
-    .expect("Failed to add permission to call external canister");
-
-    // automatically approve calls to external canisters
-    execute_request(
-        &env,
         WALLET_ADMIN_USER,
-        canister_ids.station,
-        RequestOperationInput::AddRequestPolicy(station_api::AddRequestPolicyOperationInput {
-            specifier: station_api::RequestSpecifierDTO::CallExternalCanister(
-                station_api::CallExternalCanisterResourceTargetDTO {
-                    execution_method: station_api::ExecutionMethodResourceTargetDTO::Any,
-                    validation_method: station_api::ValidationMethodResourceTargetDTO::No,
-                },
-            ),
-            rule: station_api::RequestPolicyRuleDTO::AutoApproved,
-        }),
-    )
-    .expect("Failed to add approval policy to call external canister");
+        station_api::QuorumDTO {
+            approvers: station_api::UserSpecifierDTO::Any,
+            min_approved: 1,
+        },
+    );
 
     let request_count = 10;
     let request_size = 1_000_000;
