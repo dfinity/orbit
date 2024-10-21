@@ -61,6 +61,17 @@ pub(super) fn permit_change_operation(env: &PocketIc, canister_ids: &CanisterIds
     permit_operation(env, canister_ids, resource);
 }
 
+/// Allow anyone to read request list
+pub(super) fn permit_list_reads(env: &PocketIc, canister_ids: &CanisterIds) {
+    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
+        resource: ResourceDTO::Request(RequestResourceActionDTO::List),
+        auth_scope: Some(AuthScopeDTO::Authenticated),
+        user_groups: None,
+        users: None,
+    });
+    execute_request(env, WALLET_ADMIN_USER, canister_ids.station, add_permission).unwrap();
+}
+
 fn set_four_eyes_on(env: &PocketIc, canister_ids: &CanisterIds, specifier: RequestSpecifierDTO) {
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
@@ -95,26 +106,14 @@ pub(super) fn set_four_eyes_on_change(env: &PocketIc, canister_ids: &CanisterIds
     set_four_eyes_on(env, canister_ids, specifier);
 }
 
-/// Allow anyone to read request list
-pub(super) fn permit_list_reads(env: &PocketIc, canister_ids: &CanisterIds) {
-    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: ResourceDTO::Request(RequestResourceActionDTO::List),
-        auth_scope: Some(AuthScopeDTO::Authenticated),
-        user_groups: None,
-        users: None,
-    });
-    execute_request(env, WALLET_ADMIN_USER, canister_ids.station, add_permission).unwrap();
-}
-
-pub(super) fn set_auto_approve(env: &PocketIc, canister_ids: &CanisterIds) {
+pub(super) fn set_auto_approve_on(
+    env: &PocketIc,
+    canister_ids: &CanisterIds,
+    specifier: RequestSpecifierDTO,
+) {
     let add_request_policy =
         RequestOperationInput::AddRequestPolicy(AddRequestPolicyOperationInput {
-            specifier: RequestSpecifierDTO::CallExternalCanister(
-                CallExternalCanisterResourceTargetDTO {
-                    validation_method: ValidationMethodResourceTargetDTO::No,
-                    execution_method: ExecutionMethodResourceTargetDTO::Any,
-                },
-            ),
+            specifier,
             rule: RequestPolicyRuleDTO::AutoApproved,
         });
     execute_request(
@@ -124,4 +123,18 @@ pub(super) fn set_auto_approve(env: &PocketIc, canister_ids: &CanisterIds) {
         add_request_policy,
     )
     .unwrap();
+}
+
+pub(super) fn set_auto_approve_on_call(env: &PocketIc, canister_ids: &CanisterIds) {
+    let specifier =
+        RequestSpecifierDTO::CallExternalCanister(CallExternalCanisterResourceTargetDTO {
+            validation_method: ValidationMethodResourceTargetDTO::No,
+            execution_method: ExecutionMethodResourceTargetDTO::Any,
+        });
+    set_auto_approve_on(env, canister_ids, specifier);
+}
+
+pub(super) fn set_auto_approve_on_change(env: &PocketIc, canister_ids: &CanisterIds) {
+    let specifier = RequestSpecifierDTO::ChangeExternalCanister(ExternalCanisterIdDTO::Any);
+    set_auto_approve_on(env, canister_ids, specifier);
 }

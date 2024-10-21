@@ -150,7 +150,6 @@ impl DfxOrbit {
             .read_state_canister_info(canister_id, "controllers")
             .await?;
         let value: ciborium::Value = ciborium::from_reader(&blob[..])?;
-        dbg!(&value);
 
         let array = match value {
             ciborium::Value::Array(array) => array,

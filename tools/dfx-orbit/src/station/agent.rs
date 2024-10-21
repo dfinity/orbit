@@ -86,13 +86,6 @@ impl StationAgent {
             .await
     }
 
-    // pub async fn canister_status(
-    //     &self,
-    //     args: CanisterStatusInput,
-    // ) -> StationAgentResult<CanisterStatusResult> {
-    //     self.update_orbit_typed("canister_status", args).await
-    // }
-
     async fn update_orbit(&self, method_name: &str) -> UpdateBuilder {
         self.agent.update(&self.config.station_id, method_name)
     }

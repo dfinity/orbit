@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::DfxOrbit;
-use anyhow::bail;
+use anyhow::{bail, Context};
 use candid::Principal;
 use clap::Parser;
 use station_api::{
@@ -102,8 +102,15 @@ async fn get_new_controller_set(
     remove: Vec<Principal>,
 ) -> anyhow::Result<Vec<Principal>> {
     // Transform into maps to deduplicate
-    dbg!("Fetching controllers for {}", canister_id.to_text());
-    let old_controllers = dfx_orbit.get_controllers(canister_id).await?;
+    let old_controllers = dfx_orbit
+        .get_controllers(canister_id)
+        .await
+        .with_context(|| {
+            format!(
+                "Failed to retreive controllers for {}",
+                canister_id.to_text()
+            )
+        })?;
     let controllers = old_controllers
         .iter()
         .chain(add.iter())
