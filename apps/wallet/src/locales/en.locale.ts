@@ -529,6 +529,10 @@ export default {
       reserved_cycles_limit: 'Reserved Cycles Limit',
       reserved_cycles_limit_hint:
         'Number of cycles the canister can allocate, operations that allocate memory or compute will fail if the limit is reached.',
+      wasm_memory_limit: 'Wasm Memory Limit',
+      wasm_memory_limit_hint: 'The maximum amount of memory the canister can use for Wasm heap.',
+      log_visibility: 'Log Visibility',
+      log_visibility_hint: 'The visibility of the canister logs.',
     },
     wasm_module: 'WASM Module',
     wasm_args: 'Arguments',
@@ -545,6 +549,8 @@ export default {
     },
   },
   terms: {
+    controllers: 'Controllers',
+    public: 'Public',
     execute: 'Execute',
     error: 'Error',
     self: 'Self',

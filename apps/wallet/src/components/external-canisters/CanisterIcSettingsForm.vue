@@ -145,6 +145,23 @@
             :hint="$t('external_canisters.native_settings.reserved_cycles_limit_hint')"
           />
           <VTextField
+            v-model="model.wasm_memory_limit"
+            :label="$t('external_canisters.native_settings.wasm_memory_limit')"
+            name="wasm_memory_limit"
+            :readonly="props.readonly"
+            density="comfortable"
+            type="number"
+            :rules="[
+              requiredRule,
+              numberRangeRule({
+                min: 0,
+                max: Number.MAX_SAFE_INTEGER,
+                decimals: 0,
+              }),
+            ]"
+            :hint="$t('external_canisters.native_settings.wasm_memory_limit_hint')"
+          />
+          <VTextField
             v-model="model.freezing_threshold"
             :label="$t('external_canisters.native_settings.freezing_threshold')"
             name="freezing_threshold"
@@ -160,6 +177,17 @@
               }),
             ]"
             :hint="$t('external_canisters.native_settings.freezing_threshold_hint')"
+          />
+          <VSelect
+            v-model="model.log_visibility"
+            :items="logVisibilityItems"
+            :label="$t('external_canisters.native_settings.log_visibility')"
+            :hint="$t('external_canisters.native_settings.log_visibility_hint')"
+            name="log_visibility"
+            :readonly="props.readonly"
+            density="comfortable"
+            item-value="value"
+            item-title="text"
           />
         </VCol>
       </VRow>
@@ -186,12 +214,14 @@ import {
 import logger from '~/core/logger.core';
 import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
-import { VFormValidation } from '~/types/helper.types';
+import { SelectItem, VFormValidation } from '~/types/helper.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { numberRangeRule, requiredRule, uniqueRule, validPrincipalRule } from '~/utils/form.utils';
 import TextOverflow from '../TextOverflow.vue';
 import CanisterIdField from '../inputs/CanisterIdField.vue';
 import { CanisterIcSettingsModel } from './external-canisters.types';
+import { LogVisibility } from '~/generated/station/station.did';
+import { useI18n } from 'vue-i18n';
 
 const props = withDefaults(
   defineProps<{
@@ -220,6 +250,7 @@ const emit = defineEmits<{
 
 const form = ref<VFormValidation>();
 const valid = ref(true);
+const i18n = useI18n();
 const fieldsWithErrors = ref<string[]>([]);
 const newController = ref<string>('');
 const app = useAppStore();
@@ -233,6 +264,8 @@ const takeModelSnapshot = (model: CanisterIcSettingsModel): string => {
   snapshot.set('reserved_cycles_limit', model.reserved_cycles_limit?.toString());
   snapshot.set('freezing_threshold', model.freezing_threshold?.toString());
   snapshot.set('canister_id', model.canisterId?.toText());
+  snapshot.set('wasm_memory_limit', model.wasm_memory_limit?.toString());
+  snapshot.set('log_visibility', JSON.stringify(model.log_visibility));
 
   const controllers = model.controllers?.map(c => c.toText()).sort() ?? [];
   controllers.forEach((controller, idx) => snapshot.set(`controllers[${idx}]`, controller));
@@ -332,6 +365,11 @@ const addController = () => {
 
   newController.value = '';
 };
+
+const logVisibilityItems = computed<SelectItem<LogVisibility>[]>(() => [
+  { value: { controllers: null }, text: i18n.t('terms.controllers') },
+  { value: { public: null }, text: i18n.t('terms.public') },
+]);
 
 const existingControllers = computed(() => model.value.controllers?.map(c => c.toText()) || []);
 
