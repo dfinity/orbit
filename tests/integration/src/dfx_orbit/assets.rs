@@ -5,7 +5,10 @@ use super::{
 use crate::{
     dfx_orbit::{setup::setup_dfx_orbit, util::fetch_asset},
     setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER},
-    utils::{add_user, execute_request, user_test_id},
+    utils::{
+        add_external_canister_call_any_method_permission_and_approval, add_user, execute_request,
+        user_test_id, ADMIN_GROUP_ID,
+    },
     CanisterIds, TestEnv,
 };
 use candid::{Nat, Principal};
@@ -38,6 +41,17 @@ fn asset_upload() {
         canister_ids,
         ..
     } = setup_new_env();
+
+    // add the permissions for admins to call any external canister
+    add_external_canister_call_any_method_permission_and_approval(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        station_api::QuorumDTO {
+            approvers: station_api::UserSpecifierDTO::Any,
+            min_approved: 1,
+        },
+    );
 
     let asset_canister = setup_asset_canister(&mut env, &canister_ids);
 
@@ -104,6 +118,18 @@ fn asset_validation() {
         canister_ids,
         ..
     } = setup_new_env();
+
+    add_external_canister_call_any_method_permission_and_approval(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        station_api::QuorumDTO {
+            approvers: station_api::UserSpecifierDTO::Group(vec![ADMIN_GROUP_ID
+                .hyphenated()
+                .to_string()]),
+            min_approved: 2,
+        },
+    );
 
     let asset_canister = setup_asset_canister(&mut env, &canister_ids);
 

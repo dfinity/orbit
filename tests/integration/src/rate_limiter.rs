@@ -1,5 +1,8 @@
 use crate::setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{bump_time_to_avoid_ratelimit, execute_request, submit_request_raw};
+use crate::utils::{
+    add_external_canister_call_any_method_permission_and_approval, bump_time_to_avoid_ratelimit,
+    execute_request, submit_request_raw,
+};
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
@@ -36,6 +39,17 @@ fn test_request_size_rate_limiter() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
+
+    // add the permissions for admins to call any external canister
+    add_external_canister_call_any_method_permission_and_approval(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        station_api::QuorumDTO {
+            approvers: station_api::UserSpecifierDTO::Any,
+            min_approved: 1,
+        },
+    );
 
     let request_count = 10;
     let request_size = 1_000_000;

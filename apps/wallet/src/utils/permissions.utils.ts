@@ -1,5 +1,6 @@
 import {
   AccountResourceAction,
+  CallExternalCanisterResourceTarget,
   ExternalCanisterId,
   ExternalCanisterResourceAction,
   PermissionResourceAction,
@@ -9,6 +10,7 @@ import {
   SystemResourceAction,
   UserResourceAction,
 } from '~/generated/station/station.did';
+import { mapCallExternalCanisterResourceTargetToKey } from '~/mappers/external-canister.mapper';
 import { variantIs } from '~/utils/helper.utils';
 
 /**
@@ -39,6 +41,15 @@ export const isExternalCanisterIdContained = (a: ExternalCanisterId, b: External
   }
 
   return variantIs(a, 'Any') && variantIs(b, 'Any');
+};
+
+export const isExternalCanisterCallContained = (
+  a: CallExternalCanisterResourceTarget,
+  b: CallExternalCanisterResourceTarget,
+) => {
+  return (
+    mapCallExternalCanisterResourceTargetToKey(a) === mapCallExternalCanisterResourceTargetToKey(b)
+  );
 };
 
 /**
@@ -152,6 +163,10 @@ export const isExternalCanisterActionContained = (
 
   if (variantIs(a, 'Fund') && variantIs(b, 'Fund')) {
     return isExternalCanisterIdContained(a.Fund, b.Fund);
+  }
+
+  if (variantIs(a, 'Call') && variantIs(b, 'Call')) {
+    return isExternalCanisterCallContained(a.Call, b.Call);
   }
 
   return false;
