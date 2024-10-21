@@ -1128,6 +1128,7 @@ export const idlFactory = ({ IDL }) => {
     'Sent' : IDL.Null,
   });
   const NotificationTypeInput = IDL.Variant({
+    'RequestAutoApproved' : IDL.Null,
     'RequestCreated' : IDL.Null,
     'SystemMessage' : IDL.Null,
   });
@@ -1163,6 +1164,12 @@ export const idlFactory = ({ IDL }) => {
     'AddAccount' : IDL.Null,
   });
   const NotificationType = IDL.Variant({
+    'RequestAutoApproved' : IDL.Record({
+      'account_id' : IDL.Opt(UUID),
+      'request_id' : UUID,
+      'operation_type' : RequestOperationType,
+      'user_id' : IDL.Opt(UUID),
+    }),
     'RequestCreated' : IDL.Record({
       'account_id' : IDL.Opt(UUID),
       'request_id' : UUID,

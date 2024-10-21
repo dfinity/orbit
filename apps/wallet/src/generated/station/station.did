@@ -188,6 +188,18 @@ type NotificationType = variant {
     // User id is available for relevant request types.
     user_id : opt UUID;
   };
+  // Notification for the auto-approval of a request.
+  // This should be used to alert users when a request has been auto-approved.
+  RequestAutoApproved : record {
+    // The request id that was created.
+    request_id : UUID;
+    // The type of the request (e.g. "transfer").
+    operation_type : RequestOperationType;
+    // Account id is available for relevant request types.
+    account_id : opt UUID;
+    // User id is available for relevant request types.
+    user_id : opt UUID;
+  };
   // Notification for the failure of a request.
   // This should be used to alert the requester when a request has failed to be executed.
   RequestFailed : record {
@@ -214,6 +226,7 @@ type NotificationType = variant {
 type NotificationTypeInput = variant {
   SystemMessage;
   RequestCreated;
+  RequestAutoApproved;
 };
 
 // A record type that can be used to represent a notification.

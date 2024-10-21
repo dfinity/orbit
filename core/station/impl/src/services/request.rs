@@ -9,10 +9,12 @@ use crate::{
     factories::requests::{RequestExecuteStage, RequestFactory},
     mappers::HelperMapper,
     models::{
+        request_operation::AddUserOperationInput,
         resource::{RequestResourceAction, Resource, ResourceId},
+        user_status::UserStatus,
         DisplayUser, NotificationType, Request, RequestAdditionalInfo, RequestApprovalStatus,
-        RequestCallerPrivileges, RequestCreatedNotification, RequestRejectedNotification,
-        RequestStatus, RequestStatusCode,
+        RequestAutoApprovedNotification, RequestCallerPrivileges, RequestCreatedNotification,
+        RequestRejectedNotification, RequestStatus, RequestStatusCode,
     },
     repositories::{
         EvaluationResultRepository, RequestRepository, RequestWhereClause,
@@ -316,7 +318,22 @@ impl RequestService {
         input: CreateRequestInput,
         ctx: &CallContext,
     ) -> ServiceResult<Request> {
-        let requester = self.user_service.get_user_by_identity(&ctx.caller())?;
+        let is_controller = ctx.caller_is_controller();
+        let requester = match self.user_service.get_user_by_identity(&ctx.caller()) {
+            Ok(user) => Ok(user),
+            Err(e) => {
+                if is_controller {
+                    self.user_service.add_user(AddUserOperationInput {
+                        groups: vec![],
+                        identities: vec![ctx.caller()],
+                        name: "controller".to_string(),
+                        status: UserStatus::Active,
+                    })
+                } else {
+                    Err(e)
+                }
+            }
+        }?;
         let mut request = RequestFactory::create_request(requester.id, input).await?;
 
         // Different request types may have different validation rules.
@@ -327,7 +344,15 @@ impl RequestService {
         self.request_repository
             .insert(request.to_key(), request.to_owned());
 
-        if request.can_approve(&requester.id) {
+        // Auto-approve the request if the caller is a controller of Orbit.
+        if is_controller {
+            request.add_approval(
+                requester.id,
+                RequestApprovalStatus::Approved,
+                Some(format!("Caller: {} is a controller of Orbit", ctx.caller())),
+            )?;
+            request.status = RequestStatus::Approved;
+        } else if request.can_approve(&requester.id) {
             request.add_approval(requester.id, RequestApprovalStatus::Approved, None)?;
         }
 
@@ -343,10 +368,11 @@ impl RequestService {
                 .insert(request.id, evaluation);
         }
 
-        if request.status == RequestStatus::Created {
-            self.created_request_hook(&request).await;
-        } else if request.status == RequestStatus::Rejected {
-            self.rejected_request_hook(&request).await;
+        match request.status {
+            RequestStatus::Created => self.created_request_hook(&request).await,
+            RequestStatus::Rejected => self.rejected_request_hook(&request).await,
+            RequestStatus::Approved => self.auto_approved_request_hook(&request).await,
+            _ => {}
         }
 
         Ok(request)
@@ -398,6 +424,35 @@ impl RequestService {
                 .send_notification(
                     approver,
                     NotificationType::RequestCreated(RequestCreatedNotification {
+                        request_id: request.id,
+                    }),
+                    request.title.to_owned(),
+                    request.summary.to_owned(),
+                )
+                .await;
+        }
+    }
+
+    // Notify all possible approvers that the request has been auto-approved.
+    async fn auto_approved_request_hook(&self, request: &Request) {
+        let mut possible_approvers = match request.find_all_possible_approvers().await {
+            Ok(approvers) => approvers,
+            Err(_) => {
+                print(format!(
+                    "Failed to find all possible approvers for request {}",
+                    Uuid::from_bytes(request.id).hyphenated()
+                ));
+                return;
+            }
+        };
+
+        possible_approvers.remove(&request.requested_by);
+
+        for approver in possible_approvers {
+            self.notification_service
+                .send_notification(
+                    approver,
+                    NotificationType::RequestAutoApproved(RequestAutoApprovedNotification {
                         request_id: request.id,
                     }),
                     request.title.to_owned(),
@@ -516,6 +571,7 @@ mod tests {
             request_policy_test_utils::mock_request_policy,
             request_specifier::{RequestSpecifier, UserSpecifier},
             request_test_utils::mock_request,
+            resource::ExternalCanisterId,
             resource::ResourceIds,
             user_test_utils::mock_user,
             AddAccountOperationInput, AddAddressBookEntryOperation,
@@ -531,7 +587,7 @@ mod tests {
         services::AccountService,
     };
     use candid::Principal;
-    use orbit_essentials::model::ModelKey;
+    use orbit_essentials::{cdk::mocks::TEST_CONTROLLER_ID, model::ModelKey};
     use station_api::{
         ListRequestsOperationTypeDTO, RequestApprovalStatusDTO, RequestStatusCodeDTO,
     };
@@ -543,6 +599,13 @@ mod tests {
         caller_user: User,
         call_context: CallContext,
         account_service: AccountService,
+    }
+
+    impl TestContext {
+        fn with_caller(mut self, caller: Principal) -> Self {
+            self.call_context = CallContext::new(caller);
+            self
+        }
     }
 
     fn setup() -> TestContext {
@@ -665,15 +728,10 @@ mod tests {
     async fn request_creation_triggers_notifications() {
         let ctx = setup();
         // creates other users
-        let mut related_user = mock_user();
-        related_user.identities = vec![Principal::from_slice(&[25; 29])];
-        related_user.id = [25; 16];
-        related_user.status = UserStatus::Active;
-
-        let mut unrelated_user = mock_user();
-        unrelated_user.identities = vec![Principal::from_slice(&[26; 29])];
-        unrelated_user.id = [26; 16];
-        unrelated_user.status = UserStatus::Active;
+        let (related_user, unrelated_user) = (
+            mock_user_from_principal(Principal::from_slice(&[25; 29])),
+            mock_user_from_principal(Principal::from_slice(&[26; 29])),
+        );
 
         USER_REPOSITORY.insert(related_user.to_key(), related_user.clone());
         USER_REPOSITORY.insert(unrelated_user.to_key(), unrelated_user.clone());
@@ -721,6 +779,71 @@ mod tests {
         let notifications = NOTIFICATION_REPOSITORY.list();
         assert_eq!(notifications.len(), 1);
         assert_eq!(notifications[0].target_user_id, related_user.id);
+    }
+
+    fn mock_user_from_principal(principal: Principal) -> User {
+        let mut user = mock_user();
+        user.identities = vec![principal];
+        let mut id = [0u8; 16];
+        let data = principal.as_slice();
+        id.copy_from_slice(&data[0..16]);
+        user.id = id;
+        user.status = UserStatus::Active;
+        user
+    }
+
+    #[tokio::test]
+    async fn controllers_requests_are_auto_approved() {
+        let ctx: TestContext = setup().with_caller(TEST_CONTROLLER_ID);
+        let approver_user = mock_user_from_principal(Principal::from_slice(&[25; 29]));
+
+        USER_REPOSITORY.insert(approver_user.to_key(), approver_user.clone());
+
+        // creates a request policy for ChangeExternalCanister request.
+        let mut request_policy = mock_request_policy();
+        request_policy.specifier =
+            RequestSpecifier::ChangeExternalCanister(ExternalCanisterId::Any);
+        request_policy.rule = RequestPolicyRule::QuorumPercentage(
+            UserSpecifier::Id(vec![approver_user.id]),
+            Percentage(100),
+        );
+        REQUEST_POLICY_REPOSITORY.insert(request_policy.id, request_policy.to_owned());
+
+        let request = ctx
+            .service
+            .create_request(
+                CreateRequestInput {
+                    operation: station_api::RequestOperationInput::ChangeExternalCanister(
+                        station_api::ChangeExternalCanisterOperationInput {
+                            canister_id: Principal::from_slice(&[1u8; 16]),
+                            mode: station_api::CanisterInstallMode::Upgrade,
+                            module: vec![],
+                            module_extra_chunks: None,
+                            arg: None,
+                        },
+                    ),
+                    title: None,
+                    summary: None,
+                    execution_plan: Some(station_api::RequestExecutionScheduleDTO::Immediate),
+                },
+                &ctx.call_context,
+            )
+            .await
+            .unwrap();
+
+        // Check that request was auto approved and that approver received a notification.
+        assert_eq!(request.status, RequestStatus::Approved);
+        let notifications = NOTIFICATION_REPOSITORY.list();
+        assert_eq!(notifications.len(), 1);
+        assert_eq!(notifications[0].target_user_id, approver_user.id);
+
+        assert!(
+            USER_REPOSITORY
+                .list()
+                .iter()
+                .any(|user| user.identities.contains(&TEST_CONTROLLER_ID)),
+            "Controller user was not created in orbit"
+        );
     }
 
     #[tokio::test]
