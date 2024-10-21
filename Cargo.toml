@@ -53,8 +53,8 @@ ic-certification = { git = "https://github.com/dfinity/response-verification", r
 ic-certified-assets = { git = "https://github.com/dfinity/sdk.git", rev = "bb5f8b58afa94b1950f5e1a750e0491457ad88d1" }
 ic-http-certification = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
 ic-representation-independent-hash = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
-ic-cdk = "0.13.2"
-ic-cdk-macros = "0.9"
+ic-cdk = "0.16.0"
+ic-cdk-macros = "0.16.0"
 ic-cdk-timers = "0.9.0"
 ic-ledger-types = "0.12.0"
 ic-stable-structures = "0.6.4"

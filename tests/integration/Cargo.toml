@@ -11,7 +11,7 @@ dfx-orbit = { path = '../../tools/dfx-orbit', version = '0.5.0' }
 flate2 = { workspace = true }
 hex = { workspace = true }
 orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alpha.5' }
-ic-cdk = { workspace = true }
+ic-cdk = "0.13.2"
 ic-certified-assets = { workspace = true }
 ic-ledger-types = { workspace = true }
 itertools = { workspace = true }
