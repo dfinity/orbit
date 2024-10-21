@@ -39,6 +39,44 @@ fn asset_upload() {
         ..
     } = setup_new_env();
 
+    // add the permissions for admins to call any external canister
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        RequestOperationInput::EditPermission(station_api::EditPermissionOperationInput {
+            auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
+            users: None,
+            user_groups: None,
+            resource: station_api::ResourceDTO::ExternalCanister(
+                station_api::ExternalCanisterResourceActionDTO::Call(
+                    station_api::CallExternalCanisterResourceTargetDTO {
+                        execution_method: station_api::ExecutionMethodResourceTargetDTO::Any,
+                        validation_method: station_api::ValidationMethodResourceTargetDTO::No,
+                    },
+                ),
+            ),
+        }),
+    )
+    .expect("Failed to add permission to call external canister");
+
+    // automatically approve admin calls to external canisters
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        RequestOperationInput::AddRequestPolicy(station_api::AddRequestPolicyOperationInput {
+            specifier: station_api::RequestSpecifierDTO::CallExternalCanister(
+                station_api::CallExternalCanisterResourceTargetDTO {
+                    execution_method: station_api::ExecutionMethodResourceTargetDTO::Any,
+                    validation_method: station_api::ValidationMethodResourceTargetDTO::No,
+                },
+            ),
+            rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+        }),
+    )
+    .expect("Failed to add approval policy to call external canister");
+
     let asset_canister = setup_asset_canister(&mut env, &canister_ids);
 
     let (dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
