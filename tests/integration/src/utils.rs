@@ -855,7 +855,7 @@ pub(crate) fn add_external_canister_call_any_method_permission_and_approval(
 ) {
     // add the permissions for admins to call any external canister
     execute_request(
-        &env,
+        env,
         admin_id,
         station_id,
         RequestOperationInput::EditPermission(station_api::EditPermissionOperationInput {
@@ -876,7 +876,7 @@ pub(crate) fn add_external_canister_call_any_method_permission_and_approval(
 
     // automatically approve calls to external canisters
     execute_request(
-        &env,
+        env,
         admin_id,
         station_id,
         RequestOperationInput::AddRequestPolicy(station_api::AddRequestPolicyOperationInput {
