@@ -53,6 +53,8 @@ describe('CanisterIcSettingsDialog', () => {
           freezing_threshold: BigInt(0),
           memory_allocation: BigInt(0),
           reserved_cycles_limit: BigInt(0),
+          log_visibility: { controllers: null },
+          wasm_memory_limit: BigInt(0),
         },
         attach: true, // disables teleport in VDialog
       },
