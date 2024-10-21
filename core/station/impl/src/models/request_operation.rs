@@ -266,7 +266,7 @@ pub enum SystemUpgradeTarget {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct WasmModuleExtraChunks {
     pub store_canister: Principal,
-    pub chunk_hashes_list: Vec<Vec<u8>>,
+    pub extra_chunks_key: String,
     pub wasm_module_hash: Vec<u8>,
 }
 

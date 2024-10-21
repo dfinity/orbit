@@ -89,7 +89,6 @@ fn canister_install(use_chunks: bool) {
         argument: None,
         arg_file: None,
         asset_canister: asset_canister.map(|p| p.to_text()),
-        max_chunk_len: asset_canister.map(|_| max_chunk_len),
     };
 
     let request = dfx_orbit_test(&mut env, config, async {

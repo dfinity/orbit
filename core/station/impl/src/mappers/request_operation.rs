@@ -358,7 +358,7 @@ impl From<orbit_essentials::types::WasmModuleExtraChunks> for WasmModuleExtraChu
     fn from(input: orbit_essentials::types::WasmModuleExtraChunks) -> WasmModuleExtraChunks {
         WasmModuleExtraChunks {
             store_canister: input.store_canister,
-            chunk_hashes_list: input.chunk_hashes_list,
+            extra_chunks_key: input.extra_chunks_key,
             wasm_module_hash: input.wasm_module_hash,
         }
     }
@@ -368,7 +368,7 @@ impl From<WasmModuleExtraChunks> for orbit_essentials::types::WasmModuleExtraChu
     fn from(input: WasmModuleExtraChunks) -> orbit_essentials::types::WasmModuleExtraChunks {
         orbit_essentials::types::WasmModuleExtraChunks {
             store_canister: input.store_canister,
-            chunk_hashes_list: input.chunk_hashes_list,
+            extra_chunks_key: input.extra_chunks_key,
             wasm_module_hash: input.wasm_module_hash,
         }
     }
