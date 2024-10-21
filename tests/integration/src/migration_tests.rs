@@ -6,8 +6,11 @@ use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, PocketIc};
 
-const BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // can be found in the station core/init.rs
-const BASELINE_NR_PERMISSIONS: usize = 34; // can be found in the station core/init.rs
+const CURRENT_BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // can be found in the station core/init.rs
+const CURRENT_BASELINE_NR_PERMISSIONS: usize = 35; // can be found in the station core/init.rs
+
+const PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // baseline in the previous memory version core/init.rs
+const PREVIOUS_BASELINE_NR_PERMISSIONS: usize = 34; // baseline in the previous memory version core/init.rs
 
 const USER_GROUPS_NR: usize = 10;
 const USER_NR: usize = 10;
@@ -18,12 +21,12 @@ const REQUEST_POLICY_NR: usize = 3;
 const SYSTEM_UPGRADER_UPDATES_NR: usize = 1;
 const SYSTEM_STATION_UPDATES_NR: usize = 1;
 const EXPECTED_GENERATED_REQUESTS: usize = 150;
-const EXPECTED_REQUEST_POLICIES_NR: usize =
+const EXPECTED_ADDITIONAL_REQUEST_POLICIES_NR: usize =
     // for accounts there are transfer policies and configuration policies
-    ACCOUNTS_NR * 2 + REQUEST_POLICY_NR + BASELINE_NR_OF_REQUEST_POLICIES;
-const EXPECTED_PERMISSIONS_NR: usize =
+    ACCOUNTS_NR * 2 + REQUEST_POLICY_NR;
+const EXPECTED_ADDITIONAL_PERMISSIONS_NR: usize =
     // for accounts there are view, transfer and configuration permissions
-    ACCOUNTS_NR * 3 + BASELINE_NR_PERMISSIONS;
+    ACCOUNTS_NR * 3;
 
 #[test]
 fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
@@ -101,13 +104,13 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_REQUEST_POLICIES_NR,
+        EXPECTED_ADDITIONAL_REQUEST_POLICIES_NR + CURRENT_BASELINE_NR_OF_REQUEST_POLICIES,
     );
     assert_can_list_permissions(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_PERMISSIONS_NR,
+        EXPECTED_ADDITIONAL_PERMISSIONS_NR + CURRENT_BASELINE_NR_PERMISSIONS,
     );
 }
 
@@ -178,13 +181,13 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_REQUEST_POLICIES_NR,
+        EXPECTED_ADDITIONAL_REQUEST_POLICIES_NR + PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES,
     );
     assert_can_list_permissions(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_PERMISSIONS_NR,
+        EXPECTED_ADDITIONAL_PERMISSIONS_NR + PREVIOUS_BASELINE_NR_PERMISSIONS,
     );
 
     // Makes sure that the next test data id number is pointing at a value that was
@@ -245,14 +248,17 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         canister_ids.station,
         WALLET_ADMIN_USER,
         // for accounts there are transfer policies and configuration policies
-        EXPECTED_REQUEST_POLICIES_NR + new_records + (new_records * 2),
+        EXPECTED_ADDITIONAL_REQUEST_POLICIES_NR
+            + PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES
+            + new_records
+            + (new_records * 2),
     );
     assert_can_list_permissions(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
         // for accounts there are view, transfer and configuration permissions
-        EXPECTED_PERMISSIONS_NR + (new_records * 3),
+        EXPECTED_ADDITIONAL_PERMISSIONS_NR + PREVIOUS_BASELINE_NR_PERMISSIONS + (new_records * 3),
     );
 }
 
