@@ -571,6 +571,7 @@ mod tests {
             request_policy_test_utils::mock_request_policy,
             request_specifier::{RequestSpecifier, UserSpecifier},
             request_test_utils::mock_request,
+            resource::ExternalCanisterId,
             resource::ResourceIds,
             user_test_utils::mock_user,
             AddAccountOperationInput, AddAddressBookEntryOperation,
@@ -601,7 +602,7 @@ mod tests {
     }
 
     impl TestContext {
-        fn with_call_context(mut self, caller: Principal) -> Self {
+        fn with_caller(mut self, caller: Principal) -> Self {
             self.call_context = CallContext::new(caller);
             self
         }
@@ -727,15 +728,10 @@ mod tests {
     async fn request_creation_triggers_notifications() {
         let ctx = setup();
         // creates other users
-        let mut related_user = mock_user();
-        related_user.identities = vec![Principal::from_slice(&[25; 29])];
-        related_user.id = [25; 16];
-        related_user.status = UserStatus::Active;
-
-        let mut unrelated_user = mock_user();
-        unrelated_user.identities = vec![Principal::from_slice(&[26; 29])];
-        unrelated_user.id = [26; 16];
-        unrelated_user.status = UserStatus::Active;
+        let (related_user, unrelated_user) = (
+            mock_user_from_principal(Principal::from_slice(&[25; 29])),
+            mock_user_from_principal(Principal::from_slice(&[26; 29])),
+        );
 
         USER_REPOSITORY.insert(related_user.to_key(), related_user.clone());
         USER_REPOSITORY.insert(unrelated_user.to_key(), unrelated_user.clone());
@@ -785,9 +781,33 @@ mod tests {
         assert_eq!(notifications[0].target_user_id, related_user.id);
     }
 
+    fn mock_user_from_principal(principal: Principal) -> User {
+        let mut user = mock_user();
+        user.identities = vec![principal];
+        let mut id = [0u8; 16];
+        let data = principal.as_slice();
+        id.copy_from_slice(&data[0..16]);
+        user.id = id;
+        user.status = UserStatus::Active;
+        user
+    }
+
     #[tokio::test]
     async fn controllers_requests_are_auto_approved() {
-        let ctx: TestContext = setup().with_call_context(TEST_CONTROLLER_ID);
+        let ctx: TestContext = setup().with_caller(TEST_CONTROLLER_ID);
+        let approver_user = mock_user_from_principal(Principal::from_slice(&[25; 29]));
+
+        USER_REPOSITORY.insert(approver_user.to_key(), approver_user.clone());
+
+        // creates a request policy for ChangeExternalCanister request.
+        let mut request_policy = mock_request_policy();
+        request_policy.specifier =
+            RequestSpecifier::ChangeExternalCanister(ExternalCanisterId::Any);
+        request_policy.rule = RequestPolicyRule::QuorumPercentage(
+            UserSpecifier::Id(vec![approver_user.id]),
+            Percentage(100),
+        );
+        REQUEST_POLICY_REPOSITORY.insert(request_policy.id, request_policy.to_owned());
 
         let request = ctx
             .service
@@ -811,7 +831,19 @@ mod tests {
             .await
             .unwrap();
 
+        // Check that request was auto approved and that approver received a notification.
         assert_eq!(request.status, RequestStatus::Approved);
+        let notifications = NOTIFICATION_REPOSITORY.list();
+        assert_eq!(notifications.len(), 1);
+        assert_eq!(notifications[0].target_user_id, approver_user.id);
+
+        assert!(
+            USER_REPOSITORY
+                .list()
+                .iter()
+                .any(|user| user.identities.contains(&TEST_CONTROLLER_ID)),
+            "Controller user was not created in orbit"
+        );
     }
 
     #[tokio::test]
