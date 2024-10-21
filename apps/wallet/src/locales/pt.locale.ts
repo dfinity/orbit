@@ -532,6 +532,11 @@ export default {
       reserved_cycles_limit: 'Limite de ciclos reservados',
       reserved_cycles_limit_hint:
         'Número de ciclos que o canister pode alocar, operações que alocam memória ou computação falharão se o limite for atingido.',
+      wasm_memory_limit: 'Limite de memória WASM',
+      wasm_memory_limit_hint:
+        'A quantidade máxima de memória que o canister pode usar para o heap WASM.',
+      log_visibility: 'Visibilidade de log',
+      log_visibility_hint: 'A visibilidade dos logs do canister.',
     },
     wasm_module: 'Módulo WASM',
     wasm_args: 'Argumentos',
@@ -548,6 +553,8 @@ export default {
     },
   },
   terms: {
+    controllers: 'Controladores',
+    public: 'Público',
     execute: 'Executar',
     error: 'Erro',
     self: 'Próprio',
@@ -919,6 +926,7 @@ export default {
       addressbook: 'Livro de endereços',
       managesysteminfo: 'Gerir informações do sistema',
       externalcanister: 'Canister gerenciado',
+      callcanister: 'Chamar canister',
     },
     actions: {
       list: 'Listar',

@@ -58,6 +58,8 @@
                   memory_allocation: canisterDetails.status.value.settings.memory_allocation,
                   reserved_cycles_limit:
                     canisterDetails.status.value.settings.reserved_cycles_limit,
+                  wasm_memory_limit: canisterDetails.status.value.settings.wasm_memory_limit,
+                  log_visibility: canisterDetails.status.value.settings.log_visibility,
                 }"
               />
             </template>

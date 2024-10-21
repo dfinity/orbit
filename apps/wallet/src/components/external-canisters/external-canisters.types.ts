@@ -4,6 +4,7 @@ import {
   CanisterInstallMode,
   CanisterMethod,
   ExternalCanisterChangeRequestPolicyRuleInput,
+  LogVisibility,
   ValidationMethodResourceTarget,
 } from '~/generated/station/station.did';
 
@@ -19,6 +20,8 @@ export interface CanisterIcSettingsModel {
   memory_allocation?: number;
   compute_allocation?: number;
   reserved_cycles_limit?: number;
+  log_visibility?: LogVisibility;
+  wasm_memory_limit?: number;
 }
 
 export interface CanisterInstallModel {
