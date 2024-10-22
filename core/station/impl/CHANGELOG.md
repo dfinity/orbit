@@ -1,3 +1,43 @@
+## 0.0.2-alpha.8 (2024-10-22)
+
+
+### 🚀 Features
+
+- **dfx-orbit:** dfx-orbit version 0.5.0 ([#370](https://github.com/dfinity/orbit/pull/370))
+
+- **control-panel:** allow deploying station to subnet of choice ([#372](https://github.com/dfinity/orbit/pull/372))
+
+- **dfx-orbit:** support installing canisters with large WASM ([#380](https://github.com/dfinity/orbit/pull/380))
+
+- **station:** add canister execution method and validation pair edit variant ([#381](https://github.com/dfinity/orbit/pull/381))
+
+- **station:** allow external canister creation on subnet of choice ([#383](https://github.com/dfinity/orbit/pull/383))
+
+- **wallet:** add external canister method call ui ([#385](https://github.com/dfinity/orbit/pull/385))
+
+- **station:** init with default external canisters policies ([#393](https://github.com/dfinity/orbit/pull/393))
+
+- **station:** enable native settings change of a non managed canister ([#396](https://github.com/dfinity/orbit/pull/396))
+
+
+### 🩹 Fixes
+
+- **release:** workaround nx bug in release script ([#375](https://github.com/dfinity/orbit/pull/375))
+
+
+### 🧱 Updated Dependencies
+
+- Updated orbit-essentials to 0.0.2-alpha.6
+- Updated upgrader-api to 0.0.2-alpha.6
+- Updated station-api to 0.0.2-alpha.7
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Leon Tan
+- mraszyk @mraszyk
+
 ## 0.0.2-alpha.7 (2024-10-02)
 
 

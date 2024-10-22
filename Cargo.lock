@@ -884,7 +884,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
 name = "control-panel"
-version = "0.0.2-alpha.6"
+version = "0.0.2-alpha.7"
 dependencies = [
  "candid",
  "candid_parser",
@@ -911,7 +911,7 @@ dependencies = [
 
 [[package]]
 name = "control-panel-api"
-version = "0.0.2-alpha.3"
+version = "0.0.2-alpha.4"
 dependencies = [
  "candid",
  "orbit-essentials",
@@ -1196,7 +1196,7 @@ dependencies = [
 
 [[package]]
 name = "dfx-orbit"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "candid",
@@ -3155,7 +3155,7 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "orbit-essentials"
-version = "0.0.2-alpha.5"
+version = "0.0.2-alpha.6"
 dependencies = [
  "base64 0.22.1",
  "candid",
@@ -4603,7 +4603,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "station"
-version = "0.0.2-alpha.7"
+version = "0.0.2-alpha.8"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4637,7 +4637,7 @@ dependencies = [
 
 [[package]]
 name = "station-api"
-version = "0.0.2-alpha.6"
+version = "0.0.2-alpha.7"
 dependencies = [
  "candid",
  "orbit-essentials",
@@ -5250,7 +5250,7 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "upgrader"
-version = "0.0.2-alpha.4"
+version = "0.0.2-alpha.5"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5277,7 +5277,7 @@ dependencies = [
 
 [[package]]
 name = "upgrader-api"
-version = "0.0.2-alpha.5"
+version = "0.0.2-alpha.6"
 dependencies = [
  "candid",
  "ic-stable-structures",

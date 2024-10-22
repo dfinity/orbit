@@ -1,6 +1,6 @@
 use super::util::parse_arguments;
 use crate::{canister::util::log_hashes, DfxOrbit};
-use anyhow::{bail, Context};
+use anyhow::{anyhow, bail, Context};
 use candid::CandidType;
 use clap::{Parser, ValueEnum};
 use orbit_essentials::types::WasmModuleExtraChunks;
@@ -9,10 +9,9 @@ use station_api::{
     CanisterInstallMode, ChangeExternalCanisterOperationDTO, ChangeExternalCanisterOperationInput,
     GetRequestResponse, RequestOperationDTO, RequestOperationInput,
 };
+use std::collections::HashMap;
 use std::fmt::Write;
-
-/// The default maximum length in bytes of module chunks (the IC does not allow chunks larger than 1MiB).
-const DEFAULT_MAX_CHUNK_LEN: usize = 1 << 20;
+use std::path::PathBuf;
 
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Clone, Parser)]
@@ -34,9 +33,6 @@ pub struct RequestCanisterInstallArgs {
     /// The asset canister name or ID to upload module chunks to.
     #[clap(long)]
     pub asset_canister: Option<String>,
-    /// The maximum length in bytes of module chunks.
-    #[clap(long)]
-    pub max_chunk_len: Option<usize>,
 }
 
 #[derive(CandidType)]
@@ -79,34 +75,31 @@ impl RequestCanisterInstallArgs {
             // compute module hash
             let canister_wasm_hash = hash(&module);
 
-            // chunk module
-            let chunks: Vec<&[u8]> = module
-                .chunks(self.max_chunk_len.unwrap_or(DEFAULT_MAX_CHUNK_LEN))
-                .collect();
-
-            // upload chunks to asset canister
-            for chunk in &chunks {
-                let chunk_hash = hash(chunk);
-                let store_arg = StoreArg {
-                    key: format!("/{}", hex::encode(chunk_hash.clone())),
-                    content: chunk.to_vec(),
-                    content_type: "application/octet-stream".to_string(),
-                    content_encoding: "identity".to_string(),
-                    sha256: Some(chunk_hash),
-                };
-                asset_agent
-                    .update("store")
-                    .with_arg(store_arg)
-                    .build()
-                    .call_and_wait()
-                    .await?;
-            }
+            // upload module as extra chunks to asset canister
+            let path: PathBuf = self.wasm.into();
+            let extra_chunks_key = path
+                .file_name()
+                .ok_or_else(|| {
+                    anyhow!(
+                        "Could not derive the WASM file name from {}",
+                        path.display()
+                    )
+                })?
+                .to_str()
+                .ok_or_else(|| anyhow!("The WASM file name cannot be converted to a String"))?
+                .to_string();
+            ic_asset::upload(
+                &asset_agent,
+                HashMap::from([(extra_chunks_key.clone(), path)]),
+                &dfx_orbit.logger,
+            )
+            .await?;
 
             (
                 vec![],
                 Some(WasmModuleExtraChunks {
                     store_canister: asset_canister_id,
-                    chunk_hashes_list: chunks.iter().map(|c| hash(c)).collect(),
+                    extra_chunks_key,
                     wasm_module_hash: canister_wasm_hash,
                 }),
             )

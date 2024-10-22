@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::DfxOrbit;
-use anyhow::bail;
+use anyhow::{bail, Context};
 use candid::Principal;
 use clap::Parser;
 use station_api::{
@@ -15,15 +15,15 @@ use std::collections::BTreeSet;
 #[derive(Debug, Clone, Parser)]
 pub struct RequestCanisterUpdateSettingsArgs {
     /// The canister name or ID.
-    canister: String,
+    pub canister: String,
 
     /// Add a principal to the list of controllers of the canister
     #[clap(long)]
-    pub(crate) add_controller: Vec<Principal>,
+    pub add_controller: Vec<Principal>,
 
     /// Removes a principal from the list of controllers of the canister
     #[clap(long)]
-    pub(crate) remove_controller: Vec<Principal>,
+    pub remove_controller: Vec<Principal>,
 }
 
 impl RequestCanisterUpdateSettingsArgs {
@@ -98,8 +98,16 @@ async fn get_new_controller_set(
     add: Vec<Principal>,
     remove: Vec<Principal>,
 ) -> anyhow::Result<Vec<Principal>> {
-    // Transform into maps to deduplicates
-    let old_controllers = dfx_orbit.get_controllers(canister_id).await?;
+    // Transform into maps to deduplicate
+    let old_controllers = dfx_orbit
+        .get_controllers(canister_id)
+        .await
+        .with_context(|| {
+            format!(
+                "Failed to retreive controllers for {}",
+                canister_id.to_text()
+            )
+        })?;
     let controllers = old_controllers
         .iter()
         .chain(add.iter())

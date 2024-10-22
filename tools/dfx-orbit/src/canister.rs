@@ -9,7 +9,7 @@ mod util;
 
 pub use self::{
     call::RequestCanisterCallArgs, install::CanisterInstallModeArgs,
-    install::RequestCanisterInstallArgs,
+    install::RequestCanisterInstallArgs, settings::RequestCanisterUpdateSettingsArgs,
 };
 
 // TODO: Support Canister create + integration test
@@ -30,8 +30,8 @@ pub enum RequestCanisterActionArgs {
     Install(RequestCanisterInstallArgs),
     /// Request to call a canister method
     Call(RequestCanisterCallArgs),
-    // Update a canister's settings (i.e its controller, compute allocation, or memory allocation.)
-    //UpdateSettings(RequestCanisterUpdateSettingsArgs),
+    /// Update a canister's settings (i.e its controller, compute allocation, or memory allocation.)
+    UpdateSettings(RequestCanisterUpdateSettingsArgs),
 }
 
 impl RequestCanisterArgs {
@@ -53,7 +53,7 @@ impl RequestCanisterActionArgs {
         match self {
             RequestCanisterActionArgs::Install(args) => args.into_request(dfx_orbit).await,
             RequestCanisterActionArgs::Call(args) => args.into_request(dfx_orbit),
-            //RequestCanisterActionArgs::UpdateSettings(args) => args.into_request(dfx_orbit).await,
+            RequestCanisterActionArgs::UpdateSettings(args) => args.into_request(dfx_orbit).await,
         }
     }
 }
@@ -72,8 +72,8 @@ pub enum VerifyCanisterActionArgs {
     Install(RequestCanisterInstallArgs),
     /// Verify call a canister method
     Call(RequestCanisterCallArgs),
-    // Verify an update settings request
-    //UpdateSettings(RequestCanisterUpdateSettingsArgs),
+    /// Verify an update settings request
+    UpdateSettings(RequestCanisterUpdateSettingsArgs),
 }
 
 impl VerifyCanisterArgs {
@@ -85,9 +85,9 @@ impl VerifyCanisterArgs {
         match &self.action {
             VerifyCanisterActionArgs::Install(args) => args.verify(dfx_orbit, request)?,
             VerifyCanisterActionArgs::Call(args) => args.verify(dfx_orbit, request)?,
-            // VerifyCanisterActionArgs::UpdateSettings(args) => {
-            //     args.verify(dfx_orbit, request).await?
-            // }
+            VerifyCanisterActionArgs::UpdateSettings(args) => {
+                args.verify(dfx_orbit, request).await?
+            }
         }
 
         Ok(())
