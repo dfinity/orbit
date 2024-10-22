@@ -1,7 +1,8 @@
 use crate::DfxOrbit;
-use anyhow::bail;
+use anyhow::{anyhow, bail, Context};
 use candid::{Nat, Principal};
-use ic_utils::Canister;
+use ic_certified_assets::types::CommitProposedBatchArguments;
+use ic_utils::{call::AsyncCaller, Canister};
 use serde_bytes::ByteBuf;
 use slog::Logger;
 use station_api::{GetRequestResponse, RequestOperationDTO};
@@ -61,5 +62,31 @@ impl AssetAgent<'_> {
 
     pub(super) async fn compute_evidence(&self, sources: &[&Path]) -> anyhow::Result<String> {
         Ok(ic_asset::compute_evidence(&self.canister_agent, sources, &self.logger).await?)
+    }
+
+    pub(super) async fn validate_commit_proposed_batch(
+        &self,
+        batch_id: Nat,
+        evidence: String,
+    ) -> anyhow::Result<()> {
+        let evidence = hex::decode(evidence)?;
+        let arg = CommitProposedBatchArguments {
+            batch_id,
+            evidence: ByteBuf::from(evidence),
+        };
+
+        let method: AsyncCaller<'_, (Result<String, String>,)> = self
+            .canister_agent
+            .update("validate_commit_proposed_batch")
+            .with_arg(arg)
+            .build();
+
+        let result: Result<String, String> = method
+            .call_and_wait_one()
+            .await
+            .with_context(|| "Failed to check if the batch is valid")?;
+        result.map_err(|str| anyhow!(str))?;
+
+        Ok(())
     }
 }
