@@ -8,6 +8,7 @@ import { services } from '~/plugins/services.plugin';
 import AssetForm from './AssetForm.vue';
 import { flushPromises } from '@vue/test-utils';
 import { VCard } from 'vuetify/components';
+import { BlockchainStandard } from '~/types/chain.types';
 
 vi.mock('~/services/station.service', () => {
   const mock: Partial<StationService> = {
@@ -17,7 +18,7 @@ vi.mock('~/services/station.service', () => {
         supported_blockchains: [
           {
             blockchain: 'icp',
-            supported_standards: [{ standard: 'native' }],
+            supported_standards: [{ standard: BlockchainStandard.Native }],
           },
         ],
       } as Capabilities),
@@ -39,7 +40,7 @@ vi.mock('~/services/station.service', () => {
               value: 'qhbym-qaaaa-aaaaa-aaafq-cai',
             },
           ],
-          standards: ['native'],
+          standards: [BlockchainStandard.Native],
           name: 'Test',
           symbol: 'TEST',
         },
@@ -111,7 +112,7 @@ describe('AssetDialog', () => {
 
     await form
       .findComponent({ name: 'StandardsAutocomplete' })
-      .vm.$emit('update:modelValue', ['native']);
+      .vm.$emit('update:modelValue', [BlockchainStandard.Native]);
 
     // fill out form
     await form.find('input[name="name"]').setValue('Test');
