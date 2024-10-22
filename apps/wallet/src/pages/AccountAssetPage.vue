@@ -40,8 +40,11 @@
                     $t(`blockchains.${accountAddress.blockchain}.formats.${accountAddress.format}`)
                   "
                 ></VChip>
-                <TextOverflow :max-length="32" :text="accountAddress.address"
-              /></small>
+                <ShortenedAddress
+                  :address="accountAddress.address"
+                  :format="accountAddress.format as AddressFormat"
+                ></ShortenedAddress>
+              </small>
               <VBtn
                 size="x-small"
                 variant="text"
@@ -151,9 +154,14 @@
                           </td>
                           <td>
                             <div class="d-flex flex-row align-center">
-                              <TextOverflow
-                                :text="isReceivedTransfer(transfer) ? transfer.from : transfer.to"
+                              <ShortenedAddress
+                                v-if="asset"
+                                :address="
+                                  isReceivedTransfer(transfer) ? transfer.from : transfer.to
+                                "
+                                :format="transfer.format"
                               />
+
                               <VBtn
                                 size="x-small"
                                 variant="text"
@@ -268,7 +276,7 @@ import {
 } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
-import TextOverflow from '~/components/TextOverflow.vue';
+import ShortenedAddress from '~/components/ShortenedAddress.vue';
 import BatchTransfersActionBtn from '~/components/accounts/BatchTransfersActionBtn.vue';
 import RemoveAssetDialog from '~/components/accounts/RemoveAssetDialog.vue';
 import TransferBtn from '~/components/accounts/TransferBtn.vue';
@@ -290,6 +298,7 @@ import { ChainApiFactory } from '~/services/chains';
 import { useStationStore } from '~/stores/station.store';
 import type { PageProps } from '~/types/app.types';
 import {
+  AddressFormat,
   BlockchainType,
   ChainApiCapability,
   type AccountIncomingTransfer,
@@ -297,6 +306,7 @@ import {
 import { BreadCrumbItem } from '~/types/navigation.types';
 import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
+import { detectAddressFormat } from '~/utils/asset.utils';
 import { convertDate } from '~/utils/date.utils';
 import { formatBalance, throttle } from '~/utils/helper.utils';
 
@@ -386,7 +396,9 @@ const isReceivedTransfer = (transfer: AccountIncomingTransfer): boolean => {
   // return transfer.to === account.value?.address;
 };
 
-const loadTransfers = async (): Promise<AccountIncomingTransfer[]> => {
+const loadTransfers = async (): Promise<
+  (AccountIncomingTransfer & { format: string | undefined })[]
+> => {
   if (
     !account.value ||
     !accountAsset.value ||
@@ -409,7 +421,13 @@ const loadTransfers = async (): Promise<AccountIncomingTransfer[]> => {
     }),
   });
 
-  return transfers;
+  return transfers.map(transfer => ({
+    ...transfer,
+    format: detectAddressFormat(
+      asset.value!.blockchain,
+      isReceivedTransfer(transfer) ? transfer.from : transfer.to,
+    ),
+  }));
 };
 
 let useVerifiedCall = false;

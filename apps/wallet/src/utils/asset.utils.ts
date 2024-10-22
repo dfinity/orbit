@@ -1,3 +1,4 @@
+import { decodeIcrcAccount } from '@dfinity/ledger-icrc';
 import { Asset, StandardData, SupportedBlockchain } from '~/generated/station/station.did';
 import { ICNativeApi } from '~/services/chains/ic-native-api.service';
 import { ICRC1Api } from '~/services/chains/icrc1-api.service';
@@ -42,4 +43,30 @@ export function detectAddressStandard(
     );
 
   return supportedStandards?.find(s => s.supported_address_formats.includes(maybeFormat));
+}
+
+export function shortenIcrc1Address(address: string): string {
+  const account = decodeIcrcAccount(address);
+  const principal = account.owner.toText();
+
+  if (!account.subaccount || account.subaccount.every(b => b === 0)) {
+    // show just the principal, if there is no subaccount
+    if (principal.length <= 32) {
+      // the principal is short enough to show the whole thing
+      return principal;
+    }
+
+    // shorten the principal
+    return principal.slice(0, 12) + '...' + principal.slice(-10);
+  } else {
+    let subaccount = address.split('.')[1];
+
+    if (subaccount.length <= 27) {
+      // the subaccount is short enough to show the whole thing
+      return `${address.slice(0, 6)}...${subaccount}`;
+    }
+
+    // shorted the subaccount
+    return `${address.slice(0, 6)}...${subaccount.slice(0, 20)}...${address.slice(-4)}`;
+  }
 }

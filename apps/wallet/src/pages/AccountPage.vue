@@ -100,9 +100,11 @@
                         :key="account_address.address"
                       >
                         <small>
-                          <TextOverflow :max-length="32" :text="account_address.address">
-                          </TextOverflow
-                        ></small>
+                          <ShortenedAddress
+                            :address="account_address.address"
+                            :format="account_address.format"
+                          />
+                        </small>
                       </div>
                     </template>
 
@@ -177,7 +179,7 @@ import {
 } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
-import TextOverflow from '~/components/TextOverflow.vue';
+import ShortenedAddress from '~/components/ShortenedAddress.vue';
 import AccountSetupAction from '~/components/accounts/AccountSetupAction.vue';
 import AddAccountAssetBtn from '~/components/accounts/AddAccountAssetBtn.vue';
 import DateRange from '~/components/inputs/DateRange.vue';

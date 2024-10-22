@@ -18,7 +18,7 @@
           <VIcon :icon="mdiArrowRight" size="x-small" class="ml-1" />
         </div>
         <div class="d-flex align-center text-no-wrap">
-          <TextOverflow :text="formValue.to" />
+          <ShortenedAddress :address="formValue.to!" :format="format" />
           <VBtn
             size="x-small"
             variant="text"
@@ -60,6 +60,9 @@ import { Routes } from '~/configs/routes.config';
 import TextOverflow from '~/components/TextOverflow.vue';
 import { copyToClipboard } from '~/utils/app.utils';
 import { formatBalance } from '~/utils/helper.utils';
+import ShortenedAddress from '~/components/ShortenedAddress.vue';
+import { AddressFormat } from '~/types/chain.types';
+import { detectAddressFormat } from '~/utils/asset.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -76,6 +79,7 @@ const isListMode = computed(() => props.mode === 'list');
 const formValue: Ref<Partial<Transfer>> = ref({});
 const account = computed(() => props.operation.from_account?.[0]);
 const asset = computed(() => props.operation.from_asset);
+const format = ref<AddressFormat | string | undefined>(undefined);
 
 onBeforeMount(() => {
   const transfer: Partial<Transfer> = {};
@@ -89,6 +93,8 @@ onBeforeMount(() => {
     transfer.network = props.operation.input.network[0];
   }
   transfer.metadata = props.operation.input.metadata;
+
+  format.value = detectAddressFormat(props.operation.from_asset.blockchain, transfer.to);
 
   formValue.value = transfer;
 });
