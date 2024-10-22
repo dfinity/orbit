@@ -124,7 +124,12 @@ export default {
     icp: {
       name: 'Internet Computer',
       standards: {
-        native: 'Nativo',
+        icp_native: 'ICP (Nativo)',
+        icrc1: 'ICRC-1',
+      },
+      formats: {
+        icp_account_identifier: 'ICP Nativo',
+        icrc1_account: 'ICRC-1',
       },
     },
     eth: {
@@ -274,6 +279,9 @@ export default {
       editaccount: {
         title: 'Editar conta',
         request_title: 'Pedido de alteração de conta',
+        added_assets: 'Adicionado',
+        removed_assets: 'Removido',
+        replaced_assets: 'Substituído',
       },
       editaddressbookentry: {
         title: 'Editar endereço',
@@ -695,6 +703,7 @@ export default {
   navigation: {
     home: 'Início',
     accounts: 'Contas',
+    account: 'Conta',
     address_book: 'Endereços',
     users: 'Usuários',
     settings: 'Configuraçōes',
@@ -733,6 +742,14 @@ export default {
       csv_ignored_transfers_hint: 'Transferências com erros serão ignoradas.',
       csv_transfer_failed: 'Error ao processar transferências, por favor, tente novamente.',
       csv_download_invalid: 'Baixar erros',
+      add_asset: 'Adicionar ativo',
+      remove_asset: 'Remover ativo',
+      no_assets_to_add: 'Nenhum ativo disponível para adicionar.',
+      remove_asset_confirm:
+        'Tem a certeza que deseja remover este ativo? Remover o ativo não afeta o saldo da conta. Re-adicionar o ativo restaurará o acesso ao saldo.',
+      transfers_not_supported: 'As transferências não são suportadas para este ativo.',
+      add_index_canister_to_see_transactions:
+        'Considere adicionar o canister de índice ao ativo para ver as transações.',
     },
     address_book: {
       title: 'Livro de endereços',

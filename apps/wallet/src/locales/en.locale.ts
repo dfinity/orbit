@@ -96,7 +96,7 @@ export default {
         'To verify the update, open the terminal and follow the instructions bellow:',
     },
     asset: 'Asset',
-    no_data: 'No data available',
+    no_data: 'No data available.',
     no_matching_results: 'No matching results found for `{search}`.',
     add_new_label: 'Add new label: {label}',
     user_cancel_pending_requests: 'Cancel all pending requests from this user.',
