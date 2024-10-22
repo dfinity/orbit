@@ -1,5 +1,6 @@
 <template>
   <VDialog
+    v-bind="$attrs"
     v-model="openModel"
     :persistent="loading || saving"
     transition="dialog-bottom-transition"
@@ -100,7 +101,7 @@ const openModel = computed({
 const stationService = services().station;
 
 const canSave = computed(() => {
-  return valid.value && !loading.value;
+  return valid.value && assets.value.length > 0 && !loading.value;
 });
 
 const save = async (): Promise<void> => {

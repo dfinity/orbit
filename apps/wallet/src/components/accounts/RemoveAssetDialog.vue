@@ -19,7 +19,7 @@
         <VSpacer />
         <VBtn
           :disabled="working"
-          data-test-id="remove-asset-dialog-save-button"
+          data-test-id="remove-asset-dialog-cancel-button"
           @click="openModel = false"
         >
           {{ $t('terms.cancel') }}
@@ -28,7 +28,7 @@
           :loading="working"
           color="primary"
           variant="elevated"
-          data-test-id="remove-asset-dialog-save-button"
+          data-test-id="remove-asset-dialog-confirm-button"
           @click="removeAsset"
         >
           {{ $t('terms.remove') }}

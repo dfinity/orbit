@@ -12,6 +12,7 @@
     :disabled="props.disabled.value"
     :rules="props.rules.value"
     :no-data-text="props.noDataText.value"
+    data-test-id="token-autocomplete"
   />
 </template>
 
