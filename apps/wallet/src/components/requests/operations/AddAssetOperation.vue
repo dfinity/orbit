@@ -7,7 +7,6 @@
     <RequestOperationListRow>
       <template #name>{{ $t('terms.standards') }}</template>
       <template #content>
-        {{ $t(`blockchains.${formValue.blockchain!}.name`) }}:
         {{
           formValue.standards
             ?.map(standard => $t(`blockchains.${formValue.blockchain!}.standards.${standard}`))

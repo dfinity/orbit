@@ -270,6 +270,9 @@ export default {
       editaccount: {
         title: 'Edit account',
         request_title: 'Edit account request',
+        added_assets: 'Added',
+        removed_assets: 'Removed',
+        replaced_assets: 'Replaced',
       },
       editaddressbookentry: {
         title: 'Edit address book entry',
