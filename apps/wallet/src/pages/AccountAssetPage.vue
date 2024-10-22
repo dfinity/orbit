@@ -195,13 +195,13 @@
                   </DataLoader>
 
                   <VAlert
+                    v-else-if="
+                      chainApi && !chainApi.getCapabilities().includes(ChainApiCapability.Transfers)
+                    "
                     type="warning"
                     variant="tonal"
                     density="compact"
                     class="mt-4"
-                    v-else-if="
-                      chainApi && !chainApi.getCapabilities().includes(ChainApiCapability.Transfers)
-                    "
                   >
                     {{ $t('pages.account.transfers_not_supported') }}
 

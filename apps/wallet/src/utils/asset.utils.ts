@@ -59,7 +59,7 @@ export function shortenIcrc1Address(address: string): string {
     // shorten the principal
     return principal.slice(0, 12) + '...' + principal.slice(-10);
   } else {
-    let subaccount = address.split('.')[1];
+    const subaccount = address.split('.')[1];
 
     if (subaccount.length <= 27) {
       // the subaccount is short enough to show the whole thing

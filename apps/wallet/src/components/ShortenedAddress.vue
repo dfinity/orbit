@@ -12,7 +12,7 @@
   ></TextOverflow>
 
   <!-- unknown format -->
-  <TextOverflow v-else="format" :text="address" :max-length="32"></TextOverflow>
+  <TextOverflow v-else :text="address" :max-length="32"></TextOverflow>
 </template>
 
 <script setup lang="ts">
