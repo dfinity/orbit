@@ -1,6 +1,6 @@
 use super::{
     setup::{dfx_orbit_test, setup_dfx_user, DfxOrbitTestConfig},
-    util::{permit_call_operation, set_auto_approve, set_four_eyes_on_call},
+    util::{permit_call_operation, set_auto_approve_on_call, set_four_eyes_on_call},
 };
 use crate::{
     dfx_orbit::{setup::setup_dfx_orbit, util::fetch_asset},
@@ -61,7 +61,7 @@ fn asset_upload() {
 
     // As admin: Grant the user the call and prepare permissions
     permit_call_operation(&env, &canister_ids);
-    set_auto_approve(&env, &canister_ids);
+    set_auto_approve_on_call(&env, &canister_ids);
     grant_prepare_permission(&env, &canister_ids, asset_canister, dfx_principal);
 
     let (asset_dir, assets) = setup_assets();
