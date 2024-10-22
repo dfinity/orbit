@@ -84,7 +84,7 @@ impl AssetAgent<'_> {
         let result: Result<String, String> = method
             .call_and_wait_one()
             .await
-            .with_context(|| "Failed to check if the batch is valid")?;
+            .with_context(|| "Failed to fetch current upload proposal from asset canister")?;
         result.map_err(|str| anyhow!(str))?;
 
         Ok(())
