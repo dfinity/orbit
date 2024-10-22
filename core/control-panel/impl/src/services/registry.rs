@@ -542,7 +542,7 @@ mod tests {
 
         let module_extra_chunks = WasmModuleExtraChunks {
             store_canister: Principal::management_canister(),
-            chunk_hashes_list: vec![],
+            extra_chunks_key: "".to_string(),
             wasm_module_hash: vec![],
         };
         let input = RegistryEntryUpdateInput {

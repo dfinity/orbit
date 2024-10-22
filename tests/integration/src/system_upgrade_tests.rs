@@ -13,7 +13,7 @@ use station_api::{
 };
 use upgrader_api::InitArg;
 
-const EXTRA_TICKS: u64 = 100;
+const EXTRA_TICKS: u64 = 200;
 
 fn do_successful_station_upgrade(
     env: &PocketIc,
@@ -145,6 +145,60 @@ fn failed_station_upgrade() {
         &canister_ids,
         station_upgrade_operation,
         "Canister's Wasm module is not valid",
+    );
+}
+
+#[test]
+fn too_many_chunks() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let canister_wasm = get_canister_wasm("station").to_vec();
+    let chunk_len = canister_wasm.len() / 150;
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(&env, canister_wasm, chunk_len);
+
+    // create system upgrade request from chunks
+    let system_upgrade_operation =
+        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+            target: SystemUpgradeTargetDTO::UpgradeStation,
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: None,
+        });
+
+    do_failed_system_upgrade(
+        &env,
+        &canister_ids,
+        system_upgrade_operation,
+        "The total number of wasm chunks must not exceed 101",
+    );
+}
+
+#[test]
+fn too_large_wasm() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(&env, vec![42_u8; 102 << 20], 1 << 20);
+
+    // create system upgrade request from chunks
+    let system_upgrade_operation =
+        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+            target: SystemUpgradeTargetDTO::UpgradeStation,
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: None,
+        });
+
+    do_failed_system_upgrade(
+        &env,
+        &canister_ids,
+        system_upgrade_operation,
+        "Wasm extra chunks length 105_906_176 exceeds the maximum wasm length 104_857_600",
     );
 }
 

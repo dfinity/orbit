@@ -1,8 +1,8 @@
 export const idlFactory = ({ IDL }) => {
   const WasmModuleExtraChunks = IDL.Record({
     'wasm_module_hash' : IDL.Vec(IDL.Nat8),
-    'chunk_hashes_list' : IDL.Vec(IDL.Vec(IDL.Nat8)),
     'store_canister' : IDL.Principal,
+    'extra_chunks_key' : IDL.Text,
   });
   const WasmModuleRegistryEntryDependency = IDL.Record({
     'name' : IDL.Text,
