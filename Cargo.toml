@@ -41,16 +41,16 @@ cap-std = "3.1.0"
 ciborium = "0.2.2"
 clap = { version = "4.5.7", features = ["derive"] }
 dateparser = "0.2"
-dfx-core = { git = "https://github.com/dfinity/sdk.git", rev = "705c34689a1e5cb2c8421404f3c120fff93e4612" }
+dfx-core = { git = "https://github.com/dfinity/sdk.git", rev = "d65717bd6d0c172247c37dd23395c9fb13b2ba20" }
 flate2 = "1.0"
 convert_case = "0.6"
 futures = "0.3"
 getrandom = { version = "0.2", features = ["custom"] }
 hex = "0.4"
 ic-agent = "0.38"
-ic-asset = { git = "https://github.com/dfinity/sdk.git", rev = "705c34689a1e5cb2c8421404f3c120fff93e4612" }
+ic-asset = { git = "https://github.com/dfinity/sdk.git", rev = "d65717bd6d0c172247c37dd23395c9fb13b2ba20" }
 ic-certification = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
-ic-certified-assets = { git = "https://github.com/dfinity/sdk.git", rev = "705c34689a1e5cb2c8421404f3c120fff93e4612" }
+ic-certified-assets = { git = "https://github.com/dfinity/sdk.git", rev = "d65717bd6d0c172247c37dd23395c9fb13b2ba20" }
 ic-http-certification = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
 ic-representation-independent-hash = { git = "https://github.com/dfinity/response-verification", rev = "da70db93832f88ecc556ae082612aedec47d3816" }
 ic-cdk = "0.16.0"

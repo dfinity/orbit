@@ -825,15 +825,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1462739cb27611015575c0c11df5df7601141071f07518d56fcc1be504cbec97"
 
 [[package]]
-name = "cmake"
-version = "0.1.51"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb1e43aa7fd152b1f968787f7dbcdeb306d1867ff373c69955211876c053f91a"
-dependencies = [
- "cc",
-]
-
-[[package]]
 name = "codespan-reporting"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1150,7 +1141,7 @@ checksum = "339544cc9e2c4dc3fc7149fd630c5f22263a4fdf18a98afd0075784968b5cf00"
 [[package]]
 name = "dfx-core"
 version = "0.1.0"
-source = "git+https://github.com/dfinity/sdk.git?rev=705c34689a1e5cb2c8421404f3c120fff93e4612#705c34689a1e5cb2c8421404f3c120fff93e4612"
+source = "git+https://github.com/dfinity/sdk.git?rev=d65717bd6d0c172247c37dd23395c9fb13b2ba20#d65717bd6d0c172247c37dd23395c9fb13b2ba20"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -1551,7 +1542,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "324a1be68054ef05ad64b861cc9eaf1d623d2d8cb25b4bf2cb9cdd902b4bf253"
 dependencies = [
  "crc32fast",
- "libz-ng-sys",
  "miniz_oxide 0.8.0",
 ]
 
@@ -2103,7 +2093,7 @@ dependencies = [
 [[package]]
 name = "ic-asset"
 version = "0.21.0"
-source = "git+https://github.com/dfinity/sdk.git?rev=705c34689a1e5cb2c8421404f3c120fff93e4612#705c34689a1e5cb2c8421404f3c120fff93e4612"
+source = "git+https://github.com/dfinity/sdk.git?rev=d65717bd6d0c172247c37dd23395c9fb13b2ba20#d65717bd6d0c172247c37dd23395c9fb13b2ba20"
 dependencies = [
  "backoff",
  "brotli",
@@ -2311,7 +2301,7 @@ dependencies = [
 [[package]]
 name = "ic-certified-assets"
 version = "0.2.5"
-source = "git+https://github.com/dfinity/sdk.git?rev=705c34689a1e5cb2c8421404f3c120fff93e4612#705c34689a1e5cb2c8421404f3c120fff93e4612"
+source = "git+https://github.com/dfinity/sdk.git?rev=d65717bd6d0c172247c37dd23395c9fb13b2ba20#d65717bd6d0c172247c37dd23395c9fb13b2ba20"
 dependencies = [
  "base64 0.13.1",
  "candid",
@@ -2830,16 +2820,6 @@ dependencies = [
  "bitflags 2.6.0",
  "libc",
  "redox_syscall 0.5.3",
-]
-
-[[package]]
-name = "libz-ng-sys"
-version = "1.1.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f0f7295a34685977acb2e8cc8b08ee4a8dffd6cf278eeccddbe1ed55ba815d5"
-dependencies = [
- "cmake",
- "libc",
 ]
 
 [[package]]
