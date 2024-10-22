@@ -1,6 +1,6 @@
 use super::util::parse_arguments;
 use crate::{canister::util::log_hashes, DfxOrbit};
-use anyhow::{anyhow, bail, Context};
+use anyhow::{bail, Context};
 use candid::CandidType;
 use clap::{Parser, ValueEnum};
 use orbit_essentials::types::WasmModuleExtraChunks;
@@ -9,9 +9,7 @@ use station_api::{
     CanisterInstallMode, ChangeExternalCanisterOperationDTO, ChangeExternalCanisterOperationInput,
     GetRequestResponse, RequestOperationDTO, RequestOperationInput,
 };
-use std::collections::HashMap;
-use std::fmt::Write;
-use std::path::PathBuf;
+use std::{collections::HashMap, fmt::Write, path::PathBuf};
 
 /// Requests that a canister be installed or updated.  Equivalent to `orbit_station_api::CanisterInstallMode`.
 #[derive(Debug, Clone, Parser)]
@@ -62,13 +60,6 @@ impl RequestCanisterInstallArgs {
         let mode = self.mode.into();
 
         let (module, module_extra_chunks) = if let Some(ref asset_canister) = self.asset_canister {
-            if self.max_chunk_len > Some(DEFAULT_MAX_CHUNK_LEN) {
-                bail!(
-                    "--max-chunk-len must not be larger than {}",
-                    DEFAULT_MAX_CHUNK_LEN
-                );
-            }
-
             let asset_canister_id = dfx_orbit.canister_id(asset_canister)?;
             let asset_agent = dfx_orbit.canister_agent(asset_canister_id)?;
 
@@ -79,14 +70,14 @@ impl RequestCanisterInstallArgs {
             let path: PathBuf = self.wasm.into();
             let extra_chunks_key = path
                 .file_name()
-                .ok_or_else(|| {
-                    anyhow!(
+                .with_context(|| {
+                    format!(
                         "Could not derive the WASM file name from {}",
                         path.display()
                     )
                 })?
                 .to_str()
-                .ok_or_else(|| anyhow!("The WASM file name cannot be converted to a String"))?
+                .with_context(|| "The WASM file name cannot be converted to a String")?
                 .to_string();
             ic_asset::upload(
                 &asset_agent,
