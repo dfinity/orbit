@@ -1,3 +1,41 @@
+## 0.0.2-alpha.7 (2024-10-22)
+
+
+### 🚀 Features
+
+- **control-panel:** support deploying large station WASM ([#364](https://github.com/dfinity/orbit/pull/364))
+
+- **control-panel:** support large WASM in registry ([#365](https://github.com/dfinity/orbit/pull/365))
+
+- **dfx-orbit:** dfx-orbit version 0.5.0 ([#370](https://github.com/dfinity/orbit/pull/370))
+
+- **control-panel:** allow deploying station to subnet of choice ([#372](https://github.com/dfinity/orbit/pull/372))
+
+- **dfx-orbit:** support installing canisters with large WASM ([#380](https://github.com/dfinity/orbit/pull/380))
+
+- **station:** allow external canister creation on subnet of choice ([#383](https://github.com/dfinity/orbit/pull/383))
+
+- **wallet:** add external canister method call ui ([#385](https://github.com/dfinity/orbit/pull/385))
+
+
+### 🩹 Fixes
+
+- **release:** workaround nx bug in release script ([#375](https://github.com/dfinity/orbit/pull/375))
+
+
+### 🧱 Updated Dependencies
+
+- Updated orbit-essentials to 0.0.2-alpha.6
+- Updated control-panel-api to 0.0.2-alpha.4
+- Updated station-api to 0.0.2-alpha.7
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Leon Tan
+- mraszyk @mraszyk
+
 ## 0.0.2-alpha.6 (2024-10-02)
 
 

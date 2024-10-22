@@ -537,6 +537,11 @@ export default {
       reserved_cycles_limit: 'Limite de cycles réservés',
       reserved_cycles_limit_hint:
         'Nombre de cycles que le canister peut allouer, les opérations qui allouent de la mémoire ou du calcul échoueront si la limite est atteinte.',
+      wasm_memory_limit: 'Limite de mémoire Wasm',
+      wasm_memory_limit_hint:
+        'La quantité maximale de mémoire que le canister peut utiliser pour le tas Wasm.',
+      log_visibility: 'Visibilité des logs',
+      log_visibility_hint: 'La visibilité des logs du canister.',
     },
     wasm_module: 'Module WASM',
     wasm_args: 'Arguments',
@@ -553,6 +558,8 @@ export default {
     },
   },
   terms: {
+    controllers: 'Contrôleurs',
+    public: 'Public',
     execute: 'Exécuter',
     error: 'Erreur',
     self: 'Soi',
@@ -940,6 +947,7 @@ export default {
       systemupgrade: 'Mise à jour du système',
       change: 'Changement',
       fund: 'Financer',
+      callcanister: 'Appeler un canister',
     },
     allow: {
       public: "N'importe qui",
