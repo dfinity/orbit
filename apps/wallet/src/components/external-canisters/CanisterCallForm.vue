@@ -42,7 +42,14 @@
           />
         </VCol>
         <VCol cols="12" class="pb-0 px-6">
-          <CanisterArgumentField v-model="model.arg" name="argument" :readonly="readonly" />
+          <CanisterArgumentField
+            v-model="model.arg"
+            name="argument"
+            :readonly="readonly"
+            :candid="
+              props.candidIdl ? { idl: props.candidIdl, method: model.methodName } : undefined
+            "
+          />
         </VCol>
         <VCol v-if="hasConfiguredValidationMethods" cols="12" class="px-0 px-6">
           <VSelect
@@ -134,6 +141,8 @@ import { SelectItem } from '~/types/helper.types';
 import { ValidationMethodResourceTarget } from '~/generated/station/station.did';
 import { useI18n } from 'vue-i18n';
 import { isApiError } from '~/utils/app.utils';
+import { getServiceMethods } from '~/utils/didc.utils';
+import logger from '~/core/logger.core';
 
 const props = withDefaults(
   defineProps<{
@@ -141,6 +150,7 @@ const props = withDefaults(
     allowedMethods?: CanisterAllowedMethod[];
     allowAnyMethod?: boolean;
     readonly?: boolean;
+    candidIdl?: string;
     hide?: {
       canisterId?: boolean;
     };
@@ -149,6 +159,7 @@ const props = withDefaults(
     readonly: false,
     allowedMethods: () => [],
     allowAnyMethod: false,
+    candidIdl: undefined,
     hide: () => ({
       canisterId: false,
     }),
@@ -242,9 +253,19 @@ watch(
 );
 
 const availableExecutionMethods = computed<string[]>(() => {
+  const allowAnyMethpd =
+    props.allowAnyMethod || props.allowedMethods.some(method => method.methodName === '*');
   const configuredMethods = props.allowedMethods
     .map(method => method.methodName)
     .filter(methodName => !!methodName && methodName.trim().length && methodName !== '*');
+
+  if (allowAnyMethpd && props.candidIdl) {
+    try {
+      configuredMethods.push(...getServiceMethods(props.candidIdl));
+    } catch (e) {
+      logger.warn('Failed to get service methods from candid idl', e);
+    }
+  }
 
   return Array.from(new Set(configuredMethods)).sort();
 });

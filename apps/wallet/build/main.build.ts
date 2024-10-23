@@ -34,6 +34,10 @@ export default defineConfig(_ => {
     appType: 'spa',
     server: {
       open: false,
+      fs: {
+        // required to be able to test packages locally with pnpm link
+        strict: false,
+      },
     },
     preview: {
       open: true,
