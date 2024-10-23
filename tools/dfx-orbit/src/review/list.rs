@@ -155,8 +155,7 @@ impl DfxOrbit {
                 .collect(),
             next_offset: responses
                 .last()
-                .map(|response| response.next_offset)
-                .flatten(),
+                .and_then(|response| response.next_offset),
             total: responses.last().map(|response| response.total).unwrap_or(0),
             privileges: responses
                 .iter()
