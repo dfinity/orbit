@@ -76,46 +76,35 @@
         <VTextarea :model-value="review.argValidationRendering" rows="1" readonly hide-details />
       </VListItemSubtitle>
     </VListItem>
-    <VListItem v-if="props.fullReviewContext && review.argHex" class="px-0 mx-0">
+    <VListItem v-if="props.fullReviewContext && review.arg" class="px-0 mx-0">
       <VListItemTitle class="font-weight-bold text-body-2">
         {{ $t('external_canisters.perform_call.argument') }}
-        ({{ $t('external_canisters.wasm_args_formats.hex').toLowerCase() }})
-
-        <VBtn
-          size="x-small"
-          variant="text"
-          :icon="mdiContentCopy"
-          @click="
-            copyToClipboard({
-              textToCopy: review.argHex,
-              sendNotification: true,
-            })
-          "
-        />
       </VListItemTitle>
-      <VListItemSubtitle>
-        <VTextarea :model-value="review.argHex" rows="2" readonly hide-details />
+      <VListItemSubtitle class="mt-1">
+        <LabeledTextDisplay :items="argDisplayItems" />
       </VListItemSubtitle>
     </VListItem>
-    <VListItem v-if="review.replyHex" class="px-0 mx-0">
+    <VListItem v-if="review.reply" class="px-0 mx-0">
       <VListItemTitle class="font-weight-bold text-body-2">
         {{ $t('external_canisters.perform_call.reply_received') }}
-        ({{ $t('external_canisters.wasm_args_formats.hex').toLowerCase() }})
+        <template v-if="!props.fullReviewContext && replyHex">
+          ({{ $t('external_canisters.wasm_args_formats.hex').toLowerCase() }})
 
-        <VBtn
-          size="x-small"
-          variant="text"
-          :icon="mdiContentCopy"
-          @click="
-            copyToClipboard({
-              textToCopy: review.replyHex,
-              sendNotification: true,
-            })
-          "
-        />
+          <VBtn
+            size="x-small"
+            variant="text"
+            :icon="mdiContentCopy"
+            @click="
+              copyToClipboard({
+                textToCopy: replyHex,
+                sendNotification: true,
+              })
+            "
+          />
+        </template>
       </VListItemTitle>
       <VListItemSubtitle v-if="props.fullReviewContext">
-        <VTextarea :model-value="review.replyHex" rows="2" readonly hide-details />
+        <LabeledTextDisplay :items="replyDisplayItems" class="mt-1" />
       </VListItemSubtitle>
     </VListItem>
   </VList>
@@ -123,13 +112,19 @@
 
 <script setup lang="ts">
 import { mdiContentCopy } from '@mdi/js';
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { CanisterCallReviewContext } from '~/components/external-canisters/external-canisters.types';
 import ValidationMethodExplainer from '~/components/external-canisters/ValidationMethodExplainer.vue';
 import TextOverflow from '~/components/TextOverflow.vue';
+import LabeledTextDisplay from '~/components/ui/LabeledTextDisplay.vue';
 import { useExternalCanisterProvider } from '~/composables/external-canisters.composable';
 import { toCyclesUnit } from '~/mappers/cycles.mapper';
 import { CyclesUnit } from '~/types/app.types';
 import { copyToClipboard } from '~/utils/app.utils';
+import { arrayBufferToHex } from '~/utils/crypto.utils';
+import { decode } from '~/utils/didc.utils';
+import { toUint8Array } from '~/utils/helper.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -142,4 +137,86 @@ const props = withDefaults(
 );
 
 const { canisterId } = useExternalCanisterProvider();
+const i18n = useI18n();
+
+const replyHex = computed(() =>
+  props.review.reply ? arrayBufferToHex(toUint8Array(props.review.reply)) : undefined,
+);
+
+const replyCandid = computed(() => {
+  if (!props.review.reply || !props.review.candidIdl || !replyHex.value) {
+    return undefined;
+  }
+
+  try {
+    return decode({
+      idl: props.review.candidIdl,
+      serviceMethod: props.review.methodName ?? undefined,
+      input: replyHex.value,
+    });
+  } catch (error) {
+    return undefined;
+  }
+});
+
+const argHex = computed(() =>
+  props.review.arg ? arrayBufferToHex(toUint8Array(props.review.arg)) : undefined,
+);
+
+const argCandid = computed(() => {
+  if (!props.review.arg || !props.review.candidIdl || !argHex.value) {
+    return undefined;
+  }
+
+  try {
+    return decode({
+      idl: props.review.candidIdl,
+      serviceMethod: props.review.methodName ?? undefined,
+      input: argHex.value,
+      useServiceMethodReturnType: false,
+    });
+  } catch (error) {
+    return undefined;
+  }
+});
+
+const argDisplayItems = computed(() => {
+  const items: { title: string; content: string }[] = [];
+
+  if (argCandid.value) {
+    items.push({
+      title: i18n.t('external_canisters.wasm_args_formats.candid'),
+      content: argCandid.value,
+    });
+  }
+
+  if (argHex.value) {
+    items.push({
+      title: i18n.t('external_canisters.wasm_args_formats.hex'),
+      content: argHex.value,
+    });
+  }
+
+  return items;
+});
+
+const replyDisplayItems = computed(() => {
+  const items: { title: string; content: string }[] = [];
+
+  if (replyCandid.value) {
+    items.push({
+      title: i18n.t('external_canisters.wasm_args_formats.candid'),
+      content: replyCandid.value,
+    });
+  }
+
+  if (replyHex.value) {
+    items.push({
+      title: i18n.t('external_canisters.wasm_args_formats.hex'),
+      content: replyHex.value,
+    });
+  }
+
+  return items;
+});
 </script>
