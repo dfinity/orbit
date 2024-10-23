@@ -1194,6 +1194,7 @@ dependencies = [
  "clap",
  "dateparser",
  "dfx-core",
+ "futures",
  "hex",
  "ic-agent",
  "ic-asset",

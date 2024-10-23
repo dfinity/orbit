@@ -4,7 +4,7 @@ use super::{
 };
 use crate::DfxOrbit;
 use clap::Parser;
-use slog::{debug, warn};
+use slog::debug;
 use station_api::{
     ListRequestsInput, ListRequestsResponse, ListRequestsSortBy, PaginationInput, SortDirection,
 };
@@ -62,63 +62,6 @@ impl From<ReviewListArgs> for ListRequestsInput {
 }
 
 impl DfxOrbit {
-    pub(super) async fn fetch_list(
-        &self,
-        request: ListRequestsInput,
-        _limit: Option<u64>,
-    ) -> anyhow::Result<ListRequestsResponse> {
-        let mut response = self.station.review_list(request.clone()).await?;
-
-        while let Some(request) = self.next_request(request.clone(), &response) {
-            debug!(
-                self.logger,
-                "Fetching request list page {:?}", request.paginate
-            );
-
-            let new_response = self.station.review_list(request.clone()).await?;
-            response = self.merge_responses(response, new_response);
-
-            debug!(
-                self.logger,
-                "Got response total: {}, next_offset: {:?}", response.total, response.next_offset
-            );
-        }
-
-        Ok(response)
-    }
-
-    fn merge_responses(
-        &self,
-        mut left: ListRequestsResponse,
-        right: ListRequestsResponse,
-    ) -> ListRequestsResponse {
-        if left.total != right.total {
-            warn!(self.logger, "The length of the list does not match");
-        }
-
-        left.requests.extend(right.requests);
-        left.next_offset = right.next_offset;
-        left.privileges.extend(right.privileges);
-        left.additional_info.extend(right.additional_info);
-
-        left
-    }
-
-    fn next_request(
-        &self,
-        mut last_request: ListRequestsInput,
-        response: &ListRequestsResponse,
-    ) -> Option<ListRequestsInput> {
-        response.next_offset.map(|offset| {
-            last_request
-                .paginate
-                .as_mut()
-                .map(|paginate| paginate.offset = Some(offset));
-            last_request
-        })
-    }
-
-    // Parallel implementation
     pub(super) async fn parallel_fetch_list(
         &self,
         args: &ReviewListArgs,
@@ -129,22 +72,27 @@ impl DfxOrbit {
             .review_list(initial_request.clone())
             .await?
             .total;
+        let offset = args.offset.unwrap_or(0);
 
-        let requests = self.generate_requests(
-            &initial_request,
-            total,
-            args.offset.unwrap_or(0),
-            args.chunk_size,
-            args.limit,
-        );
+        let requests =
+            self.generate_requests(&initial_request, total, offset, args.chunk_size, args.limit);
         debug!(
             self.logger,
-            "There are {} entires, which will be fetched in {} parallel requests",
-            total,
+            "There are {} entries, which will be fetched in {} parallel requests",
+            total - offset,
             requests.len()
         );
 
-        todo!()
+        let calls = requests
+            .into_iter()
+            .map(|request| async move {
+                debug!(self.logger, "Fetching {:?}", request.paginate);
+                self.station.review_list(request).await
+            })
+            .collect::<Vec<_>>();
+        let responses = futures::future::try_join_all(calls).await?;
+
+        Ok(self.merge_all(responses))
     }
 
     fn initial_request(&self, args: &ReviewListArgs) -> ListRequestsInput {

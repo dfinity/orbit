@@ -98,8 +98,7 @@ impl ReviewArgs {
 
         match self.action {
             ReviewActionArgs::List(args) => {
-                //let response = dfx_orbit.station.review_list(args.into()).await?;
-                let response = dfx_orbit.fetch_list(args.into(), None).await?;
+                let response = dfx_orbit.parallel_fetch_list(&args).await?;
 
                 if as_json {
                     print_as_json(&response)?;
