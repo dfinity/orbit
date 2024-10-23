@@ -118,6 +118,102 @@ impl DfxOrbit {
         })
     }
 
+    // Parallel implementation
+    pub(super) async fn parallel_fetch_list(
+        &self,
+        args: &ReviewListArgs,
+    ) -> anyhow::Result<ListRequestsResponse> {
+        let initial_request = self.initial_request(args);
+        let total = self
+            .station
+            .review_list(initial_request.clone())
+            .await?
+            .total;
+
+        let requests = self.generate_requests(
+            &initial_request,
+            total,
+            args.offset.unwrap_or(0),
+            args.chunk_size,
+            args.limit,
+        );
+        debug!(
+            self.logger,
+            "There are {} entires, which will be fetched in {} parallel requests",
+            total,
+            requests.len()
+        );
+
+        todo!()
+    }
+
+    fn initial_request(&self, args: &ReviewListArgs) -> ListRequestsInput {
+        ListRequestsInput {
+            requester_ids: None,
+            approver_ids: None,
+            statuses: None,
+            operation_types: (!args.all).then(external_canister_operations),
+            expiration_from_dt: None,
+            expiration_to_dt: None,
+            created_from_dt: None,
+            created_to_dt: None,
+            paginate: Some(PaginationInput {
+                offset: Some(0),
+                limit: Some(0),
+            }),
+            sort_by: Some(ListRequestsSortBy::CreatedAt(SortDirection::Desc)),
+            only_approvable: args.only_approvable,
+            with_evaluation_results: true,
+        }
+    }
+
+    fn generate_requests(
+        &self,
+        input: &ListRequestsInput,
+        total: u64,
+        offset: u64,
+        chunk_size: u16,
+        limit: Option<u64>,
+    ) -> Vec<ListRequestsInput> {
+        let end = limit
+            .map(|limit| limit + offset)
+            .unwrap_or(total)
+            .min(total);
+
+        (offset..end)
+            .step_by(chunk_size as usize)
+            .map(|offset| ListRequestsInput {
+                paginate: Some(PaginationInput {
+                    offset: Some(offset),
+                    limit: Some(chunk_size),
+                }),
+                ..input.clone()
+            })
+            .collect()
+    }
+
+    fn merge_all(&self, responses: Vec<ListRequestsResponse>) -> ListRequestsResponse {
+        ListRequestsResponse {
+            requests: responses
+                .iter()
+                .flat_map(|response| response.requests.clone())
+                .collect(),
+            next_offset: responses
+                .last()
+                .map(|response| response.next_offset)
+                .flatten(),
+            total: responses.last().map(|response| response.total).unwrap_or(0),
+            privileges: responses
+                .iter()
+                .flat_map(|response| response.privileges.clone())
+                .collect(),
+            additional_info: responses
+                .iter()
+                .flat_map(|response| response.additional_info.clone())
+                .collect(),
+        }
+    }
+
     pub(super) fn display_list(&self, data: ListRequestsResponse) -> String {
         let add_info = data
             .additional_info
