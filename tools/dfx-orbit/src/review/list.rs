@@ -27,12 +27,12 @@ pub struct ReviewListArgs {
     pub only_approvable: bool,
 
     /// Fetch the values in chunks of this size
-    #[clap(long, default_value = "20")]
+    #[clap(long, default_value = "20", num_args(0..))]
     pub chunk_size: u16,
 
     /// Start fetching values at the specified offset
-    #[clap(long)]
-    pub offset: Option<u64>,
+    #[clap(long, default_value = "0")]
+    pub offset: u64,
 
     /// Limit the amount of responses to the specified value
     #[clap(short, long)]
@@ -51,7 +51,7 @@ impl From<ReviewListArgs> for ListRequestsInput {
             created_from_dt: None,
             created_to_dt: None,
             paginate: Some(PaginationInput {
-                offset: args.offset,
+                offset: Some(args.offset),
                 limit: Some(args.chunk_size),
             }),
             sort_by: Some(ListRequestsSortBy::CreatedAt(SortDirection::Desc)),
@@ -72,14 +72,18 @@ impl DfxOrbit {
             .review_list(initial_request.clone())
             .await?
             .total;
-        let offset = args.offset.unwrap_or(0);
 
-        let requests =
-            self.generate_requests(&initial_request, total, offset, args.chunk_size, args.limit);
+        let requests = self.generate_requests(
+            &initial_request,
+            total,
+            args.offset,
+            args.chunk_size,
+            args.limit,
+        );
         debug!(
             self.logger,
             "There are {} entries, which will be fetched in {} parallel requests",
-            total - offset,
+            total - args.offset,
             requests.len()
         );
 
@@ -92,7 +96,7 @@ impl DfxOrbit {
             .collect::<Vec<_>>();
         let responses = futures::future::try_join_all(calls).await?;
 
-        Ok(self.merge_all(responses))
+        Ok(self.merge_all_responses(responses))
     }
 
     fn initial_request(&self, args: &ReviewListArgs) -> ListRequestsInput {
@@ -123,24 +127,27 @@ impl DfxOrbit {
         chunk_size: u16,
         limit: Option<u64>,
     ) -> Vec<ListRequestsInput> {
+        // Calculate the end (index) until which we are fetching
         let end = limit
             .map(|limit| limit + offset)
             .unwrap_or(total)
             .min(total);
 
         (offset..end)
+            // Calculate the offset and size of every chunk
             .step_by(chunk_size as usize)
-            .map(|offset| ListRequestsInput {
+            .map(|offset| (offset, (offset + u64::from(chunk_size)).min(end)))
+            .map(|(offset, end)| ListRequestsInput {
                 paginate: Some(PaginationInput {
                     offset: Some(offset),
-                    limit: Some(chunk_size),
+                    limit: Some((end - offset) as u16),
                 }),
                 ..input.clone()
             })
             .collect()
     }
 
-    fn merge_all(&self, responses: Vec<ListRequestsResponse>) -> ListRequestsResponse {
+    fn merge_all_responses(&self, responses: Vec<ListRequestsResponse>) -> ListRequestsResponse {
         ListRequestsResponse {
             requests: responses
                 .iter()
