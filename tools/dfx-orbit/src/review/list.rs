@@ -40,6 +40,11 @@ pub struct ReviewListArgs {
 }
 
 impl DfxOrbit {
+    /// Fetch the list in chunks in parallel
+    ///
+    /// This function first fetches an empty subset, to find out how long the list is.
+    /// It then generates a bunch of requests to fetch chunks of specified size, requests
+    /// them in parallel and then reconstructs them back into one list.
     pub(super) async fn parallel_fetch_list(
         &self,
         args: &ReviewListArgs,
