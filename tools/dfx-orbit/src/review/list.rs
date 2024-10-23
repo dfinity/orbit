@@ -39,28 +39,6 @@ pub struct ReviewListArgs {
     pub limit: Option<u64>,
 }
 
-impl From<ReviewListArgs> for ListRequestsInput {
-    fn from(args: ReviewListArgs) -> Self {
-        Self {
-            requester_ids: None,
-            approver_ids: None,
-            statuses: None,
-            operation_types: (!args.all).then(external_canister_operations),
-            expiration_from_dt: None,
-            expiration_to_dt: None,
-            created_from_dt: None,
-            created_to_dt: None,
-            paginate: Some(PaginationInput {
-                offset: Some(args.offset),
-                limit: Some(args.chunk_size),
-            }),
-            sort_by: Some(ListRequestsSortBy::CreatedAt(SortDirection::Desc)),
-            only_approvable: args.only_approvable,
-            with_evaluation_results: true,
-        }
-    }
-}
-
 impl DfxOrbit {
     pub(super) async fn parallel_fetch_list(
         &self,
