@@ -349,7 +349,7 @@ type TransferOperationInput = record {
 type TransferOperation = record {
   // The account to use for the transaction.
   from_account : opt Account;
-  // The account to use for the transaction.
+  // The asset to use for the transaction.
   from_asset : Asset;
   // The network to use for the transaction.
   network : Network;
