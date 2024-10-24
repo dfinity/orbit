@@ -1,5 +1,5 @@
 use super::{AccountDTO, TimestampRfc3339};
-use crate::{MetadataDTO, UuidDTO};
+use crate::{AssetDTO, MetadataDTO, UuidDTO};
 use candid::{CandidType, Deserialize};
 
 pub type NetworkIdDTO = String;
@@ -13,6 +13,8 @@ pub struct NetworkDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct TransferOperationInput {
     pub from_account_id: UuidDTO,
+    pub from_asset_id: UuidDTO,
+    pub with_standard: String,
     pub to: String,
     pub amount: candid::Nat,
     pub fee: Option<candid::Nat>,
@@ -23,6 +25,7 @@ pub struct TransferOperationInput {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct TransferOperationDTO {
     pub from_account: Option<AccountDTO>,
+    pub from_asset: AssetDTO,
     pub network: NetworkDTO,
     pub input: TransferOperationInput,
     pub transfer_id: Option<UuidDTO>,

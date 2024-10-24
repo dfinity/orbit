@@ -102,7 +102,7 @@ impl LoggerService {
 mod test {
 
     use crate::model::{
-        test::{mock_accounts, mock_committee},
+        test::{mock_accounts, mock_assets, mock_committee},
         DisasterRecoveryResultLog, RecoveryResult, SetAccountsLog, SetCommitteeLog,
         UpgradeResultLog,
     };
@@ -123,6 +123,7 @@ mod test {
         ));
         logger_service.log(LogEntryType::SetAccounts(SetAccountsLog {
             accounts: mock_accounts(),
+            assets: mock_assets(),
         }));
         let result = logger_service.get_logs(None, None);
         println!("{:?}", result);

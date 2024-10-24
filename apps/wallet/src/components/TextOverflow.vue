@@ -13,7 +13,7 @@ const props = withDefaults(
     text: string;
     maxLength?: number;
     overflowText?: string;
-    overflowPosition?: 'start' | 'middle' | 'end';
+    overflowPosition?: 'start' | 'middle' | 'end' | ((input: string) => string);
   }>(),
   {
     maxLength: 18,
@@ -40,15 +40,19 @@ const truncatedText = computed(() => {
     }`;
   }
 
-  const overflowLengthStart = Math.ceil(props.overflowText.length / 2);
-  const overflowLengthEnd = Math.floor(props.overflowText.length / 2);
-  const start = Math.ceil((props.maxLength - 1) / 2) - overflowLengthStart;
-  const end = Math.floor((props.maxLength - 1) / 2) - overflowLengthEnd;
+  if (props.overflowPosition === 'middle') {
+    const overflowLengthStart = Math.ceil(props.overflowText.length / 2);
+    const overflowLengthEnd = Math.floor(props.overflowText.length / 2);
+    const start = Math.ceil((props.maxLength - 1) / 2) - overflowLengthStart;
+    const end = Math.floor((props.maxLength - 1) / 2) - overflowLengthEnd;
 
-  return `${props.text.slice(0, start)}${props.overflowText}${props.text.slice(
-    props.text.length - end,
-    props.text.length,
-  )}`;
+    return `${props.text.slice(0, start)}${props.overflowText}${props.text.slice(
+      props.text.length - end,
+      props.text.length,
+    )}`;
+  }
+
+  return props.overflowPosition(props.text);
 });
 
 const handleCopy = (event: ClipboardEvent): void => {

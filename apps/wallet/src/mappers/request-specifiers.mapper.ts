@@ -91,6 +91,18 @@ export const mapRequestSpecifierToEnum = (specifier: RequestSpecifier): RequestS
     return RequestSpecifierEnum.SetDisasterRecovery;
   }
 
+  if (variantIs(specifier, 'AddAsset')) {
+    return RequestSpecifierEnum.AddAsset;
+  }
+
+  if (variantIs(specifier, 'EditAsset')) {
+    return RequestSpecifierEnum.EditAsset;
+  }
+
+  if (variantIs(specifier, 'RemoveAsset')) {
+    return RequestSpecifierEnum.RemoveAsset;
+  }
+
   return unreachable(specifier);
 };
 

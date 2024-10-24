@@ -14,6 +14,7 @@ orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alph
 ic-cdk = '0.13.2'
 ic-certified-assets = { workspace = true }
 ic-ledger-types = { workspace = true }
+icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
 num-bigint = { workspace = true }

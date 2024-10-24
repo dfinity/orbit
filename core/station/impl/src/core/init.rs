@@ -3,9 +3,10 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, ExternalCanisterId, ExternalCanisterResourceAction,
-        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
-        ResourceIds, SystemResourceAction, UserResourceAction,
+        AccountResourceAction, CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
+        ExternalCanisterId, ExternalCanisterResourceAction, PermissionResourceAction,
+        RequestResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
+        SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
     },
     ADMIN_GROUP_ID,
 };
@@ -164,7 +165,39 @@ lazy_static! {
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(ExternalCanisterId::Any)),
-        )
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(CallExternalCanisterResourceTarget {
+              validation_method: ValidationMethodResourceTarget::No,
+              execution_method: ExecutionMethodResourceTarget::Any,
+            })),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Any)),
+        ),
+        // assets
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Create),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::List),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Read(ResourceId::Any)),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Update(ResourceId::Any)),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Delete(ResourceId::Any)),
+        ),
     ];
 
 }
@@ -250,6 +283,19 @@ pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPoli
         ),
         (
             RequestSpecifier::FundExternalCanister(ExternalCanisterId::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        // create, edit, and remove assets
+        (
+            RequestSpecifier::AddAsset,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        (
+            RequestSpecifier::EditAsset(ResourceIds::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        (
+            RequestSpecifier::RemoveAsset(ResourceIds::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
     ]

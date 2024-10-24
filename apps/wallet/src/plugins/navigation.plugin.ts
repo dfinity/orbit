@@ -177,6 +177,19 @@ const sections = (): NavigationSections => ({
             route: Routes.Requests,
           },
         },
+        {
+          name: 'assets',
+          localeKey: 'navigation.assets',
+          action: {
+            type: NavigationActionType.To,
+            handle: route =>
+              route.params.locale ? `/${route.params.locale}/settings/assets` : '/settings/assets',
+          },
+          auth: {
+            type: NavigastionAuthType.Route,
+            route: Routes.Assets,
+          },
+        },
       ],
     },
   ],

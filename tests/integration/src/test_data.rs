@@ -9,6 +9,7 @@ use crate::utils::bump_time_to_avoid_ratelimit;
 
 pub mod account;
 pub mod address_book;
+pub mod asset;
 pub mod permission;
 pub mod request_policy;
 pub mod system_upgrade;
@@ -55,6 +56,7 @@ pub struct StationDataGenerator<'a> {
     station_updates: usize,
     permission_updates: usize,
     request_policy_updates: usize,
+    assets: usize,
 }
 
 impl<'a> StationDataGenerator<'a> {
@@ -77,6 +79,7 @@ impl<'a> StationDataGenerator<'a> {
             max_user_groups_per_user: 5,
             has_generated: false,
             count_requests: 0,
+            assets: Self::DEFAULT_ENTRIES,
         }
     }
 
@@ -121,6 +124,11 @@ impl<'a> StationDataGenerator<'a> {
 
     pub fn with_address_book_entries(mut self, address_book_entries: usize) -> Self {
         self.address_book_entries = address_book_entries;
+        self
+    }
+
+    pub fn with_assets(mut self, assets: usize) -> Self {
+        self.assets = assets;
         self
     }
 
@@ -211,6 +219,15 @@ impl<'a> StationDataGenerator<'a> {
                     format!("{}_edited", account.name),
                 );
                 self.increment_request_count();
+
+                account::edit_account_assets(
+                    self.env,
+                    self.station_canister_id,
+                    self.requester,
+                    account.id.clone(),
+                    station_api::ChangeAssets::ReplaceWith { assets: vec![] },
+                );
+                self.increment_request_count();
             }
         }
 
@@ -230,6 +247,23 @@ impl<'a> StationDataGenerator<'a> {
                     self.requester,
                     address_book_entry.id.clone(),
                     format!("{}_edited", address_book_entry.address_owner),
+                );
+                self.increment_request_count();
+            }
+        }
+
+        // Add the assets
+        for _ in 0..self.assets {
+            let asset = asset::add_asset(self.env, self.station_canister_id, self.requester);
+            self.increment_request_count();
+
+            if self.perform_edit_operations {
+                asset::edit_asset_name(
+                    self.env,
+                    self.station_canister_id,
+                    self.requester,
+                    asset.id.clone(),
+                    format!("{}_edited", asset.name),
                 );
                 self.increment_request_count();
             }

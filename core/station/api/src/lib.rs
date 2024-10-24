@@ -48,3 +48,6 @@ pub use resource::*;
 
 mod disaster_recovery;
 pub use disaster_recovery::*;
+
+mod asset;
+pub use asset::*;

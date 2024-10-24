@@ -4,6 +4,7 @@ export enum Routes {
   NotFound = 'NotFound',
   Accounts = 'Accounts',
   Account = 'Account',
+  AccountAsset = 'AccountAsset',
   MySettings = 'MySettings',
   UserGroups = 'UserGroups',
   SystemSettings = 'SystemSettings',
@@ -14,6 +15,7 @@ export enum Routes {
   Initialization = 'Initialization',
   AddStation = 'AddStation',
   Permissions = 'Permissions',
+  Assets = 'Assets',
   ExternalCanisters = 'ExternalCanisters',
   ExternalCanister = 'ExternalCanister',
   // Request Pages

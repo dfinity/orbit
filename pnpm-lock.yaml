@@ -10,13 +10,13 @@ importers:
     devDependencies:
       '@monodon/rust':
         specifier: 2.0.0
-        version: 2.0.0(@napi-rs/cli@3.0.0-alpha.63)
+        version: 2.0.0(@napi-rs/cli@3.0.0-alpha.63(@emnapi/runtime@1.3.0))
       '@nx/devkit':
         specifier: 19.8.3
         version: 19.8.3(nx@19.8.3)
       '@nx/js':
         specifier: 19.8.3
-        version: 19.8.3(@types/node@20.11.25)(nx@19.8.3)(typescript@5.6.2)
+        version: 19.8.3(@babel/traverse@7.24.5)(@types/node@20.11.25)(nx@19.8.3)(typescript@5.6.2)
       '@nx/workspace':
         specifier: 19.8.3
         version: 19.8.3
@@ -25,13 +25,13 @@ importers:
         version: 20.11.25
       '@typescript-eslint/eslint-plugin':
         specifier: 7.9.0
-        version: 7.9.0(@typescript-eslint/parser@7.9.0)(eslint@8.57.0)(typescript@5.6.2)
+        version: 7.9.0(@typescript-eslint/parser@7.9.0(eslint@8.57.0)(typescript@5.6.2))(eslint@8.57.0)(typescript@5.6.2)
       '@typescript-eslint/parser':
         specifier: 7.9.0
         version: 7.9.0(eslint@8.57.0)(typescript@5.6.2)
       '@vitest/coverage-v8':
         specifier: 1.6.0
-        version: 1.6.0(vitest@1.6.0)
+        version: 1.6.0(vitest@1.6.0(@types/node@20.11.25)(jsdom@24.0.0)(sass@1.77.1))
       concurrently:
         specifier: 8.2.2
         version: 8.2.2
@@ -52,7 +52,7 @@ importers:
         version: 5.2.11(@types/node@20.11.25)(sass@1.77.1)
       vitest:
         specifier: 1.6.0
-        version: 1.6.0(@types/node@20.11.25)
+        version: 1.6.0(@types/node@20.11.25)(jsdom@24.0.0)(sass@1.77.1)
       vue-tsc:
         specifier: 2.1.6
         version: 2.1.6(typescript@5.6.2)
@@ -60,20 +60,23 @@ importers:
   apps/wallet:
     dependencies:
       '@dfinity/agent':
-        specifier: 1.4.0
-        version: 1.4.0(@dfinity/candid@1.4.0)(@dfinity/principal@1.4.0)
+        specifier: 2.1.2
+        version: 2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)
       '@dfinity/auth-client':
-        specifier: 1.4.0
-        version: 1.4.0(@dfinity/agent@1.4.0)(@dfinity/identity@1.4.0)(@dfinity/principal@1.4.0)
+        specifier: 2.1.2
+        version: 2.1.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/identity@2.1.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)(@peculiar/webcrypto@1.4.3))(@dfinity/principal@2.1.2)
       '@dfinity/candid':
-        specifier: 1.4.0
-        version: 1.4.0(@dfinity/principal@1.4.0)
+        specifier: 2.1.2
+        version: 2.1.2(@dfinity/principal@2.1.2)
       '@dfinity/identity':
-        specifier: 1.4.0
-        version: 1.4.0(@dfinity/agent@1.4.0)(@dfinity/principal@1.4.0)(@peculiar/webcrypto@1.4.3)
+        specifier: 2.1.2
+        version: 2.1.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)(@peculiar/webcrypto@1.4.3)
+      '@dfinity/ledger-icrc':
+        specifier: 2.6.1
+        version: 2.6.1(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)(@dfinity/utils@2.5.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))
       '@dfinity/principal':
-        specifier: 1.4.0
-        version: 1.4.0
+        specifier: 2.1.2
+        version: 2.1.2
       '@mdi/font':
         specifier: 7.4.47
         version: 7.4.47
@@ -85,7 +88,7 @@ importers:
         version: 6.0.3
       pinia:
         specifier: 2.1.7
-        version: 2.1.7(typescript@5.6.2)(vue@3.5.11)
+        version: 2.1.7(typescript@5.6.2)(vue@3.5.11(typescript@5.6.2))
       pino:
         specifier: 9.1.0
         version: 9.1.0
@@ -97,23 +100,23 @@ importers:
         version: 3.5.11(typescript@5.6.2)
       vue-i18n:
         specifier: 9.13.1
-        version: 9.13.1(vue@3.5.11)
+        version: 9.13.1(vue@3.5.11(typescript@5.6.2))
       vue-router:
         specifier: 4.3.2
-        version: 4.3.2(vue@3.5.11)
+        version: 4.3.2(vue@3.5.11(typescript@5.6.2))
       vuetify:
         specifier: 3.5.9
-        version: 3.5.9(typescript@5.6.2)(vite-plugin-vuetify@2.0.3)(vue-i18n@9.13.1)(vue@3.5.11)
+        version: 3.5.9(typescript@5.6.2)(vite-plugin-vuetify@2.0.3)(vue-i18n@9.13.1(vue@3.5.11(typescript@5.6.2)))(vue@3.5.11(typescript@5.6.2))
     devDependencies:
       '@pinia/testing':
         specifier: 0.1.3
-        version: 0.1.3(pinia@2.1.7)(vue@3.5.11)
+        version: 0.1.3(pinia@2.1.7(typescript@5.6.2)(vue@3.5.11(typescript@5.6.2)))(vue@3.5.11(typescript@5.6.2))
       '@types/validator':
         specifier: 13.11.10
         version: 13.11.10
       '@vitejs/plugin-vue':
         specifier: 5.0.4
-        version: 5.0.4(vite@5.2.11)(vue@3.5.11)
+        version: 5.0.4(vite@5.2.11(@types/node@22.7.4)(sass@1.77.1))(vue@3.5.11(typescript@5.6.2))
       '@vue/test-utils':
         specifier: 2.4.6
         version: 2.4.6
@@ -134,19 +137,19 @@ importers:
         version: 1.77.1
       vite-plugin-vuetify:
         specifier: 2.0.3
-        version: 2.0.3(vite@5.2.11)(vue@3.5.11)(vuetify@3.5.9)
+        version: 2.0.3(vite@5.2.11(@types/node@22.7.4)(sass@1.77.1))(vue@3.5.11(typescript@5.6.2))(vuetify@3.5.9)
 
   cli:
     devDependencies:
       '@dfinity/agent':
         specifier: 1.4.0
-        version: 1.4.0(@dfinity/candid@1.4.0)(@dfinity/principal@1.4.0)
+        version: 1.4.0(@dfinity/candid@1.4.0(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0)
       '@dfinity/candid':
         specifier: 1.4.0
         version: 1.4.0(@dfinity/principal@1.4.0)
       '@dfinity/identity':
         specifier: 1.4.0
-        version: 1.4.0(@dfinity/agent@1.4.0)(@dfinity/principal@1.4.0)(@peculiar/webcrypto@1.4.3)
+        version: 1.4.0(@dfinity/agent@1.4.0(@dfinity/candid@1.4.0(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0)(@peculiar/webcrypto@1.4.3)
       '@dfinity/principal':
         specifier: 1.4.0
         version: 1.4.0
@@ -271,16 +274,16 @@ packages:
     resolution: {integrity: sha512-2ofRCjnnA9y+wk8b9IAREroeUP02KHp431N2mhKniy2yKIDKpbrHv9eXwm8cBeWQYcJmzv5qKCu65P47eCF7CQ==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/helper-string-parser@7.25.7':
-    resolution: {integrity: sha512-CbkjYdsJNHFk8uqpEkpCvRs3YRp9tY6FmFY7wLMSYuGYkrdUi7r2lc4/wqsvlHoMznX3WJ9IP8giGPq68T/Y6g==}
+  '@babel/helper-string-parser@7.25.9':
+    resolution: {integrity: sha512-4A/SCr/2KLd5jrtOMFzaKjVtAei3+2r/NChoBNoZ3EyP/+GlhoaEGoWOZUmFmoITP7zOJyHIMm+DYRd8o3PvHA==}
     engines: {node: '>=6.9.0'}
 
   '@babel/helper-validator-identifier@7.24.5':
     resolution: {integrity: sha512-3q93SSKX2TWCG30M2G2kwaKeTYgEUp5Snjuj8qm729SObL6nbtUldAi37qbxkD5gg3xnBio+f9nqpSepGZMvxA==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/helper-validator-identifier@7.25.7':
-    resolution: {integrity: sha512-AM6TzwYqGChO45oiuPqwL2t20/HdMC1rTPAesnBCgPCSF1x3oN9MVUwQV2iyz4xqWrctwK5RNC8LV22kaQCNYg==}
+  '@babel/helper-validator-identifier@7.25.9':
+    resolution: {integrity: sha512-Ed61U6XJc3CVRfkERJWDz4dJwKe7iLmmJsbOGu9wSloNSFttHV0I8g6UAgb7qnK5ly5bGLPd4oXZlxCdANBOWQ==}
     engines: {node: '>=6.9.0'}
 
   '@babel/helper-validator-option@7.23.5':
@@ -304,8 +307,8 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  '@babel/parser@7.25.7':
-    resolution: {integrity: sha512-aZn7ETtQsjjGG5HruveUK06cU3Hljuhd9Iojm4M8WWv3wLE6OkE5PWbDUkItmMgegmccaITudyuW5RPYrYlgWw==}
+  '@babel/parser@7.25.9':
+    resolution: {integrity: sha512-aI3jjAAO1fh7vY/pBGsn1i9LDbRP43+asrRlkPuTXW5yHXtd1NgTEMudbBoDDxrf1daEEfPJqR+JBMakzrR4Dg==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -795,8 +798,8 @@ packages:
     resolution: {integrity: sha512-6mQNsaLeXTw0nxYUYu+NSa4Hx4BlF1x1x8/PMFbiR+GBSr+2DkECc69b8hgy2frEodNcvPffeH8YfWd3LI6jhQ==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/types@7.25.7':
-    resolution: {integrity: sha512-vwIVdXG+j+FOpkwqHRcBgHLYNL7XMkufrlaFvL9o6Ai9sJn9+PdyIL5qa0XzTZw084c+u9LOls53eoZWP/W5WQ==}
+  '@babel/types@7.25.9':
+    resolution: {integrity: sha512-OwS2CM5KocvQ/k7dFJa8i5bNGJP0hXWfVCfDkqRFP1IreH1JDC7wG6eCYCi0+McbfT8OR/kNqsI0UU0xP9H6PQ==}
     engines: {node: '>=6.9.0'}
 
   '@bcoe/v8-coverage@0.2.3':
@@ -812,17 +815,28 @@ packages:
       '@dfinity/candid': ^1.4.0
       '@dfinity/principal': ^1.4.0
 
-  '@dfinity/auth-client@1.4.0':
-    resolution: {integrity: sha512-9ImeOAw61SQvHJ+w4RHIuKKUL2xAQDLoce+JhmH3DbJuVvNbZIM5xMW8gHTZVlXaMw3Vhip+a1DPJIGy95r9pA==}
+  '@dfinity/agent@2.1.2':
+    resolution: {integrity: sha512-UAXf6uXovhBlSp245RWlA21zcCavy+vVUvKVQUpesk1gLJpJlvsCE6hYOwTeFZAP+bjmPi0Tl7cx8DT2KM4eDQ==}
     peerDependencies:
-      '@dfinity/agent': ^1.4.0
-      '@dfinity/identity': ^1.4.0
-      '@dfinity/principal': ^1.4.0
+      '@dfinity/candid': ^2.1.2
+      '@dfinity/principal': ^2.1.2
+
+  '@dfinity/auth-client@2.1.2':
+    resolution: {integrity: sha512-3wIbap6NQi+6z/o+kEFfOQmWuIz94/j1efVlkBtLO0IWqC5NZqoMppwANZZCkENeMvI0krhqH3asQvediWKIsg==}
+    peerDependencies:
+      '@dfinity/agent': ^2.1.2
+      '@dfinity/identity': ^2.1.2
+      '@dfinity/principal': ^2.1.2
 
   '@dfinity/candid@1.4.0':
     resolution: {integrity: sha512-PsTJVn63ZM4A/6Xs5coI0zMFevSwJ8hcyh38LdH/92n6wi9UOTis1yc4qL5MZvvRCUAD0c3rVjELL+49E9sPyA==}
     peerDependencies:
       '@dfinity/principal': ^1.4.0
+
+  '@dfinity/candid@2.1.2':
+    resolution: {integrity: sha512-do69J9iahW2tlmbPdbmc8MDhi5cfIQyTcAlYqaSOOAyg+Kp8beCnW7mletXVfx30dyVlpkyCrYOXhbpQuSCKtw==}
+    peerDependencies:
+      '@dfinity/principal': ^2.1.2
 
   '@dfinity/identity@1.4.0':
     resolution: {integrity: sha512-4WmMsQSuzfWXmm4s+0FYGbFiQcMGE88Ztg6yFq7aTMtRWuAjhz66Dy1+jRCrXxsoxvDdUvPzsyjkOSpr1AuUYQ==}
@@ -831,8 +845,33 @@ packages:
       '@dfinity/principal': ^1.4.0
       '@peculiar/webcrypto': ^1.4.0
 
+  '@dfinity/identity@2.1.2':
+    resolution: {integrity: sha512-LgskXJzyqm1UVsobAkF8bL1/SdLKFYW2kTIsKw7UOhuBy/COpnf3HZYmKeFCnxvharyIyq23W3WBhIpu9FeAvw==}
+    peerDependencies:
+      '@dfinity/agent': ^2.1.2
+      '@dfinity/principal': ^2.1.2
+      '@peculiar/webcrypto': ^1.4.0
+
+  '@dfinity/ledger-icrc@2.6.1':
+    resolution: {integrity: sha512-fsCC01JHDIA+2l7CRll44yB5/OF2qj3Gz7xE10SW7V80elYULfa98w9ks12dqxGh62+62btxujU7ylluTgugyg==}
+    peerDependencies:
+      '@dfinity/agent': ^2.0.0
+      '@dfinity/candid': ^2.0.0
+      '@dfinity/principal': ^2.0.0
+      '@dfinity/utils': ^2.5.2
+
   '@dfinity/principal@1.4.0':
     resolution: {integrity: sha512-SuTBVlc71ub89ji0WN5/T100zUG2uIMn5x4+We4vS4nJ0R3/Xt89XJsHepjd5SQTSQPOvP7eQ+S8cQKWRz/RkA==}
+
+  '@dfinity/principal@2.1.2':
+    resolution: {integrity: sha512-L3Y0nDjquqNFseM2Gx5fI4GOUKjjezFr9/6ZjSwAFeDeb4Ubqld4ZKL3FEzv4QKNbfZgCx19b7UXi+OdmLhi4w==}
+
+  '@dfinity/utils@2.5.2':
+    resolution: {integrity: sha512-QSW7t8kcLj0s/gL4NbYqr+Pqr3e2QhFn2JriwcghuflhwrYet1y23ANyM4EwSUeDAUR/OQXR86e4MfWkGMttAg==}
+    peerDependencies:
+      '@dfinity/agent': ^2.0.0
+      '@dfinity/candid': ^2.0.0
+      '@dfinity/principal': ^2.0.0
 
   '@emnapi/core@1.3.0':
     resolution: {integrity: sha512-9hRqVlhwqBqCoToZ3hFcNVqL+uyHV06Y47ax4UB8L6XgVRqYz7MFnfessojo6+5TK89pKwJnpophwjTMOeKI9Q==}
@@ -2918,8 +2957,8 @@ packages:
     resolution: {integrity: sha512-Jo6dJ04CmSjuznwJSS3pUeWmd/H0ffTlkXXgwZi+eq1UCmqQwCh+eLsYOYCwY991i2Fah4h1BEMCx4qThGbsiA==}
     engines: {node: '>=10'}
 
-  magic-string@0.30.11:
-    resolution: {integrity: sha512-+Wri9p0QHMy+545hKww7YAu5NyzF8iomPL/RQazugQ9+Ez4Ic3mERMd8ZTX5rfK944j+560ZJi8iAwgak1Ac7A==}
+  magic-string@0.30.12:
+    resolution: {integrity: sha512-Ea8I3sQMVXr8JhN4z+H/d8zwo+tYDgHE9+5G4Wnrwhs0gaK9fXTKx0Tw5Xwsd/bCPTTZNRAdpyzvoeORe9LYpw==}
 
   magic-string@0.30.8:
     resolution: {integrity: sha512-ISQTe55T2ao7XtlAStud6qwYPZjE4GK1S/BeVPus4jrq6JuOnQ00YKQC581RWhR122W7msZV263KzVeLoqidyQ==}
@@ -3149,8 +3188,8 @@ packages:
   picocolors@1.0.0:
     resolution: {integrity: sha512-1fygroTLlHu66zi26VoTDv8yRgm0Fccecssto+MhsZ0D/DGW2sm8E8AjW7NU5VVTRt5GxbeZ5qBuJr+HyLYkjQ==}
 
-  picocolors@1.1.0:
-    resolution: {integrity: sha512-TQ92mBOW0l3LeMeyLV6mzy/kWr8lkd/hp3mTg7wYK7zJhuBStmGMBG0BdeDZS/dZx1IukaX6Bk11zcln25o1Aw==}
+  picocolors@1.1.1:
+    resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
   picomatch@2.3.1:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
@@ -4060,11 +4099,11 @@ snapshots:
 
   '@babel/helper-string-parser@7.24.1': {}
 
-  '@babel/helper-string-parser@7.25.7': {}
+  '@babel/helper-string-parser@7.25.9': {}
 
   '@babel/helper-validator-identifier@7.24.5': {}
 
-  '@babel/helper-validator-identifier@7.25.7': {}
+  '@babel/helper-validator-identifier@7.25.9': {}
 
   '@babel/helper-validator-option@7.23.5': {}
 
@@ -4093,9 +4132,9 @@ snapshots:
     dependencies:
       '@babel/types': 7.24.5
 
-  '@babel/parser@7.25.7':
+  '@babel/parser@7.25.9':
     dependencies:
-      '@babel/types': 7.25.7
+      '@babel/types': 7.25.9
 
   '@babel/plugin-bugfix-firefox-class-in-computed-class-key@7.24.5(@babel/core@7.24.5)':
     dependencies:
@@ -4685,11 +4724,10 @@ snapshots:
       '@babel/helper-validator-identifier': 7.24.5
       to-fast-properties: 2.0.0
 
-  '@babel/types@7.25.7':
+  '@babel/types@7.25.9':
     dependencies:
-      '@babel/helper-string-parser': 7.25.7
-      '@babel/helper-validator-identifier': 7.25.7
-      to-fast-properties: 2.0.0
+      '@babel/helper-string-parser': 7.25.9
+      '@babel/helper-validator-identifier': 7.25.9
 
   '@bcoe/v8-coverage@0.2.3': {}
 
@@ -4697,7 +4735,7 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@dfinity/agent@1.4.0(@dfinity/candid@1.4.0)(@dfinity/principal@1.4.0)':
+  '@dfinity/agent@1.4.0(@dfinity/candid@1.4.0(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0)':
     dependencies:
       '@dfinity/candid': 1.4.0(@dfinity/principal@1.4.0)
       '@dfinity/principal': 1.4.0
@@ -4708,29 +4746,70 @@ snapshots:
       buffer: 6.0.3
       simple-cbor: 0.4.1
 
-  '@dfinity/auth-client@1.4.0(@dfinity/agent@1.4.0)(@dfinity/identity@1.4.0)(@dfinity/principal@1.4.0)':
+  '@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)':
     dependencies:
-      '@dfinity/agent': 1.4.0(@dfinity/candid@1.4.0)(@dfinity/principal@1.4.0)
-      '@dfinity/identity': 1.4.0(@dfinity/agent@1.4.0)(@dfinity/principal@1.4.0)(@peculiar/webcrypto@1.4.3)
-      '@dfinity/principal': 1.4.0
+      '@dfinity/candid': 2.1.2(@dfinity/principal@2.1.2)
+      '@dfinity/principal': 2.1.2
+      '@noble/curves': 1.4.0
+      '@noble/hashes': 1.4.0
+      base64-arraybuffer: 0.2.0
+      borc: 2.1.2
+      buffer: 6.0.3
+      simple-cbor: 0.4.1
+
+  '@dfinity/auth-client@2.1.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/identity@2.1.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)(@peculiar/webcrypto@1.4.3))(@dfinity/principal@2.1.2)':
+    dependencies:
+      '@dfinity/agent': 2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)
+      '@dfinity/identity': 2.1.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)(@peculiar/webcrypto@1.4.3)
+      '@dfinity/principal': 2.1.2
       idb: 7.1.1
 
   '@dfinity/candid@1.4.0(@dfinity/principal@1.4.0)':
     dependencies:
       '@dfinity/principal': 1.4.0
 
-  '@dfinity/identity@1.4.0(@dfinity/agent@1.4.0)(@dfinity/principal@1.4.0)(@peculiar/webcrypto@1.4.3)':
+  '@dfinity/candid@2.1.2(@dfinity/principal@2.1.2)':
     dependencies:
-      '@dfinity/agent': 1.4.0(@dfinity/candid@1.4.0)(@dfinity/principal@1.4.0)
+      '@dfinity/principal': 2.1.2
+
+  '@dfinity/identity@1.4.0(@dfinity/agent@1.4.0(@dfinity/candid@1.4.0(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0)(@peculiar/webcrypto@1.4.3)':
+    dependencies:
+      '@dfinity/agent': 1.4.0(@dfinity/candid@1.4.0(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0)
       '@dfinity/principal': 1.4.0
       '@noble/curves': 1.4.0
       '@noble/hashes': 1.4.0
       '@peculiar/webcrypto': 1.4.3
       borc: 2.1.2
 
+  '@dfinity/identity@2.1.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)(@peculiar/webcrypto@1.4.3)':
+    dependencies:
+      '@dfinity/agent': 2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)
+      '@dfinity/principal': 2.1.2
+      '@noble/curves': 1.4.0
+      '@noble/hashes': 1.4.0
+      '@peculiar/webcrypto': 1.4.3
+      borc: 2.1.2
+
+  '@dfinity/ledger-icrc@2.6.1(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)(@dfinity/utils@2.5.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))':
+    dependencies:
+      '@dfinity/agent': 2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)
+      '@dfinity/candid': 2.1.2(@dfinity/principal@2.1.2)
+      '@dfinity/principal': 2.1.2
+      '@dfinity/utils': 2.5.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)
+
   '@dfinity/principal@1.4.0':
     dependencies:
       '@noble/hashes': 1.4.0
+
+  '@dfinity/principal@2.1.2':
+    dependencies:
+      '@noble/hashes': 1.4.0
+
+  '@dfinity/utils@2.5.2(@dfinity/agent@2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2))(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)':
+    dependencies:
+      '@dfinity/agent': 2.1.2(@dfinity/candid@2.1.2(@dfinity/principal@2.1.2))(@dfinity/principal@2.1.2)
+      '@dfinity/candid': 2.1.2(@dfinity/principal@2.1.2)
+      '@dfinity/principal': 2.1.2
 
   '@emnapi/core@1.3.0':
     dependencies:
@@ -5015,10 +5094,10 @@ snapshots:
 
   '@mdi/js@7.4.47': {}
 
-  '@monodon/rust@2.0.0(@napi-rs/cli@3.0.0-alpha.63)':
+  '@monodon/rust@2.0.0(@napi-rs/cli@3.0.0-alpha.63(@emnapi/runtime@1.3.0))':
     dependencies:
       '@ltd/j-toml': 1.38.0
-      '@napi-rs/cli': 3.0.0-alpha.63
+      '@napi-rs/cli': 3.0.0-alpha.63(@emnapi/runtime@1.3.0)
       '@nx/devkit': 19.8.3(nx@19.8.3)
       chalk: 4.1.2
       npm-run-path: 4.0.1
@@ -5030,7 +5109,7 @@ snapshots:
       - '@swc/core'
       - debug
 
-  '@napi-rs/cli@3.0.0-alpha.63':
+  '@napi-rs/cli@3.0.0-alpha.63(@emnapi/runtime@1.3.0)':
     dependencies:
       '@inquirer/prompts': 6.0.1
       '@napi-rs/cross-toolchain': 0.0.16
@@ -5045,6 +5124,8 @@ snapshots:
       toml: 3.0.0
       typanion: 3.14.0
       wasm-sjlj: 1.0.5
+    optionalDependencies:
+      '@emnapi/runtime': 1.3.0
     transitivePeerDependencies:
       - '@napi-rs/cross-toolchain-arm64-target-aarch64'
       - '@napi-rs/cross-toolchain-arm64-target-armv7'
@@ -5298,9 +5379,9 @@ snapshots:
     transitivePeerDependencies:
       - nx
 
-  '@nrwl/js@19.8.3(@types/node@20.11.25)(nx@19.8.3)(typescript@5.6.2)':
+  '@nrwl/js@19.8.3(@babel/traverse@7.24.5)(@types/node@20.11.25)(nx@19.8.3)(typescript@5.6.2)':
     dependencies:
-      '@nx/js': 19.8.3(@types/node@20.11.25)(nx@19.8.3)(typescript@5.6.2)
+      '@nx/js': 19.8.3(@babel/traverse@7.24.5)(@types/node@20.11.25)(nx@19.8.3)(typescript@5.6.2)
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@swc-node/register'
@@ -5343,7 +5424,7 @@ snapshots:
       tslib: 2.6.2
       yargs-parser: 21.1.1
 
-  '@nx/js@19.8.3(@types/node@20.11.25)(nx@19.8.3)(typescript@5.6.2)':
+  '@nx/js@19.8.3(@babel/traverse@7.24.5)(@types/node@20.11.25)(nx@19.8.3)(typescript@5.6.2)':
     dependencies:
       '@babel/core': 7.24.5
       '@babel/plugin-proposal-decorators': 7.24.1(@babel/core@7.24.5)
@@ -5352,12 +5433,12 @@ snapshots:
       '@babel/preset-env': 7.24.5(@babel/core@7.24.5)
       '@babel/preset-typescript': 7.24.1(@babel/core@7.24.5)
       '@babel/runtime': 7.22.15
-      '@nrwl/js': 19.8.3(@types/node@20.11.25)(nx@19.8.3)(typescript@5.6.2)
+      '@nrwl/js': 19.8.3(@babel/traverse@7.24.5)(@types/node@20.11.25)(nx@19.8.3)(typescript@5.6.2)
       '@nx/devkit': 19.8.3(nx@19.8.3)
       '@nx/workspace': 19.8.3
       babel-plugin-const-enum: 1.2.0(@babel/core@7.24.5)
       babel-plugin-macros: 2.8.0
-      babel-plugin-transform-typescript-metadata: 0.3.2(@babel/core@7.24.5)
+      babel-plugin-transform-typescript-metadata: 0.3.2(@babel/core@7.24.5)(@babel/traverse@7.24.5)
       chalk: 4.1.2
       columnify: 1.6.0
       detect-port: 1.5.1
@@ -5511,10 +5592,10 @@ snapshots:
       tslib: 2.6.2
       webcrypto-core: 1.7.7
 
-  '@pinia/testing@0.1.3(pinia@2.1.7)(vue@3.5.11)':
+  '@pinia/testing@0.1.3(pinia@2.1.7(typescript@5.6.2)(vue@3.5.11(typescript@5.6.2)))(vue@3.5.11(typescript@5.6.2))':
     dependencies:
-      pinia: 2.1.7(typescript@5.6.2)(vue@3.5.11)
-      vue-demi: 0.14.6(vue@3.5.11)
+      pinia: 2.1.7(typescript@5.6.2)(vue@3.5.11(typescript@5.6.2))
+      vue-demi: 0.14.6(vue@3.5.11(typescript@5.6.2))
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
@@ -5604,7 +5685,7 @@ snapshots:
 
   '@types/wrap-ansi@3.0.0': {}
 
-  '@typescript-eslint/eslint-plugin@7.9.0(@typescript-eslint/parser@7.9.0)(eslint@8.57.0)(typescript@5.6.2)':
+  '@typescript-eslint/eslint-plugin@7.9.0(@typescript-eslint/parser@7.9.0(eslint@8.57.0)(typescript@5.6.2))(eslint@8.57.0)(typescript@5.6.2)':
     dependencies:
       '@eslint-community/regexpp': 4.10.0
       '@typescript-eslint/parser': 7.9.0(eslint@8.57.0)(typescript@5.6.2)
@@ -5617,6 +5698,7 @@ snapshots:
       ignore: 5.3.1
       natural-compare: 1.4.0
       ts-api-utils: 1.3.0(typescript@5.6.2)
+    optionalDependencies:
       typescript: 5.6.2
     transitivePeerDependencies:
       - supports-color
@@ -5629,6 +5711,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 7.9.0
       debug: 4.3.4
       eslint: 8.57.0
+    optionalDependencies:
       typescript: 5.6.2
     transitivePeerDependencies:
       - supports-color
@@ -5645,6 +5728,7 @@ snapshots:
       debug: 4.3.4
       eslint: 8.57.0
       ts-api-utils: 1.3.0(typescript@5.6.2)
+    optionalDependencies:
       typescript: 5.6.2
     transitivePeerDependencies:
       - supports-color
@@ -5661,6 +5745,7 @@ snapshots:
       minimatch: 9.0.4
       semver: 7.6.0
       ts-api-utils: 1.3.0(typescript@5.6.2)
+    optionalDependencies:
       typescript: 5.6.2
     transitivePeerDependencies:
       - supports-color
@@ -5683,12 +5768,12 @@ snapshots:
 
   '@ungap/structured-clone@1.2.0': {}
 
-  '@vitejs/plugin-vue@5.0.4(vite@5.2.11)(vue@3.5.11)':
+  '@vitejs/plugin-vue@5.0.4(vite@5.2.11(@types/node@22.7.4)(sass@1.77.1))(vue@3.5.11(typescript@5.6.2))':
     dependencies:
-      vite: 5.2.11(@types/node@20.11.25)(sass@1.77.1)
+      vite: 5.2.11(@types/node@22.7.4)(sass@1.77.1)
       vue: 3.5.11(typescript@5.6.2)
 
-  '@vitest/coverage-v8@1.6.0(vitest@1.6.0)':
+  '@vitest/coverage-v8@1.6.0(vitest@1.6.0(@types/node@20.11.25)(jsdom@24.0.0)(sass@1.77.1))':
     dependencies:
       '@ampproject/remapping': 2.2.1
       '@bcoe/v8-coverage': 0.2.3
@@ -5703,7 +5788,7 @@ snapshots:
       std-env: 3.7.0
       strip-literal: 2.0.0
       test-exclude: 6.0.0
-      vitest: 1.6.0(@types/node@20.11.25)
+      vitest: 1.6.0(@types/node@20.11.25)(jsdom@24.0.0)(sass@1.77.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -5758,7 +5843,7 @@ snapshots:
 
   '@vue/compiler-core@3.5.11':
     dependencies:
-      '@babel/parser': 7.25.7
+      '@babel/parser': 7.25.9
       '@vue/shared': 3.5.11
       entities: 4.5.0
       estree-walker: 2.0.2
@@ -5776,13 +5861,13 @@ snapshots:
 
   '@vue/compiler-sfc@3.5.11':
     dependencies:
-      '@babel/parser': 7.25.7
+      '@babel/parser': 7.25.9
       '@vue/compiler-core': 3.5.11
       '@vue/compiler-dom': 3.5.11
       '@vue/compiler-ssr': 3.5.11
       '@vue/shared': 3.5.11
       estree-walker: 2.0.2
-      magic-string: 0.30.11
+      magic-string: 0.30.12
       postcss: 8.4.47
       source-map-js: 1.2.0
 
@@ -5808,6 +5893,7 @@ snapshots:
       minimatch: 9.0.4
       muggle-string: 0.4.1
       path-browserify: 1.0.1
+    optionalDependencies:
       typescript: 5.6.2
 
   '@vue/reactivity@3.5.11':
@@ -5826,7 +5912,7 @@ snapshots:
       '@vue/shared': 3.5.11
       csstype: 3.1.3
 
-  '@vue/server-renderer@3.5.11(vue@3.5.11)':
+  '@vue/server-renderer@3.5.11(vue@3.5.11(typescript@5.6.2))':
     dependencies:
       '@vue/compiler-ssr': 3.5.11
       '@vue/shared': 3.5.11
@@ -5841,11 +5927,11 @@ snapshots:
       js-beautify: 1.14.11
       vue-component-type-helpers: 2.0.17
 
-  '@vuetify/loader-shared@2.0.3(vue@3.5.11)(vuetify@3.5.9)':
+  '@vuetify/loader-shared@2.0.3(vue@3.5.11(typescript@5.6.2))(vuetify@3.5.9)':
     dependencies:
       upath: 2.0.1
       vue: 3.5.11(typescript@5.6.2)
-      vuetify: 3.5.9(typescript@5.6.2)(vite-plugin-vuetify@2.0.3)(vue-i18n@9.13.1)(vue@3.5.11)
+      vuetify: 3.5.9(typescript@5.6.2)(vite-plugin-vuetify@2.0.3)(vue-i18n@9.13.1(vue@3.5.11(typescript@5.6.2)))(vue@3.5.11(typescript@5.6.2))
 
   '@yarnpkg/lockfile@1.1.0': {}
 
@@ -5985,10 +6071,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  babel-plugin-transform-typescript-metadata@0.3.2(@babel/core@7.24.5):
+  babel-plugin-transform-typescript-metadata@0.3.2(@babel/core@7.24.5)(@babel/traverse@7.24.5):
     dependencies:
       '@babel/core': 7.24.5
       '@babel/helper-plugin-utils': 7.24.5
+    optionalDependencies:
+      '@babel/traverse': 7.24.5
 
   balanced-match@1.0.2: {}
 
@@ -6901,7 +6989,7 @@ snapshots:
     dependencies:
       yallist: 4.0.0
 
-  magic-string@0.30.11:
+  magic-string@0.30.12:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
 
@@ -7161,16 +7249,17 @@ snapshots:
 
   picocolors@1.0.0: {}
 
-  picocolors@1.1.0: {}
+  picocolors@1.1.1: {}
 
   picomatch@2.3.1: {}
 
-  pinia@2.1.7(typescript@5.6.2)(vue@3.5.11):
+  pinia@2.1.7(typescript@5.6.2)(vue@3.5.11(typescript@5.6.2)):
     dependencies:
       '@vue/devtools-api': 6.6.1
-      typescript: 5.6.2
       vue: 3.5.11(typescript@5.6.2)
-      vue-demi: 0.14.6(vue@3.5.11)
+      vue-demi: 0.14.6(vue@3.5.11(typescript@5.6.2))
+    optionalDependencies:
+      typescript: 5.6.2
 
   pino-abstract-transport@1.2.0:
     dependencies:
@@ -7213,7 +7302,7 @@ snapshots:
   postcss@8.4.47:
     dependencies:
       nanoid: 3.3.7
-      picocolors: 1.1.0
+      picocolors: 1.1.1
       source-map-js: 1.2.1
 
   prelude-ls@1.2.1: {}
@@ -7630,7 +7719,7 @@ snapshots:
 
   validator@13.12.0: {}
 
-  vite-node@1.6.0(@types/node@20.11.25):
+  vite-node@1.6.0(@types/node@20.11.25)(sass@1.77.1):
     dependencies:
       cac: 6.7.14
       debug: 4.3.4
@@ -7647,30 +7736,39 @@ snapshots:
       - supports-color
       - terser
 
-  vite-plugin-vuetify@2.0.3(vite@5.2.11)(vue@3.5.11)(vuetify@3.5.9):
+  vite-plugin-vuetify@2.0.3(vite@5.2.11(@types/node@22.7.4)(sass@1.77.1))(vue@3.5.11(typescript@5.6.2))(vuetify@3.5.9):
     dependencies:
-      '@vuetify/loader-shared': 2.0.3(vue@3.5.11)(vuetify@3.5.9)
+      '@vuetify/loader-shared': 2.0.3(vue@3.5.11(typescript@5.6.2))(vuetify@3.5.9)
       debug: 4.3.4
       upath: 2.0.1
-      vite: 5.2.11(@types/node@20.11.25)(sass@1.77.1)
+      vite: 5.2.11(@types/node@22.7.4)(sass@1.77.1)
       vue: 3.5.11(typescript@5.6.2)
-      vuetify: 3.5.9(typescript@5.6.2)(vite-plugin-vuetify@2.0.3)(vue-i18n@9.13.1)(vue@3.5.11)
+      vuetify: 3.5.9(typescript@5.6.2)(vite-plugin-vuetify@2.0.3)(vue-i18n@9.13.1(vue@3.5.11(typescript@5.6.2)))(vue@3.5.11(typescript@5.6.2))
     transitivePeerDependencies:
       - supports-color
 
   vite@5.2.11(@types/node@20.11.25)(sass@1.77.1):
     dependencies:
-      '@types/node': 20.11.25
       esbuild: 0.20.2
       postcss: 8.4.38
       rollup: 4.22.4
-      sass: 1.77.1
     optionalDependencies:
-      fsevents: 2.3.3
-
-  vitest@1.6.0(@types/node@20.11.25):
-    dependencies:
       '@types/node': 20.11.25
+      fsevents: 2.3.3
+      sass: 1.77.1
+
+  vite@5.2.11(@types/node@22.7.4)(sass@1.77.1):
+    dependencies:
+      esbuild: 0.20.2
+      postcss: 8.4.38
+      rollup: 4.22.4
+    optionalDependencies:
+      '@types/node': 22.7.4
+      fsevents: 2.3.3
+      sass: 1.77.1
+
+  vitest@1.6.0(@types/node@20.11.25)(jsdom@24.0.0)(sass@1.77.1):
+    dependencies:
       '@vitest/expect': 1.6.0
       '@vitest/runner': 1.6.0
       '@vitest/snapshot': 1.6.0
@@ -7689,8 +7787,11 @@ snapshots:
       tinybench: 2.5.1
       tinypool: 0.8.4
       vite: 5.2.11(@types/node@20.11.25)(sass@1.77.1)
-      vite-node: 1.6.0(@types/node@20.11.25)
+      vite-node: 1.6.0(@types/node@20.11.25)(sass@1.77.1)
       why-is-node-running: 2.2.2
+    optionalDependencies:
+      '@types/node': 20.11.25
+      jsdom: 24.0.0
     transitivePeerDependencies:
       - less
       - lightningcss
@@ -7704,7 +7805,7 @@ snapshots:
 
   vue-component-type-helpers@2.0.17: {}
 
-  vue-demi@0.14.6(vue@3.5.11):
+  vue-demi@0.14.6(vue@3.5.11(typescript@5.6.2)):
     dependencies:
       vue: 3.5.11(typescript@5.6.2)
 
@@ -7721,14 +7822,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vue-i18n@9.13.1(vue@3.5.11):
+  vue-i18n@9.13.1(vue@3.5.11(typescript@5.6.2)):
     dependencies:
       '@intlify/core-base': 9.13.1
       '@intlify/shared': 9.13.1
       '@vue/devtools-api': 6.6.1
       vue: 3.5.11(typescript@5.6.2)
 
-  vue-router@4.3.2(vue@3.5.11):
+  vue-router@4.3.2(vue@3.5.11(typescript@5.6.2)):
     dependencies:
       '@vue/devtools-api': 6.6.1
       vue: 3.5.11(typescript@5.6.2)
@@ -7745,16 +7846,18 @@ snapshots:
       '@vue/compiler-dom': 3.5.11
       '@vue/compiler-sfc': 3.5.11
       '@vue/runtime-dom': 3.5.11
-      '@vue/server-renderer': 3.5.11(vue@3.5.11)
+      '@vue/server-renderer': 3.5.11(vue@3.5.11(typescript@5.6.2))
       '@vue/shared': 3.5.11
+    optionalDependencies:
       typescript: 5.6.2
 
-  vuetify@3.5.9(typescript@5.6.2)(vite-plugin-vuetify@2.0.3)(vue-i18n@9.13.1)(vue@3.5.11):
+  vuetify@3.5.9(typescript@5.6.2)(vite-plugin-vuetify@2.0.3)(vue-i18n@9.13.1(vue@3.5.11(typescript@5.6.2)))(vue@3.5.11(typescript@5.6.2)):
     dependencies:
-      typescript: 5.6.2
-      vite-plugin-vuetify: 2.0.3(vite@5.2.11)(vue@3.5.11)(vuetify@3.5.9)
       vue: 3.5.11(typescript@5.6.2)
-      vue-i18n: 9.13.1(vue@3.5.11)
+    optionalDependencies:
+      typescript: 5.6.2
+      vite-plugin-vuetify: 2.0.3(vite@5.2.11(@types/node@22.7.4)(sass@1.77.1))(vue@3.5.11(typescript@5.6.2))(vuetify@3.5.9)
+      vue-i18n: 9.13.1(vue@3.5.11(typescript@5.6.2))
 
   w3c-xmlserializer@5.0.0:
     dependencies:

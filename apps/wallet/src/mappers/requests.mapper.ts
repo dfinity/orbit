@@ -13,6 +13,7 @@ import {
   RequestWithDetails,
 } from '~/types/requests.types';
 import { RequestOperationEnum, RequestStatusEnum } from '~/types/station.types';
+import { detectAddressFormat } from '~/utils/asset.utils';
 import { formatBalance, stringify, unreachable, variantIs } from '~/utils/helper.utils';
 
 export const mapRequestsOperationTypeToGroup = (
@@ -77,6 +78,14 @@ export const mapRequestsOperationTypeToGroup = (
     variantIs(operationType, 'FundExternalCanister')
   ) {
     return ListRequestsOperationTypeGroup.ExternalCanister;
+  }
+
+  if (
+    variantIs(operationType, 'AddAsset') ||
+    variantIs(operationType, 'EditAsset') ||
+    variantIs(operationType, 'RemoveAsset')
+  ) {
+    return ListRequestsOperationTypeGroup.Asset;
   }
 
   return unreachable(operationType);
@@ -241,6 +250,15 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'SetDisasterRecovery')) {
     return RequestOperationEnum.SetDisasterRecovery;
   }
+  if (variantIs(operation, 'AddAsset')) {
+    return RequestOperationEnum.AddAsset;
+  }
+  if (variantIs(operation, 'EditAsset')) {
+    return RequestOperationEnum.EditAsset;
+  }
+  if (variantIs(operation, 'RemoveAsset')) {
+    return RequestOperationEnum.RemoveAsset;
+  }
 
   return unreachable(operation);
 };
@@ -310,6 +328,12 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { FundExternalCanister: [] };
   } else if (variantIs(requestOperation, 'SetDisasterRecovery')) {
     return { SetDisasterRecovery: null };
+  } else if (variantIs(requestOperation, 'AddAsset')) {
+    return { AddAsset: null };
+  } else if (variantIs(requestOperation, 'EditAsset')) {
+    return { EditAsset: null };
+  } else if (variantIs(requestOperation, 'RemoveAsset')) {
+    return { RemoveAsset: null };
   } else {
     return unreachable(requestOperation);
   }
@@ -421,10 +445,9 @@ const mapRequestToAccountCsvRow = (request: Request): CsvRow => {
     return {
       account_id: request.operation.AddAccount.account?.[0]?.id ?? '',
       account_name: request.operation.AddAccount.input.name,
-      blockchain: request.operation.AddAccount.input.blockchain,
       details: stringify({
         metadata: request.operation.AddAccount.input.metadata,
-        standard: request.operation.AddAccount.input.standard,
+        assets: request.operation.AddAccount.input.assets,
         configs_request_policy: request.operation.AddAccount.input.configs_request_policy,
         transfer_request_policy: request.operation.AddAccount.input.transfer_request_policy,
       }),
@@ -480,18 +503,31 @@ const mapRequestToTransferCsvRow = (request: Request): CsvRow => {
   if (variantIs(request.operation, 'Transfer') && request.operation.Transfer.from_account?.[0]) {
     const account = request.operation.Transfer.from_account[0];
 
+    const asset = request.operation.Transfer.from_asset;
+
+    // to determine the `from address` we find a matching address to the format of the `to address`
+    const maybeToAddressFormat = detectAddressFormat(
+      asset.blockchain,
+      request.operation.Transfer.input.to,
+    );
+
+    const fallbackAddress = account.addresses[0]?.address ?? '-';
+
+    const fromAddress = maybeToAddressFormat
+      ? (account.addresses.find(accountAddress => accountAddress.format === maybeToAddressFormat)
+          ?.address ?? fallbackAddress)
+      : fallbackAddress;
+
     return {
       from_account: account.name,
-      from_account_address: account.address,
+      from_account_address: fromAddress,
+      from_asset: `${asset.name} (${asset.blockchain} / ${asset.name})`,
       to: request.operation.Transfer.input.to,
       amount:
-        formatBalance(request.operation.Transfer.input.amount, account.decimals) +
-        ' ' +
-        account.symbol,
+        formatBalance(request.operation.Transfer.input.amount, asset.decimals) + ' ' + asset.symbol,
       fee: request.operation.Transfer.fee[0]
-        ? formatBalance(request.operation.Transfer.fee[0], account.decimals) + ' ' + account.symbol
+        ? formatBalance(request.operation.Transfer.fee[0], asset.decimals) + ' ' + asset.symbol
         : '',
-      // comment: request.summary[0] ?? '',
       comment: request.summary[0] ?? '',
     };
   }

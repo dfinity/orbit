@@ -9,7 +9,7 @@ use crate::{
     core::observer::Observer,
     errors::DisasterRecoveryError,
     models::{Account, User, UserStatus},
-    repositories::{AccountRepository, ACCOUNT_REPOSITORY},
+    repositories::{AccountRepository, AssetRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY},
     services::SYSTEM_SERVICE,
 };
 use orbit_essentials::repository::Repository;
@@ -19,6 +19,7 @@ lazy_static! {
             system_service: Arc::clone(&SYSTEM_SERVICE),
             user_service: Arc::clone(&USER_SERVICE),
             account_repository: Arc::clone(&ACCOUNT_REPOSITORY),
+            asset_repository: Arc::clone(&ASSET_REPOSITORY),
         });
 }
 
@@ -26,6 +27,7 @@ pub struct DisasterRecoveryService {
     system_service: Arc<SystemService>,
     user_service: Arc<UserService>,
     account_repository: Arc<AccountRepository>,
+    asset_repository: Arc<AssetRepository>,
 }
 
 impl DisasterRecoveryService {
@@ -33,6 +35,7 @@ impl DisasterRecoveryService {
         let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
 
         let accounts = self.account_repository.list();
+        let assets = self.asset_repository.list();
 
         ic_cdk::call(
             upgrader_canister_id,
@@ -42,13 +45,30 @@ impl DisasterRecoveryService {
                     .iter()
                     .map(|account| upgrader_api::Account {
                         id: Uuid::from_bytes(account.id).hyphenated().to_string(),
-                        blockchain: account.blockchain.to_string(),
-                        address: account.address.clone(),
-                        standard: account.standard.to_string(),
-                        symbol: account.symbol.clone(),
-                        decimals: account.decimals,
+                        seed: account.seed,
+                        assets: account
+                            .assets
+                            .iter()
+                            .map(|account_asset| {
+                                Uuid::from_bytes(account_asset.asset_id)
+                                    .hyphenated()
+                                    .to_string()
+                            })
+                            .collect(),
                         name: account.name.clone(),
                         metadata: account.metadata.clone().into(),
+                    })
+                    .collect(),
+                assets: assets
+                    .iter()
+                    .map(|asset| upgrader_api::Asset {
+                        id: Uuid::from_bytes(asset.id).hyphenated().to_string(),
+                        blockchain: asset.blockchain.to_string(),
+                        symbol: asset.symbol.clone(),
+                        name: asset.name.clone(),
+                        decimals: asset.decimals,
+                        standards: asset.standards.iter().map(|s| s.to_string()).collect(),
+                        metadata: asset.metadata.clone().into(),
                     })
                     .collect(),
             },),

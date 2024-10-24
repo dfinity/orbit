@@ -16,6 +16,7 @@
 
   <TransferDialog
     :account="props.account.value"
+    :asset="props.asset.value"
     :open="open"
     :transfer-id="props.transferId.value"
     :readonly="props.readonly.value"
@@ -32,11 +33,12 @@
 import { ref, toRefs } from 'vue';
 import { VBtn } from 'vuetify/components';
 import TransferDialog from '~/components/accounts/TransferDialog.vue';
-import { Account, UUID } from '~/generated/station/station.did';
+import { Account, Asset, UUID } from '~/generated/station/station.did';
 
 const input = withDefaults(
   defineProps<{
     account: Account;
+    asset: Asset;
     transferId?: UUID;
     icon?: string;
     text?: string;

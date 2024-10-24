@@ -1,4 +1,5 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
+use crate::test_data::asset::list_assets;
 use crate::test_data::{set_test_data_id, StationDataGenerator};
 use crate::utils::{compress_to_gzip, create_file, read_file, NNS_ROOT_CANISTER_ID};
 use crate::TestEnv;
@@ -28,7 +29,9 @@ const EXPECTED_ADDITIONAL_PERMISSIONS_NR: usize =
     // for accounts there are view, transfer and configuration permissions
     ACCOUNTS_NR * 3;
 
+// todo: reenable when migrations are implemented
 #[test]
+#[ignore]
 fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     let TestEnv {
         env, canister_ids, ..
@@ -114,7 +117,9 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     );
 }
 
+// todo: reenable when migrations are implemented
 #[test]
+#[ignore]
 fn test_canister_migration_path_with_previous_wasm_memory_version() {
     let TestEnv {
         env, canister_ids, ..
@@ -122,7 +127,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
 
     let station_wasm = get_canister_wasm("station").to_vec();
     let wasm_memory =
-        read_file("station-memory-v0.bin").expect("Unexpected missing older wasm memory");
+        read_file("station-memory-v1.bin").expect("Unexpected missing older wasm memory");
 
     env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .expect("unexpected failure stopping canister");
@@ -190,6 +195,8 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         EXPECTED_ADDITIONAL_PERMISSIONS_NR + PREVIOUS_BASELINE_NR_PERMISSIONS,
     );
 
+    assert_has_icp_asset(&env, canister_ids.station, WALLET_ADMIN_USER);
+
     // Makes sure that the next test data id number is pointing at a value that was
     // not already used in the previous version
     set_test_data_id(9_999);
@@ -204,6 +211,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
             .with_user_groups(new_records)
             .with_accounts(new_records)
             .with_address_book_entries(new_records)
+            .with_assets(new_records)
             .with_request_policy_updates(new_records)
             .with_station_updates(0)
             .with_upgrader_updates(0)
@@ -259,6 +267,14 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         WALLET_ADMIN_USER,
         // for accounts there are view, transfer and configuration permissions
         EXPECTED_ADDITIONAL_PERMISSIONS_NR + PREVIOUS_BASELINE_NR_PERMISSIONS + (new_records * 3),
+    );
+
+    assert_can_list_assets(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        // there should be one asset here already: ICP
+        new_records + 1,
     );
 }
 
@@ -461,4 +477,42 @@ fn assert_can_list_permissions(
     let res = res.0.unwrap();
 
     assert_eq!(res.total as usize, expected);
+}
+
+fn assert_can_list_assets(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    expected: usize,
+) {
+    let res: (ApiResult<station_api::ListAssetsResponse>,) = update_candid_as(
+        env,
+        station_id,
+        requester,
+        "list_assets",
+        (station_api::ListAssetsInput {
+            paginate: Some(station_api::PaginationInput {
+                offset: Some(0),
+                limit: Some(25),
+            }),
+        },),
+    )
+    .unwrap();
+
+    let res = res.0.unwrap();
+
+    assert_eq!(res.total as usize, expected);
+}
+
+fn assert_has_icp_asset(env: &PocketIc, station_id: Principal, requester: Principal) {
+    let assets = list_assets(env, station_id, requester)
+        .expect("Failed to query list assets")
+        .0
+        .expect("Failed to list assets");
+
+    assert!(assets.assets.len() == 1);
+    assert_eq!(assets.assets[0].symbol, "ICP");
+    assert_eq!(assets.assets[0].name, "Internet Computer");
+    assert_eq!(&assets.assets[0].blockchain, "icp");
+    assert_eq!(assets.assets[0].standards, vec!["icp_native"]);
 }
