@@ -10,11 +10,12 @@
     :density="props.density.value"
     :readonly="props.readonly.value"
     :disabled="props.disabled.value"
-    @update:search="autocomplete.search"
+    @update:search="autocomplete.search = $event"
   />
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
+import { VAutocomplete } from 'vuetify/components';
 import { useAssetAutocomplete } from '~/composables/autocomplete.composable';
 import { UUID } from '~/generated/station/station.did';
 import { SelectItem } from '~/types/helper.types';
