@@ -180,7 +180,6 @@ const props = withDefaults(
   defineProps<{
     account: Account;
     asset: Asset;
-    // address: string;
     batchChunkSize?: number;
     icon?: string;
     text?: string;
