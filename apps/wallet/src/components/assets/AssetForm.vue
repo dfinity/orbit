@@ -36,11 +36,7 @@
     />
 
     <InternetComputerNativeStandardForm
-      v-if="
-        model.blockchain === 'icp' &&
-        ((model.standards && model.standards.includes(BlockchainStandard.Native)) ||
-          (model.standards && model.standards.includes(BlockchainStandard.ICRC1)))
-      "
+      v-if="shouldUseIcpForm"
       v-model="model.metadata!"
       :readonly="isViewMode"
     ></InternetComputerNativeStandardForm>
@@ -83,6 +79,7 @@
         :label="$t('terms.metadata')"
         :rules="[requiredRule]"
         :disabled="isViewMode"
+        :hide-keys="hiddenMetadataKeys"
       />
     </template>
   </VForm>
@@ -172,4 +169,15 @@ const submit = async () => {
     emit('submit', model.value);
   }
 };
+
+const shouldUseIcpForm = computed(
+  () =>
+    model.value.blockchain === 'icp' &&
+    ((model.value.standards && model.value.standards.includes(BlockchainStandard.Native)) ||
+      (model.value.standards && model.value.standards.includes(BlockchainStandard.ICRC1))),
+);
+
+const hiddenMetadataKeys = computed(() =>
+  shouldUseIcpForm.value ? ['ledger_canister_id', 'index_canister_id'] : [],
+);
 </script>
