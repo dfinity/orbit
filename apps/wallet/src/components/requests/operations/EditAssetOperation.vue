@@ -1,14 +1,14 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
-    <RequestOperationListRow v-if="symbol_name">
+    <RequestOperationListRow v-if="symbolName">
       <template #name>{{ $t('terms.symbol') }}</template>
       <template #content>
-        {{ symbol_name }}
+        {{ symbolName }}
       </template>
     </RequestOperationListRow>
-    <RequestOperationListRow v-if="blockchain_standards">
+    <RequestOperationListRow v-if="blockchainStandards">
       <template #name>{{ $t('terms.standards') }}</template>
-      <template #content> {{ blockchain_standards }} </template>
+      <template #content> {{ blockchainStandards }} </template>
     </RequestOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" indeterminate />
@@ -42,8 +42,8 @@ const formValue: Ref<Partial<Asset>> = ref({});
 const station = useStationStore();
 const loading = ref(false);
 
-const symbol_name = ref('');
-const blockchain_standards = ref('');
+const symbolName = ref('');
+const blockchainStandards = ref('');
 
 const fetchDetails = async () => {
   loading.value = true;
@@ -120,27 +120,25 @@ onBeforeMount(() => {
     props.operation.input.standards?.length > 0 ? props.operation.input.standards[0]! : [];
 
   if (symbol && name) {
-    symbol_name.value = `${symbol} (${name})`;
+    symbolName.value = `${symbol} (${name})`;
   } else if (symbol) {
-    symbol_name.value = symbol;
+    symbolName.value = symbol;
   } else if (name) {
-    symbol_name.value = name;
+    symbolName.value = name;
   }
 
   if (blockchain && standards.length > 0) {
-    blockchain_standards.value = `${i18n.t(`blockchains.${blockchain}.name`)}: ${standards
+    blockchainStandards.value = standards
       .map(standard => i18n.t(`blockchains.${blockchain}.standards.${standard}`))
-      .join(', ')}`;
+      .join(', ');
   } else if (blockchain) {
-    blockchain_standards.value = i18n.t(`blockchains.${blockchain}.name`);
+    blockchainStandards.value = i18n.t(`blockchains.${blockchain}.name`);
   } else if (standards) {
-    blockchain_standards.value = standards.join(', ');
+    blockchainStandards.value = standards.join(', ');
   }
 
   if (!isListMode.value) {
     fetchDetails();
   }
-
-  // formValue.value = entry;
 });
 </script>

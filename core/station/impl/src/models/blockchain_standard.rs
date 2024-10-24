@@ -60,7 +60,7 @@ impl TokenStandard {
         match self {
             TokenStandard::ICRC1 | TokenStandard::InternetComputerNative => vec![
                 Self::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
-                Self::METADATA_KEY_INDEX_CANISTER_ID.to_string(),
+                // index canister is optional
             ],
         }
     }

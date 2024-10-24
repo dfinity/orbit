@@ -7,7 +7,7 @@ use thiserror::Error;
 pub enum BlockchainApiError {
     /// Failed to fetch latest asset balance.
     #[error(r#"Failed to fetch latest asset balance."#)]
-    FetchBalanceFailed { asset_id: String },
+    FetchBalanceFailed { asset_id: String, info: String },
     /// Missing metadata key.
     #[error(r#"Metadata '{key}' not found."#)]
     MissingMetadata { key: String },
@@ -37,8 +37,10 @@ impl DetailableError for BlockchainApiError {
         match self {
             BlockchainApiError::FetchBalanceFailed {
                 asset_id: account_id,
+                info,
             } => {
                 details.insert("account_id".to_string(), account_id.to_string());
+                details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
             BlockchainApiError::TransactionSubmitFailed { info } => {

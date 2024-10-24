@@ -1165,6 +1165,7 @@ export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
 export interface StandardData {
   'supported_operations' : Array<string>,
+  'supported_address_formats' : Array<string>,
   'required_metadata_fields' : Array<string>,
   'standard' : string,
 }
@@ -1251,6 +1252,7 @@ export interface TransferListItem {
 export interface TransferMetadata { 'key' : string, 'value' : string }
 export interface TransferOperation {
   'fee' : [] | [bigint],
+  'from_asset' : Asset,
   'network' : Network,
   'transfer_id' : [] | [UUID],
   'from_account' : [] | [Account],

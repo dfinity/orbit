@@ -109,7 +109,12 @@ export default {
     icp: {
       name: 'Internet Computer',
       standards: {
-        native: 'Native',
+        icp_native: 'ICP (Native)',
+        icrc1: 'ICRC-1',
+      },
+      formats: {
+        icp_account_identifier: 'ICP Native',
+        icrc1_account: 'ICRC-1',
       },
     },
     eth: {
@@ -265,6 +270,9 @@ export default {
       editaccount: {
         title: 'Edit account',
         request_title: 'Edit account request',
+        added_assets: 'Added',
+        removed_assets: 'Removed',
+        replaced_assets: 'Replaced',
       },
       editaddressbookentry: {
         title: 'Edit address book entry',
@@ -693,6 +701,7 @@ export default {
   navigation: {
     home: 'Home',
     accounts: 'Accounts',
+    account: 'Account',
     address_book: 'Address Book',
     users: 'Users',
     settings: 'Settings',
@@ -730,6 +739,14 @@ export default {
       csv_ignored_transfers_hint: 'Transfers with errors will be ignored.',
       csv_transfer_failed: 'Failed to process transfers, please try again.',
       csv_download_invalid: 'Download invalid',
+      add_asset: 'Add asset',
+      remove_asset: 'Remove asset',
+      no_assets_to_add: 'No assets available to add.',
+      remove_asset_confirm:
+        'Are you sure you want to remove this asset? Removing the asset does not affect the account balance. Re-adding the asset will restore access to the balance.',
+      transfers_not_supported: 'Transfers are not supported for this asset.',
+      add_index_canister_to_see_transactions:
+        'Consider adding the index canister to the asset to see transactions.',
     },
     address_book: {
       title: 'Address Book',

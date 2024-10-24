@@ -6,6 +6,22 @@
         {{ props.operation.input.name[0] ?? '-' }}
       </template>
     </RequestOperationListRow>
+    <RequestOperationListRow v-if="props.operation.input.change_assets?.[0]">
+      <template #name>{{ $t('terms.assets') }}</template>
+      <template #content>
+        <div v-if="editAssets.addAssets">
+          {{ editAssets.addAssets }}
+        </div>
+
+        <div v-if="editAssets.removeAssets">
+          {{ editAssets.removeAssets }}
+        </div>
+
+        <div v-if="editAssets.replaceAssets">
+          {{ editAssets.replaceAssets }}
+        </div>
+      </template>
+    </RequestOperationListRow>
   </div>
   <LoadingMessage v-else-if="loading" />
   <AccountSetupWizard v-else :model-value="model" mode="view" />
@@ -23,8 +39,10 @@ import {
 } from '~/composables/account.composable';
 import logger from '~/core/logger.core';
 import { EditAccountOperation, Request } from '~/generated/station/station.did';
-import { variantIs } from '~/utils/helper.utils';
+import { unreachable, variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
+import { useI18n } from 'vue-i18n';
+import { useStationStore } from '~/stores/station.store';
 
 const props = withDefaults(
   defineProps<{
@@ -37,9 +55,59 @@ const props = withDefaults(
   },
 );
 
+const i18n = useI18n();
+
 const isListMode = computed(() => props.mode === 'list');
 const model: Ref<AccountSetupWizardModel> = ref(useDefaultAccountSetupWizardModel());
 const loading = ref(false);
+
+const editAssets = computed(() => {
+  const assets = {
+    addAssets: '',
+    replaceAssets: '',
+    removeAssets: '',
+  };
+  if (props.operation.input.change_assets[0]) {
+    if (variantIs(props.operation.input.change_assets[0], 'Change')) {
+      if (props.operation.input.change_assets[0].Change.add_assets.length > 0) {
+        assets.addAssets = `${i18n.t('requests.types.editaccount.added_assets')}: ${assetIdsToString(
+          props.operation.input.change_assets[0].Change.add_assets,
+        )}`;
+      }
+
+      if (props.operation.input.change_assets[0].Change.remove_assets.length > 0) {
+        assets.removeAssets = `${i18n.t('requests.types.editaccount.removed_assets')}: ${assetIdsToString(
+          props.operation.input.change_assets[0].Change.remove_assets,
+        )}`;
+      }
+    } else if (variantIs(props.operation.input.change_assets[0], 'ReplaceWith')) {
+      assets.replaceAssets = `${i18n.t('requests.types.editaccount.replaced_assets')}: ${assetIdsToString(
+        props.operation.input.change_assets[0].ReplaceWith.assets,
+      )}`;
+    } else {
+      unreachable(props.operation.input.change_assets[0]);
+    }
+  }
+
+  return assets;
+});
+
+const station = useStationStore();
+
+function assetIdsToString(ids: string[]): string {
+  return ids
+    .map(id => {
+      const maybeAsset = station.configuration.details.supported_assets.find(
+        asset => asset.id == id,
+      );
+      if (maybeAsset) {
+        return `${maybeAsset.symbol} (${maybeAsset.name})`;
+      } else {
+        return id;
+      }
+    })
+    .join(', ');
+}
 
 const fetchDetails = async () => {
   try {

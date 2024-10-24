@@ -1,5 +1,5 @@
 <template>
-  <VCombobox
+  <VSelect
     v-model="model"
     :multiple="props.multiple"
     :label="props.label"
@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { VCombobox } from 'vuetify/components';
+import { VSelect } from 'vuetify/components';
 import { useStationStore } from '~/stores/station.store';
 import { FormValidationRuleFn } from '~/types/helper.types';
 
@@ -57,12 +57,7 @@ const standardsData = computed(
 const model = computed({
   get: () => props.modelValue,
   set: value => {
-    const standards = value as { value: string; text: string }[] | undefined;
-
-    emit(
-      'update:modelValue',
-      standards?.map(v => v.value),
-    );
+    emit('update:modelValue', value || []);
   },
 });
 
@@ -70,10 +65,10 @@ const emit = defineEmits<{
   (event: 'update:modelValue', payload?: string[]): void;
 }>();
 
-const items = computed(() =>
-  standardsData.value.map(data => ({
+const items = computed(() => {
+  return standardsData.value.map(data => ({
     value: data.standard,
     text: i18n.t(`blockchains.${props.blockchain}.standards.${data.standard}`),
-  })),
-);
+  }));
+});
 </script>

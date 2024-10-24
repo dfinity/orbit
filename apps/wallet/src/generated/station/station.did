@@ -349,6 +349,8 @@ type TransferOperationInput = record {
 type TransferOperation = record {
   // The account to use for the transaction.
   from_account : opt Account;
+  // The asset to use for the transaction.
+  from_asset : Asset;
   // The network to use for the transaction.
   network : Network;
   // The input to the request to transfer funds.
@@ -1750,6 +1752,8 @@ type StandardData = record {
   required_metadata_fields : vec text;
   // Supported operations for the standard (e.g. `["transfer", "list_transfers", "balance"]`).
   supported_operations : vec text;
+  // Supported address formats of the standard.
+  supported_address_formats : vec text;
 };
 
 // Describes a blockchain and its standards supported by the station.

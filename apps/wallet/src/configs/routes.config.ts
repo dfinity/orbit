@@ -4,6 +4,7 @@ export enum Routes {
   NotFound = 'NotFound',
   Accounts = 'Accounts',
   Account = 'Account',
+  AccountAsset = 'AccountAsset',
   MySettings = 'MySettings',
   UserGroups = 'UserGroups',
   SystemSettings = 'SystemSettings',

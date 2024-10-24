@@ -29,6 +29,9 @@ pub enum AssetError {
     /// The asset has failed validation.
     #[error(r#"The account has failed validation."#)]
     ValidationError { info: String },
+    /// The asset is in use.
+    #[error(r#"The asset is used by {resource} `{id}`"#)]
+    AssetInUse { id: String, resource: String },
     /// The asset is not unique.
     #[error(r#"The asset already exists."#)]
     AlreadyExists {
@@ -88,6 +91,11 @@ impl DetailableError for AssetError {
             AssetError::AlreadyExists { symbol, blockchain } => {
                 details.insert("symbol".to_string(), symbol.to_string());
                 details.insert("blockchain".to_string(), blockchain.to_string());
+                Some(details)
+            }
+            AssetError::AssetInUse { id, resource } => {
+                details.insert("id".to_string(), id.to_string());
+                details.insert("resource".to_string(), resource.to_string());
                 Some(details)
             }
         }

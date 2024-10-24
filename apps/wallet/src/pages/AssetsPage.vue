@@ -54,7 +54,15 @@
               {{ $t(`blockchains.${asset.blockchain.toLowerCase()}.name`) }}
             </template>
             <template #item.standards="{ item: asset }">
-              {{ asset.standards.join(', ') }}
+              {{
+                asset.standards
+                  .map(standard =>
+                    $t(
+                      `blockchains.${asset.blockchain.toLowerCase()}.standards.${standard.toLowerCase()}`,
+                    ),
+                  )
+                  .join(', ')
+              }}
             </template>
 
             <template #item.actions="{ item: asset }">

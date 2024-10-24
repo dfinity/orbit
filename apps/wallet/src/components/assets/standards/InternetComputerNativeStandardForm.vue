@@ -17,7 +17,7 @@
     density="comfortable"
     :disabled="props.readonly"
     :prepend-icon="mdiDatabase"
-    :rules="[requiredRule, validCanisterId]"
+    :rules="[validCanisterId]"
   />
 </template>
 <script lang="ts" setup>
@@ -56,14 +56,20 @@ onMounted(() => {
 
 watch(ledgerId, () => {
   const newValue = model.value.filter(m => m.key !== 'ledger_canister_id');
-  newValue.push({ key: 'ledger_canister_id', value: ledgerId.value });
+
+  if (ledgerId.value) {
+    newValue.push({ key: 'ledger_canister_id', value: ledgerId.value });
+  }
 
   model.value = newValue;
 });
 
 watch(indexId, () => {
   const newValue = model.value.filter(m => m.key !== 'index_canister_id');
-  newValue.push({ key: 'index_canister_id', value: indexId.value });
+
+  if (indexId.value) {
+    newValue.push({ key: 'index_canister_id', value: indexId.value });
+  }
 
   model.value = newValue;
 });

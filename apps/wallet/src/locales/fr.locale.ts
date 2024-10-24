@@ -119,7 +119,12 @@ export default {
     icp: {
       name: 'Internet Computer',
       standards: {
-        native: 'Native',
+        icp_native: 'ICP (Native)',
+        icrc1: 'ICRC-1',
+      },
+      formats: {
+        icp_account_identifier: 'ICP Native',
+        icrc1_account: 'ICRC-1',
       },
     },
     eth: {
@@ -275,6 +280,9 @@ export default {
       editaccount: {
         title: 'Modifier de modifier un compte',
         request_title: 'Demande de modifier un compte',
+        added_assets: 'Ajouté',
+        removed_assets: 'Supprimé',
+        replaced_assets: 'Remplacé',
       },
       editaddressbookentry: {
         title: "Modifier une entrée de carnet d'adresses",
@@ -698,6 +706,7 @@ export default {
   navigation: {
     home: 'Acceuil',
     accounts: 'Comptes',
+    account: 'Compte',
     address_book: "Carnet d'Adresses",
     users: 'Usagers',
     settings: 'Settings',
@@ -737,6 +746,14 @@ export default {
       csv_ignored_transfers_hint: 'Transfers with errors will be ignored.',
       csv_transfer_failed: 'Échec de process transfers, veuillez essayer de nouveau.',
       csv_download_invalid: 'Téléchargement invalide',
+      add_asset: 'Ajouter un actif',
+      remove_asset: 'Supprimer un actif',
+      no_assets_to_add: 'Pas d actifs disponibles à ajouter.',
+      remove_asset_confirm:
+        'Êtes-vous sûr de vouloir supprimer cet actif? Supprimer l actif n affecte pas le solde du compte. Réajouter l actif restaurera l accès au solde.',
+      transfers_not_supported: 'Les transferts ne sont pas supportés pour cet actif.',
+      add_index_canister_to_see_transactions:
+        'Considérez d ajouter le canister d index à l actif pour voir les transactions.',
     },
     address_book: {
       title: "Carnet d'Adresses",

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import AssetForm from './AssetForm.vue';
 import { mount } from '~/test.utils';
+import { BlockchainStandard } from '~/types/chain.types';
 
 describe('AssetForm', () => {
   it('renders correctly for creation', () => {
@@ -17,7 +18,7 @@ describe('AssetForm', () => {
       props: {
         modelValue: {
           blockchain: 'icp',
-          standards: ['native'],
+          standards: [BlockchainStandard.Native],
           metadata: [],
         },
       },
@@ -32,7 +33,7 @@ describe('AssetForm', () => {
       props: {
         modelValue: {
           blockchain: 'icp',
-          standards: ['native'],
+          standards: [BlockchainStandard.Native],
           metadata: [],
           decimals: 8,
           name: 'Test',
