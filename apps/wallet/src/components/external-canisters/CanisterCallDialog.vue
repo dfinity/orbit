@@ -21,6 +21,7 @@
         :hide="{ canisterId: !!canisterCallModel.canisterId }"
         :allowed-methods="props.allowedMethods"
         :allow-any-method="props.allowAnyMethod"
+        :candid-idl="props.canisterCandidIdl"
         @submitting="canClose = !$event"
         @submitted="open = false"
       >
@@ -59,6 +60,7 @@ const props = withDefaults(
     allowedMethods?: CanisterAllowedMethod[];
     allowAnyMethod?: boolean;
     dialogMaxWidth?: number;
+    canisterCandidIdl?: string;
     title?: string;
   }>(),
   {
@@ -66,6 +68,7 @@ const props = withDefaults(
     allowedMethods: () => [],
     allowAnyMethod: false,
     dialogMaxWidth: 800,
+    canisterCandidIdl: undefined,
     title: undefined,
   },
 );

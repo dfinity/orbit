@@ -28,6 +28,7 @@
           v-model="canisterInstallModel"
           v-model:trigger-submit="triggerFormSubmit"
           :display="{ canisterId: props.canisterId === undefined }"
+          :candid-idl="props.canisterCandidIdl"
           @submit="submit"
           @valid="valid = $event"
         />
@@ -102,6 +103,7 @@ const props = withDefaults(
     open?: boolean;
     canisterId?: Principal;
     canisterModuleHash?: string;
+    canisterCandidIdl?: string;
     dialogMaxWidth?: number;
     title?: string;
   }>(),
@@ -109,6 +111,7 @@ const props = withDefaults(
     open: false,
     canisterId: undefined,
     canisterModuleHash: undefined,
+    canisterCandidIdl: undefined,
     dialogMaxWidth: 800,
     title: undefined,
   },

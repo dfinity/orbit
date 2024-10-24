@@ -37,12 +37,20 @@ import { useI18n } from 'vue-i18n';
 import { VBtn, VBtnToggle, VIcon, VTextarea } from 'vuetify/components';
 import { SelectItem } from '~/types/helper.types';
 import { hexStringToArrayBuffer } from '~/utils/crypto.utils';
+import { encode } from '~/utils/didc.utils';
 import { isHexRule, requiredRule } from '~/utils/form.utils';
+import { assertAndReturn } from '~/utils/helper.utils';
 
 const props = withDefaults(
   defineProps<{
     modelValue?: Uint8Array;
-    candidIdl?: string;
+    /**
+     * Enables the argument to be written in Candid textual representation.
+     */
+    candid?: {
+      idl: string;
+      method?: string;
+    };
     readonly?: boolean;
     required?: boolean;
     label?: string;
@@ -54,7 +62,7 @@ const props = withDefaults(
     readonly: false,
     required: false,
     label: undefined,
-    candidIdl: undefined,
+    candid: undefined,
     density: 'comfortable',
     variant: 'filled',
   },
@@ -81,15 +89,15 @@ const label = computed(() => {
 });
 
 const argument = ref<string>();
-const selectedParseFormat = ref<string>(props.candidIdl ? 'candid' : 'hex');
+const selectedParseFormat = ref<string>(props.candid ? 'candid' : 'hex');
 const availableParseFormats = computed<SelectItem[]>(() => {
-  const items: SelectItem[] = [
-    { text: i18n.t('external_canisters.wasm_args_formats.hex'), value: 'hex' },
-  ];
+  const items: SelectItem[] = [];
 
-  if (props.candidIdl) {
+  if (props.candid) {
     items.push({ text: i18n.t('external_canisters.wasm_args_formats.candid'), value: 'candid' });
   }
+
+  items.push({ text: i18n.t('external_canisters.wasm_args_formats.hex'), value: 'hex' });
 
   return items;
 });
@@ -127,7 +135,18 @@ const parseArgumentRule = async (value: unknown): Promise<string | boolean> => {
         parsedArgument = new Uint8Array(hexStringToArrayBuffer(rawArgument));
         break;
       }
-      case 'candid':
+      case 'candid': {
+        const candid = assertAndReturn(props.candid, 'Candid definition is expected');
+        const hexString = encode({
+          idl: candid.idl,
+          serviceMethod: candid.method,
+          input: rawArgument,
+          targetFormat: 'hex',
+        });
+
+        parsedArgument = new Uint8Array(hexStringToArrayBuffer(hexString));
+        break;
+      }
       default:
         throw new Error('Not implemented');
     }

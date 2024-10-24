@@ -27,6 +27,7 @@
           <CanisterArgumentField
             v-model="model.wasmInstallArg"
             :readonly="props.readonly"
+            :candid="candidIdl ? { idl: candidIdl } : undefined"
             name="argument"
           />
         </VCol>
@@ -51,6 +52,7 @@ const props = withDefaults(
     modelValue: CanisterInstallModel;
     triggerSubmit?: boolean;
     readonly?: boolean;
+    candidIdl?: string;
     display?: {
       canisterId: boolean;
     };
@@ -58,6 +60,7 @@ const props = withDefaults(
   {
     readonly: false,
     triggerSubmit: false,
+    candidIdl: undefined,
     display: () => ({
       canisterId: true,
     }),
@@ -84,6 +87,8 @@ const triggerSubmit = computed({
   get: () => props.triggerSubmit,
   set: value => emit('update:triggerSubmit', value),
 });
+
+const candidIdl = computed(() => props.candidIdl);
 
 watch(valid, newValid => emit('valid', newValid), { immediate: true });
 
