@@ -393,7 +393,6 @@ watch(
 const isReceivedTransfer = (transfer: AccountIncomingTransfer): boolean => {
   return !!addresses.value?.some(address => address.address === transfer.to);
 
-  // return transfer.to === account.value?.address;
 };
 
 const loadTransfers = async (): Promise<
