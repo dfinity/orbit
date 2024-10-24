@@ -1,17 +1,10 @@
 <template>
   <TextOverflow
-    v-if="format === AddressFormat.ICPNative"
-    :max-length="32"
-    :text="address"
-  ></TextOverflow>
-
-  <TextOverflow
-    v-else-if="format === AddressFormat.ICRC1"
+    v-if="format === AddressFormat.ICRC1"
     :text="address"
     :overflow-position="shortenIcrc1Address"
   ></TextOverflow>
 
-  <!-- unknown format -->
   <TextOverflow v-else :text="address" :max-length="32"></TextOverflow>
 </template>
 
