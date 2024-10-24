@@ -582,8 +582,8 @@ type SystemUpgradeTarget = variant {
 type WasmModuleExtraChunks = record {
   // The asset canister from which the chunks are to be retrieved.
   store_canister : principal;
-  // The list of chunk hashes in the order they should be appended to the wasm module.
-  chunk_hashes_list : vec blob;
+  // The name of the asset containing extra chunks in the asset canister.
+  extra_chunks_key : text;
   // The hash of the assembled wasm module.
   wasm_module_hash : blob;
 };
@@ -649,12 +649,30 @@ type ChangeExternalCanisterOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
+type SubnetFilter = record {
+  subnet_type : opt text;
+};
+
+type SubnetSelection = variant {
+  // Choose a specific subnet
+  Subnet : record {
+    subnet : principal;
+  };
+  // Choose a random subnet that fulfills the specified properties
+  Filter : SubnetFilter;
+};
+
 type CreateExternalCanisterOperationKindCreateNew = record {
   // The initial cycles to allocate to the canister.
   //
   // If not set, only the minimal amount of cycles required to create the
   // canister will be allocated.
   initial_cycles : opt nat64;
+
+  // The subnet on which the canister should be created.
+  //
+  // By default, the canister is created on the same subnet as the station.
+  subnet_selection : opt SubnetSelection;
 };
 
 type CreateExternalCanisterOperationKindAddExisting = record {
@@ -2343,6 +2361,7 @@ type UserPrivilege = variant {
   ListRequests;
   CreateExternalCanister;
   ListExternalCanisters;
+  CallAnyExternalCanister;
   ListAssets;
   AddAsset;
 };
@@ -2448,12 +2467,19 @@ type CanisterStatusInput = record {
   canister_id : principal;
 };
 
+type LogVisibility = variant {
+  public;
+  controllers;
+};
+
 type DefiniteCanisterSettings = record {
   controllers : vec principal;
   compute_allocation : nat;
   memory_allocation : nat;
   freezing_threshold : nat;
   reserved_cycles_limit : nat;
+  log_visibility : LogVisibility;
+  wasm_memory_limit : nat;
 };
 
 type DefiniteCanisterSettingsInput = record {
@@ -2462,6 +2488,8 @@ type DefiniteCanisterSettingsInput = record {
   memory_allocation : opt nat;
   freezing_threshold : opt nat;
   reserved_cycles_limit : opt nat;
+  log_visibility : opt LogVisibility;
+  wasm_memory_limit : opt nat;
 };
 
 type CanisterStatusResponse = record {

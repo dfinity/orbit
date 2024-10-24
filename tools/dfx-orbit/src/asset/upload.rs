@@ -1,5 +1,5 @@
 use crate::DfxOrbit;
-use anyhow::bail;
+use anyhow::{bail, Context};
 use candid::{Nat, Principal};
 use clap::Parser;
 use ic_certified_assets::types::{CommitProposedBatchArguments, DeleteBatchArguments};
@@ -74,6 +74,17 @@ impl VerifyAssetUploadArgs {
         let asset_agent = dfx_orbit.asset_agent(canister_id)?;
 
         let evidence = asset_agent.compute_evidence(&paths).await?;
+
+        // Check that the expected batch ID and evidence are actually proposed
+        asset_agent
+            .validate_commit_proposed_batch(self.batch_id.clone(), evidence.clone())
+            .await
+            .with_context(|| {
+                format!(
+                    "There is no proposal for batch ID {}, evidence {} on canister \"{}\"",
+                    self.batch_id, evidence, self.canister,
+                )
+            })?;
 
         println!("Computed evidence: 0x{evidence}");
         DfxOrbit::check_evidence(request, canister_id, self.batch_id.clone(), evidence)?;

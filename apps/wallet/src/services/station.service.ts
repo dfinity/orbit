@@ -9,6 +9,7 @@ import {
   AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
+  CanisterMethod,
   CanisterStatusResult,
   Capabilities,
   ChangeExternalCanisterOperationInput,
@@ -961,6 +962,40 @@ export class StationService {
       title: [],
       summary: [],
       operation: { CreateExternalCanister: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async callExternalCanister(
+    canisterId: Principal,
+    call: {
+      method: string;
+      arg?: Uint8Array | number[];
+      attachCycles?: bigint;
+      validationMethod?: CanisterMethod;
+    },
+    opts: { comment?: string } = {},
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: opts.comment ? [opts.comment] : [],
+      operation: {
+        CallExternalCanister: {
+          execution_method: {
+            canister_id: canisterId,
+            method_name: call.method,
+          },
+          arg: call.arg !== undefined ? [call.arg] : [],
+          execution_method_cycles: call.attachCycles !== undefined ? [call.attachCycles] : [],
+          validation_method: call.validationMethod !== undefined ? [call.validationMethod] : [],
+        },
+      },
     });
 
     if (variantIs(result, 'Err')) {

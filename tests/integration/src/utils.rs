@@ -5,6 +5,10 @@ use candid::{CandidType, Encode};
 use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
 use ic_cdk::api::management_canister::main::CanisterStatusResponse;
+use ic_certified_assets::types::{
+    BatchOperation, CommitBatchArguments, CreateAssetArguments, CreateBatchResponse,
+    CreateChunkArg, CreateChunkResponse, SetAssetContentArguments,
+};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use orbit_essentials::types::WasmModuleExtraChunks;
@@ -26,7 +30,9 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::time::Duration;
 use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
+use uuid::Uuid;
 
+pub const ADMIN_GROUP_ID: Uuid = Uuid::from_u128(302240678275694148452352); // very first uuidv4 generated
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 
 pub const COUNTER_WAT: &str = r#"
@@ -309,6 +315,7 @@ pub fn get_system_info(
     user_id: Principal,
     station_canister_id: CanisterId,
 ) -> SystemInfoDTO {
+    await_station_healthy(env, station_canister_id);
     let res: (ApiResult<SystemInfoResponse>,) =
         update_candid_as(env, station_canister_id, user_id, "system_info", ()).unwrap();
     res.0.unwrap().system
@@ -892,7 +899,7 @@ pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, cont
 
     let station_wasm = get_canister_wasm("station");
     let (base_chunk, module_extra_chunks) =
-        upload_canister_chunks_to_asset_canister(env, station_wasm, 200_000);
+        upload_canister_chunks_to_asset_canister(env, station_wasm, 500_000);
     let upload_canister_modules_args = UploadCanisterModulesInput {
         upgrader_wasm_module: None,
         station_wasm_module: Some(base_chunk),
@@ -923,7 +930,7 @@ struct StoreArg {
     pub sha256: Option<Vec<u8>>,
 }
 
-fn hash(data: Vec<u8>) -> Vec<u8> {
+fn hash(data: &Vec<u8>) -> Vec<u8> {
     let mut hasher = Sha256::new();
     hasher.update(data);
     hasher.finalize().to_vec()
@@ -944,9 +951,7 @@ pub fn upload_canister_chunks_to_asset_canister(
     );
 
     // get canister wasm hash
-    let mut hasher = Sha256::new();
-    hasher.update(&canister_wasm);
-    let canister_wasm_hash = hasher.finalize().to_vec();
+    let canister_wasm_hash = hash(&canister_wasm);
 
     // chunk canister
     let mut chunks = canister_wasm.chunks(chunk_len);
@@ -956,30 +961,133 @@ pub fn upload_canister_chunks_to_asset_canister(
     assert!(chunks.len() >= 2);
 
     // upload chunks to asset canister
-    for chunk in &chunks {
-        let chunk_hash = hash(chunk.to_vec());
-        let store_arg = StoreArg {
-            key: hex::encode(chunk_hash.clone()),
-            content: chunk.to_vec(),
-            content_type: "application/octet-stream".to_string(),
-            content_encoding: "identity".to_string(),
-            sha256: Some(chunk_hash),
+    let batch_id = update_candid_as::<_, (CreateBatchResponse,)>(
+        env,
+        asset_canister_id,
+        Principal::anonymous(),
+        "create_batch",
+        ((),),
+    )
+    .unwrap()
+    .0
+    .batch_id;
+    let extra_chunks_key = "/extra_chunks".to_string();
+    let create_asset = CreateAssetArguments {
+        key: extra_chunks_key.clone(),
+        content_type: "application/octet-stream".to_string(),
+        max_age: None,
+        headers: None,
+        enable_aliasing: None,
+        allow_raw_access: None,
+    };
+    let mut chunk_ids = vec![];
+    for chunk in chunks {
+        let create_chunk_arg = CreateChunkArg {
+            batch_id: batch_id.clone(),
+            content: chunk.to_vec().into(),
         };
-        update_candid_as::<_, ((),)>(
+        let create_chunk_response = update_candid_as::<_, (CreateChunkResponse,)>(
             env,
             asset_canister_id,
             Principal::anonymous(),
-            "store",
-            (store_arg,),
+            "create_chunk",
+            (create_chunk_arg,),
         )
-        .unwrap();
+        .unwrap()
+        .0;
+        chunk_ids.push(create_chunk_response.chunk_id);
     }
+    let set_asset_content = SetAssetContentArguments {
+        key: extra_chunks_key.clone(),
+        content_encoding: "identity".to_string(),
+        chunk_ids,
+        sha256: None,
+        last_chunk: None,
+    };
+    let operations = vec![
+        BatchOperation::CreateAsset(create_asset),
+        BatchOperation::SetAssetContent(set_asset_content),
+    ];
+    let commit_batch_args: CommitBatchArguments = CommitBatchArguments {
+        batch_id,
+        operations,
+    };
+    update_candid_as::<_, ((),)>(
+        env,
+        asset_canister_id,
+        Principal::anonymous(),
+        "commit_batch",
+        (commit_batch_args,),
+    )
+    .unwrap();
 
     let module_extra_chunks = WasmModuleExtraChunks {
         store_canister: asset_canister_id,
-        chunk_hashes_list: chunks.iter().map(|c| hash(c.to_vec())).collect(),
+        extra_chunks_key,
         wasm_module_hash: canister_wasm_hash,
     };
 
     (base_chunk.to_vec(), module_extra_chunks)
+}
+
+pub(crate) fn await_station_healthy(env: &PocketIc, station_id: Principal) {
+    let max_rounds = 100;
+    for _ in 0..max_rounds {
+        env.tick();
+        let res: (station_api::HealthStatus,) =
+            query_candid_as(env, station_id, WALLET_ADMIN_USER, "health_status", ())
+                .expect("Unexpected error calling Station health_status");
+        if res.0 == station_api::HealthStatus::Healthy {
+            return;
+        }
+    }
+    panic!(
+        "Station did not become healthy within {} rounds.",
+        max_rounds
+    );
+}
+
+pub(crate) fn add_external_canister_call_any_method_permission_and_approval(
+    env: &PocketIc,
+    station_id: Principal,
+    admin_id: Principal,
+    quorum: station_api::QuorumDTO,
+) {
+    // add the permissions for admins to call any external canister
+    execute_request(
+        env,
+        admin_id,
+        station_id,
+        RequestOperationInput::EditPermission(station_api::EditPermissionOperationInput {
+            auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
+            users: None,
+            user_groups: None,
+            resource: station_api::ResourceDTO::ExternalCanister(
+                station_api::ExternalCanisterResourceActionDTO::Call(
+                    station_api::CallExternalCanisterResourceTargetDTO {
+                        execution_method: station_api::ExecutionMethodResourceTargetDTO::Any,
+                        validation_method: station_api::ValidationMethodResourceTargetDTO::No,
+                    },
+                ),
+            ),
+        }),
+    )
+    .expect("Failed to add permission to call external canister");
+
+    // automatically approve calls to external canisters
+    execute_request(
+        env,
+        admin_id,
+        station_id,
+        RequestOperationInput::AddRequestPolicy(station_api::AddRequestPolicyOperationInput {
+            specifier: station_api::RequestSpecifierDTO::CallExternalCanister(
+                station_api::CallExternalCanisterResourceTargetDTO {
+                    execution_method: station_api::ExecutionMethodResourceTargetDTO::Any,
+                    validation_method: station_api::ValidationMethodResourceTargetDTO::No,
+                },
+            ),
+            rule: station_api::RequestPolicyRuleDTO::Quorum(quorum),
+        }),
+    )
+    .expect("Failed to add approval policy to call external canister");
 }

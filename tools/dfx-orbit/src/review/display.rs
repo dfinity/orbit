@@ -1,54 +1,12 @@
 use crate::DfxOrbit;
 use station_api::{
-    EvaluatedRequestPolicyRuleDTO, EvaluationStatusDTO, GetRequestResponse, ListRequestsResponse,
+    EvaluatedRequestPolicyRuleDTO, EvaluationStatusDTO, GetRequestResponse,
     RequestAdditionalInfoDTO, RequestApprovalDTO, RequestApprovalStatusDTO, RequestDTO,
     RequestOperationDTO, RequestStatusDTO,
 };
-use std::{
-    collections::{BTreeMap, HashMap},
-    fmt::Write,
-};
-use tabled::{
-    settings::{Settings, Style},
-    Table,
-};
+use std::{collections::BTreeMap, fmt::Write};
 
 impl DfxOrbit {
-    pub(crate) fn display_list(&self, data: ListRequestsResponse) -> String {
-        let add_info = data
-            .additional_info
-            .into_iter()
-            .map(|info| (info.id.clone(), info))
-            .collect::<HashMap<String, _>>();
-
-        let data_iter = data.requests.iter().map(|request| {
-            let add_info = add_info.get(&request.id);
-
-            [
-                request.id.clone(),
-                add_info
-                    .map(|add_info| add_info.requester_name.clone())
-                    .unwrap_or(String::from("-")),
-                request.title.clone(),
-                display_request_operation(&request.operation).to_string(),
-                display_request_status(&request.status).to_string(),
-            ]
-        });
-        let titled_iter = std::iter::once([
-            String::from("ID"),
-            String::from("Requested by"),
-            String::from("Title"),
-            String::from("Operation"),
-            String::from("Execution Status"),
-        ])
-        .chain(data_iter);
-
-        let table_config = Settings::default().with(Style::psql());
-        let table = Table::from_iter(titled_iter).with(table_config).to_string();
-
-        table
-    }
-
     pub(crate) fn display_get_request_response(
         &self,
         request: GetRequestResponse,
@@ -258,7 +216,7 @@ fn display_request_approvals<W: Write>(
     Ok(())
 }
 
-fn display_request_operation(op: &RequestOperationDTO) -> &'static str {
+pub(super) fn display_request_operation(op: &RequestOperationDTO) -> &'static str {
     match op {
         RequestOperationDTO::Transfer(_) => "Transfer",
         RequestOperationDTO::AddAccount(_) => "AddAccount",
@@ -289,7 +247,7 @@ fn display_request_operation(op: &RequestOperationDTO) -> &'static str {
     }
 }
 
-fn display_request_status(status: &RequestStatusDTO) -> &'static str {
+pub(super) fn display_request_status(status: &RequestStatusDTO) -> &'static str {
     match status {
         RequestStatusDTO::Created => "Created",
         RequestStatusDTO::Approved => "Approved",

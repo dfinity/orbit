@@ -150,9 +150,18 @@ impl DfxOrbit {
             .read_state_canister_info(canister_id, "controllers")
             .await?;
         let value: ciborium::Value = ciborium::from_reader(&blob[..])?;
-        let ciborium::Value::Array(array) = value else {
-            bail!("Expected an array as result from controllers endpoint")
+
+        let array = match value {
+            ciborium::Value::Array(array) => array,
+            ciborium::Value::Tag(_, inner) => {
+                let Ok(array) = inner.into_array() else {
+                    bail!("Expected an array as result from controllers endpoint");
+                };
+                array
+            }
+            _ => bail!("Expected an array as result from controllers endpoint"),
         };
+
         let result = array
             .into_iter()
             .map(|value| match value {

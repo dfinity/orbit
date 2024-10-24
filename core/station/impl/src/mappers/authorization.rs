@@ -3,10 +3,11 @@ use crate::{
     core::{ic_cdk::api::trap, CallContext},
     models::{
         resource::{
-            AccountResourceAction, CallExternalCanisterResourceTarget, ExternalCanisterId,
-            ExternalCanisterResourceAction, NotificationResourceAction, PermissionResourceAction,
-            RequestResourceAction, Resource, ResourceAction, ResourceId, SystemResourceAction,
-            UserResourceAction,
+            AccountResourceAction, CallExternalCanisterResourceTarget,
+            ExecutionMethodResourceTarget, ExternalCanisterId, ExternalCanisterResourceAction,
+            NotificationResourceAction, PermissionResourceAction, RequestResourceAction, Resource,
+            ResourceAction, ResourceId, SystemResourceAction, UserResourceAction,
+            ValidationMethodResourceTarget,
         },
         CanisterMethod, Transfer,
     },
@@ -16,7 +17,7 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 20] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 21] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
     UserPrivilege::ManageSystemInfo,
@@ -35,6 +36,7 @@ pub const USER_PRIVILEGES: [UserPrivilege; 20] = [
     UserPrivilege::ListRequests,
     UserPrivilege::CreateExternalCanister,
     UserPrivilege::ListExternalCanisters,
+    UserPrivilege::CallAnyExternalCanister,
     UserPrivilege::AddAsset,
     UserPrivilege::ListAssets,
 ];
@@ -66,6 +68,12 @@ impl From<UserPrivilege> for Resource {
             UserPrivilege::ListExternalCanisters => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::List)
             }
+            UserPrivilege::CallAnyExternalCanister => Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Call(CallExternalCanisterResourceTarget {
+                    execution_method: ExecutionMethodResourceTarget::Any,
+                    validation_method: ValidationMethodResourceTarget::No,
+                }),
+            ),
             UserPrivilege::AddAsset => Resource::Asset(ResourceAction::Create),
             UserPrivilege::ListAssets => Resource::Asset(ResourceAction::List),
         }

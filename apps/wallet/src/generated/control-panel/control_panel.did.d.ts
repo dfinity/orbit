@@ -206,8 +206,8 @@ export type UserSubscriptionStatus = { 'Unsubscribed' : null } |
   { 'Pending' : null };
 export interface WasmModuleExtraChunks {
   'wasm_module_hash' : Uint8Array | number[],
-  'chunk_hashes_list' : Array<Uint8Array | number[]>,
   'store_canister' : Principal,
+  'extra_chunks_key' : string,
 }
 export interface WasmModuleRegistryEntryDependency {
   'name' : string,

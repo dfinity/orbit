@@ -112,6 +112,8 @@ const initialModel = (): CanisterIcSettingsModel => {
   model.reserved_cycles_limit = parseToNumberOrUndefined(
     props.canisterSettings?.reserved_cycles_limit,
   );
+  model.log_visibility = props.canisterSettings?.log_visibility;
+  model.wasm_memory_limit = parseToNumberOrUndefined(props.canisterSettings?.wasm_memory_limit);
 
   return model;
 };
@@ -166,6 +168,17 @@ const submit = async (input: CanisterIcSettingsModel) => {
           input.reserved_cycles_limit !== undefined &&
           BigInt(input.reserved_cycles_limit) !== props.canisterSettings?.reserved_cycles_limit
             ? [BigInt(input.reserved_cycles_limit)]
+            : [],
+        wasm_memory_limit:
+          input.wasm_memory_limit !== undefined &&
+          BigInt(input.wasm_memory_limit) !== props.canisterSettings?.wasm_memory_limit
+            ? [BigInt(input.wasm_memory_limit)]
+            : [],
+        log_visibility:
+          input.log_visibility &&
+          JSON.stringify(input.log_visibility) !==
+            JSON.stringify(props.canisterSettings?.log_visibility)
+            ? [input.log_visibility]
             : [],
         controllers: input.controllers && hasUpdatedControllers ? [input.controllers] : [],
       },

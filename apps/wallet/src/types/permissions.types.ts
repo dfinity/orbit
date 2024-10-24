@@ -23,6 +23,7 @@ export enum ResourceActionEnum {
   Update = 'Update',
   Change = 'Change',
   Fund = 'Fund',
+  CallCanister = 'CallCanister',
   Delete = 'Delete',
   Transfer = 'Transfer',
   SystemInfoConfig = 'SystemInfoConfig',

@@ -1,5 +1,5 @@
 <template>
-  <slot v-if="failed" name="error" :error-msg="props.errorMsg" :error-details="errorDetails">
+  <slot v-if="failed" name="error" :error-msg="translations.errorMsg" :error-details="errorDetails">
     <VAlert type="error" variant="tonal" density="compact">
       {{ props.errorMsg }}
     </VAlert>
@@ -9,10 +9,10 @@
 <script lang="ts" setup generic="T">
 import { Ref } from 'vue';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { VAlert } from 'vuetify/components';
 import { DisabledBackgroundPollingError } from '~/core/errors.core';
 import { logger } from '~/core/logger.core';
-import { i18n } from '~/plugins/i18n.plugin';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 
@@ -32,7 +32,7 @@ const props = withDefaults(
     disableRefresh?: boolean;
   }>(),
   {
-    errorMsg: i18n.global.t('app.data_load_error'),
+    errorMsg: undefined,
     refreshIntervalMs: undefined,
     retries: 0,
     forceReload: false,
@@ -46,6 +46,11 @@ const emit = defineEmits<{
   (event: 'loading', payload: boolean): void;
   (event: 'update:forceReload', payload: boolean): void;
 }>();
+
+const i18n = useI18n();
+const translations = computed(() => ({
+  errorMsg: props.errorMsg ?? i18n.t('app.data_load_error'),
+}));
 
 watch(
   () => props.forceReload,

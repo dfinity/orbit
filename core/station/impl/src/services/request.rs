@@ -1141,7 +1141,9 @@ mod tests {
                     operation_types: Some(vec![ListRequestsOperationTypeDTO::Transfer(None)]),
                     statuses: Some(vec![RequestStatusCodeDTO::Created]),
                     paginate: None,
-                    sort_by: None,
+                    sort_by: Some(station_api::ListRequestsSortBy::CreatedAt(
+                        station_api::SortDirection::Asc,
+                    )),
                     only_approvable: true,
                     with_evaluation_results: false,
                 },

@@ -12,6 +12,7 @@ use crate::errors::ValidationError;
 use crate::models::Metadata;
 use candid::Principal;
 use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
+use orbit_essentials::cmc::SubnetSelection;
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::{storable, types::UUID};
 use std::{collections::HashSet, fmt::Display};
@@ -367,7 +368,7 @@ pub enum SystemUpgradeTarget {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct WasmModuleExtraChunks {
     pub store_canister: Principal,
-    pub chunk_hashes_list: Vec<Vec<u8>>,
+    pub extra_chunks_key: String,
     pub wasm_module_hash: Vec<u8>,
 }
 
@@ -570,6 +571,7 @@ pub enum ExternalCanisterChangeCallRequestPoliciesInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct CreateExternalCanisterOperationKindCreateNew {
     pub initial_cycles: Option<u64>,
+    pub subnet_selection: Option<SubnetSelection>,
 }
 
 #[storable]
@@ -644,12 +646,21 @@ pub enum ConfigureExternalCanisterOperationKind {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum LogVisibility {
+    Public,
+    Controllers,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct DefiniteCanisterSettingsInput {
     pub controllers: Option<Vec<Principal>>,
     pub compute_allocation: Option<candid::Nat>,
     pub memory_allocation: Option<candid::Nat>,
     pub freezing_threshold: Option<candid::Nat>,
     pub reserved_cycles_limit: Option<candid::Nat>,
+    pub log_visibility: Option<LogVisibility>,
+    pub wasm_memory_limit: Option<candid::Nat>,
 }
 
 #[storable]

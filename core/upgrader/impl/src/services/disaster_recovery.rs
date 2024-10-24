@@ -225,7 +225,7 @@ impl DisasterRecoveryService {
 
                 self.storage.set(storage);
 
-                return RecoveryEvaluationResult::Met(result);
+                return RecoveryEvaluationResult::Met(Box::new(result));
             }
         }
 
@@ -292,6 +292,7 @@ impl DisasterRecoveryService {
             .install(
                 station_canister_id,
                 request.wasm_module,
+                request.wasm_module_extra_chunks,
                 request.arg,
                 request.install_mode,
             )
@@ -321,10 +322,16 @@ impl DisasterRecoveryService {
         let mut value = self.storage.get();
 
         if let Some(committee_member) = self.get_committee_member(caller) {
+            let wasm_sha256 = if let Some(ref module_extra_chunks) = request.module_extra_chunks {
+                module_extra_chunks.wasm_module_hash.clone()
+            } else {
+                sha256_hash(&request.module)
+            };
             let recovery_request = StationRecoveryRequest {
                 user_id: committee_member.id,
-                wasm_sha256: sha256_hash(&request.module),
+                wasm_sha256,
                 wasm_module: request.module,
+                wasm_module_extra_chunks: request.module_extra_chunks,
                 arg_sha256: sha256_hash(&request.arg),
                 arg: request.arg,
                 submitted_at: time(),
@@ -362,7 +369,7 @@ impl DisasterRecoveryService {
             let logger = self.logger.clone();
 
             spawn(async move {
-                Self::do_recovery(storage, installer, logger, request).await;
+                Self::do_recovery(storage, installer, logger, *request).await;
             });
         }
     }
@@ -373,6 +380,7 @@ mod test {
     use super::DISASTER_RECOVERY_SERVICE;
     use async_trait::async_trait;
     use candid::Principal;
+    use orbit_essentials::types::WasmModuleExtraChunks;
     use std::{
         panic::{set_hook, take_hook},
         sync::{atomic::AtomicI32, Arc},
@@ -415,6 +423,7 @@ mod test {
             &self,
             _canister_id: Principal,
             _wasm_module: Vec<u8>,
+            _wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
             _arg: Vec<u8>,
             _mode: InstallMode,
         ) -> Result<(), String> {
@@ -449,6 +458,7 @@ mod test {
             &self,
             _canister_id: Principal,
             _wasm_module: Vec<u8>,
+            _wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
             _arg: Vec<u8>,
             _mode: InstallMode,
         ) -> Result<(), String> {
@@ -481,6 +491,7 @@ mod test {
             upgrader_api::RequestDisasterRecoveryInput {
                 arg: vec![1, 2, 3],
                 module: vec![4, 5, 6],
+                module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
             },
         );
@@ -492,6 +503,7 @@ mod test {
             upgrader_api::RequestDisasterRecoveryInput {
                 arg: vec![1, 2, 3],
                 module: vec![4, 5, 6],
+                module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
             },
         );
@@ -507,6 +519,7 @@ mod test {
             upgrader_api::RequestDisasterRecoveryInput {
                 arg: vec![0, 0, 0],
                 module: vec![4, 5, 6],
+                module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
             },
         );
@@ -520,6 +533,7 @@ mod test {
             upgrader_api::RequestDisasterRecoveryInput {
                 arg: vec![1, 2, 3],
                 module: vec![4, 5, 6],
+                module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
             },
         );
@@ -551,6 +565,7 @@ mod test {
         let recovery_request = StationRecoveryRequest {
             user_id: [1; 16],
             wasm_module: vec![1, 2, 3],
+            wasm_module_extra_chunks: None,
             wasm_sha256: vec![4, 5, 6],
             install_mode: InstallMode::Reinstall,
             arg: vec![7, 8, 9],
@@ -629,6 +644,7 @@ mod test {
         let recovery_request = StationRecoveryRequest {
             user_id: [1; 16],
             wasm_module: vec![1, 2, 3],
+            wasm_module_extra_chunks: None,
             wasm_sha256: vec![4, 5, 6],
             install_mode: InstallMode::Reinstall,
             arg: vec![7, 8, 9],
@@ -669,6 +685,7 @@ mod test {
         let recovery_request = StationRecoveryRequest {
             user_id: [1; 16],
             wasm_module: vec![1, 2, 3],
+            wasm_module_extra_chunks: None,
             wasm_sha256: vec![4, 5, 6],
             install_mode: InstallMode::Reinstall,
             arg: vec![7, 8, 9],

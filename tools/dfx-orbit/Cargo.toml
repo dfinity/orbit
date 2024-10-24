@@ -1,7 +1,7 @@
 
 [package]
 name = 'dfx-orbit'
-version = '0.5.0'
+version = '0.6.0'
 description = 'Command line tool for interacting with the Orbit digital asset manager on the ICP blockchain.'
 authors.workspace = true
 edition.workspace = true
@@ -13,21 +13,22 @@ license.workspace = true
 anyhow.workspace = true
 candid.workspace = true
 candid_parser.workspace = true
+cap-std.workspace = true
 clap.workspace = true
 ciborium.workspace = true
-serde.workspace = true
-serde_bytes.workspace = true
-serde_json.workspace = true
-cap-std.workspace = true
 dateparser.workspace = true
 dfx-core.workspace = true
+futures.workspace = true
 hex.workspace = true
 ic-agent.workspace = true
 ic-asset.workspace = true
 ic-certified-assets.workspace = true
 ic-utils.workspace = true
 itertools.workspace = true
-orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alpha.5' }
+orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alpha.6' }
+serde.workspace = true
+serde_bytes.workspace = true
+serde_json.workspace = true
 sha2.workspace = true
 slog.workspace = true
 slog-term.workspace = true
@@ -35,7 +36,7 @@ slog-async.workspace = true
 tabled.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ['rt'] }
-station-api = { path = '../../core/station/api', version = '0.0.2-alpha.6' }
+station-api = { path = '../../core/station/api', version = '0.0.2-alpha.7' }
 
 [lib]
 doctest = false

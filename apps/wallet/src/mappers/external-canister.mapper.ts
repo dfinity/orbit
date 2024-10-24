@@ -1,6 +1,17 @@
-import { ExternalCanisterState } from '~/generated/station/station.did';
+import {
+  CanisterAllowedMethod,
+  CanisterConfiguredMethodCall,
+} from '~/components/external-canisters/external-canisters.types';
+import {
+  CallExternalCanisterResourceTarget,
+  ExternalCanisterCallerPrivileges,
+  ExternalCanisterPermissions,
+  ExternalCanisterRequestPolicies,
+  ExternalCanisterState,
+  ValidationMethodResourceTarget,
+} from '~/generated/station/station.did';
 import { ExternalCanisterStateEnum } from '~/types/station.types';
-import { unreachable } from '~/utils/helper.utils';
+import { unreachable, variantIs } from '~/utils/helper.utils';
 
 export const mapExternalCanisterStateEnumToVariant = (
   state: ExternalCanisterStateEnum,
@@ -27,4 +38,155 @@ export const mapExternalCanisterStateVariantToEnum = (
   }
 
   return unreachable(state);
+};
+
+export const mapMethodCallConfigurationToKey = (config: {
+  executionMethod: string;
+  validationMethod: ValidationMethodResourceTarget;
+}): string => {
+  let key = `${config.executionMethod}::`;
+
+  if (variantIs(config.validationMethod, 'No')) {
+    key += 'no_validation';
+  }
+
+  if (variantIs(config.validationMethod, 'ValidationMethod')) {
+    key += `${config.validationMethod.ValidationMethod.method_name}::${config.validationMethod.ValidationMethod.canister_id.toText()}`;
+  }
+
+  return key;
+};
+
+export const mapAllowedCanisterMethods = (
+  methods: ExternalCanisterCallerPrivileges['can_call'],
+): CanisterAllowedMethod[] => {
+  const allowedMethod: Map<string, CanisterAllowedMethod> = new Map();
+
+  const getOrDefault = (
+    methodName: string,
+    validationTarget: ValidationMethodResourceTarget,
+  ): CanisterAllowedMethod =>
+    allowedMethod.get(
+      mapMethodCallConfigurationToKey({
+        executionMethod: methodName,
+        validationMethod: validationTarget,
+      }),
+    ) ?? {
+      methodName,
+      validationTarget,
+    };
+
+  for (const method of methods) {
+    const methodEntry = getOrDefault(method.execution_method, method.validation_method);
+
+    allowedMethod.set(
+      mapMethodCallConfigurationToKey({
+        executionMethod: method.execution_method,
+        validationMethod: method.validation_method,
+      }),
+      methodEntry,
+    );
+  }
+
+  return Array.from(allowedMethod.values()).sort((a, b) => {
+    if (
+      variantIs(a.validationTarget, 'ValidationMethod') &&
+      variantIs(b.validationTarget, 'ValidationMethod')
+    ) {
+      return a.validationTarget.ValidationMethod.method_name.localeCompare(
+        b.validationTarget.ValidationMethod.method_name,
+      );
+    }
+
+    return a.methodName.localeCompare(b.methodName);
+  });
+};
+
+export const mapConfiguredMethodCalls = (opts: {
+  requestPolicies?: ExternalCanisterRequestPolicies['calls'];
+  permissions?: ExternalCanisterPermissions['calls'];
+}): CanisterConfiguredMethodCall[] => {
+  const configuredMethodCalls: Map<string, CanisterConfiguredMethodCall> = new Map();
+
+  const getOrDefault = (
+    methodName: string,
+    validationTarget: ValidationMethodResourceTarget,
+  ): CanisterConfiguredMethodCall =>
+    configuredMethodCalls.get(
+      mapMethodCallConfigurationToKey({
+        executionMethod: methodName,
+        validationMethod: validationTarget,
+      }),
+    ) ?? {
+      methodName,
+      requestPolicies: [],
+      permission: undefined,
+      validationTarget,
+    };
+
+  for (const policy of opts.requestPolicies ?? []) {
+    const methodCallEntry = getOrDefault(policy.execution_method, policy.validation_method);
+
+    methodCallEntry.requestPolicies.push({
+      rule: policy.rule,
+      policy_id: [policy.policy_id],
+    });
+
+    configuredMethodCalls.set(
+      mapMethodCallConfigurationToKey({
+        executionMethod: policy.execution_method,
+        validationMethod: policy.validation_method,
+      }),
+      methodCallEntry,
+    );
+  }
+
+  for (const permission of opts.permissions ?? []) {
+    const methodCallEntry = getOrDefault(permission.execution_method, permission.validation_method);
+
+    methodCallEntry.permission = permission.allow;
+
+    configuredMethodCalls.set(
+      mapMethodCallConfigurationToKey({
+        executionMethod: permission.execution_method,
+        validationMethod: permission.validation_method,
+      }),
+      methodCallEntry,
+    );
+  }
+
+  return Array.from(configuredMethodCalls.values()).sort((a, b) => {
+    if (
+      a.methodName === b.methodName &&
+      variantIs(a.validationTarget, 'ValidationMethod') &&
+      variantIs(b.validationTarget, 'ValidationMethod')
+    ) {
+      return a.validationTarget.ValidationMethod.method_name.localeCompare(
+        b.validationTarget.ValidationMethod.method_name,
+      );
+    }
+
+    return a.methodName.localeCompare(b.methodName);
+  });
+};
+
+export const mapCallExternalCanisterResourceTargetToKey = (
+  target: CallExternalCanisterResourceTarget,
+): string => {
+  let executionMethod = `execution_method::`;
+  let validationMethod = `validation_method::`;
+
+  if (variantIs(target.execution_method, 'Any')) {
+    executionMethod += 'any';
+  } else {
+    executionMethod += `${target.execution_method.ExecutionMethod.method_name}::${target.execution_method.ExecutionMethod.canister_id.toText()}`;
+  }
+
+  if (variantIs(target.validation_method, 'No')) {
+    validationMethod += 'no_validation';
+  } else {
+    validationMethod += `${target.validation_method.ValidationMethod.method_name}::${target.validation_method.ValidationMethod.canister_id.toText()}`;
+  }
+
+  return `${executionMethod}::${validationMethod}`;
 };

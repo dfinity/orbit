@@ -37,7 +37,7 @@ use crate::{
         ExternalCanisterChangeCallPermissionsInput, ExternalCanisterChangeCallRequestPoliciesInput,
         ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
         ExternalCanisterPermissionsUpdateInput, ExternalCanisterRequestPoliciesCreateInput,
-        ExternalCanisterRequestPoliciesUpdateInput, FundExternalCanisterOperation,
+        ExternalCanisterRequestPoliciesUpdateInput, FundExternalCanisterOperation, LogVisibility,
         ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveAssetOperation, RemoveAssetOperationInput, RemoveRequestPolicyOperation,
         RemoveRequestPolicyOperationInput, RemoveUserGroupOperation, RequestOperation,
@@ -387,7 +387,7 @@ impl From<orbit_essentials::types::WasmModuleExtraChunks> for WasmModuleExtraChu
     fn from(input: orbit_essentials::types::WasmModuleExtraChunks) -> WasmModuleExtraChunks {
         WasmModuleExtraChunks {
             store_canister: input.store_canister,
-            chunk_hashes_list: input.chunk_hashes_list,
+            extra_chunks_key: input.extra_chunks_key,
             wasm_module_hash: input.wasm_module_hash,
         }
     }
@@ -397,7 +397,7 @@ impl From<WasmModuleExtraChunks> for orbit_essentials::types::WasmModuleExtraChu
     fn from(input: WasmModuleExtraChunks) -> orbit_essentials::types::WasmModuleExtraChunks {
         orbit_essentials::types::WasmModuleExtraChunks {
             store_canister: input.store_canister,
-            chunk_hashes_list: input.chunk_hashes_list,
+            extra_chunks_key: input.extra_chunks_key,
             wasm_module_hash: input.wasm_module_hash,
         }
     }
@@ -606,6 +606,15 @@ impl From<ConfigureExternalCanisterSettingsInput>
     }
 }
 
+impl From<LogVisibility> for station_api::LogVisibility {
+    fn from(input: LogVisibility) -> station_api::LogVisibility {
+        match input {
+            LogVisibility::Public => station_api::LogVisibility::Public,
+            LogVisibility::Controllers => station_api::LogVisibility::Controllers,
+        }
+    }
+}
+
 impl From<DefiniteCanisterSettingsInput> for station_api::DefiniteCanisterSettingsInput {
     fn from(input: DefiniteCanisterSettingsInput) -> station_api::DefiniteCanisterSettingsInput {
         station_api::DefiniteCanisterSettingsInput {
@@ -614,6 +623,10 @@ impl From<DefiniteCanisterSettingsInput> for station_api::DefiniteCanisterSettin
             freezing_threshold: input.freezing_threshold,
             memory_allocation: input.memory_allocation,
             reserved_cycles_limit: input.reserved_cycles_limit,
+            log_visibility: input
+                .log_visibility
+                .map(|log_visibility| log_visibility.into()),
+            wasm_memory_limit: input.wasm_memory_limit,
         }
     }
 }
@@ -1118,6 +1131,7 @@ impl From<station_api::CreateExternalCanisterOperationKindCreateNewDTO>
     ) -> CreateExternalCanisterOperationKindCreateNew {
         CreateExternalCanisterOperationKindCreateNew {
             initial_cycles: input.initial_cycles,
+            subnet_selection: input.subnet_selection,
         }
     }
 }
@@ -1130,6 +1144,7 @@ impl From<CreateExternalCanisterOperationKindCreateNew>
     ) -> station_api::CreateExternalCanisterOperationKindCreateNewDTO {
         station_api::CreateExternalCanisterOperationKindCreateNewDTO {
             initial_cycles: input.initial_cycles,
+            subnet_selection: input.subnet_selection,
         }
     }
 }

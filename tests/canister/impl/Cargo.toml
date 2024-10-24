@@ -1,3 +1,4 @@
+
 [package]
 name = 'test_canister'
 include = ['src', 'Cargo.toml']
@@ -17,3 +18,8 @@ candid = { workspace = true }
 futures = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
+serde = { workspace = true }
+
+[dev-dependencies]
+candid_parser = { workspace = true }
+orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.0.2-alpha.6' }

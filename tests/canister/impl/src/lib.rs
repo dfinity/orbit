@@ -1,7 +1,11 @@
-use candid::Principal;
+use candid::{CandidType, Deserialize, Principal};
 use futures::future::join_all;
 use ic_cdk::api::call::call_raw;
-use ic_cdk::update;
+use ic_cdk::{query, update};
+
+thread_local! {
+    static NUMBER: std::cell::RefCell<u64> = const { std::cell::RefCell::new(0) };
+}
 
 #[update]
 async fn call(canister_id: Principal, method_name: String, arg: Vec<u8>, mut total_calls: u64) {
@@ -16,5 +20,56 @@ async fn call(canister_id: Principal, method_name: String, arg: Vec<u8>, mut tot
         for r in res {
             r.unwrap();
         }
+    }
+}
+
+#[derive(CandidType, Deserialize)]
+pub enum ValidationResponse {
+    Ok(String),
+    Err(String),
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct StoreNumberInput {
+    number: u64,
+}
+
+#[update]
+async fn validate_number(input: StoreNumberInput) -> ValidationResponse {
+    if input.number > 100 {
+        ValidationResponse::Err("Number is too large".to_string())
+    } else {
+        ValidationResponse::Ok("Number is valid".to_string())
+    }
+}
+
+#[update]
+async fn store_number(input: StoreNumberInput) {
+    NUMBER.with(|n| {
+        *n.borrow_mut() = input.number;
+    });
+}
+
+#[query]
+async fn get_number() -> u64 {
+    NUMBER.with(|n| *n.borrow())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn check_candid_interface() {
+        use candid_parser::utils::{service_equal, CandidSource};
+
+        candid::export_service!();
+        let new_interface = __export_service();
+
+        service_equal(
+            CandidSource::Text(&new_interface),
+            CandidSource::Text(include_str!("../../api/spec.did")),
+        )
+        .unwrap();
     }
 }

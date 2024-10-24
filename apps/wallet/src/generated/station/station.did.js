@@ -44,10 +44,16 @@ export const idlFactory = ({ IDL }) => {
     'Init' : SystemInit,
   });
   const CanisterStatusInput = IDL.Record({ 'canister_id' : IDL.Principal });
+  const LogVisibility = IDL.Variant({
+    'controllers' : IDL.Null,
+    'public' : IDL.Null,
+  });
   const DefiniteCanisterSettings = IDL.Record({
     'freezing_threshold' : IDL.Nat,
     'controllers' : IDL.Vec(IDL.Principal),
     'reserved_cycles_limit' : IDL.Nat,
+    'log_visibility' : LogVisibility,
+    'wasm_memory_limit' : IDL.Nat,
     'memory_allocation' : IDL.Nat,
     'compute_allocation' : IDL.Nat,
   });
@@ -327,6 +333,8 @@ export const idlFactory = ({ IDL }) => {
     'freezing_threshold' : IDL.Opt(IDL.Nat),
     'controllers' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'reserved_cycles_limit' : IDL.Opt(IDL.Nat),
+    'log_visibility' : IDL.Opt(LogVisibility),
+    'wasm_memory_limit' : IDL.Opt(IDL.Nat),
     'memory_allocation' : IDL.Opt(IDL.Nat),
     'compute_allocation' : IDL.Opt(IDL.Nat),
   });
@@ -342,8 +350,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const WasmModuleExtraChunks = IDL.Record({
     'wasm_module_hash' : IDL.Vec(IDL.Nat8),
-    'chunk_hashes_list' : IDL.Vec(IDL.Vec(IDL.Nat8)),
     'store_canister' : IDL.Principal,
+    'extra_chunks_key' : IDL.Text,
   });
   const CanisterInstallMode = IDL.Variant({
     'reinstall' : IDL.Null,
@@ -460,8 +468,14 @@ export const idlFactory = ({ IDL }) => {
   const CreateExternalCanisterOperationKindAddExisting = IDL.Record({
     'canister_id' : IDL.Principal,
   });
+  const SubnetFilter = IDL.Record({ 'subnet_type' : IDL.Opt(IDL.Text) });
+  const SubnetSelection = IDL.Variant({
+    'Filter' : SubnetFilter,
+    'Subnet' : IDL.Record({ 'subnet' : IDL.Principal }),
+  });
   const CreateExternalCanisterOperationKindCreateNew = IDL.Record({
     'initial_cycles' : IDL.Opt(IDL.Nat64),
+    'subnet_selection' : IDL.Opt(SubnetSelection),
   });
   const CreateExternalCanisterOperationKind = IDL.Variant({
     'AddExisting' : CreateExternalCanisterOperationKindAddExisting,
@@ -1408,6 +1422,7 @@ export const idlFactory = ({ IDL }) => {
     'ListAddressBookEntries' : IDL.Null,
     'ListExternalCanisters' : IDL.Null,
     'ListRequests' : IDL.Null,
+    'CallAnyExternalCanister' : IDL.Null,
     'SystemInfo' : IDL.Null,
     'Capabilities' : IDL.Null,
     'AddAccount' : IDL.Null,

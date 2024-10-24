@@ -1,3 +1,15 @@
+type ValidationResponse = variant {
+  Ok : text;
+  Err : text;
+};
+
+type StoreNumberInput = record {
+  number : nat64;
+};
+
 service : {
   call : (canister_id : principal, method_name : text, arg : blob, total_calls : nat64) -> ();
-}
+  validate_number : (input : StoreNumberInput) -> (ValidationResponse);
+  store_number : (input : StoreNumberInput) -> ();
+  get_number : () -> (nat64) query;
+};

@@ -1,5 +1,12 @@
 import { Principal } from '@dfinity/principal';
-import { CanisterInstallMode } from '~/generated/station/station.did';
+import {
+  Allow,
+  CanisterInstallMode,
+  CanisterMethod,
+  ExternalCanisterChangeRequestPolicyRuleInput,
+  LogVisibility,
+  ValidationMethodResourceTarget,
+} from '~/generated/station/station.did';
 
 export interface CanisterTopUpModel {
   canisterId?: Principal;
@@ -13,6 +20,8 @@ export interface CanisterIcSettingsModel {
   memory_allocation?: number;
   compute_allocation?: number;
   reserved_cycles_limit?: number;
+  log_visibility?: LogVisibility;
+  wasm_memory_limit?: number;
 }
 
 export interface CanisterInstallModel {
@@ -20,4 +29,48 @@ export interface CanisterInstallModel {
   wasmModule?: Uint8Array;
   wasmInstallArg?: Uint8Array;
   mode?: CanisterInstallMode;
+}
+
+export interface CanisterMethodCallConfigurationModel {
+  canisterId: Principal;
+  alreadyConfiguredMethods: CanisterConfiguredMethodCall[];
+  methodName?: string;
+  requestPolicies: Partial<ExternalCanisterChangeRequestPolicyRuleInput>[];
+  permission: Allow;
+  validationMethodName?: string;
+  validationCanisterId?: Principal;
+}
+
+export interface CanisterAllowedMethod {
+  methodName: string;
+  validationTarget: ValidationMethodResourceTarget;
+}
+
+export interface CanisterConfiguredMethodCall extends CanisterAllowedMethod {
+  methodName: string;
+  validationTarget: ValidationMethodResourceTarget;
+  permission?: Allow;
+  requestPolicies: ExternalCanisterChangeRequestPolicyRuleInput[];
+}
+
+export interface CanisterCallModel {
+  canisterId?: Principal;
+  methodName?: string;
+  arg?: Uint8Array;
+  requestComment?: string;
+  cycles?: bigint;
+  validationTarget?: ValidationMethodResourceTarget;
+}
+
+export interface CanisterCallReviewContext {
+  canisterId: Principal;
+  methodName: string;
+  arg?: Uint8Array;
+  argHex?: string;
+  argChecksum?: string;
+  argValidationRendering?: string;
+  cycles?: bigint;
+  validationMethod?: CanisterMethod;
+  reply?: Uint8Array;
+  replyHex?: string;
 }

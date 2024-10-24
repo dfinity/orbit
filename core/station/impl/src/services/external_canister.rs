@@ -35,7 +35,7 @@ use candid::{Encode, Principal};
 use ic_cdk::api::call::call_raw;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, delete_canister, deposit_cycles, stop_canister, update_settings,
-    CanisterIdRecord, CanisterStatusResponse, CreateCanisterArgument, UpdateSettingsArgument,
+    CanisterIdRecord, CanisterStatusResponse, UpdateSettingsArgument,
 };
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
@@ -63,7 +63,7 @@ lazy_static! {
         ));
 }
 
-const CREATE_CANISTER_CYCLES: u128 = 100_000_000_000; // the default fee of 100 B cycles
+const CREATE_CANISTER_CYCLES: u128 = 325_000_000_000; // fee sufficient to create canisters on any ICP mainnet subnet
 
 #[derive(Default, Debug)]
 pub struct ExternalCanisterService {
@@ -409,30 +409,6 @@ impl ExternalCanisterService {
         ExternalCanisterAvailableFilters { names, labels }
     }
 
-    /// Creates a new external canister.
-    ///
-    /// Optionally, the caller can provide the initial cycles to deposit into the canister, if not provided,
-    /// the default value will be used.
-    pub async fn create_canister(
-        &self,
-        cycles: Option<u128>,
-    ) -> ServiceResult<Principal, ExternalCanisterError> {
-        let create_canister_arg = CreateCanisterArgument { settings: None };
-
-        let canister_id = mgmt::create_canister(
-            create_canister_arg,
-            cycles.unwrap_or(CREATE_CANISTER_CYCLES),
-        )
-        .await
-        .map_err(|(_, err)| ExternalCanisterError::Failed {
-            reason: err.to_string(),
-        })?
-        .0
-        .canister_id;
-
-        Ok(canister_id)
-    }
-
     /// Calls the management canister to get the status of the canister with the given id.
     ///
     /// The station needs to be a controller of the target canister.
@@ -496,12 +472,14 @@ impl ExternalCanisterService {
                 external_canister.validate()?;
 
                 // Create the canister in the subnet and update the external canister with the correct id.
-                external_canister.canister_id = self
-                    .create_canister(opts.initial_cycles.map(|cycles| cycles as u128))
-                    .await
-                    .map_err(|err| ExternalCanisterError::Failed {
-                        reason: format!("failed to create external canister: {}", err),
-                    })?;
+                external_canister.canister_id = orbit_essentials::cmc::create_canister(
+                    opts.subnet_selection.clone(),
+                    opts.initial_cycles
+                        .map(|cycles| cycles as u128)
+                        .unwrap_or(CREATE_CANISTER_CYCLES),
+                )
+                .await
+                .map_err(|err| ExternalCanisterError::Failed { reason: err })?;
 
                 external_canister
             }

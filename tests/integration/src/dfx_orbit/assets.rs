@@ -1,11 +1,14 @@
 use super::{
     setup::{dfx_orbit_test, setup_dfx_user, DfxOrbitTestConfig},
-    util::{permit_call_operation, set_auto_approve, set_four_eyes_on_call},
+    util::{permit_call_operation, set_auto_approve_on_call, set_four_eyes_on_call},
 };
 use crate::{
     dfx_orbit::{setup::setup_dfx_orbit, util::fetch_asset},
     setup::{create_canister, get_canister_wasm, setup_new_env, WALLET_ADMIN_USER},
-    utils::{add_user, execute_request, user_test_id},
+    utils::{
+        add_external_canister_call_any_method_permission_and_approval, add_user, execute_request,
+        user_test_id, ADMIN_GROUP_ID,
+    },
     CanisterIds, TestEnv,
 };
 use candid::{Nat, Principal};
@@ -39,6 +42,17 @@ fn asset_upload() {
         ..
     } = setup_new_env();
 
+    // add the permissions for admins to call any external canister
+    add_external_canister_call_any_method_permission_and_approval(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        station_api::QuorumDTO {
+            approvers: station_api::UserSpecifierDTO::Any,
+            min_approved: 1,
+        },
+    );
+
     let asset_canister = setup_asset_canister(&mut env, &canister_ids);
 
     let (dfx_principal, _dfx_user) = setup_dfx_user(&env, &canister_ids);
@@ -47,7 +61,7 @@ fn asset_upload() {
 
     // As admin: Grant the user the call and prepare permissions
     permit_call_operation(&env, &canister_ids);
-    set_auto_approve(&env, &canister_ids);
+    set_auto_approve_on_call(&env, &canister_ids);
     grant_prepare_permission(&env, &canister_ids, asset_canister, dfx_principal);
 
     let (asset_dir, assets) = setup_assets();
@@ -104,6 +118,18 @@ fn asset_validation() {
         canister_ids,
         ..
     } = setup_new_env();
+
+    add_external_canister_call_any_method_permission_and_approval(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        station_api::QuorumDTO {
+            approvers: station_api::UserSpecifierDTO::Group(vec![ADMIN_GROUP_ID
+                .hyphenated()
+                .to_string()]),
+            min_approved: 2,
+        },
+    );
 
     let asset_canister = setup_asset_canister(&mut env, &canister_ids);
 

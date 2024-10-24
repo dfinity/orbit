@@ -266,6 +266,7 @@ export interface CreateExternalCanisterOperationKindAddExisting {
 }
 export interface CreateExternalCanisterOperationKindCreateNew {
   'initial_cycles' : [] | [bigint],
+  'subnet_selection' : [] | [SubnetSelection],
 }
 export interface CreateRequestInput {
   'title' : [] | [string],
@@ -294,6 +295,8 @@ export interface DefiniteCanisterSettings {
   'freezing_threshold' : bigint,
   'controllers' : Array<Principal>,
   'reserved_cycles_limit' : bigint,
+  'log_visibility' : LogVisibility,
+  'wasm_memory_limit' : bigint,
   'memory_allocation' : bigint,
   'compute_allocation' : bigint,
 }
@@ -301,6 +304,8 @@ export interface DefiniteCanisterSettingsInput {
   'freezing_threshold' : [] | [bigint],
   'controllers' : [] | [Array<Principal>],
   'reserved_cycles_limit' : [] | [bigint],
+  'log_visibility' : [] | [LogVisibility],
+  'wasm_memory_limit' : [] | [bigint],
   'memory_allocation' : [] | [bigint],
   'compute_allocation' : [] | [bigint],
 }
@@ -855,6 +860,8 @@ export type ListUsersResult = {
     }
   } |
   { 'Err' : Error };
+export type LogVisibility = { 'controllers' : null } |
+  { 'public' : null };
 export interface ManageSystemInfoOperation {
   'input' : ManageSystemInfoOperationInput,
 }
@@ -1182,6 +1189,9 @@ export type SubmitRequestApprovalResult = {
     }
   } |
   { 'Err' : Error };
+export interface SubnetFilter { 'subnet_type' : [] | [string] }
+export type SubnetSelection = { 'Filter' : SubnetFilter } |
+  { 'Subnet' : { 'subnet' : Principal } };
 export interface SupportedBlockchain {
   'blockchain' : string,
   'supported_standards' : Array<StandardData>,
@@ -1315,6 +1325,7 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListAddressBookEntries' : null } |
   { 'ListExternalCanisters' : null } |
   { 'ListRequests' : null } |
+  { 'CallAnyExternalCanister' : null } |
   { 'SystemInfo' : null } |
   { 'Capabilities' : null } |
   { 'AddAccount' : null };
@@ -1331,8 +1342,8 @@ export type ValidationMethodResourceTarget = { 'No' : null } |
   { 'ValidationMethod' : CanisterMethod };
 export interface WasmModuleExtraChunks {
   'wasm_module_hash' : Uint8Array | number[],
-  'chunk_hashes_list' : Array<Uint8Array | number[]>,
   'store_canister' : Principal,
+  'extra_chunks_key' : string,
 }
 export interface _SERVICE {
   'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,

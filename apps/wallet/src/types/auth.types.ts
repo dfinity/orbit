@@ -19,6 +19,7 @@ export enum Privilege {
   AddAsset = 'AddAsset',
   ListExternalCanisters = 'ListExternalCanisters',
   CreateExternalCanister = 'CreateExternalCanister',
+  CallAnyExternalCanister = 'CallAnyExternalCanister',
 }
 
 export enum RequiredSessionState {

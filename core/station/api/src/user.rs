@@ -113,6 +113,7 @@ pub enum UserPrivilege {
     ListRequests,
     CreateExternalCanister,
     ListExternalCanisters,
+    CallAnyExternalCanister,
     ListAssets,
     AddAsset,
 }

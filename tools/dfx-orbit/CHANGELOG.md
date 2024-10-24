@@ -1,3 +1,31 @@
+## 0.6.0 (2024-10-22)
+
+
+### 🚀 Features
+
+- **dfx-orbit:** support installing canisters with large WASM ([#380](https://github.com/dfinity/orbit/pull/380))
+
+- **station:** add canister execution method and validation pair edit variant ([#381](https://github.com/dfinity/orbit/pull/381))
+
+- **wallet:** add external canister method call ui ([#385](https://github.com/dfinity/orbit/pull/385))
+
+
+### 🩹 Fixes
+
+- **orbit-essentials:** prefix wasm chunk hashes with slash in asset canister ([#391](https://github.com/dfinity/orbit/pull/391))
+
+
+### 🧱 Updated Dependencies
+
+- Updated orbit-essentials to 0.0.2-alpha.6
+- Updated station-api to 0.0.2-alpha.7
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- mraszyk @mraszyk
+
 ## 0.5.0 (2024-10-05)
 
 

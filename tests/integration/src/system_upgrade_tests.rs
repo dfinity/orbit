@@ -13,7 +13,7 @@ use station_api::{
 };
 use upgrader_api::InitArg;
 
-const EXTRA_TICKS: u64 = 50;
+const EXTRA_TICKS: u64 = 200;
 
 fn do_successful_station_upgrade(
     env: &PocketIc,
@@ -127,29 +127,6 @@ fn do_failed_system_upgrade(
 }
 
 #[test]
-fn successful_station_upgrade() {
-    let TestEnv {
-        env, canister_ids, ..
-    } = setup_new_env();
-
-    // get station wasm
-    let station_wasm = get_canister_wasm("station").to_vec();
-
-    // create station upgrade request
-    let station_init_arg = SystemInstall::Upgrade(SystemUpgrade { name: None });
-    let station_init_arg_bytes = Encode!(&station_init_arg).unwrap();
-    let station_upgrade_operation =
-        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
-            target: SystemUpgradeTargetDTO::UpgradeStation,
-            module: station_wasm,
-            module_extra_chunks: None,
-            arg: Some(station_init_arg_bytes),
-        });
-
-    do_successful_station_upgrade(&env, &canister_ids, station_upgrade_operation);
-}
-
-#[test]
 fn failed_station_upgrade() {
     let TestEnv {
         env, canister_ids, ..
@@ -172,6 +149,60 @@ fn failed_station_upgrade() {
 }
 
 #[test]
+fn too_many_chunks() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let canister_wasm = get_canister_wasm("station").to_vec();
+    let chunk_len = canister_wasm.len() / 150;
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(&env, canister_wasm, chunk_len);
+
+    // create system upgrade request from chunks
+    let system_upgrade_operation =
+        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+            target: SystemUpgradeTargetDTO::UpgradeStation,
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: None,
+        });
+
+    do_failed_system_upgrade(
+        &env,
+        &canister_ids,
+        system_upgrade_operation,
+        "The total number of wasm chunks must not exceed 101",
+    );
+}
+
+#[test]
+fn too_large_wasm() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(&env, vec![42_u8; 102 << 20], 1 << 20);
+
+    // create system upgrade request from chunks
+    let system_upgrade_operation =
+        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+            target: SystemUpgradeTargetDTO::UpgradeStation,
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: None,
+        });
+
+    do_failed_system_upgrade(
+        &env,
+        &canister_ids,
+        system_upgrade_operation,
+        "Wasm extra chunks length 105_906_176 exceeds the maximum wasm length 104_857_600",
+    );
+}
+
+#[test]
 fn system_upgrade_from_chunks() {
     let TestEnv {
         env, canister_ids, ..
@@ -189,7 +220,7 @@ fn system_upgrade_from_chunks() {
             SystemUpgradeTargetDTO::UpgradeStation,
             station_init_arg_bytes,
             "station",
-            200_000,
+            500_000,
         ),
         (
             SystemUpgradeTargetDTO::UpgradeUpgrader,
