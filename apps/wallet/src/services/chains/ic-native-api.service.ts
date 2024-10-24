@@ -11,7 +11,7 @@ import {
   FetchTransfersInput,
 } from '~/types/chain.types';
 import { nanoToJsDate } from '~/utils/date.utils';
-import { hexStringToUin8Array, isValidSha256 } from '~/utils/helper.utils';
+import { hexStringToUint8Array, isValidSha256 } from '~/utils/helper.utils';
 
 export class ICNativeApi implements ChainApi {
   private indexActor: ActorSubclass<IcpIndexService> | null = null;
@@ -47,7 +47,7 @@ export class ICNativeApi implements ChainApi {
 
   async fetchBalance(): Promise<bigint> {
     const balance = await this.ledgerActor.account_balance({
-      account: hexStringToUin8Array(this.address),
+      account: hexStringToUint8Array(this.address),
     });
 
     return balance.e8s;

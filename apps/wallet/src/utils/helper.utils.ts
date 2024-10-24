@@ -533,7 +533,7 @@ export const transformData = (
   return normalizedInput;
 };
 
-export function hexStringToUin8Array(input: string) {
+export function hexStringToUint8Array(input: string) {
   const result = new Uint8Array(input.length / 2);
 
   for (let i = 0; i < input.length; i += 2) {
