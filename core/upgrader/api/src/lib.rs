@@ -114,7 +114,7 @@ pub struct RequestDisasterRecoveryInput {
 
     pub install_mode: InstallMode,
 
-    pub force_stop: bool,
+    pub force: bool,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

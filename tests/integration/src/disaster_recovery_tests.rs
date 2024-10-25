@@ -367,7 +367,7 @@ fn test_disaster_recovery_flow() {
         })
         .unwrap(),
         install_mode: upgrader_api::InstallMode::Reinstall,
-        force_stop: false,
+        force: false,
     };
 
     let bad_request = upgrader_api::RequestDisasterRecoveryInput {
@@ -375,7 +375,7 @@ fn test_disaster_recovery_flow() {
         module_extra_chunks: Some(module_extra_chunks),
         arg: vec![1, 2, 3],
         install_mode: upgrader_api::InstallMode::Reinstall,
-        force_stop: false,
+        force: false,
     };
 
     let res: (ApiResult<()>,) = update_candid_as(
@@ -575,7 +575,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
             }))
             .unwrap(),
             install_mode: upgrader_api::InstallMode::Reinstall,
-            force_stop: false,
+            force: false,
         },),
     )
     .expect("Unexpected failed update call to request disaster recovery");
@@ -744,7 +744,7 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
             }))
             .unwrap(),
             install_mode: upgrader_api::InstallMode::Reinstall,
-            force_stop: false,
+            force: false,
         },),
     )
     .expect("Unexpected failed update call to request disaster recovery");
@@ -821,7 +821,7 @@ fn test_disaster_recovery_in_progress() {
         })
         .unwrap(),
         install_mode: upgrader_api::InstallMode::Reinstall,
-        force_stop: false,
+        force: false,
     };
 
     let res: (ApiResult<()>,) = update_candid_as(
@@ -915,7 +915,7 @@ fn test_disaster_recovery_install() {
         })
         .unwrap(),
         install_mode: upgrader_api::InstallMode::Install,
-        force_stop: false,
+        force: false,
     };
 
     let res: (ApiResult<()>,) = update_candid_as(
@@ -950,7 +950,7 @@ fn test_disaster_recovery_upgrade() {
         module_extra_chunks: Some(module_extra_chunks),
         arg: Encode!(&station_init_arg).unwrap(),
         install_mode: upgrader_api::InstallMode::Upgrade,
-        force_stop: false,
+        force: false,
     };
 
     let res: (ApiResult<()>,) = update_candid_as(
@@ -994,7 +994,7 @@ fn test_disaster_recovery_failing() {
         module_extra_chunks: Some(module_extra_chunks),
         arg: Encode!(&arg).unwrap(),
         install_mode: upgrader_api::InstallMode::Upgrade,
-        force_stop: false,
+        force: false,
     };
 
     let res: (ApiResult<()>,) = update_candid_as(
@@ -1072,7 +1072,7 @@ fn test_disaster_recovery_unstoppable() {
         module_extra_chunks: Some(module_extra_chunks),
         arg: Encode!(&station_init_arg).unwrap(),
         install_mode: upgrader_api::InstallMode::Upgrade,
-        force_stop: false,
+        force: false,
     };
     let res: (ApiResult<()>,) = update_candid_as(
         &env,
@@ -1117,7 +1117,7 @@ fn test_disaster_recovery_unstoppable() {
     assert_eq!(station_status.status, CanisterStatusType::Stopping);
 
     // force stop in disaster recovery
-    disaster_recovery_request.force_stop = true;
+    disaster_recovery_request.force = true;
 
     // we perform successful disaster recovery with forced stop twice
     // to test that snapshots can be taken multiple times

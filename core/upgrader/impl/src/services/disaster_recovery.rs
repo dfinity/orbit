@@ -275,7 +275,7 @@ impl DisasterRecoveryService {
         };
 
         if let Err(err) = installer.stop(station_canister_id).await {
-            if request.force_stop {
+            if request.force {
                 let existing_snapshots = list_canister_snapshots(CanisterIdRecord {
                     canister_id: station_canister_id,
                 })
@@ -347,7 +347,7 @@ impl DisasterRecoveryService {
                 arg: request.arg,
                 submitted_at: time(),
                 install_mode: request.install_mode.into(),
-                force_stop: request.force_stop,
+                force: request.force,
             };
 
             // check if user had previous recovery request
@@ -509,7 +509,7 @@ mod test {
                 module: vec![4, 5, 6],
                 module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
-                force_stop: false,
+                force: false,
             },
         );
         assert!(dr.storage.get().recovery_requests.is_empty());
@@ -522,7 +522,7 @@ mod test {
                 module: vec![4, 5, 6],
                 module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
-                force_stop: false,
+                force: false,
             },
         );
 
@@ -539,7 +539,7 @@ mod test {
                 module: vec![4, 5, 6],
                 module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
-                force_stop: false,
+                force: false,
             },
         );
 
@@ -554,7 +554,7 @@ mod test {
                 module: vec![4, 5, 6],
                 module_extra_chunks: None,
                 install_mode: upgrader_api::InstallMode::Upgrade,
-                force_stop: false,
+                force: false,
             },
         );
 
@@ -591,7 +591,7 @@ mod test {
             arg: vec![7, 8, 9],
             arg_sha256: vec![10, 11, 12],
             submitted_at: 0,
-            force_stop: false,
+            force: false,
         };
 
         // assert that during install the state is set to InProgress
@@ -673,7 +673,7 @@ mod test {
             arg: vec![7, 8, 9],
             arg_sha256: vec![10, 11, 12],
             submitted_at: 0,
-            force_stop: false,
+            force: false,
         };
 
         let installer = Arc::new(TestInstaller::default());
@@ -706,7 +706,7 @@ mod test {
             arg: vec![7, 8, 9],
             arg_sha256: vec![10, 11, 12],
             submitted_at: 0,
-            force_stop: false,
+            force: false,
         };
 
         let installer = Arc::new(PanickingTestInstaller::default());

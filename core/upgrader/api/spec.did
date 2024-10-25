@@ -135,7 +135,7 @@ type RequestDisasterRecoveryInput = record {
   // The install mode: Install, Upgrade, or Reinstall.
   install_mode : InstallMode;
   // Should the station be forced to stop if it is unstoppable.
-  force_stop : bool;
+  force : bool;
 };
 
 type InstallMode = variant {
