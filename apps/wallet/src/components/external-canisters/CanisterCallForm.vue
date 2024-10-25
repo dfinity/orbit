@@ -253,13 +253,13 @@ watch(
 );
 
 const availableExecutionMethods = computed<string[]>(() => {
-  const allowAnyMethpd =
+  const allowAnyMethod =
     props.allowAnyMethod || props.allowedMethods.some(method => method.methodName === '*');
   const configuredMethods = props.allowedMethods
     .map(method => method.methodName)
     .filter(methodName => !!methodName && methodName.trim().length && methodName !== '*');
 
-  if (allowAnyMethpd && props.candidIdl) {
+  if (allowAnyMethod && props.candidIdl) {
     try {
       configuredMethods.push(...getServiceMethods(props.candidIdl));
     } catch (e) {
