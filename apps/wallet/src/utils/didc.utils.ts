@@ -1,13 +1,7 @@
 import { Certificate, LookupStatus } from '@dfinity/agent';
-import loadDidcLib, { decode, encode, getServiceMethods } from '@dfinity/didc';
+import { decode, encode, getServiceMethods } from '@dfinity/didc';
 import { Principal } from '@dfinity/principal';
 import { icAgent } from '~/core/ic-agent.core';
-
-// Load the didc library wasm file, this check is required because tests are run in nodejs where the wasm
-// loading is synchronous and does not require the promise to be resolved as in the web.
-if (typeof loadDidcLib === 'function') {
-  await loadDidcLib();
-}
 
 export { decode, encode, getServiceMethods };
 

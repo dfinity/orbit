@@ -2,6 +2,7 @@ import vue from '@vitejs/plugin-vue';
 import { basename, dirname, resolve } from 'path';
 import { defineConfig } from 'vite';
 import vuetify from 'vite-plugin-vuetify';
+import wasm from 'vite-plugin-wasm';
 import {
   ENV,
   MODE,
@@ -45,6 +46,7 @@ export default defineConfig(_ => {
     // Vite automatically loads .env files from the root of the project if they are prefixed with the envPrefix.
     envPrefix: 'APP_',
     plugins: [
+      wasm(),
       vue(),
       vuetify({ autoImport: true }),
       withCanisterIds({ isProduction }),
