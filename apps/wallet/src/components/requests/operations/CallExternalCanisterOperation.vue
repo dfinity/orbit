@@ -20,7 +20,7 @@ import { useStationStore } from '~/stores/station.store';
 import { toUint8Array, variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 import ReviewCallExternalCanisterOperation from '../review/ReviewCallExternalCanisterOperation.vue';
-import { arrayBufferToHex } from '~/utils/crypto.utils';
+import { fetchCanisterIdlFromMetadata } from '~/utils/didc.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -37,20 +37,20 @@ const isListMode = computed(() => props.mode === 'list');
 const reviewContext: Ref<CanisterCallReviewContext | null> = ref(null);
 const station = useStationStore();
 
-const fillReviewContext = (operation: CallExternalCanisterOperation): CanisterCallReviewContext => {
+const fillReviewContext = (
+  operation: CallExternalCanisterOperation,
+  candidIdl?: string,
+): CanisterCallReviewContext => {
   return {
+    candidIdl,
     canisterId: operation.execution_method.canister_id,
     methodName: operation.execution_method.method_name,
     cycles: operation.execution_method_cycles?.[0] ?? undefined,
     argChecksum: operation.arg_checksum?.[0] ?? undefined,
     arg: operation.arg?.[0] ? toUint8Array(operation.arg[0]) : undefined,
-    argHex: operation.arg?.[0] ? arrayBufferToHex(toUint8Array(operation.arg[0])) : undefined,
     argValidationRendering: operation.arg_rendering?.[0],
     reply: operation.execution_method_reply?.[0]
       ? toUint8Array(operation.execution_method_reply[0])
-      : undefined,
-    replyHex: operation.execution_method_reply?.[0]
-      ? arrayBufferToHex(toUint8Array(operation.execution_method_reply[0]))
       : undefined,
   };
 };
@@ -63,7 +63,17 @@ const loadWithFullInformation = async (): Promise<void> => {
     });
 
     if (variantIs(result.request.operation, 'CallExternalCanister')) {
-      reviewContext.value = fillReviewContext(result.request.operation.CallExternalCanister);
+      const candidIdl = await fetchCanisterIdlFromMetadata(
+        result.request.operation.CallExternalCanister.execution_method.canister_id,
+      ).catch(err => {
+        logger.warn(`Error fetching canister IDL for ${props.request.id}`, err);
+        return undefined;
+      });
+
+      reviewContext.value = fillReviewContext(
+        result.request.operation.CallExternalCanister,
+        candidIdl,
+      );
     }
   } catch (err) {
     logger.error(`Error loading full CallExternalCanister request ${props.request.id}`, err);
