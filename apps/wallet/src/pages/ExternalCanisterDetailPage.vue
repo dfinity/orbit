@@ -144,6 +144,9 @@
               :allow-any-method="
                 hasRequiredPrivilege({ anyOf: [Privilege.CallAnyExternalCanister] })
               "
+              :canister-candid-idl="
+                canisterDetails.candid.value !== null ? canisterDetails.candid.value.idl : undefined
+              "
               @update:open="dialogs.call = $event"
             />
             <VBtn
@@ -190,6 +193,11 @@
                   :request-policies="canister.request_policies.calls"
                   :permissions="canister.permissions.calls"
                   :readonly="!privileges.can_change"
+                  :canister-candid-idl="
+                    canisterDetails.candid.value !== null
+                      ? canisterDetails.candid.value.idl
+                      : undefined
+                  "
                   @editing="disableRefresh = $event"
                 />
               </div>
@@ -227,6 +235,11 @@
                               :canister-module-hash="
                                 canisterDetails.moduleHash.value !== null
                                   ? canisterDetails.moduleHash.value
+                                  : undefined
+                              "
+                              :canister-candid-idl="
+                                canisterDetails.candid.value !== null
+                                  ? canisterDetails.candid.value.idl
                                   : undefined
                               "
                             />
@@ -432,6 +445,7 @@ import { BreadCrumbItem } from '~/types/navigation.types';
 import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { hasRequiredPrivilege } from '~/utils/auth.utils';
+import { fetchCanisterIdlFromMetadata } from '~/utils/didc.utils';
 import { debounce } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), {
@@ -442,11 +456,17 @@ const router = useRouter();
 const app = useAppStore();
 const canister: Ref<ExternalCanister | null> = ref(null);
 const canisterDetails = ref<{
-  moduleHash: { value: string | null; loading: boolean };
-  status: { value: CanisterStatusResponse | null; loading: boolean };
+  moduleHash: { value: string | null; loading: boolean; initialized: boolean };
+  status: { value: CanisterStatusResponse | null; loading: boolean; initialized: boolean };
+  candid: {
+    value: { idl: string } | null;
+    loading: boolean;
+    initialized: boolean;
+  };
 }>({
-  moduleHash: { value: null, loading: false },
-  status: { value: null, loading: false },
+  moduleHash: { value: null, loading: false, initialized: false },
+  status: { value: null, loading: false, initialized: false },
+  candid: { value: null, loading: false, initialized: false },
 });
 
 const pageTitle = computed(() => {
@@ -511,8 +531,9 @@ watch(
       loading.value = true;
       verifiedPageLoad.value = false;
       canisterDetails.value = {
-        moduleHash: { value: null, loading: false },
-        status: { value: null, loading: false },
+        moduleHash: { value: null, loading: false, initialized: false },
+        status: { value: null, loading: false, initialized: false },
+        candid: { value: null, loading: false, initialized: false },
       };
       privileges.value = buildDefaultPrivileges();
       canister.value = null;
@@ -526,8 +547,7 @@ watch(
 
 const loadExternalCanisterStatus = debounce(
   (canisterId: Principal) => {
-    canisterDetails.value.status.loading =
-      canisterDetails.value.status.value === null ? true : false;
+    canisterDetails.value.status.loading = !canisterDetails.value.status.initialized;
     useLoadExternalCanisterStatus(canisterId)
       .then(status => {
         canisterDetails.value.status.value = status;
@@ -537,6 +557,7 @@ const loadExternalCanisterStatus = debounce(
       })
       .finally(() => {
         canisterDetails.value.status.loading = false;
+        canisterDetails.value.status.initialized = true;
       });
   },
   20_000, // A status call is a call through the station canister, to prevent high load we make less frequent calls.
@@ -545,8 +566,7 @@ const loadExternalCanisterStatus = debounce(
 
 const loadExternalCanisterModuleHash = debounce(
   (canisterId: Principal) => {
-    canisterDetails.value.moduleHash.loading =
-      canisterDetails.value.moduleHash.value === null ? true : false;
+    canisterDetails.value.moduleHash.loading = !canisterDetails.value.moduleHash.initialized;
     useLoadExternalCanisterModuleHash(canisterId)
       .then(moduleHash => {
         canisterDetails.value.moduleHash.value = moduleHash;
@@ -556,9 +576,29 @@ const loadExternalCanisterModuleHash = debounce(
       })
       .finally(() => {
         canisterDetails.value.moduleHash.loading = false;
+        canisterDetails.value.moduleHash.initialized = true;
       });
   },
-  2_000, // Module hash loading is cheap and can be done with a status call to the IC.
+  2_000, // Module hash loading is cheap and can be done with a readState call to the IC.
+  { immediate: true },
+);
+
+const loadExternalCanisterCandidIdl = debounce(
+  (canisterId: Principal) => {
+    canisterDetails.value.candid.loading = !canisterDetails.value.candid.initialized;
+    fetchCanisterIdlFromMetadata(canisterId)
+      .then(idl => {
+        canisterDetails.value.candid.value = idl ? { idl } : null;
+      })
+      .catch(err => {
+        logger.error('Failed to read canister candid interface', err);
+      })
+      .finally(() => {
+        canisterDetails.value.candid.loading = false;
+        canisterDetails.value.candid.initialized = true;
+      });
+  },
+  2_000, // Module hash loading is cheap and can be done with a readState call to the IC.
   { immediate: true },
 );
 
@@ -581,6 +621,7 @@ const loadExternalCanister = async (): Promise<void> => {
     // Load additional canister details, such as module hash and canister status.
     loadExternalCanisterModuleHash(result.canister.canister_id);
     loadExternalCanisterStatus(result.canister.canister_id);
+    loadExternalCanisterCandidIdl(result.canister.canister_id);
   } catch (err) {
     const error = err as ApiError;
 
