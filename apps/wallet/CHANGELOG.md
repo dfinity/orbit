@@ -1,3 +1,18 @@
+## 0.0.2-alpha.12 (2024-10-25)
+
+
+### 🚀 Features
+
+- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))
+
+- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Leon Tan
+
 ## 0.0.2-alpha.11 (2024-10-22)
 
 
