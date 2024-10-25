@@ -1,3 +1,15 @@
+## 0.0.2-alpha.13 (2024-10-25)
+
+
+### 🚀 Features
+
+- **wallet:** enable webassembly loading ([050ad8e2](https://github.com/dfinity/orbit/commit/050ad8e2))
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+
 ## 0.0.2-alpha.12 (2024-10-25)
 
 

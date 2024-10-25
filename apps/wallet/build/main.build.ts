@@ -80,7 +80,11 @@ export default defineConfig(_ => {
                 return `locale-${localeName}`;
               }
 
-              if (isNodeModule && folder.includes('/@dfinity')) {
+              if (
+                isNodeModule &&
+                folder.includes('/@dfinity') &&
+                !folder.includes('/@dfinity/didc') // this package has a wasm so we exclude it
+              ) {
                 return 'ic-libs';
               }
 
