@@ -53,7 +53,7 @@ export default defineConfig(_ => {
       withIcAssetsFile(isProduction && MODE !== 'localhost'),
     ],
     build: {
-      target: 'es2020',
+      target: 'es2022',
       sourcemap: !optimized,
       minify: optimized,
       chunkSizeWarningLimit: 500,
