@@ -846,6 +846,7 @@ pub fn upload_canister_chunks_to_asset_canister(
         content_encoding: "identity".to_string(),
         chunk_ids,
         sha256: None,
+        last_chunk: None,
     };
     let operations = vec![
         BatchOperation::CreateAsset(create_asset),
