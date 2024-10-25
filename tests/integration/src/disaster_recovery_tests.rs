@@ -2,12 +2,12 @@ use crate::setup::{
     get_canister_wasm, setup_new_env, setup_new_env_with_config, WALLET_ADMIN_USER,
 };
 use crate::utils::{
-    add_user, advance_time_to_burn_cycles, await_station_healthy, deploy_test_canister,
-    execute_request, get_account_read_permission, get_account_transfer_permission,
-    get_account_update_permission, get_core_canister_health_status, get_request, get_system_info,
-    get_upgrader_disaster_recovery, get_upgrader_logs, get_user, list_canister_snapshots,
-    set_disaster_recovery, submit_request, upload_canister_chunks_to_asset_canister, user_test_id,
-    NNS_ROOT_CANISTER_ID,
+    add_external_canister_call_any_method_permission_and_approval_auto, add_user,
+    advance_time_to_burn_cycles, await_station_healthy, deploy_test_canister, execute_request,
+    get_account_read_permission, get_account_transfer_permission, get_account_update_permission,
+    get_core_canister_health_status, get_request, get_system_info, get_upgrader_disaster_recovery,
+    get_upgrader_logs, get_user, list_canister_snapshots, set_disaster_recovery, submit_request,
+    upload_canister_chunks_to_asset_canister, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -1020,6 +1020,12 @@ fn test_disaster_recovery_unstoppable() {
     let upgrader_id = system_info.upgrader_id;
 
     let test_canister = deploy_test_canister(&env);
+
+    add_external_canister_call_any_method_permission_and_approval_auto(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+    );
 
     // submit request to call the "expensive" method on the test canister and make the request "Processing"
     let execution_method = CanisterMethodDTO {
