@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::core::ic_cdk::api::trap;
 use crate::core::{read_system_info, write_system_info, Memory};
@@ -7,23 +7,26 @@ use crate::models::request_specifier::RequestSpecifier;
 use crate::models::resource::{Resource, SystemResourceAction};
 use crate::repositories::permission::PERMISSION_REPOSITORY;
 use crate::repositories::{
-    AccountRepository, AddressBookRepository, TransferRepository, REQUEST_POLICY_REPOSITORY,
-    USER_GROUP_REPOSITORY, USER_REPOSITORY,
+    AccountRepository, AddressBookRepository, RequestRepository, TransferRepository,
+    REQUEST_POLICY_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
 };
 use crate::STABLE_MEMORY_VERSION;
 use ic_stable_structures::memory_manager::VirtualMemory;
+use lazy_static::lazy_static;
 use orbit_essentials::model::ModelKey;
 use orbit_essentials::repository::{RebuildRepository, Repository};
 use orbit_essentials::types::{Timestamp, UUID};
 use serde::{Deserialize, Deserializer};
 
-use crate::models::permission::AuthScope;
+use crate::models::permission::{Allow, AuthScope};
 use crate::models::resource::{ResourceAction, ResourceId, ResourceIds};
 use crate::models::{
     Account, AccountAddress, AccountAsset, AccountBalance, AccountId, AccountKey, AccountSeed,
-    AddRequestPolicyOperationInput, AddressBookEntry, AddressBookEntryId, AddressBookEntryKey,
-    AddressFormat, Asset, AssetId, Blockchain, EditPermissionOperationInput, Metadata,
-    TokenStandard, Transfer, TransferId, TransferKey, TransferStatus, UserId,
+    AddAccountOperationInput, AddAddressBookEntryOperationInput, AddRequestPolicyOperationInput,
+    AddressBookEntry, AddressBookEntryId, AddressBookEntryKey, AddressFormat, Asset, AssetId,
+    Blockchain, EditPermissionOperationInput, Metadata, MetadataItem, Request, RequestKey,
+    RequestPolicyRule, TokenStandard, Transfer, TransferId, TransferKey, TransferOperation,
+    TransferOperationInput, TransferStatus, UserId,
 };
 use crate::repositories::ASSET_REPOSITORY;
 use crate::services::permission::PERMISSION_SERVICE;
@@ -32,6 +35,29 @@ use crate::services::REQUEST_POLICY_SERVICE;
 pub const INITIAL_ICP_ASSET_ID: [u8; 16] = [
     0x78, 0x02, 0xcb, 0xab, 0x22, 0x1d, 0x4e, 0x49, 0xb7, 0x64, 0xa6, 0x95, 0xea, 0x6d, 0xef, 0x1a,
 ];
+
+lazy_static! {
+    static ref INITIAL_ICP_ASSET: Asset = Asset {
+        id: INITIAL_ICP_ASSET_ID,
+        blockchain: Blockchain::InternetComputer,
+        decimals: 8,
+        name: "Internet Computer".to_string(),
+        symbol: "ICP".to_string(),
+
+        standards: BTreeSet::from([TokenStandard::InternetComputerNative, TokenStandard::ICRC1,]),
+        metadata: Metadata::new(BTreeMap::from([
+            (
+                "ledger_canister_id".to_string(),
+                "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+            ),
+            (
+                "index_canister_id".to_string(),
+                "qhbym-qaaaa-aaaaa-aaafq-cai".to_string(),
+            ),
+        ])),
+    };
+}
+
 /// Handles stable memory schema migrations for the station canister.
 ///
 /// Stable memory migration conditions:
@@ -153,18 +179,7 @@ fn apply_migration() {
         }
     }
 
-    // add ICP asset
-    let icp_asset = Asset {
-        id: INITIAL_ICP_ASSET_ID,
-        blockchain: Blockchain::InternetComputer,
-        decimals: 8,
-        metadata: Metadata::default(),
-        name: "Internet Computer".to_string(),
-        standards: BTreeSet::from([TokenStandard::InternetComputerNative]),
-        symbol: "ICP".to_string(),
-    };
-
-    ASSET_REPOSITORY.insert(icp_asset.key(), icp_asset);
+    ASSET_REPOSITORY.insert(INITIAL_ICP_ASSET.key(), INITIAL_ICP_ASSET.clone());
 }
 
 #[cfg(test)]
@@ -172,6 +187,13 @@ thread_local! {
     pub static MIGRATED_ENTRIES: std::cell::RefCell<u64> = const { std::cell::RefCell::new(0) };
 
     pub static MIGRATED_ACCOUNTS: std::cell::RefCell<Vec<(UUID, String)>> = const { std::cell::RefCell::new(vec![]) };
+}
+
+#[derive(Debug, Deserialize)]
+pub enum BlockchainStandard {
+    Native,
+    ICRC1,
+    ERC20,
 }
 
 impl<'de> Deserialize<'de> for AddressBookEntry {
@@ -276,13 +298,6 @@ impl<'de> Deserialize<'de> for Account {
     where
         D: Deserializer<'de>,
     {
-        #[derive(Debug, Deserialize)]
-        pub enum BlockchainStandard {
-            Native,
-            ICRC1,
-            ERC20,
-        }
-
         #[allow(dead_code)]
         #[derive(Debug, Deserialize)]
         struct PreMigrationAccount {
@@ -356,6 +371,174 @@ impl<'de> Deserialize<'de> for Account {
     }
 }
 
+impl<'de> Deserialize<'de> for TransferOperationInput {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationTransferOperationInput {
+            pub from_account_id: AccountId,
+            pub to: String,
+            pub amount: candid::Nat,
+            pub metadata: Metadata,
+            pub network: String,
+            pub fee: Option<candid::Nat>,
+
+            pub from_asset_id: Option<AssetId>,
+            pub with_standard: Option<TokenStandard>,
+        }
+
+        let pre_migration_entry = PreMigrationTransferOperationInput::deserialize(deserializer)?;
+
+        #[cfg(test)]
+        if pre_migration_entry.from_asset_id.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
+        }
+
+        Ok(TransferOperationInput {
+            from_account_id: pre_migration_entry.from_account_id,
+            to: pre_migration_entry.to,
+            amount: pre_migration_entry.amount,
+            metadata: pre_migration_entry.metadata,
+            network: pre_migration_entry.network,
+            fee: pre_migration_entry.fee,
+            from_asset_id: pre_migration_entry
+                .from_asset_id
+                .unwrap_or(INITIAL_ICP_ASSET_ID),
+            with_standard: pre_migration_entry
+                .with_standard
+                .unwrap_or(TokenStandard::InternetComputerNative),
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for TransferOperation {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationTransferOperation {
+            pub transfer_id: Option<UUID>,
+            pub input: TransferOperationInput,
+            pub fee: Option<candid::Nat>,
+
+            pub asset: Option<Asset>,
+        }
+
+        let pre_migration_entry = PreMigrationTransferOperation::deserialize(deserializer)?;
+
+        #[cfg(test)]
+        if pre_migration_entry.asset.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
+        }
+
+        Ok(TransferOperation {
+            transfer_id: pre_migration_entry.transfer_id,
+            input: pre_migration_entry.input,
+            fee: pre_migration_entry.fee,
+            asset: pre_migration_entry
+                .asset
+                .unwrap_or_else(|| INITIAL_ICP_ASSET.clone()),
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for AddAccountOperationInput {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[allow(dead_code)]
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationAddAccountOperationInput {
+            pub name: String,
+            pub metadata: Metadata,
+            pub read_permission: Allow,
+            pub configs_permission: Allow,
+            pub transfer_permission: Allow,
+            pub configs_request_policy: Option<RequestPolicyRule>,
+            pub transfer_request_policy: Option<RequestPolicyRule>,
+
+            // removed fields
+            pub blockchain: Option<Blockchain>,
+            pub standard: Option<BlockchainStandard>,
+
+            // new fields
+            pub assets: Option<Vec<AssetId>>,
+        }
+
+        let pre_migration_entry = PreMigrationAddAccountOperationInput::deserialize(deserializer)?;
+
+        #[cfg(test)]
+        if pre_migration_entry.assets.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
+        }
+
+        Ok(AddAccountOperationInput {
+            name: pre_migration_entry.name,
+            metadata: pre_migration_entry.metadata,
+            read_permission: pre_migration_entry.read_permission,
+            configs_permission: pre_migration_entry.configs_permission,
+            transfer_permission: pre_migration_entry.transfer_permission,
+            configs_request_policy: pre_migration_entry.configs_request_policy,
+            transfer_request_policy: pre_migration_entry.transfer_request_policy,
+            assets: pre_migration_entry
+                .assets
+                .unwrap_or_else(|| vec![INITIAL_ICP_ASSET_ID]),
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for AddAddressBookEntryOperationInput {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[allow(dead_code)]
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationAddAddressBookEntryOperationInput {
+            pub address_owner: String,
+            pub address: String,
+            pub blockchain: Blockchain,
+            #[serde(default)]
+            pub labels: Vec<String>,
+            pub metadata: Vec<MetadataItem>,
+
+            // added fields
+            pub address_format: Option<AddressFormat>,
+        }
+
+        let pre_migration_entry =
+            PreMigrationAddAddressBookEntryOperationInput::deserialize(deserializer)?;
+
+        #[cfg(test)]
+        if pre_migration_entry.address_format.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
+        }
+
+        Ok(AddAddressBookEntryOperationInput {
+            address_owner: pre_migration_entry.address_owner,
+            address: pre_migration_entry.address,
+            blockchain: pre_migration_entry.blockchain,
+            labels: pre_migration_entry.labels,
+            metadata: pre_migration_entry.metadata,
+            address_format: pre_migration_entry
+                .address_format
+                .unwrap_or(AddressFormat::ICPAccountIdentifier),
+        })
+    }
+}
+
 impl RebuildRepository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>
     for AddressBookRepository
 {
@@ -363,6 +546,7 @@ impl RebuildRepository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memo
 
 impl RebuildRepository<TransferKey, Transfer, VirtualMemory<Memory>> for TransferRepository {}
 impl RebuildRepository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository {}
+impl RebuildRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {}
 
 #[cfg(test)]
 mod test {
@@ -373,13 +557,14 @@ mod test {
 
     use crate::{
         core::{
-            ACCOUNT_MEMORY_ID, ADDRESS_BOOK_MEMORY_ID, MEMORY_MANAGER, TRANSFER_MEMORY_ID,
-            WASM_PAGE_SIZE,
+            ACCOUNT_MEMORY_ID, ADDRESS_BOOK_MEMORY_ID, MEMORY_MANAGER, REQUEST_MEMORY_ID,
+            TRANSFER_MEMORY_ID, WASM_PAGE_SIZE,
         },
         migration::{INITIAL_ICP_ASSET_ID, MIGRATED_ACCOUNTS, MIGRATED_ENTRIES},
         models::AddressFormat,
         repositories::{
-            address_book, ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, TRANSFER_REPOSITORY,
+            address_book, ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, REQUEST_REPOSITORY,
+            TRANSFER_REPOSITORY,
         },
         STABLE_MEMORY_VERSION,
     };
@@ -475,5 +660,12 @@ mod test {
 
         ACCOUNT_REPOSITORY.list();
         assert!(MIGRATED_ACCOUNTS.with(|entries| entries.borrow_mut().len()) == 0);
+    }
+
+    #[test]
+    fn test_request_migration() {
+        restore_snapshot("request", REQUEST_MEMORY_ID);
+
+        REQUEST_REPOSITORY.list();
     }
 }

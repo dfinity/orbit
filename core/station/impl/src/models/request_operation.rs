@@ -132,7 +132,7 @@ pub struct RemoveAssetOperationInput {
     pub asset_id: AssetId,
 }
 
-#[storable]
+#[storable(skip_deserialize = true)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferOperation {
     pub transfer_id: Option<UUID>,
@@ -141,7 +141,7 @@ pub struct TransferOperation {
     pub fee: Option<candid::Nat>,
 }
 
-#[storable]
+#[storable(skip_deserialize = true)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TransferOperationInput {
     pub from_account_id: AccountId,
@@ -162,7 +162,7 @@ pub struct AddAccountOperation {
     pub input: AddAccountOperationInput,
 }
 
-#[storable]
+#[storable(skip_deserialize = true)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAccountOperationInput {
     pub name: String,
@@ -246,7 +246,7 @@ pub struct AddAddressBookEntryOperation {
     pub input: AddAddressBookEntryOperationInput,
 }
 
-#[storable]
+#[storable(skip_deserialize = true)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddAddressBookEntryOperationInput {
     pub address_owner: String,
