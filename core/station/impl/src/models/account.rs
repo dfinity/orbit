@@ -24,7 +24,7 @@ pub type AccountSeed = UUID;
 ///
 /// A account can be associated with one or more users and can only hold one type of asset,
 /// which is defined by the blockchain, standard and symbol.
-#[storable]
+#[storable(skip_deserialize = true)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Account {
     /// The account id, which is a UUID.

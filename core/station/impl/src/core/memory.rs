@@ -38,7 +38,7 @@ thread_local! {
 
   // The memory manager is used for simulating multiple memories. Given a `MemoryId` it can
   // return a memory that can be used by stable structures.
-  static MEMORY_MANAGER: RefCell<MemoryManager<Memory>> =
+  pub static MEMORY_MANAGER: RefCell<MemoryManager<Memory>> =
       RefCell::new(MemoryManager::init_with_bucket_size(managed_memory(), STABLE_MEMORY_BUCKET_SIZE));
 }
 

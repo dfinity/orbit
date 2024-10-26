@@ -31,7 +31,6 @@ const EXPECTED_ADDITIONAL_PERMISSIONS_NR: usize =
 
 // todo: reenable when migrations are implemented
 #[test]
-#[ignore]
 fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     let TestEnv {
         env, canister_ids, ..
@@ -119,7 +118,6 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
 
 // todo: reenable when migrations are implemented
 #[test]
-#[ignore]
 fn test_canister_migration_path_with_previous_wasm_memory_version() {
     let TestEnv {
         env, canister_ids, ..
