@@ -166,17 +166,6 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(ExternalCanisterId::Any)),
         ),
-        (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ExternalCanister(ExternalCanisterResourceAction::Call(CallExternalCanisterResourceTarget {
-              validation_method: ValidationMethodResourceTarget::No,
-              execution_method: ExecutionMethodResourceTarget::Any,
-            })),
-        ),
-        (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Any)),
-        ),
         // assets
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),

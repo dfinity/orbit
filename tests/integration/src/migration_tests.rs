@@ -7,11 +7,14 @@ use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, PocketIc};
 
-const CURRENT_BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // can be found in the station core/init.rs
-const CURRENT_BASELINE_NR_PERMISSIONS: usize = 35; // can be found in the station core/init.rs
+const CURRENT_BASELINE_NR_OF_REQUEST_POLICIES: usize = 21; // can be found in the station core/init.rs
+const CURRENT_BASELINE_NR_PERMISSIONS: usize = 40; // can be found in the station core/init.rs
 
 const PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // baseline in the previous memory version core/init.rs
-const PREVIOUS_BASELINE_NR_PERMISSIONS: usize = 34; // baseline in the previous memory version core/init.rs
+const PREVIOUS_BASELINE_NR_PERMISSIONS: usize = 35; // baseline in the previous memory version core/init.rs
+
+const POLICIES_ADDED_AT_MIGRATION: usize = 3;
+const PERMISSIONS_ADDED_AT_MIGRATION: usize = 5;
 
 const USER_GROUPS_NR: usize = 10;
 const USER_NR: usize = 10;
@@ -29,7 +32,6 @@ const EXPECTED_ADDITIONAL_PERMISSIONS_NR: usize =
     // for accounts there are view, transfer and configuration permissions
     ACCOUNTS_NR * 3;
 
-// todo: reenable when migrations are implemented
 #[test]
 fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     let TestEnv {
@@ -133,6 +135,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
     // This is needed to avoid `install_code` rate limit error
     env.tick();
     env.tick();
+    env.tick();
 
     // Set the stable memory of the canister to the previous version of the canister
     env.set_stable_memory(
@@ -184,13 +187,17 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_ADDITIONAL_REQUEST_POLICIES_NR + PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES,
+        EXPECTED_ADDITIONAL_REQUEST_POLICIES_NR
+            + PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES
+            + POLICIES_ADDED_AT_MIGRATION,
     );
     assert_can_list_permissions(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        EXPECTED_ADDITIONAL_PERMISSIONS_NR + PREVIOUS_BASELINE_NR_PERMISSIONS,
+        EXPECTED_ADDITIONAL_PERMISSIONS_NR
+            + PREVIOUS_BASELINE_NR_PERMISSIONS
+            + PERMISSIONS_ADDED_AT_MIGRATION,
     );
 
     assert_has_icp_asset(&env, canister_ids.station, WALLET_ADMIN_USER);
@@ -256,6 +263,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         // for accounts there are transfer policies and configuration policies
         EXPECTED_ADDITIONAL_REQUEST_POLICIES_NR
             + PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES
+            + POLICIES_ADDED_AT_MIGRATION
             + new_records
             + (new_records * 2),
     );
@@ -264,7 +272,10 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         canister_ids.station,
         WALLET_ADMIN_USER,
         // for accounts there are view, transfer and configuration permissions
-        EXPECTED_ADDITIONAL_PERMISSIONS_NR + PREVIOUS_BASELINE_NR_PERMISSIONS + (new_records * 3),
+        EXPECTED_ADDITIONAL_PERMISSIONS_NR
+            + PREVIOUS_BASELINE_NR_PERMISSIONS
+            + PERMISSIONS_ADDED_AT_MIGRATION
+            + (new_records * 3),
     );
 
     assert_can_list_assets(
@@ -440,13 +451,17 @@ fn assert_can_list_request_policies(
         requester,
         "list_request_policies",
         (station_api::ListRequestPoliciesInput {
-            limit: Some(25),
+            limit: Some(1000),
             offset: Some(0),
         },),
     )
     .unwrap();
 
     let res = res.0.unwrap();
+
+    // res.policies
+    //     .iter()
+    //     .for_each(|p| println!("{:?}-{:?}", p.specifier, p.rule));
 
     assert_eq!(res.total as usize, expected);
 }
@@ -512,5 +527,10 @@ fn assert_has_icp_asset(env: &PocketIc, station_id: Principal, requester: Princi
     assert_eq!(assets.assets[0].symbol, "ICP");
     assert_eq!(assets.assets[0].name, "Internet Computer");
     assert_eq!(&assets.assets[0].blockchain, "icp");
-    assert_eq!(assets.assets[0].standards, vec!["icp_native"]);
+    assert!(
+        assets.assets[0]
+            .standards
+            .contains(&"icp_native".to_string())
+            && assets.assets[0].standards.contains(&"icrc1".to_string())
+    );
 }
