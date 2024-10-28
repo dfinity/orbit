@@ -168,9 +168,11 @@ mod tests {
 
     #[tokio::test]
     async fn apply_migration_should_migrate_stable_memory_version() {
+        let base_stable_memory_version = STABLE_MEMORY_VERSION - 1;
+
         let mut system_info = SystemInfo::new(Principal::management_canister(), Vec::new());
 
-        system_info.set_stable_memory_version(0);
+        system_info.set_stable_memory_version(base_stable_memory_version);
 
         write_system_info(system_info);
 
@@ -191,7 +193,7 @@ mod tests {
 
         REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
 
-        system_info.set_stable_memory_version(0);
+        system_info.set_stable_memory_version(base_stable_memory_version);
         system_info.set_change_canister_request(request.id);
 
         write_system_info(system_info);
