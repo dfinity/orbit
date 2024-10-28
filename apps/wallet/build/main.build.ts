@@ -72,6 +72,13 @@ export default defineConfig(_ => {
               const folder = dirname(id);
               const isNodeModule = folder.includes('node_modules');
 
+              if (isNodeModule && folder.includes('/@dfinity/didc')) {
+                // This ensures that the didc library is not included in the main ic libs chunk,
+                // this is because the didc library includes a wasm file that is loaded at runtime and
+                // makes the first load of the application slower.
+                return `ic-didc`;
+              }
+
               if (
                 folder.includes('/src/locales') &&
                 SUPPORTED_LOCALES.some(locale => resolve(folder, `${locale}.locale.ts`) === id)

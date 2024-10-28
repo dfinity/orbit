@@ -77,17 +77,17 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, watch } from 'vue';
+import { computed, defineAsyncComponent, watch } from 'vue';
 import { useDisplay } from 'vuetify';
 import { VBtn, VLayout, VMain, VSnackbar } from 'vuetify/components';
 import AppSidebar from '~/components/layouts/AppSidebar.vue';
 import AppToolbar from '~/components/layouts/AppToolbar.vue';
-import OpenRequestOverlay from '~/components/requests/OpenRequestOverlay.vue';
+import StationSelector from '~/components/StationSelector.vue';
+import { appInitConfig } from '~/configs/init.config';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';
 import SessionExpiredOverlay from './SessionExpiredOverlay.vue';
-import StationSelector from '~/components/StationSelector.vue';
-import { appInitConfig } from '~/configs/init.config';
+import ErrorDialog from './ui/ErrorDialog.vue';
 
 const app = useAppStore();
 const session = useSessionStore();
@@ -138,6 +138,13 @@ const showStationSelector = computed(
 );
 
 const showWarningBanner = ['playground', 'testing'].includes(appInitConfig.buildMode);
+
+// Ensures that the OpenRequestOverlay is only loaded when there is a request in context to be displayed
+const OpenRequestOverlay = defineAsyncComponent({
+  errorComponent: ErrorDialog,
+  loader: () => import('~/components/requests/OpenRequestOverlay.vue'),
+  delay: 200,
+});
 </script>
 
 <style lang="scss">

@@ -101,6 +101,8 @@ export default {
     no_matching_results: 'Pas de résultats correspondants trouvés pour `{search}`.',
     add_new_label: 'Ajouter une nouvelle étiquette: {label}',
     user_cancel_pending_requests: 'Annuler toutes les demandes en attente de cet usager.',
+    error_dialog_title: 'Échec de chargement.',
+    error_dialog_message: 'Échec de chargement, veuillez réessayer.',
   },
   alpha_warning: {
     version: 'Ceci est une version alpha.',

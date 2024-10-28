@@ -99,6 +99,8 @@ export default {
     no_matching_results: 'No matching results found for `{search}`.',
     add_new_label: 'Add new label: {label}',
     user_cancel_pending_requests: 'Cancel all pending requests from this user.',
+    error_dialog_title: 'Failed to load.',
+    error_dialog_message: 'Failed to load, please try again.',
   },
   alpha_warning: {
     version: 'This is an alpha version.',
