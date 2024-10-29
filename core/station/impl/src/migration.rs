@@ -1,24 +1,9 @@
-use std::collections::{BTreeMap, BTreeSet};
-
 use crate::core::ic_cdk::api::trap;
 use crate::core::{read_system_info, write_system_info, Memory};
 use crate::factories::blockchains::InternetComputer;
+use crate::models::permission::{Allow, AuthScope};
 use crate::models::request_specifier::RequestSpecifier;
 use crate::models::resource::{Resource, SystemResourceAction};
-use crate::repositories::permission::PERMISSION_REPOSITORY;
-use crate::repositories::{
-    AccountRepository, AddressBookRepository, RequestRepository, TransferRepository,
-    REQUEST_POLICY_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
-};
-use crate::STABLE_MEMORY_VERSION;
-use ic_stable_structures::memory_manager::VirtualMemory;
-use lazy_static::lazy_static;
-use orbit_essentials::model::ModelKey;
-use orbit_essentials::repository::{RebuildRepository, Repository};
-use orbit_essentials::types::{Timestamp, UUID};
-use serde::{Deserialize, Deserializer};
-
-use crate::models::permission::{Allow, AuthScope};
 use crate::models::resource::{ResourceAction, ResourceId, ResourceIds};
 use crate::models::{
     Account, AccountAddress, AccountAsset, AccountBalance, AccountId, AccountKey, AccountSeed,
@@ -28,35 +13,20 @@ use crate::models::{
     RequestPolicyRule, TokenStandard, Transfer, TransferId, TransferKey, TransferOperation,
     TransferOperationInput, TransferStatus, UserId,
 };
+use crate::repositories::permission::PERMISSION_REPOSITORY;
 use crate::repositories::ASSET_REPOSITORY;
+use crate::repositories::{
+    AccountRepository, AddressBookRepository, RequestRepository, TransferRepository,
+    REQUEST_POLICY_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
+};
 use crate::services::permission::PERMISSION_SERVICE;
-use crate::services::REQUEST_POLICY_SERVICE;
-
-pub const INITIAL_ICP_ASSET_ID: [u8; 16] = [
-    0x78, 0x02, 0xcb, 0xab, 0x22, 0x1d, 0x4e, 0x49, 0xb7, 0x64, 0xa6, 0x95, 0xea, 0x6d, 0xef, 0x1a,
-];
-
-lazy_static! {
-    static ref INITIAL_ICP_ASSET: Asset = Asset {
-        id: INITIAL_ICP_ASSET_ID,
-        blockchain: Blockchain::InternetComputer,
-        decimals: 8,
-        name: "Internet Computer".to_string(),
-        symbol: "ICP".to_string(),
-
-        standards: BTreeSet::from([TokenStandard::InternetComputerNative, TokenStandard::ICRC1,]),
-        metadata: Metadata::new(BTreeMap::from([
-            (
-                "ledger_canister_id".to_string(),
-                "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
-            ),
-            (
-                "index_canister_id".to_string(),
-                "qhbym-qaaaa-aaaaa-aaafq-cai".to_string(),
-            ),
-        ])),
-    };
-}
+use crate::services::{INITIAL_ICP_ASSET, INITIAL_ICP_ASSET_ID, REQUEST_POLICY_SERVICE};
+use crate::STABLE_MEMORY_VERSION;
+use ic_stable_structures::memory_manager::VirtualMemory;
+use orbit_essentials::model::ModelKey;
+use orbit_essentials::repository::{RebuildRepository, Repository};
+use orbit_essentials::types::{Timestamp, UUID};
+use serde::{Deserialize, Deserializer};
 
 /// Handles stable memory schema migrations for the station canister.
 ///
@@ -569,10 +539,10 @@ mod test {
         STABLE_MEMORY_VERSION,
     };
 
-    fn restore_snapshot(name: &str, memory_id: MemoryId) {
+    fn restore_snapshot(label: &str, memory_id: MemoryId) {
         let snapshot = fs::read(format!(
-            "src/migration_tests/snapshots/{}_repo_snapshot_v{}.bin",
-            name,
+            "src/migration_tests/snapshots/{}_v{}.bin",
+            label,
             STABLE_MEMORY_VERSION - 1
         ))
         .unwrap();
@@ -584,7 +554,7 @@ mod test {
 
     #[test]
     fn test_address_book_migration() {
-        restore_snapshot("address_book", ADDRESS_BOOK_MEMORY_ID);
+        restore_snapshot("address_book_repository", ADDRESS_BOOK_MEMORY_ID);
 
         address_book::ADDRESS_BOOK_REPOSITORY.list();
         assert!(MIGRATED_ENTRIES.with(|entries| *entries.borrow_mut()) > 0);
@@ -601,7 +571,7 @@ mod test {
 
     #[test]
     fn test_transfer_migration() {
-        restore_snapshot("transfer", TRANSFER_MEMORY_ID);
+        restore_snapshot("transfer_repository", TRANSFER_MEMORY_ID);
 
         TRANSFER_REPOSITORY.list();
         assert!(MIGRATED_ENTRIES.with(|entries| *entries.borrow_mut()) > 0);
@@ -618,7 +588,7 @@ mod test {
 
     #[test]
     fn test_account_migration() {
-        restore_snapshot("account", ACCOUNT_MEMORY_ID);
+        restore_snapshot("account_repository", ACCOUNT_MEMORY_ID);
 
         ACCOUNT_REPOSITORY.list();
         assert!(MIGRATED_ACCOUNTS.with(|entries| entries.borrow_mut().len()) > 0);
@@ -664,8 +634,18 @@ mod test {
 
     #[test]
     fn test_request_migration() {
-        restore_snapshot("request", REQUEST_MEMORY_ID);
+        restore_snapshot("request_repository", REQUEST_MEMORY_ID);
 
         REQUEST_REPOSITORY.list();
+        assert!(MIGRATED_ENTRIES.with(|entries| *entries.borrow_mut()) > 0);
+
+        REQUEST_REPOSITORY.rebuild();
+
+        MIGRATED_ENTRIES.with(|entries| {
+            *entries.borrow_mut() = 0;
+        });
+
+        REQUEST_REPOSITORY.list();
+        assert!(MIGRATED_ENTRIES.with(|entries| *entries.borrow_mut()) == 0);
     }
 }

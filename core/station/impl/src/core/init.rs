@@ -3,10 +3,9 @@ use crate::models::{
     request_policy_rule::RequestPolicyRule,
     request_specifier::{RequestSpecifier, ResourceSpecifier, UserSpecifier},
     resource::{
-        AccountResourceAction, CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget,
-        ExternalCanisterId, ExternalCanisterResourceAction, PermissionResourceAction,
-        RequestResourceAction, Resource, ResourceAction, ResourceId, ResourceIds,
-        SystemResourceAction, UserResourceAction, ValidationMethodResourceTarget,
+        AccountResourceAction, ExternalCanisterId, ExternalCanisterResourceAction,
+        PermissionResourceAction, RequestResourceAction, Resource, ResourceAction, ResourceId,
+        ResourceIds, SystemResourceAction, UserResourceAction,
     },
     ADMIN_GROUP_ID,
 };
