@@ -50,8 +50,20 @@ type Asset = record {
   metadata : vec Metadata;
 };
 
-// Backup of Account in the station canister.
+// Backup of a legacy Account in the station canister.
 type Account = record {
+  id : text;
+  decimals : nat32;
+  metadata : vec Metadata;
+  name : text;
+  blockchain : text;
+  address : text;
+  standard : text;
+  symbol : text;
+};
+
+// Backup of a multi asset Account in the station canister.
+type MultiAssetAccount = record {
   id : text;
   name : text;
   seed : blob;
@@ -100,9 +112,21 @@ type GetDisasterRecoveryAccountsResponse = record {
   accounts : vec Account;
 };
 
+// Response to a successful get_disaster_recovery_accounts query.
+type GetDisasterRecoveryAccountsAndAssetsResponse = record {
+  accounts : vec MultiAssetAccount;
+  assets : vec Asset;
+};
+
 // Result of the get_disaster_recovery_accounts query.
 type GetDisasterRecoveryAccountsResult = variant {
   Ok : GetDisasterRecoveryAccountsResponse;
+  Err : Error;
+};
+
+// Result of the get_disaster_recovery_accounts_and_assets query.
+type GetDisasterRecoveryAccountsAndAssetsResult = variant {
+  Ok : GetDisasterRecoveryAccountsAndAssetsResponse;
   Err : Error;
 };
 
@@ -127,6 +151,12 @@ type SetDisasterRecoveryCommitteeInput = record {
 // when accounts are added.
 type SetDisasterRecoveryAccountsInput = record {
   accounts : vec Account;
+};
+
+// Set the disaster recovery accounts. Called by the station canister
+// when accounts are added.
+type SetDisasterRecoveryAccountsAndAssetsInput = record {
+  accounts : vec MultiAssetAccount;
   assets : vec Asset;
 };
 
@@ -233,8 +263,12 @@ type RecoveryResult = variant {
 type GetDisasterRecoveryStateResponse = record {
   // The disaster recovery committee.
   committee : opt DisasterRecoveryCommittee;
-  // The backup of the station accounts.
+  // The backup of the legacy station accounts.
   accounts : vec Account;
+  // The backup of the legacy station accounts.
+  multi_asset_accounts : vec MultiAssetAccount;
+  // The backup of the station assets.
+  assets : vec Asset;
   // The current list of recovery requests.
   recovery_requests : vec StationRecoveryRequest;
   // The current recovery status.
@@ -254,8 +288,10 @@ service : (InitArg) -> {
   "trigger_upgrade" : (UpgradeParams) -> (TriggerUpgradeResponse);
   "set_disaster_recovery_committee" : (SetDisasterRecoveryCommitteeInput) -> (SetDisasterRecoveryResult);
   "set_disaster_recovery_accounts" : (SetDisasterRecoveryAccountsInput) -> (SetDisasterRecoveryResult);
+  "set_disaster_recovery_accounts_and_assets" : (SetDisasterRecoveryAccountsAndAssetsInput) -> (SetDisasterRecoveryResult);
   "is_committee_member" : () -> (IsCommitteeMemberResult) query;
   "get_disaster_recovery_accounts" : () -> (GetDisasterRecoveryAccountsResult) query;
+  "get_disaster_recovery_accounts_and_assets" : () -> (GetDisasterRecoveryAccountsAndAssetsResult) query;
   "get_disaster_recovery_committee" : () -> (GetDisasterRecoveryCommitteeResult) query;
   "get_disaster_recovery_state" : () -> (GetDisasterRecoveryStateResult) query;
   "request_disaster_recovery" : (RequestDisasterRecoveryInput) -> (RequestDisasterRecoveryResult);

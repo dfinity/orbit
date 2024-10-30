@@ -35,6 +35,13 @@ fn set_disaster_recovery_accounts(
 }
 
 #[update]
+fn set_disaster_recovery_accounts_and_assets(
+    input: upgrader_api::SetDisasterRecoveryAccountsAndAssetsInput,
+) -> ApiResult {
+    CONTROLLER.set_disaster_recovery_accounts_and_assets(input)
+}
+
+#[update]
 fn request_disaster_recovery(input: upgrader_api::RequestDisasterRecoveryInput) -> ApiResult {
     CONTROLLER.request_disaster_recovery(input)
 }
@@ -48,6 +55,12 @@ fn is_committee_member() -> ApiResult<upgrader_api::IsCommitteeMemberResponse> {
 fn get_disaster_recovery_accounts() -> ApiResult<upgrader_api::GetDisasterRecoveryAccountsResponse>
 {
     CONTROLLER.get_disaster_recovery_accounts()
+}
+
+#[query]
+fn get_disaster_recovery_accounts_and_assets(
+) -> ApiResult<upgrader_api::GetDisasterRecoveryAccountsAndAssetsResponse> {
+    CONTROLLER.get_disaster_recovery_accounts_and_assets()
 }
 
 #[query]
@@ -88,7 +101,21 @@ impl DisasterRecoveryController {
         if !is_controller(&caller) {
             Err(UpgraderApiError::NotController)?
         } else {
-            self.disaster_recovery_service.set_accounts(
+            self.disaster_recovery_service
+                .set_accounts(input.accounts.into_iter().map(Into::into).collect())
+        }
+    }
+
+    fn set_disaster_recovery_accounts_and_assets(
+        &self,
+
+        input: upgrader_api::SetDisasterRecoveryAccountsAndAssetsInput,
+    ) -> ApiResult {
+        let caller = caller();
+        if !is_controller(&caller) {
+            Err(UpgraderApiError::NotController)?
+        } else {
+            self.disaster_recovery_service.set_accounts_and_assets(
                 input.accounts.into_iter().map(Into::into).collect(),
                 input.assets.into_iter().map(Into::into).collect(),
             )
@@ -136,6 +163,30 @@ impl DisasterRecoveryController {
                 accounts: self
                     .disaster_recovery_service
                     .get_accounts()
+                    .into_iter()
+                    .map(Into::into)
+                    .collect(),
+            })
+        }
+    }
+
+    fn get_disaster_recovery_accounts_and_assets(
+        &self,
+    ) -> ApiResult<upgrader_api::GetDisasterRecoveryAccountsAndAssetsResponse> {
+        let caller = caller();
+        if !is_controller(&caller) {
+            Err(UpgraderApiError::NotController)?
+        } else {
+            Ok(upgrader_api::GetDisasterRecoveryAccountsAndAssetsResponse {
+                accounts: self
+                    .disaster_recovery_service
+                    .get_multi_asset_accounts()
+                    .into_iter()
+                    .map(Into::into)
+                    .collect(),
+                assets: self
+                    .disaster_recovery_service
+                    .get_assets()
                     .into_iter()
                     .map(Into::into)
                     .collect(),

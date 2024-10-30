@@ -2,7 +2,9 @@ use crate::upgrader_ic_cdk::api::time;
 use orbit_essentials::{storable, types::Timestamp, utils::timestamp_to_rfc3339};
 use serde::Serialize;
 
-use super::{Account, AdminUser, Asset, DisasterRecoveryCommittee, RecoveryResult};
+use super::{
+    Account, AdminUser, Asset, DisasterRecoveryCommittee, MultiAssetAccount, RecoveryResult,
+};
 
 #[derive(Serialize)]
 pub enum UpgradeResultLog {
@@ -18,6 +20,11 @@ pub struct SetCommitteeLog {
 #[derive(Serialize)]
 pub struct SetAccountsLog {
     pub accounts: Vec<Account>,
+}
+
+#[derive(Serialize)]
+pub struct SetAccountsAndAssetsLog {
+    pub multi_asset_accounts: Vec<MultiAssetAccount>,
     pub assets: Vec<Asset>,
 }
 
@@ -49,6 +56,7 @@ pub struct DisasterRecoveryInProgressLog {
 pub enum LogEntryType {
     SetCommittee(SetCommitteeLog),
     SetAccounts(SetAccountsLog),
+    SetAccountsAndAssets(SetAccountsAndAssetsLog),
     RequestDisasterRecovery(RequestDisasterRecoveryLog),
     DisasterRecoveryStart(DisasterRecoveryStartLog),
     DisasterRecoveryResult(DisasterRecoveryResultLog),
@@ -81,6 +89,7 @@ impl LogEntryType {
             LogEntryType::DisasterRecoveryInProgressExpired(_) => {
                 "disaster_recovery_in_progress_expired".to_owned()
             }
+            LogEntryType::SetAccountsAndAssets(_) => "set_accounts_and_assets".to_owned(),
         }
     }
 
@@ -97,11 +106,7 @@ impl LogEntryType {
                 data.committee.quorum
             ),
             LogEntryType::SetAccounts(data) => {
-                format!(
-                    "Set {} disaster recovery account(s) and {} asset(s)",
-                    data.accounts.len(),
-                    data.assets.len()
-                )
+                format!("Set {} disaster recovery account(s)", data.accounts.len(),)
             }
             LogEntryType::RequestDisasterRecovery(data) => format!(
                 "{} requested disaster recovery with wasm hash {} and arg hash {}",
@@ -137,6 +142,13 @@ impl LogEntryType {
                     data.operation
                 )
             }
+            LogEntryType::SetAccountsAndAssets(data) => {
+                format!(
+                    "Set {} multi-asset account(s) and {} asset(s)",
+                    data.multi_asset_accounts.len(),
+                    data.assets.len()
+                )
+            }
         }
     }
 
@@ -150,6 +162,7 @@ impl LogEntryType {
             LogEntryType::UpgradeResult(data) => serde_json::to_string(data),
             LogEntryType::DisasterRecoveryInProgress(data) => serde_json::to_string(data),
             LogEntryType::DisasterRecoveryInProgressExpired(data) => serde_json::to_string(data),
+            LogEntryType::SetAccountsAndAssets(data) => serde_json::to_string(data),
         }
         .map_err(|err| format!("Failed to serialize log entry: {}", err))
     }

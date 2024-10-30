@@ -4,7 +4,8 @@ use crate::{
     errors::UpgraderApiError,
     model::{
         Asset, DisasterRecoveryInProgressLog, DisasterRecoveryResultLog, DisasterRecoveryStartLog,
-        LogEntryType, RequestDisasterRecoveryLog, SetAccountsLog, SetCommitteeLog,
+        LogEntryType, MultiAssetAccount, RequestDisasterRecoveryLog, SetAccountsAndAssetsLog,
+        SetAccountsLog, SetCommitteeLog,
     },
     services::LOGGER_SERVICE,
     upgrader_ic_cdk::{api::time, spawn},
@@ -116,6 +117,11 @@ impl DisasterRecoveryService {
             value.recovery_status = RecoveryStatus::Idle;
         }
 
+        // Ensure committee is not empty due to some error
+        if committee.users.is_empty() {
+            return Err(UpgraderApiError::EmptyCommittee.into());
+        }
+
         value.committee = Some(committee.clone());
 
         self.storage.set(value);
@@ -126,7 +132,7 @@ impl DisasterRecoveryService {
         Ok(())
     }
 
-    pub fn set_accounts(&self, accounts: Vec<Account>, assets: Vec<Asset>) -> ServiceResult {
+    pub fn set_accounts(&self, accounts: Vec<Account>) -> ServiceResult {
         let mut value = self.storage.get();
 
         if let RecoveryStatus::InProgress { since } = &value.recovery_status {
@@ -145,20 +151,62 @@ impl DisasterRecoveryService {
         }
 
         value.accounts = accounts.clone();
+
+        self.storage.set(value);
+
+        self.logger
+            .log(LogEntryType::SetAccounts(SetAccountsLog { accounts }));
+
+        Ok(())
+    }
+
+    pub fn set_accounts_and_assets(
+        &self,
+        multi_asset_accounts: Vec<MultiAssetAccount>,
+        assets: Vec<Asset>,
+    ) -> ServiceResult {
+        let mut value = self.storage.get();
+
+        if let RecoveryStatus::InProgress { since } = &value.recovery_status {
+            let log = DisasterRecoveryInProgressLog {
+                operation: "set_accounts".to_owned(),
+            };
+            if since + DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS > time() {
+                self.logger
+                    .log(LogEntryType::DisasterRecoveryInProgress(log));
+                return Err(UpgraderApiError::DisasterRecoveryInProgress.into());
+            }
+
+            self.logger
+                .log(LogEntryType::DisasterRecoveryInProgressExpired(log));
+            value.recovery_status = RecoveryStatus::Idle;
+        }
+
+        value.multi_asset_accounts = multi_asset_accounts.clone();
         value.assets = assets.clone();
 
         self.storage.set(value);
 
-        self.logger.log(LogEntryType::SetAccounts(SetAccountsLog {
-            accounts,
-            assets,
-        }));
+        self.logger.log(LogEntryType::SetAccountsAndAssets(
+            SetAccountsAndAssetsLog {
+                multi_asset_accounts,
+                assets,
+            },
+        ));
 
         Ok(())
     }
 
     pub fn get_accounts(&self) -> Vec<Account> {
         self.storage.get().accounts
+    }
+
+    pub fn get_multi_asset_accounts(&self) -> Vec<MultiAssetAccount> {
+        self.storage.get().multi_asset_accounts
+    }
+
+    pub fn get_assets(&self) -> Vec<Asset> {
+        self.storage.get().assets
     }
 
     pub fn get_committee(&self) -> Option<DisasterRecoveryCommittee> {
@@ -388,7 +436,7 @@ mod test {
 
     use crate::{
         model::{
-            test::{mock_accounts, mock_assets, mock_committee},
+            test::{mock_accounts, mock_assets, mock_committee, mock_multi_asset_accounts},
             InstallMode, RecoveryEvaluationResult, RecoveryResult, RecoveryStatus,
             StationRecoveryRequest,
         },
@@ -753,7 +801,19 @@ mod test {
         storage.set(value);
 
         let error = DISASTER_RECOVERY_SERVICE
-            .set_accounts(mock_accounts(), mock_assets())
+            .set_accounts_and_assets(mock_multi_asset_accounts(), mock_assets())
+            .expect_err("Setting accounts and assets during recovery should fail");
+
+        assert_eq!(error.code, "DISASTER_RECOVERY_IN_PROGRESS".to_string(),);
+
+        let error = DISASTER_RECOVERY_SERVICE
+            .set_accounts(mock_accounts())
+            .expect_err("Setting accounts during recovery should fail");
+
+        assert_eq!(error.code, "DISASTER_RECOVERY_IN_PROGRESS".to_string(),);
+
+        let error = DISASTER_RECOVERY_SERVICE
+            .set_committee(mock_committee())
             .expect_err("Setting committee during recovery should fail");
 
         assert_eq!(error.code, "DISASTER_RECOVERY_IN_PROGRESS".to_string(),);
