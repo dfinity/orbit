@@ -21,9 +21,9 @@ use station_api::{
 use std::collections::BTreeMap;
 use std::str::FromStr;
 use upgrader_api::{
-    Account, AdminUser, Asset, DisasterRecoveryCommittee, GetDisasterRecoveryAccountsResponse,
-    GetDisasterRecoveryCommitteeResponse, SetDisasterRecoveryAccountsInput,
-    SetDisasterRecoveryCommitteeInput,
+    AdminUser, Asset, DisasterRecoveryCommittee, GetDisasterRecoveryAccountsAndAssetsResponse,
+    GetDisasterRecoveryCommitteeResponse, MultiAssetAccount,
+    SetDisasterRecoveryAccountsAndAssetsInput, SetDisasterRecoveryCommitteeInput,
 };
 use uuid::Uuid;
 
@@ -153,16 +153,16 @@ fn successful_disaster_recovery_sync() {
 
     let icp_asset_id = Uuid::from_bytes([0; 16]).hyphenated().to_string();
 
-    let args = SetDisasterRecoveryAccountsInput {
+    let args = SetDisasterRecoveryAccountsAndAssetsInput {
         accounts: vec![
-            Account {
+            MultiAssetAccount {
                 id: Uuid::from_bytes([0; 16]).hyphenated().to_string(),
                 name: "Main Account".to_owned(),
                 metadata: vec![],
                 assets: vec![icp_asset_id.clone()],
                 seed: [0; 16],
             },
-            Account {
+            MultiAssetAccount {
                 id: Uuid::from_bytes([1; 16]).hyphenated().to_string(),
                 name: "Another Account".to_owned(),
                 metadata: vec![],
@@ -186,7 +186,7 @@ fn successful_disaster_recovery_sync() {
         &env,
         upgrader_id,
         Principal::from_slice(&[1]),
-        "set_disaster_recovery_accounts",
+        "set_disaster_recovery_accounts_and_assets",
         (args.clone(),),
     )
     .expect("Failed update call to set disaster recovery accounts");
@@ -200,17 +200,17 @@ fn successful_disaster_recovery_sync() {
         &env,
         upgrader_id,
         canister_ids.station,
-        "set_disaster_recovery_accounts",
+        "set_disaster_recovery_accounts_and_assets",
         (args,),
     )
     .expect("Failed update call to set disaster recovery accounts");
     res.0.expect("Failed to set disaster recovery accounts");
 
-    let res: (ApiResult<GetDisasterRecoveryAccountsResponse>,) = query_candid_as(
+    let res: (ApiResult<GetDisasterRecoveryAccountsAndAssetsResponse>,) = query_candid_as(
         &env,
         upgrader_id,
         canister_ids.station,
-        "get_disaster_recovery_accounts",
+        "get_disaster_recovery_accounts_and_assets",
         ((),),
     )
     .expect("Failed query call to get disaster recovery accounts");
@@ -295,8 +295,10 @@ fn auto_syncs_on_account_creation() {
 
     let state = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
 
-    assert_eq!(state.accounts.len(), 1);
-    assert_eq!(state.accounts[0].name, "admin");
+    println!("{:?}", state);
+
+    assert_eq!(state.multi_asset_accounts.len(), 1);
+    assert_eq!(state.multi_asset_accounts[0].name, "admin");
 }
 
 /*

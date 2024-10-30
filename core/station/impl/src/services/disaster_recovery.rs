@@ -39,11 +39,11 @@ impl DisasterRecoveryService {
 
         ic_cdk::call(
             upgrader_canister_id,
-            "set_disaster_recovery_accounts",
-            (upgrader_api::SetDisasterRecoveryAccountsInput {
+            "set_disaster_recovery_accounts_and_assets",
+            (upgrader_api::SetDisasterRecoveryAccountsAndAssetsInput {
                 accounts: accounts
                     .iter()
-                    .map(|account| upgrader_api::Account {
+                    .map(|account| upgrader_api::MultiAssetAccount {
                         id: Uuid::from_bytes(account.id).hyphenated().to_string(),
                         seed: account.seed,
                         assets: account

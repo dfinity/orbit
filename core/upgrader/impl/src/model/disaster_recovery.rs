@@ -461,7 +461,11 @@ impl From<DisasterRecovery> for upgrader_api::GetDisasterRecoveryStateResponse {
                 .map(upgrader_api::Account::from)
                 .collect(),
 
-            multi_asset_accounts: vec![],
+            multi_asset_accounts: value
+                .multi_asset_accounts
+                .into_iter()
+                .map(upgrader_api::MultiAssetAccount::from)
+                .collect(),
             assets: value
                 .assets
                 .into_iter()
