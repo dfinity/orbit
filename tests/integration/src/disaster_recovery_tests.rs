@@ -21,9 +21,11 @@ use station_api::{
 use std::collections::BTreeMap;
 use std::str::FromStr;
 use upgrader_api::{
-    AdminUser, Asset, DisasterRecoveryCommittee, GetDisasterRecoveryAccountsAndAssetsResponse,
+    Account, AdminUser, Asset, DisasterRecoveryCommittee,
+    GetDisasterRecoveryAccountsAndAssetsResponse, GetDisasterRecoveryAccountsResponse,
     GetDisasterRecoveryCommitteeResponse, MultiAssetAccount,
-    SetDisasterRecoveryAccountsAndAssetsInput, SetDisasterRecoveryCommitteeInput,
+    SetDisasterRecoveryAccountsAndAssetsInput, SetDisasterRecoveryAccountsInput,
+    SetDisasterRecoveryCommitteeInput,
 };
 use uuid::Uuid;
 
@@ -1026,4 +1028,67 @@ fn test_disaster_recovery_failing() {
     res.0.expect("Failed to request disaster recovery");
 
     await_disaster_recovery_failure(&env, canister_ids.station, upgrader_id);
+}
+
+#[test]
+fn test_disaster_recovery_supports_legacy_format() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+
+    let args = SetDisasterRecoveryAccountsInput {
+        accounts: vec![
+            Account {
+                id: Uuid::from_bytes([0; 16]).hyphenated().to_string(),
+                name: "Main Account".to_owned(),
+                metadata: vec![],
+                blockchain: "icp".to_owned(),
+                address: "1".to_owned(),
+                standard: "icp_native".to_owned(),
+                symbol: "ICP1".to_owned(),
+                decimals: 8,
+            },
+            Account {
+                id: Uuid::from_bytes([1; 16]).hyphenated().to_string(),
+                name: "Another Account".to_owned(),
+                metadata: vec![],
+                blockchain: "icp".to_owned(),
+                address: "2".to_owned(),
+                standard: "icp_native".to_owned(),
+                symbol: "ICP2".to_owned(),
+                decimals: 8,
+            },
+        ],
+    };
+
+    let res: (ApiResult,) = update_candid_as(
+        &env,
+        upgrader_id,
+        canister_ids.station,
+        "set_disaster_recovery_accounts",
+        (args,),
+    )
+    .expect("Failed update call to set disaster recovery accounts");
+    res.0.expect("Failed to set disaster recovery accounts");
+
+    let res: (ApiResult<GetDisasterRecoveryAccountsResponse>,) = query_candid_as(
+        &env,
+        upgrader_id,
+        canister_ids.station,
+        "get_disaster_recovery_accounts",
+        ((),),
+    )
+    .expect("Failed query call to get disaster recovery accounts");
+
+    let res = res.0.expect("Failed to get disaster recovery accounts");
+
+    assert!(res.accounts.len() == 2);
+    assert_eq!(res.accounts[0].name, "Main Account");
+    assert_eq!(res.accounts[0].address, "1");
+
+    assert_eq!(res.accounts[1].name, "Another Account");
+    assert_eq!(res.accounts[1].address, "2");
 }
