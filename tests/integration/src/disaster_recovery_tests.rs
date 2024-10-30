@@ -9,10 +9,11 @@ use crate::utils::{
     upload_canister_chunks_to_asset_canister, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
-use candid::{Encode, Principal};
+use candid::{CandidType, Encode, Principal};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::utils::sha256_hash;
 use pocket_ic::{query_candid_as, update_candid_as, PocketIc};
+use serde::Deserialize;
 use station_api::{
     AccountDTO, AddAccountOperationInput, AllowDTO, DisasterRecoveryCommitteeDTO, HealthStatus,
     ListAccountsResponse, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
@@ -23,9 +24,9 @@ use std::str::FromStr;
 use upgrader_api::{
     Account, AdminUser, Asset, DisasterRecoveryCommittee,
     GetDisasterRecoveryAccountsAndAssetsResponse, GetDisasterRecoveryAccountsResponse,
-    GetDisasterRecoveryCommitteeResponse, MultiAssetAccount,
+    GetDisasterRecoveryCommitteeResponse, MultiAssetAccount, RecoveryResult, RecoveryStatus,
     SetDisasterRecoveryAccountsAndAssetsInput, SetDisasterRecoveryAccountsInput,
-    SetDisasterRecoveryCommitteeInput,
+    SetDisasterRecoveryCommitteeInput, StationRecoveryRequest,
 };
 use uuid::Uuid;
 
@@ -1091,4 +1092,28 @@ fn test_disaster_recovery_supports_legacy_format() {
 
     assert_eq!(res.accounts[1].name, "Another Account");
     assert_eq!(res.accounts[1].address, "2");
+
+    // old response format should deserialize correctly
+    #[derive(Clone, Debug, CandidType, Deserialize)]
+    pub struct GetDisasterRecoveryStateResponse {
+        pub committee: Option<DisasterRecoveryCommittee>,
+        pub accounts: Vec<Account>,
+
+        pub recovery_requests: Vec<StationRecoveryRequest>,
+        pub recovery_status: RecoveryStatus,
+        pub last_recovery_result: Option<RecoveryResult>,
+    }
+
+    let res: (ApiResult<GetDisasterRecoveryStateResponse>,) = query_candid_as(
+        &env,
+        upgrader_id,
+        canister_ids.station,
+        "get_disaster_recovery_state",
+        ((),),
+    )
+    .expect("Failed query call to get disaster recovery accounts");
+
+    let res = res.0.expect("Failed to get disaster recovery accounts");
+
+    assert!(res.accounts.len() == 2);
 }
