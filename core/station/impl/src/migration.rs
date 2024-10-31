@@ -14,10 +14,13 @@ use crate::models::{
     TransferOperationInput, TransferStatus, UserId,
 };
 use crate::repositories::permission::PERMISSION_REPOSITORY;
-use crate::repositories::ASSET_REPOSITORY;
 use crate::repositories::{
     AccountRepository, AddressBookRepository, RequestRepository, TransferRepository,
     REQUEST_POLICY_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
+};
+use crate::repositories::{
+    ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, REQUEST_REPOSITORY,
+    TRANSFER_REPOSITORY,
 };
 use crate::services::permission::PERMISSION_SERVICE;
 use crate::services::{INITIAL_ICP_ASSET, INITIAL_ICP_ASSET_ID, REQUEST_POLICY_SERVICE};
@@ -150,6 +153,12 @@ fn apply_migration() {
     }
 
     ASSET_REPOSITORY.insert(INITIAL_ICP_ASSET.key(), INITIAL_ICP_ASSET.clone());
+
+    // rebuild repositories to apply the changes
+    ADDRESS_BOOK_REPOSITORY.rebuild();
+    TRANSFER_REPOSITORY.rebuild();
+    ACCOUNT_REPOSITORY.rebuild();
+    REQUEST_REPOSITORY.rebuild();
 }
 
 #[cfg(test)]
