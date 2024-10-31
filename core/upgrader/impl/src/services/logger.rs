@@ -128,7 +128,6 @@ mod test {
             },
         ));
         let result = logger_service.get_logs(None, None);
-        println!("{:?}", result);
 
         assert_eq!(result.logs.len(), 4);
         assert_eq!(result.total, 4);

@@ -118,7 +118,6 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     );
 }
 
-// todo: reenable when migrations are implemented
 #[test]
 fn test_canister_migration_path_with_previous_wasm_memory_version() {
     let TestEnv {

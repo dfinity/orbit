@@ -298,8 +298,6 @@ fn auto_syncs_on_account_creation() {
 
     let state = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
 
-    println!("{:?}", state);
-
     assert_eq!(state.multi_asset_accounts.len(), 1);
     assert_eq!(state.multi_asset_accounts[0].name, "admin");
 }
