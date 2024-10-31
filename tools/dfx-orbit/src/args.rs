@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{
     asset::{RequestAssetArgs, VerifyAssetArgs},
     canister::{RequestCanisterArgs, VerifyCanisterArgs},
@@ -26,8 +28,12 @@ pub struct DfxOrbitArgs {
     pub(crate) quiet: u8,
 
     /// Name of the station to execute the command on. (Uses default station if unspecified)
-    #[clap(short, long)]
+    #[clap(short, long, conflicts_with = "station_file")]
     pub(crate) station: Option<String>,
+
+    /// Load station information from a json file. (Useful in CI)
+    #[clap(long, conflicts_with = "station")]
+    pub(crate) station_file: Option<PathBuf>,
 
     // TODO: Allow to specify --network, to overwrite the network specified by the station
     /// The user identity to run this command as
@@ -106,11 +112,14 @@ impl DfxOrbitArgs {
             return Ok(());
         };
 
-        let config = match self.station {
-            Some(station_name) => orbit_agent.station(&station_name)?,
-            None => orbit_agent
+        let config = if let Some(station_name) = self.station {
+            orbit_agent.station(&station_name)?
+        } else if let Some(station_file) = self.station_file {
+            orbit_agent.station_from_path(&station_file)?
+        } else {
+            orbit_agent
                 .default_station()?
-                .ok_or_else(|| anyhow::format_err!("No default station specified"))?,
+                .ok_or_else(|| anyhow::format_err!("No default station specified"))?
         };
 
         let dfx_orbit = DfxOrbit::new(orbit_agent, config, self.identity, logger).await?;
