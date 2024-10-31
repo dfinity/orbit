@@ -153,7 +153,7 @@ type SetDisasterRecoveryAccountsInput = record {
   accounts : vec Account;
 };
 
-// Set the disaster recovery accounts. Called by the station canister
+// Set the disaster recovery accounts and assets. Called by the station canister
 // when accounts are added.
 type SetDisasterRecoveryAccountsAndAssetsInput = record {
   accounts : vec MultiAssetAccount;
