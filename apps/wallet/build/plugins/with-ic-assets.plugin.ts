@@ -10,7 +10,7 @@ const getContentSecurityPolicy = (
 ): string => {
   const csp: Record<string, string[]> = {
     'default-src': ["'none'"],
-    'script-src': ["'self'"],
+    'script-src': ["'self'", "'wasm-unsafe-eval'"],
     'connect-src': ["'self'", 'https://icp-api.io', 'https://ic0.app', 'https://icp0.io'],
     'img-src': ["'self'", 'data:'],
     'font-src': ["'self'"],

@@ -101,6 +101,8 @@ export default {
     no_matching_results: 'Nenhum resultado encontrado para `{search}`.',
     add_new_label: 'Adicionar novo rótulo: {label}',
     user_cancel_pending_requests: 'Cancelar todos os pedidos pendentes deste usuário.',
+    error_dialog_title: 'Falha ao carregar.',
+    error_dialog_message: 'Falha ao carregar, por favor, tente novamente.',
   },
   alpha_warning: {
     version: 'Esta é uma versão alfa.',

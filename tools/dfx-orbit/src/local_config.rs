@@ -1,4 +1,6 @@
 //! Local dfx configuration of Orbit stations.
+use std::path::Path;
+
 use crate::{dfx::OrbitExtensionAgent, station::StationConfig};
 use anyhow::Context;
 use candid::Principal;
@@ -134,6 +136,15 @@ impl OrbitExtensionAgent {
     /// Gets the local stored dfx configuration for a given station.
     pub fn station(&self, name: &str) -> anyhow::Result<StationConfig> {
         let station_file = self.station_file(name)?;
+        let station: StationConfig = serde_json::from_reader(station_file)
+            .with_context(|| "Failed to parse station file")?;
+        Ok(station)
+    }
+
+    pub fn station_from_path(&self, path: &Path) -> anyhow::Result<StationConfig> {
+        let station_file = std::fs::File::open(path)
+            .with_context(|| format!("Failed to open station file at {}", path.display()))?;
+
         let station: StationConfig = serde_json::from_reader(station_file)
             .with_context(|| "Failed to parse station file")?;
         Ok(station)
