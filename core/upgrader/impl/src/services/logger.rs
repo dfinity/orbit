@@ -102,8 +102,8 @@ impl LoggerService {
 mod test {
 
     use crate::model::{
-        test::{mock_accounts, mock_assets, mock_committee},
-        DisasterRecoveryResultLog, RecoveryResult, SetAccountsLog, SetCommitteeLog,
+        test::{mock_assets, mock_committee, mock_multi_asset_accounts},
+        DisasterRecoveryResultLog, RecoveryResult, SetAccountsAndAssetsLog, SetCommitteeLog,
         UpgradeResultLog,
     };
 
@@ -121,16 +121,21 @@ mod test {
                 result: RecoveryResult::Success,
             },
         ));
-        logger_service.log(LogEntryType::SetAccounts(SetAccountsLog {
-            accounts: mock_accounts(),
-            assets: mock_assets(),
-        }));
+        logger_service.log(LogEntryType::SetAccountsAndAssets(
+            SetAccountsAndAssetsLog {
+                multi_asset_accounts: mock_multi_asset_accounts(),
+                assets: mock_assets(),
+            },
+        ));
         let result = logger_service.get_logs(None, None);
-        println!("{:?}", result);
+
         assert_eq!(result.logs.len(), 4);
         assert_eq!(result.total, 4);
         assert_eq!(result.logs[3].entry_type, "set_committee".to_owned());
-        assert_eq!(result.logs[0].entry_type, "set_accounts".to_owned());
+        assert_eq!(
+            result.logs[0].entry_type,
+            "set_accounts_and_assets".to_owned()
+        );
 
         let result = logger_service.get_logs(Some(1), Some(2));
         assert_eq!(result.logs.len(), 2);

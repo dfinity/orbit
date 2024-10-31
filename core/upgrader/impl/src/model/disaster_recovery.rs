@@ -302,11 +302,33 @@ impl From<Asset> for upgrader_api::Asset {
     }
 }
 
-type AccountSeed = [u8; 16];
-
 #[storable]
 #[derive(Clone, Debug)]
 pub struct Account {
+    /// The account id, which is a UUID.
+    pub id: UUID,
+    /// The blockchain type (e.g. `icp`, `eth`, `btc`)
+    pub blockchain: String,
+    /// The account address (e.g. `0x1234`, etc.)
+    pub address: String,
+    /// The blockchain standard (e.g. `native`, `icrc1`, `erc20`, etc.)
+    pub standard: String,
+    /// The asset symbol (e.g. `ICP`, `ETH`, `BTC`, etc.)
+    pub symbol: String,
+    /// The asset decimals (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
+    pub decimals: u32,
+    /// The account name (e.g. `My Main Account`)
+    pub name: String,
+    /// The account metadata, which is a list of key-value pairs,
+    /// where the key is unique and the first entry in the tuple,
+    /// and the value is the second entry in the tuple.
+    pub metadata: Vec<Metadata>,
+}
+
+type AccountSeed = [u8; 16];
+#[storable]
+#[derive(Clone, Debug)]
+pub struct MultiAssetAccount {
     /// The account id, which is a UUID.
     pub id: UUID,
     /// The blockchain type (e.g. `icp`, `eth`, `btc`)
@@ -327,6 +349,42 @@ impl From<upgrader_api::Account> for Account {
             id: *HelperMapper::to_uuid(value.id)
                 .expect("Invalid account ID")
                 .as_bytes(),
+            blockchain: value.blockchain,
+            address: value.address,
+            standard: value.standard,
+            symbol: value.symbol,
+            decimals: value.decimals,
+            name: value.name,
+            metadata: value.metadata.into_iter().map(Metadata::from).collect(),
+        }
+    }
+}
+
+impl From<Account> for upgrader_api::Account {
+    fn from(value: Account) -> Self {
+        upgrader_api::Account {
+            id: Uuid::from_bytes(value.id).hyphenated().to_string(),
+            blockchain: value.blockchain,
+            address: value.address,
+            standard: value.standard,
+            symbol: value.symbol,
+            decimals: value.decimals,
+            name: value.name,
+            metadata: value
+                .metadata
+                .into_iter()
+                .map(upgrader_api::MetadataDTO::from)
+                .collect(),
+        }
+    }
+}
+
+impl From<upgrader_api::MultiAssetAccount> for MultiAssetAccount {
+    fn from(value: upgrader_api::MultiAssetAccount) -> Self {
+        MultiAssetAccount {
+            id: *HelperMapper::to_uuid(value.id)
+                .expect("Invalid account ID")
+                .as_bytes(),
             assets: value
                 .assets
                 .into_iter()
@@ -343,9 +401,9 @@ impl From<upgrader_api::Account> for Account {
     }
 }
 
-impl From<Account> for upgrader_api::Account {
-    fn from(value: Account) -> Self {
-        upgrader_api::Account {
+impl From<MultiAssetAccount> for upgrader_api::MultiAssetAccount {
+    fn from(value: MultiAssetAccount) -> Self {
+        upgrader_api::MultiAssetAccount {
             id: Uuid::from_bytes(value.id).hyphenated().to_string(),
             name: value.name,
             seed: value.seed,
@@ -367,7 +425,12 @@ impl From<Account> for upgrader_api::Account {
 #[derive(Clone, Debug)]
 pub struct DisasterRecovery {
     pub accounts: Vec<Account>,
+
+    #[serde(default)]
+    pub multi_asset_accounts: Vec<MultiAssetAccount>,
+    #[serde(default)]
     pub assets: Vec<Asset>,
+
     pub committee: Option<DisasterRecoveryCommittee>,
 
     pub recovery_requests: Vec<StationRecoveryRequest>,
@@ -379,6 +442,7 @@ impl Default for DisasterRecovery {
     fn default() -> Self {
         DisasterRecovery {
             accounts: vec![],
+            multi_asset_accounts: vec![],
             assets: vec![],
             committee: None,
             recovery_requests: vec![],
@@ -396,6 +460,18 @@ impl From<DisasterRecovery> for upgrader_api::GetDisasterRecoveryStateResponse {
                 .into_iter()
                 .map(upgrader_api::Account::from)
                 .collect(),
+
+            multi_asset_accounts: value
+                .multi_asset_accounts
+                .into_iter()
+                .map(upgrader_api::MultiAssetAccount::from)
+                .collect(),
+            assets: value
+                .assets
+                .into_iter()
+                .map(upgrader_api::Asset::from)
+                .collect(),
+
             committee: value
                 .committee
                 .map(upgrader_api::DisasterRecoveryCommittee::from),
@@ -414,7 +490,7 @@ impl From<DisasterRecovery> for upgrader_api::GetDisasterRecoveryStateResponse {
 pub mod test {
     use candid::Principal;
 
-    use crate::model::Asset;
+    use crate::model::{Asset, MultiAssetAccount};
 
     use super::{Account, AdminUser, DisasterRecoveryCommittee};
 
@@ -445,12 +521,37 @@ pub mod test {
         vec![
             Account {
                 id: [1; 16],
+                blockchain: "icp".to_owned(),
+                address: "0x1234".to_owned(),
+                standard: "native".to_owned(),
+                symbol: "ICP".to_owned(),
+                decimals: 8,
+                name: "Main Account".to_owned(),
+                metadata: vec![],
+            },
+            Account {
+                id: [2; 16],
+                blockchain: "eth".to_owned(),
+                address: "0x5678".to_owned(),
+                standard: "erc20".to_owned(),
+                symbol: "ETH".to_owned(),
+                decimals: 18,
+                name: "Secondary Account".to_owned(),
+                metadata: vec![],
+            },
+        ]
+    }
+
+    pub fn mock_multi_asset_accounts() -> Vec<MultiAssetAccount> {
+        vec![
+            MultiAssetAccount {
+                id: [1; 16],
                 assets: vec![[1; 16], [2; 16]],
                 seed: [0; 16],
                 name: "Main Account".to_owned(),
                 metadata: vec![],
             },
-            Account {
+            MultiAssetAccount {
                 id: [2; 16],
                 assets: vec![[1; 16]],
                 seed: [0; 16],

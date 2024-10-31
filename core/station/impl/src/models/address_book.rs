@@ -14,7 +14,7 @@ use std::{collections::HashMap, hash::Hash};
 pub type AddressBookEntryId = UUID;
 
 /// Represents an address book entry in the system.
-#[storable]
+#[storable(skip_deserialize = true)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddressBookEntry {
     /// The address book entry id, which is a UUID.

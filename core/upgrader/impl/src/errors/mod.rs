@@ -4,6 +4,7 @@ pub enum UpgraderApiError {
     NotController,
     Unauthorized,
     DisasterRecoveryInProgress,
+    EmptyCommittee,
 }
 
 impl From<UpgraderApiError> for ApiError {
@@ -22,6 +23,11 @@ impl From<UpgraderApiError> for ApiError {
             UpgraderApiError::DisasterRecoveryInProgress => ApiError {
                 code: "DISASTER_RECOVERY_IN_PROGRESS".to_owned(),
                 message: Some("Disaster recovery is in progress.".to_owned()),
+                details: None,
+            },
+            UpgraderApiError::EmptyCommittee => ApiError {
+                code: "EMPTY_COMMITTEE".to_owned(),
+                message: Some("Committee cannot be empty.".to_owned()),
                 details: None,
             },
         }

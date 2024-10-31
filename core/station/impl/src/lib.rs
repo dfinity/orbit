@@ -14,6 +14,7 @@ pub mod jobs;
 mod macros;
 pub mod mappers;
 pub mod migration;
+pub mod migration_tests;
 pub mod models;
 pub mod repositories;
 pub mod services;

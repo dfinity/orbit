@@ -44,6 +44,28 @@ pub struct DisasterRecoveryCommittee {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct Account {
+    /// The account id, which is a UUID.
+    pub id: UuidDTO,
+    /// The blockchain type (e.g. `icp`, `eth`, `btc`)
+    pub blockchain: String,
+    /// The account address (e.g. `0x1234`, etc.)
+    pub address: String,
+    /// The blockchain standard (e.g. `native`, `icrc1`, `erc20`, etc.)
+    pub standard: String,
+    /// The asset symbol (e.g. `ICP`, `ETH`, `BTC`, etc.)
+    pub symbol: String,
+    /// The asset decimals (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
+    pub decimals: u32,
+    /// The account name (e.g. `My Main Account`)
+    pub name: String,
+    /// The account metadata, which is a list of key-value pairs,
+    /// where the key is unique and the first entry in the tuple,
+    /// and the value is the second entry in the tuple.
+    pub metadata: Vec<MetadataDTO>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Asset {
     /// The asset id, which is a UUID.
     pub id: UuidDTO,
@@ -65,7 +87,7 @@ pub struct Asset {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct Account {
+pub struct MultiAssetAccount {
     /// The account id, which is a UUID.
     pub id: UuidDTO,
     /// The seed for address generation.
@@ -96,6 +118,12 @@ pub struct GetDisasterRecoveryAccountsResponse {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct GetDisasterRecoveryAccountsAndAssetsResponse {
+    pub accounts: Vec<MultiAssetAccount>,
+    pub assets: Vec<Asset>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct GetDisasterRecoveryCommitteeResponse {
     pub committee: Option<DisasterRecoveryCommittee>,
 }
@@ -108,6 +136,11 @@ pub struct SetDisasterRecoveryCommitteeInput {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct SetDisasterRecoveryAccountsInput {
     pub accounts: Vec<Account>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct SetDisasterRecoveryAccountsAndAssetsInput {
+    pub accounts: Vec<MultiAssetAccount>,
     pub assets: Vec<Asset>,
 }
 
@@ -204,6 +237,9 @@ pub enum RecoveryResult {
 pub struct GetDisasterRecoveryStateResponse {
     pub committee: Option<DisasterRecoveryCommittee>,
     pub accounts: Vec<Account>,
+
+    pub multi_asset_accounts: Vec<MultiAssetAccount>,
+    pub assets: Vec<Asset>,
 
     pub recovery_requests: Vec<StationRecoveryRequest>,
     pub recovery_status: RecoveryStatus,

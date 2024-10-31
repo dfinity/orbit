@@ -11,9 +11,9 @@ use crate::{
     factories::blockchains::InternetComputer,
     models::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
-        AccountKey, CanisterInstallMode, CanisterUpgradeModeArgs, CycleObtainStrategy,
-        ManageSystemInfoOperationInput, RequestId, RequestKey, RequestOperation, RequestStatus,
-        SystemUpgradeTarget, WasmModuleExtraChunks,
+        AccountKey, Asset, Blockchain, CanisterInstallMode, CanisterUpgradeModeArgs,
+        CycleObtainStrategy, ManageSystemInfoOperationInput, Metadata, RequestId, RequestKey,
+        RequestOperation, RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, RequestRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY,
@@ -37,9 +37,16 @@ use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
 use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
-use std::sync::Arc;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    sync::Arc,
+};
 use upgrader_api::UpgradeParams;
 use uuid::Uuid;
+
+pub const INITIAL_ICP_ASSET_ID: [u8; 16] = [
+    0x78, 0x02, 0xcb, 0xab, 0x22, 0x1d, 0x4e, 0x49, 0xb7, 0x64, 0xa6, 0x95, 0xea, 0x6d, 0xef, 0x1a,
+];
 
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> = Arc::new(SystemService::new(
@@ -47,6 +54,25 @@ lazy_static! {
         Arc::clone(&REQUEST_SERVICE),
         Arc::clone(&CHANGE_CANISTER_SERVICE)
     ));
+    pub static ref INITIAL_ICP_ASSET: Asset = Asset {
+        id: INITIAL_ICP_ASSET_ID,
+        blockchain: Blockchain::InternetComputer,
+        decimals: 8,
+        name: "Internet Computer".to_string(),
+        symbol: "ICP".to_string(),
+
+        standards: BTreeSet::from([TokenStandard::InternetComputerNative, TokenStandard::ICRC1,]),
+        metadata: Metadata::new(BTreeMap::from([
+            (
+                "ledger_canister_id".to_string(),
+                "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+            ),
+            (
+                "index_canister_id".to_string(),
+                "qhbym-qaaaa-aaaaa-aaafq-cai".to_string(),
+            ),
+        ])),
+    };
 }
 
 #[derive(Default, Debug)]
@@ -520,12 +546,8 @@ impl SystemService {
 }
 
 mod init_canister_sync_handlers {
-    use std::collections::{BTreeMap, BTreeSet};
-
     use crate::core::ic_cdk::{api::print, next_time};
-    use crate::models::{
-        AddUserOperationInput, Asset, Blockchain, Metadata, TokenStandard, UserStatus,
-    };
+    use crate::models::{AddUserOperationInput, Asset, UserStatus};
     use crate::repositories::ASSET_REPOSITORY;
     use crate::services::USER_SERVICE;
     use crate::{
@@ -537,6 +559,8 @@ mod init_canister_sync_handlers {
     use orbit_essentials::repository::Repository;
     use station_api::AdminInitInput;
     use uuid::Uuid;
+
+    use super::INITIAL_ICP_ASSET;
 
     pub fn add_admin_group() {
         // adds the admin group which is used as the default group for admins during the canister instantiation
@@ -551,27 +575,7 @@ mod init_canister_sync_handlers {
     }
 
     pub fn add_initial_assets() {
-        let initial_assets: Vec<Asset> = vec![Asset {
-            blockchain: Blockchain::InternetComputer,
-            standards: BTreeSet::from([
-                TokenStandard::InternetComputerNative,
-                TokenStandard::ICRC1,
-            ]),
-            symbol: "ICP".to_string(),
-            name: "Internet Computer".to_string(),
-            metadata: Metadata::new(BTreeMap::from([
-                (
-                    "ledger_canister_id".to_string(),
-                    "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
-                ),
-                (
-                    "index_canister_id".to_string(),
-                    "qhbym-qaaaa-aaaaa-aaafq-cai".to_string(),
-                ),
-            ])),
-            decimals: 8,
-            id: Uuid::new_v4().as_bytes().to_owned(),
-        }];
+        let initial_assets: Vec<Asset> = vec![INITIAL_ICP_ASSET.clone()];
 
         for asset in initial_assets {
             print(format!("Adding initial asset: {}", asset.name));
