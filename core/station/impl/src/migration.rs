@@ -333,15 +333,16 @@ impl<'de> Deserialize<'de> for Account {
                 balance: pre_migration_entry.balance.unwrap_or(None),
             }]),
             addresses: pre_migration_entry.addresses.unwrap_or_else(|| {
+                let blockchain = InternetComputer::create();
                 vec![
                     AccountAddress {
-                        address: pre_migration_entry.address.unwrap_or(
-                            InternetComputer::create().generate_account_identifier(&seed),
-                        ),
+                        address: pre_migration_entry
+                            .address
+                            .unwrap_or(blockchain.generate_account_identifier(&seed)),
                         format: AddressFormat::ICPAccountIdentifier,
                     },
                     AccountAddress {
-                        address: InternetComputer::create().generate_icrc1_address(&seed),
+                        address: blockchain.generate_icrc1_address(&seed),
                         format: AddressFormat::ICRC1Account,
                     },
                 ]
