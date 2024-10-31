@@ -459,7 +459,6 @@ fn assert_can_list_request_policies(
 
     let res = res.0.unwrap();
 
-
     assert_eq!(res.total as usize, expected);
 }
 
