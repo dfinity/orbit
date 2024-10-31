@@ -99,23 +99,31 @@ pub struct DisasterRecoveryService {
 }
 
 impl DisasterRecoveryService {
-    pub fn set_committee(&self, committee: DisasterRecoveryCommittee) -> ServiceResult {
-        let mut value = self.storage.get();
-
+    fn ensure_not_in_progress(
+        logger: &Arc<LoggerService>,
+        value: &mut DisasterRecovery,
+        operation: &str,
+    ) -> ServiceResult {
         if let RecoveryStatus::InProgress { since } = &value.recovery_status {
             let log = DisasterRecoveryInProgressLog {
-                operation: "set_committee".to_owned(),
+                operation: operation.to_owned(),
             };
             if since + DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS > time() {
-                self.logger
-                    .log(LogEntryType::DisasterRecoveryInProgress(log));
+                logger.log(LogEntryType::DisasterRecoveryInProgress(log));
                 return Err(UpgraderApiError::DisasterRecoveryInProgress.into());
             }
 
-            self.logger
-                .log(LogEntryType::DisasterRecoveryInProgressExpired(log));
+            logger.log(LogEntryType::DisasterRecoveryInProgressExpired(log));
             value.recovery_status = RecoveryStatus::Idle;
         }
+
+        Ok(())
+    }
+
+    pub fn set_committee(&self, committee: DisasterRecoveryCommittee) -> ServiceResult {
+        let mut value = self.storage.get();
+
+        Self::ensure_not_in_progress(&self.logger, &mut value, "set_committee")?;
 
         // Ensure committee is not empty due to some error
         if committee.users.is_empty() {
@@ -135,20 +143,7 @@ impl DisasterRecoveryService {
     pub fn set_accounts(&self, accounts: Vec<Account>) -> ServiceResult {
         let mut value = self.storage.get();
 
-        if let RecoveryStatus::InProgress { since } = &value.recovery_status {
-            let log = DisasterRecoveryInProgressLog {
-                operation: "set_accounts".to_owned(),
-            };
-            if since + DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS > time() {
-                self.logger
-                    .log(LogEntryType::DisasterRecoveryInProgress(log));
-                return Err(UpgraderApiError::DisasterRecoveryInProgress.into());
-            }
-
-            self.logger
-                .log(LogEntryType::DisasterRecoveryInProgressExpired(log));
-            value.recovery_status = RecoveryStatus::Idle;
-        }
+        Self::ensure_not_in_progress(&self.logger, &mut value, "set_accounts")?;
 
         value.accounts = accounts.clone();
 
@@ -167,20 +162,7 @@ impl DisasterRecoveryService {
     ) -> ServiceResult {
         let mut value = self.storage.get();
 
-        if let RecoveryStatus::InProgress { since } = &value.recovery_status {
-            let log = DisasterRecoveryInProgressLog {
-                operation: "set_accounts_and_assets".to_owned(),
-            };
-            if since + DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS > time() {
-                self.logger
-                    .log(LogEntryType::DisasterRecoveryInProgress(log));
-                return Err(UpgraderApiError::DisasterRecoveryInProgress.into());
-            }
-
-            self.logger
-                .log(LogEntryType::DisasterRecoveryInProgressExpired(log));
-            value.recovery_status = RecoveryStatus::Idle;
-        }
+        Self::ensure_not_in_progress(&self.logger, &mut value, "set_accounts_and_assets")?;
 
         value.multi_asset_accounts = multi_asset_accounts.clone();
         value.assets = assets.clone();
@@ -296,18 +278,8 @@ impl DisasterRecoveryService {
             },
         ));
 
-        if let RecoveryStatus::InProgress { since } = &value.recovery_status {
-            let log = DisasterRecoveryInProgressLog {
-                operation: "do_recovery".to_owned(),
-            };
-
-            if since + DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS > time() {
-                logger.log(LogEntryType::DisasterRecoveryInProgress(log));
-                return;
-            }
-
-            logger.log(LogEntryType::DisasterRecoveryInProgressExpired(log));
-            value.recovery_status = RecoveryStatus::Idle;
+        if Self::ensure_not_in_progress(&logger, &mut value, "do_recovery").is_err() {
+            return;
         }
 
         let Some(station_canister_id) =
