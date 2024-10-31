@@ -112,7 +112,7 @@ type GetDisasterRecoveryAccountsResponse = record {
   accounts : vec Account;
 };
 
-// Response to a successful get_disaster_recovery_accounts query.
+// Response to a successful get_disaster_recovery_accounts_and_assets query.
 type GetDisasterRecoveryAccountsAndAssetsResponse = record {
   accounts : vec MultiAssetAccount;
   assets : vec Asset;
