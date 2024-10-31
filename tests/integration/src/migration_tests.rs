@@ -459,9 +459,6 @@ fn assert_can_list_request_policies(
 
     let res = res.0.unwrap();
 
-    // res.policies
-    //     .iter()
-    //     .for_each(|p| println!("{:?}-{:?}", p.specifier, p.rule));
 
     assert_eq!(res.total as usize, expected);
 }
