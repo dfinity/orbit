@@ -169,7 +169,7 @@ impl DisasterRecoveryService {
 
         if let RecoveryStatus::InProgress { since } = &value.recovery_status {
             let log = DisasterRecoveryInProgressLog {
-                operation: "set_accounts".to_owned(),
+                operation: "set_accounts_and_assets".to_owned(),
             };
             if since + DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS > time() {
                 self.logger

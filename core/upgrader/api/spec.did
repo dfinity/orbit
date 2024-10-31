@@ -112,7 +112,7 @@ type GetDisasterRecoveryAccountsResponse = record {
   accounts : vec Account;
 };
 
-// Response to a successful get_disaster_recovery_accounts query.
+// Response to a successful get_disaster_recovery_accounts_and_assets query.
 type GetDisasterRecoveryAccountsAndAssetsResponse = record {
   accounts : vec MultiAssetAccount;
   assets : vec Asset;
@@ -265,7 +265,7 @@ type GetDisasterRecoveryStateResponse = record {
   committee : opt DisasterRecoveryCommittee;
   // The backup of the legacy station accounts.
   accounts : vec Account;
-  // The backup of the legacy station accounts.
+  // The backup of the station multi asset accounts.
   multi_asset_accounts : vec MultiAssetAccount;
   // The backup of the station assets.
   assets : vec Asset;
