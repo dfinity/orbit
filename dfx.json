@@ -63,6 +63,12 @@
       "type": "assets",
       "source": ["apps/wallet/dist/"],
       "build": "pnpm --filter 'wallet-dapp' build"
+    },
+    "wasm_chunk_store": {
+      "type": "custom",
+      "candid": "./wasms/assetstorage.did",
+      "build": "./scripts/download-asset-canister-wasm.sh",
+      "wasm": "./wasms/assetstorage.wasm.gz"
     }
   },
   "defaults": {
