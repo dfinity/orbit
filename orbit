@@ -26,7 +26,7 @@ IDENTITY_PEM_PATH=${IDENTITY_PEM_PATH:-""}
 # Path to the dfx.json file
 DFX_JSON_PATH=${DFX_JSON_PATH:-"dfx.json"}
 
-. "$(dirname "$0")/utils.sh"
+. "$(dirname "$0")/scripts/utils.sh"
 
 #############################################
 # USAGE                                     #
