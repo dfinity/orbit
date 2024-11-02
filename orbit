@@ -187,7 +187,7 @@ function install_control_panel() {
   dfx build control_panel
   dfx canister install control_panel
   dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; station_wasm_module_extra_chunks = null; })")
-  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = null; station_wasm_module_extra_chunks = opt opt record { store_canister = principal\"$wasm_chunk_store_id=\"; extra_chunks_key = \"/station.wasm.gz\"; wasm_module_hash = blob\"$station_wasm_module_hash\" } })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = null; station_wasm_module_extra_chunks = opt opt record { store_canister = principal\"$wasm_chunk_store_id\"; extra_chunks_key = \"/station.wasm.gz\"; wasm_module_hash = blob\"$station_wasm_module_hash\" } })")
 }
 
 function setup_control_panel() {
@@ -213,7 +213,7 @@ function upgrade_control_panel() {
   dfx build control_panel
   dfx canister install control_panel --mode upgrade --yes
   dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; station_wasm_module_extra_chunks = null; })")
-  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = null; station_wasm_module_extra_chunks = opt opt record { store_canister = principal\"$wasm_chunk_store_id=\"; extra_chunks_key = \"/station.wasm.gz\"; wasm_module_hash = blob\"$station_wasm_module_hash\" } })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = null; station_wasm_module_extra_chunks = opt opt record { store_canister = principal\"$wasm_chunk_store_id\"; extra_chunks_key = \"/station.wasm.gz\"; wasm_module_hash = blob\"$station_wasm_module_hash\" } })")
 }
 
 function uninstall_app_wallet() {
