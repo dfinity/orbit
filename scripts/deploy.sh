@@ -34,15 +34,7 @@ function identity_warning_confirmation() {
   echo "WARNING: You are about to deploy to the IC with the \"$network\" network, this will use your active identity."
   echo -e "\e[0m"
 
-  identity=$(dfx identity whoami)
-
-  if [ -z "$identity" ]; then
-    echo "No identity found, please login to your dfx environment."
-    exit 1
-  fi
-
-  echo "Current identity: $identity"
-  echo
+  set_identity_pem_path
 
   read -p "Do you want to continue? [y/N]: " confirmation
 
@@ -51,8 +43,6 @@ function identity_warning_confirmation() {
     echo "Deployment cancelled."
     exit 1
   fi
-
-  set_identity_pem_path "$identity"
 }
 
 function usage() {

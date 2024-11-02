@@ -166,18 +166,7 @@ function uninstall_control_panel() {
 
 function install_control_panel() {
   install_icx_asset
-
-  identity=$(dfx identity whoami)
-
-  if [ -z "$identity" ]; then
-    echo "No identity found, please login to your dfx environment."
-    exit 1
-  fi
-
-  echo "Current identity: $identity"
-  echo
-    
-  set_identity_pem_path "$identity"
+  set_identity_pem_path
 
   # Builds the dependencies and generates the WASM files
   build_wasm upgrader
