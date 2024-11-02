@@ -100,14 +100,7 @@ function setup_enviroment() {
 
   setup_cycles_wallet
 
-  if ! command -v icx-asset >/dev/null 2>&1; then
-    echo "icx-asset not found, installing..."
-
-    cargo install icx-asset --version 0.21.0
-
-    echo "icx-asset installed successfully."
-
-  fi
+  install_icx_asset
 }
 
 function get_subnet_type() {

@@ -87,3 +87,14 @@ function set_identity_pem_path() {
     exit 1
   fi
 }
+
+function install_icx_asset() {
+  if ! command -v icx-asset >/dev/null 2>&1; then
+    echo "icx-asset not found, installing..."
+
+    cargo install icx-asset --version 0.21.0
+
+    echo "icx-asset installed successfully."
+
+  fi
+}

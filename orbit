@@ -165,14 +165,7 @@ function uninstall_control_panel() {
 }
 
 function install_control_panel() {
-  if ! command -v icx-asset >/dev/null 2>&1; then
-    echo "icx-asset not found, installing..."
-
-    cargo install icx-asset --version 0.21.0
-
-    echo "icx-asset installed successfully."
-
-  fi
+  install_icx_asset
 
   identity=$(dfx identity whoami)
 
@@ -204,7 +197,7 @@ function install_control_panel() {
   dfx canister create --specified-id $CANISTER_ID_CONTROL_PANEL control_panel
   dfx build control_panel
   dfx canister install control_panel
-  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; station_wasm_module_extra_chunks = null; })")
   dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = null; station_wasm_module_extra_chunks = opt opt record { store_canister = principal\"$wasm_chunk_store_id=\"; extra_chunks_key = \"/station.wasm.gz\"; wasm_module_hash = blob\"$station_wasm_module_hash\" } })")
 }
 
