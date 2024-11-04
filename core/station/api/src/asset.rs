@@ -51,7 +51,6 @@ pub struct EditAssetOperationInput {
     pub blockchain: Option<String>,
     pub standards: Option<Vec<String>>,
     pub symbol: Option<String>,
-    pub decimals: Option<u32>,
     pub change_metadata: Option<ChangeMetadataDTO>,
 }
 

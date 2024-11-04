@@ -114,7 +114,6 @@ pub struct EditAssetOperationInput {
     pub asset_id: AssetId,
     pub name: Option<String>,
     pub symbol: Option<String>,
-    pub decimals: Option<u32>,
     pub change_metadata: Option<ChangeMetadata>,
     pub blockchain: Option<Blockchain>,
     pub standards: Option<Vec<TokenStandard>>,

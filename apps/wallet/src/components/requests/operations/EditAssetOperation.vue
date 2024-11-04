@@ -95,10 +95,6 @@ const fetchDetails = async () => {
     entry.symbol = props.operation.input.symbol[0];
   }
 
-  if (props.operation.input.decimals !== undefined) {
-    entry.decimals = props.operation.input.decimals[0];
-  }
-
   if (props.operation.input.standards && props.operation.input.standards.length > 0) {
     entry.standards = props.operation.input.standards[0];
   }
