@@ -199,7 +199,7 @@ impl EnsureExternalCanister {
     pub fn is_external_canister(
         principal: Principal,
     ) -> Result<(), ExternalCanisterValidationError> {
-        // todo: look into Asset repository and exclude the ledger_canister_id's
+        // todo: add a mutable denylist for external canisters
         if principal == Principal::management_canister()
             || principal == ic_cdk::api::id()
             || principal == MAINNET_LEDGER_CANISTER_ID
