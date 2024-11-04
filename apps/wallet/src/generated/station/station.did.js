@@ -381,7 +381,6 @@ export const idlFactory = ({ IDL }) => {
     'ReplaceAllBy' : IDL.Vec(AssetMetadata),
   });
   const EditAssetOperationInput = IDL.Record({
-    'decimals' : IDL.Opt(IDL.Nat32),
     'standards' : IDL.Opt(IDL.Vec(IDL.Text)),
     'name' : IDL.Opt(IDL.Text),
     'blockchain' : IDL.Opt(IDL.Text),
@@ -1181,6 +1180,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ListAddressBookEntriesInput = IDL.Record({
     'ids' : IDL.Opt(IDL.Vec(UUID)),
+    'address_formats' : IDL.Opt(IDL.Vec(IDL.Text)),
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'blockchain' : IDL.Opt(IDL.Text),
     'addresses' : IDL.Opt(IDL.Vec(IDL.Text)),

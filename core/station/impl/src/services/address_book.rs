@@ -87,6 +87,7 @@ impl AddressBookService {
                 addresses: input.addresses,
                 blockchain: input.blockchain,
                 labels: input.labels,
+                address_formats: input.address_formats,
             });
 
         Ok(paginated_items(PaginatedItemsArgs {

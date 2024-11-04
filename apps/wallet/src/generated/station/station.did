@@ -1711,6 +1711,8 @@ type ListAddressBookEntriesInput = record {
   blockchain : opt text;
   // The labels to search for, if provided only address book entries with the given labels will be returned.
   labels : opt vec text;
+  // The address formats to search for.
+  address_formats : opt vec text;
   // The pagination parameters.
   paginate : opt PaginationInput;
 };
@@ -1754,9 +1756,7 @@ type Asset = record {
   symbol : AssetSymbol;
   // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
   name : text;
-  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
-  // also, in the case of non-native assets, it can contain other required
-  // information (e.g. `{"address": "0x1234"}`).
+  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`).
   metadata : vec AssetMetadata;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
   decimals : nat32;
@@ -2239,9 +2239,7 @@ type AddAssetOperationInput = record {
   symbol : AssetSymbol;
   // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
   name : text;
-  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
-  // also, in the case of non-native assets, it can contain other required
-  // information (e.g. `{"address": "0x1234"}`).
+  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`).
   metadata : vec AssetMetadata;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
   decimals : nat32;
@@ -2265,8 +2263,6 @@ type EditAssetOperationInput = record {
   standards : opt vec text;
   // The asset symbol, e.g. "ICP" or "BTC".
   symbol : opt AssetSymbol;
-  // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
-  decimals : opt nat32;
   // The metadata to change.
   change_metadata : opt ChangeMetadata;
 };

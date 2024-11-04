@@ -146,6 +146,7 @@ export interface ListAddressBookEntriesArgs {
   blockchain?: string;
   labels?: [];
   ids?: UUID[];
+  address_formats?: string[];
 }
 
 export interface ListAssetsArgs {

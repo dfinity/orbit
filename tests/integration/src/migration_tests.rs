@@ -388,6 +388,7 @@ fn assert_can_list_address_book_entries(
             blockchain: None,
             labels: None,
             addresses: None,
+            address_formats: None,
             ids: None,
             paginate: Some(station_api::PaginationInput {
                 offset: Some(0),

@@ -132,6 +132,7 @@ fn address_book_entry_lifecycle() {
         addresses: None,
         ids: None,
         paginate: None,
+        address_formats: None,
     };
     let res: (Result<ListAddressBookEntriesResponseDTO, ApiErrorDTO>,) = update_candid_as(
         &env,
@@ -205,6 +206,7 @@ fn address_book_entry_lifecycle() {
         addresses: None,
         ids: None,
         paginate: None,
+        address_formats: None,
     };
     let res: (Result<ListAddressBookEntriesResponseDTO, ApiErrorDTO>,) = update_candid_as(
         &env,

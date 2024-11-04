@@ -77,6 +77,7 @@ pub struct ListAddressBookEntriesInputDTO {
     pub blockchain: Option<String>,
     pub labels: Option<Vec<String>>,
     pub paginate: Option<PaginationInput>,
+    pub address_formats: Option<Vec<String>>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

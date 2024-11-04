@@ -1711,6 +1711,8 @@ type ListAddressBookEntriesInput = record {
   blockchain : opt text;
   // The labels to search for, if provided only address book entries with the given labels will be returned.
   labels : opt vec text;
+  // The address formats to search for.
+  address_formats : opt vec text;
   // The pagination parameters.
   paginate : opt PaginationInput;
 };
