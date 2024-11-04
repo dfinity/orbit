@@ -171,11 +171,11 @@ lazy_static! {
             Resource::Asset(ResourceAction::Create),
         ),
         (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Allow::authenticated(),
             Resource::Asset(ResourceAction::List),
         ),
         (
-            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Allow::authenticated(),
             Resource::Asset(ResourceAction::Read(ResourceId::Any)),
         ),
         (
