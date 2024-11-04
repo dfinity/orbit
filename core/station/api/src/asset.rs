@@ -18,9 +18,7 @@ pub struct AssetDTO {
     pub standards: Vec<String>,
     /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
     pub name: String,
-    /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
-    /// also, in the case of non-native assets, it can contain other required
-    /// information (e.g. `{"address": "0x1234"}`).
+    /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`).
     pub metadata: Vec<MetadataDTO>,
 }
 

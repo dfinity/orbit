@@ -1754,9 +1754,7 @@ type Asset = record {
   symbol : AssetSymbol;
   // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
   name : text;
-  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
-  // also, in the case of non-native assets, it can contain other required
-  // information (e.g. `{"address": "0x1234"}`).
+  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`).
   metadata : vec AssetMetadata;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
   decimals : nat32;
@@ -2239,9 +2237,7 @@ type AddAssetOperationInput = record {
   symbol : AssetSymbol;
   // The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
   name : text;
-  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
-  // also, in the case of non-native assets, it can contain other required
-  // information (e.g. `{"address": "0x1234"}`).
+  // The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`).
   metadata : vec AssetMetadata;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
   decimals : nat32;
