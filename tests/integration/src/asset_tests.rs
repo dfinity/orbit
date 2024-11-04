@@ -1,3 +1,5 @@
+use candid::Principal;
+
 use crate::{
     setup::{setup_new_env, WALLET_ADMIN_USER},
     test_data::{
@@ -93,8 +95,29 @@ fn asset_permission_test() {
     let user = add_user(&env, canister_ids.station, WALLET_ADMIN_USER, vec![]);
 
     list_assets(&env, canister_ids.station, user.identities[0])
-        .expect_err("User should not be able to list assets");
+        .expect("Station user should be able to list assets")
+        .0
+        .expect("Station user should be able to list assets");
 
-    get_asset(&env, canister_ids.station, user.identities[0], asset.id)
-        .expect_err("User should not be able to get asset");
+    list_assets(&env, canister_ids.station, Principal::anonymous())
+        .expect_err("Unauthenticated user should not be able to list assets");
+
+    get_asset(
+        &env,
+        canister_ids.station,
+        Principal::anonymous(),
+        asset.id.clone(),
+    )
+    .expect_err("Unauthenticated user should not be able to get asset");
+
+    list_assets(&env, canister_ids.station, Principal::from_slice(&[0; 29]))
+        .expect_err("Unauthorized user should not be able to list assets");
+
+    get_asset(
+        &env,
+        canister_ids.station,
+        Principal::from_slice(&[0; 29]),
+        asset.id,
+    )
+    .expect_err("Unauthorized user should not be able to get asset");
 }
