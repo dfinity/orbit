@@ -28,9 +28,7 @@ pub struct Asset {
     pub name: String,
     /// The number of decimal places that the asset supports (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
     pub decimals: u32,
-    /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`),
-    /// also, in the case of non-native assets, it can contain other required
-    /// information (e.g. `{"address": "0x1234"}`).
+    /// The asset metadata (e.g. `{"logo": "https://example.com/logo.png"}`).
     pub metadata: Metadata,
 }
 

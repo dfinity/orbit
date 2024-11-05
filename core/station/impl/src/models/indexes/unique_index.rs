@@ -19,8 +19,8 @@ pub enum UniqueIndexKey {
     UserIdentity(Principal),
     UserName(String),
     AssetSymbolBlockchain(
-        String, // Symbol
         String, // Blockchain
+        String, // Symbol
     ),
 }
 

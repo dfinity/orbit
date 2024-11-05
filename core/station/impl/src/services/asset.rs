@@ -84,10 +84,6 @@ impl AssetService {
             asset.symbol = symbol;
         }
 
-        if let Some(decimals) = input.decimals {
-            asset.decimals = decimals;
-        }
-
         if let Some(change_metadata) = input.change_metadata {
             asset.metadata.change(change_metadata);
         }
@@ -227,7 +223,6 @@ mod tests {
                 asset_id: mock_asset.id,
                 name: Some("Internet Computer".to_string()),
                 symbol: Some("ICP".to_string()),
-                decimals: Some(8),
                 change_metadata: None,
                 blockchain: None,
                 standards: None,

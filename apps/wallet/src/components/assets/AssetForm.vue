@@ -69,7 +69,7 @@
         :label="$t('pages.assets.forms.decimals')"
         variant="filled"
         density="comfortable"
-        :disabled="isViewMode"
+        :disabled="isViewMode || !!model.id"
         :prepend-icon="mdiDecimal"
         :rules="[requiredRule]"
       />

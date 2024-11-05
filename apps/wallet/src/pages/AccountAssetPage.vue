@@ -407,7 +407,6 @@ const loadTransfers = async (): Promise<
   ) {
     return [];
   }
-  // const firstAddress = addresses.value[0];
   const transfers = await chainApi.value.fetchTransfers({
     fromDt: convertDate(filters.value.created.from, {
       time: 'start-of-day',
