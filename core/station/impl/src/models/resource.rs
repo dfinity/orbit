@@ -627,25 +627,9 @@ impl Resource {
 
             Resource::Asset(action) => match action {
                 ResourceAction::Create => vec![Resource::Asset(ResourceAction::Create)],
-                ResourceAction::Delete(ResourceId::Id(id)) => {
-                    vec![
-                        Resource::Asset(ResourceAction::Delete(ResourceId::Id(*id))),
-                        Resource::Asset(ResourceAction::Delete(ResourceId::Any)),
-                    ]
-                }
                 ResourceAction::List => vec![Resource::Asset(ResourceAction::List)],
-                ResourceAction::Read(ResourceId::Id(id)) => {
-                    vec![
-                        Resource::Asset(ResourceAction::Read(ResourceId::Id(*id))),
-                        Resource::Asset(ResourceAction::Read(ResourceId::Any)),
-                    ]
-                }
-                ResourceAction::Update(ResourceId::Id(id)) => {
-                    vec![
-                        Resource::Asset(ResourceAction::Update(ResourceId::Id(*id))),
-                        Resource::Asset(ResourceAction::Update(ResourceId::Any)),
-                    ]
-                }
+
+                // Any resource id
                 ResourceAction::Update(ResourceId::Any) => {
                     vec![Resource::Asset(ResourceAction::Update(ResourceId::Any))]
                 }
@@ -654,6 +638,35 @@ impl Resource {
                 }
                 ResourceAction::Delete(ResourceId::Any) => {
                     vec![Resource::Asset(ResourceAction::Delete(ResourceId::Any))]
+                }
+
+                // Specific resource id
+                ResourceAction::Delete(ResourceId::Id(id)) => {
+                    let mut associated_resources =
+                        Resource::Asset(ResourceAction::Delete(ResourceId::Any)).to_expanded_list();
+
+                    associated_resources
+                        .push(Resource::Asset(ResourceAction::Delete(ResourceId::Id(*id))));
+
+                    associated_resources
+                }
+                ResourceAction::Read(ResourceId::Id(id)) => {
+                    let mut associated_resources =
+                        Resource::Asset(ResourceAction::Read(ResourceId::Any)).to_expanded_list();
+
+                    associated_resources
+                        .push(Resource::Asset(ResourceAction::Read(ResourceId::Id(*id))));
+
+                    associated_resources
+                }
+                ResourceAction::Update(ResourceId::Id(id)) => {
+                    let mut associated_resources =
+                        Resource::Asset(ResourceAction::Update(ResourceId::Any)).to_expanded_list();
+
+                    associated_resources
+                        .push(Resource::Asset(ResourceAction::Update(ResourceId::Id(*id))));
+
+                    associated_resources
                 }
             },
         }
