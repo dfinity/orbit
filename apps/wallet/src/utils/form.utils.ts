@@ -1,6 +1,7 @@
 import { Principal } from '@dfinity/principal';
 import isUUID from 'validator/es/lib/isUUID';
 import { i18n } from '~/plugins/i18n.plugin';
+import { detectAddressFormat } from './asset.utils';
 
 export const requiredRule = (value: unknown): string | boolean => {
   if (value === null || value === undefined || value === '') {
@@ -241,3 +242,25 @@ export const validEmail = (value: unknown): string | boolean => {
 
   return true;
 };
+
+export const validAddress =
+  (blockchain: string) =>
+  (value: unknown): string | boolean => {
+    const hasValue = !!value;
+    if (!hasValue) {
+      // this rule only applies if there is a value
+      return true;
+    }
+
+    if (typeof value !== 'string') {
+      return i18n.global.t('forms.rules.validAddress');
+    }
+
+    try {
+      if (detectAddressFormat(blockchain, value) !== undefined) {
+        return true;
+      }
+    } catch {}
+
+    return i18n.global.t('forms.rules.validAddress');
+  };

@@ -760,6 +760,7 @@ export default {
       numberRange: 'Este campo deve estar entre {min} e {max}.',
       invalidDecimalPlaces: 'Este campo deve ter no máximo {decimals} casas decimais.',
       isHex: 'Este campo deve conter um valor hexadecimal válido.',
+      validAddress: 'Este campo deve conter um endereço válido.',
     },
   },
   navigation: {

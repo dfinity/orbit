@@ -20,7 +20,7 @@
       :readonly="isViewMode"
       type="text"
       :prepend-icon="mdiSend"
-      :rules="[requiredRule]"
+      :rules="[requiredRule, addressValidator]"
       data-test-id="transfer-form-destination-address"
     />
     <VTextField
@@ -48,7 +48,7 @@ import { computed, ref, toRefs, watch } from 'vue';
 import { VForm, VTextField } from 'vuetify/components';
 import { Account, Asset, Transfer } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
-import { requiredRule, validTokenAmount } from '~/utils/form.utils';
+import { requiredRule, validAddress, validTokenAmount } from '~/utils/form.utils';
 import { amountToBigInt, formatBalance } from '~/utils/helper.utils';
 
 export type TransferFormProps = {
@@ -86,6 +86,8 @@ const emit = defineEmits<{
 
 const model = computed(() => props.modelValue.value);
 watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });
+
+const addressValidator = computed(() => validAddress(input.asset.blockchain));
 
 const amountInput = ref<HTMLInputElement | null>(null);
 const amount = ref<string | undefined>(undefined);
