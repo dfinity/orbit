@@ -137,12 +137,13 @@ impl AddressBookEntry {
     }
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ListAddressBookEntriesInput {
     pub ids: Option<Vec<UUID>>,
     pub addresses: Option<Vec<String>>,
     pub blockchain: Option<Blockchain>,
     pub labels: Option<Vec<String>>,
+    pub address_formats: Option<Vec<AddressFormat>>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
