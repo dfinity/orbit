@@ -11,9 +11,13 @@ import {
 import { flushPromises } from '@vue/test-utils';
 import { services } from '~/plugins/services.plugin';
 import { ExtractOk } from '~/types/helper.types';
+import { AddressFormat } from '~/types/chain.types';
+
+const validIcpAddress = '5c76bc95e544204de4928e4d901e52b49df248b9c346807040e7af75aa61f4b3';
 
 vi.mock('~/utils/asset.utils', () => ({
   detectAddressStandard: vi.fn(() => 'icp_native'),
+  detectAddressFormat: vi.fn(() => AddressFormat.ICPNative),
 }));
 
 vi.mock('~/services/station.service', () => ({
@@ -112,21 +116,20 @@ describe('TransferDialog', () => {
 
     const submitButton = form.find(`[data-test-id="transfer-dialog-save-button"]`);
 
-    amount.find('input').setValue('1');
-    destination.find('input').setValue('destination address');
-    summary.find('input').setValue('test summary');
+    await amount.find('input').setValue('1');
+    await destination.find('input').setValue(validIcpAddress);
+    await summary.find('input').setValue('test summary');
 
     await flushPromises();
 
     await submitButton.trigger('click');
 
-    await wrapper.vm.$nextTick();
     await flushPromises();
 
     expect(services().station.transfer).toHaveBeenCalledWith(
       expect.objectContaining({
         amount: 100n, // decimals are 2
-        to: 'destination address',
+        to: validIcpAddress,
       }),
       'test summary',
     );
@@ -143,7 +146,7 @@ describe('TransferDialog', () => {
     services().station.getTransfer = vi.fn(() =>
       Promise.resolve({
         id: 'transfer-id',
-        to: 'destination address',
+        to: validIcpAddress,
         amount: 123n,
         request_id: 'request-id',
       } as Transfer),
@@ -181,7 +184,7 @@ describe('TransferDialog', () => {
     expect(transferId.find('input').element.value).toBe('transfer-id');
 
     expect(amount.find('input').element.value).toBe('1.23');
-    expect(destination.find('input').element.value).toBe('destination address');
+    expect(destination.find('input').element.value).toBe(validIcpAddress);
     expect(summary.find('input').element.value).toBe('test summary');
   });
 });

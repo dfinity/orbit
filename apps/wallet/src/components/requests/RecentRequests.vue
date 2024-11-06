@@ -82,6 +82,7 @@ const props = withDefaults(
   }>(),
   {
     title: undefined,
+    types: undefined,
     limit: 3,
     sortBy: () => ({
       expirationDt: 'asc',

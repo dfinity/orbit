@@ -260,7 +260,8 @@ export const validAddress =
       if (detectAddressFormat(blockchain, value) !== undefined) {
         return true;
       }
-    } catch {}
-
-    return i18n.global.t('forms.rules.validAddress');
+      return i18n.global.t('forms.rules.validAddress');
+    } catch {
+      return i18n.global.t('forms.rules.validAddress');
+    }
   };
