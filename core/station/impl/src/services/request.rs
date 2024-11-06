@@ -310,7 +310,7 @@ impl RequestService {
 
     /// Creates a new request adding the caller user as the requester.
     ///
-    /// By default the request has an expiration date of 7 days from the creation date.
+    /// By default, the request has an expiration date of 7 days from the creation date.
     pub async fn create_request(
         &self,
         input: CreateRequestInput,

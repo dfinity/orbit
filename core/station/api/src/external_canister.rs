@@ -306,6 +306,7 @@ pub struct ExternalCanisterCallerPrivilegesDTO {
     pub canister_id: Principal,
     pub can_change: bool,
     pub can_fund: bool,
+    pub can_monitor: bool,
     pub can_call: Vec<ExternalCanisterCallerMethodPrivilegesDTO>,
 }
 
@@ -377,3 +378,44 @@ pub struct FundExternalCanisterOperationInput {
 }
 
 pub type FundExternalCanisterOperationDTO = FundExternalCanisterOperationInput;
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct MonitoringExternalCanisterEstimatedRuntimeInput {
+    pub fund_runtime_secs: u64,
+    pub fallback_min_cycles: u128,
+    pub min_runtime_secs: u64,
+    pub fallback_fund_cycles: u128,
+    pub max_runtime_cycles_fund: u128,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct MonitoringExternalCanisterCyclesThresholdInput {
+    pub fund_cycles: u128,
+    pub min_cycles: u128,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum MonitorExternalCanisterStartStrategyDTO {
+    Always(u128),
+    BelowThreshold(MonitoringExternalCanisterCyclesThresholdInput),
+    BelowEstimatedRuntime(MonitoringExternalCanisterEstimatedRuntimeInput),
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct MonitorExternalCanisterStartInput {
+    pub strategy: MonitorExternalCanisterStartStrategyDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum MonitorExternalCanisterOperationKindDTO {
+    Start(MonitorExternalCanisterStartInput),
+    Stop,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct MonitorExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub kind: MonitorExternalCanisterOperationKindDTO,
+}
+
+pub type MonitorExternalCanisterOperationDTO = MonitorExternalCanisterOperationInput;

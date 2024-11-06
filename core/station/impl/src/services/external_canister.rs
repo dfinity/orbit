@@ -24,7 +24,8 @@ use crate::models::{
     ExternalCanisterChangeCallPermissionsInput, ExternalCanisterChangeCallRequestPoliciesInput,
     ExternalCanisterChangeRequestPolicyRule, ExternalCanisterEntryId, ExternalCanisterKey,
     ExternalCanisterPermissions, ExternalCanisterPermissionsUpdateInput,
-    ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesUpdateInput, RequestPolicy,
+    ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesUpdateInput,
+    MonitorExternalCanisterStartStrategy, RequestPolicy,
 };
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
 use crate::repositories::{
@@ -114,14 +115,14 @@ impl ExternalCanisterService {
         &self,
         canister_id: &Principal,
     ) -> ServiceResult<ExternalCanister> {
-        let recource_id = self
+        let resource_id = self
             .external_canister_repository
             .find_by_canister_id(canister_id)
             .ok_or(ExternalCanisterError::InvalidExternalCanister {
                 principal: *canister_id,
             })?;
 
-        self.get_external_canister(&recource_id)
+        self.get_external_canister(&resource_id)
     }
 
     /// Returns all request policies of the external canister by its canister id.
@@ -271,6 +272,12 @@ impl ExternalCanisterService {
             can_fund: Authorization::is_allowed(
                 ctx,
                 &Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                    ExternalCanisterId::Canister(*canister_id),
+                )),
+            ),
+            can_monitor: Authorization::is_allowed(
+                ctx,
+                &Resource::ExternalCanister(ExternalCanisterResourceAction::Monitor(
                     ExternalCanisterId::Canister(*canister_id),
                 )),
             ),
@@ -1018,6 +1025,45 @@ impl ExternalCanisterService {
         Ok(())
     }
 
+    pub fn canister_monitor_start(
+        &self,
+        canister_id: Principal,
+        strategy: MonitorExternalCanisterStartStrategy,
+    ) -> ServiceResult<()> {
+        // let canister_id = CanisterIdRecord { canister_id };
+        //
+        // if let Err((err_code, err_msg)) = monitor_start(canister_id, strategy).await {
+        //     Err(ExternalCanisterError::Failed {
+        //         reason: format!(
+        //             "Failed to start monitoring canister {} with strategy {:?}, code: {:?} and reason: {:?}",
+        //             canister_id.canister_id.to_text(),
+        //             strategy,
+        //             err_code,
+        //             err_msg
+        //         ),
+        //     })?;
+        // }
+
+        Ok(())
+    }
+
+    pub fn canister_monitor_stop(&self, canister_id: Principal) -> ServiceResult<()> {
+        // let canister_id = CanisterIdRecord { canister_id };
+        //
+        // if let Err((err_code, err_msg)) = monitor_stop(canister_id).await {
+        //     Err(ExternalCanisterError::Failed {
+        //         reason: format!(
+        //             "Failed to stop monitoring canister {}, code: {:?} and reason: {:?}",
+        //             canister_id.canister_id.to_text(),
+        //             err_code,
+        //             err_msg
+        //         ),
+        //     })?;
+        // }
+
+        Ok(())
+    }
+
     /// Only deletes the external canister from the system.
     pub fn soft_delete_external_canister(
         &self,
@@ -1045,6 +1091,13 @@ impl ExternalCanisterService {
         self.permission_service
             .remove_permission(&Resource::ExternalCanister(
                 ExternalCanisterResourceAction::Fund(ExternalCanisterId::Canister(
+                    external_canister.canister_id,
+                )),
+            ));
+
+        self.permission_service
+            .remove_permission(&Resource::ExternalCanister(
+                ExternalCanisterResourceAction::Monitor(ExternalCanisterId::Canister(
                     external_canister.canister_id,
                 )),
             ));
@@ -1120,7 +1173,7 @@ impl ExternalCanisterService {
         // The soft delete is done after the hard delete to ensure that the external canister
         // is removed from the subnet before it is removed from the system.
         //
-        // The intercanister call is more likely to fail than the local operation.
+        // The inter-canister call is more likely to fail than the local operation.
         self.soft_delete_external_canister(id)?;
 
         Ok(external_canister)

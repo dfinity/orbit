@@ -250,6 +250,11 @@ impl From<&station_api::CreateRequestInput> for Resource {
                     ExternalCanisterId::Canister(input.canister_id),
                 ))
             }
+            RequestOperationInput::MonitorExternalCanister(input) => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Monitor(
+                    ExternalCanisterId::Canister(input.canister_id),
+                ))
+            }
             RequestOperationInput::CreateExternalCanister(_) => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::Create)
             }

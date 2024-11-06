@@ -18,6 +18,7 @@ pub enum RequestSpecifierDTO {
     SetDisasterRecovery,
     ChangeExternalCanister(ExternalCanisterIdDTO),
     FundExternalCanister(ExternalCanisterIdDTO),
+    MonitorExternalCanister(ExternalCanisterIdDTO),
     CreateExternalCanister,
     CallExternalCanister(CallExternalCanisterResourceTargetDTO),
     EditPermission(ResourceSpecifierDTO),

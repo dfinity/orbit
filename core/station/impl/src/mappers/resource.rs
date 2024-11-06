@@ -244,6 +244,9 @@ impl From<station_api::ExternalCanisterResourceActionDTO> for ExternalCanisterRe
             station_api::ExternalCanisterResourceActionDTO::Fund(target) => {
                 ExternalCanisterResourceAction::Fund(target.into())
             }
+            station_api::ExternalCanisterResourceActionDTO::Monitor(target) => {
+                ExternalCanisterResourceAction::Monitor(target.into())
+            }
             station_api::ExternalCanisterResourceActionDTO::Call(target) => {
                 ExternalCanisterResourceAction::Call(target.into())
             }
@@ -265,6 +268,9 @@ impl From<ExternalCanisterResourceAction> for station_api::ExternalCanisterResou
             }
             ExternalCanisterResourceAction::Fund(target) => {
                 station_api::ExternalCanisterResourceActionDTO::Fund(target.into())
+            }
+            ExternalCanisterResourceAction::Monitor(target) => {
+                station_api::ExternalCanisterResourceActionDTO::Monitor(target.into())
             }
             ExternalCanisterResourceAction::Change(target) => {
                 station_api::ExternalCanisterResourceActionDTO::Change(target.into())

@@ -63,6 +63,7 @@ impl ModelValidator<ValidationError> for Resource {
                 | ExternalCanisterResourceAction::Create
                 | ExternalCanisterResourceAction::Change(_)
                 | ExternalCanisterResourceAction::Fund(_)
+                | ExternalCanisterResourceAction::Monitor(_)
                 | ExternalCanisterResourceAction::Read(_) => (),
                 ExternalCanisterResourceAction::Call(target) => target.validate()?,
             },
@@ -171,6 +172,7 @@ pub enum ExternalCanisterResourceAction {
     Change(ExternalCanisterId),
     Read(ExternalCanisterId),
     Fund(ExternalCanisterId),
+    Monitor(ExternalCanisterId),
     Call(CallExternalCanisterResourceTarget),
 }
 
@@ -397,7 +399,35 @@ impl Resource {
 
                     // The following additional resources also enable the user to perform the `Fund` action.
                     associated_resources.push(Resource::ExternalCanister(
-                        ExternalCanisterResourceAction::Change(ExternalCanisterId::Any),
+                        ExternalCanisterResourceAction::Change(ExternalCanisterId::Canister(*id)),
+                    ));
+
+                    associated_resources
+                }
+                ExternalCanisterResourceAction::Monitor(ExternalCanisterId::Any) => {
+                    vec![
+                        Resource::ExternalCanister(ExternalCanisterResourceAction::Monitor(
+                            ExternalCanisterId::Any,
+                        )),
+                        // The following additional resources also enable the user to perform the `Monitor` action.
+                        Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                            ExternalCanisterId::Any,
+                        )),
+                    ]
+                }
+                ExternalCanisterResourceAction::Monitor(ExternalCanisterId::Canister(id)) => {
+                    let mut associated_resources = Resource::ExternalCanister(
+                        ExternalCanisterResourceAction::Monitor(ExternalCanisterId::Any),
+                    )
+                    .to_expanded_list();
+
+                    associated_resources.push(Resource::ExternalCanister(
+                        ExternalCanisterResourceAction::Monitor(ExternalCanisterId::Canister(*id)),
+                    ));
+
+                    // The following additional resources also enable the user to perform the `Monitor` action.
+                    associated_resources.push(Resource::ExternalCanister(
+                        ExternalCanisterResourceAction::Change(ExternalCanisterId::Canister(*id)),
                     ));
 
                     associated_resources
@@ -691,6 +721,9 @@ impl Display for ExternalCanisterResourceAction {
             }
             ExternalCanisterResourceAction::Fund(target) => {
                 write!(f, "Fund({})", target)
+            }
+            ExternalCanisterResourceAction::Monitor(target) => {
+                write!(f, "Monitor({})", target)
             }
             ExternalCanisterResourceAction::Call(target) => {
                 write!(f, "Call({})", target)

@@ -1,5 +1,7 @@
 use super::{
-    EditAccountOperationInput, TimestampRfc3339, TransferOperationDTO, TransferOperationInput,
+    EditAccountOperationInput, MonitorExternalCanisterOperationDTO,
+    MonitorExternalCanisterOperationInput, TimestampRfc3339, TransferOperationDTO,
+    TransferOperationInput,
 };
 use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
@@ -78,6 +80,7 @@ pub enum RequestOperationDTO {
     ConfigureExternalCanister(Box<ConfigureExternalCanisterOperationDTO>),
     CallExternalCanister(Box<CallExternalCanisterOperationDTO>),
     FundExternalCanister(Box<FundExternalCanisterOperationDTO>),
+    MonitorExternalCanister(Box<MonitorExternalCanisterOperationDTO>),
     EditPermission(Box<EditPermissionOperationDTO>),
     AddRequestPolicy(Box<AddRequestPolicyOperationDTO>),
     EditRequestPolicy(Box<EditRequestPolicyOperationDTO>),
@@ -105,6 +108,7 @@ pub enum RequestOperationInput {
     ConfigureExternalCanister(ConfigureExternalCanisterOperationInput),
     CallExternalCanister(CallExternalCanisterOperationInput),
     FundExternalCanister(FundExternalCanisterOperationInput),
+    MonitorExternalCanister(MonitorExternalCanisterOperationInput),
     EditPermission(EditPermissionOperationInput),
     AddRequestPolicy(AddRequestPolicyOperationInput),
     EditRequestPolicy(EditRequestPolicyOperationInput),
@@ -131,6 +135,7 @@ pub enum RequestOperationTypeDTO {
     CreateExternalCanister,
     CallExternalCanister,
     FundExternalCanister,
+    MonitorExternalCanister,
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,
@@ -157,6 +162,7 @@ pub enum ListRequestsOperationTypeDTO {
     CreateExternalCanister,
     CallExternalCanister(Option<Principal>),
     FundExternalCanister(Option<Principal>),
+    MonitorExternalCanister(Option<Principal>),
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,

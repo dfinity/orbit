@@ -254,6 +254,9 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::FundExternalCanister(target) => {
                 station_api::RequestSpecifierDTO::FundExternalCanister(target.into())
             }
+            RequestSpecifier::MonitorExternalCanister(target) => {
+                station_api::RequestSpecifierDTO::MonitorExternalCanister(target.into())
+            }
             RequestSpecifier::CreateExternalCanister => {
                 station_api::RequestSpecifierDTO::CreateExternalCanister
             }
@@ -318,6 +321,9 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             }
             station_api::RequestSpecifierDTO::FundExternalCanister(target) => {
                 RequestSpecifier::FundExternalCanister(target.into())
+            }
+            station_api::RequestSpecifierDTO::MonitorExternalCanister(target) => {
+                RequestSpecifier::MonitorExternalCanister(target.into())
             }
             station_api::RequestSpecifierDTO::CreateExternalCanister => {
                 RequestSpecifier::CreateExternalCanister
@@ -436,6 +442,11 @@ impl RequestSpecifier {
             RequestSpecifier::FundExternalCanister(target) => {
                 vec![Resource::ExternalCanister(
                     ExternalCanisterResourceAction::Fund(target.clone()),
+                )]
+            }
+            RequestSpecifier::MonitorExternalCanister(target) => {
+                vec![Resource::ExternalCanister(
+                    ExternalCanisterResourceAction::Monitor(target.clone()),
                 )]
             }
             RequestSpecifier::CreateExternalCanister => {

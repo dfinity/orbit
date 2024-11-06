@@ -34,7 +34,8 @@ use crate::{
         ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
         ExternalCanisterPermissionsUpdateInput, ExternalCanisterRequestPoliciesCreateInput,
         ExternalCanisterRequestPoliciesUpdateInput, FundExternalCanisterOperation, LogVisibility,
-        ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
+        ManageSystemInfoOperation, ManageSystemInfoOperationInput,
+        MonitorExternalCanisterOperation, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
         RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
         SystemUpgradeOperation, SystemUpgradeOperationInput, SystemUpgradeTarget,
@@ -1591,6 +1592,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::FundExternalCanister(operation) => {
                 RequestOperationDTO::FundExternalCanister(Box::new(operation.into()))
             }
+            RequestOperation::MonitorExternalCanister(operation) => {
+                RequestOperationDTO::MonitorExternalCanister(Box::new(operation.into()))
+            }
             RequestOperation::ConfigureExternalCanister(operation) => {
                 RequestOperationDTO::ConfigureExternalCanister(Box::new(operation.into()))
             }
@@ -1733,6 +1737,19 @@ impl RequestOperation {
                         ExternalCanisterId::Any,
                     )),
                     Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                        ExternalCanisterId::Canister(*canister_id),
+                    )),
+                ]
+            }
+            RequestOperation::MonitorExternalCanister(MonitorExternalCanisterOperation {
+                canister_id,
+                ..
+            }) => {
+                vec![
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Monitor(
+                        ExternalCanisterId::Any,
+                    )),
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Monitor(
                         ExternalCanisterId::Canister(*canister_id),
                     )),
                 ]

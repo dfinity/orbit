@@ -67,6 +67,7 @@ pub enum RequestSpecifier {
     ChangeExternalCanister(ExternalCanisterId),
     CallExternalCanister(CallExternalCanisterResourceTarget),
     FundExternalCanister(ExternalCanisterId),
+    MonitorExternalCanister(ExternalCanisterId),
     EditPermission(ResourceSpecifier),
     AddRequestPolicy,
     EditRequestPolicy(ResourceIds),
@@ -87,6 +88,7 @@ impl ModelValidator<ValidationError> for RequestSpecifier {
             | RequestSpecifier::SystemUpgrade
             | RequestSpecifier::ChangeExternalCanister(_)
             | RequestSpecifier::FundExternalCanister(_)
+            | RequestSpecifier::MonitorExternalCanister(_)
             | RequestSpecifier::CreateExternalCanister
             | RequestSpecifier::AddRequestPolicy
             | RequestSpecifier::ManageSystemInfo
@@ -149,6 +151,9 @@ impl From<&RequestSpecifier> for RequestOperationType {
             }
             RequestSpecifier::CallExternalCanister(_) => RequestOperationType::CallExternalCanister,
             RequestSpecifier::FundExternalCanister(_) => RequestOperationType::FundExternalCanister,
+            RequestSpecifier::MonitorExternalCanister(_) => {
+                RequestOperationType::MonitorExternalCanister
+            }
             RequestSpecifier::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestSpecifier::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
             RequestSpecifier::RemoveRequestPolicy(_) => RequestOperationType::RemoveRequestPolicy,

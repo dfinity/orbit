@@ -33,6 +33,7 @@ pub enum RequestOperationType {
     SetDisasterRecovery = 23,
     ConfigureExternalCanister = 24,
     FundExternalCanister = 25,
+    MonitorExternalCanister = 26,
 }
 
 /// A helper enum to filter the requests based on the operation type and
@@ -54,6 +55,7 @@ pub enum ListRequestsOperationType {
     CallExternalCanister(Option<Principal>),
     ConfigureExternalCanister(Option<Principal>),
     FundExternalCanister(Option<Principal>),
+    MonitorExternalCanister(Option<Principal>),
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,
@@ -140,6 +142,15 @@ impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
                     RequestOperationFilterType::FundExternalCanister(id) if id == canister_id
                 )
             }
+            ListRequestsOperationType::MonitorExternalCanister(None) => {
+                matches!(self, RequestOperationFilterType::MonitorExternalCanister(_))
+            }
+            ListRequestsOperationType::MonitorExternalCanister(Some(canister_id)) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::MonitorExternalCanister(id) if id == canister_id
+                )
+            }
             ListRequestsOperationType::EditPermission => {
                 matches!(self, RequestOperationFilterType::EditPermission)
             }
@@ -196,6 +207,7 @@ impl FromStr for RequestOperationType {
             "set_disaster_recovery_committee" => Ok(RequestOperationType::SetDisasterRecovery),
             "configure_external_canister" => Ok(RequestOperationType::ConfigureExternalCanister),
             "fund_external_canister" => Ok(RequestOperationType::FundExternalCanister),
+            "monitor_external_canister" => Ok(RequestOperationType::MonitorExternalCanister),
             _ => Err(()),
         }
     }
@@ -231,6 +243,7 @@ impl Display for RequestOperationType {
                 write!(f, "configure_external_canister")
             }
             RequestOperationType::FundExternalCanister => write!(f, "fund_external_canister"),
+            RequestOperationType::MonitorExternalCanister => write!(f, "monitor_external_canister"),
         }
     }
 }
