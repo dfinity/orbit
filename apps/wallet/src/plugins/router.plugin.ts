@@ -18,6 +18,7 @@ import { hasRequiredPrivilege, hasRequiredSession } from '~/utils/auth.utils';
 import { i18n, i18nRouteGuard } from './i18n.plugin';
 import { initStateGuard } from './pinia.plugin';
 import { services } from './services.plugin';
+import DashboardPage from '~/pages/DashboardPage.vue';
 
 export const redirectToKey = 'redirectTo';
 
@@ -49,6 +50,18 @@ const router = createRouter({
             auth: {
               check: {
                 session: RequiredSessionState.Guest,
+              },
+            },
+          },
+        },
+        {
+          path: 'dashboard',
+          name: Routes.Dashboard,
+          component: DashboardPage,
+          meta: {
+            auth: {
+              check: {
+                session: RequiredSessionState.ConnectedToStation,
               },
             },
           },

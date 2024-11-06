@@ -718,6 +718,7 @@ export default {
     principal: 'Principal',
     status: 'Status',
     transfer: 'Transfer',
+    transfer_asset: 'Transfer {asset}',
     invalid: 'Invalid',
     control_panel: 'Control panel',
     confirmed: 'Confirmed',
@@ -762,6 +763,7 @@ export default {
   },
   navigation: {
     home: 'Home',
+    dashboard: 'Dashboard',
     accounts: 'Accounts',
     account: 'Account',
     address_book: 'Address Book',
@@ -781,6 +783,10 @@ export default {
     external_canisters: 'Canisters',
   },
   pages: {
+    dashboard: {
+      title: 'Dashboard',
+      available_assets: 'Available Assets',
+    },
     accounts: {
       title: 'Accounts',
       btn_new_transfer: 'New transfer',

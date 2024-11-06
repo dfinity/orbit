@@ -17,7 +17,9 @@
     >
       <VCard :loading="loading" data-test-id="transfer-dialog-form">
         <VToolbar color="background">
-          <VToolbarTitle>{{ $t('terms.transfer') }}</VToolbarTitle>
+          <VToolbarTitle>{{
+            $t('terms.transfer_asset', { asset: props.asset.value.symbol })
+          }}</VToolbarTitle>
           <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
         <VCardText>

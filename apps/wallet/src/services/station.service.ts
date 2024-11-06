@@ -2,7 +2,9 @@ import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { idlFactory } from '~/generated/station';
 import {
+  Account,
   AccountBalance,
+  AccountCallerPrivileges,
   AddAccountOperationInput,
   AddAddressBookEntryOperationInput,
   AddAssetOperationInput,
@@ -548,6 +550,40 @@ export class StationService {
     }
 
     return result.Ok;
+  }
+
+  async listAllAccounts(verifiedCall = false): Promise<{
+    accounts: Account[];
+    privileges: AccountCallerPrivileges[];
+  }> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+
+    const accounts: Account[] = [];
+    const privileges: AccountCallerPrivileges[] = [];
+    let nextOffset: [bigint] | [] = [];
+
+    do {
+      const result = await actor.list_accounts({
+        paginate: [
+          {
+            limit: [100],
+            offset: nextOffset,
+          },
+        ],
+        search_term: [],
+      });
+
+      if (variantIs(result, 'Err')) {
+        throw result.Err;
+      }
+
+      accounts.push(...result.Ok.accounts);
+      privileges.push(...result.Ok.privileges);
+
+      nextOffset = result.Ok.next_offset as [bigint] | []; // have to force cast here because of typescript inference
+    } while (nextOffset.length > 0);
+
+    return { accounts, privileges };
   }
 
   async listAddressBook(
