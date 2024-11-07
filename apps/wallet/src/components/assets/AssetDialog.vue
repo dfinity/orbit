@@ -149,7 +149,6 @@ const save = async (): Promise<void> => {
           },
         ],
         blockchain: [assertAndReturn(asset.value.blockchain, 'blockchain')],
-        decimals: [assertAndReturn(asset.value.decimals, 'decimals')],
         name: [assertAndReturn(asset.value.name, 'name')],
         symbol: [assertAndReturn(asset.value.symbol, 'symbol')],
         standards: [assertAndReturn(asset.value.standards, 'standards')],

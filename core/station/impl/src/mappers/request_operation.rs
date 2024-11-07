@@ -1598,7 +1598,6 @@ impl From<EditAssetOperationInput> for station_api::EditAssetOperationInput {
             asset_id: Uuid::from_bytes(input.asset_id).hyphenated().to_string(),
             name: input.name,
             symbol: input.symbol,
-            decimals: input.decimals,
             change_metadata: input
                 .change_metadata
                 .map(|change_metadata| change_metadata.into()),
@@ -1618,7 +1617,6 @@ impl From<station_api::EditAssetOperationInput> for EditAssetOperationInput {
                 .as_bytes(),
             name: input.name,
             symbol: input.symbol,
-            decimals: input.decimals,
             change_metadata: input
                 .change_metadata
                 .map(|change_metadata| change_metadata.into()),

@@ -66,7 +66,6 @@ pub fn edit_asset_name(
             blockchain: None,
             standards: None,
             symbol: None,
-            decimals: None,
             change_metadata: None,
         }),
     );

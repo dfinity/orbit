@@ -23,9 +23,9 @@ pub enum AssetError {
     /// The given blockchain is unknown to the system.
     #[error(r#"The given blockchain is unknown to the system."#)]
     UnknownBlockchain { blockchain: String },
-    /// The given blockchain standard is unknown to the system.
-    #[error(r#"The given blockchain standard is unknown to the system."#)]
-    UnknownBlockchainStandard { blockchain_standard: String },
+    /// The given token standard is unknown to the system.
+    #[error(r#"The given token standard is unknown to the system."#)]
+    UnknownTokenStandard { token_standard: String },
     /// The asset has failed validation.
     #[error(r#"The account has failed validation."#)]
     ValidationError { info: String },
@@ -50,13 +50,8 @@ impl DetailableError for AssetError {
                 details.insert("blockchain".to_string(), blockchain.to_string());
                 Some(details)
             }
-            AssetError::UnknownBlockchainStandard {
-                blockchain_standard,
-            } => {
-                details.insert(
-                    "blockchain_standard".to_string(),
-                    blockchain_standard.to_string(),
-                );
+            AssetError::UnknownTokenStandard { token_standard } => {
+                details.insert("token_standard".to_string(), token_standard.to_string());
                 Some(details)
             }
             AssetError::ValidationError { info } => {

@@ -156,9 +156,9 @@ impl AccountService {
         let mut new_account =
             AccountMapper::from_create_input(input.to_owned(), *uuid.as_bytes(), None)?;
 
-        let dedulicated_asset_ids = input.assets.iter().cloned().collect::<HashSet<_>>();
+        let deduplicated_asset_ids = input.assets.iter().cloned().collect::<HashSet<_>>();
 
-        for asset_id in dedulicated_asset_ids.iter() {
+        for asset_id in deduplicated_asset_ids.iter() {
             let asset = self.asset_repository.get(asset_id).ok_or_else(|| {
                 AccountError::ValidationError {
                     info: format!(

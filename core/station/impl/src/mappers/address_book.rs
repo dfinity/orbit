@@ -1,10 +1,12 @@
+use std::str::FromStr;
+
 use super::HelperMapper;
 use crate::core::ic_cdk::next_time;
 use crate::errors::MapperError;
 use crate::mappers::blockchain::BlockchainMapper;
 use crate::models::{
     AddAddressBookEntryOperationInput, AddressBookEntry, AddressBookEntryCallerPrivileges,
-    ListAddressBookEntriesInput,
+    AddressFormat, ListAddressBookEntriesInput,
 };
 use orbit_essentials::types::UUID;
 use orbit_essentials::utils::timestamp_to_rfc3339;
@@ -67,6 +69,14 @@ impl From<ListAddressBookEntriesInputDTO> for ListAddressBookEntriesInput {
             }),
             labels: input.labels,
             addresses: input.addresses,
+            address_formats: input.address_formats.map(|address_formats| {
+                address_formats
+                    .into_iter()
+                    .map(|address_format| {
+                        AddressFormat::from_str(&address_format).expect("Invalid address format")
+                    })
+                    .collect()
+            }),
             ids: input.ids.map(|ids| {
                 ids.into_iter()
                     .map(|id| {

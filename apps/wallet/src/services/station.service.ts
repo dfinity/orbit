@@ -587,7 +587,15 @@ export class StationService {
   }
 
   async listAddressBook(
-    { limit, offset, blockchain, labels, ids, addresses }: ListAddressBookEntriesArgs = {},
+    {
+      limit,
+      offset,
+      blockchain,
+      labels,
+      ids,
+      addresses,
+      address_formats,
+    }: ListAddressBookEntriesArgs = {},
     verifiedCall = false,
   ): Promise<ExtractOk<ListAddressBookEntriesResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
@@ -602,6 +610,7 @@ export class StationService {
       labels: labels ? [labels] : [],
       addresses: addresses ? [addresses] : [],
       ids: ids ? [ids] : [],
+      address_formats: address_formats ? [address_formats] : [],
     });
 
     if (variantIs(result, 'Err')) {

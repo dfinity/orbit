@@ -340,7 +340,6 @@ export interface EditAddressBookEntryOperationInput {
 }
 export interface EditAssetOperation { 'input' : EditAssetOperationInput }
 export interface EditAssetOperationInput {
-  'decimals' : [] | [number],
   'standards' : [] | [Array<string>],
   'name' : [] | [string],
   'blockchain' : [] | [string],
@@ -703,6 +702,7 @@ export type ListAccountsResult = {
   { 'Err' : Error };
 export interface ListAddressBookEntriesInput {
   'ids' : [] | [Array<UUID>],
+  'address_formats' : [] | [Array<string>],
   'labels' : [] | [Array<string>],
   'blockchain' : [] | [string],
   'addresses' : [] | [Array<string>],
