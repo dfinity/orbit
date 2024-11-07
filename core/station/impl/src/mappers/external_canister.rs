@@ -16,6 +16,7 @@ use crate::{
     repositories::ExternalCanisterWhereClauseSort,
 };
 use candid::Principal;
+use canfund::manager::options::{CyclesThreshold, EstimatedRuntime};
 use ic_cdk::api::management_canister::main::{self as mgmt};
 use orbit_essentials::{repository::SortDirection, utils::timestamp_to_rfc3339};
 use station_api::ExternalCanisterDTO;
@@ -473,5 +474,40 @@ impl From<MonitoringExternalCanisterEstimatedRuntimeInput>
             fallback_fund_cycles: input.fallback_fund_cycles,
             fallback_min_cycles: input.fallback_min_cycles,
         }
+    }
+}
+
+impl From<MonitorExternalCanisterStartStrategy> for canfund::manager::options::FundStrategy {
+    fn from(strategy: MonitorExternalCanisterStartStrategy) -> Self {
+        match strategy {
+            MonitorExternalCanisterStartStrategy::Always(cycles) => {
+                canfund::manager::options::FundStrategy::Always(cycles)
+            }
+            MonitorExternalCanisterStartStrategy::BelowThreshold(threshold) => {
+                canfund::manager::options::FundStrategy::BelowThreshold(threshold.into())
+            }
+            MonitorExternalCanisterStartStrategy::BelowEstimatedRuntime(runtime) => {
+                canfund::manager::options::FundStrategy::BelowEstimatedRuntime(runtime.into())
+            }
+        }
+    }
+}
+
+impl From<MonitoringExternalCanisterCyclesThresholdInput> for CyclesThreshold {
+    fn from(input: MonitoringExternalCanisterCyclesThresholdInput) -> Self {
+        CyclesThreshold::new()
+            .with_min_cycles(input.min_cycles)
+            .with_fund_cycles(input.fund_cycles)
+    }
+}
+
+impl From<MonitoringExternalCanisterEstimatedRuntimeInput> for EstimatedRuntime {
+    fn from(input: MonitoringExternalCanisterEstimatedRuntimeInput) -> Self {
+        EstimatedRuntime::new()
+            .with_fund_runtime_secs(input.fund_runtime_secs)
+            .with_min_runtime_secs(input.min_runtime_secs)
+            .with_max_runtime_cycles_fund(input.max_runtime_cycles_fund)
+            .with_fallback_fund_cycles(input.fallback_fund_cycles)
+            .with_fallback_min_cycles(input.fallback_min_cycles)
     }
 }

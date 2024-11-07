@@ -32,6 +32,7 @@ use crate::repositories::{
     ExternalCanisterRepository, ExternalCanisterWhereClause, RequestPolicyRepository,
     EXTERNAL_CANISTER_REPOSITORY, REQUEST_POLICY_REPOSITORY,
 };
+use crate::services::cycle_manager::{CycleManager, CYCLE_MANAGER};
 use candid::{Encode, Principal};
 use ic_cdk::api::call::call_raw;
 use ic_cdk::api::management_canister::main::{
@@ -56,6 +57,7 @@ use uuid::Uuid;
 lazy_static! {
     pub static ref EXTERNAL_CANISTER_SERVICE: Arc<ExternalCanisterService> =
         Arc::new(ExternalCanisterService::new(
+            Arc::clone(&CYCLE_MANAGER),
             Arc::clone(&EXTERNAL_CANISTER_REPOSITORY),
             Arc::clone(&PERMISSION_SERVICE),
             Arc::clone(&PERMISSION_REPOSITORY),
@@ -68,6 +70,7 @@ const CREATE_CANISTER_CYCLES: u128 = 325_000_000_000; // fee sufficient to creat
 
 #[derive(Default, Debug)]
 pub struct ExternalCanisterService {
+    cycle_manager: Arc<CycleManager>,
     external_canister_repository: Arc<ExternalCanisterRepository>,
     permission_service: Arc<PermissionService>,
     permission_repository: Arc<PermissionRepository>,
@@ -80,6 +83,7 @@ impl ExternalCanisterService {
     const MAX_LIST_LIMIT: u16 = 250;
 
     pub fn new(
+        cycle_manager: Arc<CycleManager>,
         external_canister_repository: Arc<ExternalCanisterRepository>,
         permission_service: Arc<PermissionService>,
         permission_repository: Arc<PermissionRepository>,
@@ -87,6 +91,7 @@ impl ExternalCanisterService {
         request_policy_repository: Arc<RequestPolicyRepository>,
     ) -> Self {
         Self {
+            cycle_manager,
             external_canister_repository,
             permission_service,
             permission_repository,
@@ -1030,36 +1035,14 @@ impl ExternalCanisterService {
         canister_id: Principal,
         strategy: MonitorExternalCanisterStartStrategy,
     ) -> ServiceResult<()> {
-        // let canister_id = CanisterIdRecord { canister_id };
-        //
-        // if let Err((err_code, err_msg)) = monitor_start(canister_id, strategy).await {
-        //     Err(ExternalCanisterError::Failed {
-        //         reason: format!(
-        //             "Failed to start monitoring canister {} with strategy {:?}, code: {:?} and reason: {:?}",
-        //             canister_id.canister_id.to_text(),
-        //             strategy,
-        //             err_code,
-        //             err_msg
-        //         ),
-        //     })?;
-        // }
+        self.cycle_manager
+            .add_canister(canister_id, strategy.into());
 
         Ok(())
     }
 
     pub fn canister_monitor_stop(&self, canister_id: Principal) -> ServiceResult<()> {
-        // let canister_id = CanisterIdRecord { canister_id };
-        //
-        // if let Err((err_code, err_msg)) = monitor_stop(canister_id).await {
-        //     Err(ExternalCanisterError::Failed {
-        //         reason: format!(
-        //             "Failed to stop monitoring canister {}, code: {:?} and reason: {:?}",
-        //             canister_id.canister_id.to_text(),
-        //             err_code,
-        //             err_msg
-        //         ),
-        //     })?;
-        // }
+        self.cycle_manager.remove_canister(canister_id);
 
         Ok(())
     }
