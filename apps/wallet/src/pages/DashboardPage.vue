@@ -44,9 +44,6 @@
                         <small class="text-medium-emphasis">{{ asset.name }}</small>
                       </div>
 
-                      <!-- <div class="mt-2">
-                        
-                      </div> -->
                     </VCol>
                     <VCol :cols="12" :sm="4" class="d-flex align-center">
                       <VChip :size="'x-small'">
