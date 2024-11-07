@@ -52,7 +52,6 @@
                       <VChip :size="'x-small'">
                         {{ $t(`blockchains.${asset.blockchain}.name`) }}
                       </VChip>
-                      <!-- {{ $t(`blockchains.${asset.blockchain}.name`) }} -->
                     </VCol>
                     <VCol
                       :cols="12"
