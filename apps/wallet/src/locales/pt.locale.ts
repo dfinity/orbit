@@ -708,6 +708,7 @@ export default {
     settings: 'Configuraçōes',
     close: 'Fechar',
     transfer: 'Transferência',
+    transfer_asset: 'Transferir {asset}',
     general: 'Geral',
     update: 'Atualizar',
     time: 'Horário',
@@ -760,10 +761,12 @@ export default {
       numberRange: 'Este campo deve estar entre {min} e {max}.',
       invalidDecimalPlaces: 'Este campo deve ter no máximo {decimals} casas decimais.',
       isHex: 'Este campo deve conter um valor hexadecimal válido.',
+      validAddress: 'Este campo deve conter um endereço válido.',
     },
   },
   navigation: {
     home: 'Início',
+    dashboard: 'Dashboard',
     accounts: 'Contas',
     account: 'Conta',
     address_book: 'Endereços',
@@ -783,6 +786,10 @@ export default {
     external_canisters: 'Canisters',
   },
   pages: {
+    dashboard: {
+      title: 'Dashboard',
+      available_assets: 'Ativos disponíveis',
+    },
     accounts: {
       title: 'Contas',
       btn_new_transfer: 'Nova transferência',

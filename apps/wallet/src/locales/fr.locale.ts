@@ -726,6 +726,7 @@ export default {
     principal: 'Principal',
     status: 'Statut',
     transfer: 'Transfert',
+    transfer_asset: 'Transfert {asset}',
     invalid: 'Invalide',
     control_panel: 'Paneau de Contrôle',
     confirmed: 'Confirmé',
@@ -765,10 +766,12 @@ export default {
       numberRange: 'Le champ doit contenir une valeur valide entre {min} et {max}.',
       invalidDecimalPlaces: 'Ce champ doit contenir un maximum de {decimals} décimales.',
       isHex: 'Ce champ doit contenir une valeur hexadécimale valide.',
+      validAddress: 'Ce champ doit contenir une adresse valide.',
     },
   },
   navigation: {
     home: 'Acceuil',
+    dashboard: 'Tableau de Bord',
     accounts: 'Comptes',
     account: 'Compte',
     address_book: "Carnet d'Adresses",
@@ -788,6 +791,10 @@ export default {
     external_canisters: 'Canisters',
   },
   pages: {
+    dashboard: {
+      title: 'Tableau de Bord',
+      available_assets: 'Actifs Disponibles',
+    },
     accounts: {
       title: 'Comptes',
       btn_new_transfer: 'Nouveau Transfert',

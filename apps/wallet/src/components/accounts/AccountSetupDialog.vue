@@ -154,6 +154,7 @@ const saveChangesToExistingAccount = async (accountId: UUID): Promise<Request> =
   changes.configs_permission = [
     assertAndReturn(wizard.value.permission.configuration, 'update_access'),
   ];
+  changes.change_assets = [];
 
   return station.service.editAccount(changes as EditAccountOperationInput);
 };

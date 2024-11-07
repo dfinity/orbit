@@ -718,6 +718,7 @@ export default {
     principal: 'Principal',
     status: 'Status',
     transfer: 'Transfer',
+    transfer_asset: 'Transfer {asset}',
     invalid: 'Invalid',
     control_panel: 'Control panel',
     confirmed: 'Confirmed',
@@ -757,10 +758,12 @@ export default {
       numberRange: 'This field must be between {min} and {max}.',
       invalidDecimalPlaces: 'This field must have a maximum of {decimals} decimal places.',
       isHex: 'This field must be a valid hexadecimal value.',
+      validAddress: 'This field must be a valid address.',
     },
   },
   navigation: {
     home: 'Home',
+    dashboard: 'Dashboard',
     accounts: 'Accounts',
     account: 'Account',
     address_book: 'Address Book',
@@ -780,6 +783,10 @@ export default {
     external_canisters: 'Canisters',
   },
   pages: {
+    dashboard: {
+      title: 'Dashboard',
+      available_assets: 'Available Assets',
+    },
     accounts: {
       title: 'Accounts',
       btn_new_transfer: 'New transfer',

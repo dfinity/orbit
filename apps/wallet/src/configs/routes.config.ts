@@ -2,6 +2,7 @@ export enum Routes {
   Login = 'Login',
   Error = 'Error',
   NotFound = 'NotFound',
+  Dashboard = 'Dashboard',
   Accounts = 'Accounts',
   Account = 'Account',
   AccountAsset = 'AccountAsset',
@@ -33,4 +34,4 @@ export enum RouteStatusCode {
 }
 
 export const defaultLoginRoute = Routes.Login;
-export const defaultHomeRoute = Routes.Accounts;
+export const defaultHomeRoute = Routes.Dashboard;
