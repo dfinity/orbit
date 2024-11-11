@@ -19,12 +19,3 @@ if [[ ${HTTP_CODE} -ne 200 ]] ; then
 fi
 
 echo "Asset canister wasm downloaded"
-
-HTTP_CODE=$(curl -L -so assetstorage.did https://github.com/dfinity/sdk/raw/master/src/distributed/assetstorage.did --write-out "%{http_code}")
-
-if [[ ${HTTP_CODE} -ne 200 ]] ; then
-    echo "Failed to download did file. Response code: ${HTTP_CODE}"
-    exit 1
-fi
-
-echo "Asset canister did file downloaded"
