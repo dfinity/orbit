@@ -280,12 +280,6 @@ impl ExternalCanisterService {
                     ExternalCanisterId::Canister(*canister_id),
                 )),
             ),
-            can_monitor: Authorization::is_allowed(
-                ctx,
-                &Resource::ExternalCanister(ExternalCanisterResourceAction::Monitor(
-                    ExternalCanisterId::Canister(*canister_id),
-                )),
-            ),
             can_call: self
                 .find_external_canister_call_permissions(canister_id)
                 .iter()
@@ -1074,13 +1068,6 @@ impl ExternalCanisterService {
         self.permission_service
             .remove_permission(&Resource::ExternalCanister(
                 ExternalCanisterResourceAction::Fund(ExternalCanisterId::Canister(
-                    external_canister.canister_id,
-                )),
-            ));
-
-        self.permission_service
-            .remove_permission(&Resource::ExternalCanister(
-                ExternalCanisterResourceAction::Monitor(ExternalCanisterId::Canister(
                     external_canister.canister_id,
                 )),
             ));

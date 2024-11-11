@@ -250,8 +250,9 @@ impl From<&station_api::CreateRequestInput> for Resource {
                     ExternalCanisterId::Canister(input.canister_id),
                 ))
             }
+            // Monitoring of external canisters share the same `Fund` action privilege
             RequestOperationInput::MonitorExternalCanister(input) => {
-                Resource::ExternalCanister(ExternalCanisterResourceAction::Monitor(
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
                     ExternalCanisterId::Canister(input.canister_id),
                 ))
             }

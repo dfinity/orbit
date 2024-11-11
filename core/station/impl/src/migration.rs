@@ -300,7 +300,7 @@ impl<'de> Deserialize<'de> for RequestSpecifier {
         const REMOVED_VARIANTS: [&str; 1] = ["ChangeCanister"];
 
         // IMPORTANT: The size of the array must be hardcoded, to make sure it can be checked at compile-time.
-        static EXPECTED_VARIANTS: [&str; 24] = {
+        static EXPECTED_VARIANTS: [&str; 23] = {
             let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] =
                 concat_str_arrays!(CURRENT_VARIANTS, REMOVED_VARIANTS);
 
@@ -402,10 +402,6 @@ impl<'de> Deserialize<'de> for RequestSpecifier {
                     "FundExternalCanister" => {
                         let value = variant_access.newtype_variant()?;
                         Ok(RequestSpecifier::FundExternalCanister(value))
-                    }
-                    "MonitorExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::MonitorExternalCanister(value))
                     }
                     _ => Err(de::Error::unknown_variant(&variant, &EXPECTED_VARIANTS)),
                 }

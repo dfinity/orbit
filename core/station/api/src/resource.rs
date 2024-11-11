@@ -79,7 +79,6 @@ pub enum ExternalCanisterResourceActionDTO {
     Create,
     Read(ExternalCanisterIdDTO),
     Fund(ExternalCanisterIdDTO),
-    Monitor(ExternalCanisterIdDTO),
     Change(ExternalCanisterIdDTO),
     Call(CallExternalCanisterResourceTargetDTO),
 }

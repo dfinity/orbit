@@ -116,7 +116,6 @@ impl From<ExternalCanisterCallerPrivileges> for station_api::ExternalCanisterCal
             canister_id: privileges.canister_id,
             can_change: privileges.can_change,
             can_fund: privileges.can_fund,
-            can_monitor: privileges.can_monitor,
             can_call: privileges.can_call.into_iter().map(Into::into).collect(),
         }
     }

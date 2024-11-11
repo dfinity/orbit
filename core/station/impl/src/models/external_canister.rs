@@ -118,7 +118,6 @@ pub struct ExternalCanisterCallerPrivileges {
     pub canister_id: Principal,
     pub can_change: bool,
     pub can_fund: bool,
-    pub can_monitor: bool,
     pub can_call: Vec<ExternalCanisterCallerMethodsPrivileges>,
 }
 

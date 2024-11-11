@@ -49,7 +49,6 @@ type RequestSpecifier = variant {
   SetDisasterRecovery;
   ChangeExternalCanister : ExternalCanisterId;
   FundExternalCanister : ExternalCanisterId;
-  MonitorExternalCanister : ExternalCanisterId;
   CreateExternalCanister;
   CallExternalCanister : CallExternalCanisterResourceTarget;
   EditPermission : ResourceSpecifier;
@@ -1968,7 +1967,6 @@ type ExternalCanisterResourceAction = variant {
   Change : ExternalCanisterId;
   Read : ExternalCanisterId;
   Fund : ExternalCanisterId;
-  Monitor : ExternalCanisterId;
   Call : CallExternalCanisterResourceTarget;
 };
 
@@ -2590,8 +2588,6 @@ type ExternalCanisterCallerPrivileges = record {
   can_change : bool;
   // Whether or not the caller can fund the external canister.
   can_fund : bool;
-  // Whether or not the caller can monitor the external canister.
-  can_monitor : bool;
   // The list of methods that the caller can call on the external canister.
   can_call : vec ExternalCanisterCallerMethodsPrivileges;
 };

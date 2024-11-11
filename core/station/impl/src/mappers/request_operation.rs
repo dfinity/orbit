@@ -1746,10 +1746,10 @@ impl RequestOperation {
                 ..
             }) => {
                 vec![
-                    Resource::ExternalCanister(ExternalCanisterResourceAction::Monitor(
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
                         ExternalCanisterId::Any,
                     )),
-                    Resource::ExternalCanister(ExternalCanisterResourceAction::Monitor(
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
                         ExternalCanisterId::Canister(*canister_id),
                     )),
                 ]
