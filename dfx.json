@@ -63,6 +63,11 @@
       "type": "assets",
       "source": ["apps/wallet/dist/"],
       "build": "pnpm --filter 'wallet-dapp' build"
+    },
+    "wasm_chunk_store": {
+      "type": "assets",
+      "source": [],
+      "build": ""
     }
   },
   "defaults": {
