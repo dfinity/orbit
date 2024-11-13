@@ -2595,7 +2595,6 @@ dependencies = [
  "dfx-orbit",
  "flate2",
  "hex",
- "ic-cdk 0.13.5",
  "ic-certified-assets",
  "ic-ledger-types",
  "itertools 0.13.0",
