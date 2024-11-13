@@ -41,4 +41,4 @@ pub const MAX_WASM_PAGES: u64 = MAX_STABLE_MEMORY_SIZE / WASM_PAGE_SIZE as u64;
 pub const ACCOUNT_BALANCE_FRESHNESS_IN_MS: u64 = 3000;
 
 /// The initial cycles balance to use when creating the upgrader canister.
-pub const INITIAL_UPGRADER_CYCLES: u128 = 1_000_000_000_000;
+pub const INITIAL_UPGRADER_CYCLES: u128 = 2_500_000_000_000;

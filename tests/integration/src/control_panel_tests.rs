@@ -713,7 +713,7 @@ fn insufficient_control_panel_cycles() {
             assert_eq!(
                 *e.details.unwrap().get("reason").unwrap(),
                 format!(
-                    "Canister {} has insufficient cycles balance to transfer 2500000000000 cycles.",
+                    "Canister {} has insufficient cycles balance to transfer 5000000000000 cycles.",
                     canister_ids.control_panel
                 )
             );

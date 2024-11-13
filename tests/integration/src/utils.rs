@@ -2,7 +2,6 @@ use crate::setup::{create_canister, get_canister_wasm, WALLET_ADMIN_USER};
 use candid::{CandidType, Encode, Principal};
 use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
-use ic_cdk::api::management_canister::main::CanisterStatusResponse;
 use ic_certified_assets::types::{
     BatchOperation, CommitBatchArguments, CreateAssetArguments, CreateBatchResponse,
     CreateChunkArg, CreateChunkResponse, SetAssetContentArguments,
@@ -10,6 +9,7 @@ use ic_certified_assets::types::{
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use orbit_essentials::types::WasmModuleExtraChunks;
+use pocket_ic::management_canister::CanisterStatusResult;
 use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
 use sha2::Digest;
 use sha2::Sha256;
@@ -359,7 +359,7 @@ pub fn canister_status(
     env: &PocketIc,
     sender: Option<Principal>,
     canister_id: Principal,
-) -> CanisterStatusResponse {
+) -> CanisterStatusResult {
     env.canister_status(canister_id, sender).unwrap()
 }
 

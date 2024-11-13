@@ -206,7 +206,7 @@ fn can_mint_cycles_to_top_up_self() {
         controller,
         ..
     } = setup_new_env_with_config(SetupConfig {
-        start_cycles: Some(2_000_000_000_000),
+        start_cycles: Some(5_000_000_000_000),
         ..Default::default()
     });
 
@@ -219,12 +219,12 @@ fn can_mint_cycles_to_top_up_self() {
     env.stop_canister(upgrader_id, Some(NNS_ROOT_CANISTER_ID))
         .expect("stop canister failed");
 
-    // set starting cycle balance to 100b
+    // set starting cycle balance to 200b
     advance_time_to_burn_cycles(
         &env,
         NNS_ROOT_CANISTER_ID,
         canister_ids.station,
-        100_000_000_000,
+        200_000_000_000,
     );
 
     let user_id = WALLET_ADMIN_USER;

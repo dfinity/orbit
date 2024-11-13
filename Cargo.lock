@@ -1997,7 +1997,7 @@ dependencies = [
  "hyper",
  "hyper-util",
  "rustls",
- "rustls-native-certs",
+ "rustls-native-certs 0.7.2",
  "rustls-pki-types",
  "tokio",
  "tokio-rustls",
@@ -2065,7 +2065,7 @@ dependencies = [
  "http 1.1.0",
  "http-body",
  "ic-certification 2.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ic-transport-types",
+ "ic-transport-types 0.38.2",
  "ic-verify-bls-signature",
  "k256 0.13.3",
  "leb128",
@@ -2428,6 +2428,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03f3044466a69802de74e710dc0300b706a05696a0531c942ca856751a13b0db"
 dependencies = [
  "ic_principal",
+]
+
+[[package]]
+name = "ic-transport-types"
+version = "0.37.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "875dc4704780383112e8e8b5063a1b98de114321d0c7d3e7f635dcf360a57fba"
+dependencies = [
+ "candid",
+ "hex",
+ "ic-certification 2.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "leb128",
+ "serde",
+ "serde_bytes",
+ "serde_repr",
+ "sha2 0.10.8",
+ "thiserror",
 ]
 
 [[package]]
@@ -3501,24 +3518,29 @@ dependencies = [
 [[package]]
 name = "pocket-ic"
 version = "5.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "beff607d4dbebff8d003453ced669d2645e905de496ca93713f3d47633357e6c"
+source = "git+https://github.com/dfinity/ic?rev=bcbccf79c89a3e81b1a38d8233f8f81d1af1b245#bcbccf79c89a3e81b1a38d8233f8f81d1af1b245"
 dependencies = [
  "base64 0.13.1",
  "candid",
  "hex",
- "ic-cdk 0.13.5",
+ "ic-certification 2.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ic-transport-types 0.37.1",
  "reqwest",
  "schemars",
  "serde",
  "serde_bytes",
+ "serde_cbor",
  "serde_json",
  "sha2 0.10.8",
  "slog",
+ "strum",
+ "strum_macros",
+ "thiserror",
  "tokio",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
+ "wslpath",
 ]
 
 [[package]]
@@ -3872,9 +3894,9 @@ checksum = "ba39f3699c378cd8970968dcbff9c43159ea4cfbd88d43c00b22f2ef10a435d2"
 
 [[package]]
 name = "reqwest"
-version = "0.12.7"
+version = "0.12.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8f4955649ef5c38cc7f9e8aa41761d48fb9677197daea9984dc54f56aad5e63"
+checksum = "a77c62af46e79de0a562e1a9849205ffcb7fc1238876e9bd743357570e04046f"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -3898,7 +3920,7 @@ dependencies = [
  "pin-project-lite",
  "quinn",
  "rustls",
- "rustls-native-certs",
+ "rustls-native-certs 0.8.0",
  "rustls-pemfile",
  "rustls-pki-types",
  "serde",
@@ -4083,6 +4105,19 @@ name = "rustls-native-certs"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "04182dffc9091a404e0fc069ea5cd60e5b866c3adf881eff99a32d048242dffa"
+dependencies = [
+ "openssl-probe",
+ "rustls-pemfile",
+ "rustls-pki-types",
+ "schannel",
+ "security-framework",
+]
+
+[[package]]
+name = "rustls-native-certs"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcaf18a4f2be7326cd874a5fa579fae794320a0f388d365dca7e480e55f83f8a"
 dependencies = [
  "openssl-probe",
  "rustls-pemfile",
@@ -4935,9 +4970,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.40.0"
+version = "1.41.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2b070231665d27ad9ec9b8df639893f46727666c6767db40317fbe920a5d998"
+checksum = "22cfb5bee7a6a52939ca9224d6ac897bb669134078daa8735560897f69de4d33"
 dependencies = [
  "backtrace",
  "bytes",
@@ -5505,7 +5540,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -5719,6 +5754,12 @@ dependencies = [
  "bitflags 2.6.0",
  "windows-sys 0.52.0",
 ]
+
+[[package]]
+name = "wslpath"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04a2ecdf2cc4d33a6a93d71bcfbc00bb1f635cdb8029a2cc0709204a045ec7a3"
 
 [[package]]
 name = "xattr"
