@@ -2065,7 +2065,7 @@ dependencies = [
  "http 1.1.0",
  "http-body",
  "ic-certification 2.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ic-transport-types 0.38.2",
+ "ic-transport-types",
  "ic-verify-bls-signature",
  "k256 0.13.3",
  "leb128",
@@ -2428,23 +2428,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03f3044466a69802de74e710dc0300b706a05696a0531c942ca856751a13b0db"
 dependencies = [
  "ic_principal",
-]
-
-[[package]]
-name = "ic-transport-types"
-version = "0.37.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "875dc4704780383112e8e8b5063a1b98de114321d0c7d3e7f635dcf360a57fba"
-dependencies = [
- "candid",
- "hex",
- "ic-certification 2.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "leb128",
- "serde",
- "serde_bytes",
- "serde_repr",
- "sha2 0.10.8",
- "thiserror",
 ]
 
 [[package]]
@@ -3516,30 +3499,25 @@ dependencies = [
 
 [[package]]
 name = "pocket-ic"
-version = "6.0.0"
-source = "git+https://github.com/dfinity/ic?rev=9d8495d4b18086c9bf4858f15fcaa2e30affd6f7#9d8495d4b18086c9bf4858f15fcaa2e30affd6f7"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "beff607d4dbebff8d003453ced669d2645e905de496ca93713f3d47633357e6c"
 dependencies = [
  "base64 0.13.1",
  "candid",
  "hex",
- "ic-certification 2.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ic-transport-types 0.37.1",
+ "ic-cdk 0.13.5",
  "reqwest",
  "schemars",
  "serde",
  "serde_bytes",
- "serde_cbor",
  "serde_json",
  "sha2 0.10.8",
  "slog",
- "strum",
- "strum_macros",
- "thiserror",
  "tokio",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
- "wslpath",
 ]
 
 [[package]]
@@ -5539,7 +5517,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -5753,12 +5731,6 @@ dependencies = [
  "bitflags 2.6.0",
  "windows-sys 0.52.0",
 ]
-
-[[package]]
-name = "wslpath"
-version = "0.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04a2ecdf2cc4d33a6a93d71bcfbc00bb1f635cdb8029a2cc0709204a045ec7a3"
 
 [[package]]
 name = "xattr"
