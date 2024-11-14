@@ -30,7 +30,7 @@ fi
 
 cd tests/integration
 echo "PocketIC download starting"
-curl -sLO https://download.dfinity.systems/ic/bcbccf79c89a3e81b1a38d8233f8f81d1af1b245/binaries/x86_64-$PLATFORM/pocket-ic.gz || exit 1
+curl -sLO https://download.dfinity.systems/ic/172f8c78653c93ad101af75b94251439b4ccf098/binaries/x86_64-$PLATFORM/pocket-ic.gz || exit 1
 gzip -df pocket-ic.gz
 export POCKET_IC_BIN="$(pwd)/pocket-ic"
 chmod +x pocket-ic
