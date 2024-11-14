@@ -1194,6 +1194,8 @@ impl ExternalCanisterService {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use super::*;
     use crate::{
         core::test_utils,
@@ -1213,7 +1215,7 @@ mod tests {
             ExternalCanisterChangeCallPermissionsInput,
             ExternalCanisterChangeCallRequestPoliciesInput,
             ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
-            ExternalCanisterRequestPoliciesCreateInput, RequestPolicyRule,
+            ExternalCanisterRequestPoliciesCreateInput, Metadata, RequestPolicyRule,
         },
     };
     use orbit_essentials::api::ApiError;
@@ -1230,6 +1232,7 @@ mod tests {
                 name: "test".to_string(),
                 description: None,
                 labels: None,
+                metadata: None,
                 permissions: ExternalCanisterPermissionsCreateInput {
                     read: Allow::authenticated(),
                     change: Allow::authenticated(),
@@ -1337,6 +1340,7 @@ mod tests {
             name: "test".to_string(),
             description: None,
             labels: None,
+            metadata: None,
             permissions: ExternalCanisterPermissionsCreateInput {
                 read: Allow::authenticated(),
                 change: Allow::authenticated(),
@@ -1437,6 +1441,7 @@ mod tests {
                 name: "test".to_string(),
                 description: None,
                 labels: None,
+                metadata: None,
                 permissions: ExternalCanisterPermissionsCreateInput {
                     read: Allow::authenticated(),
                     change: Allow::authenticated(),
@@ -1520,6 +1525,7 @@ mod tests {
                 name: "test".to_string(),
                 description: None,
                 labels: None,
+                metadata: None,
                 permissions: ExternalCanisterPermissionsCreateInput {
                     read: Allow::authenticated(),
                     change: Allow::authenticated(),
@@ -1566,6 +1572,7 @@ mod tests {
                     name: "test".to_string(),
                     description: None,
                     labels: None,
+                    metadata: None,
                     permissions: ExternalCanisterPermissionsCreateInput {
                         read: Allow::authenticated(),
                         change: Allow::authenticated(),
@@ -1600,6 +1607,7 @@ mod tests {
                     name: format!("test{}", i),
                     description: None,
                     labels: None,
+                    metadata: None,
                     permissions: ExternalCanisterPermissionsCreateInput {
                         read: Allow::authenticated(),
                         change: Allow::authenticated(),
@@ -1633,6 +1641,7 @@ mod tests {
                 name: "test".to_string(),
                 description: None,
                 labels: None,
+                metadata: None,
                 permissions: ExternalCanisterPermissionsCreateInput {
                     read: Allow::authenticated(),
                     change: Allow::authenticated(),
@@ -1667,6 +1676,10 @@ mod tests {
                 name: "test".to_string(),
                 description: None,
                 labels: None,
+                metadata: Some(Metadata::new(BTreeMap::from([
+                    ("key1".to_string(), "value1".to_string()),
+                    ("key2".to_string(), "value2".to_string()),
+                ]))),
                 permissions: ExternalCanisterPermissionsCreateInput {
                     read: Allow::authenticated(),
                     change: Allow::authenticated(),
@@ -1697,6 +1710,9 @@ mod tests {
                         name: Some("test2".to_string()),
                         description: None,
                         labels: None,
+                        change_metadata: Some(crate::models::ChangeMetadata::OverrideSpecifiedBy(
+                            BTreeMap::from([("key2".to_string(), "test".to_string())]),
+                        )),
                         state: None,
                         permissions: Some(ExternalCanisterPermissionsUpdateInput {
                             read: Some(Allow::authenticated()),
@@ -1718,6 +1734,13 @@ mod tests {
                 .unwrap();
 
         assert_eq!(updated_canister.name, "test2");
+        assert_eq!(
+            updated_canister.metadata,
+            Metadata::new(BTreeMap::from([
+                ("key1".to_string(), "value1".to_string()),
+                ("key2".to_string(), "test".to_string())
+            ]))
+        );
 
         let call_permission = PERMISSION_REPOSITORY
             .find_external_canister_call_permissions(&updated_canister.canister_id);
@@ -1733,6 +1756,7 @@ mod tests {
                 name: "test".to_string(),
                 description: None,
                 labels: None,
+                metadata: None,
                 permissions: ExternalCanisterPermissionsCreateInput {
                     read: Allow::authenticated(),
                     change: Allow::authenticated(),
@@ -1835,6 +1859,7 @@ mod tests {
                         name: None,
                         description: None,
                         labels: None,
+                        change_metadata: None,
                         state: None,
                         permissions: Some(ExternalCanisterPermissionsUpdateInput {
                             read: None,
@@ -1924,6 +1949,7 @@ mod tests {
                         name: None,
                         description: None,
                         labels: None,
+                        change_metadata: None,
                         state: None,
                         permissions: Some(ExternalCanisterPermissionsUpdateInput {
                             read: None,
@@ -1972,6 +1998,7 @@ mod tests {
                         name: None,
                         description: None,
                         labels: None,
+                        change_metadata: None,
                         state: None,
                         permissions: Some(ExternalCanisterPermissionsUpdateInput {
                             read: None,
@@ -2028,6 +2055,7 @@ mod tests {
                     name: format!("test{}", i),
                     description: None,
                     labels: None,
+                    metadata: None,
                     permissions: ExternalCanisterPermissionsCreateInput {
                         read: Allow::authenticated(),
                         change: Allow::authenticated(),
@@ -2080,6 +2108,7 @@ mod tests {
                     name: format!("test{}", i),
                     description: None,
                     labels: None,
+                    metadata: None,
                     permissions: ExternalCanisterPermissionsCreateInput {
                         read: Allow::authenticated(),
                         change: Allow::authenticated(),
@@ -2128,6 +2157,7 @@ mod tests {
                 name: "test".to_string(),
                 description: None,
                 labels: None,
+                metadata: None,
                 permissions: ExternalCanisterPermissionsCreateInput {
                     read: Allow::authenticated(),
                     change: Allow::authenticated(),
@@ -2151,6 +2181,7 @@ mod tests {
                 name: "test".to_string(),
                 description: None,
                 labels: None,
+                metadata: None,
                 permissions: ExternalCanisterPermissionsCreateInput {
                     read: Allow::authenticated(),
                     change: Allow::authenticated(),
@@ -2189,6 +2220,7 @@ mod tests {
                         name: format!("test{}", i),
                         description: None,
                         labels: None,
+                        metadata: None,
                         permissions: ExternalCanisterPermissionsCreateInput {
                             read: Allow::authenticated(),
                             change: Allow::authenticated(),
@@ -2216,6 +2248,7 @@ mod tests {
                     name: Some(external_canisters[0].name.to_string()),
                     description: None,
                     labels: None,
+                    change_metadata: None,
                     state: None,
                     permissions: None,
                     request_policies: None,
@@ -2231,6 +2264,7 @@ mod tests {
                 name: Some("test1".to_string()),
                 description: None,
                 labels: None,
+                change_metadata: None,
                 state: None,
                 permissions: None,
                 request_policies: None,

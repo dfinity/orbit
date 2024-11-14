@@ -8,7 +8,7 @@ use super::{
     CanisterMethod, ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
     CreateExternalCanisterOperationKind, ExternalCanisterChangeCallRequestPoliciesInput,
     ExternalCanisterRequestPoliciesCreateInput, ExternalCanisterRequestPoliciesUpdateInput,
-    RequestPolicy, RequestPolicyRule,
+    Metadata, RequestPolicy, RequestPolicyRule,
 };
 use crate::errors::{ExternalCanisterError, ExternalCanisterValidationError};
 use crate::repositories::REQUEST_POLICY_REPOSITORY;
@@ -45,6 +45,11 @@ pub struct ExternalCanister {
     /// This is a list of strings that can be used to categorize the canister
     /// and make it easier to search for.
     pub labels: Vec<String>,
+    /// The canister metadata.
+    ///
+    /// Can be used for storing additional information such as a group_id,
+    /// logo, group_name, etc.
+    pub metadata: Metadata,
     /// The state of the canister (e.g. active, archived, etc.)
     pub state: ExternalCanisterState,
     /// When the canister was added to the station.
@@ -150,6 +155,10 @@ impl ExternalCanister {
         if let Some(state) = changes.state {
             self.state = state;
         }
+
+        if let Some(change_metadata) = changes.change_metadata {
+            self.metadata.change(change_metadata);
+        }
     }
 }
 
@@ -226,6 +235,12 @@ impl ModelValidator<ExternalCanisterError> for ExternalCanister {
         validate_name(&self.name)?;
         validate_description(&self.description)?;
         validate_labels(&self.labels)?;
+
+        self.metadata
+            .validate()
+            .map_err(|e| ExternalCanisterError::ValidationError {
+                info: e.to_string(),
+            })?;
 
         Ok(())
     }
@@ -427,6 +442,7 @@ pub mod external_canister_test_utils {
             canister_id,
             name: canister_id.to_string(),
             description: Some("Test canister description".to_string()),
+            metadata: Metadata::default(),
             labels: vec!["test".to_string()],
             state: ExternalCanisterState::Active,
             created_at: next_time(),
@@ -437,10 +453,13 @@ pub mod external_canister_test_utils {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use crate::models::{
         request_policy_test_utils::mock_request_policy,
         CreateExternalCanisterOperationKindCreateNew, ExternalCanisterCallRequestPolicyRuleInput,
         ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
+        MetadataItem,
     };
 
     use super::*;
@@ -471,6 +490,8 @@ mod tests {
         external_canister.name = "Test canister".to_string();
         external_canister.description = Some("Test canister description".to_string());
         external_canister.labels = vec!["test".to_string()];
+        external_canister.metadata =
+            Metadata::new(BTreeMap::from([("key".to_string(), "value".to_string())]));
 
         assert!(external_canister.validate().is_ok());
     }
@@ -479,6 +500,13 @@ mod tests {
     fn invalid_external_canister_validation() {
         let mut external_canister = mock_external_canister();
         external_canister.name = "".to_string();
+        assert!(external_canister.validate().is_err());
+
+        external_canister.name = "Test canister".to_string();
+        external_canister.metadata = Metadata::new(BTreeMap::from([(
+            "key".to_string(),
+            "a".repeat(Metadata::MAX_METADATA_VALUE_LEN as usize + 1),
+        )]));
 
         assert!(external_canister.validate().is_err());
     }
@@ -570,6 +598,11 @@ mod tests {
             name: Some("New name".to_string()),
             description: Some("New description".to_string()),
             labels: Some(vec!["new".to_string()]),
+            change_metadata: Some(crate::models::ChangeMetadata::ReplaceAllBy(
+                [("key".to_string(), "value".to_string())]
+                    .into_iter()
+                    .collect(),
+            )),
             permissions: None,
             request_policies: None,
             state: Some(ExternalCanisterState::Archived),
@@ -580,6 +613,10 @@ mod tests {
         assert_eq!(model.name, "New name".to_string());
         assert_eq!(model.description, Some("New description".to_string()));
         assert_eq!(model.labels, vec!["new".to_string()]);
+        assert!(model.metadata.contains(&MetadataItem {
+            key: "key".to_string(),
+            value: "value".to_string()
+        }));
         assert_eq!(model.state, ExternalCanisterState::Archived);
     }
 
@@ -724,6 +761,7 @@ mod tests {
             name: "Test canister".to_string(),
             description: None,
             labels: None,
+            metadata: None,
             permissions: ExternalCanisterPermissionsCreateInput {
                 read: Allow::authenticated(),
                 change: Allow::authenticated(),
