@@ -206,7 +206,7 @@ fn can_mint_cycles_to_top_up_self() {
         controller,
         ..
     } = setup_new_env_with_config(SetupConfig {
-        start_cycles: Some(5_000_000_000_000),
+        start_cycles: Some(4_000_000_000_000),
         ..Default::default()
     });
 
