@@ -75,3 +75,12 @@ export enum CyclesUnit {
   // Can be used to display cycles in the smallest unit.
   Smallest = 'e8s',
 }
+
+export enum TimeUnit {
+  Years = 'Y',
+  Months = 'M',
+  Days = 'D',
+  Hours = 'H',
+  Minutes = 'Min',
+  Seconds = 'Sec',
+}

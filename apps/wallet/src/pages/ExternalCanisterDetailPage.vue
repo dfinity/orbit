@@ -295,6 +295,10 @@
                               v-model:open="dialogs.topUp"
                               :canister-id="canister.canister_id"
                             />
+                            <CanisterMonitorDialog
+                              v-model:open="dialogs.monitor"
+                              :canister-id="canister.canister_id"
+                            />
 
                             <VBtn
                               size="small"
@@ -306,6 +310,19 @@
                               @click="dialogs.topUp = true"
                             >
                               {{ $t('external_canisters.top_up') }}
+                            </VBtn>
+
+                            <VBtn
+                              :disabled="!canisterDetails.status.value"
+                              size="small"
+                              density="compact"
+                              color="default"
+                              variant="tonal"
+                              class="ml-1 px-2"
+                              :append-icon="mdiDatabaseArrowUp"
+                              @click="dialogs.monitor = true"
+                            >
+                              {{ $t('external_canisters.monitor.title') }}
                             </VBtn>
                           </template>
                         </VListItemTitle>
@@ -416,6 +433,7 @@ import CanisterCallDialog from '~/components/external-canisters/CanisterCallDial
 import CanisterConfigureMethodCallList from '~/components/external-canisters/CanisterConfigureMethodCallList.vue';
 import CanisterIcSettingsDialog from '~/components/external-canisters/CanisterIcSettingsDialog.vue';
 import CanisterInstallDialog from '~/components/external-canisters/CanisterInstallDialog.vue';
+import CanisterMonitorDialog from '~/components/external-canisters/CanisterMonitorDialog.vue';
 import CanisterSetupDialog from '~/components/external-canisters/CanisterSetupDialog.vue';
 import CanisterTopUpDialog from '~/components/external-canisters/CanisterTopUpDialog.vue';
 import CanisterUnlinkDialog from '~/components/external-canisters/CanisterUnlinkDialog.vue';
@@ -491,6 +509,7 @@ const dialogs = ref({
   icSettings: false,
   install: false,
   topUp: false,
+  monitor: false,
   call: false,
 });
 

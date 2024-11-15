@@ -1,8 +1,8 @@
 <template>
   <div class="d-flex flex-row flex-nowrap ga-1">
     <VTextField
-      ref="cyclesFieldInput"
-      v-model="displayedCycles"
+      ref="secondsFieldInput"
+      v-model="displayedSeconds"
       class="flex-grow-1"
       :name="props.name"
       :label="props.label"
@@ -15,8 +15,8 @@
       :rules="[
         ...(props.required ? [requiredRule] : []),
         numberRangeRule({
-          min: unit === CyclesUnit.Smallest ? 1 : 0.001,
-          decimals: unit === CyclesUnit.Smallest ? 0 : 3,
+          min: unit === TimeUnit.Seconds ? 1 : 0.001,
+          decimals: unit === TimeUnit.Seconds ? 0 : 3,
         }),
       ]"
       :prepend-icon="mdiDatabaseRefresh"
@@ -41,19 +41,19 @@ import { mdiDatabaseRefresh } from '@mdi/js';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VSelect, VTextField } from 'vuetify/components';
-import { fromCyclesUnit, toCyclesUnit } from '~/mappers/cycles.mapper';
-import { CyclesUnit } from '~/types/app.types';
+import { TimeUnit } from '~/types/app.types';
 import { numberRangeRule, requiredRule } from '~/utils/form.utils';
 import { parseToNumberOrUndefined } from '~/utils/helper.utils';
+import { fromTimeUnit, toTimeUnit } from '~/mappers/time.mapper.ts';
 
 const props = withDefaults(
   defineProps<{
     modelValue?: bigint;
-    unit?: CyclesUnit;
+    unit?: TimeUnit;
     label?: string;
     name?: string;
     readonly?: boolean;
-    units?: CyclesUnit[];
+    units?: TimeUnit[];
     required?: boolean;
     hint?: string;
     variant?: 'underlined' | 'outlined' | 'filled';
@@ -61,58 +61,58 @@ const props = withDefaults(
   }>(),
   {
     modelValue: undefined,
-    unit: CyclesUnit.Smallest,
+    unit: TimeUnit.Seconds,
     label: undefined,
     name: undefined,
     readonly: false,
     required: false,
     hint: undefined,
-    units: () => Object.values(CyclesUnit),
+    units: () => Object.values(TimeUnit),
     variant: 'filled',
     density: 'comfortable',
   },
 );
 
-const cyclesFieldInput = ref<VTextField>();
+const secondsFieldInput = ref<VTextField>();
 const i18n = useI18n();
-const unit = ref<CyclesUnit>(props.unit);
-const e8sCycles = ref<bigint | undefined>(props.modelValue);
-const displayedCycles = ref<number | undefined>(
-  props.modelValue ? toCyclesUnit(props.modelValue, props.unit) : undefined,
+const unit = ref<TimeUnit>(props.unit);
+const timeInSeconds = ref<bigint | undefined>(props.modelValue);
+const displayedSeconds = ref<number | undefined>(
+  props.modelValue ? toTimeUnit(props.modelValue, props.unit) : undefined,
 );
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: bigint | undefined): void;
-  (event: 'update:unit', payload: CyclesUnit): void;
+  (event: 'update:unit', payload: TimeUnit): void;
 }>();
 
 const availableUnits = computed(() =>
-  props.units.map(unit => ({ value: unit, text: i18n.t(`cycles.units.${unit.toLowerCase()}`) })),
+  props.units.map(unit => ({ value: unit, text: i18n.t(`time.units.${unit.toLowerCase()}`) })),
 );
 
-const e8sSyncCycles = (cycles?: number): void => {
+const syncTimeInSeconds = (seconds?: number): void => {
   // Reset model value if the input is invalid
-  if (cyclesFieldInput.value?.errorMessages?.length) {
+  if (secondsFieldInput.value?.errorMessages?.length) {
     emit('update:modelValue', undefined);
 
     return;
   }
 
-  cycles = parseToNumberOrUndefined(cycles);
-  e8sCycles.value = cycles !== undefined ? fromCyclesUnit(cycles, unit.value) : undefined;
+  seconds = parseToNumberOrUndefined(seconds);
+  timeInSeconds.value = seconds !== undefined ? fromTimeUnit(seconds, unit.value) : undefined;
 
-  emit('update:modelValue', e8sCycles.value);
+  emit('update:modelValue', timeInSeconds.value);
 };
 
 watch(
-  () => cyclesFieldInput.value?.errorMessages,
-  _ => e8sSyncCycles(displayedCycles.value),
+  () => secondsFieldInput.value?.errorMessages,
+  _ => syncTimeInSeconds(displayedSeconds.value),
   { deep: true },
 );
 
 watch(
-  () => displayedCycles.value,
-  cycles => e8sSyncCycles(cycles),
+  () => displayedSeconds.value,
+  cycles => syncTimeInSeconds(cycles),
 );
 
 watch(
@@ -121,17 +121,17 @@ watch(
     emit('update:unit', value);
 
     // Triggers revalidation with the updated rules when unit changes.
-    if (displayedCycles.value) {
-      cyclesFieldInput.value?.focus({
+    if (displayedSeconds.value) {
+      secondsFieldInput.value?.focus({
         preventScroll: true,
       });
 
       // Next tick is required to ensure the input is focused before blurring it.
       nextTick(() => {
-        cyclesFieldInput.value?.blur();
+        secondsFieldInput.value?.blur();
 
         // Update displayed cycles when unit changes
-        e8sSyncCycles(displayedCycles.value);
+        syncTimeInSeconds(displayedSeconds.value);
       });
     }
   },
