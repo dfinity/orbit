@@ -862,7 +862,7 @@ fn test_disaster_recovery_install() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env_with_config(crate::setup::SetupConfig {
-        start_cycles: Some(4_000_000_000_000),
+        start_cycles: Some(4_500_000_000_000),
         ..Default::default()
     });
 
