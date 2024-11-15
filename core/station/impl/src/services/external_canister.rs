@@ -63,7 +63,7 @@ lazy_static! {
         ));
 }
 
-const CREATE_CANISTER_CYCLES: u128 = 1_500_000_000_000; // fee sufficient to create canisters on any ICP mainnet subnet
+const CREATE_CANISTER_CYCLES: u128 = 2_000_000_000_000; // fee sufficient to create canisters on any ICP mainnet subnet
 
 #[derive(Default, Debug)]
 pub struct ExternalCanisterService {
