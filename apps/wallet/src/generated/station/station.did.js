@@ -295,6 +295,15 @@ export const idlFactory = ({ IDL }) => {
     'Active' : IDL.Null,
     'Archived' : IDL.Null,
   });
+  const ExternalCanisterMetadata = IDL.Record({
+    'key' : IDL.Text,
+    'value' : IDL.Text,
+  });
+  const ChangeExternalCanisterMetadata = IDL.Variant({
+    'OverrideSpecifiedBy' : IDL.Vec(ExternalCanisterMetadata),
+    'RemoveKeys' : IDL.Vec(IDL.Text),
+    'ReplaceAllBy' : IDL.Vec(ExternalCanisterMetadata),
+  });
   const ConfigureExternalCanisterSettingsInput = IDL.Record({
     'permissions' : IDL.Opt(ExternalCanisterPermissionsUpdateInput),
     'name' : IDL.Opt(IDL.Text),
@@ -302,6 +311,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Opt(IDL.Text),
     'request_policies' : IDL.Opt(ExternalCanisterRequestPoliciesUpdateInput),
     'state' : IDL.Opt(ExternalCanisterState),
+    'change_metadata' : IDL.Opt(ChangeExternalCanisterMetadata),
   });
   const DefiniteCanisterSettingsInput = IDL.Record({
     'freezing_threshold' : IDL.Opt(IDL.Nat),
@@ -436,6 +446,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateExternalCanisterOperationInput = IDL.Record({
     'permissions' : ExternalCanisterPermissionsCreateInput,
+    'metadata' : IDL.Opt(IDL.Vec(ExternalCanisterMetadata)),
     'kind' : CreateExternalCanisterOperationKind,
     'name' : IDL.Text,
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
@@ -875,6 +886,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : UUID,
     'permissions' : ExternalCanisterPermissions,
     'modified_at' : IDL.Opt(TimestampRFC3339),
+    'metadata' : IDL.Vec(ExternalCanisterMetadata),
     'name' : IDL.Text,
     'labels' : IDL.Vec(IDL.Text),
     'canister_id' : IDL.Principal,

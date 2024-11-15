@@ -392,6 +392,7 @@ fn create_external_canister_and_check_status() {
             name: "test".to_string(),
             description: None,
             labels: None,
+            metadata: None,
             permissions: ExternalCanisterPermissionsCreateInput {
                 calls: vec![],
                 read: AllowDTO {
@@ -1164,6 +1165,7 @@ fn create_external_canister_with_too_many_cycles() {
             name: name.to_string(),
             description: None,
             labels: None,
+            metadata: None,
             permissions: ExternalCanisterPermissionsCreateInput {
                 calls: vec![],
                 read: AllowDTO {
@@ -1295,6 +1297,7 @@ fn create_external_canister_on_different_subnet() {
             name: "test".to_string(),
             description: None,
             labels: None,
+            metadata: None,
             permissions: ExternalCanisterPermissionsCreateInput {
                 calls: vec![],
                 read: AllowDTO {

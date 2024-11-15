@@ -397,6 +397,7 @@ const { submit, edited, initialModel, additionalFieldErrors, submitting, valid, 
             name: [],
             description: [],
             labels: [],
+            change_metadata: [],
             state: [],
           },
         );
