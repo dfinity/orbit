@@ -7,9 +7,9 @@ use crate::utils::{
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
-use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cmc::{SubnetFilter, SubnetSelection};
+use pocket_ic::management_canister::{CanisterIdRecord, CanisterStatusResult};
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{
@@ -611,12 +611,12 @@ fn create_external_canister_and_check_status() {
 
     // checking canister status on behalf of the first user now succeeds
     let canister_id_record = CanisterIdRecord { canister_id };
-    let status: (ApiResult<CanisterStatusResponse>,) = update_candid_as(
+    let status: (ApiResult<CanisterStatusResult>,) = update_candid_as(
         &env,
         canister_ids.station,
         user_a,
         "canister_status",
-        (canister_id_record,),
+        (canister_id_record.clone(),),
     )
     .unwrap();
     assert_eq!(status.0.unwrap().module_hash, None);
