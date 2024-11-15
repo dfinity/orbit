@@ -49,6 +49,7 @@ pub struct ExternalCanister {
     ///
     /// Can be used for storing additional information such as a group_id,
     /// logo, group_name, etc.
+    #[serde(default)]
     pub metadata: Metadata,
     /// The state of the canister (e.g. active, archived, etc.)
     pub state: ExternalCanisterState,
