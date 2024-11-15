@@ -492,6 +492,7 @@ pub struct CreateExternalCanisterOperationInput {
     pub name: String,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
+    pub metadata: Option<Metadata>,
     pub permissions: ExternalCanisterPermissionsCreateInput,
     pub request_policies: ExternalCanisterRequestPoliciesCreateInput,
 }
@@ -567,6 +568,7 @@ pub struct ConfigureExternalCanisterSettingsInput {
     pub name: Option<String>,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
+    pub change_metadata: Option<ChangeMetadata>,
     pub state: Option<ExternalCanisterState>,
     pub permissions: Option<ExternalCanisterPermissionsUpdateInput>,
     pub request_policies: Option<ExternalCanisterRequestPoliciesUpdateInput>,

@@ -6,7 +6,7 @@
     <VContainer>
       <VRow>
         <VCol cols="12" class="pb-0 px-6">
-          <VTextField
+          <VCombobox
             v-model="model.methodName"
             density="comfortable"
             :prepend-inner-icon="mdiCodeBraces"
@@ -14,6 +14,7 @@
             :label="$t('external_canisters.call_configuration.method_name')"
             :hint="$t('external_canisters.call_configuration.method_name_hint')"
             :rules="[requiredRule]"
+            :items="availableServiceMethods"
             name="method_name"
           />
         </VCol>
@@ -180,13 +181,17 @@ import { assertAndReturn } from '~/utils/helper.utils';
 import AllowInput from '../inputs/AllowInput.vue';
 import CanisterIdField from '../inputs/CanisterIdField.vue';
 import { CanisterMethodCallConfigurationModel } from './external-canisters.types';
+import { getServiceMethods } from '~/utils/didc.utils';
+import logger from '~/core/logger.core';
 
 const props = withDefaults(
   defineProps<{
     modelValue: CanisterMethodCallConfigurationModel;
+    candidIdl?: string;
     readonly?: boolean;
   }>(),
   {
+    candidIdl: undefined,
     readonly: false,
   },
 );
@@ -221,6 +226,19 @@ const createValidationTarget = (
         },
       }
     : { No: null };
+
+const availableServiceMethods = computed(() => {
+  if (!props.candidIdl) {
+    return [];
+  }
+
+  try {
+    return getServiceMethods(props.candidIdl);
+  } catch (error) {
+    logger.warn('Failed to parse the Candid IDL', error);
+    return [];
+  }
+});
 
 const { submit, edited, initialModel, additionalFieldErrors, submitting, valid, submitted } =
   useForm({
@@ -379,6 +397,7 @@ const { submit, edited, initialModel, additionalFieldErrors, submitting, valid, 
             name: [],
             description: [],
             labels: [],
+            change_metadata: [],
             state: [],
           },
         );

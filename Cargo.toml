@@ -64,7 +64,7 @@ lazy_static = "1.4.0"
 mockall = "0.12.1"
 num-bigint = "0.4"
 num-traits = "0.2"
-pocket-ic = { git = "https://github.com/dfinity/ic", rev = "cce8a1797b0bd110a3a2c3c97a4dcb1f2f736834" }
+pocket-ic = "6.0.0"
 proc-macro2 = "1.0"
 prometheus = "0.13.3"
 quote = "1.0"

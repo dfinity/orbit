@@ -18,6 +18,7 @@
 
       <CanisterConfigureMethodCallForm
         v-model="canisterConfigureMethodCallModel"
+        :candid-idl="props.canisterCandidIdl"
         @submitting="canClose = !$event"
         @submitted="open = false"
       >
@@ -70,6 +71,7 @@ const props = withDefaults(
     alreadyConfiguredMethods?: CanisterConfiguredMethodCall[];
     dialogMaxWidth?: number;
     title?: string;
+    canisterCandidIdl?: string;
   }>(),
   {
     open: false,
@@ -79,6 +81,7 @@ const props = withDefaults(
     alreadyConfiguredMethods: () => [],
     dialogMaxWidth: 800,
     title: undefined,
+    canisterCandidIdl: undefined,
   },
 );
 

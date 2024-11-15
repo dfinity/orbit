@@ -5,6 +5,7 @@
       :canister-id="props.canisterId"
       :method="canisterConfigureMethodCallDialog.method"
       :already-configured-methods="canisterConfigureMethodCallDialog.alreadyConfiguredMethods"
+      :canister-candid-idl="props.canisterCandidIdl"
       @update:open="canisterConfigureMethodCallDialog.open = $event"
     />
     <header class="d-flex flex-md-row flex-column ga-2">
@@ -40,6 +41,7 @@
                     return station.service.editExternalCanisterSettings(props.canisterId, {
                       description: [],
                       labels: [],
+                      change_metadata: [],
                       name: [],
                       state: [],
                       permissions: [
@@ -149,11 +151,13 @@ const props = withDefaults(
     requestPolicies?: ExternalCanisterRequestPolicies['calls'];
     permissions?: ExternalCanisterPermissions['calls'];
     readonly?: boolean;
+    canisterCandidIdl?: string;
   }>(),
   {
     requestPolicies: () => [],
     permissions: () => [],
     readonly: false,
+    canisterCandidIdl: undefined,
   },
 );
 

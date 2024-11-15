@@ -6,14 +6,14 @@ use crate::utils::{
     advance_time_to_burn_cycles, await_station_healthy, deploy_test_canister, execute_request,
     get_account_read_permission, get_account_transfer_permission, get_account_update_permission,
     get_core_canister_health_status, get_request, get_system_info, get_upgrader_disaster_recovery,
-    get_upgrader_logs, get_user, list_canister_snapshots, set_disaster_recovery, submit_request,
+    get_upgrader_logs, get_user, set_disaster_recovery, submit_request,
     upload_canister_chunks_to_asset_canister, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
-use ic_cdk::api::management_canister::main::CanisterStatusType;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::utils::sha256_hash;
+use pocket_ic::management_canister::CanisterStatusResultStatus;
 use pocket_ic::{query_candid_as, update_candid_as, PocketIc};
 use station_api::{
     AddAccountOperationInput, AllowDTO, CallExternalCanisterOperationInput, CanisterMethodDTO,
@@ -871,7 +871,7 @@ fn test_disaster_recovery_install() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env_with_config(crate::setup::SetupConfig {
-        start_cycles: Some(2_000_000_000_000),
+        start_cycles: Some(4_500_000_000_000),
         ..Default::default()
     });
 
@@ -1090,7 +1090,10 @@ fn test_disaster_recovery_unstoppable() {
     let station_status = env
         .canister_status(canister_ids.station, Some(upgrader_id))
         .unwrap();
-    assert_eq!(station_status.status, CanisterStatusType::Stopping);
+    assert!(matches!(
+        station_status.status,
+        CanisterStatusResultStatus::Stopping
+    ));
 
     // the station can't be stopped yet because it has an open call context
     // with a pending down-stream call to the "expensive" method of the test canister
@@ -1114,14 +1117,19 @@ fn test_disaster_recovery_unstoppable() {
     let station_status = env
         .canister_status(canister_ids.station, Some(upgrader_id))
         .unwrap();
-    assert_eq!(station_status.status, CanisterStatusType::Stopping);
+    assert!(matches!(
+        station_status.status,
+        CanisterStatusResultStatus::Stopping
+    ));
 
     // force stop in disaster recovery
     disaster_recovery_request.force = true;
 
     // we perform successful disaster recovery with forced stop twice
     // to test that snapshots can be taken multiple times
-    let mut snapshots = list_canister_snapshots(&env, canister_ids.station, upgrader_id);
+    let mut snapshots = env
+        .list_canister_snapshots(canister_ids.station, Some(upgrader_id))
+        .unwrap();
     assert!(snapshots.is_empty());
     for i in 0..2 {
         let new_name = format!("recovered-{}", i);
@@ -1150,8 +1158,14 @@ fn test_disaster_recovery_unstoppable() {
         await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
 
         // check that a snapshot has been taken
-        let current_snapshots = list_canister_snapshots(&env, canister_ids.station, upgrader_id);
-        assert_ne!(current_snapshots, snapshots);
+        let current_snapshots = env
+            .list_canister_snapshots(canister_ids.station, Some(upgrader_id))
+            .unwrap();
+        assert_eq!(current_snapshots.len(), 1);
+        assert!(
+            snapshots.is_empty()
+                || (snapshots.len() == 1 && current_snapshots[0].id != snapshots[0].id)
+        );
         snapshots = current_snapshots;
 
         // check new station name set during disaster recovery
