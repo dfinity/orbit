@@ -287,6 +287,7 @@ mod tests {
     use crate::{
         core::{validation::disable_mock_resource_validation, write_system_info},
         models::{
+            asset_test_utils::mock_asset,
             request_specifier::{
                 Match, RequestSpecifier, UserInvolvedInPolicyRuleForRequestResource, UserMatcher,
                 UserSpecifier,
@@ -299,11 +300,11 @@ mod tests {
             system::SystemInfo,
             CanisterMethod, RequestKey,
         },
-        repositories::REQUEST_REPOSITORY,
+        repositories::{ASSET_REPOSITORY, REQUEST_REPOSITORY},
     };
     use candid::Principal;
-    use orbit_essentials::cdk::mocks::api::id;
     use orbit_essentials::cdk::mocks::TEST_CANISTER_ID;
+    use orbit_essentials::{cdk::mocks::api::id, model::ModelKey};
     use orbit_essentials::{model::ModelValidator, repository::Repository};
 
     #[tokio::test]
@@ -376,6 +377,9 @@ mod tests {
             Principal::from_slice(&[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x01]);
         let system_info = SystemInfo::new(upgrader_canister_id, Vec::new());
         write_system_info(system_info);
+
+        let icp_asset = mock_asset();
+        ASSET_REPOSITORY.insert(icp_asset.key(), icp_asset);
 
         RequestSpecifier::AddAccount
             .validate()
