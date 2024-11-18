@@ -41,6 +41,7 @@
                     return station.service.editExternalCanisterSettings(props.canisterId, {
                       description: [],
                       labels: [],
+                      change_metadata: [],
                       name: [],
                       state: [],
                       permissions: [

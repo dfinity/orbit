@@ -1,6 +1,7 @@
 use crate::{
-    AllowDTO, CanisterInstallMode, PaginationInput, RequestPolicyRuleDTO, Sha256HashDTO,
-    SortDirection, TimestampRfc3339, UuidDTO, ValidationMethodResourceTargetDTO,
+    AllowDTO, CanisterInstallMode, ChangeMetadataDTO, MetadataDTO, PaginationInput,
+    RequestPolicyRuleDTO, Sha256HashDTO, SortDirection, TimestampRfc3339, UuidDTO,
+    ValidationMethodResourceTargetDTO,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
 use orbit_essentials::cmc::SubnetSelection;
@@ -56,6 +57,7 @@ pub struct CreateExternalCanisterOperationInput {
     pub name: String,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
+    pub metadata: Option<Vec<MetadataDTO>>,
     pub permissions: ExternalCanisterPermissionsCreateInput,
     pub request_policies: ExternalCanisterRequestPoliciesCreateInput,
 }
@@ -140,6 +142,7 @@ pub struct ConfigureExternalCanisterSettingsInput {
     pub name: Option<String>,
     pub description: Option<String>,
     pub labels: Option<Vec<String>>,
+    pub change_metadata: Option<ChangeMetadataDTO>,
     pub state: Option<ExternalCanisterStateDTO>,
     pub permissions: Option<ExternalCanisterPermissionsUpdateInput>,
     pub request_policies: Option<ExternalCanisterRequestPoliciesUpdateInput>,
@@ -276,6 +279,7 @@ pub struct ExternalCanisterDTO {
     pub name: String,
     pub description: Option<String>,
     pub labels: Vec<String>,
+    pub metadata: Vec<MetadataDTO>,
     pub state: ExternalCanisterStateDTO,
     pub permissions: ExternalCanisterPermissionsDTO,
     pub request_policies: ExternalCanisterRequestPoliciesDTO,
