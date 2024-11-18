@@ -20,6 +20,9 @@ pub enum AssetError {
     /// Invalid symbol length.
     #[error(r#"Symbol must be between {min_length} and {max_length}."#)]
     InvalidSymbolLength { min_length: u16, max_length: u16 },
+    /// Invalid symbol.
+    #[error(r#"Symbol must contain only alphanumeric characters."#)]
+    InvalidSymbol,
     /// The given blockchain is unknown to the system.
     #[error(r#"The given blockchain is unknown to the system."#)]
     UnknownBlockchain { blockchain: String },
@@ -71,6 +74,7 @@ impl DetailableError for AssetError {
                 details.insert("max_length".to_string(), max_length.to_string());
                 Some(details)
             }
+            AssetError::InvalidSymbol => Some(details),
             AssetError::InvalidSymbolLength {
                 min_length,
                 max_length,

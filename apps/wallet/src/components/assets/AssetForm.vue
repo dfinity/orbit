@@ -50,7 +50,7 @@
         density="comfortable"
         :disabled="isViewMode"
         :prepend-icon="mdiTextBox"
-        :rules="[requiredRule]"
+        :rules="[requiredRule, maxLengthRule(64, $t('terms.name'))]"
       />
       <VTextField
         v-model="model.symbol"
@@ -60,7 +60,7 @@
         density="comfortable"
         :disabled="isViewMode"
         :prepend-icon="mdiTag"
-        :rules="[requiredRule]"
+        :rules="[requiredRule, validSymbolRule]"
       />
       <VTextField
         v-model="decimals"
@@ -71,7 +71,7 @@
         density="comfortable"
         :disabled="isViewMode || !!model.id"
         :prepend-icon="mdiDecimal"
-        :rules="[requiredRule]"
+        :rules="[requiredRule, numberRangeRule({ min: 0, max: 18 })]"
       />
 
       <MetadataField
@@ -93,7 +93,7 @@ import BlockchainAutocomplete from '~/components/inputs/BlockchainAutocomplete.v
 import MetadataField from '~/components/inputs/MetadataField.vue';
 import { Asset } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
-import { requiredRule } from '~/utils/form.utils';
+import { maxLengthRule, numberRangeRule, requiredRule, validSymbolRule } from '~/utils/form.utils';
 import StandardsAutocomplete from '../inputs/StandardsAutocomplete.vue';
 import InternetComputerNativeStandardForm from './standards/InternetComputerNativeStandardForm.vue';
 import { BlockchainStandard } from '~/types/chain.types';

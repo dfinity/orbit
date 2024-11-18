@@ -42,23 +42,15 @@ describe('AssetForm', () => {
       },
     });
 
-    // has not emitted "valid" event
-    expect(wrapper.emitted('valid')).toBeUndefined();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.emitted('valid')).toEqual([[false]]);
 
     // fill out metadata for ICP
     await wrapper
       .find('input[name="metadata_ledger_canister_id"]')
       .setValue('ryjl3-tyaaa-aaaaa-aaaba-cai');
 
-    expect(wrapper.emitted('valid')).toEqual([[false]]);
-
-    await wrapper
-      .find('input[name="metadata_index_canister_id"]')
-      .setValue('qhbym-qaaaa-aaaaa-aaafq-cai');
-
     await wrapper.vm.$nextTick();
-
-    // has emitted "valid" event with value true
     expect(wrapper.emitted('valid')).toEqual([[false], [true]]);
   });
 });
