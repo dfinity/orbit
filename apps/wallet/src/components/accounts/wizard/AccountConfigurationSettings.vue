@@ -25,14 +25,13 @@
         :disabled="isViewMode || !!model.id"
         :multiple="true"
       />
-      <!-- @selected-asset="onSelectedAsset" -->
     </VCol>
     <VCol cols="12" class="pt-0 pb-4">
       <VTextField
         v-model="model.name"
         name="name"
         :label="$t('terms.name')"
-        :rules="[requiredRule]"
+        :rules="[requiredRule, maxLengthRule(64, $t('terms.name'))]"
         variant="filled"
         class="mb-2"
         density="comfortable"
@@ -49,7 +48,7 @@ import { computed } from 'vue';
 import { VCol, VRow, VTextField } from 'vuetify/components';
 import TokenAutocomplete from '~/components/inputs/TokenAutocomplete.vue';
 import { TimestampRFC3339, UUID } from '~/generated/station/station.did';
-import { requiredRule } from '~/utils/form.utils';
+import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 
 export interface AccountConfigurationModel {
   id: UUID;
