@@ -3,7 +3,7 @@ use crate::core::{canister_config, write_canister_config, CallContext};
 use crate::errors::CanisterError;
 use crate::repositories::{UserRepository, USER_REPOSITORY};
 use crate::SYSTEM_VERSION;
-use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
+use canfund::manager::options::{CyclesThreshold, FundManagerOptions, FundStrategy};
 use canfund::manager::RegisterOpts;
 use canfund::operations::fetch::{FetchCyclesBalance, FetchCyclesBalanceFromPrometheusMetrics};
 use canfund::FundManager;
@@ -106,14 +106,11 @@ impl CanisterService {
 
             fund_manager.with_options(
                 FundManagerOptions::new()
-                    .with_interval_secs(12 * 60 * 60) // twice a day
-                    .with_strategy(FundStrategy::BelowEstimatedRuntime(
-                        EstimatedRuntime::new()
-                            .with_min_runtime_secs(2 * 24 * 60 * 60) // 2 days
-                            .with_fund_runtime_secs(5 * 24 * 60 * 60) // 3 days
-                            .with_max_runtime_cycles_fund(1_000_000_000_000)
-                            .with_fallback_min_cycles(125_000_000_000)
-                            .with_fallback_fund_cycles(250_000_000_000),
+                    .with_interval_secs(24 * 60 * 60) // once a day
+                    .with_strategy(FundStrategy::BelowThreshold(
+                        CyclesThreshold::new()
+                            .with_min_cycles(500_000_000_000)
+                            .with_fund_cycles(500_000_000_000),
                     )),
             );
 
