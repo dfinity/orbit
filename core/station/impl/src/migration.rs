@@ -193,7 +193,7 @@ impl<'de> Deserialize<'de> for AddressBookEntry {
             pub last_modification_timestamp: Timestamp,
         }
 
-        let pre_migration_entry = PreMigrationAddressBookEntry::deserialize(deserializer)?;
+        let mut pre_migration_entry = PreMigrationAddressBookEntry::deserialize(deserializer)?;
 
         #[cfg(test)]
         if pre_migration_entry.address_format.is_none() {
@@ -201,6 +201,10 @@ impl<'de> Deserialize<'de> for AddressBookEntry {
                 *entries.borrow_mut() += 1;
             });
         }
+
+        // the frontend used to add BlockchainStandard.Native = "native" label to new address book entries
+        // this label is not needed anymore
+        pre_migration_entry.labels.retain(|label| label != "native");
 
         Ok(AddressBookEntry {
             id: pre_migration_entry.id,
