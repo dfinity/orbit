@@ -1,7 +1,7 @@
 use crate::core::ic_cdk::api::{print, time};
 use crate::core::{canister_config, write_canister_config, CallContext};
 use crate::errors::CanisterError;
-use crate::repositories::{USER_REPOSITORY};
+use crate::repositories::USER_REPOSITORY;
 use crate::SYSTEM_VERSION;
 use control_panel_api::UploadCanisterModulesInput;
 use lazy_static::lazy_static;
