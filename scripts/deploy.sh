@@ -181,8 +181,8 @@ function deploy_control_panel() {
   fi
 
   # Read the WASM files and convert/hash them to hex format
-  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
-  station_wasm_module_hash=$(sha256sum ./wasms/station.wasm.gz | grep -o "^[0-9a-z]*" | sed 's/../\\&/g')
+  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/upgrader/upgrader.wasm.gz | sed 's/../\\&/g')
+  station_wasm_module_hash=$(sha256sum ./artifacts/station/station.wasm.gz | grep -o "^[0-9a-z]*" | sed 's/../\\&/g')
 
   # Extract station version from cargo toml files
   station_version=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[] | select(.name == "station").version')
