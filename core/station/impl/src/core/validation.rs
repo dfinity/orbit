@@ -196,22 +196,18 @@ impl EnsureExternalCanister {
         principal: Principal,
     ) -> Result<(), ExternalCanisterValidationError> {
         // Check if the target canister is a ledger canister of an asset.
-        let asset_canister_ids = ASSET_REPOSITORY
-            .list()
-            .iter()
-            .filter_map(|asset| {
-                asset
-                    .metadata
-                    .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID)
-            })
-            .collect::<Vec<_>>();
-
         let principal_str = principal.to_text();
+        let is_ledger_canister_id = ASSET_REPOSITORY.list().iter().any(|asset| {
+            asset
+                .metadata
+                .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID)
+                .map_or(false, |canister_id| canister_id == principal_str)
+        });
 
-        if principal == Principal::management_canister()
+        if is_ledger_canister_id
+            || principal == Principal::management_canister()
             || principal == crate::core::ic_cdk::api::id()
             || principal == SYSTEM_SERVICE.get_upgrader_canister_id()
-            || asset_canister_ids.contains(&principal_str)
         {
             return Err(ExternalCanisterValidationError::InvalidExternalCanister { principal });
         }
