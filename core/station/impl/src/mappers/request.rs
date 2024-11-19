@@ -89,18 +89,27 @@ impl Request {
         request_operation: RequestOperation,
         request_default_title: String,
     ) -> Request {
+        let mut expiration_dt = request_config
+            .expiration_dt
+            .map(|dt| rfc3339_to_timestamp(&dt))
+            .unwrap_or(Request::default_expiration_dt_ns());
+
+        let execution_plan = request_config
+            .execution_plan
+            .map(Into::into)
+            .unwrap_or(RequestExecutionPlan::Immediate);
+
+        if let RequestExecutionPlan::Scheduled { execution_time } = execution_plan {
+            // Ensure that if the execution time is set, the expiration time is not later than the execution time.
+            expiration_dt = expiration_dt.min(execution_time);
+        }
+
         Request::new(
             request_id,
             requested_by_user,
-            request_config
-                .expiration_dt
-                .map(|dt| rfc3339_to_timestamp(&dt))
-                .unwrap_or(Request::default_expiration_dt_ns()),
+            expiration_dt,
             request_operation,
-            request_config
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
+            execution_plan,
             request_config.title.unwrap_or(request_default_title),
             request_config.summary,
         )
