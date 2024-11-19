@@ -6,7 +6,7 @@ use crate::{
     errors::AuthorizationError,
     migration,
     models::resource::{Resource, SystemResourceAction},
-    services::{SystemService, SYSTEM_SERVICE},
+    services::{SystemService, INITIALIZING, SYSTEM_SERVICE},
     SYSTEM_VERSION,
 };
 use ic_cdk_macros::{post_upgrade, query, update};
@@ -27,6 +27,10 @@ fn set_certified_data_for_skip_certification() {
 #[cfg(any(not(feature = "canbench"), test))]
 #[ic_cdk_macros::init]
 async fn initialize(input: Option<SystemInstall>) {
+    INITIALIZING.with_borrow_mut(|initializing| {
+        *initializing = true;
+    });
+
     set_certified_data_for_skip_certification();
     match input {
         Some(SystemInstall::Init(input)) => CONTROLLER.initialize(input).await,
@@ -57,6 +61,10 @@ pub async fn mock_init() {
 
 #[post_upgrade]
 async fn post_upgrade(input: Option<SystemInstall>) {
+    INITIALIZING.with_borrow_mut(|initializing| {
+        *initializing = true;
+    });
+
     // Runs the migrations for the canister to ensure the stable memory schema is up-to-date
     //
     // WARNING: This needs to be done before any other access to stable memory is done, this is because

@@ -8,7 +8,7 @@ use super::{SystemService, UserService, USER_SERVICE};
 use crate::{
     core::observer::Observer,
     errors::DisasterRecoveryError,
-    models::{Account, User, UserStatus},
+    models::{User, UserStatus},
     repositories::{AccountRepository, AssetRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY},
     services::SYSTEM_SERVICE,
 };
@@ -31,7 +31,7 @@ pub struct DisasterRecoveryService {
 }
 
 impl DisasterRecoveryService {
-    pub async fn sync_accounts(&self) -> ServiceResult<()> {
+    pub async fn sync_accounts_and_assets(&self) -> ServiceResult<()> {
         let upgrader_canister_id = self.system_service.get_upgrader_canister_id();
 
         let accounts = self.account_repository.list();
@@ -126,7 +126,7 @@ impl DisasterRecoveryService {
         if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_committee().await {
             crate::core::ic_cdk::api::print(format!("Failed to sync committee: {}", error,));
         }
-        if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts().await {
+        if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts_and_assets().await {
             crate::core::ic_cdk::api::print(format!("Failed to sync accounts: {}", error,));
         }
     }
@@ -201,18 +201,19 @@ pub fn disaster_recovery_observes_remove_user(observer: &mut Observer<User>) {
     }));
 }
 
-pub fn disaster_recovery_observes_insert_account(
-    observer: &mut Observer<(Account, Option<Account>)>,
-) {
-    observer.add_listener(Box::new(|(_account, _prev)| {
+pub fn disaster_recovery_sync_accounts_and_assets_on_change(observer: &mut Observer<()>) {
+    observer.add_listener(Box::new(|_| {
         if !SYSTEM_SERVICE.is_healthy() {
-            // Skip syncing accounts during system init
+            // Skip syncing during system init
             return;
         }
 
         crate::core::ic_cdk::spawn(async {
-            if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts().await {
-                crate::core::ic_cdk::api::print(format!("Failed to sync accounts: {}", error,));
+            if let Err(error) = DISASTER_RECOVERY_SERVICE.sync_accounts_and_assets().await {
+                crate::core::ic_cdk::api::print(format!(
+                    "Failed to sync accounts and assets: {}",
+                    error,
+                ));
             }
         });
     }));

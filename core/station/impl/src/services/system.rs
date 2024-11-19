@@ -75,6 +75,10 @@ lazy_static! {
     };
 }
 
+thread_local! {
+    pub static INITIALIZING: std::cell::RefCell<bool> = const { std::cell::RefCell::new(false) };
+}
+
 #[derive(Default, Debug)]
 pub struct SystemService {
     request_repository: Arc<RequestRepository>,
@@ -118,7 +122,13 @@ impl SystemService {
         let state = read_system_state();
 
         match state {
-            SystemState::Initialized(_) => HealthStatus::Healthy,
+            SystemState::Initialized(_) => {
+                if INITIALIZING.with_borrow(|init| *init) {
+                    HealthStatus::Uninitialized
+                } else {
+                    HealthStatus::Healthy
+                }
+            }
             SystemState::Uninitialized => HealthStatus::Uninitialized,
         }
     }
@@ -294,6 +304,10 @@ impl SystemService {
 
             system_info.update_last_upgrade_timestamp();
             write_system_info(system_info.to_owned());
+
+            INITIALIZING.with_borrow_mut(|initializing| {
+                *initializing = false;
+            });
         }
 
         async fn install_canister_post_process_work(
