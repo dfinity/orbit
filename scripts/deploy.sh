@@ -180,9 +180,25 @@ function deploy_control_panel() {
     BUILD_MODE=$network ./scripts/docker-build.sh --control-panel
   fi
 
-  # Read the WASM files and convert them to hex format
-  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/upgrader/upgrader.wasm.gz | sed 's/../\\&/g')
-  station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/station/station.wasm.gz | sed 's/../\\&/g')
+  # Read the WASM files and convert/hash them to hex format
+  upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
+  station_wasm_module_hash=$(sha256sum ./wasms/station.wasm.gz | grep -o "^[0-9a-z]*" | sed 's/../\\&/g')
+
+  # Extract station version from cargo toml files
+  station_version=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[] | select(.name == "station").version')
+
+  wasm_chunk_store_id=$(dfx canister id wasm_chunk_store --network $network 2>/dev/null || echo "")
+  if [ -z "$wasm_chunk_store_id" ]; then
+    echo "Canister 'wasm_chunk_store' does not exist, creating and installing..."
+
+    dfx canister create wasm_chunk_store --network $network --with-cycles 5000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+    wasm_chunk_store_id=$(dfx canister id wasm_chunk_store --network $network 2>/dev/null || echo "")
+
+    dfx build wasm_chunk_store
+    dfx canister install wasm_chunk_store --network $network
+  fi
+  ln -sf station.wasm.gz ./artifacts/station/station-$station_version.wasm.gz
+  icx-asset --pem $IDENTITY_PEM_PATH --replica $(get_replica_url) upload $wasm_chunk_store_id ./artifacts/station/station-$station_version.wasm.gz
 
   canister_id_output=$(dfx canister id control_panel --network $network 2>/dev/null || echo "")
 
@@ -206,8 +222,8 @@ function deploy_control_panel() {
   fi
 
   echo "Updating the control_panel canister with the new station and upgrader WASM modules..."
-  dfx canister call control_panel --network $network upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; })")
-  dfx canister call control_panel --network $network upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = opt blob \"$station_wasm_module_bytes\"; })")
+  dfx canister call control_panel --network $network upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; station_wasm_module_extra_chunks = null; })")
+  dfx canister call control_panel --network $network upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = null; station_wasm_module_extra_chunks = opt opt record { store_canister = principal\"$wasm_chunk_store_id\"; extra_chunks_key = \"/station-$station_version.wasm.gz\"; wasm_module_hash = blob\"$station_wasm_module_hash\" } })")
 }
 
 function deploy_app_wallet() {
