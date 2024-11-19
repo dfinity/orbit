@@ -82,6 +82,10 @@ fn validate_symbol(symbol: &str) -> ModelValidatorResult<AssetError> {
         });
     }
 
+    if !symbol.chars().all(|c| c.is_ascii_alphanumeric()) {
+        return Err(AssetError::InvalidSymbol);
+    }
+
     Ok(())
 }
 

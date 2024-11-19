@@ -762,6 +762,7 @@ export default {
       invalidDecimalPlaces: 'Este campo deve ter no máximo {decimals} casas decimais.',
       isHex: 'Este campo deve conter um valor hexadecimal válido.',
       validAddress: 'Este campo deve conter um endereço válido.',
+      validSymbol: 'O símbolo deve ter de 1 a 32 caracteres alfanuméricos.',
     },
   },
   navigation: {

@@ -25,6 +25,11 @@ pub enum AccountError {
         r#"The account address is out of range, it must be between {min_length} and {max_length}."#
     )]
     InvalidAddressLength { min_length: u8, max_length: u8 },
+    /// The account name is out of range.
+    #[error(
+        r#"The account name is out of range, it must be between {min_length} and {max_length}."#
+    )]
+    InvalidNameLength { min_length: u8, max_length: u8 },
     /// The address format is unknown to the system.
     #[error(r#"The given address format is unknown to the system."#)]
     UnknownAddressFormat { address_format: String },

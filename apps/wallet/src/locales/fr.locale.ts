@@ -767,6 +767,7 @@ export default {
       invalidDecimalPlaces: 'Ce champ doit contenir un maximum de {decimals} décimales.',
       isHex: 'Ce champ doit contenir une valeur hexadécimale valide.',
       validAddress: 'Ce champ doit contenir une adresse valide.',
+      validSymbol: 'Le symbole doit contenir entre 1 et 32 charactères alphanumériques.',
     },
   },
   navigation: {

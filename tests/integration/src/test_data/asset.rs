@@ -43,7 +43,7 @@ pub fn add_asset(
             blockchain: "icp".to_string(),
             standards: vec!["icp_native".to_string()],
             metadata: Vec::new(),
-            symbol: format!("SYM-{}", next_id),
+            symbol: format!("SYM{}", next_id),
             decimals: 8,
         },
     )

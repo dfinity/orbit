@@ -1,10 +1,11 @@
 use super::indexes::unique_index::UniqueIndexRepository;
 use crate::{
     core::{
-        cache::Cache, ic_cdk::api::print, metrics::ASSET_METRICS, with_memory_manager, Memory,
-        ASSET_MEMORY_ID,
+        cache::Cache, ic_cdk::api::print, metrics::ASSET_METRICS, observer::Observer,
+        with_memory_manager, Memory, ASSET_MEMORY_ID,
     },
     models::{indexes::unique_index::UniqueIndexKey, Asset, AssetId},
+    services::disaster_recovery_sync_accounts_and_assets_on_change,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
@@ -29,9 +30,22 @@ lazy_static! {
 }
 
 /// A repository that enables managing assets in stable memory.
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct AssetRepository {
     unique_index: UniqueIndexRepository,
+    change_observer: Observer<()>,
+}
+
+impl Default for AssetRepository {
+    fn default() -> Self {
+        let mut change_observer = Observer::default();
+        disaster_recovery_sync_accounts_and_assets_on_change(&mut change_observer);
+
+        Self {
+            change_observer,
+            unique_index: UniqueIndexRepository::default(),
+        }
+    }
 }
 
 impl StableDb<UUID, Asset, VirtualMemory<Memory>> for AssetRepository {
@@ -116,6 +130,8 @@ impl Repository<UUID, Asset, VirtualMemory<Memory>> for AssetRepository {
 
             self.save_entry_indexes(&value, prev.as_ref());
 
+            self.change_observer.notify(&());
+
             prev
         })
     }
@@ -136,6 +152,8 @@ impl Repository<UUID, Asset, VirtualMemory<Memory>> for AssetRepository {
 
                 self.remove_entry_indexes(prev);
             }
+
+            self.change_observer.notify(&());
 
             prev
         })

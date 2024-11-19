@@ -110,6 +110,20 @@ export const maxLengthRule = (max: number, field: string) => {
   };
 };
 
+export const validSymbolRule = (value: unknown): string | boolean => {
+  const hasValue = !!value;
+  if (!hasValue) {
+    // this rule only applies if there is a value
+    return true;
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error('validSymbolRule only applies to strings');
+  }
+
+  return /^[a-zA-Z0-9]{1,32}$/.test(value) ? true : i18n.global.t('forms.rules.validSymbol');
+};
+
 export const uniqueRule = (
   existing: unknown[],
   errorMessage: string = i18n.global.t('forms.rules.duplicate'),

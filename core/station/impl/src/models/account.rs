@@ -190,9 +190,24 @@ fn validate_asset_id(asset_id: &AssetId) -> ModelValidatorResult<AccountError> {
     Ok(())
 }
 
+fn validate_account_name(name: &str) -> ModelValidatorResult<AccountError> {
+    if (name.len() < Account::NAME_RANGE.0 as usize)
+        || (name.len() > Account::NAME_RANGE.1 as usize)
+    {
+        return Err(AccountError::InvalidNameLength {
+            min_length: Account::NAME_RANGE.0,
+            max_length: Account::NAME_RANGE.1,
+        });
+    }
+
+    Ok(())
+}
+
 impl ModelValidator<AccountError> for Account {
     fn validate(&self) -> ModelValidatorResult<AccountError> {
         self.metadata.validate()?;
+
+        validate_account_name(&self.name)?;
 
         for asset in &self.assets {
             validate_asset_id(&asset.asset_id)?;
@@ -216,6 +231,7 @@ impl ModelValidator<AccountError> for Account {
 impl Account {
     pub const OWNERS_RANGE: (u8, u8) = (1, 10);
     pub const ADDRESS_RANGE: (u8, u8) = (1, 255);
+    pub const NAME_RANGE: (u8, u8) = (1, 64);
     pub const SYMBOL_RANGE: (u8, u8) = (1, 8);
     pub const MAX_POLICIES: u8 = 10;
 

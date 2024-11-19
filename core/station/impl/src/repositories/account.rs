@@ -5,7 +5,7 @@ use crate::{
         with_memory_manager, Memory, ACCOUNT_MEMORY_ID,
     },
     models::{indexes::unique_index::UniqueIndexKey, Account, AccountId, AccountKey},
-    services::disaster_recovery_observes_insert_account,
+    services::disaster_recovery_sync_accounts_and_assets_on_change,
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
@@ -30,13 +30,13 @@ lazy_static! {
 #[derive(Debug)]
 pub struct AccountRepository {
     unique_index: UniqueIndexRepository,
-    change_observer: Observer<(Account, Option<Account>)>,
+    change_observer: Observer<()>,
 }
 
 impl Default for AccountRepository {
     fn default() -> Self {
         let mut change_observer = Observer::default();
-        disaster_recovery_observes_insert_account(&mut change_observer);
+        disaster_recovery_sync_accounts_and_assets_on_change(&mut change_observer);
 
         Self {
             change_observer,
@@ -94,10 +94,9 @@ impl Repository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepositor
 
             self.save_entry_indexes(&value, prev.as_ref());
 
-            let args = (value, prev);
-            self.change_observer.notify(&args);
+            self.change_observer.notify(&());
 
-            args.1
+            prev
         })
     }
 
@@ -117,6 +116,8 @@ impl Repository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepositor
             if let Some(prev) = &prev {
                 self.remove_entry_indexes(prev);
             }
+
+            self.change_observer.notify(&());
 
             prev
         })
