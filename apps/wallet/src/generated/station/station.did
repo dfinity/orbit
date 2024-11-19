@@ -1088,6 +1088,8 @@ type CreateRequestInput = record {
   summary : opt text;
   // The time at which the request will execute if approved.
   execution_plan : opt RequestExecutionSchedule;
+  // The time at which the request will expire if still pending.
+  expiration_dt : opt TimestampRFC3339;
 };
 
 // The result type for creating a request.
