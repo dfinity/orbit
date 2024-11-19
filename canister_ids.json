@@ -8,5 +8,9 @@
     "playground": "b6jmw-iqaaa-aaaal-ai6uq-cai",
     "production": "5mxvd-qaaaa-aaaal-ajbkq-cai",
     "testing": "lotbt-qqaaa-aaaal-aduzq-cai"
+  },
+  "wasm_chunk_store": {
+    "playground": "lwcm6-3aaaa-aaaam-qb7ba-cai",
+    "production": "f2mu6-kiaaa-aaaam-advhq-cai"
   }
 }
