@@ -188,6 +188,7 @@ impl RequestArgs {
             title: self.title,
             summary: self.summary,
             execution_plan: None,
+            expiration_dt: None,
         })
     }
 }

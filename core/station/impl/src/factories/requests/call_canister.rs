@@ -1,10 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{
-        CallExternalCanisterOperation, CanisterMethod, Request, RequestExecutionPlan,
-        RequestOperation,
-    },
+    models::{CallExternalCanisterOperation, CanisterMethod, Request, RequestOperation},
     services::ExternalCanisterService,
 };
 use async_trait::async_trait;
@@ -67,10 +64,10 @@ impl Create<CallExternalCanisterOperationInput> for CallExternalCanisterRequestC
             None => None,
         };
 
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::CallExternalCanister(CallExternalCanisterOperation {
                 arg_checksum: operation_input.arg.as_ref().map(|arg| {
                     let mut hasher = Sha256::new();
@@ -81,14 +78,7 @@ impl Create<CallExternalCanisterOperationInput> for CallExternalCanisterRequestC
                 execution_method_reply: None,
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "CallExternalCanister".to_string()),
-            input.summary,
+            "Call canister".to_string(),
         );
 
         Ok(request)

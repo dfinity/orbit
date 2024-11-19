@@ -1,7 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{ManageSystemInfoOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{ManageSystemInfoOperation, Request, RequestOperation},
     services::SYSTEM_SERVICE,
 };
 use async_trait::async_trait;
@@ -18,21 +18,14 @@ impl Create<station_api::ManageSystemInfoOperationInput> for ManageSystemInfoReq
         input: station_api::CreateRequestInput,
         operation_input: station_api::ManageSystemInfoOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::ManageSystemInfo(ManageSystemInfoOperation {
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Manage System Info".to_string()),
-            input.summary,
+            "Manage System".to_string(),
         );
 
         Ok(request)
@@ -66,7 +59,7 @@ mod tests {
     use super::*;
     use crate::{
         core::{read_system_info, test_utils},
-        models::ManageSystemInfoOperationInput,
+        models::{ManageSystemInfoOperationInput, RequestExecutionPlan},
     };
     use tests::mnanage_system_info_test_utils::{
         mock_manage_system_info_api_input, mock_request_api_operation,
@@ -155,6 +148,7 @@ mod mnanage_system_info_test_utils {
             title: Some("title".to_string()),
             summary: Some("summary".to_string()),
             execution_plan: Some(station_api::RequestExecutionScheduleDTO::Immediate),
+            expiration_dt: None,
             operation: station_api::RequestOperationInput::ManageSystemInfo(
                 mock_manage_system_info_api_input(),
             ),

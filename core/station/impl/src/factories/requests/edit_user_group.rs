@@ -1,7 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{EditUserGroupOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{EditUserGroupOperation, Request, RequestOperation},
     services::USER_GROUP_SERVICE,
 };
 use async_trait::async_trait;
@@ -18,17 +18,12 @@ impl Create<station_api::EditUserGroupOperationInput> for EditUserGroupRequestCr
         input: station_api::CreateRequestInput,
         operation_input: station_api::EditUserGroupOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::EditUserGroup(operation_input.into()),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "User group edit".to_string()),
-            input.summary,
+            "Edit user group".to_string(),
         );
 
         Ok(request)

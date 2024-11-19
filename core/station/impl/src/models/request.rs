@@ -122,6 +122,33 @@ fn validate_summary(summary: &Option<String>) -> ModelValidatorResult<RequestErr
     Ok(())
 }
 
+fn validate_expiration_dt(expiration_dt: &Timestamp) -> ModelValidatorResult<RequestError> {
+    if *expiration_dt <= next_time() {
+        return Err(RequestError::ValidationError {
+            info: "The expiration date must be in the future".to_owned(),
+        });
+    }
+
+    Ok(())
+}
+
+fn validate_execution_plan(
+    execution_plan: &RequestExecutionPlan,
+) -> ModelValidatorResult<RequestError> {
+    match execution_plan {
+        RequestExecutionPlan::Scheduled { execution_time } => {
+            if *execution_time <= next_time() {
+                return Err(RequestError::ValidationError {
+                    info: "The execution time must be in the future".to_owned(),
+                });
+            }
+        }
+        RequestExecutionPlan::Immediate => (),
+    }
+
+    Ok(())
+}
+
 fn validate_requested_by(requested_by: &UserId) -> ModelValidatorResult<RequestError> {
     USER_REPOSITORY
         .get(&UserKey { id: *requested_by })
@@ -267,7 +294,8 @@ impl ModelValidator<RequestError> for Request {
         validate_title(&self.title)?;
         validate_summary(&self.summary)?;
         validate_requested_by(&self.requested_by)?;
-
+        validate_expiration_dt(&self.expiration_dt)?;
+        validate_execution_plan(&self.execution_plan)?;
         validate_request_operation_foreign_keys(&self.operation)?;
 
         Ok(())
@@ -439,6 +467,67 @@ mod tests {
         let result = validate_title(&request.title);
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn fail_request_expiration_dt_in_past() {
+        let mut request = mock_request();
+        request.expiration_dt = 0;
+
+        let result = validate_expiration_dt(&request.expiration_dt);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: "The expiration date must be in the future".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn test_request_expiration_dt_is_valid() {
+        let mut request = mock_request();
+        request.expiration_dt = Request::default_expiration_dt_ns();
+
+        let result = validate_expiration_dt(&request.expiration_dt);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_request_execution_plan_in_past() {
+        let mut request = mock_request();
+        request.execution_plan = RequestExecutionPlan::Scheduled { execution_time: 0 };
+
+        let result = validate_execution_plan(&request.execution_plan);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: "The execution time must be in the future".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn test_request_execution_plan_is_valid() {
+        let mut request = mock_request();
+        request.execution_plan = RequestExecutionPlan::Scheduled {
+            execution_time: Request::default_expiration_dt_ns(),
+        };
+
+        let result = validate_execution_plan(&request.execution_plan);
+
+        assert!(result.is_ok());
+
+        let mut request = mock_request();
+        request.execution_plan = RequestExecutionPlan::Immediate;
+
+        let result = validate_execution_plan(&request.execution_plan);
+
+        assert!(result.is_ok());
     }
 
     #[test]

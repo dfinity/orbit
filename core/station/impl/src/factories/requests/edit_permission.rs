@@ -1,7 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{EditPermissionOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{EditPermissionOperation, Request, RequestOperation},
     services::permission::PermissionService,
 };
 use async_trait::async_trait;
@@ -19,21 +19,14 @@ impl Create<station_api::EditPermissionOperationInput> for EditPermissionRequest
         input: station_api::CreateRequestInput,
         operation_input: station_api::EditPermissionOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::EditPermission(EditPermissionOperation {
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Permission update".to_string()),
-            input.summary,
+            "Edit permission".to_string(),
         );
 
         Ok(request)
@@ -107,7 +100,7 @@ mod tests {
 
         assert_eq!(request.id, request_id);
         assert_eq!(request.requested_by, requested_by_user);
-        assert_eq!(request.title, "Permission update".to_string());
+        assert_eq!(request.title, "Edit permission".to_string());
     }
 
     #[tokio::test]
@@ -181,6 +174,7 @@ pub mod edit_permission_test_utils {
             title: None,
             summary: None,
             execution_plan: None,
+            expiration_dt: None,
         }
     }
 }

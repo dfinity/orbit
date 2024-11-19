@@ -1,7 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{EditAccountOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{EditAccountOperation, Request, RequestOperation},
     services::ACCOUNT_SERVICE,
 };
 use async_trait::async_trait;
@@ -18,19 +18,14 @@ impl Create<station_api::EditAccountOperationInput> for EditAccountRequestCreate
         input: station_api::CreateRequestInput,
         operation_input: station_api::EditAccountOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::EditAccount(EditAccountOperation {
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "Account edit".to_string()),
-            input.summary,
+            "Edit account".to_string(),
         );
 
         Ok(request)

@@ -5,8 +5,8 @@ use crate::{
     factories::blockchains::BlockchainApiFactory,
     mappers::HelperMapper,
     models::{
-        Account, Metadata, Request, RequestExecutionPlan, RequestOperation, Transfer,
-        TransferOperation, TransferOperationInput,
+        Account, Metadata, Request, RequestOperation, Transfer, TransferOperation,
+        TransferOperationInput,
     },
     repositories::ACCOUNT_REPOSITORY,
     services::TransferService,
@@ -38,10 +38,11 @@ impl Create<station_api::TransferOperationInput> for TransferRequestCreate {
                     info: format!("Invalid from_account_id: {}", e),
                 }
             })?;
-        let request = Request::new(
+
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::Transfer(TransferOperation {
                 transfer_id: None,
                 fee: None,
@@ -59,12 +60,7 @@ impl Create<station_api::TransferOperationInput> for TransferRequestCreate {
                     },
                 },
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "Transfer".to_string()),
-            input.summary,
+            "Transfer".to_string(),
         );
 
         request.validate()?;

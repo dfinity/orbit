@@ -1,7 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{Request, RequestExecutionPlan, RequestOperation, SetDisasterRecoveryOperation},
+    models::{Request, RequestOperation, SetDisasterRecoveryOperation},
     services::SystemService,
 };
 use async_trait::async_trait;
@@ -19,21 +19,14 @@ impl Create<SetDisasterRecoveryOperationInput> for SetDisasterRecoveryRequestCre
         input: CreateRequestInput,
         operation_input: SetDisasterRecoveryOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::SetDisasterRecovery(SetDisasterRecoveryOperation {
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "SetDisasterRecovery".to_string()),
-            input.summary,
+            "Configure disaster recovery".to_string(),
         );
 
         Ok(request)

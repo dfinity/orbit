@@ -376,6 +376,7 @@ pub mod requests_test_utils {
             title: None,
             summary: None,
             execution_plan: None,
+            expiration_dt: None,
         }
     }
 }

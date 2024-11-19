@@ -81,6 +81,30 @@ impl Request {
     pub fn to_dto(self) -> RequestDTO {
         self.inner_to_dto(false)
     }
+
+    pub fn from_request_creation_input(
+        request_id: UUID,
+        requested_by_user: UserId,
+        request_config: station_api::CreateRequestInput,
+        request_operation: RequestOperation,
+        request_default_title: String,
+    ) -> Request {
+        Request::new(
+            request_id,
+            requested_by_user,
+            request_config
+                .expiration_dt
+                .map(|dt| rfc3339_to_timestamp(&dt))
+                .unwrap_or(Request::default_expiration_dt_ns()),
+            request_operation,
+            request_config
+                .execution_plan
+                .map(Into::into)
+                .unwrap_or(RequestExecutionPlan::Immediate),
+            request_config.title.unwrap_or(request_default_title),
+            request_config.summary,
+        )
+    }
 }
 
 impl From<RequestExecutionScheduleDTO> for RequestExecutionPlan {

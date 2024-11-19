@@ -712,6 +712,7 @@ mod tests {
                     title: None,
                     summary: None,
                     execution_plan: None,
+                    expiration_dt: None,
                 },
                 &ctx.call_context,
             )
@@ -754,6 +755,7 @@ mod tests {
                     title: None,
                     summary: None,
                     execution_plan: Some(station_api::RequestExecutionScheduleDTO::Immediate),
+                    expiration_dt: None,
                 },
                 &ctx.call_context,
             )
