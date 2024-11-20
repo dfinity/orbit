@@ -844,10 +844,10 @@ export interface MonitoringExternalCanisterCyclesThresholdInput {
 }
 export interface MonitoringExternalCanisterEstimatedRuntimeInput {
   'fund_runtime_secs' : bigint,
-  'min_runtime_secs' : bigint,
-  'max_runtime_cycles_fund' : bigint,
-  'fallback_fund_cycles' : bigint,
   'fallback_min_cycles' : bigint,
+  'min_runtime_secs' : bigint,
+  'fallback_fund_cycles' : bigint,
+  'max_runtime_cycles_fund' : bigint,
 }
 export interface Network { 'id' : NetworkId, 'name' : string }
 export type NetworkId = string;

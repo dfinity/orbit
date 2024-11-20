@@ -74,7 +74,8 @@ export const mapRequestsOperationTypeToGroup = (
     variantIs(operationType, 'CreateExternalCanister') ||
     variantIs(operationType, 'CallExternalCanister') ||
     variantIs(operationType, 'ConfigureExternalCanister') ||
-    variantIs(operationType, 'FundExternalCanister')
+    variantIs(operationType, 'FundExternalCanister') ||
+    variantIs(operationType, 'MonitorExternalCanister')
   ) {
     return ListRequestsOperationTypeGroup.ExternalCanister;
   }
@@ -238,6 +239,9 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'FundExternalCanister')) {
     return RequestOperationEnum.FundExternalCanister;
   }
+  if (variantIs(operation, 'MonitorExternalCanister')) {
+    return RequestOperationEnum.MonitorExternalCanister;
+  }
   if (variantIs(operation, 'SetDisasterRecovery')) {
     return RequestOperationEnum.SetDisasterRecovery;
   }
@@ -308,6 +312,8 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { CallExternalCanister: [] };
   } else if (variantIs(requestOperation, 'FundExternalCanister')) {
     return { FundExternalCanister: [] };
+  } else if (variantIs(requestOperation, 'MonitorExternalCanister')) {
+    return { MonitorExternalCanister: [] };
   } else if (variantIs(requestOperation, 'SetDisasterRecovery')) {
     return { SetDisasterRecovery: null };
   } else {
