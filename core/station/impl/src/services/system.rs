@@ -210,6 +210,7 @@ impl SystemService {
 
             install_canister_handlers::monitor_upgrader_cycles(
                 *system_info.get_upgrader_canister_id(),
+                system_info.get_cycle_obtain_strategy(),
             );
 
             // initializes the job timers after the canister is fully initialized
@@ -512,7 +513,7 @@ pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
 
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
-    use crate::core::ic_cdk::api::{id as self_canister_id, print};
+    use crate::core::ic_cdk::api::{id as self_canister_id};
     use crate::core::init::{default_policies, DEFAULT_PERMISSIONS};
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::mappers::blockchain::BlockchainMapper;
@@ -520,8 +521,8 @@ mod install_canister_handlers {
     use crate::models::permission::Allow;
     use crate::models::request_specifier::UserSpecifier;
     use crate::models::{
-        AddAccountOperationInput, AddRequestPolicyOperationInput, EditPermissionOperationInput,
-        RequestPolicyRule, ADMIN_GROUP_ID,
+        AddAccountOperationInput, AddRequestPolicyOperationInput, CycleObtainStrategy,
+        EditPermissionOperationInput, RequestPolicyRule, ADMIN_GROUP_ID,
     };
     use crate::services::permission::PERMISSION_SERVICE;
     use crate::services::ACCOUNT_SERVICE;
@@ -684,13 +685,10 @@ mod install_canister_handlers {
     }
 
     /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.
-    pub fn monitor_upgrader_cycles(upgrader_id: Principal) {
-        print(format!(
-            "Starting fund manager to monitor self {} and upgrader canister {} cycles",
-            id(),
-            upgrader_id.to_text()
-        ));
-
+    pub fn monitor_upgrader_cycles(
+        upgrader_id: Principal,
+        cycle_obtain_strategy: &CycleObtainStrategy,
+    ) {
         let fund_strategy = FundStrategy::BelowEstimatedRuntime(
             EstimatedRuntime::new()
                 .with_min_runtime_secs(14 * 24 * 60 * 60) // 14 days
@@ -699,8 +697,9 @@ mod install_canister_handlers {
                 .with_fallback_min_cycles(125_000_000_000)
                 .with_fallback_fund_cycles(250_000_000_000),
         );
-        CYCLE_MANAGER.add_canister(id(), fund_strategy.clone());
 
+        CYCLE_MANAGER.set_global_obtain_cycles_strategy(cycle_obtain_strategy);
+        CYCLE_MANAGER.add_canister(id(), fund_strategy.clone());
         CYCLE_MANAGER.add_canister(upgrader_id, fund_strategy.clone());
 
         CYCLE_MANAGER.start();
