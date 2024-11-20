@@ -161,6 +161,16 @@ export interface CanisterMethod {
   'canister_id' : Principal,
   'method_name' : string,
 }
+export interface CanisterSnapshotsInput { 'canister_id' : Principal }
+export type CanisterSnapshotsResponse = Array<
+  {
+    'id' : Uint8Array | number[],
+    'total_size' : bigint,
+    'taken_at_timestamp' : bigint,
+  }
+>;
+export type CanisterSnapshotsResult = { 'Ok' : CanisterSnapshotsResponse } |
+  { 'Err' : Error };
 export interface CanisterStatusInput { 'canister_id' : Principal }
 export interface CanisterStatusResponse {
   'status' : { 'stopped' : null } |
@@ -748,6 +758,7 @@ export interface ListRequestsInput {
 }
 export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
+  { 'SnapshotExternalCanister' : [] | [Principal] } |
   { 'ConfigureExternalCanister' : [] | [Principal] } |
   { 'ChangeExternalCanister' : [] | [Principal] } |
   { 'AddUser' : null } |
@@ -942,6 +953,7 @@ export type RequestExecutionSchedule = { 'Immediate' : null } |
   { 'Scheduled' : { 'execution_time' : TimestampRFC3339 } };
 export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'EditPermission' : EditPermissionOperation } |
+  { 'SnapshotExternalCanister' : SnapshotExternalCanisterOperation } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperation } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperation } |
   { 'AddUser' : AddUserOperation } |
@@ -967,6 +979,7 @@ export type RequestOperationInput = {
     'AddUserGroup' : AddUserGroupOperationInput
   } |
   { 'EditPermission' : EditPermissionOperationInput } |
+  { 'SnapshotExternalCanister' : SnapshotExternalCanisterOperationInput } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperationInput } |
   { 'AddUser' : AddUserOperationInput } |
@@ -990,6 +1003,7 @@ export type RequestOperationInput = {
   { 'AddAccount' : AddAccountOperationInput };
 export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
+  { 'SnapshotExternalCanister' : null } |
   { 'ConfigureExternalCanister' : null } |
   { 'ChangeExternalCanister' : null } |
   { 'AddUser' : null } |
@@ -1103,6 +1117,14 @@ export interface SetDisasterRecoveryOperationInput {
   'committee' : [] | [DisasterRecoveryCommittee],
 }
 export type Sha256Hash = string;
+export interface SnapshotExternalCanisterOperation {
+  'input' : SnapshotExternalCanisterOperationInput,
+  'snapshot_id' : [] | [Uint8Array | number[]],
+}
+export interface SnapshotExternalCanisterOperationInput {
+  'replace_snapshot' : [] | [Uint8Array | number[]],
+  'canister_id' : Principal,
+}
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
 export interface SubmitRequestApprovalInput {
@@ -1266,6 +1288,10 @@ export interface WasmModuleExtraChunks {
 }
 export interface _SERVICE {
   'cancel_request' : ActorMethod<[CancelRequestInput], CancelRequestResult>,
+  'canister_snapshots' : ActorMethod<
+    [CanisterSnapshotsInput],
+    CanisterSnapshotsResult
+  >,
   'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
   'create_request' : ActorMethod<[CreateRequestInput], CreateRequestResult>,
