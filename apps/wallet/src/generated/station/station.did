@@ -1106,6 +1106,23 @@ type CreateRequestResult = variant {
   Err : Error;
 };
 
+// The input type for canceling a request.
+type CancelRequestInput = record {
+  // The request id to cancel.
+  request_id : UUID;
+  // The reason for canceling the request.
+  reason : opt text;
+};
+
+// The result type for canceling a request.
+type CancelRequestResult = variant {
+  Ok : record {
+    // The request that was canceled.
+    request : Request;
+  };
+  Err : Error;
+};
+
 type ListRequestsOperationType = variant {
   // A new transfer of funds from a given account.
   Transfer : opt UUID;
@@ -2708,6 +2725,13 @@ service : (opt SystemInstall) -> {
   //
   // The request will be created and the caller will be added as the requester.
   create_request : (input : CreateRequestInput) -> (CreateRequestResult);
+  // Cancel a request if the request is in a cancelable state.
+  //
+  // Cancelable conditions:
+  //
+  // - The request is in the `Created` state.
+  // - The caller is the requester of the request.
+  cancel_request : (input : CancelRequestInput) -> (CancelRequestResult);
   // Get the list of requests.
   //
   // Only requests that the caller has access to will be returned.

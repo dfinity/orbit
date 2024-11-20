@@ -212,6 +212,17 @@ pub struct CreateRequestInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CancelRequestInput {
+    pub request_id: UuidDTO,
+    pub reason: Option<String>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CancelRequestResponse {
+    pub request: RequestDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct SubmitRequestApprovalInput {
     pub decision: RequestApprovalStatusDTO,
     pub request_id: UuidDTO,

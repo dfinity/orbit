@@ -407,6 +407,37 @@ impl RequestService {
         }
     }
 
+    /// Cancels a request if the request is in the created status and the caller is the requester.
+    pub fn cancel_request(
+        &self,
+        request_id: &UUID,
+        reason: Option<String>,
+        ctx: &CallContext,
+    ) -> ServiceResult<Request> {
+        let caller = ctx.user().ok_or(RequestError::Unauthorized)?;
+        let request = self.get_request(request_id)?;
+
+        if request.status != RequestStatus::Created {
+            Err(RequestError::CancellationNotAllowed {
+                reason: "Only requests in the created status can be cancelled.".to_string(),
+            })?
+        }
+
+        if request.requested_by != caller.id {
+            Err(RequestError::CancellationNotAllowed {
+                reason: "Only the requester can cancel the request.".to_string(),
+            })?
+        }
+
+        let request = self.request_repository.cancel_request(
+            request,
+            reason.unwrap_or("Request cancelled by requester.".to_string()),
+            next_time(),
+        );
+
+        Ok(request)
+    }
+
     pub async fn submit_request_approval(
         &self,
         input: SubmitRequestApprovalInput,
@@ -531,7 +562,7 @@ mod tests {
         services::AccountService,
     };
     use candid::Principal;
-    use orbit_essentials::model::ModelKey;
+    use orbit_essentials::{api::ApiError, model::ModelKey};
     use station_api::{
         ListRequestsOperationTypeDTO, RequestApprovalStatusDTO, RequestStatusCodeDTO,
     };
@@ -763,6 +794,111 @@ mod tests {
             .unwrap();
 
         assert!(!request.approvals.is_empty());
+    }
+
+    #[tokio::test]
+    async fn user_can_cancel_their_own_pending_request() {
+        let ctx = setup();
+
+        let mut request = mock_request();
+        request.requested_by = ctx.caller_user.id;
+        request.status = RequestStatus::Created;
+        request.operation = RequestOperation::Transfer(TransferOperation {
+            transfer_id: None,
+            fee: None,
+            input: TransferOperationInput {
+                from_account_id: [9; 16],
+                amount: candid::Nat(100u32.into()),
+                fee: None,
+                metadata: Metadata::default(),
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+            },
+        });
+
+        ctx.repository.insert(request.to_key(), request.to_owned());
+
+        let result =
+            ctx.service
+                .cancel_request(&request.id, Some("testing".to_string()), &ctx.call_context);
+
+        assert!(result.is_ok());
+        assert_eq!(
+            result.unwrap().status,
+            RequestStatus::Cancelled {
+                reason: Some("testing".to_string())
+            }
+        );
+    }
+
+    #[tokio::test]
+    async fn fail_to_cancel_another_user_request() {
+        let ctx = setup();
+
+        let mut request = mock_request();
+        request.requested_by = [93; 16];
+        request.status = RequestStatus::Created;
+        request.operation = RequestOperation::Transfer(TransferOperation {
+            transfer_id: None,
+            fee: None,
+            input: TransferOperationInput {
+                from_account_id: [9; 16],
+                amount: candid::Nat(100u32.into()),
+                fee: None,
+                metadata: Metadata::default(),
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+            },
+        });
+
+        ctx.repository.insert(request.to_key(), request.to_owned());
+
+        let result =
+            ctx.service
+                .cancel_request(&request.id, Some("testing".to_string()), &ctx.call_context);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            ApiError::from(RequestError::CancellationNotAllowed {
+                reason: "Only the requester can cancel the request.".to_string()
+            })
+        )
+    }
+
+    #[tokio::test]
+    async fn fail_cancel_request_not_in_created_status() {
+        let ctx = setup();
+
+        let mut request = mock_request();
+        request.requested_by = ctx.caller_user.id;
+        request.status = RequestStatus::Processing { started_at: 10 };
+        request.operation = RequestOperation::Transfer(TransferOperation {
+            transfer_id: None,
+            fee: None,
+            input: TransferOperationInput {
+                from_account_id: [9; 16],
+                amount: candid::Nat(100u32.into()),
+                fee: None,
+                metadata: Metadata::default(),
+                network: "mainnet".to_string(),
+                to: "0x1234".to_string(),
+            },
+        });
+
+        ctx.repository.insert(request.to_key(), request.to_owned());
+
+        let result =
+            ctx.service
+                .cancel_request(&request.id, Some("testing".to_string()), &ctx.call_context);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            ApiError::from(RequestError::CancellationNotAllowed {
+                reason: "Only requests in the created status can be cancelled.".to_string()
+            })
+        )
     }
 
     #[tokio::test]

@@ -35,6 +35,9 @@ pub enum RequestError {
     /// Request policy not found for id `{id}`.
     #[error(r#"Request policy not found for id `{id}`"#)]
     PolicyNotFound { id: String },
+    /// Request cancellation not allowed.
+    #[error(r#"Request cancellation not allowed."#)]
+    CancellationNotAllowed { reason: String },
 }
 
 impl DetailableError for RequestError {
@@ -67,6 +70,10 @@ impl DetailableError for RequestError {
             }
             RequestError::PolicyNotFound { id } => {
                 details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
+            RequestError::CancellationNotAllowed { reason } => {
+                details.insert("reason".to_string(), reason.to_string());
                 Some(details)
             }
             _ => None,
