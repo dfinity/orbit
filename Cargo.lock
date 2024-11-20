@@ -664,9 +664,9 @@ dependencies = [
 
 [[package]]
 name = "canfund"
-version = "0.2.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07a46d6265ed2ae006bd01dfc261cb67312f14269648b8ba87be1cc820806f3a"
+checksum = "087c0440ceb58ee2354e61caf0a2388698f9f566cad192c7169b9c03c461ad9f"
 dependencies = [
  "async-trait",
  "candid",
