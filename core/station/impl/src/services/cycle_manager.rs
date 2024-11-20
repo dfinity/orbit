@@ -1,6 +1,5 @@
 use crate::factories::blockchains::InternetComputer;
 use crate::models::CycleObtainStrategy;
-use crate::services::{SystemService, SYSTEM_SERVICE};
 use canfund::api::cmc::IcCyclesMintingCanister;
 use canfund::api::ledger::IcLedgerCanister;
 use canfund::manager::options::{FundManagerOptions, FundStrategy, ObtainCyclesOptions};
@@ -18,26 +17,19 @@ thread_local! {
 }
 
 lazy_static! {
-    pub static ref CYCLE_MANAGER: Arc<CycleManager> =
-        Arc::new(CycleManager::new(Arc::clone(&SYSTEM_SERVICE),));
+    pub static ref CYCLE_MANAGER: Arc<CycleManager> = Arc::new(CycleManager::new());
 }
 
 #[derive(Debug, Default)]
 pub struct CycleManager {}
 
 impl CycleManager {
-    fn new(system_service: Arc<SystemService>) -> Self {
-        let system_info = system_service.get_system_info();
-
+    fn new() -> Self {
         FUND_MANAGER.with(|manager| {
             let mut manager = manager.borrow_mut();
             // Strategy can be default as we always override per canister
             // Obtain cycles config is inherited from the system service
-            let options = FundManagerOptions::new()
-                .with_interval_secs(60 * 60 * 6)
-                .with_obtain_cycles_options(get_obtain_cycle_config(
-                    system_info.get_cycle_obtain_strategy(),
-                ));
+            let options = FundManagerOptions::new().with_interval_secs(60 * 60 * 6);
             manager.with_options(options);
         });
 
@@ -51,27 +43,44 @@ impl CycleManager {
                 RegisterOpts::new().with_strategy(fund_strategy),
             );
         });
+
+        ic_cdk::print(format!(
+            "Cycle manager: canister {} added to cycle monitoring.",
+            canister_id
+        ));
     }
 
     pub fn remove_canister(&self, canister_id: CanisterId) {
         FUND_MANAGER.with(|manager| {
             manager.borrow_mut().unregister(canister_id);
         });
+
+        ic_cdk::print(format!(
+            "Cycle manager: canister {} removed from cycle monitoring.",
+            canister_id
+        ));
     }
 
     pub fn start(&self) {
         FUND_MANAGER.with(|manager| {
             manager.borrow_mut().start();
         });
+
+        ic_cdk::print("Cycle manager: monitoring started.");
     }
 
-    pub fn set_global_minting_strategy(&self, strategy: &CycleObtainStrategy) {
+    pub fn set_global_obtain_cycles_strategy(&self, strategy: &CycleObtainStrategy) {
         FUND_MANAGER.with(|manager| {
             let mut fund_manager = manager.borrow_mut();
             let options = fund_manager.get_options();
             let options = options.with_obtain_cycles_options(get_obtain_cycle_config(strategy));
             fund_manager.with_options(options);
         });
+
+        ic_cdk::print(format!(
+            "Cycle manager: obtain cycles strategy changed to {:?}.",
+            strategy
+        ));
     }
 }
 

@@ -27,8 +27,8 @@ pub enum ChangeMetadata {
 
 impl Metadata {
     const MAX_METADATA: u8 = 10;
-    const MAX_METADATA_KEY_LEN: u8 = 24;
-    const MAX_METADATA_VALUE_LEN: u8 = 255;
+    pub const MAX_METADATA_KEY_LEN: u8 = 24;
+    pub const MAX_METADATA_VALUE_LEN: u8 = 255;
 
     pub fn new(metadata: BTreeMap<String, String>) -> Self {
         Self { metadata }

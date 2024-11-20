@@ -663,6 +663,15 @@ type CreateExternalCanisterOperationKind = variant {
   AddExisting : CreateExternalCanisterOperationKindAddExisting;
 };
 
+// ExternalCanister can have additional information attached to them,
+// this type can be used to represent the additional info.
+type ExternalCanisterMetadata = record {
+  // The key of the additional info (e.g. "app_id")
+  key : text;
+  // The value of the additional info (e.g. "2ec270f1-7663-4d51-b70f-9339486b6d6d")
+  value : text;
+};
+
 type CreateExternalCanisterOperationInput = record {
   // The kind of create operation to perform.
   kind : CreateExternalCanisterOperationKind;
@@ -672,10 +681,23 @@ type CreateExternalCanisterOperationInput = record {
   description : opt text;
   // The labels of the external canister.
   labels : opt vec text;
+  // The metadata of the external canister.
+  metadata : opt vec ExternalCanisterMetadata;
   // What operations are allowed on the canister.
   permissions : ExternalCanisterPermissionsCreateInput;
   // The request policies for the canister.
   request_policies : ExternalCanisterRequestPoliciesCreateInput;
+};
+
+// Type for instructions to update the external canister's metadata.
+type ChangeExternalCanisterMetadata = variant {
+  // Replace all existing metadata by the specified metadata.
+  ReplaceAllBy : vec ExternalCanisterMetadata;
+  // Override values of existing metadata with the specified keys
+  // and add new metadata if no metadata can be found with the specified keys.
+  OverrideSpecifiedBy : vec ExternalCanisterMetadata;
+  // Remove metadata with the specified keys.
+  RemoveKeys : vec text;
 };
 
 type ConfigureExternalCanisterSettingsInput = record {
@@ -684,6 +706,8 @@ type ConfigureExternalCanisterSettingsInput = record {
   description : opt text;
   // The labels of the external canister.
   labels : opt vec text;
+  // The metadata of the external canister.
+  change_metadata : opt ChangeExternalCanisterMetadata;
   // What operations are allowed on the canister.
   permissions : opt ExternalCanisterPermissionsUpdateInput;
   // The request policies for the canister.
@@ -2540,6 +2564,8 @@ type ExternalCanister = record {
   description : opt text;
   // The labels that can be used to categorize the canister.
   labels : vec text;
+  // The metadata that is associated with the canister.
+  metadata : vec ExternalCanisterMetadata;
   // The current state of the record (e.g. `Active`).
   state : ExternalCanisterState;
   // The permissions that are set for who can interact with the canister.
