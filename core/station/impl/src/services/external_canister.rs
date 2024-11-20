@@ -25,7 +25,7 @@ use crate::models::{
     ExternalCanisterChangeRequestPolicyRule, ExternalCanisterEntryId, ExternalCanisterKey,
     ExternalCanisterPermissions, ExternalCanisterPermissionsUpdateInput,
     ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesUpdateInput,
-    MonitorExternalCanisterStartStrategy, RequestPolicy,
+    MonitorExternalCanisterStrategy, RequestPolicy,
 };
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
 use crate::repositories::{
@@ -1027,7 +1027,7 @@ impl ExternalCanisterService {
     pub fn canister_monitor_start(
         &self,
         canister_id: Principal,
-        strategy: MonitorExternalCanisterStartStrategy,
+        strategy: MonitorExternalCanisterStrategy,
     ) -> ServiceResult<()> {
         self.cycle_manager
             .add_canister(canister_id, strategy.into());

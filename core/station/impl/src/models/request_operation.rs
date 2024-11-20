@@ -546,7 +546,7 @@ pub struct MonitoringExternalCanisterCyclesThresholdInput {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum MonitorExternalCanisterStartStrategy {
+pub enum MonitorExternalCanisterStrategy {
     Always(u128),
     BelowThreshold(MonitoringExternalCanisterCyclesThresholdInput),
     BelowEstimatedRuntime(MonitoringExternalCanisterEstimatedRuntimeInput),
@@ -554,14 +554,21 @@ pub enum MonitorExternalCanisterStartStrategy {
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum ExternalCanisterObtainCyclesStrategy {
+    Disabled,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct MonitorExternalCanisterStartInput {
-    pub strategy: MonitorExternalCanisterStartStrategy,
+    pub funding_strategy: MonitorExternalCanisterStrategy,
+    pub obtain_cycles_strategy: Option<ExternalCanisterObtainCyclesStrategy>,
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum MonitorExternalCanisterOperationKind {
-    Start(crate::models::MonitorExternalCanisterStartInput),
+    Start(MonitorExternalCanisterStartInput),
     Stop,
 }
 
@@ -569,10 +576,10 @@ pub enum MonitorExternalCanisterOperationKind {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct MonitorExternalCanisterOperationInput {
     pub canister_id: Principal,
-    pub kind: crate::models::MonitorExternalCanisterOperationKind,
+    pub kind: MonitorExternalCanisterOperationKind,
 }
 
-pub type MonitorExternalCanisterOperation = crate::models::MonitorExternalCanisterOperationInput;
+pub type MonitorExternalCanisterOperation = MonitorExternalCanisterOperationInput;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

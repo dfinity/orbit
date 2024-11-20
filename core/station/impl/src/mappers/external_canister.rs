@@ -5,12 +5,13 @@ use crate::{
         ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
         DefiniteCanisterSettingsInput, ExternalCanister, ExternalCanisterCallRequestPolicyRule,
         ExternalCanisterCallerMethodsPrivileges, ExternalCanisterCallerPrivileges,
-        ExternalCanisterChangeRequestPolicyRule, ExternalCanisterPermissions,
-        ExternalCanisterRequestPolicies, ExternalCanisterState, FundExternalCanisterOperation,
-        FundExternalCanisterOperationInput, FundExternalCanisterOperationKind,
-        FundExternalCanisterSendCyclesInput, LogVisibility, MonitorExternalCanisterOperationInput,
-        MonitorExternalCanisterOperationKind, MonitorExternalCanisterStartInput,
-        MonitorExternalCanisterStartStrategy, MonitoringExternalCanisterCyclesThresholdInput,
+        ExternalCanisterChangeRequestPolicyRule, ExternalCanisterObtainCyclesStrategy,
+        ExternalCanisterPermissions, ExternalCanisterRequestPolicies, ExternalCanisterState,
+        FundExternalCanisterOperation, FundExternalCanisterOperationInput,
+        FundExternalCanisterOperationKind, FundExternalCanisterSendCyclesInput, LogVisibility,
+        MonitorExternalCanisterOperationInput, MonitorExternalCanisterOperationKind,
+        MonitorExternalCanisterStartInput, MonitorExternalCanisterStrategy,
+        MonitoringExternalCanisterCyclesThresholdInput,
         MonitoringExternalCanisterEstimatedRuntimeInput,
     },
     repositories::ExternalCanisterWhereClauseSort,
@@ -19,7 +20,7 @@ use candid::Principal;
 use canfund::manager::options::{CyclesThreshold, EstimatedRuntime};
 use ic_cdk::api::management_canister::main::{self as mgmt};
 use orbit_essentials::{repository::SortDirection, utils::timestamp_to_rfc3339};
-use station_api::ExternalCanisterDTO;
+use station_api::{ExternalCanisterDTO, MonitorExternalCanisterObtainCyclesStrategyDTO};
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
@@ -40,6 +41,7 @@ impl ExternalCanisterMapper {
             state: ExternalCanisterState::Active,
             created_at: next_time(),
             modified_at: None,
+            monitoring: None,
         }
     }
 }
@@ -62,6 +64,7 @@ impl ExternalCanister {
             request_policies: policies.into(),
             created_at: timestamp_to_rfc3339(&self.created_at),
             modified_at: self.modified_at.map(|ts| timestamp_to_rfc3339(&ts)),
+            monitoring: self.monitoring.map(Into::into),
         }
     }
 }
@@ -376,7 +379,8 @@ impl From<MonitorExternalCanisterOperationKind>
 impl From<station_api::MonitorExternalCanisterStartInput> for MonitorExternalCanisterStartInput {
     fn from(input: station_api::MonitorExternalCanisterStartInput) -> Self {
         MonitorExternalCanisterStartInput {
-            strategy: input.strategy.into(),
+            funding_strategy: input.funding_strategy.into(),
+            obtain_cycles_strategy: input.obtain_cycles_strategy.map(Into::into),
         }
     }
 }
@@ -384,44 +388,39 @@ impl From<station_api::MonitorExternalCanisterStartInput> for MonitorExternalCan
 impl From<MonitorExternalCanisterStartInput> for station_api::MonitorExternalCanisterStartInput {
     fn from(input: MonitorExternalCanisterStartInput) -> Self {
         station_api::MonitorExternalCanisterStartInput {
-            strategy: input.strategy.into(),
+            funding_strategy: input.funding_strategy.into(),
+            obtain_cycles_strategy: input.obtain_cycles_strategy.map(Into::into),
         }
     }
 }
 
-impl From<station_api::MonitorExternalCanisterStartStrategyDTO>
-    for MonitorExternalCanisterStartStrategy
-{
-    fn from(strategy: station_api::MonitorExternalCanisterStartStrategyDTO) -> Self {
+impl From<station_api::MonitorExternalCanisterStrategyDTO> for MonitorExternalCanisterStrategy {
+    fn from(strategy: station_api::MonitorExternalCanisterStrategyDTO) -> Self {
         match strategy {
-            station_api::MonitorExternalCanisterStartStrategyDTO::Always(cycles) => {
-                MonitorExternalCanisterStartStrategy::Always(cycles)
+            station_api::MonitorExternalCanisterStrategyDTO::Always(cycles) => {
+                MonitorExternalCanisterStrategy::Always(cycles)
             }
-            station_api::MonitorExternalCanisterStartStrategyDTO::BelowThreshold(threshold) => {
-                MonitorExternalCanisterStartStrategy::BelowThreshold(threshold.into())
+            station_api::MonitorExternalCanisterStrategyDTO::BelowThreshold(threshold) => {
+                MonitorExternalCanisterStrategy::BelowThreshold(threshold.into())
             }
-            station_api::MonitorExternalCanisterStartStrategyDTO::BelowEstimatedRuntime(
-                runtime,
-            ) => MonitorExternalCanisterStartStrategy::BelowEstimatedRuntime(runtime.into()),
+            station_api::MonitorExternalCanisterStrategyDTO::BelowEstimatedRuntime(runtime) => {
+                MonitorExternalCanisterStrategy::BelowEstimatedRuntime(runtime.into())
+            }
         }
     }
 }
 
-impl From<MonitorExternalCanisterStartStrategy>
-    for station_api::MonitorExternalCanisterStartStrategyDTO
-{
-    fn from(strategy: MonitorExternalCanisterStartStrategy) -> Self {
+impl From<MonitorExternalCanisterStrategy> for station_api::MonitorExternalCanisterStrategyDTO {
+    fn from(strategy: MonitorExternalCanisterStrategy) -> Self {
         match strategy {
-            MonitorExternalCanisterStartStrategy::Always(cycles) => {
-                station_api::MonitorExternalCanisterStartStrategyDTO::Always(cycles)
+            MonitorExternalCanisterStrategy::Always(cycles) => {
+                station_api::MonitorExternalCanisterStrategyDTO::Always(cycles)
             }
-            MonitorExternalCanisterStartStrategy::BelowThreshold(threshold) => {
-                station_api::MonitorExternalCanisterStartStrategyDTO::BelowThreshold(
-                    threshold.into(),
-                )
+            MonitorExternalCanisterStrategy::BelowThreshold(threshold) => {
+                station_api::MonitorExternalCanisterStrategyDTO::BelowThreshold(threshold.into())
             }
-            MonitorExternalCanisterStartStrategy::BelowEstimatedRuntime(runtime) => {
-                station_api::MonitorExternalCanisterStartStrategyDTO::BelowEstimatedRuntime(
+            MonitorExternalCanisterStrategy::BelowEstimatedRuntime(runtime) => {
+                station_api::MonitorExternalCanisterStrategyDTO::BelowEstimatedRuntime(
                     runtime.into(),
                 )
             }
@@ -479,16 +478,16 @@ impl From<MonitoringExternalCanisterEstimatedRuntimeInput>
     }
 }
 
-impl From<MonitorExternalCanisterStartStrategy> for canfund::manager::options::FundStrategy {
-    fn from(strategy: MonitorExternalCanisterStartStrategy) -> Self {
+impl From<MonitorExternalCanisterStrategy> for canfund::manager::options::FundStrategy {
+    fn from(strategy: MonitorExternalCanisterStrategy) -> Self {
         match strategy {
-            MonitorExternalCanisterStartStrategy::Always(cycles) => {
+            MonitorExternalCanisterStrategy::Always(cycles) => {
                 canfund::manager::options::FundStrategy::Always(cycles)
             }
-            MonitorExternalCanisterStartStrategy::BelowThreshold(threshold) => {
+            MonitorExternalCanisterStrategy::BelowThreshold(threshold) => {
                 canfund::manager::options::FundStrategy::BelowThreshold(threshold.into())
             }
-            MonitorExternalCanisterStartStrategy::BelowEstimatedRuntime(runtime) => {
+            MonitorExternalCanisterStrategy::BelowEstimatedRuntime(runtime) => {
                 canfund::manager::options::FundStrategy::BelowEstimatedRuntime(runtime.into())
             }
         }
@@ -511,5 +510,25 @@ impl From<MonitoringExternalCanisterEstimatedRuntimeInput> for EstimatedRuntime 
             .with_max_runtime_cycles_fund(input.max_runtime_cycles_fund)
             .with_fallback_fund_cycles(input.fallback_fund_cycles)
             .with_fallback_min_cycles(input.fallback_min_cycles)
+    }
+}
+
+impl From<ExternalCanisterObtainCyclesStrategy> for MonitorExternalCanisterObtainCyclesStrategyDTO {
+    fn from(strategy: ExternalCanisterObtainCyclesStrategy) -> Self {
+        match strategy {
+            ExternalCanisterObtainCyclesStrategy::Disabled => {
+                MonitorExternalCanisterObtainCyclesStrategyDTO::Disabled
+            }
+        }
+    }
+}
+
+impl From<MonitorExternalCanisterObtainCyclesStrategyDTO> for ExternalCanisterObtainCyclesStrategy {
+    fn from(value: MonitorExternalCanisterObtainCyclesStrategyDTO) -> Self {
+        match value {
+            MonitorExternalCanisterObtainCyclesStrategyDTO::Disabled => {
+                ExternalCanisterObtainCyclesStrategy::Disabled
+            }
+        }
     }
 }
