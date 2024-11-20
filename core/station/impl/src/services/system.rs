@@ -513,7 +513,7 @@ pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
 
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
-    use crate::core::ic_cdk::api::{id as self_canister_id};
+    use crate::core::ic_cdk::api::id as self_canister_id;
     use crate::core::init::{default_policies, DEFAULT_PERMISSIONS};
     use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::mappers::blockchain::BlockchainMapper;
