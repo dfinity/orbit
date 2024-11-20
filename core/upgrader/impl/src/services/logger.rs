@@ -99,10 +99,10 @@ impl LoggerService {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
 
     use crate::model::{
-        test::{mock_accounts, mock_committee},
+        tests::{mock_accounts, mock_committee},
         DisasterRecoveryResultLog, RecoveryResult, SetAccountsLog, SetCommitteeLog,
         UpgradeResultLog,
     };
