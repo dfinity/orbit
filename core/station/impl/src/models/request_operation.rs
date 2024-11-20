@@ -39,6 +39,7 @@ pub enum RequestOperation {
     CreateExternalCanister(CreateExternalCanisterOperation),
     CallExternalCanister(CallExternalCanisterOperation),
     FundExternalCanister(FundExternalCanisterOperation),
+    SnapshotExternalCanister(SnapshotExternalCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
@@ -69,6 +70,9 @@ impl Display for RequestOperation {
             RequestOperation::CreateExternalCanister(_) => write!(f, "create_external_canister"),
             RequestOperation::CallExternalCanister(_) => write!(f, "call_external_canister"),
             RequestOperation::FundExternalCanister(_) => write!(f, "fund_external_canister"),
+            RequestOperation::SnapshotExternalCanister(_) => {
+                write!(f, "snapshot_external_canister")
+            }
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
@@ -609,6 +613,20 @@ pub struct CallExternalCanisterOperation {
     pub arg_checksum: Option<Vec<u8>>,
     pub arg_rendering: Option<String>,
     pub execution_method_reply: Option<Vec<u8>>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SnapshotExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub replace_snapshot: Option<Vec<u8>>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SnapshotExternalCanisterOperation {
+    pub snapshot_id: Option<Vec<u8>>,
+    pub input: SnapshotExternalCanisterOperationInput,
 }
 
 #[storable]

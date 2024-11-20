@@ -37,6 +37,7 @@ use crate::{
         ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
         RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
+        SnapshotExternalCanisterOperation, SnapshotExternalCanisterOperationInput,
         SystemUpgradeOperation, SystemUpgradeOperationInput, SystemUpgradeTarget,
         TransferOperation, User, WasmModuleExtraChunks,
     },
@@ -51,7 +52,7 @@ use station_api::{
     CallExternalCanisterOperationDTO, CanisterMethodDTO, ChangeExternalCanisterOperationDTO,
     CreateExternalCanisterOperationDTO, EditAccountOperationDTO, EditAddressBookEntryOperationDTO,
     EditUserOperationDTO, NetworkDTO, RemoveAddressBookEntryOperationDTO, RequestOperationDTO,
-    TransferOperationDTO,
+    SnapshotExternalCanisterOperationDTO, TransferOperationDTO,
 };
 use uuid::Uuid;
 
@@ -1283,6 +1284,41 @@ impl From<CallExternalCanisterOperation> for CallExternalCanisterOperationDTO {
     }
 }
 
+impl From<SnapshotExternalCanisterOperationInput>
+    for station_api::SnapshotExternalCanisterOperationInput
+{
+    fn from(
+        input: SnapshotExternalCanisterOperationInput,
+    ) -> station_api::SnapshotExternalCanisterOperationInput {
+        station_api::SnapshotExternalCanisterOperationInput {
+            canister_id: input.canister_id,
+            replace_snapshot: input.replace_snapshot,
+        }
+    }
+}
+
+impl From<station_api::SnapshotExternalCanisterOperationInput>
+    for SnapshotExternalCanisterOperationInput
+{
+    fn from(
+        input: station_api::SnapshotExternalCanisterOperationInput,
+    ) -> SnapshotExternalCanisterOperationInput {
+        SnapshotExternalCanisterOperationInput {
+            canister_id: input.canister_id,
+            replace_snapshot: input.replace_snapshot,
+        }
+    }
+}
+
+impl From<SnapshotExternalCanisterOperation> for SnapshotExternalCanisterOperationDTO {
+    fn from(operation: SnapshotExternalCanisterOperation) -> SnapshotExternalCanisterOperationDTO {
+        SnapshotExternalCanisterOperationDTO {
+            input: operation.input.into(),
+            snapshot_id: operation.snapshot_id,
+        }
+    }
+}
+
 impl From<EditPermissionOperationInput> for station_api::EditPermissionOperationInput {
     fn from(input: EditPermissionOperationInput) -> station_api::EditPermissionOperationInput {
         station_api::EditPermissionOperationInput {
@@ -1603,6 +1639,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::CallExternalCanister(operation) => {
                 RequestOperationDTO::CallExternalCanister(Box::new(operation.into()))
             }
+            RequestOperation::SnapshotExternalCanister(operation) => {
+                RequestOperationDTO::SnapshotExternalCanister(Box::new(operation.into()))
+            }
             RequestOperation::EditPermission(operation) => {
                 RequestOperationDTO::EditPermission(Box::new(operation.into()))
             }
@@ -1776,6 +1815,19 @@ impl RequestOperation {
                             validation_method: input.validation_method.clone().into(),
                             execution_method: input.execution_method.clone().into(),
                         },
+                    )),
+                ]
+            }
+            RequestOperation::SnapshotExternalCanister(SnapshotExternalCanisterOperation {
+                input,
+                ..
+            }) => {
+                vec![
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                        ExternalCanisterId::Any,
+                    )),
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                        ExternalCanisterId::Canister(input.canister_id),
                     )),
                 ]
             }

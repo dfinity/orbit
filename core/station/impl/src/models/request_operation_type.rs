@@ -33,6 +33,7 @@ pub enum RequestOperationType {
     SetDisasterRecovery = 23,
     ConfigureExternalCanister = 24,
     FundExternalCanister = 25,
+    SnapshotExternalCanister = 26,
 }
 
 /// A helper enum to filter the requests based on the operation type and
@@ -54,6 +55,7 @@ pub enum ListRequestsOperationType {
     CallExternalCanister(Option<Principal>),
     ConfigureExternalCanister(Option<Principal>),
     FundExternalCanister(Option<Principal>),
+    SnapshotExternalCanister(Option<Principal>),
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,
@@ -140,6 +142,18 @@ impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
                     RequestOperationFilterType::FundExternalCanister(id) if id == canister_id
                 )
             }
+            ListRequestsOperationType::SnapshotExternalCanister(None) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::SnapshotExternalCanister(_)
+                )
+            }
+            ListRequestsOperationType::SnapshotExternalCanister(Some(canister_id)) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::SnapshotExternalCanister(id) if id == canister_id
+                )
+            }
             ListRequestsOperationType::EditPermission => {
                 matches!(self, RequestOperationFilterType::EditPermission)
             }
@@ -219,6 +233,9 @@ impl Display for RequestOperationType {
             RequestOperationType::ChangeExternalCanister => write!(f, "change_external_canister"),
             RequestOperationType::CreateExternalCanister => write!(f, "create_external_canister"),
             RequestOperationType::CallExternalCanister => write!(f, "call_external_canister"),
+            RequestOperationType::SnapshotExternalCanister => {
+                write!(f, "snapshot_external_canister")
+            }
             RequestOperationType::EditPermission => write!(f, "edit_permission"),
             RequestOperationType::AddRequestPolicy => write!(f, "add_request_policy"),
             RequestOperationType::EditRequestPolicy => write!(f, "edit_request_policy"),

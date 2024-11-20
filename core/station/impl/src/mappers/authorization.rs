@@ -274,6 +274,11 @@ impl From<&station_api::CreateRequestInput> for Resource {
                     },
                 ))
             }
+            RequestOperationInput::SnapshotExternalCanister(input) => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    ExternalCanisterId::Canister(input.canister_id),
+                ))
+            }
             RequestOperationInput::EditPermission(_) => {
                 Resource::Permission(PermissionResourceAction::Update)
             }

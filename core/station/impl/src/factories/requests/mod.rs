@@ -37,6 +37,7 @@ mod remove_address_book_entry;
 mod remove_request_policy;
 mod remove_user_group;
 mod set_disaster_recovery;
+mod snapshot_external_canister;
 mod system_upgrade;
 mod transfer;
 
@@ -67,6 +68,8 @@ use self::{
     },
     remove_request_policy::{RemoveRequestPolicyRequestCreate, RemoveRequestPolicyRequestExecute},
     remove_user_group::{RemoveUserGroupRequestCreate, RemoveUserGroupRequestExecute},
+    snapshot_external_canister::SnapshotExternalCanisterRequestCreate,
+    snapshot_external_canister::SnapshotExternalCanisterRequestExecute,
     system_upgrade::{SystemUpgradeRequestCreate, SystemUpgradeRequestExecute},
     transfer::{TransferRequestCreate, TransferRequestExecute},
 };
@@ -217,6 +220,12 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
+            RequestOperationInput::SnapshotExternalCanister(operation) => {
+                let creator = Box::new(SnapshotExternalCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
             RequestOperationInput::EditPermission(operation) => {
                 let creator = Box::new(EditPermissionRequestCreate {});
                 creator
@@ -329,6 +338,12 @@ impl RequestFactory {
                     request,
                     operation,
                     Arc::clone(&EXTERNAL_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::SnapshotExternalCanister(operation) => {
+                Box::new(SnapshotExternalCanisterRequestExecute::new(
+                    operation,
+                    Arc::clone(&CHANGE_CANISTER_SERVICE),
                 ))
             }
             RequestOperation::EditPermission(operation) => {

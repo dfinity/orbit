@@ -21,7 +21,8 @@ use station_api::{
     ExternalCanisterPermissionsCreateInput, ExternalCanisterRequestPoliciesCreateInput,
     HealthStatus, ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
     RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, RequestStatusDTO, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
+    RequestSpecifierDTO, RequestStatusDTO, SnapshotExternalCanisterOperationInput,
+    UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 use std::str::FromStr;
 
@@ -1345,4 +1346,149 @@ fn create_external_canister_on_different_subnet() {
         env.get_subnet(canister_id).unwrap(),
         env.get_subnet(canister_ids.control_panel).unwrap()
     );
+}
+
+#[test]
+fn snapshot_external_canister_test() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    // create and install the counter canister (external canister)
+    let external_canister_id = create_canister(&env, canister_ids.station);
+    let module_bytes = wat::parse_str(COUNTER_WAT).unwrap();
+    let mut sha256 = Sha256::new();
+    sha256.update(module_bytes.clone());
+    let module_hash = sha256.finalize().to_vec();
+    env.install_canister(
+        external_canister_id,
+        module_bytes,
+        vec![],
+        Some(canister_ids.station),
+    );
+
+    // check canister status and ensure that the WASM matches the counter canister module
+    let status = canister_status(&env, Some(canister_ids.station), external_canister_id);
+    assert_eq!(status.module_hash, Some(module_hash.clone()));
+
+    // the counter should initially be set at 0
+    let ctr = update_raw(
+        &env,
+        external_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 0_u32.to_le_bytes());
+
+    // bump the counter
+    update_raw(
+        &env,
+        external_canister_id,
+        Principal::anonymous(),
+        "inc",
+        vec![],
+    )
+    .unwrap();
+
+    // the counter should now be equal to 2
+    let ctr = update_raw(
+        &env,
+        external_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 2_u32.to_le_bytes());
+
+    // retrieve the existing snapshots from the management canister: there should be no snapshots yet
+    let snapshots: Vec<_> = env
+        .list_canister_snapshots(external_canister_id, Some(canister_ids.station))
+        .unwrap();
+    assert!(snapshots.is_empty());
+
+    // execute a request taking a snapshot
+    let snapshot_canister_operation =
+        RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
+            canister_id: external_canister_id,
+            replace_snapshot: None,
+        });
+    let request = execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        snapshot_canister_operation,
+    )
+    .unwrap();
+
+    // fetch the snapshot id from the executed request
+    let snapshot_id = match request.operation {
+        RequestOperationDTO::SnapshotExternalCanister(op) => op.snapshot_id.unwrap(),
+        _ => panic!("Unexpected request operation: {:?}", request.operation),
+    };
+
+    // retrieve the existing snapshots from the management canister:
+    // there should be a single snapshot with the snapshot id from the request
+    let snapshots: Vec<_> = env
+        .list_canister_snapshots(external_canister_id, Some(canister_ids.station))
+        .unwrap()
+        .into_iter()
+        .map(|snapshot| snapshot.id)
+        .collect();
+    assert_eq!(snapshots, vec![snapshot_id.clone()]);
+
+    // taking another snapshot without specifying a snapshot to replace should fail
+    let snapshot_canister_operation =
+        RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
+            canister_id: external_canister_id,
+            replace_snapshot: None,
+        });
+    let failed_request_status = execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        snapshot_canister_operation,
+    )
+    .unwrap_err()
+    .unwrap();
+    match failed_request_status {
+        RequestStatusDTO::Failed { reason } => assert!(reason.unwrap().contains(&format!(
+            "Canister {} has reached the maximum number of snapshots allowed: 1.",
+            external_canister_id
+        ))),
+        _ => panic!("Unexpected request status: {:?}", failed_request_status),
+    };
+
+    // taking another snapshot succeeds if we replace the original snapshot
+    let snapshot_canister_operation =
+        RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
+            canister_id: external_canister_id,
+            replace_snapshot: Some(snapshot_id.clone()),
+        });
+    let request = execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        snapshot_canister_operation,
+    )
+    .unwrap();
+
+    // fetch the new snapshot id from the executed request
+    let new_snapshot_id = match request.operation {
+        RequestOperationDTO::SnapshotExternalCanister(op) => op.snapshot_id.unwrap(),
+        _ => panic!("Unexpected request operation: {:?}", request.operation),
+    };
+    assert_ne!(new_snapshot_id, snapshot_id);
+
+    // retrieve the existing snapshots from the management canister:
+    // there should be a single snapshot with the new snapshot id from the request
+    let snapshots: Vec<_> = env
+        .list_canister_snapshots(external_canister_id, Some(canister_ids.station))
+        .unwrap()
+        .into_iter()
+        .map(|snapshot| snapshot.id)
+        .collect();
+    assert_eq!(snapshots, vec![new_snapshot_id]);
 }

@@ -381,3 +381,16 @@ pub struct FundExternalCanisterOperationInput {
 }
 
 pub type FundExternalCanisterOperationDTO = FundExternalCanisterOperationInput;
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct SnapshotExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
+    pub replace_snapshot: Option<Vec<u8>>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct SnapshotExternalCanisterOperationDTO {
+    pub snapshot_id: Option<Vec<u8>>,
+    pub input: SnapshotExternalCanisterOperationInput,
+}
