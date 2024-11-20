@@ -2667,6 +2667,21 @@ type GetExternalCanisterFiltersResult = variant {
   Err : Error;
 };
 
+type CanisterSnapshotsInput = record {
+  canister_id : principal;
+};
+
+type CanisterSnapshotsResponse = vec record {
+  id : blob;
+  taken_at_timestamp : nat64;
+  total_size : nat64;
+};
+
+type CanisterSnapshotsResult = variant {
+  Ok : CanisterSnapshotsResponse;
+  Err : Error;
+};
+
 type CanisterStatusResult = variant {
   Ok : CanisterStatusResponse;
   Err : Error;
@@ -2783,6 +2798,8 @@ service : (opt SystemInstall) -> {
   list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
   // Get canister status of a canister controlled by the station.
   canister_status : (input : CanisterStatusInput) -> (CanisterStatusResult);
+  // Get snapshots of a canister controlled by the station.
+  canister_snapshots : (input : CanisterSnapshotsInput) -> (CanisterSnapshotsResult);
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
   // Internal endpoint used by the upgrader canister to notify the station about a failed station upgrade request.

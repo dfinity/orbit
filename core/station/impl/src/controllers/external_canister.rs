@@ -3,7 +3,7 @@ use crate::{
     models::resource::{ExternalCanisterId, ExternalCanisterResourceAction, Resource},
     services::{ExternalCanisterService, EXTERNAL_CANISTER_SERVICE},
 };
-use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse};
+use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse, Snapshot};
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ApiResult;
@@ -19,6 +19,11 @@ use std::sync::Arc;
 #[update(name = "canister_status")]
 async fn canister_status(input: CanisterIdRecord) -> ApiResult<CanisterStatusResponse> {
     CONTROLLER.canister_status(input).await
+}
+
+#[update(name = "canister_snapshots")]
+async fn canister_snapshots(input: CanisterIdRecord) -> ApiResult<Vec<Snapshot>> {
+    CONTROLLER.canister_snapshots(input).await
 }
 
 #[query(name = "get_external_canister")]
@@ -61,6 +66,11 @@ impl ExternalCanisterController {
     #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]
     async fn canister_status(&self, input: CanisterIdRecord) -> ApiResult<CanisterStatusResponse> {
         self.canister_service.canister_status(input).await
+    }
+
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]
+    async fn canister_snapshots(&self, input: CanisterIdRecord) -> ApiResult<Vec<Snapshot>> {
+        self.canister_service.canister_snapshots(input).await
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]

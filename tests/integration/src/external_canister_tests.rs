@@ -8,6 +8,7 @@ use crate::utils::{
 use crate::TestEnv;
 use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
+use orbit_essentials::cdk::api::management_canister::main::Snapshot;
 use orbit_essentials::cmc::{SubnetFilter, SubnetSelection};
 use pocket_ic::management_canister::{CanisterIdRecord, CanisterStatusResult};
 use pocket_ic::update_candid_as;
@@ -1431,13 +1432,32 @@ fn snapshot_external_canister_test() {
 
     // retrieve the existing snapshots from the management canister:
     // there should be a single snapshot with the snapshot id from the request
-    let snapshots: Vec<_> = env
+    let snapshots = env
         .list_canister_snapshots(external_canister_id, Some(canister_ids.station))
-        .unwrap()
-        .into_iter()
-        .map(|snapshot| snapshot.id)
-        .collect();
-    assert_eq!(snapshots, vec![snapshot_id.clone()]);
+        .unwrap();
+    assert_eq!(snapshots.len(), 1);
+    assert_eq!(snapshots[0].id, snapshot_id);
+
+    // retrieve the existing snapshots from a dedicated endpoint of the station:
+    // the snapshots should match the snapshots from the management canister
+    let res: (ApiResult<Vec<Snapshot>>,) = update_candid_as(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "canister_snapshots",
+        (CanisterIdRecord {
+            canister_id: external_canister_id,
+        },),
+    )
+    .unwrap();
+    let snapshots_via_orbit = res.0.unwrap();
+    assert_eq!(snapshots_via_orbit.len(), 1);
+    assert_eq!(snapshots_via_orbit[0].id, snapshots[0].id);
+    assert_eq!(
+        snapshots_via_orbit[0].taken_at_timestamp,
+        snapshots[0].taken_at_timestamp
+    );
+    assert_eq!(snapshots_via_orbit[0].total_size, snapshots[0].total_size);
 
     // taking another snapshot without specifying a snapshot to replace should fail
     let snapshot_canister_operation =

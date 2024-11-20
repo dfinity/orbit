@@ -51,7 +51,7 @@ mod tests {
     fn check_candid_interface() {
         use candid_parser::utils::{service_equal, CandidSource};
         use orbit_essentials::cdk::api::management_canister::main::{
-            CanisterIdRecord, CanisterStatusResponse,
+            CanisterIdRecord, CanisterStatusResponse, Snapshot,
         };
 
         candid::export_service!();
