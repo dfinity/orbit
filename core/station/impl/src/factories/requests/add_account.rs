@@ -26,7 +26,7 @@ impl Create<station_api::AddAccountOperationInput> for AddAccountRequestCreate {
                 account_id: None,
                 input: operation_input.into(),
             }),
-            "Create account".to_string(),
+            "Add account".to_string(),
         );
 
         Ok(request)

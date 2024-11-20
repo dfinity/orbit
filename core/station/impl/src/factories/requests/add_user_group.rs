@@ -23,7 +23,7 @@ impl Create<station_api::AddUserGroupOperationInput> for AddUserGroupRequestCrea
             requested_by_user,
             input,
             RequestOperation::AddUserGroup(operation_input.into()),
-            "Create user group".to_string(),
+            "Add user group".to_string(),
         );
 
         Ok(request)

@@ -26,7 +26,7 @@ impl Create<station_api::AddUserOperationInput> for AddUserRequestCreate {
                 user_id: None,
                 input: operation_input.into(),
             }),
-            "Create user".to_string(),
+            "Add user".to_string(),
         );
 
         Ok(request)
