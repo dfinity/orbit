@@ -177,6 +177,7 @@ pub fn submit_request_raw(
         title: None,
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
+        expiration_dt: None,
     };
     update_candid_as(
         env,
@@ -615,6 +616,7 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
         title: None,
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
+        expiration_dt: None,
     };
     let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
         env,

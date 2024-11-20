@@ -1,10 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{
-        Request, RequestExecutionPlan, RequestOperation, SystemUpgradeOperation,
-        SystemUpgradeTarget,
-    },
+    models::{Request, RequestOperation, SystemUpgradeOperation, SystemUpgradeTarget},
     services::{DisasterRecoveryService, SystemService},
 };
 use async_trait::async_trait;
@@ -25,10 +22,10 @@ impl Create<SystemUpgradeOperationInput> for SystemUpgradeRequestCreate {
         input: CreateRequestInput,
         operation_input: SystemUpgradeOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::SystemUpgrade(SystemUpgradeOperation {
                 arg_checksum: operation_input.arg.as_ref().map(|arg| {
                     let mut hasher = Sha256::new();
@@ -46,12 +43,7 @@ impl Create<SystemUpgradeOperationInput> for SystemUpgradeRequestCreate {
                 },
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "ChangeCanister".to_string()),
-            input.summary,
+            "Upgrade System".to_string(),
         );
 
         Ok(request)

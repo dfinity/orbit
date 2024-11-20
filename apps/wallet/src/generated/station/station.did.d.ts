@@ -250,6 +250,7 @@ export interface CreateExternalCanisterOperationKindCreateNew {
 export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
+  'expiration_dt' : [] | [TimestampRFC3339],
   'summary' : [] | [string],
   'operation' : RequestOperationInput,
 }

@@ -1,13 +1,12 @@
-use std::sync::Arc;
-
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{AddRequestPolicyOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{AddRequestPolicyOperation, Request, RequestOperation},
     services::RequestPolicyService,
 };
 use async_trait::async_trait;
 use orbit_essentials::types::UUID;
+use std::sync::Arc;
 
 pub struct AddRequestPolicyRequestCreate {}
 
@@ -20,22 +19,15 @@ impl Create<station_api::AddRequestPolicyOperationInput> for AddRequestPolicyReq
         input: station_api::CreateRequestInput,
         operation_input: station_api::AddRequestPolicyOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::AddRequestPolicy(AddRequestPolicyOperation {
                 policy_id: None,
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Request policy creation".to_string()),
-            input.summary,
+            "Add approval policy".to_string(),
         );
 
         Ok(request)
@@ -110,7 +102,7 @@ mod tests {
 
         assert_eq!(request.id, request_id);
         assert_eq!(request.requested_by, requested_by_user);
-        assert_eq!(request.title, "Request policy creation".to_string());
+        assert_eq!(request.title, "Add approval policy".to_string());
     }
 
     #[tokio::test]
@@ -175,6 +167,7 @@ pub mod add_request_policy_test_utils {
             title: None,
             summary: None,
             execution_plan: None,
+            expiration_dt: None,
         }
     }
 }

@@ -208,6 +208,7 @@ pub struct CreateRequestInput {
     pub title: Option<String>,
     pub summary: Option<String>,
     pub execution_plan: Option<RequestExecutionScheduleDTO>,
+    pub expiration_dt: Option<TimestampRfc3339>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

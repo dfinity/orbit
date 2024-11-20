@@ -571,6 +571,7 @@ export const idlFactory = ({ IDL }) => {
   const CreateRequestInput = IDL.Record({
     'title' : IDL.Opt(IDL.Text),
     'execution_plan' : IDL.Opt(RequestExecutionSchedule),
+    'expiration_dt' : IDL.Opt(TimestampRFC3339),
     'summary' : IDL.Opt(IDL.Text),
     'operation' : RequestOperationInput,
   });
