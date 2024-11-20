@@ -5,7 +5,7 @@ use crate::{
         ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
         DefiniteCanisterSettingsInput, ExternalCanister, ExternalCanisterCallRequestPolicyRule,
         ExternalCanisterCallerMethodsPrivileges, ExternalCanisterCallerPrivileges,
-        ExternalCanisterChangeRequestPolicyRule, ExternalCanisterObtainCyclesStrategy,
+        ExternalCanisterChangeRequestPolicyRule,
         ExternalCanisterPermissions, ExternalCanisterRequestPolicies, ExternalCanisterState,
         FundExternalCanisterOperation, FundExternalCanisterOperationInput,
         FundExternalCanisterOperationKind, FundExternalCanisterSendCyclesInput, LogVisibility,
@@ -20,7 +20,7 @@ use candid::Principal;
 use canfund::manager::options::{CyclesThreshold, EstimatedRuntime};
 use ic_cdk::api::management_canister::main::{self as mgmt};
 use orbit_essentials::{repository::SortDirection, utils::timestamp_to_rfc3339};
-use station_api::{ExternalCanisterDTO, MonitorExternalCanisterObtainCyclesStrategyDTO};
+use station_api::ExternalCanisterDTO;
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
@@ -510,25 +510,5 @@ impl From<MonitoringExternalCanisterEstimatedRuntimeInput> for EstimatedRuntime 
             .with_max_runtime_cycles_fund(input.max_runtime_cycles_fund)
             .with_fallback_fund_cycles(input.fallback_fund_cycles)
             .with_fallback_min_cycles(input.fallback_min_cycles)
-    }
-}
-
-impl From<ExternalCanisterObtainCyclesStrategy> for MonitorExternalCanisterObtainCyclesStrategyDTO {
-    fn from(strategy: ExternalCanisterObtainCyclesStrategy) -> Self {
-        match strategy {
-            ExternalCanisterObtainCyclesStrategy::Disabled => {
-                MonitorExternalCanisterObtainCyclesStrategyDTO::Disabled
-            }
-        }
-    }
-}
-
-impl From<MonitorExternalCanisterObtainCyclesStrategyDTO> for ExternalCanisterObtainCyclesStrategy {
-    fn from(value: MonitorExternalCanisterObtainCyclesStrategyDTO) -> Self {
-        match value {
-            MonitorExternalCanisterObtainCyclesStrategyDTO::Disabled => {
-                ExternalCanisterObtainCyclesStrategy::Disabled
-            }
-        }
     }
 }

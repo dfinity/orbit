@@ -794,17 +794,12 @@ type MonitorExternalCanisterStrategyInput = variant {
   Always : nat;
 };
 
-// The input type for specifying the strategy for obtaining cycles for the funding operation.
-type MonitorExternalCanisterObtainCyclesStrategy = variant {
-  Disabled;
-};
-
 // The input type for specifying the strategy for monitoring an external canister.
 type MonitorExternalCanisterStartInput = record {
   // The strategy for funding the canister.
   funding_strategy : MonitorExternalCanisterStrategyInput;
   // The strategy for obtaining cycles for the funding operation.
-  cycle_obtain_strategy: opt MonitorExternalCanisterObtainCyclesStrategy;
+  cycle_obtain_strategy: opt CycleObtainStrategyInput;
 };
 
 // The operation kind for monitoring an external canister in the station.
