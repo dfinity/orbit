@@ -13,20 +13,7 @@ use crate::models::resource::{
     CallExternalCanisterResourceTarget, ExecutionMethodResourceTarget, ExternalCanisterId,
     ExternalCanisterResourceAction, Resource, ValidationMethodResourceTarget,
 };
-use crate::models::{
-    AddRequestPolicyOperationInput, CanisterExecutionAndValidationMethodPairInput, CanisterMethod,
-    ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
-    CreateExternalCanisterOperationKind, DefiniteCanisterSettingsInput,
-    EditPermissionOperationInput, EditRequestPolicyOperationInput, ExternalCanister,
-    ExternalCanisterAvailableFilters, ExternalCanisterCallPermission,
-    ExternalCanisterCallRequestPolicyRule, ExternalCanisterCallRequestPolicyRuleInput,
-    ExternalCanisterCallerMethodsPrivileges, ExternalCanisterCallerPrivileges,
-    ExternalCanisterChangeCallPermissionsInput, ExternalCanisterChangeCallRequestPoliciesInput,
-    ExternalCanisterChangeRequestPolicyRule, ExternalCanisterEntryId, ExternalCanisterKey,
-    ExternalCanisterPermissions, ExternalCanisterPermissionsUpdateInput,
-    ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesUpdateInput,
-    MonitorExternalCanisterStrategy, RequestPolicy,
-};
+use crate::models::{AddRequestPolicyOperationInput, CanisterExecutionAndValidationMethodPairInput, CanisterMethod, ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput, CreateExternalCanisterOperationKind, DefiniteCanisterSettingsInput, EditPermissionOperationInput, EditRequestPolicyOperationInput, ExternalCanister, ExternalCanisterAvailableFilters, ExternalCanisterCallPermission, ExternalCanisterCallRequestPolicyRule, ExternalCanisterCallRequestPolicyRuleInput, ExternalCanisterCallerMethodsPrivileges, ExternalCanisterCallerPrivileges, ExternalCanisterChangeCallPermissionsInput, ExternalCanisterChangeCallRequestPoliciesInput, ExternalCanisterChangeRequestPolicyRule, ExternalCanisterEntryId, ExternalCanisterKey, ExternalCanisterMonitoring, ExternalCanisterPermissions, ExternalCanisterPermissionsUpdateInput, ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesUpdateInput, MonitorExternalCanisterStrategy, RequestPolicy};
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
 use crate::repositories::{
     ExternalCanisterRepository, ExternalCanisterWhereClause, RequestPolicyRepository,
@@ -1029,14 +1016,39 @@ impl ExternalCanisterService {
         canister_id: Principal,
         strategy: MonitorExternalCanisterStrategy,
     ) -> ServiceResult<()> {
+        let mut external_canister = self.get_external_canister_by_canister_id(&canister_id)?;
+        if let Some(monitoring) = &external_canister.monitoring {
+            Err(ExternalCanisterError::Failed {
+                reason: format!(
+                    "Failed to monitor canister {}. The canister is already monitored.",
+                    canister_id.to_text(),
+                ),
+            })?;
+        }
+
         self.cycle_manager
-            .add_canister(canister_id, strategy.into());
+            .add_canister(canister_id, strategy.clone().into());
+
+        external_canister.monitoring = Some(ExternalCanisterMonitoring{
+            funding_strategy: strategy,
+            obtain_cycles_strategy: None,
+        });
+
+        self.external_canister_repository
+            .insert(external_canister.key(), external_canister.clone());
 
         Ok(())
     }
 
     pub fn canister_monitor_stop(&self, canister_id: Principal) -> ServiceResult<()> {
+        let mut external_canister = self.get_external_canister_by_canister_id(&canister_id)?;
+
         self.cycle_manager.remove_canister(canister_id);
+
+        external_canister.monitoring = None;
+
+        self.external_canister_repository
+            .insert(external_canister.key(), external_canister.clone());
 
         Ok(())
     }
