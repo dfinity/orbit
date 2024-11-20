@@ -253,6 +253,7 @@ export class StationService {
   async removeUserGroup(input: RemoveUserGroupOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { RemoveUserGroup: input },
@@ -268,6 +269,7 @@ export class StationService {
   async addUserGroup(input: AddUserGroupOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { AddUserGroup: input },
@@ -283,6 +285,7 @@ export class StationService {
   async editUserGroup(input: EditUserGroupOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { EditUserGroup: input },
@@ -298,6 +301,7 @@ export class StationService {
   async addUser(input: AddUserOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { AddUser: input },
@@ -313,6 +317,7 @@ export class StationService {
   async editUser(input: EditUserOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { EditUser: input },
@@ -571,6 +576,7 @@ export class StationService {
   async fundExternalCanister(input: FundExternalCanisterOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: {
@@ -591,6 +597,7 @@ export class StationService {
   ): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: {
@@ -614,6 +621,7 @@ export class StationService {
   ): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
       operation: {
@@ -639,6 +647,7 @@ export class StationService {
 
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: {
@@ -735,6 +744,7 @@ export class StationService {
   async addCanister(input: CreateExternalCanisterOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { CreateExternalCanister: input },
@@ -778,6 +788,7 @@ export class StationService {
   async addAddressBookEntry(input: AddAddressBookEntryOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { AddAddressBookEntry: input },
@@ -793,6 +804,7 @@ export class StationService {
   async editAddressBookEntry(input: EditAddressBookEntryOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { EditAddressBookEntry: input },
@@ -875,6 +887,7 @@ export class StationService {
   async addExternalCanister(input: CreateExternalCanisterOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { CreateExternalCanister: input },
@@ -899,6 +912,7 @@ export class StationService {
   ): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
       operation: {
@@ -927,6 +941,7 @@ export class StationService {
   ): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: {
@@ -963,6 +978,7 @@ export class StationService {
   async editPermission(input: EditPermissionOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { EditPermission: input },
@@ -978,6 +994,7 @@ export class StationService {
   async editRequestPolicy(input: EditRequestPolicyOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { EditRequestPolicy: input },
@@ -993,6 +1010,7 @@ export class StationService {
   async addRequestPolicy(input: AddRequestPolicyOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { AddRequestPolicy: input },
@@ -1008,6 +1026,7 @@ export class StationService {
   async createManageSystemInfoRequest(input: ManageSystemInfoOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { ManageSystemInfo: input },
@@ -1025,6 +1044,7 @@ export class StationService {
   ): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: {
@@ -1044,6 +1064,7 @@ export class StationService {
   async editAccount(input: EditAccountOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { EditAccount: input },
@@ -1059,6 +1080,7 @@ export class StationService {
   async addAccount(input: AddAccountOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { AddAccount: input },
@@ -1074,6 +1096,7 @@ export class StationService {
   async transfer(input: TransferOperationInput, summary?: string): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: summary ? [summary] : [],
       operation: { Transfer: input },
@@ -1092,6 +1115,7 @@ export class StationService {
   ): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
       operation: { SystemUpgrade: input },
@@ -1138,6 +1162,7 @@ export class StationService {
   async removeRequestPolicy(id: UUID): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { RemoveRequestPolicy: { policy_id: id } },
@@ -1153,6 +1178,7 @@ export class StationService {
   async removeAddressBookEntry(id: UUID): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: { RemoveAddressBookEntry: { address_book_entry_id: id } },

@@ -2,8 +2,7 @@ use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{
-        RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, Request,
-        RequestExecutionPlan, RequestOperation,
+        RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, Request, RequestOperation,
     },
     services::{RequestPolicyService, REQUEST_POLICY_SERVICE},
 };
@@ -33,21 +32,14 @@ impl Create<station_api::RemoveRequestPolicyOperationInput> for RemoveRequestPol
                 ),
             })?;
 
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::RemoveRequestPolicy(RemoveRequestPolicyOperation {
                 input: operation_input,
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Request policy remove".to_string()),
-            input.summary,
+            "Remove approval policy".to_string(),
         );
 
         Ok(request)
@@ -128,7 +120,7 @@ mod tests {
 
         assert_eq!(request.id, request_id);
         assert_eq!(request.requested_by, requested_by_user);
-        assert_eq!(request.title, "Request policy remove".to_string());
+        assert_eq!(request.title, "Remove approval policy".to_string());
     }
 
     #[tokio::test]
@@ -255,6 +247,7 @@ pub mod remove_request_policy_test_utils {
             title: None,
             summary: None,
             execution_plan: None,
+            expiration_dt: None,
         }
     }
 }

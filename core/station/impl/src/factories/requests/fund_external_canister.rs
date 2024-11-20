@@ -2,8 +2,7 @@ use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{
-        FundExternalCanisterOperation, FundExternalCanisterOperationKind, Request,
-        RequestExecutionPlan, RequestOperation,
+        FundExternalCanisterOperation, FundExternalCanisterOperationKind, Request, RequestOperation,
     },
     services::ExternalCanisterService,
 };
@@ -22,17 +21,12 @@ impl Create<station_api::FundExternalCanisterOperationInput> for FundExternalCan
         input: station_api::CreateRequestInput,
         operation_input: station_api::FundExternalCanisterOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::FundExternalCanister(operation_input.into()),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "Fund canister".to_string()),
-            input.summary,
+            "Fund canister".to_string(),
         );
 
         Ok(request)

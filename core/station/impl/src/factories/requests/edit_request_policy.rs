@@ -2,8 +2,7 @@ use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{
-        EditRequestPolicyOperation, EditRequestPolicyOperationInput, Request, RequestExecutionPlan,
-        RequestOperation,
+        EditRequestPolicyOperation, EditRequestPolicyOperationInput, Request, RequestOperation,
     },
     services::{RequestPolicyService, REQUEST_POLICY_SERVICE},
 };
@@ -33,21 +32,14 @@ impl Create<station_api::EditRequestPolicyOperationInput> for EditRequestPolicyR
                 ),
             })?;
 
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::EditRequestPolicy(EditRequestPolicyOperation {
                 input: operation_input,
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Request policy update".to_string()),
-            input.summary,
+            "Edit approval policy".to_string(),
         );
 
         Ok(request)
@@ -127,7 +119,7 @@ mod tests {
 
         assert_eq!(request.id, request_id);
         assert_eq!(request.requested_by, requested_by_user);
-        assert_eq!(request.title, "Request policy update".to_string());
+        assert_eq!(request.title, "Edit approval policy".to_string());
     }
 
     #[tokio::test]
@@ -255,6 +247,7 @@ pub mod edit_request_policy_test_utils {
             title: None,
             summary: None,
             execution_plan: None,
+            expiration_dt: None,
         }
     }
 }
