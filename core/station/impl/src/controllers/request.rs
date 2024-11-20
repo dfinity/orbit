@@ -16,10 +16,10 @@ use orbit_essentials::api::ApiResult;
 use orbit_essentials::types::UUID;
 use orbit_essentials::with_middleware;
 use station_api::{
-    CreateRequestInput, CreateRequestResponse, GetNextApprovableRequestInput,
-    GetNextApprovableRequestResponse, GetRequestInput, GetRequestResponse, ListRequestsInput,
-    ListRequestsResponse, RequestAdditionalInfoDTO, RequestCallerPrivilegesDTO,
-    SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
+    CancelRequestInput, CancelRequestResponse, CreateRequestInput, CreateRequestResponse,
+    GetNextApprovableRequestInput, GetNextApprovableRequestResponse, GetRequestInput,
+    GetRequestResponse, ListRequestsInput, ListRequestsResponse, RequestAdditionalInfoDTO,
+    RequestCallerPrivilegesDTO, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
 };
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -54,6 +54,11 @@ async fn submit_request_approval(
 #[update(name = "create_request")]
 async fn create_request(input: CreateRequestInput) -> ApiResult<CreateRequestResponse> {
     CONTROLLER.create_request(input, arg_data_raw_size()).await
+}
+
+#[update(name = "cancel_request")]
+async fn cancel_request(input: CancelRequestInput) -> ApiResult<CancelRequestResponse> {
+    CONTROLLER.cancel_request(input).await
 }
 
 #[update(name = "try_execute_request", hidden = true)]
@@ -160,6 +165,21 @@ impl RequestController {
             request: request.to_dto(),
             privileges: privileges.into(),
             additional_info: additional_info.into(),
+        })
+    }
+
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
+    #[with_middleware(tail = use_canister_call_metric("cancel_request", &result))]
+    async fn cancel_request(&self, input: CancelRequestInput) -> ApiResult<CancelRequestResponse> {
+        let ctx = &call_context();
+        let request = self.request_service.cancel_request(
+            HelperMapper::to_uuid(input.request_id)?.as_bytes(),
+            input.reason,
+            ctx,
+        )?;
+
+        Ok(CancelRequestResponse {
+            request: request.to_dto(),
         })
     }
 

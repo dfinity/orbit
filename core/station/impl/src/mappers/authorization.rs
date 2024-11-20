@@ -170,6 +170,16 @@ impl From<&station_api::ListNotificationsInput> for Resource {
     }
 }
 
+impl From<&station_api::CancelRequestInput> for Resource {
+    fn from(input: &station_api::CancelRequestInput) -> Self {
+        Resource::Request(RequestResourceAction::Read(ResourceId::Id(
+            *HelperMapper::to_uuid(input.request_id.to_owned())
+                .expect("Invalid request id")
+                .as_bytes(),
+        )))
+    }
+}
+
 impl From<&station_api::CreateRequestInput> for Resource {
     fn from(input: &station_api::CreateRequestInput) -> Self {
         match &input.operation {

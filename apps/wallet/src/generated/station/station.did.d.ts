@@ -144,6 +144,12 @@ export interface CallExternalCanisterResourceTarget {
   'execution_method' : ExecutionMethodResourceTarget,
   'validation_method' : ValidationMethodResourceTarget,
 }
+export interface CancelRequestInput {
+  'request_id' : UUID,
+  'reason' : [] | [string],
+}
+export type CancelRequestResult = { 'Ok' : { 'request' : Request } } |
+  { 'Err' : Error };
 export interface CanisterExecutionAndValidationMethodPair {
   'execution_method' : string,
   'validation_method' : ValidationMethodResourceTarget,
@@ -1259,6 +1265,7 @@ export interface WasmModuleExtraChunks {
   'extra_chunks_key' : string,
 }
 export interface _SERVICE {
+  'cancel_request' : ActorMethod<[CancelRequestInput], CancelRequestResult>,
   'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
   'create_request' : ActorMethod<[CreateRequestInput], CreateRequestResult>,
