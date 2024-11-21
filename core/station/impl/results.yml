@@ -13,7 +13,7 @@ benches:
     scopes: {}
   find_500_external_canister_policies_from_50k_dataset:
     total:
-      instructions: 27465679
+      instructions: 28629145
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
@@ -25,32 +25,32 @@ benches:
     scopes: {}
   list_1k_requests:
     total:
-      instructions: 142176376
+      instructions: 142128177
       heap_increase: 14
       stable_memory_increase: 0
     scopes: {}
   list_external_canisters_with_all_statuses:
     total:
-      instructions: 213172583
+      instructions: 213226507
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
   repository_find_1k_requests_from_10k_dataset_default_filters:
     total:
-      instructions: 92231168
+      instructions: 92053986
       heap_increase: 17
       stable_memory_increase: 0
     scopes: {}
   service_filter_5k_requests_from_100k_dataset:
     total:
-      instructions: 680919877
+      instructions: 680738365
       heap_increase: 106
       stable_memory_increase: 16
     scopes: {}
   service_find_all_requests_from_2k_dataset:
     total:
-      instructions: 275772307
+      instructions: 275726235
       heap_increase: 44
       stable_memory_increase: 16
     scopes: {}
-version: 0.1.5
+version: 0.1.8
