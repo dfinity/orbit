@@ -408,7 +408,7 @@ pub enum MonitorExternalCanisterStrategyDTO {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct MonitorExternalCanisterStartInput {
     pub funding_strategy: MonitorExternalCanisterStrategyDTO,
-    pub obtain_cycles_strategy: Option<CycleObtainStrategyInput>,
+    pub cycle_obtain_strategy: Option<CycleObtainStrategyInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

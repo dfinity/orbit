@@ -556,7 +556,7 @@ pub enum MonitorExternalCanisterStrategy {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct MonitorExternalCanisterStartInput {
     pub funding_strategy: MonitorExternalCanisterStrategy,
-    pub obtain_cycles_strategy: Option<CycleObtainStrategy>,
+    pub cycle_obtain_strategy: Option<CycleObtainStrategy>,
 }
 
 #[storable]

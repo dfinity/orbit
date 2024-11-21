@@ -69,7 +69,7 @@ impl CycleManager {
         ic_cdk::print("Cycle manager: monitoring started.");
     }
 
-    pub fn set_global_obtain_cycles_strategy(&self, strategy: &CycleObtainStrategy) {
+    pub fn set_global_cycle_obtain_strategy(&self, strategy: &CycleObtainStrategy) {
         FUND_MANAGER.with(|manager| {
             let mut fund_manager = manager.borrow_mut();
             let options = fund_manager.get_options();
