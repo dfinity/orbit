@@ -487,12 +487,20 @@ impl From<DisasterRecovery> for upgrader_api::GetDisasterRecoveryStateResponse {
 }
 
 #[cfg(test)]
-pub mod test {
+pub mod tests {
     use candid::Principal;
 
     use crate::model::{Asset, MultiAssetAccount};
 
     use super::{Account, AdminUser, DisasterRecoveryCommittee};
+
+    pub fn mock_committee_member() -> Principal {
+        Principal::from_slice(&[1; 29])
+    }
+
+    pub fn mock_non_committee_member() -> Principal {
+        Principal::from_slice(&[20; 29])
+    }
 
     pub fn mock_committee() -> DisasterRecoveryCommittee {
         DisasterRecoveryCommittee {
@@ -500,7 +508,7 @@ pub mod test {
                 AdminUser {
                     id: [1; 16],
                     name: "admin_user_1".to_owned(),
-                    identities: vec![Principal::from_slice(&[1; 29])],
+                    identities: vec![mock_committee_member()],
                 },
                 AdminUser {
                     id: [2; 16],

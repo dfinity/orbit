@@ -396,7 +396,7 @@ impl DisasterRecoveryService {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::DISASTER_RECOVERY_SERVICE;
     use async_trait::async_trait;
     use candid::Principal;
@@ -408,7 +408,7 @@ mod test {
 
     use crate::{
         model::{
-            test::{mock_accounts, mock_assets, mock_committee, mock_multi_asset_accounts},
+            tests::{mock_accounts, mock_assets, mock_committee, mock_multi_asset_accounts},
             InstallMode, RecoveryEvaluationResult, RecoveryResult, RecoveryStatus,
             StationRecoveryRequest,
         },
