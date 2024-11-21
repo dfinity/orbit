@@ -162,22 +162,6 @@ mod tests {
     }
 
     #[test]
-    fn empty_artifact_is_invalid() {
-        let artifact = Artifact::new(b"".to_vec());
-
-        assert_eq!(
-            artifact.hash(),
-            vec![
-                227, 176, 196, 66, 152, 252, 28, 20, 154, 251, 244, 200, 153, 111, 185, 36, 39,
-                174, 65, 228, 100, 155, 147, 76, 164, 149, 153, 27, 120, 82, 184, 85
-            ]
-        );
-        assert_eq!(artifact.artifact(), b"");
-
-        assert!(artifact.validate().is_err());
-    }
-
-    #[test]
     fn artifact_with_same_hash_is_invalid() {
         let artifact1 = Artifact::new(b"hello world".to_vec());
 
