@@ -825,8 +825,11 @@ mod tests {
         request.operation = RequestOperation::Transfer(TransferOperation {
             transfer_id: None,
             fee: None,
+            asset: mock_asset(),
             input: TransferOperationInput {
                 from_account_id: [9; 16],
+                from_asset_id: [1; 16],
+                with_standard: TokenStandard::InternetComputerNative,
                 amount: candid::Nat(100u32.into()),
                 fee: None,
                 metadata: Metadata::default(),
@@ -860,8 +863,11 @@ mod tests {
         request.operation = RequestOperation::Transfer(TransferOperation {
             transfer_id: None,
             fee: None,
+            asset: mock_asset(),
             input: TransferOperationInput {
                 from_account_id: [9; 16],
+                from_asset_id: [1; 16],
+                with_standard: TokenStandard::InternetComputerNative,
                 amount: candid::Nat(100u32.into()),
                 fee: None,
                 metadata: Metadata::default(),
@@ -895,8 +901,11 @@ mod tests {
         request.operation = RequestOperation::Transfer(TransferOperation {
             transfer_id: None,
             fee: None,
+            asset: mock_asset(),
             input: TransferOperationInput {
                 from_account_id: [9; 16],
+                from_asset_id: [1; 16],
+                with_standard: TokenStandard::InternetComputerNative,
                 amount: candid::Nat(100u32.into()),
                 fee: None,
                 metadata: Metadata::default(),

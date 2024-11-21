@@ -808,6 +808,7 @@ export class StationService {
       title: [],
       summary: [],
       operation: { AddAsset: input },
+      expiration_dt: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -862,6 +863,7 @@ export class StationService {
       title: [],
       summary: [],
       operation: { EditAsset: input },
+      expiration_dt: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -877,6 +879,7 @@ export class StationService {
       title: [],
       summary: [],
       operation: { RemoveAsset: input },
+      expiration_dt: [],
     });
 
     if (variantIs(result, 'Err')) {

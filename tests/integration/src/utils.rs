@@ -714,6 +714,7 @@ pub fn create_transfer(
         operation: RequestOperationInput::Transfer(input),
         title: None,
         summary: None,
+        expiration_dt: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
     };
     let res: (Result<CreateRequestResponse, ApiErrorDTO>,) = update_candid_as(
