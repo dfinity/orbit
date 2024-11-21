@@ -1,7 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{AddAddressBookEntryOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{AddAddressBookEntryOperation, Request, RequestOperation},
     services::ADDRESS_BOOK_SERVICE,
 };
 use async_trait::async_trait;
@@ -18,22 +18,15 @@ impl Create<station_api::AddAddressBookEntryOperationInput> for AddAddressBookEn
         input: station_api::CreateRequestInput,
         operation_input: station_api::AddAddressBookEntryOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::AddAddressBookEntry(AddAddressBookEntryOperation {
                 address_book_entry_id: None,
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Address book entry creation".to_string()),
-            input.summary,
+            "Add address book entry".to_string(),
         );
 
         Ok(request)

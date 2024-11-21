@@ -214,6 +214,18 @@ pub struct CreateRequestInput {
     pub title: Option<String>,
     pub summary: Option<String>,
     pub execution_plan: Option<RequestExecutionScheduleDTO>,
+    pub expiration_dt: Option<TimestampRfc3339>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CancelRequestInput {
+    pub request_id: UuidDTO,
+    pub reason: Option<String>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CancelRequestResponse {
+    pub request: RequestDTO,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
