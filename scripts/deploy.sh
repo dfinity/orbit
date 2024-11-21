@@ -13,6 +13,8 @@ IDENTITY_PEM_PATH=${IDENTITY_PEM_PATH:-""}
 # Path to the dfx.json file
 DFX_JSON_PATH=${DFX_JSON_PATH:-"dfx.json"}
 
+. "$(dirname "$0")/utils.sh"
+
 #############################################
 # USAGE                                     #
 #############################################
@@ -32,15 +34,7 @@ function identity_warning_confirmation() {
   echo "WARNING: You are about to deploy to the IC with the \"$network\" network, this will use your active identity."
   echo -e "\e[0m"
 
-  identity=$(dfx identity whoami)
-
-  if [ -z "$identity" ]; then
-    echo "No identity found, please login to your dfx environment."
-    exit 1
-  fi
-
-  echo "Current identity: $identity"
-  echo
+  set_identity_pem_path
 
   read -p "Do you want to continue? [y/N]: " confirmation
 
@@ -49,8 +43,6 @@ function identity_warning_confirmation() {
     echo "Deployment cancelled."
     exit 1
   fi
-
-  set_identity_pem_path "$identity"
 }
 
 function usage() {
@@ -98,24 +90,7 @@ function setup_enviroment() {
 
   setup_cycles_wallet
 
-  if ! command -v icx-asset >/dev/null 2>&1; then
-    echo "icx-asset not found, installing..."
-
-    cargo install icx-asset --version 0.21.0
-
-    echo "icx-asset installed successfully."
-
-  fi
-}
-
-function get_network() {
-  local network=${IC_NETWORK:-local}
-  echo "$network"
-}
-
-function set_network() {
-  local network=$1
-  export IC_NETWORK=$network
+  install_icx_asset
 }
 
 function get_subnet_type() {
@@ -125,59 +100,6 @@ function get_subnet_type() {
     echo "fiduciary"
   else
     echo ""
-  fi
-}
-
-function get_replica_url() {
-  local network=$(get_network)
-  local result
-
-  # Extract the first provider or bind using jq
-  result=$(jq -r --arg network "$network" \
-    '.networks[$network] | 
-    if .providers then .providers[0] 
-    elif .bind then "http://" + .bind 
-    else null 
-    end' "$DFX_JSON_PATH")
-
-  if [ -z "$result" ] || [ "$result" == "null" ]; then
-    echo -e "\e[1;31m"
-    echo "ERROR: Replica URL not found for the network: $network"
-    echo "Please make sure the dfx.json file is correctly configured."
-    echo -e "\e[0m"
-
-    exit 1
-  else
-    echo "$result"
-  fi
-}
-
-function set_identity_pem_path() {
-  local identity_name=$1
-  local identity_store_path=${DFX_DEFAULT_IDENTITY_STORE_PATH}
-
-  if [ -z "$IDENTITY_PEM_PATH" ]; then
-    local identity_pem_path="${identity_store_path}/${identity_name}/${identity_name}.pem"
-
-    # Check if the identity pem file exists, else fallback to the id.pem filename
-    if [ ! -f "$identity_pem_path" ]; then
-      identity_pem_path="${identity_store_path}/${identity_name}/identity.pem"
-    fi
-
-    if [ ! -f "$identity_pem_path" ]; then
-      identity_pem_path="${identity_store_path}/${identity_name}/id.pem"
-    fi
-
-    export IDENTITY_PEM_PATH=$identity_pem_path
-  fi
-
-  if [ ! -f "$IDENTITY_PEM_PATH" ]; then
-    echo -e "\e[1;31m"
-    echo "ERROR: Identity PEM file not found for the identity: $identity_name"
-    echo "Please make sure the identity is available in the default identity store path: $identity_store_path"
-    echo -e "\e[0m"
-
-    exit 1
   fi
 }
 
@@ -258,9 +180,25 @@ function deploy_control_panel() {
     BUILD_MODE=$network ./scripts/docker-build.sh --control-panel
   fi
 
-  # Read the WASM files and convert them to hex format
+  # Read the WASM files and convert/hash them to hex format
   upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/upgrader/upgrader.wasm.gz | sed 's/../\\&/g')
-  station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./artifacts/station/station.wasm.gz | sed 's/../\\&/g')
+  station_wasm_module_hash=$(sha256sum ./artifacts/station/station.wasm.gz | grep -o "^[0-9a-z]*" | sed 's/../\\&/g')
+
+  # Extract station version from cargo toml files
+  station_version=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages[] | select(.name == "station").version')
+
+  wasm_chunk_store_id=$(dfx canister id wasm_chunk_store --network $network 2>/dev/null || echo "")
+  if [ -z "$wasm_chunk_store_id" ]; then
+    echo "Canister 'wasm_chunk_store' does not exist, creating and installing..."
+
+    dfx canister create wasm_chunk_store --network $network --with-cycles 5000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+    wasm_chunk_store_id=$(dfx canister id wasm_chunk_store --network $network 2>/dev/null || echo "")
+
+    dfx build wasm_chunk_store
+    dfx canister install wasm_chunk_store --network $network
+  fi
+  ln -sf station.wasm.gz ./artifacts/station/station-$station_version.wasm.gz
+  icx-asset --pem $IDENTITY_PEM_PATH --replica $(get_replica_url) upload $wasm_chunk_store_id ./artifacts/station/station-$station_version.wasm.gz
 
   canister_id_output=$(dfx canister id control_panel --network $network 2>/dev/null || echo "")
 
@@ -284,8 +222,8 @@ function deploy_control_panel() {
   fi
 
   echo "Updating the control_panel canister with the new station and upgrader WASM modules..."
-  dfx canister call control_panel --network $network upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; })")
-  dfx canister call control_panel --network $network upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = opt blob \"$station_wasm_module_bytes\"; })")
+  dfx canister call control_panel --network $network upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; station_wasm_module_extra_chunks = null; })")
+  dfx canister call control_panel --network $network upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = null; station_wasm_module_extra_chunks = opt opt record { store_canister = principal\"$wasm_chunk_store_id\"; extra_chunks_key = \"/station-$station_version.wasm.gz\"; wasm_module_hash = blob\"$station_wasm_module_hash\" } })")
 }
 
 function deploy_app_wallet() {

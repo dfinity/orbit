@@ -1,7 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{CreateExternalCanisterOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{CreateExternalCanisterOperation, Request, RequestOperation},
     services::ExternalCanisterService,
 };
 use async_trait::async_trait;
@@ -20,22 +20,15 @@ impl Create<CreateExternalCanisterOperationInput> for CreateExternalCanisterRequ
         input: CreateRequestInput,
         operation_input: CreateExternalCanisterOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::CreateExternalCanister(CreateExternalCanisterOperation {
                 canister_id: None,
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "CreateExternalCanister".to_string()),
-            input.summary,
+            "Create canister".to_string(),
         );
 
         Ok(request)

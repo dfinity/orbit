@@ -4,7 +4,7 @@ use crate::{
     mappers::HelperMapper,
     models::{
         RemoveAddressBookEntryOperation, RemoveAddressBookEntryOperationInput, Request,
-        RequestExecutionPlan, RequestOperation,
+        RequestOperation,
     },
     services::ADDRESS_BOOK_SERVICE,
 };
@@ -29,23 +29,16 @@ impl Create<station_api::RemoveAddressBookEntryOperationInput>
                 info: format!("Invalid address book entry id: {}", e),
             })?;
 
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::RemoveAddressBookEntry(RemoveAddressBookEntryOperation {
                 input: RemoveAddressBookEntryOperationInput {
                     address_book_entry_id: *address_book_entry_id.as_bytes(),
                 },
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Address book entry removal".to_string()),
-            input.summary,
+            "Remove address book entry".to_string(),
         );
 
         Ok(request)

@@ -122,6 +122,66 @@ fn validate_summary(summary: &Option<String>) -> ModelValidatorResult<RequestErr
     Ok(())
 }
 
+fn validate_expiration_dt(expiration_dt: &Timestamp) -> ModelValidatorResult<RequestError> {
+    if *expiration_dt <= next_time() {
+        return Err(RequestError::ValidationError {
+            info: "The expiration date must be in the future".to_owned(),
+        });
+    }
+
+    Ok(())
+}
+
+fn validate_status(status: &RequestStatus) -> ModelValidatorResult<RequestError> {
+    match status {
+        RequestStatus::Cancelled {
+            reason: Some(reason),
+        } => {
+            if reason.trim().is_empty() {
+                return Err(RequestError::ValidationError {
+                    info: "The reason for the cancellation must not be empty".to_owned(),
+                });
+            }
+
+            if reason.len() > Request::MAX_CANCEL_REASON_LEN as usize {
+                return Err(RequestError::ValidationError {
+                    info: format!(
+                        "The reason for the cancellation exceeds the maximum allowed: {}",
+                        Request::MAX_CANCEL_REASON_LEN
+                    ),
+                });
+            }
+
+            Ok(())
+        }
+        RequestStatus::Created
+        | RequestStatus::Rejected
+        | RequestStatus::Approved
+        | RequestStatus::Completed { .. }
+        | RequestStatus::Failed { .. }
+        | RequestStatus::Scheduled { .. }
+        | RequestStatus::Processing { .. }
+        | RequestStatus::Cancelled { reason: None } => Ok(()),
+    }
+}
+
+fn validate_execution_plan(
+    execution_plan: &RequestExecutionPlan,
+) -> ModelValidatorResult<RequestError> {
+    match execution_plan {
+        RequestExecutionPlan::Scheduled { execution_time } => {
+            if *execution_time <= next_time() {
+                return Err(RequestError::ValidationError {
+                    info: "The execution time must be in the future".to_owned(),
+                });
+            }
+        }
+        RequestExecutionPlan::Immediate => (),
+    }
+
+    Ok(())
+}
+
 fn validate_requested_by(requested_by: &UserId) -> ModelValidatorResult<RequestError> {
     USER_REPOSITORY
         .get(&UserKey { id: *requested_by })
@@ -287,7 +347,9 @@ impl ModelValidator<RequestError> for Request {
         validate_title(&self.title)?;
         validate_summary(&self.summary)?;
         validate_requested_by(&self.requested_by)?;
-
+        validate_expiration_dt(&self.expiration_dt)?;
+        validate_execution_plan(&self.execution_plan)?;
+        validate_status(&self.status)?;
         validate_request_operation_foreign_keys(&self.operation)?;
 
         Ok(())
@@ -296,6 +358,7 @@ impl ModelValidator<RequestError> for Request {
 
 impl Request {
     pub const MAX_TITLE_LEN: u8 = 255;
+    pub const MAX_CANCEL_REASON_LEN: u16 = 1000;
     pub const MAX_SUMMARY_LEN: u16 = 1000;
 
     /// Creates a new request key from the given key components.
@@ -455,6 +518,65 @@ mod tests {
     use super::*;
 
     #[test]
+    fn fail_request_cancel_reason_too_big() {
+        let mut request = mock_request();
+        request.status = RequestStatus::Cancelled {
+            reason: Some("a".repeat(Request::MAX_CANCEL_REASON_LEN as usize + 1)),
+        };
+
+        let result = validate_status(&request.status);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: format!(
+                    "The reason for the cancellation exceeds the maximum allowed: {}",
+                    Request::MAX_CANCEL_REASON_LEN
+                )
+            }
+        )
+    }
+
+    #[test]
+    fn fail_request_cancel_reason_empty() {
+        let mut request = mock_request();
+        request.status = RequestStatus::Cancelled {
+            reason: Some("".to_owned()),
+        };
+
+        let result = validate_status(&request.status);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: "The reason for the cancellation must not be empty".to_owned()
+            }
+        );
+
+        request.status = RequestStatus::Cancelled {
+            reason: Some(" ".to_owned()),
+        };
+
+        let result = validate_status(&request.status);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_request_cancel_reason_is_valid() {
+        let mut request = mock_request();
+        request.status = RequestStatus::Cancelled {
+            reason: Some("a".repeat(Request::MAX_CANCEL_REASON_LEN as usize)),
+        };
+
+        let result = validate_status(&request.status);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
     fn fail_request_title_too_big() {
         let mut request = mock_request();
         request.title = "a".repeat(Request::MAX_TITLE_LEN as usize + 1);
@@ -462,6 +584,67 @@ mod tests {
         let result = validate_title(&request.title);
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn fail_request_expiration_dt_in_past() {
+        let mut request = mock_request();
+        request.expiration_dt = 0;
+
+        let result = validate_expiration_dt(&request.expiration_dt);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: "The expiration date must be in the future".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn test_request_expiration_dt_is_valid() {
+        let mut request = mock_request();
+        request.expiration_dt = Request::default_expiration_dt_ns();
+
+        let result = validate_expiration_dt(&request.expiration_dt);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_request_execution_plan_in_past() {
+        let mut request = mock_request();
+        request.execution_plan = RequestExecutionPlan::Scheduled { execution_time: 0 };
+
+        let result = validate_execution_plan(&request.execution_plan);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: "The execution time must be in the future".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn test_request_execution_plan_is_valid() {
+        let mut request = mock_request();
+        request.execution_plan = RequestExecutionPlan::Scheduled {
+            execution_time: Request::default_expiration_dt_ns(),
+        };
+
+        let result = validate_execution_plan(&request.execution_plan);
+
+        assert!(result.is_ok());
+
+        let mut request = mock_request();
+        request.execution_plan = RequestExecutionPlan::Immediate;
+
+        let result = validate_execution_plan(&request.execution_plan);
+
+        assert!(result.is_ok());
     }
 
     #[test]

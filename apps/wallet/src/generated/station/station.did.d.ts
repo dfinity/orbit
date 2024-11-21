@@ -166,6 +166,12 @@ export interface CallExternalCanisterResourceTarget {
   'execution_method' : ExecutionMethodResourceTarget,
   'validation_method' : ValidationMethodResourceTarget,
 }
+export interface CancelRequestInput {
+  'request_id' : UUID,
+  'reason' : [] | [string],
+}
+export type CancelRequestResult = { 'Ok' : { 'request' : Request } } |
+  { 'Err' : Error };
 export interface CanisterExecutionAndValidationMethodPair {
   'execution_method' : string,
   'validation_method' : ValidationMethodResourceTarget,
@@ -212,6 +218,11 @@ export type ChangeAddressBookMetadata = {
   { 'ReplaceAllBy' : Array<AddressBookMetadata> };
 export type ChangeAssets = { 'ReplaceWith' : { 'assets' : Array<UUID> } } |
   { 'Change' : { 'add_assets' : Array<UUID>, 'remove_assets' : Array<UUID> } };
+export type ChangeExternalCanisterMetadata = {
+    'OverrideSpecifiedBy' : Array<ExternalCanisterMetadata>
+  } |
+  { 'RemoveKeys' : Array<string> } |
+  { 'ReplaceAllBy' : Array<ExternalCanisterMetadata> };
 export interface ChangeExternalCanisterOperation {
   'mode' : CanisterInstallMode,
   'canister_id' : Principal,
@@ -244,6 +255,7 @@ export interface ConfigureExternalCanisterSettingsInput {
   'description' : [] | [string],
   'request_policies' : [] | [ExternalCanisterRequestPoliciesUpdateInput],
   'state' : [] | [ExternalCanisterState],
+  'change_metadata' : [] | [ChangeExternalCanisterMetadata],
 }
 export interface CreateExternalCanisterOperation {
   'canister_id' : [] | [Principal],
@@ -251,6 +263,7 @@ export interface CreateExternalCanisterOperation {
 }
 export interface CreateExternalCanisterOperationInput {
   'permissions' : ExternalCanisterPermissionsCreateInput,
+  'metadata' : [] | [Array<ExternalCanisterMetadata>],
   'kind' : CreateExternalCanisterOperationKind,
   'name' : string,
   'labels' : [] | [Array<string>],
@@ -271,6 +284,7 @@ export interface CreateExternalCanisterOperationKindCreateNew {
 export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
+  'expiration_dt' : [] | [TimestampRFC3339],
   'summary' : [] | [string],
   'operation' : RequestOperationInput,
 }
@@ -418,6 +432,7 @@ export interface ExternalCanister {
   'id' : UUID,
   'permissions' : ExternalCanisterPermissions,
   'modified_at' : [] | [TimestampRFC3339],
+  'metadata' : Array<ExternalCanisterMetadata>,
   'name' : string,
   'labels' : Array<string>,
   'canister_id' : Principal,
@@ -512,6 +527,7 @@ export interface ExternalCanisterChangeRequestPolicyRuleInput {
 }
 export type ExternalCanisterId = { 'Any' : null } |
   { 'Canister' : Principal };
+export interface ExternalCanisterMetadata { 'key' : string, 'value' : string }
 export interface ExternalCanisterPermissions {
   'calls' : Array<ExternalCanisterCallPermission>,
   'read' : Allow,
@@ -1346,6 +1362,7 @@ export interface WasmModuleExtraChunks {
   'extra_chunks_key' : string,
 }
 export interface _SERVICE {
+  'cancel_request' : ActorMethod<[CancelRequestInput], CancelRequestResult>,
   'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
   'create_request' : ActorMethod<[CreateRequestInput], CreateRequestResult>,

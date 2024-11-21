@@ -19,6 +19,17 @@ CANISTER_ID_WALLET="wkt3w-3iaaa-aaaaa-774ba-cai"
 CANISTER_ID_TEST_ICRC1_LEDGER="bw4dl-smaaa-aaaaa-qaacq-cai"
 CANISTER_ID_TEST_ICRC1_INDEX="br5f7-7uaaa-aaaaa-qaaca-cai"
 
+# Default identity store path
+DFX_DEFAULT_IDENTITY_STORE_PATH=${DFX_DEFAULT_IDENTITY_STORE_PATH:-"$HOME/.config/dfx/identity"}
+
+# Identity PEM path to use for the deployment of the asset canister files
+IDENTITY_PEM_PATH=${IDENTITY_PEM_PATH:-""}
+
+# Path to the dfx.json file
+DFX_JSON_PATH=${DFX_JSON_PATH:-"dfx.json"}
+
+. "$(dirname "$0")/scripts/utils.sh"
+
 #############################################
 # USAGE                                     #
 #############################################
@@ -157,19 +168,29 @@ function uninstall_control_panel() {
 }
 
 function install_control_panel() {
+  install_icx_asset
+  set_identity_pem_path
+
   # Builds the dependencies and generates the WASM files
   build_wasm upgrader
   build_wasm station
 
-  # Read the WASM files and convert them to hex format
+  # Read the WASM files and convert/hash them to hex format
   upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
-  station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/station.wasm.gz | sed 's/../\\&/g')
+  station_wasm_module_hash=$(sha256sum ./wasms/station.wasm.gz | grep -o "^[0-9a-z]*" | sed 's/../\\&/g')
+
+  dfx canister create wasm_chunk_store --no-wallet
+  dfx build wasm_chunk_store
+  dfx canister install wasm_chunk_store
+
+  wasm_chunk_store_id=$(dfx canister id wasm_chunk_store)
+  icx-asset --pem $IDENTITY_PEM_PATH --replica $(get_replica_url) upload $wasm_chunk_store_id ./wasms/station.wasm.gz
 
   dfx canister create --specified-id $CANISTER_ID_CONTROL_PANEL control_panel
   dfx build control_panel
   dfx canister install control_panel
-  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; })")
-  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = opt blob \"$station_wasm_module_bytes\"; })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; station_wasm_module_extra_chunks = null; })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = null; station_wasm_module_extra_chunks = opt opt record { store_canister = principal\"$wasm_chunk_store_id\"; extra_chunks_key = \"/station.wasm.gz\"; wasm_module_hash = blob\"$station_wasm_module_hash\" } })")
 }
 
 function setup_control_panel() {
@@ -178,17 +199,24 @@ function setup_control_panel() {
 }
 
 function upgrade_control_panel() {
+  install_icx_asset
+  set_identity_pem_path
+
+  # Builds the dependencies and generates the WASM files
   build_wasm upgrader
   build_wasm station
 
-  # Read the WASM files and convert them to hex format
+  # Read the WASM files and convert/hash them to hex format
   upgrader_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/upgrader.wasm.gz | sed 's/../\\&/g')
-  station_wasm_module_bytes=$(hexdump -ve '1/1 "%.2x"' ./wasms/station.wasm.gz | sed 's/../\\&/g')
+  station_wasm_module_hash=$(sha256sum ./wasms/station.wasm.gz | grep -o "^[0-9a-z]*" | sed 's/../\\&/g')
+
+  wasm_chunk_store_id=$(dfx canister id wasm_chunk_store)
+  icx-asset --pem $IDENTITY_PEM_PATH --replica $(get_replica_url) upload $wasm_chunk_store_id ./wasms/station.wasm.gz
 
   dfx build control_panel
   dfx canister install control_panel --mode upgrade --yes
-  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; })")
-  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = opt blob \"$station_wasm_module_bytes\"; })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = opt blob \"$upgrader_wasm_module_bytes\"; station_wasm_module = null; station_wasm_module_extra_chunks = null; })")
+  dfx canister call control_panel upload_canister_modules --argument-file <(echo "(record { upgrader_wasm_module = null; station_wasm_module = null; station_wasm_module_extra_chunks = opt opt record { store_canister = principal\"$wasm_chunk_store_id\"; extra_chunks_key = \"/station.wasm.gz\"; wasm_module_hash = blob\"$station_wasm_module_hash\" } })")
 }
 
 function uninstall_app_wallet() {

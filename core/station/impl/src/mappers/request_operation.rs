@@ -599,6 +599,7 @@ impl From<ConfigureExternalCanisterSettingsInput>
             name: input.name,
             description: input.description,
             labels: input.labels,
+            change_metadata: input.change_metadata.map(Into::into),
             state: input.state.map(Into::into),
             permissions: input.permissions.map(Into::into),
             request_policies: input.request_policies.map(Into::into),
@@ -1218,6 +1219,7 @@ impl From<CreateExternalCanisterOperationInput>
             name: input.name,
             description: input.description,
             labels: input.labels,
+            metadata: input.metadata.map(|m| m.into()),
             permissions: input.permissions.into(),
             request_policies: input.request_policies.into(),
         }
@@ -1235,6 +1237,7 @@ impl From<station_api::CreateExternalCanisterOperationInput>
             name: input.name,
             description: input.description,
             labels: input.labels,
+            metadata: input.metadata.map(|m| m.into()),
             permissions: input.permissions.into(),
             request_policies: input.request_policies.into(),
         }

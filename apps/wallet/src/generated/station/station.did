@@ -687,6 +687,15 @@ type CreateExternalCanisterOperationKind = variant {
   AddExisting : CreateExternalCanisterOperationKindAddExisting;
 };
 
+// ExternalCanister can have additional information attached to them,
+// this type can be used to represent the additional info.
+type ExternalCanisterMetadata = record {
+  // The key of the additional info (e.g. "app_id")
+  key : text;
+  // The value of the additional info (e.g. "2ec270f1-7663-4d51-b70f-9339486b6d6d")
+  value : text;
+};
+
 type CreateExternalCanisterOperationInput = record {
   // The kind of create operation to perform.
   kind : CreateExternalCanisterOperationKind;
@@ -696,10 +705,23 @@ type CreateExternalCanisterOperationInput = record {
   description : opt text;
   // The labels of the external canister.
   labels : opt vec text;
+  // The metadata of the external canister.
+  metadata : opt vec ExternalCanisterMetadata;
   // What operations are allowed on the canister.
   permissions : ExternalCanisterPermissionsCreateInput;
   // The request policies for the canister.
   request_policies : ExternalCanisterRequestPoliciesCreateInput;
+};
+
+// Type for instructions to update the external canister's metadata.
+type ChangeExternalCanisterMetadata = variant {
+  // Replace all existing metadata by the specified metadata.
+  ReplaceAllBy : vec ExternalCanisterMetadata;
+  // Override values of existing metadata with the specified keys
+  // and add new metadata if no metadata can be found with the specified keys.
+  OverrideSpecifiedBy : vec ExternalCanisterMetadata;
+  // Remove metadata with the specified keys.
+  RemoveKeys : vec text;
 };
 
 type ConfigureExternalCanisterSettingsInput = record {
@@ -708,6 +730,8 @@ type ConfigureExternalCanisterSettingsInput = record {
   description : opt text;
   // The labels of the external canister.
   labels : opt vec text;
+  // The metadata of the external canister.
+  change_metadata : opt ChangeExternalCanisterMetadata;
   // What operations are allowed on the canister.
   permissions : opt ExternalCanisterPermissionsUpdateInput;
   // The request policies for the canister.
@@ -1106,6 +1130,8 @@ type CreateRequestInput = record {
   summary : opt text;
   // The time at which the request will execute if approved.
   execution_plan : opt RequestExecutionSchedule;
+  // The time at which the request will expire if still pending.
+  expiration_dt : opt TimestampRFC3339;
 };
 
 // The result type for creating a request.
@@ -1119,6 +1145,23 @@ type CreateRequestResult = variant {
     additional_info : RequestAdditionalInfo;
   };
   // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// The input type for canceling a request.
+type CancelRequestInput = record {
+  // The request id to cancel.
+  request_id : UUID;
+  // The reason for canceling the request.
+  reason : opt text;
+};
+
+// The result type for canceling a request.
+type CancelRequestResult = variant {
+  Ok : record {
+    // The request that was canceled.
+    request : Request;
+  };
   Err : Error;
 };
 
@@ -2705,6 +2748,8 @@ type ExternalCanister = record {
   description : opt text;
   // The labels that can be used to categorize the canister.
   labels : vec text;
+  // The metadata that is associated with the canister.
+  metadata : vec ExternalCanisterMetadata;
   // The current state of the record (e.g. `Active`).
   state : ExternalCanisterState;
   // The permissions that are set for who can interact with the canister.
@@ -2908,6 +2953,13 @@ service : (opt SystemInstall) -> {
   //
   // The request will be created and the caller will be added as the requester.
   create_request : (input : CreateRequestInput) -> (CreateRequestResult);
+  // Cancel a request if the request is in a cancelable state.
+  //
+  // Cancelable conditions:
+  //
+  // - The request is in the `Created` state.
+  // - The caller is the requester of the request.
+  cancel_request : (input : CancelRequestInput) -> (CancelRequestResult);
   // Get the list of requests.
   //
   // Only requests that the caller has access to will be returned.

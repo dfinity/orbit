@@ -87,6 +87,11 @@
         "output": "apps/wallet/src/generated/icrc1_ledger",
         "node_compatibility": true
       }
+    },
+    "wasm_chunk_store": {
+      "type": "assets",
+      "source": [],
+      "build": ""
     }
   },
   "defaults": {
