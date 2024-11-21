@@ -1,10 +1,18 @@
+import { execSync } from 'child_process';
 import { RegistryEntry, SearchRegistryResult } from '../generated/control_panel';
 import { execAsync } from '../utils';
+import { Principal } from '@dfinity/principal';
 
 export enum Application {
   Station = 'station',
   Upgrader = 'upgrader',
 }
+
+export const getWasmChunkStoreId = (network: string = 'local'): Principal => {
+  const maybeCanisterId = execSync(`dfx canister id wasm_chunk_store --network ${network}`);
+
+  return Principal.fromText(maybeCanisterId.toString().split('\n').join(''));
+};
 
 export const applicationToRegistryEntryMap: Record<Application, string> = {
   [Application.Station]: '@orbit/station',

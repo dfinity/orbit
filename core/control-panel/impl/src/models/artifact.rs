@@ -106,16 +106,6 @@ impl Artifact {
     }
 }
 
-fn validate_artifact(artifact: &[u8]) -> ModelValidatorResult<ArtifactError> {
-    if artifact.is_empty() {
-        return Err(ArtifactError::ValidationError {
-            info: "Artifact cannot be empty".to_string(),
-        });
-    }
-
-    Ok(())
-}
-
 fn validate_unique_hash(self_id: &ArtifactId, hash: &[u8]) -> ModelValidatorResult<ArtifactError> {
     ARTIFACT_REPOSITORY
         .find_by_hash(hash)
@@ -132,7 +122,6 @@ fn validate_unique_hash(self_id: &ArtifactId, hash: &[u8]) -> ModelValidatorResu
 
 impl ModelValidator<ArtifactError> for Artifact {
     fn validate(&self) -> ModelValidatorResult<ArtifactError> {
-        validate_artifact(&self.artifact)?;
         validate_unique_hash(self.id(), &self.hash)?;
 
         Ok(())
@@ -143,6 +132,20 @@ impl ModelValidator<ArtifactError> for Artifact {
 mod tests {
     use super::*;
     use orbit_essentials::repository::Repository;
+
+    #[test]
+    fn test_empty_artifact_is_accepted() {
+        let artifact = Artifact::new(Vec::new());
+
+        assert_eq!(artifact.artifact(), b"");
+        assert_eq!(
+            artifact.hash(),
+            vec![
+                227, 176, 196, 66, 152, 252, 28, 20, 154, 251, 244, 200, 153, 111, 185, 36, 39,
+                174, 65, 228, 100, 155, 147, 76, 164, 149, 153, 27, 120, 82, 184, 85
+            ]
+        );
+    }
 
     #[test]
     fn test_artifact_creation() {

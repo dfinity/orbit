@@ -1,6 +1,13 @@
-import { exec, execSync } from 'child_process';
+import { exec, execSync, spawnSync } from 'child_process';
+import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
+import { homedir } from 'os';
+import { join } from 'path';
 import { promisify } from 'util';
+
+export const ROOT_PATH = join(__dirname, '../..');
+export const DFX_PATH = join(ROOT_PATH, 'dfx.json');
+export const DFX_DEFAULT_IDENTITY_STORE_PATH = join(homedir(), '.config/dfx/identity');
 
 // Parse a string of arguments separated by a separator and return an array of strings.
 export const parseArgsListSplitByComma = (arg?: string): string[] => {
@@ -72,4 +79,55 @@ export const assertReplicaIsHealthy = async (network: string): Promise<void> => 
   if (ping.replica_health_status?.toLowerCase() !== 'healthy') {
     throw new Error('The replica is not healthy.');
   }
+};
+
+export const commandExists = (command: string): boolean => {
+  const result = spawnSync('command', ['-v', command], { stdio: 'ignore' });
+  return result.status === 0;
+};
+
+export const assertCommandExists = (command: string): void => {
+  if (!commandExists(command)) {
+    throw new Error(`Command '${command}' does not exist.`);
+  }
+};
+
+export const getReplicaUrl = async (network: string): Promise<string> => {
+  const dfxFile = JSON.parse(await readFile(DFX_PATH, 'utf-8'));
+
+  if (!dfxFile?.networks?.[network]) {
+    throw new Error(`Network '${network}' not found in dfx.json.`);
+  }
+
+  if (dfxFile.networks[network].providers && dfxFile.networks[network].providers.length > 0) {
+    return dfxFile.networks[network].providers[0];
+  }
+
+  if (dfxFile.networks[network].bind) {
+    return dfxFile.networks[network].bind.startsWith('http')
+      ? dfxFile.networks[network].bind
+      : `http://${dfxFile.networks[network].bind}`;
+  }
+
+  throw new Error(`Network '${network}' does not have a replica URL.`);
+};
+
+export const getIdentityPemFilePath = async (identity: string): Promise<string> => {
+  if (!existsSync(DFX_DEFAULT_IDENTITY_STORE_PATH)) {
+    throw new Error('Identity store not found.');
+  }
+
+  const possiblePaths = [
+    join(DFX_DEFAULT_IDENTITY_STORE_PATH, identity, `${identity}.pem`),
+    join(DFX_DEFAULT_IDENTITY_STORE_PATH, identity, `identity.pem`),
+    join(DFX_DEFAULT_IDENTITY_STORE_PATH, identity, `id.pem`),
+  ];
+
+  for (const path of possiblePaths) {
+    if (existsSync(path)) {
+      return path;
+    }
+  }
+
+  throw new Error(`PEM file not found for identity: ${identity}`);
 };

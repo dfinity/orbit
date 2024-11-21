@@ -92,7 +92,7 @@
 
 <script lang="ts" setup>
 import { mdiCloudDownload, mdiRefresh, mdiWrenchCog } from '@mdi/js';
-import { computed, ref } from 'vue';
+import { computed, Ref, ref } from 'vue';
 import { VBtn } from 'vuetify/components';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import SystemUpgradeForm, { SystemUpgradeFormProps } from './SystemUpgradeForm.vue';
@@ -103,8 +103,12 @@ import {
 } from '~/composables/notifications.composable';
 import { Request } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
-import { arrayBufferToHashHex, hexStringToArrayBuffer } from '~/utils/crypto.utils';
-import { assertAndReturn } from '~/utils/helper.utils';
+import {
+  arrayBufferToHashHex,
+  arrayBufferToHex,
+  hexStringToArrayBuffer,
+} from '~/utils/crypto.utils';
+import { assertAndReturn, toUint8Array } from '~/utils/helper.utils';
 import { SystemUpgradeFormMode, SystemUpgradeScreen } from './system-upgrade.types';
 import SystemUpgradeConfirmationScreen from './SystemUpgradeConfirmationScreen.vue';
 import { useAppStore } from '~/stores/app.store';
@@ -132,7 +136,7 @@ const btnText = computed(() => {
 });
 
 const station = useStationStore();
-const upgradeModel = ref<SystemUpgradeFormProps>(useDefaultUpgradeModel());
+const upgradeModel = ref(useDefaultUpgradeModel()) as Ref<SystemUpgradeFormProps>;
 const screen = ref<SystemUpgradeScreen>(SystemUpgradeScreen.Form);
 const formMode = ref<SystemUpgradeFormMode>(SystemUpgradeFormMode.Registry);
 const toggleFormMode = () => {
@@ -145,23 +149,34 @@ const toggleFormMode = () => {
 const wasmChecksum = ref<string>('');
 const formLoading = ref(false);
 const goToConfirmation = async (model: SystemUpgradeFormProps['modelValue']): Promise<void> => {
-  const wasmModule = assertAndReturn(model.wasmModule, 'model.wasmModule is required');
-  wasmChecksum.value = await arrayBufferToHashHex(wasmModule);
+  if (!model.wasmModuleExtraChunks) {
+    const wasmModule = assertAndReturn(model.wasmModule, 'model.wasmModule is required');
+    wasmChecksum.value = await arrayBufferToHashHex(wasmModule);
+  } else {
+    wasmChecksum.value = arrayBufferToHex(
+      toUint8Array(model.wasmModuleExtraChunks.wasm_module_hash),
+    );
+  }
 
   screen.value = SystemUpgradeScreen.Confirm;
 };
 
 const submitUpgrade = async (model: SystemUpgradeFormProps['modelValue']): Promise<Request> => {
-  const fileBuffer = assertAndReturn(model.wasmModule, 'model.wasmModule is required');
+  let wasmModule = new Uint8Array();
+  if (!model.wasmModuleExtraChunks) {
+    wasmModule = new Uint8Array(assertAndReturn(model.wasmModule, 'model.wasmModule is required'));
+  } else if (model.wasmModule) {
+    wasmModule = new Uint8Array(model.wasmModule);
+  }
+
   const res = await station.service.systemUpgrade(
     {
       arg:
         model.wasmInitArg && model.wasmInitArg.length > 0
           ? [new Uint8Array(hexStringToArrayBuffer(model.wasmInitArg))]
           : [],
-      module: new Uint8Array(fileBuffer),
-      // TODO: Add support for extra chunks once the control-panel supports it
-      module_extra_chunks: [],
+      module: wasmModule,
+      module_extra_chunks: model.wasmModuleExtraChunks ? [model.wasmModuleExtraChunks] : [],
       target: assertAndReturn(model.target, 'model.target is required'),
     },
     {
