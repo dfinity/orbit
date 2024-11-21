@@ -1017,7 +1017,7 @@ impl ExternalCanisterService {
         strategy: MonitorExternalCanisterStrategy,
     ) -> ServiceResult<()> {
         let mut external_canister = self.get_external_canister_by_canister_id(&canister_id)?;
-        if let Some(monitoring) = &external_canister.monitoring {
+        if let Some(_) = &external_canister.monitoring {
             Err(ExternalCanisterError::Failed {
                 reason: format!(
                     "Failed to monitor canister {}. The canister is already monitored.",

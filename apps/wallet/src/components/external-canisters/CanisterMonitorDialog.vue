@@ -122,7 +122,8 @@ const submit = async (input: CanisterMonitorModel) => {
       canister_id: assertAndReturn(input.canisterId, 'canisterId'),
       kind: {
         Start: {
-          strategy: assertAndReturn(input.strategy, 'strategy'),
+          funding_strategy: assertAndReturn(input.strategy, 'strategy'),
+          cycle_obtain_strategy: [],
         },
       },
     });
