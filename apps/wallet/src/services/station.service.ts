@@ -595,6 +595,7 @@ export class StationService {
   async monitorExternalCanister(input: MonitorExternalCanisterOperationInput): Promise<Request> {
     const result = await this.actor.create_request({
       execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
       title: [],
       summary: [],
       operation: {
