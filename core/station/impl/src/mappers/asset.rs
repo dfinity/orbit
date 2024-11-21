@@ -26,3 +26,17 @@ impl From<AssetCallerPrivileges> for AssetCallerPrivilegesDTO {
         }
     }
 }
+
+impl From<Asset> for upgrader_api::Asset {
+    fn from(asset: Asset) -> Self {
+        upgrader_api::Asset {
+            id: Uuid::from_bytes(asset.id).hyphenated().to_string(),
+            blockchain: asset.blockchain.to_string(),
+            symbol: asset.symbol.clone(),
+            name: asset.name.clone(),
+            decimals: asset.decimals,
+            standards: asset.standards.iter().map(|s| s.to_string()).collect(),
+            metadata: asset.metadata.clone().into(),
+        }
+    }
+}

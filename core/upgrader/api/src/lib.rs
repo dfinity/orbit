@@ -65,7 +65,7 @@ pub struct Account {
     pub metadata: Vec<MetadataDTO>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct Asset {
     /// The asset id, which is a UUID.
     pub id: UuidDTO,
@@ -86,7 +86,7 @@ pub struct Asset {
     pub metadata: Vec<MetadataDTO>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct MultiAssetAccount {
     /// The account id, which is a UUID.
     pub id: UuidDTO,
