@@ -2,7 +2,7 @@ use super::{Create, Execute, RequestExecuteStage};
 use crate::models::{MonitorExternalCanisterOperation, MonitorExternalCanisterOperationKind};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{Request, RequestExecutionPlan, RequestOperation},
+    models::{Request, RequestOperation},
     services::ExternalCanisterService,
 };
 use async_trait::async_trait;
@@ -22,19 +22,12 @@ impl Create<station_api::MonitorExternalCanisterOperationInput>
         input: station_api::CreateRequestInput,
         operation_input: station_api::MonitorExternalCanisterOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::MonitorExternalCanister(operation_input.into()),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Monitor canister".to_string()),
-            input.summary,
+            "Monitor canister".to_string(),
         );
 
         Ok(request)
