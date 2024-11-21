@@ -17,7 +17,7 @@ vi.mock('~/services/station.service', () => {
   };
 });
 
-describe('CanisterSetupDialog', () => {
+describe('CanisterMonitorDialog', () => {
   it('renders default card open is true', () => {
     const wrapper = mount(CanisterMonitorDialog, {
       props: {
