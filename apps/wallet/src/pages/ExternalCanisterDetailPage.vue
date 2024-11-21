@@ -78,7 +78,9 @@
                 <VListItem @click="dialogs.settings = true">
                   <VListItemTitle class="d-flex flex-nowrap ga-2">
                     <div class="flex-grow-1">{{ $t('external_canisters.configuration') }}</div>
-                    <div><VIcon :icon="mdiDatabase" size="x-small" /></div>
+                    <div>
+                      <VIcon :icon="mdiDatabase" size="x-small" />
+                    </div>
                   </VListItemTitle>
                 </VListItem>
                 <VListItem
@@ -87,14 +89,18 @@
                 >
                   <VListItemTitle class="d-flex flex-nowrap ga-2">
                     <div class="flex-grow-1">{{ $t('external_canisters.ic_settings') }}</div>
-                    <div><VIcon :icon="mdiInfinity" size="x-small" /></div>
+                    <div>
+                      <VIcon :icon="mdiInfinity" size="x-small" />
+                    </div>
                   </VListItemTitle>
                 </VListItem>
                 <VDivider />
                 <VListItem @click="dialogs.unlink = true">
                   <VListItemTitle color="warning" class="d-flex flex-nowrap ga-2 text-error">
                     <div class="flex-grow-1">{{ $t('external_canisters.unlink') }}</div>
-                    <div><VIcon :icon="mdiDatabaseOff" size="x-small" /></div>
+                    <div>
+                      <VIcon :icon="mdiDatabaseOff" size="x-small" />
+                    </div>
                   </VListItemTitle>
                 </VListItem>
               </VList>
@@ -289,7 +295,11 @@
                       </VListItem>
                       <VListItem class="pt-0 px-0">
                         <VListItemTitle class="font-weight-bold">
-                          <VIcon v-if="canister.monitoring.length" :icon="mdiBatteryChargingMedium" :tooltip="$t(`external_canisters.cycles`)" />
+                          <VIcon
+                            v-if="canister.monitoring.length"
+                            :icon="mdiBatteryChargingMedium"
+                            :tooltip="$t(`external_canisters.cycles`)"
+                          />
                           {{ $t(`external_canisters.cycles`) }}
                           <template v-if="privileges.can_fund">
                             <CanisterTopUpDialog
@@ -413,7 +423,9 @@
 import { Principal } from '@dfinity/principal';
 import {
   mdiBatteryArrowUpOutline,
-  mdiBatteryChargingMedium, mdiBatteryOffOutline, mdiBatterySyncOutline,
+  mdiBatteryChargingMedium,
+  mdiBatteryOffOutline,
+  mdiBatterySyncOutline,
   mdiContentCopy,
   mdiDatabase,
   mdiDatabaseCog,
@@ -481,7 +493,10 @@ import { copyToClipboard } from '~/utils/app.utils';
 import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import { fetchCanisterIdlFromMetadata } from '~/utils/didc.utils';
 import { assertAndReturn, debounce } from '~/utils/helper.utils';
-import { useOnFailedOperation, useOnSuccessfulOperation } from '~/composables/notifications.composable.ts';
+import {
+  useOnFailedOperation,
+  useOnSuccessfulOperation,
+} from '~/composables/notifications.composable.ts';
 
 const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,
