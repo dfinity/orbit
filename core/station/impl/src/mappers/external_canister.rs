@@ -379,7 +379,7 @@ impl From<station_api::MonitorExternalCanisterStartInput> for MonitorExternalCan
     fn from(input: station_api::MonitorExternalCanisterStartInput) -> Self {
         MonitorExternalCanisterStartInput {
             funding_strategy: input.funding_strategy.into(),
-            obtain_cycles_strategy: input.obtain_cycles_strategy.map(Into::into),
+            cycle_obtain_strategy: input.cycle_obtain_strategy.map(Into::into),
         }
     }
 }
@@ -388,7 +388,7 @@ impl From<MonitorExternalCanisterStartInput> for station_api::MonitorExternalCan
     fn from(input: MonitorExternalCanisterStartInput) -> Self {
         station_api::MonitorExternalCanisterStartInput {
             funding_strategy: input.funding_strategy.into(),
-            obtain_cycles_strategy: input.obtain_cycles_strategy.map(Into::into),
+            cycle_obtain_strategy: input.cycle_obtain_strategy.map(Into::into),
         }
     }
 }

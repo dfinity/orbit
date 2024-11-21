@@ -260,7 +260,7 @@ impl AccountService {
                 write_system_info(system_info);
 
                 #[cfg(target_arch = "wasm32")]
-                crate::services::cycle_manager::CYCLE_MANAGER.set_global_obtain_cycles_strategy(
+                crate::services::cycle_manager::CYCLE_MANAGER.set_global_cycle_obtain_strategy(
                     &CycleObtainStrategy::MintFromNativeToken {
                         account_id: new_account.id,
                     },
