@@ -311,6 +311,10 @@ export const idlFactory = ({ IDL }) => {
     'module_checksum' : Sha256Hash,
     'arg_checksum' : IDL.Opt(Sha256Hash),
   });
+  const CycleObtainStrategyInput = IDL.Variant({
+    'Disabled' : IDL.Null,
+    'MintFromNativeToken' : IDL.Record({ 'account_id' : UUID }),
+  });
   const MonitoringExternalCanisterCyclesThresholdInput = IDL.Record({
     'fund_cycles' : IDL.Nat,
     'min_cycles' : IDL.Nat,
@@ -328,7 +332,8 @@ export const idlFactory = ({ IDL }) => {
     'BelowEstimatedRuntime' : MonitoringExternalCanisterEstimatedRuntimeInput,
   });
   const MonitorExternalCanisterStartInput = IDL.Record({
-    'strategy' : MonitorExternalCanisterStrategyInput,
+    'cycle_obtain_strategy' : IDL.Opt(CycleObtainStrategyInput),
+    'funding_strategy' : MonitorExternalCanisterStrategyInput,
   });
   const MonitorExternalCanisterOperationKind = IDL.Variant({
     'Start' : MonitorExternalCanisterStartInput,
@@ -504,10 +509,6 @@ export const idlFactory = ({ IDL }) => {
     'identities' : IDL.Opt(IDL.Vec(IDL.Principal)),
   });
   const EditUserOperation = IDL.Record({ 'input' : EditUserOperationInput });
-  const CycleObtainStrategyInput = IDL.Variant({
-    'Disabled' : IDL.Null,
-    'MintFromNativeToken' : IDL.Record({ 'account_id' : UUID }),
-  });
   const ManageSystemInfoOperationInput = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'cycle_obtain_strategy' : IDL.Opt(CycleObtainStrategyInput),
@@ -933,6 +934,7 @@ export const idlFactory = ({ IDL }) => {
     'created_at' : TimestampRFC3339,
     'request_policies' : ExternalCanisterRequestPolicies,
     'state' : ExternalCanisterState,
+    'monitoring' : IDL.Opt(MonitorExternalCanisterStartInput),
   });
   const GetExternalCanisterResult = IDL.Variant({
     'Ok' : IDL.Record({

@@ -402,6 +402,7 @@ export interface ExternalCanister {
   'created_at' : TimestampRFC3339,
   'request_policies' : ExternalCanisterRequestPolicies,
   'state' : ExternalCanisterState,
+  'monitoring' : [] | [MonitorExternalCanisterStartInput],
 }
 export interface ExternalCanisterCallPermission {
   'execution_method' : string,
@@ -840,7 +841,8 @@ export type MonitorExternalCanisterOperationKind = {
   } |
   { 'Stop' : null };
 export interface MonitorExternalCanisterStartInput {
-  'strategy' : MonitorExternalCanisterStrategyInput,
+  'cycle_obtain_strategy' : [] | [CycleObtainStrategyInput],
+  'funding_strategy' : MonitorExternalCanisterStrategyInput,
 }
 export type MonitorExternalCanisterStrategyInput = { 'Always' : bigint } |
   { 'BelowThreshold' : MonitoringExternalCanisterCyclesThresholdInput } |
