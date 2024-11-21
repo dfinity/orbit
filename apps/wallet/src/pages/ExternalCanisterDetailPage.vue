@@ -289,6 +289,7 @@
                       </VListItem>
                       <VListItem class="pt-0 px-0">
                         <VListItemTitle class="font-weight-bold">
+                          <VIcon v-if="canister.monitoring.length" :icon="mdiBatteryChargingMedium" :tooltip="$t(`external_canisters.cycles`)" />
                           {{ $t(`external_canisters.cycles`) }}
                           <template v-if="privileges.can_fund">
                             <CanisterTopUpDialog
@@ -306,23 +307,37 @@
                               color="default"
                               variant="tonal"
                               class="ml-1 px-2"
-                              :append-icon="mdiDatabaseArrowUp"
+                              :append-icon="mdiBatteryArrowUpOutline"
                               @click="dialogs.topUp = true"
                             >
                               {{ $t('external_canisters.top_up') }}
                             </VBtn>
 
                             <VBtn
-                              :disabled="!canisterDetails.status.value"
+                              v-if="!canister.monitoring.length"
+                              :disabled="canisterDetails.status.loading"
                               size="small"
                               density="compact"
                               color="default"
                               variant="tonal"
                               class="ml-1 px-2"
-                              :append-icon="mdiDatabaseArrowUp"
+                              :append-icon="mdiBatterySyncOutline"
                               @click="dialogs.monitor = true"
                             >
                               {{ $t('external_canisters.monitor.title') }}
+                            </VBtn>
+                            <VBtn
+                              v-if="canister.monitoring.length"
+                              :disabled="canisterDetails.status.loading"
+                              size="small"
+                              density="compact"
+                              color="default"
+                              variant="tonal"
+                              class="ml-1 px-2"
+                              :append-icon="mdiBatteryOffOutline"
+                              @click="removeMonitoring"
+                            >
+                              {{ $t('external_canisters.monitor.stop_title') }}
                             </VBtn>
                           </template>
                         </VListItemTitle>
@@ -397,9 +412,10 @@
 <script lang="ts" setup>
 import { Principal } from '@dfinity/principal';
 import {
+  mdiBatteryArrowUpOutline,
+  mdiBatteryChargingMedium, mdiBatteryOffOutline, mdiBatterySyncOutline,
   mdiContentCopy,
   mdiDatabase,
-  mdiDatabaseArrowUp,
   mdiDatabaseCog,
   mdiDatabaseOff,
   mdiInfinity,
@@ -464,7 +480,8 @@ import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import { fetchCanisterIdlFromMetadata } from '~/utils/didc.utils';
-import { debounce } from '~/utils/helper.utils';
+import { assertAndReturn, debounce } from '~/utils/helper.utils';
+import { useOnFailedOperation, useOnSuccessfulOperation } from '~/composables/notifications.composable.ts';
 
 const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,
@@ -629,6 +646,8 @@ const loadExternalCanister = async (): Promise<void> => {
       verifiedPageLoad.value,
     );
 
+    console.log(result.canister);
+
     if (disableRefresh.value) {
       // If the page is disabled for refresh, we don't update the canister and privileges.
       return;
@@ -652,6 +671,27 @@ const loadExternalCanister = async (): Promise<void> => {
     }
 
     logger.error('Failed to load external canister', error);
+  }
+};
+
+const removeMonitoring = async (): Promise<void> => {
+  try {
+    canisterDetails.value.status.loading = true;
+
+    const request = await station.service.monitorExternalCanister({
+      canister_id: assertAndReturn(Principal.fromText(currentRouteCanisterId.value), 'canisterId'),
+      kind: {
+        Stop: null,
+      },
+    });
+
+    useOnSuccessfulOperation(request);
+  } catch (error) {
+    logger.error('Failed to submit monitoring request', error);
+
+    useOnFailedOperation();
+  } finally {
+    canisterDetails.value.status.loading = false;
   }
 };
 </script>

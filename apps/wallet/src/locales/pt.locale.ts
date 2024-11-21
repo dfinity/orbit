@@ -465,6 +465,7 @@ export default {
     start_monitoring: 'Iniciar monitoramento',
     monitor: {
       title: 'Monitorizar ciclos',
+      stop_title: 'Parar monitorização',
       strategy: {
         label: 'Estratégia de controlo',
         BelowEstimatedRuntime: 'Tempo de execução inferior ao estimado',
