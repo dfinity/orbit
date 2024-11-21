@@ -204,6 +204,7 @@ const createNewExternalCanister = async (): Promise<Request> => {
         rule: item.rule as RequestPolicyRule,
       })),
   };
+  changes.metadata = [];
   if (wizard.value.configuration.canisterId) {
     changes.kind = {
       AddExisting: {
