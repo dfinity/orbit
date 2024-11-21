@@ -400,12 +400,31 @@ impl RequestRepository {
         mut request: Request,
         reason: String,
         request_cancellation_time: u64,
-    ) {
+    ) -> Request {
+        let mut maybe_reason = match reason.trim() {
+            "" => None,
+            _ => Some(reason.trim().to_string()),
+        };
+
+        if reason.is_empty() {
+            maybe_reason = None;
+        } else if reason.len() > Request::MAX_CANCEL_REASON_LEN as usize {
+            maybe_reason = Some(
+                reason
+                    .trim()
+                    .chars()
+                    .take(Request::MAX_CANCEL_REASON_LEN as usize)
+                    .collect::<String>(),
+            );
+        }
+
         request.status = RequestStatus::Cancelled {
-            reason: Some(reason),
+            reason: maybe_reason,
         };
         request.last_modification_timestamp = request_cancellation_time;
         self.insert(request.to_key(), request.to_owned());
+
+        request
     }
 
     #[cfg(test)]

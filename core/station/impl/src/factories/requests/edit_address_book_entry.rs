@@ -4,7 +4,7 @@ use crate::{
     mappers::HelperMapper,
     models::{
         EditAddressBookEntryOperation, EditAddressBookEntryOperationInput, Request,
-        RequestExecutionPlan, RequestOperation,
+        RequestOperation,
     },
     services::ADDRESS_BOOK_SERVICE,
 };
@@ -27,10 +27,10 @@ impl Create<station_api::EditAddressBookEntryOperationInput> for EditAddressBook
                 info: format!("Invalid address book entry id: {}", e),
             })?;
 
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::EditAddressBookEntry(EditAddressBookEntryOperation {
                 input: EditAddressBookEntryOperationInput {
                     address_book_entry_id: *address_book_entry_id.as_bytes(),
@@ -39,14 +39,7 @@ impl Create<station_api::EditAddressBookEntryOperationInput> for EditAddressBook
                     labels: operation_input.labels,
                 },
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Address book entry update".to_string()),
-            input.summary,
+            "Edit address book entry".to_string(),
         );
 
         Ok(request)

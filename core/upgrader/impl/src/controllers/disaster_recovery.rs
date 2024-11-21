@@ -1,17 +1,14 @@
 use std::sync::Arc;
 
-use candid::Principal;
-use ic_cdk::{query, update};
-use lazy_static::lazy_static;
-use orbit_essentials::{
-    api::ApiResult,
-    cdk::{api::is_controller, caller},
-};
-
+use crate::upgrader_ic_cdk::{api::is_controller, caller};
 use crate::{
     errors::UpgraderApiError,
     services::{DisasterRecoveryService, DISASTER_RECOVERY_SERVICE},
 };
+use candid::Principal;
+use ic_cdk::{query, update};
+use lazy_static::lazy_static;
+use orbit_essentials::api::ApiResult;
 
 // Controller initialization and implementation.
 lazy_static! {
@@ -123,12 +120,16 @@ impl DisasterRecoveryController {
         }
     }
 
+    fn can_query_state(&self, caller: &Principal) -> bool {
+        is_controller(caller) || self.disaster_recovery_service.is_committee_member(caller)
+    }
+
     fn get_disaster_recovery_accounts(
         &self,
     ) -> ApiResult<upgrader_api::GetDisasterRecoveryAccountsResponse> {
         let caller = caller();
-        if !is_controller(&caller) {
-            Err(UpgraderApiError::NotController)?
+        if !self.can_query_state(&caller) {
+            Err(UpgraderApiError::Unauthorized)?
         } else {
             Ok(upgrader_api::GetDisasterRecoveryAccountsResponse {
                 accounts: self
@@ -145,8 +146,8 @@ impl DisasterRecoveryController {
         &self,
     ) -> ApiResult<upgrader_api::GetDisasterRecoveryCommitteeResponse> {
         let caller = caller();
-        if !is_controller(&caller) {
-            Err(UpgraderApiError::NotController)?
+        if !self.can_query_state(&caller) {
+            Err(UpgraderApiError::Unauthorized)?
         } else {
             Ok(upgrader_api::GetDisasterRecoveryCommitteeResponse {
                 committee: self
@@ -161,10 +162,61 @@ impl DisasterRecoveryController {
         &self,
     ) -> ApiResult<upgrader_api::GetDisasterRecoveryStateResponse> {
         let caller = caller();
-        if !is_controller(&caller) {
-            Err(UpgraderApiError::NotController)?
+        if !self.can_query_state(&caller) {
+            Err(UpgraderApiError::Unauthorized)?
         } else {
             Ok(self.disaster_recovery_service.get_state().into())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::model::tests::mock_non_committee_member;
+    use crate::upgrader_ic_cdk::set_caller;
+    use crate::{
+        model::tests::{mock_committee, mock_committee_member},
+        upgrader_ic_cdk::TEST_CONTROLLER_ID,
+    };
+    use candid::Principal;
+
+    use super::CONTROLLER;
+    use crate::services::DISASTER_RECOVERY_SERVICE;
+
+    #[test]
+    fn committee_members_and_controllers_are_authorized() {
+        let member_principal = mock_committee_member();
+
+        DISASTER_RECOVERY_SERVICE
+            .set_committee(mock_committee())
+            .expect("set committee should succeed");
+
+        assert!(CONTROLLER.can_query_state(&member_principal));
+        assert!(CONTROLLER.can_query_state(&TEST_CONTROLLER_ID));
+
+        assert!(!CONTROLLER.can_query_state(&Principal::anonymous()));
+        assert!(!CONTROLLER.can_query_state(&Principal::from_slice(&[128; 29])));
+    }
+
+    #[test]
+    fn authorized_callers_can_query_state() {
+        let member_principal = mock_committee_member();
+
+        DISASTER_RECOVERY_SERVICE
+            .set_committee(mock_committee())
+            .expect("set committee should succeed");
+
+        set_caller(member_principal);
+        assert!(CONTROLLER.get_disaster_recovery_accounts().is_ok());
+    }
+
+    #[test]
+    fn unauthorized_callers_cannot_query_state() {
+        DISASTER_RECOVERY_SERVICE
+            .set_committee(mock_committee())
+            .expect("set committee should succeed");
+
+        set_caller(mock_non_committee_member());
+        assert!(CONTROLLER.get_disaster_recovery_accounts().is_err());
     }
 }
