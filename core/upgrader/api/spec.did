@@ -296,4 +296,5 @@ service : (InitArg) -> {
   "get_disaster_recovery_state" : () -> (GetDisasterRecoveryStateResult) query;
   "request_disaster_recovery" : (RequestDisasterRecoveryInput) -> (RequestDisasterRecoveryResult);
   "get_logs" : (GetLogsInput) -> (GetLogsResult) query;
+  "deprecated_get_logs" : (GetLogsInput) -> (GetLogsResult) query;
 };
