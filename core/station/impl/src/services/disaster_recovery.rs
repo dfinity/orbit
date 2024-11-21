@@ -248,7 +248,7 @@ where
         }
 
         if sync_cmp.sync_eq() {
-            // Skip syncing if the account hasn't changed
+            // Skip syncing if the account or asset hasn't changed
             return;
         }
 
