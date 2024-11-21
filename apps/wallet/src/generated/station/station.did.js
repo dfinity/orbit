@@ -338,6 +338,7 @@ export const idlFactory = ({ IDL }) => {
     'kind' : MonitorExternalCanisterOperationKind,
     'canister_id' : IDL.Principal,
   });
+  const MonitorExternalCanisterOperation = MonitorExternalCanisterOperationInput;
   const UserStatus = IDL.Variant({
     'Inactive' : IDL.Null,
     'Active' : IDL.Null,
@@ -763,6 +764,7 @@ export const idlFactory = ({ IDL }) => {
     'EditPermission' : EditPermissionOperationInput,
     'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput,
     'ChangeExternalCanister' : ChangeExternalCanisterOperationInput,
+    'MonitorExternalCanister' : MonitorExternalCanisterOperationInput,
     'AddUser' : AddUserOperationInput,
     'EditUserGroup' : EditUserGroupOperationInput,
     'SetDisasterRecovery' : SetDisasterRecoveryOperationInput,
