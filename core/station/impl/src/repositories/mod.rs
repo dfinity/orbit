@@ -36,3 +36,8 @@ pub use asset::*;
 pub mod permission;
 
 pub mod indexes;
+
+pub struct InsertEntryObserverArgs<T> {
+    pub current: T,
+    pub prev: Option<T>,
+}

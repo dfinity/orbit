@@ -1,4 +1,4 @@
-use crate::upgrader_ic_cdk::api::time;
+use crate::upgrader_ic_cdk::next_time;
 use orbit_essentials::{storable, types::Timestamp, utils::timestamp_to_rfc3339};
 use serde::Serialize;
 
@@ -171,7 +171,7 @@ impl LogEntryType {
 impl LogEntry {
     pub fn try_from_entry_type(entry_type: LogEntryType) -> Result<Self, String> {
         Ok(LogEntry {
-            time: time(),
+            time: next_time(),
             entry_type: entry_type.to_type_string(),
             message: entry_type.to_message(),
             data_json: entry_type.to_json_string()?,

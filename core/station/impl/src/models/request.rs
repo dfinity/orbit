@@ -198,6 +198,7 @@ fn validate_request_operation_foreign_keys(
         RequestOperation::ManageSystemInfo(_) => (),
         RequestOperation::Transfer(op) => {
             EnsureAccount::id_exists(&op.input.from_account_id)?;
+            EnsureAsset::id_exists(&op.input.from_asset_id)?;
         }
         RequestOperation::AddAccount(op) => {
             op.input.read_permission.validate()?;

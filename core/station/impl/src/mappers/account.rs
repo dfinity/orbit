@@ -216,3 +216,23 @@ impl From<station_api::ChangeAssets> for ChangeAssets {
         }
     }
 }
+
+impl From<Account> for upgrader_api::MultiAssetAccount {
+    fn from(account: Account) -> Self {
+        Self {
+            id: Uuid::from_bytes(account.id).hyphenated().to_string(),
+            seed: account.seed,
+            assets: account
+                .assets
+                .iter()
+                .map(|account_asset| {
+                    Uuid::from_bytes(account_asset.asset_id)
+                        .hyphenated()
+                        .to_string()
+                })
+                .collect(),
+            name: account.name.clone(),
+            metadata: account.metadata.clone().into(),
+        }
+    }
+}

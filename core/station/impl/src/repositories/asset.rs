@@ -1,11 +1,14 @@
-use super::indexes::unique_index::UniqueIndexRepository;
+use super::{indexes::unique_index::UniqueIndexRepository, InsertEntryObserverArgs};
 use crate::{
     core::{
         cache::Cache, ic_cdk::api::print, metrics::ASSET_METRICS, observer::Observer,
         with_memory_manager, Memory, ASSET_MEMORY_ID,
     },
     models::{indexes::unique_index::UniqueIndexKey, Asset, AssetId},
-    services::disaster_recovery_sync_accounts_and_assets_on_change,
+    services::{
+        disaster_recovery_sync_accounts_and_assets_on_insert,
+        disaster_recovery_sync_accounts_and_assets_on_remove,
+    },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
@@ -33,16 +36,21 @@ lazy_static! {
 #[derive(Debug)]
 pub struct AssetRepository {
     unique_index: UniqueIndexRepository,
-    change_observer: Observer<()>,
+    insert_observer: Observer<InsertEntryObserverArgs<Asset>>,
+    remove_observer: Observer<()>,
 }
 
 impl Default for AssetRepository {
     fn default() -> Self {
-        let mut change_observer = Observer::default();
-        disaster_recovery_sync_accounts_and_assets_on_change(&mut change_observer);
+        let mut remove_observer = Observer::default();
+        disaster_recovery_sync_accounts_and_assets_on_remove(&mut remove_observer);
+
+        let mut insert_observer = Observer::default();
+        disaster_recovery_sync_accounts_and_assets_on_insert(&mut insert_observer);
 
         Self {
-            change_observer,
+            insert_observer,
+            remove_observer,
             unique_index: UniqueIndexRepository::default(),
         }
     }
@@ -130,9 +138,14 @@ impl Repository<UUID, Asset, VirtualMemory<Memory>> for AssetRepository {
 
             self.save_entry_indexes(&value, prev.as_ref());
 
-            self.change_observer.notify(&());
+            let args = InsertEntryObserverArgs {
+                current: value,
+                prev,
+            };
 
-            prev
+            self.insert_observer.notify(&args);
+
+            args.prev
         })
     }
 
@@ -153,7 +166,7 @@ impl Repository<UUID, Asset, VirtualMemory<Memory>> for AssetRepository {
                 self.remove_entry_indexes(prev);
             }
 
-            self.change_observer.notify(&());
+            self.remove_observer.notify(&());
 
             prev
         })
