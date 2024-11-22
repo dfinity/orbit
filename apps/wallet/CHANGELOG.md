@@ -1,3 +1,15 @@
+## 0.0.2-alpha.15 (2024-11-22)
+
+
+### 🩹 Fixes
+
+- **wallet:** transfer requests page should only show transfers ([#438](https://github.com/dfinity/orbit/pull/438))
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+
 ## 0.0.2-alpha.14 (2024-11-22)
 
 
