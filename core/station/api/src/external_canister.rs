@@ -1,6 +1,6 @@
 use crate::{
-    AllowDTO, CanisterInstallMode, ChangeMetadataDTO, MetadataDTO, PaginationInput,
-    RequestPolicyRuleDTO, Sha256HashDTO, SortDirection, TimestampRfc3339, UuidDTO,
+    AllowDTO, CanisterInstallMode, ChangeMetadataDTO, CycleObtainStrategyInput, MetadataDTO,
+    PaginationInput, RequestPolicyRuleDTO, Sha256HashDTO, SortDirection, TimestampRfc3339, UuidDTO,
     ValidationMethodResourceTargetDTO,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
@@ -285,6 +285,7 @@ pub struct ExternalCanisterDTO {
     pub request_policies: ExternalCanisterRequestPoliciesDTO,
     pub created_at: TimestampRfc3339,
     pub modified_at: Option<TimestampRfc3339>,
+    pub monitoring: Option<MonitorExternalCanisterStartInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -398,7 +399,7 @@ pub struct MonitoringExternalCanisterCyclesThresholdInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub enum MonitorExternalCanisterStartStrategyDTO {
+pub enum MonitorExternalCanisterStrategyDTO {
     Always(u128),
     BelowThreshold(MonitoringExternalCanisterCyclesThresholdInput),
     BelowEstimatedRuntime(MonitoringExternalCanisterEstimatedRuntimeInput),
@@ -406,7 +407,8 @@ pub enum MonitorExternalCanisterStartStrategyDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct MonitorExternalCanisterStartInput {
-    pub strategy: MonitorExternalCanisterStartStrategyDTO,
+    pub funding_strategy: MonitorExternalCanisterStrategyDTO,
+    pub cycle_obtain_strategy: Option<CycleObtainStrategyInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

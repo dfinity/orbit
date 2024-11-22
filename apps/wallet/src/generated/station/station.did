@@ -796,8 +796,10 @@ type MonitorExternalCanisterStrategyInput = variant {
 
 // The input type for specifying the strategy for monitoring an external canister.
 type MonitorExternalCanisterStartInput = record {
-  // The amount of cycles to send to the canister.
-  strategy : MonitorExternalCanisterStrategyInput;
+  // The strategy for funding the canister.
+  funding_strategy : MonitorExternalCanisterStrategyInput;
+  // The strategy for obtaining cycles for the funding operation.
+  cycle_obtain_strategy: opt CycleObtainStrategyInput;
 };
 
 // The operation kind for monitoring an external canister in the station.
@@ -2595,6 +2597,8 @@ type ExternalCanister = record {
   created_at : TimestampRFC3339;
   // The time at which the canister was last modified, if available.
   modified_at : opt TimestampRFC3339;
+  // Monitoring configuration for the canister.
+  monitoring : opt MonitorExternalCanisterStartInput;
 };
 
 // The state of the external canister.

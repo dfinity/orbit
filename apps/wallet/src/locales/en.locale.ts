@@ -463,6 +463,7 @@ export default {
     start_monitoring: 'Start Monitoring',
     monitor: {
       title: 'Monitor cycles',
+      stop_title: 'Stop Monitoring',
       strategy: {
         label: 'Monitoring strategy',
         BelowEstimatedRuntime: 'Below estimated runtime',

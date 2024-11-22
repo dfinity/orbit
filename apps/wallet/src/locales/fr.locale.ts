@@ -470,6 +470,7 @@ export default {
     start_monitoring: 'Démarrer la surveillance',
     monitor: {
       title: 'Contrôler les cycles',
+      stop_title: 'Arrêter la surveillance',
       strategy: {
         label: 'Stratégie de suivi',
         BelowEstimatedRuntime: "Durée d'exécution inférieure à l'estimation",

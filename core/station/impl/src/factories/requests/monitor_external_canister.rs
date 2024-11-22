@@ -60,7 +60,10 @@ impl Execute for MonitorExternalCanisterRequestExecute<'_, '_> {
         match &self.operation.kind {
             MonitorExternalCanisterOperationKind::Start(input) => {
                 self.external_canister_service
-                    .canister_monitor_start(self.operation.canister_id, input.strategy.clone())
+                    .canister_monitor_start(
+                        self.operation.canister_id,
+                        input.funding_strategy.clone(),
+                    )
                     .map_err(|e| RequestExecuteError::Failed {
                         reason: format!("Failed to monitor canister: {}", e),
                     })?;
