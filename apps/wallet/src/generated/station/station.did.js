@@ -150,6 +150,7 @@ export const idlFactory = ({ IDL }) => {
     'input' : EditPermissionOperationInput,
   });
   const SnapshotExternalCanisterOperationInput = IDL.Record({
+    'force' : IDL.Bool,
     'replace_snapshot' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'canister_id' : IDL.Principal,
   });

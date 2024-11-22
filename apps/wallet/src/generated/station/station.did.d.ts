@@ -1133,6 +1133,7 @@ export interface SnapshotExternalCanisterOperation {
   'snapshot_id' : [] | [Uint8Array | number[]],
 }
 export interface SnapshotExternalCanisterOperationInput {
+  'force' : boolean,
   'replace_snapshot' : [] | [Uint8Array | number[]],
   'canister_id' : Principal,
 }
