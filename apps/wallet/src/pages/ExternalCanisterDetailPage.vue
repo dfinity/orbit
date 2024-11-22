@@ -661,8 +661,6 @@ const loadExternalCanister = async (): Promise<void> => {
       verifiedPageLoad.value,
     );
 
-    console.log(result.canister);
-
     if (disableRefresh.value) {
       // If the page is disabled for refresh, we don't update the canister and privileges.
       return;
