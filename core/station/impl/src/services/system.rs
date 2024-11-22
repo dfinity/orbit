@@ -208,7 +208,7 @@ impl SystemService {
         fn install_canister_post_process_finish(mut system_info: SystemInfo) {
             use crate::jobs;
 
-            install_canister_handlers::monitor_upgrader_cycles(
+            install_canister_handlers::init_cycle_monitor(
                 *system_info.get_upgrader_canister_id(),
                 system_info.get_cycle_obtain_strategy(),
             );
@@ -685,7 +685,7 @@ mod install_canister_handlers {
     }
 
     /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.
-    pub fn monitor_upgrader_cycles(
+    pub fn init_cycle_monitor(
         upgrader_id: Principal,
         cycle_obtain_strategy: &CycleObtainStrategy,
     ) {
@@ -694,8 +694,8 @@ mod install_canister_handlers {
                 .with_min_runtime_secs(14 * 24 * 60 * 60) // 14 days
                 .with_fund_runtime_secs(30 * 24 * 60 * 60) // 30 days
                 .with_max_runtime_cycles_fund(1_000_000_000_000)
-                .with_fallback_min_cycles(125_000_000_000)
-                .with_fallback_fund_cycles(250_000_000_000),
+                .with_fallback_min_cycles(400_000_000_000)
+                .with_fallback_fund_cycles(200_000_000_000),
         );
 
         CYCLE_MANAGER.set_global_obtain_cycles_strategy(cycle_obtain_strategy);

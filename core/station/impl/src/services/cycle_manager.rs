@@ -29,6 +29,7 @@ impl CycleManager {
             let mut manager = manager.borrow_mut();
             // Strategy can be default as we always override per canister
             // Obtain cycles config is inherited from the system service
+            // Interval is 6 hours for all canisters monitored by the station (i.e. upgrader + external canisters)
             let options = FundManagerOptions::new().with_interval_secs(60 * 60 * 6);
             manager.with_options(options);
         });
