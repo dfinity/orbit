@@ -189,7 +189,7 @@ command.action(async options => {
 
     const moduleStoredFileName =
       `${entry.name}_${entry.version}_${moduleHashHex.substring(0, 8)}`.replace(
-        /[^a-zA-Z0-9_]/g,
+        /[^a-zA-Z0-9_.]/g,
         '',
       );
     const tempFilePath = join(tmpdir(), moduleStoredFileName);
