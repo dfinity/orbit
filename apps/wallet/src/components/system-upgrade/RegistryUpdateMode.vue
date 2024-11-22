@@ -134,7 +134,8 @@ const prepareUpdateWithWasmModule = async (): Promise<void> => {
 
     modelValue.value = {
       ...modelValue.value,
-      wasmModule: toArrayBuffer(artifact.artifact),
+      wasmModule: artifact.artifact.length ? toArrayBuffer(artifact.artifact) : undefined,
+      wasmModuleExtraChunks: registryEntry.value.WasmModule.module_extra_chunks?.[0],
       wasmInitArg: undefined,
     };
 
