@@ -5,6 +5,7 @@
         <VToolbarTitle>
           {{ props.title }}
         </VToolbarTitle>
+        <VBtn :icon="mdiClose" @click="emit('close')" />
       </VToolbar>
       <VDivider />
     </slot>
@@ -28,6 +29,7 @@
 </template>
 
 <script lang="ts" setup>
+import { mdiClose } from '@mdi/js';
 import {
   VAlert,
   VCard,
@@ -41,14 +43,19 @@ import {
 
 const props = withDefaults(
   defineProps<{
-    title?: string;
     error: string;
+    title?: string;
     errorDetails?: string;
+    open?: boolean;
   }>(),
   {
     title: undefined,
-    error: '',
     errorDetails: undefined,
+    open: true,
   },
 );
+
+const emit = defineEmits<{
+  (event: 'close'): void;
+}>();
 </script>
