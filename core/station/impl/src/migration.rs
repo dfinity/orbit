@@ -423,7 +423,7 @@ impl<'de> Deserialize<'de> for RequestOperation {
         const REMOVED_VARIANTS: [&str; 1] = ["ChangeCanister"];
 
         // IMPORTANT: The size of the array must be hardcoded, to make sure it can be checked at compile-time.
-        static EXPECTED_VARIANTS: [&str; 25] = {
+        static EXPECTED_VARIANTS: [&str; 26] = {
             let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] =
                 concat_str_arrays!(CURRENT_VARIANTS, REMOVED_VARIANTS);
 
@@ -530,6 +530,10 @@ impl<'de> Deserialize<'de> for RequestOperation {
                     "SnapshotExternalCanister" => {
                         let value = variant_access.newtype_variant()?;
                         Ok(RequestOperation::SnapshotExternalCanister(value))
+                    }
+                    "RestoreExternalCanister" => {
+                        let value = variant_access.newtype_variant()?;
+                        Ok(RequestOperation::RestoreExternalCanister(value))
                     }
                     "AddRequestPolicy" => {
                         let value = variant_access.newtype_variant()?;

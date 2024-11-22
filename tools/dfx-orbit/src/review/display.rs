@@ -237,6 +237,7 @@ pub(super) fn display_request_operation(op: &RequestOperationDTO) -> &'static st
         RequestOperationDTO::CallExternalCanister(_) => "CallExternalCanister",
         RequestOperationDTO::FundExternalCanister(_) => "FundExternalCanister",
         RequestOperationDTO::SnapshotExternalCanister(_) => "SnapshotExternalCanister",
+        RequestOperationDTO::RestoreExternalCanister(_) => "RestoreExternalCanister",
         RequestOperationDTO::EditPermission(_) => "EditPermission",
         RequestOperationDTO::AddRequestPolicy(_) => "AddRequestPolicy",
         RequestOperationDTO::EditRequestPolicy(_) => "EditRequestPolicy",

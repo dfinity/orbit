@@ -36,7 +36,8 @@ use crate::{
         ExternalCanisterRequestPoliciesUpdateInput, FundExternalCanisterOperation, LogVisibility,
         ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
-        RequestOperation, SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
+        RequestOperation, RestoreExternalCanisterOperation, RestoreExternalCanisterOperationInput,
+        SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
         SnapshotExternalCanisterOperation, SnapshotExternalCanisterOperationInput,
         SystemUpgradeOperation, SystemUpgradeOperationInput, SystemUpgradeTarget,
         TransferOperation, User, WasmModuleExtraChunks,
@@ -52,7 +53,8 @@ use station_api::{
     CallExternalCanisterOperationDTO, CanisterMethodDTO, ChangeExternalCanisterOperationDTO,
     CreateExternalCanisterOperationDTO, EditAccountOperationDTO, EditAddressBookEntryOperationDTO,
     EditUserOperationDTO, NetworkDTO, RemoveAddressBookEntryOperationDTO, RequestOperationDTO,
-    SnapshotExternalCanisterOperationDTO, TransferOperationDTO,
+    RestoreExternalCanisterOperationDTO, SnapshotExternalCanisterOperationDTO,
+    TransferOperationDTO,
 };
 use uuid::Uuid;
 
@@ -1319,6 +1321,40 @@ impl From<SnapshotExternalCanisterOperation> for SnapshotExternalCanisterOperati
     }
 }
 
+impl From<RestoreExternalCanisterOperationInput>
+    for station_api::RestoreExternalCanisterOperationInput
+{
+    fn from(
+        input: RestoreExternalCanisterOperationInput,
+    ) -> station_api::RestoreExternalCanisterOperationInput {
+        station_api::RestoreExternalCanisterOperationInput {
+            canister_id: input.canister_id,
+            snapshot_id: input.snapshot_id,
+        }
+    }
+}
+
+impl From<station_api::RestoreExternalCanisterOperationInput>
+    for RestoreExternalCanisterOperationInput
+{
+    fn from(
+        input: station_api::RestoreExternalCanisterOperationInput,
+    ) -> RestoreExternalCanisterOperationInput {
+        RestoreExternalCanisterOperationInput {
+            canister_id: input.canister_id,
+            snapshot_id: input.snapshot_id,
+        }
+    }
+}
+
+impl From<RestoreExternalCanisterOperation> for RestoreExternalCanisterOperationDTO {
+    fn from(operation: RestoreExternalCanisterOperation) -> RestoreExternalCanisterOperationDTO {
+        RestoreExternalCanisterOperationDTO {
+            input: operation.input.into(),
+        }
+    }
+}
+
 impl From<EditPermissionOperationInput> for station_api::EditPermissionOperationInput {
     fn from(input: EditPermissionOperationInput) -> station_api::EditPermissionOperationInput {
         station_api::EditPermissionOperationInput {
@@ -1642,6 +1678,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::SnapshotExternalCanister(operation) => {
                 RequestOperationDTO::SnapshotExternalCanister(Box::new(operation.into()))
             }
+            RequestOperation::RestoreExternalCanister(operation) => {
+                RequestOperationDTO::RestoreExternalCanister(Box::new(operation.into()))
+            }
             RequestOperation::EditPermission(operation) => {
                 RequestOperationDTO::EditPermission(Box::new(operation.into()))
             }
@@ -1819,6 +1858,19 @@ impl RequestOperation {
                 ]
             }
             RequestOperation::SnapshotExternalCanister(SnapshotExternalCanisterOperation {
+                input,
+                ..
+            }) => {
+                vec![
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                        ExternalCanisterId::Any,
+                    )),
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                        ExternalCanisterId::Canister(input.canister_id),
+                    )),
+                ]
+            }
+            RequestOperation::RestoreExternalCanister(RestoreExternalCanisterOperation {
                 input,
                 ..
             }) => {

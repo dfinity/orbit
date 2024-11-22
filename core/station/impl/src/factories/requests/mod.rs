@@ -36,6 +36,7 @@ mod manage_system_info;
 mod remove_address_book_entry;
 mod remove_request_policy;
 mod remove_user_group;
+mod restore_external_canister;
 mod set_disaster_recovery;
 mod snapshot_external_canister;
 mod system_upgrade;
@@ -68,6 +69,8 @@ use self::{
     },
     remove_request_policy::{RemoveRequestPolicyRequestCreate, RemoveRequestPolicyRequestExecute},
     remove_user_group::{RemoveUserGroupRequestCreate, RemoveUserGroupRequestExecute},
+    restore_external_canister::RestoreExternalCanisterRequestCreate,
+    restore_external_canister::RestoreExternalCanisterRequestExecute,
     snapshot_external_canister::SnapshotExternalCanisterRequestCreate,
     snapshot_external_canister::SnapshotExternalCanisterRequestExecute,
     system_upgrade::{SystemUpgradeRequestCreate, SystemUpgradeRequestExecute},
@@ -226,6 +229,12 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
+            RequestOperationInput::RestoreExternalCanister(operation) => {
+                let creator = Box::new(RestoreExternalCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
             RequestOperationInput::EditPermission(operation) => {
                 let creator = Box::new(EditPermissionRequestCreate {});
                 creator
@@ -342,6 +351,12 @@ impl RequestFactory {
             }
             RequestOperation::SnapshotExternalCanister(operation) => {
                 Box::new(SnapshotExternalCanisterRequestExecute::new(
+                    operation,
+                    Arc::clone(&CHANGE_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::RestoreExternalCanister(operation) => {
+                Box::new(RestoreExternalCanisterRequestExecute::new(
                     operation,
                     Arc::clone(&CHANGE_CANISTER_SERVICE),
                 ))

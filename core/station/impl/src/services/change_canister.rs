@@ -5,7 +5,7 @@ use crate::{
 use candid::Principal;
 use ic_cdk::api::management_canister::{
     main as mgmt,
-    main::{CanisterIdRecord, TakeCanisterSnapshotArgs},
+    main::{CanisterIdRecord, LoadCanisterSnapshotArgs, TakeCanisterSnapshotArgs},
 };
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
@@ -74,6 +74,57 @@ impl ChangeCanisterService {
         })?;
 
         take_snapshot_result
+    }
+
+    /// Restore a canister from a snapshot.
+    pub async fn restore_canister(
+        &self,
+        canister_id: Principal,
+        snapshot_id: Vec<u8>,
+    ) -> ServiceResult<(), ChangeCanisterError> {
+        // Stop canister
+        let stop_result = mgmt::stop_canister(CanisterIdRecord {
+            canister_id: canister_id.to_owned(),
+        })
+        .await
+        .map_err(|(_, err)| ChangeCanisterError::Failed {
+            reason: err.to_string(),
+        });
+
+        if let Err(e) = stop_result {
+            // Restart canister if the call to stop did not succeed (it is possible that the canister did stop)
+            mgmt::start_canister(CanisterIdRecord {
+                canister_id: canister_id.to_owned(),
+            })
+            .await
+            .map_err(|(_, err)| ChangeCanisterError::Failed {
+                reason: err.to_string(),
+            })?;
+
+            return Err(e);
+        }
+
+        // Take snapshot
+        let load_snapshot_result = mgmt::load_canister_snapshot(LoadCanisterSnapshotArgs {
+            canister_id,
+            snapshot_id,
+            sender_canister_version: Some(ic_cdk::api::canister_version()),
+        })
+        .await
+        .map_err(|(_, err)| ChangeCanisterError::Failed {
+            reason: err.to_string(),
+        });
+
+        // Restart canister (regardless of whether the upgrade succeeded or not)
+        mgmt::start_canister(CanisterIdRecord {
+            canister_id: canister_id.to_owned(),
+        })
+        .await
+        .map_err(|(_, err)| ChangeCanisterError::Failed {
+            reason: err.to_string(),
+        })?;
+
+        load_snapshot_result
     }
 
     /// Execute an install or upgrade of a canister.

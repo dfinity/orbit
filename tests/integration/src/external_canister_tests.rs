@@ -22,8 +22,8 @@ use station_api::{
     ExternalCanisterPermissionsCreateInput, ExternalCanisterRequestPoliciesCreateInput,
     HealthStatus, ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
     RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, RequestStatusDTO, SnapshotExternalCanisterOperationInput,
-    UserSpecifierDTO, ValidationMethodResourceTargetDTO,
+    RequestSpecifierDTO, RequestStatusDTO, RestoreExternalCanisterOperationInput,
+    SnapshotExternalCanisterOperationInput, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 use std::str::FromStr;
 
@@ -1459,6 +1459,27 @@ fn snapshot_external_canister_test() {
     );
     assert_eq!(snapshots_via_orbit[0].total_size, snapshots[0].total_size);
 
+    // bump the counter
+    update_raw(
+        &env,
+        external_canister_id,
+        Principal::anonymous(),
+        "inc",
+        vec![],
+    )
+    .unwrap();
+
+    // the counter should now be equal to 4
+    let ctr = update_raw(
+        &env,
+        external_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 4_u32.to_le_bytes());
+
     // taking another snapshot without specifying a snapshot to replace should fail
     let snapshot_canister_operation =
         RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
@@ -1480,6 +1501,31 @@ fn snapshot_external_canister_test() {
         ))),
         _ => panic!("Unexpected request status: {:?}", failed_request_status),
     };
+
+    // restore the canister from the snapshot
+    let restore_canister_operation =
+        RequestOperationInput::RestoreExternalCanister(RestoreExternalCanisterOperationInput {
+            canister_id: external_canister_id,
+            snapshot_id: snapshot_id.clone(),
+        });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        restore_canister_operation,
+    )
+    .unwrap();
+
+    // the counter should now be back at 2
+    let ctr = update_raw(
+        &env,
+        external_canister_id,
+        Principal::anonymous(),
+        "read",
+        vec![],
+    )
+    .unwrap();
+    assert_eq!(ctr, 2_u32.to_le_bytes());
 
     // taking another snapshot succeeds if we replace the original snapshot
     let snapshot_canister_operation =

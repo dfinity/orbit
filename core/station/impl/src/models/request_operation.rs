@@ -40,6 +40,7 @@ pub enum RequestOperation {
     CallExternalCanister(CallExternalCanisterOperation),
     FundExternalCanister(FundExternalCanisterOperation),
     SnapshotExternalCanister(SnapshotExternalCanisterOperation),
+    RestoreExternalCanister(RestoreExternalCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
@@ -72,6 +73,9 @@ impl Display for RequestOperation {
             RequestOperation::FundExternalCanister(_) => write!(f, "fund_external_canister"),
             RequestOperation::SnapshotExternalCanister(_) => {
                 write!(f, "snapshot_external_canister")
+            }
+            RequestOperation::RestoreExternalCanister(_) => {
+                write!(f, "restore_external_canister")
             }
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
@@ -627,6 +631,19 @@ pub struct SnapshotExternalCanisterOperationInput {
 pub struct SnapshotExternalCanisterOperation {
     pub snapshot_id: Option<Vec<u8>>,
     pub input: SnapshotExternalCanisterOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RestoreExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub snapshot_id: Vec<u8>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RestoreExternalCanisterOperation {
+    pub input: RestoreExternalCanisterOperationInput,
 }
 
 #[storable]

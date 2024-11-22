@@ -779,6 +779,7 @@ export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'CallExternalCanister' : [] | [Principal] } |
+  { 'RestoreExternalCanister' : [] | [Principal] } |
   { 'AddAccount' : null };
 export type ListRequestsResult = {
     'Ok' : {
@@ -974,6 +975,7 @@ export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'AddRequestPolicy' : AddRequestPolicyOperation } |
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
   { 'CallExternalCanister' : CallExternalCanisterOperation } |
+  { 'RestoreExternalCanister' : RestoreExternalCanisterOperation } |
   { 'AddAccount' : AddAccountOperation };
 export type RequestOperationInput = {
     'AddUserGroup' : AddUserGroupOperationInput
@@ -1000,6 +1002,7 @@ export type RequestOperationInput = {
   { 'AddRequestPolicy' : AddRequestPolicyOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
   { 'CallExternalCanister' : CallExternalCanisterOperationInput } |
+  { 'RestoreExternalCanister' : RestoreExternalCanisterOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
 export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
@@ -1024,6 +1027,7 @@ export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'CallExternalCanister' : null } |
+  { 'RestoreExternalCanister' : null } |
   { 'AddAccount' : null };
 export interface RequestPolicy {
   'id' : UUID,
@@ -1110,6 +1114,13 @@ export type ResourceIds = { 'Any' : null } |
   { 'Ids' : Array<UUID> };
 export type ResourceSpecifier = { 'Any' : null } |
   { 'Resource' : Resource };
+export interface RestoreExternalCanisterOperation {
+  'input' : RestoreExternalCanisterOperationInput,
+}
+export interface RestoreExternalCanisterOperationInput {
+  'canister_id' : Principal,
+  'snapshot_id' : Uint8Array | number[],
+}
 export interface SetDisasterRecoveryOperation {
   'committee' : [] | [DisasterRecoveryCommittee],
 }

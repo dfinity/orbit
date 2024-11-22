@@ -394,3 +394,15 @@ pub struct SnapshotExternalCanisterOperationDTO {
     pub snapshot_id: Option<Vec<u8>>,
     pub input: SnapshotExternalCanisterOperationInput,
 }
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct RestoreExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    #[serde(with = "serde_bytes")]
+    pub snapshot_id: Vec<u8>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct RestoreExternalCanisterOperationDTO {
+    pub input: RestoreExternalCanisterOperationInput,
+}
