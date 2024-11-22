@@ -62,9 +62,9 @@
       "newVersion": null
     },
     "control-panel": {
-      "currentVersion": "0.0.2-alpha.7",
+      "currentVersion": "0.0.2-alpha.8",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.8"
+      "newVersion": null
     },
     "control-panel-api": {
       "currentVersion": "0.0.2-alpha.4",
@@ -79,14 +79,14 @@
       "newVersion": null
     },
     "upgrader": {
-      "currentVersion": "0.0.2-alpha.5",
+      "currentVersion": "0.0.2-alpha.6",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.6"
+      "newVersion": null
     },
     "station": {
-      "currentVersion": "0.0.2-alpha.8",
+      "currentVersion": "0.0.2-alpha.9",
       "dependentProjects": [],
-      "newVersion": "0.0.2-alpha.9"
+      "newVersion": "0.0.2-alpha.10"
     },
     "upgrader-api": {
       "currentVersion": "0.0.2-alpha.6",
@@ -107,7 +107,7 @@
       "newVersion": null
     },
     "station-api": {
-      "currentVersion": "0.0.2-alpha.7",
+      "currentVersion": "0.0.2-alpha.8",
       "dependentProjects": [
         {
           "source": "control-panel",
@@ -140,67 +140,35 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": "0.0.2-alpha.8"
+      "newVersion": null
     },
     "dfx-orbit": {
-      "currentVersion": "0.6.0",
+      "currentVersion": "0.7.0",
       "dependentProjects": [],
-      "newVersion": "0.7.0"
+      "newVersion": null
     },
     "wallet-dapp": {
-      "currentVersion": "0.0.2-alpha.13",
-      "newVersion": "0.0.2-alpha.14",
+      "currentVersion": "0.0.2-alpha.14",
+      "newVersion": "0.0.2-alpha.15",
       "dependentProjects": []
     }
   },
   "changes": {
-    "control-panel": {
-      "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.8",
-        "gitTag": "@orbit/control-panel-v0.0.2-alpha.8",
-        "isPrerelease": true
-      },
-      "contents": "## 0.0.2-alpha.8 (2024-11-22)\n\n\n### 🚀 Features\n\n- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))\n\n- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))\n\n- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))\n\n- **enable:** wallet ui accepts wasm chunk store from registry ([#433](https://github.com/dfinity/orbit/pull/433))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.0.2-alpha.8\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Leon Tan"
-    },
-    "upgrader": {
-      "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.6",
-        "gitTag": "@orbit/upgrader-v0.0.2-alpha.6",
-        "isPrerelease": true
-      },
-      "contents": "## 0.0.2-alpha.6 (2024-11-22)\n\n\n### 🚀 Features\n\n- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))\n\n- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))\n\n- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))\n\n\n### 🩹 Fixes\n\n- **upgrader:** relax disaster recovery query restrictions ([#428](https://github.com/dfinity/orbit/pull/428))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.0.2-alpha.8\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Leon Tan\n- olaszakos"
-    },
     "station": {
       "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.9",
-        "gitTag": "@orbit/station-v0.0.2-alpha.9",
+        "rawVersion": "0.0.2-alpha.10",
+        "gitTag": "@orbit/station-v0.0.2-alpha.10",
         "isPrerelease": true
       },
-      "contents": "## 0.0.2-alpha.9 (2024-11-22)\n\n\n### 🚀 Features\n\n- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))\n\n- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))\n\n- **station:** add metadata to external canisters ([#418](https://github.com/dfinity/orbit/pull/418))\n\n- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))\n\n- **station:** requestor can cancel pending requests ([#426](https://github.com/dfinity/orbit/pull/426))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.0.2-alpha.8\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Leon Tan\n- olaszakos"
-    },
-    "station-api": {
-      "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.8",
-        "gitTag": "@orbit/station-api-v0.0.2-alpha.8",
-        "isPrerelease": true
-      },
-      "contents": "## 0.0.2-alpha.8 (2024-11-22)\n\n\n### 🚀 Features\n\n- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))\n\n- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))\n\n- **station:** add metadata to external canisters ([#418](https://github.com/dfinity/orbit/pull/418))\n\n- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))\n\n- **station:** requestor can cancel pending requests ([#426](https://github.com/dfinity/orbit/pull/426))\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Leon Tan\n- olaszakos"
+      "contents": "## 0.0.2-alpha.10 (2024-11-22)\n\n\n### 🩹 Fixes\n\n- **wallet:** transfer requests page should only show transfers ([#438](https://github.com/dfinity/orbit/pull/438))\n\n\n### ❤️  Thank You\n\n- Kepler Vital"
     },
     "wallet-dapp": {
       "releaseVersion": {
-        "rawVersion": "0.0.2-alpha.14",
-        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.14",
+        "rawVersion": "0.0.2-alpha.15",
+        "gitTag": "@orbit/wallet-dapp-v0.0.2-alpha.15",
         "isPrerelease": true
       },
-      "contents": "## 0.0.2-alpha.14 (2024-11-22)\n\n\n### 🚀 Features\n\n- **station:** add metadata to external canisters ([#418](https://github.com/dfinity/orbit/pull/418))\n\n- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))\n\n- **station:** requestor can cancel pending requests ([#426](https://github.com/dfinity/orbit/pull/426))\n\n- **enable:** wallet ui accepts wasm chunk store from registry ([#433](https://github.com/dfinity/orbit/pull/433))\n\n- **wallet:** add close btn to error dialog ([#434](https://github.com/dfinity/orbit/pull/434))\n\n\n### 🩹 Fixes\n\n- **station:** add missing metadata field from UI ([#427](https://github.com/dfinity/orbit/pull/427))\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital\n- olaszakos"
-    },
-    "dfx-orbit": {
-      "releaseVersion": {
-        "rawVersion": "0.7.0",
-        "gitTag": "@orbit/dfx-orbit-v0.7.0",
-        "isPrerelease": false
-      },
-      "contents": "## 0.7.0 (2024-11-22)\n\n\n### 🚀 Features\n\n- **dfx-orbit:** Enable controller management through Orbit ([#395](https://github.com/dfinity/orbit/pull/395))\n\n- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))\n\n- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))\n\n- **dfx-orbit:** Implement station file option ([#406](https://github.com/dfinity/orbit/pull/406))\n\n- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))\n\n\n### 🩹 Fixes\n\n- **dfx-orbit:** Fix argument parsing and evaluation around dfx-orbit ([#397](https://github.com/dfinity/orbit/pull/397))\n\n- **dfx-orbit:** Check that there is a matching asset upload proposal ([#401](https://github.com/dfinity/orbit/pull/401))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.0.2-alpha.8\n\n\n### ❤️  Thank You\n\n- Kepler Vital\n- Leon Tan"
+      "contents": "## 0.0.2-alpha.15 (2024-11-22)\n\n\n### 🩹 Fixes\n\n- **wallet:** transfer requests page should only show transfers ([#438](https://github.com/dfinity/orbit/pull/438))\n\n\n### ❤️  Thank You\n\n- Kepler Vital"
     }
   }
 }
