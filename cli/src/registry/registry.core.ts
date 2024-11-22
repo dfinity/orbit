@@ -9,9 +9,11 @@ export enum Application {
 }
 
 export const getWasmChunkStoreId = (network: string = 'local'): Principal => {
-  const maybeCanisterId = execSync(`dfx canister id wasm_chunk_store --network ${network}`);
+  const maybeCanisterId = execSync(`dfx canister id wasm_chunk_store --network ${network}`)
+    .toString()
+    .trim();
 
-  return Principal.fromText(maybeCanisterId.toString().split('\n').join(''));
+  return Principal.fromText(maybeCanisterId);
 };
 
 export const applicationToRegistryEntryMap: Record<Application, string> = {
