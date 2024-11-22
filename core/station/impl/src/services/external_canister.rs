@@ -1044,7 +1044,7 @@ impl ExternalCanisterService {
 
         external_canister.monitoring = Some(ExternalCanisterMonitoring {
             funding_strategy: strategy,
-            cycle_obtain_strategy: None,
+            cycle_obtain_strategy: None, // TODO add cycle obtain strategy
         });
 
         self.external_canister_repository
