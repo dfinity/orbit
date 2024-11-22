@@ -15,30 +15,28 @@
         <VBtn :disabled="!canClose" :icon="mdiClose" @click="open = false" />
       </VToolbar>
       <VDivider />
-
-      <VCardText>
-        <CanisterMonitorForm
-          v-model="monitorModel"
-          v-model:trigger-submit="triggerFormSubmit"
-          :display="{ canisterId: props.canisterId === undefined }"
-          @submit="submit"
-          @valid="valid = $event"
-        />
-      </VCardText>
-      <VDivider />
-      <VCardActions class="pa-3">
-        <VSpacer />
-        <VBtn
-          :disabled="!canSave"
-          :loading="submitting"
-          color="primary"
-          variant="elevated"
-          data-test-id="canister-monitor-save-button"
-          @click="triggerFormSubmit = true"
-        >
-          {{ $t('external_canisters.start_monitoring') }}
-        </VBtn>
-      </VCardActions>
+      <CanisterMonitorForm
+        v-model="monitorModel"
+        :display="{ canisterId: !monitorModel.canisterId }"
+        @submitting="canClose = !$event"
+        @submitted="open = false"
+      >
+        <template #actions="{ valid, submitting, submit }">
+          <VCardActions class="pa-3">
+            <VSpacer />
+            <VBtn
+              :disabled="!valid"
+              :loading="submitting"
+              color="primary"
+              variant="elevated"
+              data-test-id="canister-monitor-save-button"
+              @click="submit"
+            >
+              {{ $t('external_canisters.start_monitoring') }}
+            </VBtn>
+          </VCardActions>
+        </template>
+      </CanisterMonitorForm>
     </VCard>
   </VDialog>
 </template>
@@ -51,20 +49,12 @@ import {
   VBtn,
   VCard,
   VCardActions,
-  VCardText,
   VDialog,
   VDivider,
   VSpacer,
   VToolbar,
   VToolbarTitle,
 } from 'vuetify/components';
-import {
-  useOnFailedOperation,
-  useOnSuccessfulOperation,
-} from '~/composables/notifications.composable';
-import logger from '~/core/logger.core';
-import { useStationStore } from '~/stores/station.store';
-import { assertAndReturn } from '~/utils/helper.utils';
 import { CanisterMonitorModel } from './external-canisters.types';
 import CanisterMonitorForm from '~/components/external-canisters/CanisterMonitorForm.vue';
 
@@ -88,10 +78,7 @@ const emit = defineEmits<{
 }>();
 
 const i18n = useI18n();
-const valid = ref(true);
-const station = useStationStore();
-const submitting = ref(false);
-const canClose = computed(() => !submitting.value);
+const canClose = ref(true);
 const dialogTitle = computed(() => props.title || i18n.t('external_canisters.monitor.title'));
 
 const buildModel = (): CanisterMonitorModel => ({
@@ -101,42 +88,8 @@ const buildModel = (): CanisterMonitorModel => ({
 
 const open = computed({
   get: () => props.open,
-  set: value => {
-    if (!value) {
-      monitorModel.value = buildModel();
-    }
-
-    emit('update:open', value);
-  },
+  set: value => emit('update:open', value),
 });
 
-const triggerFormSubmit = ref(false);
-const canSave = computed(() => valid.value);
 const monitorModel = ref(buildModel()) as Ref<CanisterMonitorModel>;
-
-const submit = async (input: CanisterMonitorModel) => {
-  try {
-    submitting.value = true;
-
-    const request = await station.service.monitorExternalCanister({
-      canister_id: assertAndReturn(input.canisterId, 'canisterId'),
-      kind: {
-        Start: {
-          funding_strategy: assertAndReturn(input.strategy, 'strategy'),
-          cycle_obtain_strategy: [],
-        },
-      },
-    });
-
-    useOnSuccessfulOperation(request);
-
-    open.value = false;
-  } catch (error) {
-    logger.error('Failed to submit monitoring request', error);
-
-    useOnFailedOperation();
-  } finally {
-    submitting.value = false;
-  }
-};
 </script>

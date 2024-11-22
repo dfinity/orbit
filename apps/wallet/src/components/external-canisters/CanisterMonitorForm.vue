@@ -1,6 +1,9 @@
 <template>
-  <VForm ref="form" @submit.prevent="submit">
-    <VContainer class="px-0 py-2">
+  <VForm v-bind="$attrs" ref="form" @submit.prevent="submit">
+    <slot name="errors" :errors="additionalFieldErrors">
+      <FormErrorsContainer v-bind="{ errors: additionalFieldErrors }" />
+    </slot>
+    <VContainer>
       <VRow>
         <VCol cols="12" class="pb-0">
           <CanisterIdField
@@ -146,29 +149,41 @@
         </VCol>
       </VRow>
     </VContainer>
-
-    <slot name="actions"></slot>
   </VForm>
+  <slot
+    v-if="!readonly"
+    name="actions"
+    :valid="valid"
+    :submitting="submitting"
+    :edited="edited"
+    :submit="submit"
+  >
+    <FormActions v-bind="{ valid, submitting, edited, submit }" />
+  </slot>
 </template>
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VCol, VContainer, VForm, VRow, VSelect } from 'vuetify/components';
-import { VFormValidation } from '~/types/helper.types';
 import CanisterIdField from '../inputs/CanisterIdField.vue';
-import { CanisterMonitorModel } from './external-canisters.types';
 import { MonitoringStrategyEnum } from '~/types/station.types.ts';
 import { CyclesUnit, TimeUnit } from '~/types/app.types.ts';
 import CyclesInput from '~/components/inputs/CyclesInput.vue';
 import { mdiCog } from '@mdi/js';
-import { variantIs } from '~/utils/helper.utils.ts';
+import { assertAndReturn, variantIs } from '~/utils/helper.utils.ts';
 import SecondsInput from '~/components/inputs/SecondsInput.vue';
 import { requiredRule } from '~/utils/form.utils.ts';
+import FormActions from '~/components/ui/FormActions.vue';
+import { useOnFailedOperation, useOnSuccessfulOperation } from '~/composables/notifications.composable.ts';
+import logger from '~/core/logger.core.ts';
+import { useStationStore } from '~/stores/station.store.ts';
+import FormErrorsContainer from '~/components/ui/FormErrorsContainer.vue';
+import { useForm } from '~/composables/forms.composable.ts';
+import { CanisterMonitorModel } from '~/components/external-canisters/external-canisters.types.ts';
 
 const props = withDefaults(
   defineProps<{
     modelValue: CanisterMonitorModel;
-    triggerSubmit?: boolean;
     readonly?: boolean;
     display?: {
       canisterId: boolean;
@@ -176,7 +191,6 @@ const props = withDefaults(
   }>(),
   {
     readonly: false,
-    triggerSubmit: false,
     display: () => ({
       canisterId: true,
     }),
@@ -184,63 +198,46 @@ const props = withDefaults(
 );
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: CanisterMonitorModel): void;
-  (event: 'update:triggerSubmit', payload: boolean): void;
   (event: 'valid', payload: boolean): void;
-  (event: 'submit', payload: CanisterMonitorModel): void;
+  (event: 'edited', payload: boolean): void;
+  (event: 'submitting', payload: boolean): void;
+  (event: 'submitted'): void;
 }>();
-
-const form = ref<VFormValidation>();
-const valid = ref(true);
-const fieldsWithErrors = ref<string[]>([]);
-const i18n = useI18n();
 
 const model = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
 });
 
-const triggerSubmit = computed({
-  get: () => props.triggerSubmit,
-  set: value => emit('update:triggerSubmit', value),
-});
+const i18n = useI18n();
+const station = useStationStore();
 
-watch(valid, newValid => emit('valid', newValid), { immediate: true });
+const { submit, edited, additionalFieldErrors, submitting, valid, submitted } =
+  useForm({
+    model,
+    submit: async (updatedModel: CanisterMonitorModel): Promise<void> => {
+      try {
+        const strategy = assertAndReturn(updatedModel.strategy, 'Strategy');
+        const canisterId = assertAndReturn(updatedModel.canisterId, 'Canister ID');
 
-watch(
-  () => form.value?.errors,
-  _ => {
-    valid.value = form.value?.isValid ?? false;
-    fieldsWithErrors.value = form.value?.errors.map(error => error.id) ?? [];
-  },
-  { deep: true },
-);
+        const request = await station.service.monitorExternalCanister({
+          canister_id: canisterId,
+          kind: {
+            Start: {
+              funding_strategy: strategy,
+              cycle_obtain_strategy: [],
+            },
+          },
+        });
 
-watch(triggerSubmit, shouldTrigger => {
-  if (shouldTrigger) {
-    emit('update:triggerSubmit', false);
+        useOnSuccessfulOperation(request);
+      } catch (error) {
+        logger.error('Failed to submit monitoring request', error);
+        useOnFailedOperation();
+      }
+    },
+  });
 
-    submit();
-  }
-});
-
-const revalidate = async (): Promise<boolean> => {
-  const { valid: isValid, errors } = form.value
-    ? await form.value.validate()
-    : { valid: false, errors: [] };
-
-  valid.value = isValid;
-  fieldsWithErrors.value = errors.map(error => error.id);
-
-  return isValid;
-};
-
-const submit = async (): Promise<void> => {
-  const isValid = await revalidate();
-
-  if (isValid) {
-    emit('submit', model.value);
-  }
-};
 
 const monitoringStrategySelected = ref(
   model.value.strategy ? model.value.strategy.toString() : null,
@@ -294,5 +291,18 @@ const strategies = computed<
     title: i18n.t(`external_canisters.monitor.strategy.${key}`),
     value: key,
   })),
+);
+
+watch(valid, value => emit('valid', value));
+watch(edited, value => emit('edited', value));
+watch(submitting, value => emit('submitting', value));
+watch(
+  submitted,
+  (value, _) => {
+    if (value) {
+      emit('submitted');
+    }
+  },
+  { immediate: true },
 );
 </script>
