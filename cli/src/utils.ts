@@ -104,9 +104,18 @@ export const getReplicaUrl = async (network: string): Promise<string> => {
   }
 
   if (dfxFile.networks[network].bind) {
-    return dfxFile.networks[network].bind.startsWith('http')
+    const bind = dfxFile.networks[network].bind.startsWith('http')
       ? dfxFile.networks[network].bind
       : `http://${dfxFile.networks[network].bind}`;
+
+    const validLocalBinds = ['http://localhost', 'http://127.0.0.1', 'http://[::1]'];
+    if (!validLocalBinds.some(validLocalBind => bind.startsWith(validLocalBind))) {
+      throw new Error(
+        `Network '${network}' has a bind URL that is not a valid local bind: ${bind}.`,
+      );
+    }
+
+    return bind;
   }
 
   throw new Error(`Network '${network}' does not have a replica URL.`);
