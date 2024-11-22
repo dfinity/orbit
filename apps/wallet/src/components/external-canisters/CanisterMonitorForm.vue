@@ -174,7 +174,10 @@ import { assertAndReturn, variantIs } from '~/utils/helper.utils.ts';
 import SecondsInput from '~/components/inputs/SecondsInput.vue';
 import { requiredRule } from '~/utils/form.utils.ts';
 import FormActions from '~/components/ui/FormActions.vue';
-import { useOnFailedOperation, useOnSuccessfulOperation } from '~/composables/notifications.composable.ts';
+import {
+  useOnFailedOperation,
+  useOnSuccessfulOperation,
+} from '~/composables/notifications.composable.ts';
 import logger from '~/core/logger.core.ts';
 import { useStationStore } from '~/stores/station.store.ts';
 import FormErrorsContainer from '~/components/ui/FormErrorsContainer.vue';
@@ -212,32 +215,30 @@ const model = computed({
 const i18n = useI18n();
 const station = useStationStore();
 
-const { submit, edited, additionalFieldErrors, submitting, valid, submitted } =
-  useForm({
-    model,
-    submit: async (updatedModel: CanisterMonitorModel): Promise<void> => {
-      try {
-        const strategy = assertAndReturn(updatedModel.strategy, 'Strategy');
-        const canisterId = assertAndReturn(updatedModel.canisterId, 'Canister ID');
+const { submit, edited, additionalFieldErrors, submitting, valid, submitted } = useForm({
+  model,
+  submit: async (updatedModel: CanisterMonitorModel): Promise<void> => {
+    try {
+      const strategy = assertAndReturn(updatedModel.strategy, 'Strategy');
+      const canisterId = assertAndReturn(updatedModel.canisterId, 'Canister ID');
 
-        const request = await station.service.monitorExternalCanister({
-          canister_id: canisterId,
-          kind: {
-            Start: {
-              funding_strategy: strategy,
-              cycle_obtain_strategy: [],
-            },
+      const request = await station.service.monitorExternalCanister({
+        canister_id: canisterId,
+        kind: {
+          Start: {
+            funding_strategy: strategy,
+            cycle_obtain_strategy: [],
           },
-        });
+        },
+      });
 
-        useOnSuccessfulOperation(request);
-      } catch (error) {
-        logger.error('Failed to submit monitoring request', error);
-        useOnFailedOperation();
-      }
-    },
-  });
-
+      useOnSuccessfulOperation(request);
+    } catch (error) {
+      logger.error('Failed to submit monitoring request', error);
+      useOnFailedOperation();
+    }
+  },
+});
 
 const monitoringStrategySelected = ref(
   model.value.strategy ? model.value.strategy.toString() : null,
