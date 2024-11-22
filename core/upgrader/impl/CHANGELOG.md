@@ -1,3 +1,31 @@
+## 0.0.2-alpha.6 (2024-11-22)
+
+
+### 🚀 Features
+
+- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))
+
+- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))
+
+- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))
+
+
+### 🩹 Fixes
+
+- **upgrader:** relax disaster recovery query restrictions ([#428](https://github.com/dfinity/orbit/pull/428))
+
+
+### 🧱 Updated Dependencies
+
+- Updated station-api to 0.0.2-alpha.8
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Leon Tan
+- olaszakos
+
 ## 0.0.2-alpha.5 (2024-10-22)
 
 

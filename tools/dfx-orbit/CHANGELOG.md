@@ -1,3 +1,36 @@
+## 0.7.0 (2024-11-22)
+
+
+### 🚀 Features
+
+- **dfx-orbit:** Enable controller management through Orbit ([#395](https://github.com/dfinity/orbit/pull/395))
+
+- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))
+
+- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))
+
+- **dfx-orbit:** Implement station file option ([#406](https://github.com/dfinity/orbit/pull/406))
+
+- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))
+
+
+### 🩹 Fixes
+
+- **dfx-orbit:** Fix argument parsing and evaluation around dfx-orbit ([#397](https://github.com/dfinity/orbit/pull/397))
+
+- **dfx-orbit:** Check that there is a matching asset upload proposal ([#401](https://github.com/dfinity/orbit/pull/401))
+
+
+### 🧱 Updated Dependencies
+
+- Updated station-api to 0.0.2-alpha.8
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Leon Tan
+
 ## 0.6.0 (2024-10-22)
 
 
