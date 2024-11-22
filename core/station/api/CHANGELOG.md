@@ -1,3 +1,25 @@
+## 0.0.2-alpha.8 (2024-11-22)
+
+
+### 🚀 Features
+
+- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))
+
+- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))
+
+- **station:** add metadata to external canisters ([#418](https://github.com/dfinity/orbit/pull/418))
+
+- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))
+
+- **station:** requestor can cancel pending requests ([#426](https://github.com/dfinity/orbit/pull/426))
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Leon Tan
+- olaszakos
+
 ## 0.0.2-alpha.7 (2024-10-22)
 
 

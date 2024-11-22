@@ -6,19 +6,24 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { AddRegistryEntryResult, EditRegistryEntryResult } from '../generated/control_panel';
 import {
+  assertCommandExists,
   assertReplicaIsHealthy,
   cargoProjectVersion,
   execAsync,
+  getIdentityPemFilePath,
+  getReplicaUrl,
   readFileIntoUint8Array,
   toBlobString,
 } from '../utils';
 import {
   Application,
   applicationToRegistryEntryMap,
+  getWasmChunkStoreId,
   parseRegistryApplication,
   registryEntryToApplicationMap,
   searchRegistry,
 } from './registry.core';
+import { createHash } from 'crypto';
 
 const artifactsRootPath = join(__dirname, '../../../artifacts');
 
@@ -136,6 +141,14 @@ const saveArgumentInTempFile = async (argument: string): Promise<string> => {
 
 command.action(async options => {
   assertReplicaIsHealthy(options.network);
+  assertCommandExists('dfx');
+  assertCommandExists('icx-asset');
+
+  const replicaUrl = await getReplicaUrl(options.network);
+  const identityPemPath = await getIdentityPemFilePath(options.identity);
+
+  // Finds the wasm chunk store canister id.
+  const wasmChunkStoreId = getWasmChunkStoreId(options.network);
 
   // Determine whether to build the release artifacts before publishing. This is `false` by default since
   // artifacts are expected to be built before with a deterministic build.
@@ -170,6 +183,26 @@ command.action(async options => {
         'WasmModule' in foundEntry.value && foundEntry.value.WasmModule.version === entry.version,
     )?.id;
 
+    const moduleHashBuffer = createHash('sha256').update(entry.module).digest();
+    const moduleHashHex = moduleHashBuffer.toString('hex');
+    const moduleUint8Array = new Uint8Array(moduleHashBuffer);
+
+    const moduleStoredFileName =
+      `${entry.name}_v${entry.version}_sha256-${moduleHashHex.substring(0, 8)}`.replace(
+        /[^a-zA-Z0-9_.-]/g,
+        '',
+      );
+    const tempFilePath = join(tmpdir(), moduleStoredFileName);
+
+    // first write the module to a temporary file
+    await writeFile(tempFilePath, entry.module, { encoding: 'binary' });
+
+    // then use icx-asset to upload the module to the wasm chunk store, this already takes care of chunking if needed
+    console.log(`Uploading the module for '${entry.name}' to the wasm chunk store...`);
+    await execAsync(`
+      icx-asset --pem '${identityPemPath}' --replica ${replicaUrl} upload ${wasmChunkStoreId.toText()} ${tempFilePath}
+    `);
+
     if (maybeRegistryId) {
       console.log(`Updating the registry entry for ${entry.name} with id(${maybeRegistryId})...`);
       const argumentFile = await saveArgumentInTempFile(`
@@ -188,7 +221,8 @@ command.action(async options => {
             value = opt variant {
               WasmModule = record {
                 version = "${entry.version}";
-                wasm_module = blob "${toBlobString(entry.module)}";
+                wasm_module = vec {};
+                module_extra_chunks = opt record { store_canister = principal "${wasmChunkStoreId.toText()}"; wasm_module_hash = blob "${toBlobString(moduleUint8Array)}"; extra_chunks_key = "/${moduleStoredFileName}" };
                 dependencies = vec { ${entry.dependencies.map(dependency => `record { name = "${dependency.name}"; version = "${dependency.version}"; }`).join('; ')} }
               }
             }
@@ -226,7 +260,8 @@ command.action(async options => {
             value = variant {
               WasmModule = record {
                 version = "${entry.version}";
-                wasm_module = blob "${toBlobString(entry.module)}";
+                wasm_module = vec {};
+                module_extra_chunks = opt record { store_canister = principal "${wasmChunkStoreId.toText()}"; wasm_module_hash = blob "${toBlobString(moduleUint8Array)}"; extra_chunks_key = "/${moduleStoredFileName}" };
                 dependencies = vec { ${entry.dependencies.map(dependency => `record { name = "${dependency.name}"; version = "${dependency.version}"; }`).join('; ')} }
               }
             }

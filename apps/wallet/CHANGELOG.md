@@ -1,3 +1,30 @@
+## 0.0.2-alpha.14 (2024-11-22)
+
+
+### 🚀 Features
+
+- **station:** add metadata to external canisters ([#418](https://github.com/dfinity/orbit/pull/418))
+
+- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))
+
+- **station:** requestor can cancel pending requests ([#426](https://github.com/dfinity/orbit/pull/426))
+
+- **enable:** wallet ui accepts wasm chunk store from registry ([#433](https://github.com/dfinity/orbit/pull/433))
+
+- **wallet:** add close btn to error dialog ([#434](https://github.com/dfinity/orbit/pull/434))
+
+
+### 🩹 Fixes
+
+- **station:** add missing metadata field from UI ([#427](https://github.com/dfinity/orbit/pull/427))
+
+
+### ❤️  Thank You
+
+- Jan Hrubes @jedna
+- Kepler Vital
+- olaszakos
+
 ## 0.0.2-alpha.13 (2024-10-28)
 
 
