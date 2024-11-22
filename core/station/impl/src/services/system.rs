@@ -685,10 +685,7 @@ mod install_canister_handlers {
     }
 
     /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.
-    pub fn init_cycle_monitor(
-        upgrader_id: Principal,
-        cycle_obtain_strategy: &CycleObtainStrategy,
-    ) {
+    pub fn init_cycle_monitor(upgrader_id: Principal, cycle_obtain_strategy: &CycleObtainStrategy) {
         let fund_strategy = FundStrategy::BelowEstimatedRuntime(
             EstimatedRuntime::new()
                 .with_min_runtime_secs(14 * 24 * 60 * 60) // 14 days
