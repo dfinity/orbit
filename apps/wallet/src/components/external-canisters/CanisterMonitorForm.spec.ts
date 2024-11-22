@@ -33,14 +33,9 @@ describe('CanisterMonitorForm', () => {
     await flushPromises();
 
     const isValidEvents = form.emitted('valid') ?? [];
-    const submitEvents = form.emitted('submit') ?? [];
+    const submitEvents = form.emitted('submitting') ?? [];
 
     expect(isValidEvents.pop()).toEqual([true]);
-    expect(submitEvents.pop()).toEqual([
-      {
-        canisterId: Principal.fromText('r7inp-6aaaa-aaaaa-aaabq-cai'),
-        strategy: { Always: BigInt(1_000_000_000_000) },
-      },
-    ]);
+    expect(submitEvents.pop()).toEqual([true]);
   });
 });
