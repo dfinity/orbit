@@ -131,21 +131,29 @@ Request Policy Approval is the process of approving a request. Users can add the
 
 Permissions are rules that define the functionality that a user can access in a station canister. Permissions are defined by the authorized station users and can be customized to fit the needs of different use cases. Permissions can be granted to individual users, groups of users or any (un)authenticated user and can be revoked at any time.
 
+### Asset
+
+An Orbit Asset holds metadata about an asset on the blockchain. Besides typical properties like Name and Symbol, it also stores which blockchain the asset is on, what token standards it supports, the contract address(es), etc. Assets can be added/changed/removed through requests. The native ICP asset is added by default to new Orbit stations.
+
 ### Account
 
-An account is a record in the station canister that represents a user's ownership of a specific asset. Accounts can hold different types of assets, such as tokens, NFTs, or other fungible or non-fungible assets. Accounts can be created, updated, and archived by the station users through requests.
+An account is a record in the station canister that represents a user's ownership of a specific assets. Accounts can hold multiple types of assets, such as tokens, NFTs, or other fungible or non-fungible assets. Accounts can be created, updated, and archived by the station users through requests.
 
 #### Account Name
 
 An account name is a human-readable name that represents the account in the station canister. Account names can be customized by privileged users and are unique within the station canister.
 
+#### Account Asset
+
+An account can hold multiple types of assets, on any supported blockchains, and any supported standards. Assets can be added and removed from accounts. Removing an asset does not result in losing funds, readding the asset restores access.
+
 #### Account Address
 
-An account address is a unique identifier that represents the account address in relation to the asset it holds.
+An account address is a unique identifier that represents the account address in relation to the asset it holds. An account can have many addresses derived from the account seed, as assets support different token standards and address formats.
 
 #### Account Balance
 
-An account balance is the amount of a specific asset that an account holds. Account balances are updated when assets are deposited or withdrawn from the account.
+An account asset's balance is the amount of a specific asset that an account holds. Account balances are updated when assets are deposited or withdrawn from the account.
 
 ### Address Book
 
