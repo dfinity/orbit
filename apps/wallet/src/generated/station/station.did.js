@@ -311,6 +311,39 @@ export const idlFactory = ({ IDL }) => {
     'module_checksum' : Sha256Hash,
     'arg_checksum' : IDL.Opt(Sha256Hash),
   });
+  const CycleObtainStrategyInput = IDL.Variant({
+    'Disabled' : IDL.Null,
+    'MintFromNativeToken' : IDL.Record({ 'account_id' : UUID }),
+  });
+  const MonitoringExternalCanisterCyclesThresholdInput = IDL.Record({
+    'fund_cycles' : IDL.Nat,
+    'min_cycles' : IDL.Nat,
+  });
+  const MonitoringExternalCanisterEstimatedRuntimeInput = IDL.Record({
+    'fund_runtime_secs' : IDL.Nat64,
+    'fallback_min_cycles' : IDL.Nat,
+    'min_runtime_secs' : IDL.Nat64,
+    'fallback_fund_cycles' : IDL.Nat,
+    'max_runtime_cycles_fund' : IDL.Nat,
+  });
+  const MonitorExternalCanisterStrategyInput = IDL.Variant({
+    'Always' : IDL.Nat,
+    'BelowThreshold' : MonitoringExternalCanisterCyclesThresholdInput,
+    'BelowEstimatedRuntime' : MonitoringExternalCanisterEstimatedRuntimeInput,
+  });
+  const MonitorExternalCanisterStartInput = IDL.Record({
+    'cycle_obtain_strategy' : IDL.Opt(CycleObtainStrategyInput),
+    'funding_strategy' : MonitorExternalCanisterStrategyInput,
+  });
+  const MonitorExternalCanisterOperationKind = IDL.Variant({
+    'Start' : MonitorExternalCanisterStartInput,
+    'Stop' : IDL.Null,
+  });
+  const MonitorExternalCanisterOperationInput = IDL.Record({
+    'kind' : MonitorExternalCanisterOperationKind,
+    'canister_id' : IDL.Principal,
+  });
+  const MonitorExternalCanisterOperation = MonitorExternalCanisterOperationInput;
   const UserStatus = IDL.Variant({
     'Inactive' : IDL.Null,
     'Active' : IDL.Null,
@@ -476,10 +509,6 @@ export const idlFactory = ({ IDL }) => {
     'identities' : IDL.Opt(IDL.Vec(IDL.Principal)),
   });
   const EditUserOperation = IDL.Record({ 'input' : EditUserOperationInput });
-  const CycleObtainStrategyInput = IDL.Variant({
-    'Disabled' : IDL.Null,
-    'MintFromNativeToken' : IDL.Record({ 'account_id' : UUID }),
-  });
   const ManageSystemInfoOperationInput = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'cycle_obtain_strategy' : IDL.Opt(CycleObtainStrategyInput),
@@ -602,6 +631,7 @@ export const idlFactory = ({ IDL }) => {
     'EditPermission' : EditPermissionOperation,
     'ConfigureExternalCanister' : ConfigureExternalCanisterOperation,
     'ChangeExternalCanister' : ChangeExternalCanisterOperation,
+    'MonitorExternalCanister' : MonitorExternalCanisterOperation,
     'AddUser' : AddUserOperation,
     'EditUserGroup' : EditUserGroupOperation,
     'SetDisasterRecovery' : SetDisasterRecoveryOperation,
@@ -735,6 +765,7 @@ export const idlFactory = ({ IDL }) => {
     'EditPermission' : EditPermissionOperationInput,
     'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput,
     'ChangeExternalCanister' : ChangeExternalCanisterOperationInput,
+    'MonitorExternalCanister' : MonitorExternalCanisterOperationInput,
     'AddUser' : AddUserOperationInput,
     'EditUserGroup' : EditUserGroupOperationInput,
     'SetDisasterRecovery' : SetDisasterRecoveryOperationInput,
@@ -903,6 +934,7 @@ export const idlFactory = ({ IDL }) => {
     'created_at' : TimestampRFC3339,
     'request_policies' : ExternalCanisterRequestPolicies,
     'state' : ExternalCanisterState,
+    'monitoring' : IDL.Opt(MonitorExternalCanisterStartInput),
   });
   const GetExternalCanisterResult = IDL.Variant({
     'Ok' : IDL.Record({
@@ -931,6 +963,7 @@ export const idlFactory = ({ IDL }) => {
     'EditPermission' : IDL.Null,
     'ConfigureExternalCanister' : IDL.Opt(IDL.Principal),
     'ChangeExternalCanister' : IDL.Opt(IDL.Principal),
+    'MonitorExternalCanister' : IDL.Opt(IDL.Principal),
     'AddUser' : IDL.Null,
     'EditUserGroup' : IDL.Null,
     'SetDisasterRecovery' : IDL.Null,
@@ -1163,6 +1196,7 @@ export const idlFactory = ({ IDL }) => {
     'EditPermission' : IDL.Null,
     'ConfigureExternalCanister' : IDL.Null,
     'ChangeExternalCanister' : IDL.Null,
+    'MonitorExternalCanister' : IDL.Null,
     'AddUser' : IDL.Null,
     'EditUserGroup' : IDL.Null,
     'SetDisasterRecovery' : IDL.Null,

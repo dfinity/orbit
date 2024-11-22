@@ -5,6 +5,7 @@ import {
   CanisterMethod,
   ExternalCanisterChangeRequestPolicyRuleInput,
   LogVisibility,
+  MonitorExternalCanisterStrategyInput,
   ValidationMethodResourceTarget,
 } from '~/generated/station/station.did';
 
@@ -72,4 +73,9 @@ export interface CanisterCallReviewContext {
   validationMethod?: CanisterMethod;
   reply?: Uint8Array;
   candidIdl?: string;
+}
+
+export interface CanisterMonitorModel {
+  canisterId?: Principal;
+  strategy?: MonitorExternalCanisterStrategyInput;
 }

@@ -78,7 +78,9 @@
                 <VListItem @click="dialogs.settings = true">
                   <VListItemTitle class="d-flex flex-nowrap ga-2">
                     <div class="flex-grow-1">{{ $t('external_canisters.configuration') }}</div>
-                    <div><VIcon :icon="mdiDatabase" size="x-small" /></div>
+                    <div>
+                      <VIcon :icon="mdiDatabase" size="x-small" />
+                    </div>
                   </VListItemTitle>
                 </VListItem>
                 <VListItem
@@ -87,14 +89,18 @@
                 >
                   <VListItemTitle class="d-flex flex-nowrap ga-2">
                     <div class="flex-grow-1">{{ $t('external_canisters.ic_settings') }}</div>
-                    <div><VIcon :icon="mdiInfinity" size="x-small" /></div>
+                    <div>
+                      <VIcon :icon="mdiInfinity" size="x-small" />
+                    </div>
                   </VListItemTitle>
                 </VListItem>
                 <VDivider />
                 <VListItem @click="dialogs.unlink = true">
                   <VListItemTitle color="warning" class="d-flex flex-nowrap ga-2 text-error">
                     <div class="flex-grow-1">{{ $t('external_canisters.unlink') }}</div>
-                    <div><VIcon :icon="mdiDatabaseOff" size="x-small" /></div>
+                    <div>
+                      <VIcon :icon="mdiDatabaseOff" size="x-small" />
+                    </div>
                   </VListItemTitle>
                 </VListItem>
               </VList>
@@ -289,10 +295,19 @@
                       </VListItem>
                       <VListItem class="pt-0 px-0">
                         <VListItemTitle class="font-weight-bold">
+                          <VIcon
+                            v-if="canister.monitoring.length"
+                            :icon="mdiBatteryChargingMedium"
+                            :tooltip="$t(`external_canisters.cycles`)"
+                          />
                           {{ $t(`external_canisters.cycles`) }}
                           <template v-if="privileges.can_fund">
                             <CanisterTopUpDialog
                               v-model:open="dialogs.topUp"
+                              :canister-id="canister.canister_id"
+                            />
+                            <CanisterMonitorDialog
+                              v-model:open="dialogs.monitor"
                               :canister-id="canister.canister_id"
                             />
 
@@ -302,10 +317,37 @@
                               color="default"
                               variant="tonal"
                               class="ml-1 px-2"
-                              :append-icon="mdiDatabaseArrowUp"
+                              :append-icon="mdiBatteryArrowUpOutline"
                               @click="dialogs.topUp = true"
                             >
                               {{ $t('external_canisters.top_up') }}
+                            </VBtn>
+
+                            <VBtn
+                              v-if="!canister.monitoring.length"
+                              :disabled="canisterDetails.status.loading"
+                              size="small"
+                              density="compact"
+                              color="default"
+                              variant="tonal"
+                              class="ml-1 px-2"
+                              :append-icon="mdiBatterySyncOutline"
+                              @click="dialogs.monitor = true"
+                            >
+                              {{ $t('external_canisters.monitor.title') }}
+                            </VBtn>
+                            <VBtn
+                              v-if="canister.monitoring.length"
+                              :disabled="canisterDetails.status.loading"
+                              size="small"
+                              density="compact"
+                              color="default"
+                              variant="tonal"
+                              class="ml-1 px-2"
+                              :append-icon="mdiBatteryOffOutline"
+                              @click="removeMonitoring"
+                            >
+                              {{ $t('external_canisters.monitor.stop_title') }}
                             </VBtn>
                           </template>
                         </VListItemTitle>
@@ -380,9 +422,12 @@
 <script lang="ts" setup>
 import { Principal } from '@dfinity/principal';
 import {
+  mdiBatteryArrowUpOutline,
+  mdiBatteryChargingMedium,
+  mdiBatteryOffOutline,
+  mdiBatterySyncOutline,
   mdiContentCopy,
   mdiDatabase,
-  mdiDatabaseArrowUp,
   mdiDatabaseCog,
   mdiDatabaseOff,
   mdiInfinity,
@@ -416,6 +461,7 @@ import CanisterCallDialog from '~/components/external-canisters/CanisterCallDial
 import CanisterConfigureMethodCallList from '~/components/external-canisters/CanisterConfigureMethodCallList.vue';
 import CanisterIcSettingsDialog from '~/components/external-canisters/CanisterIcSettingsDialog.vue';
 import CanisterInstallDialog from '~/components/external-canisters/CanisterInstallDialog.vue';
+import CanisterMonitorDialog from '~/components/external-canisters/CanisterMonitorDialog.vue';
 import CanisterSetupDialog from '~/components/external-canisters/CanisterSetupDialog.vue';
 import CanisterTopUpDialog from '~/components/external-canisters/CanisterTopUpDialog.vue';
 import CanisterUnlinkDialog from '~/components/external-canisters/CanisterUnlinkDialog.vue';
@@ -446,7 +492,11 @@ import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import { fetchCanisterIdlFromMetadata } from '~/utils/didc.utils';
-import { debounce } from '~/utils/helper.utils';
+import { assertAndReturn, debounce } from '~/utils/helper.utils';
+import {
+  useOnFailedOperation,
+  useOnSuccessfulOperation,
+} from '~/composables/notifications.composable.ts';
 
 const props = withDefaults(defineProps<PageProps>(), {
   title: undefined,
@@ -491,6 +541,7 @@ const dialogs = ref({
   icSettings: false,
   install: false,
   topUp: false,
+  monitor: false,
   call: false,
 });
 
@@ -633,6 +684,27 @@ const loadExternalCanister = async (): Promise<void> => {
     }
 
     logger.error('Failed to load external canister', error);
+  }
+};
+
+const removeMonitoring = async (): Promise<void> => {
+  try {
+    canisterDetails.value.status.loading = true;
+
+    const request = await station.service.monitorExternalCanister({
+      canister_id: assertAndReturn(Principal.fromText(currentRouteCanisterId.value), 'canisterId'),
+      kind: {
+        Stop: null,
+      },
+    });
+
+    useOnSuccessfulOperation(request);
+  } catch (error) {
+    logger.error('Failed to submit monitoring request', error);
+
+    useOnFailedOperation();
+  } finally {
+    canisterDetails.value.status.loading = false;
   }
 };
 </script>

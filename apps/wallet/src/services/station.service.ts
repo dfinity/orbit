@@ -57,6 +57,7 @@ import {
   ListUsersResult,
   ManageSystemInfoOperationInput,
   MarkNotificationsReadInput,
+  MonitorExternalCanisterOperationInput,
   Notification,
   PaginationInput,
   RemoveUserGroupOperationInput,
@@ -581,6 +582,24 @@ export class StationService {
       summary: [],
       operation: {
         FundExternalCanister: input,
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async monitorExternalCanister(input: MonitorExternalCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
+      title: [],
+      summary: [],
+      operation: {
+        MonitorExternalCanister: input,
       },
     });
 

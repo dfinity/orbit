@@ -185,5 +185,12 @@ export enum RequestOperationEnum {
   CallExternalCanister = 'CallExternalCanister',
   ConfigureExternalCanister = 'ConfigureExternalCanister',
   FundExternalCanister = 'FundExternalCanister',
+  MonitorExternalCanister = 'MonitorExternalCanister',
   SetDisasterRecovery = 'SetDisasterRecovery',
+}
+
+export enum MonitoringStrategyEnum {
+  BelowThreshold = 'BelowThreshold',
+  BelowEstimatedRuntime = 'BelowEstimatedRuntime',
+  Always = 'Always',
 }

@@ -698,7 +698,7 @@ mod install_canister_handlers {
                 .with_fallback_fund_cycles(200_000_000_000),
         );
 
-        CYCLE_MANAGER.set_global_obtain_cycles_strategy(cycle_obtain_strategy);
+        CYCLE_MANAGER.set_global_cycle_obtain_strategy(cycle_obtain_strategy);
         CYCLE_MANAGER.add_canister(id(), fund_strategy.clone());
         CYCLE_MANAGER.add_canister(upgrader_id, fund_strategy.clone());
 
