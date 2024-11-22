@@ -33,8 +33,8 @@ echo "PocketIC download starting"
 curl -sLO https://github.com/dfinity/pocketic/releases/download/7.0.0/pocket-ic-x86_64-$PLATFORM.gz || exit 1
 gzip -df pocket-ic-x86_64-$PLATFORM.gz
 mv pocket-ic-x86_64-$PLATFORM pocket-ic
-export POCKET_IC_BIN="$(pwd)/pocket-ic"
 chmod +x pocket-ic
+export POCKET_IC_BIN="$(pwd)/pocket-ic"
 echo "PocketIC download completed"
 cd ../..
 

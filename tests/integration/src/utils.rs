@@ -892,11 +892,23 @@ pub(crate) fn await_station_healthy(env: &PocketIc, station_id: Principal) {
     );
 }
 
-pub(crate) fn add_external_canister_call_any_method_permission_and_approval(
+pub(crate) fn deploy_test_canister(env: &PocketIc) -> Principal {
+    let test_canister = create_canister(env, WALLET_ADMIN_USER);
+    let test_canister_wasm = get_canister_wasm("test_canister");
+    env.install_canister(
+        test_canister,
+        test_canister_wasm,
+        vec![],
+        Some(WALLET_ADMIN_USER),
+    );
+    test_canister
+}
+
+pub(crate) fn add_external_canister_call_any_method_permission_and_approval_rule(
     env: &PocketIc,
     station_id: Principal,
     admin_id: Principal,
-    quorum: station_api::QuorumDTO,
+    rule: station_api::RequestPolicyRuleDTO,
 ) {
     // add the permissions for admins to call any external canister
     execute_request(
@@ -931,8 +943,35 @@ pub(crate) fn add_external_canister_call_any_method_permission_and_approval(
                     validation_method: station_api::ValidationMethodResourceTargetDTO::No,
                 },
             ),
-            rule: station_api::RequestPolicyRuleDTO::Quorum(quorum),
+            rule,
         }),
     )
     .expect("Failed to add approval policy to call external canister");
+}
+
+pub(crate) fn add_external_canister_call_any_method_permission_and_approval(
+    env: &PocketIc,
+    station_id: Principal,
+    admin_id: Principal,
+    quorum: station_api::QuorumDTO,
+) {
+    add_external_canister_call_any_method_permission_and_approval_rule(
+        env,
+        station_id,
+        admin_id,
+        station_api::RequestPolicyRuleDTO::Quorum(quorum),
+    );
+}
+
+pub(crate) fn add_external_canister_call_any_method_permission_and_approval_auto(
+    env: &PocketIc,
+    station_id: Principal,
+    admin_id: Principal,
+) {
+    add_external_canister_call_any_method_permission_and_approval_rule(
+        env,
+        station_id,
+        admin_id,
+        station_api::RequestPolicyRuleDTO::AutoApproved,
+    );
 }
