@@ -25,13 +25,23 @@ impl ChangeCanisterService {
         Self {}
     }
 
-    /// Take a snapshot of a canister.
-    pub async fn snapshot_canister(
+    async fn start_canister(
         &self,
         canister_id: Principal,
-        replace_snapshot: Option<Vec<u8>>,
-    ) -> ServiceResult<Vec<u8>, ChangeCanisterError> {
-        // Stop canister
+    ) -> ServiceResult<(), ChangeCanisterError> {
+        mgmt::start_canister(CanisterIdRecord {
+            canister_id: canister_id.to_owned(),
+        })
+        .await
+        .map_err(|(_, err)| ChangeCanisterError::Failed {
+            reason: err.to_string(),
+        })
+    }
+
+    async fn stop_canister(
+        &self,
+        canister_id: Principal,
+    ) -> ServiceResult<(), ChangeCanisterError> {
         let stop_result = mgmt::stop_canister(CanisterIdRecord {
             canister_id: canister_id.to_owned(),
         })
@@ -42,16 +52,21 @@ impl ChangeCanisterService {
 
         if let Err(e) = stop_result {
             // Restart canister if the call to stop did not succeed (it is possible that the canister did stop)
-            mgmt::start_canister(CanisterIdRecord {
-                canister_id: canister_id.to_owned(),
-            })
-            .await
-            .map_err(|(_, err)| ChangeCanisterError::Failed {
-                reason: err.to_string(),
-            })?;
+            self.start_canister(canister_id).await?;
 
             return Err(e);
         }
+
+        Ok(())
+    }
+
+    /// Take a snapshot of a canister.
+    pub async fn snapshot_canister(
+        &self,
+        canister_id: Principal,
+        replace_snapshot: Option<Vec<u8>>,
+    ) -> ServiceResult<Vec<u8>, ChangeCanisterError> {
+        self.stop_canister(canister_id).await?;
 
         // Take snapshot
         let take_snapshot_result = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {
@@ -65,13 +80,7 @@ impl ChangeCanisterService {
         });
 
         // Restart canister (regardless of whether the upgrade succeeded or not)
-        mgmt::start_canister(CanisterIdRecord {
-            canister_id: canister_id.to_owned(),
-        })
-        .await
-        .map_err(|(_, err)| ChangeCanisterError::Failed {
-            reason: err.to_string(),
-        })?;
+        self.start_canister(canister_id).await?;
 
         take_snapshot_result
     }
@@ -82,27 +91,7 @@ impl ChangeCanisterService {
         canister_id: Principal,
         snapshot_id: Vec<u8>,
     ) -> ServiceResult<(), ChangeCanisterError> {
-        // Stop canister
-        let stop_result = mgmt::stop_canister(CanisterIdRecord {
-            canister_id: canister_id.to_owned(),
-        })
-        .await
-        .map_err(|(_, err)| ChangeCanisterError::Failed {
-            reason: err.to_string(),
-        });
-
-        if let Err(e) = stop_result {
-            // Restart canister if the call to stop did not succeed (it is possible that the canister did stop)
-            mgmt::start_canister(CanisterIdRecord {
-                canister_id: canister_id.to_owned(),
-            })
-            .await
-            .map_err(|(_, err)| ChangeCanisterError::Failed {
-                reason: err.to_string(),
-            })?;
-
-            return Err(e);
-        }
+        self.stop_canister(canister_id).await?;
 
         // Take snapshot
         let load_snapshot_result = mgmt::load_canister_snapshot(LoadCanisterSnapshotArgs {
@@ -116,13 +105,7 @@ impl ChangeCanisterService {
         });
 
         // Restart canister (regardless of whether the upgrade succeeded or not)
-        mgmt::start_canister(CanisterIdRecord {
-            canister_id: canister_id.to_owned(),
-        })
-        .await
-        .map_err(|(_, err)| ChangeCanisterError::Failed {
-            reason: err.to_string(),
-        })?;
+        self.start_canister(canister_id).await?;
 
         load_snapshot_result
     }
@@ -138,27 +121,7 @@ impl ChangeCanisterService {
     ) -> ServiceResult<(), ChangeCanisterError> {
         use candid::Encode;
 
-        // Stop canister
-        let stop_result = mgmt::stop_canister(CanisterIdRecord {
-            canister_id: canister_id.to_owned(),
-        })
-        .await
-        .map_err(|(_, err)| ChangeCanisterError::Failed {
-            reason: err.to_string(),
-        });
-
-        if stop_result.is_err() {
-            // Restart canister if the stop did not succeed (its possible the canister did stop running)
-            mgmt::start_canister(CanisterIdRecord {
-                canister_id: canister_id.to_owned(),
-            })
-            .await
-            .map_err(|(_, err)| ChangeCanisterError::Failed {
-                reason: err.to_string(),
-            })?;
-
-            return stop_result;
-        }
+        self.stop_canister(canister_id).await?;
 
         // Install or upgrade canister
         let default_bytes = Encode!(&()).unwrap();
@@ -173,13 +136,7 @@ impl ChangeCanisterService {
         .map_err(|err| ChangeCanisterError::Failed { reason: err });
 
         // Restart canister (regardless of whether the upgrade succeeded or not)
-        mgmt::start_canister(CanisterIdRecord {
-            canister_id: canister_id.to_owned(),
-        })
-        .await
-        .map_err(|(_, err)| ChangeCanisterError::Failed {
-            reason: err.to_string(),
-        })?;
+        self.start_canister(canister_id).await?;
 
         install_code_result
     }
