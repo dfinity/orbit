@@ -60,6 +60,7 @@ impl Execute for SnapshotExternalCanisterRequestExecute<'_> {
             .snapshot_canister(
                 self.operation.input.canister_id,
                 self.operation.input.replace_snapshot.clone(),
+                self.operation.input.force,
             )
             .await
             .map_err(|err| RequestExecuteError::Failed {

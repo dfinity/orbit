@@ -1295,6 +1295,7 @@ impl From<SnapshotExternalCanisterOperationInput>
         station_api::SnapshotExternalCanisterOperationInput {
             canister_id: input.canister_id,
             replace_snapshot: input.replace_snapshot,
+            force: input.force,
         }
     }
 }
@@ -1308,6 +1309,7 @@ impl From<station_api::SnapshotExternalCanisterOperationInput>
         SnapshotExternalCanisterOperationInput {
             canister_id: input.canister_id,
             replace_snapshot: input.replace_snapshot,
+            force: input.force,
         }
     }
 }

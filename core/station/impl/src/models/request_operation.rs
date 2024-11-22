@@ -624,6 +624,7 @@ pub struct CallExternalCanisterOperation {
 pub struct SnapshotExternalCanisterOperationInput {
     pub canister_id: Principal,
     pub replace_snapshot: Option<Vec<u8>>,
+    pub force: bool,
 }
 
 #[storable]

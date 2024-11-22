@@ -65,8 +65,13 @@ impl ChangeCanisterService {
         &self,
         canister_id: Principal,
         replace_snapshot: Option<Vec<u8>>,
+        force: bool,
     ) -> ServiceResult<Vec<u8>, ChangeCanisterError> {
-        self.stop_canister(canister_id).await?;
+        let stop_result = self.stop_canister(canister_id).await;
+
+        if !force {
+            stop_result?;
+        }
 
         // Take snapshot
         let take_snapshot_result = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {

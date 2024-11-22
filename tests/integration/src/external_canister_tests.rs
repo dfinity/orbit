@@ -1,6 +1,6 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    add_user, bump_time_to_avoid_ratelimit, canister_status, execute_request,
+    add_user, bump_time_to_avoid_ratelimit, canister_status, deploy_test_canister, execute_request,
     get_core_canister_health_status, get_request, submit_request, submit_request_approval,
     submit_request_raw, submit_request_with_expected_trap, update_raw,
     upload_canister_chunks_to_asset_canister, user_test_id, wait_for_request, COUNTER_WAT,
@@ -26,6 +26,7 @@ use station_api::{
     SnapshotExternalCanisterOperationInput, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 use std::str::FromStr;
+use std::time::Duration;
 
 #[test]
 fn successful_four_eyes_upgrade() {
@@ -1415,6 +1416,7 @@ fn snapshot_external_canister_test() {
         RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
             canister_id: external_canister_id,
             replace_snapshot: None,
+            force: false,
         });
     let request = execute_request(
         &env,
@@ -1485,6 +1487,7 @@ fn snapshot_external_canister_test() {
         RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
             canister_id: external_canister_id,
             replace_snapshot: None,
+            force: false,
         });
     let failed_request_status = execute_request(
         &env,
@@ -1532,6 +1535,7 @@ fn snapshot_external_canister_test() {
         RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
             canister_id: external_canister_id,
             replace_snapshot: Some(snapshot_id.clone()),
+            force: false,
         });
     let request = execute_request(
         &env,
@@ -1557,4 +1561,100 @@ fn snapshot_external_canister_test() {
         .map(|snapshot| snapshot.id)
         .collect();
     assert_eq!(snapshots, vec![new_snapshot_id]);
+}
+
+#[test]
+fn snapshot_unstoppable_external_canister_test() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    // create and install the test canister (external canister)
+    let external_canister_id = deploy_test_canister(&env, canister_ids.station);
+
+    // make the test canister unstoppable by submitting an update call to the method "unstoppable"
+    // and executing a round to kick off the (indefinite) update call execution
+    env.submit_call(
+        external_canister_id,
+        Principal::anonymous(),
+        "unstoppable",
+        Encode!(&()).unwrap(),
+    )
+    .unwrap();
+    env.tick();
+
+    // submit a request taking a snapshot without forcing the snapshot:
+    // we expect such a request to fail because the canister is unstoppable
+    let snapshot_canister_operation =
+        RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
+            canister_id: external_canister_id,
+            replace_snapshot: None,
+            force: false,
+        });
+    let request = submit_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        snapshot_canister_operation,
+    );
+    // timer's period for processing requests is 5 seconds
+    env.advance_time(Duration::from_secs(5));
+    // wait until the canister becomes stopping
+    loop {
+        let status = env
+            .canister_status(external_canister_id, Some(canister_ids.station))
+            .unwrap();
+        if let pocket_ic::management_canister::CanisterStatusResultStatus::Stopping = status.status
+        {
+            break;
+        }
+    }
+    // advance time by 5mins to time out canister stopping
+    env.advance_time(Duration::from_secs(5 * 60));
+    // the request should fail now
+    let failed_request_status =
+        wait_for_request(&env, WALLET_ADMIN_USER, canister_ids.station, request)
+            .unwrap_err()
+            .unwrap();
+    match failed_request_status {
+        RequestStatusDTO::Failed { reason } => {
+            assert!(reason.unwrap().contains("Stop canister request timed out"))
+        }
+        _ => panic!("Unexpected request status: {:?}", failed_request_status),
+    };
+
+    // restart the canister
+    env.start_canister(external_canister_id, Some(canister_ids.station))
+        .unwrap();
+
+    // submit a request taking a snapshot and force taking the snapshot:
+    // we expect such a request to succeed although the canister is unstoppable
+    let snapshot_canister_operation =
+        RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
+            canister_id: external_canister_id,
+            replace_snapshot: None,
+            force: true,
+        });
+    let request = submit_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        snapshot_canister_operation,
+    );
+    // timer's period for processing requests is 5 seconds
+    env.advance_time(Duration::from_secs(5));
+    // wait until the canister becomes stopping
+    loop {
+        let status = env
+            .canister_status(external_canister_id, Some(canister_ids.station))
+            .unwrap();
+        if let pocket_ic::management_canister::CanisterStatusResultStatus::Stopping = status.status
+        {
+            break;
+        }
+    }
+    // advance time by 5mins to time out canister stopping
+    env.advance_time(Duration::from_secs(5 * 60));
+    // the request should succeed now
+    wait_for_request(&env, WALLET_ADMIN_USER, canister_ids.station, request).unwrap();
 }

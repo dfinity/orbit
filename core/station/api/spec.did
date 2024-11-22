@@ -826,6 +826,8 @@ type SnapshotExternalCanisterOperationInput = record {
   canister_id : principal;
   // A snapshot to be replaced.
   replace_snapshot : opt blob;
+  // Should a snapshot be taken if the external canister fails to stop.
+  force : bool;
 };
 
 type SnapshotExternalCanisterOperation = record {

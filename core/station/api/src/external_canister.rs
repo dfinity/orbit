@@ -387,6 +387,7 @@ pub struct SnapshotExternalCanisterOperationInput {
     pub canister_id: Principal,
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub replace_snapshot: Option<Vec<u8>>,
+    pub force: bool,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

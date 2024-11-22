@@ -936,3 +936,10 @@ pub(crate) fn add_external_canister_call_any_method_permission_and_approval(
     )
     .expect("Failed to add approval policy to call external canister");
 }
+
+pub(crate) fn deploy_test_canister(env: &PocketIc, controller: Principal) -> Principal {
+    let test_canister = create_canister(env, controller);
+    let test_canister_wasm = get_canister_wasm("test_canister");
+    env.install_canister(test_canister, test_canister_wasm, vec![], Some(controller));
+    test_canister
+}
