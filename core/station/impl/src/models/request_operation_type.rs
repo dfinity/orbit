@@ -35,6 +35,7 @@ pub enum RequestOperationType {
     FundExternalCanister = 25,
     SnapshotExternalCanister = 26,
     RestoreExternalCanister = 27,
+    PruneExternalCanister = 28,
 }
 
 /// A helper enum to filter the requests based on the operation type and
@@ -58,6 +59,7 @@ pub enum ListRequestsOperationType {
     FundExternalCanister(Option<Principal>),
     SnapshotExternalCanister(Option<Principal>),
     RestoreExternalCanister(Option<Principal>),
+    PruneExternalCanister(Option<Principal>),
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,
@@ -165,6 +167,15 @@ impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
                     RequestOperationFilterType::RestoreExternalCanister(id) if id == canister_id
                 )
             }
+            ListRequestsOperationType::PruneExternalCanister(None) => {
+                matches!(self, RequestOperationFilterType::PruneExternalCanister(_))
+            }
+            ListRequestsOperationType::PruneExternalCanister(Some(canister_id)) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::PruneExternalCanister(id) if id == canister_id
+                )
+            }
             ListRequestsOperationType::EditPermission => {
                 matches!(self, RequestOperationFilterType::EditPermission)
             }
@@ -249,6 +260,9 @@ impl Display for RequestOperationType {
             }
             RequestOperationType::RestoreExternalCanister => {
                 write!(f, "restore_external_canister")
+            }
+            RequestOperationType::PruneExternalCanister => {
+                write!(f, "prune_external_canister")
             }
             RequestOperationType::EditPermission => write!(f, "edit_permission"),
             RequestOperationType::AddRequestPolicy => write!(f, "add_request_policy"),

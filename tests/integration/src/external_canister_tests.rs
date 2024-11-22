@@ -1,7 +1,7 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     add_user, bump_time_to_avoid_ratelimit, canister_status, deploy_test_canister, execute_request,
-    get_core_canister_health_status, get_request, submit_request, submit_request_approval,
+    get_core_canister_health_status, get_request, hash, submit_request, submit_request_approval,
     submit_request_raw, submit_request_with_expected_trap, update_raw,
     upload_canister_chunks_to_asset_canister, user_test_id, wait_for_request, COUNTER_WAT,
 };
@@ -20,7 +20,8 @@ use station_api::{
     CreateExternalCanisterOperationKindCreateNewDTO, CreateExternalCanisterOperationKindDTO,
     EditPermissionOperationInput, ExecutionMethodResourceTargetDTO, ExternalCanisterIdDTO,
     ExternalCanisterPermissionsCreateInput, ExternalCanisterRequestPoliciesCreateInput,
-    HealthStatus, ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse, QuorumDTO,
+    HealthStatus, ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse,
+    PruneExternalCanisterOperationInput, PruneExternalCanisterResourceDTO, QuorumDTO,
     RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
     RequestSpecifierDTO, RequestStatusDTO, RestoreExternalCanisterOperationInput,
     SnapshotExternalCanisterOperationInput, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
@@ -1560,7 +1561,120 @@ fn snapshot_external_canister_test() {
         .into_iter()
         .map(|snapshot| snapshot.id)
         .collect();
-    assert_eq!(snapshots, vec![new_snapshot_id]);
+    assert_eq!(snapshots, vec![new_snapshot_id.clone()]);
+
+    // prune the new snapshot
+    let prune_canister_operation =
+        RequestOperationInput::PruneExternalCanister(PruneExternalCanisterOperationInput {
+            canister_id: external_canister_id,
+            prune: PruneExternalCanisterResourceDTO::Snapshot(new_snapshot_id),
+        });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        prune_canister_operation,
+    )
+    .unwrap();
+
+    // retrieve the existing snapshots from the management canister: there should be no snapshots anymore
+    let snapshots: Vec<_> = env
+        .list_canister_snapshots(external_canister_id, Some(canister_ids.station))
+        .unwrap();
+    assert!(snapshots.is_empty());
+}
+
+#[test]
+fn prune_external_canister_chunk_store_test() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    // create and install the test canister (external canister)
+    let external_canister_id = deploy_test_canister(&env, canister_ids.station);
+
+    // check that the external canister is not empty
+    let status = canister_status(&env, Some(canister_ids.station), external_canister_id);
+    status.module_hash.unwrap();
+
+    // check that the external canister has an empty chunk store
+    let chunks = env
+        .stored_chunks(external_canister_id, Some(canister_ids.station))
+        .unwrap();
+    assert!(chunks.is_empty());
+
+    // upload a chunk
+    let chunk = vec![1, 2, 3, 4];
+    let chunk_hash = env
+        .upload_chunk(
+            external_canister_id,
+            Some(canister_ids.station),
+            chunk.clone(),
+        )
+        .unwrap();
+    assert_eq!(chunk_hash, hash(&chunk));
+
+    // check that the chunk is indeed in the external canister's chunk store
+    let chunks = env
+        .stored_chunks(external_canister_id, Some(canister_ids.station))
+        .unwrap();
+    assert_eq!(chunks, vec![chunk_hash]);
+
+    // prune the external canister's chunk store
+    let prune_canister_operation =
+        RequestOperationInput::PruneExternalCanister(PruneExternalCanisterOperationInput {
+            canister_id: external_canister_id,
+            prune: PruneExternalCanisterResourceDTO::ChunkStore,
+        });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        prune_canister_operation,
+    )
+    .unwrap();
+
+    // check that the external canister is still not empty
+    let status = canister_status(&env, Some(canister_ids.station), external_canister_id);
+    status.module_hash.unwrap();
+
+    // check that the external canister has an empty chunk store again
+    let chunks = env
+        .stored_chunks(external_canister_id, Some(canister_ids.station))
+        .unwrap();
+    assert!(chunks.is_empty());
+}
+
+#[test]
+fn prune_external_canister_state_test() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    // create and install the test canister (external canister)
+    let external_canister_id = deploy_test_canister(&env, canister_ids.station);
+
+    // check that the external canister is not empty
+    let status = canister_status(&env, Some(canister_ids.station), external_canister_id);
+    status.module_hash.unwrap();
+
+    // prune the external canister
+    let prune_canister_operation =
+        RequestOperationInput::PruneExternalCanister(PruneExternalCanisterOperationInput {
+            canister_id: external_canister_id,
+            prune: PruneExternalCanisterResourceDTO::State,
+        });
+    execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        prune_canister_operation,
+    )
+    .unwrap();
+
+    // check that the external canister is empty now
+    let status = canister_status(&env, Some(canister_ids.station), external_canister_id);
+    assert_eq!(status.module_hash, None);
 }
 
 #[test]

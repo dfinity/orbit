@@ -407,3 +407,24 @@ pub struct RestoreExternalCanisterOperationInput {
 pub struct RestoreExternalCanisterOperationDTO {
     pub input: RestoreExternalCanisterOperationInput,
 }
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum PruneExternalCanisterResourceDTO {
+    #[serde(rename = "snapshot", with = "serde_bytes")]
+    Snapshot(Vec<u8>),
+    #[serde(rename = "chunk_store")]
+    ChunkStore,
+    #[serde(rename = "state")]
+    State,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct PruneExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub prune: PruneExternalCanisterResourceDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct PruneExternalCanisterOperationDTO {
+    pub input: PruneExternalCanisterOperationInput,
+}

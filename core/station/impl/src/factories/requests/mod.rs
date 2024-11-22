@@ -33,6 +33,7 @@ mod edit_user;
 mod edit_user_group;
 mod fund_external_canister;
 mod manage_system_info;
+mod prune_external_canister;
 mod remove_address_book_entry;
 mod remove_request_policy;
 mod remove_user_group;
@@ -64,6 +65,8 @@ use self::{
     edit_request_policy::{EditRequestPolicyRequestCreate, EditRequestPolicyRequestExecute},
     edit_user::{EditUserRequestCreate, EditUserRequestExecute},
     edit_user_group::{EditUserGroupRequestCreate, EditUserGroupRequestExecute},
+    prune_external_canister::PruneExternalCanisterRequestCreate,
+    prune_external_canister::PruneExternalCanisterRequestExecute,
     remove_address_book_entry::{
         RemoveAddressBookEntryRequestCreate, RemoveAddressBookEntryRequestExecute,
     },
@@ -235,6 +238,12 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
+            RequestOperationInput::PruneExternalCanister(operation) => {
+                let creator = Box::new(PruneExternalCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
             RequestOperationInput::EditPermission(operation) => {
                 let creator = Box::new(EditPermissionRequestCreate {});
                 creator
@@ -357,6 +366,12 @@ impl RequestFactory {
             }
             RequestOperation::RestoreExternalCanister(operation) => {
                 Box::new(RestoreExternalCanisterRequestExecute::new(
+                    operation,
+                    Arc::clone(&CHANGE_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::PruneExternalCanister(operation) => {
+                Box::new(PruneExternalCanisterRequestExecute::new(
                     operation,
                     Arc::clone(&CHANGE_CANISTER_SERVICE),
                 ))

@@ -30,6 +30,7 @@ pub enum RequestOperationFilterType {
     FundExternalCanister(Principal),
     SnapshotExternalCanister(Principal),
     RestoreExternalCanister(Principal),
+    PruneExternalCanister(Principal),
 }
 
 impl From<RequestOperation> for RequestOperationFilterType {
@@ -87,6 +88,9 @@ impl From<RequestOperation> for RequestOperationFilterType {
             }
             RequestOperation::RestoreExternalCanister(operation) => {
                 RequestOperationFilterType::RestoreExternalCanister(operation.input.canister_id)
+            }
+            RequestOperation::PruneExternalCanister(operation) => {
+                RequestOperationFilterType::PruneExternalCanister(operation.input.canister_id)
             }
         }
     }

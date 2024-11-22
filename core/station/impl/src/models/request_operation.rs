@@ -41,6 +41,7 @@ pub enum RequestOperation {
     FundExternalCanister(FundExternalCanisterOperation),
     SnapshotExternalCanister(SnapshotExternalCanisterOperation),
     RestoreExternalCanister(RestoreExternalCanisterOperation),
+    PruneExternalCanister(PruneExternalCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
@@ -76,6 +77,9 @@ impl Display for RequestOperation {
             }
             RequestOperation::RestoreExternalCanister(_) => {
                 write!(f, "restore_external_canister")
+            }
+            RequestOperation::PruneExternalCanister(_) => {
+                write!(f, "prune_external_canister")
             }
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
@@ -645,6 +649,39 @@ pub struct RestoreExternalCanisterOperationInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct RestoreExternalCanisterOperation {
     pub input: RestoreExternalCanisterOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum PruneExternalCanisterResource {
+    Snapshot(Vec<u8>),
+    ChunkStore,
+    State,
+}
+
+impl Display for PruneExternalCanisterResource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PruneExternalCanisterResource::Snapshot(snapshot_id) => {
+                write!(f, "snapshot({})", hex::encode(snapshot_id))
+            }
+            PruneExternalCanisterResource::ChunkStore => write!(f, "chunk_store"),
+            PruneExternalCanisterResource::State => write!(f, "state"),
+        }
+    }
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct PruneExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub prune: PruneExternalCanisterResource,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct PruneExternalCanisterOperation {
+    pub input: PruneExternalCanisterOperationInput,
 }
 
 #[storable]

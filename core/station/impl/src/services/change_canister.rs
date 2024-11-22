@@ -1,11 +1,14 @@
 use crate::{
     errors::ChangeCanisterError,
-    models::{CanisterInstallMode, WasmModuleExtraChunks},
+    models::{CanisterInstallMode, PruneExternalCanisterResource, WasmModuleExtraChunks},
 };
 use candid::Principal;
 use ic_cdk::api::management_canister::{
     main as mgmt,
-    main::{CanisterIdRecord, LoadCanisterSnapshotArgs, TakeCanisterSnapshotArgs},
+    main::{
+        CanisterIdRecord, ClearChunkStoreArgument, DeleteCanisterSnapshotArgs,
+        LoadCanisterSnapshotArgs, TakeCanisterSnapshotArgs,
+    },
 };
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
@@ -58,6 +61,41 @@ impl ChangeCanisterService {
         }
 
         Ok(())
+    }
+
+    pub async fn prune_canister(
+        &self,
+        canister_id: Principal,
+        prune: PruneExternalCanisterResource,
+    ) -> ServiceResult<(), ChangeCanisterError> {
+        match prune {
+            PruneExternalCanisterResource::Snapshot(snapshot_id) => {
+                mgmt::delete_canister_snapshot(DeleteCanisterSnapshotArgs {
+                    canister_id: canister_id.to_owned(),
+                    snapshot_id,
+                })
+                .await
+                .map_err(|(_, err)| ChangeCanisterError::Failed {
+                    reason: err.to_string(),
+                })
+            }
+            PruneExternalCanisterResource::ChunkStore => {
+                mgmt::clear_chunk_store(ClearChunkStoreArgument {
+                    canister_id: canister_id.to_owned(),
+                })
+                .await
+                .map_err(|(_, err)| ChangeCanisterError::Failed {
+                    reason: err.to_string(),
+                })
+            }
+            PruneExternalCanisterResource::State => mgmt::uninstall_code(CanisterIdRecord {
+                canister_id: canister_id.to_owned(),
+            })
+            .await
+            .map_err(|(_, err)| ChangeCanisterError::Failed {
+                reason: err.to_string(),
+            }),
+        }
     }
 
     /// Take a snapshot of a canister.

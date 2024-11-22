@@ -759,6 +759,7 @@ export interface ListRequestsInput {
 export type ListRequestsOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
   { 'SnapshotExternalCanister' : [] | [Principal] } |
+  { 'PruneExternalCanister' : [] | [Principal] } |
   { 'ConfigureExternalCanister' : [] | [Principal] } |
   { 'ChangeExternalCanister' : [] | [Principal] } |
   { 'AddUser' : null } |
@@ -895,6 +896,15 @@ export interface PermissionCallerPrivileges {
 }
 export type PermissionResourceAction = { 'Read' : null } |
   { 'Update' : null };
+export interface PruneExternalCanisterOperation {
+  'input' : PruneExternalCanisterOperationInput,
+}
+export interface PruneExternalCanisterOperationInput {
+  'canister_id' : Principal,
+  'prune' : { 'snapshot' : Uint8Array | number[] } |
+    { 'state' : null } |
+    { 'chunk_store' : null },
+}
 export interface Quorum { 'min_approved' : number, 'approvers' : UserSpecifier }
 export interface QuorumPercentage {
   'min_approved' : number,
@@ -955,6 +965,7 @@ export type RequestExecutionSchedule = { 'Immediate' : null } |
 export type RequestOperation = { 'AddUserGroup' : AddUserGroupOperation } |
   { 'EditPermission' : EditPermissionOperation } |
   { 'SnapshotExternalCanister' : SnapshotExternalCanisterOperation } |
+  { 'PruneExternalCanister' : PruneExternalCanisterOperation } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperation } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperation } |
   { 'AddUser' : AddUserOperation } |
@@ -982,6 +993,7 @@ export type RequestOperationInput = {
   } |
   { 'EditPermission' : EditPermissionOperationInput } |
   { 'SnapshotExternalCanister' : SnapshotExternalCanisterOperationInput } |
+  { 'PruneExternalCanister' : PruneExternalCanisterOperationInput } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperationInput } |
   { 'AddUser' : AddUserOperationInput } |
@@ -1007,6 +1019,7 @@ export type RequestOperationInput = {
 export type RequestOperationType = { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
   { 'SnapshotExternalCanister' : null } |
+  { 'PruneExternalCanister' : null } |
   { 'ConfigureExternalCanister' : null } |
   { 'ChangeExternalCanister' : null } |
   { 'AddUser' : null } |

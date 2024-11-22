@@ -158,6 +158,17 @@ export const idlFactory = ({ IDL }) => {
     'input' : SnapshotExternalCanisterOperationInput,
     'snapshot_id' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
+  const PruneExternalCanisterOperationInput = IDL.Record({
+    'canister_id' : IDL.Principal,
+    'prune' : IDL.Variant({
+      'snapshot' : IDL.Vec(IDL.Nat8),
+      'state' : IDL.Null,
+      'chunk_store' : IDL.Null,
+    }),
+  });
+  const PruneExternalCanisterOperation = IDL.Record({
+    'input' : PruneExternalCanisterOperationInput,
+  });
   const Allow = IDL.Record({
     'user_groups' : IDL.Vec(UUID),
     'auth_scope' : AuthScope,
@@ -617,6 +628,7 @@ export const idlFactory = ({ IDL }) => {
     'AddUserGroup' : AddUserGroupOperation,
     'EditPermission' : EditPermissionOperation,
     'SnapshotExternalCanister' : SnapshotExternalCanisterOperation,
+    'PruneExternalCanister' : PruneExternalCanisterOperation,
     'ConfigureExternalCanister' : ConfigureExternalCanisterOperation,
     'ChangeExternalCanister' : ChangeExternalCanisterOperation,
     'AddUser' : AddUserOperation,
@@ -764,6 +776,7 @@ export const idlFactory = ({ IDL }) => {
     'AddUserGroup' : AddUserGroupOperationInput,
     'EditPermission' : EditPermissionOperationInput,
     'SnapshotExternalCanister' : SnapshotExternalCanisterOperationInput,
+    'PruneExternalCanister' : PruneExternalCanisterOperationInput,
     'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput,
     'ChangeExternalCanister' : ChangeExternalCanisterOperationInput,
     'AddUser' : AddUserOperationInput,
@@ -962,6 +975,7 @@ export const idlFactory = ({ IDL }) => {
     'AddUserGroup' : IDL.Null,
     'EditPermission' : IDL.Null,
     'SnapshotExternalCanister' : IDL.Opt(IDL.Principal),
+    'PruneExternalCanister' : IDL.Opt(IDL.Principal),
     'ConfigureExternalCanister' : IDL.Opt(IDL.Principal),
     'ChangeExternalCanister' : IDL.Opt(IDL.Principal),
     'AddUser' : IDL.Null,
@@ -1196,6 +1210,7 @@ export const idlFactory = ({ IDL }) => {
     'AddUserGroup' : IDL.Null,
     'EditPermission' : IDL.Null,
     'SnapshotExternalCanister' : IDL.Null,
+    'PruneExternalCanister' : IDL.Null,
     'ConfigureExternalCanister' : IDL.Null,
     'ChangeExternalCanister' : IDL.Null,
     'AddUser' : IDL.Null,
