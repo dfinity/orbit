@@ -31,7 +31,7 @@ benches:
     scopes: {}
   list_external_canisters_with_all_statuses:
     total:
-      instructions: 211825288
+      instructions: 230479541
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
