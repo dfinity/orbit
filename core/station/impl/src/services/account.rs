@@ -527,7 +527,6 @@ impl AccountService {
                     continue;
                 };
 
-                // let balance_query_result: BalanceQueryResult =
                 match (&account_asset.balance, balance_considered_fresh) {
                     (None, _) | (_, false) => {
                         let balance_update_guard_key = BalanceFetchGuardKey {
