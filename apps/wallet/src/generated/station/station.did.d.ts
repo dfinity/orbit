@@ -901,7 +901,7 @@ export interface PruneExternalCanisterOperation {
 }
 export interface PruneExternalCanisterOperationInput {
   'canister_id' : Principal,
-  'prune' : { 'snapshot' : Uint8Array | number[] } |
+  'prune' : { 'snapshot' : string } |
     { 'state' : null } |
     { 'chunk_store' : null },
 }

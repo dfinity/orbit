@@ -161,7 +161,7 @@ export const idlFactory = ({ IDL }) => {
   const PruneExternalCanisterOperationInput = IDL.Record({
     'canister_id' : IDL.Principal,
     'prune' : IDL.Variant({
-      'snapshot' : IDL.Vec(IDL.Nat8),
+      'snapshot' : IDL.Text,
       'state' : IDL.Null,
       'chunk_store' : IDL.Null,
     }),
