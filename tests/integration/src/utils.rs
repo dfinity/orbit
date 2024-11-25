@@ -1,7 +1,8 @@
 use crate::setup::{create_canister, get_canister_wasm, WALLET_ADMIN_USER};
 use crate::test_data::asset::list_assets;
+use candid::utils::ArgumentDecoder;
 use candid::Principal;
-use candid::{CandidType, Encode};
+use candid::{decode_args, CandidType, Encode};
 use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
 use ic_certified_assets::types::{
@@ -1093,4 +1094,17 @@ pub(crate) fn add_external_canister_call_any_method_permission_and_approval(
         }),
     )
     .expect("Failed to add approval policy to call external canister");
+}
+
+pub fn expect_await_call_result<T>(result: WasmResult) -> T
+where
+    T: for<'a> ArgumentDecoder<'a>,
+{
+    match result {
+        WasmResult::Reply(vec) => {
+            let result: T = decode_args(&vec).expect("Failed to decode result");
+            result
+        }
+        WasmResult::Reject(error) => panic!("Unexpected reject: {error}"),
+    }
 }

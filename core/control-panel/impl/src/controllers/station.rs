@@ -130,7 +130,7 @@ impl StationController {
     async fn deploy_station(&self, input: DeployStationInput) -> ApiResult<DeployStationResponse> {
         let ctx = CallContext::get();
         let _lock = STATE
-            .with(|state| CallerGuard::new(state.clone(), ctx.caller()))
+            .with(|state| CallerGuard::new(state.clone(), ctx.caller(), None))
             .ok_or(UserError::ConcurrentStationDeployment)?;
 
         let deployed_station_id = self.deploy_service.deploy_station(input, &ctx).await?;

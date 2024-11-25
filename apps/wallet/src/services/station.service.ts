@@ -3,7 +3,6 @@ import { Principal } from '@dfinity/principal';
 import { idlFactory } from '~/generated/station';
 import {
   Account,
-  AccountBalance,
   AccountCallerPrivileges,
   AddAccountOperationInput,
   AddAddressBookEntryOperationInput,
@@ -29,6 +28,7 @@ import {
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
+  FetchAccountBalancesResult,
   FundExternalCanisterOperationInput,
   GetAccountInput,
   GetAccountResult,
@@ -956,7 +956,9 @@ export class StationService {
     return variantIs(result, 'Healthy');
   }
 
-  async fetchAccountBalances(input: FetchAccountBalancesInput): Promise<AccountBalance[]> {
+  async fetchAccountBalances(
+    input: FetchAccountBalancesInput,
+  ): Promise<ExtractOk<FetchAccountBalancesResult>['balances']> {
     const result = await this.actor.fetch_account_balances(input);
 
     if (variantIs(result, 'Err')) {

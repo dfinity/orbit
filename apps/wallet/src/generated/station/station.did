@@ -1661,12 +1661,19 @@ type GetAccountResult = variant {
 type AccountBalance = record {
   // The account id.
   account_id : UUID;
+  // The account id.
+  asset_id : UUID;
   // The balance of the account.
   balance : nat;
   // The number of decimals used by the asset (e.g. `8` for `BTC`, `18` for `ETH`, etc.).
   decimals : nat32;
   // The time at which the balance was last updated.
   last_update_timestamp : TimestampRFC3339;
+  // The state of balance query:
+  //  - `fresh`: The balance was recently updated and is considered fresh.
+  //  - `stale`: The balance may be out of date.
+  //  - `stale_refreshing`: The balance may be out of date but it is being refreshed in the background.
+  query_state : text;
 };
 
 // Input type for getting a account balance.
@@ -1680,7 +1687,7 @@ type FetchAccountBalancesResult = variant {
   // The result data for a successful execution.
   Ok : record {
     // The account balance that was retrieved.
-    balances : vec AccountBalance;
+    balances : vec opt AccountBalance;
   };
   // The error that occurred (e.g. the user does not have the necessary permissions).
   Err : Error;

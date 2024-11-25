@@ -1,5 +1,6 @@
 use super::{AccountBalance, AssetId};
 use crate::core::validation::{EnsureAsset, EnsureIdExists};
+use crate::core::ACCOUNT_BALANCE_FRESHNESS_IN_MS;
 use crate::errors::{AccountError, RecordValidationError};
 use crate::models::Metadata;
 use crate::repositories::request_policy::REQUEST_POLICY_REPOSITORY;
@@ -246,6 +247,35 @@ impl Account {
 
     pub fn metadata_map(&self) -> HashMap<String, String> {
         self.metadata.map()
+    }
+}
+
+pub enum BalanceQueryState {
+    StaleRefreshing,
+    Stale,
+    Fresh,
+}
+
+impl fmt::Display for BalanceQueryState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            BalanceQueryState::StaleRefreshing => write!(f, "stale_refreshing"),
+            BalanceQueryState::Stale => write!(f, "stale"),
+            BalanceQueryState::Fresh => write!(f, "fresh"),
+        }
+    }
+}
+
+impl From<&AccountBalance> for BalanceQueryState {
+    fn from(balance: &AccountBalance) -> Self {
+        let balance_age_ms = crate::core::ic_cdk::api::time()
+            .saturating_sub(balance.last_modification_timestamp)
+            / 1000;
+        if balance_age_ms <= ACCOUNT_BALANCE_FRESHNESS_IN_MS {
+            BalanceQueryState::Fresh
+        } else {
+            BalanceQueryState::Stale
+        }
     }
 }
 

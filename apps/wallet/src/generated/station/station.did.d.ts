@@ -22,6 +22,8 @@ export interface AccountBalance {
   'decimals' : number,
   'balance' : bigint,
   'last_update_timestamp' : TimestampRFC3339,
+  'query_state' : string,
+  'asset_id' : UUID,
 }
 export interface AccountBalanceInfo {
   'decimals' : number,
@@ -563,7 +565,7 @@ export type ExternalCanisterState = { 'Active' : null } |
   { 'Archived' : null };
 export interface FetchAccountBalancesInput { 'account_ids' : Array<UUID> }
 export type FetchAccountBalancesResult = {
-    'Ok' : { 'balances' : Array<AccountBalance> }
+    'Ok' : { 'balances' : Array<[] | [AccountBalance]> }
   } |
   { 'Err' : Error };
 export type FundExternalCanisterOperation = FundExternalCanisterOperationInput;

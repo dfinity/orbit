@@ -2,7 +2,7 @@ use crate::{
     core::{
         authorization::Authorization,
         generate_uuid_v4,
-        ic_cdk::next_time,
+        ic_cdk::{api::time, next_time},
         read_system_info,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         write_system_info, CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
@@ -15,9 +15,9 @@ use crate::{
         request_specifier::RequestSpecifier,
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
         Account, AccountAddress, AccountBalance, AccountCallerPrivileges, AccountId,
-        AddAccountOperationInput, AddRequestPolicyOperationInput, AddressFormat, Blockchain,
-        CycleObtainStrategy, EditAccountOperationInput, EditPermissionOperationInput, MetadataItem,
-        TokenStandard,
+        AddAccountOperationInput, AddRequestPolicyOperationInput, AddressFormat, AssetId,
+        BalanceQueryState, Blockchain, CycleObtainStrategy, EditAccountOperationInput,
+        EditPermissionOperationInput, MetadataItem, TokenStandard,
     },
     repositories::{
         AccountRepository, AccountWhereClause, AssetRepository, ACCOUNT_REPOSITORY,
@@ -31,10 +31,14 @@ use crate::{
 use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    api::ServiceResult, model::ModelValidator, repository::Repository, types::UUID,
+    api::ServiceResult,
+    model::ModelValidator,
+    repository::Repository,
+    types::UUID,
+    utils::{CallerGuard, State},
 };
 use station_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput};
-use std::{collections::HashSet, sync::Arc};
+use std::{cell::RefCell, collections::HashSet, rc::Rc, sync::Arc, time::Duration};
 use uuid::Uuid;
 
 use super::SYSTEM_SERVICE;
@@ -46,6 +50,19 @@ lazy_static! {
         Arc::clone(&ACCOUNT_REPOSITORY),
         Arc::clone(&ASSET_REPOSITORY)
     ));
+}
+
+thread_local! {
+
+    pub static BALANCE_FETCH_GUARD_STATE:
+        Rc<RefCell<State<BalanceFetchGuardKey>>>
+     = Rc::new(RefCell::new(State::default()));
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct BalanceFetchGuardKey {
+    account_id: AccountId,
+    asset_id: AssetId,
 }
 
 #[derive(Default, Debug)]
@@ -479,7 +496,7 @@ impl AccountService {
     pub async fn fetch_account_balances(
         &self,
         input: FetchAccountBalancesInput,
-    ) -> ServiceResult<Vec<AccountBalanceDTO>> {
+    ) -> ServiceResult<Vec<Option<AccountBalanceDTO>>> {
         if input.account_ids.is_empty() || input.account_ids.len() > 5 {
             Err(AccountError::AccountBalancesBatchRange { min: 1, max: 5 })?
         }
@@ -510,9 +527,35 @@ impl AccountService {
                     continue;
                 };
 
-                let balance: AccountBalance =
-                    match (&account_asset.balance, balance_considered_fresh) {
-                        (None, _) | (_, false) => {
+                // let balance_query_result: BalanceQueryResult =
+                match (&account_asset.balance, balance_considered_fresh) {
+                    (None, _) | (_, false) => {
+                        let balance_update_guard_key = BalanceFetchGuardKey {
+                            account_id: account.id,
+                            asset_id: asset.id,
+                        };
+
+                        let _lock = BALANCE_FETCH_GUARD_STATE.with(|state| {
+                            CallerGuard::new(
+                                state.clone(),
+                                balance_update_guard_key,
+                                Some(time() + Duration::from_secs(60).as_nanos() as u64),
+                            )
+                        });
+
+                        if _lock.is_none() {
+                            if let Some(stale_balance) = &account_asset.balance {
+                                balances.push(Some(AccountMapper::to_balance_dto(
+                                    stale_balance.to_owned(),
+                                    asset.decimals,
+                                    account.id,
+                                    asset.id,
+                                    BalanceQueryState::StaleRefreshing,
+                                )));
+                            } else {
+                                balances.push(None);
+                            }
+                        } else {
                             let blockchain_api = BlockchainApiFactory::build(&asset.blockchain)?;
                             let fetched_balance =
                                 blockchain_api.balance(&asset, &account.addresses).await?;
@@ -523,16 +566,25 @@ impl AccountService {
 
                             account_asset.balance = Some(new_balance.clone());
 
-                            new_balance
+                            balances.push(Some(AccountMapper::to_balance_dto(
+                                new_balance,
+                                asset.decimals,
+                                account.id,
+                                asset.id,
+                                BalanceQueryState::Fresh,
+                            )));
                         }
-                        (Some(balance), _) => balance.to_owned(),
-                    };
-
-                balances.push(AccountMapper::to_balance_dto(
-                    balance,
-                    asset.decimals,
-                    account.id,
-                ));
+                    }
+                    (Some(balance), true) => {
+                        balances.push(Some(AccountMapper::to_balance_dto(
+                            balance.to_owned(),
+                            asset.decimals,
+                            account.id,
+                            asset.id,
+                            BalanceQueryState::Fresh,
+                        )));
+                    }
+                };
             }
 
             self.account_repository.insert(account_key.clone(), account);

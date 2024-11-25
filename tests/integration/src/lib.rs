@@ -3,6 +3,7 @@
 use candid::Principal;
 use pocket_ic::PocketIc;
 
+mod account_tests;
 mod address_book_tests;
 mod asset_tests;
 mod control_panel_tests;

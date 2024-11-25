@@ -101,9 +101,11 @@ pub struct FetchAccountBalancesInput {
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct AccountBalanceDTO {
     pub account_id: String,
+    pub asset_id: String,
     pub balance: candid::Nat,
     pub decimals: u32,
     pub last_update_timestamp: String,
+    pub query_state: String,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -115,7 +117,7 @@ pub struct AccountBalanceInfoDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub struct FetchAccountBalancesResponse {
-    pub balances: Vec<AccountBalanceDTO>,
+    pub balances: Vec<Option<AccountBalanceDTO>>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
