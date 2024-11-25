@@ -3,7 +3,7 @@ use crate::{
     models::resource::{ExternalCanisterId, ExternalCanisterResourceAction, Resource},
     services::{ExternalCanisterService, EXTERNAL_CANISTER_SERVICE},
 };
-use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse, Snapshot};
+use ic_cdk::api::management_canister::main::{CanisterIdRecord, CanisterStatusResponse};
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ApiResult;
@@ -11,7 +11,7 @@ use orbit_essentials::with_middleware;
 use station_api::{
     ExternalCanisterCallerPrivilegesDTO, GetExternalCanisterFiltersInput,
     GetExternalCanisterFiltersResponse, GetExternalCanisterInput, GetExternalCanisterResponse,
-    ListExternalCanistersInput, ListExternalCanistersResponse,
+    ListExternalCanistersInput, ListExternalCanistersResponse, Snapshot,
 };
 use std::sync::Arc;
 
@@ -70,7 +70,10 @@ impl ExternalCanisterController {
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]
     async fn canister_snapshots(&self, input: CanisterIdRecord) -> ApiResult<Vec<Snapshot>> {
-        self.canister_service.canister_snapshots(input).await
+        self.canister_service
+            .canister_snapshots(input)
+            .await
+            .map(|snapshots| snapshots.into_iter().map(|s| s.into()).collect())
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]

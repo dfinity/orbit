@@ -1,4 +1,6 @@
 use candid::{CandidType, Deserialize};
+use ic_cdk::api::management_canister::main as mgmt;
+use orbit_essentials::utils::timestamp_to_rfc3339;
 use std::collections::HashMap;
 
 pub type TimestampRfc3339 = String;
@@ -36,4 +38,21 @@ pub enum CanisterInstallMode {
     Reinstall = 2,
     #[serde(rename = "upgrade")]
     Upgrade = 3,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct Snapshot {
+    pub snapshot_id: String,
+    pub taken_at_timestamp: TimestampRfc3339,
+    pub total_size: u64,
+}
+
+impl From<mgmt::Snapshot> for Snapshot {
+    fn from(snapshot: mgmt::Snapshot) -> Snapshot {
+        Snapshot {
+            snapshot_id: hex::encode(&snapshot.id),
+            taken_at_timestamp: timestamp_to_rfc3339(&snapshot.taken_at_timestamp),
+            total_size: snapshot.total_size,
+        }
+    }
 }

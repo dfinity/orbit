@@ -1297,7 +1297,7 @@ impl From<SnapshotExternalCanisterOperationInput>
     ) -> station_api::SnapshotExternalCanisterOperationInput {
         station_api::SnapshotExternalCanisterOperationInput {
             canister_id: input.canister_id,
-            replace_snapshot: input.replace_snapshot,
+            replace_snapshot: input.replace_snapshot.map(hex::encode),
             force: input.force,
         }
     }
@@ -1311,7 +1311,14 @@ impl From<station_api::SnapshotExternalCanisterOperationInput>
     ) -> SnapshotExternalCanisterOperationInput {
         SnapshotExternalCanisterOperationInput {
             canister_id: input.canister_id,
-            replace_snapshot: input.replace_snapshot,
+            replace_snapshot: input.replace_snapshot.map(|snapshot_id| {
+                hex::decode(&snapshot_id).unwrap_or_else(|err| {
+                    ic_cdk::trap(&format!(
+                        "Failed to decode snapshot id {} to hex: {}",
+                        snapshot_id, err
+                    ))
+                })
+            }),
             force: input.force,
         }
     }
@@ -1321,7 +1328,7 @@ impl From<SnapshotExternalCanisterOperation> for SnapshotExternalCanisterOperati
     fn from(operation: SnapshotExternalCanisterOperation) -> SnapshotExternalCanisterOperationDTO {
         SnapshotExternalCanisterOperationDTO {
             input: operation.input.into(),
-            snapshot_id: operation.snapshot_id,
+            snapshot_id: operation.snapshot_id.map(hex::encode),
         }
     }
 }
@@ -1334,7 +1341,7 @@ impl From<RestoreExternalCanisterOperationInput>
     ) -> station_api::RestoreExternalCanisterOperationInput {
         station_api::RestoreExternalCanisterOperationInput {
             canister_id: input.canister_id,
-            snapshot_id: input.snapshot_id,
+            snapshot_id: hex::encode(&input.snapshot_id),
         }
     }
 }
@@ -1347,7 +1354,12 @@ impl From<station_api::RestoreExternalCanisterOperationInput>
     ) -> RestoreExternalCanisterOperationInput {
         RestoreExternalCanisterOperationInput {
             canister_id: input.canister_id,
-            snapshot_id: input.snapshot_id,
+            snapshot_id: hex::decode(&input.snapshot_id).unwrap_or_else(|err| {
+                ic_cdk::trap(&format!(
+                    "Failed to decode snapshot id {} to hex: {}",
+                    input.snapshot_id, err
+                ))
+            }),
         }
     }
 }
