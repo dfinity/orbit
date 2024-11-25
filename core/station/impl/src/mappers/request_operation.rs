@@ -1364,7 +1364,7 @@ impl From<PruneExternalCanisterResource> for PruneExternalCanisterResourceDTO {
     fn from(input: PruneExternalCanisterResource) -> PruneExternalCanisterResourceDTO {
         match input {
             PruneExternalCanisterResource::Snapshot(snapshot_id) => {
-                PruneExternalCanisterResourceDTO::Snapshot(snapshot_id)
+                PruneExternalCanisterResourceDTO::Snapshot(hex::encode(snapshot_id))
             }
             PruneExternalCanisterResource::ChunkStore => {
                 PruneExternalCanisterResourceDTO::ChunkStore
@@ -1378,7 +1378,14 @@ impl From<PruneExternalCanisterResourceDTO> for PruneExternalCanisterResource {
     fn from(input: PruneExternalCanisterResourceDTO) -> PruneExternalCanisterResource {
         match input {
             PruneExternalCanisterResourceDTO::Snapshot(snapshot_id) => {
-                PruneExternalCanisterResource::Snapshot(snapshot_id)
+                PruneExternalCanisterResource::Snapshot(hex::decode(&snapshot_id).unwrap_or_else(
+                    |err| {
+                        ic_cdk::trap(&format!(
+                            "Failed to convert snapshot id {} to hex: {}",
+                            snapshot_id, err
+                        ))
+                    },
+                ))
             }
             PruneExternalCanisterResourceDTO::ChunkStore => {
                 PruneExternalCanisterResource::ChunkStore

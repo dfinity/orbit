@@ -410,8 +410,8 @@ pub struct RestoreExternalCanisterOperationDTO {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum PruneExternalCanisterResourceDTO {
-    #[serde(rename = "snapshot", with = "serde_bytes")]
-    Snapshot(Vec<u8>),
+    #[serde(rename = "snapshot")]
+    Snapshot(String),
     #[serde(rename = "chunk_store")]
     ChunkStore,
     #[serde(rename = "state")]

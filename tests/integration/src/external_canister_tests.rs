@@ -1567,7 +1567,7 @@ fn snapshot_external_canister_test() {
     let prune_canister_operation =
         RequestOperationInput::PruneExternalCanister(PruneExternalCanisterOperationInput {
             canister_id: external_canister_id,
-            prune: PruneExternalCanisterResourceDTO::Snapshot(new_snapshot_id),
+            prune: PruneExternalCanisterResourceDTO::Snapshot(hex::encode(new_snapshot_id)),
         });
     execute_request(
         &env,

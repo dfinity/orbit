@@ -853,7 +853,7 @@ type PruneExternalCanisterOperationInput = record {
   // The resource to prune.
   prune : variant {
     chunk_store;
-    snapshot : blob;
+    snapshot : text;
     state;
   };
 };
