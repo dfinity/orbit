@@ -1661,7 +1661,7 @@ type GetAccountResult = variant {
 type AccountBalance = record {
   // The account id.
   account_id : UUID;
-  // The account id.
+  // The asset id.
   asset_id : UUID;
   // The balance of the account.
   balance : nat;
