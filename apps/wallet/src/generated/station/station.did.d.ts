@@ -164,9 +164,9 @@ export interface CanisterMethod {
 export interface CanisterSnapshotsInput { 'canister_id' : Principal }
 export type CanisterSnapshotsResponse = Array<
   {
-    'id' : Uint8Array | number[],
     'total_size' : bigint,
-    'taken_at_timestamp' : bigint,
+    'taken_at_timestamp' : TimestampRFC3339,
+    'snapshot_id' : string,
   }
 >;
 export type CanisterSnapshotsResult = { 'Ok' : CanisterSnapshotsResponse } |
@@ -1119,7 +1119,7 @@ export interface RestoreExternalCanisterOperation {
 }
 export interface RestoreExternalCanisterOperationInput {
   'canister_id' : Principal,
-  'snapshot_id' : Uint8Array | number[],
+  'snapshot_id' : string,
 }
 export interface SetDisasterRecoveryOperation {
   'committee' : [] | [DisasterRecoveryCommittee],
@@ -1130,11 +1130,11 @@ export interface SetDisasterRecoveryOperationInput {
 export type Sha256Hash = string;
 export interface SnapshotExternalCanisterOperation {
   'input' : SnapshotExternalCanisterOperationInput,
-  'snapshot_id' : [] | [Uint8Array | number[]],
+  'snapshot_id' : [] | [string],
 }
 export interface SnapshotExternalCanisterOperationInput {
   'force' : boolean,
-  'replace_snapshot' : [] | [Uint8Array | number[]],
+  'replace_snapshot' : [] | [string],
   'canister_id' : Principal,
 }
 export type SortByDirection = { 'Asc' : null } |

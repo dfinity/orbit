@@ -151,12 +151,12 @@ export const idlFactory = ({ IDL }) => {
   });
   const SnapshotExternalCanisterOperationInput = IDL.Record({
     'force' : IDL.Bool,
-    'replace_snapshot' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'replace_snapshot' : IDL.Opt(IDL.Text),
     'canister_id' : IDL.Principal,
   });
   const SnapshotExternalCanisterOperation = IDL.Record({
     'input' : SnapshotExternalCanisterOperationInput,
-    'snapshot_id' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'snapshot_id' : IDL.Opt(IDL.Text),
   });
   const Allow = IDL.Record({
     'user_groups' : IDL.Vec(UUID),
@@ -593,7 +593,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const RestoreExternalCanisterOperationInput = IDL.Record({
     'canister_id' : IDL.Principal,
-    'snapshot_id' : IDL.Vec(IDL.Nat8),
+    'snapshot_id' : IDL.Text,
   });
   const RestoreExternalCanisterOperation = IDL.Record({
     'input' : RestoreExternalCanisterOperationInput,
@@ -674,9 +674,9 @@ export const idlFactory = ({ IDL }) => {
   const CanisterSnapshotsInput = IDL.Record({ 'canister_id' : IDL.Principal });
   const CanisterSnapshotsResponse = IDL.Vec(
     IDL.Record({
-      'id' : IDL.Vec(IDL.Nat8),
       'total_size' : IDL.Nat64,
-      'taken_at_timestamp' : IDL.Nat64,
+      'taken_at_timestamp' : TimestampRFC3339,
+      'snapshot_id' : IDL.Text,
     })
   );
   const CanisterSnapshotsResult = IDL.Variant({
