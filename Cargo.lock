@@ -4677,6 +4677,8 @@ name = "station-api"
 version = "0.0.2-alpha.7"
 dependencies = [
  "candid",
+ "hex",
+ "ic-cdk 0.16.0",
  "orbit-essentials",
  "serde",
  "serde_bytes",

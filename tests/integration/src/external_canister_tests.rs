@@ -1438,7 +1438,7 @@ fn snapshot_external_canister_test() {
         .list_canister_snapshots(external_canister_id, Some(canister_ids.station))
         .unwrap();
     assert_eq!(snapshots.len(), 1);
-    assert_eq!(snapshots[0].id, snapshot_id);
+    assert_eq!(snapshots[0].id, hex::decode(&snapshot_id).unwrap());
 
     // retrieve the existing snapshots from a dedicated endpoint of the station:
     // the snapshots should match the snapshots from the management canister
@@ -1560,7 +1560,7 @@ fn snapshot_external_canister_test() {
         .into_iter()
         .map(|snapshot| snapshot.id)
         .collect();
-    assert_eq!(snapshots, vec![new_snapshot_id]);
+    assert_eq!(snapshots, vec![hex::decode(&new_snapshot_id).unwrap()]);
 }
 
 #[test]

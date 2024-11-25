@@ -825,7 +825,7 @@ type SnapshotExternalCanisterOperationInput = record {
   // The canister to snapshot.
   canister_id : principal;
   // A snapshot to be replaced.
-  replace_snapshot : opt blob;
+  replace_snapshot : opt text;
   // Should a snapshot be taken if the external canister fails to stop.
   force : bool;
 };
@@ -833,14 +833,14 @@ type SnapshotExternalCanisterOperationInput = record {
 type SnapshotExternalCanisterOperation = record {
   input : SnapshotExternalCanisterOperationInput;
   // The snapshot id of the new snapshot.
-  snapshot_id : opt blob;
+  snapshot_id : opt text;
 };
 
 type RestoreExternalCanisterOperationInput = record {
   // The canister to restore from a snapshot.
   canister_id : principal;
   // A snapshot to be restored.
-  snapshot_id : blob;
+  snapshot_id : text;
 };
 
 type RestoreExternalCanisterOperation = record {
@@ -2693,8 +2693,8 @@ type CanisterSnapshotsInput = record {
 };
 
 type CanisterSnapshotsResponse = vec record {
-  id : blob;
-  taken_at_timestamp : nat64;
+  snapshot_id : text;
+  taken_at_timestamp : TimestampRFC3339;
   total_size : nat64;
 };
 
