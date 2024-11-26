@@ -270,7 +270,7 @@ impl From<&AccountBalance> for BalanceQueryState {
     fn from(balance: &AccountBalance) -> Self {
         let balance_age_ms = crate::core::ic_cdk::api::time()
             .saturating_sub(balance.last_modification_timestamp)
-            / 1000;
+            / 1_000_000;
         if balance_age_ms <= ACCOUNT_BALANCE_FRESHNESS_IN_MS {
             BalanceQueryState::Fresh
         } else {

@@ -14,7 +14,7 @@ use crate::{
         request_policy_rule::RequestPolicyRuleInput,
         request_specifier::RequestSpecifier,
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
-        Account, AccountAddress, AccountBalance, AccountCallerPrivileges, AccountId,
+        Account, AccountAddress, AccountBalance, AccountCallerPrivileges, AccountId, AccountKey,
         AddAccountOperationInput, AddRequestPolicyOperationInput, AddressFormat, AssetId,
         BalanceQueryState, Blockchain, CycleObtainStrategy, EditAccountOperationInput,
         EditPermissionOperationInput, MetadataItem, TokenStandard,
@@ -38,7 +38,13 @@ use orbit_essentials::{
     utils::{CallerGuard, State},
 };
 use station_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput};
-use std::{cell::RefCell, collections::HashSet, rc::Rc, sync::Arc, time::Duration};
+use std::{
+    cell::RefCell,
+    collections::{BTreeMap, HashSet},
+    rc::Rc,
+    sync::Arc,
+    time::Duration,
+};
 use uuid::Uuid;
 
 use super::SYSTEM_SERVICE;
@@ -512,9 +518,11 @@ impl AccountService {
             .find_by_ids(account_ids.iter().map(|id| *id.as_bytes()).collect());
 
         let mut balances = Vec::new();
-        for mut account in accounts {
-            let account_key = account.to_key();
-            for account_asset in account.assets.iter_mut() {
+        let mut account_balance_updates: BTreeMap<AccountId, Vec<(AssetId, AccountBalance)>> =
+            Default::default();
+
+        for account in accounts {
+            for account_asset in account.assets.iter() {
                 let balance_considered_fresh = match &account_asset.balance {
                     Some(balance) => {
                         let balance_age_ns = next_time() - balance.last_modification_timestamp;
@@ -538,7 +546,7 @@ impl AccountService {
                             CallerGuard::new(
                                 state.clone(),
                                 balance_update_guard_key,
-                                Some(time() + Duration::from_secs(60).as_nanos() as u64),
+                                Some(time() + Duration::from_secs(5 * 60).as_nanos() as u64),
                             )
                         });
 
@@ -563,7 +571,10 @@ impl AccountService {
                                 last_modification_timestamp: next_time(),
                             };
 
-                            account_asset.balance = Some(new_balance.clone());
+                            account_balance_updates
+                                .entry(account.id)
+                                .or_default()
+                                .push((asset.id, new_balance.clone()));
 
                             balances.push(Some(AccountMapper::to_balance_dto(
                                 new_balance,
@@ -585,8 +596,35 @@ impl AccountService {
                     }
                 };
             }
+        }
 
-            self.account_repository.insert(account_key.clone(), account);
+        for (account_id, asset_balances) in account_balance_updates.into_iter() {
+            if let Some(mut account) = self.account_repository.get(&AccountKey { id: account_id }) {
+                for (asset_id, account_balance) in asset_balances.into_iter() {
+                    if let Some(account_asset) = account
+                        .assets
+                        .iter_mut()
+                        .find(|asset| asset.asset_id == asset_id)
+                    {
+                        account_asset.balance = Some(account_balance);
+                    } else {
+                        // Account no longer has the asset after the balance was fetched
+                        ic_cdk::println!(
+                        "Could not store new balance. Account with id {} no longer has asset with id {}",
+                        Uuid::from_bytes(account_id).hyphenated(),
+                        Uuid::from_bytes(asset_id).hyphenated()
+                    );
+                    }
+                }
+
+                self.account_repository.insert(account.to_key(), account);
+            } else {
+                // Account no longer exists after the balance was fetched
+                ic_cdk::println!(
+                    "Could not store new balance. Account with id {} no longer exists",
+                    Uuid::from_bytes(account_id).hyphenated()
+                );
+            }
         }
 
         Ok(balances)
