@@ -173,7 +173,7 @@ const props = withDefaults(defineProps<RequestsPageProps>(), {
 const i18n = useI18n();
 const pageTitle = computed(() => props.title || i18n.t('pages.requests.title'));
 const station = useStationStore();
-const availableDomains = useAvailableDomains();
+const availableDomains = useAvailableDomains({ filterBy: props.domains });
 const statuses = useRequestStatusItems();
 const filterUtils = useFilterUtils();
 const disableRefresh = ref(false);
@@ -200,7 +200,9 @@ const slideGroupIdIndex = ref<number>(
 watch(
   slideGroupIdIndex,
   index => {
-    filters.value.groupBy = availableDomains.value[index].id ?? RequestDomains.All;
+    const fallbackDomain = props.domains.length ? props.domains[0] : RequestDomains.All;
+
+    filters.value.groupBy = availableDomains.value?.[index]?.id ?? fallbackDomain;
   },
   { immediate: true },
 );

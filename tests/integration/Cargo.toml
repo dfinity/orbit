@@ -7,7 +7,7 @@ edition = '2021'
 [dependencies]
 candid = { workspace = true }
 candid_parser = { workspace = true }
-dfx-orbit = { path = '../../tools/dfx-orbit', version = '0.6.0' }
+dfx-orbit = { path = '../../tools/dfx-orbit', version = '0.7.0' }
 flate2 = { workspace = true }
 hex = { workspace = true }
 orbit-essentials = { path = '../../libs/orbit-essentials', version = '0.0.2-alpha.6' }
@@ -30,5 +30,5 @@ tokio.workspace = true
 uuid = { workspace = true }
 control-panel-api = { path = '../../core/control-panel/api', version = '0.0.2-alpha.4' }
 upgrader-api = { path = '../../core/upgrader/api', version = '0.0.2-alpha.6' }
-station-api = { path = '../../core/station/api', version = '0.0.2-alpha.7' }
+station-api = { path = '../../core/station/api', version = '0.0.2-alpha.8' }
 wat = { workspace = true }

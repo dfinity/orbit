@@ -1,3 +1,27 @@
+## 0.0.2-alpha.8 (2024-11-22)
+
+
+### 🚀 Features
+
+- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))
+
+- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))
+
+- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))
+
+- **enable:** wallet ui accepts wasm chunk store from registry ([#433](https://github.com/dfinity/orbit/pull/433))
+
+
+### 🧱 Updated Dependencies
+
+- Updated station-api to 0.0.2-alpha.8
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Leon Tan
+
 ## 0.0.2-alpha.7 (2024-10-22)
 
 
