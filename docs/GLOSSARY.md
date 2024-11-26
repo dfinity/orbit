@@ -137,7 +137,7 @@ An Orbit Asset holds metadata about an asset on the blockchain. Besides typical 
 
 ### Account
 
-An account is a record in the station canister that represents a user's ownership of a specific assets. Accounts can hold multiple types of assets, such as tokens, NFTs, or other fungible or non-fungible assets. Accounts can be created, updated, and archived by the station users through requests.
+An account is a record in the station canister that represents a user's ownership of specific assets. Accounts can hold multiple types of assets, such as tokens, NFTs, or other fungible or non-fungible assets. Accounts can be created, updated, and archived by the station users through requests.
 
 #### Account Name
 
