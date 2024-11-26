@@ -15,7 +15,7 @@ lazy_static! {
     pub static ref DEFAULT_PERMISSIONS: Vec<(Allow, Resource)> = vec![
         // all authenticated users can read the capabilities of the canister
         (
-            Allow::public(),
+            Allow::authenticated(),
             Resource::System(SystemResourceAction::Capabilities),
         ),
         // Admins can read the system info which includes the canister's version, cycles, etc.

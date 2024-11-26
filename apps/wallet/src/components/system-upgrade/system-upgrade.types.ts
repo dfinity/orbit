@@ -1,9 +1,10 @@
-import { SystemUpgradeTarget } from '~/generated/station/station.did';
+import { SystemUpgradeTarget, WasmModuleExtraChunks } from '~/generated/station/station.did';
 
 export interface SystemUpgradeFormValue {
   target?: SystemUpgradeTarget;
   wasmModule?: ArrayBuffer;
   wasmInitArg?: string;
+  wasmModuleExtraChunks?: WasmModuleExtraChunks;
   comment?: string;
 }
 
