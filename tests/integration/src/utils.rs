@@ -775,7 +775,7 @@ struct StoreArg {
     pub sha256: Option<Vec<u8>>,
 }
 
-fn hash(data: &Vec<u8>) -> Vec<u8> {
+pub(crate) fn hash(data: &Vec<u8>) -> Vec<u8> {
     let mut hasher = Sha256::new();
     hasher.update(data);
     hasher.finalize().to_vec()

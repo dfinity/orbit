@@ -66,6 +66,9 @@ impl From<station_api::ListRequestsOperationTypeDTO> for ListRequestsOperationTy
             station_api::ListRequestsOperationTypeDTO::RestoreExternalCanister(canister_id) => {
                 ListRequestsOperationType::RestoreExternalCanister(canister_id)
             }
+            station_api::ListRequestsOperationTypeDTO::PruneExternalCanister(canister_id) => {
+                ListRequestsOperationType::PruneExternalCanister(canister_id)
+            }
             station_api::ListRequestsOperationTypeDTO::EditPermission => {
                 ListRequestsOperationType::EditPermission
             }
@@ -127,6 +130,9 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::RestoreExternalCanister => {
                 RequestOperationType::RestoreExternalCanister
             }
+            RequestOperationTypeDTO::PruneExternalCanister => {
+                RequestOperationType::PruneExternalCanister
+            }
             RequestOperationTypeDTO::EditPermission => RequestOperationType::EditPermission,
             RequestOperationTypeDTO::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestOperationTypeDTO::EditRequestPolicy => RequestOperationType::EditRequestPolicy,
@@ -183,6 +189,9 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::RestoreExternalCanister => {
                 RequestOperationTypeDTO::RestoreExternalCanister
             }
+            RequestOperationType::PruneExternalCanister => {
+                RequestOperationTypeDTO::PruneExternalCanister
+            }
             RequestOperationType::EditPermission => RequestOperationTypeDTO::EditPermission,
             RequestOperationType::AddRequestPolicy => RequestOperationTypeDTO::AddRequestPolicy,
             RequestOperationType::EditRequestPolicy => RequestOperationTypeDTO::EditRequestPolicy,
@@ -233,6 +242,9 @@ impl From<RequestOperation> for RequestOperationType {
             }
             RequestOperation::RestoreExternalCanister(_) => {
                 RequestOperationType::RestoreExternalCanister
+            }
+            RequestOperation::PruneExternalCanister(_) => {
+                RequestOperationType::PruneExternalCanister
             }
             RequestOperation::EditPermission(_) => RequestOperationType::EditPermission,
             RequestOperation::AddRequestPolicy(_) => RequestOperationType::AddRequestPolicy,

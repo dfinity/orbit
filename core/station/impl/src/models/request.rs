@@ -297,6 +297,7 @@ fn validate_request_operation_foreign_keys(
         }
         RequestOperation::SnapshotExternalCanister(_) => (),
         RequestOperation::RestoreExternalCanister(_) => (),
+        RequestOperation::PruneExternalCanister(_) => (),
         RequestOperation::AddRequestPolicy(op) => {
             op.input.specifier.validate()?;
             op.input.rule.validate()?;

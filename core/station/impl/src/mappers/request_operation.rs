@@ -34,9 +34,11 @@ use crate::{
         ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
         ExternalCanisterPermissionsUpdateInput, ExternalCanisterRequestPoliciesCreateInput,
         ExternalCanisterRequestPoliciesUpdateInput, FundExternalCanisterOperation, LogVisibility,
-        ManageSystemInfoOperation, ManageSystemInfoOperationInput, RemoveAddressBookEntryOperation,
-        RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
-        RequestOperation, RestoreExternalCanisterOperation, RestoreExternalCanisterOperationInput,
+        ManageSystemInfoOperation, ManageSystemInfoOperationInput, PruneExternalCanisterOperation,
+        PruneExternalCanisterOperationInput, PruneExternalCanisterResource,
+        RemoveAddressBookEntryOperation, RemoveRequestPolicyOperation,
+        RemoveRequestPolicyOperationInput, RemoveUserGroupOperation, RequestOperation,
+        RestoreExternalCanisterOperation, RestoreExternalCanisterOperationInput,
         SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
         SnapshotExternalCanisterOperation, SnapshotExternalCanisterOperationInput,
         SystemUpgradeOperation, SystemUpgradeOperationInput, SystemUpgradeTarget,
@@ -52,7 +54,8 @@ use station_api::{
     AddAccountOperationDTO, AddAddressBookEntryOperationDTO, AddUserOperationDTO,
     CallExternalCanisterOperationDTO, CanisterMethodDTO, ChangeExternalCanisterOperationDTO,
     CreateExternalCanisterOperationDTO, EditAccountOperationDTO, EditAddressBookEntryOperationDTO,
-    EditUserOperationDTO, NetworkDTO, RemoveAddressBookEntryOperationDTO, RequestOperationDTO,
+    EditUserOperationDTO, NetworkDTO, PruneExternalCanisterOperationDTO,
+    PruneExternalCanisterResourceDTO, RemoveAddressBookEntryOperationDTO, RequestOperationDTO,
     RestoreExternalCanisterOperationDTO, SnapshotExternalCanisterOperationDTO,
     TransferOperationDTO,
 };
@@ -1369,6 +1372,75 @@ impl From<RestoreExternalCanisterOperation> for RestoreExternalCanisterOperation
     }
 }
 
+impl From<PruneExternalCanisterResource> for PruneExternalCanisterResourceDTO {
+    fn from(input: PruneExternalCanisterResource) -> PruneExternalCanisterResourceDTO {
+        match input {
+            PruneExternalCanisterResource::Snapshot(snapshot_id) => {
+                PruneExternalCanisterResourceDTO::Snapshot(hex::encode(snapshot_id))
+            }
+            PruneExternalCanisterResource::ChunkStore => {
+                PruneExternalCanisterResourceDTO::ChunkStore
+            }
+            PruneExternalCanisterResource::State => PruneExternalCanisterResourceDTO::State,
+        }
+    }
+}
+
+impl From<PruneExternalCanisterResourceDTO> for PruneExternalCanisterResource {
+    fn from(input: PruneExternalCanisterResourceDTO) -> PruneExternalCanisterResource {
+        match input {
+            PruneExternalCanisterResourceDTO::Snapshot(snapshot_id) => {
+                PruneExternalCanisterResource::Snapshot(hex::decode(&snapshot_id).unwrap_or_else(
+                    |err| {
+                        ic_cdk::trap(&format!(
+                            "Failed to convert snapshot id {} to hex: {}",
+                            snapshot_id, err
+                        ))
+                    },
+                ))
+            }
+            PruneExternalCanisterResourceDTO::ChunkStore => {
+                PruneExternalCanisterResource::ChunkStore
+            }
+            PruneExternalCanisterResourceDTO::State => PruneExternalCanisterResource::State,
+        }
+    }
+}
+
+impl From<PruneExternalCanisterOperationInput>
+    for station_api::PruneExternalCanisterOperationInput
+{
+    fn from(
+        input: PruneExternalCanisterOperationInput,
+    ) -> station_api::PruneExternalCanisterOperationInput {
+        station_api::PruneExternalCanisterOperationInput {
+            canister_id: input.canister_id,
+            prune: input.prune.into(),
+        }
+    }
+}
+
+impl From<station_api::PruneExternalCanisterOperationInput>
+    for PruneExternalCanisterOperationInput
+{
+    fn from(
+        input: station_api::PruneExternalCanisterOperationInput,
+    ) -> PruneExternalCanisterOperationInput {
+        PruneExternalCanisterOperationInput {
+            canister_id: input.canister_id,
+            prune: input.prune.into(),
+        }
+    }
+}
+
+impl From<PruneExternalCanisterOperation> for PruneExternalCanisterOperationDTO {
+    fn from(operation: PruneExternalCanisterOperation) -> PruneExternalCanisterOperationDTO {
+        PruneExternalCanisterOperationDTO {
+            input: operation.input.into(),
+        }
+    }
+}
+
 impl From<EditPermissionOperationInput> for station_api::EditPermissionOperationInput {
     fn from(input: EditPermissionOperationInput) -> station_api::EditPermissionOperationInput {
         station_api::EditPermissionOperationInput {
@@ -1695,6 +1767,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::RestoreExternalCanister(operation) => {
                 RequestOperationDTO::RestoreExternalCanister(Box::new(operation.into()))
             }
+            RequestOperation::PruneExternalCanister(operation) => {
+                RequestOperationDTO::PruneExternalCanister(Box::new(operation.into()))
+            }
             RequestOperation::EditPermission(operation) => {
                 RequestOperationDTO::EditPermission(Box::new(operation.into()))
             }
@@ -1885,6 +1960,19 @@ impl RequestOperation {
                 ]
             }
             RequestOperation::RestoreExternalCanister(RestoreExternalCanisterOperation {
+                input,
+                ..
+            }) => {
+                vec![
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                        ExternalCanisterId::Any,
+                    )),
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                        ExternalCanisterId::Canister(input.canister_id),
+                    )),
+                ]
+            }
+            RequestOperation::PruneExternalCanister(PruneExternalCanisterOperation {
                 input,
                 ..
             }) => {

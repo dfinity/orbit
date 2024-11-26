@@ -847,6 +847,21 @@ type RestoreExternalCanisterOperation = record {
   input : RestoreExternalCanisterOperationInput;
 };
 
+type PruneExternalCanisterOperationInput = record {
+  // The canister to prune.
+  canister_id : principal;
+  // The resource to prune.
+  prune : variant {
+    chunk_store;
+    snapshot : text;
+    state;
+  };
+};
+
+type PruneExternalCanisterOperation = record {
+  input : PruneExternalCanisterOperationInput;
+};
+
 type EditPermissionOperationInput = record {
   // The updated resource that this policy will apply to.
   resource : Resource;
@@ -942,6 +957,8 @@ type RequestOperation = variant {
   SnapshotExternalCanister : SnapshotExternalCanisterOperation;
   // An operation for restoring an external canister from a snapshot.
   RestoreExternalCanister : RestoreExternalCanisterOperation;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : PruneExternalCanisterOperation;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperation;
   // An operation for adding a request policy.
@@ -995,6 +1012,8 @@ type RequestOperationInput = variant {
   SnapshotExternalCanister : SnapshotExternalCanisterOperationInput;
   // An operation for restoring an external canister from a snapshot.
   RestoreExternalCanister : RestoreExternalCanisterOperationInput;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : PruneExternalCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
   // An operation for adding a request policy.
@@ -1048,6 +1067,8 @@ type RequestOperationType = variant {
   SnapshotExternalCanister;
   // An operation for restoring an external canister from a snapshot.
   RestoreExternalCanister;
+  // An operation for pruning an external canister.
+  PruneExternalCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -1200,6 +1221,8 @@ type ListRequestsOperationType = variant {
   SnapshotExternalCanister : opt principal;
   // An operation for restoring an external canister from a snapshot.
   RestoreExternalCanister : opt principal;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : opt principal;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
