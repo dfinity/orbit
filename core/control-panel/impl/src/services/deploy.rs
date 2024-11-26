@@ -103,6 +103,7 @@ impl DeployService {
                 quorum: Some(1),
                 fallback_controller: Some(NNS_ROOT_CANISTER_ID),
                 accounts: None,
+                assets: None,
             }))
             .map_err(|err| DeployError::Failed {
                 reason: err.to_string(),

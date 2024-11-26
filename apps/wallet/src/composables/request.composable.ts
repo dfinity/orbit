@@ -73,6 +73,13 @@ export const useAvailableDomains = (
     });
   }
 
+  if (hasRequiredPrivilege({ anyOf: [Privilege.ListAssets] })) {
+    domains.value.push({
+      id: RequestDomains.Assets,
+      types: [{ AddAsset: null }, { EditAsset: null }, { RemoveAsset: null }],
+    });
+  }
+
   domains.value.push({
     id: RequestDomains.System,
     types: [

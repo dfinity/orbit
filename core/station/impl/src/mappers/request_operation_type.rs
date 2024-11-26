@@ -78,6 +78,15 @@ impl From<station_api::ListRequestsOperationTypeDTO> for ListRequestsOperationTy
             station_api::ListRequestsOperationTypeDTO::SetDisasterRecovery => {
                 ListRequestsOperationType::SetDisasterRecovery
             }
+            station_api::ListRequestsOperationTypeDTO::AddAsset => {
+                ListRequestsOperationType::AddAsset
+            }
+            station_api::ListRequestsOperationTypeDTO::EditAsset => {
+                ListRequestsOperationType::EditAsset
+            }
+            station_api::ListRequestsOperationTypeDTO::RemoveAsset => {
+                ListRequestsOperationType::RemoveAsset
+            }
         }
     }
 }
@@ -128,6 +137,9 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::ConfigureExternalCanister => {
                 RequestOperationType::ConfigureExternalCanister
             }
+            RequestOperationTypeDTO::AddAsset => RequestOperationType::AddAsset,
+            RequestOperationTypeDTO::EditAsset => RequestOperationType::EditAsset,
+            RequestOperationTypeDTO::RemoveAsset => RequestOperationType::RemoveAsset,
         }
     }
 }
@@ -178,6 +190,9 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::ConfigureExternalCanister => {
                 RequestOperationTypeDTO::ConfigureExternalCanister
             }
+            RequestOperationType::AddAsset => RequestOperationTypeDTO::AddAsset,
+            RequestOperationType::EditAsset => RequestOperationTypeDTO::EditAsset,
+            RequestOperationType::RemoveAsset => RequestOperationTypeDTO::RemoveAsset,
         }
     }
 }
@@ -216,6 +231,9 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::RemoveRequestPolicy(_) => RequestOperationType::RemoveRequestPolicy,
             RequestOperation::ManageSystemInfo(_) => RequestOperationType::ManageSystemInfo,
             RequestOperation::SetDisasterRecovery(_) => RequestOperationType::SetDisasterRecovery,
+            RequestOperation::AddAsset(_) => RequestOperationType::AddAsset,
+            RequestOperation::EditAsset(_) => RequestOperationType::EditAsset,
+            RequestOperation::RemoveAsset(_) => RequestOperationType::RemoveAsset,
         }
     }
 }

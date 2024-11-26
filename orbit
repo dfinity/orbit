@@ -16,6 +16,8 @@ CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
 CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
 CANISTER_ID_UI="werw6-ayaaa-aaaaa-774aa-cai"
 CANISTER_ID_WALLET="wkt3w-3iaaa-aaaaa-774ba-cai"
+CANISTER_ID_TEST_ICRC1_LEDGER="bw4dl-smaaa-aaaaa-qaacq-cai"
+CANISTER_ID_TEST_ICRC1_INDEX="br5f7-7uaaa-aaaaa-qaaca-cai"
 
 # Default identity store path
 DFX_DEFAULT_IDENTITY_STORE_PATH=${DFX_DEFAULT_IDENTITY_STORE_PATH:-"$HOME/.config/dfx/identity"}
@@ -51,6 +53,7 @@ Options:
   --init-app-wallet fresh installs the Orbit Wallet application
   --candid-generate generates the code for the candid specifications that the Orbit applications are using
   --approve-waiting-list approves the given principal to the waiting list
+  --deploy-icrc1-token deploys an ICRC1 token canister for local development
 EOF
 }
 
@@ -253,6 +256,66 @@ function approve_waiting_list() {
   dfx canister call control_panel update_waiting_list "record { users = vec { principal \"$principal\" }; new_status = variant {Approved} }"
 }
 
+function deploy_icrc1_token() {
+  uninstall_test_icrc1_canisters
+  install_test_icrc1_canisters
+}
+
+function uninstall_test_icrc1_canisters() {
+  # Uninstall the ICRC1 Ledger canister
+  dfx canister delete icrc1_ledger_canister -y >/dev/null 2>&1 || true
+  dfx canister delete icrc1_index_canister -y >/dev/null 2>&1 || true
+}
+
+function install_test_icrc1_canisters() {
+  if [ "$MINTER_IDENTITY_NAME" == "$WHOAMI" ]; then
+    echo "You can't run this script as the minter identity. Please run it as a different identity."
+    exit 1
+  fi
+
+  if ! dfx identity list | grep -q $MINTER_IDENTITY_NAME; then
+    dfx identity new $MINTER_IDENTITY_NAME --storage-mode plaintext
+  fi
+
+  dfx deploy --specified-id $CANISTER_ID_TEST_ICRC1_LEDGER icrc1_ledger_canister --argument "
+  (variant {
+    Init = record {
+      minting_account = record {
+        owner = principal \"$(dfx identity get-principal --identity $MINTER_IDENTITY_NAME)\";
+      };
+      initial_balances = vec {
+        record {
+          record {
+            owner = principal \"$(dfx identity get-principal)\";
+          };
+          1_000_000_000_000 : nat;
+        };
+      };
+      token_symbol = \"TEST\";
+      token_name = \"Test ICRC1 Token\";
+
+      metadata = vec {};
+
+      transfer_fee = 20 : nat;
+
+      archive_options = record {
+        num_blocks_to_archive = 100 : nat64;
+        trigger_threshold = 100 : nat64;
+        controller_id = principal \"$CANISTER_ID_TEST_ICRC1_LEDGER\";
+      };
+    }
+  })
+"
+
+  dfx deploy --specified-id $CANISTER_ID_TEST_ICRC1_INDEX icrc1_index_canister --argument "
+  (opt variant { 
+    Init = record {
+      ledger_id = principal \"$CANISTER_ID_TEST_ICRC1_LEDGER\" 
+    }
+  })
+"
+}
+
 #############################################
 # SCRIPT OPTIONS                            #
 #############################################
@@ -279,6 +342,11 @@ while [[ $# -gt 0 ]]; do
     fi
     exec_function approve_waiting_list "$1"
     shift # Remove the principal ID from the arguments
+    echo
+    ;;
+  --deploy-icrc1-token)
+    shift
+    exec_function deploy_icrc1_token
     echo
     ;;
   --init)

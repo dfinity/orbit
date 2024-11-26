@@ -1,8 +1,9 @@
 import { Principal } from '@dfinity/principal';
 import { icAgent } from '~/core/ic-agent.core';
 import { logger } from '~/core/logger.core';
-import { AccountBalance, UUID } from '~/generated/station/station.did';
+import { AccountBalance, FetchAccountBalancesResult, UUID } from '~/generated/station/station.did';
 import { StationService } from '~/services/station.service';
+import { ExtractOk } from '~/types/helper.types';
 import { arrayBatchMaker, timer, unreachable } from '~/utils/helper.utils';
 
 const DEFAULT_INTERVAL_MS = 10000;
@@ -42,7 +43,7 @@ export interface AccountsWorkerErrorResponse {
 }
 
 export interface AccountBalancesWorkerResponse {
-  balances: AccountBalance[];
+  balances: Array<[] | [AccountBalance]>;
 }
 
 export type AccountsWorkerResponseMessage =
@@ -130,7 +131,7 @@ class AccountsWorkerImpl {
         this.stationService.fetchAccountBalances({ account_ids: accountIds }).catch(err => {
           logger.error('Failed to update the balance for the given account ids', { err });
 
-          return [] as AccountBalance[];
+          return [] as ExtractOk<FetchAccountBalancesResult>['balances'];
         }),
       );
 

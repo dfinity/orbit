@@ -42,6 +42,9 @@ pub use user_group::*;
 mod http;
 pub use http::*;
 
+mod asset;
+pub use asset::*;
+
 #[cfg(test)]
 mod tests {
     use orbit_essentials::api::*;

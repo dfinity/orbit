@@ -1,10 +1,24 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mount } from '~/test.utils';
 import TransferDialog from './TransferDialog.vue';
-import { Account, GetRequestResult, Request, Transfer } from '~/generated/station/station.did';
+import {
+  Account,
+  Asset,
+  GetRequestResult,
+  Request,
+  Transfer,
+} from '~/generated/station/station.did';
 import { flushPromises } from '@vue/test-utils';
 import { services } from '~/plugins/services.plugin';
 import { ExtractOk } from '~/types/helper.types';
+import { AddressFormat } from '~/types/chain.types';
+
+const validIcpAddress = '5c76bc95e544204de4928e4d901e52b49df248b9c346807040e7af75aa61f4b3';
+
+vi.mock('~/utils/asset.utils', () => ({
+  detectAddressStandard: vi.fn(() => 'icp_native'),
+  detectAddressFormat: vi.fn(() => AddressFormat.ICPNative),
+}));
 
 vi.mock('~/services/station.service', () => ({
   StationService: vi.fn().mockImplementation(() => {
@@ -16,14 +30,24 @@ vi.mock('~/services/station.service', () => ({
   }),
 }));
 
+const mockAsset: Asset = {
+  blockchain: 'icp',
+  decimals: 2,
+  id: '1',
+  metadata: [],
+  name: 'ICP',
+  symbol: 'ICP',
+  standards: ['icp_native', 'icrc1'],
+};
+
 describe('TransferDialog', () => {
   it('renders correctly', () => {
     const wrapper = mount(TransferDialog, {
       props: {
         account: {
           id: '1',
-          decimals: 1,
         } as Account,
+        asset: mockAsset,
         open: true,
       },
     });
@@ -35,8 +59,8 @@ describe('TransferDialog', () => {
       props: {
         account: {
           id: '1',
-          decimals: 1,
         } as Account,
+        asset: mockAsset,
         open: true,
       },
     });
@@ -74,8 +98,8 @@ describe('TransferDialog', () => {
       props: {
         account: {
           id: '1',
-          decimals: 1,
         } as Account,
+        asset: mockAsset,
         open: true,
       },
     });
@@ -92,21 +116,20 @@ describe('TransferDialog', () => {
 
     const submitButton = form.find(`[data-test-id="transfer-dialog-save-button"]`);
 
-    amount.find('input').setValue('1');
-    destination.find('input').setValue('destination address');
-    summary.find('input').setValue('test summary');
+    await amount.find('input').setValue('1');
+    await destination.find('input').setValue(validIcpAddress);
+    await summary.find('input').setValue('test summary');
 
     await flushPromises();
 
     await submitButton.trigger('click');
 
-    await wrapper.vm.$nextTick();
     await flushPromises();
 
     expect(services().station.transfer).toHaveBeenCalledWith(
       expect.objectContaining({
-        amount: 10n,
-        to: 'destination address',
+        amount: 100n, // decimals are 2
+        to: validIcpAddress,
       }),
       'test summary',
     );
@@ -123,7 +146,7 @@ describe('TransferDialog', () => {
     services().station.getTransfer = vi.fn(() =>
       Promise.resolve({
         id: 'transfer-id',
-        to: 'destination address',
+        to: validIcpAddress,
         amount: 123n,
         request_id: 'request-id',
       } as Transfer),
@@ -133,8 +156,8 @@ describe('TransferDialog', () => {
       props: {
         account: {
           id: '1',
-          decimals: 2,
         } as Account,
+        asset: mockAsset,
         open: true,
         transferId: 'transfer-id',
       },
@@ -161,7 +184,7 @@ describe('TransferDialog', () => {
     expect(transferId.find('input').element.value).toBe('transfer-id');
 
     expect(amount.find('input').element.value).toBe('1.23');
-    expect(destination.find('input').element.value).toBe('destination address');
+    expect(destination.find('input').element.value).toBe(validIcpAddress);
     expect(summary.find('input').element.value).toBe('test summary');
   });
 });

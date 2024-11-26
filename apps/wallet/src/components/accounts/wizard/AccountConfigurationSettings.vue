@@ -15,7 +15,7 @@
     <VCol cols="12" class="pt-4 pb-0">
       <TokenAutocomplete
         v-if="props.display.asset"
-        v-model="model.symbol"
+        v-model="assetIds"
         class="mb-2"
         :label="$t('terms.asset')"
         :prepend-icon="mdiBank"
@@ -23,7 +23,7 @@
         variant="filled"
         density="comfortable"
         :disabled="isViewMode || !!model.id"
-        @selected-asset="onSelectedAsset"
+        :multiple="true"
       />
     </VCol>
     <VCol cols="12" class="pt-0 pb-4">
@@ -31,7 +31,7 @@
         v-model="model.name"
         name="name"
         :label="$t('terms.name')"
-        :rules="[requiredRule]"
+        :rules="[requiredRule, maxLengthRule(64, $t('terms.name'))]"
         variant="filled"
         class="mb-2"
         density="comfortable"
@@ -47,15 +47,13 @@ import { mdiBank, mdiIdentifier, mdiWallet } from '@mdi/js';
 import { computed } from 'vue';
 import { VCol, VRow, VTextField } from 'vuetify/components';
 import TokenAutocomplete from '~/components/inputs/TokenAutocomplete.vue';
-import { TimestampRFC3339, UUID, Asset } from '~/generated/station/station.did';
-import { requiredRule } from '~/utils/form.utils';
+import { TimestampRFC3339, UUID } from '~/generated/station/station.did';
+import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 
 export interface AccountConfigurationModel {
   id: UUID;
   name: string;
-  blockchain: string;
-  standard: string;
-  symbol: string;
+  assets: UUID[];
   lastModified: TimestampRFC3339;
 }
 
@@ -83,20 +81,14 @@ const emit = defineEmits<{
 }>();
 
 const isViewMode = computed(() => props.mode === 'view');
+
 const model = computed({
   get: () => props.modelValue,
   set: value => emit('update:modelValue', value),
 });
 
-const onSelectedAsset = (asset?: Asset): void => {
-  if (asset) {
-    model.value.symbol = asset.symbol;
-    model.value.blockchain = asset.blockchain;
-    model.value.standard = asset.standard;
-  } else {
-    model.value.symbol = undefined;
-    model.value.blockchain = undefined;
-    model.value.standard = undefined;
-  }
-};
+const assetIds = computed({
+  get: () => model.value.assets,
+  set: value => (model.value.assets = value),
+});
 </script>

@@ -11,13 +11,13 @@ use crate::{
     factories::blockchains::InternetComputer,
     models::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
-        CanisterInstallMode, CanisterUpgradeModeArgs, CycleObtainStrategy,
-        ManageSystemInfoOperationInput, RequestId, RequestKey, RequestOperation, RequestStatus,
-        SystemUpgradeTarget, WasmModuleExtraChunks,
+        AccountKey, Asset, Blockchain, CanisterInstallMode, CanisterUpgradeModeArgs,
+        CycleObtainStrategy, ManageSystemInfoOperationInput, Metadata, RequestId, RequestKey,
+        RequestOperation, RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks,
     },
     repositories::{
-        permission::PERMISSION_REPOSITORY, RequestRepository, REQUEST_REPOSITORY,
-        USER_GROUP_REPOSITORY, USER_REPOSITORY,
+        permission::PERMISSION_REPOSITORY, RequestRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY,
+        REQUEST_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     services::{
         change_canister::{ChangeCanisterService, CHANGE_CANISTER_SERVICE},
@@ -37,9 +37,16 @@ use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
 use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
-use std::sync::Arc;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    sync::Arc,
+};
 use upgrader_api::UpgradeParams;
 use uuid::Uuid;
+
+pub const INITIAL_ICP_ASSET_ID: [u8; 16] = [
+    0x78, 0x02, 0xcb, 0xab, 0x22, 0x1d, 0x4e, 0x49, 0xb7, 0x64, 0xa6, 0x95, 0xea, 0x6d, 0xef, 0x1a,
+];
 
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> = Arc::new(SystemService::new(
@@ -47,6 +54,29 @@ lazy_static! {
         Arc::clone(&REQUEST_SERVICE),
         Arc::clone(&CHANGE_CANISTER_SERVICE)
     ));
+    pub static ref INITIAL_ICP_ASSET: Asset = Asset {
+        id: INITIAL_ICP_ASSET_ID,
+        blockchain: Blockchain::InternetComputer,
+        decimals: 8,
+        name: "Internet Computer".to_string(),
+        symbol: "ICP".to_string(),
+
+        standards: BTreeSet::from([TokenStandard::InternetComputerNative, TokenStandard::ICRC1,]),
+        metadata: Metadata::new(BTreeMap::from([
+            (
+                "ledger_canister_id".to_string(),
+                "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+            ),
+            (
+                "index_canister_id".to_string(),
+                "qhbym-qaaaa-aaaaa-aaafq-cai".to_string(),
+            ),
+        ])),
+    };
+}
+
+thread_local! {
+    pub static INITIALIZING: std::cell::RefCell<bool> = const { std::cell::RefCell::new(false) };
 }
 
 #[derive(Default, Debug)]
@@ -92,7 +122,13 @@ impl SystemService {
         let state = read_system_state();
 
         match state {
-            SystemState::Initialized(_) => HealthStatus::Healthy,
+            SystemState::Initialized(_) => {
+                if INITIALIZING.with_borrow(|init| *init) {
+                    HealthStatus::Uninitialized
+                } else {
+                    HealthStatus::Healthy
+                }
+            }
             SystemState::Uninitialized => HealthStatus::Uninitialized,
         }
     }
@@ -192,18 +228,29 @@ impl SystemService {
     ) -> Option<ObtainCyclesOptions> {
         match strategy {
             CycleObtainStrategy::Disabled => None,
-            CycleObtainStrategy::MintFromNativeToken { account_id } => Some(ObtainCyclesOptions {
-                obtain_cycles: Arc::new(MintCycles {
-                    ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
-                    cmc: Arc::new(IcCyclesMintingCanister::new(
-                        MAINNET_CYCLES_MINTING_CANISTER_ID,
-                    )),
-                    from_subaccount: Subaccount(
-                        InternetComputer::subaccount_from_station_account_id(account_id),
-                    ),
-                }),
-                top_up_self: true,
-            }),
+            CycleObtainStrategy::MintFromNativeToken { account_id } => {
+                if let Some(account) = ACCOUNT_REPOSITORY.get(&AccountKey { id: *account_id }) {
+                    Some(ObtainCyclesOptions {
+                        obtain_cycles: Arc::new(MintCycles {
+                            ledger: Arc::new(IcLedgerCanister::new(MAINNET_LEDGER_CANISTER_ID)),
+                            cmc: Arc::new(IcCyclesMintingCanister::new(
+                                MAINNET_CYCLES_MINTING_CANISTER_ID,
+                            )),
+                            from_subaccount: Subaccount(InternetComputer::subaccount_from_seed(
+                                &account.seed,
+                            )),
+                        }),
+                        top_up_self: true,
+                    })
+                } else {
+                    print(format!(
+                        "Account with id `{}` not found, cannot create ObtainCyclesOptions",
+                        Uuid::from_bytes(*account_id).hyphenated()
+                    ));
+
+                    None
+                }
+            }
         }
     }
     #[cfg(target_arch = "wasm32")]
@@ -257,6 +304,10 @@ impl SystemService {
 
             system_info.update_last_upgrade_timestamp();
             write_system_info(system_info.to_owned());
+
+            INITIALIZING.with_borrow_mut(|initializing| {
+                *initializing = false;
+            });
         }
 
         async fn install_canister_post_process_work(
@@ -292,10 +343,17 @@ impl SystemService {
             let admin_count = init.admins.len() as u16;
             let quorum = calc_initial_quorum(admin_count, init.quorum);
 
+            // if provided, creates the initial assets
+            if let Some(assets) = init.assets.clone() {
+                print("Adding initial assets");
+                install_canister_handlers::set_initial_assets(assets).await?;
+            }
+
             // if provided, creates the initial accounts
             if let Some(accounts) = init.accounts {
                 print("Adding initial accounts");
-                install_canister_handlers::set_initial_accounts(accounts, quorum).await?;
+                install_canister_handlers::set_initial_accounts(accounts, &init.assets, quorum)
+                    .await?;
             }
 
             if SYSTEM_SERVICE.is_healthy() {
@@ -351,6 +409,7 @@ impl SystemService {
         USER_GROUP_REPOSITORY.build_cache();
         USER_REPOSITORY.build_cache();
         PERMISSION_REPOSITORY.build_cache();
+        ASSET_REPOSITORY.build_cache();
     }
 
     /// Initializes the canister with the given owners and settings.
@@ -374,6 +433,9 @@ impl SystemService {
 
         // registers the admins of the canister
         init_canister_sync_handlers::set_admins(input.admins.clone())?;
+
+        // add initial assets
+        init_canister_sync_handlers::add_initial_assets();
 
         // sets the name of the canister
         system_info.set_name(input.name.clone());
@@ -499,16 +561,20 @@ impl SystemService {
 
 mod init_canister_sync_handlers {
     use crate::core::ic_cdk::{api::print, next_time};
-    use crate::models::{AddUserOperationInput, UserStatus};
+    use crate::models::{AddUserOperationInput, Asset, UserStatus};
+    use crate::repositories::ASSET_REPOSITORY;
     use crate::services::USER_SERVICE;
     use crate::{
         models::{UserGroup, ADMIN_GROUP_ID},
         repositories::USER_GROUP_REPOSITORY,
     };
     use orbit_essentials::api::ApiError;
+    use orbit_essentials::model::ModelKey;
     use orbit_essentials::repository::Repository;
     use station_api::AdminInitInput;
     use uuid::Uuid;
+
+    use super::INITIAL_ICP_ASSET;
 
     pub fn add_admin_group() {
         // adds the admin group which is used as the default group for admins during the canister instantiation
@@ -520,6 +586,15 @@ mod init_canister_sync_handlers {
                 last_modification_timestamp: next_time(),
             },
         );
+    }
+
+    pub fn add_initial_assets() {
+        let initial_assets: Vec<Asset> = vec![INITIAL_ICP_ASSET.clone()];
+
+        for asset in initial_assets {
+            print(format!("Adding initial asset: {}", asset.name));
+            ASSET_REPOSITORY.insert(asset.key(), asset);
+        }
     }
 
     /// Registers the newly added admins of the canister.
@@ -560,12 +635,13 @@ mod install_canister_handlers {
     use crate::models::permission::Allow;
     use crate::models::request_specifier::UserSpecifier;
     use crate::models::{
-        AddAccountOperationInput, AddRequestPolicyOperationInput, CycleObtainStrategy,
-        EditPermissionOperationInput, RequestPolicyRule, ADMIN_GROUP_ID,
+        AddAccountOperationInput, AddAssetOperationInput, AddRequestPolicyOperationInput,
+        CycleObtainStrategy, EditPermissionOperationInput, RequestPolicyRule, ADMIN_GROUP_ID,
     };
+    use crate::repositories::ASSET_REPOSITORY;
     use crate::services::permission::PERMISSION_SERVICE;
-    use crate::services::ACCOUNT_SERVICE;
     use crate::services::REQUEST_POLICY_SERVICE;
+    use crate::services::{ACCOUNT_SERVICE, ASSET_SERVICE};
     use candid::{Encode, Principal};
     use canfund::manager::options::{EstimatedRuntime, FundManagerOptions, FundStrategy};
     use canfund::manager::RegisterOpts;
@@ -573,9 +649,12 @@ mod install_canister_handlers {
     use ic_cdk::api::management_canister::main::{self as mgmt};
     use ic_cdk::id;
 
+    use orbit_essentials::api::ApiError;
+    use orbit_essentials::repository::Repository;
     use orbit_essentials::types::UUID;
-    use station_api::{InitAccountInput, SystemInit};
+    use station_api::{InitAccountInput, InitAssetInput, SystemInit};
     use std::cell::RefCell;
+    use uuid::Uuid;
 
     use super::SYSTEM_SERVICE;
 
@@ -618,6 +697,7 @@ mod install_canister_handlers {
     // Registers the initial accounts of the canister during the canister initialization.
     pub async fn set_initial_accounts(
         accounts: Vec<InitAccountInput>,
+        initial_assets: &Option<Vec<InitAssetInput>>,
         quorum: u16,
     ) -> Result<(), String> {
         let add_accounts = accounts
@@ -625,10 +705,15 @@ mod install_canister_handlers {
             .map(|account| {
                 let input = AddAccountOperationInput {
                     name: account.name,
-                    blockchain: BlockchainMapper::to_blockchain(account.blockchain.clone())
-                        .expect("Invalid blockchain"),
-                    standard: BlockchainMapper::to_blockchain_standard(account.standard)
-                        .expect("Invalid blockchain standard"),
+                    assets: account
+                        .assets
+                        .into_iter()
+                        .map(|asset| {
+                            *HelperMapper::to_uuid(asset)
+                                .expect("Invalid UUID")
+                                .as_bytes()
+                        })
+                        .collect(),
                     metadata: account.metadata.into(),
                     transfer_request_policy: Some(RequestPolicyRule::Quorum(
                         UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
@@ -652,11 +737,106 @@ mod install_canister_handlers {
             })
             .collect::<Vec<(AddAccountOperationInput, Option<UUID>)>>();
 
-        for (new_account, with_account_id) in add_accounts {
+        //
+        // In case there are assets existing in the Asset repository at the time of recovering the assets
+        // some of the assets might not be able to be recreated, in this case we try to find the same asset
+        // in the existing assets and replace the asset_id in the recreated account with the existing one.
+        //
+        for (mut new_account, with_account_id) in add_accounts {
+            if let Some(initial_assets) = initial_assets {
+                let mut new_account_assets = new_account.assets.clone();
+                for asset_id in new_account.assets.iter() {
+                    if ASSET_REPOSITORY.get(asset_id).is_none() {
+                        // the asset could not be recreated, try to find the same asset in the existing assets
+                        let asset_id_str = Uuid::from_bytes(*asset_id).hyphenated().to_string();
+                        let Some(original_asset_to_create) = initial_assets
+                            .iter()
+                            .find(|initial_asset| initial_asset.id == asset_id_str)
+                        else {
+                            // the asset does not exist and it could not be recreated, skip
+                            continue;
+                        };
+
+                        if let Some(existing_asset_id) = ASSET_REPOSITORY.exists_unique(
+                            &original_asset_to_create.blockchain,
+                            &original_asset_to_create.symbol,
+                        ) {
+                            // replace the asset_id in the recreated account with the existing one
+                            new_account_assets.retain(|id| asset_id != id);
+                            new_account_assets.push(existing_asset_id);
+
+                            print(format!(
+                                "Asset {} could not be recreated, replaced with existing asset {}",
+                                asset_id_str,
+                                Uuid::from_bytes(existing_asset_id).hyphenated()
+                            ));
+                        } else {
+                            // the asset does not exist and it could not be recreated, skip
+
+                            print(format!(
+                                "Asset {} could not be recreated and does not exist in the existing assets, skipping",
+                                asset_id_str
+                            ));
+
+                            continue;
+                        }
+                    }
+                }
+
+                new_account.assets = new_account_assets;
+            }
+
             ACCOUNT_SERVICE
                 .create_account(new_account, with_account_id)
                 .await
                 .map_err(|e| format!("Failed to add account: {:?}", e))?;
+        }
+
+        Ok(())
+    }
+    // Registers the initial accounts of the canister during the canister initialization.
+    pub async fn set_initial_assets(assets: Vec<InitAssetInput>) -> Result<(), String> {
+        let add_assets = assets
+            .into_iter()
+            .map(|asset| {
+                let input = AddAssetOperationInput {
+                    name: asset.name,
+                    blockchain: BlockchainMapper::to_blockchain(asset.blockchain.clone())
+                        .expect("Invalid blockchain"),
+                    standards: asset
+                        .standards
+                        .iter()
+                        .map(|standard| {
+                            BlockchainMapper::to_blockchain_standard(standard.clone())
+                                .expect("Invalid blockchain standard")
+                        })
+                        .collect(),
+                    decimals: asset.decimals,
+                    symbol: asset.symbol,
+                    metadata: asset.metadata.into(),
+                };
+
+                (
+                    input,
+                    *HelperMapper::to_uuid(asset.id)
+                        .expect("Invalid UUID")
+                        .as_bytes(),
+                )
+            })
+            .collect::<Vec<(AddAssetOperationInput, UUID)>>();
+
+        for (new_asset, with_asset_id) in add_assets {
+            match ASSET_SERVICE.create(new_asset, Some(with_asset_id)) {
+                Err(ApiError { code, details, .. }) if &code == "ALREADY_EXISTS" => {
+                    // asset already exists, can skip safely
+                    print(format!(
+                        "Asset already exists, skipping. Details: {:?}",
+                        details.unwrap_or_default()
+                    ));
+                }
+                Err(e) => Err(format!("Failed to add asset: {:?}", e))?,
+                Ok(_) => {}
+            }
         }
 
         Ok(())
@@ -790,6 +970,7 @@ mod tests {
                 upgrader: station_api::SystemUpgraderInput::WasmModule(vec![]),
                 fallback_controller: None,
                 accounts: None,
+                assets: None,
             })
             .await;
 

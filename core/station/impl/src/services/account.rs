@@ -2,7 +2,7 @@ use crate::{
     core::{
         authorization::Authorization,
         generate_uuid_v4,
-        ic_cdk::next_time,
+        ic_cdk::{api::time, next_time},
         read_system_info,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         write_system_info, CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
@@ -14,22 +14,37 @@ use crate::{
         request_policy_rule::RequestPolicyRuleInput,
         request_specifier::RequestSpecifier,
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
-        Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
-        AddRequestPolicyOperationInput, Blockchain, BlockchainStandard, CycleObtainStrategy,
-        EditAccountOperationInput, EditPermissionOperationInput,
+        Account, AccountAddress, AccountBalance, AccountCallerPrivileges, AccountId, AccountKey,
+        AddAccountOperationInput, AddRequestPolicyOperationInput, AddressFormat, AssetId,
+        BalanceQueryState, Blockchain, CycleObtainStrategy, EditAccountOperationInput,
+        EditPermissionOperationInput, MetadataItem, TokenStandard,
     },
-    repositories::{AccountRepository, AccountWhereClause, ACCOUNT_REPOSITORY},
+    repositories::{
+        AccountRepository, AccountWhereClause, AssetRepository, ACCOUNT_REPOSITORY,
+        ASSET_REPOSITORY,
+    },
     services::{
         permission::{PermissionService, PERMISSION_SERVICE},
         RequestPolicyService, REQUEST_POLICY_SERVICE,
     },
 };
+use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    api::ServiceResult, model::ModelValidator, repository::Repository, types::UUID,
+    api::ServiceResult,
+    model::ModelValidator,
+    repository::Repository,
+    types::UUID,
+    utils::{CallerGuard, State},
 };
 use station_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput};
-use std::sync::Arc;
+use std::{
+    cell::RefCell,
+    collections::{BTreeMap, HashSet},
+    rc::Rc,
+    sync::Arc,
+    time::Duration,
+};
 use uuid::Uuid;
 
 use super::SYSTEM_SERVICE;
@@ -39,7 +54,21 @@ lazy_static! {
         Arc::clone(&REQUEST_POLICY_SERVICE),
         Arc::clone(&PERMISSION_SERVICE),
         Arc::clone(&ACCOUNT_REPOSITORY),
+        Arc::clone(&ASSET_REPOSITORY)
     ));
+}
+
+thread_local! {
+
+    pub static BALANCE_FETCH_GUARD_STATE:
+        Rc<RefCell<State<BalanceFetchGuardKey>>>
+     = Rc::new(RefCell::new(State::default()));
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct BalanceFetchGuardKey {
+    account_id: AccountId,
+    asset_id: AssetId,
 }
 
 #[derive(Default, Debug)]
@@ -47,6 +76,7 @@ pub struct AccountService {
     request_policy_service: Arc<RequestPolicyService>,
     permission_service: Arc<PermissionService>,
     account_repository: Arc<AccountRepository>,
+    asset_repository: Arc<AssetRepository>,
 }
 
 impl AccountService {
@@ -57,11 +87,13 @@ impl AccountService {
         request_policy_service: Arc<RequestPolicyService>,
         permission_service: Arc<PermissionService>,
         account_repository: Arc<AccountRepository>,
+        asset_repository: Arc<AssetRepository>,
     ) -> Self {
         Self {
             request_policy_service,
             permission_service,
             account_repository,
+            asset_repository,
         }
     }
 
@@ -143,16 +175,49 @@ impl AccountService {
                 info: format!("Account with id {} already exists", uuid.hyphenated()),
             })?
         }
-        let blockchain_api =
-            BlockchainApiFactory::build(&input.blockchain.clone(), &input.standard.clone())?;
+
         let mut new_account =
             AccountMapper::from_create_input(input.to_owned(), *uuid.as_bytes(), None)?;
 
-        // The account address is generated after the account is created from the user input and
-        // all the validations are successfully completed.
-        if new_account.address.is_empty() {
-            let account_address = blockchain_api.generate_address(&new_account).await?;
-            new_account.address = account_address;
+        let deduplicated_asset_ids = input.assets.iter().cloned().collect::<HashSet<_>>();
+
+        for asset_id in deduplicated_asset_ids.iter() {
+            let asset = self.asset_repository.get(asset_id).ok_or_else(|| {
+                AccountError::ValidationError {
+                    info: format!(
+                        "Asset with id {} not found",
+                        Uuid::from_bytes(*asset_id).hyphenated()
+                    ),
+                }
+            })?;
+
+            for standard in asset.standards.iter() {
+                let blockchain_api = BlockchainApiFactory::build(&asset.blockchain.clone())?;
+
+                let mut account_addresses = Vec::<AccountAddress>::new();
+
+                for address_format in standard.get_info().address_formats.into_iter() {
+                    if account_addresses
+                        .iter()
+                        .any(|address| address.format == address_format)
+                        || new_account
+                            .addresses
+                            .iter()
+                            .any(|address| address.format == address_format)
+                    {
+                        // the account already has this address
+                        continue;
+                    }
+
+                    let address = blockchain_api
+                        .generate_address(&new_account.seed, address_format.clone())
+                        .await?;
+
+                    account_addresses.push(address);
+                }
+
+                new_account.addresses.extend(account_addresses);
+            }
         }
 
         if let Some(criteria) = &input.transfer_request_policy {
@@ -165,10 +230,6 @@ impl AccountService {
         input.read_permission.validate()?;
         input.configs_permission.validate()?;
         input.transfer_permission.validate()?;
-
-        // The decimals of the asset are fetched from the blockchain and stored in the account,
-        // depending on the blockchain standard used by the account the decimals used by each asset can vary.
-        new_account.decimals = blockchain_api.decimals(&new_account).await?;
 
         // Validate here before database operations.
         new_account.validate()?;
@@ -248,23 +309,41 @@ impl AccountService {
             // if this is the first account created, and there is no cycle minting account set, set this account as the cycle minting account
             if system_info.get_cycle_obtain_strategy() == &CycleObtainStrategy::Disabled
                 && ACCOUNT_REPOSITORY.len() == 1
-                && matches!(new_account.blockchain, Blockchain::InternetComputer)
-                && new_account.standard == BlockchainStandard::Native
-                && new_account.symbol == "ICP"
             {
-                ic_cdk::println!("Setting cycle minting account to {}", uuid);
+                // find the mainnet ICP asset that minting can be done from
+                if let Some(icp_asset) = self.asset_repository.list().iter().find(|asset| {
+                    asset.blockchain == Blockchain::InternetComputer
+                        && asset
+                            .standards
+                            .contains(&TokenStandard::InternetComputerNative)
+                        && asset.metadata.contains(&MetadataItem {
+                            key: TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID.to_string(),
+                            value: MAINNET_LEDGER_CANISTER_ID.to_string(),
+                        })
+                }) {
+                    // check if the new account has the ICP asset
+                    if new_account
+                        .assets
+                        .iter()
+                        .any(|account_asset| account_asset.asset_id == icp_asset.id)
+                    {
+                        ic_cdk::println!("Setting cycle minting account to {}", uuid);
 
-                system_info.set_cycle_obtain_strategy(CycleObtainStrategy::MintFromNativeToken {
-                    account_id: *uuid.as_bytes(),
-                });
-                write_system_info(system_info);
+                        system_info.set_cycle_obtain_strategy(
+                            CycleObtainStrategy::MintFromNativeToken {
+                                account_id: *uuid.as_bytes(),
+                            },
+                        );
+                        write_system_info(system_info);
 
-                #[cfg(target_arch = "wasm32")]
-                crate::services::SYSTEM_SERVICE.set_fund_manager_obtain_cycles(
-                    &CycleObtainStrategy::MintFromNativeToken {
-                        account_id: new_account.id,
-                    },
-                );
+                        #[cfg(target_arch = "wasm32")]
+                        crate::services::SYSTEM_SERVICE.set_fund_manager_obtain_cycles(
+                            &CycleObtainStrategy::MintFromNativeToken {
+                                account_id: new_account.id,
+                            },
+                        );
+                    }
+                }
             }
         }
 
@@ -286,6 +365,56 @@ impl AccountService {
                 .is_some_and(|id| id != account.id)
             {
                 Err(AccountError::AccountNameAlreadyExists)?
+            }
+        }
+
+        if let Some(change_assets) = input.change_assets {
+            change_assets.apply(&mut account.assets);
+
+            // get all supported address formats of the account
+            let mut current_address_formats: HashSet<(Blockchain, AddressFormat)> = HashSet::new();
+
+            for account_asset in account.assets.iter() {
+                let Some(asset) = self.asset_repository.get(&account_asset.asset_id) else {
+                    ic_cdk::println!(
+                        "Asset `{}` does not exist in account `{}`",
+                        Uuid::from_bytes(account_asset.asset_id).hyphenated(),
+                        Uuid::from_bytes(account.id).hyphenated()
+                    );
+                    continue;
+                };
+
+                for standard in asset.standards.iter() {
+                    standard.get_info().address_formats.iter().for_each(|f| {
+                        current_address_formats.insert((asset.blockchain.clone(), f.to_owned()));
+                    });
+                }
+            }
+
+            // remove addresses which don't belong to any account_assets any more
+            account.addresses.retain(|account_address| {
+                current_address_formats
+                    .iter()
+                    .any(|(_, format)| &account_address.format == format)
+            });
+
+            for (blockchain, address_format) in current_address_formats {
+                if account
+                    .addresses
+                    .iter()
+                    .any(|address| address.format == address_format)
+                {
+                    // the account already has this address
+                    continue;
+                }
+
+                let blockchain_api = BlockchainApiFactory::build(&blockchain)?;
+
+                let address = blockchain_api
+                    .generate_address(&account.seed, address_format.clone())
+                    .await?;
+
+                account.addresses.push(address);
             }
         }
 
@@ -373,7 +502,7 @@ impl AccountService {
     pub async fn fetch_account_balances(
         &self,
         input: FetchAccountBalancesInput,
-    ) -> ServiceResult<Vec<AccountBalanceDTO>> {
+    ) -> ServiceResult<Vec<Option<AccountBalanceDTO>>> {
         if input.account_ids.is_empty() || input.account_ids.len() > 5 {
             Err(AccountError::AccountBalancesBatchRange { min: 1, max: 5 })?
         }
@@ -382,46 +511,182 @@ impl AccountService {
             .account_ids
             .iter()
             .map(|id| HelperMapper::to_uuid(id.clone()))
-            .collect::<Result<Vec<Uuid>, _>>()?;
+            .collect::<Result<HashSet<Uuid>, _>>()?;
 
         let accounts = self
             .account_repository
             .find_by_ids(account_ids.iter().map(|id| *id.as_bytes()).collect());
 
-        let mut balances = Vec::new();
-        for mut account in accounts {
-            let balance_considered_fresh = match &account.balance {
-                Some(balance) => {
-                    let balance_age_ns = next_time() - balance.last_modification_timestamp;
-                    (balance_age_ns / 1_000_000) < ACCOUNT_BALANCE_FRESHNESS_IN_MS
-                }
-                None => false,
-            };
-            let balance: AccountBalance = match (&account.balance, balance_considered_fresh) {
-                (None, _) | (_, false) => {
-                    let blockchain_api =
-                        BlockchainApiFactory::build(&account.blockchain, &account.standard)?;
-                    let fetched_balance = blockchain_api.balance(&account).await?;
-                    let new_balance = AccountBalance {
-                        balance: candid::Nat(fetched_balance),
-                        last_modification_timestamp: next_time(),
+        struct BalanceQueryResult {
+            balance: Option<AccountBalanceDTO>,
+            update: Option<(AccountId, AssetId, AccountBalance)>,
+        }
+
+        let queries = accounts
+            .iter()
+            .flat_map(|account| {
+                account.assets.iter().map(|account_asset| async {
+                    let balance_considered_fresh = match &account_asset.balance {
+                        Some(balance) => {
+                            let balance_age_ns = next_time() - balance.last_modification_timestamp;
+                            (balance_age_ns / 1_000_000) < ACCOUNT_BALANCE_FRESHNESS_IN_MS
+                        }
+                        None => false,
                     };
 
-                    account.balance = Some(new_balance.clone());
+                    let Some(asset) = self.asset_repository.get(&account_asset.asset_id) else {
+                        return BalanceQueryResult {
+                            balance: None,
+                            update: None,
+                        };
+                    };
 
-                    self.account_repository
-                        .insert(account.to_key(), account.clone());
+                    match (&account_asset.balance, balance_considered_fresh) {
+                        (None, _) | (_, false) => {
+                            let balance_update_guard_key = BalanceFetchGuardKey {
+                                account_id: account.id,
+                                asset_id: asset.id,
+                            };
 
-                    new_balance
+                            let _lock = BALANCE_FETCH_GUARD_STATE.with(|state| {
+                                CallerGuard::new(
+                                    state.clone(),
+                                    balance_update_guard_key,
+                                    Some(time() + Duration::from_secs(5 * 60).as_nanos() as u64),
+                                )
+                            });
+
+                            if _lock.is_none() {
+                                if let Some(stale_balance) = &account_asset.balance {
+                                    BalanceQueryResult {
+                                        balance: Some(AccountMapper::to_balance_dto(
+                                            stale_balance.to_owned(),
+                                            asset.decimals,
+                                            account.id,
+                                            asset.id,
+                                            BalanceQueryState::StaleRefreshing,
+                                        )),
+                                        update: None,
+                                    }
+                                } else {
+                                    BalanceQueryResult {
+                                        balance: None,
+                                        update: None,
+                                    }
+                                }
+                            } else {
+                                let blockchain_api =
+                                    match BlockchainApiFactory::build(&asset.blockchain) {
+                                        Ok(api) => api,
+                                        Err(err) => {
+                                            ic_cdk::println!(
+                                                "Could not build blockchain api for asset with id {}. Error: {}",
+                                                Uuid::from_bytes(asset.id).hyphenated(),
+                                                err
+                                            );
+                                            return BalanceQueryResult {
+                                                balance: None,
+                                                update: None,
+                                            };
+                                        }
+                                    };
+
+                                let fetched_balance = match blockchain_api
+                                    .balance(&asset, &account.addresses)
+                                    .await
+                                {
+                                    Ok(balance) => balance,
+                                    Err(err) => {
+                                        ic_cdk::println!(
+                                            "Could not fetch balance for account with id {} and asset with id {}. Error: {}",
+                                            Uuid::from_bytes(account.id).hyphenated(),
+                                            Uuid::from_bytes(asset.id).hyphenated(),
+                                            err
+                                        );
+                                        return BalanceQueryResult {
+                                            balance: None,
+                                            update: None,
+                                        };
+                                    }
+                                };
+
+                                let new_balance = AccountBalance {
+                                    balance: candid::Nat(fetched_balance),
+                                    last_modification_timestamp: next_time(),
+                                };
+
+                                BalanceQueryResult {
+                                    update: Some((account.id, asset.id, new_balance.clone())),
+                                    balance: Some(AccountMapper::to_balance_dto(
+                                        new_balance,
+                                        asset.decimals,
+                                        account.id,
+                                        asset.id,
+                                        BalanceQueryState::Fresh,
+                                    )),
+                                }
+                            }
+                        }
+                        (Some(balance), true) => BalanceQueryResult {
+                            balance: Some(AccountMapper::to_balance_dto(
+                                balance.to_owned(),
+                                asset.decimals,
+                                account.id,
+                                asset.id,
+                                BalanceQueryState::Fresh,
+                            )),
+                            update: None,
+                        },
+                    }
+                })
+            })
+            .collect::<Vec<_>>();
+
+        let balance_query_results = futures::future::join_all(queries).await;
+
+        let mut account_balance_updates: BTreeMap<AccountId, Vec<(AssetId, AccountBalance)>> =
+            Default::default();
+        let mut balances = Vec::new();
+
+        for result in balance_query_results {
+            // group updates by account id to avoid multiple updates to the same account
+            if let Some((account_id, asset_id, balance)) = result.update {
+                account_balance_updates
+                    .entry(account_id)
+                    .or_default()
+                    .push((asset_id, balance));
+            }
+
+            balances.push(result.balance);
+        }
+
+        for (account_id, asset_balances) in account_balance_updates.into_iter() {
+            if let Some(mut account) = self.account_repository.get(&AccountKey { id: account_id }) {
+                for (asset_id, account_balance) in asset_balances.into_iter() {
+                    if let Some(account_asset) = account
+                        .assets
+                        .iter_mut()
+                        .find(|asset| asset.asset_id == asset_id)
+                    {
+                        account_asset.balance = Some(account_balance);
+                    } else {
+                        // Account no longer has the asset after the balance was fetched
+                        ic_cdk::println!(
+                        "Could not store new balance. Account with id {} no longer has asset with id {}",
+                        Uuid::from_bytes(account_id).hyphenated(),
+                        Uuid::from_bytes(asset_id).hyphenated()
+                    );
+                    }
                 }
-                (Some(balance), _) => balance.to_owned(),
-            };
 
-            balances.push(AccountMapper::to_balance_dto(
-                balance,
-                account.decimals,
-                account.id,
-            ));
+                self.account_repository.insert(account.to_key(), account);
+            } else {
+                // Account no longer exists after the balance was fetched
+                ic_cdk::println!(
+                    "Could not store new balance. Account with id {} no longer exists",
+                    Uuid::from_bytes(account_id).hyphenated()
+                );
+            }
         }
 
         Ok(balances)
@@ -431,21 +696,27 @@ impl AccountService {
 #[cfg(test)]
 mod tests {
     use candid::Principal;
+    use orbit_essentials::model::ModelKey;
 
     use super::*;
     use crate::{
         core::{test_utils, validation::disable_mock_resource_validation, CallContext},
         models::{
-            account_test_utils::mock_account, permission::Allow,
-            request_policy_rule::RequestPolicyRule, request_specifier::UserSpecifier,
-            user_test_utils::mock_user, AddAccountOperation, AddAccountOperationInput, Blockchain,
-            BlockchainStandard, Metadata, User,
+            account_test_utils::mock_account,
+            asset_test_utils::{mock_asset, mock_asset_b},
+            permission::Allow,
+            request_policy_rule::RequestPolicyRule,
+            request_specifier::UserSpecifier,
+            user_test_utils::mock_user,
+            AddAccountOperation, AddAccountOperationInput, ChangeAssets, Metadata, User,
         },
         repositories::UserRepository,
+        services::ASSET_SERVICE,
     };
 
     struct TestContext {
         repository: AccountRepository,
+        asset_repository: AssetRepository,
         service: AccountService,
         caller_user: User,
     }
@@ -462,6 +733,7 @@ mod tests {
         TestContext {
             repository: AccountRepository::default(),
             service: AccountService::default(),
+            asset_repository: AssetRepository::default(),
             caller_user: user,
         }
     }
@@ -485,8 +757,7 @@ mod tests {
             account_id: None,
             input: AddAccountOperationInput {
                 name: "foo".to_string(),
-                blockchain: Blockchain::InternetComputer,
-                standard: BlockchainStandard::Native,
+                assets: vec![],
                 metadata: Metadata::default(),
                 read_permission: Allow::users(vec![ctx.caller_user.id]),
                 configs_permission: Allow::users(vec![ctx.caller_user.id]),
@@ -516,8 +787,7 @@ mod tests {
             account_id: None,
             input: AddAccountOperationInput {
                 name: account.name,
-                blockchain: Blockchain::InternetComputer,
-                standard: BlockchainStandard::Native,
+                assets: vec![],
                 metadata: Metadata::default(),
                 read_permission: Allow::users(vec![ctx.caller_user.id]),
                 configs_permission: Allow::users(vec![ctx.caller_user.id]),
@@ -540,8 +810,7 @@ mod tests {
 
         let base_input = AddAccountOperationInput {
             name: "foo".to_string(),
-            blockchain: Blockchain::InternetComputer,
-            standard: BlockchainStandard::Native,
+            assets: vec![],
             metadata: Metadata::default(),
             read_permission: Allow::users(vec![ctx.caller_user.id]),
             configs_permission: Allow::users(vec![ctx.caller_user.id]),
@@ -627,8 +896,7 @@ mod tests {
 
         let input = AddAccountOperationInput {
             name: "foo2".to_string(),
-            blockchain: Blockchain::InternetComputer,
-            standard: BlockchainStandard::Native,
+            assets: vec![],
             metadata: Metadata::default(),
             read_permission: Allow::users(vec![ctx.caller_user.id]),
             configs_permission: Allow::users(vec![ctx.caller_user.id]),
@@ -656,6 +924,7 @@ mod tests {
         let operation = EditAccountOperationInput {
             account_id: account.id,
             name: Some("test_edit".to_string()),
+            change_assets: None,
             read_permission: None,
             transfer_permission: None,
             configs_permission: None,
@@ -673,6 +942,89 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn edit_account_assets() {
+        let ctx = setup();
+
+        let asset_a = mock_asset();
+        ctx.asset_repository.insert(asset_a.key(), asset_a.clone());
+
+        let asset_b = mock_asset_b();
+        ctx.asset_repository.insert(asset_b.key(), asset_b.clone());
+
+        let mut account = mock_account();
+        account.assets = vec![];
+        account.addresses = vec![];
+        ctx.repository.insert(account.to_key(), account.clone());
+
+        let operation = EditAccountOperationInput {
+            account_id: account.id,
+            name: None,
+            change_assets: Some(ChangeAssets::Change {
+                add_assets: vec![asset_a.id],
+                remove_assets: vec![],
+            }),
+            read_permission: None,
+            transfer_permission: None,
+            configs_permission: None,
+            transfer_request_policy: None,
+            configs_request_policy: None,
+        };
+
+        let updated_account = ctx
+            .service
+            .edit_account(operation)
+            .await
+            .expect("edit account should be successful");
+        assert_eq!(updated_account.assets.len(), 1);
+        assert_eq!(updated_account.assets[0].asset_id, asset_a.id);
+
+        let operation = EditAccountOperationInput {
+            account_id: account.id,
+            name: None,
+            change_assets: Some(ChangeAssets::Change {
+                add_assets: vec![asset_b.id],
+                remove_assets: vec![asset_a.id],
+            }),
+            read_permission: None,
+            transfer_permission: None,
+            configs_permission: None,
+            transfer_request_policy: None,
+            configs_request_policy: None,
+        };
+
+        let updated_account = ctx
+            .service
+            .edit_account(operation)
+            .await
+            .expect("edit account should be successful");
+        assert_eq!(updated_account.assets.len(), 1);
+        assert_eq!(updated_account.assets[0].asset_id, asset_b.id);
+
+        let operation = EditAccountOperationInput {
+            account_id: account.id,
+            name: None,
+            change_assets: Some(ChangeAssets::ReplaceWith {
+                assets: vec![asset_a.id, asset_b.id],
+            }),
+            read_permission: None,
+            transfer_permission: None,
+            configs_permission: None,
+            transfer_request_policy: None,
+            configs_request_policy: None,
+        };
+
+        let updated_account = ctx
+            .service
+            .edit_account(operation)
+            .await
+            .expect("edit account should be successful");
+
+        assert_eq!(updated_account.assets.len(), 2);
+        assert_eq!(updated_account.assets[0].asset_id, asset_a.id);
+        assert_eq!(updated_account.assets[1].asset_id, asset_b.id);
+    }
+
+    #[tokio::test]
     async fn edit_account_with_duplicate_name_should_fail() {
         let ctx = setup();
         let mut account = mock_account();
@@ -686,6 +1038,7 @@ mod tests {
         let operation = EditAccountOperationInput {
             account_id: account.id,
             name: Some("bar".to_string()),
+            change_assets: None,
             read_permission: None,
             transfer_permission: None,
             configs_permission: None,
@@ -699,29 +1052,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn fail_create_account_invalid_blockchain_standard() {
-        let ctx = setup();
-        let operation = AddAccountOperation {
-            account_id: None,
-            input: AddAccountOperationInput {
-                name: "foo".to_string(),
-                blockchain: Blockchain::InternetComputer,
-                standard: BlockchainStandard::ERC20,
-                metadata: Metadata::default(),
-                read_permission: Allow::users(vec![ctx.caller_user.id]),
-                configs_permission: Allow::users(vec![ctx.caller_user.id]),
-                transfer_permission: Allow::users(vec![ctx.caller_user.id]),
-                configs_request_policy: Some(RequestPolicyRule::AutoApproved),
-                transfer_request_policy: Some(RequestPolicyRule::AutoApproved),
-            },
-        };
-
-        let result = ctx.service.create_account(operation.input, None).await;
-
-        assert!(result.is_err());
-    }
-
-    #[tokio::test]
     async fn edit_account_with_missing_policy_should_fail() {
         let ctx = setup();
 
@@ -729,11 +1059,15 @@ mod tests {
 
         let account = mock_account();
 
+        let asset = mock_asset();
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+
         ctx.repository.insert(account.to_key(), account.clone());
 
         let base_input = EditAccountOperationInput {
             account_id: account.id,
             name: Some("test_edit".to_string()),
+            change_assets: None,
             read_permission: None,
             transfer_permission: None,
             configs_permission: None,
@@ -786,5 +1120,41 @@ mod tests {
             })
             .await
             .expect_err("transfer_request_policy should be invalid");
+    }
+
+    #[tokio::test]
+    async fn can_add_icrc1_asset() {
+        disable_mock_resource_validation();
+
+        let asset = ASSET_SERVICE
+            .create(
+                crate::models::AddAssetOperationInput {
+                    name: "Test ICRC1 token".to_owned(),
+                    symbol: "TEST".to_owned(),
+                    decimals: 4,
+                    metadata: Metadata::default(),
+                    blockchain: Blockchain::InternetComputer,
+                    standards: vec![TokenStandard::ICRC1],
+                },
+                None,
+            )
+            .expect("asset creation should be successful");
+
+        ACCOUNT_SERVICE
+            .create_account(
+                AddAccountOperationInput {
+                    name: "Test account".to_owned(),
+                    assets: vec![asset.id],
+                    metadata: Metadata::default(),
+                    read_permission: Allow::authenticated(),
+                    configs_permission: Allow::authenticated(),
+                    transfer_permission: Allow::authenticated(),
+                    configs_request_policy: Some(RequestPolicyRule::AutoApproved),
+                    transfer_request_policy: Some(RequestPolicyRule::AutoApproved),
+                },
+                None,
+            )
+            .await
+            .expect("account creation should be successful");
     }
 }
