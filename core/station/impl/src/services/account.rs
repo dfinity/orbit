@@ -2,7 +2,7 @@ use crate::{
     core::{
         authorization::Authorization,
         generate_uuid_v4,
-        ic_cdk::next_time,
+        ic_cdk::{api::time, next_time},
         read_system_info,
         utils::{paginated_items, retain_accessible_resources, PaginatedData, PaginatedItemsArgs},
         write_system_info, CallContext, ACCOUNT_BALANCE_FRESHNESS_IN_MS,
@@ -14,10 +14,10 @@ use crate::{
         request_policy_rule::RequestPolicyRuleInput,
         request_specifier::RequestSpecifier,
         resource::{AccountResourceAction, Resource, ResourceId, ResourceIds},
-        Account, AccountAddress, AccountBalance, AccountCallerPrivileges, AccountId,
-        AddAccountOperationInput, AddRequestPolicyOperationInput, AddressFormat, Blockchain,
-        CycleObtainStrategy, EditAccountOperationInput, EditPermissionOperationInput, MetadataItem,
-        TokenStandard,
+        Account, AccountAddress, AccountBalance, AccountCallerPrivileges, AccountId, AccountKey,
+        AddAccountOperationInput, AddRequestPolicyOperationInput, AddressFormat, AssetId,
+        BalanceQueryState, Blockchain, CycleObtainStrategy, EditAccountOperationInput,
+        EditPermissionOperationInput, MetadataItem, TokenStandard,
     },
     repositories::{
         AccountRepository, AccountWhereClause, AssetRepository, ACCOUNT_REPOSITORY,
@@ -31,10 +31,20 @@ use crate::{
 use ic_ledger_types::MAINNET_LEDGER_CANISTER_ID;
 use lazy_static::lazy_static;
 use orbit_essentials::{
-    api::ServiceResult, model::ModelValidator, repository::Repository, types::UUID,
+    api::ServiceResult,
+    model::ModelValidator,
+    repository::Repository,
+    types::UUID,
+    utils::{CallerGuard, State},
 };
 use station_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput};
-use std::{collections::HashSet, sync::Arc};
+use std::{
+    cell::RefCell,
+    collections::{BTreeMap, HashSet},
+    rc::Rc,
+    sync::Arc,
+    time::Duration,
+};
 use uuid::Uuid;
 
 use super::SYSTEM_SERVICE;
@@ -46,6 +56,19 @@ lazy_static! {
         Arc::clone(&ACCOUNT_REPOSITORY),
         Arc::clone(&ASSET_REPOSITORY)
     ));
+}
+
+thread_local! {
+
+    pub static BALANCE_FETCH_GUARD_STATE:
+        Rc<RefCell<State<BalanceFetchGuardKey>>>
+     = Rc::new(RefCell::new(State::default()));
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct BalanceFetchGuardKey {
+    account_id: AccountId,
+    asset_id: AssetId,
 }
 
 #[derive(Default, Debug)]
@@ -479,7 +502,7 @@ impl AccountService {
     pub async fn fetch_account_balances(
         &self,
         input: FetchAccountBalancesInput,
-    ) -> ServiceResult<Vec<AccountBalanceDTO>> {
+    ) -> ServiceResult<Vec<Option<AccountBalanceDTO>>> {
         if input.account_ids.is_empty() || input.account_ids.len() > 5 {
             Err(AccountError::AccountBalancesBatchRange { min: 1, max: 5 })?
         }
@@ -494,48 +517,176 @@ impl AccountService {
             .account_repository
             .find_by_ids(account_ids.iter().map(|id| *id.as_bytes()).collect());
 
-        let mut balances = Vec::new();
-        for mut account in accounts {
-            let account_key = account.to_key();
-            for account_asset in account.assets.iter_mut() {
-                let balance_considered_fresh = match &account_asset.balance {
-                    Some(balance) => {
-                        let balance_age_ns = next_time() - balance.last_modification_timestamp;
-                        (balance_age_ns / 1_000_000) < ACCOUNT_BALANCE_FRESHNESS_IN_MS
-                    }
-                    None => false,
-                };
+        struct BalanceQueryResult {
+            balance: Option<AccountBalanceDTO>,
+            update: Option<(AccountId, AssetId, AccountBalance)>,
+        }
 
-                let Some(asset) = self.asset_repository.get(&account_asset.asset_id) else {
-                    continue;
-                };
-
-                let balance: AccountBalance =
-                    match (&account_asset.balance, balance_considered_fresh) {
-                        (None, _) | (_, false) => {
-                            let blockchain_api = BlockchainApiFactory::build(&asset.blockchain)?;
-                            let fetched_balance =
-                                blockchain_api.balance(&asset, &account.addresses).await?;
-                            let new_balance = AccountBalance {
-                                balance: candid::Nat(fetched_balance),
-                                last_modification_timestamp: next_time(),
-                            };
-
-                            account_asset.balance = Some(new_balance.clone());
-
-                            new_balance
+        let queries = accounts
+            .iter()
+            .flat_map(|account| {
+                account.assets.iter().map(|account_asset| async {
+                    let balance_considered_fresh = match &account_asset.balance {
+                        Some(balance) => {
+                            let balance_age_ns = next_time() - balance.last_modification_timestamp;
+                            (balance_age_ns / 1_000_000) < ACCOUNT_BALANCE_FRESHNESS_IN_MS
                         }
-                        (Some(balance), _) => balance.to_owned(),
+                        None => false,
                     };
 
-                balances.push(AccountMapper::to_balance_dto(
-                    balance,
-                    asset.decimals,
-                    account.id,
-                ));
+                    let Some(asset) = self.asset_repository.get(&account_asset.asset_id) else {
+                        return BalanceQueryResult {
+                            balance: None,
+                            update: None,
+                        };
+                    };
+
+                    match (&account_asset.balance, balance_considered_fresh) {
+                        (None, _) | (_, false) => {
+                            let balance_update_guard_key = BalanceFetchGuardKey {
+                                account_id: account.id,
+                                asset_id: asset.id,
+                            };
+
+                            let _lock = BALANCE_FETCH_GUARD_STATE.with(|state| {
+                                CallerGuard::new(
+                                    state.clone(),
+                                    balance_update_guard_key,
+                                    Some(time() + Duration::from_secs(5 * 60).as_nanos() as u64),
+                                )
+                            });
+
+                            if _lock.is_none() {
+                                if let Some(stale_balance) = &account_asset.balance {
+                                    BalanceQueryResult {
+                                        balance: Some(AccountMapper::to_balance_dto(
+                                            stale_balance.to_owned(),
+                                            asset.decimals,
+                                            account.id,
+                                            asset.id,
+                                            BalanceQueryState::StaleRefreshing,
+                                        )),
+                                        update: None,
+                                    }
+                                } else {
+                                    BalanceQueryResult {
+                                        balance: None,
+                                        update: None,
+                                    }
+                                }
+                            } else {
+                                let blockchain_api =
+                                    match BlockchainApiFactory::build(&asset.blockchain) {
+                                        Ok(api) => api,
+                                        Err(err) => {
+                                            ic_cdk::println!(
+                                                "Could not build blockchain api for asset with id {}. Error: {}",
+                                                Uuid::from_bytes(asset.id).hyphenated(),
+                                                err
+                                            );
+                                            return BalanceQueryResult {
+                                                balance: None,
+                                                update: None,
+                                            };
+                                        }
+                                    };
+
+                                let fetched_balance = match blockchain_api
+                                    .balance(&asset, &account.addresses)
+                                    .await
+                                {
+                                    Ok(balance) => balance,
+                                    Err(err) => {
+                                        ic_cdk::println!(
+                                            "Could not fetch balance for account with id {} and asset with id {}. Error: {}",
+                                            Uuid::from_bytes(account.id).hyphenated(),
+                                            Uuid::from_bytes(asset.id).hyphenated(),
+                                            err
+                                        );
+                                        return BalanceQueryResult {
+                                            balance: None,
+                                            update: None,
+                                        };
+                                    }
+                                };
+
+                                let new_balance = AccountBalance {
+                                    balance: candid::Nat(fetched_balance),
+                                    last_modification_timestamp: next_time(),
+                                };
+
+                                BalanceQueryResult {
+                                    update: Some((account.id, asset.id, new_balance.clone())),
+                                    balance: Some(AccountMapper::to_balance_dto(
+                                        new_balance,
+                                        asset.decimals,
+                                        account.id,
+                                        asset.id,
+                                        BalanceQueryState::Fresh,
+                                    )),
+                                }
+                            }
+                        }
+                        (Some(balance), true) => BalanceQueryResult {
+                            balance: Some(AccountMapper::to_balance_dto(
+                                balance.to_owned(),
+                                asset.decimals,
+                                account.id,
+                                asset.id,
+                                BalanceQueryState::Fresh,
+                            )),
+                            update: None,
+                        },
+                    }
+                })
+            })
+            .collect::<Vec<_>>();
+
+        let balance_query_results = futures::future::join_all(queries).await;
+
+        let mut account_balance_updates: BTreeMap<AccountId, Vec<(AssetId, AccountBalance)>> =
+            Default::default();
+        let mut balances = Vec::new();
+
+        for result in balance_query_results {
+            // group updates by account id to avoid multiple updates to the same account
+            if let Some((account_id, asset_id, balance)) = result.update {
+                account_balance_updates
+                    .entry(account_id)
+                    .or_default()
+                    .push((asset_id, balance));
             }
 
-            self.account_repository.insert(account_key.clone(), account);
+            balances.push(result.balance);
+        }
+
+        for (account_id, asset_balances) in account_balance_updates.into_iter() {
+            if let Some(mut account) = self.account_repository.get(&AccountKey { id: account_id }) {
+                for (asset_id, account_balance) in asset_balances.into_iter() {
+                    if let Some(account_asset) = account
+                        .assets
+                        .iter_mut()
+                        .find(|asset| asset.asset_id == asset_id)
+                    {
+                        account_asset.balance = Some(account_balance);
+                    } else {
+                        // Account no longer has the asset after the balance was fetched
+                        ic_cdk::println!(
+                        "Could not store new balance. Account with id {} no longer has asset with id {}",
+                        Uuid::from_bytes(account_id).hyphenated(),
+                        Uuid::from_bytes(asset_id).hyphenated()
+                    );
+                    }
+                }
+
+                self.account_repository.insert(account.to_key(), account);
+            } else {
+                // Account no longer exists after the balance was fetched
+                ic_cdk::println!(
+                    "Could not store new balance. Account with id {} no longer exists",
+                    Uuid::from_bytes(account_id).hyphenated()
+                );
+            }
         }
 
         Ok(balances)

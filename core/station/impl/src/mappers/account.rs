@@ -5,7 +5,8 @@ use crate::{
     errors::MapperError,
     models::{
         Account, AccountAddress, AccountAsset, AccountBalance, AccountCallerPrivileges, AccountId,
-        AccountSeed, AddAccountOperationInput, AddressFormat, ChangeAssets,
+        AccountSeed, AddAccountOperationInput, AddressFormat, AssetId, BalanceQueryState,
+        ChangeAssets,
     },
     repositories::{request_policy::REQUEST_POLICY_REPOSITORY, ASSET_REPOSITORY},
 };
@@ -105,12 +106,16 @@ impl AccountMapper {
         balance: AccountBalance,
         decimals: u32,
         account_id: AccountId,
+        asset_id: AssetId,
+        query_state: BalanceQueryState,
     ) -> AccountBalanceDTO {
         AccountBalanceDTO {
             account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
+            asset_id: Uuid::from_bytes(asset_id).hyphenated().to_string(),
             balance: balance.balance,
             decimals,
             last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
+            query_state: query_state.to_string(),
         }
     }
 
@@ -123,9 +128,16 @@ impl AccountMapper {
             asset_id: Uuid::from_bytes(account_asset.asset_id)
                 .hyphenated()
                 .to_string(),
-            balance: account_asset
-                .balance
-                .map(|balance| Self::to_balance_dto(balance, decimals, account_id)),
+            balance: account_asset.balance.map(|balance| {
+                let query_state = BalanceQueryState::from(&balance);
+                Self::to_balance_dto(
+                    balance,
+                    decimals,
+                    account_id,
+                    account_asset.asset_id,
+                    query_state,
+                )
+            }),
         }
     }
 }

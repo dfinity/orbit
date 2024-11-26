@@ -550,6 +550,8 @@ export const idlFactory = ({ IDL }) => {
     'decimals' : IDL.Nat32,
     'balance' : IDL.Nat,
     'last_update_timestamp' : TimestampRFC3339,
+    'query_state' : IDL.Text,
+    'asset_id' : UUID,
   });
   const AccountAsset = IDL.Record({
     'balance' : IDL.Opt(AccountBalance),
@@ -907,7 +909,7 @@ export const idlFactory = ({ IDL }) => {
     'account_ids' : IDL.Vec(UUID),
   });
   const FetchAccountBalancesResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'balances' : IDL.Vec(AccountBalance) }),
+    'Ok' : IDL.Record({ 'balances' : IDL.Vec(IDL.Opt(AccountBalance)) }),
     'Err' : Error,
   });
   const GetAccountInput = IDL.Record({ 'account_id' : UUID });

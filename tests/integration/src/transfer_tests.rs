@@ -447,7 +447,10 @@ fn make_icrc1_transfer() {
     );
 
     assert_eq!(
-        account_balances.balances[0].balance,
+        account_balances.balances[0]
+            .as_ref()
+            .expect("should have balance")
+            .balance,
         candid::Nat::from(999_850u128)
     );
 
@@ -555,7 +558,10 @@ fn make_icrc1_icp_transfer() {
     );
     assert_eq!(account_balances.balances.len(), 1);
     assert_eq!(
-        account_balances.balances[0].balance,
+        account_balances.balances[0]
+            .as_ref()
+            .expect("should have balance")
+            .balance,
         candid::Nat::from(30 * 100_000_000u64)
     );
 
@@ -589,7 +595,10 @@ fn make_icrc1_icp_transfer() {
     );
     assert_eq!(account_balances.balances.len(), 1);
     assert_eq!(
-        account_balances.balances[0].balance,
+        account_balances.balances[0]
+            .as_ref()
+            .expect("should have balance")
+            .balance,
         candid::Nat::from(5 * 100_000_000u64 - 10_000)
     );
 }

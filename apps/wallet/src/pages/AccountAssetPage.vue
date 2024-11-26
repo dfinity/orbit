@@ -492,18 +492,20 @@ const loadAccount = async (): Promise<{
       account_ids: [accountId],
     });
 
-    if (balances.length) {
-      accountAsset.value = {
-        ...accountAsset.value,
-        balance: [
-          {
-            account_id: accountId,
-            balance: balances[0].balance,
-            decimals: balances[0].decimals,
-            last_update_timestamp: balances[0].last_update_timestamp,
-          },
-        ],
-      };
+    for (const balance of balances) {
+      if (!balance[0]) {
+        continue;
+      }
+
+      const accountBalance = balance[0];
+
+      if (accountBalance.account_id === accountId && accountBalance.asset_id == assetId) {
+        accountAsset.value = {
+          ...accountAsset.value,
+          balance: [accountBalance],
+        };
+        break;
+      }
     }
   }
 
