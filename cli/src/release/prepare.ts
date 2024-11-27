@@ -6,21 +6,40 @@ import { isAbsolute, join } from 'path';
 import { parseArgsListSplitByComma } from '../utils';
 import { ReleaseDetails } from './types';
 
-const parsePreReleaseMode = (releaseMode?: string): 'alpha' | 'beta' | 'rc' | 'prod' => {
-  if (!releaseMode) {
-    return 'prod';
+const ACCEPTED_SPECIFIERS = [
+  'major',
+  'minor',
+  'patch',
+  'premajor',
+  'preminor',
+  'prepatch',
+  'prerelease',
+];
+
+const ACCEPTED_PRE_RELEASE_MODES = ['alpha', 'beta', 'rc'];
+
+const parseVersionSpecifier = (specifier?: string): string | undefined => {
+  if (!specifier) {
+    return undefined;
   }
 
-  switch (releaseMode) {
-    case 'alpha':
-      return 'alpha';
-    case 'beta':
-      return 'beta';
-    case 'rc':
-      return 'rc';
-    default:
-      throw new Error(`Invalid pre-release mode: ${releaseMode}`);
+  if (!ACCEPTED_SPECIFIERS.includes(specifier)) {
+    throw new Error(`Invalid specifier: ${specifier}`);
   }
+
+  return specifier;
+};
+
+const parsePreReleaseMode = (releaseMode?: string): string | undefined => {
+  if (!releaseMode) {
+    return undefined;
+  }
+
+  if (!ACCEPTED_PRE_RELEASE_MODES.includes(releaseMode)) {
+    throw new Error(`Invalid pre-release mode: ${releaseMode}`);
+  }
+
+  return releaseMode;
 };
 
 const command = createCommand('prepare').description(
@@ -36,6 +55,11 @@ command
   .option('-d, --dry-run', 'Whether or not to perform a dry-run of the release process')
   .option('-v, --verbose', 'Whether or not to log verbose output')
   .option(
+    '-s, --version-specifier <VALUE>',
+    'The version specifier to use for the release (major, minor, patch, premajor, preminor, prepatch, prerelease)',
+    parseVersionSpecifier,
+  )
+  .option(
     '-P, --pre-release <VALUE>',
     'Specify the type of pre-release version to use (alpha, beta or rc)',
     parsePreReleaseMode,
@@ -47,15 +71,20 @@ command
   );
 
 command.action(async options => {
-  const releaseMode = !options.preRelease ? 'prod' : options.preRelease;
+  const specifier = options.versionSpecifier;
+  const preReleaseId = options.preRelease;
+
+  if (preReleaseId && specifier && specifier !== 'prerelease') {
+    throw new Error('Pre-release identifier can only be used with the "prerelease" specifier.');
+  }
 
   const { projectsVersionData } = await releaseVersion({
     firstRelease: true,
     dryRun: options.dryRun,
     verbose: options.verbose,
     projects: options.projects,
-    specifier: releaseMode !== 'prod' ? 'prerelease' : undefined,
-    preid: releaseMode !== 'prod' ? options.preRelease : undefined,
+    specifier: options.preRelease ? 'prerelease' : specifier,
+    preid: preReleaseId,
   });
 
   const newVersions = Object.values(projectsVersionData).filter(data => data.newVersion != null);
