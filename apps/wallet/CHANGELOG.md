@@ -1,3 +1,27 @@
+## 0.1.0 (2024-11-27)
+
+
+### 🚀 Features
+
+- ⚠️  **station:** multi chain support ([#374](https://github.com/dfinity/orbit/pull/374))
+
+
+### 🩹 Fixes
+
+- **control-panel:** fix initial station deploy ([#441](https://github.com/dfinity/orbit/pull/441))
+
+- **wallet:** fix semver compatibility check ([#442](https://github.com/dfinity/orbit/pull/442))
+
+
+### ⚠️  Breaking Changes
+
+- ⚠️  **station:** multi chain support ([#374](https://github.com/dfinity/orbit/pull/374))
+
+### ❤️  Thank You
+
+- Kepler Vital
+- olaszakos
+
 ## 0.0.2-alpha.15 (2024-11-22)
 
 
