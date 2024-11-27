@@ -4,7 +4,8 @@ use crate::setup::{
 };
 use crate::utils::{
     advance_time_to_burn_cycles, controller_test_id, create_icp_account,
-    get_core_canister_health_status, get_system_info, get_user, user_test_id, NNS_ROOT_CANISTER_ID,
+    get_core_canister_health_status, get_icp_account_identifier, get_system_info, get_user,
+    user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use control_panel_api::{
@@ -232,9 +233,12 @@ fn can_mint_cycles_to_top_up_self() {
     let user = get_user(&env, user_id, canister_ids.station);
 
     let account = create_icp_account(&env, canister_ids.station, user.id);
-    let account_id = AccountIdentifier::from_hex(&account.address).unwrap();
+    let account_id = AccountIdentifier::from_hex(
+        &get_icp_account_identifier(&account.addresses).expect("no icp address found"),
+    )
+    .unwrap();
 
-    send_icp_to_account(&env, controller, account_id, 100 * ICP, 0, None).unwrap();
+    send_icp_to_account(&env, controller, account_id, 100 * ICP, 0, None, None).unwrap();
     let pre_account_balance = get_icp_account_balance(&env, account_id);
     let pre_cycle_balance = env.cycle_balance(canister_ids.station);
     assert_eq!(pre_account_balance, 100 * ICP);

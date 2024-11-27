@@ -164,7 +164,28 @@ lazy_static! {
         (
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(ExternalCanisterId::Any)),
-        )
+        ),
+        // assets
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Create),
+        ),
+        (
+            Allow::authenticated(),
+            Resource::Asset(ResourceAction::List),
+        ),
+        (
+            Allow::authenticated(),
+            Resource::Asset(ResourceAction::Read(ResourceId::Any)),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Update(ResourceId::Any)),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::Asset(ResourceAction::Delete(ResourceId::Any)),
+        ),
     ];
 
 }
@@ -250,6 +271,19 @@ pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPoli
         ),
         (
             RequestSpecifier::FundExternalCanister(ExternalCanisterId::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        // create, edit, and remove assets
+        (
+            RequestSpecifier::AddAsset,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        (
+            RequestSpecifier::EditAsset(ResourceIds::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        (
+            RequestSpecifier::RemoveAsset(ResourceIds::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
     ]

@@ -1,6 +1,8 @@
 use crate::interfaces::{default_account, get_icp_balance, send_icp_to_account, ICP, ICP_FEE};
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
-use crate::utils::{execute_request, get_user, user_test_id};
+use crate::utils::{
+    execute_request, get_icp_account_identifier, get_icp_asset, get_user, user_test_id,
+};
 use crate::TestEnv;
 use ic_ledger_types::AccountIdentifier;
 use pocket_ic::update_candid_as;
@@ -24,8 +26,9 @@ fn address_book_entry_lifecycle() {
         RequestOperationInput::AddAddressBookEntry(AddAddressBookEntryOperationInput {
             address_owner: "John Doe".to_string(),
             address: "0x1234".to_string(),
+            address_format: "icp_account_identifier".to_string(),
             blockchain: "icp".to_string(),
-            labels: vec!["native".to_string()],
+            labels: vec!["icp_native".to_string()],
             metadata: vec![MetadataDTO {
                 key: "kyc".to_string(),
                 value: "false".to_string(),
@@ -47,7 +50,7 @@ fn address_book_entry_lifecycle() {
     assert_eq!(address_book_entry.address_owner, "John Doe".to_string());
     assert_eq!(address_book_entry.address, "0x1234".to_string());
     assert_eq!(address_book_entry.blockchain, "icp".to_string());
-    assert_eq!(address_book_entry.labels, vec!["native".to_string()]);
+    assert_eq!(address_book_entry.labels, vec!["icp_native".to_string()]);
     assert_eq!(
         address_book_entry.metadata,
         vec![MetadataDTO {
@@ -60,9 +63,11 @@ fn address_book_entry_lifecycle() {
     let add_address_book_entry =
         RequestOperationInput::AddAddressBookEntry(AddAddressBookEntryOperationInput {
             address_owner: "Max Mustermann".to_string(),
+            address_format: "icp_account_identifier".to_string(),
+
             address: "0x1234".to_string(),
             blockchain: "icp".to_string(),
-            labels: vec!["native".to_string()],
+            labels: vec!["icp_native".to_string()],
             metadata: vec![MetadataDTO {
                 key: "kyc".to_string(),
                 value: "true".to_string(),
@@ -80,9 +85,10 @@ fn address_book_entry_lifecycle() {
     let add_address_book_entry =
         RequestOperationInput::AddAddressBookEntry(AddAddressBookEntryOperationInput {
             address_owner: "Max Mustermann".to_string(),
+            address_format: "icp_account_identifier".to_string(),
             address: "0x5678".to_string(),
             blockchain: "icp".to_string(),
-            labels: vec!["native".to_string()],
+            labels: vec!["icp_native".to_string()],
             metadata: vec![MetadataDTO {
                 key: "kyc".to_string(),
                 value: "true".to_string(),
@@ -107,7 +113,10 @@ fn address_book_entry_lifecycle() {
     );
     assert_eq!(next_address_book_entry.address, "0x5678".to_string());
     assert_eq!(next_address_book_entry.blockchain, "icp".to_string());
-    assert_eq!(next_address_book_entry.labels, vec!["native".to_string()]);
+    assert_eq!(
+        next_address_book_entry.labels,
+        vec!["icp_native".to_string()]
+    );
     assert_eq!(
         next_address_book_entry.metadata,
         vec![MetadataDTO {
@@ -123,6 +132,7 @@ fn address_book_entry_lifecycle() {
         addresses: None,
         ids: None,
         paginate: None,
+        address_formats: None,
     };
     let res: (Result<ListAddressBookEntriesResponseDTO, ApiErrorDTO>,) = update_candid_as(
         &env,
@@ -196,6 +206,7 @@ fn address_book_entry_lifecycle() {
         addresses: None,
         ids: None,
         paginate: None,
+        address_formats: None,
     };
     let res: (Result<ListAddressBookEntriesResponseDTO, ApiErrorDTO>,) = update_candid_as(
         &env,
@@ -230,9 +241,10 @@ fn check_address_book_for_transfer() {
     let add_address_book_entry =
         RequestOperationInput::AddAddressBookEntry(AddAddressBookEntryOperationInput {
             address_owner: "John Doe".to_string(),
+            address_format: "icp_account_identifier".to_string(),
             address: john_doe_account.clone(),
             blockchain: "icp".to_string(),
-            labels: vec!["native".to_string()],
+            labels: vec!["icp_native".to_string()],
             metadata: vec![MetadataDTO {
                 key: "kyc".to_string(),
                 value: "false".to_string(),
@@ -255,11 +267,12 @@ fn check_address_book_for_transfer() {
     // get admin user
     let admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
 
+    let icp = get_icp_asset(&env, canister_ids.station, WALLET_ADMIN_USER);
+
     // create account for admin user
     let add_account = RequestOperationInput::AddAccount(AddAccountOperationInput {
         name: "admin".to_string(),
-        blockchain: "icp".to_string(),
-        standard: "native".to_string(),
+        assets: vec![icp.id.clone()],
         read_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
@@ -289,14 +302,17 @@ fn check_address_book_for_transfer() {
         _ => panic!("unexpected request operation"),
     };
 
+    let icp_address = get_icp_account_identifier(&admin_account.addresses).expect("no icp address");
+
     // send ICP to admin user's station account
-    let admin_account_address = AccountIdentifier::from_hex(&admin_account.address).unwrap();
+    let admin_account_address = AccountIdentifier::from_hex(&icp_address).unwrap();
     send_icp_to_account(
         &env,
         controller,
         admin_account_address,
         ICP + ICP_FEE,
         0,
+        None,
         None,
     )
     .unwrap();
@@ -305,6 +321,8 @@ fn check_address_book_for_transfer() {
     // and check that transfer request gets rejected
     let transfer = RequestOperationInput::Transfer(TransferOperationInput {
         from_account_id: admin_account.id,
+        from_asset_id: icp.id,
+        with_standard: "icp_native".to_string(),
         to: john_doe_account,
         amount: ICP.into(),
         fee: None,

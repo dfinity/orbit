@@ -4,6 +4,7 @@ import {
   mdiDatabase,
   mdiFormatListText,
   mdiPlusBox,
+  mdiViewDashboard,
   mdiWalletBifold,
 } from '@mdi/js';
 import { App, Ref, computed, ref, watch } from 'vue';
@@ -37,6 +38,19 @@ const sections = (): NavigationSections => ({
         },
       },
       icon: mdiPlusBox,
+    },
+    {
+      name: 'dashboard',
+      localeKey: 'navigation.dashboard',
+      action: {
+        type: NavigationActionType.To,
+        handle: route => (route.params.locale ? `/${route.params.locale}/dashboard` : '/dashboard'),
+      },
+      auth: {
+        type: NavigastionAuthType.Route,
+        route: Routes.Dashboard,
+      },
+      icon: mdiViewDashboard,
     },
     {
       name: 'accounts',
@@ -175,6 +189,19 @@ const sections = (): NavigationSections => ({
           auth: {
             type: NavigastionAuthType.Route,
             route: Routes.Requests,
+          },
+        },
+        {
+          name: 'assets',
+          localeKey: 'navigation.assets',
+          action: {
+            type: NavigationActionType.To,
+            handle: route =>
+              route.params.locale ? `/${route.params.locale}/settings/assets` : '/settings/assets',
+          },
+          auth: {
+            type: NavigastionAuthType.Route,
+            route: Routes.Assets,
           },
         },
       ],

@@ -7,7 +7,7 @@
       </template>
     </RequestOperationListRow>
   </div>
-  <VProgressCircular v-else-if="loading" />
+  <VProgressCircular v-else-if="loading" indeterminate />
   <AddressBookForm v-else :model-value="formValue" mode="view" />
 </template>
 
@@ -22,6 +22,7 @@ import {
 } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
+import { VProgressCircular } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{

@@ -2,9 +2,11 @@ import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { idlFactory } from '~/generated/station';
 import {
-  AccountBalance,
+  Account,
+  AccountCallerPrivileges,
   AddAccountOperationInput,
   AddAddressBookEntryOperationInput,
+  AddAssetOperationInput,
   AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
@@ -20,16 +22,20 @@ import {
   DisasterRecoveryCommittee,
   EditAccountOperationInput,
   EditAddressBookEntryOperationInput,
+  EditAssetOperationInput,
   EditPermissionOperationInput,
   EditRequestPolicyOperationInput,
   EditUserGroupOperationInput,
   EditUserOperationInput,
   FetchAccountBalancesInput,
+  FetchAccountBalancesResult,
   FundExternalCanisterOperationInput,
   GetAccountInput,
   GetAccountResult,
   GetAddressBookEntryInput,
   GetAddressBookEntryResult,
+  GetAssetInput,
+  GetAssetResult,
   GetExternalCanisterFiltersResult,
   GetExternalCanisterResult,
   GetNextApprovableRequestResult,
@@ -46,6 +52,7 @@ import {
   ListAccountTransfersInput,
   ListAccountsResult,
   ListAddressBookEntriesResult,
+  ListAssetsResult,
   ListExternalCanistersResult,
   ListNotificationsInput,
   ListPermissionsInput,
@@ -60,6 +67,7 @@ import {
   MonitorExternalCanisterOperationInput,
   Notification,
   PaginationInput,
+  RemoveAssetOperationInput,
   RemoveUserGroupOperationInput,
   Request,
   SubmitRequestApprovalInput,
@@ -79,6 +87,7 @@ import {
   GetNextApprovableRequestArgs,
   ListAccountsArgs,
   ListAddressBookEntriesArgs,
+  ListAssetsArgs,
   ListExternalCanistersArgs,
   ListRequestsArgs,
 } from '~/types/station.types';
@@ -549,8 +558,50 @@ export class StationService {
     return result.Ok;
   }
 
+  async listAllAccounts(verifiedCall = false): Promise<{
+    accounts: Account[];
+    privileges: AccountCallerPrivileges[];
+  }> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+
+    const accounts: Account[] = [];
+    const privileges: AccountCallerPrivileges[] = [];
+    let nextOffset: [bigint] | [] = [];
+
+    do {
+      const result = await actor.list_accounts({
+        paginate: [
+          {
+            limit: [100],
+            offset: nextOffset,
+          },
+        ],
+        search_term: [],
+      });
+
+      if (variantIs(result, 'Err')) {
+        throw result.Err;
+      }
+
+      accounts.push(...result.Ok.accounts);
+      privileges.push(...result.Ok.privileges);
+
+      nextOffset = result.Ok.next_offset as [bigint] | []; // have to force cast here because of typescript inference
+    } while (nextOffset.length > 0);
+
+    return { accounts, privileges };
+  }
+
   async listAddressBook(
-    { limit, offset, blockchain, labels, ids, addresses }: ListAddressBookEntriesArgs = {},
+    {
+      limit,
+      offset,
+      blockchain,
+      labels,
+      ids,
+      addresses,
+      address_formats,
+    }: ListAddressBookEntriesArgs = {},
     verifiedCall = false,
   ): Promise<ExtractOk<ListAddressBookEntriesResult>> {
     const actor = verifiedCall ? this.verified_actor : this.actor;
@@ -565,7 +616,19 @@ export class StationService {
       labels: labels ? [labels] : [],
       addresses: addresses ? [addresses] : [],
       ids: ids ? [ids] : [],
+      address_formats: address_formats ? [address_formats] : [],
     });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async getAsset(input: GetAssetInput, verifiedCall = false): Promise<ExtractOk<GetAssetResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.get_asset(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;
@@ -696,6 +759,27 @@ export class StationService {
     return result.Ok;
   }
 
+  async listAssets(
+    { limit, offset }: ListAssetsArgs = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListAssetsResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_assets({
+      paginate: [
+        {
+          limit: limit !== undefined ? [limit] : [],
+          offset: offset !== undefined ? [BigInt(offset)] : [],
+        },
+      ],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
   async getExternalCanisterByCanisterId(
     canisterId: Principal,
     verifiedCall = false,
@@ -737,6 +821,22 @@ export class StationService {
     return result.Ok;
   }
 
+  async addAsset(input: AddAssetOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { AddAsset: input },
+      expiration_dt: [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
   async fetchExternalCanisterFilters(
     args: {
       with_labels?: boolean;
@@ -767,6 +867,38 @@ export class StationService {
       title: [],
       summary: [],
       operation: { CreateExternalCanister: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async editAsset(input: EditAssetOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { EditAsset: input },
+      expiration_dt: [],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async removeAsset(input: RemoveAssetOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      title: [],
+      summary: [],
+      operation: { RemoveAsset: input },
+      expiration_dt: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -843,7 +975,9 @@ export class StationService {
     return variantIs(result, 'Healthy');
   }
 
-  async fetchAccountBalances(input: FetchAccountBalancesInput): Promise<AccountBalance[]> {
+  async fetchAccountBalances(
+    input: FetchAccountBalancesInput,
+  ): Promise<ExtractOk<FetchAccountBalancesResult>['balances']> {
     const result = await this.actor.fetch_account_balances(input);
 
     if (variantIs(result, 'Err')) {

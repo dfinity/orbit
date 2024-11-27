@@ -1,7 +1,7 @@
 use super::request_policy_rule::{RequestEvaluationResult, RequestPolicyRuleInput};
 use super::{
-    ConfigureExternalCanisterOperationKind, DisplayUser, EvaluationStatus, RequestApproval,
-    RequestApprovalStatus, RequestOperation, RequestStatus, UserId, UserKey,
+    ChangeAssets, ConfigureExternalCanisterOperationKind, DisplayUser, EvaluationStatus,
+    RequestApproval, RequestApprovalStatus, RequestOperation, RequestStatus, UserId, UserKey,
 };
 use crate::core::evaluation::{
     Evaluate, REQUEST_APPROVE_RIGHTS_REQUEST_POLICY_RULE_EVALUATOR, REQUEST_POLICY_RULE_EVALUATOR,
@@ -13,8 +13,8 @@ use crate::core::request::{
     RequestApprovalRightsEvaluator, RequestEvaluator, RequestPossibleApproversFinder,
 };
 use crate::core::validation::{
-    EnsureAccount, EnsureAddressBookEntry, EnsureIdExists, EnsureRequestPolicy, EnsureUser,
-    EnsureUserGroup,
+    EnsureAccount, EnsureAddressBookEntry, EnsureAsset, EnsureIdExists, EnsureRequestPolicy,
+    EnsureUser, EnsureUserGroup,
 };
 use crate::errors::{EvaluateError, RequestError, ValidationError};
 use crate::models::resource::{ExecutionMethodResourceTarget, ValidationMethodResourceTarget};
@@ -198,6 +198,7 @@ fn validate_request_operation_foreign_keys(
         RequestOperation::ManageSystemInfo(_) => (),
         RequestOperation::Transfer(op) => {
             EnsureAccount::id_exists(&op.input.from_account_id)?;
+            EnsureAsset::id_exists(&op.input.from_asset_id)?;
         }
         RequestOperation::AddAccount(op) => {
             op.input.read_permission.validate()?;
@@ -235,6 +236,19 @@ fn validate_request_operation_foreign_keys(
                 &op.input.transfer_request_policy
             {
                 policy_rule.validate()?;
+            }
+
+            if let Some(ChangeAssets::ReplaceWith { assets }) = &op.input.change_assets {
+                EnsureAsset::id_list_exists(assets)?;
+            }
+
+            if let Some(ChangeAssets::Change {
+                add_assets,
+                remove_assets,
+            }) = &op.input.change_assets
+            {
+                EnsureAsset::id_list_exists(add_assets)?;
+                EnsureAsset::id_list_exists(remove_assets)?;
             }
         }
         RequestOperation::AddAddressBookEntry(_) => (),
@@ -318,6 +332,13 @@ fn validate_request_operation_foreign_keys(
             if let Some(committee) = &op.input.committee {
                 EnsureUserGroup::id_exists(&committee.user_group_id)?;
             }
+        }
+        RequestOperation::AddAsset(_) => (),
+        RequestOperation::EditAsset(op) => {
+            EnsureAsset::id_exists(&op.input.asset_id)?;
+        }
+        RequestOperation::RemoveAsset(op) => {
+            EnsureAsset::id_exists(&op.input.asset_id)?;
         }
     }
     Ok(())
@@ -485,12 +506,15 @@ impl Request {
 #[cfg(test)]
 mod tests {
     use crate::core::validation::disable_mock_resource_validation;
+    use crate::models::asset_test_utils::mock_asset;
     use crate::models::permission::Allow;
     use crate::models::{
-        AddAccountOperationInput, AddUserOperation, AddUserOperationInput, Metadata,
-        TransferOperation, TransferOperationInput,
+        Account, AccountKey, AddAccountOperationInput, AddAssetOperationInput, AddUserOperation,
+        AddUserOperationInput, Blockchain, Metadata, TokenStandard, TransferOperation,
+        TransferOperationInput,
     };
-    use crate::services::AccountService;
+    use crate::repositories::ACCOUNT_REPOSITORY;
+    use crate::services::{AccountService, AssetService};
 
     use super::request_test_utils::mock_request;
     use super::*;
@@ -659,13 +683,26 @@ mod tests {
     async fn test_request_operation_is_valid() {
         disable_mock_resource_validation();
 
+        let asset = AssetService::default()
+            .create(
+                AddAssetOperationInput {
+                    name: "a".to_owned(),
+                    symbol: "a".to_owned(),
+                    decimals: 0,
+                    metadata: Metadata::default(),
+                    blockchain: Blockchain::InternetComputer,
+                    standards: vec![TokenStandard::InternetComputerNative],
+                },
+                None,
+            )
+            .expect("Failed to create asset");
+
         let account_service = AccountService::default();
         let account = account_service
             .create_account(
                 AddAccountOperationInput {
                     name: "a".to_owned(),
-                    blockchain: crate::models::Blockchain::InternetComputer,
-                    standard: crate::models::BlockchainStandard::Native,
+                    assets: vec![asset.id],
                     metadata: Metadata::default(),
                     read_permission: Allow::default(),
                     configs_permission: Allow::default(),
@@ -689,7 +726,10 @@ mod tests {
                 metadata: Metadata::default(),
                 to: "0x1234".to_string(),
                 from_account_id: account.id,
+                from_asset_id: asset.id,
+                with_standard: TokenStandard::InternetComputerNative,
             },
+            asset,
         });
 
         let result = validate_request_operation_foreign_keys(&operation);
@@ -711,7 +751,10 @@ mod tests {
                 metadata: Metadata::default(),
                 to: "0x1234".to_string(),
                 from_account_id: [0; 16],
+                from_asset_id: [0; 16],
+                with_standard: TokenStandard::InternetComputerNative,
             },
+            asset: mock_asset(),
         }))
         .expect_err("Invalid account id should fail");
 
@@ -780,8 +823,7 @@ mod tests {
                 account_id: None,
                 input: crate::models::AddAccountOperationInput {
                     name: "a".to_owned(),
-                    blockchain: crate::models::Blockchain::InternetComputer,
-                    standard: crate::models::BlockchainStandard::Native,
+                    assets: vec![],
                     metadata: Metadata::default(),
                     read_permission: Allow {
                         auth_scope: crate::models::permission::AuthScope::Restricted,
@@ -801,6 +843,7 @@ mod tests {
             crate::models::EditAccountOperation {
                 input: crate::models::EditAccountOperationInput {
                     account_id: [0; 16],
+                    change_assets: None,
                     read_permission: None,
                     configs_permission: None,
                     transfer_permission: None,
@@ -811,6 +854,41 @@ mod tests {
             },
         ))
         .expect_err("Invalid account id should fail");
+
+        ACCOUNT_REPOSITORY.insert(
+            AccountKey { id: [0; 16] },
+            Account {
+                id: [0; 16],
+                name: "a".to_owned(),
+                seed: [0; 16],
+                assets: vec![],
+                addresses: vec![],
+                metadata: Metadata::default(),
+                transfer_request_policy_id: None,
+                configs_request_policy_id: None,
+                last_modification_timestamp: 0,
+            },
+        );
+
+        validate_request_operation_foreign_keys(&RequestOperation::EditAccount(
+            crate::models::EditAccountOperation {
+                input: crate::models::EditAccountOperationInput {
+                    account_id: [0; 16],
+                    change_assets: Some(ChangeAssets::ReplaceWith {
+                        assets: vec![[0; 16]],
+                    }),
+                    read_permission: None,
+                    configs_permission: None,
+                    transfer_permission: None,
+                    configs_request_policy: None,
+                    transfer_request_policy: None,
+                    name: None,
+                },
+            },
+        ))
+        .expect_err("Invalid asset id should fail");
+
+        ACCOUNT_REPOSITORY.clear();
 
         validate_request_operation_foreign_keys(&RequestOperation::EditAddressBookEntry(
             crate::models::EditAddressBookEntryOperation {
@@ -869,7 +947,8 @@ mod tests {
 pub mod request_test_utils {
     use super::*;
     use crate::models::{
-        Metadata, RequestApprovalStatus, TransferOperation, TransferOperationInput,
+        asset_test_utils::mock_asset, Metadata, RequestApprovalStatus, TokenStandard,
+        TransferOperation, TransferOperationInput,
     };
     use num_bigint::BigUint;
     use uuid::Uuid;
@@ -893,7 +972,10 @@ pub mod request_test_utils {
                     metadata: Metadata::default(),
                     to: "0x1234".to_string(),
                     from_account_id: [1; 16],
+                    from_asset_id: [0; 16],
+                    with_standard: TokenStandard::InternetComputerNative,
                 },
+                asset: mock_asset(),
             }),
             approvals: vec![RequestApproval {
                 approver_id: [1; 16],

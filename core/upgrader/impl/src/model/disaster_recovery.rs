@@ -248,6 +248,62 @@ impl From<AdminUser> for upgrader_api::AdminUser {
 
 #[storable]
 #[derive(Clone, Debug)]
+pub struct Asset {
+    /// The asset id, which is a UUID.
+    pub id: UUID,
+    /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
+    pub name: String,
+    /// The asset symbol (e.g. `ICP`, `BTC`, `ETH`, etc.)
+    pub symbol: String,
+    /// The number of decimal places that the asset supports (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
+    pub decimals: u32,
+    /// The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+    pub blockchain: String,
+    // The asset standard that is supported (e.g. `erc20`, `native`, etc.), canonically
+    // represented as a lowercase string with spaces replaced with underscores.
+    pub standards: Vec<String>,
+    /// The account metadata, which is a list of key-value pairs,
+    /// where the key is unique and the first entry in the tuple,
+    /// and the value is the second entry in the tuple.
+    pub metadata: Vec<Metadata>,
+}
+
+impl From<upgrader_api::Asset> for Asset {
+    fn from(value: upgrader_api::Asset) -> Self {
+        Asset {
+            id: *HelperMapper::to_uuid(value.id)
+                .expect("Invalid asset ID")
+                .as_bytes(),
+            name: value.name,
+            symbol: value.symbol,
+            decimals: value.decimals,
+            blockchain: value.blockchain,
+            standards: value.standards,
+            metadata: value.metadata.into_iter().map(Metadata::from).collect(),
+        }
+    }
+}
+
+impl From<Asset> for upgrader_api::Asset {
+    fn from(value: Asset) -> Self {
+        upgrader_api::Asset {
+            id: Uuid::from_bytes(value.id).hyphenated().to_string(),
+            name: value.name,
+            symbol: value.symbol,
+            decimals: value.decimals,
+            blockchain: value.blockchain,
+            standards: value.standards,
+            metadata: value
+                .metadata
+                .into_iter()
+                .map(upgrader_api::MetadataDTO::from)
+                .collect(),
+        }
+    }
+}
+
+#[storable]
+#[derive(Clone, Debug)]
 pub struct Account {
     /// The account id, which is a UUID.
     pub id: UUID,
@@ -263,6 +319,24 @@ pub struct Account {
     pub decimals: u32,
     /// The account name (e.g. `My Main Account`)
     pub name: String,
+    /// The account metadata, which is a list of key-value pairs,
+    /// where the key is unique and the first entry in the tuple,
+    /// and the value is the second entry in the tuple.
+    pub metadata: Vec<Metadata>,
+}
+
+type AccountSeed = [u8; 16];
+#[storable]
+#[derive(Clone, Debug)]
+pub struct MultiAssetAccount {
+    /// The account id, which is a UUID.
+    pub id: UUID,
+    /// The blockchain type (e.g. `icp`, `eth`, `btc`)
+    pub name: String,
+    /// The address generation seed.
+    pub seed: AccountSeed,
+    /// Assets
+    pub assets: Vec<UUID>,
     /// The account metadata, which is a list of key-value pairs,
     /// where the key is unique and the first entry in the tuple,
     /// and the value is the second entry in the tuple.
@@ -305,10 +379,58 @@ impl From<Account> for upgrader_api::Account {
     }
 }
 
+impl From<upgrader_api::MultiAssetAccount> for MultiAssetAccount {
+    fn from(value: upgrader_api::MultiAssetAccount) -> Self {
+        MultiAssetAccount {
+            id: *HelperMapper::to_uuid(value.id)
+                .expect("Invalid account ID")
+                .as_bytes(),
+            assets: value
+                .assets
+                .into_iter()
+                .map(|asset_id| {
+                    *HelperMapper::to_uuid(asset_id)
+                        .expect("Invalid asset ID")
+                        .as_bytes()
+                })
+                .collect(),
+            seed: value.seed,
+            name: value.name,
+            metadata: value.metadata.into_iter().map(Metadata::from).collect(),
+        }
+    }
+}
+
+impl From<MultiAssetAccount> for upgrader_api::MultiAssetAccount {
+    fn from(value: MultiAssetAccount) -> Self {
+        upgrader_api::MultiAssetAccount {
+            id: Uuid::from_bytes(value.id).hyphenated().to_string(),
+            name: value.name,
+            seed: value.seed,
+            assets: value
+                .assets
+                .into_iter()
+                .map(|asset_id| Uuid::from_bytes(asset_id).hyphenated().to_string())
+                .collect(),
+            metadata: value
+                .metadata
+                .into_iter()
+                .map(upgrader_api::MetadataDTO::from)
+                .collect(),
+        }
+    }
+}
+
 #[storable]
 #[derive(Clone, Debug)]
 pub struct DisasterRecovery {
     pub accounts: Vec<Account>,
+
+    #[serde(default)]
+    pub multi_asset_accounts: Vec<MultiAssetAccount>,
+    #[serde(default)]
+    pub assets: Vec<Asset>,
+
     pub committee: Option<DisasterRecoveryCommittee>,
 
     pub recovery_requests: Vec<StationRecoveryRequest>,
@@ -320,6 +442,8 @@ impl Default for DisasterRecovery {
     fn default() -> Self {
         DisasterRecovery {
             accounts: vec![],
+            multi_asset_accounts: vec![],
+            assets: vec![],
             committee: None,
             recovery_requests: vec![],
             recovery_status: RecoveryStatus::Idle,
@@ -336,6 +460,18 @@ impl From<DisasterRecovery> for upgrader_api::GetDisasterRecoveryStateResponse {
                 .into_iter()
                 .map(upgrader_api::Account::from)
                 .collect(),
+
+            multi_asset_accounts: value
+                .multi_asset_accounts
+                .into_iter()
+                .map(upgrader_api::MultiAssetAccount::from)
+                .collect(),
+            assets: value
+                .assets
+                .into_iter()
+                .map(upgrader_api::Asset::from)
+                .collect(),
+
             committee: value
                 .committee
                 .map(upgrader_api::DisasterRecoveryCommittee::from),
@@ -353,6 +489,8 @@ impl From<DisasterRecovery> for upgrader_api::GetDisasterRecoveryStateResponse {
 #[cfg(test)]
 pub mod tests {
     use candid::Principal;
+
+    use crate::model::{Asset, MultiAssetAccount};
 
     use super::{Account, AdminUser, DisasterRecoveryCommittee};
 
@@ -407,6 +545,48 @@ pub mod tests {
                 symbol: "ETH".to_owned(),
                 decimals: 18,
                 name: "Secondary Account".to_owned(),
+                metadata: vec![],
+            },
+        ]
+    }
+
+    pub fn mock_multi_asset_accounts() -> Vec<MultiAssetAccount> {
+        vec![
+            MultiAssetAccount {
+                id: [1; 16],
+                assets: vec![[1; 16], [2; 16]],
+                seed: [0; 16],
+                name: "Main Account".to_owned(),
+                metadata: vec![],
+            },
+            MultiAssetAccount {
+                id: [2; 16],
+                assets: vec![[1; 16]],
+                seed: [0; 16],
+                name: "Secondary Account".to_owned(),
+                metadata: vec![],
+            },
+        ]
+    }
+
+    pub fn mock_assets() -> Vec<Asset> {
+        vec![
+            Asset {
+                id: [1; 16],
+                name: "Internet Computer".to_owned(),
+                symbol: "ICP".to_owned(),
+                decimals: 8,
+                blockchain: "icp".to_owned(),
+                standards: vec!["icp_native".to_owned()],
+                metadata: vec![],
+            },
+            Asset {
+                id: [2; 16],
+                name: "Ethereum".to_owned(),
+                symbol: "ETH".to_owned(),
+                decimals: 18,
+                blockchain: "eth".to_owned(),
+                standards: vec!["erc20".to_owned()],
                 metadata: vec![],
             },
         ]

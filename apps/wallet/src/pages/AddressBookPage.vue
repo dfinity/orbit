@@ -59,10 +59,10 @@
             </template>
             <template #item.address="{ item: addressBookEntry }">
               <div class="d-flex align-center flex-no-wrap">
-                <TextOverflow
-                  :max-length="app.isMobile ? 16 : 32"
-                  :text="addressBookEntry.address"
-                />
+                <ShortenedAddress
+                  :address="addressBookEntry.address"
+                  :format="addressBookEntry.address_format"
+                ></ShortenedAddress>
                 <VBtn
                   size="x-small"
                   variant="text"
@@ -120,7 +120,7 @@ import { VBtn, VDataTable, VPagination } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
 import PageLayout from '~/components/PageLayout.vue';
-import TextOverflow from '~/components/TextOverflow.vue';
+import ShortenedAddress from '~/components/ShortenedAddress.vue';
 import AddressBookEntryBtn from '~/components/address-book/AddressBookEntryBtn.vue';
 import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
@@ -137,7 +137,6 @@ import {
   AddressBookEntryCallerPrivileges,
   UUID,
 } from '~/generated/station/station.did';
-import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
@@ -146,7 +145,6 @@ import { copyToClipboard } from '~/utils/app.utils';
 import { throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
-const app = useAppStore();
 const station = useStationStore();
 const i18n = useI18n();
 const pageTitle = computed(() => props.title || i18n.t('pages.address_book.title'));

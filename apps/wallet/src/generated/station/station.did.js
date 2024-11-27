@@ -2,18 +2,29 @@ export const idlFactory = ({ IDL }) => {
   const RequestPolicyRule = IDL.Rec();
   const RequestPolicyRuleResult = IDL.Rec();
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
+  const UUID = IDL.Text;
+  const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const InitAssetInput = IDL.Record({
+    'id' : UUID,
+    'decimals' : IDL.Nat32,
+    'standards' : IDL.Vec(IDL.Text),
+    'metadata' : IDL.Vec(AssetMetadata),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'symbol' : IDL.Text,
+  });
   const SystemUpgraderInput = IDL.Variant({
     'Id' : IDL.Principal,
     'WasmModule' : IDL.Vec(IDL.Nat8),
   });
-  const UUID = IDL.Text;
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const AccountSeed = IDL.Vec(IDL.Nat8);
   const InitAccountInput = IDL.Record({
     'id' : IDL.Opt(UUID),
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
-    'blockchain' : IDL.Text,
-    'standard' : IDL.Text,
+    'assets' : IDL.Vec(UUID),
+    'seed' : AccountSeed,
   });
   const AdminInitInput = IDL.Record({
     'name' : IDL.Text,
@@ -21,6 +32,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
+    'assets' : IDL.Opt(IDL.Vec(InitAssetInput)),
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
     'accounts' : IDL.Opt(IDL.Vec(InitAccountInput)),
@@ -49,6 +61,10 @@ export const idlFactory = ({ IDL }) => {
   const RequestExecutionSchedule = IDL.Variant({
     'Immediate' : IDL.Null,
     'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
+  });
+  const RemoveAssetOperationInput = IDL.Record({ 'asset_id' : UUID });
+  const RemoveAssetOperation = IDL.Record({
+    'input' : RemoveAssetOperationInput,
   });
   const UserGroup = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });
   const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
@@ -131,6 +147,7 @@ export const idlFactory = ({ IDL }) => {
     'ExternalCanister' : ExternalCanisterResourceAction,
     'Account' : AccountResourceAction,
     'AddressBook' : ResourceAction,
+    'Asset' : ResourceAction,
     'UserGroup' : ResourceAction,
     'Permission' : PermissionResourceAction,
     'RequestPolicy' : ResourceAction,
@@ -366,6 +383,21 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Opt(User),
     'input' : AddUserOperationInput,
   });
+  const ChangeMetadata = IDL.Variant({
+    'OverrideSpecifiedBy' : IDL.Vec(AssetMetadata),
+    'RemoveKeys' : IDL.Vec(IDL.Text),
+    'ReplaceAllBy' : IDL.Vec(AssetMetadata),
+  });
+  const AssetSymbol = IDL.Text;
+  const EditAssetOperationInput = IDL.Record({
+    'standards' : IDL.Opt(IDL.Vec(IDL.Text)),
+    'name' : IDL.Opt(IDL.Text),
+    'blockchain' : IDL.Opt(IDL.Text),
+    'change_metadata' : IDL.Opt(ChangeMetadata),
+    'asset_id' : UUID,
+    'symbol' : IDL.Opt(AssetSymbol),
+  });
+  const EditAssetOperation = IDL.Record({ 'input' : EditAssetOperationInput });
   const EditUserGroupOperationInput = IDL.Record({
     'name' : IDL.Text,
     'user_group_id' : UUID,
@@ -380,20 +412,23 @@ export const idlFactory = ({ IDL }) => {
   const SetDisasterRecoveryOperation = IDL.Record({
     'committee' : IDL.Opt(DisasterRecoveryCommittee),
   });
+  const ResourceIds = IDL.Variant({ 'Any' : IDL.Null, 'Ids' : IDL.Vec(UUID) });
   const ResourceSpecifier = IDL.Variant({
     'Any' : IDL.Null,
     'Resource' : Resource,
   });
-  const ResourceIds = IDL.Variant({ 'Any' : IDL.Null, 'Ids' : IDL.Vec(UUID) });
   const RequestSpecifier = IDL.Variant({
+    'RemoveAsset' : ResourceIds,
     'AddUserGroup' : IDL.Null,
     'EditPermission' : ResourceSpecifier,
     'ChangeExternalCanister' : ExternalCanisterId,
     'AddUser' : IDL.Null,
+    'EditAsset' : ResourceIds,
     'EditUserGroup' : ResourceIds,
     'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : ResourceIds,
     'RemoveRequestPolicy' : ResourceIds,
+    'AddAsset' : IDL.Null,
     'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : ResourceIds,
     'CreateExternalCanister' : IDL.Null,
@@ -420,6 +455,27 @@ export const idlFactory = ({ IDL }) => {
   const RemoveRequestPolicyOperationInput = IDL.Record({ 'policy_id' : UUID });
   const RemoveRequestPolicyOperation = IDL.Record({
     'input' : RemoveRequestPolicyOperationInput,
+  });
+  const Asset = IDL.Record({
+    'id' : UUID,
+    'decimals' : IDL.Nat32,
+    'standards' : IDL.Vec(IDL.Text),
+    'metadata' : IDL.Vec(AssetMetadata),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'symbol' : AssetSymbol,
+  });
+  const AddAssetOperationInput = IDL.Record({
+    'decimals' : IDL.Nat32,
+    'standards' : IDL.Vec(IDL.Text),
+    'metadata' : IDL.Vec(AssetMetadata),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'symbol' : AssetSymbol,
+  });
+  const AddAssetOperation = IDL.Record({
+    'asset' : IDL.Opt(Asset),
+    'input' : AddAssetOperationInput,
   });
   const SystemUpgradeTarget = IDL.Variant({
     'UpgradeUpgrader' : IDL.Null,
@@ -518,37 +574,46 @@ export const idlFactory = ({ IDL }) => {
   });
   const NetworkId = IDL.Text;
   const Network = IDL.Record({ 'id' : NetworkId, 'name' : IDL.Text });
-  const AccountBalanceInfo = IDL.Record({
+  const AccountBalance = IDL.Record({
+    'account_id' : UUID,
     'decimals' : IDL.Nat32,
     'balance' : IDL.Nat,
     'last_update_timestamp' : TimestampRFC3339,
+    'query_state' : IDL.Text,
+    'asset_id' : UUID,
   });
-  const AssetSymbol = IDL.Text;
+  const AccountAsset = IDL.Record({
+    'balance' : IDL.Opt(AccountBalance),
+    'asset_id' : UUID,
+  });
+  const AccountAddress = IDL.Record({
+    'address' : IDL.Text,
+    'format' : IDL.Text,
+  });
   const Account = IDL.Record({
     'id' : UUID,
     'configs_request_policy' : IDL.Opt(RequestPolicyRule),
-    'decimals' : IDL.Nat32,
-    'balance' : IDL.Opt(AccountBalanceInfo),
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
-    'blockchain' : IDL.Text,
-    'address' : IDL.Text,
+    'assets' : IDL.Vec(AccountAsset),
+    'addresses' : IDL.Vec(AccountAddress),
     'transfer_request_policy' : IDL.Opt(RequestPolicyRule),
     'last_modification_timestamp' : TimestampRFC3339,
-    'standard' : IDL.Text,
-    'symbol' : AssetSymbol,
   });
   const TransferMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const TransferOperationInput = IDL.Record({
     'to' : IDL.Text,
     'fee' : IDL.Opt(IDL.Nat),
+    'with_standard' : IDL.Text,
     'from_account_id' : UUID,
     'metadata' : IDL.Vec(TransferMetadata),
     'network' : IDL.Opt(Network),
     'amount' : IDL.Nat,
+    'from_asset_id' : UUID,
   });
   const TransferOperation = IDL.Record({
     'fee' : IDL.Opt(IDL.Nat),
+    'from_asset' : Asset,
     'network' : Network,
     'transfer_id' : IDL.Opt(UUID),
     'from_account' : IDL.Opt(Account),
@@ -558,12 +623,20 @@ export const idlFactory = ({ IDL }) => {
     'Set' : RequestPolicyRule,
     'Remove' : IDL.Null,
   });
+  const ChangeAssets = IDL.Variant({
+    'ReplaceWith' : IDL.Record({ 'assets' : IDL.Vec(UUID) }),
+    'Change' : IDL.Record({
+      'add_assets' : IDL.Vec(UUID),
+      'remove_assets' : IDL.Vec(UUID),
+    }),
+  });
   const EditAccountOperationInput = IDL.Record({
     'account_id' : UUID,
     'configs_request_policy' : IDL.Opt(RequestPolicyRuleInput),
     'read_permission' : IDL.Opt(Allow),
     'configs_permission' : IDL.Opt(Allow),
     'name' : IDL.Opt(IDL.Text),
+    'change_assets' : IDL.Opt(ChangeAssets),
     'transfer_request_policy' : IDL.Opt(RequestPolicyRuleInput),
     'transfer_permission' : IDL.Opt(Allow),
   });
@@ -577,6 +650,7 @@ export const idlFactory = ({ IDL }) => {
     'blockchain' : IDL.Text,
     'address' : IDL.Text,
     'last_modification_timestamp' : IDL.Text,
+    'address_format' : IDL.Text,
     'address_owner' : IDL.Text,
   });
   const AddAddressBookEntryOperationInput = IDL.Record({
@@ -584,6 +658,7 @@ export const idlFactory = ({ IDL }) => {
     'labels' : IDL.Vec(IDL.Text),
     'blockchain' : IDL.Text,
     'address' : IDL.Text,
+    'address_format' : IDL.Text,
     'address_owner' : IDL.Text,
   });
   const AddAddressBookEntryOperation = IDL.Record({
@@ -617,26 +692,28 @@ export const idlFactory = ({ IDL }) => {
     'configs_permission' : Allow,
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
-    'blockchain' : IDL.Text,
+    'assets' : IDL.Vec(UUID),
     'transfer_request_policy' : IDL.Opt(RequestPolicyRule),
     'transfer_permission' : Allow,
-    'standard' : IDL.Text,
   });
   const AddAccountOperation = IDL.Record({
     'account' : IDL.Opt(Account),
     'input' : AddAccountOperationInput,
   });
   const RequestOperation = IDL.Variant({
+    'RemoveAsset' : RemoveAssetOperation,
     'AddUserGroup' : AddUserGroupOperation,
     'EditPermission' : EditPermissionOperation,
     'ConfigureExternalCanister' : ConfigureExternalCanisterOperation,
     'ChangeExternalCanister' : ChangeExternalCanisterOperation,
     'MonitorExternalCanister' : MonitorExternalCanisterOperation,
     'AddUser' : AddUserOperation,
+    'EditAsset' : EditAssetOperation,
     'EditUserGroup' : EditUserGroupOperation,
     'SetDisasterRecovery' : SetDisasterRecoveryOperation,
     'EditRequestPolicy' : EditRequestPolicyOperation,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperation,
+    'AddAsset' : AddAssetOperation,
     'SystemUpgrade' : SystemUpgradeOperation,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
     'CreateExternalCanister' : CreateExternalCanisterOperation,
@@ -716,18 +793,21 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : CanisterStatusResponse,
     'Err' : Error,
   });
-  const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
-  const Asset = IDL.Record({
-    'metadata' : IDL.Vec(AssetMetadata),
-    'name' : IDL.Text,
-    'blockchain' : IDL.Text,
+  const StandardData = IDL.Record({
+    'supported_operations' : IDL.Vec(IDL.Text),
+    'supported_address_formats' : IDL.Vec(IDL.Text),
+    'required_metadata_fields' : IDL.Vec(IDL.Text),
     'standard' : IDL.Text,
-    'symbol' : AssetSymbol,
+  });
+  const SupportedBlockchain = IDL.Record({
+    'blockchain' : IDL.Text,
+    'supported_standards' : IDL.Vec(StandardData),
   });
   const Capabilities = IDL.Record({
     'name' : IDL.Text,
     'version' : IDL.Text,
     'supported_assets' : IDL.Vec(Asset),
+    'supported_blockchains' : IDL.Vec(SupportedBlockchain),
   });
   const CapabilitiesResult = IDL.Variant({
     'Ok' : IDL.Record({ 'capabilities' : Capabilities }),
@@ -761,16 +841,19 @@ export const idlFactory = ({ IDL }) => {
     'execution_method_cycles' : IDL.Opt(IDL.Nat64),
   });
   const RequestOperationInput = IDL.Variant({
+    'RemoveAsset' : RemoveAssetOperationInput,
     'AddUserGroup' : AddUserGroupOperationInput,
     'EditPermission' : EditPermissionOperationInput,
     'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput,
     'ChangeExternalCanister' : ChangeExternalCanisterOperationInput,
     'MonitorExternalCanister' : MonitorExternalCanisterOperationInput,
     'AddUser' : AddUserOperationInput,
+    'EditAsset' : EditAssetOperationInput,
     'EditUserGroup' : EditUserGroupOperationInput,
     'SetDisasterRecovery' : SetDisasterRecoveryOperationInput,
     'EditRequestPolicy' : EditRequestPolicyOperationInput,
     'RemoveRequestPolicy' : RemoveRequestPolicyOperationInput,
+    'AddAsset' : AddAssetOperationInput,
     'SystemUpgrade' : SystemUpgradeOperationInput,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput,
     'CreateExternalCanister' : CreateExternalCanisterOperationInput,
@@ -856,14 +939,8 @@ export const idlFactory = ({ IDL }) => {
   const FetchAccountBalancesInput = IDL.Record({
     'account_ids' : IDL.Vec(UUID),
   });
-  const AccountBalance = IDL.Record({
-    'account_id' : UUID,
-    'decimals' : IDL.Nat32,
-    'balance' : IDL.Nat,
-    'last_update_timestamp' : TimestampRFC3339,
-  });
   const FetchAccountBalancesResult = IDL.Variant({
-    'Ok' : IDL.Record({ 'balances' : IDL.Vec(AccountBalance) }),
+    'Ok' : IDL.Record({ 'balances' : IDL.Vec(IDL.Opt(AccountBalance)) }),
     'Err' : Error,
   });
   const GetAccountInput = IDL.Record({ 'account_id' : UUID });
@@ -891,6 +968,19 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({
       'privileges' : AddressBookEntryCallerPrivileges,
       'address_book_entry' : AddressBookEntry,
+    }),
+    'Err' : Error,
+  });
+  const GetAssetInput = IDL.Record({ 'asset_id' : UUID });
+  const AssetCallerPrivileges = IDL.Record({
+    'id' : UUID,
+    'can_delete' : IDL.Bool,
+    'can_edit' : IDL.Bool,
+  });
+  const GetAssetResult = IDL.Variant({
+    'Ok' : IDL.Record({
+      'privileges' : AssetCallerPrivileges,
+      'asset' : Asset,
     }),
     'Err' : Error,
   });
@@ -959,16 +1049,19 @@ export const idlFactory = ({ IDL }) => {
     'Err' : Error,
   });
   const ListRequestsOperationType = IDL.Variant({
+    'RemoveAsset' : IDL.Null,
     'AddUserGroup' : IDL.Null,
     'EditPermission' : IDL.Null,
     'ConfigureExternalCanister' : IDL.Opt(IDL.Principal),
     'ChangeExternalCanister' : IDL.Opt(IDL.Principal),
     'MonitorExternalCanister' : IDL.Opt(IDL.Principal),
     'AddUser' : IDL.Null,
+    'EditAsset' : IDL.Null,
     'EditUserGroup' : IDL.Null,
     'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
+    'AddAsset' : IDL.Null,
     'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
@@ -1143,6 +1236,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ListAddressBookEntriesInput = IDL.Record({
     'ids' : IDL.Opt(IDL.Vec(UUID)),
+    'address_formats' : IDL.Opt(IDL.Vec(IDL.Text)),
     'labels' : IDL.Opt(IDL.Vec(IDL.Text)),
     'blockchain' : IDL.Opt(IDL.Text),
     'addresses' : IDL.Opt(IDL.Vec(IDL.Text)),
@@ -1153,6 +1247,16 @@ export const idlFactory = ({ IDL }) => {
       'total' : IDL.Nat64,
       'privileges' : IDL.Vec(AddressBookEntryCallerPrivileges),
       'address_book_entries' : IDL.Vec(AddressBookEntry),
+      'next_offset' : IDL.Opt(IDL.Nat64),
+    }),
+    'Err' : Error,
+  });
+  const ListAssetsInput = IDL.Record({ 'paginate' : IDL.Opt(PaginationInput) });
+  const ListAssetsResult = IDL.Variant({
+    'Ok' : IDL.Record({
+      'total' : IDL.Nat64,
+      'privileges' : IDL.Vec(AssetCallerPrivileges),
+      'assets' : IDL.Vec(Asset),
       'next_offset' : IDL.Opt(IDL.Nat64),
     }),
     'Err' : Error,
@@ -1192,16 +1296,19 @@ export const idlFactory = ({ IDL }) => {
     'notification_type' : IDL.Opt(NotificationTypeInput),
   });
   const RequestOperationType = IDL.Variant({
+    'RemoveAsset' : IDL.Null,
     'AddUserGroup' : IDL.Null,
     'EditPermission' : IDL.Null,
     'ConfigureExternalCanister' : IDL.Null,
     'ChangeExternalCanister' : IDL.Null,
     'MonitorExternalCanister' : IDL.Null,
     'AddUser' : IDL.Null,
+    'EditAsset' : IDL.Null,
     'EditUserGroup' : IDL.Null,
     'SetDisasterRecovery' : IDL.Null,
     'EditRequestPolicy' : IDL.Null,
     'RemoveRequestPolicy' : IDL.Null,
+    'AddAsset' : IDL.Null,
     'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
@@ -1361,8 +1468,10 @@ export const idlFactory = ({ IDL }) => {
     'ListUserGroups' : IDL.Null,
     'AddUser' : IDL.Null,
     'ListUsers' : IDL.Null,
+    'AddAsset' : IDL.Null,
     'SystemUpgrade' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
+    'ListAssets' : IDL.Null,
     'ManageSystemInfo' : IDL.Null,
     'AddAddressBookEntry' : IDL.Null,
     'ListAccounts' : IDL.Null,
@@ -1450,6 +1559,7 @@ export const idlFactory = ({ IDL }) => {
         [GetAddressBookEntryResult],
         ['query'],
       ),
+    'get_asset' : IDL.Func([GetAssetInput], [GetAssetResult], ['query']),
     'get_external_canister' : IDL.Func(
         [GetExternalCanisterInput],
         [GetExternalCanisterResult],
@@ -1504,6 +1614,7 @@ export const idlFactory = ({ IDL }) => {
         [ListAddressBookEntriesResult],
         ['query'],
       ),
+    'list_assets' : IDL.Func([ListAssetsInput], [ListAssetsResult], ['query']),
     'list_external_canisters' : IDL.Func(
         [ListExternalCanistersInput],
         [ListExternalCanistersResult],
@@ -1556,18 +1667,29 @@ export const idlFactory = ({ IDL }) => {
 };
 export const init = ({ IDL }) => {
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
+  const UUID = IDL.Text;
+  const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const InitAssetInput = IDL.Record({
+    'id' : UUID,
+    'decimals' : IDL.Nat32,
+    'standards' : IDL.Vec(IDL.Text),
+    'metadata' : IDL.Vec(AssetMetadata),
+    'name' : IDL.Text,
+    'blockchain' : IDL.Text,
+    'symbol' : IDL.Text,
+  });
   const SystemUpgraderInput = IDL.Variant({
     'Id' : IDL.Principal,
     'WasmModule' : IDL.Vec(IDL.Nat8),
   });
-  const UUID = IDL.Text;
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
+  const AccountSeed = IDL.Vec(IDL.Nat8);
   const InitAccountInput = IDL.Record({
     'id' : IDL.Opt(UUID),
     'metadata' : IDL.Vec(AccountMetadata),
     'name' : IDL.Text,
-    'blockchain' : IDL.Text,
-    'standard' : IDL.Text,
+    'assets' : IDL.Vec(UUID),
+    'seed' : AccountSeed,
   });
   const AdminInitInput = IDL.Record({
     'name' : IDL.Text,
@@ -1575,6 +1697,7 @@ export const init = ({ IDL }) => {
   });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
+    'assets' : IDL.Opt(IDL.Vec(InitAssetInput)),
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
     'accounts' : IDL.Opt(IDL.Vec(InitAccountInput)),

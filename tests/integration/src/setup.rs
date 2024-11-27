@@ -282,6 +282,7 @@ fn install_canisters(
             identity: WALLET_ADMIN_USER,
             name: "station-admin".to_string(),
         }],
+        assets: None,
         quorum: Some(1),
         upgrader: station_api::SystemUpgraderInput::WasmModule(upgrader_wasm),
         fallback_controller: config.fallback_controller,

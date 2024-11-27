@@ -80,6 +80,7 @@ export enum RequestDomains {
   Users = 'users',
   ExternalCanisters = 'external_canisters',
   System = 'system',
+  Assets = 'assets',
 }
 
 export interface ListAccountsArgs {
@@ -116,6 +117,9 @@ export enum RequestSpecifierEnum {
   CallExternalCanister = 'CallExternalCanister',
   FundExternalCanister = 'FundExternalCanister',
   SetDisasterRecovery = 'SetDisasterRecovery',
+  AddAsset = 'AddAsset',
+  EditAsset = 'EditAsset',
+  RemoveAsset = 'RemoveAsset',
 }
 
 export enum RequestPolicyRuleEnum {
@@ -142,6 +146,12 @@ export interface ListAddressBookEntriesArgs {
   blockchain?: string;
   labels?: [];
   ids?: UUID[];
+  address_formats?: string[];
+}
+
+export interface ListAssetsArgs {
+  limit?: number;
+  offset?: number;
 }
 
 export interface ListExternalCanistersArgs {
@@ -187,6 +197,9 @@ export enum RequestOperationEnum {
   FundExternalCanister = 'FundExternalCanister',
   MonitorExternalCanister = 'MonitorExternalCanister',
   SetDisasterRecovery = 'SetDisasterRecovery',
+  AddAsset = 'AddAsset',
+  EditAsset = 'EditAsset',
+  RemoveAsset = 'RemoveAsset',
 }
 
 export enum MonitoringStrategyEnum {

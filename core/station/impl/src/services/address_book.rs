@@ -87,6 +87,7 @@ impl AddressBookService {
                 addresses: input.addresses,
                 blockchain: input.blockchain,
                 labels: input.labels,
+                address_formats: input.address_formats,
             });
 
         Ok(paginated_items(PaginatedItemsArgs {
@@ -169,7 +170,8 @@ mod tests {
         core::test_utils,
         models::{
             address_book_entry_test_utils::mock_address_book_entry, AddAddressBookEntryOperation,
-            AddAddressBookEntryOperationInput, Blockchain, ChangeMetadata, Metadata, MetadataItem,
+            AddAddressBookEntryOperationInput, AddressFormat, Blockchain, ChangeMetadata, Metadata,
+            MetadataItem,
         },
     };
     use station_api::MetadataDTO;
@@ -201,6 +203,7 @@ mod tests {
                 blockchain: Blockchain::InternetComputer,
                 metadata: address_book_entry.metadata.clone().into(),
                 labels: vec![],
+                address_format: AddressFormat::ICPAccountIdentifier,
             },
         };
 

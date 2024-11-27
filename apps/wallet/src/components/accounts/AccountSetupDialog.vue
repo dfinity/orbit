@@ -154,15 +154,15 @@ const saveChangesToExistingAccount = async (accountId: UUID): Promise<Request> =
   changes.configs_permission = [
     assertAndReturn(wizard.value.permission.configuration, 'update_access'),
   ];
+  changes.change_assets = [];
 
   return station.service.editAccount(changes as EditAccountOperationInput);
 };
 
 const createNewAccount = async (): Promise<Request> => {
   const changes: Partial<AddAccountOperationInput> = {};
+  changes.assets = assertAndReturn(wizard.value.configuration.assets, 'assets');
   changes.name = assertAndReturn(wizard.value.configuration.name, 'name');
-  changes.blockchain = assertAndReturn(wizard.value.configuration.blockchain, 'blockchain');
-  changes.standard = assertAndReturn(wizard.value.configuration.standard, 'standard');
   changes.configs_request_policy = wizard.value.request_policy.configurationRule
     ? [wizard.value.request_policy.configurationRule]
     : [];
