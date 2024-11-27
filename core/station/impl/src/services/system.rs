@@ -10,11 +10,12 @@ use crate::{
     errors::SystemError,
     models::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
-        AccountKey, Asset, Blockchain,CanisterInstallMode, CanisterUpgradeModeArgs, ManageSystemInfoOperationInput, Metadata,RequestId,
-        RequestKey, RequestOperation, RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks,
+        Asset, Blockchain, CanisterInstallMode, CanisterUpgradeModeArgs,
+        ManageSystemInfoOperationInput, Metadata, RequestId, RequestKey, RequestOperation,
+        RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks,
     },
     repositories::{
-        permission::PERMISSION_REPOSITORY, RequestRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY,
+        permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY,
         REQUEST_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     services::{
@@ -595,16 +596,14 @@ mod install_canister_handlers {
     use candid::{Encode, Principal};
     use canfund::manager::options::{EstimatedRuntime, FundStrategy};
     use ic_cdk::api::management_canister::main::{self as mgmt};
-    use ic_cdk::id;
+    use ic_cdk::{id, print};
 
     use crate::services::cycle_manager::CYCLE_MANAGER;
     use orbit_essentials::api::ApiError;
     use orbit_essentials::repository::Repository;
     use orbit_essentials::types::UUID;
     use station_api::{InitAccountInput, InitAssetInput, SystemInit};
-    use std::cell::RefCell;
     use uuid::Uuid;
-
 
     /// Registers the default configurations for the canister.
     pub async fn init_post_process(init: &SystemInit) -> Result<(), String> {
