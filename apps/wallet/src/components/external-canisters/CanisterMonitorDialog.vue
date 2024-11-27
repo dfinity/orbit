@@ -21,21 +21,6 @@
         @submitting="canClose = !$event"
         @submitted="open = false"
       >
-        <template #actions="{ valid, submitting, submit }">
-          <VCardActions class="pa-3">
-            <VSpacer />
-            <VBtn
-              :disabled="!valid"
-              :loading="submitting"
-              color="primary"
-              variant="elevated"
-              data-test-id="canister-monitor-save-button"
-              @click="submit"
-            >
-              {{ $t('external_canisters.start_monitoring') }}
-            </VBtn>
-          </VCardActions>
-        </template>
       </CanisterMonitorForm>
     </VCard>
   </VDialog>
@@ -48,15 +33,13 @@ import { useI18n } from 'vue-i18n';
 import {
   VBtn,
   VCard,
-  VCardActions,
   VDialog,
   VDivider,
-  VSpacer,
   VToolbar,
   VToolbarTitle,
 } from 'vuetify/components';
 import { CanisterMonitorModel } from './external-canisters.types';
-import CanisterMonitorForm from '~/components/external-canisters/CanisterMonitorForm.vue';
+import CanisterMonitorForm from '~/components/external-canisters/monitor/CanisterMonitorForm.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -83,7 +66,8 @@ const dialogTitle = computed(() => props.title || i18n.t('external_canisters.mon
 
 const buildModel = (): CanisterMonitorModel => ({
   canisterId: props.canisterId,
-  strategy: undefined,
+  fundingStrategy: undefined,
+  cycleObtainStrategy: undefined,
 });
 
 const open = computed({

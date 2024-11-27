@@ -2,7 +2,7 @@ import { Principal } from '@dfinity/principal';
 import {
   Allow,
   CanisterInstallMode,
-  CanisterMethod,
+  CanisterMethod, CycleObtainStrategyInput,
   ExternalCanisterChangeRequestPolicyRuleInput,
   LogVisibility,
   MonitorExternalCanisterStrategyInput,
@@ -77,5 +77,6 @@ export interface CanisterCallReviewContext {
 
 export interface CanisterMonitorModel {
   canisterId?: Principal;
-  strategy?: MonitorExternalCanisterStrategyInput;
+  fundingStrategy?: MonitorExternalCanisterStrategyInput;
+  cycleObtainStrategy?: CycleObtainStrategyInput;
 }

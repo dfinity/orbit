@@ -334,7 +334,7 @@
                               :append-icon="mdiBatterySyncOutline"
                               @click="dialogs.monitor = true"
                             >
-                              {{ $t('external_canisters.monitor.title') }}
+                              {{ $t('external_canisters.monitor.start_title') }}
                             </VBtn>
                             <VBtn
                               v-if="canister.monitoring.length"

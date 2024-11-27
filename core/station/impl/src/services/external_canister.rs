@@ -16,7 +16,7 @@ use crate::models::resource::{
 use crate::models::{
     AddRequestPolicyOperationInput, CanisterExecutionAndValidationMethodPairInput, CanisterMethod,
     ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
-    CreateExternalCanisterOperationKind, DefiniteCanisterSettingsInput,
+    CreateExternalCanisterOperationKind, CycleObtainStrategy, DefiniteCanisterSettingsInput,
     EditPermissionOperationInput, EditRequestPolicyOperationInput, ExternalCanister,
     ExternalCanisterAvailableFilters, ExternalCanisterCallPermission,
     ExternalCanisterCallRequestPolicyRule, ExternalCanisterCallRequestPolicyRuleInput,
@@ -1028,6 +1028,7 @@ impl ExternalCanisterService {
         &self,
         canister_id: Principal,
         strategy: MonitorExternalCanisterStrategy,
+        cycle_obtain_strategy: Option<CycleObtainStrategy>,
     ) -> ServiceResult<()> {
         let mut external_canister = self.get_external_canister_by_canister_id(&canister_id)?;
         if external_canister.monitoring.is_some() {
@@ -1040,11 +1041,11 @@ impl ExternalCanisterService {
         }
 
         self.cycle_manager
-            .add_canister(canister_id, strategy.clone().into());
+            .add_canister(canister_id, strategy.clone(), cycle_obtain_strategy);
 
         external_canister.monitoring = Some(ExternalCanisterMonitoring {
             funding_strategy: strategy,
-            cycle_obtain_strategy: None, // TODO add cycle obtain strategy
+            cycle_obtain_strategy,
         });
 
         self.external_canister_repository

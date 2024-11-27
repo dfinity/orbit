@@ -55,7 +55,13 @@ describe('CanisterMonitorDialog', () => {
 
     await flushPromises();
 
-    const saveBtn = wrapper.find('[data-test-id="canister-monitor-save-button"]');
+    const nextBtn = wrapper.find('[data-test-id="monitor-dialog-stepper-next"]');
+    await nextBtn.trigger('click');
+
+    const obtainInput = wrapper.findComponent({ name: 'VSelect' });
+    await obtainInput.setValue('StationDefault');
+
+    const saveBtn = wrapper.find('[data-test-id="monitor-dialog-submit"]');
     await saveBtn.trigger('click');
 
     await flushPromises();

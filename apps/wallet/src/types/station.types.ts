@@ -188,9 +188,3 @@ export enum RequestOperationEnum {
   MonitorExternalCanister = 'MonitorExternalCanister',
   SetDisasterRecovery = 'SetDisasterRecovery',
 }
-
-export enum MonitoringStrategyEnum {
-  BelowThreshold = 'BelowThreshold',
-  BelowEstimatedRuntime = 'BelowEstimatedRuntime',
-  Always = 'Always',
-}

@@ -1,8 +1,8 @@
 use crate::factories::blockchains::InternetComputer;
-use crate::models::CycleObtainStrategy;
+use crate::models::{CycleObtainStrategy, MonitorExternalCanisterStrategy};
 use canfund::api::cmc::IcCyclesMintingCanister;
 use canfund::api::ledger::IcLedgerCanister;
-use canfund::manager::options::{FundManagerOptions, FundStrategy, ObtainCyclesOptions};
+use canfund::manager::options::{FundManagerOptions, ObtainCyclesOptions};
 use canfund::manager::RegisterOpts;
 use canfund::operations::obtain::MintCycles;
 use canfund::FundManager;
@@ -37,12 +37,22 @@ impl CycleManager {
         Self {}
     }
 
-    pub fn add_canister(&self, canister_id: CanisterId, fund_strategy: FundStrategy) {
+    pub fn add_canister(
+        &self,
+        canister_id: CanisterId,
+        fund_strategy: MonitorExternalCanisterStrategy,
+        cycle_obtain_strategy: Option<CycleObtainStrategy>,
+    ) {
+        let mut register_opts = RegisterOpts::new().with_strategy(fund_strategy.into());
+
+        if let Some(strategy) =
+            cycle_obtain_strategy.and_then(|strategy| get_obtain_cycle_config(&strategy))
+        {
+            register_opts = register_opts.with_obtain_cycles_options(strategy);
+        }
+
         FUND_MANAGER.with(|manager| {
-            manager.borrow_mut().register(
-                canister_id,
-                RegisterOpts::new().with_strategy(fund_strategy),
-            );
+            manager.borrow_mut().register(canister_id, register_opts);
         });
 
         ic_cdk::print(format!(

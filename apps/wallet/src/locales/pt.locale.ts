@@ -465,7 +465,11 @@ export default {
     start_monitoring: 'Iniciar monitoramento',
     monitor: {
       title: 'Monitorizar ciclos',
+      start_title: 'Monitorar',
       stop_title: 'Parar monitorização',
+      funding_strategy_label: 'Estratégia de financiamento',
+      cycle_obtain_strategy_label: 'Estratégia de obtenção de ciclos',
+      funding_info_text: 'A estratégia selecionada é avaliada de 6 em 6 horas.',
       strategy: {
         label: 'Estratégia de controlo',
         BelowEstimatedRuntime: 'Tempo de execução inferior ao estimado',
@@ -489,6 +493,14 @@ export default {
           'Especifique os ciclos a financiar para o financiamento de reserva quando o tempo de execução não pode ser calculado.',
         min_cycles_hint: 'Especifique o limite de ciclos para acionar o financiamento.',
         fund_cycles_hint: 'Especifique os ciclos a financiar.',
+      },
+    },
+    obtain: {
+      title: 'Obter ciclos',
+      strategy: {
+        label: 'Estratégia de obtenção',
+        StationDefault: 'Padrão da carteira',
+        MintFromNativeToken: 'Mint a partir do token nativo',
       },
     },
     configuration: 'Configuração',
