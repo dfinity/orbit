@@ -2,7 +2,8 @@ import { Principal } from '@dfinity/principal';
 import {
   Allow,
   CanisterInstallMode,
-  CanisterMethod, CycleObtainStrategyInput,
+  CanisterMethod,
+  CycleObtainStrategyInput,
   ExternalCanisterChangeRequestPolicyRuleInput,
   LogVisibility,
   MonitorExternalCanisterStrategyInput,

@@ -30,14 +30,7 @@ import { Principal } from '@dfinity/principal';
 import { mdiClose } from '@mdi/js';
 import { Ref, computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import {
-  VBtn,
-  VCard,
-  VDialog,
-  VDivider,
-  VToolbar,
-  VToolbarTitle,
-} from 'vuetify/components';
+import { VBtn, VCard, VDialog, VDivider, VToolbar, VToolbarTitle } from 'vuetify/components';
 import { CanisterMonitorModel } from './external-canisters.types';
 import CanisterMonitorForm from '~/components/external-canisters/monitor/CanisterMonitorForm.vue';
 

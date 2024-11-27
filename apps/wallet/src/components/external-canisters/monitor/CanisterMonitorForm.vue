@@ -29,7 +29,11 @@
               </VStepperItem>
             </VStepperHeader>
             <VStepperWindow>
-              <VAlert :icon="mdiInformationOutline" class="mb-8" :text="$t('external_canisters.monitor.funding_info_text')" />
+              <VAlert
+                :icon="mdiInformationOutline"
+                class="mb-8"
+                :text="$t('external_canisters.monitor.funding_info_text')"
+              />
               <VStepperWindowItem :value="CanisterMonitorSetupStep.Fund">
                 <CanisterMonitorFundStep v-model="model" :display="display" />
               </VStepperWindowItem>
