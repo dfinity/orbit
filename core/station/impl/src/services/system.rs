@@ -15,8 +15,8 @@ use crate::{
         RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks,
     },
     repositories::{
-        permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY,
-        REQUEST_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
+        permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY, REQUEST_REPOSITORY,
+        USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     services::{
         change_canister::{ChangeCanisterService, CHANGE_CANISTER_SERVICE},
