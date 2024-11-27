@@ -76,6 +76,7 @@ import logger from '~/core/logger.core';
 import { AddressBookEntry, UUID } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
 import { BlockchainStandard } from '~/types/chain.types';
+import { detectAddressFormat } from '~/utils/asset.utils';
 import { assertAndReturn } from '~/utils/helper.utils';
 
 const input = withDefaults(
@@ -160,11 +161,20 @@ const save = async (): Promise<void> => {
       return;
     }
 
+    const blockchain = assertAndReturn(addressBookEntry.value.blockchain, 'blockchain');
+    const address = assertAndReturn(addressBookEntry.value.address, 'address');
+    const maybeAddressFormat = detectAddressFormat(blockchain, address);
+
+    if (!maybeAddressFormat) {
+      throw new Error(`Invalid address for blockchain ${blockchain}`);
+    }
+
     const request = await station.service.addAddressBookEntry({
-      blockchain: assertAndReturn(addressBookEntry.value.blockchain, 'blockchain'),
+      blockchain,
       labels: assertAndReturn(addressBookEntry.value.labels, 'labels'),
       address_owner: assertAndReturn(addressBookEntry.value.address_owner, 'address_owner'),
-      address: assertAndReturn(addressBookEntry.value.address, 'address'),
+      address,
+      address_format: maybeAddressFormat,
       metadata: addressBookEntry.value.metadata ?? [],
     });
 

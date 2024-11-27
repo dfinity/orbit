@@ -39,3 +39,6 @@ mod cycle_manager;
 
 mod disaster_recovery;
 pub use disaster_recovery::*;
+
+mod asset;
+pub use asset::*;

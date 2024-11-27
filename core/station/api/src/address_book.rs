@@ -6,6 +6,7 @@ pub struct AddressBookEntryDTO {
     pub id: UuidDTO,
     pub address_owner: String,
     pub address: String,
+    pub address_format: String,
     pub blockchain: String,
     pub labels: Vec<String>,
     pub metadata: Vec<MetadataDTO>,
@@ -29,6 +30,7 @@ pub struct AddAddressBookEntryOperationDTO {
 pub struct AddAddressBookEntryOperationInput {
     pub address_owner: String,
     pub address: String,
+    pub address_format: String,
     pub blockchain: String,
     pub metadata: Vec<MetadataDTO>,
     pub labels: Vec<String>,
@@ -75,6 +77,7 @@ pub struct ListAddressBookEntriesInputDTO {
     pub blockchain: Option<String>,
     pub labels: Option<Vec<String>>,
     pub paginate: Option<PaginationInput>,
+    pub address_formats: Option<Vec<String>>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

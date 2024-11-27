@@ -1,8 +1,9 @@
+use crate::core::ic_cdk::api::print;
 use crate::{
-    models::{Account, AddressBookEntry, Request, RequestPolicy, Transfer, User, UserGroup},
+    models::{Account, AddressBookEntry, Asset, Request, RequestPolicy, Transfer, User, UserGroup},
     repositories::{
         request_policy::REQUEST_POLICY_REPOSITORY, ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY,
-        USER_GROUP_REPOSITORY, USER_REPOSITORY,
+        ASSET_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     SERVICE_NAME,
 };
@@ -15,6 +16,7 @@ use orbit_essentials::{
     repository::Repository,
 };
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
+use uuid::Uuid;
 
 use super::observer::Observer;
 
@@ -31,6 +33,13 @@ thread_local! {
     /// This list should be updated with new user group metrics as they are added.
     pub static USER_GROUP_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<UserGroup>>>> = vec![
         Rc::new(RefCell::new(MetricTotalUserGroups)),
+    ];
+
+    /// A collection of asset related metrics.
+    ///
+    /// This list should be updated with new asset metrics as they are added.
+    pub static ASSET_METRICS: Vec<Rc<RefCell<dyn ApplicationMetric<Asset>>>> = vec![
+        Rc::new(RefCell::new(MetricTotalAssets)),
     ];
 
     /// A collection of account related metrics.
@@ -77,6 +86,7 @@ pub fn recompute_metrics() {
     let users = USER_REPOSITORY.list();
     let user_groups = USER_GROUP_REPOSITORY.list();
     let accounts = ACCOUNT_REPOSITORY.list();
+    let assets = ASSET_REPOSITORY.list();
 
     // To avoid deserialize all the data, we can use the repository length to get the total number of entries of
     // simple gauge metrics.
@@ -93,6 +103,12 @@ pub fn recompute_metrics() {
         metrics
             .iter()
             .for_each(|metric| metric.borrow_mut().recalculate(&user_groups))
+    });
+
+    ASSET_METRICS.with(|metrics| {
+        metrics
+            .iter()
+            .for_each(|metric| metric.borrow_mut().recalculate(&assets))
     });
 
     ACCOUNT_METRICS.with(|metrics| {
@@ -235,6 +251,30 @@ impl ApplicationMetric<UserGroup> for MetricTotalUserGroups {
         self.dec(SERVICE_NAME, &labels! { "status" => "active" });
     }
 }
+/// Metric for the total number of assets.
+pub struct MetricTotalAssets;
+
+impl ApplicationGaugeMetric<Asset> for MetricTotalAssets {}
+
+impl ApplicationMetric<Asset> for MetricTotalAssets {
+    fn name(&self) -> &'static str {
+        "total_assets"
+    }
+
+    fn help(&self) -> &'static str {
+        "The total number of assets."
+    }
+
+    fn sum(&mut self, _: &Asset, previous: Option<&Asset>) {
+        if previous.is_none() {
+            self.inc(SERVICE_NAME);
+        }
+    }
+
+    fn sub(&mut self, _: &Asset) {
+        self.dec(SERVICE_NAME);
+    }
+}
 
 /// Metric for the number of transfers that have been created.
 pub struct MetricTotalTranfers;
@@ -315,17 +355,33 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
         let mut labeled_totals = BTreeMap::new();
 
         for account in accounts {
-            let label_key = (
-                account.blockchain.to_string().clone(),
-                account.symbol.clone().to_lowercase(),
-            );
+            for account_asset in &account.assets {
+                let Some(asset) = ASSET_REPOSITORY.get(&account_asset.asset_id) else {
+                    print(format!(
+                        "Asset `{}` not found in account `{}`",
+                        Uuid::from_bytes(account_asset.asset_id).hyphenated(),
+                        Uuid::from_bytes(account.id).hyphenated()
+                    ));
+                    continue;
+                };
 
-            let current_total = labeled_totals.get(&label_key).unwrap_or(&0.0);
-            let balance = account.balance.clone().map(|b| b.to_u64()).unwrap_or(0u64);
+                let label_key = (
+                    asset.blockchain.to_string().clone(),
+                    asset.symbol.clone().to_lowercase(),
+                );
 
-            let formatted_balance = amount_to_f64(balance as i128, account.decimals);
+                let current_total = labeled_totals.get(&label_key).unwrap_or(&0.0);
 
-            labeled_totals.insert(label_key, current_total + formatted_balance);
+                let balance = account_asset
+                    .balance
+                    .clone()
+                    .map(|b| b.to_u64())
+                    .unwrap_or(0u64);
+
+                let formatted_balance = amount_to_f64(balance as i128, asset.decimals);
+
+                labeled_totals.insert(label_key, current_total + formatted_balance);
+            }
         }
 
         for ((blockchain, symbol), total) in labeled_totals.into_iter() {
@@ -338,39 +394,66 @@ impl ApplicationMetric<Account> for MetricAssetsTotalBalance {
     }
 
     fn sum(&mut self, current: &Account, previous: Option<&Account>) {
-        let blockchain = current.blockchain.to_string();
-        let symbol = current.symbol.clone().to_lowercase();
-        let account_labels =
-            labels! { "blockchain" => blockchain.as_str(), "symbol" => symbol.as_str() };
+        if let Some(previous) = previous {
+            self.sub(previous);
+        }
 
-        let balance = current.balance.clone().map(|b| b.to_u64()).unwrap_or(0u64);
+        for account_asset in &current.assets {
+            let Some(asset) = ASSET_REPOSITORY.get(&account_asset.asset_id) else {
+                print(format!(
+                    "Asset `{}` not found in account `{}`",
+                    Uuid::from_bytes(account_asset.asset_id).hyphenated(),
+                    Uuid::from_bytes(current.id).hyphenated()
+                ));
 
-        let previous_balance = previous
-            .and_then(|p| p.balance.clone().map(|b| b.to_u64()))
-            .unwrap_or(0u64);
+                continue;
+            };
 
-        let diff_balance = balance as i128 - previous_balance as i128;
-        let current_total = self.get(SERVICE_NAME, &account_labels);
+            let blockchain = asset.blockchain.to_string();
+            let symbol = asset.symbol.clone().to_lowercase();
 
-        let formatted_balance = amount_to_f64(diff_balance, current.decimals);
-        let new_total = current_total + formatted_balance;
+            let account_labels =
+                labels! { "blockchain" => blockchain.as_str(), "symbol" => symbol.as_str() };
 
-        self.set(SERVICE_NAME, &account_labels, new_total.max(0.0));
+            let balance = account_asset
+                .balance
+                .clone()
+                .map(|b| b.to_u64())
+                .unwrap_or(0u64);
+
+            let current_total = self.get(SERVICE_NAME, &account_labels);
+
+            let formatted_balance = amount_to_f64(balance as i128, asset.decimals);
+
+            let new_total = current_total + formatted_balance;
+
+            self.set(SERVICE_NAME, &account_labels, new_total.max(0.0));
+        }
     }
 
     fn sub(&mut self, current: &Account) {
-        let blockchain = current.blockchain.to_string();
-        let symbol = current.symbol.clone().to_lowercase();
-        let account_labels =
-            labels! { "blockchain" => blockchain.as_str(), "symbol" => symbol.as_str() };
+        for account_asset in &current.assets {
+            let Some(asset) = ASSET_REPOSITORY.get(&account_asset.asset_id) else {
+                continue;
+            };
+            let blockchain = asset.blockchain.to_string();
+            let symbol = asset.symbol.clone().to_lowercase();
 
-        let balance = current.balance.clone().map(|b| b.to_u64()).unwrap_or(0u64);
+            let account_labels =
+                labels! { "blockchain" => blockchain.as_str(), "symbol" => symbol.as_str() };
 
-        let formatted_balance = amount_to_f64(balance as i128, current.decimals);
-        let current_total = self.get(SERVICE_NAME, &account_labels);
+            let balance = account_asset
+                .balance
+                .clone()
+                .map(|b| b.to_u64())
+                .unwrap_or(0u64);
 
-        let new_total = current_total - formatted_balance;
-        self.set(SERVICE_NAME, &account_labels, new_total.max(0.0));
+            let formatted_balance = amount_to_f64(balance as i128, asset.decimals);
+            let current_total = self.get(SERVICE_NAME, &account_labels);
+
+            let new_total = current_total - formatted_balance;
+            self.set(SERVICE_NAME, &account_labels, new_total.max(0.0));
+        }
     }
 }
 
@@ -464,14 +547,15 @@ mod tests {
     use crate::{
         models::{
             account_test_utils::mock_account,
-            address_book_entry_test_utils::mock_address_book_entry,
+            address_book_entry_test_utils::mock_address_book_entry, asset_test_utils::mock_asset,
             request_policy_test_utils::mock_request_policy, request_test_utils::mock_request,
             transfer_test_utils::mock_transfer, user_group_test_utils, user_test_utils::mock_user,
-            AccountBalance, Blockchain, RequestStatus, TransferStatus, UserStatus,
+            AccountAsset, AccountBalance, Blockchain, RequestStatus, TransferStatus, UserStatus,
         },
         repositories::{REQUEST_REPOSITORY, TRANSFER_REPOSITORY},
     };
     use candid::Nat;
+    use orbit_essentials::model::ModelKey;
 
     #[test]
     fn test_total_users_metric() {
@@ -513,9 +597,12 @@ mod tests {
     #[test]
     fn test_total_accounts_metric() {
         let mut account = mock_account();
-        account.blockchain = Blockchain::InternetComputer;
-        account.symbol = "ICP".to_string();
-
+        let asset = mock_asset();
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+        account.assets = vec![AccountAsset {
+            asset_id: asset.key(),
+            balance: None,
+        }];
         ACCOUNT_REPOSITORY.insert(account.to_key(), account);
 
         assert_eq!(
@@ -524,9 +611,14 @@ mod tests {
         );
 
         let mut account = mock_account();
+        let asset = mock_asset();
+
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+        account.assets = vec![AccountAsset {
+            asset_id: asset.key(),
+            balance: None,
+        }];
         account.name = "Test2".to_string();
-        account.blockchain = Blockchain::InternetComputer;
-        account.symbol = "ICP".to_string();
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account);
 
@@ -591,13 +683,15 @@ mod tests {
         let blockchain_name = Blockchain::InternetComputer.to_string();
 
         let mut account = mock_account();
-        account.blockchain = Blockchain::InternetComputer;
-        account.symbol = "icp".to_string();
-        account.balance = Some(AccountBalance {
-            balance: Nat::from(1_000_000_000u64),
-            last_modification_timestamp: 0,
-        });
-        account.decimals = 8;
+        let asset = mock_asset();
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+        account.assets = vec![AccountAsset {
+            asset_id: asset.key(),
+            balance: Some(AccountBalance {
+                balance: Nat::from(1_000_000_000u64),
+                last_modification_timestamp: 0,
+            }),
+        }];
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
 
@@ -610,13 +704,15 @@ mod tests {
         );
 
         let mut account = mock_account();
-        account.blockchain = Blockchain::InternetComputer;
-        account.symbol = "icp".to_string();
-        account.balance = Some(AccountBalance {
-            balance: Nat::from(10_000_000_000u64),
-            last_modification_timestamp: 0,
-        });
-        account.decimals = 8;
+        let asset = mock_asset();
+        ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+        account.assets = vec![AccountAsset {
+            asset_id: asset.key(),
+            balance: Some(AccountBalance {
+                balance: Nat::from(10_000_000_000u64),
+                last_modification_timestamp: 0,
+            }),
+        }];
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
 
@@ -628,10 +724,13 @@ mod tests {
             110.00000000
         );
 
-        account.balance = Some(AccountBalance {
-            balance: Nat::from(100_000_000u64),
-            last_modification_timestamp: 0,
-        });
+        account.assets = vec![AccountAsset {
+            asset_id: asset.key(),
+            balance: Some(AccountBalance {
+                balance: Nat::from(100_000_000u64),
+                last_modification_timestamp: 0,
+            }),
+        }];
 
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.clone());
 

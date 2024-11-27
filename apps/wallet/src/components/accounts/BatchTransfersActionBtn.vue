@@ -83,7 +83,7 @@
                   </td>
                   <td class="text-right text-no-wrap">
                     <span v-if="transfer.amount">
-                      {{ formatBalance(transfer.amount, account.decimals) }}
+                      {{ formatBalance(transfer.amount, asset.decimals) }}
                     </span>
                     <template v-else>
                       <VIcon :icon="mdiAlertCircle" color="error" class="mr-1" />
@@ -96,7 +96,7 @@
                 <tr>
                   <td colspan="4" class="text-right bg-background">
                     <span class="font-weight-bold">{{ $t('terms.total') }}:</span>
-                    {{ formatBalance(totalAmount, account.decimals) }}
+                    {{ formatBalance(totalAmount, asset.decimals) }}
                   </td>
                 </tr>
               </tfoot>
@@ -157,8 +157,7 @@ import {
   VToolbarTitle,
 } from 'vuetify/components';
 import logger from '~/core/logger.core';
-import { Account, Transfer, TransferOperationInput } from '~/generated/station/station.did';
-import { ChainApiFactory } from '~/services/chains';
+import { Account, Asset, TransferOperationInput } from '~/generated/station/station.did';
 import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import { CsvTable } from '~/types/app.types';
@@ -167,6 +166,7 @@ import {
   registerBeforeUnloadConfirmation,
   unregisterBeforeUnloadConfirmation,
 } from '~/utils/app.utils';
+import { detectAddressStandard } from '~/utils/asset.utils';
 import { downloadCsv, readFileAsCsvTable } from '~/utils/file.utils';
 import { requiredRule } from '~/utils/form.utils';
 import {
@@ -179,6 +179,7 @@ import {
 const props = withDefaults(
   defineProps<{
     account: Account;
+    asset: Asset;
     batchChunkSize?: number;
     icon?: string;
     text?: string;
@@ -228,9 +229,8 @@ const hasInvalidTransfers = computed(() => rows.value.some(row => !row.valid));
 const rawCsvTable = ref<CsvTable | null>(null);
 const invalidRawCsvTable = ref<CsvTable | null>(null);
 const downloadingInvalid = ref(false);
-const chainApi = computed(() => ChainApiFactory.create(props.account));
 
-type CsvTransferWithComment = Partial<Transfer> & { comment?: string };
+type CsvTransferWithComment = Partial<TransferOperationInput> & { comment?: string };
 
 const rows = ref<
   {
@@ -296,20 +296,29 @@ watch(
     for (const row of rawCsvTable.value.rows) {
       const transfer: CsvTransferWithComment = {};
       let valid = true;
+      const maybeToAddress = row?.[csvToColumn.value];
+      if (maybeToAddress !== undefined) {
+        const maybeStandard = detectAddressStandard(
+          props.asset,
+          maybeToAddress,
+          station.configuration.details.supported_blockchains,
+        );
 
-      if (
-        row?.[csvToColumn.value] !== undefined &&
-        chainApi.value.isValidAddress(row[csvToColumn.value])
-      ) {
-        transfer.to = row[csvToColumn.value];
+        if (maybeStandard) {
+          transfer.to = maybeToAddress;
+          transfer.with_standard = maybeStandard.standard;
+        } else {
+          valid = false;
+        }
       }
+
       if (row?.[csvCommentColumn.value] !== undefined) {
         transfer.comment = row[csvCommentColumn.value];
       }
 
       if (row?.[csvAmountColumn.value] !== undefined) {
         try {
-          transfer.amount = amountToBigInt(row[csvAmountColumn.value], props.account.decimals);
+          transfer.amount = amountToBigInt(row[csvAmountColumn.value], props.asset.decimals);
         } catch (e) {
           valid = false;
         }
@@ -378,10 +387,12 @@ const startBatchTransfer = async (): Promise<void> => {
           rowId,
           transfer: {
             from_account_id: props.account.id,
+            from_asset_id: props.asset.id,
+            with_standard: assertAndReturn(row.transfer.with_standard, 'with_standard'),
             amount: assertAndReturn(row.transfer.amount, 'amount'),
             to: maybeTransformBlockchainAddress(
-              props.account.blockchain,
-              props.account.standard,
+              props.asset.blockchain,
+              assertAndReturn(row.transfer.with_standard, 'with_standard'),
               assertAndReturn(row.transfer.to, 'to'),
             ),
             network: [],

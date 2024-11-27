@@ -1,5 +1,6 @@
 use candid::{CandidType, Deserialize, Principal};
 use orbit_essentials::types::WasmModuleExtraChunks;
+use station_api::AccountSeedDTO;
 use station_api::TimestampRfc3339;
 pub use station_api::{MetadataDTO, UuidDTO};
 
@@ -64,6 +65,43 @@ pub struct Account {
     pub metadata: Vec<MetadataDTO>,
 }
 
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub struct Asset {
+    /// The asset id, which is a UUID.
+    pub id: UuidDTO,
+    /// The asset name (e.g. `Internet Computer`, `Bitcoin`, `Ethereum`, etc.)
+    pub name: String,
+    /// The asset symbol (e.g. `ICP`, `BTC`, `ETH`, etc.)
+    pub symbol: String,
+    /// The number of decimal places that the asset supports (e.g. `8` for `BTC`, `18` for `ETH`, etc.)
+    pub decimals: u32,
+    /// The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
+    pub blockchain: String,
+    // The asset standard that is supported (e.g. `erc20`, `native`, etc.), canonically
+    // represented as a lowercase string with spaces replaced with underscores.
+    pub standards: Vec<String>,
+    /// The account metadata, which is a list of key-value pairs,
+    /// where the key is unique and the first entry in the tuple,
+    /// and the value is the second entry in the tuple.
+    pub metadata: Vec<MetadataDTO>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub struct MultiAssetAccount {
+    /// The account id, which is a UUID.
+    pub id: UuidDTO,
+    /// The seed for address generation.
+    pub seed: AccountSeedDTO,
+    /// The account name.
+    pub name: String,
+    /// The account assets.
+    pub assets: Vec<UuidDTO>,
+    /// The account metadata, which is a list of key-value pairs,
+    /// where the key is unique and the first entry in the tuple,
+    /// and the value is the second entry in the tuple.
+    pub metadata: Vec<MetadataDTO>,
+}
+
 #[derive(Clone, Debug, CandidType)]
 pub enum DisasterRecoveryError {
     Unauthorized,
@@ -80,6 +118,12 @@ pub struct GetDisasterRecoveryAccountsResponse {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct GetDisasterRecoveryAccountsAndAssetsResponse {
+    pub accounts: Vec<MultiAssetAccount>,
+    pub assets: Vec<Asset>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct GetDisasterRecoveryCommitteeResponse {
     pub committee: Option<DisasterRecoveryCommittee>,
 }
@@ -92,6 +136,12 @@ pub struct SetDisasterRecoveryCommitteeInput {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct SetDisasterRecoveryAccountsInput {
     pub accounts: Vec<Account>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct SetDisasterRecoveryAccountsAndAssetsInput {
+    pub accounts: Vec<MultiAssetAccount>,
+    pub assets: Vec<Asset>,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -187,6 +237,9 @@ pub enum RecoveryResult {
 pub struct GetDisasterRecoveryStateResponse {
     pub committee: Option<DisasterRecoveryCommittee>,
     pub accounts: Vec<Account>,
+
+    pub multi_asset_accounts: Vec<MultiAssetAccount>,
+    pub assets: Vec<Asset>,
 
     pub recovery_requests: Vec<StationRecoveryRequest>,
     pub recovery_status: RecoveryStatus,

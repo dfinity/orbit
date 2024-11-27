@@ -6,22 +6,34 @@ import {
   GetRequestResultData,
   RequestOperation,
   RequestApproval,
+  Asset,
 } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
 import { mount } from '~/test.utils';
 import { ExtractOk } from '~/types/helper.types';
 import RequestDialog from './RequestDialog.vue';
 
+const mockAsset: Asset = {
+  blockchain: 'icp',
+  decimals: 2,
+  id: '1',
+  metadata: [],
+  name: 'ICP',
+  symbol: 'ICP',
+  standards: ['icp_native', 'icrc1'],
+};
+
 const transferOperation1 = {
   Transfer: {
     from_account: [
       {
-        address: 'fromaddress1',
+        addresses: [{ address: 'fromaddress1' }],
       },
     ],
     input: {
       to: 'toaddress1',
     },
+    from_asset: mockAsset,
   },
 } as RequestOperation;
 
@@ -29,12 +41,13 @@ const transferOperation2 = {
   Transfer: {
     from_account: [
       {
-        address: 'fromaddress2',
+        addresses: [{ address: 'fromaddress2' }],
       },
     ],
     input: {
       to: 'toaddress2',
     },
+    from_asset: mockAsset,
   },
 } as RequestOperation;
 

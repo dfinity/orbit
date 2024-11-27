@@ -1,6 +1,7 @@
 import { Principal } from '@dfinity/principal';
 import isUUID from 'validator/es/lib/isUUID';
 import { i18n } from '~/plugins/i18n.plugin';
+import { detectAddressFormat } from './asset.utils';
 
 export const requiredRule = (value: unknown): string | boolean => {
   if (value === null || value === undefined || value === '') {
@@ -107,6 +108,20 @@ export const maxLengthRule = (max: number, field: string) => {
 
     return value.length <= max ? true : i18n.global.t('forms.rules.maxLength', { field, max });
   };
+};
+
+export const validSymbolRule = (value: unknown): string | boolean => {
+  const hasValue = !!value;
+  if (!hasValue) {
+    // this rule only applies if there is a value
+    return true;
+  }
+
+  if (typeof value !== 'string') {
+    throw new Error('validSymbolRule only applies to strings');
+  }
+
+  return /^[a-zA-Z0-9]{1,32}$/.test(value) ? true : i18n.global.t('forms.rules.validSymbol');
 };
 
 export const uniqueRule = (
@@ -241,3 +256,26 @@ export const validEmail = (value: unknown): string | boolean => {
 
   return true;
 };
+
+export const validAddress =
+  (blockchain: string) =>
+  (value: unknown): string | boolean => {
+    const hasValue = !!value;
+    if (!hasValue) {
+      // this rule only applies if there is a value
+      return true;
+    }
+
+    if (typeof value !== 'string') {
+      return i18n.global.t('forms.rules.validAddress');
+    }
+
+    try {
+      if (detectAddressFormat(blockchain, value) !== undefined) {
+        return true;
+      }
+      return i18n.global.t('forms.rules.validAddress');
+    } catch {
+      return i18n.global.t('forms.rules.validAddress');
+    }
+  };

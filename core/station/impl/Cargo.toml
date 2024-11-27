@@ -2,7 +2,7 @@
 [package]
 name = 'station'
 include = ['src', 'Cargo.toml']
-version = '0.0.2-alpha.9'
+version = '0.0.2-alpha.10'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -31,6 +31,7 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
+icrc-ledger-types = { workspace = true }
 lazy_static = { workspace = true }
 num-bigint = { workspace = true }
 serde = { workspace = true, features = ['derive'] }

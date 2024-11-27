@@ -6,10 +6,10 @@
         {{ accountSetup.configuration.name ?? '-' }}
       </template>
     </RequestOperationListRow>
-    <RequestOperationListRow v-if="accountSetup.configuration.blockchain">
-      <template #name>{{ $t('terms.blockchain') }}</template>
+    <RequestOperationListRow v-if="accountSetup.configuration.assets">
+      <template #name>{{ $t('terms.assets') }}</template>
       <template #content>
-        {{ $t(`blockchains.${accountSetup.configuration.blockchain}.name`) }}
+        {{ assetsText }}
       </template>
     </RequestOperationListRow>
   </div>
@@ -24,6 +24,7 @@ import AccountSetupWizard, {
 import { useDefaultAccountSetupWizardModel } from '~/composables/account.composable';
 import { AddAccountOperation, Request } from '~/generated/station/station.did';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
+import { useStationStore } from '~/stores/station.store';
 
 const props = withDefaults(
   defineProps<{
@@ -35,15 +36,22 @@ const props = withDefaults(
     mode: 'list',
   },
 );
-
+const station = useStationStore();
 const isListMode = computed(() => props.mode === 'list');
 const accountSetup: Ref<AccountSetupWizardModel> = ref(useDefaultAccountSetupWizardModel());
+
+const assetsText = computed(() =>
+  props.operation.input.assets
+    .map(id => station.configuration.details.supported_assets.find(asset => asset.id === id))
+    .filter(a => !!a)
+    .map(asset => `${asset.name} (${asset.symbol})`)
+    .join(', '),
+);
 
 onBeforeMount(() => {
   const model: AccountSetupWizardModel = useDefaultAccountSetupWizardModel();
   model.configuration.name = props.operation.input.name;
-  model.configuration.blockchain = props.operation.input.blockchain;
-  model.configuration.standard = props.operation.input.standard;
+  model.configuration.assets = props.operation.input.assets;
   model.request_policy.configurationRule = props.operation.input.configs_request_policy?.[0];
   model.request_policy.transferRule = props.operation.input.transfer_request_policy?.[0];
   model.permission.configuration = props.operation.input.configs_permission;

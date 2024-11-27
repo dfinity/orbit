@@ -1,15 +1,18 @@
+use std::str::FromStr;
+
 use crate::{
     core::ic_cdk::next_time,
     errors::MapperError,
     models::{
-        Account, AccountBalance, AccountCallerPrivileges, AccountId, AddAccountOperationInput,
-        BlockchainStandard, ACCOUNT_METADATA_SYMBOL_KEY,
+        Account, AccountAddress, AccountAsset, AccountBalance, AccountCallerPrivileges, AccountId,
+        AccountSeed, AddAccountOperationInput, AddressFormat, AssetId, BalanceQueryState,
+        ChangeAssets,
     },
-    repositories::request_policy::REQUEST_POLICY_REPOSITORY,
+    repositories::{request_policy::REQUEST_POLICY_REPOSITORY, ASSET_REPOSITORY},
 };
 use ic_cdk::print;
 use orbit_essentials::{repository::Repository, utils::timestamp_to_rfc3339};
-use station_api::{AccountBalanceDTO, AccountBalanceInfoDTO, AccountDTO};
+use station_api::{AccountAssetDTO, AccountBalanceDTO, AccountDTO};
 use uuid::Uuid;
 
 #[derive(Default, Clone, Debug)]
@@ -20,21 +23,29 @@ impl AccountMapper {
         AccountDTO {
             id: Uuid::from_bytes(account.id).hyphenated().to_string(),
             name: account.name,
-            decimals: account.decimals,
-            balance: match account.balance {
-                Some(balance) => Some(AccountBalanceInfoDTO {
-                    balance: balance.balance,
-                    decimals: account.decimals,
-                    last_update_timestamp: timestamp_to_rfc3339(
-                        &balance.last_modification_timestamp,
-                    ),
-                }),
-                None => None,
-            },
-            symbol: account.symbol,
-            address: account.address,
-            standard: account.standard.to_string(),
-            blockchain: account.blockchain.to_string(),
+
+            addresses: account.addresses.into_iter().map(|a| a.into()).collect(),
+            assets: account
+                .assets
+                .into_iter()
+                .filter_map(|account_asset| {
+                    if let Some(asset) = ASSET_REPOSITORY.get(&account_asset.asset_id) {
+                        Some(AccountMapper::to_account_asset_dto(
+                            account_asset,
+                            asset.decimals,
+                            account.id,
+                        ))
+                    } else {
+                        print(format!(
+                            "Asset {} not found for Account {}",
+                            Uuid::from_bytes(account_asset.asset_id).hyphenated(),
+                            Uuid::from_bytes(account.id).hyphenated()
+                        ));
+                        None
+                    }
+                })
+                .collect(),
+
             metadata: account.metadata.into_vec_dto(),
             transfer_request_policy: account.transfer_request_policy_id.and_then(|policy_id| {
                 REQUEST_POLICY_REPOSITORY
@@ -67,49 +78,23 @@ impl AccountMapper {
     pub fn from_create_input(
         input: AddAccountOperationInput,
         account_id: AccountId,
-        address: Option<String>,
+        seed: Option<AccountSeed>,
     ) -> Result<Account, MapperError> {
-        if !input
-            .blockchain
-            .supported_standards()
-            .contains(&input.standard)
-        {
-            return Err(MapperError::UnsupportedBlockchainStandard {
-                blockchain: input.blockchain.to_string(),
-                supported_standards: input
-                    .blockchain
-                    .supported_standards()
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect(),
-            });
-        }
-
-        let symbol = match input.standard {
-            BlockchainStandard::Native => {
-                if input.metadata.get(ACCOUNT_METADATA_SYMBOL_KEY).is_some() {
-                    return Err(MapperError::NativeAccountSymbolMetadataNotAllowed);
-                }
-
-                input.blockchain.native_symbol().to_string()
-            }
-            _ => input
-                .metadata
-                .get(ACCOUNT_METADATA_SYMBOL_KEY)
-                .ok_or(MapperError::NonNativeAccountSymbolRequired)?,
-        };
-
         let new_account = Account {
             id: account_id,
-            blockchain: input.blockchain,
-            standard: input.standard,
             name: input.name,
-            address: address.unwrap_or("".to_string()),
-            decimals: 0,
-            symbol,
+            seed: seed.unwrap_or(account_id),
+            addresses: vec![],
+            assets: input
+                .assets
+                .iter()
+                .map(|asset_id| AccountAsset {
+                    asset_id: *asset_id,
+                    balance: None,
+                })
+                .collect(),
             transfer_request_policy_id: None,
             configs_request_policy_id: None,
-            balance: None,
             metadata: input.metadata,
             last_modification_timestamp: next_time(),
         };
@@ -121,12 +106,38 @@ impl AccountMapper {
         balance: AccountBalance,
         decimals: u32,
         account_id: AccountId,
+        asset_id: AssetId,
+        query_state: BalanceQueryState,
     ) -> AccountBalanceDTO {
         AccountBalanceDTO {
             account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
+            asset_id: Uuid::from_bytes(asset_id).hyphenated().to_string(),
             balance: balance.balance,
             decimals,
             last_update_timestamp: timestamp_to_rfc3339(&balance.last_modification_timestamp),
+            query_state: query_state.to_string(),
+        }
+    }
+
+    pub fn to_account_asset_dto(
+        account_asset: AccountAsset,
+        decimals: u32,
+        account_id: AccountId,
+    ) -> AccountAssetDTO {
+        AccountAssetDTO {
+            asset_id: Uuid::from_bytes(account_asset.asset_id)
+                .hyphenated()
+                .to_string(),
+            balance: account_asset.balance.map(|balance| {
+                let query_state = BalanceQueryState::from(&balance);
+                Self::to_balance_dto(
+                    balance,
+                    decimals,
+                    account_id,
+                    account_asset.asset_id,
+                    query_state,
+                )
+            }),
         }
     }
 }
@@ -143,6 +154,97 @@ impl From<AccountCallerPrivileges> for station_api::AccountCallerPrivilegesDTO {
             id: Uuid::from_bytes(privileges.id).hyphenated().to_string(),
             can_transfer: privileges.can_transfer,
             can_edit: privileges.can_edit,
+        }
+    }
+}
+
+impl From<AccountAddress> for station_api::AccountAddressDTO {
+    fn from(account_address: AccountAddress) -> Self {
+        Self {
+            address: account_address.address,
+            format: account_address.format.to_string(),
+        }
+    }
+}
+
+impl From<station_api::AccountAddressDTO> for AccountAddress {
+    fn from(address: station_api::AccountAddressDTO) -> Self {
+        Self {
+            address: address.address,
+            format: AddressFormat::from_str(address.format.as_str())
+                .expect("Failed to convert string to AddressFormat"),
+        }
+    }
+}
+
+impl From<ChangeAssets> for station_api::ChangeAssets {
+    fn from(change_assets: ChangeAssets) -> Self {
+        match change_assets {
+            ChangeAssets::ReplaceWith { assets } => station_api::ChangeAssets::ReplaceWith {
+                assets: assets
+                    .iter()
+                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                    .collect(),
+            },
+            ChangeAssets::Change {
+                add_assets,
+                remove_assets,
+            } => station_api::ChangeAssets::Change {
+                add_assets: add_assets
+                    .iter()
+                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                    .collect(),
+                remove_assets: remove_assets
+                    .iter()
+                    .map(|id| Uuid::from_bytes(*id).hyphenated().to_string())
+                    .collect(),
+            },
+        }
+    }
+}
+
+impl From<station_api::ChangeAssets> for ChangeAssets {
+    fn from(change_assets: station_api::ChangeAssets) -> Self {
+        match change_assets {
+            station_api::ChangeAssets::ReplaceWith { assets } => ChangeAssets::ReplaceWith {
+                assets: assets
+                    .iter()
+                    .map(|id| *Uuid::from_str(id).expect("Invalid asset ID").as_bytes())
+                    .collect(),
+            },
+            station_api::ChangeAssets::Change {
+                add_assets,
+                remove_assets,
+            } => ChangeAssets::Change {
+                add_assets: add_assets
+                    .iter()
+                    .map(|id| *Uuid::from_str(id).expect("Invalid asset ID").as_bytes())
+                    .collect(),
+                remove_assets: remove_assets
+                    .iter()
+                    .map(|id| *Uuid::from_str(id).expect("Invalid asset ID").as_bytes())
+                    .collect(),
+            },
+        }
+    }
+}
+
+impl From<Account> for upgrader_api::MultiAssetAccount {
+    fn from(account: Account) -> Self {
+        Self {
+            id: Uuid::from_bytes(account.id).hyphenated().to_string(),
+            seed: account.seed,
+            assets: account
+                .assets
+                .iter()
+                .map(|account_asset| {
+                    Uuid::from_bytes(account_asset.asset_id)
+                        .hyphenated()
+                        .to_string()
+                })
+                .collect(),
+            name: account.name.clone(),
+            metadata: account.metadata.clone().into(),
         }
     }
 }

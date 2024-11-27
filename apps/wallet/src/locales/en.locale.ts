@@ -95,6 +95,7 @@ export default {
       verify_instructions:
         'To verify the update, open the terminal and follow the instructions bellow:',
     },
+    asset: 'Asset',
     no_data: 'No data available.',
     no_matching_results: 'No matching results found for `{search}`.',
     add_new_label: 'Add new label: {label}',
@@ -110,7 +111,12 @@ export default {
     icp: {
       name: 'Internet Computer',
       standards: {
-        native: 'Native',
+        icp_native: 'ICP (Native)',
+        icrc1: 'ICRC-1',
+      },
+      formats: {
+        icp_account_identifier: 'ICP Native',
+        icrc1_account: 'ICRC-1',
       },
     },
     eth: {
@@ -169,6 +175,7 @@ export default {
       system: 'System',
       transfers: 'Transfers',
       users: 'Users',
+      assets: 'Assets',
       external_canisters: 'Canisters',
     },
     headers: {
@@ -265,6 +272,9 @@ export default {
       editaccount: {
         title: 'Edit account',
         request_title: 'Edit account request',
+        added_assets: 'Added',
+        removed_assets: 'Removed',
+        replaced_assets: 'Replaced',
       },
       editaddressbookentry: {
         title: 'Edit address book entry',
@@ -281,6 +291,18 @@ export default {
       managesysteminfo: {
         title: 'Manage system info',
         request_title: 'Manage system info request',
+      },
+      addasset: {
+        title: 'Add asset',
+        request_title: 'Add asset request',
+      },
+      editasset: {
+        title: 'Edit asset',
+        request_title: 'Edit asset request',
+      },
+      removeasset: {
+        title: 'Remove asset',
+        request_title: 'Remove asset request',
       },
       createexternalcanister: {
         title: 'Create canister',
@@ -747,6 +769,7 @@ export default {
     principal: 'Principal',
     status: 'Status',
     transfer: 'Transfer',
+    transfer_asset: 'Transfer {asset}',
     invalid: 'Invalid',
     control_panel: 'Control panel',
     confirmed: 'Confirmed',
@@ -761,6 +784,9 @@ export default {
     version: 'Version',
     continue: 'Continue',
     cycle_obtain_strategy: 'Wallet top-up method',
+    symbol: 'Symbol',
+    standards: 'Standards',
+    assets: 'Assets',
   },
   forms: {
     create: 'Create',
@@ -783,11 +809,15 @@ export default {
       numberRange: 'This field must be between {min} and {max}.',
       invalidDecimalPlaces: 'This field must have a maximum of {decimals} decimal places.',
       isHex: 'This field must be a valid hexadecimal value.',
+      validAddress: 'This field must be a valid address.',
+      validSymbol: 'Symbol must be 1-32 alphanumeric characters.',
     },
   },
   navigation: {
     home: 'Home',
+    dashboard: 'Dashboard',
     accounts: 'Accounts',
+    account: 'Account',
     address_book: 'Address Book',
     users: 'Users',
     settings: 'Settings',
@@ -801,9 +831,14 @@ export default {
     transfer_requests: 'Transfer Requests',
     permissions: 'Permissions',
     request_policies: 'Request Policies',
+    assets: 'Assets',
     external_canisters: 'Canisters',
   },
   pages: {
+    dashboard: {
+      title: 'Dashboard',
+      available_assets: 'Available Assets',
+    },
     accounts: {
       title: 'Accounts',
       btn_new_transfer: 'New transfer',
@@ -824,6 +859,14 @@ export default {
       csv_ignored_transfers_hint: 'Transfers with errors will be ignored.',
       csv_transfer_failed: 'Failed to process transfers, please try again.',
       csv_download_invalid: 'Download invalid',
+      add_asset: 'Add asset',
+      remove_asset: 'Remove asset',
+      no_assets_to_add: 'No assets available to add.',
+      remove_asset_confirm:
+        'Are you sure you want to remove this asset? Removing the asset does not affect the account balance. Re-adding the asset will restore access to the balance.',
+      transfers_not_supported: 'Transfers are not supported for this asset.',
+      add_index_canister_to_see_transactions:
+        'Consider adding the index canister to the asset to see transactions.',
     },
     address_book: {
       title: 'Address Book',
@@ -922,6 +965,17 @@ export default {
       create_label: 'Add Policy',
       dialog_title: 'Policy',
     },
+    assets: {
+      title: 'Assets',
+      btn_new_entry: 'New asset',
+      no_results_found: 'No assets found.',
+      error_fetching_assets: 'Error fetching assets, please try again.',
+      forms: {
+        ledger_canister_id: 'Ledger Canister ID',
+        index_canister_id: 'Index Canister ID',
+        decimals: 'Decimals',
+      },
+    },
     not_found: {
       title: 'Whoops, 404',
       subtitle: 'The page you were looking for does not exist.',
@@ -961,6 +1015,7 @@ export default {
     select_resource: 'Resource Type',
     resources: {
       account: 'Account',
+      asset: 'Asset',
       user: 'User',
       usergroup: 'User Group',
       permission: 'Access Policy',
@@ -1039,6 +1094,9 @@ export default {
       setdisasterrecovery: 'Configure disaster recovery',
       callexternalcanister: 'Call canister',
       createexternalcanister: 'Create canister',
+      addasset: 'Add asset',
+      editasset: 'Edit asset',
+      removeasset: 'Remove asset',
     },
   },
   cycle_obtain_strategies: {

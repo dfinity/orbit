@@ -33,7 +33,10 @@ pub enum RequestOperationType {
     SetDisasterRecovery = 23,
     ConfigureExternalCanister = 24,
     FundExternalCanister = 25,
-    MonitorExternalCanister = 26,
+    AddAsset = 26,
+    EditAsset = 27,
+    RemoveAsset = 28,
+    MonitorExternalCanister = 29,
 }
 
 /// A helper enum to filter the requests based on the operation type and
@@ -64,6 +67,9 @@ pub enum ListRequestsOperationType {
     EditAddressBookEntry,
     RemoveAddressBookEntry,
     ManageSystemInfo,
+    AddAsset,
+    EditAsset,
+    RemoveAsset,
 }
 
 impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
@@ -175,6 +181,15 @@ impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
             ListRequestsOperationType::ManageSystemInfo => {
                 matches!(self, RequestOperationFilterType::ManageSystemInfo)
             }
+            ListRequestsOperationType::AddAsset => {
+                matches!(self, RequestOperationFilterType::AddAsset)
+            }
+            ListRequestsOperationType::EditAsset => {
+                matches!(self, RequestOperationFilterType::EditAsset)
+            }
+            ListRequestsOperationType::RemoveAsset => {
+                matches!(self, RequestOperationFilterType::RemoveAsset)
+            }
         }
     }
 }
@@ -244,6 +259,9 @@ impl Display for RequestOperationType {
             }
             RequestOperationType::FundExternalCanister => write!(f, "fund_external_canister"),
             RequestOperationType::MonitorExternalCanister => write!(f, "monitor_external_canister"),
+            RequestOperationType::AddAsset => write!(f, "add_asset"),
+            RequestOperationType::EditAsset => write!(f, "edit_asset"),
+            RequestOperationType::RemoveAsset => write!(f, "remove_asset"),
         }
     }
 }

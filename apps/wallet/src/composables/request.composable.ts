@@ -21,7 +21,9 @@ export type AvailableDomain = {
   types: ListRequestsOperationType[];
 };
 
-export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
+export const useAvailableDomains = (
+  opts: { filterBy?: RequestDomains[] } = {},
+): Ref<AvailableDomain[]> => {
   const domains: Ref<AvailableDomain[]> = ref([]);
   domains.value.push({
     id: RequestDomains.All,
@@ -71,6 +73,13 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
     });
   }
 
+  if (hasRequiredPrivilege({ anyOf: [Privilege.ListAssets] })) {
+    domains.value.push({
+      id: RequestDomains.Assets,
+      types: [{ AddAsset: null }, { EditAsset: null }, { RemoveAsset: null }],
+    });
+  }
+
   domains.value.push({
     id: RequestDomains.System,
     types: [
@@ -85,6 +94,11 @@ export const useAvailableDomains = (): Ref<AvailableDomain[]> => {
       { ManageSystemInfo: null },
     ],
   });
+
+  const filterBy = opts?.filterBy ?? [];
+  if (filterBy.length) {
+    domains.value = domains.value.filter(domain => filterBy.includes(domain.id));
+  }
 
   return domains;
 };

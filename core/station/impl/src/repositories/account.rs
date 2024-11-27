@@ -1,11 +1,14 @@
-use super::indexes::unique_index::UniqueIndexRepository;
+use super::{indexes::unique_index::UniqueIndexRepository, InsertEntryObserverArgs};
 use crate::{
     core::{
         metrics::ACCOUNT_METRICS, observer::Observer, utils::format_unique_string,
         with_memory_manager, Memory, ACCOUNT_MEMORY_ID,
     },
     models::{indexes::unique_index::UniqueIndexKey, Account, AccountId, AccountKey},
-    services::disaster_recovery_observes_insert_account,
+    services::{
+        disaster_recovery_sync_accounts_and_assets_on_insert,
+        disaster_recovery_sync_accounts_and_assets_on_remove,
+    },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
 use lazy_static::lazy_static;
@@ -30,16 +33,21 @@ lazy_static! {
 #[derive(Debug)]
 pub struct AccountRepository {
     unique_index: UniqueIndexRepository,
-    change_observer: Observer<(Account, Option<Account>)>,
+    insert_observer: Observer<InsertEntryObserverArgs<Account>>,
+    remove_observer: Observer<()>,
 }
 
 impl Default for AccountRepository {
     fn default() -> Self {
-        let mut change_observer = Observer::default();
-        disaster_recovery_observes_insert_account(&mut change_observer);
+        let mut remove_observer = Observer::default();
+        disaster_recovery_sync_accounts_and_assets_on_remove(&mut remove_observer);
+
+        let mut insert_observer = Observer::default();
+        disaster_recovery_sync_accounts_and_assets_on_insert(&mut insert_observer);
 
         Self {
-            change_observer,
+            insert_observer,
+            remove_observer,
             unique_index: UniqueIndexRepository::default(),
         }
     }
@@ -94,10 +102,14 @@ impl Repository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepositor
 
             self.save_entry_indexes(&value, prev.as_ref());
 
-            let args = (value, prev);
-            self.change_observer.notify(&args);
+            let args = InsertEntryObserverArgs {
+                current: value,
+                prev,
+            };
 
-            args.1
+            self.insert_observer.notify(&args);
+
+            args.prev
         })
     }
 
@@ -117,6 +129,8 @@ impl Repository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepositor
             if let Some(prev) = &prev {
                 self.remove_entry_indexes(prev);
             }
+
+            self.remove_observer.notify(&());
 
             prev
         })
@@ -151,13 +165,6 @@ impl AccountRepository {
     pub fn find_by_name(&self, name: &str) -> Option<AccountId> {
         self.unique_index
             .get(&UniqueIndexKey::AccountName(format_unique_string(name)))
-    }
-
-    pub fn with_empty_observers() -> Self {
-        Self {
-            change_observer: Observer::default(),
-            ..Default::default()
-        }
     }
 }
 

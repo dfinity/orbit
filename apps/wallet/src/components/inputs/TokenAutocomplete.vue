@@ -3,26 +3,29 @@
     v-model="model"
     :multiple="props.multiple.value"
     :label="props.label.value"
-    item-value="value"
-    item-title="text"
+    item-value="id"
+    :item-title="item => `${item.name} (${item.symbol})`"
     :items="items"
     :variant="props.variant.value"
     :density="props.density.value"
     :readonly="props.readonly.value"
     :disabled="props.disabled.value"
     :rules="props.rules.value"
+    :no-data-text="props.noDataText.value"
+    data-test-id="token-autocomplete"
   />
 </template>
 
 <script setup lang="ts">
 import { computed, toRefs } from 'vue';
-import { Asset } from '~/generated/station/station.did';
+import { VAutocomplete } from 'vuetify/components';
 import { useStationStore } from '~/stores/station.store';
 import { FormValidationRuleFn } from '~/types/helper.types';
 
 const input = withDefaults(
   defineProps<{
-    modelValue?: string;
+    modelValue?: string | string[];
+    excludedIds?: string[];
     label?: string;
     variant?: 'underlined' | 'outlined' | 'filled';
     density?: 'comfortable' | 'compact';
@@ -30,6 +33,7 @@ const input = withDefaults(
     readonly?: boolean;
     disabled?: boolean;
     rules?: FormValidationRuleFn[];
+    noDataText?: string;
   }>(),
   {
     modelValue: undefined,
@@ -40,6 +44,8 @@ const input = withDefaults(
     readonly: false,
     disabled: false,
     rules: undefined,
+    excludedIds: undefined,
+    noDataText: undefined,
   },
 );
 
@@ -49,24 +55,18 @@ const station = useStationStore();
 
 const model = computed({
   get: () => props.modelValue.value,
-  set: value => {
-    emit(
-      'selectedAsset',
-      station.configuration.details.supported_assets.find(token => token.symbol === value),
-    );
-    emit('update:modelValue', value);
-  },
+  set: value => emit('update:modelValue', value),
 });
 
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload?: string): void;
-  (event: 'selectedAsset', payload?: Asset): void;
+  (event: 'update:modelValue', payload?: string | string[]): void;
 }>();
 
 const items = computed(() =>
-  station.configuration.details.supported_assets.map(token => ({
-    value: token.symbol,
-    text: `${token.name} (${token.symbol})`,
-  })),
+  props.excludedIds
+    ? station.configuration.details.supported_assets.filter(
+        asset => !props.excludedIds.value?.includes(asset.id),
+      )
+    : station.configuration.details.supported_assets,
 );
 </script>

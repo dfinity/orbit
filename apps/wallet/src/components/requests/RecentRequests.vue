@@ -69,7 +69,7 @@ import RequestList from './RequestList.vue';
 
 const props = withDefaults(
   defineProps<{
-    types: ListRequestsOperationType[];
+    types?: ListRequestsOperationType[];
     title?: string;
     limit?: number;
     sortBy?: ListRequestsArgs['sortBy'];
@@ -82,6 +82,7 @@ const props = withDefaults(
   }>(),
   {
     title: undefined,
+    types: undefined,
     limit: 3,
     sortBy: () => ({
       expirationDt: 'asc',

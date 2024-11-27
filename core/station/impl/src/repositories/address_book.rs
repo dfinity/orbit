@@ -6,7 +6,7 @@ use crate::{
     },
     models::{
         indexes::unique_index::UniqueIndexKey, AddressBookEntry, AddressBookEntryId,
-        AddressBookEntryKey, Blockchain,
+        AddressBookEntryKey, AddressFormat, Blockchain,
     },
 };
 use ic_stable_structures::{memory_manager::VirtualMemory, StableBTreeMap};
@@ -207,6 +207,10 @@ impl AddressBookRepository {
             entries.retain(|entry| addresses.contains(&entry.address));
         }
 
+        if let Some(address_formats) = where_clause.address_formats {
+            entries.retain(|entry| address_formats.contains(&entry.address_format));
+        }
+
         entries.sort();
 
         entries
@@ -219,6 +223,7 @@ pub struct AddressBookWhereClause {
     pub labels: Option<Vec<String>>,
     pub addresses: Option<Vec<String>>,
     pub ids: Option<Vec<UUID>>,
+    pub address_formats: Option<Vec<AddressFormat>>,
 }
 
 #[cfg(test)]
@@ -279,5 +284,40 @@ mod tests {
         let result = repository.find_by_ids(vec![address_book_entry_0.id, address_book_entry_1.id]);
         assert!(result.contains(&address_book_entry_0));
         assert!(result.contains(&address_book_entry_1));
+    }
+
+    #[test]
+    fn test_find_by_address_formats() {
+        let repository = AddressBookRepository::default();
+        let mut address_book_entry_0 = address_book_entry_test_utils::mock_address_book_entry();
+        let mut address_book_entry_1 = address_book_entry_test_utils::mock_address_book_entry();
+        address_book_entry_0.id = [1; 16];
+        address_book_entry_1.id = [2; 16];
+
+        address_book_entry_0.address_format = AddressFormat::ICPAccountIdentifier;
+        address_book_entry_1.address_format = AddressFormat::ICRC1Account;
+
+        repository.insert(address_book_entry_0.to_key(), address_book_entry_0.clone());
+        repository.insert(address_book_entry_1.to_key(), address_book_entry_1.clone());
+
+        let result = repository.find_where(AddressBookWhereClause {
+            blockchain: None,
+            labels: None,
+            addresses: None,
+            ids: None,
+            address_formats: Some(vec![AddressFormat::ICPAccountIdentifier]),
+        });
+        assert!(result.contains(&address_book_entry_0));
+        assert_eq!(result.len(), 1);
+
+        let result = repository.find_where(AddressBookWhereClause {
+            blockchain: None,
+            labels: None,
+            addresses: None,
+            ids: None,
+            address_formats: Some(vec![AddressFormat::ICRC1Account]),
+        });
+        assert!(result.contains(&address_book_entry_1));
+        assert_eq!(result.len(), 1);
     }
 }

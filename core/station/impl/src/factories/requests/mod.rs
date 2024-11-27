@@ -21,6 +21,7 @@ use std::sync::Arc;
 
 mod add_account;
 mod add_address_book_entry;
+mod add_asset;
 mod add_request_policy;
 mod add_user;
 mod add_user_group;
@@ -30,6 +31,7 @@ mod configure_external_canister;
 mod create_canister;
 mod edit_account;
 mod edit_address_book_entry;
+mod edit_asset;
 mod edit_permission;
 mod edit_request_policy;
 mod edit_user;
@@ -38,6 +40,7 @@ mod fund_external_canister;
 mod manage_system_info;
 mod monitor_external_canister;
 mod remove_address_book_entry;
+mod remove_asset;
 mod remove_request_policy;
 mod remove_user_group;
 mod set_disaster_recovery;
@@ -258,6 +261,24 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
+            RequestOperationInput::AddAsset(operation) => {
+                let creator = Box::new(add_asset::AddAssetRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+            RequestOperationInput::EditAsset(operation) => {
+                let creator = Box::new(edit_asset::EditAssetRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+            RequestOperationInput::RemoveAsset(operation) => {
+                let creator = Box::new(remove_asset::RemoveAssetRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
         }
     }
 
@@ -379,6 +400,15 @@ impl RequestFactory {
             }
             RequestOperation::ManageSystemInfo(operation) => Box::new(
                 manage_system_info::ManageSystemInfoRequestExecute::new(request, operation),
+            ),
+            RequestOperation::AddAsset(operation) => {
+                Box::new(add_asset::AddAssetRequestExecute::new(request, operation))
+            }
+            RequestOperation::EditAsset(operation) => {
+                Box::new(edit_asset::EditAssetRequestExecute::new(request, operation))
+            }
+            RequestOperation::RemoveAsset(operation) => Box::new(
+                remove_asset::RemoveAssetRequestExecute::new(request, operation),
             ),
         }
     }

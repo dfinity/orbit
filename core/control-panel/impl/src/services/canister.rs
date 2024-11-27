@@ -51,6 +51,7 @@ impl CanisterService {
         self.assert_controller(&CallContext::get(), "upload_canister_modules".to_string())?;
 
         let mut config = canister_config().unwrap_or_default();
+
         if let Some(upgrader_wasm_module) = input.upgrader_wasm_module {
             config.upgrader_wasm_module = upgrader_wasm_module;
         }
@@ -60,6 +61,7 @@ impl CanisterService {
         if let Some(station_wasm_module_extra_chunks) = input.station_wasm_module_extra_chunks {
             config.station_wasm_module_extra_chunks = station_wasm_module_extra_chunks;
         }
+
         write_canister_config(config);
 
         Ok(())
