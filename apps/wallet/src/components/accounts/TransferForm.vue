@@ -20,7 +20,7 @@
       :readonly="isViewMode"
       type="text"
       :prepend-icon="mdiSend"
-      :rules="[requiredRule]"
+      :rules="[requiredRule, addressValidator]"
       data-test-id="transfer-form-destination-address"
     />
     <VTextField
@@ -34,7 +34,7 @@
       type="number"
       :readonly="isViewMode"
       :prepend-icon="mdiNumeric"
-      :rules="[requiredRule, (v: unknown) => validTokenAmount(v, account.decimals)]"
+      :rules="[requiredRule, (v: unknown) => validTokenAmount(v, asset.decimals)]"
       data-test-id="transfer-form-amount"
     />
   </VForm>
@@ -46,13 +46,14 @@ import { onUnmounted } from 'vue';
 import { onMounted } from 'vue';
 import { computed, ref, toRefs, watch } from 'vue';
 import { VForm, VTextField } from 'vuetify/components';
-import { Account, Transfer } from '~/generated/station/station.did';
+import { Account, Asset, Transfer } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
-import { requiredRule, validTokenAmount } from '~/utils/form.utils';
+import { requiredRule, validAddress, validTokenAmount } from '~/utils/form.utils';
 import { amountToBigInt, formatBalance } from '~/utils/helper.utils';
 
 export type TransferFormProps = {
   account: Account;
+  asset: Asset;
   modelValue: Partial<Transfer>;
   triggerSubmit?: boolean;
   valid?: boolean;
@@ -86,13 +87,15 @@ const emit = defineEmits<{
 const model = computed(() => props.modelValue.value);
 watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });
 
+const addressValidator = computed(() => validAddress(input.asset.blockchain));
+
 const amountInput = ref<HTMLInputElement | null>(null);
 const amount = ref<string | undefined>(undefined);
 watch(
   () => model.value.amount,
   newValue => {
     amount.value =
-      newValue !== undefined ? formatBalance(newValue, props.account.value.decimals) : undefined;
+      newValue !== undefined ? formatBalance(newValue, props.asset.value.decimals) : undefined;
   },
   { immediate: true },
 );
@@ -100,9 +103,9 @@ watch(
 const syncAmountInput = (): void => {
   if (
     amount.value !== undefined &&
-    validTokenAmount(amount.value, props.account.value.decimals) === true
+    validTokenAmount(amount.value, props.asset.value.decimals) === true
   ) {
-    model.value.amount = amountToBigInt(amount.value, props.account.value.decimals);
+    model.value.amount = amountToBigInt(amount.value, props.asset.value.decimals);
   } else {
     model.value.amount = undefined;
   }

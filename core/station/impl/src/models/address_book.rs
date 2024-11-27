@@ -1,4 +1,4 @@
-use super::Blockchain;
+use super::{AddressFormat, Blockchain};
 use crate::errors::AddressBookError;
 use crate::models::Metadata;
 use candid::{CandidType, Deserialize};
@@ -14,7 +14,7 @@ use std::{collections::HashMap, hash::Hash};
 pub type AddressBookEntryId = UUID;
 
 /// Represents an address book entry in the system.
-#[storable]
+#[storable(skip_deserialize = true)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct AddressBookEntry {
     /// The address book entry id, which is a UUID.
@@ -25,6 +25,8 @@ pub struct AddressBookEntry {
     pub address: String,
     /// The blockchain type (e.g. `icp`, `eth`, `btc`)
     pub blockchain: Blockchain,
+    /// The address' format.
+    pub address_format: AddressFormat,
     /// The address' metadata.
     pub metadata: Metadata,
     /// The labels associated with the address.
@@ -135,12 +137,13 @@ impl AddressBookEntry {
     }
 }
 
-#[derive(CandidType, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct ListAddressBookEntriesInput {
     pub ids: Option<Vec<UUID>>,
     pub addresses: Option<Vec<String>>,
     pub blockchain: Option<Blockchain>,
     pub labels: Option<Vec<String>>,
+    pub address_formats: Option<Vec<AddressFormat>>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -265,6 +268,7 @@ pub mod address_book_entry_test_utils {
             id: *Uuid::new_v4().as_bytes(),
             address_owner: "foo".to_string(),
             address: "0x1234".to_string(),
+            address_format: AddressFormat::ICPAccountIdentifier,
             labels: Vec::new(),
             blockchain: Blockchain::InternetComputer,
             metadata: Metadata::mock(),

@@ -1,5 +1,8 @@
 use crate::setup::{create_canister, get_canister_wasm, WALLET_ADMIN_USER};
-use candid::{CandidType, Encode, Principal};
+use crate::test_data::asset::list_assets;
+use candid::utils::ArgumentDecoder;
+use candid::Principal;
+use candid::{decode_args, CandidType, Encode};
 use control_panel_api::UploadCanisterModulesInput;
 use flate2::{write::GzEncoder, Compression};
 use ic_certified_assets::types::{
@@ -15,12 +18,14 @@ use sha2::Digest;
 use sha2::Sha256;
 use station_api::{
     AccountDTO, AddAccountOperationInput, AddUserOperationInput, AllowDTO, ApiErrorDTO,
-    CreateRequestInput, CreateRequestResponse, GetPermissionResponse, GetRequestInput,
-    GetRequestResponse, HealthStatus, MeResponse, QuorumPercentageDTO, RequestApprovalStatusDTO,
-    RequestDTO, RequestExecutionScheduleDTO, RequestOperationDTO, RequestOperationInput,
-    RequestPolicyRuleDTO, RequestStatusDTO, ResourceIdDTO, SetDisasterRecoveryOperationDTO,
-    SetDisasterRecoveryOperationInput, SubmitRequestApprovalInput, SubmitRequestApprovalResponse,
-    SystemInfoDTO, SystemInfoResponse, UserDTO, UserSpecifierDTO, UserStatusDTO, UuidDTO,
+    CreateRequestInput, CreateRequestResponse, FetchAccountBalancesInput,
+    FetchAccountBalancesResponse, GetPermissionResponse, GetRequestInput, GetRequestResponse,
+    GetTransfersInput, GetTransfersResponse, HealthStatus, MeResponse, QuorumPercentageDTO,
+    RequestApprovalStatusDTO, RequestDTO, RequestExecutionScheduleDTO, RequestOperationDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, RequestStatusDTO, ResourceIdDTO,
+    SetDisasterRecoveryOperationDTO, SetDisasterRecoveryOperationInput, SubmitRequestApprovalInput,
+    SubmitRequestApprovalResponse, SystemInfoDTO, SystemInfoResponse, UserDTO, UserSpecifierDTO,
+    UserStatusDTO, UuidDTO,
 };
 use std::io::Write;
 use std::path::PathBuf;
@@ -227,6 +232,16 @@ pub fn wait_for_request_with_extra_ticks(
     request: RequestDTO,
     extra_ticks: u64,
 ) -> Result<RequestDTO, Option<RequestStatusDTO>> {
+    // wait for the request to be approved
+    env.advance_time(Duration::from_secs(2));
+    env.tick();
+    // wait for the request to be processing
+    env.advance_time(Duration::from_secs(2));
+    env.tick();
+    // wait in case the request calls out to other canisters
+    env.advance_time(Duration::from_secs(2));
+    env.tick();
+
     for _ in 0..extra_ticks {
         // timer's period for processing requests is 5 seconds
         env.advance_time(Duration::from_secs(5));
@@ -577,11 +592,12 @@ pub fn get_account_transfer_permission(
 }
 
 pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDTO) -> AccountDTO {
+    let icp = get_icp_asset(env, station_id, WALLET_ADMIN_USER);
+
     // create account
     let create_account_args = AddAccountOperationInput {
         name: "test".to_string(),
-        blockchain: "icp".to_string(),
-        standard: "native".to_string(),
+        assets: vec![icp.id.clone()],
         read_permission: AllowDTO {
             auth_scope: station_api::AuthScopeDTO::Restricted,
             user_groups: vec![],
@@ -611,8 +627,18 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
         )),
         metadata: vec![],
     };
+
+    create_account(env, station_id, WALLET_ADMIN_USER, create_account_args)
+}
+
+pub fn create_account(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    input: AddAccountOperationInput,
+) -> AccountDTO {
     let add_account_request = CreateRequestInput {
-        operation: RequestOperationInput::AddAccount(create_account_args),
+        operation: RequestOperationInput::AddAccount(input),
         title: None,
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
@@ -621,7 +647,7 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
     let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
         env,
         station_id,
-        WALLET_ADMIN_USER,
+        requester,
         "create_request",
         (add_account_request,),
     )
@@ -651,7 +677,7 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
     let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
         env,
         station_id,
-        WALLET_ADMIN_USER,
+        requester,
         "get_request",
         (get_request_args,),
     )
@@ -675,6 +701,138 @@ pub fn create_icp_account(env: &PocketIc, station_id: Principal, user_id: UuidDT
             panic!("request must be AddAccount");
         }
     }
+}
+
+pub fn create_transfer(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    input: station_api::TransferOperationInput,
+) -> station_api::TransferDTO {
+    // make transfer request to beneficiary
+
+    let transfer_request = CreateRequestInput {
+        operation: RequestOperationInput::Transfer(input),
+        title: None,
+        summary: None,
+        expiration_dt: None,
+        execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
+    };
+    let res: (Result<CreateRequestResponse, ApiErrorDTO>,) = update_candid_as(
+        env,
+        station_id,
+        requester,
+        "create_request",
+        (transfer_request,),
+    )
+    .unwrap();
+    let request_dto = res.0.unwrap().request;
+
+    // wait for the request to be approved (timer's period is 5 seconds)
+    env.advance_time(Duration::from_secs(5));
+    env.tick();
+    // wait for the request to be processing (timer's period is 5 seconds) and first is set to processing
+    env.advance_time(Duration::from_secs(5));
+    env.tick();
+    env.tick();
+    env.tick();
+    env.advance_time(Duration::from_secs(5));
+    env.tick();
+    env.tick();
+    env.tick();
+
+    // check transfer request status
+    let get_request_args = GetRequestInput {
+        request_id: request_dto.id.clone(),
+        with_full_info: Some(false),
+    };
+    let res: (Result<GetRequestResponse, ApiErrorDTO>,) = update_candid_as(
+        env,
+        station_id,
+        requester,
+        "get_request",
+        (get_request_args,),
+    )
+    .unwrap();
+    let new_request_dto = res.0.unwrap().request;
+    match new_request_dto.status {
+        RequestStatusDTO::Completed { .. } => {}
+        _ => {
+            panic!(
+                "request must be completed by now but instead is {:?}",
+                new_request_dto.status
+            );
+        }
+    };
+
+    // request has the transfer id filled out
+    let transfer_id = match new_request_dto.operation {
+        RequestOperationDTO::Transfer(transfer) => transfer
+            .transfer_id
+            .expect("transfer id must be set for completed transfer"),
+        _ => {
+            panic!("request must be Transfer");
+        }
+    };
+
+    // fetch the transfer and check if its request id matches the request id that created it
+    let res: (Result<GetTransfersResponse, ApiErrorDTO>,) = query_candid_as(
+        env,
+        station_id,
+        requester,
+        "get_transfers",
+        (GetTransfersInput {
+            transfer_ids: vec![transfer_id],
+        },),
+    )
+    .expect("Failed to send query call");
+
+    res.0
+        .expect("Failed to get transfers")
+        .transfers
+        .first()
+        .expect("no transfer in result")
+        .clone()
+}
+
+pub fn fetch_account_balances(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+    input: FetchAccountBalancesInput,
+) -> station_api::FetchAccountBalancesResponse {
+    update_candid_as::<(FetchAccountBalancesInput,), (ApiResult<FetchAccountBalancesResponse>,)>(
+        env,
+        station_canister_id,
+        requester,
+        "fetch_account_balances",
+        (input,),
+    )
+    .expect("Failed to send query call")
+    .0
+    .expect("Failed to get account balances")
+}
+
+pub fn get_icp_asset(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+) -> station_api::AssetDTO {
+    list_assets(env, station_canister_id, requester)
+        .expect("Failed to query list_assets")
+        .0
+        .expect("Failed to list assets")
+        .assets
+        .into_iter()
+        .find(|asset| asset.symbol == "ICP")
+        .expect("Failed to find ICP asset")
+}
+
+pub fn get_icp_account_identifier(addresses: &[station_api::AccountAddressDTO]) -> Option<String> {
+    addresses
+        .iter()
+        .find(|a| a.format == "icp_account_identifier")
+        .map(|a| a.address.clone())
 }
 
 /// Compresses the given data to a gzip format.
@@ -742,6 +900,7 @@ pub fn upload_canister_modules(env: &PocketIc, control_panel_id: Principal, cont
     res.0.unwrap();
 
     // upload station
+
     let station_wasm = get_canister_wasm("station");
     let (base_chunk, module_extra_chunks) =
         upload_canister_chunks_to_asset_canister(env, station_wasm, 500_000);
@@ -942,4 +1101,17 @@ pub(crate) fn deploy_test_canister(env: &PocketIc, controller: Principal) -> Pri
     let test_canister_wasm = get_canister_wasm("test_canister");
     env.install_canister(test_canister, test_canister_wasm, vec![], Some(controller));
     test_canister
+}
+
+pub fn expect_await_call_result<T>(result: WasmResult) -> T
+where
+    T: for<'a> ArgumentDecoder<'a>,
+{
+    match result {
+        WasmResult::Reply(vec) => {
+            let result: T = decode_args(&vec).expect("Failed to decode result");
+            result
+        }
+        WasmResult::Reject(error) => panic!("Unexpected reject: {error}"),
+    }
 }

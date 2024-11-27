@@ -25,7 +25,7 @@ print_message "Benchmarking canister at $CANISTER_PATH"
 # Install canbench if not already installed
 if ! cargo install --list | grep -q canbench; then
   print_message "Installing canbench..."
-  cargo install canbench --version 0.1.4
+  cargo install canbench --version 0.1.8
 fi
 
 # Changes to the canister path
@@ -42,8 +42,8 @@ canbench --less-verbose >"$CANBENCH_TMP_OUTPUT"
 if grep -q "(regress\|(improved by \|(new)" "$CANBENCH_TMP_OUTPUT"; then
   # Check if running in GitHub Actions and print the CANBENCH_TMP_OUTPUT file if so
   if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
-  print_message "Review the benchmark results below:"
-  cat "$CANBENCH_TMP_OUTPUT"
+    print_message "Review the benchmark results below:"
+    cat "$CANBENCH_TMP_OUTPUT"
   fi
 
   print_message "Benchmarking completed. 

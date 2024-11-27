@@ -1,8 +1,5 @@
 //! Core utility features for the canister.
 
-mod assets;
-pub use assets::*;
-
 mod constants;
 pub use constants::*;
 
@@ -18,7 +15,9 @@ pub use call_context::*;
 
 pub mod middlewares;
 pub mod observer;
+pub mod standards;
 pub mod validation;
+pub use standards::*;
 
 #[cfg(not(test))]
 pub use orbit_essentials::cdk as ic_cdk;

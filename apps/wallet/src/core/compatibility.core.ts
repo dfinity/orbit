@@ -4,7 +4,7 @@ import { appInitConfig } from '~/configs/init.config';
 import { icAgent } from '~/core/ic-agent.core';
 import logger from '~/core/logger.core';
 import { redirectToKey } from '~/plugins/router.plugin';
-import { isSemanticVersion } from '~/utils/helper.utils';
+import { isSemanticVersion, SemanticVersion } from '~/utils/helper.utils';
 import { ApiCompatibilityInfo } from '~build/types/compat.types';
 
 /**
@@ -178,11 +178,14 @@ export const createCompatibilityLayer = (agent: HttpAgent = icAgent.get()) => {
 
       const compatibility = compat.api.compatibility;
 
+      const stationApiSemver = SemanticVersion.parse(stationApiVersion);
+      const latestCompatApiSemver = SemanticVersion.parse(compat.api.latest);
+
       // If the station API version is newer than the latest supported version, then we treat it as incompatible
       // and redirect to the unversioned path to avoid breaking the UI. It will also get redirected
       // if the compatibility file does not have the station API version.
       if (
-        stationApiVersion > compat.api.latest ||
+        stationApiSemver.isGreaterThan(latestCompatApiSemver) ||
         !compatibility?.[stationApiVersion]?.ui ||
         compatibility[stationApiVersion].ui.length === 0
       ) {

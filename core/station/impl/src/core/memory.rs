@@ -17,6 +17,7 @@ pub const TRANSFER_MEMORY_ID: MemoryId = MemoryId::new(4);
 pub const UNIQUE_INDEX_MEMORY_ID: MemoryId = MemoryId::new(5); // new
 pub const TRANSFER_ACCOUNT_INDEX_MEMORY_ID: MemoryId = MemoryId::new(6);
 pub const REQUEST_MEMORY_ID: MemoryId = MemoryId::new(7);
+pub const ASSET_MEMORY_ID: MemoryId = MemoryId::new(8);
 pub const NOTIFICATION_MEMORY_ID: MemoryId = MemoryId::new(11);
 pub const NOTIFICATION_USER_INDEX_MEMORY_ID: MemoryId = MemoryId::new(12);
 pub const TRANSFER_STATUS_INDEX_MEMORY_ID: MemoryId = MemoryId::new(13);
@@ -37,7 +38,7 @@ thread_local! {
 
   // The memory manager is used for simulating multiple memories. Given a `MemoryId` it can
   // return a memory that can be used by stable structures.
-  static MEMORY_MANAGER: RefCell<MemoryManager<Memory>> =
+  pub static MEMORY_MANAGER: RefCell<MemoryManager<Memory>> =
       RefCell::new(MemoryManager::init_with_bucket_size(managed_memory(), STABLE_MEMORY_BUCKET_SIZE));
 }
 

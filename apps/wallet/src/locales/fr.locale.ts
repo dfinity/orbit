@@ -97,6 +97,7 @@ export default {
       verify_instructions:
         'Pour vérifier la mise à jour, ouvrez le terminal et suivez les instructions ci-dessous:',
     },
+    asset: 'Actif',
     no_data: 'Pas de données disponibles.',
     no_matching_results: 'Pas de résultats correspondants trouvés pour `{search}`.',
     add_new_label: 'Ajouter une nouvelle étiquette: {label}',
@@ -120,7 +121,12 @@ export default {
     icp: {
       name: 'Internet Computer',
       standards: {
-        native: 'Native',
+        icp_native: 'ICP (Native)',
+        icrc1: 'ICRC-1',
+      },
+      formats: {
+        icp_account_identifier: 'ICP Native',
+        icrc1_account: 'ICRC-1',
       },
     },
     eth: {
@@ -179,6 +185,7 @@ export default {
       system: 'Système',
       transfers: 'Transferts',
       users: 'Usagers',
+      assets: 'Actifs',
       external_canisters: 'Canisters',
     },
     headers: {
@@ -275,6 +282,9 @@ export default {
       editaccount: {
         title: 'Modifier de modifier un compte',
         request_title: 'Demande de modifier un compte',
+        added_assets: 'Ajouté',
+        removed_assets: 'Supprimé',
+        replaced_assets: 'Remplacé',
       },
       editaddressbookentry: {
         title: "Modifier une entrée de carnet d'adresses",
@@ -291,6 +301,18 @@ export default {
       managesysteminfo: {
         title: 'Gérer les informations système',
         request_title: 'Demande de gérer les informations système',
+      },
+      addasset: {
+        title: 'Ajouter un actif',
+        request_title: 'Demande d ajouter un actif',
+      },
+      editasset: {
+        title: 'Modifier un actif',
+        request_title: 'Demande de modifier un actif',
+      },
+      removeasset: {
+        title: 'Supprimer un actif',
+        request_title: 'Demande de supprimer un actif',
       },
       createexternalcanister: {
         title: 'Créer un canister',
@@ -704,6 +726,7 @@ export default {
     principal: 'Principal',
     status: 'Statut',
     transfer: 'Transfert',
+    transfer_asset: 'Transfert {asset}',
     invalid: 'Invalide',
     control_panel: 'Paneau de Contrôle',
     confirmed: 'Confirmé',
@@ -718,6 +741,9 @@ export default {
     version: 'Version',
     continue: 'Continuer',
     cycle_obtain_strategy: 'Méthode de recharge du portefeuille',
+    symbol: 'Symbole',
+    standards: 'Standards',
+    assets: 'Actifs',
   },
   forms: {
     create: 'Créer',
@@ -740,11 +766,15 @@ export default {
       numberRange: 'Le champ doit contenir une valeur valide entre {min} et {max}.',
       invalidDecimalPlaces: 'Ce champ doit contenir un maximum de {decimals} décimales.',
       isHex: 'Ce champ doit contenir une valeur hexadécimale valide.',
+      validAddress: 'Ce champ doit contenir une adresse valide.',
+      validSymbol: 'Le symbole doit contenir entre 1 et 32 charactères alphanumériques.',
     },
   },
   navigation: {
     home: 'Acceuil',
+    dashboard: 'Tableau de Bord',
     accounts: 'Comptes',
+    account: 'Compte',
     address_book: "Carnet d'Adresses",
     users: 'Usagers',
     settings: 'Settings',
@@ -758,9 +788,14 @@ export default {
     transfer_requests: 'Demandes de Transfert',
     permissions: "Polices d'Accés",
     request_policies: "Polices d'Aprobation",
+    assets: 'Actifs',
     external_canisters: 'Canisters',
   },
   pages: {
+    dashboard: {
+      title: 'Tableau de Bord',
+      available_assets: 'Actifs Disponibles',
+    },
     accounts: {
       title: 'Comptes',
       btn_new_transfer: 'Nouveau Transfert',
@@ -783,6 +818,14 @@ export default {
       csv_ignored_transfers_hint: 'Transfers with errors will be ignored.',
       csv_transfer_failed: 'Échec de process transfers, veuillez essayer de nouveau.',
       csv_download_invalid: 'Téléchargement invalide',
+      add_asset: 'Ajouter un actif',
+      remove_asset: 'Supprimer un actif',
+      no_assets_to_add: 'Pas d actifs disponibles à ajouter.',
+      remove_asset_confirm:
+        'Êtes-vous sûr de vouloir supprimer cet actif? Supprimer l actif n affecte pas le solde du compte. Réajouter l actif restaurera l accès au solde.',
+      transfers_not_supported: 'Les transferts ne sont pas supportés pour cet actif.',
+      add_index_canister_to_see_transactions:
+        'Considérez d ajouter le canister d index à l actif pour voir les transactions.',
     },
     address_book: {
       title: "Carnet d'Adresses",
@@ -884,6 +927,17 @@ export default {
       create_label: 'Ajouter un police',
       dialog_title: 'Police',
     },
+    assets: {
+      title: 'Actifs',
+      btn_new_asset: 'Nouvel Actif',
+      no_results_found: 'Pas d actif trouvé.',
+      error_fetching_assets: 'Erreur lors du chargement des actifs, veuillez essayer de nouveau.',
+      forms: {
+        ledger_canister_id: 'ID du Canister Ledger',
+        index_canister_id: 'ID du Canister Index',
+        decimals: 'Décimales',
+      },
+    },
     not_found: {
       title: 'Oulala, 404',
       subtitle: "La page que vous cherchez n'existe pas.",
@@ -923,6 +977,7 @@ export default {
     select_resource: 'Type de Resource',
     resources: {
       account: 'Compte',
+      asset: 'Actif',
       user: 'Usager',
       usergroup: "Groupe d'Usagers",
       permission: "Police d'Accés",
@@ -1001,6 +1056,9 @@ export default {
       setdisasterrecovery: 'Définir la récupération après sinistre',
       callexternalcanister: 'Appeler un canister',
       createexternalcanister: 'Créer un canister',
+      addasset: 'Ajouter un actif',
+      editasset: 'Modifier un actif',
+      removeasset: 'Éffacer un actif',
     },
   },
   cycle_obtain_strategies: {

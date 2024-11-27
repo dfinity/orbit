@@ -31,6 +31,9 @@ pub enum RequestOperationFilterType {
     SnapshotExternalCanister(Principal),
     RestoreExternalCanister(Principal),
     PruneExternalCanister(Principal),
+    AddAsset,
+    EditAsset,
+    RemoveAsset,
 }
 
 impl From<RequestOperation> for RequestOperationFilterType {
@@ -92,6 +95,9 @@ impl From<RequestOperation> for RequestOperationFilterType {
             RequestOperation::PruneExternalCanister(operation) => {
                 RequestOperationFilterType::PruneExternalCanister(operation.input.canister_id)
             }
+            RequestOperation::AddAsset(_) => RequestOperationFilterType::AddAsset,
+            RequestOperation::EditAsset(_) => RequestOperationFilterType::EditAsset,
+            RequestOperation::RemoveAsset(_) => RequestOperationFilterType::RemoveAsset,
         }
     }
 }

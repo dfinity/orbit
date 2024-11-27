@@ -1,32 +1,35 @@
 use crate::core::ic_cdk::api::trap;
 use crate::core::{read_system_info, write_system_info, Memory};
-use crate::models::permission::{Permission, PermissionKey};
+use crate::factories::blockchains::InternetComputer;
+use crate::models::permission::{Allow, AuthScope};
 use crate::models::request_specifier::RequestSpecifier;
-use crate::models::resource::{ExternalCanisterResourceAction, Resource, SystemResourceAction};
+use crate::models::resource::{Resource, SystemResourceAction};
+use crate::models::resource::{ResourceAction, ResourceId, ResourceIds};
 use crate::models::{
-    Account, AccountKey, AddressBookEntry, AddressBookEntryKey, ExternalCanister,
-    ExternalCanisterKey, ListRequestsOperationType, Request, RequestKey, RequestOperation,
-    RequestPolicy, User, UserGroup, UserKey,
+    Account, AccountAddress, AccountAsset, AccountBalance, AccountId, AccountKey, AccountSeed,
+    AddAccountOperationInput, AddAddressBookEntryOperationInput, AddRequestPolicyOperationInput,
+    AddressBookEntry, AddressBookEntryId, AddressBookEntryKey, AddressFormat, Asset, AssetId,
+    Blockchain, EditPermissionOperationInput, Metadata, MetadataItem, Request, RequestKey,
+    RequestPolicyRule, TokenStandard, Transfer, TransferId, TransferKey, TransferOperation,
+    TransferOperationInput, TransferStatus, UserId,
 };
-use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
+use crate::repositories::permission::PERMISSION_REPOSITORY;
 use crate::repositories::{
-    AccountRepository, AddressBookRepository, ExternalCanisterRepository, RequestPolicyRepository,
-    RequestRepository, RequestWhereClause, UserGroupRepository, UserRepository, ACCOUNT_REPOSITORY,
-    ADDRESS_BOOK_REPOSITORY, EXTERNAL_CANISTER_REPOSITORY, REQUEST_POLICY_REPOSITORY,
-    USER_GROUP_REPOSITORY, USER_REPOSITORY,
+    AccountRepository, AddressBookRepository, RequestRepository, TransferRepository,
+    REQUEST_POLICY_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
 };
-use crate::{concat_str_arrays, STABLE_MEMORY_VERSION};
-use crate::{core::with_memory_manager, repositories::REQUEST_REPOSITORY};
-use ic_stable_structures::memory_manager::{MemoryId, VirtualMemory};
-use ic_stable_structures::Memory as DefaultMemoryTrait;
+use crate::repositories::{
+    ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, REQUEST_REPOSITORY,
+    TRANSFER_REPOSITORY,
+};
+use crate::services::permission::PERMISSION_SERVICE;
+use crate::services::{INITIAL_ICP_ASSET, INITIAL_ICP_ASSET_ID, REQUEST_POLICY_SERVICE};
+use crate::STABLE_MEMORY_VERSION;
+use ic_stable_structures::memory_manager::VirtualMemory;
 use orbit_essentials::model::ModelKey;
-use orbit_essentials::repository::{IndexedRepository, RebuildRepository, Repository, StableDb};
-use orbit_essentials::storable;
-use orbit_essentials::types::UUID;
-use serde::de::{self, EnumAccess, VariantAccess, Visitor};
+use orbit_essentials::repository::{RebuildRepository, Repository};
+use orbit_essentials::types::{Timestamp, UUID};
 use serde::{Deserialize, Deserializer};
-use std::fmt;
-use strum::VariantNames;
 
 /// Handles stable memory schema migrations for the station canister.
 ///
@@ -58,6 +61,13 @@ impl MigrationHandler {
             ));
         }
 
+        if stored_version != STABLE_MEMORY_VERSION - 1 {
+            trap(&format!(
+                "Cannot skip upgrades between station memory layout version {} to {}",
+                stored_version, STABLE_MEMORY_VERSION
+            ));
+        }
+
         apply_migration();
 
         // Update the stable memory version to the latest version.
@@ -71,544 +81,584 @@ impl MigrationHandler {
 
 /// If there is a check that needs to be run on every upgrade, regardless if the memory version has changed,
 /// it should be added here.
-fn post_run() {
-    // Deserialization of the all requests to make sure an incompatible memory will panic and avoids
-    // putting the station in an inconsistent state.
-    //
-    // This is a temporary addition only for the next release since we've added a breaking change to
-    // the `ConfigureExternalCanisterSettingsInput` which had a new API not yet used in production.
-    let where_clause = RequestWhereClause {
-        operation_types: vec![ListRequestsOperationType::ConfigureExternalCanister(None)],
-        ..Default::default()
-    };
-
-    let ids = REQUEST_REPOSITORY
-        .find_ids_where(where_clause, None)
-        .expect("Failed to search for requests with the external canister operation types");
-
-    for id in ids {
-        REQUEST_REPOSITORY
-            .get(&RequestKey { id })
-            .expect("Failed to deserialize the request from the stable memory");
-    }
-}
+fn post_run() {}
 
 /// The migration to apply to the station canister stable memory.
 ///
 /// Please include the migration steps in the `apply_migration` function.
 fn apply_migration() {
-    // step 1: clear unused memory ids
-    with_memory_manager(|memory_manager| {
-        for memory_id in [
-            MemoryId::new(3),  // USER_IDENTITY_INDEX_MEMORY_ID,
-            MemoryId::new(5),  // REQUEST_EXPIRATION_TIME_INDEX_MEMORY_ID
-            MemoryId::new(8),  // REQUEST_APPROVER_INDEX_MEMORY_ID
-            MemoryId::new(9),  // REQUEST_STATUS_INDEX_MEMORY_ID
-            MemoryId::new(10), // REQUEST_SCHEDULED_INDEX_MEMORY_ID
-            MemoryId::new(15), // USER_GROUP_NAME_INDEX_MEMORY_ID
-            MemoryId::new(18), // USER_STATUS_GROUP_INDEX_MEMORY_ID
-            MemoryId::new(20), // ADDRESS_BOOK_INDEX_MEMORY_ID
-            MemoryId::new(21), // REQUEST_REQUESTER_INDEX_MEMORY_ID
-            MemoryId::new(22), // REQUEST_CREATION_TIME_INDEX_MEMORY_ID
-            MemoryId::new(23), // REQUEST_KEY_CREATION_TIME_INDEX_MEMORY_ID
-            MemoryId::new(24), // REQUEST_KEY_EXPIRATION_TIME_INDEX_MEMORY_ID
-            MemoryId::new(25), // REQUEST_SORT_INDEX_MEMORY_ID
-            MemoryId::new(26), // REQUEST_STATUS_MODIFICATION_INDEX_MEMORY_ID
-            MemoryId::new(27), // NAME_TO_ACCOUNT_ID_INDEX_MEMORY_ID
-            MemoryId::new(28), // NAME_TO_USER_ID_INDEX_MEMORY_ID
-            MemoryId::new(29), // OPERATION_TYPE_TO_REQUEST_ID_INDEX_MEMORY_ID
-            MemoryId::new(34), // EXTERNAL_CANISTER_INDEX_MEMORY_ID
-            // The following memory ids are still in use for the same purpose, but the datatype
-            // have changed and the memory needs to be cleaned up and rebuilt later.
-            MemoryId::new(30), // REQUEST_RESOURCE_INDEX_MEMORY_ID
-            MemoryId::new(31), // POLICY_RESOURCE_INDEX_MEMORY_ID
-        ] {
-            // This cleans up the memory by writing a single zero byte to the memory id,
-            // this will make the memory id available for reuse in the future.
-            //
-            // This makes sure that if `init` is called on the memory id, it will make sure
-            // it can be reused with a different datatype.
-            let memory = memory_manager.get(memory_id);
-            if memory.size() > 0 {
-                // This marks the memory as unused, this is because the StableBTreeMap
-                // implementation uses the first three bytes of the memory to store the MAGIC value [66, 84, 82]
-                // that indicates that the memory is used by the StableBTreeMap, so adding a single different byte
-                // in those first three bytes will make the memory available for reuse.
-                memory.write(0, &[0]);
+    // add new asset permissions: resources available to all users
+    let public_resources = [
+        Resource::Asset(ResourceAction::List),
+        Resource::Asset(ResourceAction::Read(ResourceId::Any)),
+    ];
+
+    // build cache so that model validation can pass
+    USER_GROUP_REPOSITORY.build_cache();
+    USER_REPOSITORY.build_cache();
+    PERMISSION_REPOSITORY.build_cache();
+
+    for resource in public_resources {
+        let _ = PERMISSION_SERVICE.edit_permission(EditPermissionOperationInput {
+            resource,
+            auth_scope: Some(AuthScope::Authenticated),
+            user_groups: None,
+            users: None,
+        });
+    }
+
+    // add new asset permissions: inherit config from ManageSystemInfo
+    let manage_system_info_permissions_allow = PERMISSION_SERVICE
+        .get_permission(&Resource::System(SystemResourceAction::ManageSystemInfo))
+        .allow;
+
+    let sensitive_resources = [
+        Resource::Asset(ResourceAction::Create),
+        Resource::Asset(ResourceAction::Update(ResourceId::Any)),
+        Resource::Asset(ResourceAction::Delete(ResourceId::Any)),
+    ];
+
+    for resource in sensitive_resources {
+        if let Err(err) = PERMISSION_SERVICE.edit_permission(EditPermissionOperationInput {
+            resource,
+            auth_scope: Some(manage_system_info_permissions_allow.auth_scope.clone()),
+            user_groups: Some(manage_system_info_permissions_allow.user_groups.clone()),
+            users: Some(manage_system_info_permissions_allow.users.clone()),
+        }) {
+            ic_cdk::println!("Failed to create new asset permission: {:?}", err);
+        }
+    }
+
+    // add new asset policies
+    let policy_specifiers = [
+        RequestSpecifier::AddAsset,
+        RequestSpecifier::EditAsset(ResourceIds::Any),
+        RequestSpecifier::RemoveAsset(ResourceIds::Any),
+    ];
+
+    let policies_to_copy = REQUEST_POLICY_REPOSITORY
+        .find_by_resource(Resource::System(SystemResourceAction::ManageSystemInfo));
+
+    for policy in policies_to_copy {
+        for specifier in policy_specifiers.iter() {
+            if let Err(err) =
+                REQUEST_POLICY_SERVICE.add_request_policy(AddRequestPolicyOperationInput {
+                    specifier: specifier.clone(),
+                    rule: policy.rule.clone(),
+                })
+            {
+                ic_cdk::println!("Failed to create new asset policy: {:?}", err);
             }
         }
-    });
+    }
 
-    // step 2: rebuilds the repositories to ensure the data is up-to-date
-    USER_GROUP_REPOSITORY.rebuild();
-    USER_REPOSITORY.rebuild();
-    ACCOUNT_REPOSITORY.rebuild();
-    EXTERNAL_CANISTER_REPOSITORY.rebuild();
+    ASSET_REPOSITORY.insert(INITIAL_ICP_ASSET.key(), INITIAL_ICP_ASSET.clone());
+
+    // rebuild repositories to apply the changes
     ADDRESS_BOOK_REPOSITORY.rebuild();
-    PERMISSION_REPOSITORY.rebuild();
-    REQUEST_POLICY_REPOSITORY.rebuild();
+    TRANSFER_REPOSITORY.rebuild();
+    ACCOUNT_REPOSITORY.rebuild();
     REQUEST_REPOSITORY.rebuild();
 }
 
-impl<'de> Deserialize<'de> for Resource {
+#[cfg(test)]
+thread_local! {
+    pub static MIGRATED_ENTRIES: std::cell::RefCell<u64> = const { std::cell::RefCell::new(0) };
+
+    pub static MIGRATED_ACCOUNTS: std::cell::RefCell<Vec<(UUID, String)>> = const { std::cell::RefCell::new(vec![]) };
+}
+
+#[derive(Debug, Deserialize)]
+pub enum BlockchainStandard {
+    Native,
+    ICRC1,
+    ERC20,
+}
+
+impl<'de> Deserialize<'de> for AddressBookEntry {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        const ENUM_NAME: &str = "Resource";
-
-        const CURRENT_VARIANTS: &[&str] = Resource::VARIANTS;
-        const REMOVED_VARIANTS: [&str; 1] = ["ChangeCanister"];
-
-        // IMPORTANT: The size of the array must be hardcoded, to make sure it can be checked at compile-time.
-        static EXPECTED_VARIANTS: [&str; 11] = {
-            let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] = [""; 11];
-            concat_str_arrays!(CURRENT_VARIANTS, REMOVED_VARIANTS);
-
-            variants
-        };
-
-        // Define the old version of the types for migration purposes
-        #[storable]
-        #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-        pub enum OldExternalCanisterResourceAction {
-            Create(OldCreateCanisterTarget),
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationAddressBookEntry {
+            pub id: AddressBookEntryId,
+            pub address_owner: String,
+            pub address: String,
+            pub blockchain: Blockchain,
+            pub address_format: Option<AddressFormat>,
+            pub metadata: Metadata,
+            #[serde(default)]
+            pub labels: Vec<String>,
+            pub last_modification_timestamp: Timestamp,
         }
 
-        #[storable]
-        #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-        pub enum OldCreateCanisterTarget {
-            Any,
+        let mut pre_migration_entry = PreMigrationAddressBookEntry::deserialize(deserializer)?;
+
+        #[cfg(test)]
+        if pre_migration_entry.address_format.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
         }
 
-        #[storable]
-        #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-        pub enum OldChangeCanisterResourceAction {
-            Create,
-        }
+        // the frontend used to add BlockchainStandard.Native = "native" label to new address book entries
+        // this label is not needed anymore
+        pre_migration_entry.labels.retain(|label| label != "native");
 
-        /// This enum facilitates the deserialization of the ExternalCanisterResourceAction enum.
-        ///
-        /// By creating it as an untagged enum, we can handle both the old and new formats of the enum and
-        /// serde will automatically choose the correct format based on the input data.
-        #[derive(Deserialize)]
-        #[serde(untagged)]
-        enum ExternalCanisterActionWrapper {
-            NewFormat(ExternalCanisterResourceAction),
-            OldFormat(OldExternalCanisterResourceAction),
-        }
-
-        struct ResourceVisitor;
-
-        impl<'de> Visitor<'de> for ResourceVisitor {
-            type Value = Resource;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str(&format!("a valid {} enum variant", ENUM_NAME))
-            }
-
-            fn visit_enum<A>(self, data: A) -> Result<Self::Value, A::Error>
-            where
-                A: EnumAccess<'de>,
-            {
-                let (variant, variant_access) = data.variant::<String>()?;
-
-                // Due to the fact that serde serialization uses a string representation of the enum variant,
-                // it is not possible to do a compile-time check for all variants of the enum.
-                match variant.as_str() {
-                    // First the new formats
-                    "ExternalCanister" => {
-                        // Deserialize into the wrapper, which can handle both formats
-                        let wrapper =
-                            variant_access.newtype_variant::<ExternalCanisterActionWrapper>()?;
-
-                        // Try deserializing as the new format
-                        match wrapper {
-                            ExternalCanisterActionWrapper::NewFormat(new_format) => {
-                                Ok(Resource::ExternalCanister(new_format))
-                            }
-                            ExternalCanisterActionWrapper::OldFormat(_) => Ok(
-                                Resource::ExternalCanister(ExternalCanisterResourceAction::Create),
-                            ),
-                        }
-                    }
-                    // `ChangeCanister` does not exist anymore, so we need to handle it here
-                    "ChangeCanister" => {
-                        // Consume the old format variant, this is to make sure there is no
-                        // trailing data is left in the end of the deserialization, which would cause an error.
-                        //
-                        // The use of `Option<String>`` is to make sure that the deserialization is successful.
-                        let _ = variant_access.newtype_variant::<OldChangeCanisterResourceAction>();
-                        // The `ChangeCanister` variant was removed, so we need to handle it here
-                        // and map it to the correct variant.
-                        Ok(Resource::System(SystemResourceAction::Upgrade))
-                    }
-                    // Then all the default cases
-                    "Permission" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(Resource::Permission(value))
-                    }
-                    "Account" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(Resource::Account(value))
-                    }
-                    "AddressBook" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(Resource::AddressBook(value))
-                    }
-                    "Notification" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(Resource::Notification(value))
-                    }
-                    "Request" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(Resource::Request(value))
-                    }
-                    "RequestPolicy" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(Resource::RequestPolicy(value))
-                    }
-                    "System" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(Resource::System(value))
-                    }
-                    "User" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(Resource::User(value))
-                    }
-                    "UserGroup" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(Resource::UserGroup(value))
-                    }
-                    _ => Err(de::Error::unknown_variant(&variant, &EXPECTED_VARIANTS)),
-                }
-            }
-        }
-
-        deserializer.deserialize_enum(ENUM_NAME, &EXPECTED_VARIANTS, ResourceVisitor)
+        Ok(AddressBookEntry {
+            id: pre_migration_entry.id,
+            address_owner: pre_migration_entry.address_owner,
+            address: pre_migration_entry.address,
+            blockchain: pre_migration_entry.blockchain,
+            address_format: pre_migration_entry
+                .address_format
+                .unwrap_or(AddressFormat::ICPAccountIdentifier),
+            metadata: pre_migration_entry.metadata,
+            labels: pre_migration_entry.labels,
+            last_modification_timestamp: pre_migration_entry.last_modification_timestamp,
+        })
     }
 }
 
-impl<'de> Deserialize<'de> for RequestSpecifier {
+impl<'de> Deserialize<'de> for Transfer {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        const ENUM_NAME: &str = "RequestSpecifier";
-
-        const CURRENT_VARIANTS: &[&str] = RequestSpecifier::VARIANTS;
-        const REMOVED_VARIANTS: [&str; 1] = ["ChangeCanister"];
-
-        // IMPORTANT: The size of the array must be hardcoded, to make sure it can be checked at compile-time.
-        static EXPECTED_VARIANTS: [&str; 23] = {
-            let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] =
-                concat_str_arrays!(CURRENT_VARIANTS, REMOVED_VARIANTS);
-
-            variants
-        };
-
-        // Define the old version of the types for migration purposes
-        #[derive(Deserialize)]
-        enum OldCreateExternalCanisterTarget {
-            Any,
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationTransfer {
+            pub id: TransferId,
+            pub initiator_user: UserId,
+            pub from_account: AccountId,
+            pub to_address: String,
+            pub status: TransferStatus,
+            pub amount: candid::Nat,
+            pub request_id: UUID,
+            pub fee: candid::Nat,
+            pub blockchain_network: String,
+            pub metadata: Metadata,
+            pub last_modification_timestamp: Timestamp,
+            pub created_timestamp: Timestamp,
+            pub from_asset: Option<AssetId>,
+            pub with_standard: Option<TokenStandard>,
         }
 
-        struct RequestSpecifierVisitor;
+        let pre_migration_entry = PreMigrationTransfer::deserialize(deserializer)?;
 
-        impl<'de> Visitor<'de> for RequestSpecifierVisitor {
-            type Value = RequestSpecifier;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str(&format!("a valid {} enum variant", ENUM_NAME))
-            }
-
-            fn visit_enum<A>(self, data: A) -> Result<Self::Value, A::Error>
-            where
-                A: EnumAccess<'de>,
-            {
-                let (variant, variant_access) = data.variant::<String>()?;
-
-                // Due to the fact that serde serialization uses a string representation of the enum variant,
-                // it is not possible to do a compile-time check for all variants of the enum.
-                match variant.as_str() {
-                    // First the new formats
-                    "CreateExternalCanister" => {
-                        // Even though the value of the variant is not used, we still need to consume it
-                        // to make sure there is no trailing data left in the end of the deserialization.
-                        let _ = variant_access
-                            .newtype_variant::<Option<OldCreateExternalCanisterTarget>>();
-
-                        Ok(RequestSpecifier::CreateExternalCanister)
-                    }
-                    // `ChangeCanister` does not exist anymore, so we need to handle it here
-                    "ChangeCanister" => Ok(RequestSpecifier::SystemUpgrade),
-                    // Then all the default cases
-                    "AddAccount" => Ok(RequestSpecifier::AddAccount),
-                    "AddUser" => Ok(RequestSpecifier::AddUser),
-                    "EditAccount" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::EditAccount(value))
-                    }
-                    "EditUser" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::EditUser(value))
-                    }
-                    "AddAddressBookEntry" => Ok(RequestSpecifier::AddAddressBookEntry),
-                    "EditAddressBookEntry" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::EditAddressBookEntry(value))
-                    }
-                    "RemoveAddressBookEntry" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::RemoveAddressBookEntry(value))
-                    }
-                    "Transfer" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::Transfer(value))
-                    }
-                    "SystemUpgrade" => Ok(RequestSpecifier::SystemUpgrade),
-                    "SetDisasterRecovery" => Ok(RequestSpecifier::SetDisasterRecovery),
-                    "ChangeExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::ChangeExternalCanister(value))
-                    }
-                    "CallExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::CallExternalCanister(value))
-                    }
-                    "EditPermission" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::EditPermission(value))
-                    }
-                    "AddRequestPolicy" => Ok(RequestSpecifier::AddRequestPolicy),
-                    "EditRequestPolicy" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::EditRequestPolicy(value))
-                    }
-                    "RemoveRequestPolicy" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::RemoveRequestPolicy(value))
-                    }
-                    "AddUserGroup" => Ok(RequestSpecifier::AddUserGroup),
-                    "EditUserGroup" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::EditUserGroup(value))
-                    }
-                    "RemoveUserGroup" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::RemoveUserGroup(value))
-                    }
-                    "ManageSystemInfo" => Ok(RequestSpecifier::ManageSystemInfo),
-                    "FundExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestSpecifier::FundExternalCanister(value))
-                    }
-                    _ => Err(de::Error::unknown_variant(&variant, &EXPECTED_VARIANTS)),
-                }
-            }
+        #[cfg(test)]
+        if pre_migration_entry.from_asset.is_none() || pre_migration_entry.with_standard.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
         }
 
-        deserializer.deserialize_enum(ENUM_NAME, &EXPECTED_VARIANTS, RequestSpecifierVisitor)
+        Ok(Transfer {
+            id: pre_migration_entry.id,
+            initiator_user: pre_migration_entry.initiator_user,
+            from_account: pre_migration_entry.from_account,
+            to_address: pre_migration_entry.to_address,
+            status: pre_migration_entry.status,
+            amount: pre_migration_entry.amount,
+            request_id: pre_migration_entry.request_id,
+            fee: pre_migration_entry.fee,
+            blockchain_network: pre_migration_entry.blockchain_network,
+            metadata: pre_migration_entry.metadata,
+            last_modification_timestamp: pre_migration_entry.last_modification_timestamp,
+            created_timestamp: pre_migration_entry.created_timestamp,
+            from_asset: pre_migration_entry
+                .from_asset
+                .unwrap_or(INITIAL_ICP_ASSET_ID),
+            with_standard: pre_migration_entry
+                .with_standard
+                .unwrap_or(TokenStandard::InternetComputerNative),
+        })
     }
 }
 
-impl<'de> Deserialize<'de> for RequestOperation {
+impl<'de> Deserialize<'de> for Account {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        const ENUM_NAME: &str = "RequestOperation";
+        #[allow(dead_code)]
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationAccount {
+            pub id: AccountId,
+            pub name: String,
+            pub metadata: Metadata,
+            pub transfer_request_policy_id: Option<UUID>,
+            pub configs_request_policy_id: Option<UUID>,
+            pub last_modification_timestamp: Timestamp,
 
-        const CURRENT_VARIANTS: &[&str] = RequestOperation::VARIANTS;
-        const REMOVED_VARIANTS: [&str; 1] = ["ChangeCanister"];
+            // removed fields
+            pub balance: Option<Option<AccountBalance>>,
+            pub blockchain: Option<Blockchain>,
+            pub address: Option<String>,
+            pub standard: Option<BlockchainStandard>,
+            pub symbol: Option<String>,
+            pub decimals: Option<u32>,
 
-        // IMPORTANT: The size of the array must be hardcoded, to make sure it can be checked at compile-time.
-        static EXPECTED_VARIANTS: [&str; 27] = {
-            let variants: [&str; CURRENT_VARIANTS.len() + REMOVED_VARIANTS.len()] =
-                concat_str_arrays!(CURRENT_VARIANTS, REMOVED_VARIANTS);
+            // new fields
+            pub seed: Option<AccountSeed>,
+            pub assets: Option<Vec<AccountAsset>>,
+            pub addresses: Option<Vec<AccountAddress>>,
+        }
 
-            variants
-        };
+        let pre_migration_entry = PreMigrationAccount::deserialize(deserializer)?;
 
-        struct RequestOperationVisitor;
-
-        impl<'de> Visitor<'de> for RequestOperationVisitor {
-            type Value = RequestOperation;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str(&format!("a valid {} enum variant", ENUM_NAME))
-            }
-
-            fn visit_enum<A>(self, data: A) -> Result<Self::Value, A::Error>
-            where
-                A: EnumAccess<'de>,
-            {
-                let (variant, variant_access) = data.variant::<String>()?;
-
-                // Due to the fact that serde serialization uses a string representation of the enum variant,
-                // it is not possible to do a compile-time check for all variants of the enum.
-                match variant.as_str() {
-                    // First the new formats
-                    // `ChangeCanister` does not exist anymore, so we need to handle it here
-                    "ChangeCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::SystemUpgrade(value))
-                    }
-                    // Then all the default cases
-                    "Transfer" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::Transfer(value))
-                    }
-                    "AddAccount" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::AddAccount(value))
-                    }
-                    "EditAccount" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::EditAccount(value))
-                    }
-                    "AddAddressBookEntry" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::AddAddressBookEntry(value))
-                    }
-                    "EditAddressBookEntry" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::EditAddressBookEntry(value))
-                    }
-                    "RemoveAddressBookEntry" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::RemoveAddressBookEntry(value))
-                    }
-                    "AddUser" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::AddUser(value))
-                    }
-                    "EditUser" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::EditUser(value))
-                    }
-                    "EditPermission" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::EditPermission(value))
-                    }
-                    "AddUserGroup" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::AddUserGroup(value))
-                    }
-                    "EditUserGroup" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::EditUserGroup(value))
-                    }
-                    "RemoveUserGroup" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::RemoveUserGroup(value))
-                    }
-                    "SystemUpgrade" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::SystemUpgrade(value))
-                    }
-                    "ChangeExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::ChangeExternalCanister(value))
-                    }
-                    "ConfigureExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::ConfigureExternalCanister(value))
-                    }
-                    "CreateExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::CreateExternalCanister(value))
-                    }
-                    "CallExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::CallExternalCanister(value))
-                    }
-                    "FundExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::FundExternalCanister(value))
-                    }
-                    "SnapshotExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::SnapshotExternalCanister(value))
-                    }
-                    "RestoreExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::RestoreExternalCanister(value))
-                    }
-                    "PruneExternalCanister" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::PruneExternalCanister(value))
-                    }
-                    "AddRequestPolicy" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::AddRequestPolicy(value))
-                    }
-                    "EditRequestPolicy" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::EditRequestPolicy(value))
-                    }
-                    "RemoveRequestPolicy" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::RemoveRequestPolicy(value))
-                    }
-                    "ManageSystemInfo" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::ManageSystemInfo(value))
-                    }
-                    "SetDisasterRecovery" => {
-                        let value = variant_access.newtype_variant()?;
-                        Ok(RequestOperation::SetDisasterRecovery(value))
-                    }
-                    _ => Err(de::Error::unknown_variant(&variant, &EXPECTED_VARIANTS)),
-                }
+        #[cfg(test)]
+        if pre_migration_entry.seed.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
+            if let Some(address) = &pre_migration_entry.address {
+                MIGRATED_ACCOUNTS.with(|accounts| {
+                    accounts
+                        .borrow_mut()
+                        .push((pre_migration_entry.id, address.clone()));
+                });
             }
         }
 
-        deserializer.deserialize_enum(ENUM_NAME, &EXPECTED_VARIANTS, RequestOperationVisitor)
+        let seed = pre_migration_entry.seed.unwrap_or(pre_migration_entry.id);
+
+        Ok(Account {
+            id: pre_migration_entry.id,
+            name: pre_migration_entry.name,
+            metadata: pre_migration_entry.metadata,
+            transfer_request_policy_id: pre_migration_entry.transfer_request_policy_id,
+            configs_request_policy_id: pre_migration_entry.configs_request_policy_id,
+            last_modification_timestamp: pre_migration_entry.last_modification_timestamp,
+            seed,
+            assets: pre_migration_entry.assets.unwrap_or(vec![AccountAsset {
+                asset_id: INITIAL_ICP_ASSET_ID,
+                balance: pre_migration_entry.balance.unwrap_or(None),
+            }]),
+            addresses: pre_migration_entry.addresses.unwrap_or_else(|| {
+                let blockchain = InternetComputer::create();
+                vec![
+                    AccountAddress {
+                        address: pre_migration_entry
+                            .address
+                            .unwrap_or(blockchain.generate_account_identifier(&seed)),
+                        format: AddressFormat::ICPAccountIdentifier,
+                    },
+                    AccountAddress {
+                        address: blockchain.generate_icrc1_address(&seed),
+                        format: AddressFormat::ICRC1Account,
+                    },
+                ]
+            }),
+        })
     }
 }
 
-// Repositories should only implement the `RebuildRepository` trait if they are affected by the migration,
-// otherwise, they should not implement the trait.
-//
-// The ones affected should have the implementation here.
+impl<'de> Deserialize<'de> for TransferOperationInput {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationTransferOperationInput {
+            pub from_account_id: AccountId,
+            pub to: String,
+            pub amount: candid::Nat,
+            pub metadata: Metadata,
+            pub network: String,
+            pub fee: Option<candid::Nat>,
 
-impl RebuildRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {
-    fn rebuild(&self) {
-        let mut requests = Vec::with_capacity(self.len());
-        Self::with_db(|db| db.iter().for_each(|(_, v)| requests.push(v)));
-
-        // Then clear the repository to drop the existing data.
-        Self::with_db(|db| db.clear_new());
-
-        // Clear the indexes to avoid duplicates.
-        self.clear_indexes();
-
-        for mut request in requests.into_iter() {
-            // Then add the updated indexes.
-            self.add_entry_indexes(&request);
-            // Clear the module field if the request is finalized to save memory.
-            if request.is_finalized() {
-                if let RequestOperation::SystemUpgrade(operation) = &mut request.operation {
-                    operation.input.module = Vec::new();
-                }
-            }
-
-            Self::with_db(|db| db.insert(request.key(), request));
+            pub from_asset_id: Option<AssetId>,
+            pub with_standard: Option<TokenStandard>,
         }
+
+        let pre_migration_entry = PreMigrationTransferOperationInput::deserialize(deserializer)?;
+
+        #[cfg(test)]
+        if pre_migration_entry.from_asset_id.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
+        }
+
+        Ok(TransferOperationInput {
+            from_account_id: pre_migration_entry.from_account_id,
+            to: pre_migration_entry.to,
+            amount: pre_migration_entry.amount,
+            metadata: pre_migration_entry.metadata,
+            network: pre_migration_entry.network,
+            fee: pre_migration_entry.fee,
+            from_asset_id: pre_migration_entry
+                .from_asset_id
+                .unwrap_or(INITIAL_ICP_ASSET_ID),
+            with_standard: pre_migration_entry
+                .with_standard
+                .unwrap_or(TokenStandard::InternetComputerNative),
+        })
     }
 }
 
-impl RebuildRepository<PermissionKey, Permission, VirtualMemory<Memory>> for PermissionRepository {}
-impl RebuildRepository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository {}
+impl<'de> Deserialize<'de> for TransferOperation {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationTransferOperation {
+            pub transfer_id: Option<UUID>,
+            pub input: TransferOperationInput,
+            pub fee: Option<candid::Nat>,
+
+            pub asset: Option<Asset>,
+        }
+
+        let pre_migration_entry = PreMigrationTransferOperation::deserialize(deserializer)?;
+
+        #[cfg(test)]
+        if pre_migration_entry.asset.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
+        }
+
+        Ok(TransferOperation {
+            transfer_id: pre_migration_entry.transfer_id,
+            input: pre_migration_entry.input,
+            fee: pre_migration_entry.fee,
+            asset: pre_migration_entry
+                .asset
+                .unwrap_or_else(|| INITIAL_ICP_ASSET.clone()),
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for AddAccountOperationInput {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[allow(dead_code)]
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationAddAccountOperationInput {
+            pub name: String,
+            pub metadata: Metadata,
+            pub read_permission: Allow,
+            pub configs_permission: Allow,
+            pub transfer_permission: Allow,
+            pub configs_request_policy: Option<RequestPolicyRule>,
+            pub transfer_request_policy: Option<RequestPolicyRule>,
+
+            // removed fields
+            pub blockchain: Option<Blockchain>,
+            pub standard: Option<BlockchainStandard>,
+
+            // new fields
+            pub assets: Option<Vec<AssetId>>,
+        }
+
+        let pre_migration_entry = PreMigrationAddAccountOperationInput::deserialize(deserializer)?;
+
+        #[cfg(test)]
+        if pre_migration_entry.assets.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
+        }
+
+        Ok(AddAccountOperationInput {
+            name: pre_migration_entry.name,
+            metadata: pre_migration_entry.metadata,
+            read_permission: pre_migration_entry.read_permission,
+            configs_permission: pre_migration_entry.configs_permission,
+            transfer_permission: pre_migration_entry.transfer_permission,
+            configs_request_policy: pre_migration_entry.configs_request_policy,
+            transfer_request_policy: pre_migration_entry.transfer_request_policy,
+            assets: pre_migration_entry
+                .assets
+                .unwrap_or_else(|| vec![INITIAL_ICP_ASSET_ID]),
+        })
+    }
+}
+
+impl<'de> Deserialize<'de> for AddAddressBookEntryOperationInput {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[allow(dead_code)]
+        #[derive(Debug, Deserialize)]
+        struct PreMigrationAddAddressBookEntryOperationInput {
+            pub address_owner: String,
+            pub address: String,
+            pub blockchain: Blockchain,
+            #[serde(default)]
+            pub labels: Vec<String>,
+            pub metadata: Vec<MetadataItem>,
+
+            // added fields
+            pub address_format: Option<AddressFormat>,
+        }
+
+        let pre_migration_entry =
+            PreMigrationAddAddressBookEntryOperationInput::deserialize(deserializer)?;
+
+        #[cfg(test)]
+        if pre_migration_entry.address_format.is_none() {
+            MIGRATED_ENTRIES.with(|entries| {
+                *entries.borrow_mut() += 1;
+            });
+        }
+
+        Ok(AddAddressBookEntryOperationInput {
+            address_owner: pre_migration_entry.address_owner,
+            address: pre_migration_entry.address,
+            blockchain: pre_migration_entry.blockchain,
+            labels: pre_migration_entry.labels,
+            metadata: pre_migration_entry.metadata,
+            address_format: pre_migration_entry
+                .address_format
+                .unwrap_or(AddressFormat::ICPAccountIdentifier),
+        })
+    }
+}
+
 impl RebuildRepository<AddressBookEntryKey, AddressBookEntry, VirtualMemory<Memory>>
     for AddressBookRepository
 {
 }
-impl RebuildRepository<ExternalCanisterKey, ExternalCanister, VirtualMemory<Memory>>
-    for ExternalCanisterRepository
-{
+
+impl RebuildRepository<TransferKey, Transfer, VirtualMemory<Memory>> for TransferRepository {}
+impl RebuildRepository<AccountKey, Account, VirtualMemory<Memory>> for AccountRepository {}
+impl RebuildRepository<RequestKey, Request, VirtualMemory<Memory>> for RequestRepository {}
+
+#[cfg(test)]
+mod test {
+    use std::{borrow::BorrowMut, fs};
+
+    use ic_stable_structures::{memory_manager::MemoryId, Memory};
+    use orbit_essentials::repository::{RebuildRepository, Repository};
+
+    use crate::{
+        core::{
+            ACCOUNT_MEMORY_ID, ADDRESS_BOOK_MEMORY_ID, MEMORY_MANAGER, REQUEST_MEMORY_ID,
+            TRANSFER_MEMORY_ID, WASM_PAGE_SIZE,
+        },
+        migration::{INITIAL_ICP_ASSET_ID, MIGRATED_ACCOUNTS, MIGRATED_ENTRIES},
+        models::AddressFormat,
+        repositories::{
+            address_book, ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, REQUEST_REPOSITORY,
+            TRANSFER_REPOSITORY,
+        },
+        STABLE_MEMORY_VERSION,
+    };
+
+    fn restore_snapshot(label: &str, memory_id: MemoryId) {
+        let snapshot = fs::read(format!(
+            "src/migration_tests/snapshots/{}_v{}.bin",
+            label,
+            STABLE_MEMORY_VERSION - 1
+        ))
+        .unwrap();
+
+        let mut memory = MEMORY_MANAGER.with(|mm| mm.borrow_mut().get(memory_id));
+        memory.grow(snapshot.len() as u64 / WASM_PAGE_SIZE as u64 + 1u64);
+        memory.borrow_mut().write(0, &snapshot);
+    }
+
+    #[test]
+    fn test_address_book_migration() {
+        restore_snapshot("address_book_repository", ADDRESS_BOOK_MEMORY_ID);
+
+        address_book::ADDRESS_BOOK_REPOSITORY.list();
+        assert!(MIGRATED_ENTRIES.with(|entries| *entries.borrow_mut()) > 0);
+
+        ADDRESS_BOOK_REPOSITORY.rebuild();
+
+        MIGRATED_ENTRIES.with(|entries| {
+            *entries.borrow_mut() = 0;
+        });
+
+        address_book::ADDRESS_BOOK_REPOSITORY.list();
+        assert!(MIGRATED_ENTRIES.with(|entries| *entries.borrow_mut()) == 0);
+    }
+
+    #[test]
+    fn test_transfer_migration() {
+        restore_snapshot("transfer_repository", TRANSFER_MEMORY_ID);
+
+        TRANSFER_REPOSITORY.list();
+        assert!(MIGRATED_ENTRIES.with(|entries| *entries.borrow_mut()) > 0);
+
+        TRANSFER_REPOSITORY.rebuild();
+
+        MIGRATED_ENTRIES.with(|entries| {
+            *entries.borrow_mut() = 0;
+        });
+
+        TRANSFER_REPOSITORY.list();
+        assert!(MIGRATED_ENTRIES.with(|entries| *entries.borrow_mut()) == 0);
+    }
+
+    #[test]
+    fn test_account_migration() {
+        restore_snapshot("account_repository", ACCOUNT_MEMORY_ID);
+
+        ACCOUNT_REPOSITORY.list();
+        assert!(MIGRATED_ACCOUNTS.with(|entries| entries.borrow_mut().len()) > 0);
+
+        ACCOUNT_REPOSITORY.rebuild();
+
+        let accounts = ACCOUNT_REPOSITORY.list();
+        for account in accounts {
+            assert!(account.seed == account.id);
+            assert!(
+                account.assets.first().expect("No assets found").asset_id == INITIAL_ICP_ASSET_ID
+            );
+
+            assert!(account.addresses.len() == 2);
+
+            let migrated_account = MIGRATED_ACCOUNTS.with(|accounts| {
+                accounts
+                    .borrow()
+                    .iter()
+                    .find(|(id, _)| *id == account.id)
+                    .expect("Account not found in migrated accounts")
+                    .clone()
+            });
+
+            assert!(account
+                .addresses
+                .iter()
+                .any(|address| address.address == migrated_account.1
+                    && address.format == AddressFormat::ICPAccountIdentifier));
+            assert!(account
+                .addresses
+                .iter()
+                .any(|address| address.format == AddressFormat::ICRC1Account));
+        }
+
+        MIGRATED_ACCOUNTS.with(|entries| {
+            entries.borrow_mut().clear();
+        });
+
+        ACCOUNT_REPOSITORY.list();
+        assert!(MIGRATED_ACCOUNTS.with(|entries| entries.borrow_mut().len()) == 0);
+    }
+
+    #[test]
+    fn test_request_migration() {
+        restore_snapshot("request_repository", REQUEST_MEMORY_ID);
+
+        REQUEST_REPOSITORY.list();
+        assert!(MIGRATED_ENTRIES.with(|entries| *entries.borrow_mut()) > 0);
+
+        REQUEST_REPOSITORY.rebuild();
+
+        MIGRATED_ENTRIES.with(|entries| {
+            *entries.borrow_mut() = 0;
+        });
+
+        REQUEST_REPOSITORY.list();
+        assert!(MIGRATED_ENTRIES.with(|entries| *entries.borrow_mut()) == 0);
+    }
 }
-impl RebuildRepository<UUID, UserGroup, VirtualMemory<Memory>> for UserGroupRepository {}
-impl RebuildRepository<UserKey, User, VirtualMemory<Memory>> for UserRepository {}
-impl RebuildRepository<UUID, RequestPolicy, VirtualMemory<Memory>> for RequestPolicyRepository {}

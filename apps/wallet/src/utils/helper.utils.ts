@@ -215,6 +215,9 @@ export const transformIdlWithOnlyVerifiedCalls = (
   };
 };
 
+const semanticVersionRegex =
+  /^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?:-(?<preRelease>[\w.]+))?(?:\+(?<build>[\w.]+))?$/;
+
 // Checks if a string is with the correct format for a semantic version.
 //
 // More information on semantic versioning can be found at: https://semver.org/
@@ -224,10 +227,87 @@ export const isSemanticVersion = (version: string, prefix = ''): boolean => {
     versionWithoutPrefix = version.slice(prefix.length);
   }
 
-  return /^((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)$/.test(
-    versionWithoutPrefix,
-  );
+  return semanticVersionRegex.test(versionWithoutPrefix);
 };
+
+export class SemanticVersion {
+  constructor(
+    public major: number,
+    public minor: number,
+    public patch: number,
+    public preReleaseType?: string,
+    public preReleaseNumber?: number,
+    public build?: string,
+  ) {
+    if (major < 0 || minor < 0 || patch < 0) {
+      throw new Error('Version numbers must be positive');
+    }
+  }
+
+  static parse(version: string): SemanticVersion {
+    const match = version.match(semanticVersionRegex);
+    if (!match) {
+      throw new Error(`Invalid semantic version: ${version}`);
+    }
+
+    const [, major, minor, patch, preRelease, build] = match;
+    const [preReleaseType, preReleaseNumber] = preRelease?.split('.') ?? [undefined, undefined];
+
+    return new SemanticVersion(
+      Number(major),
+      Number(minor),
+      Number(patch),
+      preReleaseType,
+      preReleaseNumber !== undefined ? Number(preReleaseNumber) : 0,
+      build,
+    );
+  }
+
+  public toString(): string {
+    const preRelease = this.preReleaseType
+      ? `-${this.preReleaseType}${this.preReleaseNumber ?? 0}`
+      : '';
+    const build = this.build ? `+${this.build}` : '';
+    return `${this.major}.${this.minor}.${this.patch}${preRelease}${build}`;
+  }
+
+  public compare(other: SemanticVersion): number {
+    // Compare major, minor, and patch versions
+    if (this.major !== other.major) return this.major - other.major;
+    if (this.minor !== other.minor) return this.minor - other.minor;
+    if (this.patch !== other.patch) return this.patch - other.patch;
+
+    // Compare pre-release types and numbers
+    if (this.preReleaseType || other.preReleaseType) {
+      if (!this.preReleaseType) return 1; // No pre-release means higher precedence
+      if (!other.preReleaseType) return -1;
+      const typeComparison = this.preReleaseType.localeCompare(other.preReleaseType);
+      if (typeComparison !== 0) return typeComparison;
+
+      // Compare pre-release numbers
+      const thisNumber = this.preReleaseNumber ?? 0;
+      const otherNumber = other.preReleaseNumber ?? 0;
+      if (thisNumber !== otherNumber) return thisNumber - otherNumber;
+    }
+
+    // As per semver spec, Build metadata MUST be ignored when determining version precedence.
+    // https://semver.org/#spec-item-10
+
+    return 0;
+  }
+
+  public isGreaterThan(other: SemanticVersion): boolean {
+    return this.compare(other) > 0;
+  }
+
+  public isLessThan(other: SemanticVersion): boolean {
+    return this.compare(other) < 0;
+  }
+
+  public isEqualTo(other: SemanticVersion): boolean {
+    return this.compare(other) === 0;
+  }
+}
 
 export const removeBasePathFromPathname = (pathname: string, basePath: string): string => {
   const updatedPath = pathname.startsWith(basePath) ? pathname.slice(basePath.length) : pathname;
@@ -541,6 +621,16 @@ export const transformData = (
 
   return normalizedInput;
 };
+
+export function hexStringToUint8Array(input: string) {
+  const result = new Uint8Array(input.length / 2);
+
+  for (let i = 0; i < input.length; i += 2) {
+    result[i / 2] = parseInt(input.slice(i, i + 2), 16);
+  }
+
+  return result;
+}
 
 /**
  * Deep clones the input data using structured cloning, if Proxy objects are found they are

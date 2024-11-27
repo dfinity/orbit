@@ -1,6 +1,6 @@
 use crate::{
     core::utils::format_unique_string,
-    models::{Account, AddressBookEntry, ExternalCanister, User, UserGroup},
+    models::{Account, AddressBookEntry, Asset, ExternalCanister, User, UserGroup},
 };
 use candid::Principal;
 use orbit_essentials::{storable, types::UUID};
@@ -18,6 +18,10 @@ pub enum UniqueIndexKey {
     UserGroupName(String),
     UserIdentity(Principal),
     UserName(String),
+    AssetSymbolBlockchain(
+        String, // Blockchain
+        String, // Symbol
+    ),
 }
 
 impl AddressBookEntry {
@@ -80,6 +84,28 @@ impl UserGroup {
     }
 }
 
+impl Asset {
+    /// Converts the asset to it's unique index by name.
+    fn to_unique_index(&self) -> (UniqueIndexKey, UUID) {
+        (
+            Self::to_unique_index_by_symbol_blockchain(&self.symbol, self.blockchain.to_string()),
+            self.id,
+        )
+    }
+
+    pub fn to_unique_index_by_symbol_blockchain(
+        symbol: &str,
+        blockchain: String,
+    ) -> UniqueIndexKey {
+        UniqueIndexKey::AssetSymbolBlockchain(symbol.to_uppercase(), blockchain.to_string())
+    }
+
+    /// Extracts all unique indexes for the asset.
+    pub fn to_unique_indexes(&self) -> Vec<(UniqueIndexKey, UUID)> {
+        vec![self.to_unique_index()]
+    }
+}
+
 impl ExternalCanister {
     /// Converts the external canister to it's unique index by name.
     fn to_unique_index_by_name(&self) -> (UniqueIndexKey, UUID) {
@@ -123,6 +149,7 @@ impl Account {
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use crate::models::{
         account_test_utils::mock_account, address_book_entry_test_utils::mock_address_book_entry,

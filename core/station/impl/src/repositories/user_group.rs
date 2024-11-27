@@ -29,7 +29,7 @@ lazy_static! {
         Arc::new(UserGroupRepository::default());
 }
 
-/// A repository that enables managing users in stable memory.
+/// A repository that enables managing user groups in stable memory.
 #[derive(Default, Debug)]
 pub struct UserGroupRepository {
     unique_index: UniqueIndexRepository,
