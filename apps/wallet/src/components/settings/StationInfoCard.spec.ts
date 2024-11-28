@@ -7,6 +7,20 @@ import { useStationStore } from '~/stores/station.store';
 import { mount } from '~/test.utils';
 import StationInfoCard from './StationInfoCard.vue';
 
+import { SystemInfoResult } from '~/generated/station/station.did';
+import { ExtractOk } from '~/types/helper.types';
+import { flushPromises } from '@vue/test-utils';
+
+const testUpgraderId = 'r7inp-6aaaa-aaaaa-aaabq-cai';
+
+services().station.systemInfo = vi.fn(() =>
+  Promise.resolve({
+    system: {
+      upgrader_id: Principal.fromText(testUpgraderId),
+    },
+  } as ExtractOk<SystemInfoResult>),
+);
+
 vi.mock('~/services/control-panel.service', () => {
   const mock: Partial<ControlPanelService> = {
     manageUserStations: vi.fn().mockReturnThis(),
@@ -153,5 +167,24 @@ describe('StationInfoCard', () => {
         Remove: [stationCanisterId2],
       }),
     );
+  });
+
+  it('shows the upgrader id', async () => {
+    const wrapper = mount(
+      StationInfoCard,
+      {},
+      {
+        initialPiniaState: {
+          session: { isAuthenticated: true },
+          station: {
+            privileges: [{ SystemInfo: null }],
+          },
+        },
+      },
+    );
+
+    await flushPromises();
+
+    expect(wrapper.text().includes(testUpgraderId)).toBe(true);
   });
 });

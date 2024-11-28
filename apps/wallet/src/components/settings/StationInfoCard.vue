@@ -1,5 +1,5 @@
 <template>
-  <VCard>
+  <VCard :loading="loadingSystemInfo">
     <VCardTitle data-test-id="user-selected-station-name">
       {{ $t(`app.station_info_card_title`, { name: station.name }) }}
     </VCardTitle>
@@ -119,10 +119,40 @@
         </VListItem>
         <VListItem class="px-0">
           <VListItemTitle class="font-weight-bold">{{ $t(`terms.version`) }}</VListItemTitle>
-          <VListItemSubtitle>{{
+          <VListItemSubtitle class="mt-2">{{
             station.configuration.details?.version ? station.configuration.details.version : '-'
           }}</VListItemSubtitle>
         </VListItem>
+        <AuthCheck :privileges="[Privilege.SystemInfo]">
+          <VListItem class="px-0" v-if="!loadingSystemInfo">
+            <VListItemTitle class="font-weight-bold">{{ $t(`terms.upgrader_id`) }}</VListItemTitle>
+            <VListItemSubtitle v-if="upgraderId"
+              >{{ upgraderId }}
+              <VBtn
+                size="x-small"
+                variant="text"
+                :icon="mdiContentCopy"
+                @click="
+                  copyToClipboard({
+                    textToCopy: upgraderId,
+                    sendNotification: true,
+                  })
+                "
+              />
+            </VListItemSubtitle>
+            <VListItemSubtitle v-else-if="loadingSystemInfoError">
+              <VAlert
+                type="error"
+                variant="tonal"
+                density="compact"
+                class="mb-4 mt-2"
+                data-test-id="dr-not-configured"
+              >
+                {{ $t('pages.administration.system_info_error') }}
+              </VAlert>
+            </VListItemSubtitle>
+          </VListItem>
+        </AuthCheck>
         <VListItem v-if="session.data.stations.length > 1" class="px-0">
           <VListItemTitle class="font-weight-bold">{{ $t(`terms.main`) }}</VListItemTitle>
           <VListItemSubtitle>{{
@@ -183,7 +213,7 @@
 <script lang="ts" setup>
 import { Principal } from '@dfinity/principal';
 import { mdiContentCopy, mdiPencil } from '@mdi/js';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   VBtn,
@@ -210,6 +240,7 @@ import {
   CycleObtainStrategyInput,
   ManageSystemInfoOperationInput,
   Request,
+  SystemInfo,
 } from '~/generated/station/station.did';
 import { storeUserStationToUserStation } from '~/mappers/stations.mapper';
 import { i18n } from '~/plugins/i18n.plugin';
@@ -228,6 +259,28 @@ const app = useAppStore();
 const router = useRouter();
 const isMainStation = computed(() => station.canisterId === session.mainStation?.toText());
 const controlPanelService = services().controlPanel;
+const stationPanelService = services().station;
+
+const loadingSystemInfo = ref(true);
+const loadingSystemInfoError = ref(false);
+
+const systemInfo = ref<SystemInfo | null>(null);
+
+onMounted(async () => {
+  try {
+    loadingSystemInfo.value = true;
+    loadingSystemInfoError.value = false;
+
+    systemInfo.value = await stationPanelService.systemInfo(true).then(result => result.system);
+  } catch (e: unknown) {
+    app.sendErrorNotification(e);
+    loadingSystemInfoError.value = true;
+  } finally {
+    loadingSystemInfo.value = false;
+  }
+});
+
+const upgraderId = computed(() => systemInfo.value?.upgrader_id.toText());
 
 async function removeStation(): Promise<void> {
   await services().controlPanel.manageUserStations({
