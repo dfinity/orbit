@@ -186,5 +186,29 @@ describe('StationInfoCard', () => {
     await flushPromises();
 
     expect(wrapper.text().includes(testUpgraderId)).toBe(true);
+
+    expect(services().station.systemInfo).toHaveBeenCalled();
+    vi.clearAllMocks();
+  });
+
+  it('doesnt show the upgrader id if the user doesnt have the privilege', async () => {
+    const wrapper = mount(
+      StationInfoCard,
+      {},
+      {
+        initialPiniaState: {
+          session: { isAuthenticated: true },
+          station: {
+            privileges: [],
+          },
+        },
+      },
+    );
+
+    await flushPromises();
+
+    expect(wrapper.text().includes(testUpgraderId)).toBe(false);
+    expect(services().station.systemInfo).not.toHaveBeenCalled();
+    vi.clearAllMocks();
   });
 });
