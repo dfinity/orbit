@@ -1,3 +1,15 @@
+## 0.1.1 (2024-11-28)
+
+
+### 🩹 Fixes
+
+- **wallet:** add new opt candid metadata field ([#447](https://github.com/dfinity/orbit/pull/447))
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+
 ## 0.1.0 (2024-11-27)
 
 
