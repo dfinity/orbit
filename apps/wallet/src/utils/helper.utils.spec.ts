@@ -10,6 +10,7 @@ import {
   parseLocationQuery,
   parseToBigIntOrUndefined,
   removeBasePathFromPathname,
+  SemanticVersion,
   throttle,
   toArrayBuffer,
   transformData,
@@ -121,6 +122,53 @@ describe('Semver utils', () => {
 
     it('returns false for invalid semantic version with prefix `v1.0`', () => {
       expect(isSemanticVersion('v1.0', 'v')).toBe(false);
+    });
+  });
+
+  describe('SemanticVersion', () => {
+    it.each([
+      ['1.0.0', '2.0.0'],
+      ['1.0.0', '1.1.0'],
+      ['1.0.0', '1.0.1'],
+      ['1.1.1', '1.1.11'],
+      ['1.0.0-alpha.9', '1.0.0-alpha.10'],
+      ['1.0.0-alpha.10', '1.0.0-alpha.11'],
+      ['1.0.0-alpha.9', '1.0.0-beta'],
+      ['1.0.0-beta', '1.0.0'],
+      ['1.0.0-beta', '1.0.0+build'],
+    ])('version `v%s` is less than version `v%s`', (version, newVersion) => {
+      const olderVersion = SemanticVersion.parse(version);
+      const newerVersion = SemanticVersion.parse(newVersion);
+
+      expect(olderVersion.isLessThan(newerVersion)).toBe(true);
+    });
+
+    it.each([
+      ['1.0.0', '1.0.0'],
+      ['1.0.0', '1.0.0+build'],
+      ['1.0.0+build', '1.0.0+build'],
+      ['1.0.0+build', '1.0.0+build.1'],
+    ])('version `v%s` is equal to version `v%s`', (version, newVersion) => {
+      const olderVersion = SemanticVersion.parse(version);
+      const newerVersion = SemanticVersion.parse(newVersion);
+
+      expect(olderVersion.isEqualTo(newerVersion)).toBe(true);
+    });
+
+    it.each([
+      ['1.0.0', '2.0.0'],
+      ['1.0.0', '1.1.0'],
+      ['1.0.0', '1.0.1'],
+      ['1.1.1', '1.1.11'],
+      ['1.0.0-alpha.9', '1.0.0-alpha.10'],
+      ['1.0.0-alpha.9', '1.0.0-beta'],
+      ['1.0.0-beta', '1.0.0'],
+      ['1.0.0-beta', '1.0.0+build'],
+    ])('version `v%s` is older than version `v%s`', (oldVersion, newVersion) => {
+      const olderVersion = SemanticVersion.parse(oldVersion);
+      const newerVersion = SemanticVersion.parse(newVersion);
+
+      expect(newerVersion.isGreaterThan(olderVersion)).toBe(true);
     });
   });
 });
