@@ -252,6 +252,7 @@ import { Privilege } from '~/types/auth.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import StationInfoForm, { StationInfoModel } from './StationInfoForm.vue';
 import { unreachable, variantIs } from '~/utils/helper.utils';
+import { hasRequiredPrivilege } from '~/utils/auth.utils';
 
 const station = useStationStore();
 const session = useSessionStore();
@@ -267,17 +268,15 @@ const loadingSystemInfoError = ref(false);
 const systemInfo = ref<SystemInfo | null>(null);
 
 onMounted(async () => {
-  try {
-    loadingSystemInfo.value = true;
-    loadingSystemInfoError.value = false;
-
-    systemInfo.value = await stationPanelService.systemInfo(true).then(result => result.system);
-  } catch (e: unknown) {
-    app.sendErrorNotification(e);
-    loadingSystemInfoError.value = true;
-  } finally {
-    loadingSystemInfo.value = false;
+  if (hasRequiredPrivilege({ anyOf: [Privilege.SystemInfo] })) {
+    try {
+      systemInfo.value = await stationPanelService.systemInfo(true).then(result => result.system);
+    } catch (e: unknown) {
+      app.sendErrorNotification(e);
+      loadingSystemInfoError.value = true;
+    }
   }
+  loadingSystemInfo.value = false;
 });
 
 const upgraderId = computed(() => systemInfo.value?.upgrader_id.toText());
