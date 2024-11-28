@@ -141,13 +141,7 @@
               />
             </VListItemSubtitle>
             <VListItemSubtitle v-else-if="loadingSystemInfoError">
-              <VAlert
-                type="error"
-                variant="tonal"
-                density="compact"
-                class="mb-4 mt-2"
-                data-test-id="dr-not-configured"
-              >
+              <VAlert type="error" variant="tonal" density="compact" class="mb-4 mt-2">
                 {{ $t('pages.administration.system_info_error') }}
               </VAlert>
             </VListItemSubtitle>
