@@ -8,8 +8,8 @@ use crate::utils::{
 use crate::TestEnv;
 use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
-use orbit_essentials::cdk::api::management_canister::main::Snapshot;
 use orbit_essentials::cmc::{SubnetFilter, SubnetSelection};
+use orbit_essentials::utils::timestamp_to_rfc3339;
 use pocket_ic::management_canister::{CanisterIdRecord, CanisterStatusResult};
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
@@ -23,7 +23,7 @@ use station_api::{
     HealthStatus, ListRequestsInput, ListRequestsOperationTypeDTO, ListRequestsResponse,
     PruneExternalCanisterOperationInput, PruneExternalCanisterResourceDTO, QuorumDTO,
     RequestApprovalStatusDTO, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    RequestSpecifierDTO, RequestStatusDTO, RestoreExternalCanisterOperationInput,
+    RequestSpecifierDTO, RequestStatusDTO, RestoreExternalCanisterOperationInput, Snapshot,
     SnapshotExternalCanisterOperationInput, UserSpecifierDTO, ValidationMethodResourceTargetDTO,
 };
 use std::str::FromStr;
@@ -1455,10 +1455,13 @@ fn snapshot_external_canister_test() {
     .unwrap();
     let snapshots_via_orbit = res.0.unwrap();
     assert_eq!(snapshots_via_orbit.len(), 1);
-    assert_eq!(snapshots_via_orbit[0].id, snapshots[0].id);
+    assert_eq!(
+        snapshots_via_orbit[0].snapshot_id,
+        hex::encode(&snapshots[0].id)
+    );
     assert_eq!(
         snapshots_via_orbit[0].taken_at_timestamp,
-        snapshots[0].taken_at_timestamp
+        timestamp_to_rfc3339(&snapshots[0].taken_at_timestamp)
     );
     assert_eq!(snapshots_via_orbit[0].total_size, snapshots[0].total_size);
 
@@ -1567,7 +1570,7 @@ fn snapshot_external_canister_test() {
     let prune_canister_operation =
         RequestOperationInput::PruneExternalCanister(PruneExternalCanisterOperationInput {
             canister_id: external_canister_id,
-            prune: PruneExternalCanisterResourceDTO::Snapshot(hex::encode(new_snapshot_id)),
+            prune: PruneExternalCanisterResourceDTO::Snapshot(new_snapshot_id),
         });
     execute_request(
         &env,
