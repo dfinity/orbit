@@ -50,11 +50,17 @@ const model = computed({
 
 const station = useStationStore();
 
-const [icpAsset] = station.configuration.details.supported_assets.filter(
-  asset => asset.symbol === 'ICP',
+const [icpAsset] = station.configuration.details.supported_assets.filter(asset =>
+  asset.metadata.some(
+    data => data.key === 'ledger_canister_id' && data.value === 'ryjl3-tyaaa-aaaaa-aaaba-cai',
+  ),
 );
 
 const accountList = computed(() => {
+  if (!icpAsset) {
+    return [];
+  }
+
   return autocomplete.results.value
     .filter(account => account.assets.some(asset => asset.asset_id === icpAsset.id))
     .map(group => ({
