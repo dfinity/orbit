@@ -117,7 +117,9 @@ const obtainStrategySelected = computed({
 
 const strategyKeys = ref<ObtainCyclesStrategyEnum[]>([
   ObtainCyclesStrategyEnum.StationDefault,
-  ObtainCyclesStrategyEnum.MintFromNativeToken,
+  // TODO we need to ensure teams cannot drain accounts
+  // that means each monitoring request should be approved by an owner of the account
+  // ObtainCyclesStrategyEnum.MintFromNativeToken,
 ]);
 
 const strategies = computed<
