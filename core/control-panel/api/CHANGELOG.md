@@ -1,3 +1,37 @@
+## 0.1.0 (2024-11-27)
+
+
+### 🚀 Features
+
+- **dfx-orbit:** Review list pagination ([#403](https://github.com/dfinity/orbit/pull/403))
+
+- **wallet:** use didc for candid parsing ([#402](https://github.com/dfinity/orbit/pull/402))
+
+- **station:** add expiration dt during request creation ([#424](https://github.com/dfinity/orbit/pull/424))
+
+- ⚠️  **station:** multi chain support ([#374](https://github.com/dfinity/orbit/pull/374))
+
+
+### 🩹 Fixes
+
+- **control-panel:** fix initial station deploy ([#441](https://github.com/dfinity/orbit/pull/441))
+
+
+### ⚠️  Breaking Changes
+
+- ⚠️  **station:** multi chain support ([#374](https://github.com/dfinity/orbit/pull/374))
+
+### 🧱 Updated Dependencies
+
+- Updated orbit-essentials to 0.1.0
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- Leon Tan
+- olaszakos
+
 ## 0.0.2-alpha.4 (2024-10-22)
 
 
