@@ -50,13 +50,17 @@ const model = computed({
 
 const station = useStationStore();
 
-const [icpAsset] = station.configuration.details.supported_assets.filter(asset => asset.symbol === 'ICP');
+const [icpAsset] = station.configuration.details.supported_assets.filter(
+  asset => asset.symbol === 'ICP',
+);
 
 const accountList = computed(() => {
-  return autocomplete.results.value.filter(account => account.assets.some(asset => asset.asset_id === icpAsset.id)).map(group => ({
-    title: group.name,
-    value: group.id,
-  }));
+  return autocomplete.results.value
+    .filter(account => account.assets.some(asset => asset.asset_id === icpAsset.id))
+    .map(group => ({
+      title: group.name,
+      value: group.id,
+    }));
 });
 
 const isViewMode = computed(() => props.mode === 'view');
