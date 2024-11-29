@@ -21,6 +21,7 @@ import { computed, onMounted } from 'vue';
 import { useAccountsAutocomplete } from '~/composables/autocomplete.composable';
 import { UUID } from '~/generated/station/station.did';
 import { requiredRule } from '~/utils/form.utils';
+import { useStationStore } from '~/stores/station.store.ts';
 
 const autocomplete = useAccountsAutocomplete();
 
@@ -47,13 +48,15 @@ const model = computed({
   set: value => emit('update:modelValue', value),
 });
 
+const station = useStationStore();
+
+const [icpAsset] = station.configuration.details.supported_assets.filter(asset => asset.symbol === 'ICP');
+
 const accountList = computed(() => {
-  const accounts = autocomplete.results.value.map(group => ({
+  return autocomplete.results.value.filter(account => account.assets.some(asset => asset.asset_id === icpAsset.id)).map(group => ({
     title: group.name,
     value: group.id,
   }));
-
-  return accounts;
 });
 
 const isViewMode = computed(() => props.mode === 'view');
