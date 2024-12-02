@@ -106,6 +106,7 @@ fn review() {
                 operation_types: Some(vec![ListRequestsOperationTypeDTO::CallExternalCanister(
                     Some(canister_id),
                 )]),
+                sort_by: None,
             })
             .await
             .unwrap()
