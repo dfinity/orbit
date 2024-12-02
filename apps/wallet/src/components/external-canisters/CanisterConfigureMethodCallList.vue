@@ -8,21 +8,6 @@
       :canister-candid-idl="props.canisterCandidIdl"
       @update:open="canisterConfigureMethodCallDialog.open = $event"
     />
-    <header class="d-flex flex-md-row flex-column ga-2">
-      <div class="text-h6 text-weight-bold d-flex align-center ga-1 flex-grow-1">
-        <VIcon :icon="mdiDatabaseArrowLeftOutline" size="x-small" />
-        {{ $t('external_canisters.call_configuration.title') }}
-      </div>
-      <VBtn
-        v-if="!readonly"
-        size="small"
-        variant="outlined"
-        @click="openConfigureMethodCallDialog()"
-      >
-        {{ $t('external_canisters.call_configuration.add_new_method_pair') }}
-      </VBtn>
-    </header>
-    <VDivider />
     <VRow v-if="configuredMethodCalls.length" data-test-id="method-list">
       <VCol v-for="(method, idx) in configuredMethodCalls" :key="idx" cols="12" class="d-flex pb-0">
         <VCard width="100%">
@@ -122,11 +107,22 @@
     <p v-else data-test-id="empty-method-list">
       {{ $t('external_canisters.call_configuration.no_configuration') }}
     </p>
+    <footer class="d-flex flex-md-row flex-column ga-2 mt-4">
+      <VBtn
+        v-if="!readonly"
+        size="small"
+        variant="outlined"
+        block
+        @click="openConfigureMethodCallDialog()"
+      >
+        {{ $t('external_canisters.call_configuration.add_new_method_pair') }}
+      </VBtn>
+    </footer>
   </section>
 </template>
 <script setup lang="ts">
 import { Principal } from '@dfinity/principal';
-import { mdiCodeBraces, mdiDatabaseArrowLeftOutline, mdiPencil, mdiTrashCan } from '@mdi/js';
+import { mdiCodeBraces, mdiPencil, mdiTrashCan } from '@mdi/js';
 import { onMounted, Ref, ref, toRefs, watch } from 'vue';
 import { VBtn, VDivider, VIcon } from 'vuetify/components';
 import {

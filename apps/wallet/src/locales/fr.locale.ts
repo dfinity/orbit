@@ -484,6 +484,20 @@ export default {
     unlink_title: 'Dissocier le Canister',
     unlink_soft_delete: 'Gardez le canister sur l ordinateur, supprime seulement sa référence.',
     performed_calls: 'Appels effectués',
+    snapshots: {
+      title: 'Snapshots',
+      no_snapshots: 'Aucun snapshot na été créé pour ce canister.',
+      create_snapshot: 'Créer un snapshot',
+      create_snapshot_description:
+        'Les snapshots garantissent que vos informations sont stockées en toute sécurité et peuvent être restaurées en cas de perte ou de corruption des données. Ils permettent également d’itérer en toute sécurité, sachant que vos données précédentes sont préservées.',
+      id: 'ID',
+      size_mb: 'Taille (mb)',
+      created_at: 'Créé le',
+      remove_snapshot_title: 'Suppression de snapshot',
+      restore_snapshot_title: 'Restauration de snapshot',
+      restore_snapshot_confirmation: 'Êtes-vous sûr de vouloir restaurer ce snapshot ?',
+      remove_snapshot_confirmation: 'Êtes-vous sûr de vouloir supprimer ce snapshot ?',
+    },
     perform_call: {
       title: 'Effectuer un Appel',
       reply_received: 'Réponse reçue',
@@ -588,6 +602,7 @@ export default {
     error: 'Erreur',
     self: 'Soi',
     more: 'Plus',
+    restore: 'Restaurer',
     less: 'Moins',
     data: 'Données',
     mode: 'Mode',
