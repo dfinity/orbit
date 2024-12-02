@@ -3,25 +3,9 @@
     <template #main-header>
       <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
-          <div class="flex-1-1 d-flex ga-6 align-center">
-            <AuthCheck :privileges="[Privilege.ListAddressBookEntries]">
-              <VTextField
-                v-model.trim="searchTerm"
-                density="compact"
-                :placeholder="$t('app.search_addresses')"
-                :prepend-inner-icon="mdiMagnify"
-                variant="outlined"
-                class="flex-1-1"
-                hide-details
-                :append-inner-icon="searchTerm ? mdiClose : undefined"
-                @click:append-inner="searchTerm = ''"
-              >
-              </VTextField>
-            </AuthCheck>
-            <AuthCheck :privileges="[Privilege.AddAddressBookEntry]">
-              <AddressBookEntryBtn :text="$t('terms.new_address')" />
-            </AuthCheck>
-          </div>
+          <AuthCheck :privileges="[Privilege.AddAddressBookEntry]">
+            <AddressBookEntryBtn :text="$t('terms.new_address')" />
+          </AuthCheck>
         </template>
       </PageHeader>
     </template>
@@ -56,64 +40,84 @@
             }
           "
         >
-          <VDataTable
-            class="elevation-2 rounded"
-            :loading="loading"
-            :headers="headers"
-            :items="addressBookEntries"
-            :items-per-page="-1"
-            :hover="true"
-          >
-            <template #bottom>
-              <!--this hides the footer as pagination is not required-->
-            </template>
-            <template #item.blockchain="{ item: addressBookEntry }">
-              {{ $t(`blockchains.${addressBookEntry.blockchain.toLowerCase()}.name`) }}
-            </template>
-            <template #item.name="{ item: addressBookEntry }">
-              {{ addressBookEntry.address_owner }}
-            </template>
-            <template #item.address="{ item: addressBookEntry }">
-              <div class="d-flex align-center flex-no-wrap">
-                <ShortenedAddress
-                  :address="addressBookEntry.address"
-                  :format="addressBookEntry.address_format"
-                ></ShortenedAddress>
-                <VBtn
-                  size="x-small"
-                  variant="text"
-                  :icon="mdiContentCopy"
-                  @click="
-                    copyToClipboard({
-                      textToCopy: addressBookEntry.address,
-                      sendNotification: true,
-                    })
-                  "
-                />
-              </div>
-            </template>
-            <template #item.actions="{ item: addressBookEntry }">
-              <div class="d-flex justify-end">
-                <ActionBtn
-                  v-if="hasDeletePrivilege(addressBookEntry.id)"
-                  v-model="addressBookEntry.id"
-                  :icon="mdiTrashCanOutline"
-                  :submit="id => station.service.removeAddressBookEntry(id)"
-                  @failed="useOnFailedOperation"
-                  @submitted="useOnSuccessfulOperation"
-                />
-                <AddressBookEntryBtn
-                  :icon="!hasEditPrivilege(addressBookEntry.id) ? mdiEye : mdiPencil"
-                  :address-book-entry-id="addressBookEntry.id"
-                  :readonly="!hasEditPrivilege(addressBookEntry.id)"
-                  variant="flat"
-                  color="default"
-                  size="small"
-                  @opened="disableRefresh = $event"
-                />
-              </div>
-            </template>
-          </VDataTable>
+          <VCard class="elevation-2 rounded">
+            <VCardTitle class="d-flex align-center pe-2">
+              {{ $t('pages.address_book.table_title') }}
+              <v-spacer></v-spacer>
+              <AuthCheck :privileges="[Privilege.ListAddressBookEntries]">
+                <VTextField
+                  v-model.trim="searchTerm"
+                  density="compact"
+                  :placeholder="$t('app.search_addresses')"
+                  :prepend-inner-icon="mdiMagnify"
+                  variant="solo-filled"
+                  hide-details
+                  flat
+                  :append-inner-icon="searchTerm ? mdiClose : undefined"
+                  @click:append-inner="searchTerm = ''"
+                >
+                </VTextField>
+              </AuthCheck>
+            </VCardTitle>
+            <VDivider />
+            <VDataTable
+              :loading="loading"
+              :headers="headers"
+              :items="addressBookEntries"
+              :items-per-page="-1"
+              :hover="true"
+            >
+              <template #bottom>
+                <!--this hides the footer as pagination is not required-->
+              </template>
+              <template #item.blockchain="{ item: addressBookEntry }">
+                {{ $t(`blockchains.${addressBookEntry.blockchain.toLowerCase()}.name`) }}
+              </template>
+              <template #item.name="{ item: addressBookEntry }">
+                {{ addressBookEntry.address_owner }}
+              </template>
+              <template #item.address="{ item: addressBookEntry }">
+                <div class="d-flex align-center flex-no-wrap">
+                  <ShortenedAddress
+                    :address="addressBookEntry.address"
+                    :format="addressBookEntry.address_format"
+                  ></ShortenedAddress>
+                  <VBtn
+                    size="x-small"
+                    variant="text"
+                    :icon="mdiContentCopy"
+                    @click="
+                      copyToClipboard({
+                        textToCopy: addressBookEntry.address,
+                        sendNotification: true,
+                      })
+                    "
+                  />
+                </div>
+              </template>
+              <template #item.actions="{ item: addressBookEntry }">
+                <div class="d-flex justify-end">
+                  <ActionBtn
+                    v-if="hasDeletePrivilege(addressBookEntry.id)"
+                    v-model="addressBookEntry.id"
+                    :icon="mdiTrashCanOutline"
+                    :submit="id => station.service.removeAddressBookEntry(id)"
+                    @failed="useOnFailedOperation"
+                    @submitted="useOnSuccessfulOperation"
+                  />
+                  <AddressBookEntryBtn
+                    :icon="!hasEditPrivilege(addressBookEntry.id) ? mdiEye : mdiPencil"
+                    :address-book-entry-id="addressBookEntry.id"
+                    :readonly="!hasEditPrivilege(addressBookEntry.id)"
+                    variant="flat"
+                    color="default"
+                    size="small"
+                    @opened="disableRefresh = $event"
+                  />
+                </div>
+              </template>
+            </VDataTable>
+          </VCard>
         </DataLoader>
         <VPagination
           v-model="pagination.selectedPage"
@@ -187,7 +191,10 @@ const headers = ref<TableHeader[]>([
 ]);
 
 const searchTerm = ref('');
-watch(searchTerm, debounceSearch);
+watch(searchTerm, () => {
+  pagination.value.selectedPage = 1;
+  debounceSearch();
+});
 
 const hasEditPrivilege = (id: UUID): boolean => {
   const privilege = privileges.value.find(p => p.id === id);

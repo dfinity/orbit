@@ -835,6 +835,7 @@ export default {
       no_results_found: "Aucune adresse trouvée dans le carnet d'adresses.",
       error_fetching_address_book:
         "Erreur de chargement du carnet d'adresses, veuillez essayer de nouveau.",
+      table_title: 'Adresses',
     },
     user_settings: {
       title: 'Détails du Compte et Paramètres',

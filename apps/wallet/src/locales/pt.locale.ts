@@ -829,6 +829,7 @@ export default {
       no_results_found: 'Nenhum resultado encontrado.',
       error_fetching_address_book:
         'Erro ao carregar o livro de endereços, por favor, tente novamente.',
+      table_title: 'Endereços',
     },
     user_settings: {
       title: 'Informaçōes do usuário & Configuraçōes',

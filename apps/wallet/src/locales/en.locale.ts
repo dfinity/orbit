@@ -824,6 +824,7 @@ export default {
       btn_new_entry: 'New entry',
       no_results_found: 'No address book entry found.',
       error_fetching_address_book: 'Error fetching address book, please try again.',
+      table_title: 'Addresses',
     },
     user_settings: {
       title: 'Account Info & Settings',
