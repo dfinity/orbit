@@ -1024,6 +1024,19 @@ impl ExternalCanisterService {
         Ok(())
     }
 
+    /// Restarts monitoring for all external canisters after upgrade
+    pub fn canister_monitor_restart(&self) {
+        for canister in self.external_canister_repository.find_all() {
+            if let Some(monitoring) = &canister.monitoring {
+                self.cycle_manager.add_canister(
+                    canister.canister_id,
+                    monitoring.funding_strategy.clone(),
+                    monitoring.cycle_obtain_strategy,
+                );
+            }
+        }
+    }
+
     pub fn canister_monitor_start(
         &self,
         canister_id: Principal,

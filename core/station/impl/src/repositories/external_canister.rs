@@ -229,6 +229,11 @@ impl ExternalCanisterRepository {
             .map(|(_, canister_id)| canister_id)
             .collect()
     }
+
+    /// Finds all external canisters.
+    pub fn find_all(&self) -> Vec<ExternalCanister> {
+        self.list()
+    }
 }
 
 #[derive(Debug, Clone)]

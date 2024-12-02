@@ -68,7 +68,7 @@ async fn post_upgrade(input: Option<SystemInstall>) {
     // Runs the migrations for the canister to ensure the stable memory schema is up-to-date
     //
     // WARNING: This needs to be done before any other access to stable memory is done, this is because
-    // it might clear memory ids and the current codebase might be reusing them and loading a diffirent
+    // it might clear memory ids and the current codebase might be reusing them and loading a different
     // datatype from the one that was initially stored.
     migration::MigrationHandler::run();
 

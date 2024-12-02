@@ -592,8 +592,8 @@ mod install_canister_handlers {
     };
     use crate::repositories::ASSET_REPOSITORY;
     use crate::services::permission::PERMISSION_SERVICE;
-    use crate::services::REQUEST_POLICY_SERVICE;
     use crate::services::{ACCOUNT_SERVICE, ASSET_SERVICE};
+    use crate::services::{EXTERNAL_CANISTER_SERVICE, REQUEST_POLICY_SERVICE};
     use candid::{Encode, Principal};
     use ic_cdk::api::management_canister::main::{self as mgmt};
     use ic_cdk::{id, print};
@@ -869,6 +869,8 @@ mod install_canister_handlers {
         CYCLE_MANAGER.set_global_cycle_obtain_strategy(cycle_obtain_strategy);
         CYCLE_MANAGER.add_canister(id(), fund_strategy.clone(), None);
         CYCLE_MANAGER.add_canister(upgrader_id, fund_strategy.clone(), None);
+
+        EXTERNAL_CANISTER_SERVICE.canister_monitor_restart();
 
         CYCLE_MANAGER.start();
     }
