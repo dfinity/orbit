@@ -43,7 +43,7 @@
           <VCard class="elevation-2 rounded">
             <VCardTitle class="d-flex align-center pe-2">
               {{ $t('pages.address_book.table_title') }}
-              <v-spacer></v-spacer>
+              <VSpacer />
               <AuthCheck :privileges="[Privilege.ListAddressBookEntries]">
                 <VTextField
                   v-model.trim="searchTerm"
