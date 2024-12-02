@@ -52,6 +52,7 @@ export default {
     search_users: 'Procurar usuários',
     search_user_groups: 'Procurar grupos de usuários',
     search_accounts: 'Procurar contas',
+    search_addresses: 'Procurar endereços...',
     destination_source: 'Destino / Origem',
     amount_token: 'Quantidade, {token}',
     no_transfers: 'Nenhuma transferência disponível.',

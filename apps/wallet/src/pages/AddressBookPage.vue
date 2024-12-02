@@ -3,9 +3,25 @@
     <template #main-header>
       <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
         <template #actions>
-          <AuthCheck :privileges="[Privilege.AddAddressBookEntry]">
-            <AddressBookEntryBtn :text="$t('terms.new_address')" />
-          </AuthCheck>
+          <div class="flex-1-1 d-flex ga-6 align-center">
+            <AuthCheck :privileges="[Privilege.ListAddressBookEntries]">
+              <VTextField
+                v-model.trim="searchTerm"
+                density="compact"
+                :placeholder="$t('app.search_addresses')"
+                :prepend-inner-icon="mdiMagnify"
+                variant="outlined"
+                class="flex-1-1"
+                hide-details
+                :append-inner-icon="searchTerm ? mdiClose : undefined"
+                @click:append-inner="searchTerm = ''"
+              >
+              </VTextField>
+            </AuthCheck>
+            <AuthCheck :privileges="[Privilege.AddAddressBookEntry]">
+              <AddressBookEntryBtn :text="$t('terms.new_address')" />
+            </AuthCheck>
+          </div>
         </template>
       </PageHeader>
     </template>
@@ -113,7 +129,15 @@
 </template>
 
 <script lang="ts" setup>
-import { mdiContentCopy, mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
+import {
+  mdiClose,
+  mdiContentCopy,
+  mdiEye,
+  mdiMagnify,
+  mdiPencil,
+  mdiTrashCanOutline,
+} from '@mdi/js';
+import { watch } from 'vue';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VBtn, VDataTable, VPagination } from 'vuetify/components';
@@ -142,7 +166,7 @@ import type { PageProps, TableHeader } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
 import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
-import { throttle } from '~/utils/helper.utils';
+import { debounce, throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const station = useStationStore();
@@ -154,12 +178,16 @@ const disableRefresh = ref(false);
 const forceReload = ref(false);
 const pagination = usePagination();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
+const debounceSearch = debounce(() => (forceReload.value = true), 500);
 const headers = ref<TableHeader[]>([
   { title: i18n.t('terms.blockchain'), key: 'blockchain', sortable: false },
   { title: i18n.t('terms.name'), key: 'name', sortable: false },
   { title: i18n.t('terms.address'), key: 'address', sortable: false },
   { title: '', key: 'actions', sortable: false },
 ]);
+
+const searchTerm = ref('');
+watch(searchTerm, debounceSearch);
 
 const hasEditPrivilege = (id: UUID): boolean => {
   const privilege = privileges.value.find(p => p.id === id);
@@ -175,10 +203,13 @@ let useVerifiedCall = false;
 
 const fetchList = useFetchList(
   (offset, limit) => {
+    const addressToSearch = searchTerm.value.trim();
+
     const results = station.service.listAddressBook(
       {
         offset,
         limit,
+        addresses: addressToSearch ? [addressToSearch] : undefined,
       },
       useVerifiedCall,
     );

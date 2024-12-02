@@ -52,6 +52,7 @@ export default {
     search_users: 'Search users',
     search_user_groups: 'Search user groups',
     search_accounts: 'Search accounts',
+    search_addresses: 'Search addresses...',
     destination_source: 'Destination / Source',
     amount_token: 'Amount, {token}',
     no_transfers: 'No transfer found.',

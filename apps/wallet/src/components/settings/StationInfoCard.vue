@@ -124,7 +124,7 @@
           }}</VListItemSubtitle>
         </VListItem>
         <AuthCheck :privileges="[Privilege.SystemInfo]">
-          <VListItem class="px-0" v-if="!loadingSystemInfo">
+          <VListItem v-if="!loadingSystemInfo" class="px-0">
             <VListItemTitle class="font-weight-bold">{{ $t(`terms.upgrader_id`) }}</VListItemTitle>
             <VListItemSubtitle v-if="upgraderId"
               >{{ upgraderId }}

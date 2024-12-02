@@ -53,6 +53,7 @@ export default {
     search_users: 'Rechercher des usagers',
     search_user_groups: "Rechercher des groupes d'usagers",
     search_accounts: 'Rechercher des comptes',
+    search_addresses: 'Rechercher des adresses...',
     destination_source: 'Destination / Source',
     amount_token: 'Montant, {token}',
     no_transfers: 'Aucun transfert trouvé.',
