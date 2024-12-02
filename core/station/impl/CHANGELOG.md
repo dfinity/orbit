@@ -1,3 +1,32 @@
+## 0.1.0 (2024-11-27)
+
+
+### 🚀 Features
+
+- ⚠️  **station:** multi chain support ([#374](https://github.com/dfinity/orbit/pull/374))
+
+
+### 🩹 Fixes
+
+- **control-panel:** fix initial station deploy ([#441](https://github.com/dfinity/orbit/pull/441))
+
+
+### ⚠️  Breaking Changes
+
+- ⚠️  **station:** multi chain support ([#374](https://github.com/dfinity/orbit/pull/374))
+
+### 🧱 Updated Dependencies
+
+- Updated orbit-essentials to 0.1.0
+- Updated upgrader-api to 0.1.0
+- Updated station-api to 0.1.0
+
+
+### ❤️  Thank You
+
+- Kepler Vital
+- olaszakos
+
 ## 0.0.2-alpha.10 (2024-11-22)
 
 

@@ -678,6 +678,7 @@ export default {
     approval_policies: "Politiques d'approbation",
     download: 'Télécharger',
     upgrader: 'Metteur à jour',
+    upgrader_id: 'ID du Metteur à jour',
     view: 'Voir',
     new_address: 'Nouvelle Adresse',
     request: 'Demande',
@@ -892,6 +893,7 @@ export default {
     },
     administration: {
       title: 'Administration',
+      system_info_error: 'Erreur lors du chargement des informations système, veuillez réessayer.',
       cycle_obtain_strategy_disabled: 'Stratégie de recharge des cycles non définie',
       cycle_obtain_strategy_mint_from_native_token: 'Mint depuis le compte ICP',
     },

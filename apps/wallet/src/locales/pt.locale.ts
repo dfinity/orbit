@@ -673,6 +673,7 @@ export default {
     permissions: 'Permissões',
     approval_policies: 'Políticas de Aprovação',
     upgrader: 'Atualizador',
+    upgrader_id: 'ID do atualizador',
     resource: 'Recurso',
     automated: 'Automatizado',
     advanced: 'Avançado',
@@ -885,6 +886,8 @@ export default {
     },
     administration: {
       title: 'Administração',
+      system_info_error:
+        'Erro ao carregar as informações do sistema da carteira, por favor, tente novamente.',
       cycle_obtain_strategy_disabled: 'AVISO: Recarga de saldo de ciclos da carteira desativada.',
       cycle_obtain_strategy_mint_from_native_token: 'Recarregar a partir da conta de ICP',
     },

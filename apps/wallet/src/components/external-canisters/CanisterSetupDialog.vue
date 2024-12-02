@@ -162,7 +162,7 @@ const saveChangesToExistingExternalCanister = async (canisterId: Principal): Pro
       calls: [], // optional field, not updating calls through this dialog
     },
   ];
-
+  settings.change_metadata = [];
   settings.request_policies = [
     {
       calls: [], // optional field, not updating calls through this dialog
