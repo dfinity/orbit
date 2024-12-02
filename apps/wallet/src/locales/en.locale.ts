@@ -485,7 +485,11 @@ export default {
     start_monitoring: 'Start Monitoring',
     monitor: {
       title: 'Monitor cycles',
+      start_title: 'Monitor',
       stop_title: 'Stop Monitoring',
+      funding_strategy_label: 'Funding strategy',
+      cycle_obtain_strategy_label: 'Cycle minting strategy',
+      funding_info_text: 'Selected strategy is evaluated every 6 hours.',
       strategy: {
         label: 'Monitoring strategy',
         BelowEstimatedRuntime: 'Below estimated runtime',
@@ -508,6 +512,14 @@ export default {
           'Specify the cycles to fund for fallback funding when runtime cannot be computed.',
         min_cycles_hint: 'Specify the cycles threshold to trigger funding.',
         fund_cycles_hint: 'Specify the cycles to fund.',
+      },
+    },
+    obtain: {
+      title: 'Obtain cycles',
+      strategy: {
+        label: 'Obtain strategy',
+        StationDefault: 'Station default',
+        MintFromNativeToken: 'Mint from native token',
       },
     },
     configuration: 'Configuration',

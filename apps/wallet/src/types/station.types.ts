@@ -201,9 +201,3 @@ export enum RequestOperationEnum {
   EditAsset = 'EditAsset',
   RemoveAsset = 'RemoveAsset',
 }
-
-export enum MonitoringStrategyEnum {
-  BelowThreshold = 'BelowThreshold',
-  BelowEstimatedRuntime = 'BelowEstimatedRuntime',
-  Always = 'Always',
-}

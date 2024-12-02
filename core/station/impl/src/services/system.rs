@@ -587,14 +587,14 @@ mod install_canister_handlers {
     use crate::models::request_specifier::UserSpecifier;
     use crate::models::{
         AddAccountOperationInput, AddAssetOperationInput, AddRequestPolicyOperationInput,
-        CycleObtainStrategy, EditPermissionOperationInput, RequestPolicyRule, ADMIN_GROUP_ID,
+        CycleObtainStrategy, EditPermissionOperationInput, MonitorExternalCanisterStrategy,
+        MonitoringExternalCanisterEstimatedRuntimeInput, RequestPolicyRule, ADMIN_GROUP_ID,
     };
     use crate::repositories::ASSET_REPOSITORY;
     use crate::services::permission::PERMISSION_SERVICE;
     use crate::services::REQUEST_POLICY_SERVICE;
     use crate::services::{ACCOUNT_SERVICE, ASSET_SERVICE};
     use candid::{Encode, Principal};
-    use canfund::manager::options::{EstimatedRuntime, FundStrategy};
     use ic_cdk::api::management_canister::main::{self as mgmt};
     use ic_cdk::{id, print};
 
@@ -856,18 +856,19 @@ mod install_canister_handlers {
 
     /// Starts the fund manager service setting it up to monitor the upgrader canister cycles and top it up if needed.
     pub fn init_cycle_monitor(upgrader_id: Principal, cycle_obtain_strategy: &CycleObtainStrategy) {
-        let fund_strategy = FundStrategy::BelowEstimatedRuntime(
-            EstimatedRuntime::new()
-                .with_min_runtime_secs(14 * 24 * 60 * 60) // 14 days
-                .with_fund_runtime_secs(30 * 24 * 60 * 60) // 30 days
-                .with_max_runtime_cycles_fund(1_000_000_000_000)
-                .with_fallback_min_cycles(400_000_000_000)
-                .with_fallback_fund_cycles(200_000_000_000),
+        let fund_strategy = MonitorExternalCanisterStrategy::BelowEstimatedRuntime(
+            MonitoringExternalCanisterEstimatedRuntimeInput {
+                min_runtime_secs: 14 * 24 * 60 * 60,  // 14 days
+                fund_runtime_secs: 30 * 24 * 60 * 60, // 30 days
+                max_runtime_cycles_fund: 1_000_000_000_000,
+                fallback_min_cycles: 400_000_000_000,
+                fallback_fund_cycles: 200_000_000_000,
+            },
         );
 
         CYCLE_MANAGER.set_global_cycle_obtain_strategy(cycle_obtain_strategy);
-        CYCLE_MANAGER.add_canister(id(), fund_strategy.clone());
-        CYCLE_MANAGER.add_canister(upgrader_id, fund_strategy.clone());
+        CYCLE_MANAGER.add_canister(id(), fund_strategy.clone(), None);
+        CYCLE_MANAGER.add_canister(upgrader_id, fund_strategy.clone(), None);
 
         CYCLE_MANAGER.start();
     }

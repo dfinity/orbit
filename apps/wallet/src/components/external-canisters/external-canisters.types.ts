@@ -3,6 +3,7 @@ import {
   Allow,
   CanisterInstallMode,
   CanisterMethod,
+  CycleObtainStrategyInput,
   ExternalCanisterChangeRequestPolicyRuleInput,
   LogVisibility,
   MonitorExternalCanisterStrategyInput,
@@ -77,5 +78,6 @@ export interface CanisterCallReviewContext {
 
 export interface CanisterMonitorModel {
   canisterId?: Principal;
-  strategy?: MonitorExternalCanisterStrategyInput;
+  fundingStrategy?: MonitorExternalCanisterStrategyInput;
+  cycleObtainStrategy?: CycleObtainStrategyInput;
 }

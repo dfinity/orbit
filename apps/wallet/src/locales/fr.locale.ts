@@ -492,7 +492,11 @@ export default {
     start_monitoring: 'Démarrer la surveillance',
     monitor: {
       title: 'Contrôler les cycles',
+      start_title: 'Surveiller',
       stop_title: 'Arrêter la surveillance',
+      funding_strategy_label: 'Stratégie de financement',
+      cycle_obtain_strategy_label: 'Stratégie de monnayage du cycle',
+      funding_info_text: 'La stratégie choisie est évaluée toutes les 6 heures.',
       strategy: {
         label: 'Stratégie de suivi',
         BelowEstimatedRuntime: "Durée d'exécution inférieure à l'estimation",
@@ -516,6 +520,14 @@ export default {
           "Spécifiez les cycles à financer pour le financement de secours lorsque la durée d'exécution ne peut pas être calculée.",
         min_cycles_hint: 'Spécifiez le seuil de cycles pour déclencher le financement.',
         fund_cycles_hint: 'Spécifiez les cycles à financer.',
+      },
+    },
+    obtain: {
+      title: 'Obtenir des cycles',
+      strategy: {
+        label: 'Stratégie d obtention',
+        StationDefault: 'Défaut de Station',
+        MintFromNativeToken: 'Mint depuis le token natif',
       },
     },
     configuration: 'Configuration',
