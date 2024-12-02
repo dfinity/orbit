@@ -1096,7 +1096,7 @@ export class StationService {
     return result.Ok.request;
   }
 
-  async getExernalCanisterSnapshots(
+  async getExternalCanisterSnapshots(
     canisterId: Principal,
   ): Promise<ExtractOk<CanisterSnapshotsResult>> {
     const result = await this.actor.canister_snapshots({

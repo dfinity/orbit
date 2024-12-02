@@ -33,7 +33,13 @@
       </VCardText>
       <VCardActions class="pa-3">
         <VSpacer />
-        <VBtn :loading="saving" color="primary" variant="elevated" @click="removeSnapshot">
+        <VBtn
+          :loading="saving"
+          color="primary"
+          data-test-id="submit-btn"
+          variant="elevated"
+          @click="removeSnapshot"
+        >
           {{ $t('terms.remove') }}
         </VBtn>
       </VCardActions>

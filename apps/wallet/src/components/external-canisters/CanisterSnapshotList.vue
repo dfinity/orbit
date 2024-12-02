@@ -2,7 +2,7 @@
   <section class="d-flex flex-column ga-2">
     <DataLoader :load="loadSnapshots" @loading="loading = $event">
       <template #error="{ errorMsg, errorDetails }">
-        <ErrorCard :error="errorMsg" :error-details="errorDetails" />
+        <ErrorCard :error="errorMsg" :error-details="errorDetails" data-test-id="load-error" />
       </template>
       <LoadingMessage v-if="loading" class="ml-4" />
       <div v-else>
@@ -143,7 +143,7 @@ const emit = defineEmits<{
 }>();
 
 const loadSnapshots = async (): Promise<void> => {
-  const response = await station.service.getExernalCanisterSnapshots(props.canisterId);
+  const response = await station.service.getExternalCanisterSnapshots(props.canisterId);
 
   snapshots.value = response.map(snapshot => ({
     snapshotId: snapshot.snapshot_id,

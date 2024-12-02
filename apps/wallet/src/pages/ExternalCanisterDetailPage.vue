@@ -222,7 +222,7 @@
                   </VWindowItem>
                   <VWindowItem value="snapshots">
                     <CanisterSnapshotList
-                      :key="mainContentTabs"
+                      v-if="mainContentTabs === 'snapshots'"
                       :canister-id="canister.canister_id"
                       :readonly="!privileges.can_change"
                       :has-installed-wasm="canisterDetails.moduleHash.value !== null"
