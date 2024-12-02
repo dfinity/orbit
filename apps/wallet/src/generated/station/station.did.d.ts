@@ -615,6 +615,7 @@ export type GetExternalCanisterResult = {
   } |
   { 'Err' : Error };
 export interface GetNextApprovableRequestInput {
+  'sort_by' : [] | [ListRequestsSortBy],
   'excluded_request_ids' : Array<UUID>,
   'operation_types' : [] | [Array<ListRequestsOperationType>],
 }
