@@ -618,6 +618,7 @@ export default {
     target: 'Target',
     download: 'Download',
     upgrader: 'Upgrader',
+    upgrader_id: 'Upgrader ID',
     view: 'View',
     new_address: 'New Address',
     request: 'Request',
@@ -829,6 +830,7 @@ export default {
     },
     administration: {
       title: 'Administration',
+      system_info_error: 'Error loading station system info, please try again.',
       cycle_obtain_strategy_disabled:
         'WARNING: Station cycle balance top-up disabled. Your station may run out of cycles.',
       cycle_obtain_strategy_mint_from_native_token: 'Mint from ICP account',
