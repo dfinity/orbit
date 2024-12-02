@@ -477,6 +477,20 @@ export default {
     unlink_title: 'Unlink Canister',
     unlink_soft_delete: 'Keep the canister on the Internet Computer, only remove its reference.',
     performed_calls: 'Performed calls',
+    snapshots: {
+      title: 'Snapshots',
+      no_snapshots: 'There are no snapshots created for this canister.',
+      create_snapshot: 'Create snapshot',
+      create_snapshot_description:
+        'Snapshots ensure your information is safely stored and can be restored in case of data loss or corruption. They also allow you to iterate safely, knowing that your previous data is securely preserved.',
+      id: 'ID',
+      size_mb: 'Size (mb)',
+      created_at: 'Created at',
+      remove_snapshot_title: 'Snapshot removal',
+      restore_snapshot_title: 'Snapshot restoration',
+      restore_snapshot_confirmation: 'Are you sure you want to restore this snapshot?',
+      remove_snapshot_confirmation: 'Are you sure you want to remove this snapshot?',
+    },
     perform_call: {
       title: 'Perform Call',
       reply_received: 'Reply received',
@@ -574,6 +588,7 @@ export default {
   },
   terms: {
     controllers: 'Controllers',
+    restore: 'Restore',
     public: 'Public',
     execute: 'Execute',
     error: 'Error',
