@@ -184,6 +184,9 @@
                 { FundExternalCanister: [canister.canister_id] },
                 { ChangeExternalCanister: [canister.canister_id] },
                 { CallExternalCanister: [canister.canister_id] },
+                { PruneExternalCanister: [canister.canister_id] },
+                { SnapshotExternalCanister: [canister.canister_id] },
+                { RestoreExternalCanister: [canister.canister_id] },
               ]"
               hide-not-found
             />
@@ -194,18 +197,45 @@
               class="d-flex flex-column-reverse flex-md-row align-md-start flex-no-wrap ga-4"
             >
               <div class="d-flex flex-column flex-grow-1 ga-4 align-self-stretch">
-                <CanisterConfigureMethodCallList
-                  :canister-id="canister.canister_id"
-                  :request-policies="canister.request_policies.calls"
-                  :permissions="canister.permissions.calls"
-                  :readonly="!privileges.can_change"
-                  :canister-candid-idl="
-                    canisterDetails.candid.value !== null
-                      ? canisterDetails.candid.value.idl
-                      : undefined
-                  "
-                  @editing="disableRefresh = $event"
-                />
+                <VTabs v-model="mainContentTabs">
+                  <VTab value="configure_calls">
+                    <div class="text-weight-bold d-flex align-center ga-1 flex-grow-1">
+                      <VIcon :icon="mdiDatabaseArrowLeftOutline" size="default" />
+                      {{ $t('external_canisters.call_configuration.title') }}
+                    </div>
+                  </VTab>
+                  <VTab value="snapshots">
+                    <div class="text-weight-bold d-flex align-center ga-1 flex-grow-1">
+                      <VIcon :icon="mdiBackupRestore" size="default" />
+                      {{ $t('external_canisters.snapshots.title') }}
+                    </div>
+                  </VTab>
+                </VTabs>
+                <VWindow v-model="mainContentTabs">
+                  <VWindowItem value="configure_calls">
+                    <CanisterConfigureMethodCallList
+                      :canister-id="canister.canister_id"
+                      :request-policies="canister.request_policies.calls"
+                      :permissions="canister.permissions.calls"
+                      :readonly="!privileges.can_change"
+                      :canister-candid-idl="
+                        canisterDetails.candid.value !== null
+                          ? canisterDetails.candid.value.idl
+                          : undefined
+                      "
+                      @editing="disableRefresh = $event"
+                    />
+                  </VWindowItem>
+                  <VWindowItem value="snapshots">
+                    <CanisterSnapshotList
+                      v-if="mainContentTabs === 'snapshots'"
+                      :canister-id="canister.canister_id"
+                      :readonly="!privileges.can_change"
+                      :has-installed-wasm="canisterDetails.moduleHash.value !== null"
+                      @editing="disableRefresh = $event"
+                    />
+                  </VWindowItem>
+                </VWindow>
               </div>
               <div
                 :style="{ 'min-width': app.isMobile ? '100%' : '272px' }"
@@ -422,12 +452,14 @@
 <script lang="ts" setup>
 import { Principal } from '@dfinity/principal';
 import {
+  mdiBackupRestore,
   mdiBatteryArrowUpOutline,
   mdiBatteryChargingMedium,
   mdiBatteryOffOutline,
   mdiBatterySyncOutline,
   mdiContentCopy,
   mdiDatabase,
+  mdiDatabaseArrowLeftOutline,
   mdiDatabaseCog,
   mdiDatabaseOff,
   mdiInfinity,
@@ -449,8 +481,12 @@ import {
   VMenu,
   VProgressCircular,
   VRow,
+  VTab,
+  VTabs,
   VToolbar,
   VToolbarTitle,
+  VWindow,
+  VWindowItem,
 } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
@@ -463,6 +499,7 @@ import CanisterIcSettingsDialog from '~/components/external-canisters/CanisterIc
 import CanisterInstallDialog from '~/components/external-canisters/CanisterInstallDialog.vue';
 import CanisterMonitorDialog from '~/components/external-canisters/CanisterMonitorDialog.vue';
 import CanisterSetupDialog from '~/components/external-canisters/CanisterSetupDialog.vue';
+import CanisterSnapshotList from '~/components/external-canisters/CanisterSnapshotList.vue';
 import CanisterTopUpDialog from '~/components/external-canisters/CanisterTopUpDialog.vue';
 import CanisterUnlinkDialog from '~/components/external-canisters/CanisterUnlinkDialog.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
@@ -534,6 +571,8 @@ const buildDefaultPrivileges = (): ExternalCanisterCallerPrivileges => ({
   can_fund: false,
   can_call: [],
 });
+
+const mainContentTabs = ref<'configure_calls' | 'snapshots'>('configure_calls');
 
 const dialogs = ref({
   settings: false,

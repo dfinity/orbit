@@ -81,3 +81,26 @@ export interface CanisterMonitorModel {
   fundingStrategy?: MonitorExternalCanisterStrategyInput;
   cycleObtainStrategy?: CycleObtainStrategyInput;
 }
+
+export interface CanisterSnapshot {
+  snapshotId: string;
+  totalSize: number;
+  takenAtTimestamp: string;
+}
+
+export interface CanisterCreateSnapshotModel {
+  canisterId?: Principal;
+  comment?: string;
+}
+
+export interface CanisterRestoreSnapshotModel {
+  canisterId?: Principal;
+  snapshotId?: string;
+  comment?: string;
+}
+
+export interface CanisterRemoveSnapshotModel {
+  canisterId?: Principal;
+  snapshotId?: string;
+  comment?: string;
+}

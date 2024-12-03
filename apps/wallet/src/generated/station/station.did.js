@@ -166,6 +166,26 @@ export const idlFactory = ({ IDL }) => {
   const EditPermissionOperation = IDL.Record({
     'input' : EditPermissionOperationInput,
   });
+  const SnapshotExternalCanisterOperationInput = IDL.Record({
+    'force' : IDL.Bool,
+    'replace_snapshot' : IDL.Opt(IDL.Text),
+    'canister_id' : IDL.Principal,
+  });
+  const SnapshotExternalCanisterOperation = IDL.Record({
+    'input' : SnapshotExternalCanisterOperationInput,
+    'snapshot_id' : IDL.Opt(IDL.Text),
+  });
+  const PruneExternalCanisterOperationInput = IDL.Record({
+    'canister_id' : IDL.Principal,
+    'prune' : IDL.Variant({
+      'snapshot' : IDL.Text,
+      'state' : IDL.Null,
+      'chunk_store' : IDL.Null,
+    }),
+  });
+  const PruneExternalCanisterOperation = IDL.Record({
+    'input' : PruneExternalCanisterOperationInput,
+  });
   const Allow = IDL.Record({
     'user_groups' : IDL.Vec(UUID),
     'auth_scope' : AuthScope,
@@ -686,6 +706,13 @@ export const idlFactory = ({ IDL }) => {
     'arg_rendering' : IDL.Opt(IDL.Text),
     'execution_method_reply' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
+  const RestoreExternalCanisterOperationInput = IDL.Record({
+    'canister_id' : IDL.Principal,
+    'snapshot_id' : IDL.Text,
+  });
+  const RestoreExternalCanisterOperation = IDL.Record({
+    'input' : RestoreExternalCanisterOperationInput,
+  });
   const AddAccountOperationInput = IDL.Record({
     'configs_request_policy' : IDL.Opt(RequestPolicyRule),
     'read_permission' : Allow,
@@ -704,6 +731,8 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAsset' : RemoveAssetOperation,
     'AddUserGroup' : AddUserGroupOperation,
     'EditPermission' : EditPermissionOperation,
+    'SnapshotExternalCanister' : SnapshotExternalCanisterOperation,
+    'PruneExternalCanister' : PruneExternalCanisterOperation,
     'ConfigureExternalCanister' : ConfigureExternalCanisterOperation,
     'ChangeExternalCanister' : ChangeExternalCanisterOperation,
     'MonitorExternalCanister' : MonitorExternalCanisterOperation,
@@ -727,6 +756,7 @@ export const idlFactory = ({ IDL }) => {
     'AddRequestPolicy' : AddRequestPolicyOperation,
     'RemoveUserGroup' : RemoveUserGroupOperation,
     'CallExternalCanister' : CallExternalCanisterOperation,
+    'RestoreExternalCanister' : RestoreExternalCanisterOperation,
     'AddAccount' : AddAccountOperation,
   });
   const RequestApprovalStatus = IDL.Variant({
@@ -758,6 +788,18 @@ export const idlFactory = ({ IDL }) => {
   });
   const CancelRequestResult = IDL.Variant({
     'Ok' : IDL.Record({ 'request' : Request }),
+    'Err' : Error,
+  });
+  const CanisterSnapshotsInput = IDL.Record({ 'canister_id' : IDL.Principal });
+  const CanisterSnapshotsResponse = IDL.Vec(
+    IDL.Record({
+      'total_size' : IDL.Nat64,
+      'taken_at_timestamp' : TimestampRFC3339,
+      'snapshot_id' : IDL.Text,
+    })
+  );
+  const CanisterSnapshotsResult = IDL.Variant({
+    'Ok' : CanisterSnapshotsResponse,
     'Err' : Error,
   });
   const CanisterStatusInput = IDL.Record({ 'canister_id' : IDL.Principal });
@@ -844,6 +886,8 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAsset' : RemoveAssetOperationInput,
     'AddUserGroup' : AddUserGroupOperationInput,
     'EditPermission' : EditPermissionOperationInput,
+    'SnapshotExternalCanister' : SnapshotExternalCanisterOperationInput,
+    'PruneExternalCanister' : PruneExternalCanisterOperationInput,
     'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput,
     'ChangeExternalCanister' : ChangeExternalCanisterOperationInput,
     'MonitorExternalCanister' : MonitorExternalCanisterOperationInput,
@@ -867,6 +911,7 @@ export const idlFactory = ({ IDL }) => {
     'AddRequestPolicy' : AddRequestPolicyOperationInput,
     'RemoveUserGroup' : RemoveUserGroupOperationInput,
     'CallExternalCanister' : CallExternalCanisterOperationInput,
+    'RestoreExternalCanister' : RestoreExternalCanisterOperationInput,
     'AddAccount' : AddAccountOperationInput,
   });
   const CreateRequestInput = IDL.Record({
@@ -1052,6 +1097,8 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAsset' : IDL.Null,
     'AddUserGroup' : IDL.Null,
     'EditPermission' : IDL.Null,
+    'SnapshotExternalCanister' : IDL.Opt(IDL.Principal),
+    'PruneExternalCanister' : IDL.Opt(IDL.Principal),
     'ConfigureExternalCanister' : IDL.Opt(IDL.Principal),
     'ChangeExternalCanister' : IDL.Opt(IDL.Principal),
     'MonitorExternalCanister' : IDL.Opt(IDL.Principal),
@@ -1075,6 +1122,7 @@ export const idlFactory = ({ IDL }) => {
     'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
     'CallExternalCanister' : IDL.Opt(IDL.Principal),
+    'RestoreExternalCanister' : IDL.Opt(IDL.Principal),
     'AddAccount' : IDL.Null,
   });
   const GetNextApprovableRequestInput = IDL.Record({
@@ -1299,6 +1347,8 @@ export const idlFactory = ({ IDL }) => {
     'RemoveAsset' : IDL.Null,
     'AddUserGroup' : IDL.Null,
     'EditPermission' : IDL.Null,
+    'SnapshotExternalCanister' : IDL.Null,
+    'PruneExternalCanister' : IDL.Null,
     'ConfigureExternalCanister' : IDL.Null,
     'ChangeExternalCanister' : IDL.Null,
     'MonitorExternalCanister' : IDL.Null,
@@ -1322,6 +1372,7 @@ export const idlFactory = ({ IDL }) => {
     'AddRequestPolicy' : IDL.Null,
     'RemoveUserGroup' : IDL.Null,
     'CallExternalCanister' : IDL.Null,
+    'RestoreExternalCanister' : IDL.Null,
     'AddAccount' : IDL.Null,
   });
   const NotificationType = IDL.Variant({
@@ -1535,6 +1586,11 @@ export const idlFactory = ({ IDL }) => {
     'cancel_request' : IDL.Func(
         [CancelRequestInput],
         [CancelRequestResult],
+        [],
+      ),
+    'canister_snapshots' : IDL.Func(
+        [CanisterSnapshotsInput],
+        [CanisterSnapshotsResult],
         [],
       ),
     'canister_status' : IDL.Func(

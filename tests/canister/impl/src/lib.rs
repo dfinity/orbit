@@ -1,7 +1,8 @@
 use candid::{CandidType, Deserialize, Principal};
 use futures::future::join_all;
 use ic_cdk::api::call::call_raw;
-use ic_cdk::{query, update};
+use ic_cdk::api::performance_counter;
+use ic_cdk::{id, query, update};
 
 thread_local! {
     static NUMBER: std::cell::RefCell<u64> = const { std::cell::RefCell::new(0) };
@@ -53,6 +54,18 @@ async fn store_number(input: StoreNumberInput) {
 #[query]
 async fn get_number() -> u64 {
     NUMBER.with(|n| *n.borrow())
+}
+
+#[update]
+async fn noop() {}
+
+#[update]
+async fn unstoppable() {
+    loop {
+        if performance_counter(0) >= 19_000_000_000 {
+            let _ = ic_cdk::call::<_, ()>(id(), "noop", ((),)).await;
+        }
+    }
 }
 
 #[cfg(test)]

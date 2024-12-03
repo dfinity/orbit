@@ -40,6 +40,9 @@ pub enum RequestOperation {
     CallExternalCanister(CallExternalCanisterOperation),
     FundExternalCanister(FundExternalCanisterOperation),
     MonitorExternalCanister(MonitorExternalCanisterOperation),
+    SnapshotExternalCanister(SnapshotExternalCanisterOperation),
+    RestoreExternalCanister(RestoreExternalCanisterOperation),
+    PruneExternalCanister(PruneExternalCanisterOperation),
     AddRequestPolicy(AddRequestPolicyOperation),
     EditRequestPolicy(EditRequestPolicyOperation),
     RemoveRequestPolicy(RemoveRequestPolicyOperation),
@@ -74,6 +77,15 @@ impl Display for RequestOperation {
             RequestOperation::CallExternalCanister(_) => write!(f, "call_external_canister"),
             RequestOperation::FundExternalCanister(_) => write!(f, "fund_external_canister"),
             RequestOperation::MonitorExternalCanister(_) => write!(f, "monitor_external_canister"),
+            RequestOperation::SnapshotExternalCanister(_) => {
+                write!(f, "snapshot_external_canister")
+            }
+            RequestOperation::RestoreExternalCanister(_) => {
+                write!(f, "restore_external_canister")
+            }
+            RequestOperation::PruneExternalCanister(_) => {
+                write!(f, "prune_external_canister")
+            }
             RequestOperation::AddRequestPolicy(_) => write!(f, "add_request_policy"),
             RequestOperation::EditRequestPolicy(_) => write!(f, "edit_request_policy"),
             RequestOperation::RemoveRequestPolicy(_) => write!(f, "remove_request_policy"),
@@ -760,6 +772,67 @@ pub struct CallExternalCanisterOperation {
     pub arg_checksum: Option<Vec<u8>>,
     pub arg_rendering: Option<String>,
     pub execution_method_reply: Option<Vec<u8>>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SnapshotExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub replace_snapshot: Option<Vec<u8>>,
+    pub force: bool,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SnapshotExternalCanisterOperation {
+    pub snapshot_id: Option<Vec<u8>>,
+    pub input: SnapshotExternalCanisterOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RestoreExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub snapshot_id: Vec<u8>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RestoreExternalCanisterOperation {
+    pub input: RestoreExternalCanisterOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum PruneExternalCanisterResource {
+    Snapshot(Vec<u8>),
+    ChunkStore,
+    State,
+}
+
+impl Display for PruneExternalCanisterResource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PruneExternalCanisterResource::Snapshot(snapshot_id) => {
+                write!(f, "snapshot({})", hex::encode(snapshot_id))
+            }
+            PruneExternalCanisterResource::ChunkStore => write!(f, "chunk_store"),
+            PruneExternalCanisterResource::State => write!(f, "state"),
+        }
+    }
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct PruneExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub prune: PruneExternalCanisterResource,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct PruneExternalCanisterOperation {
+    pub input: PruneExternalCanisterOperationInput,
 }
 
 #[storable]

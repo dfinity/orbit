@@ -37,7 +37,7 @@ use candid::{Encode, Principal};
 use ic_cdk::api::call::call_raw;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, delete_canister, deposit_cycles, stop_canister, update_settings,
-    CanisterIdRecord, CanisterStatusResponse, UpdateSettingsArgument,
+    CanisterIdRecord, CanisterStatusResponse, Snapshot, UpdateSettingsArgument,
 };
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
@@ -434,6 +434,27 @@ impl ExternalCanisterService {
             .0;
 
         Ok(canister_status_response)
+    }
+
+    /// Calls the management canister to get the snapshots of the canister with the given id.
+    ///
+    /// The station needs to be a controller of the target canister.
+    pub async fn canister_snapshots(
+        &self,
+        input: CanisterIdRecord,
+    ) -> ServiceResult<Vec<Snapshot>> {
+        let canister_snapshots_arg = CanisterIdRecord {
+            canister_id: input.canister_id,
+        };
+
+        let canister_snapshots_response = mgmt::list_canister_snapshots(canister_snapshots_arg)
+            .await
+            .map_err(|(_, err)| ExternalCanisterError::Failed {
+                reason: err.to_string(),
+            })?
+            .0;
+
+        Ok(canister_snapshots_response)
     }
 
     /// Calls the target canister with the given method, argument, and cycles.

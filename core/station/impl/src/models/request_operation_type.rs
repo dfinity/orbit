@@ -33,10 +33,13 @@ pub enum RequestOperationType {
     SetDisasterRecovery = 23,
     ConfigureExternalCanister = 24,
     FundExternalCanister = 25,
-    AddAsset = 26,
-    EditAsset = 27,
-    RemoveAsset = 28,
-    MonitorExternalCanister = 29,
+    SnapshotExternalCanister = 26,
+    RestoreExternalCanister = 27,
+    PruneExternalCanister = 28,
+    AddAsset = 29,
+    EditAsset = 30,
+    RemoveAsset = 31,
+    MonitorExternalCanister = 32,
 }
 
 /// A helper enum to filter the requests based on the operation type and
@@ -59,6 +62,9 @@ pub enum ListRequestsOperationType {
     ConfigureExternalCanister(Option<Principal>),
     FundExternalCanister(Option<Principal>),
     MonitorExternalCanister(Option<Principal>),
+    SnapshotExternalCanister(Option<Principal>),
+    RestoreExternalCanister(Option<Principal>),
+    PruneExternalCanister(Option<Principal>),
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,
@@ -157,6 +163,36 @@ impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
                     RequestOperationFilterType::MonitorExternalCanister(id) if id == canister_id
                 )
             }
+            ListRequestsOperationType::SnapshotExternalCanister(None) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::SnapshotExternalCanister(_)
+                )
+            }
+            ListRequestsOperationType::SnapshotExternalCanister(Some(canister_id)) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::SnapshotExternalCanister(id) if id == canister_id
+                )
+            }
+            ListRequestsOperationType::RestoreExternalCanister(None) => {
+                matches!(self, RequestOperationFilterType::RestoreExternalCanister(_))
+            }
+            ListRequestsOperationType::RestoreExternalCanister(Some(canister_id)) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::RestoreExternalCanister(id) if id == canister_id
+                )
+            }
+            ListRequestsOperationType::PruneExternalCanister(None) => {
+                matches!(self, RequestOperationFilterType::PruneExternalCanister(_))
+            }
+            ListRequestsOperationType::PruneExternalCanister(Some(canister_id)) => {
+                matches!(
+                    self,
+                    RequestOperationFilterType::PruneExternalCanister(id) if id == canister_id
+                )
+            }
             ListRequestsOperationType::EditPermission => {
                 matches!(self, RequestOperationFilterType::EditPermission)
             }
@@ -246,6 +282,15 @@ impl Display for RequestOperationType {
             RequestOperationType::ChangeExternalCanister => write!(f, "change_external_canister"),
             RequestOperationType::CreateExternalCanister => write!(f, "create_external_canister"),
             RequestOperationType::CallExternalCanister => write!(f, "call_external_canister"),
+            RequestOperationType::SnapshotExternalCanister => {
+                write!(f, "snapshot_external_canister")
+            }
+            RequestOperationType::RestoreExternalCanister => {
+                write!(f, "restore_external_canister")
+            }
+            RequestOperationType::PruneExternalCanister => {
+                write!(f, "prune_external_canister")
+            }
             RequestOperationType::EditPermission => write!(f, "edit_permission"),
             RequestOperationType::AddRequestPolicy => write!(f, "add_request_policy"),
             RequestOperationType::EditRequestPolicy => write!(f, "edit_request_policy"),

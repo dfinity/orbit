@@ -39,11 +39,14 @@ mod edit_user_group;
 mod fund_external_canister;
 mod manage_system_info;
 mod monitor_external_canister;
+mod prune_external_canister;
 mod remove_address_book_entry;
 mod remove_asset;
 mod remove_request_policy;
 mod remove_user_group;
+mod restore_external_canister;
 mod set_disaster_recovery;
+mod snapshot_external_canister;
 mod system_upgrade;
 mod transfer;
 
@@ -69,11 +72,17 @@ use self::{
     edit_request_policy::{EditRequestPolicyRequestCreate, EditRequestPolicyRequestExecute},
     edit_user::{EditUserRequestCreate, EditUserRequestExecute},
     edit_user_group::{EditUserGroupRequestCreate, EditUserGroupRequestExecute},
+    prune_external_canister::PruneExternalCanisterRequestCreate,
+    prune_external_canister::PruneExternalCanisterRequestExecute,
     remove_address_book_entry::{
         RemoveAddressBookEntryRequestCreate, RemoveAddressBookEntryRequestExecute,
     },
     remove_request_policy::{RemoveRequestPolicyRequestCreate, RemoveRequestPolicyRequestExecute},
     remove_user_group::{RemoveUserGroupRequestCreate, RemoveUserGroupRequestExecute},
+    restore_external_canister::RestoreExternalCanisterRequestCreate,
+    restore_external_canister::RestoreExternalCanisterRequestExecute,
+    snapshot_external_canister::SnapshotExternalCanisterRequestCreate,
+    snapshot_external_canister::SnapshotExternalCanisterRequestExecute,
     system_upgrade::{SystemUpgradeRequestCreate, SystemUpgradeRequestExecute},
     transfer::{TransferRequestCreate, TransferRequestExecute},
 };
@@ -231,6 +240,24 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
+            RequestOperationInput::SnapshotExternalCanister(operation) => {
+                let creator = Box::new(SnapshotExternalCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+            RequestOperationInput::RestoreExternalCanister(operation) => {
+                let creator = Box::new(RestoreExternalCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+            RequestOperationInput::PruneExternalCanister(operation) => {
+                let creator = Box::new(PruneExternalCanisterRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
             RequestOperationInput::EditPermission(operation) => {
                 let creator = Box::new(EditPermissionRequestCreate {});
                 creator
@@ -368,6 +395,24 @@ impl RequestFactory {
                     request,
                     operation,
                     Arc::clone(&EXTERNAL_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::SnapshotExternalCanister(operation) => {
+                Box::new(SnapshotExternalCanisterRequestExecute::new(
+                    operation,
+                    Arc::clone(&CHANGE_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::RestoreExternalCanister(operation) => {
+                Box::new(RestoreExternalCanisterRequestExecute::new(
+                    operation,
+                    Arc::clone(&CHANGE_CANISTER_SERVICE),
+                ))
+            }
+            RequestOperation::PruneExternalCanister(operation) => {
+                Box::new(PruneExternalCanisterRequestExecute::new(
+                    operation,
+                    Arc::clone(&CHANGE_CANISTER_SERVICE),
                 ))
             }
             RequestOperation::EditPermission(operation) => {

@@ -185,6 +185,16 @@ export interface CanisterMethod {
   'canister_id' : Principal,
   'method_name' : string,
 }
+export interface CanisterSnapshotsInput { 'canister_id' : Principal }
+export type CanisterSnapshotsResponse = Array<
+  {
+    'total_size' : bigint,
+    'taken_at_timestamp' : TimestampRFC3339,
+    'snapshot_id' : string,
+  }
+>;
+export type CanisterSnapshotsResult = { 'Ok' : CanisterSnapshotsResponse } |
+  { 'Err' : Error };
 export interface CanisterStatusInput { 'canister_id' : Principal }
 export interface CanisterStatusResponse {
   'status' : { 'stopped' : null } |
@@ -815,6 +825,8 @@ export interface ListRequestsInput {
 export type ListRequestsOperationType = { 'RemoveAsset' : null } |
   { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
+  { 'SnapshotExternalCanister' : [] | [Principal] } |
+  { 'PruneExternalCanister' : [] | [Principal] } |
   { 'ConfigureExternalCanister' : [] | [Principal] } |
   { 'ChangeExternalCanister' : [] | [Principal] } |
   { 'MonitorExternalCanister' : [] | [Principal] } |
@@ -838,6 +850,7 @@ export type ListRequestsOperationType = { 'RemoveAsset' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'CallExternalCanister' : [] | [Principal] } |
+  { 'RestoreExternalCanister' : [] | [Principal] } |
   { 'AddAccount' : null };
 export type ListRequestsResult = {
     'Ok' : {
@@ -980,6 +993,15 @@ export interface PermissionCallerPrivileges {
 }
 export type PermissionResourceAction = { 'Read' : null } |
   { 'Update' : null };
+export interface PruneExternalCanisterOperation {
+  'input' : PruneExternalCanisterOperationInput,
+}
+export interface PruneExternalCanisterOperationInput {
+  'canister_id' : Principal,
+  'prune' : { 'snapshot' : string } |
+    { 'state' : null } |
+    { 'chunk_store' : null },
+}
 export interface Quorum { 'min_approved' : number, 'approvers' : UserSpecifier }
 export interface QuorumPercentage {
   'min_approved' : number,
@@ -1042,6 +1064,8 @@ export type RequestExecutionSchedule = { 'Immediate' : null } |
 export type RequestOperation = { 'RemoveAsset' : RemoveAssetOperation } |
   { 'AddUserGroup' : AddUserGroupOperation } |
   { 'EditPermission' : EditPermissionOperation } |
+  { 'SnapshotExternalCanister' : SnapshotExternalCanisterOperation } |
+  { 'PruneExternalCanister' : PruneExternalCanisterOperation } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperation } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperation } |
   { 'MonitorExternalCanister' : MonitorExternalCanisterOperation } |
@@ -1065,12 +1089,15 @@ export type RequestOperation = { 'RemoveAsset' : RemoveAssetOperation } |
   { 'AddRequestPolicy' : AddRequestPolicyOperation } |
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
   { 'CallExternalCanister' : CallExternalCanisterOperation } |
+  { 'RestoreExternalCanister' : RestoreExternalCanisterOperation } |
   { 'AddAccount' : AddAccountOperation };
 export type RequestOperationInput = {
     'RemoveAsset' : RemoveAssetOperationInput
   } |
   { 'AddUserGroup' : AddUserGroupOperationInput } |
   { 'EditPermission' : EditPermissionOperationInput } |
+  { 'SnapshotExternalCanister' : SnapshotExternalCanisterOperationInput } |
+  { 'PruneExternalCanister' : PruneExternalCanisterOperationInput } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperationInput } |
   { 'MonitorExternalCanister' : MonitorExternalCanisterOperationInput } |
@@ -1094,10 +1121,13 @@ export type RequestOperationInput = {
   { 'AddRequestPolicy' : AddRequestPolicyOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
   { 'CallExternalCanister' : CallExternalCanisterOperationInput } |
+  { 'RestoreExternalCanister' : RestoreExternalCanisterOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
 export type RequestOperationType = { 'RemoveAsset' : null } |
   { 'AddUserGroup' : null } |
   { 'EditPermission' : null } |
+  { 'SnapshotExternalCanister' : null } |
+  { 'PruneExternalCanister' : null } |
   { 'ConfigureExternalCanister' : null } |
   { 'ChangeExternalCanister' : null } |
   { 'MonitorExternalCanister' : null } |
@@ -1121,6 +1151,7 @@ export type RequestOperationType = { 'RemoveAsset' : null } |
   { 'AddRequestPolicy' : null } |
   { 'RemoveUserGroup' : null } |
   { 'CallExternalCanister' : null } |
+  { 'RestoreExternalCanister' : null } |
   { 'AddAccount' : null };
 export interface RequestPolicy {
   'id' : UUID,
@@ -1211,6 +1242,13 @@ export type ResourceIds = { 'Any' : null } |
   { 'Ids' : Array<UUID> };
 export type ResourceSpecifier = { 'Any' : null } |
   { 'Resource' : Resource };
+export interface RestoreExternalCanisterOperation {
+  'input' : RestoreExternalCanisterOperationInput,
+}
+export interface RestoreExternalCanisterOperationInput {
+  'canister_id' : Principal,
+  'snapshot_id' : string,
+}
 export interface SetDisasterRecoveryOperation {
   'committee' : [] | [DisasterRecoveryCommittee],
 }
@@ -1218,6 +1256,15 @@ export interface SetDisasterRecoveryOperationInput {
   'committee' : [] | [DisasterRecoveryCommittee],
 }
 export type Sha256Hash = string;
+export interface SnapshotExternalCanisterOperation {
+  'input' : SnapshotExternalCanisterOperationInput,
+  'snapshot_id' : [] | [string],
+}
+export interface SnapshotExternalCanisterOperationInput {
+  'force' : boolean,
+  'replace_snapshot' : [] | [string],
+  'canister_id' : Principal,
+}
 export type SortByDirection = { 'Asc' : null } |
   { 'Desc' : null };
 export interface StandardData {
@@ -1397,6 +1444,10 @@ export interface WasmModuleExtraChunks {
 }
 export interface _SERVICE {
   'cancel_request' : ActorMethod<[CancelRequestInput], CancelRequestResult>,
+  'canister_snapshots' : ActorMethod<
+    [CanisterSnapshotsInput],
+    CanisterSnapshotsResult
+  >,
   'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
   'create_request' : ActorMethod<[CreateRequestInput], CreateRequestResult>,

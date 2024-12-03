@@ -63,6 +63,15 @@ impl From<station_api::ListRequestsOperationTypeDTO> for ListRequestsOperationTy
             station_api::ListRequestsOperationTypeDTO::MonitorExternalCanister(canister_id) => {
                 ListRequestsOperationType::MonitorExternalCanister(canister_id)
             }
+            station_api::ListRequestsOperationTypeDTO::SnapshotExternalCanister(canister_id) => {
+                ListRequestsOperationType::SnapshotExternalCanister(canister_id)
+            }
+            station_api::ListRequestsOperationTypeDTO::RestoreExternalCanister(canister_id) => {
+                ListRequestsOperationType::RestoreExternalCanister(canister_id)
+            }
+            station_api::ListRequestsOperationTypeDTO::PruneExternalCanister(canister_id) => {
+                ListRequestsOperationType::PruneExternalCanister(canister_id)
+            }
             station_api::ListRequestsOperationTypeDTO::EditPermission => {
                 ListRequestsOperationType::EditPermission
             }
@@ -130,6 +139,15 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::MonitorExternalCanister => {
                 RequestOperationType::MonitorExternalCanister
             }
+            RequestOperationTypeDTO::SnapshotExternalCanister => {
+                RequestOperationType::SnapshotExternalCanister
+            }
+            RequestOperationTypeDTO::RestoreExternalCanister => {
+                RequestOperationType::RestoreExternalCanister
+            }
+            RequestOperationTypeDTO::PruneExternalCanister => {
+                RequestOperationType::PruneExternalCanister
+            }
             RequestOperationTypeDTO::EditPermission => RequestOperationType::EditPermission,
             RequestOperationTypeDTO::AddRequestPolicy => RequestOperationType::AddRequestPolicy,
             RequestOperationTypeDTO::EditRequestPolicy => RequestOperationType::EditRequestPolicy,
@@ -186,6 +204,15 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::MonitorExternalCanister => {
                 RequestOperationTypeDTO::MonitorExternalCanister
             }
+            RequestOperationType::SnapshotExternalCanister => {
+                RequestOperationTypeDTO::SnapshotExternalCanister
+            }
+            RequestOperationType::RestoreExternalCanister => {
+                RequestOperationTypeDTO::RestoreExternalCanister
+            }
+            RequestOperationType::PruneExternalCanister => {
+                RequestOperationTypeDTO::PruneExternalCanister
+            }
             RequestOperationType::EditPermission => RequestOperationTypeDTO::EditPermission,
             RequestOperationType::AddRequestPolicy => RequestOperationTypeDTO::AddRequestPolicy,
             RequestOperationType::EditRequestPolicy => RequestOperationTypeDTO::EditRequestPolicy,
@@ -237,6 +264,15 @@ impl From<RequestOperation> for RequestOperationType {
                 RequestOperationType::MonitorExternalCanister
             }
             RequestOperation::CallExternalCanister(_) => RequestOperationType::CallExternalCanister,
+            RequestOperation::SnapshotExternalCanister(_) => {
+                RequestOperationType::SnapshotExternalCanister
+            }
+            RequestOperation::RestoreExternalCanister(_) => {
+                RequestOperationType::RestoreExternalCanister
+            }
+            RequestOperation::PruneExternalCanister(_) => {
+                RequestOperationType::PruneExternalCanister
+            }
             RequestOperation::EditPermission(_) => RequestOperationType::EditPermission,
             RequestOperation::AddRequestPolicy(_) => RequestOperationType::AddRequestPolicy,
             RequestOperation::EditRequestPolicy(_) => RequestOperationType::EditRequestPolicy,
