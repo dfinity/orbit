@@ -1064,6 +1064,15 @@ impl ExternalCanisterService {
         strategy: MonitorExternalCanisterStrategy,
         cycle_obtain_strategy: Option<CycleObtainStrategy>,
     ) -> ServiceResult<()> {
+        if let Some(CycleObtainStrategy::MintFromNativeToken { .. }) = cycle_obtain_strategy {
+            Err(ExternalCanisterError::Failed {
+                reason: format!(
+                    "Minting from native token is not yet supported for canister {}",
+                    canister_id.to_text()
+                ),
+            })?;
+        }
+
         let mut external_canister = self.get_external_canister_by_canister_id(&canister_id)?;
         if external_canister.monitoring.is_some() {
             Err(ExternalCanisterError::Failed {
