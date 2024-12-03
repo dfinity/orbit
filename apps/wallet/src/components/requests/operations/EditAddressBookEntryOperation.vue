@@ -15,7 +15,9 @@
     <RequestOperationListRow v-if="formValue.address">
       <template #name>{{ $t('terms.address') }}</template>
       <template #content>
-        {{ formValue.address }}
+        <span class="text-break">
+          {{ formValue.address }}
+        </span>
       </template>
     </RequestOperationListRow>
   </div>

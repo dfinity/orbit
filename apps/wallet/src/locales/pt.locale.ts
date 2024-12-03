@@ -52,6 +52,7 @@ export default {
     search_users: 'Procurar usuários',
     search_user_groups: 'Procurar grupos de usuários',
     search_accounts: 'Procurar contas',
+    search_addresses: 'Procurar endereços...',
     destination_source: 'Destino / Origem',
     amount_token: 'Quantidade, {token}',
     no_transfers: 'Nenhuma transferência disponível.',
@@ -894,6 +895,7 @@ export default {
       no_results_found: 'Nenhum resultado encontrado.',
       error_fetching_address_book:
         'Erro ao carregar o livro de endereços, por favor, tente novamente.',
+      table_title: 'Endereços',
     },
     user_settings: {
       title: 'Informaçōes do usuário & Configuraçōes',

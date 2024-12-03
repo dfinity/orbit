@@ -53,6 +53,7 @@ export default {
     search_users: 'Rechercher des usagers',
     search_user_groups: "Rechercher des groupes d'usagers",
     search_accounts: 'Rechercher des comptes',
+    search_addresses: 'Rechercher des adresses...',
     destination_source: 'Destination / Source',
     amount_token: 'Montant, {token}',
     no_transfers: 'Aucun transfert trouvé.',
@@ -901,6 +902,7 @@ export default {
       no_results_found: "Aucune adresse trouvée dans le carnet d'adresses.",
       error_fetching_address_book:
         "Erreur de chargement du carnet d'adresses, veuillez essayer de nouveau.",
+      table_title: 'Adresses',
     },
     user_settings: {
       title: 'Détails du Compte et Paramètres',

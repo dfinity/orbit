@@ -52,6 +52,7 @@ export default {
     search_users: 'Search users',
     search_user_groups: 'Search user groups',
     search_accounts: 'Search accounts',
+    search_addresses: 'Search addresses...',
     destination_source: 'Destination / Source',
     amount_token: 'Amount, {token}',
     no_transfers: 'No transfer found.',
@@ -889,6 +890,7 @@ export default {
       btn_new_entry: 'New entry',
       no_results_found: 'No address book entry found.',
       error_fetching_address_book: 'Error fetching address book, please try again.',
+      table_title: 'Addresses',
     },
     user_settings: {
       title: 'Account Info & Settings',

@@ -1,9 +1,7 @@
 <template>
   <PageLayout>
     <template #main-header>
-      <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
-        <template #actions> </template>
-      </PageHeader>
+      <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs" />
     </template>
     <template #main-body>
       <PageBody>
@@ -19,113 +17,111 @@
         </AuthCheck>
 
         <AuthCheck :privileges="[Privilege.ListAccounts]">
-          <h2 class="text-body-1 font-weight-bold flex-grow-1 mb-3 mt-8">
-            {{ $t('pages.dashboard.available_assets') }}
-          </h2>
+          <VCard>
+            <VCardTitle class="flex-grow-1 pt-2 pt-3">
+              {{ $t('pages.dashboard.available_assets') }}
+            </VCardTitle>
+            <VDivider />
 
-          <DataLoader
-            v-model:force-reload="forceReload"
-            :load="fetchList"
-            :refresh-interval-ms="5000"
-            @loaded="
-              result => {
-                assets = result.assets;
-                privileges = result.privileges;
-              }
-            "
-          >
-            <VExpansionPanels class="elevation-4 rounded">
-              <VExpansionPanel v-for="asset in assets" :key="asset.id" class="rounded">
-                <VExpansionPanelTitle>
-                  <VRow>
-                    <VCol :cols="12" :sm="4">
-                      {{ asset.symbol }}
-                      <div>
-                        <small class="text-medium-emphasis">{{ asset.name }}</small>
-                      </div>
-                    </VCol>
-                    <VCol :cols="12" :sm="4" class="d-flex align-center">
-                      <VChip :size="'x-small'">
-                        {{ $t(`blockchains.${asset.blockchain}.name`) }}
-                      </VChip>
-                    </VCol>
-                    <VCol
-                      :cols="12"
-                      :sm="4"
-                      class="text-right pr-8 d-flex align-center justify-end"
-                    >
-                      {{ formatBalance(asset.totalBalance, asset.decimals) }} {{ asset.symbol }}
-                    </VCol>
-                  </VRow>
-                </VExpansionPanelTitle>
-                <VExpansionPanelText>
-                  <VDataTable
-                    class="mt-2"
-                    :headers="[
-                      { title: $t('terms.account'), key: 'account.name', sortable: false },
-                      { title: $t('terms.balance'), key: 'balance', sortable: false },
-                      {
-                        title: '',
-                        key: 'actions',
-                        sortable: false,
-                        headerProps: { class: 'w-0' },
-                      },
-                    ]"
-                    :items="asset.accountAssets"
-                    :hover="true"
-                    hide-default-footer
-                    density="compact"
-                    @click:row="
-                      (_event: unknown, item: DatatableSlotItem) => {
-                        $router.push({
-                          name: Routes.AccountAsset,
-                          params: {
-                            id: item.item.account.id,
-                            assetId: item.item.asset_id,
-                          },
-                        });
-                      }
-                    "
-                  >
-                    <template #bottom>
-                      <!--this hides the footer as pagination is not required-->
-                    </template>
-                    <template #header.balance="{ column }">
-                      <div class="d-flex justify-end">
-                        {{ column.title }}
-                      </div>
-                    </template>
-                    <template #item.balance="{ item: accountAsset }">
-                      <div class="d-flex justify-end">
-                        {{
-                          formatBalance(
-                            accountAsset.balance[0] ? accountAsset.balance[0].balance : 0n,
-                            asset.decimals,
-                          )
-                        }}
-                        {{ asset.symbol }}
-                      </div>
-                    </template>
-                    <template #item.actions="{ item: accountAsset }">
-                      <div class="d-flex justify-end">
-                        <TransferBtn
-                          v-if="
-                            privileges.some(p => p.id === accountAsset.account.id && p.can_transfer)
-                          "
-                          :account="accountAsset.account"
-                          :asset="asset"
-                          size="x-small"
-                          @click.stop=""
+            <VCardText class="px-0">
+              <DataLoader
+                v-model:force-reload="forceReload"
+                :load="fetchList"
+                :refresh-interval-ms="5000"
+                @loaded="
+                  result => {
+                    assets = result.assets;
+                    privileges = result.privileges;
+                  }
+                "
+              >
+                <VExpansionPanels flat>
+                  <VExpansionPanel v-for="asset in assets" :key="asset.id">
+                    <VExpansionPanelTitle>
+                      <VRow>
+                        <VCol :xs="6" :sm="4">
+                          {{ asset.symbol }}
+                          <div>
+                            <small class="text-medium-emphasis">{{ asset.name }}</small>
+                          </div>
+                        </VCol>
+                        <VCol :xs="6" :sm="4" class="d-none d-sm-flex align-center">
+                          <VChip :size="'x-small'">
+                            {{ $t(`blockchains.${asset.blockchain}.name`) }}
+                          </VChip>
+                        </VCol>
+                        <VCol
+                          :xs="6"
+                          :sm="4"
+                          class="text-right pr-8 d-flex align-center justify-end"
                         >
-                          {{ $t('pages.accounts.btn_new_transfer') }}
-                        </TransferBtn>
-                      </div>
-                    </template>
-                  </VDataTable>
-                </VExpansionPanelText>
-              </VExpansionPanel>
-            </VExpansionPanels>
-          </DataLoader>
+                          {{ formatBalance(asset.totalBalance, asset.decimals) }} {{ asset.symbol }}
+                        </VCol>
+                      </VRow>
+                    </VExpansionPanelTitle>
+                    <VExpansionPanelText>
+                      <VDataTable
+                        class="mt-2"
+                        :headers="assetTableHeaders"
+                        :items="asset.accountAssets"
+                        :hover="true"
+                        hide-default-footer
+                        density="compact"
+                        @click:row="
+                          (_event: unknown, item: DatatableSlotItem) => {
+                            $router.push({
+                              name: Routes.AccountAsset,
+                              params: {
+                                id: item.item.account.id,
+                                assetId: item.item.asset_id,
+                              },
+                            });
+                          }
+                        "
+                      >
+                        <template #bottom>
+                          <!--this hides the footer as pagination is not required-->
+                        </template>
+                        <template #header.balance="{ column }">
+                          <div class="d-flex justify-end">
+                            {{ column.title }}
+                          </div>
+                        </template>
+                        <template #item.balance="{ item: accountAsset }">
+                          <div class="d-flex justify-end">
+                            {{
+                              formatBalance(
+                                accountAsset.balance[0] ? accountAsset.balance[0].balance : 0n,
+                                asset.decimals,
+                              )
+                            }}
+                            {{ asset.symbol }}
+                          </div>
+                        </template>
+                        <template #item.actions="{ item: accountAsset }">
+                          <div class="d-none d-sm-flex justify-end">
+                            <TransferBtn
+                              v-if="
+                                privileges.some(
+                                  p => p.id === accountAsset.account.id && p.can_transfer,
+                                )
+                              "
+                              :account="accountAsset.account"
+                              :asset="asset"
+                              size="x-small"
+                              @click.stop=""
+                            >
+                              {{ $t('pages.accounts.btn_new_transfer') }}
+                            </TransferBtn>
+                          </div>
+                        </template>
+                      </VDataTable>
+                    </VExpansionPanelText>
+                  </VExpansionPanel>
+                </VExpansionPanels>
+              </DataLoader>
+            </VCardText>
+          </VCard>
         </AuthCheck>
       </PageBody>
     </template>
@@ -135,6 +131,7 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDisplay } from 'vuetify';
 import { VDataTable } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
@@ -162,6 +159,22 @@ const i18n = useI18n();
 const station = useStationStore();
 const pageTitle = computed(() => props.title || i18n.t('pages.dashboard.title'));
 const forceReload = ref(false);
+const { xs } = useDisplay();
+
+const assetTableHeaders = computed(() => [
+  { title: i18n.t('terms.account'), key: 'account.name', sortable: false },
+  { title: i18n.t('terms.balance'), key: 'balance', sortable: false },
+  ...(xs.value
+    ? []
+    : [
+        {
+          title: '',
+          key: 'actions',
+          sortable: false,
+          headerProps: { class: 'w-0' },
+        },
+      ]),
+]);
 
 // Vuetify does not expose this type, simplified version from the source code
 type DatatableSlotItem = {

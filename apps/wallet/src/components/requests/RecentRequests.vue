@@ -8,9 +8,9 @@
   >
     <template #default="{ data, loading }">
       <VCard :loading="data && data.requests.length > 0 ? false : loading" rounded v-bind="$attrs">
-        <VCardText class="py-0">
-          <div class="d-flex pt-4 ga-4 flex-wrap">
-            <div class="text-body-1 font-weight-bold flex-grow-1">
+        <VCardTitle>
+          <div class="d-flex pt-1 ga-4 flex-wrap">
+            <div class="flex-grow-1">
               {{ title && title.length ? title : $t('terms.requests') }}
             </div>
             <div class="d-flex flex-grow-1 justify-end flex-column flex-md-row ga-2">
@@ -27,30 +27,29 @@
               </slot>
             </div>
           </div>
-          <VList bg-color="transparent">
-            <VDivider
-              v-if="data && data.requests.length > 0"
-              class="mb-2 border-opacity-50"
-              thickness="1"
-            />
-            <RequestList
-              v-if="data"
-              :requests="data.requests"
-              :privileges="data.privileges"
-              :additionals="data.additional_info"
-              :hide-not-found="props.hideNotFound"
-              hide-headers
-              :mode="app.isMobile ? 'list' : 'grid'"
-              :show-items-title="props.showItemsTitle"
-              @approved="
-                disablePolling = false;
-                forceReload = true;
-              "
-              @opened="disablePolling = true"
-              @closed="disablePolling = false"
-            />
-          </VList>
-        </VCardText>
+        </VCardTitle>
+        <template v-if="data && data.requests.length">
+          <VDivider class="mb-2" />
+          <VCardText class="py-0 px-0">
+            <VList bg-color="transparent">
+              <RequestList
+                :requests="data.requests"
+                :privileges="data.privileges"
+                :additionals="data.additional_info"
+                :hide-not-found="props.hideNotFound"
+                hide-headers
+                mode="grid"
+                :show-items-title="props.showItemsTitle"
+                @approved="
+                  disablePolling = false;
+                  forceReload = true;
+                "
+                @opened="disablePolling = true"
+                @closed="disablePolling = false"
+              />
+            </VList>
+          </VCardText>
+        </template>
       </VCard>
     </template>
   </DataLoader>
@@ -62,7 +61,6 @@ import { RouteLocationRaw } from 'vue-router';
 import { VBtn, VCard, VCardText, VDivider, VList } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import { ListRequestsOperationType, RequestStatusCode } from '~/generated/station/station.did';
-import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import { ListRequestsArgs } from '~/types/station.types';
 import RequestList from './RequestList.vue';
@@ -83,7 +81,7 @@ const props = withDefaults(
   {
     title: undefined,
     types: undefined,
-    limit: 3,
+    limit: 4,
     sortBy: () => ({
       expirationDt: 'asc',
     }),
@@ -96,7 +94,6 @@ const props = withDefaults(
   },
 );
 
-const app = useAppStore();
 const station = useStationStore();
 const forceReload = ref(false);
 const disablePolling = ref(false);
