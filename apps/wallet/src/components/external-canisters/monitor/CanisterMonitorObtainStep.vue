@@ -18,10 +18,7 @@
     >
       <VRow class="mt-0">
         <VCol cols="12">
-          <MintFromNativeToken
-            v-model="selectedAccountId"
-            variant="filled"
-          ></MintFromNativeToken>
+          <MintFromNativeToken v-model="selectedAccountId" variant="filled"></MintFromNativeToken>
         </VCol>
       </VRow>
     </template>

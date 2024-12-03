@@ -76,8 +76,7 @@ export const mapRequestsOperationTypeToGroup = (
     variantIs(operationType, 'CallExternalCanister') ||
     variantIs(operationType, 'ConfigureExternalCanister') ||
     variantIs(operationType, 'FundExternalCanister') ||
-    variantIs(operationType, 'MonitorExternalCanister')
-    variantIs(operationType, 'FundExternalCanister') ||
+    variantIs(operationType, 'MonitorExternalCanister') ||
     variantIs(operationType, 'PruneExternalCanister') ||
     variantIs(operationType, 'RestoreExternalCanister') ||
     variantIs(operationType, 'SnapshotExternalCanister')
