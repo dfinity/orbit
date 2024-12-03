@@ -22,6 +22,7 @@ import { useAccountsAutocomplete } from '~/composables/autocomplete.composable';
 import { UUID } from '~/generated/station/station.did';
 import { requiredRule } from '~/utils/form.utils';
 import { useStationStore } from '~/stores/station.store.ts';
+import { ICP_LEDGER_CANISTER_ID } from '~/core/constants.core.ts';
 
 const autocomplete = useAccountsAutocomplete();
 
@@ -52,7 +53,7 @@ const station = useStationStore();
 
 const [icpAsset] = station.configuration.details.supported_assets.filter(asset =>
   asset.metadata.some(
-    data => data.key === 'ledger_canister_id' && data.value === 'ryjl3-tyaaa-aaaaa-aaaba-cai',
+    data => data.key === 'ledger_canister_id' && data.value === ICP_LEDGER_CANISTER_ID,
   ),
 );
 
