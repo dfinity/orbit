@@ -1,9 +1,7 @@
 <template>
   <PageLayout>
     <template #main-header>
-      <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs">
-        <template #actions> </template>
-      </PageHeader>
+      <PageHeader :title="pageTitle" :breadcrumbs="props.breadcrumbs" />
     </template>
     <template #main-body>
       <PageBody>
@@ -41,19 +39,19 @@
                   <VExpansionPanel v-for="asset in assets" :key="asset.id">
                     <VExpansionPanelTitle>
                       <VRow>
-                        <VCol :cols="12" :sm="4">
+                        <VCol :xs="6" :sm="4">
                           {{ asset.symbol }}
                           <div>
                             <small class="text-medium-emphasis">{{ asset.name }}</small>
                           </div>
                         </VCol>
-                        <VCol :cols="12" :sm="4" class="d-flex align-center">
+                        <VCol :xs="6" :sm="4" class="d-none d-sm-flex align-center">
                           <VChip :size="'x-small'">
                             {{ $t(`blockchains.${asset.blockchain}.name`) }}
                           </VChip>
                         </VCol>
                         <VCol
-                          :cols="12"
+                          :xs="6"
                           :sm="4"
                           class="text-right pr-8 d-flex align-center justify-end"
                         >
@@ -64,16 +62,7 @@
                     <VExpansionPanelText>
                       <VDataTable
                         class="mt-2"
-                        :headers="[
-                          { title: $t('terms.account'), key: 'account.name', sortable: false },
-                          { title: $t('terms.balance'), key: 'balance', sortable: false },
-                          {
-                            title: '',
-                            key: 'actions',
-                            sortable: false,
-                            headerProps: { class: 'w-0' },
-                          },
-                        ]"
+                        :headers="assetTableHeaders"
                         :items="asset.accountAssets"
                         :hover="true"
                         hide-default-footer
@@ -110,7 +99,7 @@
                           </div>
                         </template>
                         <template #item.actions="{ item: accountAsset }">
-                          <div class="d-flex justify-end">
+                          <div class="d-none d-sm-flex justify-end">
                             <TransferBtn
                               v-if="
                                 privileges.some(
@@ -142,6 +131,7 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDisplay } from 'vuetify';
 import { VDataTable } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
@@ -169,6 +159,22 @@ const i18n = useI18n();
 const station = useStationStore();
 const pageTitle = computed(() => props.title || i18n.t('pages.dashboard.title'));
 const forceReload = ref(false);
+const { xs } = useDisplay();
+
+const assetTableHeaders = computed(() => [
+  { title: i18n.t('terms.account'), key: 'account.name', sortable: false },
+  { title: i18n.t('terms.balance'), key: 'balance', sortable: false },
+  ...(xs.value
+    ? []
+    : [
+        {
+          title: '',
+          key: 'actions',
+          sortable: false,
+          headerProps: { class: 'w-0' },
+        },
+      ]),
+]);
 
 // Vuetify does not expose this type, simplified version from the source code
 type DatatableSlotItem = {
