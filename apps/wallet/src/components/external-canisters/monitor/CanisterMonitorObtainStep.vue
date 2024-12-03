@@ -20,7 +20,7 @@
         <VCol cols="12">
           <MintFromNativeToken
             v-model="selectedAccountId"
-            :variant="'filled'"
+            variant="filled"
           ></MintFromNativeToken>
         </VCol>
       </VRow>
