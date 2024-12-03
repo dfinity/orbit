@@ -38,7 +38,7 @@
                 :additionals="data.additional_info"
                 :hide-not-found="props.hideNotFound"
                 hide-headers
-                :mode="app.isMobile ? 'list' : 'grid'"
+                mode="grid"
                 :show-items-title="props.showItemsTitle"
                 @approved="
                   disablePolling = false;
@@ -61,7 +61,6 @@ import { RouteLocationRaw } from 'vue-router';
 import { VBtn, VCard, VCardText, VDivider, VList } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import { ListRequestsOperationType, RequestStatusCode } from '~/generated/station/station.did';
-import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import { ListRequestsArgs } from '~/types/station.types';
 import RequestList from './RequestList.vue';
@@ -82,7 +81,7 @@ const props = withDefaults(
   {
     title: undefined,
     types: undefined,
-    limit: 3,
+    limit: 4,
     sortBy: () => ({
       expirationDt: 'asc',
     }),
@@ -95,7 +94,6 @@ const props = withDefaults(
   },
 );
 
-const app = useAppStore();
 const station = useStationStore();
 const forceReload = ref(false);
 const disablePolling = ref(false);

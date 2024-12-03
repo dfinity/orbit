@@ -1,10 +1,9 @@
 <template>
   <VCard
-    :elevation="props.mode === 'grid' ? 0 : undefined"
     density="compact"
     :min-width="props.minWith"
+    :elevation="props.mode === 'grid' ? 0 : undefined"
     :rounded="props.mode === 'grid' ? 0 : undefined"
-    :class="{ 'br-on-background': props.mode === 'grid' }"
   >
     <VCardTitle v-if="props.showTitle" class="text-body-2 font-weight-bold">
       {{

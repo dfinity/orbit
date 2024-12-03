@@ -1,27 +1,25 @@
 <template>
-  <VProgressLinear v-if="props.loading" indeterminate color="primary" data-test-id="loading" />
-  <div
-    v-else
-    class="d-flex flex-wrap ga-2"
-    :class="{ 'flex-row': props.mode === 'grid', 'flex-column': props.mode === 'list' }"
-  >
-    <RequestListItem
-      v-for="request in props.requests"
-      :key="request.id"
-      :request="request"
-      :details="getDetails(request)"
-      :mode="props.mode"
-      :show-title="props.showItemsTitle"
-      @approved="emit('approved', request)"
-      @opened="emit('opened', request)"
-      @closed="emit('closed', request)"
-    />
-    <div
-      v-if="!props.requests.length && !props.hideNotFound"
-      class="d-block"
-      data-test-id="requests-empty-list"
-    >
-      {{ notFoundText }}
+  <div class="container">
+    <VProgressLinear v-if="props.loading" indeterminate color="primary" data-test-id="loading" />
+    <div v-else :class="{ grid: props.mode === 'grid', list: props.mode === 'list' }">
+      <RequestListItem
+        v-for="request in props.requests"
+        :key="request.id"
+        :request="request"
+        :details="getDetails(request)"
+        :mode="props.mode"
+        :show-title="props.showItemsTitle"
+        @approved="emit('approved', request)"
+        @opened="emit('opened', request)"
+        @closed="emit('closed', request)"
+      />
+      <div
+        v-if="!props.requests.length && !props.hideNotFound"
+        class="d-block"
+        data-test-id="requests-empty-list"
+      >
+        {{ notFoundText }}
+      </div>
     </div>
   </div>
 </template>
@@ -81,3 +79,53 @@ const getDetails = (request: Request): RequestDetails => {
   };
 };
 </script>
+
+<style scoped>
+.container {
+  container-type: inline-size;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@container (max-width: 799px) or ((min-width: 1200px) and (max-width: 1799px)) {
+  .grid > *:nth-child(n + 4) {
+    display: none;
+  }
+}
+@container (min-width: 800px) and (max-width: 1199px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .grid > *:nth-child(2n + 1) {
+    border-right: 1px solid rgba(255, 255, 255, var(--v-border-opacity));
+  }
+}
+
+@container (min-width: 1200px) and (max-width: 1799px) {
+  .grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .grid > *:not(:nth-child(3)) {
+    border-right: 1px solid rgba(255, 255, 255, var(--v-border-opacity));
+  }
+}
+
+@container (min-width: 1801px) {
+  .grid {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+  .grid > *:not(:nth-child(4)) {
+    border-right: 1px solid rgba(255, 255, 255, var(--v-border-opacity));
+  }
+}
+</style>
