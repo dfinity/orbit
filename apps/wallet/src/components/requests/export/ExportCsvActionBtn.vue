@@ -183,7 +183,6 @@ const startDownload = async (idx: number): Promise<void> => {
     } while (offset !== undefined);
 
     const requestList = Array.from(requests.values());
-    requestList.sort((a, b) => a.request.created_at.localeCompare(b.request.created_at));
 
     const csv = mapRequestsToCsvTable(downloadItem.group, requestList);
     const fileName =

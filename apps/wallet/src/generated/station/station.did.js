@@ -1061,6 +1061,12 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
+  const SortByDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
+  const ListRequestsSortBy = IDL.Variant({
+    'ExpirationDt' : SortByDirection,
+    'LastModificationDt' : SortByDirection,
+    'CreatedAt' : SortByDirection,
+  });
   const ListRequestsOperationType = IDL.Variant({
     'RemoveAsset' : IDL.Null,
     'AddUserGroup' : IDL.Null,
@@ -1093,6 +1099,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAccount' : IDL.Null,
   });
   const GetNextApprovableRequestInput = IDL.Record({
+    'sort_by' : IDL.Opt(ListRequestsSortBy),
     'excluded_request_ids' : IDL.Vec(UUID),
     'operation_types' : IDL.Opt(IDL.Vec(ListRequestsOperationType)),
   });
@@ -1276,7 +1283,6 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : Error,
   });
-  const SortByDirection = IDL.Variant({ 'Asc' : IDL.Null, 'Desc' : IDL.Null });
   const ListExternalCanistersSortInput = IDL.Variant({
     'Name' : SortByDirection,
   });
@@ -1402,11 +1408,6 @@ export const idlFactory = ({ IDL }) => {
       'policies' : IDL.Vec(RequestPolicy),
     }),
     'Err' : Error,
-  });
-  const ListRequestsSortBy = IDL.Variant({
-    'ExpirationDt' : SortByDirection,
-    'LastModificationDt' : SortByDirection,
-    'CreatedAt' : SortByDirection,
   });
   const RequestStatusCode = IDL.Variant({
     'Failed' : IDL.Null,
