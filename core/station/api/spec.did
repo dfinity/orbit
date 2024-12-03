@@ -845,6 +845,47 @@ type CallExternalCanisterOperation = record {
   arg : opt blob;
 };
 
+type SnapshotExternalCanisterOperationInput = record {
+  // The canister to snapshot.
+  canister_id : principal;
+  // A snapshot to be replaced.
+  replace_snapshot : opt text;
+  // Should a snapshot be taken if the external canister fails to stop.
+  force : bool;
+};
+
+type SnapshotExternalCanisterOperation = record {
+  input : SnapshotExternalCanisterOperationInput;
+  // The snapshot id of the new snapshot.
+  snapshot_id : opt text;
+};
+
+type RestoreExternalCanisterOperationInput = record {
+  // The canister to restore from a snapshot.
+  canister_id : principal;
+  // A snapshot to be restored.
+  snapshot_id : text;
+};
+
+type RestoreExternalCanisterOperation = record {
+  input : RestoreExternalCanisterOperationInput;
+};
+
+type PruneExternalCanisterOperationInput = record {
+  // The canister to prune.
+  canister_id : principal;
+  // The resource to prune.
+  prune : variant {
+    chunk_store;
+    snapshot : text;
+    state;
+  };
+};
+
+type PruneExternalCanisterOperation = record {
+  input : PruneExternalCanisterOperationInput;
+};
+
 type EditPermissionOperationInput = record {
   // The updated resource that this policy will apply to.
   resource : Resource;
@@ -936,6 +977,12 @@ type RequestOperation = variant {
   FundExternalCanister : FundExternalCanisterOperation;
   // An operation for calling an external canister.
   CallExternalCanister : CallExternalCanisterOperation;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister : SnapshotExternalCanisterOperation;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister : RestoreExternalCanisterOperation;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : PruneExternalCanisterOperation;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperation;
   // An operation for adding a request policy.
@@ -991,6 +1038,12 @@ type RequestOperationInput = variant {
   CallExternalCanister : CallExternalCanisterOperationInput;
   // An operation for funding an external canister.
   FundExternalCanister : FundExternalCanisterOperationInput;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister : SnapshotExternalCanisterOperationInput;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister : RestoreExternalCanisterOperationInput;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : PruneExternalCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
   // An operation for adding a request policy.
@@ -1046,6 +1099,12 @@ type RequestOperationType = variant {
   CallExternalCanister;
   // An operation for sending cycles to an external canister.
   FundExternalCanister;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister;
+  // An operation for pruning an external canister.
+  PruneExternalCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -1200,6 +1259,12 @@ type ListRequestsOperationType = variant {
   CallExternalCanister : opt principal;
   // An operation for sending cycles to an external canister.
   FundExternalCanister : opt principal;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister : opt principal;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister : opt principal;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : opt principal;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -2883,6 +2948,21 @@ type GetExternalCanisterFiltersResult = variant {
   Err : Error;
 };
 
+type CanisterSnapshotsInput = record {
+  canister_id : principal;
+};
+
+type CanisterSnapshotsResponse = vec record {
+  snapshot_id : text;
+  taken_at_timestamp : TimestampRFC3339;
+  total_size : nat64;
+};
+
+type CanisterSnapshotsResult = variant {
+  Ok : CanisterSnapshotsResponse;
+  Err : Error;
+};
+
 type CanisterStatusResult = variant {
   Ok : CanisterStatusResponse;
   Err : Error;
@@ -2999,6 +3079,8 @@ service : (opt SystemInstall) -> {
   list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
   // Get canister status of a canister controlled by the station.
   canister_status : (input : CanisterStatusInput) -> (CanisterStatusResult);
+  // Get snapshots of a canister controlled by the station.
+  canister_snapshots : (input : CanisterSnapshotsInput) -> (CanisterSnapshotsResult);
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
   // Internal endpoint used by the upgrader canister to notify the station about a failed station upgrade request.

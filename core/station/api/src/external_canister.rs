@@ -381,3 +381,48 @@ pub struct FundExternalCanisterOperationInput {
 }
 
 pub type FundExternalCanisterOperationDTO = FundExternalCanisterOperationInput;
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct SnapshotExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub replace_snapshot: Option<String>,
+    pub force: bool,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct SnapshotExternalCanisterOperationDTO {
+    pub snapshot_id: Option<String>,
+    pub input: SnapshotExternalCanisterOperationInput,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct RestoreExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub snapshot_id: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct RestoreExternalCanisterOperationDTO {
+    pub input: RestoreExternalCanisterOperationInput,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum PruneExternalCanisterResourceDTO {
+    #[serde(rename = "snapshot")]
+    Snapshot(String),
+    #[serde(rename = "chunk_store")]
+    ChunkStore,
+    #[serde(rename = "state")]
+    State,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct PruneExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub prune: PruneExternalCanisterResourceDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct PruneExternalCanisterOperationDTO {
+    pub input: PruneExternalCanisterOperationInput,
+}
