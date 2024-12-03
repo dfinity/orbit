@@ -670,9 +670,9 @@ dependencies = [
 
 [[package]]
 name = "canfund"
-version = "0.2.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07a46d6265ed2ae006bd01dfc261cb67312f14269648b8ba87be1cc820806f3a"
+checksum = "087c0440ceb58ee2354e61caf0a2388698f9f566cad192c7169b9c03c461ad9f"
 dependencies = [
  "async-trait",
  "candid",
@@ -2429,9 +2429,9 @@ dependencies = [
 
 [[package]]
 name = "ic-stable-structures"
-version = "0.6.6"
+version = "0.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcaf89c1bc326c72498bcc0cd954f2edf718c018e7c586d2193d701d3c9af29a"
+checksum = "b492c5a16455ae78623eaa12ead96dda6c69a83c535b1b00789f19b381c8a24c"
 dependencies = [
  "ic_principal",
 ]
@@ -2866,9 +2866,9 @@ dependencies = [
 
 [[package]]
 name = "libm"
-version = "0.2.8"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ec2a862134d2a7d32d7983ddcdd1c4923530833c9f2ea1a44fc5fa473989058"
+checksum = "8355be11b20d696c8f18f6cc018c4e372165b1fa8126cef092399c9951984ffa"
 
 [[package]]
 name = "libredox"
@@ -4721,6 +4721,8 @@ name = "station-api"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "hex",
+ "ic-cdk 0.16.0",
  "orbit-essentials",
  "serde",
  "serde_bytes",

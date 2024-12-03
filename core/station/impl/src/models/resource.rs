@@ -17,7 +17,7 @@ use crate::{
     models::CanisterMethod,
 };
 
-/// The deserile implementation is available in the migration module for the `Resource` enum, this is
+/// The deserialize implementation is available in the migration module for the `Resource` enum, this is
 /// because the enum had a backward incompatible change in the past and the migration module is handling
 /// the deserialization of the old data.
 #[storable]
@@ -407,7 +407,7 @@ impl Resource {
 
                     // The following additional resources also enable the user to perform the `Fund` action.
                     associated_resources.push(Resource::ExternalCanister(
-                        ExternalCanisterResourceAction::Change(ExternalCanisterId::Any),
+                        ExternalCanisterResourceAction::Change(ExternalCanisterId::Canister(*id)),
                     ));
 
                     associated_resources

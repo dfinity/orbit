@@ -22,9 +22,9 @@ type PaginationInput = record {
 type RequestPolicyCallerPrivileges = record {
   // The request policy id.
   id : UUID;
-  // Wether or not the caller can edit the resource.
+  // Whether or not the caller can edit the resource.
   can_edit : bool;
-  // Wether or not the caller can delete the resource.
+  // Whether or not the caller can delete the resource.
   can_delete : bool;
 };
 
@@ -340,7 +340,7 @@ type TransferOperationInput = record {
   // The network to use for the transaction, if not the
   // default network of the account will be used.
   network : opt Network;
-  // Trasanctions can be tagged with an optional additional info
+  // Transactions can be tagged with an optional additional info
   // (e.g. a nonce in the case of an Ethereum transaction)
   metadata : vec TransferMetadata;
 };
@@ -786,6 +786,63 @@ type FundExternalCanisterOperationInput = record {
 // The request operation for funding an external canister from the station.
 type FundExternalCanisterOperation = FundExternalCanisterOperationInput;
 
+type MonitoringExternalCanisterCyclesThresholdInput = record {
+  /// The min cycles threshold to trigger the funding operation.
+  min_cycles : nat;
+  /// The cycles to fund the canister with when the threshold is triggered.
+  fund_cycles : nat;
+};
+
+type MonitoringExternalCanisterEstimatedRuntimeInput = record {
+  /// The estimated min runtime in seconds to trigger the funding operation.
+  min_runtime_secs : nat64;
+  /// The runtime seconds to add to the estimated runtime.
+  fund_runtime_secs : nat64;
+  /// The maximum cycles to fund the canister with, only used when the estimated runtime is available.
+  max_runtime_cycles_fund : nat;
+  /// The fallback min cycles to trigger the funding operation when the estimated runtime is not available,
+  /// or the cycles balance is below the threshold.
+  fallback_min_cycles : nat;
+  /// The fallback cycles to fund the canister with when the estimated runtime is not available,
+  /// or the cycles balance is below the threshold.
+  fallback_fund_cycles : nat;
+};
+
+// The input type for specifying the strategy for monitoring an external canister.
+type MonitorExternalCanisterStrategyInput = variant {
+  // Fund the canister when the balance is below the threshold.
+  BelowThreshold : MonitoringExternalCanisterCyclesThresholdInput;
+  // Fund the canister based on the estimated run time in seconds.
+  BelowEstimatedRuntime : MonitoringExternalCanisterEstimatedRuntimeInput;
+  // Fund the canister at a fixed interval with the specified amount of cycles.
+  Always : nat;
+};
+
+// The input type for specifying the strategy for monitoring an external canister.
+type MonitorExternalCanisterStartInput = record {
+  // The strategy for funding the canister.
+  funding_strategy : MonitorExternalCanisterStrategyInput;
+  // The strategy for obtaining cycles for the funding operation.
+  cycle_obtain_strategy: opt CycleObtainStrategyInput;
+};
+
+// The operation kind for monitoring an external canister in the station.
+type MonitorExternalCanisterOperationKind = variant {
+  Start : MonitorExternalCanisterStartInput;
+  Stop;
+};
+
+// The input type for monitoring an external canister in the station.
+type MonitorExternalCanisterOperationInput = record {
+  // The external canister to monitor.
+  canister_id : principal;
+  // The kind of funding operation to perform.
+  kind : MonitorExternalCanisterOperationKind;
+};
+
+// The request operation for monitoring an external canister from the station.
+type MonitorExternalCanisterOperation = MonitorExternalCanisterOperationInput;
+
 type CreateExternalCanisterOperation = record {
   canister_id : opt principal;
   input : CreateExternalCanisterOperationInput;
@@ -843,6 +900,47 @@ type CallExternalCanisterOperation = record {
   // This field is not populated in list responses, only when using `get_request` and
   // setting `with_full_info` to `opt true` to avoid going over the response size limit.
   arg : opt blob;
+};
+
+type SnapshotExternalCanisterOperationInput = record {
+  // The canister to snapshot.
+  canister_id : principal;
+  // A snapshot to be replaced.
+  replace_snapshot : opt text;
+  // Should a snapshot be taken if the external canister fails to stop.
+  force : bool;
+};
+
+type SnapshotExternalCanisterOperation = record {
+  input : SnapshotExternalCanisterOperationInput;
+  // The snapshot id of the new snapshot.
+  snapshot_id : opt text;
+};
+
+type RestoreExternalCanisterOperationInput = record {
+  // The canister to restore from a snapshot.
+  canister_id : principal;
+  // A snapshot to be restored.
+  snapshot_id : text;
+};
+
+type RestoreExternalCanisterOperation = record {
+  input : RestoreExternalCanisterOperationInput;
+};
+
+type PruneExternalCanisterOperationInput = record {
+  // The canister to prune.
+  canister_id : principal;
+  // The resource to prune.
+  prune : variant {
+    chunk_store;
+    snapshot : text;
+    state;
+  };
+};
+
+type PruneExternalCanisterOperation = record {
+  input : PruneExternalCanisterOperationInput;
 };
 
 type EditPermissionOperationInput = record {
@@ -934,8 +1032,16 @@ type RequestOperation = variant {
   ConfigureExternalCanister : ConfigureExternalCanisterOperation;
   // An operation for funding an external canister.
   FundExternalCanister : FundExternalCanisterOperation;
+  // An operation for monitoring an external canister.
+  MonitorExternalCanister : MonitorExternalCanisterOperation;
   // An operation for calling an external canister.
   CallExternalCanister : CallExternalCanisterOperation;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister : SnapshotExternalCanisterOperation;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister : RestoreExternalCanisterOperation;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : PruneExternalCanisterOperation;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperation;
   // An operation for adding a request policy.
@@ -991,6 +1097,14 @@ type RequestOperationInput = variant {
   CallExternalCanister : CallExternalCanisterOperationInput;
   // An operation for funding an external canister.
   FundExternalCanister : FundExternalCanisterOperationInput;
+  // An operation for monitoring an external canister.
+  MonitorExternalCanister : MonitorExternalCanisterOperationInput;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister : SnapshotExternalCanisterOperationInput;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister : RestoreExternalCanisterOperationInput;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : PruneExternalCanisterOperationInput;
   // An operation for editing an permission.
   EditPermission : EditPermissionOperationInput;
   // An operation for adding a request policy.
@@ -1046,6 +1160,14 @@ type RequestOperationType = variant {
   CallExternalCanister;
   // An operation for sending cycles to an external canister.
   FundExternalCanister;
+  // An operation for monitoring cycles of an external canister.
+  MonitorExternalCanister;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister;
+  // An operation for pruning an external canister.
+  PruneExternalCanister;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -1080,7 +1202,7 @@ type RequestExecutionSchedule = variant {
 type RequestCallerPrivileges = record {
   // The request id.
   id : UUID;
-  // Wether or not the caller can submit an approval decision.
+  // Whether or not the caller can submit an approval decision.
   can_approve : bool;
 };
 
@@ -1200,6 +1322,14 @@ type ListRequestsOperationType = variant {
   CallExternalCanister : opt principal;
   // An operation for sending cycles to an external canister.
   FundExternalCanister : opt principal;
+  // An operation for monitoring cycles of an external canister.
+  MonitorExternalCanister : opt principal;
+  // An operation for snapshotting an external canister.
+  SnapshotExternalCanister : opt principal;
+  // An operation for restoring an external canister from a snapshot.
+  RestoreExternalCanister : opt principal;
+  // An operation for pruning an external canister.
+  PruneExternalCanister : opt principal;
   // An operation for editing an permission.
   EditPermission;
   // An operation for adding a request policy.
@@ -1320,6 +1450,8 @@ type GetNextApprovableRequestInput = record {
   operation_types : opt vec ListRequestsOperationType;
   // Exclude requests the user indicated to skip.
   excluded_request_ids : vec UUID;
+  // Get the next request from a list sorted by the given field.
+  sort_by : opt ListRequestsSortBy;
 };
 
 // Result type for retrieving a request.
@@ -1426,9 +1558,9 @@ type ListAccountTransfersResult = variant {
 type UserGroupCallerPrivileges = record {
   // The user id.
   id : UUID;
-  // Wether or not the caller can edit the user group.
+  // Whether or not the caller can edit the user group.
   can_edit : bool;
-  // Wether or not the caller can delete the user group.
+  // Whether or not the caller can delete the user group.
   can_delete : bool;
 };
 
@@ -1451,7 +1583,7 @@ type UserStatus = variant {
 type UserCallerPrivileges = record {
   // The user id.
   id : UUID;
-  // Wether or not the caller can edit the user.
+  // Whether or not the caller can edit the user.
   can_edit : bool;
 };
 
@@ -1587,9 +1719,9 @@ type AccountMetadata = record {
 type AccountCallerPrivileges = record {
   // The account id that the caller has privileges for.
   id : UUID;
-  // Wether or not the caller can edit the account.
+  // Whether or not the caller can edit the account.
   can_edit : bool;
-  // Wether or not the caller can request transfers from the account.
+  // Whether or not the caller can request transfers from the account.
   can_transfer : bool;
 };
 
@@ -1706,9 +1838,9 @@ type AddressBookMetadata = record {
 type AddressBookEntryCallerPrivileges = record {
   // The address book entry id.
   id : UUID;
-  // Wether or not the caller can edit the address book entry.
+  // Whether or not the caller can edit the address book entry.
   can_edit : bool;
-  // Wether or not the caller can delete the address book entry.
+  // Whether or not the caller can delete the address book entry.
   can_delete : bool;
 };
 
@@ -2117,7 +2249,7 @@ type Resource = variant {
 type PermissionCallerPrivileges = record {
   // The resource that the caller has privileges for.
   resource : Resource;
-  // Wether or not the caller can edit the resource.
+  // Whether or not the caller can edit the resource.
   can_edit : bool;
 };
 
@@ -2177,7 +2309,7 @@ type ListPermissionsResult = variant {
 };
 
 type GetPermissionInput = record {
-  // The resource to retrive the permission for.
+  // The resource to retrieve the permission for.
   resource : Resource;
 };
 
@@ -2767,6 +2899,8 @@ type ExternalCanister = record {
   created_at : TimestampRFC3339;
   // The time at which the canister was last modified, if available.
   modified_at : opt TimestampRFC3339;
+  // Monitoring configuration for the canister.
+  monitoring : opt MonitorExternalCanisterStartInput;
 };
 
 // The state of the external canister.
@@ -2801,9 +2935,9 @@ type ExternalCanisterCallerPrivileges = record {
   id : UUID;
   // The canister id.
   canister_id : principal;
-  // Wether or not the caller can edit the external canister.
+  // Whether or not the caller can edit the external canister.
   can_change : bool;
-  // Wether or not the caller can fund the external canister.
+  // Whether or not the caller can fund the external canister.
   can_fund : bool;
   // The list of methods that the caller can call on the external canister.
   can_call : vec ExternalCanisterCallerMethodsPrivileges;
@@ -2878,6 +3012,21 @@ type GetExternalCanisterFiltersResult = variant {
     // The list of labels that are used by the external canisters.
     labels : opt vec text;
   };
+  Err : Error;
+};
+
+type CanisterSnapshotsInput = record {
+  canister_id : principal;
+};
+
+type CanisterSnapshotsResponse = vec record {
+  snapshot_id : text;
+  taken_at_timestamp : TimestampRFC3339;
+  total_size : nat64;
+};
+
+type CanisterSnapshotsResult = variant {
+  Ok : CanisterSnapshotsResponse;
   Err : Error;
 };
 
@@ -2997,6 +3146,8 @@ service : (opt SystemInstall) -> {
   list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
   // Get canister status of a canister controlled by the station.
   canister_status : (input : CanisterStatusInput) -> (CanisterStatusResult);
+  // Get snapshots of a canister controlled by the station.
+  canister_snapshots : (input : CanisterSnapshotsInput) -> (CanisterSnapshotsResult);
   // HTTP Protocol interface.
   http_request : (HttpRequest) -> (HttpResponse) query;
   // Internal endpoint used by the upgrader canister to notify the station about a failed station upgrade request.

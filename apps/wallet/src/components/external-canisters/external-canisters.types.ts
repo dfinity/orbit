@@ -3,8 +3,10 @@ import {
   Allow,
   CanisterInstallMode,
   CanisterMethod,
+  CycleObtainStrategyInput,
   ExternalCanisterChangeRequestPolicyRuleInput,
   LogVisibility,
+  MonitorExternalCanisterStrategyInput,
   ValidationMethodResourceTarget,
 } from '~/generated/station/station.did';
 
@@ -72,4 +74,33 @@ export interface CanisterCallReviewContext {
   validationMethod?: CanisterMethod;
   reply?: Uint8Array;
   candidIdl?: string;
+}
+
+export interface CanisterMonitorModel {
+  canisterId?: Principal;
+  fundingStrategy?: MonitorExternalCanisterStrategyInput;
+  cycleObtainStrategy?: CycleObtainStrategyInput;
+}
+
+export interface CanisterSnapshot {
+  snapshotId: string;
+  totalSize: number;
+  takenAtTimestamp: string;
+}
+
+export interface CanisterCreateSnapshotModel {
+  canisterId?: Principal;
+  comment?: string;
+}
+
+export interface CanisterRestoreSnapshotModel {
+  canisterId?: Principal;
+  snapshotId?: string;
+  comment?: string;
+}
+
+export interface CanisterRemoveSnapshotModel {
+  canisterId?: Principal;
+  snapshotId?: string;
+  comment?: string;
 }

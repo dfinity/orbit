@@ -934,7 +934,7 @@ struct StoreArg {
     pub sha256: Option<Vec<u8>>,
 }
 
-fn hash(data: &Vec<u8>) -> Vec<u8> {
+pub(crate) fn hash(data: &Vec<u8>) -> Vec<u8> {
     let mut hasher = Sha256::new();
     hasher.update(data);
     hasher.finalize().to_vec()
@@ -1094,6 +1094,13 @@ pub(crate) fn add_external_canister_call_any_method_permission_and_approval(
         }),
     )
     .expect("Failed to add approval policy to call external canister");
+}
+
+pub(crate) fn deploy_test_canister(env: &PocketIc, controller: Principal) -> Principal {
+    let test_canister = create_canister(env, controller);
+    let test_canister_wasm = get_canister_wasm("test_canister");
+    env.install_canister(test_canister, test_canister_wasm, vec![], Some(controller));
+    test_canister
 }
 
 pub fn expect_await_call_result<T>(result: WasmResult) -> T

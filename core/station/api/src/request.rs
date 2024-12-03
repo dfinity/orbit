@@ -1,5 +1,7 @@
 use super::{
-    EditAccountOperationInput, TimestampRfc3339, TransferOperationDTO, TransferOperationInput,
+    EditAccountOperationInput, MonitorExternalCanisterOperationDTO,
+    MonitorExternalCanisterOperationInput, TimestampRfc3339, TransferOperationDTO,
+    TransferOperationInput,
 };
 use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
@@ -14,11 +16,14 @@ use crate::{
     EditPermissionOperationInput, EditUserGroupOperationDTO, EditUserGroupOperationInput,
     EditUserOperationDTO, EditUserOperationInput, FundExternalCanisterOperationDTO,
     FundExternalCanisterOperationInput, ManageSystemInfoOperationDTO,
-    ManageSystemInfoOperationInput, PaginationInput, RemoveAddressBookEntryOperationDTO,
+    ManageSystemInfoOperationInput, PaginationInput, PruneExternalCanisterOperationDTO,
+    PruneExternalCanisterOperationInput, RemoveAddressBookEntryOperationDTO,
     RemoveAddressBookEntryOperationInput, RemoveAssetOperationDTO, RemoveAssetOperationInput,
     RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
-    RequestPolicyRuleDTO, RequestSpecifierDTO, SetDisasterRecoveryOperationDTO,
-    SetDisasterRecoveryOperationInput, SortDirection, SystemUpgradeOperationDTO,
+    RequestPolicyRuleDTO, RequestSpecifierDTO, RestoreExternalCanisterOperationDTO,
+    RestoreExternalCanisterOperationInput, SetDisasterRecoveryOperationDTO,
+    SetDisasterRecoveryOperationInput, SnapshotExternalCanisterOperationDTO,
+    SnapshotExternalCanisterOperationInput, SortDirection, SystemUpgradeOperationDTO,
     SystemUpgradeOperationInput, UuidDTO,
 };
 use candid::{CandidType, Deserialize, Principal};
@@ -79,6 +84,10 @@ pub enum RequestOperationDTO {
     ConfigureExternalCanister(Box<ConfigureExternalCanisterOperationDTO>),
     CallExternalCanister(Box<CallExternalCanisterOperationDTO>),
     FundExternalCanister(Box<FundExternalCanisterOperationDTO>),
+    MonitorExternalCanister(Box<MonitorExternalCanisterOperationDTO>),
+    SnapshotExternalCanister(Box<SnapshotExternalCanisterOperationDTO>),
+    RestoreExternalCanister(Box<RestoreExternalCanisterOperationDTO>),
+    PruneExternalCanister(Box<PruneExternalCanisterOperationDTO>),
     EditPermission(Box<EditPermissionOperationDTO>),
     AddRequestPolicy(Box<AddRequestPolicyOperationDTO>),
     EditRequestPolicy(Box<EditRequestPolicyOperationDTO>),
@@ -109,6 +118,10 @@ pub enum RequestOperationInput {
     ConfigureExternalCanister(ConfigureExternalCanisterOperationInput),
     CallExternalCanister(CallExternalCanisterOperationInput),
     FundExternalCanister(FundExternalCanisterOperationInput),
+    MonitorExternalCanister(MonitorExternalCanisterOperationInput),
+    SnapshotExternalCanister(SnapshotExternalCanisterOperationInput),
+    RestoreExternalCanister(RestoreExternalCanisterOperationInput),
+    PruneExternalCanister(PruneExternalCanisterOperationInput),
     EditPermission(EditPermissionOperationInput),
     AddRequestPolicy(AddRequestPolicyOperationInput),
     EditRequestPolicy(EditRequestPolicyOperationInput),
@@ -138,6 +151,10 @@ pub enum RequestOperationTypeDTO {
     CreateExternalCanister,
     CallExternalCanister,
     FundExternalCanister,
+    MonitorExternalCanister,
+    SnapshotExternalCanister,
+    RestoreExternalCanister,
+    PruneExternalCanister,
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,
@@ -167,6 +184,10 @@ pub enum ListRequestsOperationTypeDTO {
     CreateExternalCanister,
     CallExternalCanister(Option<Principal>),
     FundExternalCanister(Option<Principal>),
+    MonitorExternalCanister(Option<Principal>),
+    SnapshotExternalCanister(Option<Principal>),
+    RestoreExternalCanister(Option<Principal>),
+    PruneExternalCanister(Option<Principal>),
     EditPermission,
     AddRequestPolicy,
     EditRequestPolicy,
@@ -298,6 +319,7 @@ pub struct ListRequestsResponse {
 pub struct GetNextApprovableRequestInput {
     pub excluded_request_ids: Vec<UuidDTO>,
     pub operation_types: Option<Vec<ListRequestsOperationTypeDTO>>,
+    pub sort_by: Option<ListRequestsSortBy>,
 }
 
 pub type GetNextApprovableRequestResponse = Option<GetRequestResponse>;

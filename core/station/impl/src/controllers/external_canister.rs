@@ -11,7 +11,7 @@ use orbit_essentials::with_middleware;
 use station_api::{
     ExternalCanisterCallerPrivilegesDTO, GetExternalCanisterFiltersInput,
     GetExternalCanisterFiltersResponse, GetExternalCanisterInput, GetExternalCanisterResponse,
-    ListExternalCanistersInput, ListExternalCanistersResponse,
+    ListExternalCanistersInput, ListExternalCanistersResponse, Snapshot,
 };
 use std::sync::Arc;
 
@@ -19,6 +19,11 @@ use std::sync::Arc;
 #[update(name = "canister_status")]
 async fn canister_status(input: CanisterIdRecord) -> ApiResult<CanisterStatusResponse> {
     CONTROLLER.canister_status(input).await
+}
+
+#[update(name = "canister_snapshots")]
+async fn canister_snapshots(input: CanisterIdRecord) -> ApiResult<Vec<Snapshot>> {
+    CONTROLLER.canister_snapshots(input).await
 }
 
 #[query(name = "get_external_canister")]
@@ -61,6 +66,14 @@ impl ExternalCanisterController {
     #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]
     async fn canister_status(&self, input: CanisterIdRecord) -> ApiResult<CanisterStatusResponse> {
         self.canister_service.canister_status(input).await
+    }
+
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]
+    async fn canister_snapshots(&self, input: CanisterIdRecord) -> ApiResult<Vec<Snapshot>> {
+        self.canister_service
+            .canister_snapshots(input)
+            .await
+            .map(|snapshots| snapshots.into_iter().map(|s| s.into()).collect())
     }
 
     #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]

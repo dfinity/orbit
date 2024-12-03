@@ -312,7 +312,6 @@ impl<'de> Deserialize<'de> for Account {
             MIGRATED_ENTRIES.with(|entries| {
                 *entries.borrow_mut() += 1;
             });
-
             if let Some(address) = &pre_migration_entry.address {
                 MIGRATED_ACCOUNTS.with(|accounts| {
                     accounts
