@@ -174,6 +174,15 @@ impl RequestService {
             vec![]
         };
 
+        let mut statuses: Vec<RequestStatusCode> = input
+            .statuses
+            .map(|statuses| statuses.into_iter().map(Into::into).collect::<_>())
+            .unwrap_or_default();
+
+        if input.only_approvable && !statuses.contains(&RequestStatusCode::Created) {
+            statuses.push(RequestStatusCode::Created);
+        }
+
         let mut request_ids = self.request_repository.find_ids_where(
             RequestWhereClause {
                 created_dt_from: input
@@ -197,10 +206,7 @@ impl RequestService {
                             .collect::<_>()
                     })
                     .unwrap_or_default(),
-                statuses: input
-                    .statuses
-                    .map(|statuses| statuses.into_iter().map(Into::into).collect::<_>())
-                    .unwrap_or_default(),
+                statuses,
                 requesters: filter_by_requesters.unwrap_or_default(),
                 approvers: filter_by_approvers.unwrap_or_default(),
                 not_approvers: filter_by_votable.clone(),
@@ -288,7 +294,7 @@ impl RequestService {
                 not_requesters: filter_by_votable,
                 excluded_ids: exclude_request_ids,
             },
-            None,
+            input.sort_by,
         )?;
 
         // filter out requests that the caller does not have access to read
@@ -1302,6 +1308,149 @@ mod tests {
         assert_eq!(votable_requests.items.len(), TRANSFER_COUNT - 1);
         assert_eq!(votable_requests.items[0].id, transfer_requests[0].id);
         assert_eq!(votable_requests.items[1].id, transfer_requests[2].id);
+    }
+
+    #[tokio::test]
+    async fn get_next_approvable_request_returns_requests_sorted() {
+        let ctx = setup();
+
+        let user_2 = mock_user();
+        USER_REPOSITORY.insert(user_2.to_key(), user_2.clone());
+
+        REQUEST_POLICY_REPOSITORY.insert(
+            [0; 16],
+            RequestPolicy {
+                id: [0; 16],
+                specifier: RequestSpecifier::Transfer(ResourceIds::Any),
+                rule: RequestPolicyRule::QuorumPercentage(
+                    UserSpecifier::Id(vec![ctx.caller_user.id, user_2.id]),
+                    Percentage(100),
+                ),
+            },
+        );
+
+        let mut request = mock_request();
+        request.status = RequestStatus::Created;
+        request.approvals = vec![RequestApproval {
+            approver_id: ctx.caller_user.id,
+            status: RequestApprovalStatus::Approved,
+            decided_dt: 0,
+            last_modification_timestamp: 0,
+            status_reason: None,
+        }];
+
+        // Add 3 requests with different ids and created_timestamps.
+        // The requests in the BTreeMap are stored ordered by their id.
+        // Without a sort_by, the request with the lowest id should be returned first,
+        // which will be in reverse order of creation.
+        for (id, ts) in [(1u8, 3u64), (4, 2), (3, 1), (2, 4)] {
+            request.id = [id; 16]; // storage order is different from timestamp order
+            request.created_timestamp = ts;
+            REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+        }
+
+        let next_approvable_request = ctx
+            .service
+            .get_next_approvable_request(
+                GetNextApprovableRequestInput {
+                    excluded_request_ids: vec![],
+                    operation_types: None,
+                    sort_by: None,
+                },
+                Some(&CallContext::new(user_2.identities[0])),
+            )
+            .await
+            .expect("Failed to get next approvable request")
+            .expect("No next approvable request");
+
+        // without sort_by, the request with the highest timestamp should be returned
+        assert_eq!(next_approvable_request.created_timestamp, 4);
+
+        let next_approvable_request = ctx
+            .service
+            .get_next_approvable_request(
+                GetNextApprovableRequestInput {
+                    excluded_request_ids: vec![],
+                    operation_types: None,
+                    sort_by: Some(station_api::ListRequestsSortBy::CreatedAt(
+                        station_api::SortDirection::Asc,
+                    )),
+                },
+                Some(&CallContext::new(user_2.identities[0])),
+            )
+            .await
+            .expect("Failed to get next approvable request")
+            .expect("No next approvable request");
+
+        // with sort_by, the request with the lowest created_timestamp should be returned
+        assert_eq!(next_approvable_request.created_timestamp, 1);
+    }
+
+    #[tokio::test]
+    async fn list_approvable_only_lists_pending() {
+        let ctx = setup();
+
+        let user_2 = mock_user();
+        USER_REPOSITORY.insert(user_2.to_key(), user_2.clone());
+
+        REQUEST_POLICY_REPOSITORY.insert(
+            [0; 16],
+            RequestPolicy {
+                id: [0; 16],
+                specifier: RequestSpecifier::Transfer(ResourceIds::Any),
+                rule: RequestPolicyRule::QuorumPercentage(
+                    UserSpecifier::Id(vec![ctx.caller_user.id, user_2.id]),
+                    Percentage(100),
+                ),
+            },
+        );
+
+        let approval = RequestApproval {
+            approver_id: ctx.caller_user.id,
+            status: RequestApprovalStatus::Approved,
+            decided_dt: 0,
+            last_modification_timestamp: 0,
+            status_reason: None,
+        };
+
+        let mut non_approvable_request = mock_request();
+        non_approvable_request.status = RequestStatus::Completed { completed_at: 0 };
+        non_approvable_request.approvals = vec![approval.clone()];
+        ctx.repository.insert(
+            non_approvable_request.to_key(),
+            non_approvable_request.clone(),
+        );
+
+        let mut approvable_request = mock_request();
+        approvable_request.status = RequestStatus::Created;
+        approvable_request.approvals = vec![approval.clone()];
+        ctx.repository
+            .insert(approvable_request.to_key(), approvable_request.clone());
+
+        let approvable_requests = ctx
+            .service
+            .list_requests(
+                ListRequestsInput {
+                    requester_ids: None,
+                    approver_ids: None,
+                    statuses: None,
+                    operation_types: None,
+                    expiration_from_dt: None,
+                    expiration_to_dt: None,
+                    created_from_dt: None,
+                    created_to_dt: None,
+                    paginate: None,
+                    sort_by: None,
+                    only_approvable: true,
+                    with_evaluation_results: false,
+                },
+                &CallContext::new(user_2.identities[0]),
+            )
+            .await
+            .expect("Failed to list approvable requests");
+
+        assert_eq!(approvable_requests.items.len(), 1);
+        assert_eq!(approvable_requests.items[0].id, approvable_request.id);
     }
 }
 

@@ -319,6 +319,7 @@ pub struct ListRequestsResponse {
 pub struct GetNextApprovableRequestInput {
     pub excluded_request_ids: Vec<UuidDTO>,
     pub operation_types: Option<Vec<ListRequestsOperationTypeDTO>>,
+    pub sort_by: Option<ListRequestsSortBy>,
 }
 
 pub type GetNextApprovableRequestResponse = Option<GetRequestResponse>;

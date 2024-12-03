@@ -88,6 +88,7 @@ impl From<ReviewNextArgs> for GetNextApprovableRequestInput {
         Self {
             excluded_request_ids: vec![],
             operation_types: (!args.any).then(external_canister_operations),
+            sort_by: None,
         }
     }
 }

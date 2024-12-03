@@ -482,6 +482,7 @@ export class StationService {
     const result = await actor.get_next_approvable_request({
       operation_types: types ? [types] : [],
       excluded_request_ids: excludedRequestIds ?? [],
+      sort_by: [],
     });
 
     if (variantIs(result, 'Err')) {

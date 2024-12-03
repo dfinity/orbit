@@ -1450,6 +1450,8 @@ type GetNextApprovableRequestInput = record {
   operation_types : opt vec ListRequestsOperationType;
   // Exclude requests the user indicated to skip.
   excluded_request_ids : vec UUID;
+  // Get the next request from a list sorted by the given field.
+  sort_by : opt ListRequestsSortBy;
 };
 
 // Result type for retrieving a request.
