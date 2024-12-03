@@ -461,6 +461,16 @@ export default {
       e8s: 'e8s',
     },
   },
+  time: {
+    units: {
+      y: 'Années',
+      m: 'Mois',
+      d: 'Jours',
+      h: 'Heures',
+      min: 'Minutes',
+      sec: 'Secondes',
+    },
+  },
   external_canisters: {
     add_new_label: 'Ajouter un nouveau étiquette',
     use_existing: 'Utiliser un existant',
@@ -479,6 +489,47 @@ export default {
     not_found_description: 'Le canister que vous cherchez n a pas été trouvé.',
     ic_settings: 'Paramètres IC',
     top_up: 'Recharger',
+    start_monitoring: 'Démarrer la surveillance',
+    monitor: {
+      title: 'Contrôler les cycles',
+      start_title: 'Surveiller',
+      stop_title: 'Arrêter la surveillance',
+      funding_strategy_label: 'Stratégie de financement',
+      cycle_obtain_strategy_label: 'Stratégie de monnayage du cycle',
+      funding_info_text: 'La stratégie choisie est évaluée toutes les 6 heures.',
+      strategy: {
+        label: 'Stratégie de suivi',
+        BelowEstimatedRuntime: "Durée d'exécution inférieure à l'estimation",
+        BelowThreshold: 'En dessous du seuil',
+        Always: 'Toujours',
+        fund_runtime_secs: "Durée d'exécution pour le financement",
+        min_runtime_secs: "Seuil de durée d'exécution",
+        max_runtime_cycles_fund: 'Cycles maximum à financer',
+        fallback_min_cycles: 'Seuil de cycles de secours',
+        fallback_fund_cycles: 'Cycles de secours à financer',
+        min_cycles: 'Seuil de cycles',
+        fund_cycles: 'Cycles à financer',
+        fund_runtime_secs_hint: 'Spécifiez la durée pour laquelle le canister doit être financé.',
+        min_runtime_secs_hint:
+          "Spécifiez le seuil minimal de durée d'exécution pour déclencher le financement.",
+        max_runtime_cycles_fund_hint:
+          'Spécifiez le nombre maximum de cycles pouvant être financés en une seule fois.',
+        fallback_min_cycles_hint:
+          "Spécifiez le seuil minimal de cycles pour le financement de secours lorsque la durée d'exécution ne peut pas être calculée.",
+        fallback_fund_cycles_hint:
+          "Spécifiez les cycles à financer pour le financement de secours lorsque la durée d'exécution ne peut pas être calculée.",
+        min_cycles_hint: 'Spécifiez le seuil de cycles pour déclencher le financement.',
+        fund_cycles_hint: 'Spécifiez les cycles à financer.',
+      },
+    },
+    obtain: {
+      title: 'Obtenir des cycles',
+      strategy: {
+        label: 'Stratégie d obtention',
+        StationDefault: 'Défaut de Station',
+        MintFromNativeToken: 'Mint depuis le token natif',
+      },
+    },
     configuration: 'Configuration',
     unlink: 'Dissocier',
     unlink_title: 'Dissocier le Canister',
@@ -556,6 +607,7 @@ export default {
     install: 'Installer',
     send_cycles: 'Envoyer des cycles',
     top_up_hint: 'Montant de cycles à ajouter au canister cible.',
+    monitor_hint: 'Configuration pour la surveillance automatisée des cycles.',
     add_controller: 'Ajouter un contrôleur',
     no_controllers: 'Pas de contrôleurs',
     self_controller: 'Contrôleur de soi',

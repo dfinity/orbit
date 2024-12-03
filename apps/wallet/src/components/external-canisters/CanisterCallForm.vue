@@ -188,8 +188,8 @@ const { submit, edited, additionalFieldErrors, fieldsWithErrors, submitting, val
     model,
     submit: async (updatedModel: CanisterCallModel): Promise<void> => {
       try {
-        const methodName = assertAndReturn(updatedModel.methodName, 'Method name is required');
-        const canisterId = assertAndReturn(updatedModel.canisterId, 'Canister ID is required');
+        const methodName = assertAndReturn(updatedModel.methodName, 'Method name');
+        const canisterId = assertAndReturn(updatedModel.canisterId, 'Canister ID');
         const validationMethod =
           updatedModel.validationTarget &&
           variantIs(updatedModel.validationTarget, 'ValidationMethod')

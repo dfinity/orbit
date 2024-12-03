@@ -236,6 +236,7 @@ pub(super) fn display_request_operation(op: &RequestOperationDTO) -> &'static st
         RequestOperationDTO::ConfigureExternalCanister(_) => "ConfigureExternalCanister",
         RequestOperationDTO::CallExternalCanister(_) => "CallExternalCanister",
         RequestOperationDTO::FundExternalCanister(_) => "FundExternalCanister",
+        RequestOperationDTO::MonitorExternalCanister(_) => "MonitorExternalCanister",
         RequestOperationDTO::SnapshotExternalCanister(_) => "SnapshotExternalCanister",
         RequestOperationDTO::RestoreExternalCanister(_) => "RestoreExternalCanister",
         RequestOperationDTO::PruneExternalCanister(_) => "PruneExternalCanister",

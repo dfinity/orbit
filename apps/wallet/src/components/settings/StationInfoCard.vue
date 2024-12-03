@@ -119,12 +119,14 @@
         </VListItem>
         <VListItem class="px-0">
           <VListItemTitle class="font-weight-bold">{{ $t(`terms.version`) }}</VListItemTitle>
-          <VListItemSubtitle class="mt-2">{{
-            station.configuration.details?.version ? station.configuration.details.version : '-'
-          }}</VListItemSubtitle>
+          <VListItemSubtitle class="mt-2"
+            >{{
+              station.configuration.details?.version ? station.configuration.details.version : '-'
+            }}
+          </VListItemSubtitle>
         </VListItem>
         <AuthCheck :privileges="[Privilege.SystemInfo]">
-          <VListItem class="px-0" v-if="!loadingSystemInfo">
+          <VListItem v-if="!loadingSystemInfo" class="px-0">
             <VListItemTitle class="font-weight-bold">{{ $t(`terms.upgrader_id`) }}</VListItemTitle>
             <VListItemSubtitle v-if="upgraderId"
               >{{ upgraderId }}
@@ -149,9 +151,9 @@
         </AuthCheck>
         <VListItem v-if="session.data.stations.length > 1" class="px-0">
           <VListItemTitle class="font-weight-bold">{{ $t(`terms.main`) }}</VListItemTitle>
-          <VListItemSubtitle>{{
-            isMainStation ? $t(`terms.yes`) : $t(`terms.no`)
-          }}</VListItemSubtitle>
+          <VListItemSubtitle
+            >{{ isMainStation ? $t(`terms.yes`) : $t(`terms.no`) }}
+          </VListItemSubtitle>
         </VListItem>
       </VList>
     </VCardText>

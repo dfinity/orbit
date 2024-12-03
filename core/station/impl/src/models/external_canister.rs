@@ -8,7 +8,7 @@ use super::{
     CanisterMethod, ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
     CreateExternalCanisterOperationKind, ExternalCanisterChangeCallRequestPoliciesInput,
     ExternalCanisterRequestPoliciesCreateInput, ExternalCanisterRequestPoliciesUpdateInput,
-    Metadata, RequestPolicy, RequestPolicyRule,
+    Metadata, MonitorExternalCanisterStartInput, RequestPolicy, RequestPolicyRule,
 };
 use crate::errors::{ExternalCanisterError, ExternalCanisterValidationError};
 use crate::repositories::REQUEST_POLICY_REPOSITORY;
@@ -57,6 +57,8 @@ pub struct ExternalCanister {
     pub created_at: Timestamp,
     /// The last time the record was updated.
     pub modified_at: Option<Timestamp>,
+    /// Is the canister monitored by the station.
+    pub monitoring: Option<ExternalCanisterMonitoring>,
 }
 
 #[storable]
@@ -128,6 +130,8 @@ pub struct ExternalCanisterCallerPrivileges {
 }
 
 pub type ExternalCanisterAvailableFilters = GetExternalCanisterFiltersResponse;
+
+pub type ExternalCanisterMonitoring = MonitorExternalCanisterStartInput;
 
 impl ExternalCanister {
     pub const MAX_NAME_LENGTH: usize = 100;
@@ -448,6 +452,7 @@ pub mod external_canister_test_utils {
             state: ExternalCanisterState::Active,
             created_at: next_time(),
             modified_at: None,
+            monitoring: None,
         }
     }
 }
@@ -483,6 +488,7 @@ mod tests {
         assert_eq!(model.state, deserialized_model.state);
         assert_eq!(model.created_at, deserialized_model.created_at);
         assert_eq!(model.modified_at, deserialized_model.modified_at);
+        assert_eq!(model.monitoring, deserialized_model.monitoring);
     }
 
     #[test]

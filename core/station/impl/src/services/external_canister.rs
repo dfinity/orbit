@@ -16,21 +16,23 @@ use crate::models::resource::{
 use crate::models::{
     AddRequestPolicyOperationInput, CanisterExecutionAndValidationMethodPairInput, CanisterMethod,
     ConfigureExternalCanisterSettingsInput, CreateExternalCanisterOperationInput,
-    CreateExternalCanisterOperationKind, DefiniteCanisterSettingsInput,
+    CreateExternalCanisterOperationKind, CycleObtainStrategy, DefiniteCanisterSettingsInput,
     EditPermissionOperationInput, EditRequestPolicyOperationInput, ExternalCanister,
     ExternalCanisterAvailableFilters, ExternalCanisterCallPermission,
     ExternalCanisterCallRequestPolicyRule, ExternalCanisterCallRequestPolicyRuleInput,
     ExternalCanisterCallerMethodsPrivileges, ExternalCanisterCallerPrivileges,
     ExternalCanisterChangeCallPermissionsInput, ExternalCanisterChangeCallRequestPoliciesInput,
     ExternalCanisterChangeRequestPolicyRule, ExternalCanisterEntryId, ExternalCanisterKey,
-    ExternalCanisterPermissions, ExternalCanisterPermissionsUpdateInput,
-    ExternalCanisterRequestPolicies, ExternalCanisterRequestPoliciesUpdateInput, RequestPolicy,
+    ExternalCanisterMonitoring, ExternalCanisterPermissions,
+    ExternalCanisterPermissionsUpdateInput, ExternalCanisterRequestPolicies,
+    ExternalCanisterRequestPoliciesUpdateInput, MonitorExternalCanisterStrategy, RequestPolicy,
 };
 use crate::repositories::permission::{PermissionRepository, PERMISSION_REPOSITORY};
 use crate::repositories::{
     ExternalCanisterRepository, ExternalCanisterWhereClause, RequestPolicyRepository,
     EXTERNAL_CANISTER_REPOSITORY, REQUEST_POLICY_REPOSITORY,
 };
+use crate::services::cycle_manager::{CycleManager, CYCLE_MANAGER};
 use candid::{Encode, Principal};
 use ic_cdk::api::call::call_raw;
 use ic_cdk::api::management_canister::main::{
@@ -55,6 +57,7 @@ use uuid::Uuid;
 lazy_static! {
     pub static ref EXTERNAL_CANISTER_SERVICE: Arc<ExternalCanisterService> =
         Arc::new(ExternalCanisterService::new(
+            Arc::clone(&CYCLE_MANAGER),
             Arc::clone(&EXTERNAL_CANISTER_REPOSITORY),
             Arc::clone(&PERMISSION_SERVICE),
             Arc::clone(&PERMISSION_REPOSITORY),
@@ -67,6 +70,7 @@ const CREATE_CANISTER_CYCLES: u128 = 2_250_000_000_000; // fee sufficient to cre
 
 #[derive(Default, Debug)]
 pub struct ExternalCanisterService {
+    cycle_manager: Arc<CycleManager>,
     external_canister_repository: Arc<ExternalCanisterRepository>,
     permission_service: Arc<PermissionService>,
     permission_repository: Arc<PermissionRepository>,
@@ -79,6 +83,7 @@ impl ExternalCanisterService {
     const MAX_LIST_LIMIT: u16 = 250;
 
     pub fn new(
+        cycle_manager: Arc<CycleManager>,
         external_canister_repository: Arc<ExternalCanisterRepository>,
         permission_service: Arc<PermissionService>,
         permission_repository: Arc<PermissionRepository>,
@@ -86,6 +91,7 @@ impl ExternalCanisterService {
         request_policy_repository: Arc<RequestPolicyRepository>,
     ) -> Self {
         Self {
+            cycle_manager,
             external_canister_repository,
             permission_service,
             permission_repository,
@@ -114,14 +120,14 @@ impl ExternalCanisterService {
         &self,
         canister_id: &Principal,
     ) -> ServiceResult<ExternalCanister> {
-        let recource_id = self
+        let resource_id = self
             .external_canister_repository
             .find_by_canister_id(canister_id)
             .ok_or(ExternalCanisterError::InvalidExternalCanister {
                 principal: *canister_id,
             })?;
 
-        self.get_external_canister(&recource_id)
+        self.get_external_canister(&resource_id)
     }
 
     /// Returns all request policies of the external canister by its canister id.
@@ -1039,6 +1045,71 @@ impl ExternalCanisterService {
         Ok(())
     }
 
+    /// Restarts monitoring for all external canisters after upgrade
+    pub fn canister_monitor_restart(&self) {
+        for canister in self.external_canister_repository.find_all() {
+            if let Some(monitoring) = &canister.monitoring {
+                self.cycle_manager.add_canister(
+                    canister.canister_id,
+                    monitoring.funding_strategy.clone(),
+                    monitoring.cycle_obtain_strategy,
+                );
+            }
+        }
+    }
+
+    pub fn canister_monitor_start(
+        &self,
+        canister_id: Principal,
+        strategy: MonitorExternalCanisterStrategy,
+        cycle_obtain_strategy: Option<CycleObtainStrategy>,
+    ) -> ServiceResult<()> {
+        if let Some(CycleObtainStrategy::MintFromNativeToken { .. }) = cycle_obtain_strategy {
+            Err(ExternalCanisterError::Failed {
+                reason: format!(
+                    "Minting from native token is not yet supported for canister {}",
+                    canister_id.to_text()
+                ),
+            })?;
+        }
+
+        let mut external_canister = self.get_external_canister_by_canister_id(&canister_id)?;
+        if external_canister.monitoring.is_some() {
+            Err(ExternalCanisterError::Failed {
+                reason: format!(
+                    "Failed to monitor canister {}. The canister is already monitored.",
+                    canister_id.to_text(),
+                ),
+            })?;
+        }
+
+        self.cycle_manager
+            .add_canister(canister_id, strategy.clone(), cycle_obtain_strategy);
+
+        external_canister.monitoring = Some(ExternalCanisterMonitoring {
+            funding_strategy: strategy,
+            cycle_obtain_strategy,
+        });
+
+        self.external_canister_repository
+            .insert(external_canister.key(), external_canister.clone());
+
+        Ok(())
+    }
+
+    pub fn canister_monitor_stop(&self, canister_id: Principal) -> ServiceResult<()> {
+        let mut external_canister = self.get_external_canister_by_canister_id(&canister_id)?;
+
+        self.cycle_manager.remove_canister(canister_id);
+
+        external_canister.monitoring = None;
+
+        self.external_canister_repository
+            .insert(external_canister.key(), external_canister.clone());
+
+        Ok(())
+    }
+
     /// Only deletes the external canister from the system.
     pub fn soft_delete_external_canister(
         &self,
@@ -1141,7 +1212,7 @@ impl ExternalCanisterService {
         // The soft delete is done after the hard delete to ensure that the external canister
         // is removed from the subnet before it is removed from the system.
         //
-        // The intercanister call is more likely to fail than the local operation.
+        // The inter-canister call is more likely to fail than the local operation.
         self.soft_delete_external_canister(id)?;
 
         Ok(external_canister)

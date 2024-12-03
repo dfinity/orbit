@@ -298,6 +298,7 @@ fn validate_request_operation_foreign_keys(
             }
         }
         RequestOperation::FundExternalCanister(_) => (),
+        RequestOperation::MonitorExternalCanister(_) => (),
         RequestOperation::CreateExternalCanister(op) => {
             op.input.validate()?;
         }

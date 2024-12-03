@@ -116,6 +116,7 @@ const componentsMap: {
   ConfigureExternalCanister: UnsupportedOperation,
   SetDisasterRecovery: UnsupportedOperation,
   FundExternalCanister: UnsupportedOperation,
+  MonitorExternalCanister: UnsupportedOperation,
   PruneExternalCanister: UnsupportedOperation,
   RestoreExternalCanister: UnsupportedOperation,
   SnapshotExternalCanister: UnsupportedOperation,

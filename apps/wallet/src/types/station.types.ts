@@ -195,6 +195,7 @@ export enum RequestOperationEnum {
   CallExternalCanister = 'CallExternalCanister',
   ConfigureExternalCanister = 'ConfigureExternalCanister',
   FundExternalCanister = 'FundExternalCanister',
+  MonitorExternalCanister = 'MonitorExternalCanister',
   SnapshotExternalCanister = 'SnapshotExternalCanister',
   PruneExternalCanister = 'PruneExternalCanister',
   RestoreExternalCanister = 'RestoreExternalCanister',

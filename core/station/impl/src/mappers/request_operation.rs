@@ -38,7 +38,8 @@ use crate::{
         ExternalCanisterChangeRequestPolicyRuleInput, ExternalCanisterPermissionsCreateInput,
         ExternalCanisterPermissionsUpdateInput, ExternalCanisterRequestPoliciesCreateInput,
         ExternalCanisterRequestPoliciesUpdateInput, FundExternalCanisterOperation, LogVisibility,
-        ManageSystemInfoOperation, ManageSystemInfoOperationInput, PruneExternalCanisterOperation,
+        ManageSystemInfoOperation, ManageSystemInfoOperationInput,
+        MonitorExternalCanisterOperation, PruneExternalCanisterOperation,
         PruneExternalCanisterOperationInput, PruneExternalCanisterResource,
         RemoveAddressBookEntryOperation, RemoveAssetOperation, RemoveAssetOperationInput,
         RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
@@ -1891,6 +1892,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::FundExternalCanister(operation) => {
                 RequestOperationDTO::FundExternalCanister(Box::new(operation.into()))
             }
+            RequestOperation::MonitorExternalCanister(operation) => {
+                RequestOperationDTO::MonitorExternalCanister(Box::new(operation.into()))
+            }
             RequestOperation::ConfigureExternalCanister(operation) => {
                 RequestOperationDTO::ConfigureExternalCanister(Box::new(operation.into()))
             }
@@ -2047,6 +2051,19 @@ impl RequestOperation {
                 ]
             }
             RequestOperation::FundExternalCanister(FundExternalCanisterOperation {
+                canister_id,
+                ..
+            }) => {
+                vec![
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                        ExternalCanisterId::Any,
+                    )),
+                    Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                        ExternalCanisterId::Canister(*canister_id),
+                    )),
+                ]
+            }
+            RequestOperation::MonitorExternalCanister(MonitorExternalCanisterOperation {
                 canister_id,
                 ..
             }) => {

@@ -452,6 +452,7 @@ export interface ExternalCanister {
   'created_at' : TimestampRFC3339,
   'request_policies' : ExternalCanisterRequestPolicies,
   'state' : ExternalCanisterState,
+  'monitoring' : [] | [MonitorExternalCanisterStartInput],
 }
 export interface ExternalCanisterCallPermission {
   'execution_method' : string,
@@ -829,6 +830,7 @@ export type ListRequestsOperationType = { 'RemoveAsset' : null } |
   { 'PruneExternalCanister' : [] | [Principal] } |
   { 'ConfigureExternalCanister' : [] | [Principal] } |
   { 'ChangeExternalCanister' : [] | [Principal] } |
+  { 'MonitorExternalCanister' : [] | [Principal] } |
   { 'AddUser' : null } |
   { 'EditAsset' : null } |
   { 'EditUserGroup' : null } |
@@ -911,6 +913,33 @@ export type MeResult = {
     'Ok' : { 'me' : User, 'privileges' : Array<UserPrivilege> }
   } |
   { 'Err' : Error };
+export type MonitorExternalCanisterOperation = MonitorExternalCanisterOperationInput;
+export interface MonitorExternalCanisterOperationInput {
+  'kind' : MonitorExternalCanisterOperationKind,
+  'canister_id' : Principal,
+}
+export type MonitorExternalCanisterOperationKind = {
+    'Start' : MonitorExternalCanisterStartInput
+  } |
+  { 'Stop' : null };
+export interface MonitorExternalCanisterStartInput {
+  'cycle_obtain_strategy' : [] | [CycleObtainStrategyInput],
+  'funding_strategy' : MonitorExternalCanisterStrategyInput,
+}
+export type MonitorExternalCanisterStrategyInput = { 'Always' : bigint } |
+  { 'BelowThreshold' : MonitoringExternalCanisterCyclesThresholdInput } |
+  { 'BelowEstimatedRuntime' : MonitoringExternalCanisterEstimatedRuntimeInput };
+export interface MonitoringExternalCanisterCyclesThresholdInput {
+  'fund_cycles' : bigint,
+  'min_cycles' : bigint,
+}
+export interface MonitoringExternalCanisterEstimatedRuntimeInput {
+  'fund_runtime_secs' : bigint,
+  'fallback_min_cycles' : bigint,
+  'min_runtime_secs' : bigint,
+  'fallback_fund_cycles' : bigint,
+  'max_runtime_cycles_fund' : bigint,
+}
 export interface Network { 'id' : NetworkId, 'name' : string }
 export type NetworkId = string;
 export interface Notification {
@@ -1040,6 +1069,7 @@ export type RequestOperation = { 'RemoveAsset' : RemoveAssetOperation } |
   { 'PruneExternalCanister' : PruneExternalCanisterOperation } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperation } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperation } |
+  { 'MonitorExternalCanister' : MonitorExternalCanisterOperation } |
   { 'AddUser' : AddUserOperation } |
   { 'EditAsset' : EditAssetOperation } |
   { 'EditUserGroup' : EditUserGroupOperation } |
@@ -1071,6 +1101,7 @@ export type RequestOperationInput = {
   { 'PruneExternalCanister' : PruneExternalCanisterOperationInput } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperationInput } |
+  { 'MonitorExternalCanister' : MonitorExternalCanisterOperationInput } |
   { 'AddUser' : AddUserOperationInput } |
   { 'EditAsset' : EditAssetOperationInput } |
   { 'EditUserGroup' : EditUserGroupOperationInput } |
@@ -1100,6 +1131,7 @@ export type RequestOperationType = { 'RemoveAsset' : null } |
   { 'PruneExternalCanister' : null } |
   { 'ConfigureExternalCanister' : null } |
   { 'ChangeExternalCanister' : null } |
+  { 'MonitorExternalCanister' : null } |
   { 'AddUser' : null } |
   { 'EditAsset' : null } |
   { 'EditUserGroup' : null } |

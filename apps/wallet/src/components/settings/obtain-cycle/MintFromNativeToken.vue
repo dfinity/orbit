@@ -21,6 +21,8 @@ import { computed, onMounted } from 'vue';
 import { useAccountsAutocomplete } from '~/composables/autocomplete.composable';
 import { UUID } from '~/generated/station/station.did';
 import { requiredRule } from '~/utils/form.utils';
+import { useStationStore } from '~/stores/station.store.ts';
+import { ICP_LEDGER_CANISTER_ID } from '~/core/constants.core.ts';
 
 const autocomplete = useAccountsAutocomplete();
 
@@ -47,13 +49,25 @@ const model = computed({
   set: value => emit('update:modelValue', value),
 });
 
-const accountList = computed(() => {
-  const accounts = autocomplete.results.value.map(group => ({
-    title: group.name,
-    value: group.id,
-  }));
+const station = useStationStore();
 
-  return accounts;
+const [icpAsset] = station.configuration.details.supported_assets.filter(asset =>
+  asset.metadata.some(
+    data => data.key === 'ledger_canister_id' && data.value === ICP_LEDGER_CANISTER_ID,
+  ),
+);
+
+const accountList = computed(() => {
+  if (!icpAsset) {
+    return [];
+  }
+
+  return autocomplete.results.value
+    .filter(account => account.assets.some(asset => asset.asset_id === icpAsset.id))
+    .map(group => ({
+      title: group.name,
+      value: group.id,
+    }));
 });
 
 const isViewMode = computed(() => props.mode === 'view');

@@ -50,7 +50,7 @@ impl Authorization {
                     return true;
                 }
 
-                // Validades if the user has access to the resource based on the default rules (non-permission based).
+                // Validates if the user has access to the resource based on the default rules (non-permission based).
                 if has_default_resource_access(user, resource) {
                     return true;
                 }

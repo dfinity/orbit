@@ -39,6 +39,7 @@ pub enum RequestOperation {
     CreateExternalCanister(CreateExternalCanisterOperation),
     CallExternalCanister(CallExternalCanisterOperation),
     FundExternalCanister(FundExternalCanisterOperation),
+    MonitorExternalCanister(MonitorExternalCanisterOperation),
     SnapshotExternalCanister(SnapshotExternalCanisterOperation),
     RestoreExternalCanister(RestoreExternalCanisterOperation),
     PruneExternalCanister(PruneExternalCanisterOperation),
@@ -75,6 +76,7 @@ impl Display for RequestOperation {
             RequestOperation::CreateExternalCanister(_) => write!(f, "create_external_canister"),
             RequestOperation::CallExternalCanister(_) => write!(f, "call_external_canister"),
             RequestOperation::FundExternalCanister(_) => write!(f, "fund_external_canister"),
+            RequestOperation::MonitorExternalCanister(_) => write!(f, "monitor_external_canister"),
             RequestOperation::SnapshotExternalCanister(_) => {
                 write!(f, "snapshot_external_canister")
             }
@@ -637,6 +639,54 @@ pub struct FundExternalCanisterOperationInput {
 }
 
 pub type FundExternalCanisterOperation = FundExternalCanisterOperationInput;
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct MonitoringExternalCanisterEstimatedRuntimeInput {
+    pub fund_runtime_secs: u64,
+    pub fallback_min_cycles: u128,
+    pub min_runtime_secs: u64,
+    pub fallback_fund_cycles: u128,
+    pub max_runtime_cycles_fund: u128,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct MonitoringExternalCanisterCyclesThresholdInput {
+    pub fund_cycles: u128,
+    pub min_cycles: u128,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum MonitorExternalCanisterStrategy {
+    Always(u128),
+    BelowThreshold(MonitoringExternalCanisterCyclesThresholdInput),
+    BelowEstimatedRuntime(MonitoringExternalCanisterEstimatedRuntimeInput),
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct MonitorExternalCanisterStartInput {
+    pub funding_strategy: MonitorExternalCanisterStrategy,
+    pub cycle_obtain_strategy: Option<CycleObtainStrategy>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum MonitorExternalCanisterOperationKind {
+    Start(MonitorExternalCanisterStartInput),
+    Stop,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct MonitorExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub kind: MonitorExternalCanisterOperationKind,
+}
+
+pub type MonitorExternalCanisterOperation = MonitorExternalCanisterOperationInput;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]

@@ -1,5 +1,7 @@
 use super::{
-    EditAccountOperationInput, TimestampRfc3339, TransferOperationDTO, TransferOperationInput,
+    EditAccountOperationInput, MonitorExternalCanisterOperationDTO,
+    MonitorExternalCanisterOperationInput, TimestampRfc3339, TransferOperationDTO,
+    TransferOperationInput,
 };
 use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
@@ -82,6 +84,7 @@ pub enum RequestOperationDTO {
     ConfigureExternalCanister(Box<ConfigureExternalCanisterOperationDTO>),
     CallExternalCanister(Box<CallExternalCanisterOperationDTO>),
     FundExternalCanister(Box<FundExternalCanisterOperationDTO>),
+    MonitorExternalCanister(Box<MonitorExternalCanisterOperationDTO>),
     SnapshotExternalCanister(Box<SnapshotExternalCanisterOperationDTO>),
     RestoreExternalCanister(Box<RestoreExternalCanisterOperationDTO>),
     PruneExternalCanister(Box<PruneExternalCanisterOperationDTO>),
@@ -115,6 +118,7 @@ pub enum RequestOperationInput {
     ConfigureExternalCanister(ConfigureExternalCanisterOperationInput),
     CallExternalCanister(CallExternalCanisterOperationInput),
     FundExternalCanister(FundExternalCanisterOperationInput),
+    MonitorExternalCanister(MonitorExternalCanisterOperationInput),
     SnapshotExternalCanister(SnapshotExternalCanisterOperationInput),
     RestoreExternalCanister(RestoreExternalCanisterOperationInput),
     PruneExternalCanister(PruneExternalCanisterOperationInput),
@@ -147,6 +151,7 @@ pub enum RequestOperationTypeDTO {
     CreateExternalCanister,
     CallExternalCanister,
     FundExternalCanister,
+    MonitorExternalCanister,
     SnapshotExternalCanister,
     RestoreExternalCanister,
     PruneExternalCanister,
@@ -179,6 +184,7 @@ pub enum ListRequestsOperationTypeDTO {
     CreateExternalCanister,
     CallExternalCanister(Option<Principal>),
     FundExternalCanister(Option<Principal>),
+    MonitorExternalCanister(Option<Principal>),
     SnapshotExternalCanister(Option<Principal>),
     RestoreExternalCanister(Option<Principal>),
     PruneExternalCanister(Option<Principal>),

@@ -285,7 +285,7 @@ impl RequestPolicyRuleEvaluator {
         request: &Arc<Request>,
         user_specifier: &UserSpecifier,
     ) -> Result<RequestApprovalSummary, MatchError> {
-        let casted_approvals = self.find_matching_users::<(UserId, RequestApprovalStatus)>(
+        let cast_approvals = self.find_matching_users::<(UserId, RequestApprovalStatus)>(
             request,
             request
                 .approvals
@@ -318,21 +318,21 @@ impl RequestPolicyRuleEvaluator {
             )?
             .len();
 
-        // This is to ensure that the if users become inactive or the rule is misconfigured
-        // the total_possible_approvals is not less than the casted approvals.
-        total_possible_approvers = cmp::max(casted_approvals.len(), total_possible_approvers);
+        // This is to ensure that if users become inactive or the rule is misconfigured
+        // the total_possible_approvals is not less than the cast approvals.
+        total_possible_approvers = cmp::max(cast_approvals.len(), total_possible_approvers);
 
         Ok(RequestApprovalSummary {
             total_possible_approvers,
-            approved: casted_approvals
+            approved: cast_approvals
                 .iter()
                 .filter(|&approval| approval.1 == RequestApprovalStatus::Approved)
                 .count(),
-            rejected: casted_approvals
+            rejected: cast_approvals
                 .iter()
                 .filter(|&approval| approval.1 == RequestApprovalStatus::Rejected)
                 .count(),
-            approvers: casted_approvals
+            approvers: cast_approvals
                 .into_iter()
                 .map(|(user_id, _)| user_id)
                 .collect(),

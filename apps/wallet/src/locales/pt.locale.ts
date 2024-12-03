@@ -458,6 +458,16 @@ export default {
       e8s: 'e8s',
     },
   },
+  time: {
+    units: {
+      y: 'Anos',
+      m: 'Meses',
+      d: 'Dias',
+      h: 'Horas',
+      min: 'Minutos',
+      sec: 'Segundos',
+    },
+  },
   external_canisters: {
     add_new_label: 'Adicionar novo rótulo',
     use_existing: 'Usar existente',
@@ -474,7 +484,47 @@ export default {
     not_found: 'Canister não encontrado.',
     not_found_description: 'O canister que está a tentar aceder não existe.',
     ic_settings: 'Configuraçōes do IC',
-    top_up: 'Recarregar',
+    start_monitoring: 'Iniciar monitoramento',
+    monitor: {
+      title: 'Monitorizar ciclos',
+      start_title: 'Monitorar',
+      stop_title: 'Parar monitorização',
+      funding_strategy_label: 'Estratégia de financiamento',
+      cycle_obtain_strategy_label: 'Estratégia de obtenção de ciclos',
+      funding_info_text: 'A estratégia selecionada é avaliada de 6 em 6 horas.',
+      strategy: {
+        label: 'Estratégia de controlo',
+        BelowEstimatedRuntime: 'Tempo de execução inferior ao estimado',
+        BelowThreshold: 'Abaixo do limiar',
+        Always: 'Sempre',
+        fund_runtime_secs: 'Tempo de execução para financiar',
+        min_runtime_secs: 'Limite de tempo de execução',
+        max_runtime_cycles_fund: 'Máximo de ciclos para financiar',
+        fallback_min_cycles: 'Limite mínimo de ciclos para reserva',
+        fallback_fund_cycles: 'Ciclos de reserva para financiar',
+        min_cycles: 'Limite de ciclos',
+        fund_cycles: 'Ciclos para financiar',
+        fund_runtime_secs_hint: 'Especifique a duração para a qual o canister deve ser financiado.',
+        min_runtime_secs_hint:
+          'Especifique o limite mínimo de tempo de execução para acionar o financiamento.',
+        max_runtime_cycles_fund_hint:
+          'Especifique o número máximo de ciclos que podem ser financiados de uma vez.',
+        fallback_min_cycles_hint:
+          'Especifique o limite mínimo de ciclos para o financiamento de reserva quando o tempo de execução não pode ser calculado.',
+        fallback_fund_cycles_hint:
+          'Especifique os ciclos a financiar para o financiamento de reserva quando o tempo de execução não pode ser calculado.',
+        min_cycles_hint: 'Especifique o limite de ciclos para acionar o financiamento.',
+        fund_cycles_hint: 'Especifique os ciclos a financiar.',
+      },
+    },
+    obtain: {
+      title: 'Obter ciclos',
+      strategy: {
+        label: 'Estratégia de obtenção',
+        StationDefault: 'Padrão da carteira',
+        MintFromNativeToken: 'Mint a partir do token nativo',
+      },
+    },
     configuration: 'Configuração',
     unlink: 'Dessaociar',
     unlink_title: 'Desassociar Canister',
@@ -550,6 +600,7 @@ export default {
     install: 'Instalar',
     send_cycles: 'Enviar ciclos',
     top_up_hint: 'Ciclos a adicionar ao canister de destino.',
+    monitor_hint: 'Configuração para monitorização automática de ciclos.',
     add_controller: 'Adicionar controlador',
     no_controllers: 'Nenhum controlador.',
     self_controller: 'Controlador próprio',

@@ -28,6 +28,7 @@ pub enum RequestOperationFilterType {
     ManageSystemInfo,
     ConfigureExternalCanister(Principal),
     FundExternalCanister(Principal),
+    MonitorExternalCanister(Principal),
     SnapshotExternalCanister(Principal),
     RestoreExternalCanister(Principal),
     PruneExternalCanister(Principal),
@@ -85,6 +86,9 @@ impl From<RequestOperation> for RequestOperationFilterType {
             }
             RequestOperation::FundExternalCanister(operation) => {
                 RequestOperationFilterType::FundExternalCanister(operation.canister_id)
+            }
+            RequestOperation::MonitorExternalCanister(operation) => {
+                RequestOperationFilterType::MonitorExternalCanister(operation.canister_id)
             }
             RequestOperation::SnapshotExternalCanister(operation) => {
                 RequestOperationFilterType::SnapshotExternalCanister(operation.input.canister_id)
