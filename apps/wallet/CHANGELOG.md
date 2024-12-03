@@ -1,3 +1,28 @@
+## 0.2.0 (2024-12-03)
+
+
+### 🚀 Features
+
+- **wallet:** show upgrader ID on station info card ([#446](https://github.com/dfinity/orbit/pull/446))
+
+- **station:** external canister snapshots ([#429](https://github.com/dfinity/orbit/pull/429))
+
+- **station:** monitor external canisters ([#416](https://github.com/dfinity/orbit/pull/416))
+
+- **wallet:** search for address on address book page ([#450](https://github.com/dfinity/orbit/pull/450))
+
+
+### 🩹 Fixes
+
+- **wallet:** fix request export order ([#449](https://github.com/dfinity/orbit/pull/449))
+
+
+### ❤️  Thank You
+
+- Jan Hrubes @jedna
+- mraszyk @mraszyk
+- olaszakos
+
 ## 0.1.1 (2024-11-28)
 
 
