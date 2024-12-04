@@ -52,7 +52,7 @@ export default defineConfig(_ => {
       withCanisterIds({ isProduction }),
       withApiCompatibilityFile(),
       withVersionedEntrypoint(),
-      withIcAssetsFile(isProduction && MODE !== 'localhost'),
+      withIcAssetsFile({ isProduction }),
     ],
     build: {
       target: 'es2022',

@@ -1,8 +1,9 @@
 # Define the BUILD_MODE argument with a default value of "production"
 ARG BUILD_MODE=production
+ARG TARGETPLATFORM=linux/amd64
 
 # Operating system with basic tools
-FROM --platform=linux/amd64 ubuntu@sha256:bbf3d1baa208b7649d1d0264ef7d522e1dc0deeeaaf6085bf8e4618867f03494 as base
+FROM ubuntu:20.04 AS base
 SHELL ["bash", "-c"]
 ENV TZ=UTC
 ENV LC_ALL=C.UTF-8
@@ -14,7 +15,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone &
         git jq npm xxd file curl unzip
 
 # Code specific dependencies
-FROM base as builder
+FROM base AS builder
 SHELL ["bash", "-c"]
 WORKDIR /code
 ARG BUILD_MODE
@@ -47,7 +48,7 @@ RUN eval "$(fnm env)" && \
     pnpm install --frozen-lockfile
 
 # Build the Orbit Upgrader Canister
-FROM builder as build_upgrader
+FROM builder AS build_upgrader
 SHELL ["bash", "-c"]
 WORKDIR /code
 LABEL io.icp.artifactType="canister" \
@@ -57,7 +58,7 @@ RUN eval "$(fnm env)" && \
     npx nx run upgrader:create-artifacts
 
 # Build the Orbit Station Canister
-FROM builder as build_station
+FROM builder AS build_station
 SHELL ["bash", "-c"]
 WORKDIR /code
 LABEL io.icp.artifactType="canister" \
@@ -67,7 +68,7 @@ RUN eval "$(fnm env)" && \
     npx nx run station:create-artifacts
 
 # Build the Orbit Control Panel
-FROM builder as build_control_panel
+FROM builder AS build_control_panel
 SHELL ["bash", "-c"]
 WORKDIR /code
 LABEL io.icp.artifactType="canister" \
@@ -77,7 +78,7 @@ RUN eval "$(fnm env)" && \
     npx nx run control-panel:create-artifacts
 
 # Build the Orbit Wallet Frontend Assets
-FROM builder as build_wallet_dapp
+FROM builder AS build_wallet_dapp
 SHELL ["bash", "-c"]
 WORKDIR /code
 LABEL io.icp.artifactType="canister" \
