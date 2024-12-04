@@ -67,7 +67,7 @@ impl CycleManager {
     }
 
     pub fn get_canister(&self, canister_id: &CanisterId) -> Option<CanisterRecord> {
-        FUND_MANAGER.with(|manager| manager.borrow().get_canister(canister_id))
+        FUND_MANAGER.with(|manager| manager.borrow().get_canisters().get(canister_id).cloned())
     }
 
     pub fn remove_canister(&self, canister_id: CanisterId) {
