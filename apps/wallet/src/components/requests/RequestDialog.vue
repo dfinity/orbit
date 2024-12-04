@@ -48,7 +48,7 @@
             color="primary"
             :disabled="approving"
           />
-
+          <VBtn :disabled="approving" :icon="mdiLinkVariant" @click="copyRequestUrl" />
           <VBtn :disabled="approving" :icon="mdiClose" @click="openModel = false" />
         </template>
         <template v-if="loadNext" #bottom-actions>
@@ -74,7 +74,7 @@
   </VDialog>
 </template>
 <script lang="ts" setup>
-import { mdiCheckCircle, mdiClose } from '@mdi/js';
+import { mdiCheckCircle, mdiClose, mdiLinkVariant } from '@mdi/js';
 import { computed, ref, toRefs, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { VBtn, VCard, VCardActions, VCardText, VDialog, VIcon, VSwitch } from 'vuetify/components';
@@ -97,6 +97,7 @@ import { variantIs } from '~/utils/helper.utils';
 import RequestDetailView from './RequestDetailView.vue';
 import LoadingMessage from '~/components/LoadingMessage.vue';
 import { RequestApprovalStatusEnum } from '~/types/requests.types';
+import { getRequestUrl } from '~/utils/app.utils';
 
 type DataType = {
   request: GetRequestResultData['request'];
@@ -280,5 +281,20 @@ const onApproval = async (decision: RequestApprovalStatusEnum, reason?: string):
     .finally(() => {
       approving.value = false;
     });
+};
+
+const copyRequestUrl = async () => {
+  if (currentRequestId.value === null) {
+    return;
+  }
+
+  const url = getRequestUrl(currentRequestId.value, station.canisterId, location.origin);
+
+  await navigator.clipboard.writeText(url);
+
+  app.sendNotification({
+    type: 'success',
+    message: i18n.t('requests.request_url_copied_to_clipboard'),
+  });
 };
 </script>

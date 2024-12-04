@@ -5,7 +5,13 @@ import { defaultHomeRoute } from '~/configs/routes.config';
 
 describe('ErrorScreen', () => {
   it('renders correctly', () => {
-    mockRouter.addRoute({ name: defaultHomeRoute, path: '/', redirect: '' });
+    mockRouter.addRoute({
+      name: defaultHomeRoute,
+      path: '/',
+      redirect: '',
+      component: { template: '<div></div>' },
+      children: [],
+    });
     const wrapper = mount(ErrorScreen);
     expect(wrapper.exists()).toBe(true);
   });

@@ -1,5 +1,6 @@
 import { Principal } from '@dfinity/principal';
 import { Routes, defaultHomeRoute, defaultLoginRoute } from '~/configs/routes.config';
+import { REQUEST_DIALOG_QUERY_PARAM, STATION_ID_QUERY_PARAM } from '~/core/constants.core';
 import { ApiError } from '~/generated/control-panel/control_panel.did';
 import { i18n } from '~/plugins/i18n.plugin';
 import { redirectToKey, router } from '~/plugins/router.plugin';
@@ -108,4 +109,8 @@ export const maybeTransformBlockchainAddress = (
   address: string,
 ): string => {
   return isCaseInsensitiveBlockchainAddress(blockchain, standard) ? address.toLowerCase() : address;
+};
+
+export const getRequestUrl = (requestId: string, stationId: string, origin: string): string => {
+  return `${origin}?${STATION_ID_QUERY_PARAM}=${stationId}&${REQUEST_DIALOG_QUERY_PARAM}=${requestId}`;
 };

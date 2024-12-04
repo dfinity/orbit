@@ -178,6 +178,7 @@ export default {
     processing_scheduled_at: 'Processamento agendado para {dt}',
     no_cancelled_reason: 'Nenhuma razão especificada.',
     no_failed_reason: 'Nenhuma razão especificada.',
+    request_url_copied_to_clipboard: 'URL do pedido copiado para a área de transferência.',
     domains: {
       all: 'Todos',
       accounts: 'Contas',
