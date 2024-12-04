@@ -13,6 +13,7 @@ import {
   RequestWithDetails,
 } from '~/types/requests.types';
 import { RequestOperationEnum, RequestStatusEnum } from '~/types/station.types';
+import { getRequestUrl } from '~/utils/app.utils';
 import { detectAddressFormat } from '~/utils/asset.utils';
 import { formatBalance, stringify, unreachable, variantIs } from '~/utils/helper.utils';
 
@@ -648,6 +649,8 @@ export const mapRequestToCsvRow = (
 export const mapRequestsToCsvTable = (
   group: ListRequestsOperationTypeGroup,
   requests: RequestWithDetails[],
+  origin: string,
+  stationId: string,
 ): CsvTable => {
   const table: CsvTable = { headers: {}, rows: [] };
   const headers: CsvRow = {
@@ -660,6 +663,7 @@ export const mapRequestsToCsvTable = (
     operation_type: 'Operation Type',
     ...mapListRequestsOperationTypeGroupToCsvHeaders(group),
     details: 'Details',
+    url: 'URL',
   };
 
   for (const key in headers) {
@@ -667,6 +671,8 @@ export const mapRequestsToCsvTable = (
   }
 
   const rows = requests.map(entry => {
+    const requestUrl = getRequestUrl(entry.request.id, stationId, origin);
+
     const row: CsvRow = {
       id: entry.request.id,
       requester: entry.additionalInfo?.requester_name ?? entry.request.requested_by,
@@ -677,6 +683,7 @@ export const mapRequestsToCsvTable = (
       operation_type: mapRequestOperationEnumToTranslation(
         mapRequestOperationToTypeEnum(entry.request.operation),
       ),
+      url: requestUrl,
       ...mapRequestToCsvRow(group, entry.request),
     };
 

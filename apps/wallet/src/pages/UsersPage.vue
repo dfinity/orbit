@@ -47,9 +47,10 @@
               <!-- This removes the bottom pagination since we want to display all the results -->
             </template>
             <template #item.name="{ item: user }">
-              <div class="d-flex align-center">
-                {{ user.name }}
-              </div>
+              {{ user.name }}
+            </template>
+            <template #item.user_groups="{ item: user }">
+              {{ user.groups.map(ug => ug.name).join(', ') }}
             </template>
             <template #item.status="{ item: user }">
               <UserStatusChip :status="fromUserStatusVariantToEnum(user.status)" />
@@ -95,6 +96,7 @@
 import { mdiEye, mdiPencil } from '@mdi/js';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDisplay } from 'vuetify';
 import { VChip, VDataTable } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
@@ -126,10 +128,13 @@ const disableRefresh = ref(false);
 const pagination = usePagination();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const headerProps: { class: string } = { class: 'font-weight-bold' };
-const headers = ref<TableHeader[]>([
+
+const { xs } = useDisplay();
+const headers = computed((): TableHeader[] => [
   { title: i18n.t('terms.name'), key: 'name', headerProps },
   { title: i18n.t('terms.status'), key: 'status', headerProps },
-  { title: i18n.t('terms.identity'), key: 'principals', headerProps },
+  { title: i18n.t('terms.user_groups'), key: 'user_groups', headerProps },
+  ...(xs.value ? [] : [{ title: i18n.t('terms.identity'), key: 'principals', headerProps }]),
   { title: '', key: 'actions', headerProps },
 ]);
 

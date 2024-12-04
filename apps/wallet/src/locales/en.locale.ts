@@ -169,6 +169,7 @@ export default {
     processing_scheduled_at: 'Processing scheduled at {dt}',
     no_cancelled_reason: 'No reason specified.',
     no_failed_reason: 'No reason specified.',
+    request_url_copied_to_clipboard: 'Request URL copied to clipboard.',
     domains: {
       all: 'All',
       accounts: 'Accounts',
@@ -208,6 +209,7 @@ export default {
       amount: 'Amount',
       fee: 'Fee',
       comment: 'Comment',
+      url: 'URL',
     },
     download: {
       user_group: 'User Groups',

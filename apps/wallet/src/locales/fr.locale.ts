@@ -179,6 +179,7 @@ export default {
     processing_scheduled_at: 'Traitement prévu à {dt}',
     no_cancelled_reason: 'Pas de raison déclarée.',
     no_failed_reason: 'Pas de raison déclarée.',
+    request_url_copied_to_clipboard: 'URL de la demande copiée.',
     domains: {
       all: 'Tout',
       accounts: 'Comptes',
