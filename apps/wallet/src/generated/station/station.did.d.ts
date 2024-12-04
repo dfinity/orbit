@@ -1296,6 +1296,7 @@ export interface SupportedBlockchain {
 }
 export interface SystemInfo {
   'disaster_recovery' : [] | [DisasterRecovery],
+  'upgrader_cycles' : [] | [bigint],
   'name' : string,
   'last_upgrade_timestamp' : TimestampRFC3339,
   'raw_rand_successful' : boolean,

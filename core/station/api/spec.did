@@ -823,7 +823,7 @@ type MonitorExternalCanisterStartInput = record {
   // The strategy for funding the canister.
   funding_strategy : MonitorExternalCanisterStrategyInput;
   // The strategy for obtaining cycles for the funding operation.
-  cycle_obtain_strategy: opt CycleObtainStrategyInput;
+  cycle_obtain_strategy : opt CycleObtainStrategyInput;
 };
 
 // The operation kind for monitoring an external canister in the station.
@@ -2033,8 +2033,10 @@ type SystemInfo = record {
   version : text;
   // The upgrader principal id.
   upgrader_id : principal;
-  // Cycle balance of the canister.
+  // Cycle balance of the station.
   cycles : nat64;
+  // Cycle balance of the canister.
+  upgrader_cycles : opt nat64;
   // The time at which the canister was last upgraded.
   last_upgrade_timestamp : TimestampRFC3339;
   // Did the canister successfully fetched randomness from the management canister.

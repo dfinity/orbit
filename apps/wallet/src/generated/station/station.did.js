@@ -1571,6 +1571,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SystemInfo = IDL.Record({
     'disaster_recovery' : IDL.Opt(DisasterRecovery),
+    'upgrader_cycles' : IDL.Opt(IDL.Nat64),
     'name' : IDL.Text,
     'last_upgrade_timestamp' : TimestampRFC3339,
     'raw_rand_successful' : IDL.Bool,

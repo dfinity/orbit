@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { fromCyclesUnit, toCyclesUnit } from '~/mappers/cycles.mapper';
+import {
+  cyclesUnitFromNumber,
+  formatCycles,
+  fromCyclesUnit,
+  toCyclesUnit,
+} from '~/mappers/cycles.mapper';
 import { CyclesUnit } from '~/types/app.types';
 
 describe('toCyclesUnit', () => {
@@ -67,5 +72,26 @@ describe('fromCyclesUnit', () => {
 
   it('should throw if the unit is not recognized', () => {
     expect(() => fromCyclesUnit(1, 'unknown' as CyclesUnit)).toThrow();
+  });
+});
+
+describe('cyclesUnitFromNumber', () => {
+  it('should return the correct unit based on the number provided', () => {
+    expect(cyclesUnitFromNumber(1_000_000_000_000n)).toBe(CyclesUnit.Trillion);
+    expect(cyclesUnitFromNumber(1_000_000_000n)).toBe(CyclesUnit.Billion);
+    expect(cyclesUnitFromNumber(1_000_000n)).toBe(CyclesUnit.Million);
+    expect(cyclesUnitFromNumber(1n)).toBe(CyclesUnit.Smallest);
+  });
+});
+
+describe('formatCycles', () => {
+  it('should return the formatted cycles amount from a value', () => {
+    expect(formatCycles(1_000_000_000_000n)).toBe(`1 TC`);
+    expect(formatCycles(1_100_000_000_000n)).toBe(`1.1 TC`);
+    expect(formatCycles(1_000_000_000n)).toBe(`1 BC`);
+    expect(formatCycles(1_100_000_000n)).toBe(`1.1 BC`);
+    expect(formatCycles(1_000_000n)).toBe(`1 MC`);
+    expect(formatCycles(1_100_000n)).toBe(`1.1 MC`);
+    expect(formatCycles(1n)).toBe(`1 Cycles`);
   });
 });
