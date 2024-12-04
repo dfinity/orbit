@@ -907,6 +907,7 @@ export default {
         'Erro ao carregar as informações do sistema da carteira, por favor, tente novamente.',
       cycle_obtain_strategy_disabled: 'AVISO: Recarga de saldo de ciclos da carteira desativada.',
       cycle_obtain_strategy_mint_from_native_token: 'Recarregar a partir da conta de ICP',
+      cycle_balances: 'Saldo de ciclos',
     },
     user_groups: {
       title: 'Grupos de usuários',

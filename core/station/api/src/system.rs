@@ -9,6 +9,7 @@ pub struct SystemInfoDTO {
     pub version: String,
     pub upgrader_id: Principal,
     pub cycles: u64,
+    pub upgrader_cycles: Option<u64>,
     pub last_upgrade_timestamp: TimestampRfc3339,
     pub raw_rand_successful: bool,
     pub disaster_recovery: Option<DisasterRecoveryDTO>,

@@ -80,3 +80,21 @@ export const fromCyclesUnit = (cycles: number, unit: CyclesUnit): bigint => {
       return unreachable(unit);
   }
 };
+
+export const cyclesUnitFromNumber = (cycles: bigint): CyclesUnit => {
+  if (cycles >= 1_000_000_000_000) {
+    return CyclesUnit.Trillion;
+  }
+  if (cycles >= 1_000_000_000) {
+    return CyclesUnit.Billion;
+  }
+  if (cycles >= 1_000_000) {
+    return CyclesUnit.Million;
+  }
+  return CyclesUnit.Smallest;
+};
+
+export const formatCycles = (cycles: bigint): string => {
+  const unit = cyclesUnitFromNumber(cycles);
+  return `${toCyclesUnit(cycles, unit)} ${unit}`;
+};

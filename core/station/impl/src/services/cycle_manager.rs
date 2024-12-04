@@ -4,6 +4,7 @@ use crate::repositories::ACCOUNT_REPOSITORY;
 use canfund::api::cmc::IcCyclesMintingCanister;
 use canfund::api::ledger::IcLedgerCanister;
 use canfund::manager::options::{FundManagerOptions, ObtainCyclesOptions};
+use canfund::manager::record::CanisterRecord;
 use canfund::manager::RegisterOpts;
 use canfund::operations::obtain::MintCycles;
 use canfund::FundManager;
@@ -63,6 +64,10 @@ impl CycleManager {
             "Cycle manager: canister {} added to cycle monitoring.",
             canister_id
         ));
+    }
+
+    pub fn get_canister(&self, canister_id: &CanisterId) -> Option<CanisterRecord> {
+        FUND_MANAGER.with(|manager| manager.borrow().get_canister(canister_id))
     }
 
     pub fn remove_canister(&self, canister_id: CanisterId) {
