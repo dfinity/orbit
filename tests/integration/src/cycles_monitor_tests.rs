@@ -225,7 +225,7 @@ fn can_mint_cycles_to_top_up_self() {
         &env,
         NNS_ROOT_CANISTER_ID,
         canister_ids.station,
-        200_000_000_000,
+        450_000_000_000,
     );
 
     let user_id = WALLET_ADMIN_USER;
@@ -261,7 +261,7 @@ fn can_mint_cycles_to_top_up_self() {
 
     // assert that while we lose some cycles during the process, it'll be roughly what we expect
     assert!(
-        post_cycle_balance - pre_cycle_balance > 249_000_000_000
-            && post_cycle_balance - pre_cycle_balance < 250_000_000_000
+        post_cycle_balance - pre_cycle_balance > 199_000_000_000
+            && post_cycle_balance - pre_cycle_balance < 200_000_000_000
     );
 }

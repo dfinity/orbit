@@ -1,6 +1,6 @@
 use crate::{
-    AllowDTO, CanisterInstallMode, ChangeMetadataDTO, MetadataDTO, PaginationInput,
-    RequestPolicyRuleDTO, Sha256HashDTO, SortDirection, TimestampRfc3339, UuidDTO,
+    AllowDTO, CanisterInstallMode, ChangeMetadataDTO, CycleObtainStrategyInput, MetadataDTO,
+    PaginationInput, RequestPolicyRuleDTO, Sha256HashDTO, SortDirection, TimestampRfc3339, UuidDTO,
     ValidationMethodResourceTargetDTO,
 };
 use candid::{CandidType, Deserialize, Nat, Principal};
@@ -285,6 +285,7 @@ pub struct ExternalCanisterDTO {
     pub request_policies: ExternalCanisterRequestPoliciesDTO,
     pub created_at: TimestampRfc3339,
     pub modified_at: Option<TimestampRfc3339>,
+    pub monitoring: Option<MonitorExternalCanisterStartInput>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -381,3 +382,90 @@ pub struct FundExternalCanisterOperationInput {
 }
 
 pub type FundExternalCanisterOperationDTO = FundExternalCanisterOperationInput;
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct MonitoringExternalCanisterEstimatedRuntimeInput {
+    pub fund_runtime_secs: u64,
+    pub fallback_min_cycles: u128,
+    pub min_runtime_secs: u64,
+    pub fallback_fund_cycles: u128,
+    pub max_runtime_cycles_fund: u128,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct MonitoringExternalCanisterCyclesThresholdInput {
+    pub fund_cycles: u128,
+    pub min_cycles: u128,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum MonitorExternalCanisterStrategyDTO {
+    Always(u128),
+    BelowThreshold(MonitoringExternalCanisterCyclesThresholdInput),
+    BelowEstimatedRuntime(MonitoringExternalCanisterEstimatedRuntimeInput),
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct MonitorExternalCanisterStartInput {
+    pub funding_strategy: MonitorExternalCanisterStrategyDTO,
+    pub cycle_obtain_strategy: Option<CycleObtainStrategyInput>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum MonitorExternalCanisterOperationKindDTO {
+    Start(MonitorExternalCanisterStartInput),
+    Stop,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct MonitorExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub kind: MonitorExternalCanisterOperationKindDTO,
+}
+
+pub type MonitorExternalCanisterOperationDTO = MonitorExternalCanisterOperationInput;
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct SnapshotExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub replace_snapshot: Option<String>,
+    pub force: bool,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct SnapshotExternalCanisterOperationDTO {
+    pub snapshot_id: Option<String>,
+    pub input: SnapshotExternalCanisterOperationInput,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct RestoreExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub snapshot_id: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct RestoreExternalCanisterOperationDTO {
+    pub input: RestoreExternalCanisterOperationInput,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum PruneExternalCanisterResourceDTO {
+    #[serde(rename = "snapshot")]
+    Snapshot(String),
+    #[serde(rename = "chunk_store")]
+    ChunkStore,
+    #[serde(rename = "state")]
+    State,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct PruneExternalCanisterOperationInput {
+    pub canister_id: Principal,
+    pub prune: PruneExternalCanisterResourceDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct PruneExternalCanisterOperationDTO {
+    pub input: PruneExternalCanisterOperationInput,
+}

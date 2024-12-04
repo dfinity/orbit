@@ -58,6 +58,9 @@ export const useAvailableDomains = (
         { ConfigureExternalCanister: [] },
         { CallExternalCanister: [] },
         { ChangeExternalCanister: [] },
+        { PruneExternalCanister: [] },
+        { SnapshotExternalCanister: [] },
+        { RestoreExternalCanister: [] },
       ],
     });
   }

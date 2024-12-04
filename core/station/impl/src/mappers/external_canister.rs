@@ -8,11 +8,15 @@ use crate::{
         ExternalCanisterChangeRequestPolicyRule, ExternalCanisterPermissions,
         ExternalCanisterRequestPolicies, ExternalCanisterState, FundExternalCanisterOperation,
         FundExternalCanisterOperationInput, FundExternalCanisterOperationKind,
-        FundExternalCanisterSendCyclesInput, LogVisibility,
+        FundExternalCanisterSendCyclesInput, LogVisibility, MonitorExternalCanisterOperationInput,
+        MonitorExternalCanisterOperationKind, MonitorExternalCanisterStartInput,
+        MonitorExternalCanisterStrategy, MonitoringExternalCanisterCyclesThresholdInput,
+        MonitoringExternalCanisterEstimatedRuntimeInput,
     },
     repositories::ExternalCanisterWhereClauseSort,
 };
 use candid::Principal;
+use canfund::manager::options::{CyclesThreshold, EstimatedRuntime};
 use ic_cdk::api::management_canister::main::{self as mgmt};
 use orbit_essentials::{repository::SortDirection, utils::timestamp_to_rfc3339};
 use station_api::ExternalCanisterDTO;
@@ -36,6 +40,7 @@ impl ExternalCanisterMapper {
             state: ExternalCanisterState::Active,
             created_at: next_time(),
             modified_at: None,
+            monitoring: None,
         }
     }
 }
@@ -58,6 +63,7 @@ impl ExternalCanister {
             request_policies: policies.into(),
             created_at: timestamp_to_rfc3339(&self.created_at),
             modified_at: self.modified_at.map(|ts| timestamp_to_rfc3339(&ts)),
+            monitoring: self.monitoring.map(Into::into),
         }
     }
 }
@@ -314,5 +320,194 @@ impl From<station_api::FundExternalCanisterSendCyclesInput>
         FundExternalCanisterSendCyclesInput {
             cycles: input.cycles,
         }
+    }
+}
+
+impl From<station_api::MonitorExternalCanisterOperationInput>
+    for MonitorExternalCanisterOperationInput
+{
+    fn from(input: station_api::MonitorExternalCanisterOperationInput) -> Self {
+        MonitorExternalCanisterOperationInput {
+            canister_id: input.canister_id,
+            kind: input.kind.into(),
+        }
+    }
+}
+
+impl From<MonitorExternalCanisterOperationInput>
+    for station_api::MonitorExternalCanisterOperationInput
+{
+    fn from(input: MonitorExternalCanisterOperationInput) -> Self {
+        station_api::MonitorExternalCanisterOperationInput {
+            canister_id: input.canister_id,
+            kind: input.kind.into(),
+        }
+    }
+}
+
+impl From<station_api::MonitorExternalCanisterOperationKindDTO>
+    for MonitorExternalCanisterOperationKind
+{
+    fn from(kind: station_api::MonitorExternalCanisterOperationKindDTO) -> Self {
+        match kind {
+            station_api::MonitorExternalCanisterOperationKindDTO::Start(input) => {
+                MonitorExternalCanisterOperationKind::Start(input.into())
+            }
+            station_api::MonitorExternalCanisterOperationKindDTO::Stop => {
+                MonitorExternalCanisterOperationKind::Stop
+            }
+        }
+    }
+}
+
+impl From<MonitorExternalCanisterOperationKind>
+    for station_api::MonitorExternalCanisterOperationKindDTO
+{
+    fn from(kind: MonitorExternalCanisterOperationKind) -> Self {
+        match kind {
+            MonitorExternalCanisterOperationKind::Start(input) => {
+                station_api::MonitorExternalCanisterOperationKindDTO::Start(input.into())
+            }
+            MonitorExternalCanisterOperationKind::Stop => {
+                station_api::MonitorExternalCanisterOperationKindDTO::Stop
+            }
+        }
+    }
+}
+
+impl From<station_api::MonitorExternalCanisterStartInput> for MonitorExternalCanisterStartInput {
+    fn from(input: station_api::MonitorExternalCanisterStartInput) -> Self {
+        MonitorExternalCanisterStartInput {
+            funding_strategy: input.funding_strategy.into(),
+            cycle_obtain_strategy: input.cycle_obtain_strategy.map(Into::into),
+        }
+    }
+}
+
+impl From<MonitorExternalCanisterStartInput> for station_api::MonitorExternalCanisterStartInput {
+    fn from(input: MonitorExternalCanisterStartInput) -> Self {
+        station_api::MonitorExternalCanisterStartInput {
+            funding_strategy: input.funding_strategy.into(),
+            cycle_obtain_strategy: input.cycle_obtain_strategy.map(Into::into),
+        }
+    }
+}
+
+impl From<station_api::MonitorExternalCanisterStrategyDTO> for MonitorExternalCanisterStrategy {
+    fn from(strategy: station_api::MonitorExternalCanisterStrategyDTO) -> Self {
+        match strategy {
+            station_api::MonitorExternalCanisterStrategyDTO::Always(cycles) => {
+                MonitorExternalCanisterStrategy::Always(cycles)
+            }
+            station_api::MonitorExternalCanisterStrategyDTO::BelowThreshold(threshold) => {
+                MonitorExternalCanisterStrategy::BelowThreshold(threshold.into())
+            }
+            station_api::MonitorExternalCanisterStrategyDTO::BelowEstimatedRuntime(runtime) => {
+                MonitorExternalCanisterStrategy::BelowEstimatedRuntime(runtime.into())
+            }
+        }
+    }
+}
+
+impl From<MonitorExternalCanisterStrategy> for station_api::MonitorExternalCanisterStrategyDTO {
+    fn from(strategy: MonitorExternalCanisterStrategy) -> Self {
+        match strategy {
+            MonitorExternalCanisterStrategy::Always(cycles) => {
+                station_api::MonitorExternalCanisterStrategyDTO::Always(cycles)
+            }
+            MonitorExternalCanisterStrategy::BelowThreshold(threshold) => {
+                station_api::MonitorExternalCanisterStrategyDTO::BelowThreshold(threshold.into())
+            }
+            MonitorExternalCanisterStrategy::BelowEstimatedRuntime(runtime) => {
+                station_api::MonitorExternalCanisterStrategyDTO::BelowEstimatedRuntime(
+                    runtime.into(),
+                )
+            }
+        }
+    }
+}
+
+impl From<station_api::MonitoringExternalCanisterCyclesThresholdInput>
+    for MonitoringExternalCanisterCyclesThresholdInput
+{
+    fn from(input: station_api::MonitoringExternalCanisterCyclesThresholdInput) -> Self {
+        MonitoringExternalCanisterCyclesThresholdInput {
+            min_cycles: input.min_cycles,
+            fund_cycles: input.fund_cycles,
+        }
+    }
+}
+
+impl From<MonitoringExternalCanisterCyclesThresholdInput>
+    for station_api::MonitoringExternalCanisterCyclesThresholdInput
+{
+    fn from(input: MonitoringExternalCanisterCyclesThresholdInput) -> Self {
+        station_api::MonitoringExternalCanisterCyclesThresholdInput {
+            min_cycles: input.min_cycles,
+            fund_cycles: input.fund_cycles,
+        }
+    }
+}
+
+impl From<station_api::MonitoringExternalCanisterEstimatedRuntimeInput>
+    for MonitoringExternalCanisterEstimatedRuntimeInput
+{
+    fn from(input: station_api::MonitoringExternalCanisterEstimatedRuntimeInput) -> Self {
+        MonitoringExternalCanisterEstimatedRuntimeInput {
+            fund_runtime_secs: input.fund_runtime_secs,
+            min_runtime_secs: input.min_runtime_secs,
+            max_runtime_cycles_fund: input.max_runtime_cycles_fund,
+            fallback_fund_cycles: input.fallback_fund_cycles,
+            fallback_min_cycles: input.fallback_min_cycles,
+        }
+    }
+}
+
+impl From<MonitoringExternalCanisterEstimatedRuntimeInput>
+    for station_api::MonitoringExternalCanisterEstimatedRuntimeInput
+{
+    fn from(input: MonitoringExternalCanisterEstimatedRuntimeInput) -> Self {
+        station_api::MonitoringExternalCanisterEstimatedRuntimeInput {
+            fund_runtime_secs: input.fund_runtime_secs,
+            min_runtime_secs: input.min_runtime_secs,
+            max_runtime_cycles_fund: input.max_runtime_cycles_fund,
+            fallback_fund_cycles: input.fallback_fund_cycles,
+            fallback_min_cycles: input.fallback_min_cycles,
+        }
+    }
+}
+
+impl From<MonitorExternalCanisterStrategy> for canfund::manager::options::FundStrategy {
+    fn from(strategy: MonitorExternalCanisterStrategy) -> Self {
+        match strategy {
+            MonitorExternalCanisterStrategy::Always(cycles) => {
+                canfund::manager::options::FundStrategy::Always(cycles)
+            }
+            MonitorExternalCanisterStrategy::BelowThreshold(threshold) => {
+                canfund::manager::options::FundStrategy::BelowThreshold(threshold.into())
+            }
+            MonitorExternalCanisterStrategy::BelowEstimatedRuntime(runtime) => {
+                canfund::manager::options::FundStrategy::BelowEstimatedRuntime(runtime.into())
+            }
+        }
+    }
+}
+
+impl From<MonitoringExternalCanisterCyclesThresholdInput> for CyclesThreshold {
+    fn from(input: MonitoringExternalCanisterCyclesThresholdInput) -> Self {
+        CyclesThreshold::new()
+            .with_min_cycles(input.min_cycles)
+            .with_fund_cycles(input.fund_cycles)
+    }
+}
+
+impl From<MonitoringExternalCanisterEstimatedRuntimeInput> for EstimatedRuntime {
+    fn from(input: MonitoringExternalCanisterEstimatedRuntimeInput) -> Self {
+        EstimatedRuntime::new()
+            .with_fund_runtime_secs(input.fund_runtime_secs)
+            .with_min_runtime_secs(input.min_runtime_secs)
+            .with_max_runtime_cycles_fund(input.max_runtime_cycles_fund)
+            .with_fallback_fund_cycles(input.fallback_fund_cycles)
+            .with_fallback_min_cycles(input.fallback_min_cycles)
     }
 }

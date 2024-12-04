@@ -93,7 +93,11 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::ConfigureExternalCanister(_)
                     | RequestOperation::CreateExternalCanister(_)
                     | RequestOperation::FundExternalCanister(_)
+                    | RequestOperation::MonitorExternalCanister(_)
                     | RequestOperation::CallExternalCanister(_)
+                    | RequestOperation::SnapshotExternalCanister(_)
+                    | RequestOperation::RestoreExternalCanister(_)
+                    | RequestOperation::PruneExternalCanister(_)
                     | RequestOperation::AddAsset(_)
                     | RequestOperation::EditAsset(_)
                     | RequestOperation::RemoveAsset(_) => None,
@@ -122,7 +126,11 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                     | RequestOperation::ConfigureExternalCanister(_)
                     | RequestOperation::CreateExternalCanister(_)
                     | RequestOperation::FundExternalCanister(_)
+                    | RequestOperation::MonitorExternalCanister(_)
                     | RequestOperation::CallExternalCanister(_)
+                    | RequestOperation::SnapshotExternalCanister(_)
+                    | RequestOperation::RestoreExternalCanister(_)
+                    | RequestOperation::PruneExternalCanister(_)
                     | RequestOperation::AddAsset(_)
                     | RequestOperation::EditAsset(_)
                     | RequestOperation::RemoveAsset(_) => None,

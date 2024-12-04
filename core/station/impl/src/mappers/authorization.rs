@@ -274,6 +274,12 @@ impl From<&station_api::CreateRequestInput> for Resource {
                     ExternalCanisterId::Canister(input.canister_id),
                 ))
             }
+            // Monitoring of external canisters share the same `Fund` action privilege
+            RequestOperationInput::MonitorExternalCanister(input) => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Fund(
+                    ExternalCanisterId::Canister(input.canister_id),
+                ))
+            }
             RequestOperationInput::CreateExternalCanister(_) => {
                 Resource::ExternalCanister(ExternalCanisterResourceAction::Create)
             }
@@ -286,6 +292,21 @@ impl From<&station_api::CreateRequestInput> for Resource {
                         validation_method: validation_method.into(),
                         execution_method: execution_method.into(),
                     },
+                ))
+            }
+            RequestOperationInput::SnapshotExternalCanister(input) => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    ExternalCanisterId::Canister(input.canister_id),
+                ))
+            }
+            RequestOperationInput::RestoreExternalCanister(input) => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    ExternalCanisterId::Canister(input.canister_id),
+                ))
+            }
+            RequestOperationInput::PruneExternalCanister(input) => {
+                Resource::ExternalCanister(ExternalCanisterResourceAction::Change(
+                    ExternalCanisterId::Canister(input.canister_id),
                 ))
             }
             RequestOperationInput::EditPermission(_) => {

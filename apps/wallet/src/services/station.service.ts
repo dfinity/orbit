@@ -11,6 +11,7 @@ import {
   AddUserGroupOperationInput,
   AddUserOperationInput,
   CanisterMethod,
+  CanisterSnapshotsResult,
   CanisterStatusResult,
   Capabilities,
   ChangeExternalCanisterOperationInput,
@@ -64,6 +65,7 @@ import {
   ListUsersResult,
   ManageSystemInfoOperationInput,
   MarkNotificationsReadInput,
+  MonitorExternalCanisterOperationInput,
   Notification,
   PaginationInput,
   RemoveAssetOperationInput,
@@ -480,6 +482,7 @@ export class StationService {
     const result = await actor.get_next_approvable_request({
       operation_types: types ? [types] : [],
       excluded_request_ids: excludedRequestIds ?? [],
+      sort_by: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -644,6 +647,24 @@ export class StationService {
       summary: [],
       operation: {
         FundExternalCanister: input,
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async monitorExternalCanister(input: MonitorExternalCanisterOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
+      title: [],
+      summary: [],
+      operation: {
+        MonitorExternalCanister: input,
       },
     });
 
@@ -1083,6 +1104,97 @@ export class StationService {
           canister_id: canisterId,
           kind: {
             Settings: input,
+          },
+        },
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async getExternalCanisterSnapshots(
+    canisterId: Principal,
+  ): Promise<ExtractOk<CanisterSnapshotsResult>> {
+    const result = await this.actor.canister_snapshots({
+      canister_id: canisterId,
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async createExternalCanisterSnapshot(
+    canisterId: Principal,
+    opts: { comment?: string; force?: boolean; replaceSnapshot?: string } = {},
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
+      title: [],
+      summary: opts.comment ? [opts.comment] : [],
+      operation: {
+        SnapshotExternalCanister: {
+          canister_id: canisterId,
+          replace_snapshot: opts.replaceSnapshot ? [opts.replaceSnapshot] : [],
+          force: opts.force ?? false,
+        },
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async restoreExternalCanisterSnapshot(
+    canisterId: Principal,
+    snapshotId: string,
+    opts: { comment?: string } = {},
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
+      title: [],
+      summary: opts.comment ? [opts.comment] : [],
+      operation: {
+        RestoreExternalCanister: {
+          canister_id: canisterId,
+          snapshot_id: snapshotId,
+        },
+      },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async removeExternalCanisterSnapshot(
+    canisterId: Principal,
+    snapshotId: string,
+    opts: { comment?: string } = {},
+  ): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
+      title: [],
+      summary: opts.comment ? [opts.comment] : [],
+      operation: {
+        PruneExternalCanister: {
+          canister_id: canisterId,
+          prune: {
+            snapshot: snapshotId,
           },
         },
       },

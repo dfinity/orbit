@@ -1,7 +1,7 @@
 
 [package]
 name = 'dfx-orbit'
-version = '0.8.0'
+version = '0.9.0'
 description = 'Command line tool for interacting with the Orbit digital asset manager on the ICP blockchain.'
 authors.workspace = true
 edition.workspace = true
@@ -36,7 +36,7 @@ slog-async.workspace = true
 tabled.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ['rt'] }
-station-api = { path = '../../core/station/api', version = '0.1.0' }
+station-api = { path = '../../core/station/api', version = '0.2.0' }
 
 [lib]
 doctest = false

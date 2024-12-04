@@ -126,7 +126,7 @@ watch(
         preventScroll: true,
       });
 
-      // Next stick is required to ensure the input is focused before blurring it.
+      // Next tick is required to ensure the input is focused before blurring it.
       nextTick(() => {
         cyclesFieldInput.value?.blur();
 
