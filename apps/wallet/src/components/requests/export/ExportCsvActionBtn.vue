@@ -185,7 +185,12 @@ const startDownload = async (idx: number): Promise<void> => {
     const requestList = Array.from(requests.values());
     requestList.sort((a, b) => a.request.created_at.localeCompare(b.request.created_at));
 
-    const csv = mapRequestsToCsvTable(downloadItem.group, requestList);
+    const csv = mapRequestsToCsvTable(
+      downloadItem.group,
+      requestList,
+      window.location.origin,
+      station.canisterId,
+    );
     const fileName =
       i18n.t(`requests.download.${downloadItem.group.toLowerCase()}`) +
       '_' +
