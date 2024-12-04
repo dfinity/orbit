@@ -2035,7 +2035,7 @@ type SystemInfo = record {
   upgrader_id : principal;
   // Cycle balance of the station.
   cycles : nat64;
-  // Cycle balance of the canister.
+  // Last recorded cycles balance of the upgrader canister.
   upgrader_cycles : opt nat64;
   // The time at which the canister was last upgraded.
   last_upgrade_timestamp : TimestampRFC3339;
