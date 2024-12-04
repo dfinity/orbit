@@ -86,7 +86,7 @@
     "station": {
       "currentVersion": "0.1.0",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.2.0"
     },
     "upgrader-api": {
       "currentVersion": "0.1.0",
@@ -140,27 +140,51 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.2.0"
     },
     "dfx-orbit": {
       "currentVersion": "0.8.0",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.9.0"
     },
     "wallet-dapp": {
-      "currentVersion": "0.1.0",
-      "newVersion": "0.1.1",
+      "currentVersion": "0.1.1",
+      "newVersion": "0.2.0",
       "dependentProjects": []
     }
   },
   "changes": {
-    "wallet-dapp": {
+    "station": {
       "releaseVersion": {
-        "rawVersion": "0.1.1",
-        "gitTag": "@orbit/wallet-dapp-v0.1.1",
+        "rawVersion": "0.2.0",
+        "gitTag": "@orbit/station-v0.2.0",
         "isPrerelease": false
       },
-      "contents": "## 0.1.1 (2024-11-28)\n\n\n### 🩹 Fixes\n\n- **wallet:** add new opt candid metadata field ([#447](https://github.com/dfinity/orbit/pull/447))\n\n\n### ❤️  Thank You\n\n- Kepler Vital"
+      "contents": "## 0.2.0 (2024-12-03)\n\n\n### 🚀 Features\n\n- **station:** external canister snapshots ([#429](https://github.com/dfinity/orbit/pull/429))\n\n- **station:** monitor external canisters ([#416](https://github.com/dfinity/orbit/pull/416))\n\n\n### 🩹 Fixes\n\n- **wallet:** fix request export order ([#449](https://github.com/dfinity/orbit/pull/449))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.2.0\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- mraszyk @mraszyk\n- olaszakos"
+    },
+    "station-api": {
+      "releaseVersion": {
+        "rawVersion": "0.2.0",
+        "gitTag": "@orbit/station-api-v0.2.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.2.0 (2024-12-03)\n\n\n### 🚀 Features\n\n- **station:** external canister snapshots ([#429](https://github.com/dfinity/orbit/pull/429))\n\n- **station:** monitor external canisters ([#416](https://github.com/dfinity/orbit/pull/416))\n\n\n### 🩹 Fixes\n\n- **wallet:** fix request export order ([#449](https://github.com/dfinity/orbit/pull/449))\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- mraszyk @mraszyk\n- olaszakos"
+    },
+    "wallet-dapp": {
+      "releaseVersion": {
+        "rawVersion": "0.2.0",
+        "gitTag": "@orbit/wallet-dapp-v0.2.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.2.0 (2024-12-03)\n\n\n### 🚀 Features\n\n- **wallet:** show upgrader ID on station info card ([#446](https://github.com/dfinity/orbit/pull/446))\n\n- **station:** external canister snapshots ([#429](https://github.com/dfinity/orbit/pull/429))\n\n- **station:** monitor external canisters ([#416](https://github.com/dfinity/orbit/pull/416))\n\n- **wallet:** search for address on address book page ([#450](https://github.com/dfinity/orbit/pull/450))\n\n\n### 🩹 Fixes\n\n- **wallet:** fix request export order ([#449](https://github.com/dfinity/orbit/pull/449))\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- mraszyk @mraszyk\n- olaszakos"
+    },
+    "dfx-orbit": {
+      "releaseVersion": {
+        "rawVersion": "0.9.0",
+        "gitTag": "@orbit/dfx-orbit-v0.9.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.9.0 (2024-12-03)\n\n\n### 🚀 Features\n\n- **station:** external canister snapshots ([#429](https://github.com/dfinity/orbit/pull/429))\n\n- **station:** monitor external canisters ([#416](https://github.com/dfinity/orbit/pull/416))\n\n\n### 🩹 Fixes\n\n- **wallet:** fix request export order ([#449](https://github.com/dfinity/orbit/pull/449))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.2.0\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- mraszyk @mraszyk\n- olaszakos"
     }
   }
 }

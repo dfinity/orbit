@@ -1,3 +1,29 @@
+## 0.2.0 (2024-12-03)
+
+
+### 🚀 Features
+
+- **station:** external canister snapshots ([#429](https://github.com/dfinity/orbit/pull/429))
+
+- **station:** monitor external canisters ([#416](https://github.com/dfinity/orbit/pull/416))
+
+
+### 🩹 Fixes
+
+- **wallet:** fix request export order ([#449](https://github.com/dfinity/orbit/pull/449))
+
+
+### 🧱 Updated Dependencies
+
+- Updated station-api to 0.2.0
+
+
+### ❤️  Thank You
+
+- Jan Hrubes @jedna
+- mraszyk @mraszyk
+- olaszakos
+
 ## 0.1.0 (2024-11-27)
 
 

@@ -1190,7 +1190,7 @@ dependencies = [
 
 [[package]]
 name = "dfx-orbit"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "anyhow",
  "candid",
@@ -4683,7 +4683,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "station"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4718,7 +4718,7 @@ dependencies = [
 
 [[package]]
 name = "station-api"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "candid",
  "hex",
