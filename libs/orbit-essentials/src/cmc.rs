@@ -1,7 +1,7 @@
 use crate::utils::check_balance_before_transfer;
 use candid::{CandidType, Deserialize, Principal};
 use ic_cdk::api::call::call_with_payment128;
-use ic_cdk::api::management_canister::main::{self as mgmt, CanisterSettings};
+use ic_cdk::api::management_canister::main::CanisterSettings;
 use serde::Serialize;
 
 /// The CMC canister is used to deploy a canister on a subnet of choice.
@@ -46,28 +46,18 @@ pub async fn create_canister(
     initial_cycles: u128,
 ) -> Result<Principal, String> {
     check_balance_before_transfer(initial_cycles).await?;
-    if let Some(subnet_selection) = subnet_selection {
-        let create_canister = CreateCanister {
-            subnet_selection: Some(subnet_selection),
-            settings: None,
-        };
-        call_with_payment128::<_, (Result<Principal, CreateCanisterError>,)>(
-            CMC_CANISTER_ID,
-            "create_canister",
-            (create_canister,),
-            initial_cycles,
-        )
-        .await
-        .map(|res| res.0)
-        .map_err(|(_, err)| err.to_string())?
-        .map_err(|CreateCanisterError::Refunded { create_error, .. }| create_error)
-    } else {
-        mgmt::create_canister(
-            mgmt::CreateCanisterArgument { settings: None },
-            initial_cycles,
-        )
-        .await
-        .map(|res| res.0.canister_id)
-        .map_err(|(_, err)| err.to_string())
-    }
+    let create_canister = CreateCanister {
+        subnet_selection,
+        settings: None,
+    };
+    call_with_payment128::<_, (Result<Principal, CreateCanisterError>,)>(
+        CMC_CANISTER_ID,
+        "create_canister",
+        (create_canister,),
+        initial_cycles,
+    )
+    .await
+    .map(|res| res.0)
+    .map_err(|(_, err)| err.to_string())?
+    .map_err(|CreateCanisterError::Refunded { create_error, .. }| create_error)
 }
