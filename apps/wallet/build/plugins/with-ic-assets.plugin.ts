@@ -81,10 +81,12 @@ const createICAssetsJson = (
 };
 
 export const withIcAssetsFile = (
-  isProduction = true,
-  publicDir = 'public',
-  fileName = '.ic-assets.json',
+  opts: { isProduction?: boolean; publicDir?: string; fileName?: string } = {},
 ): Plugin => {
+  const isProduction = opts.isProduction ?? true;
+  const publicDir = opts.publicDir ?? 'public';
+  const fileName = opts.fileName ?? '.ic-assets.json';
+
   return {
     name: 'with-ic-assets',
     writeBundle({ dir }) {
