@@ -36,6 +36,7 @@ pub use external_canister::*;
 pub mod permission;
 
 mod cycle_manager;
+pub use cycle_manager::*;
 
 mod disaster_recovery;
 pub use disaster_recovery::*;

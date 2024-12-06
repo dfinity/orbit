@@ -6,7 +6,12 @@ use orbit_essentials::{
 use station_api::DisasterRecoveryDTO;
 
 impl SystemInfo {
-    pub fn to_dto(&self, cycles: &u64, version: &str) -> station_api::SystemInfoDTO {
+    pub fn to_dto(
+        &self,
+        cycles: &u64,
+        version: &str,
+        upgrader_cycles: Option<u64>,
+    ) -> station_api::SystemInfoDTO {
         station_api::SystemInfoDTO {
             name: self.get_name().to_string(),
             last_upgrade_timestamp: timestamp_to_rfc3339(&self.get_last_upgrade_timestamp()),
@@ -23,6 +28,7 @@ impl SystemInfo {
                 }
             }),
             cycle_obtain_strategy: (*self.get_cycle_obtain_strategy()).into(),
+            upgrader_cycles,
         }
     }
 }

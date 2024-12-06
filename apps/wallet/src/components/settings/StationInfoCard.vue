@@ -126,23 +126,56 @@
           </VListItemSubtitle>
         </VListItem>
         <AuthCheck :privileges="[Privilege.SystemInfo]">
-          <VListItem v-if="!loadingSystemInfo" class="px-0">
+          <tempalte v-if="!loadingSystemInfo">
+            <VListItem class="px-0">
+              <VListItemTitle class="font-weight-bold">{{
+                $t(`terms.upgrader_id`)
+              }}</VListItemTitle>
+              <VListItemSubtitle v-if="upgraderId"
+                >{{ upgraderId }}
+                <VBtn
+                  size="x-small"
+                  variant="text"
+                  :icon="mdiContentCopy"
+                  @click="
+                    copyToClipboard({
+                      textToCopy: upgraderId,
+                      sendNotification: true,
+                    })
+                  "
+                />
+              </VListItemSubtitle>
+            </VListItem>
+
+            <VListItem class="px-0">
+              <VListItemTitle class="font-weight-bold">{{
+                $t(`pages.administration.cycle_balances`)
+              }}</VListItemTitle>
+              <VListItemSubtitle>
+                <table style="min-width: 200px">
+                  <tr>
+                    <td>{{ $t('terms.station') }}:</td>
+                    <td class="text-right">
+                      {{ systemInfo ? formatCycles(systemInfo.cycles) : '-' }}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>{{ $t('terms.upgrader') }}:</td>
+                    <td class="text-right">
+                      {{
+                        systemInfo?.upgrader_cycles?.[0]
+                          ? formatCycles(systemInfo.upgrader_cycles[0])
+                          : '-'
+                      }}
+                    </td>
+                  </tr>
+                </table>
+              </VListItemSubtitle>
+            </VListItem>
+          </tempalte>
+          <VListItem class="px-0" v-else-if="loadingSystemInfoError">
             <VListItemTitle class="font-weight-bold">{{ $t(`terms.upgrader_id`) }}</VListItemTitle>
-            <VListItemSubtitle v-if="upgraderId"
-              >{{ upgraderId }}
-              <VBtn
-                size="x-small"
-                variant="text"
-                :icon="mdiContentCopy"
-                @click="
-                  copyToClipboard({
-                    textToCopy: upgraderId,
-                    sendNotification: true,
-                  })
-                "
-              />
-            </VListItemSubtitle>
-            <VListItemSubtitle v-else-if="loadingSystemInfoError">
+            <VListItemSubtitle>
               <VAlert type="error" variant="tonal" density="compact" class="mb-4 mt-2">
                 {{ $t('pages.administration.system_info_error') }}
               </VAlert>
@@ -238,6 +271,7 @@ import {
   Request,
   SystemInfo,
 } from '~/generated/station/station.did';
+import { formatCycles } from '~/mappers/cycles.mapper';
 import { storeUserStationToUserStation } from '~/mappers/stations.mapper';
 import { i18n } from '~/plugins/i18n.plugin';
 import { services } from '~/plugins/services.plugin';
@@ -246,9 +280,9 @@ import { useSessionStore } from '~/stores/session.store';
 import { useStationStore } from '~/stores/station.store';
 import { Privilege } from '~/types/auth.types';
 import { copyToClipboard } from '~/utils/app.utils';
-import StationInfoForm, { StationInfoModel } from './StationInfoForm.vue';
-import { unreachable, variantIs } from '~/utils/helper.utils';
 import { hasRequiredPrivilege } from '~/utils/auth.utils';
+import { unreachable, variantIs } from '~/utils/helper.utils';
+import StationInfoForm, { StationInfoModel } from './StationInfoForm.vue';
 
 const station = useStationStore();
 const session = useSessionStore();

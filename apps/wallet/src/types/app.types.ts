@@ -73,7 +73,7 @@ export enum CyclesUnit {
   Billion = 'BC',
   Million = 'MC',
   // Can be used to display cycles in the smallest unit.
-  Smallest = 'e8s',
+  Smallest = 'Cycles',
 }
 
 export enum TimeUnit {

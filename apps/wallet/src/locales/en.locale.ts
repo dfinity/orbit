@@ -904,6 +904,7 @@ export default {
       cycle_obtain_strategy_disabled:
         'WARNING: Station cycle balance top-up disabled. Your station may run out of cycles.',
       cycle_obtain_strategy_mint_from_native_token: 'Mint from ICP account',
+      cycle_balances: 'Cycle Balances',
     },
     users: {
       title: 'Users',

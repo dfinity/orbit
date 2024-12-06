@@ -6,7 +6,7 @@ use crate::{
     errors::AuthorizationError,
     migration,
     models::resource::{Resource, SystemResourceAction},
-    services::{SystemService, INITIALIZING, SYSTEM_SERVICE},
+    services::{SystemService, CYCLE_MANAGER, INITIALIZING, SYSTEM_SERVICE},
     SYSTEM_VERSION,
 };
 use ic_cdk_macros::{post_upgrade, query, update};
@@ -137,9 +137,19 @@ impl SystemController {
     async fn system_info(&self) -> ApiResult<SystemInfoResponse> {
         let system_info = self.system_service.get_system_info();
         let cycles = canister_balance();
+        let upgrader_balance = CYCLE_MANAGER.get_canister(system_info.get_upgrader_canister_id());
 
         Ok(SystemInfoResponse {
-            system: system_info.to_dto(&cycles, SYSTEM_VERSION),
+            system: system_info.to_dto(
+                &cycles,
+                SYSTEM_VERSION,
+                upgrader_balance.and_then(|record| {
+                    record
+                        .get_cycles()
+                        .as_ref()
+                        .map(|cycles_balance| cycles_balance.amount as u64)
+                }),
+            ),
         })
     }
 
