@@ -22,6 +22,12 @@ pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
 pub static CANISTER_INITIAL_CYCLES: u128 = 100_000_000_000_000;
 
 #[derive(CandidType, Serialize)]
+pub struct SetAuthorizedSubnetworkListArgs {
+    pub who: Option<Principal>,
+    pub subnets: Vec<Principal>,
+}
+
+#[derive(CandidType, Serialize)]
 enum UpdateSubnetTypeArgs {
     Add(String),
     //Remove(String),
@@ -224,6 +230,21 @@ fn install_canisters(
         Encode!(&cmc_init_args).unwrap(),
         Some(controller),
     );
+    // set default (application) subnets on CMC
+    // by setting authorized subnets associated with no principal (CMC API)
+    let application_subnet_id = env.topology().get_app_subnets()[0];
+    let set_authorized_subnetwork_list_args = SetAuthorizedSubnetworkListArgs {
+        who: None,
+        subnets: vec![application_subnet_id],
+    };
+    update_candid_as::<_, ((),)>(
+        env,
+        cmc_canister_id,
+        nns_governance_canister_id,
+        "set_authorized_subnetwork_list",
+        (set_authorized_subnetwork_list_args,),
+    )
+    .unwrap();
     // add fiduciary subnet to CMC
     let update_subnet_type_args = UpdateSubnetTypeArgs::Add("fiduciary".to_string());
     update_candid_as::<_, ((),)>(
