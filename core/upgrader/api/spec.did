@@ -162,9 +162,9 @@ type SetDisasterRecoveryAccountsAndAssetsInput = record {
 
 // Request to trigger disaster recovery. Requests are stored in the Upgrader
 // canister, and when at least `quorum` of the committee members
-// agree on the exact module, args, and install mode, the request is processed.
+// agree on the exact disaster recovery input, the request is processed.
 // Requests older than 1 week will be discarded.
-type RequestDisasterRecoveryInput = record {
+type RequestDisasterRecoveryInstallCodeInput = record {
   // The wasm module to be installed.
   module : blob;
   // Additional wasm module chunks to append to the wasm module.
@@ -173,6 +173,9 @@ type RequestDisasterRecoveryInput = record {
   arg : blob;
   // The install mode: Install, Upgrade, or Reinstall.
   install_mode : InstallMode;
+};
+type RequestDisasterRecoveryInput = variant {
+  InstallCode : RequestDisasterRecoveryInstallCodeInput;
 };
 
 type InstallMode = variant {
@@ -226,16 +229,25 @@ type GetLogsResult = variant {
   Err : Error;
 };
 
+type StationRecoveryRequestInstallCodeOperation = record {
+  // The install mode: Install, Upgrade, or Reinstall.
+  install_mode : InstallMode;
+  // The sha of the wasm module to be installed.
+  wasm_sha256 : blob;
+  // The argument to be passed to the install function.
+  arg : blob;
+};
+
+type StationRecoveryRequestOperation = variant {
+  InstallCode : StationRecoveryRequestInstallCodeOperation;
+};
+
 // Request to recover the station.
 type StationRecoveryRequest = record {
   // The requester user id.
   user_id : text;
-  // The sha of the wasm module to be installed.
-  wasm_sha256 : blob;
-  // The install mode: Install, Upgrade, or Reinstall.
-  install_mode : InstallMode;
-  // The argument to be passed to the install function.
-  arg : blob;
+  // The disaster recovery operation.
+  operation : StationRecoveryRequestOperation;
   // The request submission timestamp.
   submitted_at : text;
 };

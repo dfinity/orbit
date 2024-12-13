@@ -29,18 +29,40 @@ pub struct SetAccountsAndAssetsLog {
 }
 
 #[derive(Serialize)]
-pub struct RequestDisasterRecoveryLog {
-    pub user: AdminUser,
+pub struct RequestDisasterRecoveryInstallCodeLog {
+    pub install_mode: String,
     pub wasm_sha256: String,
     pub arg_sha256: String,
-    pub install_mode: String,
+}
+
+#[derive(Serialize)]
+pub enum RequestDisasterRecoveryOperationLog {
+    InstallCode(RequestDisasterRecoveryInstallCodeLog),
+}
+
+impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            RequestDisasterRecoveryOperationLog::InstallCode(install_code) => {
+                write!(
+                    f,
+                    "InstallCode with mode{}, wasm hash {}, and arg hash {}",
+                    install_code.install_mode, install_code.wasm_sha256, install_code.arg_sha256
+                )
+            }
+        }
+    }
+}
+
+#[derive(Serialize)]
+pub struct RequestDisasterRecoveryLog {
+    pub user: AdminUser,
+    pub operation: RequestDisasterRecoveryOperationLog,
 }
 
 #[derive(Serialize)]
 pub struct DisasterRecoveryStartLog {
-    pub wasm_sha256: String,
-    pub arg_sha256: String,
-    pub install_mode: String,
+    pub operation: RequestDisasterRecoveryOperationLog,
 }
 
 #[derive(Serialize)]
@@ -109,16 +131,14 @@ impl LogEntryType {
                 format!("Set {} disaster recovery account(s)", data.accounts.len(),)
             }
             LogEntryType::RequestDisasterRecovery(data) => format!(
-                "{} requested disaster recovery with wasm hash {} and arg hash {}",
+                "{} requested disaster recovery with operation {}",
                 data.user.to_summary(),
-                hex::encode(&data.wasm_sha256),
-                hex::encode(&data.arg_sha256)
+                data.operation,
             ),
 
             LogEntryType::DisasterRecoveryStart(data) => format!(
-                "Disaster recovery successfully initiated to {} station with wasm {}",
-                data.install_mode,
-                hex::encode(&data.wasm_sha256)
+                "Disaster recovery successfully initiated with operation {}",
+                data.operation,
             ),
             LogEntryType::DisasterRecoveryResult(data) => match data.result {
                 RecoveryResult::Success => "Disaster recovery succeeded".to_owned(),
