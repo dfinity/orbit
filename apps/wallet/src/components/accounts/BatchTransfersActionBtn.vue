@@ -214,7 +214,7 @@ const btnText = computed(() =>
 const dialogTitle = computed(() => btnText.value ?? i18n.t('pages.accounts.btn_upload_csv'));
 const open = ref(false);
 const loading = ref(false);
-const transfersCsv = ref<File[] | undefined>(undefined);
+const transfersCsv = ref<File | undefined>(undefined);
 const csvToColumn = computed(() => i18n.t('pages.account.csv_transfer_file_column_to'));
 const csvCommentColumn = computed(() => i18n.t('pages.account.csv_transfer_file_column_comment'));
 const csvAmountColumn = computed(() => i18n.t('pages.account.csv_transfer_file_column_amount'));
@@ -278,14 +278,14 @@ watch(
 watch(
   () => transfersCsv.value,
   async files => {
-    if (!files || !files.length) {
+    if (!files || !files.size) {
       rows.value = [];
       rawCsvTable.value = null;
       invalidRawCsvTable.value = null;
       return;
     }
 
-    const table = await readFileAsCsvTable(files[0]);
+    const table = await readFileAsCsvTable(files);
     rows.value = [];
     rawCsvTable.value = table;
     invalidRawCsvTable.value = {
