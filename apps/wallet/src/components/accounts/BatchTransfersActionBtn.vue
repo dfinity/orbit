@@ -277,15 +277,15 @@ watch(
 
 watch(
   () => transfersCsv.value,
-  async files => {
-    if (!files || !files.size) {
+  async file => {
+    if (!file || !file.size) {
       rows.value = [];
       rawCsvTable.value = null;
       invalidRawCsvTable.value = null;
       return;
     }
 
-    const table = await readFileAsCsvTable(files);
+    const table = await readFileAsCsvTable(file);
     rows.value = [];
     rawCsvTable.value = table;
     invalidRawCsvTable.value = {
