@@ -27,7 +27,7 @@ serde = { workspace = true, features = ['derive'] }
 serde_bytes = { workspace = true }
 serde_cbor = { workspace = true }
 serde_json = { workspace = true }
-station-api = { path = '../../station/api', version = '0.2.0' }
+station-api = { path = '../../station/api', version = '0.3.0' }
 sha2 = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ['v4'] }
