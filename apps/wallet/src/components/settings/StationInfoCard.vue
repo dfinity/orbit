@@ -126,7 +126,7 @@
           </VListItemSubtitle>
         </VListItem>
         <AuthCheck :privileges="[Privilege.SystemInfo]">
-          <tempalte v-if="!loadingSystemInfo">
+          <template v-if="!loadingSystemInfo">
             <VListItem class="px-0">
               <VListItemTitle class="font-weight-bold">{{
                 $t(`terms.upgrader_id`)
@@ -172,7 +172,7 @@
                 </table>
               </VListItemSubtitle>
             </VListItem>
-          </tempalte>
+          </template>
           <VListItem class="px-0" v-else-if="loadingSystemInfoError">
             <VListItemTitle class="font-weight-bold">{{ $t(`terms.upgrader_id`) }}</VListItemTitle>
             <VListItemSubtitle>
