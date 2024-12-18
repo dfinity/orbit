@@ -101,6 +101,8 @@ function uninstall_cmc() {
   dfx canister delete cmc -y >/dev/null 2>&1 || true
 }
 
+# sets the user principal as the governance canister
+# so that the user principal can make privileged calls on CMC
 function install_cmc() {
   dfx deploy --specified-id $CANISTER_ID_CMC cmc --argument "
   (opt record {
