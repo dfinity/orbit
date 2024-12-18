@@ -152,7 +152,7 @@ jobs:
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@main
       - name: 'Start local replica'
-        run: dfx start --clean --host 127.0.0.1:4943 --background
+        run: dfx start --clean --pocketic --host 127.0.0.1:4943 --background
       - name: 'Perform local deployment'
         run: ./orbit --init
       - name: 'Test local deployment'
@@ -180,7 +180,7 @@ jobs:
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@main
       - name: 'Start local replica'
-        run: dfx start --clean --host 127.0.0.1:4943 --background
+        run: dfx start --clean --pocketic --host 127.0.0.1:4943 --background
       - name: 'Test prod deployment script'
         run: |
           echo y | ./scripts/deploy.sh --local # install
