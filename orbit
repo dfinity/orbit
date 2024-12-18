@@ -116,10 +116,10 @@ function install_cmc() {
 function setup_cmc() {
   uninstall_cmc
   install_cmc
-  SUBNET_ID="$(curl http://localhost:4943/_/topology 2>/dev/null | jq -r '.subnet_configs | to_entries | map(select(.value.subnet_kind == "Application"))[0] | .key')"
+  SUBNET_IDS="$(curl http://localhost:4943/_/topology 2>/dev/null | jq -r '.subnet_configs | to_entries | map(select(.value.subnet_kind == "Application"))[] | .key' | sed "s/\(.*\)/principal\\\"\1\\\";/")"
   dfx canister call cmc set_authorized_subnetwork_list "(record {
     who=null;
-    subnets=vec {principal\"$SUBNET_ID\"};
+    subnets=vec {$SUBNET_IDS};
   })
 "
 }
