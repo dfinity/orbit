@@ -92,8 +92,10 @@ Please make sure you have the following installed:
 Start a local replica listening on port 4943:
 
 ```
-dfx start --clean --host 127.0.0.1:4943
+dfx start --clean --pocketic --host 127.0.0.1:4943
 ```
+
+Note that the local replica should be stopped using `dfx stop` rather than by CTRL^C.
 
 Then the following steps can be used to setup the Orbit canister ecosystem for local development.
 
