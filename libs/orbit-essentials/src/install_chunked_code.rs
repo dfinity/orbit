@@ -12,7 +12,7 @@ const MAX_WASM_CHUNK_LEN: usize = 1 << 20; // 1MiB
 const MAX_WASM_TOTAL_LEN: usize = 100 << 20; // 100MiB
 
 // Derived limits
-const MAX_WASM_CHUNK_CNT: usize = MAX_WASM_TOTAL_LEN / MAX_WASM_CHUNK_LEN + 1;
+const MAX_WASM_CHUNK_CNT: usize = MAX_WASM_TOTAL_LEN / MAX_WASM_CHUNK_LEN + 1; // + 1 for the provided module which is the first chunk
 
 // asset canister types
 
@@ -125,7 +125,7 @@ async fn upload_chunk(target_canister: Principal, chunk: Vec<u8>) -> Result<Vec<
     Ok(chunk_hash)
 }
 
-pub async fn install_chunked_code(
+pub async fn install_chunked_code_(
     target_canister: Principal,
     install_mode: CanisterInstallMode,
     module: Vec<u8>,
@@ -134,6 +134,8 @@ pub async fn install_chunked_code(
 ) -> Result<(), String> {
     if let Some(module_extra_chunks) = module_extra_chunks {
         // clear the ICP chunk store of the target canister
+        // to delete left-over chunks in case of a failure
+        // during a past code install
         mgmt::clear_chunk_store(ClearChunkStoreArgument {
             canister_id: target_canister,
         })
@@ -180,4 +182,32 @@ pub async fn install_chunked_code(
         .map_err(|(_, err)| format!("failed to install code: {err}"))?;
     }
     Ok(())
+}
+
+pub async fn install_chunked_code(
+    target_canister: Principal,
+    install_mode: CanisterInstallMode,
+    module: Vec<u8>,
+    module_extra_chunks: Option<WasmModuleExtraChunks>,
+    arg: Vec<u8>,
+) -> Result<(), String> {
+    let has_extra_chunks = module_extra_chunks.is_some();
+    let res = install_chunked_code_(
+        target_canister,
+        install_mode,
+        module,
+        module_extra_chunks,
+        arg,
+    )
+    .await;
+    if has_extra_chunks {
+        // clear the ICP chunk store of the target canister to reduce memory footprint
+        // and ignore any errors here so that a successful code install is not reported
+        // as failed only because of a failure to clear the ICP chunk store
+        let _ = mgmt::clear_chunk_store(ClearChunkStoreArgument {
+            canister_id: target_canister,
+        })
+        .await;
+    }
+    res
 }
