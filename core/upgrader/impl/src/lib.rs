@@ -21,6 +21,7 @@ pub use orbit_essentials::cdk::mocks as upgrader_ic_cdk;
 
 pub mod controllers;
 pub mod errors;
+pub mod mappers;
 pub mod model;
 pub mod services;
 pub mod upgrade;

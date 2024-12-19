@@ -12,7 +12,7 @@ use uuid::Uuid;
 use crate::utils::HelperMapper;
 
 #[storable]
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum InstallMode {
     /// Install the wasm module.
     Install,
@@ -63,22 +63,35 @@ impl From<InstallMode> for CanisterInstallMode {
 }
 
 #[storable]
-#[derive(Clone, Debug)]
-pub struct StationRecoveryRequest {
-    /// The user ID of the station.
-    pub user_id: UUID,
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct StationRecoveryRequestInstallCodeOperation {
+    /// The install mode: upgrade or reinstall.
+    pub install_mode: InstallMode,
     /// The wasm module to be installed.
     pub wasm_module: Vec<u8>,
     /// Optional extra chunks of the wasm module to be installed.
     pub wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
     /// The SHA-256 hash of the wasm module.
     pub wasm_sha256: Vec<u8>,
-    /// The install mode: upgrade or reinstall.
-    pub install_mode: InstallMode,
     /// The install arguments.
     pub arg: Vec<u8>,
     /// The SHA-256 hash of the install arguments.
     pub arg_sha256: Vec<u8>,
+}
+
+#[storable]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum StationRecoveryRequestOperation {
+    InstallCode(StationRecoveryRequestInstallCodeOperation),
+}
+
+#[storable]
+#[derive(Clone, Debug)]
+pub struct StationRecoveryRequest {
+    /// The user ID of the station.
+    pub user_id: UUID,
+    /// The disaster recovery operation.
+    pub operation: StationRecoveryRequestOperation,
     /// Time in nanoseconds since the UNIX epoch when the request was submitted.
     pub submitted_at: Timestamp,
 }
@@ -87,9 +100,7 @@ impl From<StationRecoveryRequest> for upgrader_api::StationRecoveryRequest {
     fn from(value: StationRecoveryRequest) -> Self {
         upgrader_api::StationRecoveryRequest {
             user_id: Uuid::from_bytes(value.user_id).hyphenated().to_string(),
-            wasm_sha256: value.wasm_sha256,
-            install_mode: upgrader_api::InstallMode::from(value.install_mode),
-            arg: value.arg,
+            operation: (&value.operation).into(),
             submitted_at: timestamp_to_rfc3339(&value.submitted_at),
         }
     }
