@@ -29,7 +29,7 @@ serde_cbor = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ['serde', 'v4'] }
 control-panel-api = { path = '../api', version = '0.1.0' }
-station-api = { path = '../../station/api', version = '0.2.0' }
+station-api = { path = '../../station/api', version = '0.3.0' }
 semver = { workspace = true }
 email_address = '0.2.4'
 

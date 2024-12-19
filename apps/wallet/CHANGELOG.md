@@ -1,3 +1,29 @@
+## 0.3.0 (2024-12-17)
+
+
+### 🚀 Features
+
+- **wallet:** add user groups to users page ([#454](https://github.com/dfinity/orbit/pull/454))
+
+- **wallet:** add request URL to export; copy request URL button ([#453](https://github.com/dfinity/orbit/pull/453))
+
+- **station:** display station and upgrader cycle balance on Administration page ([#457](https://github.com/dfinity/orbit/pull/457))
+
+
+### 🩹 Fixes
+
+- **wallet:** update lockfile ([#459](https://github.com/dfinity/orbit/pull/459))
+
+- **wallet:** fix typo in template ([#462](https://github.com/dfinity/orbit/pull/462))
+
+- **wallet:** fix CSV upload ([#463](https://github.com/dfinity/orbit/pull/463))
+
+
+### ❤️  Thank You
+
+- Jan Hrubes @jedna
+- olaszakos
+
 ## 0.2.0 (2024-12-03)
 
 
