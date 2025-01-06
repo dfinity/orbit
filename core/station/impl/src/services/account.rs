@@ -358,7 +358,7 @@ impl AccountService {
         let mut account = self.get_account(&input.account_id)?;
 
         if let Some(name) = &input.name {
-            account.name = name.to_owned();
+            name.clone_into(&mut account.name);
 
             if self
                 .account_repository

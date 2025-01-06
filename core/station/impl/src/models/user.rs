@@ -311,7 +311,7 @@ pub mod user_test_utils {
 
     pub fn add_user(id: &UUID) -> User {
         let mut user = mock_user();
-        user.id = id.to_owned();
+        id.clone_into(&mut user.id);
         user.status = UserStatus::Active;
         USER_REPOSITORY.insert(user.to_key(), user.to_owned());
 
@@ -320,7 +320,7 @@ pub mod user_test_utils {
 
     pub fn add_inactive_user(id: &UUID) -> User {
         let mut user = mock_user();
-        user.id = id.to_owned();
+        id.clone_into(&mut user.id);
         user.status = UserStatus::Inactive;
         USER_REPOSITORY.insert(user.to_key(), user.to_owned());
 

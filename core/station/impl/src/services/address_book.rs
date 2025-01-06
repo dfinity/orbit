@@ -135,7 +135,7 @@ impl AddressBookService {
         let mut entry = self.get_entry_by_id(&input.address_book_entry_id)?;
 
         if let Some(address_owner) = &input.address_owner {
-            entry.address_owner = address_owner.to_owned();
+            address_owner.clone_into(&mut entry.address_owner);
         }
 
         if let Some(change_metadata) = input.change_metadata {
