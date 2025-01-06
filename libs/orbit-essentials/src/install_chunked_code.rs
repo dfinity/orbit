@@ -125,7 +125,7 @@ async fn upload_chunk(target_canister: Principal, chunk: Vec<u8>) -> Result<Vec<
     Ok(chunk_hash)
 }
 
-pub async fn install_chunked_code_(
+pub async fn install_chunked_code(
     target_canister: Principal,
     install_mode: CanisterInstallMode,
     module: Vec<u8>,
@@ -158,7 +158,7 @@ pub async fn install_chunked_code_(
             chunk_hashes_list.push(chunk_hash);
         }
         // install target canister from chunks stored in the ICP chunk store of the target canister
-        mgmt::install_chunked_code(InstallChunkedCodeArgument {
+        let res = mgmt::install_chunked_code(InstallChunkedCodeArgument {
             mode: install_mode,
             target_canister,
             store_canister: Some(target_canister),
@@ -170,7 +170,15 @@ pub async fn install_chunked_code_(
             arg,
         })
         .await
-        .map_err(|(_, err)| format!("failed to install code from chunks: {err}"))?;
+        .map_err(|(_, err)| format!("failed to install code from chunks: {err}"));
+        // clear the ICP chunk store of the target canister to reduce memory footprint
+        // and ignore any errors here so that a successful code install is not reported
+        // as failed only because of a failure to clear the ICP chunk store
+        let _ = mgmt::clear_chunk_store(ClearChunkStoreArgument {
+            canister_id: target_canister,
+        })
+        .await;
+        res
     } else {
         mgmt::install_code(InstallCodeArgument {
             mode: install_mode,
@@ -179,35 +187,6 @@ pub async fn install_chunked_code_(
             arg,
         })
         .await
-        .map_err(|(_, err)| format!("failed to install code: {err}"))?;
+        .map_err(|(_, err)| format!("failed to install code: {err}"))
     }
-    Ok(())
-}
-
-pub async fn install_chunked_code(
-    target_canister: Principal,
-    install_mode: CanisterInstallMode,
-    module: Vec<u8>,
-    module_extra_chunks: Option<WasmModuleExtraChunks>,
-    arg: Vec<u8>,
-) -> Result<(), String> {
-    let has_extra_chunks = module_extra_chunks.is_some();
-    let res = install_chunked_code_(
-        target_canister,
-        install_mode,
-        module,
-        module_extra_chunks,
-        arg,
-    )
-    .await;
-    if has_extra_chunks {
-        // clear the ICP chunk store of the target canister to reduce memory footprint
-        // and ignore any errors here so that a successful code install is not reported
-        // as failed only because of a failure to clear the ICP chunk store
-        let _ = mgmt::clear_chunk_store(ClearChunkStoreArgument {
-            canister_id: target_canister,
-        })
-        .await;
-    }
-    res
 }
