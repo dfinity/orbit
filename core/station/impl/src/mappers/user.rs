@@ -94,7 +94,7 @@ impl From<UserDTO> for User {
 impl User {
     pub fn update_with(&mut self, input: EditUserOperationInput) -> Result<(), UserError> {
         if let Some(new_identities) = &input.identities {
-            self.identities = new_identities.to_owned();
+            new_identities.clone_into(&mut self.identities);
         }
 
         if let Some(new_groups) = input.groups {

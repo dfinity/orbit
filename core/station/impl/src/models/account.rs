@@ -399,7 +399,7 @@ pub mod account_test_utils {
 
     pub fn add_account(id: &UUID) -> Account {
         let mut account = mock_account();
-        account.id = id.to_owned();
+        id.clone_into(&mut account.id);
         ACCOUNT_REPOSITORY.insert(account.to_key(), account.to_owned());
 
         account

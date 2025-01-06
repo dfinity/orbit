@@ -1,55 +1,55 @@
 benches:
   batch_insert_100_requests:
     total:
-      instructions: 229960587
+      instructions: 224958727
       heap_increase: 0
       stable_memory_increase: 96
     scopes: {}
   find_100_users_from_50k_user_dataset:
     total:
-      instructions: 218785601
+      instructions: 232602798
       heap_increase: 97
       stable_memory_increase: 0
     scopes: {}
   find_500_external_canister_policies_from_50k_dataset:
     total:
-      instructions: 27755234
+      instructions: 27064569
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
   heap_size_of_indexed_request_fields_cache_is_lt_300mib:
     total:
-      instructions: 195191574
+      instructions: 209683797
       heap_increase: 85
       stable_memory_increase: 0
     scopes: {}
   list_1k_requests:
     total:
-      instructions: 138421353
+      instructions: 136002732
       heap_increase: 14
       stable_memory_increase: 0
     scopes: {}
   list_external_canisters_with_all_statuses:
     total:
-      instructions: 228366343
+      instructions: 226684807
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
   repository_find_1k_requests_from_10k_dataset_default_filters:
     total:
-      instructions: 89877807
+      instructions: 89330227
       heap_increase: 17
       stable_memory_increase: 0
     scopes: {}
   service_filter_5k_requests_from_100k_dataset:
     total:
-      instructions: 670746367
+      instructions: 666905397
       heap_increase: 106
       stable_memory_increase: 16
     scopes: {}
   service_find_all_requests_from_2k_dataset:
     total:
-      instructions: 271661935
+      instructions: 270097779
       heap_increase: 44
       stable_memory_increase: 16
     scopes: {}
