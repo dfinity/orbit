@@ -37,8 +37,8 @@ impl RegistryMapper {
         entry.namespace = namespace;
         entry.name = name;
         entry.description = input.description.to_string();
-        entry.tags = input.tags.clone();
-        entry.categories = input.categories.clone();
+        entry.tags.clone_from(&input.tags);
+        entry.categories.clone_from(&input.categories);
         entry.metadata = HelperMapper::from_metadata(input.metadata.clone());
 
         match &input.value {
@@ -67,11 +67,11 @@ impl RegistryMapper {
         }
 
         if let Some(tags) = &input.tags {
-            entry.tags = tags.clone();
+            entry.tags.clone_from(tags);
         }
 
         if let Some(categories) = &input.categories {
-            entry.categories = categories.clone();
+            entry.categories.clone_from(categories);
         }
 
         if let Some(metadata) = &input.metadata {

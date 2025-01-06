@@ -145,7 +145,7 @@ impl DisasterRecoveryService {
 
         Self::ensure_not_in_progress(&self.logger, &mut value, "set_accounts")?;
 
-        value.accounts = accounts.clone();
+        value.accounts.clone_from(&accounts);
 
         self.storage.set(value);
 
@@ -164,8 +164,8 @@ impl DisasterRecoveryService {
 
         Self::ensure_not_in_progress(&self.logger, &mut value, "set_accounts_and_assets")?;
 
-        value.multi_asset_accounts = multi_asset_accounts.clone();
-        value.assets = assets.clone();
+        value.multi_asset_accounts.clone_from(&multi_asset_accounts);
+        value.assets.clone_from(&assets);
 
         self.storage.set(value);
 
