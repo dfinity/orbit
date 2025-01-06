@@ -22,7 +22,7 @@ on:
 jobs:
   deterministic-build:
     name: 'deterministic-build:optional'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         include:
