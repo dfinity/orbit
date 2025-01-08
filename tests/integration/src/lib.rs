@@ -13,14 +13,16 @@ mod disaster_recovery_tests;
 mod external_canister_tests;
 mod http;
 mod interfaces;
-mod migration_tests;
 mod notification;
 mod rate_limiter;
 mod register_tests;
 mod setup;
+mod station_migration_tests;
+mod station_test_data;
 mod system_upgrade_tests;
-mod test_data;
 mod transfer_tests;
+mod upgrader_migration_tests;
+mod upgrader_test_data;
 mod user;
 mod utils;
 

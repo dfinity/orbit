@@ -4,8 +4,11 @@ use crate::setup::{
 use crate::utils::{
     add_user, advance_time_to_burn_cycles, await_station_healthy, execute_request,
     get_account_read_permission, get_account_transfer_permission, get_account_update_permission,
-    get_core_canister_health_status, get_icp_asset, get_system_info,
-    get_upgrader_disaster_recovery, get_upgrader_logs, get_user, set_disaster_recovery,
+    get_core_canister_health_status, get_disaster_recovery_accounts,
+    get_disaster_recovery_accounts_and_assets, get_disaster_recovery_committee, get_icp_asset,
+    get_system_info, get_upgrader_disaster_recovery, get_upgrader_logs, get_user,
+    request_disaster_recovery, set_disaster_recovery, set_disaster_recovery_accounts,
+    set_disaster_recovery_accounts_and_assets, set_disaster_recovery_committee,
     upload_canister_chunks_to_asset_canister, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
@@ -22,11 +25,8 @@ use station_api::{
 use std::collections::BTreeMap;
 use std::str::FromStr;
 use upgrader_api::{
-    Account, AdminUser, Asset, DisasterRecoveryCommittee,
-    GetDisasterRecoveryAccountsAndAssetsResponse, GetDisasterRecoveryAccountsResponse,
-    GetDisasterRecoveryCommitteeResponse, MultiAssetAccount, RecoveryResult, RecoveryStatus,
-    SetDisasterRecoveryAccountsAndAssetsInput, SetDisasterRecoveryAccountsInput,
-    SetDisasterRecoveryCommitteeInput, StationRecoveryRequest,
+    Account, AdminUser, Asset, DisasterRecoveryCommittee, MultiAssetAccount, RecoveryResult,
+    RecoveryStatus, StationRecoveryRequest,
 };
 use uuid::Uuid;
 
@@ -90,64 +90,37 @@ fn successful_disaster_recovery_sync() {
 
     let upgrader_id = system_info.upgrader_id;
 
-    let args: SetDisasterRecoveryCommitteeInput = SetDisasterRecoveryCommitteeInput {
-        committee: DisasterRecoveryCommittee {
-            quorum: 1,
-            users: vec![
-                AdminUser {
-                    id: Uuid::new_v4().hyphenated().to_string(),
-                    name: "user_1".to_owned(),
-                    identities: vec![Principal::from_slice(&[0])],
-                },
-                AdminUser {
-                    id: Uuid::new_v4().hyphenated().to_string(),
-                    name: "user_2".to_owned(),
-                    identities: vec![Principal::from_slice(&[1])],
-                },
-            ],
+    let quorum = 1;
+    let users = vec![
+        AdminUser {
+            id: Uuid::new_v4().hyphenated().to_string(),
+            name: "user_1".to_owned(),
+            identities: vec![Principal::from_slice(&[0])],
         },
-    };
+        AdminUser {
+            id: Uuid::new_v4().hyphenated().to_string(),
+            name: "user_2".to_owned(),
+            identities: vec![Principal::from_slice(&[1])],
+        },
+    ];
+    let committee = DisasterRecoveryCommittee { quorum, users };
 
     // non-controller can't set disaster recovery committee
-    let res: (ApiResult,) = update_candid_as(
+    let err = set_disaster_recovery_committee(
         &env,
         upgrader_id,
         Principal::from_slice(&[1]),
-        "set_disaster_recovery_committee",
-        (args.clone(),),
+        committee.clone(),
     )
-    .expect("Failed update call to set disaster recovery committee");
-    let err = res
-        .0
-        .expect_err("Non-controller should not be able to set disaster recovery committee");
+    .expect_err("Non-controller should not be able to set disaster recovery committee");
     assert!(err.code == "NOT_CONTROLLER");
 
     // controller can set disaster recovery committee
-    let res: (ApiResult,) = update_candid_as(
-        &env,
-        upgrader_id,
-        canister_ids.station,
-        "set_disaster_recovery_committee",
-        (args,),
-    )
-    .expect("Failed update call to set disaster recovery committee");
-    res.0.expect("Failed to set disaster recovery committee");
+    set_disaster_recovery_committee(&env, upgrader_id, canister_ids.station, committee)
+        .expect("Failed to set disaster recovery committee");
 
-    let res: (ApiResult<GetDisasterRecoveryCommitteeResponse>,) = query_candid_as(
-        &env,
-        upgrader_id,
-        canister_ids.station,
-        "get_disaster_recovery_committee",
-        ((),),
-    )
-    .expect("Failed query call to get disaster recovery committee");
-
-    let maybe_admins = res
-        .0
-        .expect("Failed to get disaster recovery committee")
-        .committee;
-
-    let admins = maybe_admins.expect("No committee found");
+    let admins = get_disaster_recovery_committee(&env, upgrader_id, canister_ids.station)
+        .expect("No committee found");
 
     assert_eq!(admins.quorum, 1);
     assert_eq!(admins.users.len(), 2);
@@ -156,72 +129,55 @@ fn successful_disaster_recovery_sync() {
 
     let icp_asset_id = Uuid::from_bytes([0; 16]).hyphenated().to_string();
 
-    let args = SetDisasterRecoveryAccountsAndAssetsInput {
-        accounts: vec![
-            MultiAssetAccount {
-                id: Uuid::from_bytes([0; 16]).hyphenated().to_string(),
-                name: "Main Account".to_owned(),
-                metadata: vec![],
-                assets: vec![icp_asset_id.clone()],
-                seed: [0; 16],
-            },
-            MultiAssetAccount {
-                id: Uuid::from_bytes([1; 16]).hyphenated().to_string(),
-                name: "Another Account".to_owned(),
-                metadata: vec![],
-                assets: vec![icp_asset_id.clone()],
-                seed: [1; 16],
-            },
-        ],
-        assets: vec![Asset {
-            blockchain: "icp".to_owned(),
+    let accounts = vec![
+        MultiAssetAccount {
             id: Uuid::from_bytes([0; 16]).hyphenated().to_string(),
-            name: "Internet Computer".to_owned(),
-            symbol: "ICP".to_owned(),
-            decimals: 8,
+            name: "Main Account".to_owned(),
             metadata: vec![],
-            standards: vec!["icp_native".to_owned()],
-        }],
-    };
+            assets: vec![icp_asset_id.clone()],
+            seed: [0; 16],
+        },
+        MultiAssetAccount {
+            id: Uuid::from_bytes([1; 16]).hyphenated().to_string(),
+            name: "Another Account".to_owned(),
+            metadata: vec![],
+            assets: vec![icp_asset_id.clone()],
+            seed: [1; 16],
+        },
+    ];
+    let assets = vec![Asset {
+        blockchain: "icp".to_owned(),
+        id: Uuid::from_bytes([0; 16]).hyphenated().to_string(),
+        name: "Internet Computer".to_owned(),
+        symbol: "ICP".to_owned(),
+        decimals: 8,
+        metadata: vec![],
+        standards: vec!["icp_native".to_owned()],
+    }];
 
     // non-controller can't set disaster recovery accounts
-    let res: (ApiResult,) = update_candid_as(
+    let err = set_disaster_recovery_accounts_and_assets(
         &env,
         upgrader_id,
         Principal::from_slice(&[1]),
-        "set_disaster_recovery_accounts_and_assets",
-        (args.clone(),),
+        accounts.clone(),
+        assets.clone(),
     )
-    .expect("Failed update call to set disaster recovery accounts");
-    let err = res
-        .0
-        .expect_err("Non-controller should not be able to set disaster recovery accounts");
+    .expect_err("Non-controller should not be able to set disaster recovery accounts");
     assert!(err.code == "NOT_CONTROLLER");
 
     // controller can set disaster recovery accounts
-    let res: (ApiResult,) = update_candid_as(
+    set_disaster_recovery_accounts_and_assets(
         &env,
         upgrader_id,
         canister_ids.station,
-        "set_disaster_recovery_accounts_and_assets",
-        (args,),
+        accounts,
+        assets,
     )
-    .expect("Failed update call to set disaster recovery accounts");
-    res.0.expect("Failed to set disaster recovery accounts");
+    .expect("Failed to set disaster recovery accounts");
 
-    let res: (ApiResult<GetDisasterRecoveryAccountsAndAssetsResponse>,) = query_candid_as(
-        &env,
-        upgrader_id,
-        canister_ids.station,
-        "get_disaster_recovery_accounts_and_assets",
-        ((),),
-    )
-    .expect("Failed query call to get disaster recovery accounts");
-
-    let accounts = res
-        .0
-        .expect("Failed to get disaster recovery accounts")
-        .accounts;
+    let (accounts, _) =
+        get_disaster_recovery_accounts_and_assets(&env, upgrader_id, canister_ids.station);
 
     assert_eq!(accounts.len(), 2);
     assert_eq!(accounts[0].name, "Main Account");
@@ -382,15 +338,8 @@ fn test_disaster_recovery_flow() {
         install_mode: upgrader_api::InstallMode::Reinstall,
     };
 
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        upgrader_id,
-        WALLET_ADMIN_USER,
-        "request_disaster_recovery",
-        (good_request.clone(),),
-    )
-    .expect("Failed update call to request disaster recovery");
-    res.0.expect("Failed to request disaster recovery");
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
+        .expect("Failed to request disaster recovery");
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
     assert!(matches!(
@@ -398,15 +347,8 @@ fn test_disaster_recovery_flow() {
         upgrader_api::RecoveryStatus::Idle
     ));
 
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        upgrader_id,
-        user2_identity,
-        "request_disaster_recovery",
-        (bad_request.clone(),),
-    )
-    .expect("Failed update call to request disaster recovery");
-    res.0.expect("Failed to request disaster recovery");
+    request_disaster_recovery(&env, upgrader_id, user2_identity, bad_request.clone())
+        .expect("Failed to request disaster recovery");
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
     assert!(matches!(
@@ -416,15 +358,7 @@ fn test_disaster_recovery_flow() {
 
     assert!(dr_status.last_recovery_result.is_none());
 
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        upgrader_id,
-        user4_identity,
-        "request_disaster_recovery",
-        (good_request.clone(),),
-    )
-    .expect("Failed update call to request disaster recovery");
-    res.0
+    request_disaster_recovery(&env, upgrader_id, user4_identity, good_request.clone())
         .expect_err("User 4 should not be able to request disaster recovery");
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
@@ -435,15 +369,8 @@ fn test_disaster_recovery_flow() {
 
     assert!(dr_status.last_recovery_result.is_none());
 
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        upgrader_id,
-        user3_identity,
-        "request_disaster_recovery",
-        (good_request.clone(),),
-    )
-    .expect("Failed update call to request disaster recovery");
-    res.0.expect("Failed to request disaster recovery");
+    request_disaster_recovery(&env, upgrader_id, user3_identity, good_request.clone())
+        .expect("Failed to request disaster recovery");
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
     assert!(matches!(
@@ -561,12 +488,11 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
 
     let (base_chunk, module_extra_chunks) =
         upload_canister_chunks_to_asset_canister(&env, station_wasm_module, 500_000);
-    let res: (ApiResult<()>,) = update_candid_as(
+    request_disaster_recovery(
         &env,
         upgrader_id,
         WALLET_ADMIN_USER,
-        "request_disaster_recovery",
-        (upgrader_api::RequestDisasterRecoveryInput {
+        upgrader_api::RequestDisasterRecoveryInput {
             module: base_chunk,
             module_extra_chunks: Some(module_extra_chunks),
             arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
@@ -593,11 +519,9 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
             }))
             .unwrap(),
             install_mode: upgrader_api::InstallMode::Reinstall,
-        },),
+        },
     )
-    .expect("Unexpected failed update call to request disaster recovery");
-    res.0
-        .expect("Unexpected failed to request disaster recovery");
+    .expect("Unexpected failed to request disaster recovery");
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
     assert!(matches!(
@@ -745,12 +669,11 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
     // 2. perform the disaster recovery request with the station wasm and using the same upgrader id
     let (base_chunk, module_extra_chunks) =
         upload_canister_chunks_to_asset_canister(&env, station_wasm_module.clone(), 500_000);
-    let res: (ApiResult<()>,) = update_candid_as(
+    request_disaster_recovery(
         &env,
         upgrader_id,
         WALLET_ADMIN_USER,
-        "request_disaster_recovery",
-        (upgrader_api::RequestDisasterRecoveryInput {
+        upgrader_api::RequestDisasterRecoveryInput {
             module: base_chunk,
             module_extra_chunks: Some(module_extra_chunks),
             arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
@@ -767,11 +690,9 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
             }))
             .unwrap(),
             install_mode: upgrader_api::InstallMode::Reinstall,
-        },),
+        },
     )
-    .expect("Unexpected failed update call to request disaster recovery");
-    res.0
-        .expect("Unexpected failed to request disaster recovery");
+    .expect("Unexpected failed to request disaster recovery");
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
     assert!(matches!(
@@ -845,15 +766,8 @@ fn test_disaster_recovery_in_progress() {
         install_mode: upgrader_api::InstallMode::Reinstall,
     };
 
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        upgrader_id,
-        WALLET_ADMIN_USER,
-        "request_disaster_recovery",
-        (good_request.clone(),),
-    )
-    .expect("Failed update call to request disaster recovery");
-    res.0.expect("Failed to request disaster recovery");
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
+        .expect("Failed to request disaster recovery");
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
     assert!(matches!(
@@ -861,15 +775,8 @@ fn test_disaster_recovery_in_progress() {
         upgrader_api::RecoveryStatus::InProgress { .. }
     ));
 
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        upgrader_id,
-        WALLET_ADMIN_USER,
-        "request_disaster_recovery",
-        (good_request.clone(),),
-    )
-    .expect("Failed update call to request disaster recovery");
-    res.0.expect("Failed to request disaster recovery");
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
+        .expect("Failed to request disaster recovery");
 
     let dr_status = get_upgrader_disaster_recovery(&env, &upgrader_id, &canister_ids.station);
     assert!(matches!(
@@ -938,16 +845,8 @@ fn test_disaster_recovery_install() {
         install_mode: upgrader_api::InstallMode::Install,
     };
 
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        upgrader_id,
-        WALLET_ADMIN_USER,
-        "request_disaster_recovery",
-        (good_request.clone(),),
-    )
-    .expect("Unexpected failed update call to request disaster recovery");
-    res.0
-        .expect("Unexpected failed to request disaster recovery");
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
+        .expect("Failed to request disaster recovery");
 
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
 }
@@ -972,15 +871,8 @@ fn test_disaster_recovery_upgrade() {
         install_mode: upgrader_api::InstallMode::Upgrade,
     };
 
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        upgrader_id,
-        WALLET_ADMIN_USER,
-        "request_disaster_recovery",
-        (good_request.clone(),),
-    )
-    .expect("Failed update call to request disaster recovery");
-    res.0.expect("Failed to request disaster recovery");
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
+        .expect("Failed to request disaster recovery");
 
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
 }
@@ -1016,15 +908,8 @@ fn test_disaster_recovery_failing() {
         install_mode: upgrader_api::InstallMode::Upgrade,
     };
 
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        upgrader_id,
-        WALLET_ADMIN_USER,
-        "request_disaster_recovery",
-        (good_request.clone(),),
-    )
-    .expect("Failed update call to request disaster recovery");
-    res.0.expect("Failed to request disaster recovery");
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
+        .expect("Failed to request disaster recovery");
 
     await_disaster_recovery_failure(&env, canister_ids.station, upgrader_id);
 }
@@ -1038,58 +923,40 @@ fn test_disaster_recovery_supports_legacy_format() {
     let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
     let upgrader_id = system_info.upgrader_id;
 
-    let args = SetDisasterRecoveryAccountsInput {
-        accounts: vec![
-            Account {
-                id: Uuid::from_bytes([0; 16]).hyphenated().to_string(),
-                name: "Main Account".to_owned(),
-                metadata: vec![],
-                blockchain: "icp".to_owned(),
-                address: "1".to_owned(),
-                standard: "icp_native".to_owned(),
-                symbol: "ICP1".to_owned(),
-                decimals: 8,
-            },
-            Account {
-                id: Uuid::from_bytes([1; 16]).hyphenated().to_string(),
-                name: "Another Account".to_owned(),
-                metadata: vec![],
-                blockchain: "icp".to_owned(),
-                address: "2".to_owned(),
-                standard: "icp_native".to_owned(),
-                symbol: "ICP2".to_owned(),
-                decimals: 8,
-            },
-        ],
-    };
+    let accounts = vec![
+        Account {
+            id: Uuid::from_bytes([0; 16]).hyphenated().to_string(),
+            name: "Main Account".to_owned(),
+            metadata: vec![],
+            blockchain: "icp".to_owned(),
+            address: "1".to_owned(),
+            standard: "icp_native".to_owned(),
+            symbol: "ICP1".to_owned(),
+            decimals: 8,
+        },
+        Account {
+            id: Uuid::from_bytes([1; 16]).hyphenated().to_string(),
+            name: "Another Account".to_owned(),
+            metadata: vec![],
+            blockchain: "icp".to_owned(),
+            address: "2".to_owned(),
+            standard: "icp_native".to_owned(),
+            symbol: "ICP2".to_owned(),
+            decimals: 8,
+        },
+    ];
 
-    let res: (ApiResult,) = update_candid_as(
-        &env,
-        upgrader_id,
-        canister_ids.station,
-        "set_disaster_recovery_accounts",
-        (args,),
-    )
-    .expect("Failed update call to set disaster recovery accounts");
-    res.0.expect("Failed to set disaster recovery accounts");
+    set_disaster_recovery_accounts(&env, upgrader_id, canister_ids.station, accounts)
+        .expect("Failed to set disaster recovery accounts");
 
-    let res: (ApiResult<GetDisasterRecoveryAccountsResponse>,) = query_candid_as(
-        &env,
-        upgrader_id,
-        canister_ids.station,
-        "get_disaster_recovery_accounts",
-        ((),),
-    )
-    .expect("Failed query call to get disaster recovery accounts");
+    let actual_accounts = get_disaster_recovery_accounts(&env, upgrader_id, canister_ids.station);
 
-    let res = res.0.expect("Failed to get disaster recovery accounts");
+    assert!(actual_accounts.len() == 2);
+    assert_eq!(actual_accounts[0].name, "Main Account");
+    assert_eq!(actual_accounts[0].address, "1");
 
-    assert!(res.accounts.len() == 2);
-    assert_eq!(res.accounts[0].name, "Main Account");
-    assert_eq!(res.accounts[0].address, "1");
-
-    assert_eq!(res.accounts[1].name, "Another Account");
-    assert_eq!(res.accounts[1].address, "2");
+    assert_eq!(actual_accounts[1].name, "Another Account");
+    assert_eq!(actual_accounts[1].address, "2");
 
     // old response format should deserialize correctly
     #[derive(Clone, Debug, CandidType, Deserialize)]

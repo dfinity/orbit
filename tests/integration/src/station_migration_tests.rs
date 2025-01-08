@@ -1,6 +1,6 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
-use crate::test_data::asset::list_assets;
-use crate::test_data::{set_test_data_id, StationDataGenerator};
+use crate::station_test_data::asset::list_assets;
+use crate::station_test_data::{set_test_data_id, StationDataGenerator};
 use crate::utils::{compress_to_gzip, create_file, read_file, NNS_ROOT_CANISTER_ID};
 use crate::TestEnv;
 use candid::{Encode, Principal};

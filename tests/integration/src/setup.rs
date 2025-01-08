@@ -66,6 +66,7 @@ pub struct SetupConfig {
     pub upload_canister_modules: bool,
     pub fallback_controller: Option<Principal>,
     pub start_cycles: Option<u128>,
+    pub set_time_to_now: bool,
 }
 
 impl Default for SetupConfig {
@@ -74,6 +75,7 @@ impl Default for SetupConfig {
             upload_canister_modules: true,
             fallback_controller: Some(NNS_ROOT_CANISTER_ID),
             start_cycles: None,
+            set_time_to_now: true,
         }
     }
 }
@@ -112,7 +114,9 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
     // live mode would set the time back to the current time.
     // Therefore, if we want to use live mode, we need to start the tests with the time
     // set to the past.
-    env.set_time(SystemTime::now() - Duration::from_secs(24 * 60 * 60));
+    if config.set_time_to_now {
+        env.set_time(SystemTime::now() - Duration::from_secs(24 * 60 * 60));
+    }
     let controller = controller_test_id();
     let minter = minter_test_id();
     let canister_ids = install_canisters(&mut env, config, controller, minter);

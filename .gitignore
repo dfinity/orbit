@@ -74,6 +74,7 @@ wasms/*.wasm.gz
 .nx/workspace-data
 /artifacts
 
-# The latest memory dump of the station will change every time the tests are run due to 
+# The latest memory dump of the station and upgrader will change every time the tests are run due to 
 # the system time added to PocketIC being the current time, making it non deterministic.
 tests/integration/assets/station-memory-latest.bin
+tests/integration/assets/upgrader-memory-latest.bin
