@@ -114,7 +114,7 @@ function install_cmc() {
 }
 
 function textual_encode() {
-  ( echo "$1" | xxd -r -p | /usr/bin/crc32 /dev/stdin; echo -n "$1" ) |
+  ( echo "$1" | xxd -r -p | crc32 /dev/stdin; echo -n "$1" ) |
   xxd -r -p | base32 | tr A-Z a-z |
   tr -d = | fold -w5 | paste -sd'-' -
 }
