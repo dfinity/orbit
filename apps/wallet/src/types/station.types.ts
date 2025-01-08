@@ -147,6 +147,7 @@ export interface ListAddressBookEntriesArgs {
   labels?: [];
   ids?: UUID[];
   address_formats?: string[];
+  search_term?: string;
 }
 
 export interface ListAssetsArgs {

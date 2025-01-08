@@ -603,6 +603,7 @@ export class StationService {
       ids,
       addresses,
       address_formats,
+      search_term,
     }: ListAddressBookEntriesArgs = {},
     verifiedCall = false,
   ): Promise<ExtractOk<ListAddressBookEntriesResult>> {
@@ -619,6 +620,7 @@ export class StationService {
       addresses: addresses ? [addresses] : [],
       ids: ids ? [ids] : [],
       address_formats: address_formats ? [address_formats] : [],
+      search_term: search_term ? [search_term] : [],
     });
 
     if (variantIs(result, 'Err')) {

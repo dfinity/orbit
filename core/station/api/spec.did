@@ -1895,6 +1895,8 @@ type ListAddressBookEntriesInput = record {
   labels : opt vec text;
   // The address formats to search for.
   address_formats : opt vec text;
+  // The term to use for filtering the address book entries.
+  search_term : opt text;
   // The pagination parameters.
   paginate : opt PaginationInput;
 };

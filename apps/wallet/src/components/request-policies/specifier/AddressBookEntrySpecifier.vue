@@ -22,7 +22,7 @@
     </div>
     <AddressBookAutocomplete
       v-if="isIds"
-      v-model="idsModel"
+      v-model="loadedEntries"
       :label="$t('terms.addresses')"
       variant="underlined"
       density="comfortable"
@@ -32,9 +32,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, toRefs } from 'vue';
+import { computed, ref, toRefs, watch } from 'vue';
 import AddressBookAutocomplete from '~/components/inputs/AddressBookAutocomplete.vue';
-import { ResourceIds } from '~/generated/station/station.did';
+import { AddressBookEntry, ResourceIds } from '~/generated/station/station.did';
+import { services } from '~/plugins/services.plugin';
 import { variantIs } from '~/utils/helper.utils';
 
 const input = withDefaults(
@@ -52,6 +53,8 @@ const input = withDefaults(
 
 const props = toRefs(input);
 
+const stationService = services().station;
+
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: ResourceIds): void;
 }>();
@@ -63,15 +66,6 @@ const model = computed({
 
 const isAny = computed(() => variantIs(model.value, 'Any'));
 const isIds = computed(() => variantIs(model.value, 'Ids'));
-
-const idsModel = computed({
-  get: () => (variantIs(model.value, 'Ids') ? model.value.Ids : []),
-  set: value => {
-    if (variantIs(model.value, 'Ids')) {
-      model.value.Ids = value;
-    }
-  },
-});
 
 const setSelectionMode = (variant: 'Any' | 'Ids'): void => {
   if (variantIs(model.value, variant)) {
@@ -88,4 +82,30 @@ const setSelectionMode = (variant: 'Any' | 'Ids'): void => {
     return;
   }
 };
+
+const loadedEntries = ref<AddressBookEntry[]>([]);
+
+watch(loadedEntries, () => {
+  model.value = { Ids: loadedEntries.value.map(e => e.id) };
+});
+
+watch(
+  isIds,
+  async () => {
+    if (isIds.value) {
+      const list = variantIs(model.value, 'Ids') ? model.value['Ids'] : [];
+      const allEntries = [];
+      while (list.length > 0) {
+        const entries = await stationService.listAddressBook({
+          ids: list.splice(0, 100),
+        });
+        allEntries.push(...entries.address_book_entries);
+      }
+      loadedEntries.value = allEntries;
+    }
+  },
+  {
+    immediate: true,
+  },
+);
 </script>
