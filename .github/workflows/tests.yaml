@@ -151,8 +151,27 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@main
-      - name: 'Start local replica'
+      - name: 'Start PocketIC'
         run: dfx start --clean --pocketic --host 127.0.0.1:4943 --background
+      - name: 'Perform local deployment'
+        run: ./orbit --init
+      - name: 'Test local deployment'
+        run: |
+          curl http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943/ | grep "<title>Orbit Wallet</title>"
+  deployment-test-replica:
+    name: 'deployment-test-replica:required'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Run sccache-cache'
+        uses: mozilla-actions/sccache-action@v0.0.4
+      - name: 'Install dfx'
+        uses: dfinity/setup-dfx@main
+      - name: 'Start local replica'
+        run: dfx start --clean --host 127.0.0.1:4943 --background
       - name: 'Perform local deployment'
         run: ./orbit --init
       - name: 'Test local deployment'
