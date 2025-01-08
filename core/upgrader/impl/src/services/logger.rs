@@ -1,13 +1,12 @@
 use std::{cell::RefCell, sync::Arc};
 
-use ic_stable_structures::{memory_manager::MemoryId, BTreeMap, Log};
+use ic_stable_structures::{memory_manager::MemoryId, BTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::types::Timestamp;
 
 use crate::{
     model::{LogEntry, LogEntryType},
-    Memory, DEPRECATED_MEMORY_ID_LOG_DATA, DEPRECATED_MEMORY_ID_LOG_INDEX, MEMORY_ID_LOGS,
-    MEMORY_MANAGER,
+    Memory, MEMORY_ID_LOGS, MEMORY_MANAGER,
 };
 
 pub const MAX_GET_LOGS_LIMIT: u64 = 100;
@@ -15,13 +14,6 @@ pub const DEFAULT_GET_LOGS_LIMIT: u64 = 10;
 pub const MAX_LOG_ENTRIES: u64 = 25000;
 
 thread_local! {
-    static DEPRECATED_STORAGE: RefCell<Log<LogEntry, Memory, Memory>> = RefCell::new(
-        Log::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(DEPRECATED_MEMORY_ID_LOG_INDEX))),
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(DEPRECATED_MEMORY_ID_LOG_DATA))),
-        ).expect("Failed to initialize deprecated log storage")
-    );
-
     static STORAGE: RefCell<BTreeMap<Timestamp, LogEntry, Memory>> = RefCell::new(
         BTreeMap::init(
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(MEMORY_ID_LOGS))),
@@ -93,47 +85,6 @@ impl LoggerService {
 
             let next_offset = if total > offset + limit {
                 Some(offset + limit)
-            } else {
-                None
-            };
-            GetLogsResult {
-                logs,
-                total,
-                next_offset,
-            }
-        })
-    }
-
-    /// Returns logs from the deprecated storage starting from the end of the log.
-    pub fn deprecated_get_logs(&self, offset: Option<u64>, limit: Option<u64>) -> GetLogsResult {
-        DEPRECATED_STORAGE.with(|storage| {
-            let borrowed = storage.borrow();
-
-            let total = borrowed.len();
-
-            if total == 0 {
-                return GetLogsResult {
-                    logs: vec![],
-                    total,
-                    next_offset: None,
-                };
-            }
-
-            let offset = offset.unwrap_or(0);
-            let limit = limit
-                .unwrap_or(DEFAULT_GET_LOGS_LIMIT)
-                .min(MAX_GET_LOGS_LIMIT);
-
-            let first_inclusive = u64::saturating_sub(total, offset + 1);
-            let last_inclusive = u64::saturating_sub(total, offset + limit);
-
-            let logs = (last_inclusive..=first_inclusive)
-                .rev()
-                .filter_map(|i| borrowed.get(i))
-                .collect::<Vec<_>>();
-
-            let next_offset = if last_inclusive > 0 {
-                Some(offset + logs.len() as u64)
             } else {
                 None
             };
@@ -223,21 +174,5 @@ mod tests {
 
         assert_eq!(result.total, MAX_LOG_ENTRIES);
         assert_ne!(result.logs.last().unwrap().time, latest_log_time);
-    }
-
-    #[test]
-    fn test_deprecated_storage() {
-        let logger_service = LoggerService::default();
-        logger_service.log(LogEntryType::SetCommittee(SetCommitteeLog {
-            committee: mock_committee(),
-        }));
-
-        // new logs should be in the new storage
-        let result = logger_service.get_logs(None, None);
-        assert_eq!(result.total, 1);
-
-        // deprecated logs should not get new logs
-        let result = logger_service.deprecated_get_logs(None, None);
-        assert_eq!(result.total, 0);
     }
 }
