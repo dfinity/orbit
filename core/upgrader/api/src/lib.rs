@@ -107,7 +107,7 @@ pub enum DisasterRecoveryError {
     Unauthorized,
 }
 
-#[derive(Clone, Debug, CandidType)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct IsCommitteeMemberResponse {
     pub is_committee_member: bool,
 }
@@ -176,7 +176,7 @@ pub struct GetLogsInput {
     pub pagination: Option<PaginationInput>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct LogEntry {
     pub time: TimestampRfc3339,
     pub entry_type: String,

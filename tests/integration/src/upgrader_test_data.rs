@@ -5,14 +5,15 @@ use pocket_ic::PocketIc;
 use time::format_description::well_known::Rfc3339;
 use time::OffsetDateTime;
 use upgrader_api::{
-    Account, AdminUser, Asset, DisasterRecoveryCommittee, MetadataDTO, MultiAssetAccount,
+    Account, AdminUser, Asset, DisasterRecoveryCommittee, LogEntry, MetadataDTO, MultiAssetAccount,
     RecoveryResult, RecoveryStatus, StationRecoveryRequest,
 };
 use uuid::Uuid;
 
 use crate::utils::{
-    get_disaster_recovery_accounts, get_disaster_recovery_accounts_and_assets,
-    get_disaster_recovery_committee, get_disaster_recovery_state, request_disaster_recovery,
+    get_all_upgrader_logs, get_disaster_recovery_accounts,
+    get_disaster_recovery_accounts_and_assets, get_disaster_recovery_committee,
+    get_disaster_recovery_state, is_committee_member, request_disaster_recovery,
     set_disaster_recovery_accounts, set_disaster_recovery_accounts_and_assets,
     set_disaster_recovery_committee, upload_canister_chunks_to_asset_canister,
 };
@@ -57,6 +58,7 @@ pub struct UpgraderDataGenerator<'a> {
     recovery_requests: Vec<StationRecoveryRequest>,
     recovery_status: RecoveryStatus,
     last_recovery_result: Option<RecoveryResult>,
+    logs: Vec<LogEntry>,
 }
 
 impl<'a> UpgraderDataGenerator<'a> {
@@ -72,6 +74,7 @@ impl<'a> UpgraderDataGenerator<'a> {
             recovery_requests: vec![],
             recovery_status: RecoveryStatus::Idle,
             last_recovery_result: None,
+            logs: vec![],
         }
     }
 
@@ -222,6 +225,9 @@ impl<'a> UpgraderDataGenerator<'a> {
             };
             self.recovery_requests.push(recovery_request);
         }
+        self.logs =
+            get_all_upgrader_logs(self.env, &self.upgrader_id, &self.some_committee_member());
+        assert!(self.logs.len() > 1);
     }
 
     pub fn test_api(&self) {
@@ -243,5 +249,15 @@ impl<'a> UpgraderDataGenerator<'a> {
         assert_eq!(state.recovery_requests, self.recovery_requests);
         assert_eq!(state.recovery_status, self.recovery_status);
         assert_eq!(state.last_recovery_result, self.last_recovery_result);
+        is_committee_member(self.env, self.upgrader_id, Principal::anonymous()).unwrap_err();
+        assert!(
+            is_committee_member(self.env, self.upgrader_id, self.some_committee_member()).unwrap()
+        );
+        assert!(
+            !is_committee_member(self.env, self.upgrader_id, Principal::from_slice(&[0])).unwrap()
+        );
+        let logs =
+            get_all_upgrader_logs(self.env, &self.upgrader_id, &self.some_committee_member());
+        assert_eq!(logs, self.logs);
     }
 }

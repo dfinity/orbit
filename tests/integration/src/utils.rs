@@ -30,7 +30,9 @@ use station_api::{
 use std::io::Write;
 use std::path::PathBuf;
 use std::time::Duration;
-use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
+use upgrader_api::{
+    GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse, LogEntry, PaginationInput,
+};
 use uuid::Uuid;
 
 pub const ADMIN_GROUP_ID: Uuid = Uuid::from_u128(302240678275694148452352); // very first uuidv4 generated
@@ -514,6 +516,32 @@ pub fn get_upgrader_logs(
     .expect("Failed query call to get disaster recovery logs");
 
     res.0.expect("Failed to get disaster recovery logs")
+}
+
+pub fn get_all_upgrader_logs(
+    env: &PocketIc,
+    upgrader_id: &Principal,
+    sender: &Principal,
+) -> Vec<LogEntry> {
+    let pagination = PaginationInput {
+        offset: Some(0),
+        limit: Some(100),
+    };
+    let res: (ApiResult<GetLogsResponse>,) = query_candid_as(
+        env,
+        upgrader_id.to_owned(),
+        *sender,
+        "get_logs",
+        (GetLogsInput {
+            pagination: Some(pagination),
+        },),
+    )
+    .expect("Failed query call to get disaster recovery logs");
+
+    let logs = res.0.expect("Failed to get disaster recovery logs");
+    assert_eq!(logs.logs.len(), logs.total as usize);
+    assert!(logs.next_offset.is_none());
+    logs.logs
 }
 
 pub fn get_account_read_permission(
@@ -1250,4 +1278,15 @@ pub(crate) fn get_disaster_recovery_state(
         query_candid_as(env, upgrader_id, user, "get_disaster_recovery_state", ((),))
             .expect("Failed query call to get disaster recovery state");
     res.0.unwrap()
+}
+
+pub(crate) fn is_committee_member(
+    env: &PocketIc,
+    upgrader_id: Principal,
+    user: Principal,
+) -> ApiResult<bool> {
+    let res: (ApiResult<upgrader_api::IsCommitteeMemberResponse>,) =
+        query_candid_as(env, upgrader_id, user, "is_committee_member", ((),))
+            .expect("Failed query call to check committee membership");
+    res.0.map(|resp| resp.is_committee_member)
 }
