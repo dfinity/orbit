@@ -1,21 +1,25 @@
 use crate::factories::blockchains::InternetComputer;
 use crate::models::{AccountKey, CycleObtainStrategy, MonitorExternalCanisterStrategy};
 use crate::repositories::ACCOUNT_REPOSITORY;
+use candid::Principal;
 use canfund::api::cmc::IcCyclesMintingCanister;
-use canfund::api::ledger::IcLedgerCanister;
+use canfund::api::ledger::{CyclesLedgerCanister, IcLedgerCanister};
 use canfund::manager::options::{FundManagerOptions, ObtainCyclesOptions};
 use canfund::manager::record::CanisterRecord;
 use canfund::manager::RegisterOpts;
-use canfund::operations::obtain::MintCycles;
+use canfund::operations::obtain::{MintCycles, WithdrawFromLedger};
 use canfund::FundManager;
 use ic_cdk::api::management_canister::main::CanisterId;
 use ic_cdk::print;
-use ic_ledger_types::{Subaccount, MAINNET_CYCLES_MINTING_CANISTER_ID, MAINNET_LEDGER_CANISTER_ID};
+use ic_ledger_types::{MAINNET_CYCLES_MINTING_CANISTER_ID, MAINNET_LEDGER_CANISTER_ID};
 use lazy_static::lazy_static;
 use orbit_essentials::repository::Repository;
 use std::cell::RefCell;
 use std::sync::Arc;
 use uuid::Uuid;
+
+pub const MAINNET_CYCLES_LEDGER_CANISTER_ID: Principal =
+    Principal::from_slice(&[0x00, 0x00, 0x00, 0x00, 0x02, 0x10, 0x00, 0x02, 0x01, 0x01]);
 
 thread_local! {
     static FUND_MANAGER: RefCell<FundManager> = RefCell::new(FundManager::new());
@@ -115,8 +119,29 @@ fn get_obtain_cycle_config(strategy: &CycleObtainStrategy) -> Option<ObtainCycle
                         cmc: Arc::new(IcCyclesMintingCanister::new(
                             MAINNET_CYCLES_MINTING_CANISTER_ID,
                         )),
-                        from_subaccount: Subaccount(InternetComputer::subaccount_from_seed(
-                            &account.seed,
+                        from_subaccount: ic_ledger_types::Subaccount(
+                            InternetComputer::subaccount_from_seed(&account.seed),
+                        ),
+                    }),
+                })
+            } else {
+                print(format!(
+                    "Account with id `{}` not found, cannot create ObtainCyclesOptions",
+                    Uuid::from_bytes(*account_id).hyphenated()
+                ));
+
+                None
+            }
+        }
+        CycleObtainStrategy::WithdrawFromCyclesLedger { account_id } => {
+            if let Some(account) = ACCOUNT_REPOSITORY.get(&AccountKey { id: *account_id }) {
+                Some(ObtainCyclesOptions {
+                    obtain_cycles: Arc::new(WithdrawFromLedger {
+                        ledger: Arc::new(CyclesLedgerCanister::new(
+                            MAINNET_CYCLES_LEDGER_CANISTER_ID,
+                        )),
+                        from_subaccount: Some(icrc_ledger_types::icrc1::account::Subaccount::from(
+                            InternetComputer::subaccount_from_seed(&account.seed),
                         )),
                     }),
                 })

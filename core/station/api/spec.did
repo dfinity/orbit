@@ -2010,6 +2010,11 @@ type CycleObtainStrategyInput = variant {
     // The Orbit account ID to use for minting cycles.
     account_id : UUID;
   };
+  // Use the Cycles Ledger balance to obtain cycles.
+  WithdrawFromCyclesLedger : record {
+    // The Orbit account ID to use for obtaining cycles.
+    account_id : UUID;
+  };
 };
 
 // Strategy defining how the station canister tops up its own cycles.
@@ -2019,6 +2024,13 @@ type CycleObtainStrategy = variant {
   // Use the CMC to mint cycles from ICP held in an Orbit account.
   MintFromNativeToken : record {
     // The Orbit account ID to use for minting cycles.
+    account_id : UUID;
+    // The Orbit account name.
+    account_name : opt text;
+  };
+  // Use the Cycles Ledger balance to obtain cycles.
+  WithdrawFromCyclesLedger : record {
+    // The Orbit account ID to use for obtaining cycles.
     account_id : UUID;
     // The Orbit account name.
     account_name : opt text;
