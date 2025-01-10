@@ -432,6 +432,7 @@ fn no_upload_canister_modules() {
         upload_canister_modules: false,
         fallback_controller: None,
         start_cycles: None,
+        ..Default::default()
     });
 
     let user_id = user_test_id(0);

@@ -1,5 +1,5 @@
 use crate::setup::{create_canister, get_canister_wasm, WALLET_ADMIN_USER};
-use crate::test_data::asset::list_assets;
+use crate::station_test_data::asset::list_assets;
 use candid::utils::ArgumentDecoder;
 use candid::Principal;
 use candid::{decode_args, CandidType, Encode};
@@ -30,7 +30,9 @@ use station_api::{
 use std::io::Write;
 use std::path::PathBuf;
 use std::time::Duration;
-use upgrader_api::{GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse};
+use upgrader_api::{
+    GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse, LogEntry, PaginationInput,
+};
 use uuid::Uuid;
 
 pub const ADMIN_GROUP_ID: Uuid = Uuid::from_u128(302240678275694148452352); // very first uuidv4 generated
@@ -514,6 +516,32 @@ pub fn get_upgrader_logs(
     .expect("Failed query call to get disaster recovery logs");
 
     res.0.expect("Failed to get disaster recovery logs")
+}
+
+pub fn get_all_upgrader_logs(
+    env: &PocketIc,
+    upgrader_id: &Principal,
+    sender: &Principal,
+) -> Vec<LogEntry> {
+    let pagination = PaginationInput {
+        offset: Some(0),
+        limit: Some(100),
+    };
+    let res: (ApiResult<GetLogsResponse>,) = query_candid_as(
+        env,
+        upgrader_id.to_owned(),
+        *sender,
+        "get_logs",
+        (GetLogsInput {
+            pagination: Some(pagination),
+        },),
+    )
+    .expect("Failed query call to get disaster recovery logs");
+
+    let logs = res.0.expect("Failed to get disaster recovery logs");
+    assert_eq!(logs.logs.len(), logs.total as usize);
+    assert!(logs.next_offset.is_none());
+    logs.logs
 }
 
 pub fn get_account_read_permission(
@@ -1114,4 +1142,151 @@ where
         }
         WasmResult::Reject(error) => panic!("Unexpected reject: {error}"),
     }
+}
+
+pub(crate) fn set_disaster_recovery_committee(
+    env: &PocketIc,
+    upgrader_id: Principal,
+    station_id: Principal,
+    committee: upgrader_api::DisasterRecoveryCommittee,
+) -> ApiResult {
+    let args = upgrader_api::SetDisasterRecoveryCommitteeInput { committee };
+    let res: (ApiResult,) = update_candid_as(
+        env,
+        upgrader_id,
+        station_id,
+        "set_disaster_recovery_committee",
+        (args,),
+    )
+    .expect("Failed update call to set disaster recovery committee");
+    res.0
+}
+
+pub(crate) fn get_disaster_recovery_committee(
+    env: &PocketIc,
+    upgrader_id: Principal,
+    station_id: Principal,
+) -> Option<upgrader_api::DisasterRecoveryCommittee> {
+    let res: (ApiResult<upgrader_api::GetDisasterRecoveryCommitteeResponse>,) = query_candid_as(
+        env,
+        upgrader_id,
+        station_id,
+        "get_disaster_recovery_committee",
+        ((),),
+    )
+    .expect("Failed query call to get disaster recovery committee");
+    res.0.unwrap().committee
+}
+
+pub(crate) fn set_disaster_recovery_accounts(
+    env: &PocketIc,
+    upgrader_id: Principal,
+    station_id: Principal,
+    accounts: Vec<upgrader_api::Account>,
+) -> ApiResult {
+    let args = upgrader_api::SetDisasterRecoveryAccountsInput { accounts };
+    let res: (ApiResult,) = update_candid_as(
+        env,
+        upgrader_id,
+        station_id,
+        "set_disaster_recovery_accounts",
+        (args,),
+    )
+    .expect("Failed update call to set disaster recovery accounts");
+    res.0
+}
+
+pub(crate) fn get_disaster_recovery_accounts(
+    env: &PocketIc,
+    upgrader_id: Principal,
+    station_id: Principal,
+) -> Vec<upgrader_api::Account> {
+    let res: (ApiResult<upgrader_api::GetDisasterRecoveryAccountsResponse>,) = query_candid_as(
+        env,
+        upgrader_id,
+        station_id,
+        "get_disaster_recovery_accounts",
+        ((),),
+    )
+    .expect("Failed query call to get disaster recovery accounts");
+    res.0.unwrap().accounts
+}
+
+pub(crate) fn set_disaster_recovery_accounts_and_assets(
+    env: &PocketIc,
+    upgrader_id: Principal,
+    station_id: Principal,
+    accounts: Vec<upgrader_api::MultiAssetAccount>,
+    assets: Vec<upgrader_api::Asset>,
+) -> ApiResult {
+    let args = upgrader_api::SetDisasterRecoveryAccountsAndAssetsInput { accounts, assets };
+    let res: (ApiResult,) = update_candid_as(
+        env,
+        upgrader_id,
+        station_id,
+        "set_disaster_recovery_accounts_and_assets",
+        (args,),
+    )
+    .expect("Failed update call to set disaster recovery accounts and assets");
+    res.0
+}
+
+pub(crate) fn get_disaster_recovery_accounts_and_assets(
+    env: &PocketIc,
+    upgrader_id: Principal,
+    station_id: Principal,
+) -> (
+    Vec<upgrader_api::MultiAssetAccount>,
+    Vec<upgrader_api::Asset>,
+) {
+    let res: (ApiResult<upgrader_api::GetDisasterRecoveryAccountsAndAssetsResponse>,) =
+        query_candid_as(
+            env,
+            upgrader_id,
+            station_id,
+            "get_disaster_recovery_accounts_and_assets",
+            ((),),
+        )
+        .expect("Failed query call to get disaster recovery accounts and assets");
+    let resp = res.0.unwrap();
+    (resp.accounts, resp.assets)
+}
+
+pub(crate) fn request_disaster_recovery(
+    env: &PocketIc,
+    upgrader_id: Principal,
+    user: Principal,
+    request: upgrader_api::RequestDisasterRecoveryInput,
+) -> ApiResult {
+    let res: (ApiResult<()>,) = update_candid_as(
+        env,
+        upgrader_id,
+        user,
+        "request_disaster_recovery",
+        (request,),
+    )
+    .expect("Failed update call to request disaster recovery");
+    res.0
+}
+
+pub(crate) fn get_disaster_recovery_state(
+    env: &PocketIc,
+    upgrader_id: Principal,
+    user: Principal,
+) -> upgrader_api::GetDisasterRecoveryStateResponse {
+    let res: (ApiResult<upgrader_api::GetDisasterRecoveryStateResponse>,) =
+        query_candid_as(env, upgrader_id, user, "get_disaster_recovery_state", ((),))
+            .expect("Failed query call to get disaster recovery state");
+    res.0.unwrap()
+}
+
+pub(crate) fn is_committee_member(
+    env: &PocketIc,
+    upgrader_id: Principal,
+    user: Principal,
+) -> ApiResult<bool> {
+    let res: (ApiResult<upgrader_api::IsCommitteeMemberResponse>,) =
+        query_candid_as(env, upgrader_id, user, "is_committee_member", ((),))
+            .expect("Failed query call to check committee membership");
+    res.0.map(|resp| resp.is_committee_member)
 }

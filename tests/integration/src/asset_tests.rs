@@ -2,7 +2,7 @@ use candid::Principal;
 
 use crate::{
     setup::{setup_new_env, WALLET_ADMIN_USER},
-    test_data::{
+    station_test_data::{
         asset::{
             add_asset, add_asset_with_input, edit_asset_name, get_asset, list_assets, remove_asset,
         },
