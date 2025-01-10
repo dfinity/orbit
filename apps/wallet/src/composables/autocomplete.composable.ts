@@ -91,8 +91,8 @@ export const useAddressBookAutocomplete = () => {
 
   const autocomplete = useAutocomplete(async term => {
     const results = await station.service.listAddressBook({
-      addresses: term.trim().length > 0 ? [term.trim()] : undefined,
-      limit: 100,
+      search_term: term.trim().length > 0 ? term.trim() : undefined,
+      limit: 10,
       offset: 0,
     });
 

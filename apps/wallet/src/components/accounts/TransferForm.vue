@@ -10,17 +10,27 @@
       :readonly="isViewMode"
       data-test-id="transfer-form-transfer-id"
     />
-    <VTextField
+    <AddressInput
+      v-if="!isViewMode"
       v-model="model.to"
       :label="$t('terms.destination_address')"
-      :variant="isViewMode ? 'plain' : 'filled'"
+      :readonly="isViewMode"
+      required
+      :prepend-icon="mdiSend"
+      data-test-id="transfer-form-destination-address"
+      :blockchain="input.asset.blockchain"
+    />
+
+    <VTextField
+      v-else
+      v-model="model.to"
+      :label="$t('terms.destination_address')"
+      variant="plain"
       density="comfortable"
       class="mb-2"
-      name="to"
-      :readonly="isViewMode"
+      readonly
       type="text"
       :prepend-icon="mdiSend"
-      :rules="[requiredRule, addressValidator]"
       data-test-id="transfer-form-destination-address"
     />
     <VTextField
@@ -48,8 +58,9 @@ import { computed, ref, toRefs, watch } from 'vue';
 import { VForm, VTextField } from 'vuetify/components';
 import { Account, Asset, Transfer } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
-import { requiredRule, validAddress, validTokenAmount } from '~/utils/form.utils';
+import { requiredRule, validTokenAmount } from '~/utils/form.utils';
 import { amountToBigInt, formatBalance } from '~/utils/helper.utils';
+import AddressInput from '../inputs/AddressInput.vue';
 
 export type TransferFormProps = {
   account: Account;
@@ -86,8 +97,6 @@ const emit = defineEmits<{
 
 const model = computed(() => props.modelValue.value);
 watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });
-
-const addressValidator = computed(() => validAddress(input.asset.blockchain));
 
 const amountInput = ref<HTMLInputElement | null>(null);
 const amount = ref<string | undefined>(undefined);

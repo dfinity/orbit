@@ -80,7 +80,7 @@ impl AddressBookService {
         input: ListAddressBookEntriesInput,
         paginate: Option<PaginationInput>,
     ) -> ServiceResult<PaginatedData<AddressBookEntry>> {
-        let entries = self
+        let mut entries = self
             .address_book_repository
             .find_where(AddressBookWhereClause {
                 ids: input.ids,
@@ -89,6 +89,14 @@ impl AddressBookService {
                 labels: input.labels,
                 address_formats: input.address_formats,
             });
+
+        if let Some(search_term) = input.search_term {
+            let search_term = search_term.to_lowercase();
+            entries.retain(|entry| {
+                entry.address_owner.to_lowercase().contains(&search_term)
+                    || entry.address.to_lowercase().contains(&search_term)
+            });
+        }
 
         Ok(paginated_items(PaginatedItemsArgs {
             offset: paginate.to_owned().and_then(|p| p.offset),
