@@ -5,11 +5,12 @@ use crate::utils::{
     add_user, advance_time_to_burn_cycles, await_station_healthy, execute_request,
     get_account_read_permission, get_account_transfer_permission, get_account_update_permission,
     get_core_canister_health_status, get_disaster_recovery_accounts,
-    get_disaster_recovery_accounts_and_assets, get_disaster_recovery_committee, get_icp_asset,
-    get_system_info, get_upgrader_disaster_recovery, get_upgrader_logs, get_user,
-    request_disaster_recovery, set_disaster_recovery, set_disaster_recovery_accounts,
-    set_disaster_recovery_accounts_and_assets, set_disaster_recovery_committee,
-    upload_canister_chunks_to_asset_canister, user_test_id, NNS_ROOT_CANISTER_ID,
+    get_disaster_recovery_accounts_and_assets, get_disaster_recovery_committee,
+    get_disaster_recovery_state, get_icp_asset, get_system_info, get_upgrader_disaster_recovery,
+    get_upgrader_logs, get_user, request_disaster_recovery, set_disaster_recovery,
+    set_disaster_recovery_accounts, set_disaster_recovery_accounts_and_assets,
+    set_disaster_recovery_committee, upload_canister_chunks_to_asset_canister, user_test_id,
+    NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{CandidType, Encode, Principal};
@@ -981,4 +982,74 @@ fn test_disaster_recovery_supports_legacy_format() {
     let res = res.0.expect("Failed to get disaster recovery accounts");
 
     assert!(res.accounts.len() == 2);
+}
+
+#[test]
+fn test_disaster_recovery_committee_change_with_open_requests() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let upgrader_id = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station).upgrader_id;
+
+    let users: Vec<_> = (0..5)
+        .map(|i: u64| AdminUser {
+            id: Uuid::from_u128(i.into()).hyphenated().to_string(),
+            name: format!("user_{}", i),
+            identities: vec![Principal::from_slice(&i.to_le_bytes())],
+        })
+        .collect();
+    let request = upgrader_api::RequestDisasterRecoveryInput {
+        module: vec![],
+        module_extra_chunks: None,
+        arg: vec![],
+        install_mode: upgrader_api::InstallMode::Reinstall,
+    };
+    let disaster_recovery = |i: usize| {
+        request_disaster_recovery(
+            &env,
+            upgrader_id,
+            *users[i].identities.first().unwrap(),
+            request.clone(),
+        )
+        .unwrap();
+    };
+
+    // set committee to be {u0, u1, u2, u3}, quorum=3
+    let quorum = 3;
+    let committee = DisasterRecoveryCommittee {
+        quorum,
+        users: users[..=3].to_vec(),
+    };
+    set_disaster_recovery_committee(&env, upgrader_id, canister_ids.station, committee.clone())
+        .unwrap();
+
+    // users u0, u1 make disaster recovery request
+    disaster_recovery(0);
+    disaster_recovery(1);
+
+    // user u0 leaves the committee: set committee to be {u1, u2, u3}, quorum=3
+    let quorum = 3;
+    let committee = DisasterRecoveryCommittee {
+        quorum,
+        users: users[1..=3].to_vec(),
+    };
+    set_disaster_recovery_committee(&env, upgrader_id, canister_ids.station, committee.clone())
+        .unwrap();
+
+    // user u2 makes disaster recovery request
+    disaster_recovery(2);
+
+    // disaster recovery should not be triggered as only users u1, u2 (less than quorum=3)
+    // from the current committee submitted disaster recovery requests,
+    // but the requests from the current committee should be retained
+    let some_committee_member = *users[3].identities.first().unwrap();
+    let state = get_disaster_recovery_state(&env, upgrader_id, some_committee_member);
+    assert_eq!(state.recovery_requests.len(), 2);
+    state
+        .recovery_requests
+        .iter()
+        .all(|request| request.user_id == users[1].id || request.user_id == users[2].id);
+    assert_eq!(state.recovery_status, upgrader_api::RecoveryStatus::Idle);
+    assert!(state.last_recovery_result.is_none());
 }

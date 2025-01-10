@@ -1,4 +1,8 @@
-use std::{cell::RefCell, collections::HashMap, sync::Arc};
+use std::{
+    cell::RefCell,
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use crate::{
     errors::UpgraderApiError,
@@ -132,6 +136,13 @@ impl DisasterRecoveryService {
 
         value.committee = Some(committee.clone());
 
+        // only retain recovery requests from committee members
+        // who are in the new committee
+        let committee_set: HashSet<_> = committee.users.iter().map(|user| user.id).collect();
+        value
+            .recovery_requests
+            .retain(|request| committee_set.contains(&request.user_id));
+
         self.storage.set(value);
 
         self.logger
@@ -239,6 +250,12 @@ impl DisasterRecoveryService {
 
             now < expires_at
         });
+
+        // Remove requests from users who are not in the committee
+        let committee_set: HashSet<_> = committee.users.iter().map(|user| user.id).collect();
+        storage
+            .recovery_requests
+            .retain(|request| committee_set.contains(&request.user_id));
 
         let mut submissions: HashMap<(Vec<u8>, Vec<u8>), usize> = Default::default();
 
