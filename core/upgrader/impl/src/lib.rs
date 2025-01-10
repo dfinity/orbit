@@ -1,4 +1,4 @@
-use crate::model::{DisasterRecovery, LogEntry, State};
+use crate::model::{DisasterRecovery, LogEntry};
 use crate::services::set_logs;
 use crate::upgrade::{
     CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithStart,
@@ -15,6 +15,7 @@ use ic_stable_structures::{
     DefaultMemoryImpl, StableBTreeMap, Storable,
 };
 use lazy_static::lazy_static;
+use orbit_essentials::storable;
 use orbit_essentials::types::Timestamp;
 use std::{borrow::Cow, cell::RefCell, collections::BTreeMap, sync::Arc};
 use upgrade::{UpgradeError, UpgradeParams};
@@ -70,6 +71,23 @@ thread_local! {
     );
 }
 
+#[storable]
+struct State {
+    target_canister: Principal,
+    disaster_recovery: DisasterRecovery,
+    stable_memory_version: u32,
+}
+
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            target_canister: Principal::anonymous(),
+            disaster_recovery: Default::default(),
+            stable_memory_version: STABLE_MEMORY_VERSION,
+        }
+    }
+}
+
 fn get_state() -> State {
     STATE.with(|storage| storage.borrow().get(&()).unwrap_or_default())
 }
@@ -82,7 +100,7 @@ pub fn get_target_canister() -> Principal {
     get_state().target_canister
 }
 
-pub fn set_target_canister(target_canister: Principal) {
+fn set_target_canister(target_canister: Principal) {
     let mut state = get_state();
     state.target_canister = target_canister;
     set_state(state);
@@ -130,6 +148,8 @@ fn post_upgrade() {
     let target_canister_bytes = old_target_canister_bytes
         .get(&())
         .unwrap_or_else(|| trap("Could not determine stable memory layout."));
+    // if a principal can be parsed out of memory with OLD_MEMORY_ID_TARGET_CANISTER_ID
+    // then we need to perform stable memory migration
     if let Ok(target_canister) = serde_cbor::from_slice::<Principal>(&target_canister_bytes.0) {
         let old_disaster_recovery: StableValue<DisasterRecovery> = StableValue::init(
             old_memory_manager.get(MemoryId::new(OLD_MEMORY_ID_DISASTER_RECOVERY)),
