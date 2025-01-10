@@ -394,6 +394,7 @@ fn assert_can_list_address_book_entries(
                 offset: Some(0),
                 limit: Some(25),
             }),
+            search_term: None,
         },),
     )
     .unwrap();

@@ -86,6 +86,7 @@ impl From<ListAddressBookEntriesInputDTO> for ListAddressBookEntriesInput {
                     })
                     .collect()
             }),
+            search_term: input.search_term,
         }
     }
 }

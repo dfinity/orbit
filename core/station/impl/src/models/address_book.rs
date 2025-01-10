@@ -144,6 +144,7 @@ pub struct ListAddressBookEntriesInput {
     pub blockchain: Option<Blockchain>,
     pub labels: Option<Vec<String>>,
     pub address_formats: Option<Vec<AddressFormat>>,
+    pub search_term: Option<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { StationService } from '~/services/station.service';
 import { mount } from '~/test.utils';
 import AddressBookAutocomplete from './AddressBookAutocomplete.vue';
+import { AddressBookEntry } from '~/generated/station/station.did';
 
 vi.mock('~/services/station.service', () => {
   const mock: Partial<StationService> = {
@@ -24,7 +25,11 @@ describe('AddressBookAutocomplete', () => {
   it('renders with selected ids', () => {
     const wrapper = mount(AddressBookAutocomplete, {
       props: {
-        modelValue: ['1'],
+        modelValue: [
+          {
+            id: '1',
+          } as AddressBookEntry,
+        ],
       },
     });
 
@@ -33,7 +38,7 @@ describe('AddressBookAutocomplete', () => {
     const autocomplete = wrapper.findComponent({ name: 'VAutocomplete' });
     expect(autocomplete.exists()).toBe(true);
 
-    expect(autocomplete.props('modelValue')).toEqual(['1']);
+    expect(autocomplete.props('modelValue')).toEqual([{ id: '1' }]);
   });
 
   it('renders with empty list of address book entries', async () => {
