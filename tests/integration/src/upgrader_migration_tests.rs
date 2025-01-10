@@ -21,7 +21,6 @@ fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal
 
     // Set the stable memory of the canister to v0
     let wasm_memory = read_file("upgrader-memory-v0.bin").expect("Unexpected missing wasm memory");
-
     env.set_stable_memory(
         upgrader_id,
         wasm_memory,
@@ -45,8 +44,7 @@ fn upgrade_from_latest(env: &PocketIc, upgrader_id: Principal, station_id: Princ
     canister_memory = compress_to_gzip(&canister_memory);
     create_file("upgrader-memory-latest.bin", &canister_memory);
 
-    // Then upgrade the canister with the same wasm to trigger the upgrade path and assure that the
-    // migration path is not triggered and the canister is still working
+    // Then upgrade the canister with the same wasm.
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     env.upgrade_canister(
         upgrader_id,
@@ -97,11 +95,13 @@ where
     test_data_generator.test_api();
 }
 
+/// Tests that canister upgrades work if the stable memory version does not change.
 #[test]
 fn test_upgrader_migration_from_latest() {
     test_upgrader_migration_from_version(upgrade_from_latest);
 }
 
+/// Tests migration from v0 to latest.
 #[test]
 fn test_upgrader_migration_from_v0() {
     test_upgrader_migration_from_version(upgrade_from_v0);

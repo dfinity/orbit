@@ -64,8 +64,8 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     canister_memory = compress_to_gzip(&canister_memory);
     create_file("station-memory-latest.bin", &canister_memory);
 
-    // Then upgrade the canister with the same wasm to trigger the upgrade path and assure that the
-    // migration path is not triggered and the canister is still working
+    // Then upgrade the canister with the same wasm
+    // to test that upgrades work also if stable memory version does not change.
     env.upgrade_canister(
         canister_ids.station,
         station_wasm,
