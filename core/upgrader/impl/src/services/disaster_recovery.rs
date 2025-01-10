@@ -1,43 +1,31 @@
-use std::{cell::RefCell, collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use crate::{
     errors::UpgraderApiError,
+    get_disaster_recovery, get_target_canister,
     model::{
         Asset, DisasterRecoveryInProgressLog, DisasterRecoveryResultLog, DisasterRecoveryStartLog,
         LogEntryType, MultiAssetAccount, RequestDisasterRecoveryLog, SetAccountsAndAssetsLog,
         SetAccountsLog, SetCommitteeLog,
     },
     services::LOGGER_SERVICE,
+    set_disaster_recovery,
     upgrader_ic_cdk::{api::time, spawn},
 };
 use candid::Principal;
-use ic_stable_structures::memory_manager::MemoryId;
 use lazy_static::lazy_static;
 use orbit_essentials::{api::ServiceResult, utils::sha256_hash};
 
-use crate::{
-    model::{
-        Account, AdminUser, DisasterRecovery, DisasterRecoveryCommittee, InstallMode,
-        RecoveryEvaluationResult, RecoveryFailure, RecoveryResult, RecoveryStatus,
-        StationRecoveryRequest,
-    },
-    StableValue, MEMORY_ID_DISASTER_RECOVERY, MEMORY_MANAGER, TARGET_CANISTER_ID,
+use crate::model::{
+    Account, AdminUser, DisasterRecovery, DisasterRecoveryCommittee, InstallMode,
+    RecoveryEvaluationResult, RecoveryFailure, RecoveryResult, RecoveryStatus,
+    StationRecoveryRequest,
 };
 
 use super::{InstallCanister, LoggerService, INSTALL_CANISTER};
 
 pub const DISASTER_RECOVERY_REQUEST_EXPIRATION_NS: u64 = 60 * 60 * 24 * 7 * 1_000_000_000; // 1 week
 pub const DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS: u64 = 60 * 60 * 1_000_000_000; // 1 hour
-
-thread_local! {
-
-    static STORAGE: RefCell<StableValue<DisasterRecovery>> = RefCell::new(
-        StableValue::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(MEMORY_ID_DISASTER_RECOVERY))),
-        )
-    );
-
-}
 
 lazy_static! {
     pub static ref DISASTER_RECOVERY_SERVICE: Arc<DisasterRecoveryService> =
@@ -83,11 +71,11 @@ pub struct DisasterRecoveryStorage {}
 
 impl DisasterRecoveryStorage {
     pub fn get(&self) -> DisasterRecovery {
-        STORAGE.with(|storage| storage.borrow().get(&()).unwrap_or_default())
+        get_disaster_recovery()
     }
 
     fn set(&self, value: DisasterRecovery) {
-        STORAGE.with(|storage| storage.borrow_mut().insert((), value));
+        set_disaster_recovery(value);
     }
 }
 
@@ -282,15 +270,7 @@ impl DisasterRecoveryService {
             return;
         }
 
-        let Some(station_canister_id) =
-            TARGET_CANISTER_ID.with(|id| id.borrow().get(&()).map(|id| id.0))
-        else {
-            value.last_recovery_result = Some(RecoveryResult::Failure(RecoveryFailure {
-                reason: "Station canister ID not set".to_string(),
-            }));
-            storage.set(value);
-            return;
-        };
+        let station_canister_id = get_target_canister();
 
         value.recovery_status = RecoveryStatus::InProgress { since: time() };
         storage.set(value);
@@ -415,7 +395,6 @@ mod tests {
         services::{
             DisasterRecoveryService, DisasterRecoveryStorage, InstallCanister, LoggerService,
         },
-        StorablePrincipal, TARGET_CANISTER_ID,
     };
 
     #[derive(Default)]
@@ -575,11 +554,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_do_recovery() {
-        TARGET_CANISTER_ID.with(|id| {
-            id.borrow_mut()
-                .insert((), StorablePrincipal(Principal::anonymous()));
-        });
-
         let storage: DisasterRecoveryStorage = Default::default();
         let logger = Arc::new(LoggerService::default());
         let recovery_request = StationRecoveryRequest {
@@ -656,50 +630,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_failing_do_recovery_with_no_target_canister_id() {
-        // setup: TARGET_CANISTER_ID is not set, so recovery should fail
-
-        let storage: DisasterRecoveryStorage = Default::default();
-        let logger = Arc::new(LoggerService::default());
-        let recovery_request = StationRecoveryRequest {
-            user_id: [1; 16],
-            wasm_module: vec![1, 2, 3],
-            wasm_module_extra_chunks: None,
-            wasm_sha256: vec![4, 5, 6],
-            install_mode: InstallMode::Reinstall,
-            arg: vec![7, 8, 9],
-            arg_sha256: vec![10, 11, 12],
-            submitted_at: 0,
-        };
-
-        let installer = Arc::new(TestInstaller::default());
-
-        DisasterRecoveryService::do_recovery(
-            storage.clone(),
-            installer.clone(),
-            logger.clone(),
-            recovery_request.clone(),
-        )
-        .await;
-
-        assert!(matches!(
-            storage.get().last_recovery_result,
-            Some(RecoveryResult::Failure(_))
-        ));
-
-        assert!(matches!(
-            storage.get().recovery_status,
-            RecoveryStatus::Idle
-        ));
-    }
-
-    #[tokio::test]
     async fn test_failing_do_recovery_with_panicking_install() {
-        TARGET_CANISTER_ID.with(|id| {
-            id.borrow_mut()
-                .insert((), StorablePrincipal(Principal::anonymous()));
-        });
-
         let storage: DisasterRecoveryStorage = Default::default();
         let logger = Arc::new(LoggerService::default());
         let recovery_request = StationRecoveryRequest {
