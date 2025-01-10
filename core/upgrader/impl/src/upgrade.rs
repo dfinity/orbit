@@ -106,6 +106,8 @@ impl<T: Upgrade> Upgrade for WithBackground<T> {
 
         ic_cdk::spawn(async move {
             let res = u.upgrade(ps).await;
+            // Notify the target canister about a failed upgrade unless the call is unauthorized
+            // (we don't want to spam the target canister with such errors).
             if let Err(ref err) = res {
                 let err = match err {
                     UpgradeError::UnexpectedError(err) => Some(err.to_string()),
