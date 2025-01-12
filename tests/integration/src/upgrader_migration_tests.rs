@@ -1,6 +1,6 @@
 use crate::setup::{get_canister_wasm, setup_new_env_with_config, SetupConfig, WALLET_ADMIN_USER};
 use crate::upgrader_test_data::UpgraderDataGenerator;
-use crate::utils::{compress_to_gzip, create_file, get_system_info, read_file};
+use crate::utils::{compress_to_gzip, create_file, get_system_info, read_file, upgrade_station};
 use crate::TestEnv;
 use candid::{Encode, Principal};
 use pocket_ic::PocketIc;
@@ -41,8 +41,8 @@ fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal
 fn upgrade_from_latest(env: &PocketIc, upgrader_id: Principal, station_id: Principal) {
     let mut canister_memory = env.get_stable_memory(upgrader_id);
 
-    // Assert that the stable memory length in the latest layout is less than 3MiB.
-    assert!(canister_memory.len() < 3 << 20);
+    // Assert that stable memory size is 2MiB + stable structures header (64KiB) for the latest layout.
+    assert_eq!(canister_memory.len(), (2 << 20) + (64 << 10));
 
     // This is used to store the stable memory of the canister for future use
     canister_memory = compress_to_gzip(&canister_memory);
@@ -97,6 +97,18 @@ where
 
     // Assert that the canister api is still working after adding more test data
     test_data_generator.test_api();
+
+    // Test that the station can still be upgraded via the upgrader with the latest stable memory layout.
+    let current_station_name = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station).name;
+    assert_eq!(current_station_name, "Station");
+    upgrade_station(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        Some("Upgraded Station".to_string()),
+    );
+    let current_station_name = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station).name;
+    assert_eq!(current_station_name, "Upgraded Station");
 }
 
 /// Tests that canister upgrades work if the stable memory version does not change.
