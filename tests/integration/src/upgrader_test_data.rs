@@ -89,7 +89,7 @@ impl<'a> UpgraderDataGenerator<'a> {
 
     pub fn generate(&mut self) {
         let quorum = 5;
-        let users: Vec<_> = (0..20)
+        let users: Vec<_> = (0..100)
             .map(|_| AdminUser {
                 id: next_unique_uuid(),
                 name: format!("user_{}", next_unique_id()),
