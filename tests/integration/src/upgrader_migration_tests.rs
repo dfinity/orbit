@@ -39,8 +39,12 @@ fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal
 }
 
 fn upgrade_from_latest(env: &PocketIc, upgrader_id: Principal, station_id: Principal) {
-    // This is used to store the stable memory of the canister for future use
     let mut canister_memory = env.get_stable_memory(upgrader_id);
+
+    // Assert that the stable memory length in the latest layout is less than 3MiB.
+    assert!(canister_memory.len() < 3 << 20);
+
+    // This is used to store the stable memory of the canister for future use
     canister_memory = compress_to_gzip(&canister_memory);
     create_file("upgrader-memory-latest.bin", &canister_memory);
 
