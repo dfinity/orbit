@@ -59,6 +59,7 @@ pub struct UpgraderDataGenerator<'a> {
     recovery_status: RecoveryStatus,
     last_recovery_result: Option<RecoveryResult>,
     logs: Vec<LogEntry>,
+    already_generated: bool,
 }
 
 impl<'a> UpgraderDataGenerator<'a> {
@@ -75,6 +76,7 @@ impl<'a> UpgraderDataGenerator<'a> {
             recovery_status: RecoveryStatus::Idle,
             last_recovery_result: None,
             logs: vec![],
+            already_generated: false,
         }
     }
 
@@ -87,7 +89,7 @@ impl<'a> UpgraderDataGenerator<'a> {
 
     pub fn generate(&mut self) {
         let quorum = 5;
-        let users: Vec<_> = (0..8)
+        let users: Vec<_> = (0..20)
             .map(|_| AdminUser {
                 id: next_unique_uuid(),
                 name: format!("user_{}", next_unique_id()),
@@ -225,9 +227,42 @@ impl<'a> UpgraderDataGenerator<'a> {
             };
             self.recovery_requests.push(recovery_request);
         }
+
+        // submit one large disaster recovery request
+        // so that it spans multiple stable memory buckets
+        // in the new stable memory layout with 1MiB buckets
+        if !self.already_generated {
+            let wasm_module = vec![42; 1_500_000];
+            let wasm_sha256 = orbit_essentials::utils::sha256_hash(&wasm_module);
+            let large_request = upgrader_api::RequestDisasterRecoveryInput {
+                module: wasm_module,
+                module_extra_chunks: None,
+                arg: vec![],
+                install_mode: upgrader_api::InstallMode::Reinstall,
+            };
+            let last_committee_member = self.committee.as_ref().unwrap().users.last().unwrap();
+            request_disaster_recovery(
+                self.env,
+                self.upgrader_id,
+                last_committee_member.identities[0],
+                large_request.clone(),
+            )
+            .unwrap();
+            let recovery_request = StationRecoveryRequest {
+                user_id: last_committee_member.id.clone(),
+                wasm_sha256,
+                install_mode: large_request.install_mode,
+                arg: large_request.arg,
+                submitted_at: pic_time_to_rfc3339(self.env),
+            };
+            self.recovery_requests.push(recovery_request);
+        }
+
         self.logs =
             get_all_upgrader_logs(self.env, &self.upgrader_id, &self.some_committee_member());
         assert!(self.logs.len() > 1);
+
+        self.already_generated = true;
     }
 
     pub fn test_api(&self) {
