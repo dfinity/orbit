@@ -27,6 +27,8 @@ fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal
         pocket_ic::common::rest::BlobCompression::Gzip,
     );
 
+    let stable_memory_size_before_upgrade = env.get_stable_memory(upgrader_id).len();
+
     // Then upgrade the canister to trigger the migration path
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     env.upgrade_canister(
@@ -36,6 +38,11 @@ fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal
         Some(station_id),
     )
     .expect("Unexpected failure upgrading canister.");
+
+    let stable_memory_size_after_upgrade = env.get_stable_memory(upgrader_id).len();
+
+    // Assert that stable memory size doesn't grow after upgrade.
+    assert!(stable_memory_size_after_upgrade <= stable_memory_size_before_upgrade);
 }
 
 fn upgrade_from_latest(env: &PocketIc, upgrader_id: Principal, station_id: Principal) {
