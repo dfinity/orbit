@@ -1,5 +1,5 @@
 use crate::model::{DisasterRecovery, LogEntry};
-use crate::services::set_logs;
+use crate::services::insert_logs;
 use crate::upgrade::{
     CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithStart,
     WithStop,
@@ -142,7 +142,7 @@ fn post_upgrade() {
 
     let old_memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
 
-    // determine stable memory layout by trying to parse the target canister id from OLD_MEMORY_ID_TARGET_CANISTER_ID
+    // determine stable memory layout by trying to parse the target canister from memory with OLD_MEMORY_ID_TARGET_CANISTER_ID
     let old_target_canister_bytes: StableValue<RawBytes> =
         StableValue::init(old_memory_manager.get(MemoryId::new(OLD_MEMORY_ID_TARGET_CANISTER_ID)));
     let target_canister_bytes = old_target_canister_bytes
@@ -171,7 +171,7 @@ fn post_upgrade() {
             stable_memory_version: STABLE_MEMORY_VERSION,
         };
         set_state(state);
-        set_logs(logs);
+        insert_logs(logs);
     }
 }
 

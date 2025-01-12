@@ -22,7 +22,7 @@ thread_local! {
 }
 
 // only use this function for stable memory migration!
-pub fn set_logs(logs: BTreeMap<Timestamp, LogEntry>) {
+pub fn insert_logs(logs: BTreeMap<Timestamp, LogEntry>) {
     STORAGE.with(|storage| {
         for (timestamp, log) in logs {
             storage.borrow_mut().insert(timestamp, log);
