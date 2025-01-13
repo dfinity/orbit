@@ -1,11 +1,10 @@
 use crate::{
+    get_target_canister,
     model::{LogEntryType, UpgradeResultLog},
     services::LOGGER_SERVICE,
-    LocalRef, StableValue, StorablePrincipal,
 };
-use anyhow::{anyhow, Context};
+use anyhow::anyhow;
 use async_trait::async_trait;
-use candid::Principal;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode,
 };
@@ -41,23 +40,12 @@ pub trait Upgrade: 'static + Sync + Send {
 }
 
 #[derive(Clone)]
-pub struct Upgrader {
-    target: LocalRef<StableValue<StorablePrincipal>>,
-}
-
-impl Upgrader {
-    pub fn new(target: LocalRef<StableValue<StorablePrincipal>>) -> Self {
-        Self { target }
-    }
-}
+pub struct Upgrader {}
 
 #[async_trait]
 impl Upgrade for Upgrader {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        let target_canister = self
-            .target
-            .with(|id| id.borrow().get(&()).context("canister id not set"))?
-            .0;
+        let target_canister = get_target_canister();
 
         install_chunked_code(
             target_canister,
@@ -71,17 +59,15 @@ impl Upgrade for Upgrader {
     }
 }
 
-pub struct WithStop<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
+pub struct WithStop<T>(pub T);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithStop<T> {
     /// Perform an upgrade but ensure that the target canister is stopped first
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        let id = self
-            .1
-            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+        let id = get_target_canister();
 
-        mgmt::stop_canister(CanisterIdRecord { canister_id: id.0 })
+        mgmt::stop_canister(CanisterIdRecord { canister_id: id })
             .await
             .map_err(|(_, err)| anyhow!("failed to stop canister: {err}"))?;
 
@@ -89,7 +75,7 @@ impl<T: Upgrade> Upgrade for WithStop<T> {
     }
 }
 
-pub struct WithStart<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
+pub struct WithStart<T>(pub T);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithStart<T> {
@@ -98,11 +84,9 @@ impl<T: Upgrade> Upgrade for WithStart<T> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
         let out = self.0.upgrade(ps).await;
 
-        let id = self
-            .1
-            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+        let id = get_target_canister();
 
-        mgmt::start_canister(CanisterIdRecord { canister_id: id.0 })
+        mgmt::start_canister(CanisterIdRecord { canister_id: id })
             .await
             .map_err(|(_, err)| anyhow!("failed to start canister: {err}"))?;
 
@@ -110,7 +94,7 @@ impl<T: Upgrade> Upgrade for WithStart<T> {
     }
 }
 
-pub struct WithBackground<T>(pub Arc<T>, pub LocalRef<StableValue<StorablePrincipal>>);
+pub struct WithBackground<T>(pub Arc<T>);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithBackground<T> {
@@ -118,37 +102,34 @@ impl<T: Upgrade> Upgrade for WithBackground<T> {
     /// so that it is performed in a non-blocking manner
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
         let u = self.0.clone();
-        let target_canister_id: Option<Principal> =
-            self.1.with(|p| p.borrow().get(&()).map(|sp| sp.0));
+        let target_canister_id = get_target_canister();
 
         ic_cdk::spawn(async move {
             let res = u.upgrade(ps).await;
             // Notify the target canister about a failed upgrade unless the call is unauthorized
             // (we don't want to spam the target canister with such errors).
-            if let Some(target_canister_id) = target_canister_id {
-                if let Err(ref err) = res {
-                    let err = match err {
-                        UpgradeError::UnexpectedError(err) => Some(err.to_string()),
-                        UpgradeError::NotController => Some(
-                            "The upgrader canister is not a controller of the target canister"
-                                .to_string(),
-                        ),
-                        UpgradeError::Unauthorized => None,
-                    };
-                    if let Some(err) = err {
-                        let notify_failed_station_upgrade_input =
-                            NotifyFailedStationUpgradeInput { reason: err };
-                        let notify_res = call::<_, (ApiResult<()>,)>(
-                            target_canister_id,
-                            "notify_failed_station_upgrade",
-                            (notify_failed_station_upgrade_input,),
-                        )
-                        .await
-                        .map(|r| r.0);
-                        // Log an error if the notification can't be made.
-                        if let Err(e) = notify_res {
-                            print(format!("notify_failed_station_upgrade failed: {:?}", e));
-                        }
+            if let Err(ref err) = res {
+                let err = match err {
+                    UpgradeError::UnexpectedError(err) => Some(err.to_string()),
+                    UpgradeError::NotController => Some(
+                        "The upgrader canister is not a controller of the target canister"
+                            .to_string(),
+                    ),
+                    UpgradeError::Unauthorized => None,
+                };
+                if let Some(err) = err {
+                    let notify_failed_station_upgrade_input =
+                        NotifyFailedStationUpgradeInput { reason: err };
+                    let notify_res = call::<_, (ApiResult<()>,)>(
+                        target_canister_id,
+                        "notify_failed_station_upgrade",
+                        (notify_failed_station_upgrade_input,),
+                    )
+                    .await
+                    .map(|r| r.0);
+                    // Log an error if the notification can't be made.
+                    if let Err(e) = notify_res {
+                        print(format!("notify_failed_station_upgrade failed: {:?}", e));
                     }
                 }
             }
@@ -158,16 +139,14 @@ impl<T: Upgrade> Upgrade for WithBackground<T> {
     }
 }
 
-pub struct WithAuthorization<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
+pub struct WithAuthorization<T>(pub T);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithAuthorization<T> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        let id = self
-            .1
-            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+        let id = get_target_canister();
 
-        if !ic_cdk::caller().eq(&id.0) {
+        if !ic_cdk::caller().eq(&id) {
             return Err(UpgradeError::Unauthorized);
         }
 
@@ -175,17 +154,15 @@ impl<T: Upgrade> Upgrade for WithAuthorization<T> {
     }
 }
 
-pub struct CheckController<T>(pub T, pub LocalRef<StableValue<StorablePrincipal>>);
+pub struct CheckController<T>(pub T);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for CheckController<T> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        let id = self
-            .1
-            .with(|id| id.borrow().get(&()).context("canister id not set"))?;
+        let id = get_target_canister();
 
         let (resp,) = mgmt::canister_info(CanisterInfoRequest {
-            canister_id: id.0,
+            canister_id: id,
             num_requested_changes: None,
         })
         .await
