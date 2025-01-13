@@ -21,17 +21,86 @@
           <LoadingMessage />
         </VCardText>
         <VCardText v-else>
-          <AssetForm
-            v-if="data"
-            v-model="asset"
-            v-model:trigger-submit="triggerSubmit"
-            :display="{
-              id: true,
-            }"
-            :disabled="props.readonly.value"
-            @submit="save"
-            @valid="valid = $event"
-          />
+          <VRadioGroup v-if="!input.assetId" inline v-model="assetType">
+            <VRadio
+              :label="$t('pages.assets.well_known.option_add_well_known_assets')"
+              value="well-known"
+            ></VRadio>
+            <VRadio
+              :label="$t('pages.assets.well_known.option_add_custom_asset')"
+              value="custom"
+            ></VRadio>
+          </VRadioGroup>
+
+          <template v-if="!input.assetId && assetType === 'well-known'">
+            <VCombobox
+              v-model="chosenWellKnownAssets"
+              :loading="wellKnownAssets === undefined"
+              :items="wellKnownAssets"
+              item-title="name"
+              item-value="symbol"
+              multiple
+              clear-on-select
+              hide-selected
+              :return-object="true"
+              :custom-filter="filterWellKnownAssets"
+              :placeholder="$t(`pages.assets.well_known.placeholder`)"
+              :rules="[requiredRule]"
+            >
+              <template #selection="{ item, index }">
+                <VChip
+                  :text="item.title"
+                  v-if="item === Object(item)"
+                  color="secondary"
+                  size="small"
+                  variant="flat"
+                  closable
+                  label
+                  @click:close="removeWellKnownAsset(index)"
+                ></VChip>
+              </template>
+
+              <template #item="{ item, props: { onClick } }">
+                <VListSubheader v-if="'header' in item.raw">
+                  {{ $t(`pages.assets.well_known.groups.${item.raw.header}`) }}
+                </VListSubheader>
+                <!-- prettier-ignore -->
+
+                <VListItem
+                  @click="(onClick as any)"
+                  :disabled="isExistingAsset(item.raw.data.blockchain, item.raw.data.symbol)"
+                  v-else
+                >
+                  <VListItemTitle class="d-flex justify-space-between align-center"
+                    >{{ item.title }}
+
+                    <VIcon
+                      v-if="isExistingAsset(item.raw.data.blockchain, item.raw.data.symbol)"
+                      size="16"
+                      class="ml-2"
+                      :icon="mdiCheckCircle"
+                    >
+                    </VIcon>
+                  </VListItemTitle>
+                  <VListItemSubtitle>{{ item.raw.symbol }}</VListItemSubtitle>
+                </VListItem>
+              </template>
+            </VCombobox>
+          </template>
+
+          <template v-else-if="input.assetId || assetType === 'custom'">
+            <AssetForm
+              v-if="data"
+              v-model="asset"
+              v-model:trigger-submit="triggerSubmit"
+              :display="{
+                id: true,
+              }"
+              :disabled="props.readonly.value"
+              @submit="save"
+              @valid="valid = $event"
+            />
+          </template>
         </VCardText>
         <VDivider />
         <VCardActions class="pa-3">
@@ -43,7 +112,7 @@
             color="primary"
             variant="elevated"
             data-test-id="save-asset"
-            @click="triggerSubmit = true"
+            @click="onSave"
           >
             {{ props.assetId.value ? $t('terms.save') : $t('terms.create') }}
           </VBtn>
@@ -53,8 +122,8 @@
   </VDialog>
 </template>
 <script lang="ts" setup>
-import { mdiClose } from '@mdi/js';
-import { computed, ref, toRefs } from 'vue';
+import { mdiCheckCircle, mdiClose } from '@mdi/js';
+import { computed, ref, toRefs, watch } from 'vue';
 import {
   VBtn,
   VCard,
@@ -62,6 +131,8 @@ import {
   VCardText,
   VDialog,
   VDivider,
+  VRadio,
+  VRadioGroup,
   VSpacer,
   VToolbar,
   VToolbarTitle,
@@ -75,8 +146,10 @@ import {
 import logger from '~/core/logger.core';
 import { Asset, UUID } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
-import { assertAndReturn } from '~/utils/helper.utils';
+import { assertAndReturn, unreachable } from '~/utils/helper.utils';
 import AssetForm from './AssetForm.vue';
+import { requiredRule } from '~/utils/form.utils';
+import { fetchWellKnownIcpAssets, getAllAssets, WellKnownAsset } from '~/utils/asset.utils';
 
 const input = withDefaults(
   defineProps<{
@@ -93,6 +166,39 @@ const input = withDefaults(
   },
 );
 
+const assetType = ref<'well-known' | 'custom'>('well-known');
+
+const chosenWellKnownAssets = ref<ComboboxItem[]>([]);
+
+type GroupedComboboxItem =
+  | {
+      header: string;
+    }
+  | {
+      name: string;
+      symbol: string;
+      data: WellKnownAsset;
+    };
+
+const wellKnownAssets = ref<GroupedComboboxItem[] | undefined>(undefined);
+
+function removeWellKnownAsset(index: number) {
+  chosenWellKnownAssets.value.splice(index, 1);
+}
+
+function filterWellKnownAssets(_: string, queryText: string, item: any) {
+  const { raw } = item as { raw: GroupedComboboxItem };
+  if ('header' in raw) {
+    return false;
+  }
+
+  const lowercaseQuery = queryText.toLowerCase();
+  return (
+    raw.name.toLowerCase().includes(lowercaseQuery) ||
+    raw.symbol.toLowerCase().includes(lowercaseQuery)
+  );
+}
+
 const emit = defineEmits<{
   (event: 'update:open', payload: boolean): void;
 }>();
@@ -102,12 +208,57 @@ const valid = ref(true);
 const loading = ref(false);
 const saving = ref(false);
 const asset = ref<Partial<Asset>>({});
+const existingAssets = ref<Asset[] | undefined>();
 const openModel = computed({
   get: () => props.open.value,
   set: value => emit('update:open', value),
 });
 
 const station = useStationStore();
+
+watch(openModel, value => {
+  if (value) {
+    assetType.value = 'well-known';
+    chosenWellKnownAssets.value = [];
+    wellKnownAssets.value = undefined;
+    if (!input.assetId) {
+      loadWellKnownAssets();
+      getAllAssets().then(assets => {
+        existingAssets.value = assets;
+      });
+    }
+  }
+});
+
+function isExistingAsset(blockchain: string, symbol: string) {
+  return existingAssets.value?.some(a => a.blockchain === blockchain && a.symbol === symbol);
+}
+
+type ComboboxItem = {
+  name: string;
+  symbol: string;
+  data: WellKnownAsset;
+};
+
+function loadWellKnownAssets() {
+  fetchWellKnownIcpAssets().then(groupedAssets => {
+    wellKnownAssets.value = groupedAssets
+      .map(
+        group =>
+          [
+            {
+              header: group.groupKey,
+            },
+            ...group.assets.map(a => ({
+              name: a.name,
+              symbol: a.symbol,
+              data: a,
+            })),
+          ] satisfies GroupedComboboxItem[],
+      )
+      .flat();
+  });
+}
 
 const loadAsset = async (): Promise<{
   asset: Partial<Asset>;
@@ -129,7 +280,15 @@ const loadAsset = async (): Promise<{
 };
 
 const canSave = computed(() => {
-  return valid.value && !loading.value;
+  if (input.assetId) {
+    return valid.value && !loading.value;
+  } else if (assetType.value === 'well-known') {
+    return chosenWellKnownAssets.value.length > 0 && !loading.value;
+  } else if (assetType.value === 'custom') {
+    return valid.value && !loading.value;
+  } else {
+    unreachable(assetType.value);
+  }
 });
 
 const triggerSubmit = ref(false);
@@ -175,4 +334,32 @@ const save = async (): Promise<void> => {
     saving.value = false;
   }
 };
+
+async function onSave() {
+  if (!input.assetId) {
+    if (assetType.value === 'custom') {
+      triggerSubmit.value = true;
+    } else if (assetType.value === 'well-known') {
+      try {
+        saving.value = true;
+        const results = await Promise.all(
+          chosenWellKnownAssets.value.map(asset => station.service.addAsset(asset.data)),
+        );
+        useOnSuccessfulOperation(results[0]);
+        openModel.value = false;
+      } catch (error) {
+        logger.error(`Failed to save assets ${error}`);
+        useOnFailedOperation();
+      } finally {
+        saving.value = false;
+      }
+
+      // useOnSuccessfulOperation(request);
+    } else {
+      unreachable(assetType.value);
+    }
+  } else {
+    triggerSubmit.value = true;
+  }
+}
 </script>
