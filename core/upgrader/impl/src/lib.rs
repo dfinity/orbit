@@ -5,7 +5,7 @@ use crate::upgrade::{
     WithStop,
 };
 use candid::Principal;
-use ic_cdk::api::stable::stable_write;
+use ic_cdk::api::stable::{stable_size, stable_write};
 use ic_cdk::{
     api::management_canister::main::CanisterInstallMode, init, post_upgrade, trap, update,
 };
@@ -161,9 +161,9 @@ fn post_upgrade() {
             StableBTreeMap::init(old_memory_manager.get(MemoryId::new(OLD_MEMORY_ID_LOGS)));
         let logs: BTreeMap<Timestamp, LogEntry> = old_logs.iter().collect();
 
-        // clear the magic header of stable structures to force their reinitialization
-        // https://github.com/dfinity/stable-structures/blob/69ed47f9b5001af67d650c714cd56ec3ee0ef2bb/src/memory_manager.rs#L254-L256
-        stable_write(0, &[0; 3]);
+        // clear the stable memory
+        let stable_memory_size_bytes = stable_size() * (WASM_PAGE_SIZE as u64);
+        stable_write(0, &vec![0; stable_memory_size_bytes as usize]);
 
         let state = State {
             target_canister,
