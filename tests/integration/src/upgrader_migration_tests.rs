@@ -112,7 +112,7 @@ where
     test_data_generator.test_api();
 
     // Submit a few more large disaster recovery requests to test that
-    // stable memory can grow with the new layout.
+    // stable memory can grow with the latest stable memory layout.
     let committee =
         get_disaster_recovery_committee(&env, upgrader_id, canister_ids.station).unwrap();
     for (i, user) in committee.users.into_iter().take(20).enumerate() {
