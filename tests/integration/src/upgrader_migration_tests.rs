@@ -1,6 +1,9 @@
 use crate::setup::{get_canister_wasm, setup_new_env_with_config, SetupConfig, WALLET_ADMIN_USER};
 use crate::upgrader_test_data::UpgraderDataGenerator;
-use crate::utils::{compress_to_gzip, create_file, get_system_info, read_file, upgrade_station};
+use crate::utils::{
+    compress_to_gzip, create_file, get_disaster_recovery_committee, get_system_info, read_file,
+    request_disaster_recovery, upgrade_station,
+};
 use crate::TestEnv;
 use candid::{Encode, Principal};
 use pocket_ic::PocketIc;
@@ -93,6 +96,9 @@ where
 
     upgrade_from(&env, upgrader_id, canister_ids.station);
 
+    let canister_memory = env.get_stable_memory(upgrader_id);
+    let stable_memory_size_after_upgrade = canister_memory.len();
+
     env.start_canister(upgrader_id, Some(canister_ids.station))
         .expect("Unexpected failure starting canister.");
 
@@ -104,6 +110,30 @@ where
 
     // Assert that the canister api is still working after adding more test data
     test_data_generator.test_api();
+
+    // Submit a few more large disaster recovery requests to test that
+    // stable memory can grow with the new layout.
+    let committee =
+        get_disaster_recovery_committee(&env, upgrader_id, canister_ids.station).unwrap();
+    for (i, user) in committee.users.into_iter().take(20).enumerate() {
+        let wasm_module = vec![i as u8; 2_000_000];
+        let large_request = upgrader_api::RequestDisasterRecoveryInput {
+            module: wasm_module,
+            module_extra_chunks: None,
+            arg: vec![],
+            install_mode: upgrader_api::InstallMode::Reinstall,
+        };
+        request_disaster_recovery(
+            &env,
+            upgrader_id,
+            *user.identities.first().unwrap(),
+            large_request,
+        )
+        .unwrap();
+    }
+    let canister_memory = env.get_stable_memory(upgrader_id);
+    let stable_memory_size = canister_memory.len();
+    assert!(stable_memory_size > stable_memory_size_after_upgrade);
 
     // Test that the station can still be upgraded via the upgrader with the latest stable memory layout.
     let current_station_name = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station).name;
