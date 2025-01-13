@@ -190,8 +190,7 @@ export async function fetchWellKnownIcpAssets(): Promise<GroupedWellKnownAssets>
   const snsAssets = await fetchSNSAssets();
   const ckTokens = await fetchCkTokens();
   const maybeSnsAssets = snsAssets.map(asset => {
-    if (asset.lifecycle.lifecycle !== 3) {
-      // only 3=COMMITTED SNS assets exist
+    if (asset.lifecycle.lifecycle !== SNSAggregatorAssetLifecycle.COMMITTED) {
       return;
     }
 
