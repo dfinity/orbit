@@ -246,7 +246,7 @@ impl<'a> UpgraderDataGenerator<'a> {
                 arg: vec![],
                 install_mode: upgrader_api::InstallMode::Reinstall,
             };
-            let committee_member = &self.committee.as_ref().unwrap().users[i as usize];
+            let committee_member = &self.committee.as_ref().unwrap().users[i];
             request_disaster_recovery(
                 self.env,
                 self.upgrader_id,
