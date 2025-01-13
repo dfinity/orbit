@@ -1,5 +1,6 @@
 use crate::setup::{create_canister, get_canister_wasm, WALLET_ADMIN_USER};
 use crate::station_test_data::asset::list_assets;
+use crate::system_upgrade_tests::STATION_UPGRADE_EXTRA_TICKS;
 use candid::utils::ArgumentDecoder;
 use candid::Principal;
 use candid::{decode_args, CandidType, Encode};
@@ -24,8 +25,9 @@ use station_api::{
     RequestApprovalStatusDTO, RequestDTO, RequestExecutionScheduleDTO, RequestOperationDTO,
     RequestOperationInput, RequestPolicyRuleDTO, RequestStatusDTO, ResourceIdDTO,
     SetDisasterRecoveryOperationDTO, SetDisasterRecoveryOperationInput, SubmitRequestApprovalInput,
-    SubmitRequestApprovalResponse, SystemInfoDTO, SystemInfoResponse, UserDTO, UserSpecifierDTO,
-    UserStatusDTO, UuidDTO,
+    SubmitRequestApprovalResponse, SystemInfoDTO, SystemInfoResponse, SystemInstall, SystemUpgrade,
+    SystemUpgradeOperationInput, SystemUpgradeTargetDTO, UserDTO, UserSpecifierDTO, UserStatusDTO,
+    UuidDTO,
 };
 use std::io::Write;
 use std::path::PathBuf;
@@ -1289,4 +1291,36 @@ pub(crate) fn is_committee_member(
         query_candid_as(env, upgrader_id, user, "is_committee_member", ((),))
             .expect("Failed query call to check committee membership");
     res.0.map(|resp| resp.is_committee_member)
+}
+
+pub(crate) fn upgrade_station(
+    env: &PocketIc,
+    user: Principal,
+    station_id: Principal,
+    name: Option<String>,
+) {
+    // upload chunks to asset canister
+    let station_wasm = get_canister_wasm("station").to_vec();
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(env, station_wasm, 200_000);
+
+    // create system upgrade request from chunks
+    let station_init_arg = SystemInstall::Upgrade(SystemUpgrade { name });
+    let station_init_arg_bytes = Encode!(&station_init_arg).unwrap();
+    let system_upgrade_operation =
+        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+            target: SystemUpgradeTargetDTO::UpgradeStation,
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: Some(station_init_arg_bytes),
+        });
+
+    execute_request_with_extra_ticks(
+        env,
+        user,
+        station_id,
+        system_upgrade_operation,
+        STATION_UPGRADE_EXTRA_TICKS,
+    )
+    .unwrap();
 }
