@@ -13,7 +13,7 @@ use station_api::{
 };
 use upgrader_api::InitArg;
 
-const EXTRA_TICKS: u64 = 200;
+pub(crate) const STATION_UPGRADE_EXTRA_TICKS: u64 = 200;
 
 fn do_successful_station_upgrade(
     env: &PocketIc,
@@ -33,7 +33,7 @@ fn do_successful_station_upgrade(
         WALLET_ADMIN_USER,
         canister_ids.station,
         station_upgrade_operation.clone(),
-        EXTRA_TICKS,
+        STATION_UPGRADE_EXTRA_TICKS,
     )
     .unwrap();
 
@@ -52,7 +52,7 @@ fn do_successful_station_upgrade(
         WALLET_ADMIN_USER,
         canister_ids.station,
         station_upgrade_operation,
-        EXTRA_TICKS,
+        STATION_UPGRADE_EXTRA_TICKS,
     )
     .unwrap();
 
@@ -104,7 +104,7 @@ fn do_failed_system_upgrade(
         WALLET_ADMIN_USER,
         canister_ids.station,
         system_upgrade_operation,
-        EXTRA_TICKS,
+        STATION_UPGRADE_EXTRA_TICKS,
     )
     .unwrap_err()
     .unwrap();
