@@ -105,6 +105,7 @@ impl<'a> UpgraderDataGenerator<'a> {
         )
         .unwrap();
         self.committee = Some(committee);
+        self.recovery_requests.clear();
 
         let accounts: Vec<_> = (0..6)
             .map(|_| Account {
