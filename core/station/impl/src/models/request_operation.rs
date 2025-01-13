@@ -382,6 +382,7 @@ pub enum SystemUpgradeTarget {
 pub struct WasmModuleExtraChunks {
     pub store_canister: Principal,
     pub extra_chunks_key: String,
+    #[serde(with = "serde_bytes")]
     pub wasm_module_hash: Vec<u8>,
 }
 
@@ -390,15 +391,19 @@ pub struct WasmModuleExtraChunks {
 pub struct SystemUpgradeOperationInput {
     pub target: SystemUpgradeTarget,
     /// The module is only available while the operation is not finalized.
+    #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
     pub module_extra_chunks: Option<WasmModuleExtraChunks>,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct SystemUpgradeOperation {
+    #[serde(with = "serde_bytes")]
     pub module_checksum: Vec<u8>,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg_checksum: Option<Vec<u8>>,
     pub input: SystemUpgradeOperationInput,
 }
@@ -450,15 +455,19 @@ pub struct SetDisasterRecoveryOperationInput {
 pub struct ChangeExternalCanisterOperationInput {
     pub canister_id: Principal,
     pub mode: CanisterInstallMode,
+    #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
     pub module_extra_chunks: Option<WasmModuleExtraChunks>,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
 }
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ChangeExternalCanisterOperation {
+    #[serde(with = "serde_bytes")]
     pub module_checksum: Vec<u8>,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg_checksum: Option<Vec<u8>>,
     pub input: ChangeExternalCanisterOperationInput,
 }
@@ -761,6 +770,7 @@ impl ModelValidator<ValidationError> for CanisterMethod {
 pub struct CallExternalCanisterOperationInput {
     pub validation_method: Option<CanisterMethod>,
     pub execution_method: CanisterMethod,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
     pub execution_method_cycles: Option<u64>,
 }
@@ -769,8 +779,10 @@ pub struct CallExternalCanisterOperationInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct CallExternalCanisterOperation {
     pub input: CallExternalCanisterOperationInput,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg_checksum: Option<Vec<u8>>,
     pub arg_rendering: Option<String>,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub execution_method_reply: Option<Vec<u8>>,
 }
 
@@ -778,6 +790,7 @@ pub struct CallExternalCanisterOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct SnapshotExternalCanisterOperationInput {
     pub canister_id: Principal,
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub replace_snapshot: Option<Vec<u8>>,
     pub force: bool,
 }
@@ -785,6 +798,7 @@ pub struct SnapshotExternalCanisterOperationInput {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct SnapshotExternalCanisterOperation {
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub snapshot_id: Option<Vec<u8>>,
     pub input: SnapshotExternalCanisterOperationInput,
 }
@@ -793,6 +807,7 @@ pub struct SnapshotExternalCanisterOperation {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct RestoreExternalCanisterOperationInput {
     pub canister_id: Principal,
+    #[serde(with = "serde_bytes")]
     pub snapshot_id: Vec<u8>,
 }
 
@@ -805,6 +820,7 @@ pub struct RestoreExternalCanisterOperation {
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum PruneExternalCanisterResource {
+    #[serde(with = "serde_bytes")]
     Snapshot(Vec<u8>),
     ChunkStore,
     State,
