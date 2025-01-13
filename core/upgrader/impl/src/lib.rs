@@ -10,7 +10,7 @@ use ic_stable_structures::{
 };
 use lazy_static::lazy_static;
 use orbit_essentials::storable;
-use std::{cell::RefCell, sync::Arc, thread::LocalKey};
+use std::{cell::RefCell, sync::Arc};
 use upgrade::{UpgradeError, UpgradeParams};
 use upgrader_api::{InitArg, TriggerUpgradeError};
 
@@ -29,7 +29,6 @@ pub mod utils;
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 type StableMap<K, V> = StableBTreeMap<K, V, Memory>;
 type StableValue<T> = StableMap<(), T>;
-type LocalRef<T> = &'static LocalKey<RefCell<T>>;
 
 const MEMORY_ID_TARGET_CANISTER_ID: u8 = 0;
 const MEMORY_ID_DISASTER_RECOVERY: u8 = 1;
@@ -51,6 +50,15 @@ thread_local! {
     );
 }
 
+pub fn get_target_canister() -> Principal {
+    TARGET_CANISTER_ID.with(|id| {
+        id.borrow()
+            .get(&())
+            .map(|id| id.0)
+            .unwrap_or(Principal::anonymous())
+    })
+}
+
 #[init]
 fn init_fn(InitArg { target_canister }: InitArg) {
     TARGET_CANISTER_ID.with(|id| {
@@ -61,13 +69,13 @@ fn init_fn(InitArg { target_canister }: InitArg) {
 
 lazy_static! {
     static ref UPGRADER: Box<dyn Upgrade> = {
-        let u = Upgrader::new(&TARGET_CANISTER_ID);
-        let u = WithStop(u, &TARGET_CANISTER_ID);
-        let u = WithStart(u, &TARGET_CANISTER_ID);
+        let u = Upgrader {};
+        let u = WithStop(u);
+        let u = WithStart(u);
         let u = WithLogs(u, "upgrade".to_string());
-        let u = WithBackground(Arc::new(u), &TARGET_CANISTER_ID);
-        let u = CheckController(u, &TARGET_CANISTER_ID);
-        let u = WithAuthorization(u, &TARGET_CANISTER_ID);
+        let u = WithBackground(Arc::new(u));
+        let u = CheckController(u);
+        let u = WithAuthorization(u);
         let u = WithLogs(u, "trigger_upgrade".to_string());
         Box::new(u)
     };
