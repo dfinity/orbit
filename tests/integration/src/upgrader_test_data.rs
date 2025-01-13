@@ -59,7 +59,6 @@ pub struct UpgraderDataGenerator<'a> {
     recovery_status: RecoveryStatus,
     last_recovery_result: Option<RecoveryResult>,
     logs: Vec<LogEntry>,
-    already_generated: bool,
 }
 
 impl<'a> UpgraderDataGenerator<'a> {
@@ -76,12 +75,17 @@ impl<'a> UpgraderDataGenerator<'a> {
             recovery_status: RecoveryStatus::Idle,
             last_recovery_result: None,
             logs: vec![],
-            already_generated: false,
         }
     }
 
     pub fn some_committee_member(&self) -> Principal {
-        *self.committee.clone().unwrap().users[0]
+        *self
+            .committee
+            .as_ref()
+            .unwrap()
+            .users
+            .first()
+            .unwrap()
             .identities
             .first()
             .unwrap()
@@ -150,7 +154,7 @@ impl<'a> UpgraderDataGenerator<'a> {
         let assets: Vec<_> = (0..10)
             .map(|_| Asset {
                 blockchain: "icp".to_owned(),
-                id: Uuid::from_bytes([0; 16]).hyphenated().to_string(),
+                id: next_unique_uuid(),
                 name: "Internet Computer".to_owned(),
                 symbol: "ICP".to_owned(),
                 decimals: 8,
@@ -182,11 +186,11 @@ impl<'a> UpgraderDataGenerator<'a> {
         let state =
             get_disaster_recovery_state(self.env, self.upgrader_id, self.some_committee_member());
         if state.last_recovery_result.is_none() {
-            for i in 0..5 {
+            for i in 0..quorum {
                 request_disaster_recovery(
                     self.env,
                     self.upgrader_id,
-                    *self.committee.clone().unwrap().users[i]
+                    *self.committee.as_ref().unwrap().users[i as usize]
                         .identities
                         .first()
                         .unwrap(),
@@ -208,11 +212,12 @@ impl<'a> UpgraderDataGenerator<'a> {
             self.last_recovery_result = Some(last_recovery_result);
             self.recovery_requests.clear();
         };
-        for i in 0..2 {
+        let num_small_requests = 2;
+        for i in 0..num_small_requests {
             request_disaster_recovery(
                 self.env,
                 self.upgrader_id,
-                *self.committee.clone().unwrap().users[i]
+                *self.committee.as_ref().unwrap().users[i]
                     .identities
                     .first()
                     .unwrap(),
@@ -220,7 +225,7 @@ impl<'a> UpgraderDataGenerator<'a> {
             )
             .unwrap();
             let recovery_request = StationRecoveryRequest {
-                user_id: self.committee.clone().unwrap().users[i].id.clone(),
+                user_id: self.committee.as_ref().unwrap().users[i].id.clone(),
                 wasm_sha256: wasm_sha256.clone(),
                 install_mode: request.install_mode.clone(),
                 arg: request.arg.clone(),
@@ -229,11 +234,11 @@ impl<'a> UpgraderDataGenerator<'a> {
             self.recovery_requests.push(recovery_request);
         }
 
-        // submit one large disaster recovery request
-        // so that it spans multiple stable memory buckets
-        // in the new stable memory layout with 1MiB buckets
-        if !self.already_generated {
-            let wasm_module = vec![42; 1_500_000];
+        // submit a few large disaster recovery requests
+        // so that they span multiple stable memory buckets
+        let num_large_requests = 10;
+        for i in num_small_requests..(num_small_requests + num_large_requests) {
+            let wasm_module = vec![i as u8; 2_000_000];
             let wasm_sha256 = orbit_essentials::utils::sha256_hash(&wasm_module);
             let large_request = upgrader_api::RequestDisasterRecoveryInput {
                 module: wasm_module,
@@ -241,16 +246,16 @@ impl<'a> UpgraderDataGenerator<'a> {
                 arg: vec![],
                 install_mode: upgrader_api::InstallMode::Reinstall,
             };
-            let last_committee_member = self.committee.as_ref().unwrap().users.last().unwrap();
+            let committee_member = &self.committee.as_ref().unwrap().users[i as usize];
             request_disaster_recovery(
                 self.env,
                 self.upgrader_id,
-                last_committee_member.identities[0],
+                *committee_member.identities.first().unwrap(),
                 large_request.clone(),
             )
             .unwrap();
             let recovery_request = StationRecoveryRequest {
-                user_id: last_committee_member.id.clone(),
+                user_id: committee_member.id.clone(),
                 wasm_sha256,
                 install_mode: large_request.install_mode,
                 arg: large_request.arg,
@@ -262,8 +267,6 @@ impl<'a> UpgraderDataGenerator<'a> {
         self.logs =
             get_all_upgrader_logs(self.env, &self.upgrader_id, &self.some_committee_member());
         assert!(self.logs.len() > 1);
-
-        self.already_generated = true;
     }
 
     pub fn test_api(&self) {
