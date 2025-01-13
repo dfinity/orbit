@@ -1302,7 +1302,7 @@ pub(crate) fn upgrade_station(
     // upload chunks to asset canister
     let station_wasm = get_canister_wasm("station").to_vec();
     let (base_chunk, module_extra_chunks) =
-        upload_canister_chunks_to_asset_canister(&env, station_wasm, 200_000);
+        upload_canister_chunks_to_asset_canister(env, station_wasm, 200_000);
 
     // create system upgrade request from chunks
     let station_init_arg = SystemInstall::Upgrade(SystemUpgrade { name });

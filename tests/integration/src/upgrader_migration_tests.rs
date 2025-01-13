@@ -48,8 +48,8 @@ fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal
 fn upgrade_from_latest(env: &PocketIc, upgrader_id: Principal, station_id: Principal) {
     let mut canister_memory = env.get_stable_memory(upgrader_id);
 
-    // Assert that stable memory size is 2MiB + stable structures header (64KiB) for the latest layout.
-    assert_eq!(canister_memory.len(), (2 << 20) + (64 << 10));
+    // Assert that stable memory size is 21 buckets of 1MiB each + stable structures header (64KiB) for the latest layout.
+    assert_eq!(canister_memory.len(), 21 * (1 << 20) + (64 << 10));
 
     // This is used to store the stable memory of the canister for future use
     canister_memory = compress_to_gzip(&canister_memory);

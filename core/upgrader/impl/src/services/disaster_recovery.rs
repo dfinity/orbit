@@ -1,28 +1,26 @@
-use std::{collections::HashMap, sync::Arc};
-
+use super::{InstallCanister, LoggerService, INSTALL_CANISTER};
 use crate::{
     errors::UpgraderApiError,
     get_disaster_recovery, get_target_canister,
     model::{
-        Asset, DisasterRecoveryInProgressLog, DisasterRecoveryResultLog, DisasterRecoveryStartLog,
-        LogEntryType, MultiAssetAccount, RequestDisasterRecoveryLog, SetAccountsAndAssetsLog,
-        SetAccountsLog, SetCommitteeLog,
+        Account, AdminUser, Asset, DisasterRecovery, DisasterRecoveryCommittee,
+        DisasterRecoveryInProgressLog, DisasterRecoveryResultLog, DisasterRecoveryStartLog,
+        InstallMode, LogEntryType, MultiAssetAccount, RecoveryEvaluationResult, RecoveryFailure,
+        RecoveryResult, RecoveryStatus, RequestDisasterRecoveryLog, SetAccountsAndAssetsLog,
+        SetAccountsLog, SetCommitteeLog, StationRecoveryRequest,
     },
     services::LOGGER_SERVICE,
     set_disaster_recovery,
     upgrader_ic_cdk::{api::time, spawn},
 };
+
 use candid::Principal;
 use lazy_static::lazy_static;
 use orbit_essentials::{api::ServiceResult, utils::sha256_hash};
-
-use crate::model::{
-    Account, AdminUser, DisasterRecovery, DisasterRecoveryCommittee, InstallMode,
-    RecoveryEvaluationResult, RecoveryFailure, RecoveryResult, RecoveryStatus,
-    StationRecoveryRequest,
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
 };
-
-use super::{InstallCanister, LoggerService, INSTALL_CANISTER};
 
 pub const DISASTER_RECOVERY_REQUEST_EXPIRATION_NS: u64 = 60 * 60 * 24 * 7 * 1_000_000_000; // 1 week
 pub const DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS: u64 = 60 * 60 * 1_000_000_000; // 1 hour
@@ -119,6 +117,13 @@ impl DisasterRecoveryService {
         }
 
         value.committee = Some(committee.clone());
+
+        // only retain recovery requests from committee members
+        // who are in the new committee
+        let committee_set: HashSet<_> = committee.users.iter().map(|user| user.id).collect();
+        value
+            .recovery_requests
+            .retain(|request| committee_set.contains(&request.user_id));
 
         self.storage.set(value);
 
@@ -227,6 +232,12 @@ impl DisasterRecoveryService {
 
             now < expires_at
         });
+
+        // Remove requests from users who are not in the committee
+        let committee_set: HashSet<_> = committee.users.iter().map(|user| user.id).collect();
+        storage
+            .recovery_requests
+            .retain(|request| committee_set.contains(&request.user_id));
 
         let mut submissions: HashMap<(Vec<u8>, Vec<u8>), usize> = Default::default();
 
