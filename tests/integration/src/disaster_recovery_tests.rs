@@ -322,22 +322,26 @@ fn test_disaster_recovery_flow() {
         .expect("No module hash found");
 
     // install the upgrader wasm for the station as a test
-    let good_request = upgrader_api::RequestDisasterRecoveryInput {
-        module: base_chunk.clone(),
-        module_extra_chunks: Some(module_extra_chunks.clone()),
-        arg: Encode!(&upgrader_api::InitArg {
-            target_canister: canister_ids.station
-        })
-        .unwrap(),
-        install_mode: upgrader_api::InstallMode::Reinstall,
-    };
+    let good_request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+        upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+            install_mode: upgrader_api::InstallMode::Reinstall,
+            module: base_chunk.clone(),
+            module_extra_chunks: Some(module_extra_chunks.clone()),
+            arg: Encode!(&upgrader_api::InitArg {
+                target_canister: canister_ids.station
+            })
+            .unwrap(),
+        },
+    );
 
-    let bad_request = upgrader_api::RequestDisasterRecoveryInput {
-        module: base_chunk,
-        module_extra_chunks: Some(module_extra_chunks),
-        arg: vec![1, 2, 3],
-        install_mode: upgrader_api::InstallMode::Reinstall,
-    };
+    let bad_request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+        upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: vec![1, 2, 3],
+            install_mode: upgrader_api::InstallMode::Reinstall,
+        },
+    );
 
     request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
         .expect("Failed to request disaster recovery");
@@ -493,34 +497,36 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
         &env,
         upgrader_id,
         WALLET_ADMIN_USER,
-        upgrader_api::RequestDisasterRecoveryInput {
-            module: base_chunk,
-            module_extra_chunks: Some(module_extra_chunks),
-            arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
-                name: "Station".to_string(),
-                admins: vec![
-                    station_api::AdminInitInput {
-                        identity: WALLET_ADMIN_USER,
-                        name: "updated-admin-name".to_string(),
-                    },
-                    station_api::AdminInitInput {
-                        identity: Principal::from_slice(&[95; 29]),
-                        name: "another-admin".to_string(),
-                    },
-                    station_api::AdminInitInput {
-                        identity: Principal::from_slice(&[97; 29]),
-                        name: "yet-another-admin".to_string(),
-                    }
-                ],
-                quorum: None,
-                fallback_controller: None,
-                upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
-                accounts: Some(init_accounts_input),
-                assets: Some(vec![init_assets_input]),
-            }))
-            .unwrap(),
-            install_mode: upgrader_api::InstallMode::Reinstall,
-        },
+        upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+            upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+                module: base_chunk,
+                module_extra_chunks: Some(module_extra_chunks),
+                arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
+                    name: "Station".to_string(),
+                    admins: vec![
+                        station_api::AdminInitInput {
+                            identity: WALLET_ADMIN_USER,
+                            name: "updated-admin-name".to_string(),
+                        },
+                        station_api::AdminInitInput {
+                            identity: Principal::from_slice(&[95; 29]),
+                            name: "another-admin".to_string(),
+                        },
+                        station_api::AdminInitInput {
+                            identity: Principal::from_slice(&[97; 29]),
+                            name: "yet-another-admin".to_string(),
+                        }
+                    ],
+                    quorum: None,
+                    fallback_controller: None,
+                    upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
+                    accounts: Some(init_accounts_input),
+                    assets: Some(vec![init_assets_input]),
+                }))
+                .unwrap(),
+                install_mode: upgrader_api::InstallMode::Reinstall,
+            },
+        ),
     )
     .expect("Unexpected failed to request disaster recovery");
 
@@ -674,24 +680,26 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
         &env,
         upgrader_id,
         WALLET_ADMIN_USER,
-        upgrader_api::RequestDisasterRecoveryInput {
-            module: base_chunk,
-            module_extra_chunks: Some(module_extra_chunks),
-            arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
-                name: "Station".to_string(),
-                admins: vec![station_api::AdminInitInput {
-                    identity: WALLET_ADMIN_USER,
-                    name: "updated-admin-name".to_string(),
-                }],
-                quorum: None,
-                fallback_controller: Some(fallback_controller),
-                upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
-                accounts: None,
-                assets: None,
-            }))
-            .unwrap(),
-            install_mode: upgrader_api::InstallMode::Reinstall,
-        },
+        upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+            upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+                module: base_chunk,
+                module_extra_chunks: Some(module_extra_chunks),
+                arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
+                    name: "Station".to_string(),
+                    admins: vec![station_api::AdminInitInput {
+                        identity: WALLET_ADMIN_USER,
+                        name: "updated-admin-name".to_string(),
+                    }],
+                    quorum: None,
+                    fallback_controller: Some(fallback_controller),
+                    upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
+                    accounts: None,
+                    assets: None,
+                }))
+                .unwrap(),
+                install_mode: upgrader_api::InstallMode::Reinstall,
+            },
+        ),
     )
     .expect("Unexpected failed to request disaster recovery");
 
@@ -757,15 +765,17 @@ fn test_disaster_recovery_in_progress() {
         upload_canister_chunks_to_asset_canister(&env, new_wasm_module, 50_000);
 
     // install the upgrader wasm for the station as a test
-    let good_request = upgrader_api::RequestDisasterRecoveryInput {
-        module: base_chunk,
-        module_extra_chunks: Some(module_extra_chunks),
-        arg: Encode!(&upgrader_api::InitArg {
-            target_canister: canister_ids.station
-        })
-        .unwrap(),
-        install_mode: upgrader_api::InstallMode::Reinstall,
-    };
+    let good_request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+        upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: Encode!(&upgrader_api::InitArg {
+                target_canister: canister_ids.station
+            })
+            .unwrap(),
+            install_mode: upgrader_api::InstallMode::Reinstall,
+        },
+    );
 
     request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
         .expect("Failed to request disaster recovery");
@@ -836,15 +846,17 @@ fn test_disaster_recovery_install() {
     let new_wasm_module = get_canister_wasm("upgrader");
     let (base_chunk, module_extra_chunks) =
         upload_canister_chunks_to_asset_canister(&env, new_wasm_module, 50_000);
-    let good_request = upgrader_api::RequestDisasterRecoveryInput {
-        module: base_chunk,
-        module_extra_chunks: Some(module_extra_chunks),
-        arg: Encode!(&upgrader_api::InitArg {
-            target_canister: canister_ids.station
-        })
-        .unwrap(),
-        install_mode: upgrader_api::InstallMode::Install,
-    };
+    let good_request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+        upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: Encode!(&upgrader_api::InitArg {
+                target_canister: canister_ids.station
+            })
+            .unwrap(),
+            install_mode: upgrader_api::InstallMode::Install,
+        },
+    );
 
     request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
         .expect("Failed to request disaster recovery");
@@ -865,12 +877,14 @@ fn test_disaster_recovery_upgrade() {
     let new_wasm_module = get_canister_wasm("station");
     let (base_chunk, module_extra_chunks) =
         upload_canister_chunks_to_asset_canister(&env, new_wasm_module, 500_000);
-    let good_request = upgrader_api::RequestDisasterRecoveryInput {
-        module: base_chunk,
-        module_extra_chunks: Some(module_extra_chunks),
-        arg: Encode!(&station_init_arg).unwrap(),
-        install_mode: upgrader_api::InstallMode::Upgrade,
-    };
+    let good_request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+        upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: Encode!(&station_init_arg).unwrap(),
+            install_mode: upgrader_api::InstallMode::Upgrade,
+        },
+    );
 
     request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
         .expect("Failed to request disaster recovery");
@@ -902,12 +916,14 @@ fn test_disaster_recovery_failing() {
     let new_wasm_module = get_canister_wasm("station");
     let (base_chunk, module_extra_chunks) =
         upload_canister_chunks_to_asset_canister(&env, new_wasm_module, 500_000);
-    let good_request = upgrader_api::RequestDisasterRecoveryInput {
-        module: base_chunk,
-        module_extra_chunks: Some(module_extra_chunks),
-        arg: Encode!(&arg).unwrap(),
-        install_mode: upgrader_api::InstallMode::Upgrade,
-    };
+    let good_request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+        upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+            module: base_chunk,
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: Encode!(&arg).unwrap(),
+            install_mode: upgrader_api::InstallMode::Upgrade,
+        },
+    );
 
     request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, good_request.clone())
         .expect("Failed to request disaster recovery");
@@ -999,12 +1015,14 @@ fn test_disaster_recovery_committee_change_with_open_requests() {
             identities: vec![Principal::from_slice(&i.to_le_bytes())],
         })
         .collect();
-    let request = upgrader_api::RequestDisasterRecoveryInput {
-        module: vec![],
-        module_extra_chunks: None,
-        arg: vec![],
-        install_mode: upgrader_api::InstallMode::Reinstall,
-    };
+    let request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+        upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+            module: vec![],
+            module_extra_chunks: None,
+            arg: vec![],
+            install_mode: upgrader_api::InstallMode::Reinstall,
+        },
+    );
     let disaster_recovery = |i: usize| {
         request_disaster_recovery(
             &env,

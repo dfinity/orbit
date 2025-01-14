@@ -1,4 +1,4 @@
-use crate::model::{DisasterRecovery, LogEntry};
+use crate::model::{DisasterRecovery, DisasterRecoveryV0, LogEntry};
 use crate::services::insert_logs;
 use crate::upgrade::{
     CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithStart,
@@ -28,6 +28,7 @@ pub use orbit_essentials::cdk::mocks as upgrader_ic_cdk;
 
 pub mod controllers;
 pub mod errors;
+pub mod mappers;
 pub mod model;
 pub mod services;
 pub mod upgrade;
@@ -151,10 +152,10 @@ fn post_upgrade() {
     // if a principal can be parsed out of memory with OLD_MEMORY_ID_TARGET_CANISTER_ID
     // then we need to perform stable memory migration
     if let Ok(target_canister) = serde_cbor::from_slice::<Principal>(&target_canister_bytes.0) {
-        let old_disaster_recovery: StableValue<DisasterRecovery> = StableValue::init(
+        let old_disaster_recovery: StableValue<DisasterRecoveryV0> = StableValue::init(
             old_memory_manager.get(MemoryId::new(OLD_MEMORY_ID_DISASTER_RECOVERY)),
         );
-        let disaster_recovery: DisasterRecovery =
+        let disaster_recovery: DisasterRecoveryV0 =
             old_disaster_recovery.get(&()).unwrap_or_default();
 
         let old_logs: StableBTreeMap<Timestamp, LogEntry, Memory> =
@@ -167,7 +168,7 @@ fn post_upgrade() {
 
         let state = State {
             target_canister,
-            disaster_recovery,
+            disaster_recovery: disaster_recovery.into(),
             stable_memory_version: STABLE_MEMORY_VERSION,
         };
         set_state(state);

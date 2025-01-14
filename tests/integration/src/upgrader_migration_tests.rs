@@ -117,12 +117,14 @@ where
         get_disaster_recovery_committee(&env, upgrader_id, canister_ids.station).unwrap();
     for (i, user) in committee.users.into_iter().take(20).enumerate() {
         let wasm_module = vec![i as u8; 2_000_000];
-        let large_request = upgrader_api::RequestDisasterRecoveryInput {
-            module: wasm_module,
-            module_extra_chunks: None,
-            arg: vec![],
-            install_mode: upgrader_api::InstallMode::Reinstall,
-        };
+        let large_request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+            upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+                module: wasm_module,
+                module_extra_chunks: None,
+                arg: vec![],
+                install_mode: upgrader_api::InstallMode::Reinstall,
+            },
+        );
         request_disaster_recovery(
             &env,
             upgrader_id,

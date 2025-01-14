@@ -7,6 +7,7 @@ use time::OffsetDateTime;
 use upgrader_api::{
     Account, AdminUser, Asset, DisasterRecoveryCommittee, LogEntry, MetadataDTO, MultiAssetAccount,
     RecoveryResult, RecoveryStatus, StationRecoveryRequest,
+    StationRecoveryRequestInstallCodeOperation, StationRecoveryRequestOperation,
 };
 use uuid::Uuid;
 
@@ -177,12 +178,16 @@ impl<'a> UpgraderDataGenerator<'a> {
         let wasm_sha256 = orbit_essentials::utils::sha256_hash(&wasm_module);
         let (base_chunk, module_extra_chunks) =
             upload_canister_chunks_to_asset_canister(self.env, wasm_module, 4);
-        let request = upgrader_api::RequestDisasterRecoveryInput {
-            module: base_chunk,
-            module_extra_chunks: Some(module_extra_chunks),
-            arg: next_unique_uuid().as_bytes().to_vec(),
-            install_mode: upgrader_api::InstallMode::Reinstall,
-        };
+        let arg = next_unique_uuid().as_bytes().to_vec();
+        let install_mode = upgrader_api::InstallMode::Reinstall;
+        let request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+            upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+                module: base_chunk,
+                module_extra_chunks: Some(module_extra_chunks),
+                arg: arg.clone(),
+                install_mode: install_mode.clone(),
+            },
+        );
         let state =
             get_disaster_recovery_state(self.env, self.upgrader_id, self.some_committee_member());
         if state.last_recovery_result.is_none() {
@@ -226,9 +231,13 @@ impl<'a> UpgraderDataGenerator<'a> {
             .unwrap();
             let recovery_request = StationRecoveryRequest {
                 user_id: self.committee.as_ref().unwrap().users[i].id.clone(),
-                wasm_sha256: wasm_sha256.clone(),
-                install_mode: request.install_mode.clone(),
-                arg: request.arg.clone(),
+                operation: StationRecoveryRequestOperation::InstallCode(
+                    StationRecoveryRequestInstallCodeOperation {
+                        wasm_sha256: wasm_sha256.clone(),
+                        install_mode: install_mode.clone(),
+                        arg: arg.clone(),
+                    },
+                ),
                 submitted_at: pic_time_to_rfc3339(self.env),
             };
             self.recovery_requests.push(recovery_request);
@@ -240,25 +249,33 @@ impl<'a> UpgraderDataGenerator<'a> {
         for i in num_small_requests..(num_small_requests + num_large_requests) {
             let wasm_module = vec![i as u8; 2_000_000];
             let wasm_sha256 = orbit_essentials::utils::sha256_hash(&wasm_module);
-            let large_request = upgrader_api::RequestDisasterRecoveryInput {
-                module: wasm_module,
-                module_extra_chunks: None,
-                arg: vec![],
-                install_mode: upgrader_api::InstallMode::Reinstall,
-            };
+            let arg = vec![];
+            let install_mode = upgrader_api::InstallMode::Reinstall;
+            let large_request = upgrader_api::RequestDisasterRecoveryInput::InstallCode(
+                upgrader_api::RequestDisasterRecoveryInstallCodeInput {
+                    module: wasm_module,
+                    module_extra_chunks: None,
+                    arg: arg.clone(),
+                    install_mode: install_mode.clone(),
+                },
+            );
             let committee_member = &self.committee.as_ref().unwrap().users[i];
             request_disaster_recovery(
                 self.env,
                 self.upgrader_id,
                 *committee_member.identities.first().unwrap(),
-                large_request.clone(),
+                large_request,
             )
             .unwrap();
             let recovery_request = StationRecoveryRequest {
                 user_id: committee_member.id.clone(),
-                wasm_sha256,
-                install_mode: large_request.install_mode,
-                arg: large_request.arg,
+                operation: StationRecoveryRequestOperation::InstallCode(
+                    StationRecoveryRequestInstallCodeOperation {
+                        wasm_sha256,
+                        install_mode,
+                        arg,
+                    },
+                ),
                 submitted_at: pic_time_to_rfc3339(self.env),
             };
             self.recovery_requests.push(recovery_request);
@@ -297,6 +314,30 @@ impl<'a> UpgraderDataGenerator<'a> {
         );
         let logs =
             get_all_upgrader_logs(self.env, &self.upgrader_id, &self.some_committee_member());
-        assert_eq!(logs, self.logs);
+        assert_eq!(logs.len(), self.logs.len());
+        for (i, log) in logs.iter().enumerate() {
+            assert_eq!(log.time, self.logs[i].time);
+            assert_eq!(log.entry_type, self.logs[i].entry_type);
+            // we made a breaking change to the log message format
+            if log.message != self.logs[i].message {
+                assert!(
+                    log.message
+                        .contains("requested disaster recovery with wasm hash")
+                        || log
+                            .message
+                            .contains("Disaster recovery successfully initiated to")
+                );
+                assert!(
+                    self.logs[i]
+                        .message
+                        .contains("requested disaster recovery with operation")
+                        || self.logs[i]
+                            .message
+                            .contains("Disaster recovery successfully initiated with operation")
+                );
+            } else {
+                assert_eq!(log.data_json, self.logs[i].data_json);
+            }
+        }
     }
 }

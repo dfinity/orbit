@@ -1,7 +1,9 @@
 use candid::{CandidType, Deserialize, Principal};
 use serde::Serialize;
 
-#[derive(CandidType, Deserialize, Serialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(
+    CandidType, Deserialize, Serialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash,
+)]
 pub struct WasmModuleExtraChunks {
     pub store_canister: Principal,
     pub extra_chunks_key: String,

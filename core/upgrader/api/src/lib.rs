@@ -155,7 +155,7 @@ pub enum InstallMode {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct RequestDisasterRecoveryInput {
+pub struct RequestDisasterRecoveryInstallCodeInput {
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
     pub module_extra_chunks: Option<WasmModuleExtraChunks>,
@@ -163,6 +163,11 @@ pub struct RequestDisasterRecoveryInput {
     pub arg: Vec<u8>,
 
     pub install_mode: InstallMode,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum RequestDisasterRecoveryInput {
+    InstallCode(RequestDisasterRecoveryInstallCodeInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -198,15 +203,26 @@ pub enum TriggerUpgradeResponse {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub struct StationRecoveryRequestInstallCodeOperation {
+    /// The install mode: upgrade or reinstall.
+    pub install_mode: InstallMode,
+    /// The SHA-256 hash of the wasm module.
+    pub wasm_sha256: Vec<u8>,
+    /// The install arguments.
+    pub arg: Vec<u8>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub enum StationRecoveryRequestOperation {
+    InstallCode(StationRecoveryRequestInstallCodeOperation),
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct StationRecoveryRequest {
     /// The user ID of the station.
     pub user_id: UuidDTO,
-    /// The SHA-256 hash of the wasm module.
-    pub wasm_sha256: Vec<u8>,
-    /// The install mode: upgrade or reinstall.
-    pub install_mode: InstallMode,
-    /// The install arguments.
-    pub arg: Vec<u8>,
+    /// The disaster recovery operation.
+    pub operation: StationRecoveryRequestOperation,
     /// Time in nanoseconds since the UNIX epoch when the request was submitted.
     pub submitted_at: TimestampRfc3339,
 }
