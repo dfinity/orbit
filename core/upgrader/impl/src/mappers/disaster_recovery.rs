@@ -1,11 +1,13 @@
 use crate::model::{
     RequestDisasterRecoveryInstallCodeLog, RequestDisasterRecoveryOperationLog,
-    StationRecoveryRequestInstallCodeOperation, StationRecoveryRequestOperation,
+    StationRecoveryRequestInstallCodeOperation,
+    StationRecoveryRequestInstallCodeOperationFootprint, StationRecoveryRequestOperation,
+    StationRecoveryRequestOperationFootprint,
 };
 use orbit_essentials::utils::sha256_hash;
 
-impl From<&upgrader_api::RequestDisasterRecoveryInput> for StationRecoveryRequestOperation {
-    fn from(request: &upgrader_api::RequestDisasterRecoveryInput) -> Self {
+impl From<upgrader_api::RequestDisasterRecoveryInput> for StationRecoveryRequestOperation {
+    fn from(request: upgrader_api::RequestDisasterRecoveryInput) -> Self {
         match request {
             upgrader_api::RequestDisasterRecoveryInput::InstallCode(install_code) => {
                 let wasm_sha256 =
@@ -16,12 +18,28 @@ impl From<&upgrader_api::RequestDisasterRecoveryInput> for StationRecoveryReques
                     };
                 StationRecoveryRequestOperation::InstallCode(
                     StationRecoveryRequestInstallCodeOperation {
-                        install_mode: install_code.install_mode.clone().into(),
-                        wasm_module: install_code.module.clone(),
-                        wasm_module_extra_chunks: install_code.module_extra_chunks.clone(),
+                        install_mode: install_code.install_mode.into(),
+                        wasm_module: install_code.module,
+                        wasm_module_extra_chunks: install_code.module_extra_chunks,
                         wasm_sha256,
-                        arg: install_code.arg.clone(),
                         arg_sha256: sha256_hash(&install_code.arg),
+                        arg: install_code.arg,
+                    },
+                )
+            }
+        }
+    }
+}
+
+impl From<&StationRecoveryRequestOperation> for StationRecoveryRequestOperationFootprint {
+    fn from(operation: &StationRecoveryRequestOperation) -> Self {
+        match operation {
+            StationRecoveryRequestOperation::InstallCode(ref install_code) => {
+                StationRecoveryRequestOperationFootprint::InstallCode(
+                    StationRecoveryRequestInstallCodeOperationFootprint {
+                        install_mode: install_code.install_mode,
+                        wasm_sha256: install_code.wasm_sha256.clone(),
+                        arg_sha256: install_code.arg_sha256.clone(),
                     },
                 )
             }

@@ -9,6 +9,7 @@ use crate::{
         RecoveryResult, RecoveryStatus, RequestDisasterRecoveryLog,
         RequestDisasterRecoveryOperationLog, SetAccountsAndAssetsLog, SetAccountsLog,
         SetCommitteeLog, StationRecoveryRequest, StationRecoveryRequestOperation,
+        StationRecoveryRequestOperationFootprint,
     },
     services::LOGGER_SERVICE,
     set_disaster_recovery,
@@ -240,10 +241,12 @@ impl DisasterRecoveryService {
             .recovery_requests
             .retain(|request| committee_set.contains(&request.user_id));
 
-        let mut submissions: HashMap<StationRecoveryRequestOperation, usize> = Default::default();
+        let mut submissions: HashMap<StationRecoveryRequestOperationFootprint, usize> =
+            Default::default();
 
         for request in storage.recovery_requests.iter() {
-            let entry = submissions.entry(request.operation.clone()).or_insert(0);
+            let request_operation_footprint = (&request.operation).into();
+            let entry = submissions.entry(request_operation_footprint).or_insert(0);
 
             *entry += 1;
 
@@ -336,7 +339,7 @@ impl DisasterRecoveryService {
         let mut value = self.storage.get();
 
         if let Some(committee_member) = self.get_committee_member(caller) {
-            let operation: StationRecoveryRequestOperation = (&request).into();
+            let operation: StationRecoveryRequestOperation = request.into();
             let operation_log: RequestDisasterRecoveryOperationLog = (&operation).into();
             let recovery_request = StationRecoveryRequest {
                 user_id: committee_member.id,

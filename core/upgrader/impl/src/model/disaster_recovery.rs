@@ -63,7 +63,7 @@ impl From<InstallMode> for CanisterInstallMode {
 }
 
 #[storable]
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct StationRecoveryRequestInstallCodeOperation {
     /// The install mode: upgrade or reinstall.
     pub install_mode: InstallMode,
@@ -82,9 +82,21 @@ pub struct StationRecoveryRequestInstallCodeOperation {
 }
 
 #[storable]
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StationRecoveryRequestOperation {
     InstallCode(StationRecoveryRequestInstallCodeOperation),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct StationRecoveryRequestInstallCodeOperationFootprint {
+    pub install_mode: InstallMode,
+    pub wasm_sha256: Vec<u8>,
+    pub arg_sha256: Vec<u8>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum StationRecoveryRequestOperationFootprint {
+    InstallCode(StationRecoveryRequestInstallCodeOperationFootprint),
 }
 
 #[storable]
