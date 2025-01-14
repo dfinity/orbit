@@ -1,4 +1,4 @@
-//! Helper functions to generate test data for the integration tests.
+//! Helper functions to generate station test data for the integration tests.
 
 use candid::Principal;
 use pocket_ic::PocketIc;

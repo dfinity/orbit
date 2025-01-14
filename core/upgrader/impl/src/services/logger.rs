@@ -1,6 +1,6 @@
-use std::{cell::RefCell, sync::Arc};
+use std::{cell::RefCell, collections::BTreeMap, sync::Arc};
 
-use ic_stable_structures::{memory_manager::MemoryId, BTreeMap};
+use ic_stable_structures::{memory_manager::MemoryId, StableBTreeMap};
 use lazy_static::lazy_static;
 use orbit_essentials::types::Timestamp;
 
@@ -14,11 +14,20 @@ pub const DEFAULT_GET_LOGS_LIMIT: u64 = 10;
 pub const MAX_LOG_ENTRIES: u64 = 25000;
 
 thread_local! {
-    static STORAGE: RefCell<BTreeMap<Timestamp, LogEntry, Memory>> = RefCell::new(
-        BTreeMap::init(
+    static STORAGE: RefCell<StableBTreeMap<Timestamp, LogEntry, Memory>> = RefCell::new(
+        StableBTreeMap::init(
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(MEMORY_ID_LOGS))),
         )
     );
+}
+
+// only use this function for stable memory migration!
+pub fn insert_logs(logs: BTreeMap<Timestamp, LogEntry>) {
+    STORAGE.with(|storage| {
+        for (timestamp, log) in logs {
+            storage.borrow_mut().insert(timestamp, log);
+        }
+    });
 }
 
 lazy_static! {
