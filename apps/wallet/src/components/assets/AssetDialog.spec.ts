@@ -47,6 +47,13 @@ vi.mock('~/services/station.service', () => {
         privileges: {},
       } as ExtractOk<GetAssetResult>),
     ),
+    listAssets: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        assets: [],
+        next_offset: [BigInt(0)],
+        total: BigInt(0),
+      }),
+    ),
   };
 
   return {
@@ -93,7 +100,7 @@ describe('AssetDialog', () => {
     expect(index.value).toBe('qhbym-qaaaa-aaaaa-aaafq-cai');
   });
 
-  it('creates new asset', async () => {
+  it('creates new custom asset', async () => {
     const wrapper = mount(AssetDialog, {
       props: {
         open: true,
@@ -103,6 +110,10 @@ describe('AssetDialog', () => {
     await flushPromises();
 
     const dialogContents = wrapper.findComponent(VCard);
+
+    // select custom asset
+    const customAssetRadio = dialogContents.find('input[type="radio"][value="custom"]');
+    await customAssetRadio.trigger('click');
 
     const form = wrapper.findComponent(AssetForm);
 
@@ -134,5 +145,51 @@ describe('AssetDialog', () => {
     await flushPromises();
 
     expect(services().station.addAsset).toHaveBeenCalled();
+
+    vi.spyOn(services().station, 'addAsset').mockClear();
+  });
+
+  it('creates new from well known assets', async () => {
+    const wrapper = mount(AssetDialog, {
+      props: {
+        open: true,
+      },
+    });
+
+    await flushPromises();
+
+    const dialogContents = wrapper.findComponent(VCard);
+
+    // select custom asset
+    const wellKnownAssetRadio = dialogContents.find('input[type="radio"][value="well-known"]');
+    await wellKnownAssetRadio.trigger('click');
+
+    const input = wrapper.findComponent({ name: 'VAutocomplete' });
+    expect(input.exists()).toBe(true);
+
+    expect(input.vm.$props.items.length).toBeGreaterThan(0);
+
+    const ckBtc = input.vm.$props.items.find(
+      (i: { symbol: string } | { header: string }) => 'symbol' in i && i.symbol === 'ckBTC',
+    );
+    const chat = input.vm.$props.items.find(
+      (i: { symbol: string } | { header: string }) => 'symbol' in i && i.symbol === 'CHAT',
+    );
+    expect(ckBtc).toBeDefined();
+    expect(chat).toBeDefined();
+
+    input.vm.$emit('update:modelValue', [ckBtc, chat]);
+
+    await wrapper.vm.$nextTick();
+
+    const saveButton = dialogContents.find('[data-test-id="save-asset"]');
+
+    await saveButton.trigger('click');
+
+    expect(services().station.addAsset).toHaveBeenCalledTimes(2);
+    expect(services().station.addAsset).toHaveBeenCalledWith(ckBtc.data);
+    expect(services().station.addAsset).toHaveBeenCalledWith(chat.data);
+
+    vi.spyOn(services().station, 'addAsset').mockClear();
   });
 });
