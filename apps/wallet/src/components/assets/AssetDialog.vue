@@ -33,7 +33,7 @@
           </VRadioGroup>
 
           <template v-if="!input.assetId && assetType === 'well-known'">
-            <VCombobox
+            <VAutocomplete
               v-model="chosenWellKnownAssets"
               :loading="wellKnownAssets === undefined"
               :items="wellKnownAssets"
@@ -42,6 +42,7 @@
               multiple
               clear-on-select
               hide-selected
+              auto-select-first
               :return-object="true"
               :custom-filter="filterWellKnownAssets"
               :placeholder="$t(`pages.assets.well_known.placeholder`)"
@@ -85,7 +86,7 @@
                   <VListItemSubtitle>{{ item.raw.symbol }}</VListItemSubtitle>
                 </VListItem>
               </template>
-            </VCombobox>
+            </VAutocomplete>
           </template>
 
           <template v-else-if="input.assetId || assetType === 'custom'">
@@ -125,6 +126,7 @@
 import { mdiCheckCircle, mdiClose } from '@mdi/js';
 import { computed, ref, toRefs, watch } from 'vue';
 import {
+  VAutocomplete,
   VBtn,
   VCard,
   VCardActions,
@@ -216,19 +218,25 @@ const openModel = computed({
 
 const station = useStationStore();
 
-watch(openModel, value => {
-  if (value) {
-    assetType.value = 'well-known';
-    chosenWellKnownAssets.value = [];
-    wellKnownAssets.value = undefined;
-    if (!input.assetId) {
-      loadWellKnownAssets();
-      getAllAssets().then(assets => {
-        existingAssets.value = assets;
-      });
+watch(
+  openModel,
+  value => {
+    if (value) {
+      assetType.value = 'well-known';
+      chosenWellKnownAssets.value = [];
+      wellKnownAssets.value = undefined;
+      if (!input.assetId) {
+        loadWellKnownAssets();
+        getAllAssets().then(assets => {
+          existingAssets.value = assets;
+        });
+      }
     }
-  }
-});
+  },
+  {
+    immediate: true,
+  },
+);
 
 function isExistingAsset(blockchain: string, symbol: string) {
   return existingAssets.value?.some(a => a.blockchain === blockchain && a.symbol === symbol);
