@@ -19,9 +19,7 @@
         "epeco-piaaa-aaaai-qatka-cai",
         "thhc2-kiaaa-aaaao-ajnha-cai"
       ],
-      "archives": [
-        "zmbi7-fyaaa-aaaaq-aaahq-cai"
-      ]
+      "archives": ["zmbi7-fyaaa-aaaaq-aaahq-cai"]
     },
     "meta": {
       "url": "https://dragginz.io/",
@@ -30,9 +28,7 @@
       "logo": "/v1/sns/root/zxeu2-7aaaa-aaaaq-aaafa-cai/logo.png"
     },
     "parameters": {
-      "reserved_ids": [
-        1001
-      ],
+      "reserved_ids": [1001],
       "functions": [
         {
           "id": 0,
@@ -172,17 +168,7 @@
       "max_dissolve_delay_bonus_percentage": 100,
       "max_followees_per_function": 15,
       "neuron_claimer_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8]
       },
       "neuron_minimum_stake_e8s": 100000000000,
       "max_neuron_age_for_age_bonus": 252460800,
@@ -196,17 +182,7 @@
       "max_number_of_proposals_with_ballots": 700,
       "max_age_bonus_percentage": 25,
       "neuron_grantable_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8]
       },
       "voting_rewards_parameters": {
         "final_reward_rate_basis_points": 0,
@@ -285,9 +261,7 @@
       [
         "icrc1:decimals",
         {
-          "Nat": [
-            8
-          ]
+          "Nat": [8]
         }
       ],
       [
@@ -305,23 +279,17 @@
       [
         "icrc1:fee",
         {
-          "Nat": [
-            100000
-          ]
+          "Nat": [100000]
         }
       ],
       [
         "icrc1:max_memo_length",
         {
-          "Nat": [
-            32
-          ]
+          "Nat": [32]
         }
       ]
     ],
-    "icrc1_fee": [
-      100000
-    ],
+    "icrc1_fee": [100000],
     "icrc1_total_supply": 799999967868694000,
     "swap_params": {
       "params": {
@@ -429,9 +397,7 @@
         "nafek-diaaa-aaaar-qalxa-cai",
         "jodzs-iqaaa-aaaar-qamqa-cai"
       ],
-      "archives": [
-        "2sqpr-ciaaa-aaaaq-aaaoq-cai"
-      ]
+      "archives": ["2sqpr-ciaaa-aaaaq-aaaoq-cai"]
     },
     "meta": {
       "url": "https://oc.app",
@@ -440,16 +406,7 @@
       "logo": "/v1/sns/root/3e3x2-xyaaa-aaaaq-aaalq-cai/logo.png"
     },
     "parameters": {
-      "reserved_ids": [
-        1005,
-        1006,
-        1007,
-        5000,
-        100000,
-        100001,
-        100002,
-        100003
-      ],
+      "reserved_ids": [1005, 1006, 1007, 5000, 100000, 100001, 100002, 100003],
       "functions": [
         {
           "id": 0,
@@ -1057,19 +1014,7 @@
       "max_dissolve_delay_bonus_percentage": 100,
       "max_followees_per_function": 15,
       "neuron_claimer_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "neuron_minimum_stake_e8s": 400000000,
       "max_neuron_age_for_age_bonus": 15768000,
@@ -1083,19 +1028,7 @@
       "max_number_of_proposals_with_ballots": 700,
       "max_age_bonus_percentage": 25,
       "neuron_grantable_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "voting_rewards_parameters": {
         "final_reward_rate_basis_points": 250,
@@ -1167,9 +1100,7 @@
       [
         "icrc1:decimals",
         {
-          "Nat": [
-            8
-          ]
+          "Nat": [8]
         }
       ],
       [
@@ -1187,23 +1118,17 @@
       [
         "icrc1:fee",
         {
-          "Nat": [
-            100000
-          ]
+          "Nat": [100000]
         }
       ],
       [
         "icrc1:max_memo_length",
         {
-          "Nat": [
-            32
-          ]
+          "Nat": [32]
         }
       ]
     ],
-    "icrc1_fee": [
-      100000
-    ],
+    "icrc1_fee": [100000],
     "icrc1_total_supply": 10135272629622921,
     "swap_params": {
       "params": {
@@ -1403,19 +1328,7 @@
       "max_dissolve_delay_bonus_percentage": 100,
       "max_followees_per_function": 15,
       "neuron_claimer_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "neuron_minimum_stake_e8s": 500000000,
       "max_neuron_age_for_age_bonus": 15778800,
@@ -1429,19 +1342,7 @@
       "max_number_of_proposals_with_ballots": 700,
       "max_age_bonus_percentage": 25,
       "neuron_grantable_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "voting_rewards_parameters": {
         "final_reward_rate_basis_points": 100,
@@ -1498,9 +1399,7 @@
       [
         "icrc1:decimals",
         {
-          "Nat": [
-            8
-          ]
+          "Nat": [8]
         }
       ],
       [
@@ -1518,15 +1417,11 @@
       [
         "icrc1:fee",
         {
-          "Nat": [
-            100000
-          ]
+          "Nat": [100000]
         }
       ]
     ],
-    "icrc1_fee": [
-      100000
-    ],
+    "icrc1_fee": [100000],
     "icrc1_total_supply": 12500000000000000,
     "swap_params": {
       "params": null
@@ -1602,9 +1497,7 @@
         "xcvai-qiaaa-aaaak-afowq-cai",
         "xfug4-5qaaa-aaaak-afowa-cai"
       ],
-      "archives": [
-        "6yan7-4qaaa-aaaaq-aaaua-cai"
-      ]
+      "archives": ["6yan7-4qaaa-aaaaq-aaaua-cai"]
     },
     "meta": {
       "url": "https://kinic.io/",
@@ -1857,19 +1750,7 @@
       "max_dissolve_delay_bonus_percentage": 100,
       "max_followees_per_function": 15,
       "neuron_claimer_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "neuron_minimum_stake_e8s": 10000000,
       "max_neuron_age_for_age_bonus": 15778800,
@@ -1883,19 +1764,7 @@
       "max_number_of_proposals_with_ballots": 700,
       "max_age_bonus_percentage": 25,
       "neuron_grantable_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "voting_rewards_parameters": {
         "final_reward_rate_basis_points": 250,
@@ -1936,9 +1805,7 @@
           "sns_governance_canister_id": "74ncn-fqaaa-aaaaq-aaasa-cai",
           "min_direct_participation_icp_e8s": null,
           "restricted_countries": {
-            "iso_codes": [
-              "US"
-            ]
+            "iso_codes": ["US"]
           },
           "min_icp_e8s": null,
           "max_direct_participation_icp_e8s": null
@@ -1971,9 +1838,7 @@
       [
         "icrc1:decimals",
         {
-          "Nat": [
-            8
-          ]
+          "Nat": [8]
         }
       ],
       [
@@ -1991,23 +1856,17 @@
       [
         "icrc1:fee",
         {
-          "Nat": [
-            100000
-          ]
+          "Nat": [100000]
         }
       ],
       [
         "icrc1:max_memo_length",
         {
-          "Nat": [
-            32
-          ]
+          "Nat": [32]
         }
       ]
     ],
-    "icrc1_fee": [
-      100000
-    ],
+    "icrc1_fee": [100000],
     "icrc1_total_supply": 613330613010173,
     "swap_params": {
       "params": {
@@ -2055,9 +1914,7 @@
         "sns_governance_canister_id": "74ncn-fqaaa-aaaaq-aaasa-cai",
         "min_direct_participation_icp_e8s": null,
         "restricted_countries": {
-          "iso_codes": [
-            "US"
-          ]
+          "iso_codes": ["US"]
         },
         "min_icp_e8s": null,
         "max_direct_participation_icp_e8s": null
@@ -2099,9 +1956,7 @@
         "vyatz-hqaaa-aaaam-qauea-cai",
         "74zq4-iqaaa-aaaam-ab53a-cai"
       ],
-      "archives": [
-        "4zzzg-yyaaa-aaaaq-aaazq-cai"
-      ]
+      "archives": ["4zzzg-yyaaa-aaaaq-aaazq-cai"]
     },
     "meta": {
       "url": "https://yral.com",
@@ -2302,19 +2157,7 @@
       "max_dissolve_delay_bonus_percentage": 100,
       "max_followees_per_function": 15,
       "neuron_claimer_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "neuron_minimum_stake_e8s": 500000000,
       "max_neuron_age_for_age_bonus": 63115200,
@@ -2328,19 +2171,7 @@
       "max_number_of_proposals_with_ballots": 700,
       "max_age_bonus_percentage": 25,
       "neuron_grantable_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "voting_rewards_parameters": {
         "final_reward_rate_basis_points": 500,
@@ -2412,9 +2243,7 @@
       [
         "icrc1:decimals",
         {
-          "Nat": [
-            8
-          ]
+          "Nat": [8]
         }
       ],
       [
@@ -2432,23 +2261,17 @@
       [
         "icrc1:fee",
         {
-          "Nat": [
-            100000
-          ]
+          "Nat": [100000]
         }
       ],
       [
         "icrc1:max_memo_length",
         {
-          "Nat": [
-            32
-          ]
+          "Nat": [32]
         }
       ]
     ],
-    "icrc1_fee": [
-      100000
-    ],
+    "icrc1_fee": [100000],
     "icrc1_total_supply": 103167118614575736,
     "swap_params": {
       "params": {
@@ -2648,19 +2471,7 @@
       "max_dissolve_delay_bonus_percentage": 25,
       "max_followees_per_function": 15,
       "neuron_claimer_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "neuron_minimum_stake_e8s": 1000000000000,
       "max_neuron_age_for_age_bonus": 15768000,
@@ -2674,19 +2485,7 @@
       "max_number_of_proposals_with_ballots": 700,
       "max_age_bonus_percentage": 25,
       "neuron_grantable_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "voting_rewards_parameters": {
         "final_reward_rate_basis_points": 125,
@@ -2743,9 +2542,7 @@
       [
         "icrc1:decimals",
         {
-          "Nat": [
-            8
-          ]
+          "Nat": [8]
         }
       ],
       [
@@ -2763,15 +2560,11 @@
       [
         "icrc1:fee",
         {
-          "Nat": [
-            100000000
-          ]
+          "Nat": [100000000]
         }
       ]
     ],
-    "icrc1_fee": [
-      100000000
-    ],
+    "icrc1_fee": [100000000],
     "icrc1_total_supply": 1000000000000000000,
     "swap_params": {
       "params": null
@@ -2846,9 +2639,7 @@
         "77bch-kaaaa-aaaan-qa4vq-cai",
         "gfcya-pyaaa-aaaan-qbxda-cai"
       ],
-      "archives": [
-        "52vqa-maaaa-aaaaq-aaa7a-cai"
-      ]
+      "archives": ["52vqa-maaaa-aaaaq-aaa7a-cai"]
     },
     "meta": {
       "url": "https://yadjb-mqaaa-aaaan-qaqlq-cai.raw.ic0.app/",
@@ -3023,19 +2814,7 @@
       "max_dissolve_delay_bonus_percentage": 25,
       "max_followees_per_function": 15,
       "neuron_claimer_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "neuron_minimum_stake_e8s": 1000000000000,
       "max_neuron_age_for_age_bonus": 15768000,
@@ -3049,19 +2828,7 @@
       "max_number_of_proposals_with_ballots": 700,
       "max_age_bonus_percentage": 25,
       "neuron_grantable_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "voting_rewards_parameters": {
         "final_reward_rate_basis_points": 125,
@@ -3133,9 +2900,7 @@
       [
         "icrc1:decimals",
         {
-          "Nat": [
-            8
-          ]
+          "Nat": [8]
         }
       ],
       [
@@ -3153,23 +2918,17 @@
       [
         "icrc1:fee",
         {
-          "Nat": [
-            100000000
-          ]
+          "Nat": [100000000]
         }
       ],
       [
         "icrc1:max_memo_length",
         {
-          "Nat": [
-            32
-          ]
+          "Nat": [32]
         }
       ]
     ],
-    "icrc1_fee": [
-      100000000
-    ],
+    "icrc1_fee": [100000000],
     "icrc1_total_supply": 929001141364461593,
     "swap_params": {
       "params": {
@@ -3369,19 +3128,7 @@
       "max_dissolve_delay_bonus_percentage": 150,
       "max_followees_per_function": 15,
       "neuron_claimer_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "neuron_minimum_stake_e8s": 400000000,
       "max_neuron_age_for_age_bonus": 15778463,
@@ -3395,19 +3142,7 @@
       "max_number_of_proposals_with_ballots": 700,
       "max_age_bonus_percentage": 25,
       "neuron_grantable_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "voting_rewards_parameters": {
         "final_reward_rate_basis_points": 150,
@@ -3449,9 +3184,7 @@
           "sns_governance_canister_id": "5grkr-3aaaa-aaaaq-aaa5a-cai",
           "min_direct_participation_icp_e8s": null,
           "restricted_countries": {
-            "iso_codes": [
-              "US"
-            ]
+            "iso_codes": ["US"]
           },
           "min_icp_e8s": null,
           "max_direct_participation_icp_e8s": null
@@ -3484,9 +3217,7 @@
       [
         "icrc1:decimals",
         {
-          "Nat": [
-            8
-          ]
+          "Nat": [8]
         }
       ],
       [
@@ -3504,15 +3235,11 @@
       [
         "icrc1:fee",
         {
-          "Nat": [
-            100000
-          ]
+          "Nat": [100000]
         }
       ]
     ],
-    "icrc1_fee": [
-      100000
-    ],
+    "icrc1_fee": [100000],
     "icrc1_total_supply": 50000000000000000,
     "swap_params": {
       "params": {
@@ -3561,9 +3288,7 @@
         "sns_governance_canister_id": "5grkr-3aaaa-aaaaq-aaa5a-cai",
         "min_direct_participation_icp_e8s": null,
         "restricted_countries": {
-          "iso_codes": [
-            "US"
-          ]
+          "iso_codes": ["US"]
         },
         "min_icp_e8s": null,
         "max_direct_participation_icp_e8s": null
@@ -3717,19 +3442,7 @@
       "max_dissolve_delay_bonus_percentage": 200,
       "max_followees_per_function": 15,
       "neuron_claimer_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "neuron_minimum_stake_e8s": 100000000,
       "max_neuron_age_for_age_bonus": 15778800,
@@ -3743,19 +3456,7 @@
       "max_number_of_proposals_with_ballots": 700,
       "max_age_bonus_percentage": 125,
       "neuron_grantable_permissions": {
-        "permissions": [
-          0,
-          1,
-          2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10
-        ]
+        "permissions": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
       },
       "voting_rewards_parameters": {
         "final_reward_rate_basis_points": 0,
@@ -3775,9 +3476,7 @@
           "neurons_fund_participation": null,
           "min_participant_icp_e8s": null,
           "neuron_basket_construction_parameters": null,
-          "fallback_controller_principal_ids": [
-            "htsl7-baaaa-aaaam-ablva-cai"
-          ],
+          "fallback_controller_principal_ids": ["htsl7-baaaa-aaaam-ablva-cai"],
           "max_icp_e8s": null,
           "neuron_minimum_stake_e8s": 100000000,
           "confirmation_text": null,
@@ -3812,9 +3511,7 @@
       [
         "icrc1:decimals",
         {
-          "Nat": [
-            8
-          ]
+          "Nat": [8]
         }
       ],
       [
@@ -3832,15 +3529,11 @@
       [
         "icrc1:fee",
         {
-          "Nat": [
-            100000
-          ]
+          "Nat": [100000]
         }
       ]
     ],
-    "icrc1_fee": [
-      100000
-    ],
+    "icrc1_fee": [100000],
     "icrc1_total_supply": 210000000000000000,
     "swap_params": {
       "params": null
@@ -3852,9 +3545,7 @@
         "neurons_fund_participation": null,
         "min_participant_icp_e8s": null,
         "neuron_basket_construction_parameters": null,
-        "fallback_controller_principal_ids": [
-          "htsl7-baaaa-aaaam-ablva-cai"
-        ],
+        "fallback_controller_principal_ids": ["htsl7-baaaa-aaaam-ablva-cai"],
         "max_icp_e8s": null,
         "neuron_minimum_stake_e8s": 100000000,
         "confirmation_text": null,

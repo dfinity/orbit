@@ -21,7 +21,7 @@
           <LoadingMessage />
         </VCardText>
         <VCardText v-else>
-          <VRadioGroup v-if="!input.assetId" inline v-model="assetType">
+          <VRadioGroup v-if="!input.assetId" v-model="assetType" inline>
             <VRadio
               :label="$t('pages.assets.well_known.option_add_well_known_assets')"
               value="well-known"
@@ -50,8 +50,8 @@
             >
               <template #selection="{ item, index }">
                 <VChip
-                  :text="item.title"
                   v-if="item === Object(item)"
+                  :text="item.title"
                   color="secondary"
                   size="small"
                   variant="flat"
@@ -68,9 +68,9 @@
                 <!-- prettier-ignore -->
 
                 <VListItem
-                  @click="(onClick as any)"
-                  :disabled="isExistingAsset(item.raw.data.blockchain, item.raw.data.symbol)"
                   v-else
+                  :disabled="isExistingAsset(item.raw.data.blockchain, item.raw.data.symbol)"
+                  @click="(onClick as any)"
                 >
                   <VListItemTitle class="d-flex justify-space-between align-center"
                     >{{ item.title }}
@@ -188,16 +188,18 @@ function removeWellKnownAsset(index: number) {
   chosenWellKnownAssets.value.splice(index, 1);
 }
 
-function filterWellKnownAssets(_: string, queryText: string, item: any) {
-  const { raw } = item as { raw: GroupedComboboxItem };
-  if ('header' in raw) {
+function filterWellKnownAssets(
+  _: string,
+  queryText: string,
+  item: { raw: GroupedComboboxItem } | undefined,
+) {
+  if (!item || 'header' in item.raw) {
     return false;
   }
-
   const lowercaseQuery = queryText.toLowerCase();
   return (
-    raw.name.toLowerCase().includes(lowercaseQuery) ||
-    raw.symbol.toLowerCase().includes(lowercaseQuery)
+    item.raw.name.toLowerCase().includes(lowercaseQuery) ||
+    item.raw.symbol.toLowerCase().includes(lowercaseQuery)
   );
 }
 
@@ -295,7 +297,7 @@ const canSave = computed(() => {
   } else if (assetType.value === 'custom') {
     return valid.value && !loading.value;
   } else {
-    unreachable(assetType.value);
+    return unreachable(assetType.value);
   }
 });
 

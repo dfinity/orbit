@@ -132,10 +132,12 @@ function fetchAggregatorPage(page: number): Promise<SNSAggregatorAsset[]> {
 
 export async function fetchSNSAssets(): Promise<SNSAggregatorAsset[]> {
   const MAX_RETRIES = 5;
+  const MAX_PAGES = 100;
+
   const allDaos: SNSAggregatorAsset[] = [];
   let page = 0;
   let retriesLeft = MAX_RETRIES;
-  while (true) {
+  while (page < MAX_PAGES) {
     try {
       const pageData = await fetchAggregatorPage(page);
       allDaos.push(...pageData);
