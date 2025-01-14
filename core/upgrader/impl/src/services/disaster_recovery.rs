@@ -1,7 +1,7 @@
 use super::{InstallCanister, LoggerService, INSTALL_CANISTER};
 use crate::{
     errors::UpgraderApiError,
-    get_target_canister,
+    get_disaster_recovery, get_target_canister,
     model::{
         Account, AdminUser, Asset, DisasterRecovery, DisasterRecoveryCommittee,
         DisasterRecoveryInProgressLog, DisasterRecoveryResultLog, DisasterRecoveryStartLog,
@@ -10,32 +10,20 @@ use crate::{
         SetAccountsLog, SetCommitteeLog, StationRecoveryRequest,
     },
     services::LOGGER_SERVICE,
+    set_disaster_recovery,
     upgrader_ic_cdk::{api::time, spawn},
-    StableValue, MEMORY_ID_DISASTER_RECOVERY, MEMORY_MANAGER,
 };
 
 use candid::Principal;
-use ic_stable_structures::memory_manager::MemoryId;
 use lazy_static::lazy_static;
 use orbit_essentials::{api::ServiceResult, utils::sha256_hash};
 use std::{
-    cell::RefCell,
     collections::{HashMap, HashSet},
     sync::Arc,
 };
 
 pub const DISASTER_RECOVERY_REQUEST_EXPIRATION_NS: u64 = 60 * 60 * 24 * 7 * 1_000_000_000; // 1 week
 pub const DISASTER_RECOVERY_IN_PROGESS_EXPIRATION_NS: u64 = 60 * 60 * 1_000_000_000; // 1 hour
-
-thread_local! {
-
-    static STORAGE: RefCell<StableValue<DisasterRecovery>> = RefCell::new(
-        StableValue::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(MEMORY_ID_DISASTER_RECOVERY))),
-        )
-    );
-
-}
 
 lazy_static! {
     pub static ref DISASTER_RECOVERY_SERVICE: Arc<DisasterRecoveryService> =
@@ -81,11 +69,11 @@ pub struct DisasterRecoveryStorage {}
 
 impl DisasterRecoveryStorage {
     pub fn get(&self) -> DisasterRecovery {
-        STORAGE.with(|storage| storage.borrow().get(&()).unwrap_or_default())
+        get_disaster_recovery()
     }
 
     fn set(&self, value: DisasterRecovery) {
-        STORAGE.with(|storage| storage.borrow_mut().insert((), value));
+        set_disaster_recovery(value);
     }
 }
 
