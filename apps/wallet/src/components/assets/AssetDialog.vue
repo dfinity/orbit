@@ -126,7 +126,7 @@
   </VDialog>
 </template>
 <script lang="ts" setup>
-import { mdiBitcoin, mdiCheckCircle, mdiClose, mdiNote, mdiStorageTank, mdiStore } from '@mdi/js';
+import { mdiBitcoin, mdiCheckCircle, mdiClose } from '@mdi/js';
 import { computed, ref, toRefs, watch } from 'vue';
 import {
   VAutocomplete,
@@ -151,10 +151,10 @@ import {
 import logger from '~/core/logger.core';
 import { Asset, UUID } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
+import { fetchWellKnownIcpAssets, getAllAssets, WellKnownAsset } from '~/utils/asset.utils';
+import { requiredRule } from '~/utils/form.utils';
 import { assertAndReturn, unreachable } from '~/utils/helper.utils';
 import AssetForm from './AssetForm.vue';
-import { requiredRule } from '~/utils/form.utils';
-import { fetchWellKnownIcpAssets, getAllAssets, WellKnownAsset } from '~/utils/asset.utils';
 
 const input = withDefaults(
   defineProps<{
