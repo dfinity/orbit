@@ -314,6 +314,30 @@ impl<'a> UpgraderDataGenerator<'a> {
         );
         let logs =
             get_all_upgrader_logs(self.env, &self.upgrader_id, &self.some_committee_member());
-        assert_eq!(logs, self.logs);
+        assert_eq!(logs.len(), self.logs.len());
+        for (i, log) in logs.iter().enumerate() {
+            assert_eq!(log.time, self.logs[i].time);
+            assert_eq!(log.entry_type, self.logs[i].entry_type);
+            // we made a breaking change to the log message format
+            if log.message != self.logs[i].message {
+                assert!(
+                    log.message
+                        .contains("requested disaster recovery with wasm hash")
+                        || log
+                            .message
+                            .contains("Disaster recovery successfully initiated to")
+                );
+                assert!(
+                    self.logs[i]
+                        .message
+                        .contains("requested disaster recovery with operation")
+                        || self.logs[i]
+                            .message
+                            .contains("Disaster recovery successfully initiated with operation")
+                );
+            } else {
+                assert_eq!(log.data_json, self.logs[i].data_json);
+            }
+        }
     }
 }

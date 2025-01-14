@@ -46,7 +46,7 @@ impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
             RequestDisasterRecoveryOperationLog::InstallCode(install_code) => {
                 write!(
                     f,
-                    "InstallCode with mode{}, wasm hash {}, and arg hash {}",
+                    "InstallCode with mode {}, wasm hash {}, and arg hash {}",
                     install_code.install_mode, install_code.wasm_sha256, install_code.arg_sha256
                 )
             }

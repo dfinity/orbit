@@ -511,6 +511,62 @@ impl From<DisasterRecovery> for upgrader_api::GetDisasterRecoveryStateResponse {
     }
 }
 
+// legacy types
+
+#[storable]
+#[derive(Clone, Debug)]
+pub struct StationRecoveryRequestV0 {
+    /// The user ID of the station.
+    pub user_id: UUID,
+    /// The wasm module to be installed.
+    #[serde(with = "serde_bytes")]
+    pub wasm_module: Vec<u8>,
+    /// Optional extra chunks of the wasm module to be installed.
+    pub wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
+    /// The SHA-256 hash of the wasm module.
+    pub wasm_sha256: Vec<u8>,
+    /// The install mode: upgrade or reinstall.
+    pub install_mode: InstallMode,
+    /// The install arguments.
+    #[serde(with = "serde_bytes")]
+    pub arg: Vec<u8>,
+    /// The SHA-256 hash of the install arguments.
+    pub arg_sha256: Vec<u8>,
+    /// Time in nanoseconds since the UNIX epoch when the request was submitted.
+    pub submitted_at: Timestamp,
+}
+
+#[storable]
+#[derive(Clone, Debug)]
+pub struct DisasterRecoveryV0 {
+    pub accounts: Vec<Account>,
+
+    #[serde(default)]
+    pub multi_asset_accounts: Vec<MultiAssetAccount>,
+    #[serde(default)]
+    pub assets: Vec<Asset>,
+
+    pub committee: Option<DisasterRecoveryCommittee>,
+
+    pub recovery_requests: Vec<StationRecoveryRequestV0>,
+    pub recovery_status: RecoveryStatus,
+    pub last_recovery_result: Option<RecoveryResult>,
+}
+
+impl Default for DisasterRecoveryV0 {
+    fn default() -> Self {
+        DisasterRecoveryV0 {
+            accounts: vec![],
+            multi_asset_accounts: vec![],
+            assets: vec![],
+            committee: None,
+            recovery_requests: vec![],
+            recovery_status: RecoveryStatus::Idle,
+            last_recovery_result: None,
+        }
+    }
+}
+
 #[cfg(test)]
 pub mod tests {
     use candid::Principal;
