@@ -47,6 +47,9 @@
               :custom-filter="filterWellKnownAssets"
               :placeholder="$t(`pages.assets.well_known.placeholder`)"
               :rules="[requiredRule]"
+              :prepend-icon="mdiBitcoin"
+              density="comfortable"
+              class="mb-2"
             >
               <template #selection="{ item, index }">
                 <VChip
@@ -65,8 +68,8 @@
                 <VListSubheader v-if="'header' in item.raw">
                   {{ $t(`pages.assets.well_known.groups.${item.raw.header}`) }}
                 </VListSubheader>
-                <!-- prettier-ignore -->
 
+                <!-- prettier-ignore -->
                 <VListItem
                   v-else
                   :disabled="isExistingAsset(item.raw.data.blockchain, item.raw.data.symbol)"
@@ -123,7 +126,7 @@
   </VDialog>
 </template>
 <script lang="ts" setup>
-import { mdiCheckCircle, mdiClose } from '@mdi/js';
+import { mdiBitcoin, mdiCheckCircle, mdiClose, mdiNote, mdiStorageTank, mdiStore } from '@mdi/js';
 import { computed, ref, toRefs, watch } from 'vue';
 import {
   VAutocomplete,
