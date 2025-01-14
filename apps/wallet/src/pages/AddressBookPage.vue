@@ -216,7 +216,7 @@ const fetchList = useFetchList(
       {
         offset,
         limit,
-        addresses: addressToSearch ? [addressToSearch] : undefined,
+        search_term: addressToSearch,
       },
       useVerifiedCall,
     );

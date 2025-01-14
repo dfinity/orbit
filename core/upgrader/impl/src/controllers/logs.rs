@@ -28,13 +28,6 @@ fn get_logs(input: upgrader_api::GetLogsInput) -> ApiResult<upgrader_api::GetLog
     CONTROLLER.get_logs(input)
 }
 
-#[query]
-fn deprecated_get_logs(
-    input: upgrader_api::GetLogsInput,
-) -> ApiResult<upgrader_api::GetLogsResponse> {
-    CONTROLLER.deprecated_get_logs(input)
-}
-
 pub struct LogsController {
     disaster_recover_service: Arc<DisasterRecoveryService>,
     logger_service: Arc<LoggerService>,
@@ -53,33 +46,6 @@ impl LogsController {
                 next_offset,
                 total,
             } = self.logger_service.get_logs(
-                input.pagination.as_ref().and_then(|p| p.offset),
-                input.pagination.as_ref().and_then(|p| p.limit),
-            );
-
-            Ok(upgrader_api::GetLogsResponse {
-                logs: logs.into_iter().map(|l| l.into()).collect(),
-                total,
-                next_offset,
-            })
-        } else {
-            Err(UpgraderApiError::Unauthorized.into())
-        }
-    }
-
-    // Supports fetching the logs from the deprecated log storage.
-    pub fn deprecated_get_logs(
-        &self,
-        input: upgrader_api::GetLogsInput,
-    ) -> ApiResult<upgrader_api::GetLogsResponse> {
-        let caller = caller();
-
-        if is_controller(&caller) || self.disaster_recover_service.is_committee_member(&caller) {
-            let GetLogsResult {
-                logs,
-                next_offset,
-                total,
-            } = self.logger_service.deprecated_get_logs(
                 input.pagination.as_ref().and_then(|p| p.offset),
                 input.pagination.as_ref().and_then(|p| p.limit),
             );

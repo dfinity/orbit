@@ -1,15 +1,15 @@
 <template>
-  <VAutocomplete
+  <VCombobox
     v-model="model"
-    :multiple="props.multiple.value"
-    :label="props.label.value"
     :custom-filter="() => true"
-    auto-select-first
-    item-value="id"
-    item-title="address_owner"
-    return-object
+    :label="props.label.value"
+    item-value="address"
+    item-title="address"
     clear-on-select
     hide-selected
+    :rules="props.required ? [requiredRule, addressValidator] : [addressValidator]"
+    :return-object="false"
+    :loading="autocomplete.loading.value"
     :items="items"
     :variant="props.variant.value"
     :density="props.density.value"
@@ -24,38 +24,44 @@
         <VListItemSubtitle>{{ item.raw.address }}</VListItemSubtitle>
       </VListItem>
     </template>
-  </VAutocomplete>
+  </VCombobox>
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref, toRefs, watch } from 'vue';
+import { VCombobox } from 'vuetify/components';
 import { useAddressBookAutocomplete } from '~/composables/autocomplete.composable';
 import { AddressBookEntry } from '~/generated/station/station.did';
+import { requiredRule, validAddress } from '~/utils/form.utils';
 
 const input = withDefaults(
   defineProps<{
-    modelValue?: AddressBookEntry[] | AddressBookEntry;
+    modelValue?: string;
     label?: string;
-    variant?: 'underlined' | 'outlined';
+    variant?: 'underlined' | 'outlined' | 'solo';
     density?: 'comfortable' | 'compact';
-    multiple?: boolean;
     readonly?: boolean;
     disabled?: boolean;
+    required?: boolean;
+    blockchain: string;
   }>(),
   {
-    modelValue: () => [],
+    modelValue: undefined,
     label: undefined,
-    variant: 'underlined',
+    variant: undefined,
     density: 'comfortable',
     multiple: false,
     readonly: false,
     disabled: false,
+    required: false,
   },
 );
 
 const props = toRefs(input);
 
+const addressValidator = computed(() => validAddress(props.blockchain.value));
+
 const emit = defineEmits<{
-  (event: 'update:modelValue', payload: AddressBookEntry[] | AddressBookEntry): void;
+  (event: 'update:modelValue', payload: string | undefined): void;
 }>();
 
 const model = computed({
@@ -64,6 +70,7 @@ const model = computed({
 });
 
 const items = ref<AddressBookEntry[]>([]);
+
 const autocomplete = useAddressBookAutocomplete();
 
 onMounted(() => {

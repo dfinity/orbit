@@ -4,7 +4,7 @@ use crate::interfaces::{
     ICP_FEE,
 };
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
-use crate::test_data::asset::add_asset_with_input;
+use crate::station_test_data::asset::add_asset_with_input;
 use crate::utils::{
     create_account, create_transfer, fetch_account_balances, get_icp_account_identifier,
     get_icp_asset, user_test_id,

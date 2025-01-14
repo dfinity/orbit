@@ -173,7 +173,7 @@
               </VListItemSubtitle>
             </VListItem>
           </template>
-          <VListItem class="px-0" v-else-if="loadingSystemInfoError">
+          <VListItem v-else-if="loadingSystemInfoError" class="px-0">
             <VListItemTitle class="font-weight-bold">{{ $t(`terms.upgrader_id`) }}</VListItemTitle>
             <VListItemSubtitle>
               <VAlert type="error" variant="tonal" density="compact" class="mb-4 mt-2">

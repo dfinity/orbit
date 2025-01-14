@@ -1,6 +1,6 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
-use crate::test_data::asset::list_assets;
-use crate::test_data::{set_test_data_id, StationDataGenerator};
+use crate::station_test_data::asset::list_assets;
+use crate::station_test_data::{set_test_data_id, StationDataGenerator};
 use crate::utils::{compress_to_gzip, create_file, read_file, NNS_ROOT_CANISTER_ID};
 use crate::TestEnv;
 use candid::{Encode, Principal};
@@ -64,8 +64,8 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     canister_memory = compress_to_gzip(&canister_memory);
     create_file("station-memory-latest.bin", &canister_memory);
 
-    // Then upgrade the canister with the same wasm to trigger the upgrade path and assure that the
-    // migration path is not triggered and the canister is still working
+    // Then upgrade the canister with the same wasm
+    // to test that upgrades work also if stable memory version does not change.
     env.upgrade_canister(
         canister_ids.station,
         station_wasm,
@@ -394,6 +394,7 @@ fn assert_can_list_address_book_entries(
                 offset: Some(0),
                 limit: Some(25),
             }),
+            search_term: None,
         },),
     )
     .unwrap();

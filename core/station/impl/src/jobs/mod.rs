@@ -311,9 +311,8 @@ mod test {
 
     #[tokio::test]
     async fn test_request_insertion() {
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&cancel_expired_requests::Job::JOB_TYPE)
-            .is_none());
+        assert!(!JobStateDatabase::get_time_job_maps()
+            .contains_key(&cancel_expired_requests::Job::JOB_TYPE));
 
         let expiration = time() + Duration::from_secs(30 * 24 * 60 * 60).as_nanos() as u64;
         let expiration_coarse =
@@ -395,26 +394,23 @@ mod test {
         // scheduled request is executed, timer should be removed
         Scheduler::run_scheduled::<execute_scheduled_requests::Job>(scheduled_at).await;
 
-        assert!(JobStateDatabase::get_time_job_maps()
+        assert!(!JobStateDatabase::get_time_job_maps()
             .get(&execute_scheduled_requests::Job::JOB_TYPE)
             .expect("Job not scheduled at all")
-            .get(&scheduled_at)
-            .is_none(),);
+            .contains_key(&scheduled_at));
 
         // first job expires, cleaning up the timer
         Scheduler::run_scheduled::<cancel_expired_requests::Job>(expiration_coarse).await;
 
         // all timers should be removed
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&cancel_expired_requests::Job::JOB_TYPE)
-            .is_none());
+        assert!(!JobStateDatabase::get_time_job_maps()
+            .contains_key(&cancel_expired_requests::Job::JOB_TYPE));
     }
 
     #[tokio::test]
     async fn test_request_removal() {
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&cancel_expired_requests::Job::JOB_TYPE)
-            .is_none());
+        assert!(!JobStateDatabase::get_time_job_maps()
+            .contains_key(&cancel_expired_requests::Job::JOB_TYPE));
 
         let expiration = time() + Duration::from_secs(30 * 24 * 60 * 60).as_nanos() as u64;
         let expiration_coarse =
@@ -442,9 +438,8 @@ mod test {
         REQUEST_REPOSITORY.remove(&request_1.to_key());
 
         // all timers should be removed
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&cancel_expired_requests::Job::JOB_TYPE)
-            .is_none());
+        assert!(!JobStateDatabase::get_time_job_maps()
+            .contains_key(&cancel_expired_requests::Job::JOB_TYPE));
     }
 
     #[tokio::test]
@@ -469,9 +464,8 @@ mod test {
 
         Scheduler::run_scheduled::<execute_created_transfers::Job>(coarse_time).await;
 
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&execute_created_transfers::Job::JOB_TYPE)
-            .is_none());
+        assert!(!JobStateDatabase::get_time_job_maps()
+            .contains_key(&execute_created_transfers::Job::JOB_TYPE));
     }
 
     #[tokio::test]
@@ -565,8 +559,7 @@ mod test {
 
         // 5 transfers are scheduled for execution
         assert!(JobStateDatabase::get_time_job_maps()
-            .get(&execute_created_transfers::Job::JOB_TYPE)
-            .is_some());
+            .contains_key(&execute_created_transfers::Job::JOB_TYPE));
 
         let transfer_job_time = *JobStateDatabase::get_time_job_maps()
             .get(&execute_created_transfers::Job::JOB_TYPE)
@@ -579,9 +572,8 @@ mod test {
         Scheduler::run_scheduled::<execute_created_transfers::Job>(transfer_job_time).await;
 
         // transfer job should be removed
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&execute_created_transfers::Job::JOB_TYPE)
-            .is_none());
+        assert!(!JobStateDatabase::get_time_job_maps()
+            .contains_key(&execute_created_transfers::Job::JOB_TYPE));
 
         // time for expiration
         set_mock_ic_time(SystemTime::UNIX_EPOCH + Duration::from_nanos(expiration_coarse));
@@ -590,9 +582,8 @@ mod test {
         Scheduler::run_scheduled::<cancel_expired_requests::Job>(expiration_coarse).await;
 
         // expiration jobs should be removed
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&cancel_expired_requests::Job::JOB_TYPE)
-            .is_none());
+        assert!(!JobStateDatabase::get_time_job_maps()
+            .contains_key(&cancel_expired_requests::Job::JOB_TYPE));
 
         // run the scheduled requests job
         for at_ns in JobStateDatabase::get_time_job_maps()
@@ -604,9 +595,8 @@ mod test {
         }
 
         // all scheduled requests should be executed
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&execute_scheduled_requests::Job::JOB_TYPE)
-            .is_none());
+        assert!(!JobStateDatabase::get_time_job_maps()
+            .contains_key(&execute_scheduled_requests::Job::JOB_TYPE));
 
         // there should be 7 new transfer jobs scheduled
         assert_eq!(

@@ -78,6 +78,7 @@ pub struct ListAddressBookEntriesInputDTO {
     pub labels: Option<Vec<String>>,
     pub paginate: Option<PaginationInput>,
     pub address_formats: Option<Vec<String>>,
+    pub search_term: Option<String>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

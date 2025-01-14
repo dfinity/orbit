@@ -144,6 +144,7 @@ pub struct ListAddressBookEntriesInput {
     pub blockchain: Option<Blockchain>,
     pub labels: Option<Vec<String>>,
     pub address_formats: Option<Vec<AddressFormat>>,
+    pub search_term: Option<String>,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -278,7 +279,7 @@ pub mod address_book_entry_test_utils {
 
     pub fn add_address_book_entry(id: &UUID) -> AddressBookEntry {
         let mut address_book_entry = mock_address_book_entry();
-        address_book_entry.id = id.to_owned();
+        id.clone_into(&mut address_book_entry.id);
         ADDRESS_BOOK_REPOSITORY.insert(address_book_entry.to_key(), address_book_entry.to_owned());
 
         address_book_entry

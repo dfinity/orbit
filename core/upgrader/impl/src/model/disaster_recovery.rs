@@ -68,12 +68,14 @@ pub struct StationRecoveryRequestInstallCodeOperation {
     /// The install mode: upgrade or reinstall.
     pub install_mode: InstallMode,
     /// The wasm module to be installed.
+    #[serde(with = "serde_bytes")]
     pub wasm_module: Vec<u8>,
     /// Optional extra chunks of the wasm module to be installed.
     pub wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
     /// The SHA-256 hash of the wasm module.
     pub wasm_sha256: Vec<u8>,
     /// The install arguments.
+    #[serde(with = "serde_bytes")]
     pub arg: Vec<u8>,
     /// The SHA-256 hash of the install arguments.
     pub arg_sha256: Vec<u8>,

@@ -12,7 +12,7 @@ const MAX_WASM_CHUNK_LEN: usize = 1 << 20; // 1MiB
 const MAX_WASM_TOTAL_LEN: usize = 100 << 20; // 100MiB
 
 // Derived limits
-const MAX_WASM_CHUNK_CNT: usize = MAX_WASM_TOTAL_LEN / MAX_WASM_CHUNK_LEN + 1;
+const MAX_WASM_CHUNK_CNT: usize = MAX_WASM_TOTAL_LEN / MAX_WASM_CHUNK_LEN + 1; // + 1 for the provided module which is the first chunk
 
 // asset canister types
 
@@ -134,6 +134,8 @@ pub async fn install_chunked_code(
 ) -> Result<(), String> {
     if let Some(module_extra_chunks) = module_extra_chunks {
         // clear the ICP chunk store of the target canister
+        // to delete left-over chunks in case of a failure
+        // during a past code install
         mgmt::clear_chunk_store(ClearChunkStoreArgument {
             canister_id: target_canister,
         })
@@ -156,7 +158,7 @@ pub async fn install_chunked_code(
             chunk_hashes_list.push(chunk_hash);
         }
         // install target canister from chunks stored in the ICP chunk store of the target canister
-        mgmt::install_chunked_code(InstallChunkedCodeArgument {
+        let res = mgmt::install_chunked_code(InstallChunkedCodeArgument {
             mode: install_mode,
             target_canister,
             store_canister: Some(target_canister),
@@ -168,7 +170,15 @@ pub async fn install_chunked_code(
             arg,
         })
         .await
-        .map_err(|(_, err)| format!("failed to install code from chunks: {err}"))?;
+        .map_err(|(_, err)| format!("failed to install code from chunks: {err}"));
+        // clear the ICP chunk store of the target canister to reduce memory footprint
+        // and ignore any errors here so that a successful code install is not reported
+        // as failed only because of a failure to clear the ICP chunk store
+        let _ = mgmt::clear_chunk_store(ClearChunkStoreArgument {
+            canister_id: target_canister,
+        })
+        .await;
+        res
     } else {
         mgmt::install_code(InstallCodeArgument {
             mode: install_mode,
@@ -177,7 +187,6 @@ pub async fn install_chunked_code(
             arg,
         })
         .await
-        .map_err(|(_, err)| format!("failed to install code: {err}"))?;
+        .map_err(|(_, err)| format!("failed to install code: {err}"))
     }
-    Ok(())
 }

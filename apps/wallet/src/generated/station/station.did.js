@@ -1296,6 +1296,7 @@ export const idlFactory = ({ IDL }) => {
     'blockchain' : IDL.Opt(IDL.Text),
     'addresses' : IDL.Opt(IDL.Vec(IDL.Text)),
     'paginate' : IDL.Opt(PaginationInput),
+    'search_term' : IDL.Opt(IDL.Text),
   });
   const ListAddressBookEntriesResult = IDL.Variant({
     'Ok' : IDL.Record({

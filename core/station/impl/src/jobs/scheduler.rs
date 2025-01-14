@@ -146,9 +146,7 @@ mod test {
 
         super::Scheduler::run_scheduled::<OneShotJob>(0).await;
 
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&OneShotJob::JOB_TYPE)
-            .is_none());
+        assert!(!JobStateDatabase::get_time_job_maps().contains_key(&OneShotJob::JOB_TYPE));
     }
 
     #[tokio::test]
@@ -176,9 +174,7 @@ mod test {
         .await
         .expect_err("Job should panic");
 
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&JobThatPanics::JOB_TYPE)
-            .is_none());
+        assert!(!JobStateDatabase::get_time_job_maps().contains_key(&JobThatPanics::JOB_TYPE));
     }
 
     #[tokio::test]
@@ -234,9 +230,9 @@ mod test {
 
         super::Scheduler::run_scheduled::<OneShotJob>(5_000_000_000u64).await;
 
-        assert!(JobStateDatabase::get_time_job_maps()
-            .get(&JobType::CancelExpiredRequests)
-            .is_none());
+        assert!(
+            !JobStateDatabase::get_time_job_maps().contains_key(&JobType::CancelExpiredRequests)
+        );
     }
 
     #[tokio::test]
