@@ -25,7 +25,7 @@ pub enum TriggerUpgradeError {
     UnexpectedError(String),
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct AdminUser {
     /// The user ID.
     pub id: UuidDTO,
@@ -35,7 +35,7 @@ pub struct AdminUser {
     pub identities: Vec<Principal>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct DisasterRecoveryCommittee {
     /// The users that are able to request disaster recovery.
     pub users: Vec<AdminUser>,
@@ -43,7 +43,7 @@ pub struct DisasterRecoveryCommittee {
     pub quorum: u16,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct Account {
     /// The account id, which is a UUID.
     pub id: UuidDTO,
@@ -107,7 +107,7 @@ pub enum DisasterRecoveryError {
     Unauthorized,
 }
 
-#[derive(Clone, Debug, CandidType)]
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct IsCommitteeMemberResponse {
     pub is_committee_member: bool,
 }
@@ -144,7 +144,7 @@ pub struct SetDisasterRecoveryAccountsAndAssetsInput {
     pub assets: Vec<Asset>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub enum InstallMode {
     /// Install the module.
     Install,
@@ -155,7 +155,7 @@ pub enum InstallMode {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
-pub struct RequestDisasterRecoveryInput {
+pub struct RequestDisasterRecoveryInstallCodeInput {
     #[serde(with = "serde_bytes")]
     pub module: Vec<u8>,
     pub module_extra_chunks: Option<WasmModuleExtraChunks>,
@@ -163,6 +163,11 @@ pub struct RequestDisasterRecoveryInput {
     pub arg: Vec<u8>,
 
     pub install_mode: InstallMode,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum RequestDisasterRecoveryInput {
+    InstallCode(RequestDisasterRecoveryInstallCodeInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -176,7 +181,7 @@ pub struct GetLogsInput {
     pub pagination: Option<PaginationInput>,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct LogEntry {
     pub time: TimestampRfc3339,
     pub entry_type: String,
@@ -197,21 +202,32 @@ pub enum TriggerUpgradeResponse {
     Err(TriggerUpgradeError),
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub struct StationRecoveryRequestInstallCodeOperation {
+    /// The install mode: upgrade or reinstall.
+    pub install_mode: InstallMode,
+    /// The SHA-256 hash of the wasm module.
+    pub wasm_sha256: Vec<u8>,
+    /// The install arguments.
+    pub arg: Vec<u8>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub enum StationRecoveryRequestOperation {
+    InstallCode(StationRecoveryRequestInstallCodeOperation),
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct StationRecoveryRequest {
     /// The user ID of the station.
     pub user_id: UuidDTO,
-    /// The SHA-256 hash of the wasm module.
-    pub wasm_sha256: Vec<u8>,
-    /// The install mode: upgrade or reinstall.
-    pub install_mode: InstallMode,
-    /// The install arguments.
-    pub arg: Vec<u8>,
+    /// The disaster recovery operation.
+    pub operation: StationRecoveryRequestOperation,
     /// Time in nanoseconds since the UNIX epoch when the request was submitted.
     pub submitted_at: TimestampRfc3339,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub enum RecoveryStatus {
     /// There are no active recovery requests.
     Idle,
@@ -219,13 +235,13 @@ pub enum RecoveryStatus {
     InProgress { since: TimestampRfc3339 },
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub struct RecoveryFailure {
     /// The reason for the recovery failure.
     pub reason: String,
 }
 
-#[derive(Clone, Debug, CandidType, Deserialize)]
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub enum RecoveryResult {
     /// The recovery request was successful.
     Success,

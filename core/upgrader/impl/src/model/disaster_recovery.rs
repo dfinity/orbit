@@ -12,7 +12,7 @@ use uuid::Uuid;
 use crate::utils::HelperMapper;
 
 #[storable]
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 pub enum InstallMode {
     /// Install the wasm module.
     Install,
@@ -63,22 +63,49 @@ impl From<InstallMode> for CanisterInstallMode {
 }
 
 #[storable]
-#[derive(Clone, Debug)]
-pub struct StationRecoveryRequest {
-    /// The user ID of the station.
-    pub user_id: UUID,
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StationRecoveryRequestInstallCodeOperation {
+    /// The install mode: upgrade or reinstall.
+    pub install_mode: InstallMode,
     /// The wasm module to be installed.
+    #[serde(with = "serde_bytes")]
     pub wasm_module: Vec<u8>,
     /// Optional extra chunks of the wasm module to be installed.
     pub wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
     /// The SHA-256 hash of the wasm module.
     pub wasm_sha256: Vec<u8>,
-    /// The install mode: upgrade or reinstall.
-    pub install_mode: InstallMode,
     /// The install arguments.
+    #[serde(with = "serde_bytes")]
     pub arg: Vec<u8>,
     /// The SHA-256 hash of the install arguments.
     pub arg_sha256: Vec<u8>,
+}
+
+#[storable]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StationRecoveryRequestOperation {
+    InstallCode(StationRecoveryRequestInstallCodeOperation),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct StationRecoveryRequestInstallCodeOperationFootprint {
+    pub install_mode: InstallMode,
+    pub wasm_sha256: Vec<u8>,
+    pub arg_sha256: Vec<u8>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum StationRecoveryRequestOperationFootprint {
+    InstallCode(StationRecoveryRequestInstallCodeOperationFootprint),
+}
+
+#[storable]
+#[derive(Clone, Debug)]
+pub struct StationRecoveryRequest {
+    /// The user ID of the station.
+    pub user_id: UUID,
+    /// The disaster recovery operation.
+    pub operation: StationRecoveryRequestOperation,
     /// Time in nanoseconds since the UNIX epoch when the request was submitted.
     pub submitted_at: Timestamp,
 }
@@ -87,9 +114,7 @@ impl From<StationRecoveryRequest> for upgrader_api::StationRecoveryRequest {
     fn from(value: StationRecoveryRequest) -> Self {
         upgrader_api::StationRecoveryRequest {
             user_id: Uuid::from_bytes(value.user_id).hyphenated().to_string(),
-            wasm_sha256: value.wasm_sha256,
-            install_mode: upgrader_api::InstallMode::from(value.install_mode),
-            arg: value.arg,
+            operation: (&value.operation).into(),
             submitted_at: timestamp_to_rfc3339(&value.submitted_at),
         }
     }
@@ -482,6 +507,62 @@ impl From<DisasterRecovery> for upgrader_api::GetDisasterRecoveryStateResponse {
                 .collect(),
             recovery_status: value.recovery_status.into(),
             last_recovery_result: value.last_recovery_result.map(|r| r.into()),
+        }
+    }
+}
+
+// legacy types
+
+#[storable]
+#[derive(Clone, Debug)]
+pub struct StationRecoveryRequestV0 {
+    /// The user ID of the station.
+    pub user_id: UUID,
+    /// The wasm module to be installed.
+    #[serde(with = "serde_bytes")]
+    pub wasm_module: Vec<u8>,
+    /// Optional extra chunks of the wasm module to be installed.
+    pub wasm_module_extra_chunks: Option<WasmModuleExtraChunks>,
+    /// The SHA-256 hash of the wasm module.
+    pub wasm_sha256: Vec<u8>,
+    /// The install mode: upgrade or reinstall.
+    pub install_mode: InstallMode,
+    /// The install arguments.
+    #[serde(with = "serde_bytes")]
+    pub arg: Vec<u8>,
+    /// The SHA-256 hash of the install arguments.
+    pub arg_sha256: Vec<u8>,
+    /// Time in nanoseconds since the UNIX epoch when the request was submitted.
+    pub submitted_at: Timestamp,
+}
+
+#[storable]
+#[derive(Clone, Debug)]
+pub struct DisasterRecoveryV0 {
+    pub accounts: Vec<Account>,
+
+    #[serde(default)]
+    pub multi_asset_accounts: Vec<MultiAssetAccount>,
+    #[serde(default)]
+    pub assets: Vec<Asset>,
+
+    pub committee: Option<DisasterRecoveryCommittee>,
+
+    pub recovery_requests: Vec<StationRecoveryRequestV0>,
+    pub recovery_status: RecoveryStatus,
+    pub last_recovery_result: Option<RecoveryResult>,
+}
+
+impl Default for DisasterRecoveryV0 {
+    fn default() -> Self {
+        DisasterRecoveryV0 {
+            accounts: vec![],
+            multi_asset_accounts: vec![],
+            assets: vec![],
+            committee: None,
+            recovery_requests: vec![],
+            recovery_status: RecoveryStatus::Idle,
+            last_recovery_result: None,
         }
     }
 }

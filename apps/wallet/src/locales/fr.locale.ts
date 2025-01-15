@@ -1012,6 +1012,15 @@ export default {
         index_canister_id: 'ID du Canister Index',
         decimals: 'Décimales',
       },
+      well_known: {
+        groups: {
+          sns: 'SNS tokens',
+          ck_tokens: 'Chain-key tokens',
+        },
+        placeholder: 'Rechercher un actif...',
+        option_add_well_known_assets: 'Ajouter des actifs connus',
+        option_add_custom_asset: 'Ajouter un actif personnalisé',
+      },
     },
     not_found: {
       title: 'Oulala, 404',

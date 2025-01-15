@@ -51,6 +51,7 @@ pub struct SystemInfo {
     /// The upgrader canister id that is allowed to upgrade this canister.
     upgrader_canister_id: Option<Principal>,
     /// The upgrader canister wasm module.
+    #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     upgrader_wasm_module: Option<Vec<u8>>,
     /// The disaster recovery committee user group id.
     disaster_recovery_committee: Option<DisasterRecoveryCommittee>,

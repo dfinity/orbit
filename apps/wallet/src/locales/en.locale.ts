@@ -999,6 +999,15 @@ export default {
         index_canister_id: 'Index Canister ID',
         decimals: 'Decimals',
       },
+      well_known: {
+        groups: {
+          sns: 'SNS tokens',
+          ck_tokens: 'Chain-key tokens',
+        },
+        placeholder: 'Search asset...',
+        option_add_well_known_assets: 'Add well known assets',
+        option_add_custom_asset: 'Add custom asset',
+      },
     },
     not_found: {
       title: 'Whoops, 404',

@@ -1008,6 +1008,15 @@ export default {
         index_canister_id: 'ID do canister de índice',
         decimals: 'Decimais',
       },
+      well_known: {
+        groups: {
+          sns: 'SNS tokens',
+          ck_tokens: 'Chain-key tokens',
+        },
+        placeholder: 'Pesquisar ativo...',
+        option_add_well_known_assets: 'Adicionar ativos conhecidos',
+        option_add_custom_asset: 'Adicionar ativo personalizado',
+      },
     },
     not_found: {
       title: 'Ups, 404',

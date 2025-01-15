@@ -744,6 +744,7 @@ export interface ListAddressBookEntriesInput {
   'blockchain' : [] | [string],
   'addresses' : [] | [Array<string>],
   'paginate' : [] | [PaginationInput],
+  'search_term' : [] | [string],
 }
 export type ListAddressBookEntriesResult = {
     'Ok' : {
