@@ -711,6 +711,7 @@ export default {
     see_all: 'See All',
     requests: 'Requests',
     cancel: 'Cancel',
+    cancel_request: 'Cancel Request',
     checksum: 'Checksum',
     module_checksum: 'Module Checksum',
     rejected: 'Rejected',

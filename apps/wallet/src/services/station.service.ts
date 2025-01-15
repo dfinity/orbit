@@ -10,6 +10,7 @@ import {
   AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
+  CancelRequestInput,
   CanisterMethod,
   CanisterSnapshotsResult,
   CanisterStatusResult,
@@ -516,6 +517,16 @@ export class StationService {
 
   async submitRequestApproval(input: SubmitRequestApprovalInput): Promise<Request> {
     const result = await this.actor.submit_request_approval(input);
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async cancelRequest(input: CancelRequestInput): Promise<Request> {
+    const result = await this.actor.cancel_request(input);
 
     if (variantIs(result, 'Err')) {
       throw result.Err;

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { mount } from '~/test.utils';
 import RequestDetailView from './RequestDetailView.vue';
 import { variantIs } from '~/utils/helper.utils';
+import { useStationStore } from '~/stores/station.store';
+import { flushPromises } from '@vue/test-utils';
 
 type RequestDetailViewProps = InstanceType<typeof RequestDetailView>['$props'];
 
@@ -192,6 +194,52 @@ const failedProps: RequestDetailViewProps = {
   },
 };
 
+const cancelledProps: RequestDetailViewProps = {
+  details: {
+    can_approve: false,
+    requester_name: 'requester',
+    approvers: [
+      { id: 'approver-1-id', name: '' },
+      { id: 'approver-2-id', name: '' },
+    ],
+  },
+  request: {
+    status: { Cancelled: { reason: ['cancellation reason'] } },
+    approvals: [
+      {
+        approver_id: 'approver-1-id',
+        status: { Approved: null },
+        decided_at: '',
+        status_reason: [],
+      },
+      {
+        approver_id: 'approver-2-id',
+        status: { Rejected: null },
+        decided_at: '',
+        status_reason: ['Test comment'],
+      },
+    ],
+    operation: {
+      AddUser: {
+        user: [],
+        input: {
+          groups: [],
+          identities: [],
+          name: 'test',
+          status: { Active: null },
+        },
+      },
+    },
+    created_at: '',
+    id: '',
+    execution_plan: { Immediate: null },
+    expiration_dt: '',
+    requested_by: 'approver-1-id',
+    summary: [],
+    title: '',
+  },
+};
+
 describe('RequestDetailView', () => {
   it('renders properly', () => {
     const wrapper = mount(RequestDetailView, {
@@ -311,5 +359,47 @@ describe('RequestDetailView', () => {
     await wrapper.find('[data-test-id="request-approvals-and-evaluation"] button').trigger('click');
 
     expect(wrapper.find('[data-test-id="request-acceptance-rules"]').exists()).toBeTruthy();
+  });
+
+  it('shows a cancel button for cancellable requests', async () => {
+    const wrapper = mount(RequestDetailView, {
+      props: pendingProps,
+    });
+    const station = useStationStore();
+    station.$patch({
+      user: { id: 'requester-id' },
+    });
+    await flushPromises();
+    expect(wrapper.find('[data-test-id="request-details-cancel"]').exists()).toBeTruthy();
+
+    await wrapper.find('[data-test-id="request-details-cancel"]').trigger('click');
+    expect(wrapper.emitted().cancel).toBeTruthy();
+  });
+
+  it("shows doesn't show cancel button for cancelled requests", async () => {
+    const wrapper = mount(RequestDetailView, {
+      props: cancelledProps,
+    });
+    const station = useStationStore();
+    station.$patch({
+      user: { id: 'requester-id' },
+    });
+
+    await flushPromises();
+
+    expect(wrapper.find('[data-test-id="request-details-cancel"]').exists()).toBeFalsy();
+  });
+
+  it("shows doesn't show cancel button for non-requester", async () => {
+    const wrapper = mount(RequestDetailView, {
+      props: pendingProps,
+    });
+    const station = useStationStore();
+    station.$patch({
+      user: { id: 'not-requester-id' },
+    });
+
+    await flushPromises();
+    expect(wrapper.find('[data-test-id="request-details-cancel"]').exists()).toBeFalsy();
   });
 });

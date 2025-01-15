@@ -73,7 +73,7 @@
         hide-details
         rows="1"
         auto-grow
-        :readonly="props.loading || !props.details.can_approve"
+        :readonly="props.loading || (!props.details.can_approve && !canCancel)"
       />
     </VCardText>
 
@@ -173,6 +173,17 @@
         :class="{ 'mt-8': props.details.can_approve }"
       />
       <div class="d-flex flex-column flex-md-row ga-1 justify-end flex-grow-1 w-100 w-md-auto">
+        <VBtn
+          v-if="canCancel"
+          data-test-id="request-details-cancel"
+          variant="plain"
+          class="ma-0"
+          :disabled="props.loading"
+          @click="$emit('cancel', reasonOrUndefined)"
+        >
+          {{ $t('terms.cancel_request') }}
+        </VBtn>
+
         <template v-if="props.details.can_approve">
           <VBtn
             data-test-id="request-details-reject"
@@ -261,8 +272,10 @@ import TransferOperation from './operations/TransferOperation.vue';
 import UnsupportedOperation from './operations/UnsupportedOperation.vue';
 import EditAssetOperation from './operations/EditAssetOperation.vue';
 import RemoveAssetOperation from './operations/RemoveAssetOperation.vue';
+import { useStationStore } from '~/stores/station.store';
 
 const i18n = useI18n();
+const store = useStationStore();
 
 const props = withDefaults(
   defineProps<{
@@ -315,6 +328,7 @@ const componentsMap: {
 defineEmits<{
   (event: 'approve', reason?: string): void;
   (event: 'reject', reason?: string): void;
+  (event: 'cancel', reason?: string): void;
 }>();
 
 const detailView = computed<{
@@ -339,6 +353,10 @@ const detailView = computed<{
         operation: props.request.operation[unknownOperationType as keyof RequestOperation],
       }
     : null;
+});
+
+const canCancel = computed(() => {
+  return props.request.requested_by === store.user.id && variantIs(props.request.status, 'Created');
 });
 
 const requestType = computed(() => {

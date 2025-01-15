@@ -719,6 +719,7 @@ export default {
     save: 'Sauvegarder',
     see_all: 'Voir Tout',
     cancel: 'Annuler',
+    cancel_request: 'Annuler la demande',
     checksum: 'Checksum',
     module_checksum: 'Checksum du Module',
     rejected: 'Rejetté',
