@@ -376,7 +376,7 @@ describe('RequestDetailView', () => {
     expect(wrapper.emitted().cancel).toBeTruthy();
   });
 
-  it("shows doesn't show cancel button for cancelled requests", async () => {
+  it("doesn't show cancel button for cancelled requests", async () => {
     const wrapper = mount(RequestDetailView, {
       props: cancelledProps,
     });
@@ -390,7 +390,7 @@ describe('RequestDetailView', () => {
     expect(wrapper.find('[data-test-id="request-details-cancel"]').exists()).toBeFalsy();
   });
 
-  it("shows doesn't show cancel button for non-requester", async () => {
+  it("doesn't show cancel button for non-requester", async () => {
     const wrapper = mount(RequestDetailView, {
       props: pendingProps,
     });
