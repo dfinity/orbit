@@ -7,7 +7,7 @@ use canfund::api::ledger::{CyclesLedgerCanister, IcLedgerCanister};
 use canfund::manager::options::{FundManagerOptions, ObtainCyclesOptions};
 use canfund::manager::record::CanisterRecord;
 use canfund::manager::RegisterOpts;
-use canfund::operations::obtain::{MintCycles, WithdrawFromLedger};
+use canfund::operations::obtain::{MintCycles, WithdrawFromCyclesLedger};
 use canfund::FundManager;
 use ic_cdk::api::management_canister::main::CanisterId;
 use ic_cdk::print;
@@ -136,7 +136,7 @@ fn get_obtain_cycle_config(strategy: &CycleObtainStrategy) -> Option<ObtainCycle
         CycleObtainStrategy::WithdrawFromCyclesLedger { account_id } => {
             if let Some(account) = ACCOUNT_REPOSITORY.get(&AccountKey { id: *account_id }) {
                 Some(ObtainCyclesOptions {
-                    obtain_cycles: Arc::new(WithdrawFromLedger {
+                    obtain_cycles: Arc::new(WithdrawFromCyclesLedger {
                         ledger: Arc::new(CyclesLedgerCanister::new(
                             MAINNET_CYCLES_LEDGER_CANISTER_ID,
                         )),
