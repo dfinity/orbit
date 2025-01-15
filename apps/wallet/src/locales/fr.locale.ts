@@ -915,7 +915,8 @@ export default {
       system_info_error: 'Erreur lors du chargement des informations système, veuillez réessayer.',
       cycle_obtain_strategy_disabled: 'Stratégie de recharge des cycles non définie',
       cycle_obtain_strategy_mint_from_native_token: 'Mint depuis le compte ICP',
-      cycle_obtain_strategy_withdraw_from_cycles_ledger: 'Retrait du compte du grand livre des cycles',
+      cycle_obtain_strategy_withdraw_from_cycles_ledger:
+        'Retrait du compte du grand livre des cycles',
       cycle_balances: 'Solde de Cycles',
     },
     users: {
