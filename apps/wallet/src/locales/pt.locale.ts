@@ -708,6 +708,7 @@ export default {
     approved: 'Aprovado',
     confirm: 'Confirmar',
     cancel: 'Cancelar',
+    cancel_request: 'Cancelar pedido',
     see_all: 'Ver todos',
     min: 'Mínimo',
     rule: 'Regra',

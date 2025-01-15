@@ -12,6 +12,7 @@ import { services } from '~/plugins/services.plugin';
 import { mount } from '~/test.utils';
 import { ExtractOk } from '~/types/helper.types';
 import RequestDialog from './RequestDialog.vue';
+import RequestDetailView from './RequestDetailView.vue';
 
 const mockAsset: Asset = {
   blockchain: 'icp',
@@ -263,6 +264,34 @@ describe('RequestDialog', () => {
 
     expect(contents.find('[data-test-id="no-more-requests"]').exists()).toBeTruthy();
 
+    vi.restoreAllMocks();
+  });
+
+  it('cancels the request when the cancel button is clicked', async () => {
+    vi.spyOn(services().station, 'getRequest').mockResolvedValueOnce(approvableRequestResponse);
+    vi.spyOn(services().station, 'cancelRequest').mockResolvedValueOnce(
+      approvableRequestResponse.request,
+    );
+
+    const wrapper = mount(RequestDialog, {
+      props: {
+        requestId: '123',
+        open: true,
+      },
+    });
+
+    await flushPromises();
+
+    const detailView = wrapper.findComponent(RequestDetailView);
+
+    expect(detailView.exists()).toBeTruthy();
+
+    detailView.vm.$emit('cancel');
+
+    expect(services().station.cancelRequest).toHaveBeenCalledWith({
+      request_id: '123',
+      reason: [],
+    });
     vi.restoreAllMocks();
   });
 });
