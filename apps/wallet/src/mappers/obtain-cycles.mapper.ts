@@ -9,6 +9,9 @@ export function cycleObtainStrategyInputToKey(
   if (variantIs(strategy, 'MintFromNativeToken')) {
     return CycleObtainStrategyEnum.MintFromNativeToken;
   }
+  if (variantIs(strategy, 'WithdrawFromCyclesLedger')) {
+    return CycleObtainStrategyEnum.WithdrawFromCyclesLedger;
+  }
   if (variantIs(strategy, 'Disabled')) {
     return CycleObtainStrategyEnum.Disabled;
   } else {
@@ -21,6 +24,8 @@ export function cycleObtainStrategyToSummary(strategy: CycleObtainStrategyInput)
     return i18n.global.t('cycle_obtain_strategies.disabled');
   } else if (variantIs(strategy, 'MintFromNativeToken')) {
     return `${i18n.global.t('cycle_obtain_strategies.mintfromnativetoken')} "${strategy.MintFromNativeToken.account_id}"`;
+  } else if (variantIs(strategy, 'WithdrawFromCyclesLedger')) {
+    return `${i18n.global.t('cycle_obtain_strategies.withdrawfromcyclesledger')} "${strategy.WithdrawFromCyclesLedger.account_id}"`;
   } else {
     return unreachable(strategy);
   }

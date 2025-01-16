@@ -34,6 +34,9 @@ pub enum CycleObtainStrategy {
     MintFromNativeToken {
         account_id: AccountId,
     },
+    WithdrawFromCyclesLedger {
+        account_id: AccountId,
+    },
 }
 
 #[storable(size = SYSTEM_RESERVED_MEMORY_BYTES)]

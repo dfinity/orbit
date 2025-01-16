@@ -34,12 +34,17 @@ pub enum CycleObtainStrategyDTO {
         account_id: UuidDTO,
         account_name: Option<String>,
     },
+    WithdrawFromCyclesLedger {
+        account_id: UuidDTO,
+        account_name: Option<String>,
+    },
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum CycleObtainStrategyInput {
     Disabled,
     MintFromNativeToken { account_id: UuidDTO },
+    WithdrawFromCyclesLedger { account_id: UuidDTO },
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

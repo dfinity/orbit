@@ -523,6 +523,7 @@ export default {
         label: 'Obtain strategy',
         StationDefault: 'Station default',
         MintFromNativeToken: 'Mint from native token',
+        WithdrawFromCyclesLedger: 'Withdraw from Cycles Ledger',
       },
     },
     configuration: 'Configuration',
@@ -905,6 +906,7 @@ export default {
       cycle_obtain_strategy_disabled:
         'WARNING: Station cycle balance top-up disabled. Your station may run out of cycles.',
       cycle_obtain_strategy_mint_from_native_token: 'Mint from ICP account',
+      cycle_obtain_strategy_withdraw_from_cycles_ledger: 'Withdraw from Cycles Ledger account',
       cycle_balances: 'Cycle Balances',
     },
     users: {
@@ -1134,5 +1136,6 @@ export default {
   cycle_obtain_strategies: {
     disabled: 'Disabled',
     mintfromnativetoken: 'Mint from ICP account',
+    withdrawfromcyclesledger: 'Withdraw from Cycles Ledger',
   },
 };

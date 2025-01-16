@@ -30,8 +30,13 @@
         :variant="isViewMode ? 'plain' : 'filled'"
         :disabled="isViewMode"
       ></MintFromNativeToken>
+      <WithdrawFromCyclesLedger
+        v-if="cycleObtainStrategySelected == 'WithdrawFromCyclesLedger'"
+        v-model="withdrawFromCyclesLedgerAccountId"
+        :variant="isViewMode ? 'plain' : 'filled'"
+        :disabled="isViewMode"
+      ></WithdrawFromCyclesLedger>
       <template v-else-if="cycleObtainStrategySelected == 'Disabled'"></template>
-      <template v-else>{{ unreachable(cycleObtainStrategySelected) }}</template>
     </template>
   </VForm>
 </template>
@@ -46,8 +51,9 @@ import { cycleObtainStrategyInputToKey } from '~/mappers/obtain-cycles.mapper';
 import { VFormValidation } from '~/types/helper.types';
 import { CycleObtainStrategyEnum } from '~/types/obtain-cycles.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
-import { unreachable, variantIs } from '~/utils/helper.utils';
-import MintFromNativeToken from './obtain-cycle/MintFromNativeToken.vue';
+import { variantIs } from '~/utils/helper.utils';
+import MintFromNativeToken from '~/components/settings/obtain-cycles/MintFromNativeToken.vue';
+import WithdrawFromCyclesLedger from '~/components/settings/obtain-cycles/WithdrawFromCyclesLedger.vue';
 
 const i18n = useI18n();
 
@@ -91,9 +97,17 @@ const mintFromNativeTokenAccountId = ref<UUID | null>(
     : null,
 );
 
+const withdrawFromCyclesLedgerAccountId = ref<UUID | null>(
+  model.value.cycle_obtain_strategy?.[0] &&
+    variantIs(model.value.cycle_obtain_strategy?.[0], 'WithdrawFromCyclesLedger')
+    ? model.value.cycle_obtain_strategy?.[0].WithdrawFromCyclesLedger.account_id
+    : null,
+);
+
 const cycleObtainStrategyKeys = ref<CycleObtainStrategyEnum[]>([
   CycleObtainStrategyEnum.Disabled,
   CycleObtainStrategyEnum.MintFromNativeToken,
+  CycleObtainStrategyEnum.WithdrawFromCyclesLedger,
 ]);
 
 const cycleObtainStrategies = computed(() => {
@@ -123,6 +137,21 @@ watch(
       model.value.cycle_obtain_strategy = [
         {
           MintFromNativeToken: {
+            account_id: newValue,
+          },
+        },
+      ];
+    }
+  },
+);
+
+watch(
+  () => withdrawFromCyclesLedgerAccountId.value,
+  newValue => {
+    if (newValue) {
+      model.value.cycle_obtain_strategy = [
+        {
+          WithdrawFromCyclesLedger: {
             account_id: newValue,
           },
         },

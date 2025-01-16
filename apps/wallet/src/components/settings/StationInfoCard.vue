@@ -402,6 +402,12 @@ function cycleObtainStrategyToInput(strategy: CycleObtainStrategy): CycleObtainS
         account_id: strategy.MintFromNativeToken.account_id,
       },
     };
+  } else if (variantIs(strategy, 'WithdrawFromCyclesLedger')) {
+    return {
+      WithdrawFromCyclesLedger: {
+        account_id: strategy.WithdrawFromCyclesLedger.account_id,
+      },
+    };
   } else if (variantIs(strategy, 'Disabled')) {
     return { Disabled: null };
   } else {
@@ -434,6 +440,8 @@ const submitManageSystemInfoOperation = async ({
 const cycleObtainStrategy = computed(() => {
   if (variantIs(station.configuration.cycleObtainStrategy, 'MintFromNativeToken')) {
     return `${i18n.global.t('pages.administration.cycle_obtain_strategy_mint_from_native_token')} "${station.configuration.cycleObtainStrategy.MintFromNativeToken.account_name}"`;
+  } else if (variantIs(station.configuration.cycleObtainStrategy, 'WithdrawFromCyclesLedger')) {
+    return `${i18n.global.t('pages.administration.cycle_obtain_strategy_withdraw_from_cycles_ledger')} "${station.configuration.cycleObtainStrategy.WithdrawFromCyclesLedger.account_name}"`;
   } else if (variantIs(station.configuration.cycleObtainStrategy, 'Disabled')) {
     return i18n.global.t('pages.administration.cycle_obtain_strategy_disabled');
   } else {

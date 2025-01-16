@@ -33,7 +33,7 @@ import { variantIs } from '~/utils/helper.utils.ts';
 import { requiredRule } from '~/utils/form.utils.ts';
 import { mdiCog } from '@mdi/js';
 import { CanisterMonitorModel } from '~/components/external-canisters/external-canisters.types.ts';
-import MintFromNativeToken from '~/components/settings/obtain-cycle/MintFromNativeToken.vue';
+import MintFromNativeToken from '~/components/settings/obtain-cycles/MintFromNativeToken.vue';
 import { ObtainCyclesStrategyEnum } from '~/components/external-canisters/monitor/monitor.types.ts';
 
 const props = withDefaults(
