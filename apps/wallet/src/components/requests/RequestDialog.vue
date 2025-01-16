@@ -1,7 +1,7 @@
 <template>
   <VDialog
     v-model="openModel"
-    :persistent="loading || approving"
+    :persistent="loading || working"
     transition="dialog-bottom-transition"
     :max-width="props.dialogMaxWidth.value"
   >
@@ -31,11 +31,12 @@
           approvers: data.additionalInfo.approvers,
           evaluationResult: data.additionalInfo.evaluation_result[0],
         }"
-        :loading="approving || loading"
+        :loading="working || loading"
         @closed="openModel = false"
         @opened="openModel = true"
         @approve="reason => onApproval(RequestApprovalStatusEnum.Approved, reason)"
         @reject="reason => onApproval(RequestApprovalStatusEnum.Rejected, reason)"
+        @cancel="reason => onCancel(reason)"
       >
         <template #top-actions>
           <VSwitch
@@ -46,13 +47,13 @@
             class="flex-0-1"
             :hide-details="true"
             color="primary"
-            :disabled="approving"
+            :disabled="working"
           />
-          <VBtn :disabled="approving" :icon="mdiLinkVariant" @click="copyRequestUrl" />
-          <VBtn :disabled="approving" :icon="mdiClose" @click="openModel = false" />
+          <VBtn :disabled="working" :icon="mdiLinkVariant" @click="copyRequestUrl" />
+          <VBtn :disabled="working" :icon="mdiClose" @click="openModel = false" />
         </template>
         <template v-if="loadNext" #bottom-actions>
-          <VBtn variant="plain" :disabled="approving" class="ma-0" @click="skip">
+          <VBtn variant="plain" :disabled="working" class="ma-0" @click="skip">
             {{ $t('terms.skip') }}
           </VBtn>
         </template>
@@ -122,13 +123,14 @@ const props = toRefs(input);
 const emit = defineEmits<{
   (event: 'update:open', payload: boolean): void;
   (event: 'approved'): void;
+  (event: 'cancelled'): void;
   (event: 'closed'): void;
   (event: 'opened'): void;
   (event: 'request-changed', payload: UUID): void;
 }>();
 const currentRequestId = ref<UUID | null>(props.requestId.value);
 const preloadedData = ref<DataType | null>(null);
-const approving = ref(false);
+const working = ref(false);
 const loading = ref(false);
 const skippedRequestIds = ref<UUID[]>([]);
 
@@ -199,7 +201,7 @@ const loadRequest = async (): Promise<DataType> => {
 };
 
 const skip = async (): Promise<void> => {
-  approving.value = true;
+  working.value = true;
   skippedRequestIds.value.push(currentRequestId.value!);
 
   preloadedData.value = await loadNextRequest();
@@ -211,7 +213,7 @@ const skip = async (): Promise<void> => {
     currentRequestId.value = null;
   }
 
-  approving.value = false;
+  working.value = false;
 };
 
 const onRequestLoaded = (data: Awaited<ReturnType<typeof loadRequest>>): void => {
@@ -240,7 +242,7 @@ const onApproval = async (decision: RequestApprovalStatusEnum, reason?: string):
     return;
   }
 
-  approving.value = true;
+  working.value = true;
 
   return station.service
     .submitRequestApproval({
@@ -279,7 +281,40 @@ const onApproval = async (decision: RequestApprovalStatusEnum, reason?: string):
       });
     })
     .finally(() => {
-      approving.value = false;
+      working.value = false;
+    });
+};
+
+const onCancel = async (reason?: string): Promise<void> => {
+  if (currentRequestId.value === null) {
+    return;
+  }
+
+  working.value = true;
+
+  return station.service
+    .cancelRequest({
+      request_id: currentRequestId.value,
+      reason: reason && reason.length ? [reason] : [],
+    })
+    .then(async () => {
+      app.sendNotification({
+        type: 'success',
+        message: i18n.t('app.action_save_success'),
+      });
+      emit('cancelled');
+      openModel.value = false;
+    })
+    .catch(err => {
+      logger.error(`Failed to cancel request:`, err);
+
+      app.sendNotification({
+        type: 'error',
+        message: i18n.t('app.action_save_failed'),
+      });
+    })
+    .finally(() => {
+      working.value = false;
     });
 };
 

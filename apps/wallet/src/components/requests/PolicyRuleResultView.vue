@@ -180,11 +180,13 @@ function getApprovalSummary(approverIds: string[], status: EvaluationStatus): st
       n: approvals,
       m: rejections,
     });
-  } else {
+  } else if (variantIs(status, 'Pending')) {
     append = i18n.t('requests.evaluation.approval_summary_pending', {
       n: approvals,
       m: rejections,
     });
+  } else {
+    unreachable(status);
   }
 
   return append;

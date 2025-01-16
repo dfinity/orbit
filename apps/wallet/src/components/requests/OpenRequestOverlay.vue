@@ -4,6 +4,7 @@
     v-model:open="open"
     :request-id="requestId"
     @approved="open = false"
+    @cancelled="open = false"
     @request-changed="updateRequestId"
   />
 </template>
