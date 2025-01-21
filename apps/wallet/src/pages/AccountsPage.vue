@@ -65,7 +65,7 @@
             <template #item.name="{ item: account }">
               {{ account.name }}
 
-              <VTooltip v-if="account.id == sourceCylceAccount" location="bottom">
+              <VTooltip v-if="account.id == sourceCycleAccount" location="bottom">
                 <template #activator="{ props: tooltipProps }">
                   <VIcon :icon="mdiCashSync" class="ml-2 pb-1" v-bind="tooltipProps"></VIcon>
                 </template>
@@ -141,7 +141,7 @@ const headers = computed<TableHeader[]>(() => {
   ];
 });
 
-const sourceCylceAccount = ref<UUID | undefined>();
+const sourceCycleAccount = ref<UUID | undefined>();
 
 let useVerifiedCall = false;
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
@@ -174,7 +174,10 @@ onMounted(async () => {
       const systemInfo = (await station.service.systemInfo()).system;
 
       if (variantIs(systemInfo.cycle_obtain_strategy, 'MintFromNativeToken')) {
-        sourceCylceAccount.value = systemInfo.cycle_obtain_strategy.MintFromNativeToken.account_id;
+        sourceCycleAccount.value = systemInfo.cycle_obtain_strategy.MintFromNativeToken.account_id;
+      } else if (variantIs(systemInfo.cycle_obtain_strategy, 'WithdrawFromCyclesLedger')) {
+        sourceCycleAccount.value =
+          systemInfo.cycle_obtain_strategy.WithdrawFromCyclesLedger.account_id;
       } else if (variantIs(systemInfo.cycle_obtain_strategy, 'Disabled')) {
         // do nothing
       } else {

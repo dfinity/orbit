@@ -219,7 +219,7 @@ impl RequestApprovalSummary {
     /// minimum approvals required.
     ///
     /// If the request does not yet have enough approvals to meet the minimum approvals required but has
-    /// enough uncasted approvals that could be casted to meet the minimum approvals required, then the evaluation
+    /// enough uncast approvals that could be cast to meet the minimum approvals required, then the evaluation
     /// is kept in the `Pending` state.
     fn evaluate(&self, min_approved: usize) -> EvaluationStatus {
         let min_approved = cmp::min(min_approved, self.total_possible_approvers);
