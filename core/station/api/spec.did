@@ -2558,14 +2558,6 @@ type MeResult = variant {
   Err : Error;
 };
 
-// The admin that is created in the station during the init process.
-type AdminInitInput = record {
-  // The name of the user.
-  name : text;
-  // The identity of the admin.
-  identity : principal;
-};
-
 // An input type for configuring the upgrader canister.
 type SystemUpgraderInput = variant {
   // An existing upgrader canister.
@@ -2606,23 +2598,80 @@ type InitAssetInput = record {
   metadata : vec AssetMetadata;
 };
 
+// The input type for creating a user group when initializing the canister for the first time.
+type InitUserGroupInput = record {
+  // The id of the user group, if not provided a new UUID will be generated.
+  id : opt UUID;
+  // The name of the user group, must be unique.
+  name : text;
+};
+
+// The input type for adding identities to a user.
+type UserIdentityInput = record {
+  // The identity of the user.
+  identity : principal;
+};
+
+// The users to create when initializing the canister for the first time.
+type InitUserInput = record {
+  // The id of the user, if not provided a new UUID will be generated.
+  id : opt UUID;
+  // The name of the user.
+  name : text;
+  // The identities of the user.
+  identities : vec UserIdentityInput;
+  // The user groups to associate with the user (optional).
+  groups : opt vec UUID;
+  // The status of the user (e.g. `Active`).
+  //
+  // If not provided the default status is `Active` when there is at least
+  // one identity ot `Inactive` otherwise.
+  status : opt UserStatus;
+};
+
+// The init type for initializing the permissions when first creating the canister.
+type InitPermissionInput = record {
+  // The resource that the permission is for.
+  resource : Resource;
+  // The allow rules for who can access the resource.
+  allow : Allow;
+};
+
+// The init type for adding a request approval policies when initializing the canister for the first time.
+type InitRequestPolicyInput = record {
+  // The request specifier that identifies for what operation this policy is for (e.g. "transfer").
+  specifier : RequestSpecifier;
+  // The rule to use for the request approval evaluation (e.g. "quorum").
+  rule : RequestPolicyRule;
+};
+
 // The init configuration for the canister.
 //
 // Only used when installing the canister for the first time.
 type SystemInit = record {
   // The name of the station.
   name : text;
-  // The list of admin principals to be associated with the station.
-  admins : vec AdminInitInput;
-  // Quorum of admins for initial policies.
-  quorum : opt nat16;
   // The upgrader configuration.
   upgrader : SystemUpgraderInput;
-  // An optional additional controller of the station and upgrader canisters.
+  // The list of users to be associated with the station.
+  users : vec InitUserInput;
+  // The list of user groups to be associated with the station (optional).
+  user_groups : opt vec InitUserGroupInput;
+  // The list of permissions to be associated with the station (optional).
+  //
+  // If not provided the default permissions will be used enabling any authenticated user to access
+  // and create requests for the station.
+  permissions : opt vec InitPermissionInput;
+  // The list of request approval policies to be associated with the station (optional).
+  //
+  // If not provided the default request approval policies will be used setting a quorum of 51% of all users
+  // to approve a request before it can be executed.
+  request_policies : opt vec InitRequestPolicyInput;
+  // An additional controller of the station and upgrader canisters (optional).
   fallback_controller : opt principal;
-  // Optional initial accounts to create.
+  // Initial accounts to create (optional).
   accounts : opt vec InitAccountInput;
-  // Optional initial assets to create.
+  // Initial assets to create (optional).
   assets : opt vec InitAssetInput;
 };
 
