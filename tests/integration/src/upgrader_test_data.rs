@@ -312,8 +312,7 @@ impl<'a> UpgraderDataGenerator<'a> {
                 OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
             assert!(date_self.ge(&date_lower) && date_self.le(&date_higher));
             // this is required so that the deep comparison of state.recovery_requests below is not affected by the time difference
-            state.recovery_requests[i].submitted_at =
-                self.recovery_requests[i].submitted_at.clone();
+            state.recovery_requests[i].submitted_at.clone_from(&self.recovery_requests[i].submitted_at)
         }
         assert_eq!(state.recovery_requests, self.recovery_requests);
         assert_eq!(state.recovery_status, self.recovery_status);
