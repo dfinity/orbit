@@ -304,13 +304,16 @@ impl<'a> UpgraderDataGenerator<'a> {
         assert_eq!(state.assets, self.assets);
         // check that the recovery requests are within a millisecond of the original submission time
         for i in 0..state.recovery_requests.len() {
-            let date_state = OffsetDateTime::parse(&state.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
+            let date_state =
+                OffsetDateTime::parse(&state.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
             let date_lower = date_state - Duration::milliseconds(1);
             let date_higher = date_state + Duration::milliseconds(1);
-            let date_self = OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339).unwrap() ;
+            let date_self =
+                OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
             assert!(date_self.ge(&date_lower) && date_self.le(&date_higher));
             // this is required so that the deep comparison of state.recovery_requests below is not affected by the time difference
-            state.recovery_requests[i].submitted_at = self.recovery_requests[i].submitted_at.clone();
+            state.recovery_requests[i].submitted_at =
+                self.recovery_requests[i].submitted_at.clone();
         }
         assert_eq!(state.recovery_requests, self.recovery_requests);
         assert_eq!(state.recovery_status, self.recovery_status);
@@ -328,7 +331,10 @@ impl<'a> UpgraderDataGenerator<'a> {
         for (i, log) in logs.iter().enumerate() {
             let log_time = OffsetDateTime::parse(&log.time, &Rfc3339).unwrap();
             let self_log_time = OffsetDateTime::parse(&self.logs[i].time, &Rfc3339).unwrap();
-            assert!(log_time + Duration::milliseconds(1) >= self_log_time && log_time - Duration::milliseconds(1) <= self_log_time);
+            assert!(
+                log_time + Duration::milliseconds(1) >= self_log_time
+                    && log_time - Duration::milliseconds(1) <= self_log_time
+            );
             assert_eq!(log.entry_type, self.logs[i].entry_type);
             // we made a breaking change to the log message format
             if log.message != self.logs[i].message {
@@ -338,9 +344,7 @@ impl<'a> UpgraderDataGenerator<'a> {
                         || log
                             .message
                             .contains("Disaster recovery successfully initiated to")
-                        || log
-                            .message
-                            .contains("Set committee of station-admin")
+                        || log.message.contains("Set committee of station-admin")
                 );
                 assert!(
                     self.logs[i]
@@ -349,9 +353,7 @@ impl<'a> UpgraderDataGenerator<'a> {
                         || self.logs[i]
                             .message
                             .contains("Disaster recovery successfully initiated with operation")
-                        || log
-                        .message
-                        .contains("Set committee of station-admin")
+                        || log.message.contains("Set committee of station-admin")
                 );
             } else {
                 assert_eq!(log.data_json, self.logs[i].data_json);
