@@ -80,6 +80,15 @@ export interface AddAssetOperationInput {
   'blockchain' : string,
   'symbol' : AssetSymbol,
 }
+export interface AddNamedRuleOperation {
+  'named_rule' : [] | [NamedRule],
+  'input' : AddNamedRuleOperationInput,
+}
+export interface AddNamedRuleOperationInput {
+  'name' : string,
+  'rule' : RequestPolicyRule,
+  'description' : [] | [string],
+}
 export interface AddRequestPolicyOperation {
   'input' : AddRequestPolicyOperationInput,
   'policy_id' : [] | [UUID],
@@ -373,6 +382,15 @@ export interface EditAssetOperationInput {
   'asset_id' : UUID,
   'symbol' : [] | [AssetSymbol],
 }
+export interface EditNamedRuleOperation {
+  'input' : EditNamedRuleOperationInput,
+}
+export interface EditNamedRuleOperationInput {
+  'name' : [] | [string],
+  'rule' : [] | [RequestPolicyRule],
+  'description' : [] | [string],
+  'named_rule_id' : UUID,
+}
 export interface EditPermissionOperation {
   'input' : EditPermissionOperationInput,
 }
@@ -625,6 +643,14 @@ export type GetExternalCanisterResult = {
     }
   } |
   { 'Err' : Error };
+export interface GetNamedRuleInput { 'named_rule_id' : UUID }
+export type GetNamedRuleResult = {
+    'Ok' : {
+      'privileges' : NamedRuleCallerPrivileges,
+      'named_rule' : NamedRule,
+    }
+  } |
+  { 'Err' : Error };
 export interface GetNextApprovableRequestInput {
   'sort_by' : [] | [ListRequestsSortBy],
   'excluded_request_ids' : Array<UUID>,
@@ -775,6 +801,16 @@ export type ListExternalCanistersResult = {
   } |
   { 'Err' : Error };
 export type ListExternalCanistersSortInput = { 'Name' : SortByDirection };
+export interface ListNamedRulesInput { 'paginate' : [] | [PaginationInput] }
+export type ListNamedRulesResult = {
+    'Ok' : {
+      'total' : bigint,
+      'privileges' : Array<NamedRuleCallerPrivileges>,
+      'named_rules' : Array<NamedRule>,
+      'next_offset' : [] | [bigint],
+    }
+  } |
+  { 'Err' : Error };
 export interface ListNotificationsInput {
   'status' : [] | [NotificationStatus],
   'to_dt' : [] | [TimestampRFC3339],
@@ -829,6 +865,7 @@ export type ListRequestsOperationType = { 'RemoveAsset' : null } |
   { 'EditPermission' : null } |
   { 'SnapshotExternalCanister' : [] | [Principal] } |
   { 'PruneExternalCanister' : [] | [Principal] } |
+  { 'EditNamedRule' : null } |
   { 'ConfigureExternalCanister' : [] | [Principal] } |
   { 'ChangeExternalCanister' : [] | [Principal] } |
   { 'MonitorExternalCanister' : [] | [Principal] } |
@@ -850,8 +887,10 @@ export type ListRequestsOperationType = { 'RemoveAsset' : null } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'AddRequestPolicy' : null } |
+  { 'RemoveNamedRule' : null } |
   { 'RemoveUserGroup' : null } |
   { 'CallExternalCanister' : [] | [Principal] } |
+  { 'AddNamedRule' : null } |
   { 'RestoreExternalCanister' : [] | [Principal] } |
   { 'AddAccount' : null };
 export type ListRequestsResult = {
@@ -941,6 +980,17 @@ export interface MonitoringExternalCanisterEstimatedRuntimeInput {
   'fallback_fund_cycles' : bigint,
   'max_runtime_cycles_fund' : bigint,
 }
+export interface NamedRule {
+  'id' : UUID,
+  'name' : string,
+  'rule' : RequestPolicyRule,
+  'description' : [] | [string],
+}
+export interface NamedRuleCallerPrivileges {
+  'id' : UUID,
+  'can_delete' : boolean,
+  'can_edit' : boolean,
+}
 export interface Network { 'id' : NetworkId, 'name' : string }
 export type NetworkId = string;
 export interface Notification {
@@ -1017,6 +1067,10 @@ export interface RemoveAddressBookEntryOperationInput {
 }
 export interface RemoveAssetOperation { 'input' : RemoveAssetOperationInput }
 export interface RemoveAssetOperationInput { 'asset_id' : UUID }
+export interface RemoveNamedRuleOperation {
+  'input' : RemoveNamedRuleOperationInput,
+}
+export interface RemoveNamedRuleOperationInput { 'named_rule_id' : UUID }
 export interface RemoveRequestPolicyOperation {
   'input' : RemoveRequestPolicyOperationInput,
 }
@@ -1068,6 +1122,7 @@ export type RequestOperation = { 'RemoveAsset' : RemoveAssetOperation } |
   { 'EditPermission' : EditPermissionOperation } |
   { 'SnapshotExternalCanister' : SnapshotExternalCanisterOperation } |
   { 'PruneExternalCanister' : PruneExternalCanisterOperation } |
+  { 'EditNamedRule' : EditNamedRuleOperation } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperation } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperation } |
   { 'MonitorExternalCanister' : MonitorExternalCanisterOperation } |
@@ -1089,8 +1144,10 @@ export type RequestOperation = { 'RemoveAsset' : RemoveAssetOperation } |
   { 'EditAccount' : EditAccountOperation } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperation } |
   { 'AddRequestPolicy' : AddRequestPolicyOperation } |
+  { 'RemoveNamedRule' : RemoveNamedRuleOperation } |
   { 'RemoveUserGroup' : RemoveUserGroupOperation } |
   { 'CallExternalCanister' : CallExternalCanisterOperation } |
+  { 'AddNamedRule' : AddNamedRuleOperation } |
   { 'RestoreExternalCanister' : RestoreExternalCanisterOperation } |
   { 'AddAccount' : AddAccountOperation };
 export type RequestOperationInput = {
@@ -1100,6 +1157,7 @@ export type RequestOperationInput = {
   { 'EditPermission' : EditPermissionOperationInput } |
   { 'SnapshotExternalCanister' : SnapshotExternalCanisterOperationInput } |
   { 'PruneExternalCanister' : PruneExternalCanisterOperationInput } |
+  { 'EditNamedRule' : EditNamedRuleOperationInput } |
   { 'ConfigureExternalCanister' : ConfigureExternalCanisterOperationInput } |
   { 'ChangeExternalCanister' : ChangeExternalCanisterOperationInput } |
   { 'MonitorExternalCanister' : MonitorExternalCanisterOperationInput } |
@@ -1121,8 +1179,10 @@ export type RequestOperationInput = {
   { 'EditAccount' : EditAccountOperationInput } |
   { 'AddAddressBookEntry' : AddAddressBookEntryOperationInput } |
   { 'AddRequestPolicy' : AddRequestPolicyOperationInput } |
+  { 'RemoveNamedRule' : RemoveNamedRuleOperationInput } |
   { 'RemoveUserGroup' : RemoveUserGroupOperationInput } |
   { 'CallExternalCanister' : CallExternalCanisterOperationInput } |
+  { 'AddNamedRule' : AddNamedRuleOperationInput } |
   { 'RestoreExternalCanister' : RestoreExternalCanisterOperationInput } |
   { 'AddAccount' : AddAccountOperationInput };
 export type RequestOperationType = { 'RemoveAsset' : null } |
@@ -1130,6 +1190,7 @@ export type RequestOperationType = { 'RemoveAsset' : null } |
   { 'EditPermission' : null } |
   { 'SnapshotExternalCanister' : null } |
   { 'PruneExternalCanister' : null } |
+  { 'EditNamedRule' : null } |
   { 'ConfigureExternalCanister' : null } |
   { 'ChangeExternalCanister' : null } |
   { 'MonitorExternalCanister' : null } |
@@ -1151,8 +1212,10 @@ export type RequestOperationType = { 'RemoveAsset' : null } |
   { 'EditAccount' : null } |
   { 'AddAddressBookEntry' : null } |
   { 'AddRequestPolicy' : null } |
+  { 'RemoveNamedRule' : null } |
   { 'RemoveUserGroup' : null } |
   { 'CallExternalCanister' : null } |
+  { 'AddNamedRule' : null } |
   { 'RestoreExternalCanister' : null } |
   { 'AddAccount' : null };
 export interface RequestPolicy {
@@ -1172,7 +1235,8 @@ export type RequestPolicyRule = { 'Not' : RequestPolicyRule } |
   { 'AutoApproved' : null } |
   { 'AllOf' : Array<RequestPolicyRule> } |
   { 'AnyOf' : Array<RequestPolicyRule> } |
-  { 'AllowListedByMetadata' : AddressBookMetadata };
+  { 'AllowListedByMetadata' : AddressBookMetadata } |
+  { 'NamedRule' : UUID };
 export type RequestPolicyRuleInput = { 'Set' : RequestPolicyRule } |
   { 'Remove' : null };
 export interface RequestPolicyRuleResult {
@@ -1184,6 +1248,7 @@ export type RequestResourceAction = { 'List' : null } |
 export type RequestSpecifier = { 'RemoveAsset' : ResourceIds } |
   { 'AddUserGroup' : null } |
   { 'EditPermission' : ResourceSpecifier } |
+  { 'EditNamedRule' : ResourceIds } |
   { 'ChangeExternalCanister' : ExternalCanisterId } |
   { 'AddUser' : null } |
   { 'EditAsset' : ResourceIds } |
@@ -1203,8 +1268,10 @@ export type RequestSpecifier = { 'RemoveAsset' : ResourceIds } |
   { 'EditAccount' : ResourceIds } |
   { 'AddAddressBookEntry' : null } |
   { 'AddRequestPolicy' : null } |
+  { 'RemoveNamedRule' : ResourceIds } |
   { 'RemoveUserGroup' : ResourceIds } |
   { 'CallExternalCanister' : CallExternalCanisterResourceTarget } |
+  { 'AddNamedRule' : null } |
   { 'AddAccount' : null };
 export type RequestStatus = { 'Failed' : { 'reason' : [] | [string] } } |
   { 'Approved' : null } |
@@ -1230,6 +1297,7 @@ export type Resource = { 'Request' : RequestResourceAction } |
   { 'Account' : AccountResourceAction } |
   { 'AddressBook' : ResourceAction } |
   { 'Asset' : ResourceAction } |
+  { 'NamedRule' : ResourceAction } |
   { 'UserGroup' : ResourceAction } |
   { 'Permission' : PermissionResourceAction } |
   { 'RequestPolicy' : ResourceAction };
@@ -1472,6 +1540,7 @@ export interface _SERVICE {
     [GetExternalCanisterFiltersInput],
     GetExternalCanisterFiltersResult
   >,
+  'get_named_rule' : ActorMethod<[GetNamedRuleInput], GetNamedRuleResult>,
   'get_next_approvable_request' : ActorMethod<
     [GetNextApprovableRequestInput],
     GetNextApprovableRequestResult
@@ -1501,6 +1570,7 @@ export interface _SERVICE {
     [ListExternalCanistersInput],
     ListExternalCanistersResult
   >,
+  'list_named_rules' : ActorMethod<[ListNamedRulesInput], ListNamedRulesResult>,
   'list_notifications' : ActorMethod<
     [ListNotificationsInput],
     ListNotificationsResult

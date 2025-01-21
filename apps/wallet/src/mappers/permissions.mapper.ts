@@ -47,6 +47,10 @@ export const fromResourceToResourceEnum = (resource: Resource): ResourceTypeEnum
     return ResourceTypeEnum.Asset;
   }
 
+  if (variantIs(resource, 'NamedRule')) {
+    return ResourceTypeEnum.NamedRule;
+  }
+
   return unreachable(resource);
 };
 
