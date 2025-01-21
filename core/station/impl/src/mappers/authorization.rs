@@ -158,6 +158,16 @@ impl From<&station_api::GetAssetInput> for Resource {
     }
 }
 
+impl From<&station_api::GetNamedRuleInput> for Resource {
+    fn from(input: &station_api::GetNamedRuleInput) -> Self {
+        Resource::NamedRule(ResourceAction::Read(ResourceId::Id(
+            *HelperMapper::to_uuid(input.named_rule_id.to_owned())
+                .expect("Invalid named rule id")
+                .as_bytes(),
+        )))
+    }
+}
+
 impl From<&station_api::SubmitRequestApprovalInput> for Resource {
     fn from(input: &station_api::SubmitRequestApprovalInput) -> Self {
         Resource::Request(RequestResourceAction::Read(ResourceId::Id(
@@ -344,6 +354,21 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 Resource::Asset(ResourceAction::Delete(ResourceId::Id(
                     *HelperMapper::to_uuid(input.asset_id.to_owned())
                         .expect("Invalid asset id")
+                        .as_bytes(),
+                )))
+            }
+            RequestOperationInput::AddNamedRule(_) => Resource::NamedRule(ResourceAction::Create),
+            RequestOperationInput::EditNamedRule(input) => {
+                Resource::NamedRule(ResourceAction::Update(ResourceId::Id(
+                    *HelperMapper::to_uuid(input.named_rule_id.to_owned())
+                        .expect("Invalid named rule id")
+                        .as_bytes(),
+                )))
+            }
+            RequestOperationInput::RemoveNamedRule(input) => {
+                Resource::NamedRule(ResourceAction::Delete(ResourceId::Id(
+                    *HelperMapper::to_uuid(input.named_rule_id.to_owned())
+                        .expect("Invalid named rule id")
                         .as_bytes(),
                 )))
             }

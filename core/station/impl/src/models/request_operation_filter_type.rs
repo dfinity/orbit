@@ -35,6 +35,9 @@ pub enum RequestOperationFilterType {
     AddAsset,
     EditAsset,
     RemoveAsset,
+    AddNamedRule,
+    EditNamedRule,
+    RemoveNamedRule,
 }
 
 impl From<RequestOperation> for RequestOperationFilterType {
@@ -102,6 +105,9 @@ impl From<RequestOperation> for RequestOperationFilterType {
             RequestOperation::AddAsset(_) => RequestOperationFilterType::AddAsset,
             RequestOperation::EditAsset(_) => RequestOperationFilterType::EditAsset,
             RequestOperation::RemoveAsset(_) => RequestOperationFilterType::RemoveAsset,
+            RequestOperation::AddNamedRule(_) => RequestOperationFilterType::AddNamedRule,
+            RequestOperation::EditNamedRule(_) => RequestOperationFilterType::EditNamedRule,
+            RequestOperation::RemoveNamedRule(_) => RequestOperationFilterType::RemoveNamedRule,
         }
     }
 }

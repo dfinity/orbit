@@ -22,6 +22,7 @@ pub enum UniqueIndexKey {
         String, // Blockchain
         String, // Symbol
     ),
+    NamedRuleName(String),
 }
 
 impl AddressBookEntry {

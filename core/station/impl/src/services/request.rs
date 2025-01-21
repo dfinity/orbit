@@ -1452,6 +1452,14 @@ mod tests {
         assert_eq!(approvable_requests.items.len(), 1);
         assert_eq!(approvable_requests.items[0].id, approvable_request.id);
     }
+
+    #[tokio::test]
+    async fn test_inherited_upgrade_resource() {
+        // step 1 create Upgrade policy
+        // step 2 create SetDisasterRecovery policy
+        // step 3 create SetDisasterRecovery request
+        // step 4 observe approval evaluation
+    }
 }
 
 #[cfg(feature = "canbench")]

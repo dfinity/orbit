@@ -2,13 +2,16 @@ use super::{
     request_specifier::{
         Match, RequestHasMetadata, UserInvolvedInPolicyRuleForRequestResource, UserSpecifier,
     },
-    EvaluateError, EvaluationStatus, MetadataItem, Percentage, Request, RequestApprovalStatus,
-    RequestId, RequestOperation, UserId, UserStatus,
+    EvaluateError, EvaluationStatus, MetadataItem, NamedRuleId, NamedRuleKey, Percentage, Request,
+    RequestApprovalStatus, RequestId, RequestOperation, UserId, UserStatus,
 };
 use crate::{
     core::{ic_cdk::api::print, utils::calculate_minimum_threshold},
     errors::{MatchError, ValidationError},
-    repositories::{UserWhereClause, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, USER_REPOSITORY},
+    repositories::{
+        UserWhereClause, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, NAMED_RULE_REPOSITORY,
+        USER_REPOSITORY,
+    },
     services::ACCOUNT_SERVICE,
 };
 use orbit_essentials::storable;
@@ -33,6 +36,8 @@ pub enum RequestPolicyRule {
     Or(Vec<RequestPolicyRule>),
     And(Vec<RequestPolicyRule>),
     Not(Box<RequestPolicyRule>),
+    // Named rule
+    NamedRule(NamedRuleId),
 }
 
 impl ModelValidator<ValidationError> for RequestPolicyRule {
@@ -52,6 +57,8 @@ impl ModelValidator<ValidationError> for RequestPolicyRule {
                 Ok(())
             }
             RequestPolicyRule::Not(rule) => rule.validate(),
+
+            RequestPolicyRule::NamedRule(_) => Ok(()),
         }
     }
 }
@@ -517,6 +524,19 @@ impl
                     },
                     evaluated_rule: EvaluatedRequestPolicyRule::Not(Box::new(evaluation_result)),
                 })
+            }
+
+            RequestPolicyRule::NamedRule(rule_id) => {
+                let named_rule = NAMED_RULE_REPOSITORY
+                    .get(&NamedRuleKey { id: *rule_id })
+                    .ok_or_else(|| {
+                        EvaluateError::UnexpectedError(anyhow::anyhow!(
+                            "failed to get named rule with id {}",
+                            Uuid::from_bytes(*rule_id).hyphenated()
+                        ))
+                    })?;
+
+                self.evaluate((request.to_owned(), Arc::new(named_rule.rule.to_owned())))
             }
         }
     }
