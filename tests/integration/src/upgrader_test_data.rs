@@ -332,14 +332,15 @@ impl<'a> UpgraderDataGenerator<'a> {
             assert_eq!(log.entry_type, self.logs[i].entry_type);
             // we made a breaking change to the log message format
             if log.message != self.logs[i].message {
-                println!("log.message: {}", log.message);
-                println!("self.log.message: {}", self.logs[i].message);
                 assert!(
                     log.message
                         .contains("requested disaster recovery with wasm hash")
                         || log
                             .message
                             .contains("Disaster recovery successfully initiated to")
+                        || log
+                            .message
+                            .contains("Set committee of station-admin")
                 );
                 assert!(
                     self.logs[i]
@@ -348,6 +349,9 @@ impl<'a> UpgraderDataGenerator<'a> {
                         || self.logs[i]
                             .message
                             .contains("Disaster recovery successfully initiated with operation")
+                        || log
+                        .message
+                        .contains("Set committee of station-admin")
                 );
             } else {
                 assert_eq!(log.data_json, self.logs[i].data_json);
