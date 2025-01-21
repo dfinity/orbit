@@ -911,7 +911,7 @@ export default {
       cycle_obtain_strategy_disabled: 'AVISO: Recarga de saldo de ciclos da carteira desativada.',
       cycle_obtain_strategy_mint_from_native_token: 'Recarregar a partir da conta de ICP',
       cycle_obtain_strategy_withdraw_from_cycles_ledger:
-        'Retrait du compte du grand livre des cycles',
+        'Recarregar a partir da conta no livro global de contabilidade de ciclos.',
       cycle_balances: 'Saldo de ciclos',
     },
     user_groups: {
