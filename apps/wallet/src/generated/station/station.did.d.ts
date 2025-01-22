@@ -1345,7 +1345,12 @@ export interface SystemUpgradeOperationInput {
 export type SystemUpgradeTarget = { 'UpgradeUpgrader' : null } |
   { 'UpgradeStation' : null };
 export type SystemUpgraderInput = { 'Id' : Principal } |
-  { 'WasmModule' : Uint8Array | number[] };
+  {
+    'Deploy' : {
+      'initial_cycles' : bigint,
+      'wasm_module' : Uint8Array | number[],
+    }
+  };
 export type TimestampRFC3339 = string;
 export interface Transfer {
   'id' : UUID,
