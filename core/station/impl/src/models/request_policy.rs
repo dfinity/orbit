@@ -64,9 +64,17 @@ impl ModelValidator<RequestPolicyError> for RequestPolicy {
 #[cfg(test)]
 pub mod request_policy_test_utils {
     use super::RequestPolicy;
-    use crate::models::{
-        request_policy_rule::RequestPolicyRule, request_specifier::RequestSpecifier,
+    use crate::{
+        core::CallContext,
+        models::{
+            request_policy_rule::RequestPolicyRule, request_specifier::RequestSpecifier,
+            AddNamedRuleOperationInput, AddRequestPolicyOperationInput, AddUserOperationInput,
+            ADMIN_GROUP_ID,
+        },
+        services::{NAMED_RULE_SERVICE, REQUEST_POLICY_SERVICE, REQUEST_SERVICE, USER_SERVICE},
     };
+    use candid::Principal;
+    use station_api::CreateRequestInput;
     use uuid::Uuid;
 
     pub fn mock_request_policy() -> RequestPolicy {
@@ -75,5 +83,71 @@ pub mod request_policy_test_utils {
             specifier: RequestSpecifier::AddAccount,
             rule: RequestPolicyRule::AutoApproved,
         }
+    }
+
+    #[tokio::test]
+    async fn test_named_rule_traversal() {
+        let named_rule_1 = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                description: None,
+                name: "auto_approver".to_string(),
+                rule: RequestPolicyRule::AutoApproved,
+            })
+            .expect("Failed to create named rule");
+
+        let named_rule_2 = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                description: None,
+                name: "test".to_string(),
+                rule: RequestPolicyRule::Or(vec![
+                    RequestPolicyRule::NamedRule(named_rule_1.id),
+                    RequestPolicyRule::AllowListed,
+                ]),
+            })
+            .expect("Failed to create named rule");
+
+        REQUEST_POLICY_SERVICE
+            .add_request_policy(AddRequestPolicyOperationInput {
+                specifier: RequestSpecifier::AddUser,
+                rule: RequestPolicyRule::NamedRule(named_rule_2.id),
+            })
+            .expect("Failed to add request policy");
+
+        let user = USER_SERVICE
+            .add_user(AddUserOperationInput {
+                groups: vec![*ADMIN_GROUP_ID],
+                identities: vec![Principal::from_slice(&[1; 29])],
+                name: "admin".to_string(),
+                status: crate::models::UserStatus::Active,
+            })
+            .expect("Failed to add user");
+
+        let ctx = CallContext::new(user.identities[0]);
+
+        let request = REQUEST_SERVICE
+            .create_request(
+                CreateRequestInput {
+                    operation: station_api::RequestOperationInput::AddUser(
+                        station_api::AddUserOperationInput {
+                            groups: vec![],
+                            identities: vec![],
+                            name: "test".to_string(),
+                            status: station_api::UserStatusDTO::Active,
+                        },
+                    ),
+                    title: None,
+                    summary: None,
+                    execution_plan: None,
+                    expiration_dt: None,
+                },
+                &ctx,
+            )
+            .await
+            .expect("Failed to create request");
+
+        assert!(matches!(
+            request.status,
+            crate::models::RequestStatus::Approved
+        ));
     }
 }
