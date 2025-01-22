@@ -1633,6 +1633,13 @@ impl From<station_api::CycleObtainStrategyDTO> for CycleObtainStrategy {
                         .as_bytes(),
                 }
             }
+            station_api::CycleObtainStrategyDTO::WithdrawFromCyclesLedger {
+                account_id, ..
+            } => CycleObtainStrategy::WithdrawFromCyclesLedger {
+                account_id: *HelperMapper::to_uuid(account_id)
+                    .expect("Invalid account id")
+                    .as_bytes(),
+            },
         }
     }
 }
@@ -1643,6 +1650,14 @@ impl From<CycleObtainStrategy> for station_api::CycleObtainStrategyDTO {
             CycleObtainStrategy::Disabled => station_api::CycleObtainStrategyDTO::Disabled,
             CycleObtainStrategy::MintFromNativeToken { account_id } => {
                 station_api::CycleObtainStrategyDTO::MintFromNativeToken {
+                    account_name: ACCOUNT_REPOSITORY
+                        .get(&AccountKey { id: account_id })
+                        .map(|a| a.name),
+                    account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
+                }
+            }
+            CycleObtainStrategy::WithdrawFromCyclesLedger { account_id } => {
+                station_api::CycleObtainStrategyDTO::WithdrawFromCyclesLedger {
                     account_name: ACCOUNT_REPOSITORY
                         .get(&AccountKey { id: account_id })
                         .map(|a| a.name),
@@ -1664,6 +1679,13 @@ impl From<station_api::CycleObtainStrategyInput> for CycleObtainStrategy {
                         .as_bytes(),
                 }
             }
+            station_api::CycleObtainStrategyInput::WithdrawFromCyclesLedger {
+                account_id, ..
+            } => CycleObtainStrategy::WithdrawFromCyclesLedger {
+                account_id: *HelperMapper::to_uuid(account_id)
+                    .expect("Invalid account id")
+                    .as_bytes(),
+            },
         }
     }
 }
@@ -1674,6 +1696,11 @@ impl From<CycleObtainStrategy> for station_api::CycleObtainStrategyInput {
             CycleObtainStrategy::Disabled => station_api::CycleObtainStrategyInput::Disabled,
             CycleObtainStrategy::MintFromNativeToken { account_id } => {
                 station_api::CycleObtainStrategyInput::MintFromNativeToken {
+                    account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
+                }
+            }
+            CycleObtainStrategy::WithdrawFromCyclesLedger { account_id } => {
+                station_api::CycleObtainStrategyInput::WithdrawFromCyclesLedger {
                     account_id: Uuid::from_bytes(account_id).hyphenated().to_string(),
                 }
             }

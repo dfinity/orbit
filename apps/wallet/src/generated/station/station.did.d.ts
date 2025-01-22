@@ -323,9 +323,16 @@ export type CycleObtainStrategy = { 'Disabled' : null } |
       'account_id' : UUID,
       'account_name' : [] | [string],
     }
+  } |
+  {
+    'WithdrawFromCyclesLedger' : {
+      'account_id' : UUID,
+      'account_name' : [] | [string],
+    }
   };
 export type CycleObtainStrategyInput = { 'Disabled' : null } |
-  { 'MintFromNativeToken' : { 'account_id' : UUID } };
+  { 'MintFromNativeToken' : { 'account_id' : UUID } } |
+  { 'WithdrawFromCyclesLedger' : { 'account_id' : UUID } };
 export interface DefiniteCanisterSettings {
   'freezing_threshold' : bigint,
   'controllers' : Array<Principal>,
