@@ -286,10 +286,10 @@ fn deploy_user_station() {
         env.topology().get_fiduciary().unwrap()
     );
 
-    check_station_controllers(&env, newly_created_user_station, user_id);
+    check_station_deployment(&env, newly_created_user_station, user_id);
 }
 
-fn check_station_controllers(env: &PocketIc, station_id: Principal, user_id: Principal) {
+fn check_station_deployment(env: &PocketIc, station_id: Principal, user_id: Principal) {
     // first get the upgrader canister ID
     let system_info = get_system_info(env, user_id, station_id);
     let upgrader_id = system_info.upgrader_id;
@@ -632,7 +632,7 @@ fn deploy_user_station_to_different_subnet() {
     );
 
     await_station_healthy(&env, newly_created_user_station, user_id);
-    check_station_controllers(&env, newly_created_user_station, user_id);
+    check_station_deployment(&env, newly_created_user_station, user_id);
 }
 
 #[test]
