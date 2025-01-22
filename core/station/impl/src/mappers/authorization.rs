@@ -76,6 +76,8 @@ impl From<UserPrivilege> for Resource {
             ),
             UserPrivilege::AddAsset => Resource::Asset(ResourceAction::Create),
             UserPrivilege::ListAssets => Resource::Asset(ResourceAction::List),
+            UserPrivilege::ListNamedRules => Resource::NamedRule(ResourceAction::List),
+            UserPrivilege::AddNamedRule => Resource::NamedRule(ResourceAction::Create),
         }
     }
 }

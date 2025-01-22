@@ -2699,6 +2699,8 @@ type UserPrivilege = variant {
   CallAnyExternalCanister;
   ListAssets;
   AddAsset;
+  ListNamedRules;
+  AddNamedRule;
 };
 
 type MeResult = variant {

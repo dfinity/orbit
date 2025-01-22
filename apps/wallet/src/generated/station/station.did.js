@@ -1588,6 +1588,7 @@ export const idlFactory = ({ IDL }) => {
   const UserPrivilege = IDL.Variant({
     'AddUserGroup' : IDL.Null,
     'ListRequestPolicies' : IDL.Null,
+    'ListNamedRules' : IDL.Null,
     'ListPermissions' : IDL.Null,
     'ListUserGroups' : IDL.Null,
     'AddUser' : IDL.Null,
@@ -1605,6 +1606,7 @@ export const idlFactory = ({ IDL }) => {
     'ListRequests' : IDL.Null,
     'CallAnyExternalCanister' : IDL.Null,
     'SystemInfo' : IDL.Null,
+    'AddNamedRule' : IDL.Null,
     'Capabilities' : IDL.Null,
     'AddAccount' : IDL.Null,
   });

@@ -1485,6 +1485,7 @@ export interface UserGroupCallerPrivileges {
 }
 export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListRequestPolicies' : null } |
+  { 'ListNamedRules' : null } |
   { 'ListPermissions' : null } |
   { 'ListUserGroups' : null } |
   { 'AddUser' : null } |
@@ -1502,6 +1503,7 @@ export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListRequests' : null } |
   { 'CallAnyExternalCanister' : null } |
   { 'SystemInfo' : null } |
+  { 'AddNamedRule' : null } |
   { 'Capabilities' : null } |
   { 'AddAccount' : null };
 export type UserResourceAction = { 'List' : null } |
