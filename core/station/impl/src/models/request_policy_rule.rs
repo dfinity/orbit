@@ -6,7 +6,11 @@ use super::{
     RequestApprovalStatus, RequestId, RequestOperation, UserId, UserStatus,
 };
 use crate::{
-    core::{ic_cdk::api::print, utils::calculate_minimum_threshold},
+    core::{
+        ic_cdk::api::print,
+        utils::calculate_minimum_threshold,
+        validation::{EnsureIdExists, EnsureNamedRule},
+    },
     errors::{MatchError, ValidationError},
     repositories::{
         UserWhereClause, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, NAMED_RULE_REPOSITORY,
@@ -58,7 +62,9 @@ impl ModelValidator<ValidationError> for RequestPolicyRule {
             }
             RequestPolicyRule::Not(rule) => rule.validate(),
 
-            RequestPolicyRule::NamedRule(_) => Ok(()),
+            RequestPolicyRule::NamedRule(rule_id) => {
+                EnsureNamedRule::id_exists(rule_id).map_err(ValidationError::RecordValidationError)
+            }
         }
     }
 }

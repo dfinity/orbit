@@ -125,13 +125,6 @@ impl Repository<NamedRuleKey, NamedRule, VirtualMemory<Memory>> for NamedRuleRep
 
             let prev = m.borrow_mut().insert(key, value.clone());
 
-            // Update metrics when a user is upserted.
-            // USER_METRICS.with(|metrics| {
-            //     metrics
-            //         .iter()
-            //         .for_each(|metric| metric.borrow_mut().sum(&value, prev.as_ref()))
-            // });
-
             self.save_entry_indexes(&value, prev.as_ref());
 
             prev
@@ -143,15 +136,6 @@ impl Repository<NamedRuleKey, NamedRule, VirtualMemory<Memory>> for NamedRuleRep
             CACHE.with(|cache| cache.borrow_mut().remove(&key.id));
 
             let prev = m.borrow_mut().remove(key);
-
-            // Update metrics when a named rule is removed.
-            // if let Some(prev) = &prev {
-            //     USER_METRICS.with(|metrics| {
-            //         metrics
-            //             .iter()
-            //             .for_each(|metric| metric.borrow_mut().sub(prev))
-            //     });
-            // }
 
             if let Some(prev) = &prev {
                 self.remove_entry_indexes(prev);
