@@ -1,6 +1,7 @@
 use crate::setup::{setup_new_env, setup_new_env_with_config, SetupConfig, WALLET_ADMIN_USER};
 use crate::utils::{
-    controller_test_id, upload_canister_modules, user_test_id, NNS_ROOT_CANISTER_ID,
+    await_station_healthy, controller_test_id, get_system_info, upload_canister_modules,
+    user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::Principal;
@@ -272,44 +273,46 @@ fn deploy_user_station() {
     let health_status = res.0;
     assert_eq!(health_status, HealthStatus::Uninitialized);
 
-    let rounds_required_for_station_initialization = 5;
-    for _ in 0..rounds_required_for_station_initialization {
-        env.tick();
-    }
+    await_station_healthy(&env, newly_created_user_station, user_id);
 
-    // the newly created station should be healthy at this point
-    let res: (HealthStatus,) = update_candid_as(
-        &env,
-        newly_created_user_station,
-        user_id,
-        "health_status",
-        (),
-    )
-    .unwrap();
-    let health_status = res.0;
-    assert_eq!(health_status, HealthStatus::Healthy);
+    // the newly created station should be at the same subnet as the control panel
+    assert_eq!(
+        env.get_subnet(newly_created_user_station).unwrap(),
+        env.get_subnet(canister_ids.control_panel).unwrap()
+    );
+    // which is different from the fiduciary subnet
+    assert_ne!(
+        env.get_subnet(newly_created_user_station).unwrap(),
+        env.topology().get_fiduciary().unwrap()
+    );
 
     check_station_controllers(&env, newly_created_user_station, user_id);
 }
 
-fn check_station_controllers(env: &PocketIc, station: Principal, user_id: Principal) {
-    // the control panel should set the newly deployed station's controllers
-    // to be the upgrader canister and the NNS root canister;
+fn check_station_controllers(env: &PocketIc, station_id: Principal, user_id: Principal) {
     // first get the upgrader canister ID
-    let res: (ApiResult<SystemInfoResponse>,) =
-        update_candid_as(env, station, user_id, "system_info", ()).unwrap();
-    let upgrader_canister_id = res.0.unwrap().system.upgrader_id;
+    let system_info = get_system_info(env, user_id, station_id);
+    let upgrader_id = system_info.upgrader_id;
     // now get the canister status from the management canister on behalf of the upgrader canister
     // (note that only controllers can invoke the canister status management canister method)
-    let canister_status = env
-        .canister_status(station, Some(upgrader_canister_id))
-        .unwrap();
+    let canister_status = env.canister_status(station_id, Some(upgrader_id)).unwrap();
+    // the control panel should set the newly deployed station's controllers
+    // to be the upgrader canister and the NNS root canister;
     // assert that the set of controllers is equal to {upgrader_canister_id, NNS_ROOT_CANISTER_ID}
     let station_controllers = canister_status.settings.controllers;
     assert_eq!(station_controllers.len(), 2);
-    assert!(station_controllers.contains(&upgrader_canister_id));
+    assert!(station_controllers.contains(&upgrader_id));
     assert!(station_controllers.contains(&NNS_ROOT_CANISTER_ID));
-    assert_ne!(upgrader_canister_id, NNS_ROOT_CANISTER_ID);
+    assert_ne!(upgrader_id, NNS_ROOT_CANISTER_ID);
+
+    // stop the station and upgrader to get their cycles balance including reservations
+    env.stop_canister(upgrader_id, Some(station_id)).unwrap();
+    env.stop_canister(station_id, Some(upgrader_id)).unwrap();
+    // check the cycles balance of station and upgrader
+    let upgrader_cycles = env.cycle_balance(upgrader_id);
+    assert!((900_000_000_000..1_100_000_000_000).contains(&upgrader_cycles));
+    let station_cycles = env.cycle_balance(station_id);
+    assert!((900_000_000_000..1_100_000_000_000).contains(&station_cycles));
 }
 
 #[test]
@@ -628,24 +631,7 @@ fn deploy_user_station_to_different_subnet() {
         env.get_subnet(canister_ids.control_panel).unwrap()
     );
 
-    // wait until the station is healthy
-    let rounds_required_for_station_initialization = 5;
-    for _ in 0..rounds_required_for_station_initialization {
-        env.tick();
-    }
-
-    // the newly created station should be healthy at this point
-    let res: (HealthStatus,) = update_candid_as(
-        &env,
-        newly_created_user_station,
-        user_id,
-        "health_status",
-        (),
-    )
-    .unwrap();
-    let health_status = res.0;
-    assert_eq!(health_status, HealthStatus::Healthy);
-
+    await_station_healthy(&env, newly_created_user_station, user_id);
     check_station_controllers(&env, newly_created_user_station, user_id);
 }
 
@@ -714,7 +700,7 @@ fn insufficient_control_panel_cycles() {
             assert_eq!(
                 *e.details.unwrap().get("reason").unwrap(),
                 format!(
-                    "Canister {} has insufficient cycles balance to transfer 4500000000000 cycles.",
+                    "Canister {} has insufficient cycles balance to transfer 1500000000000 cycles.",
                     canister_ids.control_panel
                 )
             );

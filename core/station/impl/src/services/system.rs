@@ -580,7 +580,6 @@ pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::id as self_canister_id;
     use crate::core::init::{default_policies, DEFAULT_PERMISSIONS};
-    use crate::core::INITIAL_UPGRADER_CYCLES;
     use crate::mappers::blockchain::BlockchainMapper;
     use crate::mappers::HelperMapper;
     use crate::models::permission::Allow;
@@ -803,8 +802,13 @@ mod install_canister_handlers {
 
                 Ok(upgrader_id)
             }
-            station_api::SystemUpgraderInput::WasmModule(upgrader_wasm_module) => {
-                deploy_upgrader(upgrader_wasm_module, controllers).await
+            station_api::SystemUpgraderInput::Deploy(deploy_args) => {
+                deploy_upgrader(
+                    deploy_args.wasm_module,
+                    deploy_args.initial_cycles,
+                    controllers,
+                )
+                .await
             }
         }
     }
@@ -812,6 +816,7 @@ mod install_canister_handlers {
     /// Deploys the station upgrader canister and sets the station as the controller of the upgrader.
     async fn deploy_upgrader(
         upgrader_wasm_module: Vec<u8>,
+        initial_upgrader_cycles: u128,
         controllers: Vec<Principal>,
     ) -> Result<Principal, String> {
         let (upgrader_canister,) = mgmt::create_canister(
@@ -821,7 +826,7 @@ mod install_canister_handlers {
                     ..Default::default()
                 }),
             },
-            INITIAL_UPGRADER_CYCLES,
+            initial_upgrader_cycles,
         )
         .await
         .map_err(|e| format!("Failed to create upgrader canister: {:?}", e))?;
@@ -893,7 +898,12 @@ mod tests {
                     identity: Principal::from_slice(&[1; 29]),
                 }],
                 quorum: Some(1),
-                upgrader: station_api::SystemUpgraderInput::WasmModule(vec![]),
+                upgrader: station_api::SystemUpgraderInput::Deploy(
+                    station_api::DeploySystemUpgraderInput {
+                        wasm_module: vec![],
+                        initial_cycles: 0,
+                    },
+                ),
                 fallback_controller: None,
                 accounts: None,
                 assets: None,
