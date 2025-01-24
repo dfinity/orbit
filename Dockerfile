@@ -44,7 +44,7 @@ RUN eval "$(fnm env)" && \
 # Install the monorepo dependencies
 COPY . .
 RUN eval "$(fnm env)" && \
-    fnm use && \ 
+    fnm use && \
     pnpm install --frozen-lockfile
 
 # Build the Orbit Upgrader Canister
@@ -85,4 +85,14 @@ LABEL io.icp.artifactType="canister" \
       io.icp.artifactName="wallet-dapp"
 RUN eval "$(fnm env)" && \
     fnm use && \
-    npx nx run wallet-dapp:create-artifacts
+    npx nx run wallet-dapp:create-artifacts \
+
+# Build the Orbit Docs Frontend Assets
+FROM builder AS build_docs_portal
+SHELL ["bash", "-c"]
+WORKDIR /code
+LABEL io.icp.artifactType="canister" \
+      io.icp.artifactName="docs-portal"
+RUN eval "$(fnm env)" && \
+    fnm use && \
+    npx nx run docs-portal:create-artifacts
