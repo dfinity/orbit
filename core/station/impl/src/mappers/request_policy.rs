@@ -44,6 +44,10 @@ impl From<RequestPolicyRule> for RequestPolicyRuleDTO {
             RequestPolicyRule::Not(policy_rule) => {
                 RequestPolicyRuleDTO::Not(Box::new(Into::into(*policy_rule)))
             }
+
+            RequestPolicyRule::NamedRule(rule_id) => {
+                RequestPolicyRuleDTO::NamedRule(Uuid::from_bytes(rule_id).hyphenated().to_string())
+            }
         }
     }
 }
@@ -72,6 +76,9 @@ impl From<RequestPolicyRuleDTO> for RequestPolicyRule {
             RequestPolicyRuleDTO::Not(policy_rule) => {
                 RequestPolicyRule::Not(Box::new(Into::into(*policy_rule)))
             }
+            RequestPolicyRuleDTO::NamedRule(id) => RequestPolicyRule::NamedRule(
+                *HelperMapper::to_uuid(id).expect("invalid uuid").as_bytes(),
+            ),
         }
     }
 }
@@ -289,6 +296,14 @@ impl From<RequestSpecifier> for station_api::RequestSpecifierDTO {
             RequestSpecifier::RemoveAsset(resource_ids) => {
                 station_api::RequestSpecifierDTO::RemoveAsset(resource_ids.into())
             }
+
+            RequestSpecifier::AddNamedRule => station_api::RequestSpecifierDTO::AddNamedRule,
+            RequestSpecifier::EditNamedRule(resource_ids) => {
+                station_api::RequestSpecifierDTO::EditNamedRule(resource_ids.into())
+            }
+            RequestSpecifier::RemoveNamedRule(resource_ids) => {
+                station_api::RequestSpecifierDTO::RemoveNamedRule(resource_ids.into())
+            }
         }
     }
 }
@@ -360,6 +375,14 @@ impl From<station_api::RequestSpecifierDTO> for RequestSpecifier {
             }
             station_api::RequestSpecifierDTO::RemoveAsset(resource_ids) => {
                 RequestSpecifier::RemoveAsset(resource_ids.into())
+            }
+
+            station_api::RequestSpecifierDTO::AddNamedRule => RequestSpecifier::AddNamedRule,
+            station_api::RequestSpecifierDTO::EditNamedRule(resource_ids) => {
+                RequestSpecifier::EditNamedRule(resource_ids.into())
+            }
+            station_api::RequestSpecifierDTO::RemoveNamedRule(resource_ids) => {
+                RequestSpecifier::RemoveNamedRule(resource_ids.into())
             }
         }
     }
@@ -522,6 +545,27 @@ impl RequestSpecifier {
                 ResourceIds::Ids(ids) => ids
                     .iter()
                     .map(|id| Resource::Asset(ResourceAction::Delete(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
+
+            RequestSpecifier::AddNamedRule => vec![Resource::NamedRule(ResourceAction::Create)],
+            RequestSpecifier::EditNamedRule(resource_ids) => match resource_ids {
+                ResourceIds::Any => {
+                    vec![Resource::NamedRule(ResourceAction::Update(ResourceId::Any))]
+                }
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::NamedRule(ResourceAction::Update(ResourceId::Id(*id))))
+                    .collect::<_>(),
+            },
+
+            RequestSpecifier::RemoveNamedRule(resource_ids) => match resource_ids {
+                ResourceIds::Any => {
+                    vec![Resource::NamedRule(ResourceAction::Delete(ResourceId::Any))]
+                }
+                ResourceIds::Ids(ids) => ids
+                    .iter()
+                    .map(|id| Resource::NamedRule(ResourceAction::Delete(ResourceId::Id(*id))))
                     .collect::<_>(),
             },
         }

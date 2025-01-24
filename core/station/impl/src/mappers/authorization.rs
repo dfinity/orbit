@@ -17,7 +17,7 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 21] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 23] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
     UserPrivilege::ManageSystemInfo,
@@ -39,6 +39,8 @@ pub const USER_PRIVILEGES: [UserPrivilege; 21] = [
     UserPrivilege::CallAnyExternalCanister,
     UserPrivilege::AddAsset,
     UserPrivilege::ListAssets,
+    UserPrivilege::ListNamedRules,
+    UserPrivilege::AddNamedRule,
 ];
 
 impl From<UserPrivilege> for Resource {
@@ -76,6 +78,8 @@ impl From<UserPrivilege> for Resource {
             ),
             UserPrivilege::AddAsset => Resource::Asset(ResourceAction::Create),
             UserPrivilege::ListAssets => Resource::Asset(ResourceAction::List),
+            UserPrivilege::ListNamedRules => Resource::NamedRule(ResourceAction::List),
+            UserPrivilege::AddNamedRule => Resource::NamedRule(ResourceAction::Create),
         }
     }
 }
@@ -153,6 +157,16 @@ impl From<&station_api::GetAssetInput> for Resource {
         Resource::Asset(ResourceAction::Read(ResourceId::Id(
             *HelperMapper::to_uuid(input.asset_id.to_owned())
                 .expect("Invalid asset id")
+                .as_bytes(),
+        )))
+    }
+}
+
+impl From<&station_api::GetNamedRuleInput> for Resource {
+    fn from(input: &station_api::GetNamedRuleInput) -> Self {
+        Resource::NamedRule(ResourceAction::Read(ResourceId::Id(
+            *HelperMapper::to_uuid(input.named_rule_id.to_owned())
+                .expect("Invalid named rule id")
                 .as_bytes(),
         )))
     }
@@ -344,6 +358,21 @@ impl From<&station_api::CreateRequestInput> for Resource {
                 Resource::Asset(ResourceAction::Delete(ResourceId::Id(
                     *HelperMapper::to_uuid(input.asset_id.to_owned())
                         .expect("Invalid asset id")
+                        .as_bytes(),
+                )))
+            }
+            RequestOperationInput::AddNamedRule(_) => Resource::NamedRule(ResourceAction::Create),
+            RequestOperationInput::EditNamedRule(input) => {
+                Resource::NamedRule(ResourceAction::Update(ResourceId::Id(
+                    *HelperMapper::to_uuid(input.named_rule_id.to_owned())
+                        .expect("Invalid named rule id")
+                        .as_bytes(),
+                )))
+            }
+            RequestOperationInput::RemoveNamedRule(input) => {
+                Resource::NamedRule(ResourceAction::Delete(ResourceId::Id(
+                    *HelperMapper::to_uuid(input.named_rule_id.to_owned())
+                        .expect("Invalid named rule id")
                         .as_bytes(),
                 )))
             }
