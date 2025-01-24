@@ -17,7 +17,7 @@ use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
 use station_api::{RequestOperationInput, UserPrivilege};
 
-pub const USER_PRIVILEGES: [UserPrivilege; 21] = [
+pub const USER_PRIVILEGES: [UserPrivilege; 23] = [
     UserPrivilege::Capabilities,
     UserPrivilege::SystemInfo,
     UserPrivilege::ManageSystemInfo,
@@ -39,6 +39,8 @@ pub const USER_PRIVILEGES: [UserPrivilege; 21] = [
     UserPrivilege::CallAnyExternalCanister,
     UserPrivilege::AddAsset,
     UserPrivilege::ListAssets,
+    UserPrivilege::ListNamedRules,
+    UserPrivilege::AddNamedRule,
 ];
 
 impl From<UserPrivilege> for Resource {
