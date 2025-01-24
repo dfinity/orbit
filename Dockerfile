@@ -85,7 +85,7 @@ LABEL io.icp.artifactType="canister" \
       io.icp.artifactName="wallet-dapp"
 RUN eval "$(fnm env)" && \
     fnm use && \
-    npx nx run wallet-dapp:create-artifacts \
+    npx nx run wallet-dapp:create-artifacts
 
 # Build the Orbit Docs Frontend Assets
 FROM builder AS build_docs_portal
