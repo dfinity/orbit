@@ -351,6 +351,7 @@ export const idlFactory = ({ IDL }) => {
   const CycleObtainStrategyInput = IDL.Variant({
     'Disabled' : IDL.Null,
     'MintFromNativeToken' : IDL.Record({ 'account_id' : UUID }),
+    'WithdrawFromCyclesLedger' : IDL.Record({ 'account_id' : UUID }),
   });
   const MonitoringExternalCanisterCyclesThresholdInput = IDL.Record({
     'fund_cycles' : IDL.Nat,
@@ -1566,6 +1567,10 @@ export const idlFactory = ({ IDL }) => {
   const CycleObtainStrategy = IDL.Variant({
     'Disabled' : IDL.Null,
     'MintFromNativeToken' : IDL.Record({
+      'account_id' : UUID,
+      'account_name' : IDL.Opt(IDL.Text),
+    }),
+    'WithdrawFromCyclesLedger' : IDL.Record({
       'account_id' : UUID,
       'account_name' : IDL.Opt(IDL.Text),
     }),

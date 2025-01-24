@@ -525,6 +525,7 @@ export default {
         label: 'Estratégia de obtenção',
         StationDefault: 'Padrão da carteira',
         MintFromNativeToken: 'Mint a partir do token nativo',
+        WithdrawFromCyclesLedger: 'Levantamento do livro de registo de ciclos',
       },
     },
     configuration: 'Configuração',
@@ -909,6 +910,8 @@ export default {
         'Erro ao carregar as informações do sistema da carteira, por favor, tente novamente.',
       cycle_obtain_strategy_disabled: 'AVISO: Recarga de saldo de ciclos da carteira desativada.',
       cycle_obtain_strategy_mint_from_native_token: 'Recarregar a partir da conta de ICP',
+      cycle_obtain_strategy_withdraw_from_cycles_ledger:
+        'Recarregar a partir da conta no livro global de contabilidade de ciclos.',
       cycle_balances: 'Saldo de ciclos',
     },
     user_groups: {
@@ -1141,5 +1144,6 @@ export default {
   cycle_obtain_strategies: {
     disabled: 'Desativado',
     mintfromnativetoken: 'Recarregar a partir da conta de ICP',
+    withdrawfromcyclesledger: 'Recarregar a partir do livro de registo de ciclos',
   },
 };
