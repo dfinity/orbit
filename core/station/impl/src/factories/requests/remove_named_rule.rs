@@ -1,7 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{RemoveNamedRuleOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{RemoveNamedRuleOperation, Request, RequestOperation},
     services::NamedRuleService,
 };
 use async_trait::async_trait;
@@ -18,21 +18,14 @@ impl Create<station_api::RemoveNamedRuleOperationInput> for RemoveNamedRuleReque
         input: station_api::CreateRequestInput,
         operation_input: station_api::RemoveNamedRuleOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::RemoveNamedRule(RemoveNamedRuleOperation {
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input
-                .title
-                .unwrap_or_else(|| "Remove named rule".to_string()),
-            input.summary,
+            "Remove named rule".to_string(),
         );
 
         Ok(request)

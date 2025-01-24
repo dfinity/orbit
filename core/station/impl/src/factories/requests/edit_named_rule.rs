@@ -4,7 +4,7 @@ use orbit_essentials::types::UUID;
 
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{EditNamedRuleOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{EditNamedRuleOperation, Request, RequestOperation},
     services::NamedRuleService,
 };
 
@@ -19,19 +19,14 @@ impl Create<station_api::EditNamedRuleOperationInput> for EditNamedRuleRequestCr
         input: station_api::CreateRequestInput,
         operation_input: station_api::EditNamedRuleOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::EditNamedRule(EditNamedRuleOperation {
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "Edit named rule".to_string()),
-            input.summary,
+            "Edit named rule".to_string(),
         );
 
         Ok(request)
