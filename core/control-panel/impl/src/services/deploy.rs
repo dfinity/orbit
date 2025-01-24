@@ -16,6 +16,7 @@ use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::cmc::create_canister;
 use orbit_essentials::install_chunked_code::install_chunked_code;
+use orbit_essentials::utils::check_balance_before_transfer;
 use std::sync::Arc;
 
 lazy_static! {
@@ -95,6 +96,9 @@ impl DeployService {
         let station_initial_cycles = upgrader_initial_cycles + INITIAL_STATION_CYCLES;
         let extra_cycles = station_initial_cycles.saturating_sub(station_cycles);
         if extra_cycles > 0 {
+            check_balance_before_transfer(extra_cycles)
+                .await
+                .map_err(|err| DeployError::Failed { reason: err })?;
             mgmt::deposit_cycles(station, extra_cycles)
                 .await
                 .map_err(|(_, err)| DeployError::Failed { reason: err })?;
