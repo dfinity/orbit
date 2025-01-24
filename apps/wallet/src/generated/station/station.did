@@ -1994,7 +1994,9 @@ type SupportedBlockchain = record {
   supported_standards : vec StandardData;
 };
 
-// The input type for adding a new named rule.
+// The named rule type.
+// 
+// A named rule is a reusable configuration that can be applied to many approval policies.
 type NamedRule = record {
   // The rule id.
   id : UUID;
@@ -2018,7 +2020,7 @@ type NamedRuleCallerPrivileges = record {
 
 // Input type for getting a named rule.
 type GetNamedRuleInput = record {
-  // The named rule id to retrieve.
+  // The named rule to retrieve by the id.
   named_rule_id : UUID;
 };
 
