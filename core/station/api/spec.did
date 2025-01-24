@@ -2020,7 +2020,7 @@ type NamedRuleCallerPrivileges = record {
 
 // Input type for getting a named rule.
 type GetNamedRuleInput = record {
-  // The named rule id to retrieve.
+  // The named rule to retrieve by the id.
   named_rule_id : UUID;
 };
 
