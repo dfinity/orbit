@@ -180,6 +180,9 @@ importers:
       astro:
         specifier: ^5.1.5
         version: 5.1.7(@types/node@22.7.4)(jiti@1.21.7)(rollup@4.28.0)(sass@1.77.1)(typescript@5.6.2)(yaml@2.7.0)
+      playwright:
+        specifier: ^1.49.1
+        version: 1.49.1
       rehype-mermaid:
         specifier: ^3.0.0
         version: 3.0.0(playwright@1.49.1)
@@ -189,10 +192,6 @@ importers:
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.17(ts-node@10.9.1(@types/node@22.7.4)(typescript@5.6.2))
-    devDependencies:
-      playwright:
-        specifier: ^1.49.1
-        version: 1.49.1
 
 packages:
 

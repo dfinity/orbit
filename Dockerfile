@@ -95,4 +95,5 @@ LABEL io.icp.artifactType="canister" \
       io.icp.artifactName="docs-portal"
 RUN eval "$(fnm env)" && \
     fnm use && \
+    npx nx show projects && \
     npx nx run docs-portal:create-artifacts
