@@ -98,6 +98,10 @@ const componentsMap: {
   CallExternalCanister: UnsupportedSpecifier,
   SetDisasterRecovery: UnsupportedSpecifier,
   FundExternalCanister: UnsupportedSpecifier,
+
+  AddNamedRule: UnsupportedSpecifier,
+  EditNamedRule: UnsupportedSpecifier,
+  RemoveNamedRule: UnsupportedSpecifier,
 };
 
 function isKeyOfRequestSpecifier(key: string): key is keyof RequestSpecifier {
@@ -260,6 +264,16 @@ watch(
         model.value = { [specifier.value]: { Any: null } };
         break;
       case RequestSpecifierEnum.RemoveAsset:
+        model.value = { [specifier.value]: { Any: null } };
+        break;
+
+      case RequestSpecifierEnum.AddNamedRule:
+        model.value = { [specifier.value]: null };
+        break;
+      case RequestSpecifierEnum.EditNamedRule:
+        model.value = { [specifier.value]: { Any: null } };
+        break;
+      case RequestSpecifierEnum.RemoveNamedRule:
         model.value = { [specifier.value]: { Any: null } };
         break;
       default:

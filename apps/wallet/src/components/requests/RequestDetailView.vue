@@ -323,6 +323,9 @@ const componentsMap: {
   PruneExternalCanister: UnsupportedOperation,
   RestoreExternalCanister: UnsupportedOperation,
   SnapshotExternalCanister: UnsupportedOperation,
+  AddNamedRule: UnsupportedOperation,
+  EditNamedRule: UnsupportedOperation,
+  RemoveNamedRule: UnsupportedOperation,
 };
 
 defineEmits<{

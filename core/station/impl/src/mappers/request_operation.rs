@@ -11,8 +11,9 @@ use crate::{
         },
         Account, AccountKey, AddAccountOperation, AddAccountOperationInput,
         AddAddressBookEntryOperation, AddAddressBookEntryOperationInput, AddAssetOperation,
-        AddAssetOperationInput, AddRequestPolicyOperation, AddRequestPolicyOperationInput,
-        AddUserOperation, AddUserOperationInput, AddressBookEntry, AddressFormat, Asset,
+        AddAssetOperationInput, AddNamedRuleOperation, AddNamedRuleOperationInput,
+        AddRequestPolicyOperation, AddRequestPolicyOperationInput, AddUserOperation,
+        AddUserOperationInput, AddressBookEntry, AddressFormat, Asset,
         CallExternalCanisterOperation, CallExternalCanisterOperationInput,
         CanisterExecutionAndValidationMethodPairInput, CanisterInstallMode,
         CanisterInstallModeArgs, CanisterMethod, CanisterReinstallModeArgs,
@@ -24,9 +25,10 @@ use crate::{
         CreateExternalCanisterOperationKindCreateNew, CycleObtainStrategy,
         DefiniteCanisterSettingsInput, DisasterRecoveryCommittee, EditAccountOperation,
         EditAccountOperationInput, EditAddressBookEntryOperation, EditAssetOperation,
-        EditAssetOperationInput, EditPermissionOperation, EditPermissionOperationInput,
-        EditRequestPolicyOperation, EditRequestPolicyOperationInput, EditUserGroupOperation,
-        EditUserOperation, EditUserOperationInput, ExternalCanisterCallPermission,
+        EditAssetOperationInput, EditNamedRuleOperation, EditNamedRuleOperationInput,
+        EditPermissionOperation, EditPermissionOperationInput, EditRequestPolicyOperation,
+        EditRequestPolicyOperationInput, EditUserGroupOperation, EditUserOperation,
+        EditUserOperationInput, ExternalCanisterCallPermission,
         ExternalCanisterCallPermissionExecMethodEntryInput,
         ExternalCanisterCallPermissionMethodPairInput,
         ExternalCanisterCallPermissionsExecMethodInput,
@@ -39,19 +41,20 @@ use crate::{
         ExternalCanisterPermissionsUpdateInput, ExternalCanisterRequestPoliciesCreateInput,
         ExternalCanisterRequestPoliciesUpdateInput, FundExternalCanisterOperation, LogVisibility,
         ManageSystemInfoOperation, ManageSystemInfoOperationInput,
-        MonitorExternalCanisterOperation, PruneExternalCanisterOperation,
+        MonitorExternalCanisterOperation, NamedRule, NamedRuleKey, PruneExternalCanisterOperation,
         PruneExternalCanisterOperationInput, PruneExternalCanisterResource,
         RemoveAddressBookEntryOperation, RemoveAssetOperation, RemoveAssetOperationInput,
-        RemoveRequestPolicyOperation, RemoveRequestPolicyOperationInput, RemoveUserGroupOperation,
-        RequestOperation, RestoreExternalCanisterOperation, RestoreExternalCanisterOperationInput,
+        RemoveNamedRuleOperation, RemoveNamedRuleOperationInput, RemoveRequestPolicyOperation,
+        RemoveRequestPolicyOperationInput, RemoveUserGroupOperation, RequestOperation,
+        RestoreExternalCanisterOperation, RestoreExternalCanisterOperationInput,
         SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
         SnapshotExternalCanisterOperation, SnapshotExternalCanisterOperationInput,
         SystemUpgradeOperation, SystemUpgradeOperationInput, SystemUpgradeTarget,
         TransferOperation, User, WasmModuleExtraChunks,
     },
     repositories::{
-        AccountRepository, AddressBookRepository, AssetRepository, UserRepository,
-        ACCOUNT_REPOSITORY, USER_GROUP_REPOSITORY,
+        AccountRepository, AddressBookRepository, AssetRepository, NamedRuleRepository,
+        UserRepository, ACCOUNT_REPOSITORY, USER_GROUP_REPOSITORY,
     },
 };
 use orbit_essentials::repository::Repository;
@@ -1849,6 +1852,91 @@ impl From<station_api::RemoveAssetOperationInput> for RemoveAssetOperationInput 
         }
     }
 }
+impl AddNamedRuleOperation {
+    pub fn to_dto(self, named_rule: Option<NamedRule>) -> station_api::AddNamedRuleOperationDTO {
+        station_api::AddNamedRuleOperationDTO {
+            named_rule: named_rule.map(|named_rule| named_rule.into()),
+            input: station_api::AddNamedRuleOperationInput {
+                name: self.input.name,
+                description: self.input.description,
+                rule: self.input.rule.into(),
+            },
+        }
+    }
+}
+
+impl From<station_api::AddNamedRuleOperationDTO> for AddNamedRuleOperation {
+    fn from(operation: station_api::AddNamedRuleOperationDTO) -> AddNamedRuleOperation {
+        AddNamedRuleOperation {
+            named_rule_id: operation.named_rule.map(|named_rule| {
+                *HelperMapper::to_uuid(named_rule.id)
+                    .expect("Invalid named rule id")
+                    .as_bytes()
+            }),
+            input: operation.input.into(),
+        }
+    }
+}
+
+impl From<station_api::AddNamedRuleOperationInput> for AddNamedRuleOperationInput {
+    fn from(input: station_api::AddNamedRuleOperationInput) -> AddNamedRuleOperationInput {
+        AddNamedRuleOperationInput {
+            name: input.name,
+            description: input.description,
+            rule: input.rule.into(),
+        }
+    }
+}
+
+impl From<EditNamedRuleOperation> for station_api::EditNamedRuleOperationDTO {
+    fn from(operation: EditNamedRuleOperation) -> station_api::EditNamedRuleOperationDTO {
+        station_api::EditNamedRuleOperationDTO {
+            input: station_api::EditNamedRuleOperationInput {
+                named_rule_id: Uuid::from_bytes(operation.input.named_rule_id)
+                    .hyphenated()
+                    .to_string(),
+                name: operation.input.name,
+                description: operation.input.description,
+                rule: operation.input.rule.map(|rule| rule.into()),
+            },
+        }
+    }
+}
+
+impl From<station_api::EditNamedRuleOperationInput> for EditNamedRuleOperationInput {
+    fn from(input: station_api::EditNamedRuleOperationInput) -> EditNamedRuleOperationInput {
+        EditNamedRuleOperationInput {
+            named_rule_id: *HelperMapper::to_uuid(input.named_rule_id)
+                .expect("Invalid named rule id")
+                .as_bytes(),
+            name: input.name,
+            description: input.description,
+            rule: input.rule.map(|rule| rule.into()),
+        }
+    }
+}
+
+impl From<RemoveNamedRuleOperation> for station_api::RemoveNamedRuleOperationDTO {
+    fn from(operation: RemoveNamedRuleOperation) -> station_api::RemoveNamedRuleOperationDTO {
+        station_api::RemoveNamedRuleOperationDTO {
+            input: station_api::RemoveNamedRuleOperationInput {
+                named_rule_id: Uuid::from_bytes(operation.input.named_rule_id)
+                    .hyphenated()
+                    .to_string(),
+            },
+        }
+    }
+}
+
+impl From<station_api::RemoveNamedRuleOperationInput> for RemoveNamedRuleOperationInput {
+    fn from(input: station_api::RemoveNamedRuleOperationInput) -> RemoveNamedRuleOperationInput {
+        RemoveNamedRuleOperationInput {
+            named_rule_id: *HelperMapper::to_uuid(input.named_rule_id)
+                .expect("Invalid named rule id")
+                .as_bytes(),
+        }
+    }
+}
 
 impl From<RequestOperation> for RequestOperationDTO {
     fn from(operation: RequestOperation) -> RequestOperationDTO {
@@ -1967,6 +2055,20 @@ impl From<RequestOperation> for RequestOperationDTO {
             }
             RequestOperation::RemoveAsset(operation) => {
                 RequestOperationDTO::RemoveAsset(Box::new(operation.into()))
+            }
+
+            RequestOperation::AddNamedRule(operation) => {
+                let named_rule = operation
+                    .named_rule_id
+                    .and_then(|id| NamedRuleRepository::default().get(&NamedRuleKey { id }));
+
+                RequestOperationDTO::AddNamedRule(Box::new(operation.to_dto(named_rule)))
+            }
+            RequestOperation::EditNamedRule(operation) => {
+                RequestOperationDTO::EditNamedRule(Box::new(operation.into()))
+            }
+            RequestOperation::RemoveNamedRule(operation) => {
+                RequestOperationDTO::RemoveNamedRule(Box::new(operation.into()))
             }
         }
     }
@@ -2213,6 +2315,26 @@ impl RequestOperation {
                 vec![
                     Resource::Asset(ResourceAction::Delete(ResourceId::Id(input.asset_id))),
                     Resource::Asset(ResourceAction::Delete(ResourceId::Any)),
+                ]
+            }
+
+            RequestOperation::AddNamedRule(_) => {
+                vec![Resource::NamedRule(ResourceAction::Create)]
+            }
+            RequestOperation::EditNamedRule(EditNamedRuleOperation { input }) => {
+                vec![
+                    Resource::NamedRule(ResourceAction::Update(ResourceId::Id(
+                        input.named_rule_id,
+                    ))),
+                    Resource::NamedRule(ResourceAction::Update(ResourceId::Any)),
+                ]
+            }
+            RequestOperation::RemoveNamedRule(RemoveNamedRuleOperation { input }) => {
+                vec![
+                    Resource::NamedRule(ResourceAction::Delete(ResourceId::Id(
+                        input.named_rule_id,
+                    ))),
+                    Resource::NamedRule(ResourceAction::Delete(ResourceId::Any)),
                 ]
             }
         }
