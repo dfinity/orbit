@@ -862,6 +862,7 @@ export default {
     request_policies: "Polices d'Aprobation",
     assets: 'Actifs',
     external_canisters: 'Canisters',
+    approval_policy: 'Police d approbation',
   },
   pages: {
     dashboard: {
@@ -1022,6 +1023,13 @@ export default {
         placeholder: 'Rechercher un actif...',
         option_add_well_known_assets: 'Ajouter des actifs connus',
         option_add_custom_asset: 'Ajouter un actif personnalisé',
+      },
+    },
+    approval_policy: {
+      btn_new_entry: 'Ajouter une nouvelle police',
+      title: 'Police d approbation',
+      dialog: {
+        title: 'Police d approbation',
       },
     },
     not_found: {

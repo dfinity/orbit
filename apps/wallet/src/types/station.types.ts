@@ -81,6 +81,7 @@ export enum RequestDomains {
   ExternalCanisters = 'external_canisters',
   System = 'system',
   Assets = 'assets',
+  ApprovalPolicy = 'approval_policy',
 }
 
 export interface ListAccountsArgs {

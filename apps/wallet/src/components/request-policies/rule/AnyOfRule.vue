@@ -44,7 +44,7 @@ import RuleBuilder from './RuleBuilder.vue';
 const input = withDefaults(
   defineProps<{
     modelValue?: RequestPolicyRule[];
-    specifier: RequestSpecifier;
+    specifier?: RequestSpecifier | null;
     disabled?: boolean;
   }>(),
   {

@@ -20,7 +20,7 @@ import { unreachable } from '~/utils/helper.utils';
 
 const input = withDefaults(
   defineProps<{
-    specifier: RequestSpecifier;
+    specifier?: RequestSpecifier | null;
   }>(),
   {},
 );

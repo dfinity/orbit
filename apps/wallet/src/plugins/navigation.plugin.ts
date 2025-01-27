@@ -177,6 +177,19 @@ const sections = (): NavigationSections => ({
           },
         },
         {
+          name: 'approval_policy',
+          localeKey: 'navigation.approval_policy',
+          action: {
+            type: NavigationActionType.To,
+            handle: route =>
+              route.params.locale ? `/${route.params.locale}/settings/approval-policy` : '/settings/approval-policy',
+          },
+          auth: {
+            type: NavigastionAuthType.Route,
+            route: Routes.ApprovalPolicy,
+          },
+        },
+        {
           name: 'requests',
           localeKey: 'navigation.requests',
           action: {

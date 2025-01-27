@@ -409,6 +409,48 @@ export const globalPermissions = (): AggregatedResoucePermissions[] => [
       return false;
     },
   },
+  {
+    resourceType: ResourceTypeEnum.NamedRule,
+    resources: [
+      {
+        action: ResourceActionEnum.List,
+        resource: { NamedRule: { List: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Create,
+        resource: { NamedRule: { Create: null } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Read,
+        resource: { NamedRule: { Read: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Update,
+        resource: { NamedRule: { Update: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+      {
+        action: ResourceActionEnum.Delete,
+        resource: { NamedRule: { Delete: { Any: null } } },
+        allow: defaultAllowLevels(),
+        canEdit: false,
+      },
+    ],
+    match(specifier: Resource, resource: Resource): boolean {
+      if (variantIs(specifier, 'NamedRule') && variantIs(resource, 'NamedRule')) {
+        return isResourceActionContained(specifier.NamedRule, resource.NamedRule);
+      }
+
+      return false;
+    },
+  },
 ];
 
 export const getAccountPermissions = (accountId: UUID): AggregatedResoucePermissions[] => {

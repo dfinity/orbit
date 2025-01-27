@@ -854,6 +854,7 @@ export default {
     request_policies: 'Request Policies',
     assets: 'Assets',
     external_canisters: 'Canisters',
+    approval_policy: 'Approval Policy',
   },
   pages: {
     dashboard: {
@@ -1008,6 +1009,13 @@ export default {
         placeholder: 'Search asset...',
         option_add_well_known_assets: 'Add well known assets',
         option_add_custom_asset: 'Add custom asset',
+      },
+    },
+    approval_policy: {
+      btn_new_entry: 'Add new policy',
+      title: 'Approval Policy',
+      dialog: {
+        title: 'Approval Policy',
       },
     },
     not_found: {

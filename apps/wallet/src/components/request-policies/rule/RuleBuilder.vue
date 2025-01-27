@@ -1,8 +1,8 @@
 <template>
   <AddRuleSelect
     v-if="model === null && !props.disabled.value"
-    :specifier="props.specifier.value"
     @add="model = $event"
+    :specifier="props.specifier.value"
   />
   <template v-else-if="model !== null">
     <AllOfRule
@@ -76,7 +76,7 @@ import QuorumRule from './QuorumRule.vue';
 const input = withDefaults(
   defineProps<{
     modelValue?: RequestPolicyRule | null;
-    specifier: RequestSpecifier;
+    specifier?: RequestSpecifier | null;
     disabled?: boolean;
   }>(),
   {
