@@ -1,5 +1,4 @@
 ---
-import { Icon } from '@astrojs/starlight/components';
 import MobileMenuFooter from '@astrojs/starlight/components/MobileMenuFooter.astro';
 import SidebarPersister from '@astrojs/starlight/components/SidebarPersister.astro';
 import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
@@ -45,12 +44,6 @@ function assertGroups(sidebar: SidebarEntry[]): asserts sidebar is Group[] {
 }
 
 assertGroups(sidebar);
-
-/** Determine if an array of sidebar items contains the current page.  */
-const isCurrent = (sidebar: SidebarEntry[]): boolean =>
-  sidebar
-    .map((entry) => (entry.type === 'link' ? entry.isCurrent : isCurrent(entry.entries)))
-    .some((entry) => entry === true);
 ---
 
 <SidebarPersister {...Astro.props}>
