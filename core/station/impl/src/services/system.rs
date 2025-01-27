@@ -350,6 +350,8 @@ impl SystemService {
                         let upgrader_initial_cycles = deploy_args
                             .initial_cycles
                             .unwrap_or(DEFAULT_INITIAL_UPGRADER_CYCLES);
+                        // TODO(PEN-426): improve this check once the freezing limit in cycles is exposed
+                        // synchronously via a system API.
                         let station_cycles = canister_balance128();
                         if station_cycles < upgrader_initial_cycles {
                             ic_cdk::trap(&format!("Station cycles balance {} is insufficient for transferring {} cycles when deploying the upgrader.", station_cycles, upgrader_initial_cycles));
