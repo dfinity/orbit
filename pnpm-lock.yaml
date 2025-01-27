@@ -169,41 +169,41 @@ importers:
   docs:
     dependencies:
       '@astrojs/starlight':
-        specifier: ^0.31.0
+        specifier: 0.31.0
         version: 0.31.0(astro@5.1.7(@types/node@22.7.4)(jiti@1.21.7)(rollup@4.28.0)(sass@1.77.1)(typescript@5.6.2)(yaml@2.7.0))
       '@astrojs/starlight-tailwind':
-        specifier: ^3.0.0
+        specifier: 3.0.0
         version: 3.0.0(@astrojs/starlight@0.31.0(astro@5.1.7(@types/node@22.7.4)(jiti@1.21.7)(rollup@4.28.0)(sass@1.77.1)(typescript@5.6.2)(yaml@2.7.0)))(@astrojs/tailwind@5.1.5(astro@5.1.7(@types/node@22.7.4)(jiti@1.21.7)(rollup@4.28.0)(sass@1.77.1)(typescript@5.6.2)(yaml@2.7.0))(tailwindcss@3.4.17(ts-node@10.9.1(@types/node@22.7.4)(typescript@5.6.2)))(ts-node@10.9.1(@types/node@22.7.4)(typescript@5.6.2)))(tailwindcss@3.4.17(ts-node@10.9.1(@types/node@22.7.4)(typescript@5.6.2)))
       '@astrojs/tailwind':
-        specifier: ^5.1.5
+        specifier: 5.1.5
         version: 5.1.5(astro@5.1.7(@types/node@22.7.4)(jiti@1.21.7)(rollup@4.28.0)(sass@1.77.1)(typescript@5.6.2)(yaml@2.7.0))(tailwindcss@3.4.17(ts-node@10.9.1(@types/node@22.7.4)(typescript@5.6.2)))(ts-node@10.9.1(@types/node@22.7.4)(typescript@5.6.2))
       astro:
-        specifier: ^5.1.5
+        specifier: 5.1.7
         version: 5.1.7(@types/node@22.7.4)(jiti@1.21.7)(rollup@4.28.0)(sass@1.77.1)(typescript@5.6.2)(yaml@2.7.0)
       playwright:
-        specifier: ^1.49.1
+        specifier: 1.49.1
         version: 1.49.1
       rehype-mermaid:
-        specifier: ^3.0.0
+        specifier: 3.0.0
         version: 3.0.0(playwright@1.49.1)
       sharp:
-        specifier: ^0.33.5
+        specifier: 0.33.5
         version: 0.33.5
       tailwindcss:
-        specifier: ^3.4.17
+        specifier: 3.4.17
         version: 3.4.17(ts-node@10.9.1(@types/node@22.7.4)(typescript@5.6.2))
     devDependencies:
       '@typescript-eslint/parser':
         specifier: 7.9.0
         version: 7.9.0(eslint@9.19.0(jiti@1.21.7))(typescript@5.6.2)
       eslint:
-        specifier: ^9.19.0
+        specifier: 9.19.0
         version: 9.19.0(jiti@1.21.7)
       eslint-plugin-astro:
-        specifier: ^1.3.1
+        specifier: 1.3.1
         version: 1.3.1(eslint@9.19.0(jiti@1.21.7))
       eslint-plugin-mdx:
-        specifier: ^3.1.5
+        specifier: 3.1.5
         version: 3.1.5(eslint@9.19.0(jiti@1.21.7))
 
 packages:
@@ -12824,7 +12824,7 @@ snapshots:
   vite@6.0.7(@types/node@22.7.4)(jiti@1.21.7)(sass@1.77.1)(yaml@2.7.0):
     dependencies:
       esbuild: 0.24.2
-      postcss: 8.4.49
+      postcss: 8.5.1
       rollup: 4.28.0
     optionalDependencies:
       '@types/node': 22.7.4
