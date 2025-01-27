@@ -1,6 +1,9 @@
 import { ComputedRef, Ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { allRequestPolicyRules, requestSpecifiersIncludedRules } from '~/configs/request-policies.config';
+import {
+  allRequestPolicyRules,
+  requestSpecifiersIncludedRules,
+} from '~/configs/request-policies.config';
 import { RequestSpecifier } from '~/generated/station/station.did';
 import { mapRequestSpecifierToEnum } from '~/mappers/request-specifiers.mapper';
 import { SelectItem } from '~/types/helper.types';

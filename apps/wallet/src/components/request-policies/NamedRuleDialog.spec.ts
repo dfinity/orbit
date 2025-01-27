@@ -116,7 +116,7 @@ describe('NamedRuleDialog', () => {
     await flushPromises();
 
     const dialogContents = wrapper.findComponent(VCard);
-    
+
     const form = wrapper.findComponent(NamedRuleForm);
 
     // Update form fields
@@ -142,9 +142,11 @@ describe('NamedRuleDialog', () => {
       named_rule_id: '1',
       name: ['Updated Rule'],
       description: ['Updated Description'],
-      rule: [{
-        AutoApproved: null,
-      },]
+      rule: [
+        {
+          AutoApproved: null,
+        },
+      ],
     });
   });
 

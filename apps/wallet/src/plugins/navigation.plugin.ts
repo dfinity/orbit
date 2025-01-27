@@ -182,7 +182,9 @@ const sections = (): NavigationSections => ({
           action: {
             type: NavigationActionType.To,
             handle: route =>
-              route.params.locale ? `/${route.params.locale}/settings/approval-policy` : '/settings/approval-policy',
+              route.params.locale
+                ? `/${route.params.locale}/settings/approval-policy`
+                : '/settings/approval-policy',
           },
           auth: {
             type: NavigastionAuthType.Route,

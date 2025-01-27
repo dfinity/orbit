@@ -162,8 +162,8 @@ impl NamedRuleService {
             named_rule.name = name;
         }
 
-        if input.description.is_some() {
-            named_rule.description = input.description;
+        if let Some(description) = input.description {
+            named_rule.description = description;
         }
 
         if let Some(rule) = input.rule {
@@ -275,7 +275,7 @@ mod test {
         let input = crate::models::EditNamedRuleOperationInput {
             named_rule_id: named_rule.id,
             name: Some("edited".to_string()),
-            description: Some("edited description".to_string()),
+            description: Some(Some("edited description".to_string())),
             rule: Some(RequestPolicyRule::AutoApproved),
         };
 
@@ -284,7 +284,7 @@ mod test {
 
         let edited_named_rule = result.unwrap();
         assert_eq!(edited_named_rule.name, input.name.unwrap());
-        assert_eq!(edited_named_rule.description, input.description);
+        assert_eq!(edited_named_rule.description, input.description.unwrap());
         assert_eq!(edited_named_rule.rule, input.rule.unwrap());
     }
 
@@ -302,7 +302,7 @@ mod test {
         let input = crate::models::EditNamedRuleOperationInput {
             named_rule_id: named_rule.id,
             name: Some("edited".to_string()),
-            description: Some("edited description".to_string()),
+            description: Some(Some("edited description".to_string())),
             rule: Some(RequestPolicyRule::NamedRule(named_rule_id)),
         };
 

@@ -1,8 +1,8 @@
 <template>
   <AddRuleSelect
     v-if="model === null && !props.disabled.value"
-    @add="model = $event"
     :specifier="props.specifier.value"
+    @add="model = $event"
   />
   <template v-else-if="model !== null">
     <AllOfRule

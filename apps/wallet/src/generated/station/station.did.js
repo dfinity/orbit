@@ -220,7 +220,7 @@ export const idlFactory = ({ IDL }) => {
   const EditNamedRuleOperationInput = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'rule' : IDL.Opt(RequestPolicyRule),
-    'description' : IDL.Opt(IDL.Text),
+    'description' : IDL.Opt(IDL.Opt(IDL.Text)),
     'named_rule_id' : UUID,
   });
   const EditNamedRuleOperation = IDL.Record({

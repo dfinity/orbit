@@ -2090,8 +2090,8 @@ type EditNamedRuleOperationInput = record {
   named_rule_id : UUID;
   // The rule name.
   name : opt text;
-  // The rule description.
-  description : opt text;
+  // The optional rule description.
+  description : opt opt text;
   // The rule value.
   rule : opt RequestPolicyRule;
 };
