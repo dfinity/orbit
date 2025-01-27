@@ -99,6 +99,15 @@ impl From<station_api::ListRequestsOperationTypeDTO> for ListRequestsOperationTy
             station_api::ListRequestsOperationTypeDTO::RemoveAsset => {
                 ListRequestsOperationType::RemoveAsset
             }
+            station_api::ListRequestsOperationTypeDTO::AddNamedRule => {
+                ListRequestsOperationType::AddNamedRule
+            }
+            station_api::ListRequestsOperationTypeDTO::EditNamedRule => {
+                ListRequestsOperationType::EditNamedRule
+            }
+            station_api::ListRequestsOperationTypeDTO::RemoveNamedRule => {
+                ListRequestsOperationType::RemoveNamedRule
+            }
         }
     }
 }
@@ -164,6 +173,9 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::AddAsset => RequestOperationType::AddAsset,
             RequestOperationTypeDTO::EditAsset => RequestOperationType::EditAsset,
             RequestOperationTypeDTO::RemoveAsset => RequestOperationType::RemoveAsset,
+            RequestOperationTypeDTO::AddNamedRule => RequestOperationType::AddNamedRule,
+            RequestOperationTypeDTO::EditNamedRule => RequestOperationType::EditNamedRule,
+            RequestOperationTypeDTO::RemoveNamedRule => RequestOperationType::RemoveNamedRule,
         }
     }
 }
@@ -229,6 +241,10 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::AddAsset => RequestOperationTypeDTO::AddAsset,
             RequestOperationType::EditAsset => RequestOperationTypeDTO::EditAsset,
             RequestOperationType::RemoveAsset => RequestOperationTypeDTO::RemoveAsset,
+
+            RequestOperationType::AddNamedRule => RequestOperationTypeDTO::AddNamedRule,
+            RequestOperationType::EditNamedRule => RequestOperationTypeDTO::EditNamedRule,
+            RequestOperationType::RemoveNamedRule => RequestOperationTypeDTO::RemoveNamedRule,
         }
     }
 }
@@ -282,6 +298,9 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::AddAsset(_) => RequestOperationType::AddAsset,
             RequestOperation::EditAsset(_) => RequestOperationType::EditAsset,
             RequestOperation::RemoveAsset(_) => RequestOperationType::RemoveAsset,
+            RequestOperation::AddNamedRule(_) => RequestOperationType::AddNamedRule,
+            RequestOperation::EditNamedRule(_) => RequestOperationType::EditNamedRule,
+            RequestOperation::RemoveNamedRule(_) => RequestOperationType::RemoveNamedRule,
         }
     }
 }

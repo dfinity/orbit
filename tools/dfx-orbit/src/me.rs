@@ -86,5 +86,7 @@ fn display_privilege(privilege: &UserPrivilege) -> &'static str {
         UserPrivilege::CallAnyExternalCanister => "CallAnyExternalCanister",
         UserPrivilege::AddAsset => "AddAsset",
         UserPrivilege::ListAssets => "ListAssets",
+        UserPrivilege::ListNamedRules => "ListNamedRules",
+        UserPrivilege::AddNamedRule => "AddNamedRule",
     }
 }

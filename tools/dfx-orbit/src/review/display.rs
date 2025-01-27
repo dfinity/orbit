@@ -248,6 +248,9 @@ pub(super) fn display_request_operation(op: &RequestOperationDTO) -> &'static st
         RequestOperationDTO::AddAsset(_) => "AddAsset",
         RequestOperationDTO::EditAsset(_) => "EditAsset",
         RequestOperationDTO::RemoveAsset(_) => "RemoveAsset",
+        RequestOperationDTO::AddNamedRule(_) => "AddNamedRule",
+        RequestOperationDTO::EditNamedRule(_) => "EditNamedRule",
+        RequestOperationDTO::RemoveNamedRule(_) => "RemoveNamedRule",
     }
 }
 

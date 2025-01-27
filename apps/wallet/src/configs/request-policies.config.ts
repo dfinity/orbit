@@ -42,4 +42,7 @@ export const requestSpecifiersIncludedRules = (): Record<
   [RequestSpecifierEnum.AddAsset]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.EditAsset]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.RemoveAsset]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.AddNamedRule]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.EditNamedRule]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.RemoveNamedRule]: [...defaultRequestPolicyRules],
 });

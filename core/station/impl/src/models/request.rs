@@ -13,8 +13,8 @@ use crate::core::request::{
     RequestApprovalRightsEvaluator, RequestEvaluator, RequestPossibleApproversFinder,
 };
 use crate::core::validation::{
-    EnsureAccount, EnsureAddressBookEntry, EnsureAsset, EnsureIdExists, EnsureRequestPolicy,
-    EnsureUser, EnsureUserGroup,
+    EnsureAccount, EnsureAddressBookEntry, EnsureAsset, EnsureIdExists, EnsureNamedRule,
+    EnsureRequestPolicy, EnsureUser, EnsureUserGroup,
 };
 use crate::errors::{EvaluateError, RequestError, ValidationError};
 use crate::models::resource::{ExecutionMethodResourceTarget, ValidationMethodResourceTarget};
@@ -342,6 +342,13 @@ fn validate_request_operation_foreign_keys(
         }
         RequestOperation::RemoveAsset(op) => {
             EnsureAsset::id_exists(&op.input.asset_id)?;
+        }
+        RequestOperation::AddNamedRule(_) => (),
+        RequestOperation::EditNamedRule(op) => {
+            EnsureNamedRule::id_exists(&op.input.named_rule_id)?;
+        }
+        RequestOperation::RemoveNamedRule(op) => {
+            EnsureNamedRule::id_exists(&op.input.named_rule_id)?;
         }
     }
     Ok(())

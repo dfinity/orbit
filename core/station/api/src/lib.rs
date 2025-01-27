@@ -51,3 +51,6 @@ pub use disaster_recovery::*;
 
 mod asset;
 pub use asset::*;
+
+mod named_rule;
+pub use named_rule::*;

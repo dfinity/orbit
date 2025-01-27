@@ -22,6 +22,7 @@ use std::sync::Arc;
 mod add_account;
 mod add_address_book_entry;
 mod add_asset;
+mod add_named_rule;
 mod add_request_policy;
 mod add_user;
 mod add_user_group;
@@ -32,6 +33,7 @@ mod create_canister;
 mod edit_account;
 mod edit_address_book_entry;
 mod edit_asset;
+mod edit_named_rule;
 mod edit_permission;
 mod edit_request_policy;
 mod edit_user;
@@ -42,6 +44,7 @@ mod monitor_external_canister;
 mod prune_external_canister;
 mod remove_address_book_entry;
 mod remove_asset;
+mod remove_named_rule;
 mod remove_request_policy;
 mod remove_user_group;
 mod restore_external_canister;
@@ -306,6 +309,25 @@ impl RequestFactory {
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
             }
+
+            RequestOperationInput::AddNamedRule(operation) => {
+                let creator = Box::new(add_named_rule::AddNamedRuleRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+            RequestOperationInput::EditNamedRule(operation) => {
+                let creator = Box::new(edit_named_rule::EditNamedRuleRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+            RequestOperationInput::RemoveNamedRule(operation) => {
+                let creator = Box::new(remove_named_rule::RemoveNamedRuleRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
         }
     }
 
@@ -454,6 +476,15 @@ impl RequestFactory {
             }
             RequestOperation::RemoveAsset(operation) => Box::new(
                 remove_asset::RemoveAssetRequestExecute::new(request, operation),
+            ),
+            RequestOperation::AddNamedRule(operation) => Box::new(
+                add_named_rule::AddNamedRuleRequestExecute::new(request, operation),
+            ),
+            RequestOperation::EditNamedRule(operation) => Box::new(
+                edit_named_rule::EditNamedRuleRequestExecute::new(request, operation),
+            ),
+            RequestOperation::RemoveNamedRule(operation) => Box::new(
+                remove_named_rule::RemoveNamedRuleRequestExecute::new(request, operation),
             ),
         }
     }

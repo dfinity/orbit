@@ -93,6 +93,14 @@ export const mapRequestsOperationTypeToGroup = (
     return ListRequestsOperationTypeGroup.Asset;
   }
 
+  if (
+    variantIs(operationType, 'AddNamedRule') ||
+    variantIs(operationType, 'EditNamedRule') ||
+    variantIs(operationType, 'RemoveNamedRule')
+  ) {
+    return ListRequestsOperationTypeGroup.NamedRule;
+  }
+
   return unreachable(operationType);
 };
 
@@ -276,6 +284,15 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'RemoveAsset')) {
     return RequestOperationEnum.RemoveAsset;
   }
+  if (variantIs(operation, 'AddNamedRule')) {
+    return RequestOperationEnum.AddNamedRule;
+  }
+  if (variantIs(operation, 'EditNamedRule')) {
+    return RequestOperationEnum.EditNamedRule;
+  }
+  if (variantIs(operation, 'RemoveNamedRule')) {
+    return RequestOperationEnum.RemoveNamedRule;
+  }
 
   return unreachable(operation);
 };
@@ -359,6 +376,12 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { EditAsset: null };
   } else if (variantIs(requestOperation, 'RemoveAsset')) {
     return { RemoveAsset: null };
+  } else if (variantIs(requestOperation, 'AddNamedRule')) {
+    return { AddNamedRule: null };
+  } else if (variantIs(requestOperation, 'EditNamedRule')) {
+    return { EditNamedRule: null };
+  } else if (variantIs(requestOperation, 'RemoveNamedRule')) {
+    return { RemoveNamedRule: null };
   } else {
     return unreachable(requestOperation);
   }
