@@ -59,6 +59,6 @@ pub struct DeployStationResponse {
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum CanDeployStationResponse {
     NotAllowed(UserSubscriptionStatusDTO),
-    Allowed(u64),
+    Allowed(usize),
     QuotaExceeded,
 }

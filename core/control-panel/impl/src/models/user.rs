@@ -29,7 +29,7 @@ pub enum UserSubscriptionStatus {
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum CanDeployStation {
     NotAllowed(UserSubscriptionStatus),
-    Allowed(u64),
+    Allowed(usize),
     QuotaExceeded,
 }
 
@@ -48,7 +48,7 @@ impl std::fmt::Display for UserSubscriptionStatus {
 #[derive(Clone, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
 pub struct UserRateLimiter {
     pub unix_date: u64,
-    pub num_deployed_stations: u64,
+    pub num_deployed_stations: usize,
 }
 
 /// The identity of an user.
@@ -91,7 +91,7 @@ impl User {
     pub const NAME_LEN_RANGE: (u8, u8) = (1, 100);
     pub const EMAIL_LEN_RANGE: (u8, u8) = (1, 100);
     pub const MAX_STATIONS: u8 = 15;
-    pub const MAX_DEPLOYED_STATIONS_PER_DAY: u64 = 2;
+    pub const MAX_DEPLOYED_STATIONS_PER_DAY: usize = 2;
 
     pub fn to_key(&self) -> UserKey {
         UserKey(self.id)
