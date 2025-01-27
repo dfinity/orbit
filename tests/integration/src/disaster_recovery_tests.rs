@@ -908,7 +908,7 @@ fn test_disaster_recovery_failing() {
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: vec![],
-                initial_cycles: 0,
+                initial_cycles: None,
             },
         ),
         name: "Station".to_string(),

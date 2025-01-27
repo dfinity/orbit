@@ -68,7 +68,7 @@ pub struct AdminInitInput {
 pub struct DeploySystemUpgraderInput {
     #[serde(with = "serde_bytes")]
     pub wasm_module: Vec<u8>,
-    pub initial_cycles: u128,
+    pub initial_cycles: Option<u128>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]

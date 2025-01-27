@@ -1415,7 +1415,7 @@ export type SystemUpgradeTarget = { 'UpgradeUpgrader' : null } |
 export type SystemUpgraderInput = { 'Id' : Principal } |
   {
     'Deploy' : {
-      'initial_cycles' : bigint,
+      'initial_cycles' : [] | [bigint],
       'wasm_module' : Uint8Array | number[],
     }
   };

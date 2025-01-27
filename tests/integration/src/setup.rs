@@ -312,7 +312,7 @@ fn install_canisters(
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: upgrader_wasm,
-                initial_cycles: 5_000_000_000_000,
+                initial_cycles: Some(5_000_000_000_000),
             },
         ),
         fallback_controller: config.fallback_controller,

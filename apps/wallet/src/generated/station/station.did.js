@@ -16,7 +16,7 @@ export const idlFactory = ({ IDL }) => {
   const SystemUpgraderInput = IDL.Variant({
     'Id' : IDL.Principal,
     'Deploy' : IDL.Record({
-      'initial_cycles' : IDL.Nat,
+      'initial_cycles' : IDL.Opt(IDL.Nat),
       'wasm_module' : IDL.Vec(IDL.Nat8),
     }),
   });
@@ -1830,7 +1830,7 @@ export const init = ({ IDL }) => {
   const SystemUpgraderInput = IDL.Variant({
     'Id' : IDL.Principal,
     'Deploy' : IDL.Record({
-      'initial_cycles' : IDL.Nat,
+      'initial_cycles' : IDL.Opt(IDL.Nat),
       'wasm_module' : IDL.Vec(IDL.Nat8),
     }),
   });

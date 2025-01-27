@@ -2730,7 +2730,11 @@ type SystemUpgraderInput = variant {
   // Creates and deploys a new canister.
   Deploy : record {
     wasm_module : blob;
-    initial_cycles : nat;
+    // The initial cycles to allocate to the c
+    //
+    // If not set, only the minimal amount of cycles required to create
+    // and deploy the canister will be allocated.
+    initial_cycles : opt nat;
   };
 };
 

@@ -580,6 +580,7 @@ pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::id as self_canister_id;
     use crate::core::init::{default_policies, DEFAULT_PERMISSIONS};
+    use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
     use crate::mappers::blockchain::BlockchainMapper;
     use crate::mappers::HelperMapper;
     use crate::models::permission::Allow;
@@ -803,9 +804,10 @@ mod install_canister_handlers {
                 Ok(upgrader_id)
             }
             station_api::SystemUpgraderInput::Deploy(deploy_args) => {
+                let upgrader_initial_cycles = deploy_args.initial_cycles.unwrap_or(DEFAULT_INITIAL_UPGRADER_CYCLES);
                 deploy_upgrader(
                     deploy_args.wasm_module,
-                    deploy_args.initial_cycles,
+                    upgrader_initial_cycles,
                     controllers,
                 )
                 .await
@@ -901,7 +903,7 @@ mod tests {
                 upgrader: station_api::SystemUpgraderInput::Deploy(
                     station_api::DeploySystemUpgraderInput {
                         wasm_module: vec![],
-                        initial_cycles: 0,
+                        initial_cycles: None,
                     },
                 ),
                 fallback_controller: None,

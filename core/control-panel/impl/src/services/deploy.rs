@@ -135,7 +135,7 @@ impl DeployService {
                 upgrader: station_api::SystemUpgraderInput::Deploy(
                     station_api::DeploySystemUpgraderInput {
                         wasm_module: upgrader_wasm_module,
-                        initial_cycles: upgrader_initial_cycles,
+                        initial_cycles: Some(upgrader_initial_cycles),
                     }
                 ),
                 quorum: Some(1),
