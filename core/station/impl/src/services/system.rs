@@ -342,6 +342,20 @@ impl SystemService {
 
         match install {
             SystemInstall::Init(init) => {
+                use crate::core::ic_cdk::api::canister_balance128;
+                use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
+                match init.upgrader {
+                    station_api::SystemUpgraderInput::Id(_) => (),
+                    station_api::SystemUpgraderInput::Deploy(ref deploy_args) => {
+                        let upgrader_initial_cycles = deploy_args
+                            .initial_cycles
+                            .unwrap_or(DEFAULT_INITIAL_UPGRADER_CYCLES);
+                        let station_cycles = canister_balance128();
+                        if station_cycles < upgrader_initial_cycles {
+                            ic_cdk::trap(&format!("Station cycles balance {} is insufficient for transferring {} cycles when deploying the upgrader.", station_cycles, upgrader_initial_cycles));
+                        }
+                    }
+                };
                 crate::core::ic_timers::set_timer(std::time::Duration::from_millis(0), move || {
                     use crate::core::ic_cdk::spawn;
                     spawn(install_canister_post_process_timer(init, system_info))
