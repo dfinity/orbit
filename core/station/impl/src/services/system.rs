@@ -804,7 +804,9 @@ mod install_canister_handlers {
                 Ok(upgrader_id)
             }
             station_api::SystemUpgraderInput::Deploy(deploy_args) => {
-                let upgrader_initial_cycles = deploy_args.initial_cycles.unwrap_or(DEFAULT_INITIAL_UPGRADER_CYCLES);
+                let upgrader_initial_cycles = deploy_args
+                    .initial_cycles
+                    .unwrap_or(DEFAULT_INITIAL_UPGRADER_CYCLES);
                 deploy_upgrader(
                     deploy_args.wasm_module,
                     upgrader_initial_cycles,
