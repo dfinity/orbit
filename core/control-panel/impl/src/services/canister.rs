@@ -95,11 +95,13 @@ impl CanisterService {
         let deployed_stations = users
             .iter()
             .flat_map(|user| {
-                user.deployed_stations.iter().filter(|canister_id| {
-                    user.stations
-                        .iter()
-                        .any(|station| station.canister_id == **canister_id)
-                })
+                user.get_deployed_stations()
+                    .into_iter()
+                    .filter(|canister_id| {
+                        user.stations
+                            .iter()
+                            .any(|station| station.canister_id == *canister_id)
+                    })
             })
             .collect::<HashSet<_>>();
 
@@ -118,7 +120,7 @@ impl CanisterService {
 
             for canister_id in deployed_stations {
                 fund_manager.register(
-                    *canister_id,
+                    canister_id,
                     RegisterOpts::new().with_cycles_fetcher(self.create_station_cycles_fetcher()),
                 );
             }
