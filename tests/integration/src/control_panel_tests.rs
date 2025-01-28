@@ -9,9 +9,10 @@ use crate::utils::{
 use crate::TestEnv;
 use candid::{Encode, Principal};
 use control_panel_api::{
-    AssociateWithCallerInput, DeployStationAdminUserInput, DeployStationInput,
-    DeployStationResponse, ListUserStationsInput, ManageUserStationsInput, RegisterUserInput,
-    RegisterUserResponse, UpdateWaitingListInput, UserStationDTO, UserSubscriptionStatusDTO,
+    AssociateWithCallerInput, CanDeployStationResponse, DeployStationAdminUserInput,
+    DeployStationInput, DeployStationResponse, ListUserStationsInput, ManageUserStationsInput,
+    RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput, UserStationDTO,
+    UserSubscriptionStatusDTO,
 };
 use control_panel_api::{ListUserStationsResponse, UploadCanisterModulesInput};
 use orbit_essentials::api::ApiResult;
@@ -361,9 +362,70 @@ fn deploy_too_many_stations() {
 
     // deploy the maximum amount of user stations
     let mut stations = vec![];
-    for i in 0..3 {
+    for day in 0..2 {
+        for i in 0..2 {
+            let deploy_station_args = DeployStationInput {
+                name: format!("station_{}_{}", day, i),
+                admins: vec![DeployStationAdminUserInput {
+                    identity: user_id,
+                    username: "admin".to_string(),
+                }],
+                associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+                subnet_selection: None,
+            };
+
+            let res: (ApiResult<CanDeployStationResponse>,) = update_candid_as(
+                &env,
+                canister_ids.control_panel,
+                user_id,
+                "can_deploy_station",
+                ((),),
+            )
+            .unwrap();
+            assert!(
+                matches!(res.0.unwrap(), CanDeployStationResponse::Allowed(remaining) if remaining == 2 - i)
+            );
+
+            let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
+                &env,
+                canister_ids.control_panel,
+                user_id,
+                "deploy_station",
+                (deploy_station_args,),
+            )
+            .unwrap();
+            stations.push(res.0.unwrap().canister_id);
+        }
+
+        // check that the user has 2 more stations and the first deployed station is the main station
+        let res: (ApiResult<ListUserStationsResponse>,) = update_candid_as(
+            &env,
+            canister_ids.control_panel,
+            user_id,
+            "list_user_stations",
+            (ListUserStationsInput {
+                filter_by_labels: None,
+            },),
+        )
+        .unwrap();
+        let associated_stations = res.0.unwrap().stations;
+        assert_eq!(associated_stations.len(), day + 2);
+        assert_eq!(associated_stations[0].canister_id, stations[0]);
+
+        // reset all but one deployed station
+        let manage_user_stations_args = ManageUserStationsInput::Remove(stations[1..].to_vec());
+        let res: (ApiResult<()>,) = update_candid_as(
+            &env,
+            canister_ids.control_panel,
+            user_id,
+            "manage_user_stations",
+            (manage_user_stations_args,),
+        )
+        .unwrap();
+        assert!(res.0.is_ok());
+
         let deploy_station_args = DeployStationInput {
-            name: format!("station_{}", i),
+            name: format!("last_station_{}", day),
             admins: vec![DeployStationAdminUserInput {
                 identity: user_id,
                 username: "admin".to_string(),
@@ -372,6 +434,7 @@ fn deploy_too_many_stations() {
             subnet_selection: None,
         };
 
+        // deploying an additional station should fail nonetheless
         let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
             &env,
             canister_ids.control_panel,
@@ -380,56 +443,11 @@ fn deploy_too_many_stations() {
             (deploy_station_args,),
         )
         .unwrap();
-        stations.push(res.0.unwrap().canister_id);
+        assert_eq!(res.0.unwrap_err().code, "DEPLOY_STATION_QUOTA_EXCEEDED");
+
+        // tomorrow the user should again be able to deploy stations
+        env.advance_time(std::time::Duration::from_secs(86400));
     }
-
-    // check that the user has 3 stations and the first deployed station is the main station
-    let res: (ApiResult<ListUserStationsResponse>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        user_id,
-        "list_user_stations",
-        (ListUserStationsInput {
-            filter_by_labels: None,
-        },),
-    )
-    .unwrap();
-    let associated_stations = res.0.unwrap().stations;
-    assert_eq!(associated_stations.len(), 3);
-    assert_eq!(associated_stations[0].canister_id, stations[0]);
-
-    // reset all but one deployed station
-    let manage_user_stations_args = ManageUserStationsInput::Remove(stations[1..].to_vec());
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        user_id,
-        "manage_user_stations",
-        (manage_user_stations_args,),
-    )
-    .unwrap();
-    assert!(res.0.is_ok());
-
-    let deploy_station_args = DeployStationInput {
-        name: "last_station".to_string(),
-        admins: vec![DeployStationAdminUserInput {
-            identity: user_id,
-            username: "admin".to_string(),
-        }],
-        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
-        subnet_selection: None,
-    };
-
-    // deploying an additional station should fail nonetheless
-    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        user_id,
-        "deploy_station",
-        (deploy_station_args,),
-    )
-    .unwrap();
-    assert_eq!(res.0.unwrap_err().code, "DEPLOY_STATION_QUOTA_EXCEEDED");
 }
 
 #[test]

@@ -1,7 +1,7 @@
 use crate::{
     core::{generate_uuid_v4, ic_cdk::next_time, CallContext},
     errors::UserError,
-    mappers::{SubscribedUser, UserMapper},
+    mappers::SubscribedUser,
     models::{CanDeployStation, User, UserId, UserKey, UserSubscriptionStatus},
     repositories::{UserRepository, USER_REPOSITORY},
     services::canister::FUND_MANAGER,
@@ -98,8 +98,7 @@ impl UserService {
 
         let user_id = generate_uuid_v4().await;
         let user_identity = ctx.caller();
-        let user =
-            UserMapper::from_register_input(*user_id.as_bytes(), input.clone(), user_identity);
+        let user = User::new_from_register_input(*user_id.as_bytes(), input.clone(), user_identity);
 
         user.validate()?;
         self.user_repository.insert(UserKey(user.id), user.clone());
@@ -181,7 +180,7 @@ impl UserService {
 
         users
             .into_iter()
-            .flat_map(|user| user.deployed_stations)
+            .flat_map(|user| user.get_deployed_stations())
             .collect()
     }
 
@@ -193,7 +192,7 @@ impl UserService {
     ) -> ServiceResult<User> {
         let mut user = self.get_user(user_id, ctx)?;
 
-        user.deployed_stations.push(station_canister_id);
+        user.add_deployed_station(station_canister_id);
 
         user.validate()?;
 
