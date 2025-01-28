@@ -2728,7 +2728,14 @@ type SystemUpgraderInput = variant {
   // An existing upgrader canister.
   Id : principal;
   // Creates and deploys a new canister.
-  WasmModule : blob;
+  Deploy : record {
+    wasm_module : blob;
+    // The initial cycles to allocate to the canister.
+    //
+    // If not set, only the minimal amount of cycles required to create
+    // and deploy the canister will be allocated.
+    initial_cycles : opt nat;
+  };
 };
 
 // The initial accounts to create when initializing the canister for the first time, e.g., after disaster recovery.

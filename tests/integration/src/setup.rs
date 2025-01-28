@@ -2,13 +2,13 @@ use crate::interfaces::{
     NnsIndexCanisterInitPayload, NnsLedgerCanisterInitPayload, NnsLedgerCanisterPayload,
 };
 use crate::utils::{
-    controller_test_id, minter_test_id, set_controllers, upload_canister_modules,
-    NNS_ROOT_CANISTER_ID,
+    await_station_healthy, controller_test_id, minter_test_id, set_controllers,
+    upload_canister_modules, NNS_ROOT_CANISTER_ID,
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{CandidType, Encode, Principal};
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
-use pocket_ic::{query_candid_as, update_candid_as, PocketIc, PocketIcBuilder};
+use pocket_ic::{update_candid_as, PocketIc, PocketIcBuilder};
 use serde::Serialize;
 use station_api::{AdminInitInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
 use std::collections::{HashMap, HashSet};
@@ -309,7 +309,12 @@ fn install_canisters(
         }],
         assets: None,
         quorum: Some(1),
-        upgrader: station_api::SystemUpgraderInput::WasmModule(upgrader_wasm),
+        upgrader: station_api::SystemUpgraderInput::Deploy(
+            station_api::DeploySystemUpgraderInput {
+                wasm_module: upgrader_wasm,
+                initial_cycles: Some(5_000_000_000_000),
+            },
+        ),
         fallback_controller: config.fallback_controller,
         accounts: None,
     });
@@ -319,28 +324,8 @@ fn install_canisters(
         Encode!(&station_init_args).unwrap(),
         Some(controller),
     );
-    // required because the station canister performs post init tasks through a one off timer
-    env.tick();
-    // required because it requires inter canister calls to initialize the UUIDs generator with a call
-    // to `raw_rand` which is not allowed in init calls,
-    env.tick();
-    env.tick();
-    // required because the station canister creates the upgrader canister
-    env.tick();
-    // required because the station canister installs the upgrader canister
-    env.tick();
-    env.tick();
-    // required because the station canister updates its own controllers
-    env.tick();
-    env.tick();
 
-    // the newly created station should be healthy at this point
-    let res: (station_api::HealthStatus,) =
-        query_candid_as(env, station, WALLET_ADMIN_USER, "health_status", ())
-            .expect("Unexpected error calling Station health_status");
-    let health_status = res.0;
-
-    assert_eq!(health_status, station_api::HealthStatus::Healthy);
+    await_station_healthy(env, station, WALLET_ADMIN_USER);
 
     CanisterIds {
         icp_ledger: nns_ledger_canister_id,

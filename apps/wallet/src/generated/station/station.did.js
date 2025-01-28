@@ -15,7 +15,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const SystemUpgraderInput = IDL.Variant({
     'Id' : IDL.Principal,
-    'WasmModule' : IDL.Vec(IDL.Nat8),
+    'Deploy' : IDL.Record({
+      'initial_cycles' : IDL.Opt(IDL.Nat),
+      'wasm_module' : IDL.Vec(IDL.Nat8),
+    }),
   });
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AccountSeed = IDL.Vec(IDL.Nat8);
@@ -1826,7 +1829,10 @@ export const init = ({ IDL }) => {
   });
   const SystemUpgraderInput = IDL.Variant({
     'Id' : IDL.Principal,
-    'WasmModule' : IDL.Vec(IDL.Nat8),
+    'Deploy' : IDL.Record({
+      'initial_cycles' : IDL.Opt(IDL.Nat),
+      'wasm_module' : IDL.Vec(IDL.Nat8),
+    }),
   });
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AccountSeed = IDL.Vec(IDL.Nat8);
