@@ -1,9 +1,13 @@
-use crate::setup::{setup_new_env, setup_new_env_with_config, SetupConfig, WALLET_ADMIN_USER};
+use crate::setup::{
+    create_canister_with_cycles, get_canister_wasm, setup_new_env, setup_new_env_with_config,
+    SetupConfig, WALLET_ADMIN_USER,
+};
 use crate::utils::{
-    controller_test_id, upload_canister_modules, user_test_id, NNS_ROOT_CANISTER_ID,
+    await_station_healthy, controller_test_id, get_system_info, set_controllers,
+    upload_canister_modules, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
-use candid::Principal;
+use candid::{Encode, Principal};
 use control_panel_api::{
     AssociateWithCallerInput, CanDeployStationResponse, DeployStationAdminUserInput,
     DeployStationInput, DeployStationResponse, ListUserStationsInput, ManageUserStationsInput,
@@ -13,8 +17,13 @@ use control_panel_api::{
 use control_panel_api::{ListUserStationsResponse, UploadCanisterModulesInput};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cmc::{SubnetFilter, SubnetSelection};
-use pocket_ic::{update_candid_as, PocketIc};
-use station_api::{HealthStatus, SystemInfoResponse};
+use pocket_ic::management_canister::CanisterInstallMode;
+use pocket_ic::{update_candid_as, CallError, PocketIc};
+use sha2::{Digest, Sha256};
+use station_api::{
+    AdminInitInput, HealthStatus, SystemInfoResponse, SystemInit as SystemInitArg,
+    SystemInstall as SystemInstallArg,
+};
 
 #[test]
 fn register_user_successful() {
@@ -273,44 +282,46 @@ fn deploy_user_station() {
     let health_status = res.0;
     assert_eq!(health_status, HealthStatus::Uninitialized);
 
-    let rounds_required_for_station_initialization = 5;
-    for _ in 0..rounds_required_for_station_initialization {
-        env.tick();
-    }
+    await_station_healthy(&env, newly_created_user_station, user_id);
 
-    // the newly created station should be healthy at this point
-    let res: (HealthStatus,) = update_candid_as(
-        &env,
-        newly_created_user_station,
-        user_id,
-        "health_status",
-        (),
-    )
-    .unwrap();
-    let health_status = res.0;
-    assert_eq!(health_status, HealthStatus::Healthy);
+    // the newly created station should be at the same subnet as the control panel
+    assert_eq!(
+        env.get_subnet(newly_created_user_station).unwrap(),
+        env.get_subnet(canister_ids.control_panel).unwrap()
+    );
+    // which is different from the fiduciary subnet
+    assert_ne!(
+        env.get_subnet(newly_created_user_station).unwrap(),
+        env.topology().get_fiduciary().unwrap()
+    );
 
-    check_station_controllers(&env, newly_created_user_station, user_id);
+    check_station_deployment(&env, newly_created_user_station, user_id);
 }
 
-fn check_station_controllers(env: &PocketIc, station: Principal, user_id: Principal) {
-    // the control panel should set the newly deployed station's controllers
-    // to be the upgrader canister and the NNS root canister;
+fn check_station_deployment(env: &PocketIc, station_id: Principal, user_id: Principal) {
     // first get the upgrader canister ID
-    let res: (ApiResult<SystemInfoResponse>,) =
-        update_candid_as(env, station, user_id, "system_info", ()).unwrap();
-    let upgrader_canister_id = res.0.unwrap().system.upgrader_id;
+    let system_info = get_system_info(env, user_id, station_id);
+    let upgrader_id = system_info.upgrader_id;
     // now get the canister status from the management canister on behalf of the upgrader canister
     // (note that only controllers can invoke the canister status management canister method)
-    let canister_status = env
-        .canister_status(station, Some(upgrader_canister_id))
-        .unwrap();
+    let canister_status = env.canister_status(station_id, Some(upgrader_id)).unwrap();
+    // the control panel should set the newly deployed station's controllers
+    // to be the upgrader canister and the NNS root canister;
     // assert that the set of controllers is equal to {upgrader_canister_id, NNS_ROOT_CANISTER_ID}
     let station_controllers = canister_status.settings.controllers;
     assert_eq!(station_controllers.len(), 2);
-    assert!(station_controllers.contains(&upgrader_canister_id));
+    assert!(station_controllers.contains(&upgrader_id));
     assert!(station_controllers.contains(&NNS_ROOT_CANISTER_ID));
-    assert_ne!(upgrader_canister_id, NNS_ROOT_CANISTER_ID);
+    assert_ne!(upgrader_id, NNS_ROOT_CANISTER_ID);
+
+    // stop the station and upgrader to get their cycles balance including reservations
+    env.stop_canister(upgrader_id, Some(station_id)).unwrap();
+    env.stop_canister(station_id, Some(upgrader_id)).unwrap();
+    // check the cycles balance of station and upgrader
+    let upgrader_cycles = env.cycle_balance(upgrader_id);
+    assert!((900_000_000_000..1_100_000_000_000).contains(&upgrader_cycles));
+    let station_cycles = env.cycle_balance(station_id);
+    assert!((900_000_000_000..1_100_000_000_000).contains(&station_cycles));
 }
 
 #[test]
@@ -646,25 +657,8 @@ fn deploy_user_station_to_different_subnet() {
         env.get_subnet(canister_ids.control_panel).unwrap()
     );
 
-    // wait until the station is healthy
-    let rounds_required_for_station_initialization = 5;
-    for _ in 0..rounds_required_for_station_initialization {
-        env.tick();
-    }
-
-    // the newly created station should be healthy at this point
-    let res: (HealthStatus,) = update_candid_as(
-        &env,
-        newly_created_user_station,
-        user_id,
-        "health_status",
-        (),
-    )
-    .unwrap();
-    let health_status = res.0;
-    assert_eq!(health_status, HealthStatus::Healthy);
-
-    check_station_controllers(&env, newly_created_user_station, user_id);
+    await_station_healthy(&env, newly_created_user_station, user_id);
+    check_station_deployment(&env, newly_created_user_station, user_id);
 }
 
 #[test]
@@ -732,7 +726,7 @@ fn insufficient_control_panel_cycles() {
             assert_eq!(
                 *e.details.unwrap().get("reason").unwrap(),
                 format!(
-                    "Canister {} has insufficient cycles balance to transfer 4500000000000 cycles.",
+                    "Canister {} has insufficient cycles balance to transfer 1500000000000 cycles.",
                     canister_ids.control_panel
                 )
             );
@@ -750,4 +744,106 @@ fn insufficient_control_panel_cycles() {
             break;
         }
     }
+}
+
+#[test]
+fn deploy_station_with_insufficient_cycles() {
+    let TestEnv { env, .. } = setup_new_env();
+
+    let upgrader_initial_cycles = 10_000_000_000_000; // 10T
+
+    // deploy the station with 400B cycles and add the station as its own controller
+    let station_initial_cycles = 400_000_000_000; // 400B
+    let station = create_canister_with_cycles(&env, WALLET_ADMIN_USER, station_initial_cycles);
+    assert_eq!(env.cycle_balance(station), station_initial_cycles);
+    set_controllers(
+        &env,
+        Some(WALLET_ADMIN_USER),
+        station,
+        vec![WALLET_ADMIN_USER, station],
+    );
+
+    // upload the station WASM to the station's ICP chunk store
+    let station_wasm = get_canister_wasm("station").to_vec();
+    env.clear_chunk_store(station, Some(WALLET_ADMIN_USER))
+        .unwrap();
+    let chunks: Vec<_> = station_wasm.chunks(1_000_000).collect();
+    let mut hashes = vec![];
+    for chunk in chunks {
+        let hash = env
+            .upload_chunk(station, Some(WALLET_ADMIN_USER), chunk.to_vec())
+            .unwrap();
+        hashes.push(hash);
+    }
+    let mut hasher = Sha256::new();
+    hasher.update(station_wasm);
+    let wasm_module_hash = hasher.finalize().to_vec();
+
+    // station init args
+    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
+    let station_init_args = Encode!(&SystemInstallArg::Init(SystemInitArg {
+        name: "Station".to_string(),
+        admins: vec![AdminInitInput {
+            identity: WALLET_ADMIN_USER,
+            name: "station-admin".to_string(),
+        }],
+        assets: None,
+        quorum: Some(1),
+        upgrader: station_api::SystemUpgraderInput::Deploy(
+            station_api::DeploySystemUpgraderInput {
+                wasm_module: upgrader_wasm,
+                initial_cycles: Some(upgrader_initial_cycles),
+            },
+        ),
+        fallback_controller: None,
+        accounts: None,
+    }))
+    .unwrap();
+
+    // installing the station should fail due to insufficient balance for deploying the upgrader
+    // and consume no more than 50B cycles
+    let cycles_before_install = env.cycle_balance(station);
+    let err = env
+        .install_chunked_canister(
+            station,
+            Some(WALLET_ADMIN_USER),
+            CanisterInstallMode::Install,
+            station,
+            hashes.clone(),
+            wasm_module_hash.clone(),
+            station_init_args.clone(),
+        )
+        .unwrap_err();
+    match err {
+        CallError::Reject(msg) => panic!("Unexpected reject: {}", msg),
+        CallError::UserError(err) => assert!(err.description.contains(&format!(
+            "insufficient for transferring {} cycles when deploying the upgrader",
+            upgrader_initial_cycles
+        ))),
+    };
+    let cycles_after_failed_install = env.cycle_balance(station);
+    assert!(cycles_before_install <= cycles_after_failed_install + 50_000_000_000);
+
+    // top up the station to have enough cycles to transfer when deploying the upgrader
+    env.add_cycles(station, upgrader_initial_cycles);
+
+    // skip a few rounds to prevent instruction rate-limiting for canister installation
+    for _ in 0..100 {
+        env.tick();
+    }
+
+    // now installing the station should succeed
+    env.install_chunked_canister(
+        station,
+        Some(WALLET_ADMIN_USER),
+        CanisterInstallMode::Install,
+        station,
+        hashes,
+        wasm_module_hash,
+        station_init_args,
+    )
+    .unwrap();
+
+    // and the station should eventually become healthy
+    await_station_healthy(&env, station, WALLET_ADMIN_USER);
 }
