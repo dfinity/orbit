@@ -18,6 +18,7 @@ CANISTER_ID_ICP_LEDGER="ryjl3-tyaaa-aaaaa-aaaba-cai"
 CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
 CANISTER_ID_UI="werw6-ayaaa-aaaaa-774aa-cai"
 CANISTER_ID_WALLET="wkt3w-3iaaa-aaaaa-774ba-cai"
+CANISTER_ID_DOCS="bp6mw-eqaaa-aaaac-ahroq-cai"
 CANISTER_ID_TEST_ICRC1_LEDGER="bw4dl-smaaa-aaaaa-qaacq-cai"
 CANISTER_ID_TEST_ICRC1_INDEX="br5f7-7uaaa-aaaaa-qaaca-cai"
 
@@ -275,6 +276,19 @@ function setup_app_wallet() {
   install_app_wallet
 }
 
+function uninstall_docs_portal() {
+  dfx canister delete docs_portal -y >/dev/null 2>&1 || true
+}
+
+function install_docs_portal() {
+  BUILD_MODE=local dfx deploy --specified-id $CANISTER_ID_DOCS docs_portal
+}
+
+function setup_docs_portal() {
+  uninstall_docs_portal
+  install_docs_portal
+}
+
 function candid_generate() {
   dfx generate station
   dfx generate control_panel
@@ -401,6 +415,7 @@ while [[ $# -gt 0 ]]; do
     exec_function setup_internet_identity
     exec_function setup_control_panel
     exec_function setup_app_wallet
+    exec_function setup_docs_portal
     echo
     ;;
   --init-cmc)
@@ -437,6 +452,12 @@ while [[ $# -gt 0 ]]; do
     shift
     exec_function setup_devenv
     exec_function setup_app_wallet
+    echo
+    ;;
+  --init-docs-portal)
+    shift
+    exec_function setup_devenv
+    exec_function setup_docs_portal
     echo
     ;;
   --candid-generate)

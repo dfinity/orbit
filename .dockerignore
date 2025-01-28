@@ -1,6 +1,6 @@
 Dockerfile
 node_modules
-docs
+docs/old
 dist
 target
 out
