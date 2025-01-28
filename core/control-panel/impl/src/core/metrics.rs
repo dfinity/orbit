@@ -115,15 +115,15 @@ impl ApplicationMetric<User> for MetricDeployedStations {
     fn recalculate(&mut self, models: &[User]) {
         let mut deployed_stations = 0.0;
         for user in models {
-            deployed_stations += user.deployed_stations.len() as f64;
+            deployed_stations += user.get_num_deployed_stations() as f64;
         }
 
         self.set(SERVICE_NAME, deployed_stations);
     }
 
     fn sum(&mut self, current: &User, previous: Option<&User>) {
-        let diff_deployed_stations = current.deployed_stations.len() as f64
-            - previous.map_or(0.0, |user| user.deployed_stations.len() as f64);
+        let diff_deployed_stations = current.get_num_deployed_stations() as f64
+            - previous.map_or(0.0, |user| user.get_num_deployed_stations() as f64);
 
         let current_total = self.get(SERVICE_NAME);
 
@@ -135,7 +135,7 @@ impl ApplicationMetric<User> for MetricDeployedStations {
 
         self.set(
             SERVICE_NAME,
-            current_total.sub(model.deployed_stations.len() as f64),
+            current_total.sub(model.get_num_deployed_stations() as f64),
         );
     }
 }
@@ -270,10 +270,8 @@ mod tests {
             name: "Main Station".to_string(),
             labels: Vec::new(),
         }];
-        user.deployed_stations = vec![
-            Principal::from_slice(&[1; 29]),
-            Principal::from_slice(&[2; 29]),
-        ];
+        user.add_deployed_station(Principal::from_slice(&[1; 29]));
+        user.add_deployed_station(Principal::from_slice(&[2; 29]));
         user.subscription_status = UserSubscriptionStatus::Approved;
         let status = user.subscription_status.to_string();
 
@@ -305,10 +303,8 @@ mod tests {
             name: "Main Station".to_string(),
             labels: Vec::new(),
         }];
-        user.deployed_stations = vec![
-            Principal::from_slice(&[1; 29]),
-            Principal::from_slice(&[2; 29]),
-        ];
+        user.add_deployed_station(Principal::from_slice(&[1; 29]));
+        user.add_deployed_station(Principal::from_slice(&[2; 29]));
         user.subscription_status = UserSubscriptionStatus::Approved;
         let status = user.subscription_status.to_string();
 
@@ -320,7 +316,7 @@ mod tests {
             name: "Main Station".to_string(),
             labels: Vec::new(),
         }];
-        user2.deployed_stations = vec![Principal::from_slice(&[1; 29])];
+        user2.add_deployed_station(Principal::from_slice(&[1; 29]));
         user2.subscription_status = UserSubscriptionStatus::Pending("email".to_string());
         let status2 = user2.subscription_status.to_string();
 
@@ -360,10 +356,8 @@ mod tests {
             name: "Main Station".to_string(),
             labels: Vec::new(),
         }];
-        user.deployed_stations = vec![
-            Principal::from_slice(&[1; 29]),
-            Principal::from_slice(&[2; 29]),
-        ];
+        user.add_deployed_station(Principal::from_slice(&[1; 29]));
+        user.add_deployed_station(Principal::from_slice(&[2; 29]));
         user.subscription_status = UserSubscriptionStatus::Approved;
         let status = user.subscription_status.to_string();
 
@@ -388,11 +382,7 @@ mod tests {
                 labels: Vec::new(),
             },
         ];
-        user.deployed_stations = vec![
-            Principal::from_slice(&[1; 29]),
-            Principal::from_slice(&[2; 29]),
-            Principal::from_slice(&[3; 29]),
-        ];
+        user.add_deployed_station(Principal::from_slice(&[3; 29]));
         user.subscription_status = UserSubscriptionStatus::Pending("test@email.com".to_string());
         let new_status = user.subscription_status.to_string();
 
