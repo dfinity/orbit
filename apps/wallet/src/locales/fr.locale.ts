@@ -1123,6 +1123,10 @@ export default {
     user_type_select: "Type d'Usager",
     add_rule_label: 'Ajouter un règle +',
     unsupported_specifier: 'Définition de spécificateur non supportée',
+    rule_groups: {
+      custom_rules: 'Règles personnalisées',
+      named_rules: 'Polices d approbation',
+    },
     rule_user_specifier: {
       owner: 'Propriétaire',
       requester: 'Demandeur',

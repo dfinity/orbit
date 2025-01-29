@@ -1118,6 +1118,10 @@ export default {
     user_type_select: 'Tipo de usuário',
     add_rule_label: 'Adicionar regra +',
     unsupported_specifier: 'Especificador não suportado',
+    rule_groups: {
+      custom_rules: 'Regras personalizadas',
+      named_rules: 'Políticas de aprovação',
+    },
     rule_user_specifier: {
       owner: 'Proprietário',
       requester: 'Requerente',

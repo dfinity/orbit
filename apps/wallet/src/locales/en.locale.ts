@@ -1109,6 +1109,10 @@ export default {
     user_type_select: 'User type',
     add_rule_label: 'Add rule +',
     unsupported_specifier: 'Unsupported specifier definition',
+    rule_groups: {
+      custom_rules: 'Custom rules',
+      named_rules: 'Approval policies',
+    },
     rule_user_specifier: {
       owner: 'Owner',
       requester: 'Requester',

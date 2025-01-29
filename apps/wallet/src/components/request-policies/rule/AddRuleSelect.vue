@@ -8,11 +8,22 @@
     hide-details
     density="comfortable"
     @update:model-value="onAddRule"
-  />
+  >
+    <template #item="{ item, props: { onClick } }">
+      <VListSubheader v-if="'header' in item.raw">
+        {{ item.raw.header }}
+      </VListSubheader>
+      <VListItem v-else @click="onClick as () => void">
+        <VListItemTitle class="d-flex justify-space-between align-center">
+          {{ item.raw.text }}
+        </VListItemTitle>
+      </VListItem>
+    </template>
+  </VSelect>
 </template>
 
 <script setup lang="ts">
-import { ref, toRefs } from 'vue';
+import { ref, toRefs, watch } from 'vue';
 import {
   RequestSpecifierRule,
   useRequestSpecifierRules,
@@ -34,6 +45,10 @@ const props = toRefs(input);
 
 const selectedAddRule = ref<RequestSpecifierRule | null>(null);
 const availableRules = useRequestSpecifierRules(props.specifier);
+
+watch(availableRules, newVal => {
+  console.log('newVal', newVal);
+});
 
 const emit = defineEmits<{
   (event: 'add', payload: RequestPolicyRule): void;

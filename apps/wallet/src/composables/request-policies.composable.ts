@@ -22,9 +22,11 @@ import { unreachable, variantIs } from '~/utils/helper.utils';
 
 export type RequestSpecifierRule = RequestPolicyRuleEnum | { NamedRule: UUID };
 
+export type RuleSelectItem = SelectItem<RequestSpecifierRule> | { header: string };
+
 export const useRequestSpecifierRules = (
   specifier: Ref<RequestSpecifier | null | undefined>,
-): ComputedRef<SelectItem<RequestPolicyRuleEnum | { NamedRule: UUID }>[]> => {
+): ComputedRef<RuleSelectItem[]> => {
   const allSpecifierRules = requestSpecifiersIncludedRules();
   const i18n = useI18n();
   const station = useStationStore();
@@ -37,9 +39,12 @@ export const useRequestSpecifierRules = (
   });
 
   return computed(() => {
-    const items: SelectItem<RequestSpecifierRule>[] = [];
+    const items: RuleSelectItem[] = [];
 
     if (!specifier.value) {
+      items.push({
+        header: i18n.t('request_policies.rule_groups.custom_rules'),
+      });
       allRequestPolicyRules.forEach(rule => {
         items.push({
           value: rule,
@@ -50,6 +55,10 @@ export const useRequestSpecifierRules = (
       const specifierEnum = mapRequestSpecifierToEnum(specifier.value);
 
       if (allSpecifierRules[specifierEnum]) {
+        items.push({
+          header: i18n.t('request_policies.rule_groups.custom_rules'),
+        });
+
         allSpecifierRules[specifierEnum].forEach(rule => {
           items.push({
             value: rule,
@@ -62,10 +71,15 @@ export const useRequestSpecifierRules = (
     if (namedRules.value) {
       const namedRuleValues = namedRules.value.map(rule => ({
         value: { NamedRule: rule.id },
-        text: i18n.t(`request_policies.rule.named_rule`, { name: rule.name }),
+        text: rule.name,
       }));
 
-      items.unshift(...namedRuleValues);
+      items.unshift(
+        {
+          header: i18n.t('request_policies.rule_groups.named_rules'),
+        },
+        ...namedRuleValues,
+      );
     }
 
     return items;
