@@ -67,7 +67,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CanDeployStationResponse = IDL.Variant({
     'NotAllowed' : UserSubscriptionStatus,
-    'Allowed' : IDL.Nat64,
+    'Allowed' : IDL.Null,
     'QuotaExceeded' : IDL.Null,
   });
   const CanDeployStationResult = IDL.Variant({
