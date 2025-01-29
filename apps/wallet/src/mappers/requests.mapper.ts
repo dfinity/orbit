@@ -419,6 +419,12 @@ export const mapListRequestsOperationTypeGroupToCsvHeaders = (
     headers.policy_id = 'Policy ID';
   }
 
+  if (group === ListRequestsOperationTypeGroup.NamedRule) {
+    headers.rule_id = 'Rule ID';
+    headers.rule_name = 'Rule Name';
+    headers.rule_description = 'Rule Description';
+  }
+
   if (group === ListRequestsOperationTypeGroup.SystemUpgrade) {
     headers.change_target = 'Change Target';
     headers.wasm_checksum = 'Wasm Checksum';
@@ -607,6 +613,34 @@ const mapRequestToRequestPolicyCsvRow = (request: Request): CsvRow => {
   return {};
 };
 
+const mapRequestToNamedRuleCsvRow = (request: Request): CsvRow => {
+  if (variantIs(request.operation, 'AddNamedRule')) {
+    return {
+      rule_id: request.operation.AddNamedRule.named_rule?.[0]?.id ?? '',
+      rule_name: request.operation.AddNamedRule.input.name,
+      rule_description: request.operation.AddNamedRule.input.description?.[0] ?? '',
+      details: stringify(request.operation.AddNamedRule.input),
+    };
+  }
+
+  if (variantIs(request.operation, 'EditNamedRule')) {
+    return {
+      rule_id: request.operation.EditNamedRule.input.named_rule_id,
+      rule_name: request.operation.EditNamedRule.input.name[0] ?? '',
+      rule_description: request.operation.EditNamedRule.input.description[0]?.[0] ?? '',
+      details: stringify(request.operation.EditNamedRule.input),
+    };
+  }
+
+  if (variantIs(request.operation, 'RemoveNamedRule')) {
+    return {
+      rule_id: request.operation.RemoveNamedRule.input.named_rule_id,
+    };
+  }
+
+  return {};
+};
+
 const mapRequestToPermissionCsvRow = (request: Request): CsvRow => {
   if (variantIs(request.operation, 'EditPermission')) {
     return {
@@ -664,6 +698,8 @@ export const mapRequestToCsvRow = (
       return mapRequestToSystemUpgradeCsvRow(request);
     case ListRequestsOperationTypeGroup.Transfer:
       return mapRequestToTransferCsvRow(request);
+    case ListRequestsOperationTypeGroup.NamedRule:
+      return mapRequestToNamedRuleCsvRow(request);
   }
 
   return {};

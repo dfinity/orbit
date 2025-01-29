@@ -83,13 +83,6 @@ export const useAvailableDomains = (
     });
   }
 
-  if (hasRequiredPrivilege({ anyOf: [Privilege.ListNamedRules] })) {
-    domains.value.push({
-      id: RequestDomains.ApprovalPolicy,
-      types: [{ AddNamedRule: null }, { EditNamedRule: null }, { RemoveNamedRule: null }],
-    });
-  }
-
   domains.value.push({
     id: RequestDomains.System,
     types: [
@@ -102,6 +95,9 @@ export const useAvailableDomains = (
       { EditUserGroup: null },
       { RemoveUserGroup: null },
       { ManageSystemInfo: null },
+      { AddNamedRule: null },
+      { EditNamedRule: null },
+      { RemoveNamedRule: null },
     ],
   });
 

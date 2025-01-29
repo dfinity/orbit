@@ -219,6 +219,9 @@ export default {
       amount: 'Montant',
       fee: 'Frais',
       comment: 'Commentaire',
+      rule_id: 'ID de Règle',
+      rule_name: 'Nom de Règle',
+      rule_description: 'Description de Règle',
     },
     download: {
       user_group: "Groupes d'Usagers",
@@ -231,6 +234,7 @@ export default {
       transfer: 'Transferts',
       external_canister: 'Canister Géré',
       system_info: 'Informations Système',
+      named_rule: 'Polices d approbation',
     },
     types: {
       addusergroup: {

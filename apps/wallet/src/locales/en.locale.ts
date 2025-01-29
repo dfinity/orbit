@@ -210,6 +210,9 @@ export default {
       fee: 'Fee',
       comment: 'Comment',
       url: 'URL',
+      rule_id: 'Rule ID',
+      rule_name: 'Rule Name',
+      rule_description: 'Rule Description',
     },
     download: {
       user_group: 'User Groups',
@@ -222,6 +225,8 @@ export default {
       transfer: 'Transfers',
       external_canister: 'External Canisters',
       system_info: 'System Info',
+      asset: 'Assets',
+      named_rule: 'Approval Policy',
     },
     types: {
       addusergroup: {

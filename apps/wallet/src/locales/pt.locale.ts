@@ -200,6 +200,7 @@ export default {
       transfer: 'Transferências',
       external_canister: 'Canister gerenciado',
       system_info: 'Informações do sistema',
+      named_rule: 'Política de aprovação',
     },
     headers: {
       id: 'ID',
@@ -230,6 +231,9 @@ export default {
       amount: 'Quantidade',
       fee: 'Taxa',
       comment: 'Comentário',
+      rule_id: 'ID da regra',
+      rule_name: 'Nome da regra',
+      rule_description: 'Descrição da regra',
     },
     types: {
       addusergroup: {
