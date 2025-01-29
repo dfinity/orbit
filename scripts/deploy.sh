@@ -258,6 +258,38 @@ function deploy_app_wallet() {
   fi
 }
 
+function deploy_docs_portal() {
+  local network=$(get_network)
+  local subnet_type=$(get_subnet_type)
+
+  echo "Deploying the Docs Portal to the '$network' network."
+
+  if should_build_artifacts || [ ! -f ./artifacts/docs-portal/docs-portal.tar.gz ]; then
+    BUILD_MODE=$network ./scripts/docker-build.sh --docs-portal
+  fi
+
+  if [ -d ./artifacts/docs-portal/dist ]; then
+    rm -rf ./artifacts/docs-portal/dist
+  fi
+
+  mkdir -p ./artifacts/docs-portal/dist
+  tar -xvf ./artifacts/docs-portal/docs-portal.tar.gz -C ./artifacts/docs-portal/dist
+
+  canister_id_output=$(dfx canister id docs_portal --network $network 2>/dev/null || echo "")
+
+  if [ -z "$canister_id_output" ]; then
+    echo "Canister 'docs_portal' does not exist, creating and installing..."
+
+    BUILD_MODE=$network dfx deploy --network $network docs_portal --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+  else
+    echo "Canister 'docs_portal' already exists with ID: $canister_id_output"
+    echo
+    echo "Uploading assets to the docs_portal canister..."
+
+    BUILD_MODE=$network dfx deploy --network $network docs_portal
+  fi
+}
+
 #############################################
 # SCRIPT OPTIONS                            #
 #############################################
@@ -308,6 +340,7 @@ while [[ $# -gt 0 ]]; do
   fi
   exec_function deploy_control_panel
   exec_function deploy_app_wallet
+  exec_function deploy_docs_portal
   echo
   echo -e "\e[1;32mDeployment completed successfully to the '$(get_network)' network.\e[0m"
   echo

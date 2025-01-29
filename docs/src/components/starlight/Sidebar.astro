@@ -1,0 +1,55 @@
+---
+import MobileMenuFooter from '@astrojs/starlight/components/MobileMenuFooter.astro';
+import SidebarPersister from '@astrojs/starlight/components/SidebarPersister.astro';
+import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
+import type { Props } from '@astrojs/starlight/props';
+import type { SidebarEntry } from '@astrojs/starlight/utils/navigation';
+
+
+const { sidebar, id } = Astro.props;
+
+function stripLeadingAndTrailingSlashes(path: string): string {
+  return path.replace(/^\/|\/$/g, '');
+}
+
+function findParentGroup(sidebar: SidebarEntry[], id: string): SidebarEntry | null {
+  for (const entry of sidebar) {
+    if (entry.type === 'group') {
+      for (const subEntry of entry.entries) {
+        if (subEntry.type === 'link' && stripLeadingAndTrailingSlashes(subEntry.href) === id) {
+          return entry;
+        }
+        if (subEntry.type === 'group') {
+          const parentGroup = findParentGroup(subEntry.entries, id);
+          if (parentGroup) {
+            return entry;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+const parentGroup = findParentGroup(sidebar, id);
+
+// Make sure all top-level items in the sidebar are groups.
+type Group = Extract<SidebarEntry, { type: 'group' }>;
+function assertGroups(sidebar: SidebarEntry[]): asserts sidebar is Group[] {
+  for (const entry of sidebar) {
+    if (entry.type !== 'group') {
+      throw new Error('Top-level links are not permitted in the docs sidebar.');
+    }
+  }
+}
+
+assertGroups(sidebar);
+---
+
+<SidebarPersister {...Astro.props}>
+  <SidebarSublist sublist={sidebar.filter((group) => group === parentGroup)} />
+</SidebarPersister>
+
+<div class="md:sl-hidden">
+  <MobileMenuFooter {...Astro.props} />
+</div>

@@ -40,5 +40,5 @@ pub const MAX_WASM_PAGES: u64 = MAX_STABLE_MEMORY_SIZE / WASM_PAGE_SIZE as u64;
 /// The number of seconds that the account balance is considered fresh.
 pub const ACCOUNT_BALANCE_FRESHNESS_IN_MS: u64 = 3000;
 
-/// The initial cycles balance to use when creating the upgrader canister.
-pub const INITIAL_UPGRADER_CYCLES: u128 = 2_250_000_000_000;
+/// The default initial cycles balance to use when creating and deploying the upgrader canister.
+pub const DEFAULT_INITIAL_UPGRADER_CYCLES: u128 = 2_500_000_000_000;
