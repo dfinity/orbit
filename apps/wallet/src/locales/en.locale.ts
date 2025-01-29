@@ -331,6 +331,18 @@ export default {
         title: 'Edit disaster recovery',
         request_title: 'Edit disaster recovery request',
       },
+      addnamedrule: {
+        title: 'Add approval policy',
+        request_title: 'Add approval policy request',
+      },
+      editnamedrule: {
+        title: 'Edit approval policy',
+        request_title: 'Edit approval policy request',
+      },
+      removenamedrule: {
+        title: 'Remove approval policy',
+        request_title: 'Remove approval policy request',
+      },
       unknown: {
         title: 'Unknown',
         request_title: 'Unknown request',
@@ -1068,6 +1080,7 @@ export default {
       addressbook: 'Address Book',
       managesysteminfo: 'Manage System Info',
       externalcanister: 'External Canister',
+      namedrule: 'Approval Policy',
     },
     actions: {
       list: 'List',
@@ -1100,8 +1113,8 @@ export default {
       owner: 'Owner',
       requester: 'Requester',
       any: 'Any user',
-      group: 'Member of group',
-      id: 'Specific user',
+      group: 'Member of group(s)',
+      id: 'Specific user(s)',
     },
     rule: {
       allof: 'all of',
@@ -1112,6 +1125,39 @@ export default {
       quorumpercentage: 'Quorum percentage',
       allowlistedbymetadata: 'Allowlisted by metadata',
       allowlisted: 'Allowlisted',
+      named_rule: 'Use approval policy: {name}',
+    },
+    rule_tooltip_summary: {
+      allof: 'All of the following:',
+      anyof: 'Any of the following:',
+      not: 'When not the following:',
+      autoapproved: 'Auto-approved',
+      quorum: 'At least {quorum} of {specifier}',
+      quorumpercentage: 'At least {percentage}% of {specifier}',
+      allowlistedbymetadata: 'Address in address book with metadata {metadata}',
+      allowlisted: 'Address in address book',
+      named_rule: 'Use approval policy: {name}',
+    },
+    rule_short_summary: {
+      allof: ' AND ',
+      anyof: ' OR ',
+      not: 'NOT ',
+      autoapproved: 'Auto-approved',
+      quorum: '{quorum} from {specifier}',
+      quorumpercentage: '{percentage}% from {specifier}',
+      allowlistedbymetadata: 'Address marked with {metadata}',
+      allowlisted: 'Address in address book',
+      named_rule: 'Use approval policy: {name}',
+    },
+    rule_user_tooltip_summary: {
+      any: 'any user',
+      id: 'user(s) {users}',
+      group: 'members of group(s) {groups}',
+    },
+    rule_user_summary: {
+      any: 'any user',
+      id: '{users}',
+      group: '{groups}',
     },
     specifier: {
       editpermission: 'Edit permission',
@@ -1139,6 +1185,9 @@ export default {
       addasset: 'Add asset',
       editasset: 'Edit asset',
       removeasset: 'Remove asset',
+      addnamedrule: 'Add approval policy',
+      editnamedrule: 'Edit approval policy',
+      removenamedrule: 'Remove approval policy',
     },
   },
   cycle_obtain_strategies: {

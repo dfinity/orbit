@@ -24,6 +24,11 @@ vi.mock('~/services/station.service', () => {
     ),
     addNamedRule: vi.fn().mockImplementation(() => Promise.resolve({} as Request)),
     editNamedRule: vi.fn().mockImplementation(() => Promise.resolve({} as Request)),
+    listNamedRules: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        named_rules: [],
+      }),
+    ),
   };
 
   return {
@@ -32,7 +37,7 @@ vi.mock('~/services/station.service', () => {
 });
 
 describe('NamedRuleDialog', () => {
-  it.skip('renders correctly', () => {
+  it('renders correctly', () => {
     const wrapper = mount(NamedRuleDialog, {
       props: {
         open: true,
@@ -141,7 +146,7 @@ describe('NamedRuleDialog', () => {
     expect(services().station.editNamedRule).toHaveBeenCalledWith({
       named_rule_id: '1',
       name: ['Updated Rule'],
-      description: ['Updated Description'],
+      description: [['Updated Description']],
       rule: [
         {
           AutoApproved: null,

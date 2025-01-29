@@ -50,6 +50,7 @@ const input = withDefaults(
   {
     modelValue: () => [],
     disabled: false,
+    specifier: null,
   },
 );
 

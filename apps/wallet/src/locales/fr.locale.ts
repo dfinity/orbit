@@ -340,6 +340,18 @@ export default {
         title: 'Éditer la sauvegarde',
         request_title: 'Demande d édition de sauvegarde',
       },
+      addnamedrule: {
+        title: 'Ajouter une politique d approbation',
+        request_title: 'Demande d ajout d une politique d approbation',
+      },
+      editnamedrule: {
+        title: 'Modifier une politique d approbation',
+        request_title: 'Demande de modification d une politique d approbation',
+      },
+      removenamedrule: {
+        title: 'Supprimer une politique d approbation',
+        request_title: 'Demande de suppression d une politique d approbation',
+      },
       unknown: {
         title: 'Inconnu',
         request_title: 'Demande Inconnue',
@@ -1082,6 +1094,7 @@ export default {
       addressbook: "Carnet d'Adresses",
       managesysteminfo: 'Gérer les informations système',
       externalcanister: 'Canister Géré',
+      namedrule: 'Police d approbation',
     },
     actions: {
       list: 'Lister',
@@ -1114,8 +1127,8 @@ export default {
       owner: 'Propriétaire',
       requester: 'Demandeur',
       any: "N'importe quel usager",
-      group: 'Membre du groupe',
-      id: 'Usager spécifique',
+      group: 'Membre du groupe(s)',
+      id: 'Usager spécifique(s)',
     },
     rule: {
       allof: 'Tout les',
@@ -1126,6 +1139,39 @@ export default {
       quorumpercentage: 'Pourcentage du Quorum',
       allowlistedbymetadata: 'Liste blanche par metadata',
       allowlisted: 'Liste blanche',
+      named_rule: 'Utiliser la politique d approbation: {name}',
+    },
+    rule_tooltip_summary: {
+      allof: 'Tout les suivants:',
+      anyof: 'Un des suivants:',
+      not: 'Quand ce n est pas:',
+      autoapproved: 'Auto-approuvé',
+      quorum: 'Au moins {quorum} de {specifier}',
+      quorumpercentage: 'Au moins {percentage}% de {specifier}',
+      allowlistedbymetadata: 'Adresse dans le carnet d adresses avec la metadata {metadata}',
+      allowlisted: 'Adresse dans le carnet d adresses',
+      named_rule: 'Utiliser la politique d approbation: {name}',
+    },
+    rule_short_summary: {
+      allof: ' ET ',
+      anyof: ' OR ',
+      not: 'NOT ',
+      autoapproved: 'Auto-approuvé',
+      quorum: '{quorum} de {specifier}',
+      quorumpercentage: '{percentage}% de {specifier}',
+      allowlistedbymetadata: 'Adresse marquée avec la metadata {metadata}',
+      allowlisted: 'Adresse dans le carnet d adresses',
+      named_rule: 'Utiliser la politique d approbation: {name}',
+    },
+    rule_user_tooltip_summary: {
+      any: 'N importe quel usager',
+      id: 'usager(s) {users}',
+      group: 'membre(s) du groupe(s) {groups}',
+    },
+    rule_user_summary: {
+      any: 'N importe quel usager',
+      id: '{users}',
+      group: '{groups}',
     },
     specifier: {
       editpermission: 'Modifier les permissions',

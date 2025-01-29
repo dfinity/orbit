@@ -53,7 +53,9 @@
             <template #item.description="{ item: namedRule }">
               {{ namedRule.description[0] ?? '' }}
             </template>
-
+            <template #item.rule="{ item: namedRule }">
+              <RuleSummary :rule="namedRule.rule" />
+            </template>
             <template #item.actions="{ item: namedRule }">
               <div class="d-flex justify-end">
                 <ActionBtn
@@ -102,6 +104,7 @@ import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import NamedRuleDialogBtn from '~/components/request-policies/NamedRuleDialogBtn.vue';
+import RuleSummary from '~/components/request-policies/rule/RuleSummary.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
 import {
@@ -129,6 +132,7 @@ const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const headers = ref<TableHeader[]>([
   { title: i18n.t('terms.name'), key: 'name', sortable: false },
   { title: i18n.t('terms.description'), key: 'description', sortable: false },
+  { title: i18n.t('terms.rule'), key: 'rule', sortable: false },
   { title: '', key: 'actions', sortable: false },
 ]);
 

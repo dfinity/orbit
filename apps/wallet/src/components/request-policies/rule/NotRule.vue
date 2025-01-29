@@ -43,6 +43,7 @@ const input = withDefaults(
   }>(),
   {
     disabled: false,
+    specifier: null,
   },
 );
 

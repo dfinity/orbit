@@ -131,13 +131,6 @@ const save = async (): Promise<void> => {
   try {
     saving.value = true;
     if (namedRule.value.id) {
-      console.log('namedRule', {
-        named_rule_id: namedRule.value.id,
-        name: [assertAndReturn(namedRule.value.name)],
-        description: namedRule.value.description ?? [],
-        rule: [assertAndReturn(namedRule.value.rule)],
-      });
-
       const request = await station.service.editNamedRule({
         named_rule_id: namedRule.value.id,
         name: [assertAndReturn(namedRule.value.name)],

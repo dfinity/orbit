@@ -339,6 +339,18 @@ export default {
         title: 'Configurar recuperação de desastres',
         request_title: 'Pedido de configuração de recuperação de desastres',
       },
+      addnamedrule: {
+        title: 'Adicionar política de aprovação',
+        request_title: 'Pedido de adição de política de aprovação',
+      },
+      editnamedrule: {
+        title: 'Editar política de aprovação',
+        request_title: 'Pedido de edição de política de aprovação',
+      },
+      removenamedrule: {
+        title: 'Remover política de aprovação',
+        request_title: 'Pedido de remoção de política de aprovação',
+      },
       unknown: {
         title: 'Desconhecido',
         request_title: 'Pedido desconhecido',
@@ -1078,6 +1090,7 @@ export default {
       managesysteminfo: 'Gerir informações do sistema',
       externalcanister: 'Canister gerenciado',
       callcanister: 'Chamar canister',
+      namedrule: 'Política de aprovação',
     },
     actions: {
       list: 'Listar',
@@ -1109,8 +1122,8 @@ export default {
       owner: 'Proprietário',
       requester: 'Requerente',
       any: 'Qualquer usuário',
-      group: 'Grupo de usuários',
-      id: 'Usuário específico',
+      group: 'Membro de grupo(s)',
+      id: 'Usuário específico(s)',
     },
     rule: {
       allof: 'todos',
@@ -1121,6 +1134,39 @@ export default {
       quorumpercentage: 'Percentual de quórum',
       allowlistedbymetadata: 'Lista branca por metadados',
       allowlisted: 'Lista branca',
+      named_rule: 'Usa política de aprovação: {name}',
+    },
+    rule_tooltip_summary: {
+      allof: 'Todos os seguintes:',
+      anyof: 'Qualquer um dos seguintes:',
+      not: 'Quando não for o seguinte:',
+      autoapproved: 'Aprovado automaticamente',
+      quorum: 'Pelo menos {quorum} de {specifier}',
+      quorumpercentage: 'Pelo menos {percentage}% de {specifier}',
+      allowlistedbymetadata: 'Endereço na lista de endereços com metadados {metadata}',
+      allowlisted: 'Endereço na lista de endereços',
+      named_rule: 'Usa política de aprovação: {name}',
+    },
+    rule_short_summary: {
+      allof: ' E ',
+      anyof: ' OU ',
+      not: 'NÃO ',
+      autoapproved: 'Aprovado automaticamente',
+      quorum: '{quorum} de {specifier}',
+      quorumpercentage: '{percentage}% de {specifier}',
+      allowlistedbymetadata: 'Endereço marcado com {metadata}',
+      allowlisted: 'Endereço na lista de endereços',
+      named_rule: 'Usa política de aprovação: {name}',
+    },
+    rule_user_tooltip_summary: {
+      any: 'qualquer usuário',
+      id: 'usuário(s) {users}',
+      group: 'membros do grupo(s) {groups}',
+    },
+    rule_user_summary: {
+      any: 'qualquer usuário',
+      id: '{users}',
+      group: '{groups}',
     },
     specifier: {
       editpermission: 'Editar permissão',
@@ -1147,6 +1193,9 @@ export default {
       addasset: 'Adicionar ativo',
       editasset: 'Editar ativo',
       removeasset: 'Remover ativo',
+      addnamedrule: 'Adicionar política de aprovação',
+      editnamedrule: 'Editar política de aprovação',
+      removenamedrule: 'Remover política de aprovação',
     },
   },
   cycle_obtain_strategies: {
