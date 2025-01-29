@@ -412,7 +412,7 @@ fn deploy_too_many_stations() {
         for i in 0..max_stations_per_user {
             assert!(matches!(
                 can_deploy(user_id).unwrap(),
-                CanDeployStationResponse::Allowed
+                CanDeployStationResponse::Allowed(remaining) if max_stations_per_user == remaining + i
             ));
             let station_id = deploy(user_id, day, i).unwrap().canister_id;
             stations.push(station_id);
@@ -461,7 +461,7 @@ fn deploy_too_many_stations() {
         for i in 1..(max_stations_per_day + 1 - max_stations_per_user as u64) {
             assert!(matches!(
                 can_deploy(user_test_id(i)).unwrap(),
-                CanDeployStationResponse::Allowed
+                CanDeployStationResponse::Allowed(remaining) if remaining == std::cmp::min(max_stations_per_user, max_stations_per_day as usize - max_stations_per_user - (i as usize - 1))
             ));
             deploy(user_test_id(i), day, 0).unwrap();
         }

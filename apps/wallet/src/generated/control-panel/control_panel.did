@@ -203,12 +203,12 @@ type DeployStationResult = variant {
 };
 
 // The successful result of checking if the caller can deploy a station canister.
-// If the caller cannot deploy a station canister, then the returned variant provides
-// a reason why the caller cannot deploy a station canister
+// Returns the remaining number of station canisters the caller can still deploy
+// or a reason why the caller cannot deploy a station canister
 // (bad subscription status or exceeded quota).
 type CanDeployStationResponse = variant {
   NotAllowed : UserSubscriptionStatus;
-  Allowed;
+  Allowed : nat64;
   QuotaExceeded;
 };
 

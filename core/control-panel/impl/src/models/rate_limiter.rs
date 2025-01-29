@@ -36,10 +36,10 @@ impl RateLimiter {
             if self.num_deployed_stations >= self.max_deployed_stations {
                 CanDeployStation::QuotaExceeded
             } else {
-                CanDeployStation::Allowed
+                CanDeployStation::Allowed(self.max_deployed_stations - self.num_deployed_stations)
             }
         } else {
-            CanDeployStation::Allowed
+            CanDeployStation::Allowed(self.max_deployed_stations)
         }
     }
 

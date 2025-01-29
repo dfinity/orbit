@@ -29,7 +29,7 @@ pub enum UserSubscriptionStatus {
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum CanDeployStation {
     NotAllowed(UserSubscriptionStatus),
-    Allowed,
+    Allowed(usize),
     QuotaExceeded,
 }
 

@@ -21,7 +21,7 @@ export interface Artifact {
 export type CanDeployStationResponse = {
     'NotAllowed' : UserSubscriptionStatus
   } |
-  { 'Allowed' : null } |
+  { 'Allowed' : bigint } |
   { 'QuotaExceeded' : null };
 export type CanDeployStationResult = { 'Ok' : CanDeployStationResponse } |
   { 'Err' : ApiError };

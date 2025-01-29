@@ -224,9 +224,9 @@ impl UserService {
         })?;
 
         let check_can_deploy_station =
-            |can_deploy_station_response: CanDeployStation| -> Result<(), UserError> {
+            |can_deploy_station_response: CanDeployStation| -> Result<usize, UserError> {
                 match can_deploy_station_response {
-                    CanDeployStation::Allowed => Ok(()),
+                    CanDeployStation::Allowed(remaining) => Ok(remaining),
                     CanDeployStation::QuotaExceeded => Err(UserError::DeployStationQuotaExceeded),
                     CanDeployStation::NotAllowed(subscription_status) => {
                         Err(UserError::BadUserSubscriptionStatus {
@@ -235,10 +235,14 @@ impl UserService {
                     }
                 }
             };
-        check_can_deploy_station(config.global_rate_limiter.can_deploy_station())?;
-        check_can_deploy_station(user.can_deploy_station())?;
+        let allowed_globally =
+            check_can_deploy_station(config.global_rate_limiter.can_deploy_station())?;
+        let allowed_per_user = check_can_deploy_station(user.can_deploy_station())?;
 
-        Ok(CanDeployStation::Allowed)
+        Ok(CanDeployStation::Allowed(std::cmp::min(
+            allowed_globally,
+            allowed_per_user,
+        )))
     }
 
     /// Checks if the caller is a controller.
