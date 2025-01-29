@@ -31,15 +31,22 @@ impl RateLimiter {
     }
 
     pub fn can_deploy_station(&self) -> CanDeployStation {
+        match self.remaining_quota() {
+            Some(remaining) => CanDeployStation::Allowed(remaining),
+            None => CanDeployStation::QuotaExceeded,
+        }
+    }
+
+    pub fn remaining_quota(&self) -> Option<usize> {
         let current_unix_date = time() / 86_400_000_000_000;
         if self.unix_date == current_unix_date {
             if self.num_deployed_stations >= self.max_deployed_stations {
-                CanDeployStation::QuotaExceeded
+                None
             } else {
-                CanDeployStation::Allowed(self.max_deployed_stations - self.num_deployed_stations)
+                Some(self.max_deployed_stations - self.num_deployed_stations)
             }
         } else {
-            CanDeployStation::Allowed(self.max_deployed_stations)
+            Some(self.max_deployed_stations)
         }
     }
 

@@ -1,8 +1,8 @@
 //! Station services.
+use crate::core::canister_config;
 use crate::core::middlewares::use_canister_call_metric;
-use crate::errors::UserError;
+use crate::errors::{DeployError, UserError};
 use crate::mappers::user_station::UpdateUserStationInputInto;
-use crate::models::MAX_DEPLOYED_STATIONS_PER_DAY;
 use crate::services::{
     DeployService, UserStationService, DEPLOY_SERVICE, USER_SERVICE, USER_STATION_SERVICE,
 };
@@ -130,13 +130,20 @@ impl StationController {
     #[with_middleware(tail = use_canister_call_metric("deploy_station", &result))]
     async fn deploy_station(&self, input: DeployStationInput) -> ApiResult<DeployStationResponse> {
         let ctx = CallContext::get();
+        let config = canister_config().ok_or(DeployError::Failed {
+            reason: "Canister config not initialized.".to_string(),
+        })?;
+        let max_concurrency = config
+            .global_rate_limiter
+            .remaining_quota()
+            .ok_or(UserError::DeployStationQuotaExceeded)?;
         let _lock = STATE
             .with(|state| {
                 CallerGuard::new(
                     state.clone(),
                     ctx.caller(),
                     CallerGuardParams {
-                        max_concurrency: Some(MAX_DEPLOYED_STATIONS_PER_DAY),
+                        max_concurrency: Some(max_concurrency),
                         expires_at_ns: None,
                     },
                 )
