@@ -1,6 +1,6 @@
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::next_time, CallContext},
-    errors::UserError,
+    core::{canister_config, generate_uuid_v4, ic_cdk::next_time, CallContext},
+    errors::{DeployError, UserError},
     mappers::SubscribedUser,
     models::{CanDeployStation, User, UserId, UserKey, UserSubscriptionStatus},
     repositories::{UserRepository, USER_REPOSITORY},
@@ -210,10 +210,28 @@ impl UserService {
     }
 
     /// Checks if a user can deploy a station.
-    pub async fn can_deploy_station(&self, ctx: &CallContext) -> ServiceResult<CanDeployStation> {
+    pub fn can_deploy_station(&self, ctx: &CallContext) -> ServiceResult<CanDeployStation> {
         let user = self.get_user_by_identity(&ctx.caller(), ctx)?;
+        let config = canister_config().ok_or(DeployError::Failed {
+            reason: "Canister config not initialized.".to_string(),
+        })?;
 
-        Ok(user.can_deploy_station())
+        let check_can_deploy_station =
+            |can_deploy_station_response: CanDeployStation| -> Result<(), UserError> {
+                match can_deploy_station_response {
+                    CanDeployStation::Allowed => Ok(()),
+                    CanDeployStation::QuotaExceeded => Err(UserError::DeployStationQuotaExceeded),
+                    CanDeployStation::NotAllowed(subscription_status) => {
+                        Err(UserError::BadUserSubscriptionStatus {
+                            subscription_status: subscription_status.into(),
+                        })
+                    }
+                }
+            };
+        check_can_deploy_station(config.global_rate_limiter.can_deploy_station())?;
+        check_can_deploy_station(user.can_deploy_station())?;
+
+        Ok(CanDeployStation::Allowed)
     }
 
     /// Checks if the caller is a controller.

@@ -145,7 +145,6 @@ impl StationController {
         let ctx = CallContext::get();
         self.user_service
             .can_deploy_station(&ctx)
-            .await
             .map(|can_deploy_station| can_deploy_station.into())
     }
 }
