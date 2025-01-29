@@ -35,7 +35,7 @@ use orbit_essentials::{
     model::ModelValidator,
     repository::Repository,
     types::UUID,
-    utils::{CallerGuard, State},
+    utils::{CallerGuard, CallerGuardParams, State},
 };
 use station_api::{AccountBalanceDTO, FetchAccountBalancesInput, ListAccountsInput};
 use std::{
@@ -553,7 +553,10 @@ impl AccountService {
                                 CallerGuard::new(
                                     state.clone(),
                                     balance_update_guard_key,
-                                    Some(time() + Duration::from_secs(5 * 60).as_nanos() as u64),
+                                    CallerGuardParams {
+                                      max_concurrency: None,
+                                      expires_at_ns: Some(time() + Duration::from_secs(5 * 60).as_nanos() as u64)
+                                    },
                                 )
                             });
 

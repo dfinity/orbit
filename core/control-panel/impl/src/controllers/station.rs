@@ -2,6 +2,7 @@
 use crate::core::middlewares::use_canister_call_metric;
 use crate::errors::UserError;
 use crate::mappers::user_station::UpdateUserStationInputInto;
+use crate::models::MAX_DEPLOYED_STATIONS_PER_DAY;
 use crate::services::{
     DeployService, UserStationService, DEPLOY_SERVICE, USER_SERVICE, USER_STATION_SERVICE,
 };
@@ -14,7 +15,7 @@ use control_panel_api::{
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ApiResult;
-use orbit_essentials::utils::{CallerGuard, State};
+use orbit_essentials::utils::{CallerGuard, CallerGuardParams, State};
 use orbit_essentials::with_middleware;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -130,7 +131,16 @@ impl StationController {
     async fn deploy_station(&self, input: DeployStationInput) -> ApiResult<DeployStationResponse> {
         let ctx = CallContext::get();
         let _lock = STATE
-            .with(|state| CallerGuard::new(state.clone(), ctx.caller(), None))
+            .with(|state| {
+                CallerGuard::new(
+                    state.clone(),
+                    ctx.caller(),
+                    CallerGuardParams {
+                        max_concurrency: Some(MAX_DEPLOYED_STATIONS_PER_DAY),
+                        expires_at_ns: None,
+                    },
+                )
+            })
             .ok_or(UserError::ConcurrentStationDeployment)?;
 
         let deployed_station_id = self.deploy_service.deploy_station(input, &ctx).await?;

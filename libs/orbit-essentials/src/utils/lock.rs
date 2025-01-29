@@ -7,7 +7,7 @@ use crate::cdk::api::time;
 use std::fmt::Debug;
 
 // The following code implementing canister locks with optional expiration is adapted from
-// https://internetcomputer.org/docs/current/developer-docs/security/rust-canister-development-security-best-practices#recommendation-10
+// https://internetcomputer.org/docs/current/developer-docs/security/rust-canister-development-security-best-practices#recommendation-1
 
 pub struct State<T: Ord> {
     pending_requests: BTreeMap<T, Option<u64>>,
@@ -26,8 +26,13 @@ pub struct CallerGuard<T: Ord> {
     lock: T,
 }
 
+pub struct CallerGuardParams {
+    pub max_concurrency: Option<usize>,
+    pub expires_at_ns: Option<u64>,
+}
+
 impl<T: Clone + Ord + Debug> CallerGuard<T> {
-    pub fn new(state: Rc<RefCell<State<T>>>, lock: T, expires_at_ns: Option<u64>) -> Option<Self> {
+    pub fn new(state: Rc<RefCell<State<T>>>, lock: T, params: CallerGuardParams) -> Option<Self> {
         {
             let pending_requests = &mut state.borrow_mut().pending_requests;
             if let Some(existing_request) = pending_requests.get(&lock) {
@@ -38,13 +43,19 @@ impl<T: Clone + Ord + Debug> CallerGuard<T> {
                     } else {
                         // Lock has expired, fall through to update the lock.
                         crate::cdk::api::print(format!("Lock has expired for {:?}", lock));
+                        pending_requests.remove(&lock);
                     }
                 } else {
                     // Lock is held indefinitely.
                     return None;
                 }
             }
-            pending_requests.insert(lock.clone(), expires_at_ns);
+            if let Some(max_concurrency) = params.max_concurrency {
+                if pending_requests.len() >= max_concurrency {
+                    return None;
+                }
+            }
+            pending_requests.insert(lock.clone(), params.expires_at_ns);
         }
 
         Some(Self { state, lock })
