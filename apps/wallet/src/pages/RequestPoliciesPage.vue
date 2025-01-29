@@ -51,6 +51,9 @@
             <template #item.name="{ item: policy }">
               <SpecifierSelector v-model="policy.specifier" readonly />
             </template>
+            <template #item.rule="{ item: policy }">
+              <RuleSummary :rule="policy.rule" />
+            </template>
             <template #item.actions="{ item: policy }">
               <div class="d-flex ga-0">
                 <ActionBtn
@@ -95,6 +98,7 @@
 import { mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
 import { computed, Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDisplay } from 'vuetify';
 import { VDataTable, VPagination } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
@@ -103,6 +107,7 @@ import ActionBtn from '~/components/buttons/ActionBtn.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import OpenRequestPolicyBtn from '~/components/request-policies/OpenRequestPolicyBtn.vue';
+import RuleSummary from '~/components/request-policies/rule/RuleSummary.vue';
 import SpecifierSelector from '~/components/request-policies/specifier/SpecifierSelector.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
 import { useFetchList, usePagination } from '~/composables/lists.composable';
@@ -124,6 +129,7 @@ import { throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const i18n = useI18n();
+const { xs } = useDisplay();
 const station = useStationStore();
 const pageTitle = computed(() => props.title ?? i18n.t('pages.request_policies.title'));
 const forceReload = ref(false);
@@ -132,15 +138,53 @@ const policies: Ref<RequestPolicy[]> = ref([]);
 const privileges = ref<RequestPolicyCallerPrivileges[]>([]);
 const pagination = usePagination();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
-const headers = ref<TableHeader[]>([
-  {
-    title: i18n.t('terms.request_policy'),
-    key: 'name',
-    headerProps: { class: 'font-weight-bold w-100' },
+// const headers = ref<TableHeader[]>([
+//   {
+//     title: i18n.t('terms.request_policy'),
+//     key: 'name',
+//     headerProps: { class: 'font-weight-bold w-50' },
+//     sortable: false,
+//   },
+
+//   ...(xs.value
+//     ? []
+//     : [
+//         {
+//           title: i18n.t('request_policies.rule'),
+//           key: 'rule',
+//           headerProps: { class: 'font-weight-bold w-50' },
+//           sortable: false,
+//         },
+//       ]),
+//   { title: '', key: 'actions', headerProps: { class: 'font-weight-bold' }, sortable: false },
+// ]);
+
+const headers = computed(() => {
+  const headers: TableHeader[] = [
+    {
+      title: i18n.t('terms.request_policy'),
+      key: 'name',
+      headerProps: { class: `font-weight-bold ${xs.value ? 'w-100' : 'w-50'}` },
+      sortable: false,
+    },
+  ];
+  if (!xs.value) {
+    headers.push({
+      title: i18n.t('terms.rule'),
+      key: 'rule',
+      headerProps: { class: 'font-weight-bold w-50' },
+      sortable: false,
+    });
+  }
+
+  headers.push({
+    title: '',
+    key: 'actions',
+    headerProps: { class: 'font-weight-bold' },
     sortable: false,
-  },
-  { title: '', key: 'actions', headerProps: { class: 'font-weight-bold' }, sortable: false },
-]);
+  });
+  return headers;
+});
 
 const hasEditPrivilege = (id: UUID): boolean => {
   const privilege = privileges.value.find(p => p.id === id);
