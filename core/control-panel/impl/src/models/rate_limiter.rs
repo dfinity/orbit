@@ -22,7 +22,7 @@ impl RateLimiter {
         Self::new(MAX_DEPLOYED_STATIONS_PER_USER_PER_DAY)
     }
 
-    pub fn new(max_deployed_stations: usize) -> Self {
+    fn new(max_deployed_stations: usize) -> Self {
         Self {
             unix_date: 0,
             num_deployed_stations: 0,

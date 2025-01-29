@@ -186,7 +186,7 @@ impl UserService {
             .collect()
     }
 
-    pub async fn add_deployed_station(
+    pub fn add_deployed_station(
         &self,
         user_id: &UserId,
         station_canister_id: Principal,

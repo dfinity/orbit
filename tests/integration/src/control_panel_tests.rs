@@ -456,9 +456,9 @@ fn deploy_too_many_stations() {
             "DEPLOY_STATION_QUOTA_EXCEEDED"
         );
 
-        // so far `max_stations_per_user` have been deployed;
+        // so far `max_stations_per_user` have been deployed today;
         // now deploy up to `max_stations_per_day` on behalf of pairwise distinct users
-        for i in 1..(max_stations_per_day - max_stations_per_user as u64) {
+        for i in 1..(max_stations_per_day + 1 - max_stations_per_user as u64) {
             assert!(matches!(
                 can_deploy(user_test_id(i)).unwrap(),
                 CanDeployStationResponse::Allowed

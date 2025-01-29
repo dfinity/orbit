@@ -7,8 +7,6 @@ use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, WasmModuleExtraChunks};
 use std::borrow::Cow;
 
-pub const MAX_DEPLOYED_STATIONS_PER_DAY: usize = 100;
-
 #[storable]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CanisterConfig {
@@ -40,7 +38,7 @@ impl Default for CanisterConfig {
             station_wasm_module_extra_chunks: None,
             last_upgrade_timestamp: time(),
             version: None,
-            global_rate_limiter: RateLimiter::new(MAX_DEPLOYED_STATIONS_PER_DAY),
+            global_rate_limiter: RateLimiter::new_global(),
         }
     }
 }
@@ -57,7 +55,7 @@ impl CanisterConfig {
             station_wasm_module_extra_chunks,
             last_upgrade_timestamp: time(),
             version: Some(SYSTEM_VERSION.to_string()),
-            global_rate_limiter: RateLimiter::new(MAX_DEPLOYED_STATIONS_PER_DAY),
+            global_rate_limiter: RateLimiter::new_global(),
         }
     }
 }

@@ -146,8 +146,7 @@ impl DeployService {
         .map_err(|err| DeployError::Failed { reason: err })?;
 
         self.user_service
-            .add_deployed_station(&user.id, station_canister, ctx)
-            .await?;
+            .add_deployed_station(&user.id, station_canister, ctx)?;
 
         // Adds the deployed station to the user
         if let Some(info) = input.associate_with_caller {
