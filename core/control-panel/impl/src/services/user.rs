@@ -1,5 +1,7 @@
 use crate::{
-    core::{canister_config, generate_uuid_v4, ic_cdk::next_time, CallContext},
+    core::{
+        canister_config, generate_uuid_v4, ic_cdk::next_time, write_canister_config, CallContext,
+    },
     errors::{DeployError, UserError},
     mappers::SubscribedUser,
     models::{CanDeployStation, User, UserId, UserKey, UserSubscriptionStatus},
@@ -191,11 +193,16 @@ impl UserService {
         ctx: &CallContext,
     ) -> ServiceResult<User> {
         let mut user = self.get_user(user_id, ctx)?;
+        let mut config = canister_config().ok_or(DeployError::Failed {
+            reason: "Canister config not initialized.".to_string(),
+        })?;
 
+        config.global_rate_limiter.add_deployed_station();
         user.add_deployed_station(station_canister_id);
 
         user.validate()?;
 
+        write_canister_config(config);
         self.user_repository.insert(user.to_key(), user.clone());
 
         FUND_MANAGER.with(|fund_manager| {

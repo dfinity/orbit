@@ -334,44 +334,45 @@ fn deploy_too_many_stations() {
     env.add_cycles(canister_ids.control_panel, 10_000_000_000_000_000);
 
     let bootstrap_user = |user_id: Principal| {
-      // register user
-      let register_args = RegisterUserInput { station: None };
-      let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
-          &env,
-          canister_ids.control_panel,
-          user_id,
-          "register_user",
-          (register_args,),
-      )
-      .unwrap();
-      let user_dto = res.0.unwrap().user;
-      assert_eq!(user_dto.identity, user_id);
+        // register user
+        let register_args = RegisterUserInput { station: None };
+        let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
+            &env,
+            canister_ids.control_panel,
+            user_id,
+            "register_user",
+            (register_args,),
+        )
+        .unwrap();
+        let user_dto = res.0.unwrap().user;
+        assert_eq!(user_dto.identity, user_id);
 
-      // approve user
-      let update_waiting_list_args = UpdateWaitingListInput {
-          users: vec![user_id],
-          new_status: UserSubscriptionStatusDTO::Approved,
-      };
-      let res: (ApiResult<()>,) = update_candid_as(
-          &env,
-          canister_ids.control_panel,
-          controller_test_id(),
-          "update_waiting_list",
-          (update_waiting_list_args,),
-      )
-      .unwrap();
-      res.0.unwrap();
+        // approve user
+        let update_waiting_list_args = UpdateWaitingListInput {
+            users: vec![user_id],
+            new_status: UserSubscriptionStatusDTO::Approved,
+        };
+        let res: (ApiResult<()>,) = update_candid_as(
+            &env,
+            canister_ids.control_panel,
+            controller_test_id(),
+            "update_waiting_list",
+            (update_waiting_list_args,),
+        )
+        .unwrap();
+        res.0.unwrap();
     };
 
     let can_deploy = |user_id: Principal| -> ApiResult<CanDeployStationResponse> {
-            update_candid_as::<_, (ApiResult<CanDeployStationResponse>,)>(
-                &env,
-                canister_ids.control_panel,
-                user_id,
-                "can_deploy_station",
-                ((),),
-            )
-            .unwrap().0
+        update_candid_as::<_, (ApiResult<CanDeployStationResponse>,)>(
+            &env,
+            canister_ids.control_panel,
+            user_id,
+            "can_deploy_station",
+            ((),),
+        )
+        .unwrap()
+        .0
     };
 
     let deploy = |user_id: Principal, day: usize, i: usize| -> ApiResult<DeployStationResponse> {
@@ -391,16 +392,17 @@ fn deploy_too_many_stations() {
             "deploy_station",
             (deploy_station_args,),
         )
-        .unwrap().0
+        .unwrap()
+        .0
     };
 
     let max_stations_per_user = 2;
     let max_stations_per_day = 100;
 
     for i in 0..(max_stations_per_day + 1) {
-      bootstrap_user(user_test_id(i));
-      // to prevent rate-limiting
-      env.advance_time(std::time::Duration::from_secs(60));
+        bootstrap_user(user_test_id(i));
+        // to prevent rate-limiting
+        env.advance_time(std::time::Duration::from_secs(60));
     }
 
     for day in 0..2 {
@@ -408,7 +410,10 @@ fn deploy_too_many_stations() {
         let user_id = user_test_id(0);
         let mut stations = vec![];
         for i in 0..max_stations_per_user {
-            assert!(matches!(can_deploy(user_id).unwrap(), CanDeployStationResponse::Allowed));
+            assert!(matches!(
+                can_deploy(user_id).unwrap(),
+                CanDeployStationResponse::Allowed
+            ));
             let station_id = deploy(user_id, day, i).unwrap().canister_id;
             stations.push(station_id);
         }
@@ -440,19 +445,40 @@ fn deploy_too_many_stations() {
         assert!(res.0.is_ok());
 
         // deploying a new station should fail nonetheless
-        assert_eq!(can_deploy(user_id).unwrap_err().code, "DEPLOY_STATION_QUOTA_EXCEEDED");
-        assert_eq!(deploy(user_id, day, max_stations_per_user).unwrap_err().code, "DEPLOY_STATION_QUOTA_EXCEEDED");
+        assert_eq!(
+            can_deploy(user_id).unwrap_err().code,
+            "DEPLOY_STATION_QUOTA_EXCEEDED"
+        );
+        assert_eq!(
+            deploy(user_id, day, max_stations_per_user)
+                .unwrap_err()
+                .code,
+            "DEPLOY_STATION_QUOTA_EXCEEDED"
+        );
 
         // so far `max_stations_per_user` have been deployed;
         // now deploy up to `max_stations_per_day` on behalf of pairwise distinct users
         for i in 1..(max_stations_per_day - max_stations_per_user as u64) {
-          assert!(matches!(can_deploy(user_test_id(i)).unwrap(), CanDeployStationResponse::Allowed));
-          deploy(user_test_id(i), day, 0).unwrap();
+            assert!(matches!(
+                can_deploy(user_test_id(i)).unwrap(),
+                CanDeployStationResponse::Allowed
+            ));
+            deploy(user_test_id(i), day, 0).unwrap();
         }
 
         // deploying one more station on behalf of yet another use should fail due to global rate limit
-        assert_eq!(can_deploy(user_test_id(max_stations_per_day)).unwrap_err().code, "DEPLOY_STATION_QUOTA_EXCEEDED");
-        assert_eq!(deploy(user_test_id(max_stations_per_day), day, 0).unwrap_err().code, "DEPLOY_STATION_QUOTA_EXCEEDED");
+        assert_eq!(
+            can_deploy(user_test_id(max_stations_per_day))
+                .unwrap_err()
+                .code,
+            "DEPLOY_STATION_QUOTA_EXCEEDED"
+        );
+        assert_eq!(
+            deploy(user_test_id(max_stations_per_day), day, 0)
+                .unwrap_err()
+                .code,
+            "DEPLOY_STATION_QUOTA_EXCEEDED"
+        );
 
         // tomorrow the user should again be able to deploy stations
         env.advance_time(std::time::Duration::from_secs(86400));
