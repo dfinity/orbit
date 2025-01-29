@@ -67,3 +67,40 @@ impl<T: Ord> Drop for CallerGuard<T> {
         self.state.borrow_mut().pending_requests.remove(&self.lock);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{CallerGuard, CallerGuardParams, State};
+    use candid::Principal;
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    #[test]
+    fn max_concurrency() {
+        let mut locks = vec![];
+        let max_concurrency: usize = 100;
+        let state = Rc::new(RefCell::new(State::default()));
+        for i in 0..max_concurrency {
+            locks.push(
+                CallerGuard::new(
+                    state.clone(),
+                    Principal::from_slice(&i.to_le_bytes()),
+                    CallerGuardParams {
+                        max_concurrency: Some(max_concurrency),
+                        expires_at_ns: None,
+                    },
+                )
+                .unwrap(),
+            )
+        }
+        assert!(CallerGuard::new(
+            state.clone(),
+            Principal::from_slice(&max_concurrency.to_le_bytes()),
+            CallerGuardParams {
+                max_concurrency: Some(max_concurrency),
+                expires_at_ns: None,
+            },
+        )
+        .is_none());
+    }
+}
