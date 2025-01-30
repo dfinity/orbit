@@ -81,7 +81,7 @@ jobs:
         uses: actions/upload-artifact/merge@v4
         with:
           name: integration-tests
-          path: artifacts/${{ matrix.canister }}.wasm.gz
+          pattern: artifacts/${{ matrix.canister }}.wasm.gz
           retention-days: 10
   download-canisters:
     name: Download Canister
@@ -110,7 +110,7 @@ jobs:
         uses: actions/upload-artifact/merge@v4
         with:
           name: integration-tests
-          path: artifacts/${{ matrix.canister }}.wasm.gz
+          pattern: artifacts/${{ matrix.canister }}.wasm.gz
           retention-days: 10
   integration-tests:
     name: 'integration-tests:required'
