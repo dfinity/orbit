@@ -78,7 +78,7 @@ jobs:
           mkdir -p artifacts
           mv tests/integration/wasms/* artifacts
       - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact/merge@v4
         with:
           name: integration-tests
           path: artifacts/${{ matrix.canister }}.wasm.gz
@@ -108,7 +108,7 @@ jobs:
           mkdir -p artifacts
           mv tests/integration/wasms/* artifacts
       - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact/merge@v4
         with:
           name: integration-tests
           path: artifacts/${{ matrix.canister }}.wasm.gz
