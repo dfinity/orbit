@@ -83,7 +83,6 @@ jobs:
           name: integration-tests
           path: artifacts/${{ matrix.canister }}.wasm.gz
           retention-days: 10
-          if-no-files-found: error
   download-canisters:
     name: Download Canister
     runs-on: ubuntu-latest
@@ -113,7 +112,6 @@ jobs:
           name: integration-tests
           path: artifacts/${{ matrix.canister }}.wasm.gz
           retention-days: 10
-          if-no-files-found: error
   integration-tests:
     name: 'integration-tests:required'
     needs: [build-wasms, download-canisters]
