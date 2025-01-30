@@ -26,9 +26,22 @@ pub struct CallerGuard<T: Ord> {
     lock: T,
 }
 
+#[derive(Default)]
 pub struct CallerGuardParams {
-    pub max_concurrency: Option<usize>,
-    pub expires_at_ns: Option<u64>,
+    max_concurrency: Option<usize>,
+    expires_at_ns: Option<u64>,
+}
+
+impl CallerGuardParams {
+    pub fn with_max_concurrency(mut self, max_concurrency: usize) -> Self {
+        self.max_concurrency = Some(max_concurrency);
+        self
+    }
+
+    pub fn with_expires_at_ns(mut self, expires_at_ns: u64) -> Self {
+        self.expires_at_ns = Some(expires_at_ns);
+        self
+    }
 }
 
 impl<T: Clone + Ord + Debug> CallerGuard<T> {

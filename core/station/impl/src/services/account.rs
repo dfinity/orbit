@@ -553,10 +553,7 @@ impl AccountService {
                                 CallerGuard::new(
                                     state.clone(),
                                     balance_update_guard_key,
-                                    CallerGuardParams {
-                                      max_concurrency: None,
-                                      expires_at_ns: Some(time() + Duration::from_secs(5 * 60).as_nanos() as u64)
-                                    },
+                                    CallerGuardParams::default().with_expires_at_ns(time() + Duration::from_secs(5 * 60).as_nanos() as u64),
                                 )
                             });
 

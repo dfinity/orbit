@@ -142,10 +142,7 @@ impl StationController {
                 CallerGuard::new(
                     state.clone(),
                     ctx.caller(),
-                    CallerGuardParams {
-                        max_concurrency: Some(max_concurrency),
-                        expires_at_ns: None,
-                    },
+                    CallerGuardParams::default().with_max_concurrency(max_concurrency),
                 )
             })
             .ok_or(UserError::ConcurrentStationDeployment)?;
