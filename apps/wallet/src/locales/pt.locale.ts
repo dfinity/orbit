@@ -457,7 +457,7 @@ export default {
       tc: 'TC',
       bc: 'Bilhōes',
       mc: 'Milhōes',
-      e8s: 'e8s',
+      cycles: 'Ciclos',
     },
   },
   time: {

@@ -36,7 +36,7 @@
                         v-model="dialog.content.allow"
                         :readonly="!dialog.content.editable"
                         :resource="dialog.content.resource"
-                        class="flex-grow-1"
+                        class="flex-grow-1 py-4 px-6"
                         @submitting="dialog.closable = !$event"
                         @submitted="dialog.open = false"
                       >

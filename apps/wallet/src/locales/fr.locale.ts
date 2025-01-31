@@ -460,7 +460,7 @@ export default {
       tc: 'TC',
       bc: 'Milliard',
       mc: 'Million',
-      e8s: 'e8s',
+      cycles: 'Cycles',
     },
   },
   time: {

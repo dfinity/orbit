@@ -3,20 +3,18 @@
     <slot name="errors" :errors="additionalFieldErrors">
       <FormErrorsContainer v-bind="{ errors: additionalFieldErrors }" />
     </slot>
-    <VContainer>
-      <VRow>
-        <VCol cols="12" class="pb-0 px-5">
-          <p class="text-h6">{{ title }}</p>
-          <p v-if="explainer" class="text-body-2 text-medium-emphasis">{{ explainer }}</p>
-        </VCol>
-        <VCol cols="12" class="pb-0 px-5">
-          <p class="text-body-1 font-weight-medium mb-2">
-            {{ $t('permissions.permitted_users') }}
-          </p>
-          <AllowInput v-model="model" :mode="props.readonly ? 'view' : 'edit'" />
-        </VCol>
-      </VRow>
-    </VContainer>
+    <div class="d-flex flex-column ga-2">
+      <div>
+        <p class="text-body-1 font-weight-bold">{{ title }}</p>
+        <p v-if="explainer" class="text-body-2 text-medium-emphasis">{{ explainer }}</p>
+      </div>
+      <div>
+        <p class="text-body-1 font-weight-medium mb-2">
+          {{ $t('permissions.permitted_users') }}
+        </p>
+        <AllowInput v-model="model" :mode="props.readonly ? 'view' : 'edit'" />
+      </div>
+    </div>
   </VForm>
   <slot
     v-if="!readonly"
@@ -31,20 +29,20 @@
 </template>
 <script lang="ts" setup>
 import { computed, watch } from 'vue';
-import { VCol, VContainer, VForm, VRow } from 'vuetify/components';
+import { useI18n } from 'vue-i18n';
+import { VForm } from 'vuetify/components';
 import FormActions from '~/components/ui/FormActions.vue';
 import FormErrorsContainer from '~/components/ui/FormErrorsContainer.vue';
 import { useForm } from '~/composables/forms.composable';
-import { Allow, Resource } from '~/generated/station/station.did';
-import AllowInput from '../inputs/AllowInput.vue';
 import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { isApiError } from '~/utils/app.utils';
-import { useI18n } from 'vue-i18n';
-import { useStationStore } from '~/stores/station.store';
+import { Allow, Resource } from '~/generated/station/station.did';
 import { fromResourceToDisplayText } from '~/mappers/permissions.mapper';
+import { useStationStore } from '~/stores/station.store';
+import { isApiError } from '~/utils/app.utils';
+import AllowInput from '../inputs/AllowInput.vue';
 
 const props = withDefaults(
   defineProps<{

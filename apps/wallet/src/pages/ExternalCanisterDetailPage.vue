@@ -411,7 +411,7 @@
                             </template>
                             <template v-else>
                               {{ canisterDetails.status.value.cycles }}
-                              {{ $t('cycles.units.e8s') }}
+                              {{ $t('cycles.units.cycles') }}
                             </template>
                           </span>
                         </VListItemSubtitle>

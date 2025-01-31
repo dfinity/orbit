@@ -16,7 +16,8 @@
     v-else-if="permission.allow && permission.resource"
     :model-value="permission.allow"
     :resource="permission.resource"
-    mode="view"
+    readonly
+    class="py-2"
   />
 </template>
 
