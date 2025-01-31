@@ -103,7 +103,7 @@ export const useUserSpecifierSelectorItems = (): ComputedRef<SelectItem[]> => {
   });
 };
 
-type PopulatedUserSpecifier =
+export type PopulatedUserSpecifier =
   | {
       kind: RequestPolicyRuleUserSpecifierEnum.Any;
     }
@@ -285,16 +285,17 @@ function populatedUserSpecifierToTooltip(
   userSpecifier: PopulatedUserSpecifier,
   i18n: ReturnType<typeof useI18n>,
 ): string {
-  if (userSpecifier.kind === RequestPolicyRuleUserSpecifierEnum.Id) {
-    return i18n.t('request_policies.rule_user_summary.id', {
-      users: userSpecifier.users.map(user => user.name).join(', '),
-    });
+  if (userSpecifier.kind === RequestPolicyRuleUserSpecifierEnum.Any) {
+    return i18n.t('request_policies.rule_rich_summary.any_user_specifier');
+  } else if (userSpecifier.kind === RequestPolicyRuleUserSpecifierEnum.Id) {
+    if (userSpecifier.users.length === 0) {
+      return i18n.t('request_policies.rule_rich_summary.no_user_specifier');
+    }
+    return userSpecifier.users.map(user => user.name).join(', ');
   } else if (userSpecifier.kind === RequestPolicyRuleUserSpecifierEnum.Group) {
-    return i18n.t('request_policies.rule_user_summary.group', {
-      groups: userSpecifier.groups.map(group => group.name).join(', '),
-    });
+    return userSpecifier.groups.map(group => group.name).join(', ');
   } else {
-    return i18n.t('request_policies.rule_user_summary.any');
+    return unreachable(userSpecifier);
   }
 }
 
@@ -305,34 +306,79 @@ function indentMultilineText(text: string): string {
     .join('\n');
 }
 
-function populatedRuleToTooltip(rule: PopulatedRule, i18n: ReturnType<typeof useI18n>): string {
+export function populatedRuleToTooltip(
+  rule: PopulatedRule,
+  i18n: ReturnType<typeof useI18n>,
+): string {
   if (rule.kind === 'NamedRule') {
-    return i18n.t('request_policies.rule_tooltip_summary.named_rule', {
+    return i18n.t('request_policies.rule_rich_summary.named_rule', {
       name: rule.name ?? rule.id,
     });
-  }
-  if (rule.kind === 'Quorum') {
-    return i18n.t('request_policies.rule_tooltip_summary.quorum', {
-      quorum: rule.n,
-      specifier: populatedUserSpecifierToTooltip(rule.approvers, i18n),
+  } else if (rule.kind === 'Quorum') {
+    // Any user can approve
+    if (rule.approvers.kind === RequestPolicyRuleUserSpecifierEnum.Any) {
+      return i18n.t('request_policies.rule_rich_summary.any_user_specifier', rule.n);
+    }
+
+    // No user can approve
+    else if (
+      rule.approvers.kind === RequestPolicyRuleUserSpecifierEnum.Id &&
+      (rule.n === 0 || rule.approvers.users.length === 0)
+    ) {
+      return i18n.t('request_policies.rule_rich_summary.invalid_rule_auto_approved');
+    }
+
+    // Single user can approve
+    else if (
+      rule.approvers.kind === RequestPolicyRuleUserSpecifierEnum.Id &&
+      rule.approvers.users.length === 1
+    ) {
+      return i18n.t('request_policies.rule_rich_summary.single_user_specifier', {
+        user: populatedUserSpecifierToTooltip(rule.approvers, i18n),
+      });
+    }
+
+    // Multiple users can approve
+    else if (rule.approvers.kind === RequestPolicyRuleUserSpecifierEnum.Id) {
+      return i18n.t(
+        'request_policies.rule_rich_summary.user_specifier',
+        {
+          users: populatedUserSpecifierToTooltip(rule.approvers, i18n),
+          n: rule.n,
+        },
+        rule.n,
+      );
+    }
+
+    // Groups can approve
+    else {
+      return i18n.t(
+        'request_policies.rule_rich_summary.group_specifier',
+        {
+          groups: populatedUserSpecifierToTooltip(rule.approvers, i18n),
+          n: rule.n,
+        },
+        rule.n,
+      );
+    }
+  } else if (rule.kind === 'QuorumPercentage') {
+    if (rule.approvers.kind === RequestPolicyRuleUserSpecifierEnum.Any) {
+      return i18n.t('request_policies.rule_rich_summary.quorum_percentage_any_user', {
+        n: rule.n,
+      });
+    }
+    return i18n.t('request_policies.rule_rich_summary.quorum_percentage_rule', {
+      n: rule.n,
+      users: populatedUserSpecifierToTooltip(rule.approvers, i18n),
     });
-  }
-  if (rule.kind === 'QuorumPercentage') {
-    return i18n.t('request_policies.rule_tooltip_summary.quorumpercentage', {
-      percentage: rule.n,
-      specifier: populatedUserSpecifierToTooltip(rule.approvers, i18n),
-    });
-  }
-  if (rule.kind === 'AllowListedByMetadata') {
-    return i18n.t('request_policies.rule_tooltip_summary.allowlistedbymetadata', {
+  } else if (rule.kind === 'AllowListedByMetadata') {
+    return i18n.t('request_policies.rule_rich_summary.allowlisted_by_metadata', {
       metadata: rule.value ? `"${rule.key}=${rule.value}"` : `"${rule.key}"`,
     });
-  }
-  if (rule.kind === 'AllowListed') {
-    return i18n.t('request_policies.rule_tooltip_summary.allowlisted');
-  }
-  if (rule.kind === 'AutoApproved') {
-    return i18n.t('request_policies.rule_tooltip_summary.autoapproved');
+  } else if (rule.kind === 'AllowListed') {
+    return i18n.t('request_policies.rule_rich_summary.allowlisted');
+  } else if (rule.kind === 'AutoApproved') {
+    return i18n.t('request_policies.rule_rich_summary.auto_approved');
   } else if (rule.kind === 'AllOf') {
     return (
       i18n.t('request_policies.rule_tooltip_summary.allof') +
@@ -392,81 +438,32 @@ export function isRuleComplex(rule: PopulatedRule): boolean {
   return complexRuleCount(rule) > 1;
 }
 
-function populatedRuleToShortSummary(
-  rule: PopulatedRule,
-  i18n: ReturnType<typeof useI18n>,
-): string {
-  if (rule.kind === 'AllOf') {
-    return rule.rules
-      .map(r => populatedRuleToShortSummary(r, i18n))
-      .join(i18n.t('request_policies.rule_short_summary.allof'));
-  } else if (rule.kind === 'AnyOf') {
-    return rule.rules
-      .map(r => populatedRuleToShortSummary(r, i18n))
-      .join(i18n.t('request_policies.rule_short_summary.anyof'));
-  } else if (rule.kind === 'Not') {
-    return (
-      i18n.t('request_policies.rule_short_summary.not') +
-      ' ' +
-      populatedRuleToShortSummary(rule.rule, i18n)
-    );
-  } else if (rule.kind === 'NamedRule') {
-    return i18n.t('request_policies.rule_short_summary.named_rule', { name: rule.name ?? rule.id });
-  } else if (rule.kind === 'AutoApproved') {
-    return i18n.t('request_policies.rule_short_summary.autoapproved');
-  } else if (rule.kind === 'Quorum') {
-    return i18n.t('request_policies.rule_short_summary.quorum', {
-      quorum: rule.n,
-      specifier: populatedUserSpecifierToTooltip(rule.approvers, i18n),
-    });
-  } else if (rule.kind === 'QuorumPercentage') {
-    return i18n.t('request_policies.rule_short_summary.quorumpercentage', {
-      percentage: rule.n,
-      specifier: populatedUserSpecifierToTooltip(rule.approvers, i18n),
-    });
-  } else if (rule.kind === 'AllowListedByMetadata') {
-    return i18n.t('request_policies.rule_short_summary.allowlistedbymetadata', {
-      metadata: rule.value ? `"${rule.key}=${rule.value}"` : `"${rule.key}"`,
-    });
-  } else if (rule.kind === 'AllowListed') {
-    return i18n.t('request_policies.rule_short_summary.allowlisted');
-  } else {
-    // return populatedRuleToTooltip(rule, i18n);
-    return unreachable(rule);
-  }
-}
-
-export function useRuleToShortSummary(rule: Ref<RequestPolicyRule | null>): {
-  isComplex: Ref<boolean>;
-  summary: Ref<string | null>;
-  tooltip: Ref<string | null>;
+export function usePopulatedRule(rule: Ref<RequestPolicyRule | null>): {
+  populatedRule: Ref<PopulatedRule | null>;
+  complexRuleSummary: Ref<string | null>;
 } {
   const station = services().station;
+  const populatedRule = ref<PopulatedRule | null>(null);
+  const complexRuleSummary = ref<string | null>(null);
   const i18n = useI18n();
-  const summary = ref<string | null>(null);
-  const isComplex = ref<boolean>(false);
-  const tooltip = ref<string | null>(null);
-
   watch(
     rule,
     async rule => {
       if (!rule) {
-        summary.value = null;
+        populatedRule.value = null;
         return;
       }
-      const populatedRule = await populateRule(rule, station);
-
-      summary.value = populatedRuleToShortSummary(populatedRule, i18n);
-      isComplex.value = isRuleComplex(populatedRule);
-
-      tooltip.value = populatedRuleToTooltip(populatedRule, i18n);
+      populatedRule.value = await populateRule(rule, station);
+      const isComplex = isRuleComplex(populatedRule.value);
+      complexRuleSummary.value = isComplex
+        ? populatedRuleToTooltip(populatedRule.value, i18n)
+        : null;
     },
     { immediate: true },
   );
 
   return {
-    isComplex,
-    summary,
-    tooltip,
+    populatedRule,
+    complexRuleSummary,
   };
 }

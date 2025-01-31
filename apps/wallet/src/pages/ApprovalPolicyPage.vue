@@ -16,7 +16,7 @@
             class="mb-4"
             :see-all-link="{
               name: Routes.Requests,
-              query: { group_by: RequestDomains.ApprovalPolicy },
+              query: { group_by: RequestDomains.System },
             }"
             :types="[{ AddNamedRule: null }, { EditNamedRule: null }, { RemoveNamedRule: null }]"
             hide-not-found
@@ -48,10 +48,15 @@
               <!--this hides the footer as pagination is not required-->
             </template>
             <template #item.name="{ item: namedRule }">
-              {{ namedRule.name }}
+              <div class="text-body-2">{{ namedRule.name }}</div>
+              <div v-if="namedRule.description[0]" class="text-caption text-grey-lighten-1">
+                {{ namedRule.description[0] }}
+              </div>
             </template>
-            <template #item.description="{ item: namedRule }">
-              {{ namedRule.description[0] ?? '' }}
+            <template #item.linked_policies="{ item: namedRule }">
+              <div v-if="linkedPolicies">
+                {{ linkedPolicies[namedRule.id] || '-' }}
+              </div>
             </template>
             <template #item.rule="{ item: namedRule }">
               <RuleSummary :rule="namedRule.rule" />
@@ -63,6 +68,7 @@
                   v-model="namedRule.id"
                   :icon="mdiTrashCanOutline"
                   :submit="id => station.service.removeNamedRule(id)"
+                  :disabled="(linkedPolicies?.[namedRule.id] ?? 0) > 0"
                   @failed="useOnFailedOperation"
                   @submitted="useOnSuccessfulOperation"
                 />
@@ -94,8 +100,9 @@
 
 <script lang="ts" setup>
 import { mdiEye, mdiPencil, mdiTrashCanOutline } from '@mdi/js';
-import { computed, ref } from 'vue';
+import { computed, ComputedRef, onMounted, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useDisplay } from 'vuetify';
 import { VDataTable, VPagination } from 'vuetify/components';
 import AuthCheck from '~/components/AuthCheck.vue';
 import DataLoader from '~/components/DataLoader.vue';
@@ -112,12 +119,20 @@ import {
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
 import { Routes } from '~/configs/routes.config';
-import { NamedRule, NamedRuleCallerPrivileges, UUID } from '~/generated/station/station.did';
+import {
+  ListRequestPoliciesResult,
+  NamedRule,
+  NamedRuleCallerPrivileges,
+  RequestPolicy,
+  RequestPolicyRule,
+  UUID,
+} from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
-import type { PageProps, TableHeader } from '~/types/app.types';
+import type { PageProps } from '~/types/app.types';
 import { Privilege } from '~/types/auth.types';
+import { ExtractOk } from '~/types/helper.types';
 import { RequestDomains } from '~/types/station.types';
-import { throttle } from '~/utils/helper.utils';
+import { throttle, variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 const station = useStationStore();
@@ -127,14 +142,28 @@ const namedRules = ref<NamedRule[]>([]);
 const privileges = ref<NamedRuleCallerPrivileges[]>([]);
 const disableRefresh = ref(false);
 const forceReload = ref(false);
+const { xs } = useDisplay();
 const pagination = usePagination();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
-const headers = ref<TableHeader[]>([
-  { title: i18n.t('terms.name'), key: 'name', sortable: false },
-  { title: i18n.t('terms.description'), key: 'description', sortable: false },
-  { title: i18n.t('terms.rule'), key: 'rule', sortable: false },
-  { title: '', key: 'actions', sortable: false },
-]);
+const allPolicies = ref<RequestPolicy[] | null>(null);
+
+const headers = computed(() => {
+  return [
+    { title: i18n.t('terms.name'), key: 'name', sortable: false },
+
+    ...(xs.value
+      ? []
+      : [
+          { title: i18n.t('terms.rule'), key: 'rule', sortable: false },
+          {
+            title: i18n.t('pages.approval_policy.linked_policies'),
+            key: 'linked_policies',
+            sortable: false,
+          },
+        ]),
+    { title: '', key: 'actions', sortable: false },
+  ];
+});
 
 const hasEditPrivilege = (id: UUID): boolean => {
   const privilege = privileges.value.find(p => p.id === id);
@@ -147,6 +176,26 @@ const hasDeletePrivilege = (id: UUID): boolean => {
 };
 
 let useVerifiedCall = false;
+
+function ruleHasNamedRule(rule: RequestPolicyRule, namedRuleId: UUID): boolean {
+  if (variantIs(rule, 'NamedRule')) {
+    return rule.NamedRule === namedRuleId;
+  } else if (variantIs(rule, 'AllOf')) {
+    return rule.AllOf.some(r => ruleHasNamedRule(r, namedRuleId));
+  } else if (variantIs(rule, 'AnyOf')) {
+    return rule.AnyOf.some(r => ruleHasNamedRule(r, namedRuleId));
+  } else if (variantIs(rule, 'Not')) {
+    return ruleHasNamedRule(rule.Not, namedRuleId);
+  }
+  return false;
+}
+
+function namedRuleIsUsedInNamedRules(
+  namedRuleId: UUID,
+  named_rule_rules: RequestPolicyRule[],
+): boolean {
+  return named_rule_rules.some(nr => ruleHasNamedRule(nr, namedRuleId));
+}
 
 const fetchList = useFetchList(
   (offset, limit) => {
@@ -167,4 +216,54 @@ const fetchList = useFetchList(
     getTotal: res => Number(res.total),
   },
 );
+
+onMounted(async () => {
+  const fetchedPolicies: RequestPolicy[] = [];
+  let componentUnmounted = false;
+
+  onUnmounted(() => {
+    componentUnmounted = true;
+  });
+
+  let offset = 0;
+  let result: ExtractOk<ListRequestPoliciesResult>;
+  do {
+    result = await station.service.listRequestPolicies({
+      limit: 100,
+      offset: offset,
+    });
+    fetchedPolicies.push(...result.policies);
+    if (result.next_offset.length === 0 || componentUnmounted) {
+      break;
+    }
+
+    offset = Number(result.next_offset);
+  } while (result.total > fetchedPolicies.length);
+
+  if (!componentUnmounted) {
+    allPolicies.value = fetchedPolicies;
+  }
+});
+
+const linkedPolicies: ComputedRef<Record<UUID, number> | null> = computed(() => {
+  if (!allPolicies.value || !namedRules.value) {
+    return null;
+  }
+
+  const allNamedRuleRules = namedRules.value.flatMap(nr => nr.rule);
+
+  const linkedPolicies: Record<UUID, number> = {};
+  for (const namedRule of namedRules.value) {
+    if (namedRuleIsUsedInNamedRules(namedRule.id, allNamedRuleRules)) {
+      linkedPolicies[namedRule.id] = (linkedPolicies[namedRule.id] || 0) + 1;
+    }
+
+    for (const policy of allPolicies.value) {
+      if (ruleHasNamedRule(policy.rule, namedRule.id)) {
+        linkedPolicies[namedRule.id] = (linkedPolicies[namedRule.id] || 0) + 1;
+      }
+    }
+  }
+  return linkedPolicies;
+});
 </script>

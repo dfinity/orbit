@@ -138,26 +138,6 @@ const policies: Ref<RequestPolicy[]> = ref([]);
 const privileges = ref<RequestPolicyCallerPrivileges[]>([]);
 const pagination = usePagination();
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
-// const headers = ref<TableHeader[]>([
-//   {
-//     title: i18n.t('terms.request_policy'),
-//     key: 'name',
-//     headerProps: { class: 'font-weight-bold w-50' },
-//     sortable: false,
-//   },
-
-//   ...(xs.value
-//     ? []
-//     : [
-//         {
-//           title: i18n.t('request_policies.rule'),
-//           key: 'rule',
-//           headerProps: { class: 'font-weight-bold w-50' },
-//           sortable: false,
-//         },
-//       ]),
-//   { title: '', key: 'actions', headerProps: { class: 'font-weight-bold' }, sortable: false },
-// ]);
 
 const headers = computed(() => {
   const headers: TableHeader[] = [

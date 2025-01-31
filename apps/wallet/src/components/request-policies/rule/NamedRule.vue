@@ -15,7 +15,7 @@
         :text="tooltip"
       >
         <template #activator="{ props: activatorProps }">
-          <span v-bind="activatorProps" class="underline-dotted ml-2 cursor-help">
+          <span v-bind="activatorProps" class="underline-dotted ml-2 font-weight-bold">
             {{ namedRule.name }}
           </span>
         </template>

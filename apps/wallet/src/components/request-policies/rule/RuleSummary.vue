@@ -1,20 +1,23 @@
 <template>
-  <template v-if="isComplex">
-    <VTooltip v-if="tooltip" location="bottom" content-class="white-space-pre-wrap" :text="tooltip">
+  <template v-if="complexRuleSummary">
+    <VTooltip location="bottom" content-class="white-space-pre-wrap" :text="complexRuleSummary">
       <template #activator="{ props }">
-        <span v-bind="props" class="underline-dotted cursor-help"> Complex rule </span>
+        <span v-bind="props" class="underline-dotted font-weight-bold">
+          {{ $t('request_policies.rule_rich_summary.complex_rule') }}
+        </span>
       </template>
     </VTooltip>
   </template>
   <template v-else>
-    <span>{{ summary }}</span>
+    <RuleSummaryItem v-if="populatedRule" :rule="populatedRule" />
   </template>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useRuleToShortSummary } from '~/composables/request-policies.composable';
+import { usePopulatedRule } from '~/composables/request-policies.composable';
 import { RequestPolicyRule } from '~/generated/station/station.did';
+import RuleSummaryItem from './RuleSummaryItem.vue';
 
 const input = defineProps<{
   rule: RequestPolicyRule;
@@ -22,5 +25,5 @@ const input = defineProps<{
 
 const rule = ref(input.rule);
 
-const { summary, isComplex, tooltip } = useRuleToShortSummary(rule);
+const { populatedRule, complexRuleSummary } = usePopulatedRule(rule);
 </script>
