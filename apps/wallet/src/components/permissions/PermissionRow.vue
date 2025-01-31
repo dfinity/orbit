@@ -1,6 +1,6 @@
 <template>
   <tr>
-    <td class="w-100 text-body-2">
+    <td class="w-100 py-1 text-body-2">
       <slot>
         <p>
           {{ title }}

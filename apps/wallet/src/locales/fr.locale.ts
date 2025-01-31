@@ -1086,12 +1086,12 @@ export default {
       system: 'Système',
       transfer: 'Transfert',
       request: 'Demande',
-      addressbook: 'Carnet d’Adresses',
+      addressbook: "Carnet d'Adresses",
       managesysteminfo: 'Gérer les Informations Système',
       externalcanister: 'Canister Externe',
     },
     categories: {
-      treasury: 'Trésorerie (comptes, actifs, carnet d’adresses, etc...)',
+      treasury: 'Trésorerie (comptes, actifs, etc...)',
       canisters: 'Canisters/Applications',
       users: 'Utilisateurs',
       system: "Système (Mises à jour logicielles, Autorisations, Politiques d'Approbation, etc...)",
@@ -1113,21 +1113,21 @@ export default {
       account_transfer_any_description:
         "Permet à l'utilisateur d'initier des transferts depuis n'importe quel compte du portefeuille.",
 
-      addressbook_list: 'Voir la Page du Carnet d’Adresses',
+      addressbook_list: "Voir la Page du Carnet d'Adresses",
       addressbook_list_description:
-        "Permet d'accéder à la page du carnet d’adresses, en affichant uniquement les entrées visibles pour l'utilisateur.",
-      addressbook_read_any: 'Voir Toutes les Entrées du Carnet d’Adresses',
+        "Permet d'accéder à la page du carnet d'adresses, en affichant uniquement les entrées visibles pour l'utilisateur.",
+      addressbook_read_any: "Voir Toutes les Entrées du Carnet d'Adresses",
       addressbook_read_any_description:
-        "Permet d'afficher toutes les entrées du carnet d’adresses.",
-      addressbook_create: 'Ajouter de Nouvelles Entrées au Carnet d’Adresses',
+        "Permet d'afficher toutes les entrées du carnet d'adresses.",
+      addressbook_create: "Ajouter de Nouvelles Entrées au Carnet d'Adresses",
       addressbook_create_description:
         "Permet d'ajouter de nouveaux contacts, y compris des métadonnées telles que des noms et d'autres détails.",
-      addressbook_update_any: 'Modifier les Entrées du Carnet d’Adresses',
+      addressbook_update_any: "Modifier les Entrées du Carnet d'Adresses",
       addressbook_update_any_description:
-        'Permet de modifier les entrées existantes du carnet d’adresses, y compris les métadonnées.',
-      addressbook_delete_any: 'Supprimer les Entrées du Carnet d’Adresses',
+        "Permet de modifier les entrées existantes du carnet d'adresses, y compris les métadonnées.",
+      addressbook_delete_any: "Supprimer les Entrées du Carnet d'Adresses",
       addressbook_delete_any_description:
-        "Permet de supprimer des entrées du carnet d’adresses. ⚠ Remarque: Les entrées peuvent être utilisées dans les politiques d'approbation pour restreindre ou autoriser les transferts, alors la suppression doit être effectuée avec précaution.",
+        "Permet de supprimer des entrées du carnet d'adresses. ⚠ Remarque: Les entrées peuvent être utilisées dans les politiques d'approbation pour restreindre ou autoriser les transferts, alors la suppression doit être effectuée avec précaution.",
 
       asset_list: 'Voir la Page des Actifs',
       asset_list_description:

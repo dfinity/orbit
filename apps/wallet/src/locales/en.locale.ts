@@ -1077,7 +1077,7 @@ export default {
       externalcanister: 'External Canister',
     },
     categories: {
-      treasury: 'Treasury (accounts, assets, address book, etc...)',
+      treasury: 'Treasury (accounts, assets, etc...)',
       canisters: 'Canisters/Applications',
       users: 'Users',
       system: 'System (Software updates, Permissions, Approval Policies, etc...)',

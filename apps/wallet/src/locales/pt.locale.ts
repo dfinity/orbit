@@ -1086,7 +1086,7 @@ export default {
       externalcanister: 'Canister Externo',
     },
     categories: {
-      treasury: 'Tesouraria (contas, ativos, livro de endereços, etc...)',
+      treasury: 'Tesouraria (contas, ativos, etc...)',
       canisters: 'Canisters/Aplicações',
       users: 'Usuários',
       system: 'Sistema (Atualizações de software, Permissões, Políticas de Aprovação, etc...)',
