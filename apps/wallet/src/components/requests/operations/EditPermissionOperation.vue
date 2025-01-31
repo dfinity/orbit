@@ -12,13 +12,18 @@
     </RequestOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" indeterminate />
-  <PermissionForm v-else :model-value="permission" mode="view" />
+  <PermissionItemForm
+    v-else-if="permission.allow && permission.resource"
+    :model-value="permission.allow"
+    :resource="permission.resource"
+    mode="view"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeMount, Ref, ref } from 'vue';
 import { VProgressCircular } from 'vuetify/components';
-import PermissionForm from '~/components/permissions/PermissionForm.vue';
+import PermissionItemForm from '~/components/permissions/PermissionItemForm.vue';
 import logger from '~/core/logger.core';
 import { EditPermissionOperation, Permission, Request } from '~/generated/station/station.did';
 import { fromResourceToResourceEnum } from '~/mappers/permissions.mapper';
