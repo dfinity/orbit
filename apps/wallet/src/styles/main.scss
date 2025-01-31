@@ -170,3 +170,9 @@ a {
 .min-height-100 {
   min-height: 100%;
 }
+
+.v-dialog--right .v-overlay__content {
+  top: 0;
+  right: 0;
+  left: auto !important;
+}

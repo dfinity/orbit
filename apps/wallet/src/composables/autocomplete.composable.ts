@@ -2,14 +2,14 @@ import { Ref, ref } from 'vue';
 import { logger } from '~/core/logger.core';
 import { UserGroup } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
-import { throttle } from '~/utils/helper.utils';
+import { debounce } from '~/utils/helper.utils';
 
 export const useAutocomplete = <T>(fetchCall: (search: string) => Promise<T[]>) => {
   const search = ref<string>('');
   const loading = ref<boolean>(false);
   const results: Ref<T[]> = ref([]);
 
-  const triggerSearch = throttle(async () => {
+  const triggerSearch = debounce(async () => {
     try {
       loading.value = true;
       const fetchResults = await fetchCall(search.value);
@@ -27,7 +27,7 @@ export const useAutocomplete = <T>(fetchCall: (search: string) => Promise<T[]>) 
   const searchItems = async (searchTerm?: string): Promise<void> => {
     search.value = searchTerm || '';
 
-    triggerSearch();
+    return triggerSearch();
   };
 
   return {

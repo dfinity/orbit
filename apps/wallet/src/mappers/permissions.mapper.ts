@@ -78,3 +78,40 @@ export const toAuthScopeEnum = (authScope: AuthScope): AuthScopeEnum => {
 
   return unreachable(authScope);
 };
+
+/**
+ * Creates a text representation of a resource action for display purposes.
+ *
+ * e.g. For the resource object { User: { List: null } }, the text representation would be "user_list".
+ *
+ * @param resourceAction The resource action to convert to text.
+ * @returns The text representation of the resource action.
+ */
+export const fromResourceToDisplayText = (resource: Resource, separator = '_'): string => {
+  const keys = Object.keys(resource);
+  if (keys.length === 0) {
+    return '';
+  }
+
+  let displayText = '';
+
+  for (const key of keys) {
+    displayText += displayText.length ? separator + key : key;
+    const resourceKey = key as keyof Resource;
+
+    // also check if resource is an object and not null
+    if (
+      typeof resource[resourceKey] === 'object' &&
+      resource[resourceKey] !== null &&
+      !Array.isArray(resource[resourceKey])
+    ) {
+      const actionValue = fromResourceToDisplayText(resource[resourceKey]);
+
+      if (actionValue?.length) {
+        displayText += separator + actionValue;
+      }
+    }
+  }
+
+  return displayText.toLowerCase();
+};
