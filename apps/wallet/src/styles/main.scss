@@ -176,3 +176,15 @@ a {
   right: 0;
   left: auto !important;
 }
+
+.no-table-borders {
+  /* Remove outer border if needed */
+  border: none !important;
+
+  thead th,
+  tbody td,
+  tfoot td {
+    border-bottom: none !important;
+    border-top: none !important;
+  }
+}

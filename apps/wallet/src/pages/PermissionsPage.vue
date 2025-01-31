@@ -72,17 +72,21 @@
                           <p>{{ $t('permissions.categories.treasury') }}</p>
                         </VExpansionPanelTitle>
                         <VExpansionPanelText>
-                          <div class="d-flex flex-column ga-4">
-                            <PermissionItem
-                              v-for="(resource, idx) in Object.values(GLOBAL_PERMISSIONS.treasury)"
-                              :key="idx"
-                              :resource="resource"
-                              :allowed="allowedByResource[JSON.stringify(resource)]"
-                              :db="{ usersById, userGroupsById }"
-                              class="cursor-pointer"
-                              @click.stop="openDialog(resource)"
-                            />
-                          </div>
+                          <VTable hover class="no-table-borders">
+                            <tbody>
+                              <PermissionRow
+                                v-for="(resource, idx) in Object.values(
+                                  GLOBAL_PERMISSIONS.treasury,
+                                )"
+                                :key="idx"
+                                :resource="resource"
+                                :allowed="allowedByResource[JSON.stringify(resource)]"
+                                :db="{ usersById, userGroupsById }"
+                                class="cursor-pointer"
+                                @click.stop="openDialog(resource)"
+                              />
+                            </tbody>
+                          </VTable>
                         </VExpansionPanelText>
                       </VExpansionPanel>
                       <VExpansionPanel>
@@ -91,17 +95,21 @@
                           <p>{{ $t('permissions.categories.canisters') }}</p>
                         </VExpansionPanelTitle>
                         <VExpansionPanelText>
-                          <div class="d-flex flex-column ga-4">
-                            <PermissionItem
-                              v-for="(resource, idx) in Object.values(GLOBAL_PERMISSIONS.canisters)"
-                              :key="idx"
-                              :resource="resource"
-                              :allowed="allowedByResource[JSON.stringify(resource)]"
-                              :db="{ usersById, userGroupsById }"
-                              class="cursor-pointer"
-                              @click.stop="openDialog(resource)"
-                            />
-                          </div>
+                          <VTable hover class="no-table-borders">
+                            <tbody>
+                              <PermissionRow
+                                v-for="(resource, idx) in Object.values(
+                                  GLOBAL_PERMISSIONS.canisters,
+                                )"
+                                :key="idx"
+                                :resource="resource"
+                                :allowed="allowedByResource[JSON.stringify(resource)]"
+                                :db="{ usersById, userGroupsById }"
+                                class="hoverable cursor-pointer"
+                                @click.stop="openDialog(resource)"
+                              />
+                            </tbody>
+                          </VTable>
                         </VExpansionPanelText>
                       </VExpansionPanel>
                       <VExpansionPanel>
@@ -110,17 +118,19 @@
                           <p>{{ $t('permissions.categories.users') }}</p>
                         </VExpansionPanelTitle>
                         <VExpansionPanelText>
-                          <div class="d-flex flex-column ga-4">
-                            <PermissionItem
-                              v-for="(resource, idx) in Object.values(GLOBAL_PERMISSIONS.users)"
-                              :key="idx"
-                              :resource="resource"
-                              :allowed="allowedByResource[JSON.stringify(resource)]"
-                              :db="{ usersById, userGroupsById }"
-                              class="cursor-pointer"
-                              @click.stop="openDialog(resource)"
-                            />
-                          </div>
+                          <VTable hover class="no-table-borders">
+                            <tbody>
+                              <PermissionRow
+                                v-for="(resource, idx) in Object.values(GLOBAL_PERMISSIONS.users)"
+                                :key="idx"
+                                :resource="resource"
+                                :allowed="allowedByResource[JSON.stringify(resource)]"
+                                :db="{ usersById, userGroupsById }"
+                                class="hoverable cursor-pointer"
+                                @click.stop="openDialog(resource)"
+                              />
+                            </tbody>
+                          </VTable>
                         </VExpansionPanelText>
                       </VExpansionPanel>
                       <VExpansionPanel>
@@ -129,17 +139,19 @@
                           <p>{{ $t('permissions.categories.system') }}</p>
                         </VExpansionPanelTitle>
                         <VExpansionPanelText>
-                          <div class="d-flex flex-column ga-4">
-                            <PermissionItem
-                              v-for="(resource, idx) in Object.values(GLOBAL_PERMISSIONS.system)"
-                              :key="idx"
-                              :resource="resource"
-                              :allowed="allowedByResource[JSON.stringify(resource)]"
-                              :db="{ usersById, userGroupsById }"
-                              class="cursor-pointer"
-                              @click.stop="openDialog(resource)"
-                            />
-                          </div>
+                          <VTable hover class="no-table-borders">
+                            <tbody>
+                              <PermissionRow
+                                v-for="(resource, idx) in Object.values(GLOBAL_PERMISSIONS.system)"
+                                :key="idx"
+                                :resource="resource"
+                                :allowed="allowedByResource[JSON.stringify(resource)]"
+                                :db="{ usersById, userGroupsById }"
+                                class="hoverable cursor-pointer"
+                                @click.stop="openDialog(resource)"
+                              />
+                            </tbody>
+                          </VTable>
                         </VExpansionPanelText>
                       </VExpansionPanel>
                     </VExpansionPanels>
@@ -169,8 +181,8 @@ import DataLoader from '~/components/DataLoader.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import PageLayout from '~/components/PageLayout.vue';
-import PermissionItem from '~/components/permissions/PermissionItem.vue';
 import PermissionItemForm from '~/components/permissions/PermissionItemForm.vue';
+import PermissionRow from '~/components/permissions/PermissionRow.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
 import FlyoutDialog from '~/components/ui/FlyoutDialog.vue';
 import { GLOBAL_PERMISSIONS } from '~/configs/permissions.config';

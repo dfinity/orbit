@@ -18,8 +18,8 @@ function definePermissions<T extends Record<string, Resource>>(permissions: T): 
 export const GLOBAL_PERMISSIONS = {
   treasury: definePermissions({
     list_accounts: { Account: { List: null } },
-    create_account: { Account: { Create: null } },
     read_any_account: { Account: { Read: { Any: null } } },
+    create_account: { Account: { Create: null } },
     update_any_account: { Account: { Update: { Any: null } } },
     transfer_from_any_account: { Account: { Transfer: { Any: null } } },
     list_addressbook: { AddressBook: { List: null } },
@@ -28,15 +28,15 @@ export const GLOBAL_PERMISSIONS = {
     update_any_addressbook: { AddressBook: { Update: { Any: null } } },
     delete_any_addressbook: { AddressBook: { Delete: { Any: null } } },
     list_assets: { Asset: { List: null } },
-    create_asset: { Asset: { Create: null } },
     read_any_asset: { Asset: { Read: { Any: null } } },
+    create_asset: { Asset: { Create: null } },
     update_any_asset: { Asset: { Update: { Any: null } } },
     delete_any_asset: { Asset: { Delete: { Any: null } } },
   }),
   canisters: definePermissions({
     list_external_canisters: { ExternalCanister: { List: null } },
-    create_external_canister: { ExternalCanister: { Create: null } },
     read_any_external_canister: { ExternalCanister: { Read: { Any: null } } },
+    create_external_canister: { ExternalCanister: { Create: null } },
     change_any_external_canister: { ExternalCanister: { Change: { Any: null } } },
     fund_any_external_canister: { ExternalCanister: { Fund: { Any: null } } },
     call_any_external_canister: {
@@ -47,8 +47,8 @@ export const GLOBAL_PERMISSIONS = {
   }),
   users: definePermissions({
     list_users: { User: { List: null } },
-    create_user: { User: { Create: null } },
     read_any_user: { User: { Read: { Any: null } } },
+    create_user: { User: { Create: null } },
     update_any_user: { User: { Update: { Any: null } } },
     list_usergroups: { UserGroup: { List: null } },
     create_usergroup: { UserGroup: { Create: null } },

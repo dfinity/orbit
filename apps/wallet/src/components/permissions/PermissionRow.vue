@@ -1,6 +1,6 @@
 <template>
-  <div class="d-flex flex-md-row flex-column ga-4 px-4">
-    <div class="d-flex flex-column ga-1 flex-grow-1 text-body-2">
+  <tr>
+    <td class="w-100 text-body-2">
       <slot>
         <p>
           {{ title }}
@@ -11,12 +11,12 @@
             class="text-medium-emphasis"
           />
         </p>
-        <p v-if="explainer" class="text-medium-emphasis">
+        <p v-if="explainer" class="text-caption text-medium-emphasis">
           {{ explainer }}
         </p>
       </slot>
-    </div>
-    <div class="d-flex flex-row ga-2 align-center">
+    </td>
+    <td class="text-center">
       <slot name="actions">
         <VIcon v-if="isPubliclyAvailable" :icon="mdiEarth" size="small" />
         <VIcon v-if="isAvailableToAllAuthenticatedUsers" :icon="mdiAccountLock" size="small" />
@@ -24,7 +24,7 @@
           <VChip
             v-if="props.allowed.user_groups.length > 0"
             size="small"
-            variant="flat"
+            variant="text"
             density="comfortable"
             :prepend-icon="mdiAccountGroup"
           >
@@ -37,7 +37,7 @@
           <VChip
             v-if="props.allowed.users.length > 0"
             size="small"
-            variant="flat"
+            variant="text"
             density="comfortable"
             :prepend-icon="mdiAccount"
           >
@@ -49,8 +49,8 @@
           </VChip>
         </template>
       </slot>
-    </div>
-  </div>
+    </td>
+  </tr>
 </template>
 <script lang="ts" setup>
 import { mdiAccount, mdiAccountGroup, mdiAccountLock, mdiEarth, mdiProgressPencil } from '@mdi/js';
@@ -67,6 +67,7 @@ const props = withDefaults(
     resource: Resource;
     type?: 'view' | 'action';
     allowed?: Allow;
+    hover?: boolean;
     db?: {
       usersById: Record<string, BasicUser>;
       userGroupsById: Record<string, UserGroup>;
@@ -77,6 +78,7 @@ const props = withDefaults(
     allowed: () => ({ auth_scope: { Restricted: null }, users: [], user_groups: [] }),
     type: 'view',
     description: undefined,
+    hover: false,
   },
 );
 

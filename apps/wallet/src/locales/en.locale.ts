@@ -1062,56 +1062,6 @@ export default {
       restricted: 'Specific Users/Groups',
       restricted_tooltip: 'Accessible only to the selected users or groups.',
     },
-    actions: {
-      list: 'List',
-      create: 'Create',
-      read: 'Read',
-      update: 'Update',
-      delete: 'Delete',
-      transfer: 'Transfer',
-      capabilities: 'Capabilities',
-      systeminfo: 'System info',
-      systeminfocapabilities: 'Capabilities (Supported Assets)',
-      systeminfoconfig: 'Configuration (Upgrades, Metrics, Usage)',
-      managesysteminfo: 'Manage System Info (e.g. name)',
-      systemupgrade: 'Upgrade',
-      change: 'Change',
-      fund: 'Fund',
-      callcanister: 'Call',
-      account_list: 'View Accounts page',
-      account_list_description:
-        'Shows the accounts page, but only accounts that the user has view access.',
-      account_read_any: 'View accounts',
-      account_read_any_description: 'Has access to view all wallet accounts and their details.',
-    },
-    categories: {
-      treasury: 'Treasury (accounts, assets, address book, etc...)',
-      canisters: 'Canisters/Applications',
-      users: 'Users',
-      system: 'System (Software updates, Permissions, Approval Policies, etc...)',
-    },
-    list_accounts: 'View Accounts page',
-    list_accounts_description:
-      'Shows the accounts page, but only accounts that the user has view access.',
-    read_any_account: 'View accounts',
-    read_any_account_description: 'Has access to view all wallet accounts and their details.',
-    create_account: 'Add new accounts',
-    create_account_description:
-      'Can add new accounts to the wallet and assign assets to them (e.g. ICP, ckBTC).',
-    update_any_account: 'Edit accounts',
-    update_any_account_description:
-      'Can edit any wallet account details including associated permissions and approval policies.',
-    transfer_from_any_account: 'Create transfers',
-    transfer_from_any_account_description: 'Can create transfers from any account in the wallet.',
-    list_addressbook: 'View Address Book Page',
-    list_addressbook_description:
-      'Shows the address book page, but only entries that the user has view access.',
-
-    resource_title: 'Resource',
-    group_members_title: 'Members of groups',
-    specific_users_title: 'Specific users',
-    everyone_title: 'Everyone',
-    select_resource: 'Resource Type',
     resources: {
       account: 'Account',
       asset: 'Asset',
@@ -1125,6 +1075,140 @@ export default {
       addressbook: 'Address Book',
       managesysteminfo: 'Manage System Info',
       externalcanister: 'External Canister',
+    },
+    categories: {
+      treasury: 'Treasury (accounts, assets, address book, etc...)',
+      canisters: 'Canisters/Applications',
+      users: 'Users',
+      system: 'System (Software updates, Permissions, Approval Policies, etc...)',
+    },
+    actions: {
+      account_list: 'View Accounts Page',
+      account_list_description:
+        'Allows access to the accounts page, but only displays accounts the user has permission to view.',
+      account_read_any: 'View All Accounts',
+      account_read_any_description:
+        'Grants access to view all accounts, including balances and associated assets.',
+      account_create: 'Add New Accounts',
+      account_create_description:
+        'Allows the creation of new accounts and assigning assets (e.g., ICP, ckBTC).',
+      account_update_any: 'Edit Accounts',
+      account_update_any_description:
+        'Grants permission to edit account details, including permissions and approval policies.',
+      account_transfer_any: 'Create Transfers',
+      account_transfer_any_description:
+        'Allows the user to initiate transfers from any account within the wallet.',
+
+      addressbook_list: 'View Address Book Page',
+      addressbook_list_description:
+        'Grants access to the address book page, showing only entries the user can view.',
+      addressbook_read_any: 'View All Address Book Entries',
+      addressbook_read_any_description: 'Allows access to all address book entries.',
+      addressbook_create: 'Add New Address Book Entries',
+      addressbook_create_description:
+        'Enables adding new contacts, including metadata such as names and additional details.',
+      addressbook_update_any: 'Edit Address Book Entries',
+      addressbook_update_any_description:
+        'Allows editing existing address book entries, including metadata.',
+      addressbook_delete_any: 'Delete Address Book Entries',
+      addressbook_delete_any_description:
+        'Grants permission to delete address book entries. ⚠ Note: Entries may be used in approval policies to restrict or allow transfers, so deletion should be handled with care.',
+
+      asset_list: 'View Assets Page',
+      asset_list_description:
+        'Grants access to the assets page, but only displays assets the user can view.',
+      asset_read_any: 'View All Assets',
+      asset_read_any_description: 'Allows viewing of all assets and their details.',
+      asset_create: 'Add New Assets',
+      asset_create_description:
+        'Enables adding new assets to the wallet, which can then be assigned to accounts.',
+      asset_update_any: 'Edit Assets',
+      asset_update_any_description:
+        'Grants permission to edit asset details, including associated permissions and approval policies.',
+      asset_delete_any: 'Delete Assets',
+      asset_delete_any_description:
+        'Allows asset deletion. ⚠ Note: Deleting an asset will remove it from all accounts.',
+
+      externalcanister_list: 'View Canisters Page',
+      externalcanister_list_description:
+        'Grants access to the canisters page, showing only canisters the user can view.',
+      externalcanister_read_any: 'View All Canisters',
+      externalcanister_read_any_description:
+        'Allows access to view all canisters and their details.',
+      externalcanister_create: 'Add New Canisters',
+      externalcanister_create_description:
+        'Enables adding new or existing canisters to the wallet. The wallet can either fully control these canisters or act as a monitoring and authorization layer.',
+      externalcanister_change_any: 'Edit Canisters',
+      externalcanister_change_any_description:
+        'Grants permission to modify canister details, permissions, approval policies, settings, and controllers.',
+      externalcanister_fund_any: 'Fund Canisters',
+      externalcanister_fund_any_description:
+        'Allows the user to top up canisters with cycles using the wallet.',
+      externalcanister_call_execution_method_any_validation_method_no: 'Call Canisters',
+      externalcanister_call_execution_method_any_validation_method_no_description:
+        'Enables making calls to any canister through the wallet. ⚠ Note: This permission allows execution of arbitrary calls to canisters, so proper approval policies should be enforced.',
+
+      user_list: 'View Users Page',
+      user_list_description:
+        'Grants access to the users page, showing only users the user can view.',
+      user_read_any: 'View All Users',
+      user_read_any_description: 'Allows access to view all users and their details.',
+      user_create: 'Add New Users',
+      user_create_description: 'Enables adding new users to the wallet.',
+      user_update_any: 'Edit Users',
+      user_update_any_description:
+        'Grants permission to edit user details, including associated identities and status.',
+
+      usergroup_list: 'View User Groups Page',
+      usergroup_list_description:
+        'Grants access to the user groups page, but only for groups the user can view.',
+      usergroup_read_any: 'View All User Groups',
+      usergroup_read_any_description: 'Allows viewing of all user groups and their details.',
+      usergroup_create: 'Add New User Groups',
+      usergroup_create_description: 'Enables adding new user groups to the wallet.',
+      usergroup_update_any: 'Edit User Groups',
+      usergroup_update_any_description: 'Grants permission to modify user group details.',
+      usergroup_delete_any: 'Delete User Groups',
+      usergroup_delete_any_description:
+        'Allows deleting user groups. ⚠ Note: Deleting a user group removes it from all associated users and may impact approval policies that rely on it.',
+
+      system_capabilities: 'View Supported Assets',
+      system_capabilities_description:
+        'Can view the list of supported assets, including their symbols, names, and metadata.',
+      system_systeminfo: 'View System Information',
+      system_systeminfo_description:
+        'Allows viewing of system-wide information such as the wallet version, upgrader ID, and cycle balances.',
+      system_managesysteminfo: 'Manage System Information',
+      system_managesysteminfo_description:
+        'Grants permission to modify system settings, including the wallet name.',
+      system_upgrade: 'Perform System Upgrade',
+      system_upgrade_description:
+        'Allows upgrading the wallet to a new version. ⚠ Note: Upgrades can affect the availability and functionality of the wallet.',
+
+      permission_update: 'Manage Permissions',
+      permission_update_description:
+        'Grants full control over wallet permissions, including adding, updating, and removing permissions.',
+
+      requestpolicy_list: 'View Request Policies Page',
+      requestpolicy_list_description:
+        'Grants access to the request policies page, showing only policies the user can view.',
+      requestpolicy_read_any: 'View All Request Policies',
+      requestpolicy_read_any_description:
+        'Allows viewing of all request policies and their details.',
+      requestpolicy_create: 'Add New Request Policies',
+      requestpolicy_create_description: 'Enables adding new request policies to the wallet.',
+      requestpolicy_update_any: 'Edit Request Policies',
+      requestpolicy_update_any_description: 'Grants permission to modify request policies.',
+      requestpolicy_delete_any: 'Delete Request Policies',
+      requestpolicy_delete_any_description:
+        'Allows deleting request policies. ⚠ Note: Deleting a request policy may impact the functionality of the wallet.',
+
+      request_list: 'View Requests Page',
+      request_list_description:
+        'Allows access to the requests page, showing only requests the user can view. In most cases, this should be available to all users so they can track requests requiring their approval.',
+      request_read_any: 'View All Requests',
+      request_read_any_description:
+        'Enables viewing of all requests, including those submitted by other users.',
     },
   },
   request_policies: {
