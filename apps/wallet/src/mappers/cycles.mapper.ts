@@ -96,5 +96,5 @@ export const cyclesUnitFromNumber = (cycles: bigint): CyclesUnit => {
 
 export const formatCycles = (cycles: bigint): string => {
   const unit = cyclesUnitFromNumber(cycles);
-  return `${toCyclesUnit(cycles, unit)} ${unit}`;
+  return `${toCyclesUnit(cycles, unit).toFixed(3)} ${unit}`;
 };
