@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRefs, watch } from 'vue';
+import { ref, toRefs } from 'vue';
 import {
   RequestSpecifierRule,
   useRequestSpecifierRules,
@@ -45,10 +45,6 @@ const props = toRefs(input);
 
 const selectedAddRule = ref<RequestSpecifierRule | null>(null);
 const availableRules = useRequestSpecifierRules(props.specifier);
-
-watch(availableRules, newVal => {
-  console.log('newVal', newVal);
-});
 
 const emit = defineEmits<{
   (event: 'add', payload: RequestPolicyRule): void;

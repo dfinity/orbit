@@ -65,10 +65,6 @@ const loading = ref(true);
 const error = ref<boolean>(false);
 const appStore = useAppStore();
 
-// const rule = computed(() => namedRule.value? {
-//     NamedRule:
-// });
-
 const rule = computed(() => (namedRule.value ? namedRule.value.rule : null));
 
 const tooltip = useRuleToTooltip(rule);
