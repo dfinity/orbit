@@ -78,9 +78,9 @@ jobs:
           mkdir -p artifacts
           mv tests/integration/wasms/* artifacts
       - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: integration-tests
+          name: integration-tests-${{ matrix.canister }}
           path: artifacts/${{ matrix.canister }}.wasm.gz
           retention-days: 10
           if-no-files-found: error
@@ -108,9 +108,9 @@ jobs:
           mkdir -p artifacts
           mv tests/integration/wasms/* artifacts
       - name: 'Upload Artifacts'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: integration-tests
+          name: integration-tests-${{ matrix.canister }}
           path: artifacts/${{ matrix.canister }}.wasm.gz
           retention-days: 10
           if-no-files-found: error
@@ -127,10 +127,11 @@ jobs:
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.4
       - name: 'Download Artifacts'
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: integration-tests
           path: tests/integration/wasms
+          pattern: integration-tests-${{ matrix.canister }}
+          merge-multiple: true
       - name: Build test canister
         run: |
           ./scripts/generate-wasm.sh test_canister
