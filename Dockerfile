@@ -26,6 +26,7 @@ ENV RUSTUP_HOME=/opt/rustup \
 # Path modifications need to be done in separate ENV statements
 ENV PATH=$CARGO_HOME/bin:$PATH
 ENV PATH=$FNM_DIR/bin:$PATH
+ENV COREPACK_DEFAULT_TO_LATEST=0
 # Install Rust and the Node.js version manager
 COPY rust-toolchain.toml .
 RUN curl -fsSL https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path && \
