@@ -26,7 +26,6 @@ ENV RUSTUP_HOME=/opt/rustup \
 # Path modifications need to be done in separate ENV statements
 ENV PATH=$CARGO_HOME/bin:$PATH
 ENV PATH=$FNM_DIR/bin:$PATH
-ENV COREPACK_DEFAULT_TO_LATEST=0
 # Install Rust and the Node.js version manager
 COPY rust-toolchain.toml .
 RUN curl -fsSL https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path && \
@@ -40,6 +39,7 @@ COPY package.json .
 RUN eval "$(fnm env)" && \
     fnm install && \
     fnm use && \
+    npm install -g corepack@0.31.0 && \
     corepack enable && \
     fnm alias default production
 # Install the monorepo dependencies
