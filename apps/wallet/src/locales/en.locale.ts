@@ -950,25 +950,16 @@ export default {
       station_name_field: 'Wallet Name',
       admin_name_field: 'Your username',
 
-      check_permissions_title: 'Checking waiting list status...',
-      join_waitlist_title: 'Join waiting list',
-      join_waitlist_body:
-        "Join Orbit's waiting list! Enter your email to get early access and exclusive updates. Your journey starts now.",
-      join_waitlist_email_field: 'Enter your email address',
-      join_waitlist: 'Sign up now',
-
-      waitlist_pending_title: 'You are on the waiting list!',
-      waitlist_pending_body:
-        'Please wait for the approval. You will receive an email once your request is approved.',
-
-      waitlist_check_error_title: 'Failed to check waiting list status',
-      waitlist_check_error_body: 'Failed to check waiting list status, please try again.',
+      check_permissions_title: 'Checking deployment eligibility...',
 
       quota_exceed_error_title: 'Quota exceeded',
       quota_exceed_error_body: 'You have reached the maximum number of wallets you can create.',
 
       waitlist_denied_title: "You've been denied access.",
-      waitlist_denied_body: 'Unfortunately, you are not eligible to join the waiting list.',
+      waitlist_denied_body: 'Unfortunately, you are not eligible to deploy a wallet.',
+
+      deployment_check_error_title: 'Failed to check deployment eligibility',
+      deployment_check_error_body: 'Failed to check deployment eligibility, please try again.',
 
       status_starting: 'Initializing, please wait ...',
       status_deploying: 'Deploying your wallet to the Internet Computer ...',
