@@ -12,7 +12,19 @@ import { group } from './config/sidebar';
 export const sidebar = [
   // User docs
   group('users', {
-    items: ['users/getting-started'],
+    items: [
+      'users/welcome',
+      'users/getting-started',
+      'users/managing-assets',
+      'users/wallet-management',
+      'users/permissions-policies',
+      'users/requests',
+      'users/external-canisters',
+      // 'users/upgrades',
+      'users/glossary',
+      // 'users/disaster-recovery',
+      // 'users/limitations',
+    ],
   }),
 
   // Developer docs
