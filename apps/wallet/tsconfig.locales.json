@@ -1,11 +1,9 @@
 {
-    "compilerOptions": {
-      "composite": true,
-      "strict": true,
-      "skipLibCheck": true,
-      "resolveJsonModule": true
-    },
-    "include": [
-      "src/locales/**/*.ts"
-    ]
-  }
+  "compilerOptions": {
+    "composite": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/locales/**/*.ts"]
+}

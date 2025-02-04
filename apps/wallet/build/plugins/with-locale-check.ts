@@ -1,9 +1,9 @@
-import { Plugin } from 'vite';
-import { readdirSync, readFileSync } from 'fs';
+import { readdirSync } from 'fs';
 import { resolve } from 'path';
+import { Plugin } from 'vite';
 import enLocale from '../../src/locales/en.locale';
-import ptLocale from '../../src/locales/pt.locale';
 import frLocale from '../../src/locales/fr.locale';
+import ptLocale from '../../src/locales/pt.locale';
 
 type LocaleKey = {
   [key: string]: LocaleKey | string;

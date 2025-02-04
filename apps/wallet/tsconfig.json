@@ -22,5 +22,5 @@
   },
   "include": ["src"],
   "exclude": ["src/locales/**"],
-  "references": [{ "path": "./tsconfig.node.json" }, { "path": "./tsconfig.locales.json" },]
+  "references": [{ "path": "./tsconfig.node.json" }, { "path": "./tsconfig.locales.json" }]
 }
