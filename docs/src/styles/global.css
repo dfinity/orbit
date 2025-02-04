@@ -1,0 +1,44 @@
+:root {
+  --sl-font: 'Roboto', sans-serif;
+  --sl-color-bg-nav: #030024;
+  --sl-color-hairline-light: --sl-color-bg-nav;
+  --sl-color-hairline-shade: --sl-color-bg-nav;
+  --sl-color-bg-sidebar: --sl-color-bg-nav;
+}
+
+.page {
+  background-color: #030024;
+}
+
+.hero-bg {
+  background: url('../assets/logo-markers-bg.png') no-repeat bottom left / 50vmin;
+  position: absolute;
+  inset: 0 0 auto auto;
+  height: 100vh;
+  width: 100vw;
+  z-index: -1;
+}
+
+[data-theme='light'] .page {
+  background-color: #ffffff;
+}
+
+:root[data-theme='light'] {
+  --sl-color-bg-nav: #ffffff;
+  --sl-color-hairline-light: #ffffff;
+  --sl-color-hairline-shade: #ffffff;
+}
+
+[data-theme='light'] body {
+  background-color: #ffffff;
+}
+
+.header img {
+  padding: 0.2em 0;
+}
+
+/* reset ugly margin in nested lists */
+main li > ul {
+  margin-top: 0 !important;
+}
+
