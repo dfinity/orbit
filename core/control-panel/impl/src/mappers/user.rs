@@ -53,9 +53,7 @@ impl From<CanDeployStation> for CanDeployStationResponse {
             CanDeployStation::NotAllowed(user_subscription_status) => {
                 CanDeployStationResponse::NotAllowed(user_subscription_status.into())
             }
-            CanDeployStation::Allowed(remaining_stations) => {
-                CanDeployStationResponse::Allowed(remaining_stations)
-            }
+            CanDeployStation::Allowed(remaining) => CanDeployStationResponse::Allowed(remaining),
             CanDeployStation::QuotaExceeded => CanDeployStationResponse::QuotaExceeded,
         }
     }

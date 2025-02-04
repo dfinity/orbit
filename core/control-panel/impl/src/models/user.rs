@@ -1,7 +1,7 @@
 use super::UserStation;
-use crate::core::ic_cdk::api::time;
 use crate::core::ic_cdk::next_time;
 use crate::errors::UserError;
+use crate::models::RateLimiter;
 use candid::Principal;
 use control_panel_api::RegisterUserInput;
 use email_address::EmailAddress;
@@ -44,13 +44,6 @@ impl std::fmt::Display for UserSubscriptionStatus {
     }
 }
 
-#[storable]
-#[derive(Clone, Debug, Default, Eq, Ord, PartialEq, PartialOrd)]
-pub struct UserRateLimiter {
-    pub unix_date: u64,
-    pub num_deployed_stations: usize,
-}
-
 /// The identity of an user.
 #[storable]
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -68,9 +61,9 @@ pub struct User {
     /// The stations that have ever been deployed for the user by the control panel.
     /// Used to bound the total number of stations a user could deploy via the control panel.
     deployed_stations: Vec<Principal>,
-    /// Used to rate limit the number of deployed stations per user by the control panel.
-    #[serde(default)]
-    user_rate_limiter: UserRateLimiter,
+    /// Used to rate limit the number of deployed stations per user per day by the control panel.
+    #[serde(default = "RateLimiter::new_user")]
+    user_rate_limiter: RateLimiter,
     /// The timestamp of last time the user was active.
     pub last_active: Timestamp,
     /// Last time the identity was updated.
@@ -107,13 +100,7 @@ impl User {
 
     pub fn add_deployed_station(&mut self, station: Principal) {
         self.deployed_stations.push(station);
-        let current_unix_date = time() / 86_400_000_000_000;
-        if self.user_rate_limiter.unix_date == current_unix_date {
-            self.user_rate_limiter.num_deployed_stations += 1;
-        } else {
-            self.user_rate_limiter.unix_date = current_unix_date;
-            self.user_rate_limiter.num_deployed_stations = 1;
-        }
+        self.user_rate_limiter.add_deployed_station();
     }
 
     pub fn can_deploy_station(&self) -> CanDeployStation {
@@ -125,19 +112,7 @@ impl User {
                 return CanDeployStation::NotAllowed(self.subscription_status.clone());
             }
         };
-        let current_unix_date = time() / 86_400_000_000_000;
-        if self.user_rate_limiter.unix_date == current_unix_date {
-            if self.user_rate_limiter.num_deployed_stations >= Self::MAX_DEPLOYED_STATIONS_PER_DAY {
-                CanDeployStation::QuotaExceeded
-            } else {
-                CanDeployStation::Allowed(
-                    Self::MAX_DEPLOYED_STATIONS_PER_DAY
-                        - self.user_rate_limiter.num_deployed_stations,
-                )
-            }
-        } else {
-            CanDeployStation::Allowed(Self::MAX_DEPLOYED_STATIONS_PER_DAY)
-        }
+        self.user_rate_limiter.can_deploy_station()
     }
 
     pub fn new_from_register_input(
@@ -157,7 +132,7 @@ impl User {
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             stations: stations.into_iter().map(|station| station.into()).collect(),
             deployed_stations: vec![],
-            user_rate_limiter: UserRateLimiter::default(),
+            user_rate_limiter: RateLimiter::new_user(),
             last_active: registration_time,
             last_update_timestamp: registration_time,
         }
@@ -290,7 +265,7 @@ mod tests {
 pub mod user_model_utils {
     use super::{User, UserSubscriptionStatus};
     use crate::core::test_utils;
-    use crate::models::UserRateLimiter;
+    use crate::models::RateLimiter;
     use uuid::Uuid;
 
     pub fn mock_user() -> User {
@@ -300,7 +275,7 @@ pub mod user_model_utils {
             subscription_status: UserSubscriptionStatus::Unsubscribed,
             stations: vec![],
             deployed_stations: vec![],
-            user_rate_limiter: UserRateLimiter::default(),
+            user_rate_limiter: RateLimiter::new_user(),
             last_active: 0,
             last_update_timestamp: 0,
         }

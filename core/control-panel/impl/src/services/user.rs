@@ -1,6 +1,8 @@
 use crate::{
-    core::{generate_uuid_v4, ic_cdk::next_time, CallContext},
-    errors::UserError,
+    core::{
+        canister_config, generate_uuid_v4, ic_cdk::next_time, write_canister_config, CallContext,
+    },
+    errors::{DeployError, UserError},
     mappers::SubscribedUser,
     models::{CanDeployStation, User, UserId, UserKey, UserSubscriptionStatus},
     repositories::{UserRepository, USER_REPOSITORY},
@@ -184,18 +186,23 @@ impl UserService {
             .collect()
     }
 
-    pub async fn add_deployed_station(
+    pub fn add_deployed_station(
         &self,
         user_id: &UserId,
         station_canister_id: Principal,
         ctx: &CallContext,
     ) -> ServiceResult<User> {
         let mut user = self.get_user(user_id, ctx)?;
+        let mut config = canister_config().ok_or(DeployError::Failed {
+            reason: "Canister config not initialized.".to_string(),
+        })?;
 
+        config.global_rate_limiter.add_deployed_station();
         user.add_deployed_station(station_canister_id);
 
         user.validate()?;
 
+        write_canister_config(config);
         self.user_repository.insert(user.to_key(), user.clone());
 
         FUND_MANAGER.with(|fund_manager| {
@@ -210,10 +217,32 @@ impl UserService {
     }
 
     /// Checks if a user can deploy a station.
-    pub async fn can_deploy_station(&self, ctx: &CallContext) -> ServiceResult<CanDeployStation> {
+    pub fn can_deploy_station(&self, ctx: &CallContext) -> ServiceResult<CanDeployStation> {
         let user = self.get_user_by_identity(&ctx.caller(), ctx)?;
+        let config = canister_config().ok_or(DeployError::Failed {
+            reason: "Canister config not initialized.".to_string(),
+        })?;
 
-        Ok(user.can_deploy_station())
+        let check_can_deploy_station =
+            |can_deploy_station_response: CanDeployStation| -> Result<usize, UserError> {
+                match can_deploy_station_response {
+                    CanDeployStation::Allowed(remaining) => Ok(remaining),
+                    CanDeployStation::QuotaExceeded => Err(UserError::DeployStationQuotaExceeded),
+                    CanDeployStation::NotAllowed(subscription_status) => {
+                        Err(UserError::BadUserSubscriptionStatus {
+                            subscription_status: subscription_status.into(),
+                        })
+                    }
+                }
+            };
+        let allowed_globally =
+            check_can_deploy_station(config.global_rate_limiter.can_deploy_station())?;
+        let allowed_per_user = check_can_deploy_station(user.can_deploy_station())?;
+
+        Ok(CanDeployStation::Allowed(std::cmp::min(
+            allowed_globally,
+            allowed_per_user,
+        )))
     }
 
     /// Checks if the caller is a controller.

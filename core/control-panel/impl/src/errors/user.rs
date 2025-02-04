@@ -47,7 +47,7 @@ pub enum UserError {
         max_labels: usize,
     },
     /// Concurrent station canister deployment.
-    #[error(r#"Concurrent station canister deployment is not allowed."#)]
+    #[error(r#"Too many concurrent requests to deploy the station canister."#)]
     ConcurrentStationDeployment,
 }
 
