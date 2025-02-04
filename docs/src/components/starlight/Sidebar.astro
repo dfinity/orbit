@@ -20,7 +20,7 @@ function findParentGroup(sidebar: SidebarEntry[], id: string): SidebarEntry | nu
           return entry;
         }
         if (subEntry.type === 'group') {
-          const parentGroup = findParentGroup(subEntry.entries, id);
+          const parentGroup = findParentGroup([subEntry], id);
           if (parentGroup) {
             return entry;
           }
@@ -47,7 +47,7 @@ assertGroups(sidebar);
 ---
 
 <SidebarPersister {...Astro.props}>
-  <SidebarSublist sublist={sidebar.filter((group) => group === parentGroup)} />
+  <SidebarSublist sublist={parentGroup && parentGroup.entries} />
 </SidebarPersister>
 
 <div class="md:sl-hidden">
