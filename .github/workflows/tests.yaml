@@ -125,7 +125,7 @@ jobs:
           pattern: integration-tests-*
   integration-tests:
     name: 'integration-tests:required'
-    needs: [build-wasms, download-canisters]
+    needs: [merge-artifacts]
     runs-on: ubuntu-latest
     env:
       BUILD_WASMS: 'false'
