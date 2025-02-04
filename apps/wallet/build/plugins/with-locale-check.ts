@@ -39,9 +39,26 @@ function compareLocales(
 }
 
 export const withLocaleCheck = (): Plugin => {
+  let isServe = false;
+
   return {
     name: 'with-locale-check',
+    configResolved(config) {
+      // config.command is "serve" in dev, "build" in production
+      isServe = config.command === 'serve';
+    },
+
     async buildStart() {
+      const errorOut = (msg: string) => {
+        if (isServe) {
+          // In dev, just warn (doesn’t stop the server)
+          this.warn(msg);
+        } else {
+          // In production build, fail
+          this.error(msg);
+        }
+      };
+
       const locales = [
         { name: 'pt', locale: ptLocale },
         { name: 'fr', locale: frLocale },
@@ -50,22 +67,20 @@ export const withLocaleCheck = (): Plugin => {
       // check if there are only these locale files in the src/locales folder
       const localeFiles = readdirSync(resolve(__dirname, '../../src/locales'));
       if (localeFiles.length !== locales.length + 1) {
-        console.error(
-          `ERROR: There are ${localeFiles.length} locale files in the src/locales folder, expected ${locales.length + 1}.`,
+        errorOut(
+          `There are ${localeFiles.length} locale files in the src/locales folder, expected ${locales.length + 1}.`,
         );
-        process.exit(1);
       }
 
-      let result = true;
+      const badLocales: string[] = [];
       for (const locale of locales) {
         if (!compareLocales(enLocale, locale.locale, '', locale.name)) {
-          console.error(`ERROR: Locale keys of ${locale.name} are not equal to en.locale.ts`);
-          result = false;
+          badLocales.push(locale.name);
         }
       }
 
-      if (!result) {
-        process.exit(1);
+      if (badLocales.length > 0) {
+        errorOut(`Locale keys are not equal to en.locale.ts: ${badLocales.join(', ')}`);
       }
     },
   };
