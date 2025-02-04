@@ -2,13 +2,9 @@ use crate::{
     errors::UserError,
     models::{CanDeployStation, User, UserSubscriptionStatus},
 };
-use control_panel_api::{
-    CanDeployStationResponse, SubscribedUserDTO, UserDTO, UserSubscriptionStatusDTO,
-};
+use control_panel_api::{CanDeployStationResponse, UserDTO, UserSubscriptionStatusDTO};
 use orbit_essentials::api::ApiError;
 use orbit_essentials::utils::timestamp_to_rfc3339;
-
-pub type SubscribedUser = SubscribedUserDTO;
 
 impl From<User> for UserDTO {
     fn from(user: User) -> Self {

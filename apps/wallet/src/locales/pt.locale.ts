@@ -958,25 +958,17 @@ export default {
       station_name_field: 'Nome da carteira',
       admin_name_field: 'Seu nome de usuário',
 
-      check_permissions_title: 'Verificando o estado da lista de espera ...',
-      join_waitlist_title: 'Junte-se à lista de espera',
-      join_waitlist_body:
-        'Junte-se à lista de espera da Orbit! Insira o seu email para obter acesso antecipado e atualizações exclusivas. A sua jornada começa agora.',
-      join_waitlist_email_field: 'Insira o seu endereço de email',
-      join_waitlist: 'Inscreva-se agora',
-
-      waitlist_pending_title: 'Você está na lista de espera!',
-      waitlist_pending_body:
-        'Por favor, aguarde a aprovação. Você receberá um email assim que o seu pedido for aprovado.',
-      waitlist_denied_title: 'Você foi negado o acesso.',
-      waitlist_denied_body: 'Infelizmente, você não é elegível para se juntar à lista de espera.',
-
-      waitlist_check_error_title: 'Falha ao verificar o estado da lista de espera',
-      waitlist_check_error_body:
-        'Falha ao verificar o estado da lista de espera, por favor, tente novamente.',
+      check_permissions_title: 'Verificando a elegibilidade para o deployment...',
 
       quota_exceed_error_title: 'Limite de carteiras excedido',
       quota_exceed_error_body: 'Você atingiu o limite de carteiras que pode criar.',
+
+      waitlist_denied_title: 'Você foi negado o acesso.',
+      waitlist_denied_body: 'Infelizmente, você não é elegível para se juntar à lista de espera.',
+
+      deployment_check_error_title: 'Erro ao verificar a elegibilidade para o deployment',
+      deployment_check_error_body:
+        'Erro ao verificar a elegibilidade para o deployment, por favor, tente novamente.',
 
       status_starting: 'Inicializando, por favor, aguarde ...',
       status_deploying: 'Instalando a sua carteira no Internet Computer ...',

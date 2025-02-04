@@ -39,6 +39,7 @@ COPY package.json .
 RUN eval "$(fnm env)" && \
     fnm install && \
     fnm use && \
+    npm install -g corepack@0.31.0 && \
     corepack enable && \
     fnm alias default production
 # Install the monorepo dependencies
