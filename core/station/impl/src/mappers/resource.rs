@@ -29,6 +29,7 @@ impl From<station_api::ResourceDTO> for Resource {
             station_api::ResourceDTO::Request(action) => Resource::Request(action.into()),
             station_api::ResourceDTO::System(action) => Resource::System(action.into()),
             station_api::ResourceDTO::Asset(action) => Resource::Asset(action.into()),
+            station_api::ResourceDTO::NamedRule(action) => Resource::NamedRule(action.into()),
         }
     }
 }
@@ -51,6 +52,7 @@ impl From<Resource> for station_api::ResourceDTO {
             Resource::Request(action) => station_api::ResourceDTO::Request(action.into()),
             Resource::System(action) => station_api::ResourceDTO::System(action.into()),
             Resource::Asset(action) => station_api::ResourceDTO::Asset(action.into()),
+            Resource::NamedRule(action) => station_api::ResourceDTO::NamedRule(action.into()),
         }
     }
 }

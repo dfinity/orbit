@@ -1,46 +1,14 @@
 use crate::{
-    core::ic_cdk::next_time,
     errors::UserError,
     models::{CanDeployStation, User, UserSubscriptionStatus},
 };
-use candid::Principal;
 use control_panel_api::{
-    CanDeployStationResponse, RegisterUserInput, SubscribedUserDTO, UserDTO,
-    UserSubscriptionStatusDTO,
+    CanDeployStationResponse, SubscribedUserDTO, UserDTO, UserSubscriptionStatusDTO,
 };
 use orbit_essentials::api::ApiError;
-use orbit_essentials::types::UUID;
 use orbit_essentials::utils::timestamp_to_rfc3339;
 
 pub type SubscribedUser = SubscribedUserDTO;
-
-#[derive(Default)]
-pub struct UserMapper {}
-
-impl UserMapper {
-    /// Maps the registration input to an user entity.
-    pub fn from_register_input(
-        new_user_id: UUID,
-        input: RegisterUserInput,
-        user_identity: Principal,
-    ) -> User {
-        let registration_time = next_time();
-        let stations = match input.station {
-            Some(station) => vec![station],
-            None => vec![],
-        };
-
-        User {
-            id: new_user_id,
-            identity: user_identity,
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
-            stations: stations.into_iter().map(|station| station.into()).collect(),
-            deployed_stations: vec![],
-            last_active: registration_time,
-            last_update_timestamp: registration_time,
-        }
-    }
-}
 
 impl From<User> for UserDTO {
     fn from(user: User) -> Self {
@@ -85,9 +53,7 @@ impl From<CanDeployStation> for CanDeployStationResponse {
             CanDeployStation::NotAllowed(user_subscription_status) => {
                 CanDeployStationResponse::NotAllowed(user_subscription_status.into())
             }
-            CanDeployStation::Allowed(remaining_stations) => {
-                CanDeployStationResponse::Allowed(remaining_stations)
-            }
+            CanDeployStation::Allowed(remaining) => CanDeployStationResponse::Allowed(remaining),
             CanDeployStation::QuotaExceeded => CanDeployStationResponse::QuotaExceeded,
         }
     }
@@ -96,7 +62,8 @@ impl From<CanDeployStation> for CanDeployStationResponse {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use control_panel_api::UserStationDTO;
+    use candid::Principal;
+    use control_panel_api::{RegisterUserInput, UserStationDTO};
 
     #[test]
     fn mapped_user_registration_with_no_station() {
@@ -104,7 +71,7 @@ mod tests {
         let user_identity = Principal::from_slice(&[u8::MAX; 29]);
         let input = RegisterUserInput { station: None };
 
-        let user = UserMapper::from_register_input(user_id, input, user_identity);
+        let user = User::new_from_register_input(user_id, input, user_identity);
 
         assert_eq!(user.id, user_id);
         assert_eq!(user.identity, user_identity);
@@ -124,7 +91,7 @@ mod tests {
             }),
         };
 
-        let user = UserMapper::from_register_input(user_id, input, user_identity);
+        let user = User::new_from_register_input(user_id, input, user_identity);
 
         assert_eq!(user.id, user_id);
         assert_eq!(user.identity, user_identity);

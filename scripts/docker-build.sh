@@ -23,6 +23,7 @@ Options:
   --station builds the station canister
   --upgrader builds the upgrader canister
   --wallet-dapp builds the wallet frontend assets
+  --docs-portal builds the docs frontend assets
 
   -h, --help prints this help message
 EOF
@@ -92,6 +93,10 @@ function build_wallet_dapp() {
   deterministic_build wallet-dapp build_wallet_dapp
 }
 
+function build_docs_portal() {
+  deterministic_build docs-portal build_docs_portal
+}
+
 #############################################
 # SCRIPT OPTIONS                            #
 #############################################
@@ -128,6 +133,11 @@ while [[ $# -gt 0 ]]; do
   --wallet-dapp)
     shift
     exec_function build_wallet_dapp
+    echo
+    ;;
+  --docs-portal)
+    shift
+    exec_function build_docs_portal
     echo
     ;;
   *)

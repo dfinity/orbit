@@ -342,6 +342,22 @@ impl SystemService {
 
         match install {
             SystemInstall::Init(init) => {
+                use crate::core::ic_cdk::api::canister_balance128;
+                use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
+                match init.upgrader {
+                    station_api::SystemUpgraderInput::Id(_) => (),
+                    station_api::SystemUpgraderInput::Deploy(ref deploy_args) => {
+                        let upgrader_initial_cycles = deploy_args
+                            .initial_cycles
+                            .unwrap_or(DEFAULT_INITIAL_UPGRADER_CYCLES);
+                        // TODO(PEN-426): improve this check once the freezing limit in cycles is exposed
+                        // synchronously via a system API.
+                        let station_cycles = canister_balance128();
+                        if station_cycles < upgrader_initial_cycles {
+                            ic_cdk::trap(&format!("Station cycles balance {} is insufficient for transferring {} cycles when deploying the upgrader.", station_cycles, upgrader_initial_cycles));
+                        }
+                    }
+                };
                 crate::core::ic_timers::set_timer(std::time::Duration::from_millis(0), move || {
                     use crate::core::ic_cdk::spawn;
                     spawn(install_canister_post_process_timer(init, system_info))
@@ -580,7 +596,7 @@ pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::id as self_canister_id;
     use crate::core::init::{default_policies, DEFAULT_PERMISSIONS};
-    use crate::core::INITIAL_UPGRADER_CYCLES;
+    use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
     use crate::mappers::blockchain::BlockchainMapper;
     use crate::mappers::HelperMapper;
     use crate::models::permission::Allow;
@@ -803,8 +819,16 @@ mod install_canister_handlers {
 
                 Ok(upgrader_id)
             }
-            station_api::SystemUpgraderInput::WasmModule(upgrader_wasm_module) => {
-                deploy_upgrader(upgrader_wasm_module, controllers).await
+            station_api::SystemUpgraderInput::Deploy(deploy_args) => {
+                let upgrader_initial_cycles = deploy_args
+                    .initial_cycles
+                    .unwrap_or(DEFAULT_INITIAL_UPGRADER_CYCLES);
+                deploy_upgrader(
+                    deploy_args.wasm_module,
+                    upgrader_initial_cycles,
+                    controllers,
+                )
+                .await
             }
         }
     }
@@ -812,6 +836,7 @@ mod install_canister_handlers {
     /// Deploys the station upgrader canister and sets the station as the controller of the upgrader.
     async fn deploy_upgrader(
         upgrader_wasm_module: Vec<u8>,
+        initial_upgrader_cycles: u128,
         controllers: Vec<Principal>,
     ) -> Result<Principal, String> {
         let (upgrader_canister,) = mgmt::create_canister(
@@ -821,7 +846,7 @@ mod install_canister_handlers {
                     ..Default::default()
                 }),
             },
-            INITIAL_UPGRADER_CYCLES,
+            initial_upgrader_cycles,
         )
         .await
         .map_err(|e| format!("Failed to create upgrader canister: {:?}", e))?;
@@ -893,7 +918,12 @@ mod tests {
                     identity: Principal::from_slice(&[1; 29]),
                 }],
                 quorum: Some(1),
-                upgrader: station_api::SystemUpgraderInput::WasmModule(vec![]),
+                upgrader: station_api::SystemUpgraderInput::Deploy(
+                    station_api::DeploySystemUpgraderInput {
+                        wasm_module: vec![],
+                        initial_cycles: None,
+                    },
+                ),
                 fallback_controller: None,
                 accounts: None,
                 assets: None,

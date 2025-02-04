@@ -20,6 +20,8 @@ export enum Privilege {
   ListExternalCanisters = 'ListExternalCanisters',
   CreateExternalCanister = 'CreateExternalCanister',
   CallAnyExternalCanister = 'CallAnyExternalCanister',
+  AddNamedRule = 'AddNamedRule',
+  ListNamedRules = 'ListNamedRules',
 }
 
 export enum RequiredSessionState {

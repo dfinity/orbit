@@ -30,6 +30,9 @@ pub use request_policy::*;
 pub mod request_evaluation_result;
 pub use request_evaluation_result::*;
 
+pub mod named_rule;
+pub use named_rule::*;
+
 pub mod asset;
 pub use asset::*;
 

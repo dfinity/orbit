@@ -537,7 +537,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
     ));
 
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
-    await_station_healthy(&env, canister_ids.station);
+    await_station_healthy(&env, canister_ids.station, WALLET_ADMIN_USER);
 
     // 4. assert that the station is reinstalled with the same accounts and the apporoval policies are set correctly
     let res: (ApiResult<ListAccountsResponse>,) = update_candid_as(
@@ -810,7 +810,7 @@ fn test_disaster_recovery_install() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env_with_config(crate::setup::SetupConfig {
-        start_cycles: Some(4_500_000_000_000),
+        start_cycles: Some(10_000_000_000_000),
         ..Default::default()
     });
 
@@ -905,7 +905,12 @@ fn test_disaster_recovery_failing() {
     let arg = SystemInstall::Init(SystemInit {
         fallback_controller: None,
         quorum: None,
-        upgrader: station_api::SystemUpgraderInput::WasmModule(vec![]),
+        upgrader: station_api::SystemUpgraderInput::Deploy(
+            station_api::DeploySystemUpgraderInput {
+                wasm_module: vec![],
+                initial_cycles: None,
+            },
+        ),
         name: "Station".to_string(),
         admins: vec![],
         accounts: None,

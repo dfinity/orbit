@@ -6,25 +6,27 @@ use super::{
 use crate::{
     AddAccountOperationDTO, AddAccountOperationInput, AddAddressBookEntryOperationDTO,
     AddAddressBookEntryOperationInput, AddAssetOperationDTO, AddAssetOperationInput,
-    AddUserGroupOperationDTO, AddUserGroupOperationInput, AddUserOperationDTO,
-    AddUserOperationInput, CallExternalCanisterOperationDTO, CallExternalCanisterOperationInput,
+    AddNamedRuleOperationDTO, AddNamedRuleOperationInput, AddUserGroupOperationDTO,
+    AddUserGroupOperationInput, AddUserOperationDTO, AddUserOperationInput,
+    CallExternalCanisterOperationDTO, CallExternalCanisterOperationInput,
     ChangeExternalCanisterOperationDTO, ChangeExternalCanisterOperationInput,
     ConfigureExternalCanisterOperationDTO, ConfigureExternalCanisterOperationInput,
     CreateExternalCanisterOperationDTO, CreateExternalCanisterOperationInput, DisplayUserDTO,
     EditAccountOperationDTO, EditAddressBookEntryOperationDTO, EditAddressBookEntryOperationInput,
-    EditAssetOperationDTO, EditAssetOperationInput, EditPermissionOperationDTO,
-    EditPermissionOperationInput, EditUserGroupOperationDTO, EditUserGroupOperationInput,
-    EditUserOperationDTO, EditUserOperationInput, FundExternalCanisterOperationDTO,
-    FundExternalCanisterOperationInput, ManageSystemInfoOperationDTO,
-    ManageSystemInfoOperationInput, PaginationInput, PruneExternalCanisterOperationDTO,
-    PruneExternalCanisterOperationInput, RemoveAddressBookEntryOperationDTO,
-    RemoveAddressBookEntryOperationInput, RemoveAssetOperationDTO, RemoveAssetOperationInput,
-    RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput, RequestEvaluationResultDTO,
-    RequestPolicyRuleDTO, RequestSpecifierDTO, RestoreExternalCanisterOperationDTO,
-    RestoreExternalCanisterOperationInput, SetDisasterRecoveryOperationDTO,
-    SetDisasterRecoveryOperationInput, SnapshotExternalCanisterOperationDTO,
-    SnapshotExternalCanisterOperationInput, SortDirection, SystemUpgradeOperationDTO,
-    SystemUpgradeOperationInput, UuidDTO,
+    EditAssetOperationDTO, EditAssetOperationInput, EditNamedRuleOperationDTO,
+    EditNamedRuleOperationInput, EditPermissionOperationDTO, EditPermissionOperationInput,
+    EditUserGroupOperationDTO, EditUserGroupOperationInput, EditUserOperationDTO,
+    EditUserOperationInput, FundExternalCanisterOperationDTO, FundExternalCanisterOperationInput,
+    ManageSystemInfoOperationDTO, ManageSystemInfoOperationInput, PaginationInput,
+    PruneExternalCanisterOperationDTO, PruneExternalCanisterOperationInput,
+    RemoveAddressBookEntryOperationDTO, RemoveAddressBookEntryOperationInput,
+    RemoveAssetOperationDTO, RemoveAssetOperationInput, RemoveNamedRuleOperationDTO,
+    RemoveNamedRuleOperationInput, RemoveUserGroupOperationDTO, RemoveUserGroupOperationInput,
+    RequestEvaluationResultDTO, RequestPolicyRuleDTO, RequestSpecifierDTO,
+    RestoreExternalCanisterOperationDTO, RestoreExternalCanisterOperationInput,
+    SetDisasterRecoveryOperationDTO, SetDisasterRecoveryOperationInput,
+    SnapshotExternalCanisterOperationDTO, SnapshotExternalCanisterOperationInput, SortDirection,
+    SystemUpgradeOperationDTO, SystemUpgradeOperationInput, UuidDTO,
 };
 use candid::{CandidType, Deserialize, Principal};
 
@@ -96,6 +98,9 @@ pub enum RequestOperationDTO {
     AddAsset(Box<AddAssetOperationDTO>),
     EditAsset(Box<EditAssetOperationDTO>),
     RemoveAsset(Box<RemoveAssetOperationDTO>),
+    AddNamedRule(Box<AddNamedRuleOperationDTO>),
+    EditNamedRule(Box<EditNamedRuleOperationDTO>),
+    RemoveNamedRule(Box<RemoveNamedRuleOperationDTO>),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -130,6 +135,9 @@ pub enum RequestOperationInput {
     AddAsset(AddAssetOperationInput),
     EditAsset(EditAssetOperationInput),
     RemoveAsset(RemoveAssetOperationInput),
+    AddNamedRule(AddNamedRuleOperationInput),
+    EditNamedRule(EditNamedRuleOperationInput),
+    RemoveNamedRule(RemoveNamedRuleOperationInput),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -164,6 +172,9 @@ pub enum RequestOperationTypeDTO {
     AddAsset,
     EditAsset,
     RemoveAsset,
+    AddNamedRule,
+    EditNamedRule,
+    RemoveNamedRule,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -198,6 +209,9 @@ pub enum ListRequestsOperationTypeDTO {
     AddAsset,
     EditAsset,
     RemoveAsset,
+    AddNamedRule,
+    EditNamedRule,
+    RemoveNamedRule,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

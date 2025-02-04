@@ -1,8 +1,8 @@
 use super::resource::{Resource, ResourceIds};
 use super::{MetadataItem, Request, RequestId, RequestOperation, RequestOperationType};
 use crate::core::validation::{
-    EnsureAccount, EnsureAddressBookEntry, EnsureAsset, EnsureIdExists, EnsureRequestPolicy,
-    EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
+    EnsureAccount, EnsureAddressBookEntry, EnsureAsset, EnsureIdExists, EnsureNamedRule,
+    EnsureRequestPolicy, EnsureResourceIdExists, EnsureUser, EnsureUserGroup,
 };
 use crate::errors::ValidationError;
 use crate::models::resource::{CallExternalCanisterResourceTarget, ExternalCanisterId};
@@ -81,6 +81,10 @@ pub enum RequestSpecifier {
     AddAsset,
     EditAsset(ResourceIds),
     RemoveAsset(ResourceIds),
+
+    AddNamedRule,
+    EditNamedRule(ResourceIds),
+    RemoveNamedRule(ResourceIds),
 }
 
 impl ModelValidator<ValidationError> for RequestSpecifier {
@@ -97,7 +101,8 @@ impl ModelValidator<ValidationError> for RequestSpecifier {
             | RequestSpecifier::ManageSystemInfo
             | RequestSpecifier::SetDisasterRecovery
             | RequestSpecifier::AddUserGroup
-            | RequestSpecifier::AddAsset => (),
+            | RequestSpecifier::AddAsset
+            | RequestSpecifier::AddNamedRule => (),
 
             RequestSpecifier::CallExternalCanister(target) => {
                 target.validate()?;
@@ -131,6 +136,11 @@ impl ModelValidator<ValidationError> for RequestSpecifier {
             RequestSpecifier::EditAsset(resource_ids)
             | RequestSpecifier::RemoveAsset(resource_ids) => {
                 EnsureAsset::resource_ids_exist(resource_ids)?
+            }
+
+            RequestSpecifier::EditNamedRule(resource_ids)
+            | RequestSpecifier::RemoveNamedRule(resource_ids) => {
+                EnsureNamedRule::resource_ids_exist(resource_ids)?
             }
         }
         Ok(())
@@ -172,6 +182,10 @@ impl From<&RequestSpecifier> for RequestOperationType {
             RequestSpecifier::AddAsset => RequestOperationType::AddAsset,
             RequestSpecifier::EditAsset(_) => RequestOperationType::EditAsset,
             RequestSpecifier::RemoveAsset(_) => RequestOperationType::RemoveAsset,
+
+            RequestSpecifier::AddNamedRule => RequestOperationType::AddNamedRule,
+            RequestSpecifier::EditNamedRule(_) => RequestOperationType::EditNamedRule,
+            RequestSpecifier::RemoveNamedRule(_) => RequestOperationType::RemoveNamedRule,
         }
     }
 }

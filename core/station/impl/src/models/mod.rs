@@ -92,3 +92,6 @@ pub mod resource;
 pub mod indexes;
 
 pub mod rate_limiter;
+
+pub mod named_rule;
+pub use named_rule::*;

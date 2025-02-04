@@ -1,6 +1,7 @@
 //! Station services.
+use crate::core::canister_config;
 use crate::core::middlewares::use_canister_call_metric;
-use crate::errors::UserError;
+use crate::errors::{DeployError, UserError};
 use crate::mappers::user_station::UpdateUserStationInputInto;
 use crate::services::{
     DeployService, UserStationService, DEPLOY_SERVICE, USER_SERVICE, USER_STATION_SERVICE,
@@ -14,7 +15,7 @@ use control_panel_api::{
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
 use orbit_essentials::api::ApiResult;
-use orbit_essentials::utils::{CallerGuard, State};
+use orbit_essentials::utils::{CallerGuard, CallerGuardParams, State};
 use orbit_essentials::with_middleware;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -129,8 +130,21 @@ impl StationController {
     #[with_middleware(tail = use_canister_call_metric("deploy_station", &result))]
     async fn deploy_station(&self, input: DeployStationInput) -> ApiResult<DeployStationResponse> {
         let ctx = CallContext::get();
+        let config = canister_config().ok_or(DeployError::Failed {
+            reason: "Canister config not initialized.".to_string(),
+        })?;
+        let max_concurrency = config
+            .global_rate_limiter
+            .remaining_quota()
+            .ok_or(UserError::DeployStationQuotaExceeded)?;
         let _lock = STATE
-            .with(|state| CallerGuard::new(state.clone(), ctx.caller(), None))
+            .with(|state| {
+                CallerGuard::new(
+                    state.clone(),
+                    ctx.caller(),
+                    CallerGuardParams::default().with_max_concurrency(max_concurrency),
+                )
+            })
             .ok_or(UserError::ConcurrentStationDeployment)?;
 
         let deployed_station_id = self.deploy_service.deploy_station(input, &ctx).await?;
@@ -145,7 +159,6 @@ impl StationController {
         let ctx = CallContext::get();
         self.user_service
             .can_deploy_station(&ctx)
-            .await
             .map(|can_deploy_station| can_deploy_station.into())
     }
 }

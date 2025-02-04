@@ -14,6 +14,7 @@ export enum ResourceTypeEnum {
   SetDisasterRecovery = 'SetDisasterRecovery',
   Notification = 'Notification',
   Asset = 'Asset',
+  NamedRule = 'NamedRule',
 }
 
 export enum ResourceActionEnum {

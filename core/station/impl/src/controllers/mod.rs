@@ -45,6 +45,9 @@ pub use http::*;
 mod asset;
 pub use asset::*;
 
+mod named_rule;
+pub use named_rule::*;
+
 #[cfg(test)]
 mod tests {
     use orbit_essentials::api::*;

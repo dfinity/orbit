@@ -62,6 +62,9 @@ type RequestSpecifier = variant {
   AddAsset;
   EditAsset : ResourceIds;
   RemoveAsset : ResourceIds;
+  AddNamedRule;
+  EditNamedRule : ResourceIds;
+  RemoveNamedRule : ResourceIds;
 };
 
 // A record type that can be used to represent a percentage of users that are required to approve a rule.
@@ -95,6 +98,7 @@ type RequestPolicyRule = variant {
   AnyOf : vec RequestPolicyRule;
   AllOf : vec RequestPolicyRule;
   Not : RequestPolicyRule;
+  NamedRule : UUID;
 };
 
 // Defines the high level result of evaluating a request policy rule.
@@ -1058,6 +1062,12 @@ type RequestOperation = variant {
   EditAsset : EditAssetOperation;
   // An operation for removing an existing asset.
   RemoveAsset : RemoveAssetOperation;
+  // An operation for adding a new named rule.
+  AddNamedRule : AddNamedRuleOperation;
+  // An operation for editing an existing named rule.
+  EditNamedRule : EditNamedRuleOperation;
+  // An operation for removing an existing named rule.
+  RemoveNamedRule : RemoveNamedRuleOperation;
 };
 
 type RequestOperationInput = variant {
@@ -1121,6 +1131,12 @@ type RequestOperationInput = variant {
   EditAsset : EditAssetOperationInput;
   // An operation for removing an existing asset.
   RemoveAsset : RemoveAssetOperationInput;
+  // An operation for adding a new named rule.
+  AddNamedRule : AddNamedRuleOperationInput;
+  // An operation for editing an existing named rule.
+  EditNamedRule : EditNamedRuleOperationInput;
+  // An operation for removing an existing named rule.
+  RemoveNamedRule : RemoveNamedRuleOperationInput;
 };
 
 type RequestOperationType = variant {
@@ -1184,6 +1200,12 @@ type RequestOperationType = variant {
   EditAsset;
   // An operation for removing an existing asset.
   RemoveAsset;
+  // An operation for adding a new named rule.
+  AddNamedRule;
+  // An operation for editing an existing named rule.
+  EditNamedRule;
+  // An operation for removing an existing named rule.
+  RemoveNamedRule;
 };
 
 // The schedule for executing a transaction of a given transfer.
@@ -1348,6 +1370,12 @@ type ListRequestsOperationType = variant {
   EditAsset;
   // An operation for removing an asset.
   RemoveAsset;
+  // An operation for adding a named rule.
+  AddNamedRule;
+  // An operation for editing a named rule.
+  EditNamedRule;
+  // An operation for removing a named rule.
+  RemoveNamedRule;
 };
 
 // The direction to use for sorting.
@@ -1966,6 +1994,120 @@ type SupportedBlockchain = record {
   supported_standards : vec StandardData;
 };
 
+// The named rule type.
+// 
+// A named rule is a reusable configuration that can be applied to many approval policies.
+type NamedRule = record {
+  // The rule id.
+  id : UUID;
+  // The rule name.
+  name : text;
+  // The rule description.
+  description : opt text;
+  // The rule value.
+  rule : RequestPolicyRule;
+};
+
+// A record type that can be used to represent the caller privileges for a given named rule.
+type NamedRuleCallerPrivileges = record {
+  // The named rule id.
+  id : UUID;
+  // Whether or not the caller can edit the resource.
+  can_edit : bool;
+  // Whether or not the caller can delete the resource.
+  can_delete : bool;
+};
+
+// Input type for getting a named rule.
+type GetNamedRuleInput = record {
+  // The named rule to retrieve by the id.
+  named_rule_id : UUID;
+};
+
+// Result type for retrieving a named rule.
+type GetNamedRuleResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The named rule that was retrieved.
+    named_rule : NamedRule;
+    // The privileges of the caller for the named rule.
+    privileges : NamedRuleCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// Input type for listing named rules.
+type ListNamedRulesInput = record {
+  // The pagination parameters.
+  paginate : opt PaginationInput;
+};
+
+// Result type for listing named rules.
+type ListNamedRulesResult = variant {
+  // The result data for a successful execution.
+  Ok : record {
+    // The list of named rules.
+    named_rules : vec NamedRule;
+    // The offset to use for the next page.
+    next_offset : opt nat64;
+    // The total number of named rules.
+    total : nat64;
+    // The privileges of the caller.
+    privileges : vec NamedRuleCallerPrivileges;
+  };
+  // The error that occurred (e.g. the user does not have the necessary permissions).
+  Err : Error;
+};
+
+// The operation type for adding a new named rule.
+type AddNamedRuleOperation = record {
+  // The result of adding a named rule.
+  named_rule : opt NamedRule;
+  // The input to the request to add a named rule.
+  input : AddNamedRuleOperationInput;
+};
+
+// The input type for creating a named rule.
+type AddNamedRuleOperationInput = record {
+  // The rule name.
+  name : text;
+  // The rule description.
+  description : opt text;
+  // The rule value.
+  rule : RequestPolicyRule;
+};
+
+// The operation type for editing an existing named rule.
+type EditNamedRuleOperation = record {
+  // The input to the request to edit a named rule.
+  input : EditNamedRuleOperationInput;
+};
+
+// The input type for editing a named rule.
+type EditNamedRuleOperationInput = record {
+  // The named rule id to edit.
+  named_rule_id : UUID;
+  // The rule name.
+  name : opt text;
+  // The rule description.
+  description : opt text;
+  // The rule value.
+  rule : opt RequestPolicyRule;
+};
+
+// The operation type for removing a named rule.
+type RemoveNamedRuleOperation = record {
+  // The input to the request to remove a named rule.
+  input : RemoveNamedRuleOperationInput;
+};
+
+// The input type for deleting a named rule.
+type RemoveNamedRuleOperationInput = record {
+  // The named rule id to remove.
+  named_rule_id : UUID;
+};
+
 // A record type that is used to show the current capabilities of the station.
 type Capabilities = record {
   // The name of the station.
@@ -2259,6 +2401,7 @@ type Resource = variant {
   User : UserResourceAction;
   UserGroup : ResourceAction;
   Asset : ResourceAction;
+  NamedRule : ResourceAction;
 };
 
 // A record type that can be used to represent the caller privileges for a given permission.
@@ -2558,6 +2701,8 @@ type UserPrivilege = variant {
   CallAnyExternalCanister;
   ListAssets;
   AddAsset;
+  ListNamedRules;
+  AddNamedRule;
 };
 
 type MeResult = variant {
@@ -2583,7 +2728,14 @@ type SystemUpgraderInput = variant {
   // An existing upgrader canister.
   Id : principal;
   // Creates and deploys a new canister.
-  WasmModule : blob;
+  Deploy : record {
+    wasm_module : blob;
+    // The initial cycles to allocate to the canister.
+    //
+    // If not set, only the minimal amount of cycles required to create
+    // and deploy the canister will be allocated.
+    initial_cycles : opt nat;
+  };
 };
 
 // The initial accounts to create when initializing the canister for the first time, e.g., after disaster recovery.
@@ -3172,4 +3324,8 @@ service : (opt SystemInstall) -> {
   get_asset : (input : GetAssetInput) -> (GetAssetResult) query;
   // List all assets that the caller has access to.
   list_assets : (input : ListAssetsInput) -> (ListAssetsResult) query;
+  // Get a named rule by id.
+  get_named_rule : (input : GetNamedRuleInput) -> (GetNamedRuleResult) query;
+  // List named rules that the caller has access to.
+  list_named_rules : (input : ListNamedRulesInput) -> (ListNamedRulesResult) query;
 };

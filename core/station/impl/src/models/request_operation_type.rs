@@ -40,6 +40,9 @@ pub enum RequestOperationType {
     EditAsset = 30,
     RemoveAsset = 31,
     MonitorExternalCanister = 32,
+    AddNamedRule = 33,
+    EditNamedRule = 34,
+    RemoveNamedRule = 35,
 }
 
 /// A helper enum to filter the requests based on the operation type and
@@ -76,6 +79,9 @@ pub enum ListRequestsOperationType {
     AddAsset,
     EditAsset,
     RemoveAsset,
+    AddNamedRule,
+    EditNamedRule,
+    RemoveNamedRule,
 }
 
 impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
@@ -226,6 +232,15 @@ impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
             ListRequestsOperationType::RemoveAsset => {
                 matches!(self, RequestOperationFilterType::RemoveAsset)
             }
+            ListRequestsOperationType::AddNamedRule => {
+                matches!(self, RequestOperationFilterType::AddNamedRule)
+            }
+            ListRequestsOperationType::EditNamedRule => {
+                matches!(self, RequestOperationFilterType::EditNamedRule)
+            }
+            ListRequestsOperationType::RemoveNamedRule => {
+                matches!(self, RequestOperationFilterType::RemoveNamedRule)
+            }
         }
     }
 }
@@ -307,6 +322,9 @@ impl Display for RequestOperationType {
             RequestOperationType::AddAsset => write!(f, "add_asset"),
             RequestOperationType::EditAsset => write!(f, "edit_asset"),
             RequestOperationType::RemoveAsset => write!(f, "remove_asset"),
+            RequestOperationType::AddNamedRule => write!(f, "add_named_rule"),
+            RequestOperationType::EditNamedRule => write!(f, "edit_named_rule"),
+            RequestOperationType::RemoveNamedRule => write!(f, "remove_named_rule"),
         }
     }
 }

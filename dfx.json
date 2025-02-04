@@ -80,6 +80,13 @@
       ],
       "build": "pnpm --filter 'wallet-dapp' build"
     },
+    "docs_portal": {
+      "type": "assets",
+      "source": [
+        "docs/dist/"
+      ],
+      "build": "pnpm --filter 'docs-portal' build"
+    },
     "icrc1_index_canister": {
       "type": "custom",
       "candid": "https://raw.githubusercontent.com/dfinity/ic/d87954601e4b22972899e9957e800406a0a6b929/rs/rosetta-api/icrc1/index-ng/index-ng.did",
