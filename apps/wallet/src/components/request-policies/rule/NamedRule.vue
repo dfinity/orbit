@@ -4,8 +4,8 @@
     <template v-if="loading">
       <VProgressCircular indeterminate />
     </template>
-    <template v-else-if="error">
-      {{ $t('request_policies.rule.named_rule') }}
+    <template v-else-if="error !== null">
+      {{ namedRuleId }} <ErrorTooltip :text="error" />
     </template>
     <template v-else-if="namedRule">
       <VTooltip
@@ -43,11 +43,12 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { computed } from 'vue';
 import { toRefs } from 'vue';
+import ErrorTooltip from '~/components/error/ErrorTooltip.vue';
 import { useRuleToTooltip } from '~/composables/request-policies.composable';
 import { NamedRule, UUID } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
-
+import { getErrorMessage } from '~/utils/error.utils';
 const input = withDefaults(
   defineProps<{
     namedRuleId: UUID;
@@ -62,7 +63,7 @@ const props = toRefs(input);
 
 const namedRule = ref<NamedRule | null>(null);
 const loading = ref(true);
-const error = ref<boolean>(false);
+const error = ref<string | null>(null);
 const appStore = useAppStore();
 
 const rule = computed(() => (namedRule.value ? namedRule.value.rule : null));
@@ -79,7 +80,7 @@ onMounted(async () => {
     namedRule.value = (await services().station.getNamedRule(props.namedRuleId.value)).named_rule;
   } catch (e) {
     appStore.sendErrorNotification(e);
-    error.value = true;
+    error.value = getErrorMessage(e);
   } finally {
     loading.value = false;
   }

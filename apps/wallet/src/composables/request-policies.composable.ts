@@ -68,7 +68,7 @@ export const useRequestSpecifierRules = (
       }
     }
 
-    if (namedRules.value) {
+    if (namedRules.value && namedRules.value.length > 0) {
       const namedRuleValues = namedRules.value.map(rule => ({
         value: { NamedRule: rule.id },
         text: rule.name,

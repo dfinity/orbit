@@ -145,7 +145,7 @@ import { RequestPolicyRuleEnum, RequestPolicyRuleUserSpecifierEnum } from '~/typ
 import RuleSummaryUserSpecifier from './RuleSummaryUserSpecifier.vue';
 import { unreachable } from '~/utils/helper.utils';
 import { mdiAlertCircle } from '@mdi/js';
-import InteractiveNamedRule from '~/components/users/InteractiveNamedRule.vue';
+import InteractiveNamedRule from '~/components/request-policies/InteractiveNamedRule.vue';
 defineProps<{
   rule: PopulatedRule;
 }>();
