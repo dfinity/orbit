@@ -150,7 +150,7 @@ export const validPrincipalRule = (value: unknown): string | boolean => {
     // parsing the principal will throw if it is invalid
     Principal.fromText(value as string);
     return true;
-  } catch (e) {
+  } catch (_e) {
     return i18n.global.t('forms.rules.validPrincipal');
   }
 };
@@ -174,7 +174,7 @@ export const validCanisterId = (value: unknown): string | boolean => {
     // parsing the principal will throw if it is invalid
     Principal.fromText(value as string);
     return true;
-  } catch (e) {
+  } catch (_e) {
     return i18n.global.t('forms.rules.validCanisterId');
   }
 };
@@ -193,7 +193,7 @@ export const validUuidV4Rule = (value: unknown): string | boolean => {
     } else {
       return i18n.global.t('forms.rules.validUuidV4');
     }
-  } catch (e) {
+  } catch (_e) {
     return i18n.global.t('forms.rules.validUuidV4');
   }
 };
@@ -234,7 +234,7 @@ export const validTokenAmount = (value: unknown, decimals: number): string | boo
     }
 
     return true;
-  } catch (e) {
+  } catch (_e) {
     return i18n.global.t('forms.rules.validTokenAmount');
   }
 };
