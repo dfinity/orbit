@@ -219,6 +219,7 @@ export default {
       amount: 'Montant',
       fee: 'Frais',
       comment: 'Commentaire',
+      url: 'URL',
     },
     download: {
       user_group: "Groupes d'Usagers",
@@ -686,6 +687,7 @@ export default {
     comment: 'Commentaire',
     comment_optional: 'Commentaire (optionnel)',
     arg: 'Paramètre',
+    access: 'Accès',
     target: 'Cible',
     previous: 'Précédent',
     next: 'Suivant',
@@ -1006,7 +1008,7 @@ export default {
     },
     assets: {
       title: 'Actifs',
-      btn_new_asset: 'Nouvel Actif',
+      btn_new_entry: 'Nouvel Actif',
       no_results_found: 'Pas d actif trouvé.',
       error_fetching_assets: 'Erreur lors du chargement des actifs, veuillez essayer de nouveau.',
       forms: {

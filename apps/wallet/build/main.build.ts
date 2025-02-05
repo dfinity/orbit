@@ -16,6 +16,7 @@ import { withApiCompatibilityFile } from './plugins/with-compatibility-file.plug
 import { withIcAssetsFile } from './plugins/with-ic-assets.plugin';
 import { withVersionedEntrypoint } from './plugins/with-versioned-entrypoint.plugin';
 import { getCommitHash } from './utils/git.utils';
+import { withLocaleCheck } from './plugins/with-locale-check';
 
 // https://vitejs.dev/config/
 export default defineConfig(_ => {
@@ -53,6 +54,7 @@ export default defineConfig(_ => {
       withApiCompatibilityFile(),
       withVersionedEntrypoint(),
       withIcAssetsFile({ isProduction }),
+      withLocaleCheck(),
     ],
     build: {
       target: 'es2022',

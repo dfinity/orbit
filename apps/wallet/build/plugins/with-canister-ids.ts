@@ -15,7 +15,7 @@ const resolveCanisterIds = (
   icpNetwork: string,
   dfxConfigDirPath: string,
 ): typeof DEFAULT_CANISTER_IDS => {
-  const canisters = Object.assign({}, DEFAULT_CANISTER_IDS);
+  const canisters = Object.assign({} as typeof DEFAULT_CANISTER_IDS, DEFAULT_CANISTER_IDS);
   const dfxConfigFile =
     icpNetwork === 'local'
       ? resolve(dfxConfigDirPath, '.dfx/local/canister_ids.json')
@@ -45,7 +45,7 @@ const resolveCanisterIds = (
       continue;
     }
 
-    canisters[canisterName] = details[icpNetwork];
+    canisters[canisterName as keyof typeof canisters] = details[icpNetwork];
   }
 
   return canisters;
@@ -87,12 +87,16 @@ export const withCanisterIds = (
       const envPrefix = opts.envPrefix || ENV_PREFIX;
 
       const canisters = resolveCanisterIds(icpNetwork, dfxConfigDirPath);
-      const canisterEnvVars = Object.entries(canisters).reduce((acc, [key, value]) => {
-        acc[`import.meta.env.${envPrefix}CANISTER_ID_${key.toUpperCase()}`] = JSON.stringify(value);
-        // This is to support the generated actors that use the process.env.CANISTER_ID_* variables.
-        acc[`process.env.CANISTER_ID_${key.toUpperCase()}`] = JSON.stringify(value);
-        return acc;
-      }, {});
+      const canisterEnvVars = Object.entries(canisters).reduce(
+        (acc, [key, value]) => {
+          acc[`import.meta.env.${envPrefix}CANISTER_ID_${key.toUpperCase()}`] =
+            JSON.stringify(value);
+          // This is to support the generated actors that use the process.env.CANISTER_ID_* variables.
+          acc[`process.env.CANISTER_ID_${key.toUpperCase()}`] = JSON.stringify(value);
+          return acc;
+        },
+        {} as Record<string, string>,
+      );
 
       const buildEnvVars = {
         ...canisterEnvVars,
@@ -105,14 +109,17 @@ export const withCanisterIds = (
         define: { ...buildEnvVars },
         test: {
           env: {
-            ...Object.entries(buildEnvVars).reduce((acc, [key, value]) => {
-              const keyParts = key.split('.');
-              if (keyParts.length) {
-                acc[keyParts.pop()] = JSON.parse(value);
-              }
+            ...Object.entries(buildEnvVars).reduce(
+              (acc, [key, value]) => {
+                const keyParts = key.split('.');
+                if (keyParts.length) {
+                  acc[keyParts.pop()!] = JSON.parse(value);
+                }
 
-              return acc;
-            }, {}),
+                return acc;
+              },
+              {} as Record<string, string>,
+            ),
           },
         },
       };

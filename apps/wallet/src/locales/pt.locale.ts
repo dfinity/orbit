@@ -35,6 +35,7 @@ export default {
     request_pending_message: 'O seu pedido foi criado e está pendente de aprovação.',
     request_approved_message: 'Este pedido foi approvado e está sendo processado.',
     request_rejected_message: 'Este pedido foi rejeitado.',
+    request_completed_message: 'Este pedido foi concluído.',
     user_status_active: 'Ativo',
     user_status_inactive: 'Inativo',
     add_new_identity: 'Adicionar nova identidade',
@@ -97,7 +98,7 @@ export default {
       verify_instructions:
         'Para verificar a atualização, abra o terminal e siga as instruções abaixo:',
     },
-    assets: 'Ativos',
+    asset: 'Ativo',
     no_data: 'Nenhum dado disponível.',
     no_matching_results: 'Nenhum resultado encontrado para `{search}`.',
     add_new_label: 'Adicionar novo rótulo: {label}',
@@ -230,6 +231,7 @@ export default {
       amount: 'Quantidade',
       fee: 'Taxa',
       comment: 'Comentário',
+      url: 'URL',
     },
     types: {
       addusergroup: {
@@ -486,6 +488,7 @@ export default {
     not_found: 'Canister não encontrado.',
     not_found_description: 'O canister que está a tentar aceder não existe.',
     ic_settings: 'Configuraçōes do IC',
+    top_up: 'Recarregar',
     start_monitoring: 'Iniciar monitoramento',
     monitor: {
       title: 'Monitorizar ciclos',
@@ -687,6 +690,7 @@ export default {
     wasm: 'Wasm',
     download: 'Baixar',
     arg: 'Arg',
+    access: 'Acesso',
     target: 'Alvo',
     permissions: 'Permissões',
     approval_policies: 'Políticas de Aprovação',
@@ -1086,6 +1090,7 @@ export default {
       systemupgrade: 'Atualizar o sistema',
       change: 'Alterar',
       fund: 'Financiar',
+      callcanister: 'Chamar',
     },
     allow: {
       public: 'Acesso público',
@@ -1136,6 +1141,7 @@ export default {
       fundexternalcanister: 'Financiar canister',
       setdisasterrecovery: 'Recuperação de sistema',
       callexternalcanister: 'Interagir com canister',
+      createexternalcanister: 'Criar canister',
       addasset: 'Adicionar ativo',
       editasset: 'Editar ativo',
       removeasset: 'Remover ativo',
