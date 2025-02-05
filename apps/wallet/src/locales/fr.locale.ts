@@ -235,6 +235,7 @@ export default {
       transfer: 'Transferts',
       external_canister: 'Canister Géré',
       system_info: 'Informations Système',
+      asset: 'Actifs',
       named_rule: 'Polices d approbation',
     },
     types: {
@@ -1049,6 +1050,7 @@ export default {
       dialog: {
         title: 'Police d approbation',
       },
+      linked_policies: 'Polices liées',
     },
     not_found: {
       title: 'Oulala, 404',
@@ -1201,6 +1203,9 @@ export default {
       addasset: 'Ajouter un actif',
       editasset: 'Modifier un actif',
       removeasset: 'Éffacer un actif',
+      addnamedrule: 'Ajouter une politique d approbation',
+      editnamedrule: 'Modifier une politique d approbation',
+      removenamedrule: 'Éffacer une politique d approbation',
     },
   },
   cycle_obtain_strategies: {

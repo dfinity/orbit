@@ -201,6 +201,7 @@ export default {
       transfer: 'Transferências',
       external_canister: 'Canister gerenciado',
       system_info: 'Informações do sistema',
+      asset: 'Ativos',
       named_rule: 'Política de aprovação',
     },
     headers: {
@@ -1046,6 +1047,7 @@ export default {
       dialog: {
         title: 'Política de aprovação',
       },
+      linked_policies: 'Políticas vinculadas',
     },
     not_found: {
       title: 'Ups, 404',
