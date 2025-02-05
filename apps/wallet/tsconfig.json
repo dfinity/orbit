@@ -20,5 +20,5 @@
       "~build/*": ["./build/*"]
     }
   },
-  "include": ["src", "build/**/*.ts"],
+  "include": ["src", "build/**/*.ts"]
 }
