@@ -25,11 +25,11 @@
     @update:search="searchItems"
   >
     <template #item="{ props: autocompleteProps, item }">
-      <VListSubheader v-if="item.props.header" class="font-weight-bold text-high-emphasis">
+      <VListSubheader v-if="item.props.header">
         {{ item.props.header }}
       </VListSubheader>
       <VListItem v-else v-bind="autocompleteProps" :title="undefined">
-        <VListItemSubtitle>{{ item.title }}</VListItemSubtitle>
+        <VListItemTitle>{{ item.title }}</VListItemTitle>
       </VListItem>
     </template>
     <template #append-inner>
