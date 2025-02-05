@@ -20,7 +20,5 @@
       "~build/*": ["./build/*"]
     }
   },
-  "include": ["src"],
-  "exclude": ["src/locales/**"],
-  "references": [{ "path": "./tsconfig.node.json" }, { "path": "./tsconfig.locales.json" },]
+  "include": ["src", "build/**/*.ts"],
 }

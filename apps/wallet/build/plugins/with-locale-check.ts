@@ -1,5 +1,5 @@
 import { Plugin } from 'vite';
-import { readdirSync, readFileSync } from 'fs';
+import { readdirSync } from 'fs';
 import { resolve } from 'path';
 import enLocale from '../../src/locales/en.locale';
 import ptLocale from '../../src/locales/pt.locale';
