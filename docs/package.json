@@ -20,8 +20,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "lint": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../.prettierignore --check .\" \"ESLINT_USE_FLAT_CONFIG=false eslint --ext .js,.vue,.ts,.cjs,.mdx,.astro .\"",
-    "format": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../.prettierignore --write .\" \"ESLINT_USE_FLAT_CONFIG=false eslint --ext .js,.vue,.ts,.cjs,.mdx,.astro --fix .\""
+    "lint": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../.prettierignore --check .\" \"eslint .\"",
+    "format": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../.prettierignore --write .\" \"eslint --fix .\""
   },
   "dependencies": {
     "@astrojs/starlight": "0.31.1",

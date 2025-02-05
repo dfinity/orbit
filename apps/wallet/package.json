@@ -20,8 +20,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "type-check": "vue-tsc --noEmit",
-    "lint": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../../.prettierignore --check .\" \"ESLINT_USE_FLAT_CONFIG=false eslint --ext .js,.vue,.ts,.cjs .\"",
-    "format": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../../.prettierignore --write .\" \"ESLINT_USE_FLAT_CONFIG=false eslint --ext .js,.vue,.ts,.cjs --fix .\""
+    "lint": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../../.prettierignore --check .\" \"eslint .\"",
+    "format": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../../.prettierignore --write .\" \"eslint --fix .\""
   },
   "dependencies": {
     "@dfinity/agent": "1.4.0",
