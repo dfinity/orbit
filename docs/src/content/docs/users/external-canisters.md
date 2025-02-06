@@ -66,4 +66,7 @@ Always test new versions in a staging environment before upgrading production ca
 - **Automate Monitoring:** Use alerts to stay informed of cycle balance changes.
 - **Secure Permissions:** Restrict access to canister management functions.
 - **Plan Upgrades:** Schedule upgrades during low-traffic periods to minimize disruptions.
-- **Regular Maintenance:** Periodically review and optimize canister configurations.
+
+## **Known Limitations**
+
+Orbit Wallet currently does not support asset canister management flows. Teams managing assets must rely on the dfx-orbit CLI, which provides the necessary functionality for secure and policy-driven asset updates.

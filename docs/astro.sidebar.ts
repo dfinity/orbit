@@ -23,7 +23,6 @@ export const sidebar = [
       'users/upgrades',
       'users/glossary',
       // 'users/disaster-recovery',
-      // 'users/limitations',
     ],
   }),
 
