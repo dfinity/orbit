@@ -186,6 +186,27 @@ lazy_static! {
             Allow::user_groups(vec![*ADMIN_GROUP_ID]),
             Resource::Asset(ResourceAction::Delete(ResourceId::Any)),
         ),
+        // named rules
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::NamedRule(ResourceAction::List),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::NamedRule(ResourceAction::Create),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::NamedRule(ResourceAction::Read(ResourceId::Any)),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::NamedRule(ResourceAction::Update(ResourceId::Any)),
+        ),
+        (
+            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+            Resource::NamedRule(ResourceAction::Delete(ResourceId::Any)),
+        ),
     ];
 
 }
@@ -284,6 +305,19 @@ pub fn default_policies(admin_quorum: u16) -> Vec<(RequestSpecifier, RequestPoli
         ),
         (
             RequestSpecifier::RemoveAsset(ResourceIds::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        // named rules
+        (
+            RequestSpecifier::AddNamedRule,
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        (
+            RequestSpecifier::EditNamedRule(ResourceIds::Any),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
+        (
+            RequestSpecifier::RemoveNamedRule(ResourceIds::Any),
             RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
         ),
     ]

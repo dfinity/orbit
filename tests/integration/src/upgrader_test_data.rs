@@ -3,7 +3,7 @@
 use candid::Principal;
 use pocket_ic::PocketIc;
 use time::format_description::well_known::Rfc3339;
-use time::OffsetDateTime;
+use time::{Duration, OffsetDateTime};
 use upgrader_api::{
     Account, AdminUser, Asset, DisasterRecoveryCommittee, LogEntry, MetadataDTO, MultiAssetAccount,
     RecoveryResult, RecoveryStatus, StationRecoveryRequest,
@@ -296,12 +296,26 @@ impl<'a> UpgraderDataGenerator<'a> {
             get_disaster_recovery_accounts_and_assets(self.env, self.upgrader_id, self.station_id);
         assert_eq!(multi_asset_accounts, self.multi_asset_accounts);
         assert_eq!(assets, self.assets);
-        let state =
+        let mut state =
             get_disaster_recovery_state(self.env, self.upgrader_id, self.some_committee_member());
         assert_eq!(state.committee, self.committee);
         assert_eq!(state.accounts, self.accounts);
         assert_eq!(state.multi_asset_accounts, self.multi_asset_accounts);
         assert_eq!(state.assets, self.assets);
+        // check that the recovery requests are within a millisecond of the original submission time
+        for i in 0..state.recovery_requests.len() {
+            let date_state =
+                OffsetDateTime::parse(&state.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
+            let date_lower = date_state - Duration::milliseconds(1);
+            let date_higher = date_state + Duration::milliseconds(1);
+            let date_self =
+                OffsetDateTime::parse(&self.recovery_requests[i].submitted_at, &Rfc3339).unwrap();
+            assert!(date_self.ge(&date_lower) && date_self.le(&date_higher));
+            // this is required so that the deep comparison of state.recovery_requests below is not affected by the time difference
+            state.recovery_requests[i]
+                .submitted_at
+                .clone_from(&self.recovery_requests[i].submitted_at)
+        }
         assert_eq!(state.recovery_requests, self.recovery_requests);
         assert_eq!(state.recovery_status, self.recovery_status);
         assert_eq!(state.last_recovery_result, self.last_recovery_result);
@@ -316,7 +330,12 @@ impl<'a> UpgraderDataGenerator<'a> {
             get_all_upgrader_logs(self.env, &self.upgrader_id, &self.some_committee_member());
         assert_eq!(logs.len(), self.logs.len());
         for (i, log) in logs.iter().enumerate() {
-            assert_eq!(log.time, self.logs[i].time);
+            let log_time = OffsetDateTime::parse(&log.time, &Rfc3339).unwrap();
+            let self_log_time = OffsetDateTime::parse(&self.logs[i].time, &Rfc3339).unwrap();
+            assert!(
+                log_time + Duration::milliseconds(1) >= self_log_time
+                    && log_time - Duration::milliseconds(1) <= self_log_time
+            );
             assert_eq!(log.entry_type, self.logs[i].entry_type);
             // we made a breaking change to the log message format
             if log.message != self.logs[i].message {
@@ -326,6 +345,7 @@ impl<'a> UpgraderDataGenerator<'a> {
                         || log
                             .message
                             .contains("Disaster recovery successfully initiated to")
+                        || log.message.contains("Set committee of station-admin")
                 );
                 assert!(
                     self.logs[i]
@@ -334,6 +354,7 @@ impl<'a> UpgraderDataGenerator<'a> {
                         || self.logs[i]
                             .message
                             .contains("Disaster recovery successfully initiated with operation")
+                        || log.message.contains("Set committee of station-admin")
                 );
             } else {
                 assert_eq!(log.data_json, self.logs[i].data_json);

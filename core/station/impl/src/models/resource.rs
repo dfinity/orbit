@@ -7,7 +7,7 @@ use orbit_essentials::{
 use std::fmt::{Display, Formatter};
 use uuid::Uuid;
 
-use crate::core::validation::EnsureAsset;
+use crate::core::validation::{EnsureAsset, EnsureNamedRule};
 use crate::{
     core::validation::{
         EnsureAccount, EnsureAddressBookEntry, EnsureNotification, EnsureRequest,
@@ -35,6 +35,7 @@ pub enum Resource {
     User(UserResourceAction),
     UserGroup(ResourceAction),
     Asset(ResourceAction),
+    NamedRule(ResourceAction),
 }
 
 impl ModelValidator<ValidationError> for Resource {
@@ -114,6 +115,15 @@ impl ModelValidator<ValidationError> for Resource {
                 | ResourceAction::Update(resource_id)
                 | ResourceAction::Delete(resource_id) => {
                     EnsureAsset::resource_id_exists(resource_id)?
+                }
+            },
+
+            Resource::NamedRule(action) => match action {
+                ResourceAction::List | ResourceAction::Create => (),
+                ResourceAction::Read(resource_id)
+                | ResourceAction::Update(resource_id)
+                | ResourceAction::Delete(resource_id) => {
+                    EnsureNamedRule::resource_id_exists(resource_id)?
                 }
             },
         }
@@ -669,6 +679,56 @@ impl Resource {
                     associated_resources
                 }
             },
+            Resource::NamedRule(action) => match action {
+                ResourceAction::Create => vec![Resource::NamedRule(ResourceAction::Create)],
+                ResourceAction::List => vec![Resource::NamedRule(ResourceAction::List)],
+
+                // Any resource id
+                ResourceAction::Update(ResourceId::Any) => {
+                    vec![Resource::NamedRule(ResourceAction::Update(ResourceId::Any))]
+                }
+                ResourceAction::Read(ResourceId::Any) => {
+                    vec![Resource::NamedRule(ResourceAction::Read(ResourceId::Any))]
+                }
+                ResourceAction::Delete(ResourceId::Any) => {
+                    vec![Resource::NamedRule(ResourceAction::Delete(ResourceId::Any))]
+                }
+
+                // Specific resource id
+                ResourceAction::Delete(ResourceId::Id(id)) => {
+                    let mut associated_resources =
+                        Resource::NamedRule(ResourceAction::Delete(ResourceId::Any))
+                            .to_expanded_list();
+
+                    associated_resources.push(Resource::NamedRule(ResourceAction::Delete(
+                        ResourceId::Id(*id),
+                    )));
+
+                    associated_resources
+                }
+                ResourceAction::Read(ResourceId::Id(id)) => {
+                    let mut associated_resources =
+                        Resource::NamedRule(ResourceAction::Read(ResourceId::Any))
+                            .to_expanded_list();
+
+                    associated_resources.push(Resource::NamedRule(ResourceAction::Read(
+                        ResourceId::Id(*id),
+                    )));
+
+                    associated_resources
+                }
+                ResourceAction::Update(ResourceId::Id(id)) => {
+                    let mut associated_resources =
+                        Resource::NamedRule(ResourceAction::Update(ResourceId::Any))
+                            .to_expanded_list();
+
+                    associated_resources.push(Resource::NamedRule(ResourceAction::Update(
+                        ResourceId::Id(*id),
+                    )));
+
+                    associated_resources
+                }
+            },
         }
     }
 }
@@ -689,6 +749,7 @@ impl Display for Resource {
             Resource::User(action) => write!(f, "User({})", action),
             Resource::UserGroup(action) => write!(f, "UserGroup({})", action),
             Resource::Asset(action) => write!(f, "Asset({})", action),
+            Resource::NamedRule(action) => write!(f, "NamedRule({})", action),
         }
     }
 }

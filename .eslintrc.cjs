@@ -10,6 +10,7 @@ const config = {
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'prettier',
+    "plugin:astro/recommended",
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -34,6 +35,21 @@ const config = {
     window: true,
     module: true,
   },
+  overrides: [
+    {
+      files: '*.mdx',
+      extends: 'plugin:mdx/recommended',
+    },
+    {
+      files: ["*.astro"],
+      parser: "astro-eslint-parser",
+      parserOptions: {
+        parser: "@typescript-eslint/parser",
+        extraFileExtensions: [".astro"],
+      },
+      rules: {},
+    },
+  ],
 };
 
 module.exports = config;

@@ -39,12 +39,13 @@ COPY package.json .
 RUN eval "$(fnm env)" && \
     fnm install && \
     fnm use && \
+    npm install -g corepack@0.31.0 && \
     corepack enable && \
     fnm alias default production
 # Install the monorepo dependencies
 COPY . .
 RUN eval "$(fnm env)" && \
-    fnm use && \ 
+    fnm use && \
     pnpm install --frozen-lockfile
 
 # Build the Orbit Upgrader Canister
@@ -86,3 +87,14 @@ LABEL io.icp.artifactType="canister" \
 RUN eval "$(fnm env)" && \
     fnm use && \
     npx nx run wallet-dapp:create-artifacts
+
+# Build the Orbit Docs Frontend Assets
+FROM builder AS build_docs_portal
+SHELL ["bash", "-c"]
+WORKDIR /code
+LABEL io.icp.artifactType="canister" \
+      io.icp.artifactName="docs-portal"
+RUN eval "$(fnm env)" && \
+    fnm use && \
+    npx nx show projects && \
+    npx nx run docs-portal:create-artifacts

@@ -93,6 +93,14 @@ export const mapRequestsOperationTypeToGroup = (
     return ListRequestsOperationTypeGroup.Asset;
   }
 
+  if (
+    variantIs(operationType, 'AddNamedRule') ||
+    variantIs(operationType, 'EditNamedRule') ||
+    variantIs(operationType, 'RemoveNamedRule')
+  ) {
+    return ListRequestsOperationTypeGroup.NamedRule;
+  }
+
   return unreachable(operationType);
 };
 
@@ -276,6 +284,15 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'RemoveAsset')) {
     return RequestOperationEnum.RemoveAsset;
   }
+  if (variantIs(operation, 'AddNamedRule')) {
+    return RequestOperationEnum.AddNamedRule;
+  }
+  if (variantIs(operation, 'EditNamedRule')) {
+    return RequestOperationEnum.EditNamedRule;
+  }
+  if (variantIs(operation, 'RemoveNamedRule')) {
+    return RequestOperationEnum.RemoveNamedRule;
+  }
 
   return unreachable(operation);
 };
@@ -359,6 +376,12 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { EditAsset: null };
   } else if (variantIs(requestOperation, 'RemoveAsset')) {
     return { RemoveAsset: null };
+  } else if (variantIs(requestOperation, 'AddNamedRule')) {
+    return { AddNamedRule: null };
+  } else if (variantIs(requestOperation, 'EditNamedRule')) {
+    return { EditNamedRule: null };
+  } else if (variantIs(requestOperation, 'RemoveNamedRule')) {
+    return { RemoveNamedRule: null };
   } else {
     return unreachable(requestOperation);
   }
@@ -394,6 +417,12 @@ export const mapListRequestsOperationTypeGroupToCsvHeaders = (
 
   if (group === ListRequestsOperationTypeGroup.RequestPolicy) {
     headers.policy_id = 'Policy ID';
+  }
+
+  if (group === ListRequestsOperationTypeGroup.NamedRule) {
+    headers.rule_id = 'Rule ID';
+    headers.rule_name = 'Rule Name';
+    headers.rule_description = 'Rule Description';
   }
 
   if (group === ListRequestsOperationTypeGroup.SystemUpgrade) {
@@ -584,6 +613,34 @@ const mapRequestToRequestPolicyCsvRow = (request: Request): CsvRow => {
   return {};
 };
 
+const mapRequestToNamedRuleCsvRow = (request: Request): CsvRow => {
+  if (variantIs(request.operation, 'AddNamedRule')) {
+    return {
+      rule_id: request.operation.AddNamedRule.named_rule?.[0]?.id ?? '',
+      rule_name: request.operation.AddNamedRule.input.name,
+      rule_description: request.operation.AddNamedRule.input.description?.[0] ?? '',
+      details: stringify(request.operation.AddNamedRule.input),
+    };
+  }
+
+  if (variantIs(request.operation, 'EditNamedRule')) {
+    return {
+      rule_id: request.operation.EditNamedRule.input.named_rule_id,
+      rule_name: request.operation.EditNamedRule.input.name[0] ?? '',
+      rule_description: request.operation.EditNamedRule.input.description[0]?.[0] ?? '',
+      details: stringify(request.operation.EditNamedRule.input),
+    };
+  }
+
+  if (variantIs(request.operation, 'RemoveNamedRule')) {
+    return {
+      rule_id: request.operation.RemoveNamedRule.input.named_rule_id,
+    };
+  }
+
+  return {};
+};
+
 const mapRequestToPermissionCsvRow = (request: Request): CsvRow => {
   if (variantIs(request.operation, 'EditPermission')) {
     return {
@@ -641,6 +698,8 @@ export const mapRequestToCsvRow = (
       return mapRequestToSystemUpgradeCsvRow(request);
     case ListRequestsOperationTypeGroup.Transfer:
       return mapRequestToTransferCsvRow(request);
+    case ListRequestsOperationTypeGroup.NamedRule:
+      return mapRequestToNamedRuleCsvRow(request);
   }
 
   return {};

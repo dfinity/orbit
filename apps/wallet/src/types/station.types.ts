@@ -120,6 +120,9 @@ export enum RequestSpecifierEnum {
   AddAsset = 'AddAsset',
   EditAsset = 'EditAsset',
   RemoveAsset = 'RemoveAsset',
+  AddNamedRule = 'AddNamedRule',
+  EditNamedRule = 'EditNamedRule',
+  RemoveNamedRule = 'RemoveNamedRule',
 }
 
 export enum RequestPolicyRuleEnum {
@@ -204,4 +207,7 @@ export enum RequestOperationEnum {
   AddAsset = 'AddAsset',
   EditAsset = 'EditAsset',
   RemoveAsset = 'RemoveAsset',
+  AddNamedRule = 'AddNamedRule',
+  EditNamedRule = 'EditNamedRule',
+  RemoveNamedRule = 'RemoveNamedRule',
 }

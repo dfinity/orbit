@@ -273,6 +273,9 @@ import UnsupportedOperation from './operations/UnsupportedOperation.vue';
 import EditAssetOperation from './operations/EditAssetOperation.vue';
 import RemoveAssetOperation from './operations/RemoveAssetOperation.vue';
 import { useStationStore } from '~/stores/station.store';
+import AddNamedRuleOperation from './operations/AddNamedRuleOperation.vue';
+import EditNamedRuleOperation from './operations/EditNamedRuleOperation.vue';
+import RemoveNamedRuleOperation from './operations/RemoveNamedRuleOperation.vue';
 
 const i18n = useI18n();
 const store = useStationStore();
@@ -314,6 +317,10 @@ const componentsMap: {
   EditAsset: EditAssetOperation,
   RemoveAsset: RemoveAssetOperation,
   CallExternalCanister: CallExternalCanisterOperation,
+  AddNamedRule: AddNamedRuleOperation,
+  EditNamedRule: EditNamedRuleOperation,
+  RemoveNamedRule: RemoveNamedRuleOperation,
+
   ChangeExternalCanister: UnsupportedOperation,
   CreateExternalCanister: UnsupportedOperation,
   ConfigureExternalCanister: UnsupportedOperation,

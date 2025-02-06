@@ -5,7 +5,7 @@
 [![Tests Status](https://img.shields.io/github/actions/workflow/status/dfinity/orbit/tests.yaml?logo=githubactions&logoColor=white&style=for-the-badge&label=tests)](./actions/workflows/tests.yaml)
 
 <div style="display:flex;flex-direction:column;">
-  <img src="./docs/orbit-header.png" alt="Orbit logo" role="presentation"/><br />
+  <img src="docs/old/orbit-header.png" alt="Orbit logo" role="presentation"/><br />
 </div>
 
 Check out the [Orbit Wallet](https://orbitwallet.io) to see the platform in action.
@@ -41,7 +41,7 @@ Orbit is composed of several components, each with its own role and responsibili
 - **Station**: A station is the core canister component of Orbit. It is a trustless multi-custody canister that allows users to manage their digital assets and operations.
 - **Upgrader**: The upgrader is responsible for managing the lifecycle of the station canister. It allows for seamless and secure upgrades of the station canister.
 
-For detailed information on orbit components and terminology, please refer to the [Orbit Glossary](./docs/GLOSSARY.md).
+For detailed information on orbit components and terminology, please refer to the [Orbit Glossary](docs/old/GLOSSARY.md).
 
 ## Target Architecture
 

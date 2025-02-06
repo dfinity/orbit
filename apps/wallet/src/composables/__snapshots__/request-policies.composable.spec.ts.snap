@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`request-policies.composable > display the all of rule correctly 1`] = `
+"All of the following:
+    - Any of the following:
+        - Address in address book
+        - No approval required
+    - Approved, except when:
+        - Address in address book
+    - 1 approval from any user"
+`;
+
+exports[`request-policies.composable > display the allowlisted by metadata rule correctly 1`] = `"Address marked with "test=test""`;
+
+exports[`request-policies.composable > display the allowlisted rule correctly 1`] = `"Address in address book"`;
+
+exports[`request-policies.composable > display the any user percentage quorum rule correctly 1`] = `"50% approval of all users"`;
+
+exports[`request-policies.composable > display the any user quorum rule correctly 1`] = `"5 approvals from any user"`;
+
+exports[`request-policies.composable > display the auto approved rule correctly 1`] = `"No approval required"`;
+
+exports[`request-policies.composable > display the some groups quorum rule correctly 1`] = `"1 approval from Admin, Developers"`;
+
+exports[`request-policies.composable > display the some users percentage quorum rule correctly 1`] = `"50% approval from Alice"`;
+
+exports[`request-policies.composable > display the some users quorum rule correctly 1`] = `"5 approvals from Alice, Bob"`;

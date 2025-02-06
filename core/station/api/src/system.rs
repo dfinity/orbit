@@ -34,12 +34,17 @@ pub enum CycleObtainStrategyDTO {
         account_id: UuidDTO,
         account_name: Option<String>,
     },
+    WithdrawFromCyclesLedger {
+        account_id: UuidDTO,
+        account_name: Option<String>,
+    },
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum CycleObtainStrategyInput {
     Disabled,
     MintFromNativeToken { account_id: UuidDTO },
+    WithdrawFromCyclesLedger { account_id: UuidDTO },
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -60,9 +65,16 @@ pub struct AdminInitInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct DeploySystemUpgraderInput {
+    #[serde(with = "serde_bytes")]
+    pub wasm_module: Vec<u8>,
+    pub initial_cycles: Option<u128>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub enum SystemUpgraderInput {
     Id(Principal),
-    WasmModule(#[serde(with = "serde_bytes")] Vec<u8>),
+    Deploy(DeploySystemUpgraderInput),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]

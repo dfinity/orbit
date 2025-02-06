@@ -1,5 +1,6 @@
 use super::CANISTER_CONFIG_STATE_SIZE;
 use crate::core::ic_cdk::api::time;
+use crate::models::RateLimiter;
 use crate::SYSTEM_VERSION;
 use ic_stable_structures::{storable::Bound, Storable};
 use orbit_essentials::storable;
@@ -23,6 +24,10 @@ pub struct CanisterConfig {
 
     /// The version of the canister.
     pub version: Option<String>,
+
+    /// Used to rate limit the number of deployed stations per day by the control panel.
+    #[serde(default = "RateLimiter::new_global")]
+    pub global_rate_limiter: RateLimiter,
 }
 
 impl Default for CanisterConfig {
@@ -33,6 +38,7 @@ impl Default for CanisterConfig {
             station_wasm_module_extra_chunks: None,
             last_upgrade_timestamp: time(),
             version: None,
+            global_rate_limiter: RateLimiter::new_global(),
         }
     }
 }
@@ -49,6 +55,7 @@ impl CanisterConfig {
             station_wasm_module_extra_chunks,
             last_upgrade_timestamp: time(),
             version: Some(SYSTEM_VERSION.to_string()),
+            global_rate_limiter: RateLimiter::new_global(),
         }
     }
 }

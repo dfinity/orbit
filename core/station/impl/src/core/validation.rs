@@ -7,12 +7,13 @@ use crate::{
     errors::{ExternalCanisterValidationError, RecordValidationError},
     models::{
         resource::{Resource, ResourceId, ResourceIds},
-        AccountKey, AddressBookEntryKey, NotificationKey, RequestKey, TokenStandard, UserKey,
+        AccountKey, AddressBookEntryKey, NamedRuleKey, NotificationKey, RequestKey, TokenStandard,
+        UserKey,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, request_policy::REQUEST_POLICY_REPOSITORY,
-        ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, NOTIFICATION_REPOSITORY,
-        REQUEST_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
+        ACCOUNT_REPOSITORY, ADDRESS_BOOK_REPOSITORY, ASSET_REPOSITORY, NAMED_RULE_REPOSITORY,
+        NOTIFICATION_REPOSITORY, REQUEST_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     services::SYSTEM_SERVICE,
 };
@@ -247,6 +248,21 @@ impl EnsureIdExists<UUID> for EnsureAsset {
 }
 
 impl EnsureResourceIdExists for EnsureAsset {}
+
+pub struct EnsureNamedRule {}
+
+impl EnsureIdExists<UUID> for EnsureNamedRule {
+    fn id_exists(id: &UUID) -> Result<(), RecordValidationError> {
+        ensure_entry_exists(NAMED_RULE_REPOSITORY.to_owned(), NamedRuleKey { id: *id }).ok_or(
+            RecordValidationError::NotFound {
+                model_name: "NamedRule".to_string(),
+                id: Uuid::from_bytes(*id).hyphenated().to_string(),
+            },
+        )
+    }
+}
+
+impl EnsureResourceIdExists for EnsureNamedRule {}
 
 #[cfg(test)]
 mod test {

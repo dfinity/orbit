@@ -5,7 +5,8 @@ use super::{
     resource::{Resource, ValidationMethodResourceTarget},
     AccountAsset, AccountId, AddressBookEntryId, AddressFormat, Asset, AssetId, Blockchain,
     ChangeMetadata, CycleObtainStrategy, DisasterRecoveryCommittee, ExternalCanisterCallPermission,
-    ExternalCanisterState, MetadataItem, TokenStandard, UserGroupId, UserId, UserStatus,
+    ExternalCanisterState, MetadataItem, NamedRuleId, TokenStandard, UserGroupId, UserId,
+    UserStatus,
 };
 use crate::core::validation::EnsureExternalCanister;
 use crate::errors::ValidationError;
@@ -51,6 +52,9 @@ pub enum RequestOperation {
     AddAsset(AddAssetOperation),
     EditAsset(EditAssetOperation),
     RemoveAsset(RemoveAssetOperation),
+    AddNamedRule(AddNamedRuleOperation),
+    EditNamedRule(EditNamedRuleOperation),
+    RemoveNamedRule(RemoveNamedRuleOperation),
 }
 
 impl Display for RequestOperation {
@@ -94,6 +98,9 @@ impl Display for RequestOperation {
             RequestOperation::AddAsset(_) => write!(f, "add_asset"),
             RequestOperation::EditAsset(_) => write!(f, "edit_asset"),
             RequestOperation::RemoveAsset(_) => write!(f, "remove_asset"),
+            RequestOperation::AddNamedRule(_) => write!(f, "add_named_rule"),
+            RequestOperation::EditNamedRule(_) => write!(f, "edit_named_rule"),
+            RequestOperation::RemoveNamedRule(_) => write!(f, "remove_named_rule"),
         }
     }
 }
@@ -917,6 +924,48 @@ pub struct ManageSystemInfoOperationInput {
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct ManageSystemInfoOperation {
     pub input: ManageSystemInfoOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddNamedRuleOperationInput {
+    pub name: String,
+    pub description: Option<String>,
+    pub rule: RequestPolicyRule,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct AddNamedRuleOperation {
+    pub named_rule_id: Option<NamedRuleId>,
+    pub input: AddNamedRuleOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RemoveNamedRuleOperation {
+    pub input: RemoveNamedRuleOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct RemoveNamedRuleOperationInput {
+    pub named_rule_id: NamedRuleId,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditNamedRuleOperation {
+    pub input: EditNamedRuleOperationInput,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct EditNamedRuleOperationInput {
+    pub named_rule_id: NamedRuleId,
+    pub name: Option<String>,
+    pub description: Option<Option<String>>,
+    pub rule: Option<RequestPolicyRule>,
 }
 
 #[cfg(test)]

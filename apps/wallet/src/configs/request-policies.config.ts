@@ -1,5 +1,16 @@
 import { RequestPolicyRuleEnum, RequestSpecifierEnum } from '~/types/station.types';
 
+export const allRequestPolicyRules = [
+  RequestPolicyRuleEnum.AutoApproved,
+  RequestPolicyRuleEnum.QuorumPercentage,
+  RequestPolicyRuleEnum.Quorum,
+  RequestPolicyRuleEnum.AllOf,
+  RequestPolicyRuleEnum.AnyOf,
+  RequestPolicyRuleEnum.Not,
+  RequestPolicyRuleEnum.AllowListedByMetadata,
+  RequestPolicyRuleEnum.AllowListed,
+];
+
 export const defaultRequestPolicyRules = [
   RequestPolicyRuleEnum.AutoApproved,
   RequestPolicyRuleEnum.QuorumPercentage,
@@ -42,4 +53,7 @@ export const requestSpecifiersIncludedRules = (): Record<
   [RequestSpecifierEnum.AddAsset]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.EditAsset]: [...defaultRequestPolicyRules],
   [RequestSpecifierEnum.RemoveAsset]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.AddNamedRule]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.EditNamedRule]: [...defaultRequestPolicyRules],
+  [RequestSpecifierEnum.RemoveNamedRule]: [...defaultRequestPolicyRules],
 });

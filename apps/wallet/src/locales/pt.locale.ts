@@ -35,6 +35,7 @@ export default {
     request_pending_message: 'O seu pedido foi criado e está pendente de aprovação.',
     request_approved_message: 'Este pedido foi approvado e está sendo processado.',
     request_rejected_message: 'Este pedido foi rejeitado.',
+    request_completed_message: 'Este pedido foi concluído.',
     user_status_active: 'Ativo',
     user_status_inactive: 'Inativo',
     add_new_identity: 'Adicionar nova identidade',
@@ -97,7 +98,7 @@ export default {
       verify_instructions:
         'Para verificar a atualização, abra o terminal e siga as instruções abaixo:',
     },
-    assets: 'Ativos',
+    asset: 'Ativo',
     no_data: 'Nenhum dado disponível.',
     no_matching_results: 'Nenhum resultado encontrado para `{search}`.',
     add_new_label: 'Adicionar novo rótulo: {label}',
@@ -200,6 +201,8 @@ export default {
       transfer: 'Transferências',
       external_canister: 'Canister gerenciado',
       system_info: 'Informações do sistema',
+      asset: 'Ativos',
+      named_rule: 'Política de aprovação',
     },
     headers: {
       id: 'ID',
@@ -230,6 +233,10 @@ export default {
       amount: 'Quantidade',
       fee: 'Taxa',
       comment: 'Comentário',
+      rule_id: 'ID da regra',
+      rule_name: 'Nome da regra',
+      rule_description: 'Descrição da regra',
+      url: 'URL',
     },
     types: {
       addusergroup: {
@@ -338,6 +345,18 @@ export default {
       setdisasterrecovery: {
         title: 'Configurar recuperação de desastres',
         request_title: 'Pedido de configuração de recuperação de desastres',
+      },
+      addnamedrule: {
+        title: 'Adicionar política de aprovação',
+        request_title: 'Pedido de adição de política de aprovação',
+      },
+      editnamedrule: {
+        title: 'Editar política de aprovação',
+        request_title: 'Pedido de edição de política de aprovação',
+      },
+      removenamedrule: {
+        title: 'Remover política de aprovação',
+        request_title: 'Pedido de remoção de política de aprovação',
       },
       unknown: {
         title: 'Desconhecido',
@@ -486,6 +505,7 @@ export default {
     not_found: 'Canister não encontrado.',
     not_found_description: 'O canister que está a tentar aceder não existe.',
     ic_settings: 'Configuraçōes do IC',
+    top_up: 'Recarregar',
     start_monitoring: 'Iniciar monitoramento',
     monitor: {
       title: 'Monitorizar ciclos',
@@ -525,6 +545,7 @@ export default {
         label: 'Estratégia de obtenção',
         StationDefault: 'Padrão da carteira',
         MintFromNativeToken: 'Mint a partir do token nativo',
+        WithdrawFromCyclesLedger: 'Levantamento do livro de registo de ciclos',
       },
     },
     configuration: 'Configuração',
@@ -686,6 +707,7 @@ export default {
     wasm: 'Wasm',
     download: 'Baixar',
     arg: 'Arg',
+    access: 'Acesso',
     target: 'Alvo',
     permissions: 'Permissões',
     approval_policies: 'Políticas de Aprovação',
@@ -855,6 +877,7 @@ export default {
     request_policies: 'Regras de aprovação',
     assets: 'Ativos',
     external_canisters: 'Canisters',
+    approval_policy: 'Política de aprovação',
   },
   pages: {
     dashboard: {
@@ -909,6 +932,8 @@ export default {
         'Erro ao carregar as informações do sistema da carteira, por favor, tente novamente.',
       cycle_obtain_strategy_disabled: 'AVISO: Recarga de saldo de ciclos da carteira desativada.',
       cycle_obtain_strategy_mint_from_native_token: 'Recarregar a partir da conta de ICP',
+      cycle_obtain_strategy_withdraw_from_cycles_ledger:
+        'Recarregar a partir da conta no livro global de contabilidade de ciclos.',
       cycle_balances: 'Saldo de ciclos',
     },
     user_groups: {
@@ -1016,6 +1041,14 @@ export default {
         option_add_custom_asset: 'Adicionar ativo personalizado',
       },
     },
+    approval_policy: {
+      title: 'Política de aprovação',
+      btn_new_entry: 'Adicionar nova política',
+      dialog: {
+        title: 'Política de aprovação',
+      },
+      linked_policies: 'Políticas vinculadas',
+    },
     not_found: {
       title: 'Ups, 404',
       subtitle: 'A página que está a tentar aceder não existe.',
@@ -1067,6 +1100,7 @@ export default {
       managesysteminfo: 'Gerir informações do sistema',
       externalcanister: 'Canister gerenciado',
       callcanister: 'Chamar canister',
+      namedrule: 'Política de aprovação',
     },
     actions: {
       list: 'Listar',
@@ -1083,6 +1117,7 @@ export default {
       systemupgrade: 'Atualizar o sistema',
       change: 'Alterar',
       fund: 'Financiar',
+      callcanister: 'Chamar',
     },
     allow: {
       public: 'Acesso público',
@@ -1094,12 +1129,16 @@ export default {
     user_type_select: 'Tipo de usuário',
     add_rule_label: 'Adicionar regra +',
     unsupported_specifier: 'Especificador não suportado',
+    rule_groups: {
+      custom_rules: 'Regras personalizadas',
+      named_rules: 'Políticas de aprovação',
+    },
     rule_user_specifier: {
       owner: 'Proprietário',
       requester: 'Requerente',
       any: 'Qualquer usuário',
-      group: 'Grupo de usuários',
-      id: 'Usuário específico',
+      group: 'Membro de grupo(s)',
+      id: 'Usuário específico(s)',
     },
     rule: {
       allof: 'todos',
@@ -1110,6 +1149,30 @@ export default {
       quorumpercentage: 'Percentual de quórum',
       allowlistedbymetadata: 'Lista branca por metadados',
       allowlisted: 'Lista branca',
+      named_rule: 'Usa política de aprovação: {name}',
+    },
+    rule_tooltip_summary: {
+      allof: 'Todos os seguintes:',
+      anyof: 'Qualquer um dos seguintes:',
+      not: 'Aprovado, excepto quando:',
+    },
+    rule_rich_summary: {
+      complex_rule: 'Regra complexa',
+      no_user_specifier: 'Nenhuma lista de usuários',
+      any_user_specifier: '1 aprovação de qualquer usuário|{n} aprovações de qualquer usuário',
+      auto_approved: 'Nenhuma aprovação requerida',
+      invalid_rule_auto_approved: 'Regra inválida: Aprovado automaticamente',
+      single_user_specifier: '{user} aprova',
+      user_specifier: '{n} aprovação de {users}|{n} aprovações de {users}',
+      group_specifier: '{n} aprovação de {groups}|{n} aprovações de {groups}',
+      quorum_percentage_any_user: '{n}% aprovação de todos os usuários',
+      quorum_percentage_rule: '{n}% aprovação de {users}',
+      allowlisted_by_metadata: 'Endereço marcado com {metadata}',
+      allowlisted: 'Endereço no livro de endereços',
+      not: 'Não: {rule}',
+      allof: ' E ',
+      anyof: ' OU ',
+      named_rule: 'Use política de aprovação: {name}',
     },
     specifier: {
       editpermission: 'Editar permissão',
@@ -1133,13 +1196,18 @@ export default {
       fundexternalcanister: 'Financiar canister',
       setdisasterrecovery: 'Recuperação de sistema',
       callexternalcanister: 'Interagir com canister',
+      createexternalcanister: 'Criar canister',
       addasset: 'Adicionar ativo',
       editasset: 'Editar ativo',
       removeasset: 'Remover ativo',
+      addnamedrule: 'Adicionar política de aprovação',
+      editnamedrule: 'Editar política de aprovação',
+      removenamedrule: 'Remover política de aprovação',
     },
   },
   cycle_obtain_strategies: {
     disabled: 'Desativado',
     mintfromnativetoken: 'Recarregar a partir da conta de ICP',
+    withdrawfromcyclesledger: 'Recarregar a partir do livro de registo de ciclos',
   },
 };

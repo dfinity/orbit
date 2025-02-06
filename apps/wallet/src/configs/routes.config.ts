@@ -23,6 +23,7 @@ export enum Routes {
   Requests = 'Requests',
   TransferRequests = 'TransferRequests',
   RequestPolicies = 'RequestPolicies',
+  ApprovalPolicy = 'ApprovalPolicy',
 }
 
 export enum RouteStatusCode {

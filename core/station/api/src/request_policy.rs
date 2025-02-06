@@ -31,6 +31,9 @@ pub enum RequestSpecifierDTO {
     AddAsset,
     EditAsset(ResourceIdsDTO),
     RemoveAsset(ResourceIdsDTO),
+    AddNamedRule,
+    EditNamedRule(ResourceIdsDTO),
+    RemoveNamedRule(ResourceIdsDTO),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -81,6 +84,7 @@ pub enum RequestPolicyRuleDTO {
     AnyOf(Vec<RequestPolicyRuleDTO>),
     AllOf(Vec<RequestPolicyRuleDTO>),
     Not(Box<RequestPolicyRuleDTO>),
+    NamedRule(UuidDTO),
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

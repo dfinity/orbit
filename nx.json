@@ -19,6 +19,7 @@
       "core/**",
       "apps/**",
       "tools/**",
+      "docs/**",
       "!libs/orbit-essentials-macros-tests",
       "!tests/**"
     ]

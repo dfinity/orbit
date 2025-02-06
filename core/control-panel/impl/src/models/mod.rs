@@ -13,3 +13,6 @@ mod artifact;
 pub use artifact::*;
 
 pub mod indexes;
+
+mod rate_limiter;
+pub use rate_limiter::*;
