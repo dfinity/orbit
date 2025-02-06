@@ -445,10 +445,10 @@ fn deploy_too_many_stations() {
         assert!(res.0.is_ok());
 
         // deploying a new station should fail nonetheless
-        assert_eq!(
-            can_deploy(user_id).unwrap_err().code,
-            "DEPLOY_STATION_QUOTA_EXCEEDED"
-        );
+        assert!(matches!(
+            can_deploy(user_id).unwrap(),
+            CanDeployStationResponse::QuotaExceeded
+        ));
         assert_eq!(
             deploy(user_id, day, max_stations_per_user)
                 .unwrap_err()
@@ -467,12 +467,10 @@ fn deploy_too_many_stations() {
         }
 
         // deploying one more station on behalf of yet another use should fail due to global rate limit
-        assert_eq!(
-            can_deploy(user_test_id(max_stations_per_day))
-                .unwrap_err()
-                .code,
-            "DEPLOY_STATION_QUOTA_EXCEEDED"
-        );
+        assert!(matches!(
+            can_deploy(user_test_id(max_stations_per_day)).unwrap(),
+            CanDeployStationResponse::QuotaExceeded
+        ));
         assert_eq!(
             deploy(user_test_id(max_stations_per_day), day, 0)
                 .unwrap_err()
