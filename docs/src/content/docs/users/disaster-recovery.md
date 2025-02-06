@@ -2,6 +2,7 @@
 title: Disaster Recovery in Orbit Wallet
 sidebar:
   label: Disaster Recovery
+draft: true
 description: This page provide the necessary information to get started with Orbit.
 ---
 

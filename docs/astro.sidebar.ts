@@ -31,9 +31,9 @@ export const sidebar = [
     items: [
       'developers/getting-started',
       'developers/glossary',
-      'developers/i18n',
-      'developers/deployment',
-      'developers/contribute',
+      // 'developers/i18n',
+      // 'developers/deployment',
+      // 'developers/contribute',
     ],
   }),
 ] satisfies StarlightUserConfig['sidebar'];
