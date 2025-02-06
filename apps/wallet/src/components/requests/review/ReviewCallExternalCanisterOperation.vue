@@ -154,7 +154,7 @@ const replyCandid = computed(() => {
       serviceMethod: props.review.methodName ?? undefined,
       input: replyHex.value,
     });
-  } catch (error) {
+  } catch (_error) {
     return undefined;
   }
 });
@@ -175,7 +175,7 @@ const argCandid = computed(() => {
       input: argHex.value,
       useServiceMethodReturnType: false,
     });
-  } catch (error) {
+  } catch (_error) {
     return undefined;
   }
 });

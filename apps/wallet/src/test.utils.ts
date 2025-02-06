@@ -101,7 +101,6 @@ export function mockFileReader(result: ArrayBuffer, errorOut: boolean = false): 
       this.result = result;
 
       if (errorOut) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         setTimeout(() => this.onerror?.(new ProgressEvent('error')));
       } else {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -252,7 +252,6 @@ describe('Location query utils', () => {
       query.arg2 = ['value1', 'value2'];
       query.arg3 = '';
       query.arg4 = null;
-      query.arg5;
       query.arg6 = ['value1', '', 'value2', null];
 
       const result = parseLocationQuery(query);

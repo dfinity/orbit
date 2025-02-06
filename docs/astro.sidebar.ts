@@ -12,7 +12,18 @@ import { group } from './config/sidebar';
 export const sidebar = [
   // User docs
   group('users', {
-    items: ['users/getting-started'],
+    items: [
+      'users/welcome',
+      'users/getting-started',
+      'users/managing-assets',
+      'users/wallet-management',
+      'users/permissions-policies',
+      'users/requests',
+      'users/external-canisters',
+      'users/upgrades',
+      'users/glossary',
+      // 'users/disaster-recovery',
+    ],
   }),
 
   // Developer docs
@@ -20,9 +31,9 @@ export const sidebar = [
     items: [
       'developers/getting-started',
       'developers/glossary',
-      'developers/i18n',
-      'developers/deployment',
-      'developers/contribute',
+      // 'developers/i18n',
+      // 'developers/deployment',
+      // 'developers/contribute',
     ],
   }),
 ] satisfies StarlightUserConfig['sidebar'];
