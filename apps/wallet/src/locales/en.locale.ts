@@ -1236,6 +1236,19 @@ export default {
       request_read_any: 'View All Requests',
       request_read_any_description:
         'Enables viewing of all requests, including those submitted by other users.',
+
+      namedrule_list: 'View Approval Policies Page',
+      namedrule_list_description:
+        'Grants access to the approval policies page, showing only policies the user can view.',
+      namedrule_read_any: 'View All Approval Policies',
+      namedrule_read_any_description: 'Allows viewing of all approval policies and their details.',
+
+      namedrule_create: 'Add New Approval Policies',
+      namedrule_create_description: 'Enables adding new approval policies to the wallet.',
+      namedrule_update_any: 'Edit Approval Policies',
+      namedrule_update_any_description: 'Grants permission to modify approval policies.',
+      namedrule_delete_any: 'Delete Approval Policies',
+      namedrule_delete_any_description: 'Allows deleting approval policies.',
     },
   },
   request_policies: {
