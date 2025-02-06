@@ -1,7 +1,7 @@
 export default {
   app: {
-    title: '{app} Wallet',
-    name: 'Orbit Wallet',
+    title: '{app}',
+    name: 'Orbit',
     action_save_failed: 'Failed to save action, please try again.',
     action_save_success: 'Action successfully saved.',
     session_load_error: 'Failed to load your session, please try again.',
@@ -103,10 +103,6 @@ export default {
     user_cancel_pending_requests: 'Cancel all pending requests from this user.',
     error_dialog_title: 'Failed to load.',
     error_dialog_message: 'Failed to load, please try again.',
-  },
-  alpha_warning: {
-    version: 'This is an alpha version.',
-    caution: 'Use with caution.',
   },
   blockchains: {
     icp: {
@@ -383,16 +379,21 @@ export default {
   sidebar: {
     highlights: {
       main: 'Trustless Wallet {line1} {line2} {line3}',
-      line3: 'Multichain',
-      line1: 'Digital Assets',
-      line2: 'Multi-Custody',
+      line1: 'Multi-signature',
+      line2: 'Digital Assets',
+      line3: 'Smart Contracts',
     },
   },
   landing: {
-    title: 'Seamless Multichain',
-    subtitle: 'One Platform, Full Control',
-    description:
-      'Orbit streamlines on-chain asset management for enterprises, DAOs, and teams, consolidating control and visibility into a single, intuitive platform.',
+    btn_accept_license: {
+      phrase: 'By clicking this button, you agree to the {0}.',
+      license: 'License',
+    },
+    highlights: {
+      multisignature: 'Multi-signature approvals',
+      treasury: 'Treasury management',
+      smartcontract: 'Smart contract management',
+    },
     connect_title: 'Securely connect to manage your digital assets',
     connect_btn: 'Connect with Internet Identity',
     connect_error: 'Failed to connect, please try again.',
@@ -642,6 +643,7 @@ export default {
     },
   },
   terms: {
+    license: 'License',
     controllers: 'Controllers',
     restore: 'Restore',
     public: 'Public',
@@ -947,8 +949,8 @@ export default {
       station_title: 'Create your own wallet',
       station_body:
         'Create your own wallet and manage your digital assets. You can add users, set permissions and manage request approval policies.',
-      station_name_field: 'Wallet Name',
-      admin_name_field: 'Your username',
+      station_name_field: 'How would you like to name your wallet?',
+      admin_name_field: 'What is your name?',
 
       check_permissions_title: 'Checking waiting list status...',
       join_waitlist_title: 'Join waiting list',

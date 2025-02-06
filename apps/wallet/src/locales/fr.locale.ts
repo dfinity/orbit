@@ -1,7 +1,7 @@
 export default {
   app: {
-    title: 'Portefeuille {app}',
-    name: 'Orbit Wallet',
+    title: '{app}',
+    name: 'Orbit',
     action_save_failed: "Échec de sauvegarde de l'action, veuillez essayer de nouveau.",
     action_save_success: "Sauvegarde de l'action réussie.",
     session_load_error: 'Échec du chargement votre session, veuillez essayer de nouveau.',
@@ -106,16 +106,12 @@ export default {
     error_dialog_title: 'Échec de chargement.',
     error_dialog_message: 'Échec de chargement, veuillez réessayer.',
   },
-  alpha_warning: {
-    version: 'Ceci est une version alpha.',
-    caution: 'Utilisez avec prudence.',
-  },
   sidebar: {
     highlights: {
-      main: 'Portefeuille Trustless {line1} {line2} {line3}',
-      line3: 'Multichain',
-      line1: 'Actifs Numériques',
-      line2: 'Multi-Garde',
+      main: 'Portefeuille de confiance {line1} {line2} {line3}',
+      line1: 'Multi-signatures',
+      line2: 'Gestion d actifs',
+      line3: 'Contrat intelligent',
     },
   },
   blockchains: {
@@ -394,10 +390,15 @@ export default {
     },
   },
   landing: {
-    title: 'Gestion Multichain',
-    subtitle: 'Une Plateforme, Une Supervision Complète',
-    description:
-      'Orbit simplifie la gestion des actifs on-chain pour les entreprises, les DAOs et les équipes, en consolidant le contrôle et la visibilité sur une seule plateforme intuitive.',
+    btn_accept_license: {
+      phrase: 'En cliquant sur ce bouton, vous acceptez les {0}.',
+      license: 'Licence',
+    },
+    highlights: {
+      multisignature: 'Approbations Multi-signatures',
+      treasury: 'Gestion du Trésor',
+      smartcontract: 'Gestion de Contrat Intelligent',
+    },
     connect_title: 'Connectez-vous en toute sécurité pour gérer vos actifs numériques',
     connect_btn: 'Se connecter avec Internet Identity',
     connect_error: 'Échec de la connexion, veuillez réessayer.',
@@ -652,6 +653,7 @@ export default {
     },
   },
   terms: {
+    license: 'Licence',
     controllers: 'Contrôleurs',
     public: 'Public',
     execute: 'Exécuter',
