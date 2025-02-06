@@ -95,6 +95,9 @@ export const useAvailableDomains = (
       { EditUserGroup: null },
       { RemoveUserGroup: null },
       { ManageSystemInfo: null },
+      { AddNamedRule: null },
+      { EditNamedRule: null },
+      { RemoveNamedRule: null },
     ],
   });
 

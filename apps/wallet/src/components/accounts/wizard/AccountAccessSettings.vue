@@ -8,7 +8,7 @@
             :tooltip="$t('app.account_dialog_access_read_hint')"
           />
         </VCardTitle>
-        <VCardText class="py-0">
+        <VCardText>
           <AllowInput v-model="model.read" :mode="props.mode" />
         </VCardText>
       </VCard>
@@ -22,7 +22,7 @@
             :tooltip="$t('app.account_dialog_access_configuration_hint')"
           />
         </VCardTitle>
-        <VCardText class="py-0">
+        <VCardText>
           <AllowInput v-model="model.configuration" :mode="props.mode" />
         </VCardText>
       </VCard>
@@ -36,7 +36,7 @@
             :tooltip="$t('app.account_dialog_access_transfer_hint')"
           />
         </VCardTitle>
-        <VCardText class="py-0">
+        <VCardText>
           <AllowInput v-model="model.transfer" :mode="props.mode" />
         </VCardText>
       </VCard>

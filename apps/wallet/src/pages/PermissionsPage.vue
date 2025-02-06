@@ -18,48 +18,152 @@
                 hide-not-found
               />
             </VCol>
-            <VCol cols="12">
-              <DataLoader
-                v-slot="{ data, loading }"
-                :load="() => fetchPermissions(useResourcesFromAggregatedView(resourcePermissions))"
-                :refresh-interval-ms="5000"
-                :disable-refresh="disableRefresh"
-              >
-                <PermissionList
-                  :loading="loading"
-                  :resources="resourcePermissions"
-                  :permissions="data ? data.permissions : []"
-                  :privileges="data ? data.privileges : []"
-                  :preload-user-groups="data ? data.userGroups : []"
-                  :preload-users="data ? data.users : []"
-                  @editing="disableRefresh = $event"
-                />
-              </DataLoader>
-            </VCol>
-            <VCol cols="12">
-              <div class="text-h6 px-2">{{ $t('permissions.individual_resources_title') }}</div>
-
-              <VAutocomplete
-                v-model="individualResourceSelected"
-                class="px-2 mt-2"
-                :items="individualResources"
-                density="comfortable"
-                :label="$t('permissions.select_resource')"
-                hide-details
-              />
-
-              <IndividualAccountPermissions
-                v-if="individualResourceSelected === ResourceTypeEnum.Account"
-                :fetch-permissions="fetchPermissions"
-              />
-              <IndividualUserPermissions
-                v-else-if="individualResourceSelected === ResourceTypeEnum.User"
-                :fetch-permissions="fetchPermissions"
-              />
-              <IndividualUserGroupPermissions
-                v-else-if="individualResourceSelected === ResourceTypeEnum.UserGroup"
-                :fetch-permissions="fetchPermissions"
-              />
+            <VCol>
+              <VRow>
+                <VCol cols="12" class="px-6">
+                  <h1 class="text-h4">{{ $t('permissions.global_permissions') }}</h1>
+                  <VDivider class="pb-2" />
+                  <p>{{ $t('permissions.global_permissions_description') }}</p>
+                </VCol>
+                <VCol cols="12" class="px-6">
+                  <FlyoutDialog
+                    v-model="dialog.open"
+                    :closable="dialog.closable"
+                    :title="$t('terms.permission')"
+                  >
+                    <div v-if="dialog.content" class="d-flex flex-column h-100">
+                      <PermissionItemForm
+                        v-model="dialog.content.allow"
+                        :readonly="!dialog.content.editable"
+                        :resource="dialog.content.resource"
+                        class="flex-grow-1 py-4 px-6"
+                        @submitting="dialog.closable = !$event"
+                        @submitted="dialog.open = false"
+                      >
+                        <template #actions="{ valid, submitting, submit, edited }">
+                          <VDivider />
+                          <VCardActions class="pa-2">
+                            <VBtn
+                              color="primary"
+                              variant="elevated"
+                              data-test-id="submit-btn"
+                              block
+                              :disabled="!valid || !edited"
+                              :loading="submitting"
+                              @click.stop="submit"
+                            >
+                              {{ $t('terms.update') }}
+                            </VBtn>
+                          </VCardActions>
+                        </template>
+                      </PermissionItemForm>
+                    </div>
+                  </FlyoutDialog>
+                  <DataLoader
+                    v-slot="{ loading }"
+                    :load="loadPermissions"
+                    :refresh-interval-ms="5000"
+                  >
+                    <VProgressLinear v-if="loading" indeterminate />
+                    <VExpansionPanels :disabled="loading">
+                      <VExpansionPanel>
+                        <VExpansionPanelTitle class="text-wrap">
+                          <VIcon :icon="mdiWalletBifold" class="mr-2" size="small" />
+                          <p>{{ $t('permissions.categories.treasury') }}</p>
+                        </VExpansionPanelTitle>
+                        <VExpansionPanelText class="child-px-md-0">
+                          <VTable hover class="no-table-borders">
+                            <tbody>
+                              <PermissionRow
+                                v-for="(resource, idx) in Object.values(
+                                  GLOBAL_PERMISSIONS.treasury,
+                                )"
+                                :key="idx"
+                                :resource="resource"
+                                :allowed="allowedByResource[JSON.stringify(resource)]"
+                                :db="{ usersById, userGroupsById }"
+                                class="cursor-pointer"
+                                @click.stop="openDialog(resource)"
+                              />
+                            </tbody>
+                          </VTable>
+                        </VExpansionPanelText>
+                      </VExpansionPanel>
+                      <VExpansionPanel>
+                        <VExpansionPanelTitle class="text-wrap">
+                          <VIcon :icon="mdiDatabase" class="mr-2" size="small" />
+                          <p>{{ $t('permissions.categories.canisters') }}</p>
+                        </VExpansionPanelTitle>
+                        <VExpansionPanelText>
+                          <VTable hover class="no-table-borders">
+                            <tbody>
+                              <PermissionRow
+                                v-for="(resource, idx) in Object.values(
+                                  GLOBAL_PERMISSIONS.canisters,
+                                )"
+                                :key="idx"
+                                :resource="resource"
+                                :allowed="allowedByResource[JSON.stringify(resource)]"
+                                :db="{ usersById, userGroupsById }"
+                                class="hoverable cursor-pointer"
+                                @click.stop="openDialog(resource)"
+                              />
+                            </tbody>
+                          </VTable>
+                        </VExpansionPanelText>
+                      </VExpansionPanel>
+                      <VExpansionPanel>
+                        <VExpansionPanelTitle class="text-wrap">
+                          <VIcon :icon="mdiAccountGroup" class="mr-2" size="small" />
+                          <p>{{ $t('permissions.categories.users') }}</p>
+                        </VExpansionPanelTitle>
+                        <VExpansionPanelText>
+                          <VTable hover class="no-table-borders">
+                            <tbody>
+                              <PermissionRow
+                                v-for="(resource, idx) in Object.values(GLOBAL_PERMISSIONS.users)"
+                                :key="idx"
+                                :resource="resource"
+                                :allowed="allowedByResource[JSON.stringify(resource)]"
+                                :db="{ usersById, userGroupsById }"
+                                class="hoverable cursor-pointer"
+                                @click.stop="openDialog(resource)"
+                              />
+                            </tbody>
+                          </VTable>
+                        </VExpansionPanelText>
+                      </VExpansionPanel>
+                      <VExpansionPanel>
+                        <VExpansionPanelTitle class="text-wrap">
+                          <VIcon :icon="mdiCogs" class="mr-2" size="small" />
+                          <p>{{ $t('permissions.categories.system') }}</p>
+                        </VExpansionPanelTitle>
+                        <VExpansionPanelText>
+                          <VTable hover class="no-table-borders">
+                            <tbody>
+                              <PermissionRow
+                                v-for="(resource, idx) in Object.values(GLOBAL_PERMISSIONS.system)"
+                                :key="idx"
+                                :resource="resource"
+                                :allowed="allowedByResource[JSON.stringify(resource)]"
+                                :db="{ usersById, userGroupsById }"
+                                class="hoverable cursor-pointer"
+                                @click.stop="openDialog(resource)"
+                              />
+                            </tbody>
+                          </VTable>
+                        </VExpansionPanelText>
+                      </VExpansionPanel>
+                    </VExpansionPanels>
+                  </DataLoader>
+                </VCol>
+                <VCol cols="12" class="px-6">
+                  <p class="d-flex flex-row ga-1 align-center text-body-2">
+                    <VIcon :icon="mdiProgressPencil" size="small" class="text-medium-emphasis" />
+                    <span>{{ $t('permissions.action_approval_legend') }}</span>
+                  </p>
+                </VCol>
+              </VRow>
             </VCol>
           </VRow>
         </VContainer>
@@ -69,31 +173,23 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref } from 'vue';
+import { mdiAccountGroup, mdiCogs, mdiDatabase, mdiProgressPencil, mdiWalletBifold } from '@mdi/js';
+import { computed, Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { VAutocomplete, VCol, VContainer, VRow } from 'vuetify/components';
+import { VCol, VContainer, VDivider, VRow } from 'vuetify/components';
 import DataLoader from '~/components/DataLoader.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import PageLayout from '~/components/PageLayout.vue';
-import IndividualAccountPermissions from '~/components/permissions/IndividualAccountPermissions.vue';
-import IndividualUserGroupPermissions from '~/components/permissions/IndividualUserGroupPermissions.vue';
-import IndividualUserPermissions from '~/components/permissions/IndividualUserPermissions.vue';
-import PermissionList from '~/components/permissions/PermissionList.vue';
+import PermissionItemForm from '~/components/permissions/PermissionItemForm.vue';
+import PermissionRow from '~/components/permissions/PermissionRow.vue';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
-import { useResourcesFromAggregatedView } from '~/composables/permissions.composable';
-import { globalPermissions } from '~/configs/permissions.config';
+import FlyoutDialog from '~/components/ui/FlyoutDialog.vue';
+import { GLOBAL_PERMISSIONS } from '~/configs/permissions.config';
 import { Routes } from '~/configs/routes.config';
-import {
-  BasicUser,
-  Permission,
-  PermissionCallerPrivileges,
-  Resource,
-  UserGroup,
-} from '~/generated/station/station.did';
+import { Allow, BasicUser, Resource, UserGroup } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
 import type { PageProps } from '~/types/app.types';
-import { ResourceTypeEnum } from '~/types/permissions.types';
 import { RequestDomains } from '~/types/station.types';
 
 const props = withDefaults(defineProps<PageProps>(), {
@@ -103,64 +199,79 @@ const props = withDefaults(defineProps<PageProps>(), {
 
 const i18n = useI18n();
 const title = computed(() => props.title || i18n.t('pages.permissions.title'));
+const resources = [
+  ...Object.values(GLOBAL_PERMISSIONS.treasury),
+  ...Object.values(GLOBAL_PERMISSIONS.canisters),
+  ...Object.values(GLOBAL_PERMISSIONS.users),
+  ...Object.values(GLOBAL_PERMISSIONS.system),
+];
+
 const station = useStationStore();
-const disableRefresh = ref(false);
-const resourcePermissions = globalPermissions();
-const individualResourceSelected = ref<ResourceTypeEnum | null>(null);
-const individualResourceKeys = ref<ResourceTypeEnum[]>([
-  ResourceTypeEnum.Account,
-  ResourceTypeEnum.User,
-  ResourceTypeEnum.UserGroup,
-]);
+const allowedByResource: Ref<Record<string, Allow>> = ref({});
+const privilegesByResource: Ref<Record<string, { canEdit: boolean }>> = ref({});
+const usersById: Ref<Record<string, BasicUser>> = ref({});
+const userGroupsById: Ref<Record<string, UserGroup>> = ref({});
 
-const individualResources = computed(() => {
-  return individualResourceKeys.value.map(key => ({
-    value: key,
-    title: i18n.t(`permissions.resources.${key.toLowerCase()}`),
-  }));
-});
+const dialog: Ref<{
+  open: boolean;
+  closable: boolean;
+  content?: {
+    editable: boolean;
+    resource: Resource;
+    allow: Allow;
+  };
+}> = ref({ open: false, closable: true });
 
-const fetchPermissions = async (
-  resources: Resource[],
-): Promise<{
-  permissions: Permission[];
-  privileges: PermissionCallerPrivileges[];
-  userGroups: UserGroup[];
-  users: BasicUser[];
-}> => {
-  const userGroups: UserGroup[] = [];
-  const users: BasicUser[] = [];
-  let permissions: Permission[] = [];
-  let privileges: PermissionCallerPrivileges[] = [];
-  let limit = 250;
-  let nextOffset = BigInt(0);
-  let maxOffsetFound = nextOffset;
+const openDialog = (resource: Resource): void => {
+  dialog.value = {
+    open: true,
+    closable: true,
+    content: {
+      editable: privilegesByResource.value[JSON.stringify(resource)]?.canEdit ?? false,
+      resource: resource,
+      allow: allowedByResource.value[JSON.stringify(resource)] ?? {
+        auth_scope: { Restricted: null },
+        users: [],
+        user_groups: [],
+      },
+    },
+  };
+};
 
-  do {
-    // This is to avoid infinite loops in case the offset is not updated properly
-    maxOffsetFound = nextOffset;
+// The very first call is a query call to get the initial details faster,
+// then the subsequent calls are verified calls
+const initialPageLoad = ref(false);
 
-    const result = await station.service.listPermissions({
+const loadPermissions = async (): Promise<boolean> => {
+  const result = await station.service.listPermissions(
+    {
       resources: [resources],
-      paginate: [
-        {
-          limit: [limit],
-          offset: [nextOffset],
-        },
-      ],
-    });
+      paginate: [],
+    },
+    initialPageLoad.value,
+  );
 
-    userGroups.push(...result.user_groups);
-    users.push(...result.users);
-    privileges.push(...result.privileges);
+  allowedByResource.value = Object.fromEntries(
+    result.permissions.map(permission => [JSON.stringify(permission.resource), permission.allow]),
+  );
+  privilegesByResource.value = Object.fromEntries(
+    result.privileges.map(privilege => [
+      JSON.stringify(privilege.resource),
+      { canEdit: privilege.can_edit },
+    ]),
+  );
+  usersById.value = Object.fromEntries(result.users.map(user => [user.id, user]));
+  userGroupsById.value = Object.fromEntries(
+    result.user_groups.map(userGroup => [userGroup.id, userGroup]),
+  );
 
-    permissions = permissions.concat(result.permissions);
-    nextOffset =
-      result.next_offset?.[0] !== undefined && result.next_offset[0] > 0
-        ? result.next_offset[0]
-        : BigInt(-1);
-  } while (nextOffset > 0 && nextOffset > maxOffsetFound);
+  if (initialPageLoad.value) {
+    // For the initial page load we fetch the permissions with a query call and immediately after
+    // we fetch the permissions with a verified call to update the UI with the certified data
+    initialPageLoad.value = false;
+    loadPermissions();
+  }
 
-  return { permissions, userGroups, users, privileges };
+  return true;
 };
 </script>

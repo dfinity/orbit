@@ -186,6 +186,40 @@ a {
   min-height: 100%;
 }
 
+<<<<<<< HEAD
 .border-bottom {
   border-bottom: 1px solid rgb(var(--ds-on-background), 0.8) !important;
+=======
+.v-dialog--right .v-overlay__content {
+  top: 0;
+  right: 0;
+  left: auto !important;
+}
+
+.no-table-borders {
+  /* Remove outer border if needed */
+  border: none !important;
+
+  thead th,
+  tbody td,
+  tfoot td {
+    border-bottom: none !important;
+    border-top: none !important;
+  }
+}
+
+@media (max-width: #{$device-md}) {
+  .child-px-md-0 > * {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+.white-space-pre-wrap {
+  white-space: pre-wrap;
+}
+
+.underline-dotted {
+  text-decoration: underline dotted;
+>>>>>>> main
 }
