@@ -20,7 +20,7 @@ export const sidebar = [
       'users/permissions-policies',
       'users/requests',
       'users/external-canisters',
-      // 'users/upgrades',
+      'users/upgrades',
       'users/glossary',
       // 'users/disaster-recovery',
       // 'users/limitations',
