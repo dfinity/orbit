@@ -188,3 +188,10 @@ a {
     border-top: none !important;
   }
 }
+
+@media (max-width: #{$device-md}) {
+  .child-px-md-0 > * {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}

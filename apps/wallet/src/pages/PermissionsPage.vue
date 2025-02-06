@@ -71,7 +71,7 @@
                           <VIcon :icon="mdiWalletBifold" class="mr-2" size="small" />
                           <p>{{ $t('permissions.categories.treasury') }}</p>
                         </VExpansionPanelTitle>
-                        <VExpansionPanelText>
+                        <VExpansionPanelText class="child-px-md-0">
                           <VTable hover class="no-table-borders">
                             <tbody>
                               <PermissionRow
