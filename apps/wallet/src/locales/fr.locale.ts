@@ -219,6 +219,9 @@ export default {
       amount: 'Montant',
       fee: 'Frais',
       comment: 'Commentaire',
+      rule_id: 'ID de Règle',
+      rule_name: 'Nom de Règle',
+      rule_description: 'Description de Règle',
       url: 'URL',
     },
     download: {
@@ -232,6 +235,8 @@ export default {
       transfer: 'Transferts',
       external_canister: 'Canister Géré',
       system_info: 'Informations Système',
+      asset: 'Actifs',
+      named_rule: 'Polices d approbation',
     },
     types: {
       addusergroup: {
@@ -340,6 +345,18 @@ export default {
       setdisasterrecovery: {
         title: 'Éditer la sauvegarde',
         request_title: 'Demande d édition de sauvegarde',
+      },
+      addnamedrule: {
+        title: 'Ajouter une politique d approbation',
+        request_title: 'Demande d ajout d une politique d approbation',
+      },
+      editnamedrule: {
+        title: 'Modifier une politique d approbation',
+        request_title: 'Demande de modification d une politique d approbation',
+      },
+      removenamedrule: {
+        title: 'Supprimer une politique d approbation',
+        request_title: 'Demande de suppression d une politique d approbation',
       },
       unknown: {
         title: 'Inconnu',
@@ -864,6 +881,7 @@ export default {
     request_policies: "Polices d'Aprobation",
     assets: 'Actifs',
     external_canisters: 'Canisters',
+    approval_policy: 'Police d approbation',
   },
   pages: {
     dashboard: {
@@ -1026,6 +1044,14 @@ export default {
         option_add_custom_asset: 'Ajouter un actif personnalisé',
       },
     },
+    approval_policy: {
+      btn_new_entry: 'Ajouter une nouvelle police',
+      title: 'Police d approbation',
+      dialog: {
+        title: 'Police d approbation',
+      },
+      linked_policies: 'Polices liées',
+    },
     not_found: {
       title: 'Oulala, 404',
       subtitle: "La page que vous cherchez n'existe pas.",
@@ -1076,6 +1102,7 @@ export default {
       addressbook: "Carnet d'Adresses",
       managesysteminfo: 'Gérer les informations système',
       externalcanister: 'Canister Géré',
+      namedrule: 'Police d approbation',
     },
     actions: {
       list: 'Lister',
@@ -1104,12 +1131,16 @@ export default {
     user_type_select: "Type d'Usager",
     add_rule_label: 'Ajouter un règle +',
     unsupported_specifier: 'Définition de spécificateur non supportée',
+    rule_groups: {
+      custom_rules: 'Règles personnalisées',
+      named_rules: 'Polices d approbation',
+    },
     rule_user_specifier: {
       owner: 'Propriétaire',
       requester: 'Demandeur',
       any: "N'importe quel usager",
-      group: 'Membre du groupe',
-      id: 'Usager spécifique',
+      group: 'Membre du groupe(s)',
+      id: 'Usager spécifique(s)',
     },
     rule: {
       allof: 'Tout les',
@@ -1120,6 +1151,31 @@ export default {
       quorumpercentage: 'Pourcentage du Quorum',
       allowlistedbymetadata: 'Liste blanche par metadata',
       allowlisted: 'Liste blanche',
+      named_rule: 'Utiliser la politique d approbation: {name}',
+    },
+    rule_tooltip_summary: {
+      allof: 'Tout les suivants:',
+      anyof: 'Un des suivants:',
+      not: 'Approuvé, sauf quand:',
+    },
+    rule_rich_summary: {
+      complex_rule: 'Règle complexe',
+      no_user_specifier: 'Aucune liste d usagers',
+      any_user_specifier:
+        '1 approbation de n importe quel usager|{n} approbation de n importe quel usager',
+      auto_approved: 'Aucune approbation requise',
+      invalid_rule_auto_approved: 'Règle invalide: Auto-approuvé',
+      single_user_specifier: '{user} approuve',
+      user_specifier: '{n} approbation de {users}|{n} approbation de {users}',
+      group_specifier: '{n} approbation de {groups}|{n} approbation de {groups}',
+      quorum_percentage_any_user: '{n}% d approbation de tous les usagers',
+      quorum_percentage_rule: '{n}% d approbation de {users}',
+      allowlisted_by_metadata: 'Adresse marquée avec {metadata}',
+      allowlisted: 'Adresse dans le carnet d adresses',
+      not: 'Not: {rule}',
+      allof: ' ET ',
+      anyof: ' OU ',
+      named_rule: 'Utiliser la politique d approbation: {name}',
     },
     specifier: {
       editpermission: 'Modifier les permissions',
@@ -1147,6 +1203,9 @@ export default {
       addasset: 'Ajouter un actif',
       editasset: 'Modifier un actif',
       removeasset: 'Éffacer un actif',
+      addnamedrule: 'Ajouter une politique d approbation',
+      editnamedrule: 'Modifier une politique d approbation',
+      removenamedrule: 'Éffacer une politique d approbation',
     },
   },
   cycle_obtain_strategies: {

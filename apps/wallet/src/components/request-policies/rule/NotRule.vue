@@ -38,11 +38,12 @@ import AddRuleSelect from '~/components/request-policies/rule/AddRuleSelect.vue'
 const input = withDefaults(
   defineProps<{
     modelValue: RequestPolicyRule;
-    specifier: RequestSpecifier;
+    specifier?: RequestSpecifier | null;
     disabled?: boolean;
   }>(),
   {
     disabled: false,
+    specifier: null,
   },
 );
 

@@ -210,6 +210,9 @@ export default {
       fee: 'Fee',
       comment: 'Comment',
       url: 'URL',
+      rule_id: 'Rule ID',
+      rule_name: 'Rule Name',
+      rule_description: 'Rule Description',
     },
     download: {
       user_group: 'User Groups',
@@ -222,6 +225,8 @@ export default {
       transfer: 'Transfers',
       external_canister: 'External Canisters',
       system_info: 'System Info',
+      asset: 'Assets',
+      named_rule: 'Approval Policy',
     },
     types: {
       addusergroup: {
@@ -330,6 +335,18 @@ export default {
       setdisasterrecovery: {
         title: 'Edit disaster recovery',
         request_title: 'Edit disaster recovery request',
+      },
+      addnamedrule: {
+        title: 'Add approval policy',
+        request_title: 'Add approval policy request',
+      },
+      editnamedrule: {
+        title: 'Edit approval policy',
+        request_title: 'Edit approval policy request',
+      },
+      removenamedrule: {
+        title: 'Remove approval policy',
+        request_title: 'Remove approval policy request',
       },
       unknown: {
         title: 'Unknown',
@@ -854,6 +871,7 @@ export default {
     request_policies: 'Request Policies',
     assets: 'Assets',
     external_canisters: 'Canisters',
+    approval_policy: 'Approval Policy',
   },
   pages: {
     dashboard: {
@@ -1010,6 +1028,14 @@ export default {
         option_add_custom_asset: 'Add custom asset',
       },
     },
+    approval_policy: {
+      btn_new_entry: 'Add new policy',
+      title: 'Approval Policy',
+      dialog: {
+        title: 'Approval Policy',
+      },
+      linked_policies: 'Linked policies',
+    },
     not_found: {
       title: 'Whoops, 404',
       subtitle: 'The page you were looking for does not exist.',
@@ -1060,6 +1086,7 @@ export default {
       addressbook: 'Address Book',
       managesysteminfo: 'Manage System Info',
       externalcanister: 'External Canister',
+      namedrule: 'Approval Policy',
     },
     actions: {
       list: 'List',
@@ -1088,12 +1115,16 @@ export default {
     user_type_select: 'User type',
     add_rule_label: 'Add rule +',
     unsupported_specifier: 'Unsupported specifier definition',
+    rule_groups: {
+      custom_rules: 'Custom rules',
+      named_rules: 'Approval policies',
+    },
     rule_user_specifier: {
       owner: 'Owner',
       requester: 'Requester',
       any: 'Any user',
-      group: 'Member of group',
-      id: 'Specific user',
+      group: 'Member of group(s)',
+      id: 'Specific user(s)',
     },
     rule: {
       allof: 'all of',
@@ -1104,6 +1135,30 @@ export default {
       quorumpercentage: 'Quorum percentage',
       allowlistedbymetadata: 'Allowlisted by metadata',
       allowlisted: 'Allowlisted',
+      named_rule: 'Use approval policy: {name}',
+    },
+    rule_tooltip_summary: {
+      allof: 'All of the following:',
+      anyof: 'Any of the following:',
+      not: 'Approved, except when:',
+    },
+    rule_rich_summary: {
+      complex_rule: 'Complex rule',
+      no_user_specifier: 'No user list',
+      any_user_specifier: '1 approval from any user|{n} approvals from any user',
+      auto_approved: 'No approval required',
+      invalid_rule_auto_approved: 'Invalid rule: Auto-approved',
+      single_user_specifier: '{user} approves',
+      user_specifier: '{n} approval from {users}|{n} approvals from {users}',
+      group_specifier: '{n} approval from {groups}|{n} approvals from {groups}',
+      quorum_percentage_any_user: '{n}% approval of all users',
+      quorum_percentage_rule: '{n}% approval from {users}',
+      allowlisted_by_metadata: 'Address marked with {metadata}',
+      allowlisted: 'Address in address book',
+      not: 'Not: {rule}',
+      allof: ' AND ',
+      anyof: ' OR ',
+      named_rule: 'Use approval policy: {name}',
     },
     specifier: {
       editpermission: 'Edit permission',
@@ -1131,6 +1186,9 @@ export default {
       addasset: 'Add asset',
       editasset: 'Edit asset',
       removeasset: 'Remove asset',
+      addnamedrule: 'Add approval policy',
+      editnamedrule: 'Edit approval policy',
+      removenamedrule: 'Remove approval policy',
     },
   },
   cycle_obtain_strategies: {

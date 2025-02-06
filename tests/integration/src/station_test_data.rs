@@ -10,6 +10,7 @@ use crate::utils::bump_time_to_avoid_ratelimit;
 pub mod account;
 pub mod address_book;
 pub mod asset;
+pub mod named_rule;
 pub mod permission;
 pub mod request_policy;
 pub mod system_upgrade;

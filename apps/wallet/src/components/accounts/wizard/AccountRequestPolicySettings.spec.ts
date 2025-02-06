@@ -6,6 +6,11 @@ import AccountRequestPolicySettings from './AccountRequestPolicySettings.vue';
 vi.mock('~/services/station.service', () => {
   const mock: Partial<StationService> = {
     withStationId: vi.fn().mockReturnThis(),
+    listNamedRules: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        named_rules: [],
+      }),
+    ),
   };
 
   return {
