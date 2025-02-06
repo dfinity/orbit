@@ -395,7 +395,7 @@ export interface EditNamedRuleOperation {
 export interface EditNamedRuleOperationInput {
   'name' : [] | [string],
   'rule' : [] | [RequestPolicyRule],
-  'description' : [] | [string],
+  'description' : [] | [[] | [string]],
   'named_rule_id' : UUID,
 }
 export interface EditPermissionOperation {

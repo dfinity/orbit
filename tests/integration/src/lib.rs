@@ -13,6 +13,7 @@ mod disaster_recovery_tests;
 mod external_canister_tests;
 mod http;
 mod interfaces;
+mod named_rule_tests;
 mod notification;
 mod rate_limiter;
 mod register_tests;

@@ -964,7 +964,7 @@ pub struct EditNamedRuleOperation {
 pub struct EditNamedRuleOperationInput {
     pub named_rule_id: NamedRuleId,
     pub name: Option<String>,
-    pub description: Option<String>,
+    pub description: Option<Option<String>>,
     pub rule: Option<RequestPolicyRule>,
 }
 

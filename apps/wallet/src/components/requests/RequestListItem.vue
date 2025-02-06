@@ -66,7 +66,9 @@ import TransferOperation from './operations/TransferOperation.vue';
 import UnsupportedOperation from './operations/UnsupportedOperation.vue';
 import EditAssetOperation from './operations/EditAssetOperation.vue';
 import RemoveAssetOperation from './operations/RemoveAssetOperation.vue';
-
+import AddNamedRuleOperation from './operations/AddNamedRuleOperation.vue';
+import EditNamedRuleOperation from './operations/EditNamedRuleOperation.vue';
+import RemoveNamedRuleOperation from './operations/RemoveNamedRuleOperation.vue';
 const props = withDefaults(
   defineProps<{
     request: Request;
@@ -108,6 +110,9 @@ const componentsMap: {
   AddAsset: AddAssetOperation,
   EditAsset: EditAssetOperation,
   RemoveAsset: RemoveAssetOperation,
+  AddNamedRule: AddNamedRuleOperation,
+  EditNamedRule: EditNamedRuleOperation,
+  RemoveNamedRule: RemoveNamedRuleOperation,
 
   // below variants are not supported yet
   ChangeExternalCanister: UnsupportedOperation,
@@ -119,9 +124,6 @@ const componentsMap: {
   PruneExternalCanister: UnsupportedOperation,
   RestoreExternalCanister: UnsupportedOperation,
   SnapshotExternalCanister: UnsupportedOperation,
-  AddNamedRule: UnsupportedOperation,
-  EditNamedRule: UnsupportedOperation,
-  RemoveNamedRule: UnsupportedOperation,
 };
 
 defineEmits<{

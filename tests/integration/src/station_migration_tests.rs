@@ -7,8 +7,8 @@ use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, PocketIc};
 
-const CURRENT_BASELINE_NR_OF_REQUEST_POLICIES: usize = 21; // can be found in the station core/init.rs
-const CURRENT_BASELINE_NR_PERMISSIONS: usize = 40; // can be found in the station core/init.rs
+const CURRENT_BASELINE_NR_OF_REQUEST_POLICIES: usize = 24; // can be found in the station core/init.rs
+const CURRENT_BASELINE_NR_PERMISSIONS: usize = 45; // can be found in the station core/init.rs
 
 const PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // baseline in the previous memory version core/init.rs
 const PREVIOUS_BASELINE_NR_PERMISSIONS: usize = 35; // baseline in the previous memory version core/init.rs
