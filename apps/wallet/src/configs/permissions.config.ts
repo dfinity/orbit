@@ -69,5 +69,10 @@ export const GLOBAL_PERMISSIONS = {
     delete_any_request_policy: { RequestPolicy: { Delete: { Any: null } } },
     list_requests: { Request: { List: null } },
     read_any_request: { Request: { Read: { Any: null } } },
+    list_named_rules: { NamedRule: { List: null } },
+    create_named_rule: { NamedRule: { Create: null } },
+    read_any_named_rule: { NamedRule: { Read: { Any: null } } },
+    update_any_named_rule: { NamedRule: { Update: { Any: null } } },
+    delete_any_named_rule: { NamedRule: { Delete: { Any: null } } },
   }),
 };

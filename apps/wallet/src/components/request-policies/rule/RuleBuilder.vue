@@ -12,6 +12,12 @@
       :disabled="props.disabled.value"
       @remove="emit('remove')"
     />
+    <NamedRule
+      v-else-if="variantIs(model, 'NamedRule')"
+      :named-rule-id="model.NamedRule"
+      :disabled="props.disabled.value"
+      @remove="emit('remove')"
+    />
     <AutoApprovedRule
       v-else-if="variantIs(model, 'AutoApproved')"
       :disabled="props.disabled.value"
@@ -72,16 +78,18 @@ import AutoApprovedRule from './AutoApprovedRule.vue';
 import NotRule from './NotRule.vue';
 import QuorumPercentageRule from './QuorumPercentageRule.vue';
 import QuorumRule from './QuorumRule.vue';
+import NamedRule from './NamedRule.vue';
 
 const input = withDefaults(
   defineProps<{
     modelValue?: RequestPolicyRule | null;
-    specifier: RequestSpecifier;
+    specifier?: RequestSpecifier | null;
     disabled?: boolean;
   }>(),
   {
     modelValue: null,
     disabled: false,
+    specifier: null,
   },
 );
 
