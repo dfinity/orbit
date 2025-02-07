@@ -19,6 +19,7 @@ CANISTER_ID_INTERNET_IDENTITY="rdmx6-jaaaa-aaaaa-aaadq-cai"
 CANISTER_ID_UI="werw6-ayaaa-aaaaa-774aa-cai"
 CANISTER_ID_WALLET="wkt3w-3iaaa-aaaaa-774ba-cai"
 CANISTER_ID_DOCS="bp6mw-eqaaa-aaaac-ahroq-cai"
+CANISTER_ID_MARKETING="TBD"
 CANISTER_ID_TEST_ICRC1_LEDGER="bw4dl-smaaa-aaaaa-qaacq-cai"
 CANISTER_ID_TEST_ICRC1_INDEX="br5f7-7uaaa-aaaaa-qaaca-cai"
 
@@ -276,6 +277,19 @@ function setup_app_wallet() {
   install_app_wallet
 }
 
+function uninstall_app_marketing() {
+  dfx canister delete app_marketing -y >/dev/null 2>&1 || true
+}
+
+function install_app_marketing() {
+  BUILD_MODE=local dfx deploy --specified-id $CANISTER_ID_MARKETING app_marketing
+}
+
+function setup_app_marketing() {
+  uninstall_app_marketing
+  install_app_marketing
+}
+
 function uninstall_docs_portal() {
   dfx canister delete docs_portal -y >/dev/null 2>&1 || true
 }
@@ -452,6 +466,12 @@ while [[ $# -gt 0 ]]; do
     shift
     exec_function setup_devenv
     exec_function setup_app_wallet
+    echo
+    ;;
+  --init-app-marketing)
+    shift
+    exec_function setup_devenv
+    exec_function setup_app_marketing
     echo
     ;;
   --init-docs-portal)

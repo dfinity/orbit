@@ -80,6 +80,13 @@
       ],
       "build": "pnpm --filter 'wallet-dapp' build"
     },
+    "app_marketing": {
+      "type": "assets",
+      "source": [
+        "apps/marketing/dist/"
+      ],
+      "build": "pnpm --filter 'marketing-dapp' build"
+    },
     "docs_portal": {
       "type": "assets",
       "source": [
