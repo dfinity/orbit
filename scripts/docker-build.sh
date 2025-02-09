@@ -23,6 +23,7 @@ Options:
   --station builds the station canister
   --upgrader builds the upgrader canister
   --wallet-dapp builds the wallet frontend assets
+  --marketing-dapp builds the marketing frontend assets
   --docs-portal builds the docs frontend assets
 
   -h, --help prints this help message
@@ -93,6 +94,10 @@ function build_wallet_dapp() {
   deterministic_build wallet-dapp build_wallet_dapp
 }
 
+function build_marketing_dapp() {
+  deterministic_build marketing-dapp build_marketing_dapp
+}
+
 function build_docs_portal() {
   deterministic_build docs-portal build_docs_portal
 }
@@ -133,6 +138,11 @@ while [[ $# -gt 0 ]]; do
   --wallet-dapp)
     shift
     exec_function build_wallet_dapp
+    echo
+    ;;
+  --marketing-dapp)
+    shift
+    exec_function build_marketing_dapp
     echo
     ;;
   --docs-portal)
