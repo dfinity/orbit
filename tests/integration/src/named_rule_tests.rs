@@ -18,7 +18,7 @@ use crate::{
 };
 
 #[test]
-fn no_named_rules_by_default() {
+fn two_named_rules_by_default() {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
@@ -27,7 +27,7 @@ fn no_named_rules_by_default() {
         .expect("Failed to call list named rules");
 
     let response = named_rules.0.expect("Failed to get response");
-    assert_eq!(response.named_rules.len(), 0);
+    assert_eq!(response.named_rules.len(), 2);
 }
 
 #[test]
