@@ -351,6 +351,7 @@ fn create_external_canister_and_check_status() {
 
     // create new user identities and add them to the station
     let user_a = user_test_id(0);
+    add_user(&env, user_a, vec![], canister_ids.station);
     let user_b = user_test_id(1);
     add_user(&env, user_b, vec![], canister_ids.station);
 
