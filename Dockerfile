@@ -88,6 +88,16 @@ RUN eval "$(fnm env)" && \
     fnm use && \
     npx nx run wallet-dapp:create-artifacts
 
+# Build the Orbit Wallet Frontend Assets
+FROM builder AS build_marketing_dapp
+SHELL ["bash", "-c"]
+WORKDIR /code
+LABEL io.icp.artifactType="canister" \
+      io.icp.artifactName="marketing-dapp"
+RUN eval "$(fnm env)" && \
+    fnm use && \
+    npx nx run marketing-dapp:create-artifacts
+
 # Build the Orbit Docs Frontend Assets
 FROM builder AS build_docs_portal
 SHELL ["bash", "-c"]
