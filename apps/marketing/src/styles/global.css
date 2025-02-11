@@ -65,6 +65,22 @@
   font-weight: 500;
 }
 
+@utility text-h8 {
+  font-size: 0.75rem;
+  line-height: 95%;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  @apply uppercase;
+}
+
+@utility text-h9 {
+  font-size: 0.75rem;
+  line-height: 95%;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  @apply uppercase;
+}
+
 @utility text-body-medium {
   font-size: 1.125rem;
   line-height: 160%;

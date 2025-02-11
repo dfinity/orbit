@@ -1,3 +1,7 @@
+---
+import { headerNav } from '../lib/nav';
+---
+
 <div class="fixed top-0 left-0 right-0 bg-gradient-to-b from-black to-transparent z-10">
   <header
     class="container-page text-white h-20 lg:h-32 flex flex-row items-center justify-between z-20"
@@ -5,10 +9,13 @@
     <img src="/logo.svg" alt="Orbit Logo" class="h-5 lg:h-7 z-10" />
 
     <div class="hidden lg:inline-flex flex-row items-center gap-x-7">
-      <a href="" class="text-h7 hover:text-white/70 transition-all duration-300">Features</a>
-      <a href="" class="text-h7 hover:text-white/70 transition-all duration-300">Products</a>
-      <a href="" class="text-h7 hover:text-white/70 transition-all duration-300">Clients</a>
-      <a href="" class="text-h7 hover:text-white/70 transition-all duration-300">FAQ</a>
+      {
+        headerNav.navigation.map(item => (
+          <a href={item.href} class="text-h7 hover:text-white/70 transition-all duration-300">
+            {item.label}
+          </a>
+        ))
+      }
 
       <a
         class="btn btn-outline lg:w-72"
@@ -49,10 +56,13 @@
     <nav
       class="fixed inset-0 px-6 bg-black flex-col items-start pt-36 gap-y-5 flex opacity-0 pointer-events-none peer-has-checked:opacity-100 peer-has-checked:pointer-events-auto transition-all duration-300"
     >
-      <a href="" class="text-h3 hover:text-white/70 transition-all duration-300">Features</a>
-      <a href="" class="text-h3 hover:text-white/70 transition-all duration-300">Pricing</a>
-      <a href="" class="text-h3 hover:text-white/70 transition-all duration-300">Clients</a>
-      <a href="" class="text-h3 hover:text-white/70 transition-all duration-300">FAQ</a>
+      {
+        headerNav.navigation.map(item => (
+          <a href={item.href} class="text-h3 hover:text-white/70 transition-all duration-300">
+            {item.label}
+          </a>
+        ))
+      }
 
       <a
         class="btn btn-outline block mt-20 w-full"
