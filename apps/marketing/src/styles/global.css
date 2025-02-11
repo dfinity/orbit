@@ -1,1 +1,113 @@
 @import 'tailwindcss';
+
+@font-face {
+  font-family: 'Rules';
+  src: url('/fonts/RulesRegular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rules';
+  src: url('/fonts/RulesMedium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-feature-settings: 'calt' off;
+}
+
+@theme {
+  --color-*: initial;
+  --color-black: #030d03;
+  --color-white: #fff;
+  --color-blue: #2c0dff;
+
+  --font-*: initial;
+  --font-rules: 'Rules', sans-serif;
+}
+
+@utility text-h1 {
+  font-size: 4.5rem;
+  line-height: 120%;
+  font-weight: 500;
+}
+
+@utility text-h2 {
+  font-size: 3.5rem;
+  line-height: 130%;
+  font-weight: 500;
+}
+
+@utility text-h3 {
+  font-size: 2.125rem;
+  line-height: 150%;
+  font-weight: 500;
+}
+
+@utility text-h4 {
+  font-size: 1.625rem;
+  line-height: 120%;
+  font-weight: 500;
+}
+
+@utility text-h5 {
+  font-size: 1.25rem;
+  line-height: 130%;
+  font-weight: 500;
+}
+@utility text-h6 {
+  font-size: 1rem;
+  line-height: 110%;
+  font-weight: 500;
+}
+@utility text-h7 {
+  font-size: 1.25rem;
+  line-height: 180%;
+  font-weight: 500;
+}
+
+@utility text-body-medium {
+  font-size: 1.125rem;
+  line-height: 160%;
+  font-weight: 400;
+}
+
+@utility btn {
+  @apply px-8 pt-2 pb-4 text-h7 rounded-lg appearance-none cursor-pointer text-center inline-flex items-center justify-center focus:outline-2 outline-white outline-offset-2;
+}
+
+@utility btn-outline {
+  @apply bg-transparent border border-white text-white hover:bg-white hover:text-black transition-colors;
+}
+
+@utility btn-primary {
+  @apply bg-white border border-white text-black hover:bg-black hover:text-white transition-colors;
+}
+
+@utility container-page {
+  @apply max-w-screen-2xl mx-auto px-6 lg:px-10;
+}
+
+body,
+html {
+  @apply bg-black;
+  font-family: var(--font-rules);
+
+  font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@utility animate-delayed-fade-in {
+  animation: fade-in 1s ease-in-out 1.5s both;
+}
