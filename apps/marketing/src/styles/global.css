@@ -18,7 +18,7 @@
 @theme {
   --color-*: initial;
   --color-black: #030d03;
-  --color-white: #fff;
+  --color-white: #ffffff;
   --color-blue: #2c0dff;
 
   --font-*: initial;
@@ -71,6 +71,18 @@
   font-weight: 400;
 }
 
+@utility text-body-small {
+  font-size: 0.875rem;
+  line-height: 160%;
+  font-weight: 400;
+}
+
+@utility text-body-caption {
+  font-size: 0.8125rem;
+  line-height: 160%;
+  font-weight: 500;
+}
+
 @utility btn {
   @apply px-8 pt-2 pb-4 text-h7 rounded-lg appearance-none cursor-pointer text-center inline-flex items-center justify-center focus:outline-2 outline-white outline-offset-2;
 }
@@ -85,6 +97,14 @@
 
 @utility container-page {
   @apply max-w-screen-2xl mx-auto px-6 lg:px-10;
+}
+
+@utility badge {
+  @apply text-body-caption px-3 py-2 inline-flex gap-2.5 items-center rounded-md;
+}
+
+@utility badge-disabled {
+  @apply  text-white/40 bg-white/10;
 }
 
 body,

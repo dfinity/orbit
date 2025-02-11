@@ -36,6 +36,7 @@ import Header from '../components/Header.astro';
           </div>
         </div>
 
+        <!-- background blob -->
         <div
           class="absolute -top-28 lg:-top-64 -translate-y-1/3 right-0 translate-x-3/5 w-[2000px] lg:-translate-y-1/4 lg:translate-x-2/5 pointer-events-none z-[-1]"
         >
@@ -48,9 +49,65 @@ import Header from '../components/Header.astro';
         </div>
       </div>
 
+      <!-- scroll down indicator -->
       <div
         class="hidden lg:block mx-auto h-96 w-px bg-gradient-to-b from-black/0 via-white to-black/0 animate-delayed-fade-in"
       >
+      </div>
+
+      <div class="flex flex-col lg:flex-row pt-20">
+        <div class="flex-1">
+          <h2 class="text-h4 lg:text-h2 lg:pr-20">
+            Next-Level security, full control, zero compromises.
+          </h2>
+        </div>
+        <div
+          class="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-24 lg:gap-y-16 divide-solid divide-white/40 divide-y lg:divide-none"
+        >
+          <div class="py-5 lg:py-0">
+            <img src="/icon-1.svg" alt="" class="hidden lg:block" />
+            <h3 class="text-h3 lg:mt-3">Multi-approver policies</h3>
+            <p class="text-body-small text-white/60 mt-2 hidden lg:block">
+              Multi-signature digital asset solution with automated approval workflows
+            </p>
+          </div>
+
+          <div class="py-5 lg:py-0">
+            <img src="/icon-2.svg" alt="" class="hidden lg:block" />
+            <h3 class="text-h3 lg:mt-3">Security and decentralized</h3>
+            <p class="text-body-small text-white/60 mt-2 hidden lg:block">
+              Enterprise-grade, fully decentralized on-chain solution
+            </p>
+          </div>
+
+          <div class="py-5 lg:py-0">
+            <img src="/icon-3.svg" alt="" class="hidden lg:block" />
+            <h3 class="text-h3 lg:mt-3">Decentralized key management</h3>
+            <p class="text-body-small text-white/60 mt-2 hidden lg:block">
+              Enterprise-grade, fully decentralized on-chain solution
+            </p>
+          </div>
+
+          <div class="py-5 lg:py-0">
+            <div class="items-center justify-between hidden lg:flex">
+              <img src="/icon-4.svg" alt="" class="" />
+              <span class="badge badge-disabled">
+                <span class="relative -top-0.5">Coming soon</span>
+                <img src="/coming-soon.svg" alt="Coming soon" />
+              </span>
+            </div>
+            <h3 class="text-h3 lg:mt-3 text-white/40">
+              <span class="badge badge-disabled lg:hidden float-right relative top-2">
+                <span class="relative -top-0.5">Coming soon</span>
+                <img src="/coming-soon.svg" alt="Coming soon" />
+              </span>
+              The future is multi-chain
+            </h3>
+            <p class="text-body-small text-white/60 mt-2 hidden lg:block">
+              Assets across multiple blockchains with ICP's Chain Fusion technology
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
