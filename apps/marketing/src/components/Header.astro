@@ -28,7 +28,7 @@ import { headerNav } from '../lib/nav';
     </div>
 
     <label class="lg:hidden cursor-pointer peer group z-10">
-      <input type="checkbox" class="hidden" />
+      <input type="checkbox" class="hidden" name="mobileMenuTrigger" />
       <svg
         width="40"
         height="40"
@@ -54,11 +54,15 @@ import { headerNav } from '../lib/nav';
     </label>
 
     <nav
-      class="fixed inset-0 px-6 bg-black flex-col items-start pt-36 gap-y-5 flex opacity-0 pointer-events-none peer-has-checked:opacity-100 peer-has-checked:pointer-events-auto transition-all duration-300"
+      class="lg:hidden fixed inset-0 px-6 bg-black flex-col items-start pt-36 gap-y-5 flex opacity-0 pointer-events-none peer-has-checked:opacity-100 peer-has-checked:pointer-events-auto transition-all duration-300"
     >
       {
         headerNav.navigation.map(item => (
-          <a href={item.href} class="text-h3 hover:text-white/70 transition-all duration-300">
+          <a
+            href={item.href}
+            class="text-h3 hover:text-white/70 transition-all duration-300"
+            onclick="document.querySelector('input[name=mobileMenuTrigger]').checked = false"
+          >
             {item.label}
           </a>
         ))

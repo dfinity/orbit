@@ -19,7 +19,9 @@ const currentYear = new Date().getFullYear();
 
     <div class="flex pb-6 lg:flex-row flex-col">
       <div class="flex-2 lg:border-b border-white/40 flex flex-col items-start pb-4">
-        <img src="/logo.svg" alt="Orbit Logo" />
+        <a href="#" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+          ><img src="/logo.svg" alt="Orbit Logo" /></a
+        >
         <div class="flex-1"></div>
         <div class="items-center gap-x-14 hidden lg:flex">
           <span class="text-h8">© {currentYear} Orbit</span>

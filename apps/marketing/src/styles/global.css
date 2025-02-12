@@ -17,9 +17,10 @@
 
 @theme {
   --color-*: initial;
-  --color-black: #030d03;
+  --color-black: #0e0d0e;
   --color-white: #ffffff;
   --color-blue: #2c0dff;
+  --color-panel: #191919;
 
   --font-*: initial;
   --font-rules: 'Rules', sans-serif;
@@ -111,6 +112,18 @@
   @apply bg-white border border-white text-black hover:bg-black hover:text-white transition-colors;
 }
 
+@utility toggle {
+  @apply rounded-lg appearance-none cursor-pointer text-center inline-flex items-center justify-center text-h5 px-5 pt-2 pb-3 transition-colors focus-visible:outline-2 outline-offset-2 outline-white;
+
+  &:not(:has(input:checked)) {
+    @apply bg-white/15 text-white/40 hover:bg-white/25;
+  }
+
+  &:has(input:checked) {
+    @apply bg-white text-black hover:bg-white/90;
+  }
+}
+
 @utility container-page {
   @apply max-w-screen-2xl mx-auto px-6 lg:px-10;
 }
@@ -120,7 +133,15 @@
 }
 
 @utility badge-disabled {
-  @apply  text-white/40 bg-white/10;
+  @apply text-white/40 bg-white/10;
+}
+
+@utility text-gradient {
+  @apply bg-gradient-to-b from-white to-white/50 text-transparent bg-clip-text;
+}
+
+@utility panel {
+  @apply bg-panel rounded-xl outline-[13px] outline-white/2 focus-visible:outline-white/50;
 }
 
 body,
@@ -132,6 +153,8 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+
+  scroll-behavior: smooth;
 }
 
 @keyframes fade-in {
@@ -146,4 +169,8 @@ html {
 
 @utility animate-delayed-fade-in {
   animation: fade-in 1s ease-in-out 1.5s both;
+}
+
+@utility animate-fade-in-orbs {
+  animation: fade-in 3s ease-out both;
 }

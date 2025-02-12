@@ -1,0 +1,147 @@
+---
+const features = [
+  {
+    title: 'Multi-signature approvals',
+    shortTitle: 'Multi-Sig',
+    description:
+      'Multi-signature support and decentralized key management, granting DAOs full control over their assets.',
+  },
+  {
+    title: 'Treasury management',
+    shortTitle: 'Treasury',
+    description: 'Secure and collaborative custody with flexible approval workflows',
+  },
+  {
+    title: 'Smart Contract management',
+    shortTitle: 'Smart Contracts',
+    description: 'Secure and collaborative custody with flexible approval workflows',
+  },
+  {
+    title: 'Governance',
+    shortTitle: 'Governance',
+    description: 'On-chain governance with customizable approval mechanisms and workflows',
+  },
+];
+---
+
+<section class="flex flex-col lg:flex-row pt-20" id="features">
+  <div class="flex-1">
+    <h2 class="text-h4 lg:text-h2 lg:pr-20">
+      Next-Level security, full control, zero compromises.
+    </h2>
+  </div>
+  <div
+    class="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-24 lg:gap-y-16 divide-solid divide-white/40 divide-y lg:divide-none"
+  >
+    <div class="py-5 lg:py-0">
+      <img src="/icon-1.svg" alt="" class="hidden lg:block" />
+      <h3 class="text-h3 lg:mt-3">Multi-approver policies</h3>
+      <p class="text-body-small text-white/60 mt-2 hidden lg:block">
+        Multi-signature digital asset solution with automated approval workflows
+      </p>
+    </div>
+
+    <div class="py-5 lg:py-0">
+      <img src="/icon-2.svg" alt="" class="hidden lg:block" />
+      <h3 class="text-h3 lg:mt-3">Security and decentralized</h3>
+      <p class="text-body-small text-white/60 mt-2 hidden lg:block">
+        Enterprise-grade, fully decentralized on-chain solution
+      </p>
+    </div>
+
+    <div class="py-5 lg:py-0">
+      <img src="/icon-3.svg" alt="" class="hidden lg:block" />
+      <h3 class="text-h3 lg:mt-3">Decentralized key management</h3>
+      <p class="text-body-small text-white/60 mt-2 hidden lg:block">
+        Enterprise-grade, fully decentralized on-chain solution
+      </p>
+    </div>
+
+    <div class="py-5 lg:py-0">
+      <div class="items-center justify-between hidden lg:flex">
+        <img src="/icon-4.svg" alt="" class="" />
+        <span class="badge badge-disabled">
+          <span class="relative -top-0.5">Coming soon</span>
+          <img src="/coming-soon.svg" alt="Coming soon" />
+        </span>
+      </div>
+      <h3 class="text-h3 lg:mt-3 text-white/40">
+        <span class="badge badge-disabled lg:hidden float-right relative top-2">
+          <span class="relative -top-0.5">Coming soon</span>
+          <img src="/coming-soon.svg" alt="Coming soon" />
+        </span>
+        The future is multi-chain
+      </h3>
+      <p class="text-body-small text-white/60 mt-2 hidden lg:block">
+        Assets across multiple blockchains with ICP's Chain Fusion technology
+      </p>
+    </div>
+  </div>
+</section>
+<div class="pt-28 lg:pt-32" id="other-features">
+  <div class="hidden lg:block panel px-16 pt-10 pb-32 bg-radial from-white/2">
+    <h3 class="text-h4">Get onchain, on Orbit</h3>
+    <div class="mt-16 px-30">
+      <div class="flex gap-x-3">
+        {
+          features.map((feature, index) => (
+            <label class="toggle" tabindex="0">
+              <input
+                name="feature"
+                type="radio"
+                value={feature.shortTitle}
+                class="hidden"
+                checked={index === 0}
+              />
+              {feature.shortTitle}
+            </label>
+          ))
+        }
+      </div>
+
+      <div class="grid grid-cols-1 grid-rows-1 mt-8">
+        {
+          features.map((feature, index) => (
+            <p
+              class={
+                'text-h3 col-start-1 row-start-1 transition-opacity duration-300  text-gradient' +
+                (index === 0 ? '' : ' opacity-0')
+              }
+            >
+              {feature.description}
+            </p>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+  <div class="lg:hidden">
+    <h3 class="text-h4">Get onchain, on Orbit</h3>
+    <div class="flex flex-col gap-14 pt-14">
+      {
+        features.map((feature, index) => (
+          <div class="">
+            <div class="border-b border-white/20 pb-7 flex items-center gap-5">
+              <span class=" inline-flex w-10 h-10 items-center justify-center pb-1 rounded-full border-white border">
+                {index + 1}
+              </span>
+              <h3 class="text-h4">{feature.title}</h3>
+            </div>
+            <p class="text-body-medium text-white/80 mt-3">{feature.description}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('#other-features label[class="toggle"]').forEach((label, index) => {
+    label.addEventListener('click', () => {
+      document.querySelectorAll('#other-features p').forEach(p => {
+        p.classList.add('opacity-0');
+      });
+      document.querySelectorAll('#other-features p')[index].classList.remove('opacity-0');
+    });
+  });
+</script>

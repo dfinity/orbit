@@ -1,0 +1,99 @@
+<canvas id="canvas" class="w-full h-full"></canvas>
+
+<script>
+  const canvas = document.getElementById('canvas')! as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d')!;
+
+  canvas.width = Math.min(window.innerWidth, 1450);
+  canvas.height = canvas.width * 1.5;
+
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2.5;
+  //   const startAngle = -2.2;
+  const startAngle = -1.2;
+  const speed = 0.012;
+  const orbitRadius = 550;
+  const diameter = 80;
+  const tilt = 0.25; // This tilt factor simulates a view from above the orbital plane.
+
+  const colors = {
+    blue: '43, 26, 254',
+    pink: '255, 7, 254',
+    red: '254, 6, 33',
+  };
+
+  type Orbiter = {
+    angle: number;
+    orbitRadius: number;
+    speed: number;
+    diameter: number;
+    color: string;
+  };
+
+  function darkenColor(color: string, factor: number) {
+    const [r, g, b] = color.split(',').map(Number);
+    return `${r * factor}, ${g * factor}, ${b * factor}`;
+  }
+
+  // Define two blue orbiters with different orbit radii and speeds.
+  const orbiters: Orbiter[] = [
+    { angle: startAngle, orbitRadius, speed, diameter, color: colors.red },
+    { angle: startAngle + Math.PI, orbitRadius, speed, diameter, color: colors.blue },
+    // { angle: startAngle + (2 * Math.PI) / 3, orbitRadius, speed, diameter, color: colors.pink },
+    // { angle: startAngle + (4 * Math.PI) / 3, orbitRadius, speed, diameter, color: colors.blue },
+  ];
+
+  function getShape(orbiter: Orbiter, time: number, fadeFactor: number) {
+    const angle = orbiter.angle - time * orbiter.speed;
+
+    const x = centerX + orbiter.orbitRadius * Math.cos(angle);
+    const y = centerY + orbiter.orbitRadius * Math.sin(angle) * tilt;
+    const r = orbiter.diameter * Math.sin(angle) + orbiter.diameter * 3;
+
+    // const darkenAmount = 0.7 + Math.sin(angle) * 0.3;
+    const darkenAmount = 1;
+
+    const alpha = fadeFactor;
+
+    return { x, y, r, alpha, color: darkenColor(orbiter.color, darkenAmount) };
+  }
+
+  let time = 0;
+  let lastTime = 0;
+  const timeFactor = 100;
+  //   const motionBlurFactor = 0.07;
+  const motionBlurFactor = 0.02;
+  const motionBlurSteps = 8;
+
+  function update() {
+    // Clear the entire canvas.
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const shapes = orbiters
+      .map(orb => [
+        getShape(orb, time, 1),
+        ...Array.from({ length: motionBlurSteps }, (_, i) =>
+          getShape(orb, time - timeFactor * motionBlurFactor * i, 1 - (i * 1) / motionBlurSteps),
+        ),
+      ])
+      .flat();
+
+    shapes.sort((a, b) => a.y - b.y);
+
+    shapes.forEach(shape => {
+      ctx.beginPath();
+      ctx.arc(shape.x, shape.y, shape.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${shape.color}, ${shape.alpha})`;
+      ctx.globalCompositeOperation = 'lighten';
+      ctx.fill();
+    });
+
+    time += (performance.now() - lastTime) / timeFactor;
+    lastTime = performance.now();
+
+    // Request the next animation frame.
+    requestAnimationFrame(update);
+  }
+
+  requestAnimationFrame(update);
+</script>

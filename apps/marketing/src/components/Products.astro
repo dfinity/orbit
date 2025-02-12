@@ -1,0 +1,26 @@
+---
+import ProductPanel from './ProductPanel.astro';
+---
+
+<section class="pt-28 lg:pt-56 pb-4" id="products">
+  <h2 class="text-h3 lg:text-h2">Experience Orbit</h2>
+
+  <div class="mt-16 bg-panel lg:bg-transparent -mx-6 lg:mx-0">
+    <div
+      class="flex flex-col lg:flex-row gap-x-10 divide-y divide-white/20 px-6 lg:px-0 lg:divide-none"
+    >
+      <ProductPanel title="Users" label="APP" href="https://orbit.global" image="/orbit-app.svg">
+        Use the enterprise-grade, multi-sig wallet
+      </ProductPanel>
+
+      <ProductPanel
+        title="Developers"
+        label="STATION"
+        href="https://docs.orbit.global"
+        image="/orbit-station.svg"
+      >
+        Get the latest docs to integrate seamlessly
+      </ProductPanel>
+    </div>
+  </div>
+</section>

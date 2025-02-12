@@ -2,19 +2,19 @@ export const headerNav = {
   navigation: [
     {
       label: 'Features',
-      href: '',
+      href: '#features',
     },
     {
       label: 'Products',
-      href: '',
+      href: '#products',
     },
     {
       label: 'Clients',
-      href: '',
+      href: '#clients',
     },
     {
       label: 'FAQ',
-      href: '',
+      href: '#faq',
     },
   ],
 };
@@ -23,29 +23,29 @@ export const footerNav = {
   navigation: [
     {
       label: 'Features',
-      href: '',
+      href: '#features',
     },
     {
       label: 'Products',
-      href: '',
+      href: '#products',
     },
     {
       label: 'Clients',
-      href: '',
+      href: '#clients',
     },
     {
       label: 'FAQ',
-      href: '',
+      href: '#faq',
     },
   ],
   orbit: [
     {
       label: 'Contact',
-      href: '',
+      href: 'mailto:orbit@dfinity.org',
     },
     {
       label: 'Documentation',
-      href: '',
+      href: 'https://docs.orbit.global',
     },
   ],
 };
@@ -54,21 +54,21 @@ export const footerLinks = {
   other: [
     {
       label: 'Privacy & terms',
-      href: '',
+      href: '#',
     },
     {
       label: 'Change log',
-      href: '',
+      href: 'https://github.com/dfinity/orbit/releases',
     },
   ],
   social: [
     {
       label: 'Twitter',
-      href: '',
+      href: 'https://x.com/dfinity',
     },
     {
       label: 'Github',
-      href: '',
+      href: 'https://github.com/dfinity/orbit',
     },
   ],
 };
