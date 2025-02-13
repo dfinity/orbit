@@ -32,7 +32,7 @@
 
                   <VList density="compact">
                     <VListItem class="px-0" min-height="auto">
-                      <VListItemTitle>{{ $t('landing.highlights.multisignature') }}</VListItemTitle>
+                      <VListItemTitle>{{ $t('landing.highlights.multiapproval') }}</VListItemTitle>
                     </VListItem>
                     <VListItem class="px-0" min-height="auto">
                       <VListItemTitle>{{ $t('landing.highlights.treasury') }}</VListItemTitle>

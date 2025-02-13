@@ -408,7 +408,7 @@ export default {
       license: 'License',
     },
     highlights: {
-      multisignature: 'Multi-signature approvals',
+      multiapproval: 'Multi approval policies',
       treasury: 'Treasury management',
       smartcontract: 'Smart contract management',
     },

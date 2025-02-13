@@ -413,7 +413,7 @@ export default {
       license: 'Licença',
     },
     highlights: {
-      multisignature: 'Aprovações multi-assinatura',
+      multiapproval: 'Políticas de aprovação',
       treasury: 'Gestão do tesouro',
       smartcontract: 'Gestão de contratos inteligentes',
     },

@@ -413,7 +413,7 @@ export default {
       license: 'Licence',
     },
     highlights: {
-      multisignature: 'Approbations Multi-signatures',
+      multiapproval: 'Politiques d approbation',
       treasury: 'Gestion du Trésor',
       smartcontract: 'Gestion de Contrat Intelligent',
     },
