@@ -110,7 +110,7 @@ export default {
   sidebar: {
     highlights: {
       main: 'Carteira de confiança {line1} {line2} {line3}',
-      line1: 'Multi-assinatura',
+      line1: 'Aprovação multipla',
       line2: 'Ativos digitais',
       line3: 'Contratos inteligentes',
     },

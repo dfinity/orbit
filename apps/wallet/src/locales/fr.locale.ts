@@ -110,7 +110,7 @@ export default {
   sidebar: {
     highlights: {
       main: 'Portefeuille de confiance {line1} {line2} {line3}',
-      line1: 'Multi-signatures',
+      line1: 'Approbation multiple',
       line2: 'Gestion d actifs',
       line3: 'Contrat intelligent',
     },

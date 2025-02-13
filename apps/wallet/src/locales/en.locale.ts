@@ -396,8 +396,8 @@ export default {
   },
   sidebar: {
     highlights: {
-      main: 'Trustless Wallet {line1} {line2} {line3}',
-      line1: 'Multi-signature',
+      main: 'Secure Wallet {line1} {line2} {line3}',
+      line1: 'Multi Approval',
       line2: 'Digital Assets',
       line3: 'Smart Contracts',
     },
