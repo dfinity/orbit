@@ -33,7 +33,7 @@
 }
 
 @utility text-h2 {
-  font-size: 3.5rem;
+  font-size: 3.43rem;
   line-height: 130%;
   font-weight: 500;
 }
@@ -51,18 +51,20 @@
 }
 
 @utility text-h5 {
-  font-size: 1.25rem;
-  line-height: 130%;
+  font-size: 1.3125rem;
+  line-height: 105%;
   font-weight: 500;
 }
 @utility text-h6 {
   font-size: 1rem;
-  line-height: 110%;
+  line-height: 108.75%;
   font-weight: 500;
+  letter-spacing: 0.02em;
+
 }
 @utility text-h7 {
-  font-size: 1.25rem;
-  line-height: 180%;
+  font-size: 1.125rem;
+  line-height: 150%;
   font-weight: 500;
 }
 
