@@ -4,7 +4,7 @@ const { title, label, href, image } = Astro.props;
 ---
 
 <a
-  class="lg:panel text-center flex-1 py-12 transition-all group relative overflow-hidden"
+  class="panel text-center flex-1 py-12 transition-all group relative overflow-hidden"
   href={href}
   target="_blank"
   rel="noopener noreferrer"
@@ -20,25 +20,27 @@ const { title, label, href, image } = Astro.props;
   >
   </div>
 
-  <div class="z-10 flex flex-col items-center relative">
+  <div class="z-10 flex flex-col items-center relative h-full">
     <h3 class="text-h6 text-white/50 uppercase">{title}</h3>
-    <img src={image} alt={title} class="aspect-square mt-10 h-48 -translate-x-2" />
+    <div class="flex-1 flex items-center justify-center">
+      <img src={image} alt={title} class="mt-10" />
+    </div>
 
     <div class="mt-10">
       <div
-        class="px-8 py-3 text-h7 rounded-lg text-center inline-flex items-center justify-center text-black bg-white border border-white"
+        class="px-8 py-2.5 text-h7 rounded-lg text-center inline-flex items-center justify-center text-black bg-white border border-white"
       >
         <span class="flex items-baseline gap-x-2">
-          <OrbitLogo color="currentColor" />
+          <OrbitLogo color="currentColor" class="h-5" />
           <span class="text-h9 relative -top-px -left-2">{label}</span>
         </span>
       </div>
     </div>
 
-    <p class="text-h3 max-w-[400px] mx-auto mt-4">
+    <p class="text-h4 lg:text-h3 max-w-[400px] mx-auto mt-6 lg:mt-6">
       <slot />
     </p>
-    <p class="mt-16">
+    <p class="mt-14">
       <span class="text-body-medium mt-4">Learn more &rarr;</span>
     </p>
   </div>

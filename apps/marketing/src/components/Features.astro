@@ -1,4 +1,31 @@
 ---
+import ComingSoonBadge from './ComingSoonBadge.astro';
+import MobileFeatureItem from './MobileFeatureItem.astro';
+
+const largeFeatures = [
+  {
+    icon: '/icon-1.svg',
+    title: 'Multi-approver policies',
+    description: 'Multi-signature digital asset solution with automated approval workflows',
+  },
+  {
+    icon: '/icon-2.svg',
+    title: 'Security and decentralized',
+    description: 'Enterprise-grade, fully decentralized on-chain solution',
+  },
+  {
+    icon: '/icon-3.svg',
+    title: 'Decentralized key management',
+    description: 'Enterprise-grade, fully decentralized on-chain solution',
+  },
+  {
+    icon: '/icon-4.svg',
+    title: 'The future is multi-chain',
+    description: "Assets across multiple blockchains with ICP's Chain Fusion technology",
+    comingSoon: true,
+  },
+];
+
 const features = [
   {
     title: 'Multi-signature approvals',
@@ -31,55 +58,32 @@ const features = [
     </h2>
   </div>
   <div
-    class="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-24 lg:gap-y-16 divide-solid divide-white/40 divide-y lg:divide-none"
+    class="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-24 gap-y-10 lg:gap-y-20 pt-16 lg:pt-0"
   >
-    <div class="py-5 lg:py-0">
-      <img src="/icon-1.svg" alt="" class="hidden lg:block" />
-      <h3 class="text-h3 lg:mt-3">Multi-approver policies</h3>
-      <p class="text-body-small text-white/60 mt-2 hidden lg:block">
-        Multi-signature digital asset solution with automated approval workflows
-      </p>
-    </div>
-
-    <div class="py-5 lg:py-0">
-      <img src="/icon-2.svg" alt="" class="hidden lg:block" />
-      <h3 class="text-h3 lg:mt-3">Security and decentralized</h3>
-      <p class="text-body-small text-white/60 mt-2 hidden lg:block">
-        Enterprise-grade, fully decentralized on-chain solution
-      </p>
-    </div>
-
-    <div class="py-5 lg:py-0">
-      <img src="/icon-3.svg" alt="" class="hidden lg:block" />
-      <h3 class="text-h3 lg:mt-3">Decentralized key management</h3>
-      <p class="text-body-small text-white/60 mt-2 hidden lg:block">
-        Enterprise-grade, fully decentralized on-chain solution
-      </p>
-    </div>
-
-    <div class="py-5 lg:py-0">
-      <div class="items-center justify-between hidden lg:flex">
-        <img src="/icon-4.svg" alt="" class="" />
-        <span class="badge badge-disabled">
-          <span class="relative -top-0.5">Coming soon</span>
-          <img src="/coming-soon.svg" alt="Coming soon" />
-        </span>
-      </div>
-      <h3 class="text-h3 lg:mt-3 text-white/40">
-        <span class="badge badge-disabled lg:hidden float-right relative top-2">
-          <span class="relative -top-0.5">Coming soon</span>
-          <img src="/coming-soon.svg" alt="Coming soon" />
-        </span>
-        The future is multi-chain
-      </h3>
-      <p class="text-body-small text-white/60 mt-2 hidden lg:block">
-        Assets across multiple blockchains with ICP's Chain Fusion technology
-      </p>
-    </div>
+    {
+      largeFeatures.map((feature, index) => (
+        <>
+          <div class="py-5 lg:py-0 hidden lg:block">
+            <div class="flex items-center justify-between">
+              <img src={feature.icon} alt="" class="" />
+              {feature.comingSoon && <ComingSoonBadge class="" />}
+            </div>
+            <h3 class="text-h4 lg:text-h3 lg:mt-3 ">{feature.title}</h3>
+            <p class="text-body-small text-white/60 mt-5">{feature.description}</p>
+          </div>
+          <MobileFeatureItem
+            index={index + 1}
+            title={feature.title}
+            class="lg:hidden"
+            comingSoon={feature.comingSoon}
+          />
+        </>
+      ))
+    }
   </div>
 </section>
 <div class="pt-28 lg:pt-32" id="other-features">
-  <div class="hidden lg:block panel px-16 pt-10 pb-32 bg-radial from-white/2">
+  <div class="hidden lg:block panel px-16 pt-14 pb-32 bg-radial from-white/2">
     <h3 class="text-h4">Get onchain, on Orbit</h3>
     <div class="mt-16 px-30">
       <div class="flex gap-x-3">
@@ -104,7 +108,7 @@ const features = [
           features.map((feature, index) => (
             <p
               class={
-                'text-h3 col-start-1 row-start-1 transition-opacity duration-300  text-gradient' +
+                'text-h3 col-start-1 row-start-1 transition-opacity duration-300  text-gradient leading-[150%]' +
                 (index === 0 ? '' : ' opacity-0')
               }
             >
@@ -120,15 +124,11 @@ const features = [
     <div class="flex flex-col gap-14 pt-14">
       {
         features.map((feature, index) => (
-          <div class="">
-            <div class="border-b border-white/20 pb-7 flex items-center gap-5">
-              <span class=" inline-flex w-10 h-10 items-center justify-center pb-1 rounded-full border-white border">
-                {index + 1}
-              </span>
-              <h3 class="text-h4">{feature.title}</h3>
-            </div>
-            <p class="text-body-medium text-white/80 mt-3">{feature.description}</p>
-          </div>
+          <MobileFeatureItem
+            index={index + 1}
+            title={feature.title}
+            description={feature.description}
+          />
         ))
       }
     </div>

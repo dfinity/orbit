@@ -27,20 +27,20 @@
 }
 
 @utility text-h1 {
-  font-size: 4.5rem;
+  font-size: 4.357rem;
   line-height: 120%;
   font-weight: 500;
 }
 
 @utility text-h2 {
-  font-size: 3.43rem;
+  font-size: 3.125rem;
   line-height: 130%;
   font-weight: 500;
 }
 
 @utility text-h3 {
-  font-size: 2.125rem;
-  line-height: 150%;
+  font-size: 2rem;
+  line-height: 130%;
   font-weight: 500;
 }
 
@@ -84,8 +84,14 @@
   @apply uppercase;
 }
 
-@utility text-body-medium {
+@utility text-body-big {
   font-size: 1.125rem;
+  line-height: 160%;
+  font-weight: 400;
+}
+
+@utility text-body-medium {
+  font-size: 1rem;
   line-height: 160%;
   font-weight: 400;
 }
@@ -143,7 +149,7 @@
 }
 
 @utility panel {
-  @apply bg-panel rounded-xl outline-[13px] outline-white/2 focus-visible:outline-white/50;
+  @apply bg-panel rounded-xl outline-[13px] outline-white/2 focus-visible:outline-white/50 px-6;
 }
 
 body,

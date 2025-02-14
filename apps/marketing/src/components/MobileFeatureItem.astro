@@ -1,0 +1,21 @@
+---
+import ComingSoonBadge from './ComingSoonBadge.astro';
+
+const { index, title, description, class: className, comingSoon } = Astro.props;
+---
+
+<div class={'border-b border-white/20 pb-7 ' + className}>
+  {comingSoon && <ComingSoonBadge class="float-right" />}
+  <div
+    class={'flex items-center gap-5 ' +
+      (comingSoon ? 'text-white/40 border-white/40' : 'border-white')}
+  >
+    <span
+      class="inline-flex w-10 h-10 aspect-square items-center justify-center pb-1 rounded-full border"
+    >
+      {index}
+    </span>
+    <h3 class="text-h4">{title}</h3>
+  </div>
+  {description && <p class="text-body-medium text-white/80 mt-3">{description}</p>}
+</div>

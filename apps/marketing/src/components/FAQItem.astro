@@ -2,17 +2,17 @@
 const { question, checked = undefined } = Astro.props;
 ---
 
-<div class="pb-9 border-b border-white">
+<div class="pb-11 border-b border-white">
   <div
     class="group grid grid-rows-[max-content_0fr] overflow-hidden has-checked:grid-rows-[max-content_1fr] transition-all has-focus-visible:outline-2 outline-offset-4 outline-white rounded-md"
   >
     <label class="cursor-pointer has-checked:mb-4 focus:outline-none" tabindex="0">
-      <input type="radio" name="faq" class="hidden" checked={checked} />
-      <h3 class="text-h4 lg:text-h3 flex items-center justify-between">
+      <input type="checkbox" name="faq" class="hidden" checked={checked} />
+      <h3 class="text-h5 lg:text-h4 flex items-center justify-between">
         {question}
         <svg
-          width="37"
-          height="37"
+          width="25"
+          height="25"
           viewBox="0 0 37 37"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
