@@ -107,16 +107,12 @@ export default {
     error_dialog_message: 'Falha ao carregar, por favor, tente novamente.',
     request_submit_failed: 'Falha ao enviar o pedido, por favor, tente novamente.',
   },
-  alpha_warning: {
-    version: 'Esta é uma versão alfa.',
-    caution: 'Utilize com cuidado.',
-  },
   sidebar: {
     highlights: {
-      main: 'Carteira Trustless {line1} {line2} {line3}',
-      line3: 'Multichain',
-      line1: 'Ativos Digitais',
-      line2: 'Multi-Custódia',
+      main: 'Carteira de confiança {line1} {line2} {line3}',
+      line1: 'Aprovação multipla',
+      line2: 'Ativos digitais',
+      line3: 'Contratos inteligentes',
     },
   },
   system_upgrade: {
@@ -412,10 +408,15 @@ export default {
     },
   },
   landing: {
-    title: 'Gestão Multichain',
-    subtitle: 'Uma Plataforma, Supervisão Completa',
-    description:
-      'Orbit simplifica a gestão de ativos on-chain para empresas, DAOs e equipes, consolidando controle e visibilidade em uma única plataforma intuitiva.',
+    btn_accept_license: {
+      phrase: 'Ao clicar neste botão, você concorda com a {0}.',
+      license: 'Licença',
+    },
+    highlights: {
+      multiapproval: 'Políticas de aprovação',
+      treasury: 'Gestão do tesouro',
+      smartcontract: 'Gestão de contratos inteligentes',
+    },
     connect_title: 'Conecte-se de forma segura para gerenciar seus ativos digitais',
     connect_btn: 'Conectar com Internet Identity',
     connect_error: 'Falha ao conectar, por favor tente novamente.',
@@ -666,6 +667,7 @@ export default {
     },
   },
   terms: {
+    license: 'Licença',
     loading: 'Carregando',
     permission: 'Permissão',
     controllers: 'Controladores',

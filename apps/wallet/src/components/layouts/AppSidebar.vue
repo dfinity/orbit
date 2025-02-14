@@ -12,12 +12,12 @@
           <SidebarHighlights v-if="props.nav && !$navigation.value.main.length" class="mb-4" />
         </slot>
       </div>
-      <div class="d-flex flex-column flex-grow-0 pa-4">
+      <div class="d-flex flex-row flex-grow-0 pa-4 ga-6">
         <slot name="footer">
-          <AlphaWarning class="mb-12" />
           <a v-if="showFooter" href="https://internetcomputer.org" target="_blank">
-            <img :src="poweredByBadge" height="20" />
+            <PoweredByImage width="180" alt="Internet Computer" draggable="false" />
           </a>
+          <VImg :src="betaImage" height="24" />
         </slot>
       </div>
     </div>
@@ -27,12 +27,12 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import { VNavigationDrawer } from 'vuetify/components';
-import AlphaWarning from '~/components/layouts/AlphaWarning.vue';
 import SidebarHighlights from '~/components/ui/SidebarHighlights.vue';
 import { useAppStore } from '~/stores/app.store';
-import poweredByBadge from '~assets/images/powered-by-badge.svg';
 import SidenavHeader from './sidebar/SidenavHeader.vue';
 import SidenavMenu from './sidebar/SidenavMenu.vue';
+import PoweredByImage from '../ui/svg/PoweredByImage.vue';
+import betaImage from '~assets/images/beta.png';
 
 const props = withDefaults(
   defineProps<{
