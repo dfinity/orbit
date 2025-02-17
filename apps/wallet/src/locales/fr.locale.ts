@@ -887,6 +887,7 @@ export default {
     assets: 'Actifs',
     external_canisters: 'Canisters',
     approval_policy: 'Police d approbation',
+    policies: 'Politiques',
   },
   pages: {
     dashboard: {
@@ -1026,8 +1027,8 @@ export default {
     },
     request_policies: {
       title: "Polices d'Aprobation",
-      create_label: 'Ajouter un police',
-      dialog_title: 'Police',
+      create_label: 'Ajouter une politique d approbation',
+      dialog_title: 'Police d approbation',
     },
     assets: {
       title: 'Actifs',
@@ -1050,7 +1051,7 @@ export default {
       },
     },
     approval_policy: {
-      btn_new_entry: 'Ajouter une nouvelle police',
+      btn_new_entry: "Ajouter une police d'approbation",
       title: 'Police d approbation',
       dialog: {
         title: 'Police d approbation',

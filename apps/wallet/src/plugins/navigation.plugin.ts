@@ -162,8 +162,8 @@ const sections = (): NavigationSections => ({
           },
         },
         {
-          name: 'request_policies',
-          localeKey: 'navigation.request_policies',
+          name: 'policies',
+          localeKey: 'navigation.policies',
           action: {
             type: NavigationActionType.To,
             handle: route =>
@@ -173,24 +173,10 @@ const sections = (): NavigationSections => ({
           },
           auth: {
             type: NavigastionAuthType.Route,
-            route: Routes.RequestPolicies,
+            route: Routes.Policies,
           },
         },
-        {
-          name: 'approval_policy',
-          localeKey: 'navigation.approval_policy',
-          action: {
-            type: NavigationActionType.To,
-            handle: route =>
-              route.params.locale
-                ? `/${route.params.locale}/settings/approval-policy`
-                : '/settings/approval-policy',
-          },
-          auth: {
-            type: NavigastionAuthType.Route,
-            route: Routes.ApprovalPolicy,
-          },
-        },
+
         {
           name: 'requests',
           localeKey: 'navigation.requests',

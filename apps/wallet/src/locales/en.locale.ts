@@ -876,6 +876,7 @@ export default {
     request_policies: 'Request Policies',
     assets: 'Assets',
     external_canisters: 'Canisters',
+    policies: 'Policies',
     approval_policy: 'Approval Policy',
   },
   pages: {
@@ -1010,8 +1011,8 @@ export default {
     },
     request_policies: {
       title: 'Request Policies',
-      create_label: 'Add Policy',
-      dialog_title: 'Policy',
+      create_label: 'Add Request Policy',
+      dialog_title: 'Request Policy',
     },
     assets: {
       title: 'Assets',
@@ -1034,7 +1035,7 @@ export default {
       },
     },
     approval_policy: {
-      btn_new_entry: 'Add new policy',
+      btn_new_entry: 'Add approval policy',
       title: 'Approval Policy',
       dialog: {
         title: 'Approval Policy',

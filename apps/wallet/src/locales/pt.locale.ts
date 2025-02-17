@@ -883,6 +883,7 @@ export default {
     assets: 'Ativos',
     external_canisters: 'Canisters',
     approval_policy: 'Política de aprovação',
+    policies: 'Regras',
   },
   pages: {
     dashboard: {
@@ -1023,8 +1024,8 @@ export default {
     },
     request_policies: {
       title: 'Regras de aprovação',
-      create_label: 'Criar Regra',
-      dialog_title: 'Regra',
+      create_label: 'Adicionar regra de aprovação',
+      dialog_title: 'Regra de aprovação',
     },
     assets: {
       title: 'Ativos',
@@ -1048,7 +1049,7 @@ export default {
     },
     approval_policy: {
       title: 'Política de aprovação',
-      btn_new_entry: 'Adicionar nova política',
+      btn_new_entry: 'Adicionar política de aprovação',
       dialog: {
         title: 'Política de aprovação',
       },
