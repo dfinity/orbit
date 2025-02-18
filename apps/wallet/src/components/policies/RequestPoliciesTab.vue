@@ -103,7 +103,7 @@ const forceReload = ref(false);
 const disableRefresh = ref(false);
 const policies: Ref<RequestPolicy[]> = ref([]);
 const privileges = ref<RequestPolicyCallerPrivileges[]>([]);
-const pagination = usePagination();
+const pagination = usePagination({ limit: 100 });
 const mounted = ref(false);
 const triggerSearch = throttle(() => (forceReload.value = true), 500);
 
