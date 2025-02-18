@@ -147,8 +147,8 @@ const hasDeletePrivilege = (id: UUID): boolean => {
 let useVerifiedCall = false;
 
 const fetchList = useFetchList(
-  (offset, limit) => {
-    const results = station.service.listRequestPolicies(
+  async (offset, limit) => {
+    const results = await station.service.listRequestPolicies(
       {
         offset,
         limit,
@@ -157,6 +157,17 @@ const fetchList = useFetchList(
     );
 
     useVerifiedCall = true;
+
+    results.policies.sort((a, b) => {
+      const localizedSpecifierA = i18n.t(
+        `request_policies.specifier.${Object.keys(a.specifier)[0].toLowerCase()}`,
+      );
+      const localizedSpecifierB = i18n.t(
+        `request_policies.specifier.${Object.keys(b.specifier)[0].toLowerCase()}`,
+      );
+
+      return localizedSpecifierA.localeCompare(localizedSpecifierB);
+    });
 
     return results;
   },

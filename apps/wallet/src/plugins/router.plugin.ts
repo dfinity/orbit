@@ -415,16 +415,16 @@ const router = createRouter({
               },
             },
             {
-              path: 'policies',
-              name: Routes.Policies,
-              component: () => import('~/pages/PoliciesPage.vue'),
+              path: 'approval-rules',
+              name: Routes.ApprovalRules,
+              component: () => import('~/pages/ApprovalRulesPage.vue'),
               props: () => {
                 return {
-                  title: i18n.global.t('pages.policies.title'),
+                  title: i18n.global.t('pages.approval_rules.title'),
                   breadcrumbs: [
                     { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
                     { title: i18n.global.t('navigation.settings') },
-                    { title: i18n.global.t('navigation.policies') },
+                    { title: i18n.global.t('navigation.approval_rules') },
                   ],
                 };
               },

@@ -56,7 +56,7 @@ import PageHeader from '~/components/layouts/PageHeader.vue';
 import AuthCheck from '~/components/AuthCheck.vue';
 import PageBody from '~/components/layouts/PageBody.vue';
 import RequestPoliciesTab from '~/components/policies/RequestPoliciesTab.vue';
-import ApprovalPolicyTab from '~/components/policies/ApprovalPolicyTab.vue';
+import ApprovalRulesTab from '~/components/policies/ApprovalRulesTab.vue';
 import { Routes } from '~/configs/routes.config';
 import { RequestDomains } from '~/types/station.types';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
@@ -66,12 +66,12 @@ const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcr
 
 enum Tabs {
   RequestPolicies = 'request_policies',
-  ApprovalPolicy = 'approval_policy',
+  ApprovalRules = 'approval_rules',
 }
 const tabs = [
-  { name: Tabs.ApprovalPolicy, component: ApprovalPolicyTab },
+  { name: Tabs.ApprovalRules, component: ApprovalRulesTab },
   { name: Tabs.RequestPolicies, component: RequestPoliciesTab },
 ];
 
-const tab = ref<Tabs>(Tabs.ApprovalPolicy);
+const tab = ref<Tabs>(Tabs.ApprovalRules);
 </script>

@@ -233,7 +233,7 @@ export default {
       external_canister: 'Canister Géré',
       system_info: 'Informations Système',
       asset: 'Actifs',
-      named_rule: 'Polices d approbation',
+      named_rule: 'Règles d approbation',
     },
     types: {
       addusergroup: {
@@ -344,16 +344,16 @@ export default {
         request_title: 'Demande d édition de sauvegarde',
       },
       addnamedrule: {
-        title: 'Ajouter une politique d approbation',
-        request_title: 'Demande d ajout d une politique d approbation',
+        title: 'Ajouter une règle d approbation',
+        request_title: 'Demande d ajout d une règle d approbation',
       },
       editnamedrule: {
-        title: 'Modifier une politique d approbation',
-        request_title: 'Demande de modification d une politique d approbation',
+        title: 'Modifier une règle d approbation',
+        request_title: 'Demande de modification d une règle d approbation',
       },
       removenamedrule: {
-        title: 'Supprimer une politique d approbation',
-        request_title: 'Demande de suppression d une politique d approbation',
+        title: 'Supprimer une règle d approbation',
+        request_title: 'Demande de suppression d une règle d approbation',
       },
       unknown: {
         title: 'Inconnu',
@@ -886,8 +886,7 @@ export default {
     request_policies: "Polices d'Aprobation",
     assets: 'Actifs',
     external_canisters: 'Canisters',
-    approval_policy: 'Police d approbation',
-    policies: 'Politiques',
+    approval_rules: 'Règles d approbation',
   },
   pages: {
     dashboard: {
@@ -1050,11 +1049,11 @@ export default {
         option_add_custom_asset: 'Ajouter un actif personnalisé',
       },
     },
-    approval_policy: {
-      btn_new_entry: "Ajouter une police d'approbation",
-      title: 'Police d approbation',
+    approval_rules: {
+      btn_new_entry: 'Ajouter une règle d approbation',
+      title: 'Règle d approbation',
       dialog: {
-        title: 'Police d approbation',
+        title: 'Règle d approbation',
       },
       linked_policies: 'Polices liées',
     },
@@ -1120,7 +1119,7 @@ export default {
       addressbook: "Carnet d'Adresses",
       managesysteminfo: 'Gérer les Informations Système',
       externalcanister: 'Canister Externe',
-      namedrule: 'Police d approbation',
+      namedrule: 'Règle d approbation',
     },
     categories: {
       treasury: 'Trésorerie (comptes, actifs, etc...)',
@@ -1282,7 +1281,7 @@ export default {
     unsupported_specifier: 'Définition de spécificateur non supportée',
     rule_groups: {
       custom_rules: 'Règles personnalisées',
-      named_rules: 'Polices d approbation',
+      named_rules: 'Règles d approbation',
     },
     rule_user_specifier: {
       owner: 'Propriétaire',
@@ -1300,7 +1299,7 @@ export default {
       quorumpercentage: 'Pourcentage du Quorum',
       allowlistedbymetadata: 'Liste blanche par metadata',
       allowlisted: 'Liste blanche',
-      named_rule: 'Utiliser la politique d approbation: {name}',
+      named_rule: 'Utiliser la règle d approbation: {name}',
     },
     rule_tooltip_summary: {
       allof: 'Tout les suivants:',
@@ -1324,7 +1323,7 @@ export default {
       not: 'Not: {rule}',
       allof: ' ET ',
       anyof: ' OU ',
-      named_rule: 'Utiliser la politique d approbation: {name}',
+      named_rule: 'Utiliser la règle d approbation: {name}',
     },
     specifier: {
       editpermission: 'Modifier les permissions',
@@ -1352,9 +1351,9 @@ export default {
       addasset: 'Ajouter un actif',
       editasset: 'Modifier un actif',
       removeasset: 'Éffacer un actif',
-      addnamedrule: 'Ajouter une politique d approbation',
-      editnamedrule: 'Modifier une politique d approbation',
-      removenamedrule: 'Éffacer une politique d approbation',
+      addnamedrule: 'Ajouter une règle d approbation',
+      editnamedrule: 'Modifier une règle d approbation',
+      removenamedrule: 'Éffacer une règle d approbation',
     },
   },
   cycle_obtain_strategies: {

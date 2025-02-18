@@ -1,7 +1,7 @@
 <template>
   <Teleport v-if="mounted" to="#policies-actions">
     <AuthCheck :privileges="[Privilege.AddNamedRule]">
-      <NamedRuleDialogBtn :text="$t('pages.approval_policy.btn_new_entry')" />
+      <NamedRuleDialogBtn :text="$t('pages.approval_rules.btn_new_entry')" />
     </AuthCheck>
   </Teleport>
 
@@ -127,7 +127,7 @@ const headers = computed(() => {
       : [
           { title: i18n.t('terms.rule'), key: 'rule', sortable: false },
           {
-            title: i18n.t('pages.approval_policy.linked_policies'),
+            title: i18n.t('pages.approval_rules.linked_policies'),
             key: 'linked_policies',
             sortable: false,
           },

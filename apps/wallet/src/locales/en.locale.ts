@@ -223,7 +223,7 @@ export default {
       external_canister: 'External Canisters',
       system_info: 'System Info',
       asset: 'Assets',
-      named_rule: 'Approval Policy',
+      named_rule: 'Approval Rules',
     },
     types: {
       addusergroup: {
@@ -334,16 +334,16 @@ export default {
         request_title: 'Edit disaster recovery request',
       },
       addnamedrule: {
-        title: 'Add approval policy',
-        request_title: 'Add approval policy request',
+        title: 'Add approval rule',
+        request_title: 'Add approval rule request',
       },
       editnamedrule: {
-        title: 'Edit approval policy',
-        request_title: 'Edit approval policy request',
+        title: 'Edit approval rule',
+        request_title: 'Edit approval rule request',
       },
       removenamedrule: {
-        title: 'Remove approval policy',
-        request_title: 'Remove approval policy request',
+        title: 'Remove approval rule',
+        request_title: 'Remove approval rule request',
       },
       unknown: {
         title: 'Unknown',
@@ -876,8 +876,7 @@ export default {
     request_policies: 'Request Policies',
     assets: 'Assets',
     external_canisters: 'Canisters',
-    policies: 'Policies',
-    approval_policy: 'Approval Policy',
+    approval_rules: 'Approval Rules',
   },
   pages: {
     dashboard: {
@@ -1034,11 +1033,11 @@ export default {
         option_add_custom_asset: 'Add custom asset',
       },
     },
-    approval_policy: {
-      btn_new_entry: 'Add approval policy',
-      title: 'Approval Policy',
+    approval_rules: {
+      btn_new_entry: 'Add approval rule',
+      title: 'Approval rule',
       dialog: {
-        title: 'Approval Policy',
+        title: 'Approval rule',
       },
       linked_policies: 'Linked policies',
     },
@@ -1104,7 +1103,7 @@ export default {
       addressbook: 'Address Book',
       managesysteminfo: 'Manage System Info',
       externalcanister: 'External Canister',
-      namedrule: 'Approval Policy',
+      namedrule: 'Approval Rule',
     },
     categories: {
       treasury: 'Treasury (accounts, assets, etc...)',
@@ -1260,7 +1259,7 @@ export default {
     unsupported_specifier: 'Unsupported specifier definition',
     rule_groups: {
       custom_rules: 'Custom rules',
-      named_rules: 'Approval policies',
+      named_rules: 'Approval rules',
     },
     rule_user_specifier: {
       owner: 'Owner',
@@ -1278,7 +1277,7 @@ export default {
       quorumpercentage: 'Quorum percentage',
       allowlistedbymetadata: 'Allowlisted by metadata',
       allowlisted: 'Allowlisted',
-      named_rule: 'Use approval policy: {name}',
+      named_rule: 'Use approval rule: {name}',
     },
     rule_tooltip_summary: {
       allof: 'All of the following:',
@@ -1301,7 +1300,7 @@ export default {
       not: 'Not: {rule}',
       allof: ' AND ',
       anyof: ' OR ',
-      named_rule: 'Use approval policy: {name}',
+      named_rule: 'Use approval rule: {name}',
     },
     specifier: {
       editpermission: 'Edit permission',
@@ -1329,9 +1328,9 @@ export default {
       addasset: 'Add asset',
       editasset: 'Edit asset',
       removeasset: 'Remove asset',
-      addnamedrule: 'Add approval policy',
-      editnamedrule: 'Edit approval policy',
-      removenamedrule: 'Remove approval policy',
+      addnamedrule: 'Add approval rule',
+      editnamedrule: 'Edit approval rule',
+      removenamedrule: 'Remove approval rule',
     },
   },
   cycle_obtain_strategies: {
