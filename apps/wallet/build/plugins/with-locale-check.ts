@@ -24,6 +24,12 @@ function compareLocales(
     const wholeKey = root ? root + '.' + key : key;
 
     if (typeof enLocale[key] === 'object') {
+      if (locale[key] === undefined) {
+        console.log(`Key ${wholeKey} is missing in ${localeName}`);
+        result = false;
+        continue;
+      }
+
       if (!compareLocales(enLocale[key], locale[key] as LocaleKey, wholeKey, localeName)) {
         result = false;
       }

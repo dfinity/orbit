@@ -14,7 +14,7 @@
     >
       <VCard>
         <VToolbar color="background">
-          <VToolbarTitle>{{ $t('pages.approval_policy.dialog.title') }}</VToolbarTitle>
+          <VToolbarTitle>{{ $t('pages.approval_rules.dialog.title') }}</VToolbarTitle>
           <VBtn :disabled="loading || saving" :icon="mdiClose" @click="openModel = false" />
         </VToolbar>
         <VCardText v-if="loading" class="py-8">

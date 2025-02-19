@@ -199,7 +199,7 @@ export default {
       external_canister: 'Canister gerenciado',
       system_info: 'Informações do sistema',
       asset: 'Ativos',
-      named_rule: 'Política de aprovação',
+      named_rule: 'Regras de aprovação',
     },
     headers: {
       id: 'ID',
@@ -344,16 +344,16 @@ export default {
         request_title: 'Pedido de configuração de recuperação de desastres',
       },
       addnamedrule: {
-        title: 'Adicionar política de aprovação',
-        request_title: 'Pedido de adição de política de aprovação',
+        title: 'Adicionar regra de aprovação',
+        request_title: 'Pedido de adição de regra de aprovação',
       },
       editnamedrule: {
-        title: 'Editar política de aprovação',
-        request_title: 'Pedido de edição de política de aprovação',
+        title: 'Editar regra de aprovação',
+        request_title: 'Pedido de edição de regra de aprovação',
       },
       removenamedrule: {
-        title: 'Remover política de aprovação',
-        request_title: 'Pedido de remoção de política de aprovação',
+        title: 'Remover regra de aprovação',
+        request_title: 'Pedido de remoção de regra de aprovação',
       },
       unknown: {
         title: 'Desconhecido',
@@ -882,7 +882,7 @@ export default {
     request_policies: 'Regras de aprovação',
     assets: 'Ativos',
     external_canisters: 'Canisters',
-    approval_policy: 'Política de aprovação',
+    approval_rules: 'Regras de aprovação',
   },
   pages: {
     dashboard: {
@@ -1023,8 +1023,8 @@ export default {
     },
     request_policies: {
       title: 'Regras de aprovação',
-      create_label: 'Criar Regra',
-      dialog_title: 'Regra',
+      create_label: 'Adicionar regra de aprovação',
+      dialog_title: 'Regra de aprovação',
     },
     assets: {
       title: 'Ativos',
@@ -1046,11 +1046,11 @@ export default {
         option_add_custom_asset: 'Adicionar ativo personalizado',
       },
     },
-    approval_policy: {
-      title: 'Política de aprovação',
-      btn_new_entry: 'Adicionar nova política',
+    approval_rules: {
+      btn_new_entry: 'Adicionar regra de aprovação',
+      title: 'Regra de aprovação',
       dialog: {
-        title: 'Política de aprovação',
+        title: 'Regra de aprovação',
       },
       linked_policies: 'Políticas vinculadas',
     },
@@ -1117,7 +1117,7 @@ export default {
       managesysteminfo: 'Gerenciar Informações do Sistema',
       externalcanister: 'Canister Externo',
       callcanister: 'Chamar canister',
-      namedrule: 'Política de aprovação',
+      namedrule: 'Regra de aprovação',
     },
     categories: {
       treasury: 'Tesouraria (contas, ativos, etc...)',
@@ -1276,7 +1276,7 @@ export default {
     unsupported_specifier: 'Especificador não suportado',
     rule_groups: {
       custom_rules: 'Regras personalizadas',
-      named_rules: 'Políticas de aprovação',
+      named_rules: 'Regras de aprovação',
     },
     rule_user_specifier: {
       owner: 'Proprietário',
@@ -1294,7 +1294,7 @@ export default {
       quorumpercentage: 'Percentual de quórum',
       allowlistedbymetadata: 'Lista branca por metadados',
       allowlisted: 'Lista branca',
-      named_rule: 'Usa política de aprovação: {name}',
+      named_rule: 'Usa regra de aprovação: {name}',
     },
     rule_tooltip_summary: {
       allof: 'Todos os seguintes:',
@@ -1317,7 +1317,7 @@ export default {
       not: 'Não: {rule}',
       allof: ' E ',
       anyof: ' OU ',
-      named_rule: 'Use política de aprovação: {name}',
+      named_rule: 'Use regra de aprovação: {name}',
     },
     specifier: {
       editpermission: 'Editar permissão',
@@ -1345,9 +1345,9 @@ export default {
       addasset: 'Adicionar ativo',
       editasset: 'Editar ativo',
       removeasset: 'Remover ativo',
-      addnamedrule: 'Adicionar política de aprovação',
-      editnamedrule: 'Editar política de aprovação',
-      removenamedrule: 'Remover política de aprovação',
+      addnamedrule: 'Adicionar regra de aprovação',
+      editnamedrule: 'Editar regra de aprovação',
+      removenamedrule: 'Remover regra de aprovação',
     },
   },
   cycle_obtain_strategies: {
