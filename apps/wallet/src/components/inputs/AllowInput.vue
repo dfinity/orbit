@@ -1,58 +1,83 @@
 <template>
-  <VRow>
+  <VRow v-if="isViewMode">
+    <VCol cols="12" class="py-2 text-body-2 text-medium-emphasis">
+      <template v-if="variantIs(model.auth_scope, 'Public')">
+        {{ $t('permissions.allow.public') }}
+      </template>
+      <template v-else-if="variantIs(model.auth_scope, 'Authenticated')">
+        {{ $t('permissions.allow.authenticated') }}
+      </template>
+      <template v-else-if="specifiedUsersHaveAccess">
+        <p class="mb-1">{{ $t('permissions.allow.restricted') }}</p>
+
+        <UsersAndGroupsAutocomplete
+          v-model="permittedUsersModel"
+          variant="plain"
+          menu-icon=""
+          :readonly="true"
+          :density="props.density"
+          :placeholder="$t('permissions.restrict_permitted_users')"
+          :no-data-text="$t('permissions.no_users_found')"
+          multiple
+        />
+      </template>
+      <template v-else>
+        <p class="mb-1">{{ $t('permissions.allow.no_access') }}</p>
+      </template>
+    </VCol>
+  </VRow>
+  <VRow v-else>
     <VCol cols="12" class="py-2 pl-0">
-      <VRadioGroup v-model="model.auth_scope" :inline="!app.isMobile" hide-details>
-        <VRadio
-          :disabled="isViewMode"
-          :label="$t('permissions.allow.public')"
-          :value="{ Public: null }"
-        />
-        <VRadio
-          :class="{ 'ml-2': !app.isMobile }"
-          :disabled="isViewMode"
-          :label="$t('permissions.allow.authenticated')"
-          :value="{ Authenticated: null }"
-        />
-        <VRadio
-          :class="{ 'ml-2': !app.isMobile }"
-          :disabled="isViewMode"
-          :label="$t('permissions.allow.restricted')"
-          :value="{ Restricted: null }"
-        />
+      <VRadioGroup v-model="displayScope" hide-details>
+        <VRadio :disabled="isViewMode" :value="AllowAuthScope.NoOne">
+          <template #label>
+            {{ $t('permissions.allow.no_access') }}
+          </template>
+        </VRadio>
+        <VRadio :disabled="isViewMode" :value="AllowAuthScope.Public">
+          <template #label>
+            {{ $t('permissions.allow.public') }}
+          </template>
+        </VRadio>
+        <VRadio :disabled="isViewMode" :value="AllowAuthScope.LoggedIn">
+          <template #label>
+            {{ $t('permissions.allow.authenticated') }}
+          </template>
+        </VRadio>
+        <VRadio :disabled="isViewMode" :value="AllowAuthScope.SpecifiedUsers">
+          <template #label>
+            {{ $t('permissions.allow.restricted') }}
+          </template>
+        </VRadio>
       </VRadioGroup>
     </VCol>
-    <VCol cols="12" md="6" class="py-0">
-      <UserGroupAutocomplete
-        v-if="isRestrictedScope"
-        v-model="model.user_groups"
-        :variant="props.variant"
-        multiple
-        :disabled="isViewMode"
-        :density="props.density"
-      />
-    </VCol>
-    <VCol cols="12" md="6" class="py-0">
-      <UserAutocomplete
-        v-if="isRestrictedScope"
-        v-model="model.users"
-        :variant="props.variant"
-        multiple
-        chips
-        :disabled="isViewMode"
-        :density="props.density"
-      />
-    </VCol>
+    <template v-if="displayScope === AllowAuthScope.SpecifiedUsers">
+      <VCol cols="12" class="py-0">
+        <UsersAndGroupsAutocomplete
+          v-model="permittedUsersModel"
+          :variant="props.variant"
+          :readonly="isViewMode"
+          :density="props.density"
+          :placeholder="$t('permissions.restrict_permitted_users')"
+          :no-data-text="$t('permissions.no_users_found')"
+          :rules="[requiredRule]"
+          hide-details="auto"
+          multiple
+        />
+      </VCol>
+    </template>
   </VRow>
 </template>
 
 <script lang="ts" setup>
-import { computed, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { VCol, VRadio, VRadioGroup, VRow } from 'vuetify/components';
-import UserAutocomplete from '~/components/inputs/UserAutocomplete.vue';
-import UserGroupAutocomplete from '~/components/inputs/UserGroupAutocomplete.vue';
 import { Allow } from '~/generated/station/station.did';
-import { useAppStore } from '~/stores/app.store';
+import { requiredRule } from '~/utils/form.utils';
 import { variantIs } from '~/utils/helper.utils';
+import UsersAndGroupsAutocomplete, {
+  UserAndGroupsAutocompleteModel,
+} from './UsersAndGroupsAutocomplete.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -74,28 +99,84 @@ const model = computed({
   set: value => emit('update:modelValue', value),
 });
 
-const app = useAppStore();
+const permittedUsersModel = computed({
+  get: () =>
+    [
+      ...model.value.user_groups.map(userGroupId => ({ type: 'group', id: userGroupId })),
+      ...model.value.users.map(userId => ({ type: 'user', id: userId })),
+    ] as UserAndGroupsAutocompleteModel[],
+  set: value => {
+    model.value = {
+      ...model.value,
+      users: value.filter(item => item.type === 'user').map(item => item.id),
+      user_groups: value.filter(item => item.type === 'group').map(item => item.id),
+    };
+  },
+});
+
 const isViewMode = computed(() => props.mode === 'view');
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: Allow): void;
-  (event: 'valid', payload: boolean): void;
   (event: 'submit', payload: Allow): void;
 }>();
 
-const isRestrictedScope = computed(() => variantIs(model.value.auth_scope, 'Restricted'));
+enum AllowAuthScope {
+  Public = 'public',
+  LoggedIn = 'logged_in',
+  SpecifiedUsers = 'specified_users',
+  NoOne = 'no_one',
+}
 
-watch(
-  () => isRestrictedScope.value,
-  isRestricted => {
-    // Reset user_groups and users when scope is changed from restricted to other
-    if (!isRestricted) {
-      model.value = {
-        ...model.value,
-        user_groups: [],
-        users: [],
-      };
+// Lets the user select specific users when the scope is changed to Restricted
+const selectingUsers = ref(false);
+
+const displayScope = computed({
+  get: () => {
+    if (variantIs(model.value.auth_scope, 'Public')) {
+      return AllowAuthScope.Public;
     }
+    if (variantIs(model.value.auth_scope, 'Authenticated')) {
+      return AllowAuthScope.LoggedIn;
+    }
+    if (
+      (variantIs(model.value.auth_scope, 'Restricted') &&
+        (model.value.users.length > 0 || model.value.user_groups.length > 0)) ||
+      selectingUsers.value
+    ) {
+      return AllowAuthScope.SpecifiedUsers;
+    }
+
+    return AllowAuthScope.NoOne;
   },
+  set: authScope => {
+    let scope: Allow['auth_scope'] = { Restricted: null };
+
+    // Reset user selection when scope is changed
+    selectingUsers.value = authScope === AllowAuthScope.SpecifiedUsers;
+
+    if (authScope === AllowAuthScope.Public) {
+      scope = { Public: null };
+    } else if (authScope === AllowAuthScope.LoggedIn) {
+      scope = { Authenticated: null };
+    }
+
+    model.value = {
+      auth_scope: scope,
+      // Reset user_groups and users when scope is changed to avoid inconsistent variants
+      users: [],
+      user_groups: [],
+    };
+  },
+});
+
+const specifiedUsersHaveAccess = computed(
+  () =>
+    variantIs(model.value.auth_scope, 'Restricted') &&
+    (model.value.users.length > 0 || model.value.user_groups.length > 0),
 );
+
+onMounted(() => {
+  selectingUsers.value = displayScope.value === AllowAuthScope.SpecifiedUsers;
+});
 </script>

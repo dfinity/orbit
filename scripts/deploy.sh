@@ -258,6 +258,38 @@ function deploy_app_wallet() {
   fi
 }
 
+function deploy_app_marketing() {
+  local network=$(get_network)
+  local subnet_type=$(get_subnet_type)
+
+  echo "Deploying Marketing Pages to the '$network' network."
+
+  if should_build_artifacts || [ ! -f ./artifacts/marketing-dapp/marketing-dapp.tar.gz ]; then
+    BUILD_MODE=$network ./scripts/docker-build.sh --marketing-dapp
+  fi
+
+  if [ -d ./artifacts/marketing-dapp/dist ]; then
+    rm -rf ./artifacts/marketing-dapp/dist
+  fi
+
+  mkdir -p ./artifacts/marketing-dapp/dist
+  tar -xvf ./artifacts/marketing-dapp/marketing-dapp.tar.gz -C ./artifacts/marketing-dapp/dist
+
+  canister_id_output=$(dfx canister id app_marketing --network $network 2>/dev/null || echo "")
+
+  if [ -z "$canister_id_output" ]; then
+    echo "Canister 'app_marketing' does not exist, creating and installing..."
+
+    BUILD_MODE=$network dfx deploy --network $network app_marketing --with-cycles 2000000000000 $([[ -n "$subnet_type" ]] && echo "--subnet-type $subnet_type")
+  else
+    echo "Canister 'app_marketing' already exists with ID: $canister_id_output"
+    echo
+    echo "Uploading assets to the app_wallet canister..."
+
+    BUILD_MODE=$network dfx deploy --network $network app_marketing
+  fi
+}
+
 function deploy_docs_portal() {
   local network=$(get_network)
   local subnet_type=$(get_subnet_type)

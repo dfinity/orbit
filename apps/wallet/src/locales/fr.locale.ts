@@ -1,7 +1,7 @@
 export default {
   app: {
-    title: 'Portefeuille {app}',
-    name: 'Orbit Wallet',
+    title: '{app}',
+    name: 'Orbit',
     action_save_failed: "Échec de sauvegarde de l'action, veuillez essayer de nouveau.",
     action_save_success: "Sauvegarde de l'action réussie.",
     session_load_error: 'Échec du chargement votre session, veuillez essayer de nouveau.',
@@ -105,17 +105,14 @@ export default {
     user_cancel_pending_requests: 'Annuler toutes les demandes en attente de cet usager.',
     error_dialog_title: 'Échec de chargement.',
     error_dialog_message: 'Échec de chargement, veuillez réessayer.',
-  },
-  alpha_warning: {
-    version: 'Ceci est une version alpha.',
-    caution: 'Utilisez avec prudence.',
+    request_submit_failed: 'Échec de la requête, veuillez réessayer.',
   },
   sidebar: {
     highlights: {
-      main: 'Portefeuille Trustless {line1} {line2} {line3}',
-      line3: 'Multichain',
-      line1: 'Actifs Numériques',
-      line2: 'Multi-Garde',
+      main: 'Portefeuille de confiance {line1} {line2} {line3}',
+      line1: 'Approbation multiple',
+      line2: 'Gestion d actifs',
+      line3: 'Contrat intelligent',
     },
   },
   blockchains: {
@@ -236,7 +233,7 @@ export default {
       external_canister: 'Canister Géré',
       system_info: 'Informations Système',
       asset: 'Actifs',
-      named_rule: 'Polices d approbation',
+      named_rule: 'Règles d approbation',
     },
     types: {
       addusergroup: {
@@ -347,16 +344,16 @@ export default {
         request_title: 'Demande d édition de sauvegarde',
       },
       addnamedrule: {
-        title: 'Ajouter une politique d approbation',
-        request_title: 'Demande d ajout d une politique d approbation',
+        title: 'Ajouter une règle d approbation',
+        request_title: 'Demande d ajout d une règle d approbation',
       },
       editnamedrule: {
-        title: 'Modifier une politique d approbation',
-        request_title: 'Demande de modification d une politique d approbation',
+        title: 'Modifier une règle d approbation',
+        request_title: 'Demande de modification d une règle d approbation',
       },
       removenamedrule: {
-        title: 'Supprimer une politique d approbation',
-        request_title: 'Demande de suppression d une politique d approbation',
+        title: 'Supprimer une règle d approbation',
+        request_title: 'Demande de suppression d une règle d approbation',
       },
       unknown: {
         title: 'Inconnu',
@@ -411,10 +408,15 @@ export default {
     },
   },
   landing: {
-    title: 'Gestion Multichain',
-    subtitle: 'Une Plateforme, Une Supervision Complète',
-    description:
-      'Orbit simplifie la gestion des actifs on-chain pour les entreprises, les DAOs et les équipes, en consolidant le contrôle et la visibilité sur une seule plateforme intuitive.',
+    btn_accept_license: {
+      phrase: 'En cliquant sur ce bouton, vous acceptez les {0}.',
+      license: 'Licence',
+    },
+    highlights: {
+      multiapproval: 'Politiques d approbation',
+      treasury: 'Gestion du Trésor',
+      smartcontract: 'Gestion de Contrat Intelligent',
+    },
     connect_title: 'Connectez-vous en toute sécurité pour gérer vos actifs numériques',
     connect_btn: 'Se connecter avec Internet Identity',
     connect_error: 'Échec de la connexion, veuillez réessayer.',
@@ -478,7 +480,7 @@ export default {
       tc: 'TC',
       bc: 'Milliard',
       mc: 'Million',
-      e8s: 'e8s',
+      cycles: 'Cycles',
     },
   },
   time: {
@@ -669,6 +671,9 @@ export default {
     },
   },
   terms: {
+    license: 'Licence',
+    loading: 'Chargement',
+    permission: 'Permission',
     controllers: 'Contrôleurs',
     public: 'Public',
     execute: 'Exécuter',
@@ -881,7 +886,7 @@ export default {
     request_policies: "Polices d'Aprobation",
     assets: 'Actifs',
     external_canisters: 'Canisters',
-    approval_policy: 'Police d approbation',
+    approval_rules: 'Règles d approbation',
   },
   pages: {
     dashboard: {
@@ -1021,8 +1026,8 @@ export default {
     },
     request_policies: {
       title: "Polices d'Aprobation",
-      create_label: 'Ajouter un police',
-      dialog_title: 'Police',
+      create_label: 'Ajouter une politique d approbation',
+      dialog_title: 'Police d approbation',
     },
     assets: {
       title: 'Actifs',
@@ -1044,11 +1049,11 @@ export default {
         option_add_custom_asset: 'Ajouter un actif personnalisé',
       },
     },
-    approval_policy: {
-      btn_new_entry: 'Ajouter une nouvelle police',
-      title: 'Police d approbation',
+    approval_rules: {
+      btn_new_entry: 'Ajouter une règle d approbation',
+      title: 'Règle d approbation',
       dialog: {
-        title: 'Police d approbation',
+        title: 'Règle d approbation',
       },
       linked_policies: 'Polices liées',
     },
@@ -1083,48 +1088,191 @@ export default {
     expired_dialog_btn: 'Ré-authentifiez vous',
   },
   permissions: {
-    resource_title: 'Resource',
-    group_members_title: 'Membres de groupes',
-    specific_users_title: 'Usagers specifiques',
-    everyone_title: 'Tout le monde',
-    individual_resources_title: 'Accés à une resource individuelle',
-    select_resource: 'Type de Resource',
+    global_permissions: 'Autorisations Globales',
+    global_permissions_description:
+      "Les autorisations globales s'appliquent à toutes les zones du système, telles que les comptes, le carnet d'adresses ou d'autres fonctionnalités. Ces autorisations ne sont pas liées à un élément spécifique. Pour configurer les autorisations pour une zone spécifique (par exemple, un compte particulier), accédez à la page de configuration de cet élément et mettez à jour les paramètres.",
+    action_approval_legend:
+      'Les actions que les utilisateurs peuvent effectuer (ex.: créer un transfert) peuvent nécessiter des approbations supplémentaires avant d’être exécutées.',
+    permitted_users: 'Utilisateurs autorisés',
+    restrict_permitted_users: 'Restreindre à certains utilisateurs...',
+    no_users_found: 'Aucun utilisateur trouvé.',
+    allow: {
+      no_access: 'Désactivé pour tout le monde',
+      no_access_tooltip: 'Inaccessible par quiconque, y compris les utilisateurs connectés.',
+      public: 'Public (Connexion Non Requise)',
+      public_tooltip: 'Accessible par tout le monde, y compris les visiteurs non connectés.',
+      authenticated: 'Tous les Utilisateurs Connectés',
+      authenticated_tooltip: 'Accessible par tout utilisateur connecté.',
+      restricted: 'Utilisateurs/Groupes Spécifiques',
+      restricted_tooltip: 'Accessible uniquement aux utilisateurs ou groupes sélectionnés.',
+    },
     resources: {
       account: 'Compte',
       asset: 'Actif',
-      user: 'Usager',
-      usergroup: "Groupe d'Usagers",
-      permission: "Police d'Accés",
-      requestpolicy: 'Police de Demande',
+      user: 'Utilisateur',
+      usergroup: "Groupe d'Utilisateurs",
+      permission: "Politique d'Accès",
+      requestpolicy: 'Politique de Demande',
       system: 'Système',
       transfer: 'Transfert',
       request: 'Demande',
       addressbook: "Carnet d'Adresses",
-      managesysteminfo: 'Gérer les informations système',
-      externalcanister: 'Canister Géré',
-      namedrule: 'Police d approbation',
+      managesysteminfo: 'Gérer les Informations Système',
+      externalcanister: 'Canister Externe',
+      namedrule: 'Règle d approbation',
+    },
+    categories: {
+      treasury: 'Trésorerie (comptes, actifs, etc...)',
+      canisters: 'Canisters/Applications',
+      users: 'Utilisateurs',
+      system: "Système (Mises à jour logicielles, Autorisations, Politiques d'Approbation, etc...)",
     },
     actions: {
-      list: 'Lister',
-      create: 'Créer',
-      read: 'Lire',
-      update: 'Modifier',
-      delete: 'Éffacer',
-      transfer: 'Transfert',
-      capabilities: 'Capacités',
-      systeminfo: 'Information Système',
-      systeminfocapabilities: 'Capacités (Actifs Pris en Charge)',
-      systeminfoconfig: 'Configuration (Mises à jour, Métriques, Utilisation)',
-      managesysteminfo: 'Gérer les informations système (par exemple. nom)',
-      systemupgrade: 'Mise à jour du système',
-      change: 'Changement',
-      fund: 'Financer',
-      callcanister: 'Appeler un canister',
-    },
-    allow: {
-      public: "N'importe qui",
-      authenticated: 'Authentifié',
-      restricted: 'Restreint',
+      account_list: 'Voir la Page des Comptes',
+      account_list_description:
+        "Permet d'accéder à la page des comptes, mais affiche uniquement les comptes que l'utilisateur est autorisé à voir.",
+      account_read_any: 'Voir Tous les Comptes',
+      account_read_any_description:
+        "Permet d'afficher tous les comptes, y compris les soldes et les actifs associés.",
+      account_create: 'Ajouter de Nouveaux Comptes',
+      account_create_description:
+        "Permet de créer de nouveaux comptes et d'y attribuer des actifs (ex.: ICP, ckBTC).",
+      account_update_any: 'Modifier les Comptes',
+      account_update_any_description:
+        "Permet de modifier les détails du compte, y compris les autorisations et les politiques d'approbation.",
+      account_transfer_any: 'Créer des Transferts',
+      account_transfer_any_description:
+        "Permet à l'utilisateur d'initier des transferts depuis n'importe quel compte du portefeuille.",
+
+      addressbook_list: "Voir la Page du Carnet d'Adresses",
+      addressbook_list_description:
+        "Permet d'accéder à la page du carnet d'adresses, en affichant uniquement les entrées visibles pour l'utilisateur.",
+      addressbook_read_any: "Voir Toutes les Entrées du Carnet d'Adresses",
+      addressbook_read_any_description:
+        "Permet d'afficher toutes les entrées du carnet d'adresses.",
+      addressbook_create: "Ajouter de Nouvelles Entrées au Carnet d'Adresses",
+      addressbook_create_description:
+        "Permet d'ajouter de nouveaux contacts, y compris des métadonnées telles que des noms et d'autres détails.",
+      addressbook_update_any: "Modifier les Entrées du Carnet d'Adresses",
+      addressbook_update_any_description:
+        "Permet de modifier les entrées existantes du carnet d'adresses, y compris les métadonnées.",
+      addressbook_delete_any: "Supprimer les Entrées du Carnet d'Adresses",
+      addressbook_delete_any_description:
+        "Permet de supprimer des entrées du carnet d'adresses. ⚠ Remarque: Les entrées peuvent être utilisées dans les politiques d'approbation pour restreindre ou autoriser les transferts, alors la suppression doit être effectuée avec précaution.",
+
+      asset_list: 'Voir la Page des Actifs',
+      asset_list_description:
+        "Permet d'accéder à la page des actifs, mais affiche uniquement les actifs visibles pour l'utilisateur.",
+      asset_read_any: 'Voir Tous les Actifs',
+      asset_read_any_description: "Permet d'afficher tous les actifs et leurs détails.",
+      asset_create: 'Ajouter de Nouveaux Actifs',
+      asset_create_description:
+        "Permet d'ajouter de nouveaux actifs au portefeuille, qui peuvent ensuite être attribués à des comptes.",
+      asset_update_any: 'Modifier les Actifs',
+      asset_update_any_description:
+        "Permet de modifier les détails des actifs, y compris les autorisations associées et les politiques d'approbation.",
+      asset_delete_any: 'Supprimer les Actifs',
+      asset_delete_any_description:
+        "Permet de supprimer des actifs. ⚠ Remarque: La suppression d'un actif le retirera de tous les comptes.",
+
+      externalcanister_list: 'Voir la Page des Canisters',
+      externalcanister_list_description:
+        "Permet d'accéder à la page des canisters, en affichant uniquement ceux que l'utilisateur peut voir.",
+      externalcanister_read_any: 'Voir Tous les Canisters',
+      externalcanister_read_any_description:
+        "Permet d'afficher tous les canisters et leurs détails.",
+      externalcanister_create: 'Ajouter de Nouveaux Canisters',
+      externalcanister_create_description:
+        "Permet d'ajouter de nouveaux canisters ou des canisters existants au portefeuille. Le portefeuille peut les contrôler totalement ou agir uniquement comme un outil de surveillance et d'autorisation.",
+      externalcanister_change_any: 'Modifier les Canisters',
+      externalcanister_change_any_description:
+        "Permet de modifier les détails des canisters, les autorisations, les politiques d'approbation, les paramètres et les contrôleurs.",
+      externalcanister_fund_any: 'Financer les Canisters',
+      externalcanister_fund_any_description:
+        "Permet à l'utilisateur d'ajouter des cycles aux canisters en utilisant le portefeuille.",
+      externalcanister_call_execution_method_any_validation_method_no: 'Appeler les Canisters',
+      externalcanister_call_execution_method_any_validation_method_no_description:
+        "Permet d'exécuter des appels vers n'importe quel canister via le portefeuille. ⚠ Remarque: Cette autorisation permet l'exécution d'appels arbitraires vers des canisters, donc des politiques d'approbation appropriées doivent être mises en place.",
+
+      user_list: 'Voir la Page des Utilisateurs',
+      user_list_description:
+        "Permet d'accéder à la page des utilisateurs, en affichant uniquement ceux que l'utilisateur peut voir.",
+      user_read_any: 'Voir Tous les Utilisateurs',
+      user_read_any_description: "Permet d'afficher tous les utilisateurs et leurs détails.",
+      user_create: 'Ajouter de Nouveaux Utilisateurs',
+      user_create_description: "Permet d'ajouter de nouveaux utilisateurs au portefeuille.",
+      user_update_any: 'Modifier les Utilisateurs',
+      user_update_any_description:
+        'Permet de modifier les détails des utilisateurs, y compris leurs identités associées et leur statut.',
+
+      usergroup_list: "Voir la Page des Groupes d'Utilisateurs",
+      usergroup_list_description:
+        "Permet d'accéder à la page des groupes d'utilisateurs, mais affiche uniquement les groupes que l'utilisateur est autorisé à voir.",
+      usergroup_read_any: "Voir Tous les Groupes d'Utilisateurs",
+      usergroup_read_any_description:
+        "Permet d'afficher tous les groupes d'utilisateurs et leurs détails.",
+      usergroup_create: "Ajouter de Nouveaux Groupes d'Utilisateurs",
+      usergroup_create_description:
+        "Permet d'ajouter de nouveaux groupes d'utilisateurs au portefeuille.",
+      usergroup_update_any: "Modifier les Groupes d'Utilisateurs",
+      usergroup_update_any_description:
+        "Permet de modifier les détails des groupes d'utilisateurs.",
+      usergroup_delete_any: "Supprimer les Groupes d'Utilisateurs",
+      usergroup_delete_any_description:
+        "Permet de supprimer des groupes d'utilisateurs. ⚠ Remarque: La suppression d'un groupe supprimera tous ses membres et pourrait affecter les politiques d'approbation qui en dépendent.",
+
+      system_capabilities: 'Voir les Actifs Pris en Charge',
+      system_capabilities_description:
+        "Permet d'afficher la liste des actifs pris en charge, y compris leurs symboles, noms et métadonnées.",
+      system_systeminfo: 'Voir les Informations Système',
+      system_systeminfo_description:
+        "Permet d'afficher les informations système, telles que la version du portefeuille, l'ID de mise à jour et le solde de cycles.",
+      system_managesysteminfo: 'Gérer les Informations Système',
+      system_managesysteminfo_description:
+        'Permet de modifier les paramètres du système, y compris le nom du portefeuille.',
+      system_upgrade: 'Effectuer une Mise à Jour du Système',
+      system_upgrade_description:
+        'Permet de mettre à jour le portefeuille vers une nouvelle version. ⚠ Remarque: Les mises à jour peuvent affecter la disponibilité et la fonctionnalité du portefeuille.',
+
+      permission_update: 'Modifier les Permissions',
+      permission_update_description:
+        'Permet de modifier les autorisations pour les ressources et les actions spécifiées.',
+
+      requestpolicy_list: 'Voir la Page des Politiques de Demande',
+      requestpolicy_list_description:
+        "Permet d'accéder à la page des politiques de demande, mais affiche uniquement les politiques que l'utilisateur est autorisé à voir.",
+      requestpolicy_read_any: 'Voir Toutes les Politiques de Demande',
+      requestpolicy_read_any_description:
+        "Permet d'afficher toutes les politiques de demande et leurs détails.",
+      requestpolicy_create: 'Ajouter de Nouvelles Politiques de Demande',
+      requestpolicy_create_description:
+        "Permet d'ajouter de nouvelles politiques de demande au portefeuille.",
+      requestpolicy_update_any: 'Modifier les Politiques de Demande',
+      requestpolicy_update_any_description: 'Permet de modifier les politiques de demande.',
+      requestpolicy_delete_any: 'Supprimer les Politiques de Demande',
+      requestpolicy_delete_any_description:
+        "Permet de supprimer des politiques de demande. ⚠ Remarque: La suppression d'une politique de demande peut affecter les demandes existantes qui en dépendent.",
+
+      request_list: 'Voir la Page des Demandes',
+      request_list_description:
+        "Permet d'accéder à la page des demandes, en affichant uniquement les demandes que l'utilisateur est autorisé à voir. Dans la plupart des cas, cela doit être accessible à tous les utilisateurs afin qu'ils puissent suivre les demandes nécessitant leur approbation.",
+      request_read_any: 'Voir Toutes les Demandes',
+      request_read_any_description:
+        "Permet d'afficher toutes les demandes, y compris celles soumises par d'autres utilisateurs.",
+
+      namedrule_list: 'Voir la Page des Politiques d approbation',
+      namedrule_list_description:
+        "Permet d'accéder à la page des politiques d'approbation, en affichant uniquement les politiques que l'utilisateur est autorisé à voir.",
+      namedrule_read_any: 'Voir Toutes les Politiques d approbation',
+      namedrule_read_any_description:
+        "Permet d'afficher toutes les politiques d'approbation et leurs détails.",
+      namedrule_create: 'Ajouter de Nouvelles Politiques d approbation',
+      namedrule_create_description:
+        "Permet d'ajouter de nouvelles politiques d'approbation au portefeuille.",
+      namedrule_update_any: 'Modifier les Politiques d approbation',
+      namedrule_update_any_description: 'Permet de modifier les politiques d approbation.',
+      namedrule_delete_any: 'Supprimer les Politiques d approbation',
+      namedrule_delete_any_description: 'Permet de supprimer les politiques d approbation.',
     },
   },
   request_policies: {
@@ -1133,7 +1281,7 @@ export default {
     unsupported_specifier: 'Définition de spécificateur non supportée',
     rule_groups: {
       custom_rules: 'Règles personnalisées',
-      named_rules: 'Polices d approbation',
+      named_rules: 'Règles d approbation',
     },
     rule_user_specifier: {
       owner: 'Propriétaire',
@@ -1151,7 +1299,7 @@ export default {
       quorumpercentage: 'Pourcentage du Quorum',
       allowlistedbymetadata: 'Liste blanche par metadata',
       allowlisted: 'Liste blanche',
-      named_rule: 'Utiliser la politique d approbation: {name}',
+      named_rule: 'Utiliser la règle d approbation: {name}',
     },
     rule_tooltip_summary: {
       allof: 'Tout les suivants:',
@@ -1175,7 +1323,7 @@ export default {
       not: 'Not: {rule}',
       allof: ' ET ',
       anyof: ' OU ',
-      named_rule: 'Utiliser la politique d approbation: {name}',
+      named_rule: 'Utiliser la règle d approbation: {name}',
     },
     specifier: {
       editpermission: 'Modifier les permissions',
@@ -1203,9 +1351,9 @@ export default {
       addasset: 'Ajouter un actif',
       editasset: 'Modifier un actif',
       removeasset: 'Éffacer un actif',
-      addnamedrule: 'Ajouter une politique d approbation',
-      editnamedrule: 'Modifier une politique d approbation',
-      removenamedrule: 'Éffacer une politique d approbation',
+      addnamedrule: 'Ajouter une règle d approbation',
+      editnamedrule: 'Modifier une règle d approbation',
+      removenamedrule: 'Éffacer une règle d approbation',
     },
   },
   cycle_obtain_strategies: {

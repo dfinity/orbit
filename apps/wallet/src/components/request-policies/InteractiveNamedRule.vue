@@ -22,6 +22,7 @@ import { ref } from 'vue';
 import { onMounted } from 'vue';
 import { computed } from 'vue';
 import { toRefs } from 'vue';
+import ErrorTooltip from '~/components/error/ErrorTooltip.vue';
 import { useRuleToTooltip } from '~/composables/request-policies.composable';
 import { NamedRule, UUID } from '~/generated/station/station.did';
 import { services } from '~/plugins/services.plugin';

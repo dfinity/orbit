@@ -47,6 +47,14 @@ const createICAssetsJson = (
       match: '.well-known',
       ignore: false,
     },
+    well_known_ii: {
+      match: '.well-known/ii-alternative-origins',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+      ignore: false,
+    },
     all: {
       match: '**/*',
       headers: {

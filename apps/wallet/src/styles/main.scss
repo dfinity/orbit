@@ -160,15 +160,52 @@ a {
   box-shadow: none !important;
 }
 
-.logo-markers-bg {
-  background-image: url('~assets/images/logo-markers-bg.png');
-  background-repeat: no-repeat;
-  background-position: bottom left;
-  background-size: 50vmin;
+.logo-markers {
+  background-image: url('~assets/images/logo-markers-top.png'),
+    url('~assets/images/logo-markers-bottom.png');
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    top left,
+    bottom right;
+  background-size: 50vmin, 35vmin;
+}
+
+.logo-markers-dark {
+  background-image: url('~assets/images/logo-markers-top-dark.png'),
+    url('~assets/images/logo-markers-bottom-dark.png');
 }
 
 .min-height-100 {
   min-height: 100%;
+}
+
+.border-bottom {
+  border-bottom: 1px solid rgb(var(--ds-on-background), 0.8) !important;
+}
+
+.v-dialog--right .v-overlay__content {
+  top: 0;
+  right: 0;
+  left: auto !important;
+}
+
+.no-table-borders {
+  /* Remove outer border if needed */
+  border: none !important;
+
+  thead th,
+  tbody td,
+  tfoot td {
+    border-bottom: none !important;
+    border-top: none !important;
+  }
+}
+
+@media (max-width: #{$device-md}) {
+  .child-px-md-0 > * {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
 }
 
 .white-space-pre-wrap {
