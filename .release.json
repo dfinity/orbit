@@ -59,12 +59,12 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": null
+      "newVersion": "0.2.0"
     },
     "control-panel": {
       "currentVersion": "0.1.0",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.2.0"
     },
     "control-panel-api": {
       "currentVersion": "0.1.0",
@@ -81,12 +81,12 @@
     "upgrader": {
       "currentVersion": "0.1.0",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.2.0"
     },
     "station": {
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "dependentProjects": [],
-      "newVersion": "0.3.0"
+      "newVersion": "0.4.0"
     },
     "upgrader-api": {
       "currentVersion": "0.1.0",
@@ -107,7 +107,7 @@
       "newVersion": null
     },
     "station-api": {
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "dependentProjects": [
         {
           "source": "control-panel",
@@ -140,43 +140,101 @@
           "dependencyCollection": "dependencies"
         }
       ],
-      "newVersion": "0.3.0"
+      "newVersion": "0.4.0"
     },
     "dfx-orbit": {
       "currentVersion": "0.9.0",
       "dependentProjects": [],
-      "newVersion": null
+      "newVersion": "0.10.0"
+    },
+    "marketing-dapp": {
+      "currentVersion": "0.0.1",
+      "newVersion": "0.1.0",
+      "dependentProjects": []
     },
     "wallet-dapp": {
-      "currentVersion": "0.2.0",
-      "newVersion": "0.3.0",
+      "currentVersion": "0.3.0",
+      "newVersion": "0.4.0",
+      "dependentProjects": []
+    },
+    "docs-portal": {
+      "currentVersion": "0.0.1",
+      "newVersion": "0.1.0",
       "dependentProjects": []
     }
   },
   "changes": {
-    "station": {
+    "orbit-essentials": {
       "releaseVersion": {
-        "rawVersion": "0.3.0",
-        "gitTag": "@orbit/station-v0.3.0",
+        "rawVersion": "0.2.0",
+        "gitTag": "@orbit/orbit-essentials-v0.2.0",
         "isPrerelease": false
       },
-      "contents": "## 0.3.0 (2024-12-17)\n\n\n### 🚀 Features\n\n- **station:** display station and upgrader cycle balance on Administration page ([#457](https://github.com/dfinity/orbit/pull/457))\n\n\n### 🩹 Fixes\n\n- **wallet:** update lockfile ([#459](https://github.com/dfinity/orbit/pull/459))\n\n\n### 🧱 Updated Dependencies\n\n- Updated station-api to 0.3.0\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- olaszakos"
+      "contents": "## 0.2.0 (2025-02-24)\n\n\n### 🚀 Features\n\n- **station:** external canister snapshots ([#429](https://github.com/dfinity/orbit/pull/429))\n\n- **station:** monitor external canisters ([#416](https://github.com/dfinity/orbit/pull/416))\n\n- **station:** enable station top up from the cycles ledger balance ([#472](https://github.com/dfinity/orbit/pull/472))\n\n- **docs:** docs portal ([#486](https://github.com/dfinity/orbit/pull/486))\n\n- **control-panel:** rate limiting to at most 100 stations per day ([#489](https://github.com/dfinity/orbit/pull/489))\n\n- **apps:** init marketing project ([#498](https://github.com/dfinity/orbit/pull/498))\n\n- **wallet:** updated branding ([#497](https://github.com/dfinity/orbit/pull/497))\n\n\n### 🩹 Fixes\n\n- **wallet:** update lockfile ([#459](https://github.com/dfinity/orbit/pull/459))\n\n- **ci:** install CMC in Orbit local deployment ([#465](https://github.com/dfinity/orbit/pull/465))\n\n- **ci:** build and CI issues ([#467](https://github.com/dfinity/orbit/pull/467))\n\n- **station:** docker build ([#492](https://github.com/dfinity/orbit/pull/492))\n\n- **station:** security issue 42 ([#505](https://github.com/dfinity/orbit/pull/505))\n\n- **wallet:** security issue 36, 37, 38, 39, 40, 41 ([#503](https://github.com/dfinity/orbit/pull/503))\n\n- **station:** security issue 19, 54 ([#509](https://github.com/dfinity/orbit/pull/509))\n\n- **station:** security issue 45 ([#510](https://github.com/dfinity/orbit/pull/510))\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital\n- mraszyk @mraszyk\n- olaszakos"
+    },
+    "control-panel": {
+      "releaseVersion": {
+        "rawVersion": "0.2.0",
+        "gitTag": "@orbit/control-panel-v0.2.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.2.0 (2025-02-24)\n\n\n### 🚀 Features\n\n- **station:** external canister snapshots ([#429](https://github.com/dfinity/orbit/pull/429))\n\n- **station:** monitor external canisters ([#416](https://github.com/dfinity/orbit/pull/416))\n\n- **station:** enable station top up from the cycles ledger balance ([#472](https://github.com/dfinity/orbit/pull/472))\n\n- **control-panel:** reduce initial station and upgrader cycles to 1T ([#485](https://github.com/dfinity/orbit/pull/485))\n\n- **control-panel:** user can deploy 2 stations per day ([#487](https://github.com/dfinity/orbit/pull/487))\n\n- **docs:** docs portal ([#486](https://github.com/dfinity/orbit/pull/486))\n\n- **control-panel:** rate limiting to at most 100 stations per day ([#489](https://github.com/dfinity/orbit/pull/489))\n\n- **station:** updated permission management ux ([#491](https://github.com/dfinity/orbit/pull/491))\n\n- **apps:** init marketing project ([#498](https://github.com/dfinity/orbit/pull/498))\n\n- **wallet:** updated branding ([#497](https://github.com/dfinity/orbit/pull/497))\n\n\n### 🩹 Fixes\n\n- **wallet:** update lockfile ([#459](https://github.com/dfinity/orbit/pull/459))\n\n- **ci:** install CMC in Orbit local deployment ([#465](https://github.com/dfinity/orbit/pull/465))\n\n- **ci:** build and CI issues ([#467](https://github.com/dfinity/orbit/pull/467))\n\n- **station:** docker build ([#492](https://github.com/dfinity/orbit/pull/492))\n\n- **station:** security issue 42 ([#505](https://github.com/dfinity/orbit/pull/505))\n\n- **wallet:** security issue 36, 37, 38, 39, 40, 41 ([#503](https://github.com/dfinity/orbit/pull/503))\n\n- **station:** security issue 19, 54 ([#509](https://github.com/dfinity/orbit/pull/509))\n\n- **station:** security issue 45 ([#510](https://github.com/dfinity/orbit/pull/510))\n\n\n### 🧱 Updated Dependencies\n\n- Updated orbit-essentials to 0.2.0\n- Updated station-api to 0.4.0\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital\n- mraszyk @mraszyk\n- olaszakos"
+    },
+    "upgrader": {
+      "releaseVersion": {
+        "rawVersion": "0.2.0",
+        "gitTag": "@orbit/upgrader-v0.2.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.2.0 (2025-02-24)\n\n\n### 🚀 Features\n\n- **station:** external canister snapshots ([#429](https://github.com/dfinity/orbit/pull/429))\n\n- **station:** monitor external canisters ([#416](https://github.com/dfinity/orbit/pull/416))\n\n- **upgrader:** optimize stable memory serialization ([#475](https://github.com/dfinity/orbit/pull/475))\n\n- **upgrader:** new stable memory layout ([#474](https://github.com/dfinity/orbit/pull/474))\n\n- **station:** enable station top up from the cycles ledger balance ([#472](https://github.com/dfinity/orbit/pull/472))\n\n- **docs:** docs portal ([#486](https://github.com/dfinity/orbit/pull/486))\n\n- **apps:** init marketing project ([#498](https://github.com/dfinity/orbit/pull/498))\n\n- **wallet:** updated branding ([#497](https://github.com/dfinity/orbit/pull/497))\n\n\n### 🩹 Fixes\n\n- **wallet:** update lockfile ([#459](https://github.com/dfinity/orbit/pull/459))\n\n- **ci:** install CMC in Orbit local deployment ([#465](https://github.com/dfinity/orbit/pull/465))\n\n- **ci:** build and CI issues ([#467](https://github.com/dfinity/orbit/pull/467))\n\n- **upgrader:** only retain requests from current committee members ([#473](https://github.com/dfinity/orbit/pull/473))\n\n- **station:** docker build ([#492](https://github.com/dfinity/orbit/pull/492))\n\n- **station:** security issue 42 ([#505](https://github.com/dfinity/orbit/pull/505))\n\n- **wallet:** security issue 36, 37, 38, 39, 40, 41 ([#503](https://github.com/dfinity/orbit/pull/503))\n\n- **station:** security issue 19, 54 ([#509](https://github.com/dfinity/orbit/pull/509))\n\n- **station:** security issue 45 ([#510](https://github.com/dfinity/orbit/pull/510))\n\n\n### 🧱 Updated Dependencies\n\n- Updated orbit-essentials to 0.2.0\n- Updated station-api to 0.4.0\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital\n- mraszyk @mraszyk\n- olaszakos"
+    },
+    "station": {
+      "releaseVersion": {
+        "rawVersion": "0.4.0",
+        "gitTag": "@orbit/station-v0.4.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.4.0 (2025-02-24)\n\n\n### 🚀 Features\n\n- **wallet:** searchable address book; pick from address book at transfer ([#470](https://github.com/dfinity/orbit/pull/470))\n\n- **station:** optimize stable memory serialization ([#477](https://github.com/dfinity/orbit/pull/477))\n\n- **station:** enable station top up from the cycles ledger balance ([#472](https://github.com/dfinity/orbit/pull/472))\n\n- **station:** support named rules ([#483](https://github.com/dfinity/orbit/pull/483))\n\n- **control-panel:** reduce initial station and upgrader cycles to 1T ([#485](https://github.com/dfinity/orbit/pull/485))\n\n- **docs:** docs portal ([#486](https://github.com/dfinity/orbit/pull/486))\n\n- **control-panel:** rate limiting to at most 100 stations per day ([#489](https://github.com/dfinity/orbit/pull/489))\n\n- **wallet:** Approval Policy aka Named Rules UI ([#488](https://github.com/dfinity/orbit/pull/488))\n\n- **apps:** init marketing project ([#498](https://github.com/dfinity/orbit/pull/498))\n\n- **station:** update initial policies/permissions ([#499](https://github.com/dfinity/orbit/pull/499))\n\n- **wallet:** updated branding ([#497](https://github.com/dfinity/orbit/pull/497))\n\n\n### 🩹 Fixes\n\n- **ci:** install CMC in Orbit local deployment ([#465](https://github.com/dfinity/orbit/pull/465))\n\n- **ci:** build and CI issues ([#467](https://github.com/dfinity/orbit/pull/467))\n\n- **station:** docker build ([#492](https://github.com/dfinity/orbit/pull/492))\n\n- **station:** security issue 42 ([#505](https://github.com/dfinity/orbit/pull/505))\n\n- **wallet:** security issue 36, 37, 38, 39, 40, 41 ([#503](https://github.com/dfinity/orbit/pull/503))\n\n- **station:** security issue 19, 54 ([#509](https://github.com/dfinity/orbit/pull/509))\n\n- **station:** security issue 45 ([#510](https://github.com/dfinity/orbit/pull/510))\n\n\n### 🧱 Updated Dependencies\n\n- Updated orbit-essentials to 0.2.0\n- Updated station-api to 0.4.0\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital\n- mraszyk @mraszyk\n- olaszakos"
     },
     "station-api": {
       "releaseVersion": {
-        "rawVersion": "0.3.0",
-        "gitTag": "@orbit/station-api-v0.3.0",
+        "rawVersion": "0.4.0",
+        "gitTag": "@orbit/station-api-v0.4.0",
         "isPrerelease": false
       },
-      "contents": "## 0.3.0 (2024-12-17)\n\n\n### 🚀 Features\n\n- **station:** display station and upgrader cycle balance on Administration page ([#457](https://github.com/dfinity/orbit/pull/457))\n\n\n### 🩹 Fixes\n\n- **wallet:** update lockfile ([#459](https://github.com/dfinity/orbit/pull/459))\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- olaszakos"
+      "contents": "## 0.4.0 (2025-02-24)\n\n\n### 🚀 Features\n\n- **wallet:** searchable address book; pick from address book at transfer ([#470](https://github.com/dfinity/orbit/pull/470))\n\n- **station:** enable station top up from the cycles ledger balance ([#472](https://github.com/dfinity/orbit/pull/472))\n\n- **station:** support named rules ([#483](https://github.com/dfinity/orbit/pull/483))\n\n- **control-panel:** reduce initial station and upgrader cycles to 1T ([#485](https://github.com/dfinity/orbit/pull/485))\n\n- **docs:** docs portal ([#486](https://github.com/dfinity/orbit/pull/486))\n\n- **wallet:** Approval Policy aka Named Rules UI ([#488](https://github.com/dfinity/orbit/pull/488))\n\n- **apps:** init marketing project ([#498](https://github.com/dfinity/orbit/pull/498))\n\n- **wallet:** updated branding ([#497](https://github.com/dfinity/orbit/pull/497))\n\n\n### 🩹 Fixes\n\n- **ci:** install CMC in Orbit local deployment ([#465](https://github.com/dfinity/orbit/pull/465))\n\n- **ci:** build and CI issues ([#467](https://github.com/dfinity/orbit/pull/467))\n\n- **station:** docker build ([#492](https://github.com/dfinity/orbit/pull/492))\n\n- **station:** security issue 42 ([#505](https://github.com/dfinity/orbit/pull/505))\n\n- **wallet:** security issue 36, 37, 38, 39, 40, 41 ([#503](https://github.com/dfinity/orbit/pull/503))\n\n- **station:** security issue 19, 54 ([#509](https://github.com/dfinity/orbit/pull/509))\n\n- **station:** security issue 45 ([#510](https://github.com/dfinity/orbit/pull/510))\n\n\n### 🧱 Updated Dependencies\n\n- Updated orbit-essentials to 0.2.0\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital\n- mraszyk @mraszyk\n- olaszakos"
+    },
+    "marketing-dapp": {
+      "releaseVersion": {
+        "rawVersion": "0.1.0",
+        "gitTag": "@orbit/marketing-dapp-v0.1.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.1.0 (2025-02-24)\n\n\n### 🚀 Features\n\n- **apps:** init marketing project ([#498](https://github.com/dfinity/orbit/pull/498))\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna"
     },
     "wallet-dapp": {
       "releaseVersion": {
-        "rawVersion": "0.3.0",
-        "gitTag": "@orbit/wallet-dapp-v0.3.0",
+        "rawVersion": "0.4.0",
+        "gitTag": "@orbit/wallet-dapp-v0.4.0",
         "isPrerelease": false
       },
-      "contents": "## 0.3.0 (2024-12-17)\n\n\n### 🚀 Features\n\n- **wallet:** add user groups to users page ([#454](https://github.com/dfinity/orbit/pull/454))\n\n- **wallet:** add request URL to export; copy request URL button ([#453](https://github.com/dfinity/orbit/pull/453))\n\n- **station:** display station and upgrader cycle balance on Administration page ([#457](https://github.com/dfinity/orbit/pull/457))\n\n\n### 🩹 Fixes\n\n- **wallet:** update lockfile ([#459](https://github.com/dfinity/orbit/pull/459))\n\n- **wallet:** fix typo in template ([#462](https://github.com/dfinity/orbit/pull/462))\n\n- **wallet:** fix CSV upload ([#463](https://github.com/dfinity/orbit/pull/463))\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- olaszakos"
+      "contents": "## 0.4.0 (2025-02-24)\n\n\n### 🚀 Features\n\n- **wallet:** searchable address book; pick from address book at transfer ([#470](https://github.com/dfinity/orbit/pull/470))\n\n- **wallet:** extend asset creation dialog with ck/sns tokens ([#480](https://github.com/dfinity/orbit/pull/480))\n\n- **wallet:** requesters can cancel their requests ([#481](https://github.com/dfinity/orbit/pull/481))\n\n- **station:** enable station top up from the cycles ledger balance ([#472](https://github.com/dfinity/orbit/pull/472))\n\n- **station:** support named rules ([#483](https://github.com/dfinity/orbit/pull/483))\n\n- **control-panel:** reduce initial station and upgrader cycles to 1T ([#485](https://github.com/dfinity/orbit/pull/485))\n\n- **docs:** docs portal ([#486](https://github.com/dfinity/orbit/pull/486))\n\n- **wallet:** Approval Policy aka Named Rules UI ([#488](https://github.com/dfinity/orbit/pull/488))\n\n- **station:** updated permission management ux ([#491](https://github.com/dfinity/orbit/pull/491))\n\n- **apps:** init marketing project ([#498](https://github.com/dfinity/orbit/pull/498))\n\n- **wallet:** updated branding ([#497](https://github.com/dfinity/orbit/pull/497))\n\n\n### 🩹 Fixes\n\n- **ci:** install CMC in Orbit local deployment ([#465](https://github.com/dfinity/orbit/pull/465))\n\n- **ci:** build and CI issues ([#467](https://github.com/dfinity/orbit/pull/467))\n\n- **station:** docker build ([#492](https://github.com/dfinity/orbit/pull/492))\n\n- **station:** security issue 42 ([#505](https://github.com/dfinity/orbit/pull/505))\n\n- **wallet:** security issue 36, 37, 38, 39, 40, 41 ([#503](https://github.com/dfinity/orbit/pull/503))\n\n- **station:** security issue 19, 54 ([#509](https://github.com/dfinity/orbit/pull/509))\n\n- **station:** security issue 45 ([#510](https://github.com/dfinity/orbit/pull/510))\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital\n- mraszyk @mraszyk\n- olaszakos"
+    },
+    "dfx-orbit": {
+      "releaseVersion": {
+        "rawVersion": "0.10.0",
+        "gitTag": "@orbit/dfx-orbit-v0.10.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.10.0 (2025-02-24)\n\n\n### 🚀 Features\n\n- **station:** enable station top up from the cycles ledger balance ([#472](https://github.com/dfinity/orbit/pull/472))\n\n- **station:** support named rules ([#483](https://github.com/dfinity/orbit/pull/483))\n\n- **docs:** docs portal ([#486](https://github.com/dfinity/orbit/pull/486))\n\n- **apps:** init marketing project ([#498](https://github.com/dfinity/orbit/pull/498))\n\n- **wallet:** updated branding ([#497](https://github.com/dfinity/orbit/pull/497))\n\n\n### 🩹 Fixes\n\n- **wallet:** update lockfile ([#459](https://github.com/dfinity/orbit/pull/459))\n\n- **ci:** install CMC in Orbit local deployment ([#465](https://github.com/dfinity/orbit/pull/465))\n\n- **ci:** build and CI issues ([#467](https://github.com/dfinity/orbit/pull/467))\n\n- **station:** docker build ([#492](https://github.com/dfinity/orbit/pull/492))\n\n- **station:** security issue 42 ([#505](https://github.com/dfinity/orbit/pull/505))\n\n- **wallet:** security issue 36, 37, 38, 39, 40, 41 ([#503](https://github.com/dfinity/orbit/pull/503))\n\n- **station:** security issue 19, 54 ([#509](https://github.com/dfinity/orbit/pull/509))\n\n- **station:** security issue 45 ([#510](https://github.com/dfinity/orbit/pull/510))\n\n\n### 🧱 Updated Dependencies\n\n- Updated orbit-essentials to 0.2.0\n- Updated station-api to 0.4.0\n\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- Kepler Vital\n- mraszyk @mraszyk\n- olaszakos"
+    },
+    "docs-portal": {
+      "releaseVersion": {
+        "rawVersion": "0.1.0",
+        "gitTag": "@orbit/docs-portal-v0.1.0",
+        "isPrerelease": false
+      },
+      "contents": "## 0.1.0 (2025-02-24)\n\n\n### 🚀 Features\n\n- ⚠️  **station:** multi chain support ([#374](https://github.com/dfinity/orbit/pull/374))\n\n- **docs:** docs portal ([#486](https://github.com/dfinity/orbit/pull/486))\n\n\n### ⚠️  Breaking Changes\n\n- ⚠️  **station:** multi chain support ([#374](https://github.com/dfinity/orbit/pull/374))\n\n### ❤️  Thank You\n\n- Jan Hrubes @jedna\n- olaszakos"
     }
   }
 }
