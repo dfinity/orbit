@@ -2,7 +2,7 @@
 [package]
 name = 'station-api'
 include = ['src', 'Cargo.toml']
-version = '0.3.0'
+version = '0.4.0'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
@@ -13,6 +13,6 @@ homepage.workspace = true
 candid = { workspace = true }
 hex = { workspace = true }
 ic-cdk = { workspace = true }
-orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.1.0' }
+orbit-essentials = { path = '../../../libs/orbit-essentials', version = '0.2.0' }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
