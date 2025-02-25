@@ -1,3 +1,61 @@
+## 0.4.0 (2025-02-25)
+
+
+### 🚀 Features
+
+- **wallet:** searchable address book; pick from address book at transfer ([#470](https://github.com/dfinity/orbit/pull/470))
+
+- **station:** optimize stable memory serialization ([#477](https://github.com/dfinity/orbit/pull/477))
+
+- **station:** enable station top up from the cycles ledger balance ([#472](https://github.com/dfinity/orbit/pull/472))
+
+- **station:** support named rules ([#483](https://github.com/dfinity/orbit/pull/483))
+
+- **control-panel:** reduce initial station and upgrader cycles to 1T ([#485](https://github.com/dfinity/orbit/pull/485))
+
+- **docs:** docs portal ([#486](https://github.com/dfinity/orbit/pull/486))
+
+- **control-panel:** rate limiting to at most 100 stations per day ([#489](https://github.com/dfinity/orbit/pull/489))
+
+- **wallet:** Approval Policy aka Named Rules UI ([#488](https://github.com/dfinity/orbit/pull/488))
+
+- **apps:** init marketing project ([#498](https://github.com/dfinity/orbit/pull/498))
+
+- **station:** update initial policies/permissions ([#499](https://github.com/dfinity/orbit/pull/499))
+
+- **wallet:** updated branding ([#497](https://github.com/dfinity/orbit/pull/497))
+
+
+### 🩹 Fixes
+
+- **ci:** install CMC in Orbit local deployment ([#465](https://github.com/dfinity/orbit/pull/465))
+
+- **ci:** build and CI issues ([#467](https://github.com/dfinity/orbit/pull/467))
+
+- **station:** docker build ([#492](https://github.com/dfinity/orbit/pull/492))
+
+- **station:** security issue 42 ([#505](https://github.com/dfinity/orbit/pull/505))
+
+- **wallet:** security issue 36, 37, 38, 39, 40, 41 ([#503](https://github.com/dfinity/orbit/pull/503))
+
+- **station:** security issue 19, 54 ([#509](https://github.com/dfinity/orbit/pull/509))
+
+- **station:** security issue 45 ([#510](https://github.com/dfinity/orbit/pull/510))
+
+
+### 🧱 Updated Dependencies
+
+- Updated orbit-essentials to 0.2.0
+- Updated station-api to 0.4.0
+
+
+### ❤️  Thank You
+
+- Jan Hrubes @jedna
+- Kepler Vital
+- mraszyk @mraszyk
+- olaszakos
+
 ## 0.3.0 (2024-12-17)
 
 
