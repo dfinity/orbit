@@ -2,10 +2,10 @@ name: 'Release'
 
 on:
   push:
-    # branches:
-    #   - main
-    # paths:
-    #   - '.release.json'
+    branches:
+      - main
+    paths:
+      - '.release.json'
 
 jobs:
   release_projects:
@@ -34,12 +34,12 @@ jobs:
         uses: ./.github/actions/setup-node
       - name: 'Install Dependencies'
         run: pnpm install --frozen-lockfile
-      # - name: 'Configure Git'
-      #   run: |
-      #     git config --global user.email "github-actions[bot]@@users.noreply.github.com"
-      #     git config --global user.name "GitHub Actions"
-      # - name: 'If new tags, finalize release'
-      #   run: |
-      #     orbit-cli release publish
-      #   env:
-      #     GH_TOKEN: ${{ github.token }}
+      - name: 'Configure Git'
+        run: |
+          git config --global user.email "github-actions[bot]@@users.noreply.github.com"
+          git config --global user.name "GitHub Actions"
+      - name: 'If new tags, finalize release'
+        run: |
+          orbit-cli release publish
+        env:
+          GH_TOKEN: ${{ github.token }}
