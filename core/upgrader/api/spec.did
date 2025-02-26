@@ -174,8 +174,15 @@ type RequestDisasterRecoveryInstallCodeInput = record {
   // The install mode: Install, Upgrade, or Reinstall.
   install_mode : InstallMode;
 };
+type RequestDisasterRecoveryTakeSnapshotInput = record {
+  // A snapshot to be replaced.
+  replace_snapshot : opt text;
+  // Should a snapshot be taken if the station fails to stop.
+  force : bool;
+};
 type RequestDisasterRecoveryInput = variant {
   InstallCode : RequestDisasterRecoveryInstallCodeInput;
+  TakeSnapshot : RequestDisasterRecoveryTakeSnapshotInput;
 };
 
 type InstallMode = variant {
@@ -238,8 +245,16 @@ type StationRecoveryRequestInstallCodeOperation = record {
   arg : blob;
 };
 
+type StationRecoveryRequestTakeSnapshotOperation = record {
+  // A snapshot to be replaced.
+  replace_snapshot : opt text;
+  // Should a snapshot be taken if the station fails to stop.
+  force : bool;
+};
+
 type StationRecoveryRequestOperation = variant {
   InstallCode : StationRecoveryRequestInstallCodeOperation;
+  TakeSnapshot : StationRecoveryRequestTakeSnapshotOperation;
 };
 
 // Request to recover the station.

@@ -166,8 +166,15 @@ pub struct RequestDisasterRecoveryInstallCodeInput {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct RequestDisasterRecoveryTakeSnapshotInput {
+    pub replace_snapshot: Option<String>,
+    pub force: bool,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum RequestDisasterRecoveryInput {
     InstallCode(RequestDisasterRecoveryInstallCodeInput),
+    TakeSnapshot(RequestDisasterRecoveryTakeSnapshotInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -213,8 +220,15 @@ pub struct StationRecoveryRequestInstallCodeOperation {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub struct StationRecoveryRequestTakeSnapshotOperation {
+    pub replace_snapshot: Option<String>,
+    pub force: bool,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub enum StationRecoveryRequestOperation {
     InstallCode(StationRecoveryRequestInstallCodeOperation),
+    TakeSnapshot(StationRecoveryRequestTakeSnapshotOperation),
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
