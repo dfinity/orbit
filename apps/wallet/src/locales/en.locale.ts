@@ -1218,9 +1218,9 @@ export default {
       permission_update_description:
         'Grants full control over wallet permissions, including adding, updating, and removing permissions.',
 
-      requestpolicy_list: 'View Request Policies Page',
+      requestpolicy_list: 'View Request Policies Tab',
       requestpolicy_list_description:
-        'Grants access to the request policies page, showing only policies the user can view.',
+        'Grants access to the request policies tab, showing only policies the user can view.',
       requestpolicy_read_any: 'View All Request Policies',
       requestpolicy_read_any_description:
         'Allows viewing of all request policies and their details.',
@@ -1239,18 +1239,18 @@ export default {
       request_read_any_description:
         'Enables viewing of all requests, including those submitted by other users.',
 
-      namedrule_list: 'View Approval Policies Page',
+      namedrule_list: 'View Approval Rules Tab',
       namedrule_list_description:
-        'Grants access to the approval policies page, showing only policies the user can view.',
-      namedrule_read_any: 'View All Approval Policies',
-      namedrule_read_any_description: 'Allows viewing of all approval policies and their details.',
+        'Grants access to the approval rules tab, showing only rules the user can view.',
+      namedrule_read_any: 'View All Approval Rules',
+      namedrule_read_any_description: 'Allows viewing of all approval rules and their details.',
 
-      namedrule_create: 'Add New Approval Policies',
-      namedrule_create_description: 'Enables adding new approval policies to the wallet.',
-      namedrule_update_any: 'Edit Approval Policies',
-      namedrule_update_any_description: 'Grants permission to modify approval policies.',
-      namedrule_delete_any: 'Delete Approval Policies',
-      namedrule_delete_any_description: 'Allows deleting approval policies.',
+      namedrule_create: 'Add New Approval Rules',
+      namedrule_create_description: 'Enables adding new approval rules to the wallet.',
+      namedrule_update_any: 'Edit Approval Rules',
+      namedrule_update_any_description: 'Grants permission to modify approval rules.',
+      namedrule_delete_any: 'Delete Approval Rules',
+      namedrule_delete_any_description: 'Allows deleting approval rules.',
     },
   },
   request_policies: {

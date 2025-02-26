@@ -42,7 +42,7 @@
             hide-not-found
           />
         </AuthCheck>
-        <component :is="tabs.find(t => t.name === tab)?.component" />
+        <component :is="tabs.find(t => t.name === tab)?.component" v-if="tab" />
       </PageBody>
     </template>
   </PageLayout>
@@ -60,7 +60,8 @@ import ApprovalRulesTab from '~/components/policies/ApprovalRulesTab.vue';
 import { Routes } from '~/configs/routes.config';
 import { RequestDomains } from '~/types/station.types';
 import RecentRequests from '~/components/requests/RecentRequests.vue';
-import { ref } from 'vue';
+import { type Component, ref } from 'vue';
+import { hasRequiredPrivilege } from '~/utils/auth.utils';
 
 const props = withDefaults(defineProps<PageProps>(), { title: undefined, breadcrumbs: () => [] });
 
@@ -68,10 +69,15 @@ enum Tabs {
   RequestPolicies = 'request_policies',
   ApprovalRules = 'approval_rules',
 }
-const tabs = [
-  { name: Tabs.ApprovalRules, component: ApprovalRulesTab },
-  { name: Tabs.RequestPolicies, component: RequestPoliciesTab },
-];
+const tabs: { name: Tabs; component: Component }[] = [];
 
-const tab = ref<Tabs>(Tabs.ApprovalRules);
+if (hasRequiredPrivilege({ anyOf: [Privilege.ListNamedRules] })) {
+  tabs.push({ name: Tabs.ApprovalRules, component: ApprovalRulesTab });
+}
+
+if (hasRequiredPrivilege({ anyOf: [Privilege.ListRequestPolicies] })) {
+  tabs.push({ name: Tabs.RequestPolicies, component: RequestPoliciesTab });
+}
+
+const tab = ref<Tabs | undefined>(tabs[0]?.name);
 </script>
