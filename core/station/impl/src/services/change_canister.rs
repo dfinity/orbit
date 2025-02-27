@@ -112,7 +112,7 @@ impl ChangeCanisterService {
         }
 
         // Take snapshot
-        let snapshot_result = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {
+        let take_snapshot_result = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {
             canister_id,
             replace_snapshot,
         })
@@ -125,7 +125,7 @@ impl ChangeCanisterService {
         // Restart canister (regardless of whether the upgrade succeeded or not)
         self.start_canister(canister_id).await?;
 
-        snapshot_result
+        take_snapshot_result
     }
 
     /// Restore a canister from a snapshot.
