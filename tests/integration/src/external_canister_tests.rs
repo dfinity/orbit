@@ -612,7 +612,7 @@ fn call_external_canister_test() {
         call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: 'Unauthorized access to resources: ExternalCanister(Call(CallExternalCanister("
     ));
 
     // nothing should have changed so far
@@ -801,7 +801,7 @@ fn call_external_canister_test() {
         illegal_call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: 'Unauthorized access to resources: ExternalCanister(Call(CallExternalCanister("
     ));
 
     bump_time_to_avoid_ratelimit(&env);
@@ -821,7 +821,7 @@ fn call_external_canister_test() {
         illegal_call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: 'Unauthorized access to resources: ExternalCanister(Call(CallExternalCanister("
     ));
 
     // submit a request labeling the validation method as the execution method which is illegal given the permissions set so far
@@ -839,7 +839,7 @@ fn call_external_canister_test() {
         illegal_call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: 'Unauthorized access to resources: ExternalCanister(Call(CallExternalCanister("
     ));
 
     // nothing should have changed

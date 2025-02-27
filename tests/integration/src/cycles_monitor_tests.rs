@@ -157,7 +157,7 @@ fn successful_monitors_stations_and_tops_up() {
     )
     .unwrap_err();
     assert!(user_error.reject_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: System(SystemInfo)"
+        "Canister called `ic0.trap` with message: 'Unauthorized access to resources: System(SystemInfo)'."
     ));
 
     let upgrader_id = get_system_info(&env, user_id, newly_created_user_station).upgrader_id;
