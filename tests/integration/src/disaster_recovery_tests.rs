@@ -1093,13 +1093,13 @@ fn test_disaster_recovery_via_canister_snapshots() {
         .unwrap();
     assert!(snapshots.is_empty());
 
-    let take_snapshot_request = upgrader_api::RequestDisasterRecoveryInput::TakeSnapshot(
-        upgrader_api::RequestDisasterRecoveryTakeSnapshotInput {
+    let snapshot_request = upgrader_api::RequestDisasterRecoveryInput::Snapshot(
+        upgrader_api::RequestDisasterRecoverySnapshotInput {
             replace_snapshot: None,
             force: false,
         },
     );
-    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, take_snapshot_request)
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, snapshot_request)
         .expect("Failed to request disaster recovery");
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
 

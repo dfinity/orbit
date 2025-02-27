@@ -289,18 +289,18 @@ impl DisasterRecoveryService {
 
                 Ok(())
             }
-            StationRecoveryRequestOperation::TakeSnapshot(take_snapshot) => {
+            StationRecoveryRequestOperation::Snapshot(snapshot) => {
                 if let Err(reason) = installer.stop(station_canister_id).await {
-                    if !take_snapshot.force {
+                    if !snapshot.force {
                         return Err(reason);
                     }
                 }
 
-                let take_snapshot_args = TakeCanisterSnapshotArgs {
+                let snapshot_args = TakeCanisterSnapshotArgs {
                     canister_id: station_canister_id,
-                    replace_snapshot: take_snapshot.replace_snapshot,
+                    replace_snapshot: snapshot.replace_snapshot,
                 };
-                take_canister_snapshot(take_snapshot_args)
+                take_canister_snapshot(snapshot_args)
                     .await
                     .map_err(|(_, err)| err)?;
 
