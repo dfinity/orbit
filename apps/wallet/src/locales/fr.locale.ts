@@ -1238,9 +1238,9 @@ export default {
       permission_update_description:
         'Permet de modifier les autorisations pour les ressources et les actions spécifiées.',
 
-      requestpolicy_list: 'Voir la Page des Politiques de Demande',
+      requestpolicy_list: "Voir l'Onglet des Politiques de Demande",
       requestpolicy_list_description:
-        "Permet d'accéder à la page des politiques de demande, mais affiche uniquement les politiques que l'utilisateur est autorisé à voir.",
+        "Permet d'accéder à l'onglet des politiques de demande, en affichant uniquement les politiques que l'utilisateur est autorisé à voir.",
       requestpolicy_read_any: 'Voir Toutes les Politiques de Demande',
       requestpolicy_read_any_description:
         "Permet d'afficher toutes les politiques de demande et leurs détails.",
@@ -1260,19 +1260,19 @@ export default {
       request_read_any_description:
         "Permet d'afficher toutes les demandes, y compris celles soumises par d'autres utilisateurs.",
 
-      namedrule_list: 'Voir la Page des Politiques d approbation',
+      namedrule_list: "Voir l'Onglet des Règles d'Approbation",
       namedrule_list_description:
-        "Permet d'accéder à la page des politiques d'approbation, en affichant uniquement les politiques que l'utilisateur est autorisé à voir.",
-      namedrule_read_any: 'Voir Toutes les Politiques d approbation',
+        "Permet d'accéder à l'onglet des règles d'approbation, en affichant uniquement les règles que l'utilisateur est autorisé à voir.",
+      namedrule_read_any: "Voir Toutes les Règles d'Approbation",
       namedrule_read_any_description:
-        "Permet d'afficher toutes les politiques d'approbation et leurs détails.",
-      namedrule_create: 'Ajouter de Nouvelles Politiques d approbation',
+        "Permet d'afficher toutes les règles d'approbation et leurs détails.",
+      namedrule_create: "Ajouter de Nouvelles Règles d'Approbation",
       namedrule_create_description:
-        "Permet d'ajouter de nouvelles politiques d'approbation au portefeuille.",
-      namedrule_update_any: 'Modifier les Politiques d approbation',
-      namedrule_update_any_description: 'Permet de modifier les politiques d approbation.',
-      namedrule_delete_any: 'Supprimer les Politiques d approbation',
-      namedrule_delete_any_description: 'Permet de supprimer les politiques d approbation.',
+        "Permet d'ajouter de nouvelles règles d'approbation au portefeuille.",
+      namedrule_update_any: "Modifier les Règles d'Approbation",
+      namedrule_update_any_description: "Permet de modifier les règles d'approbation.",
+      namedrule_delete_any: "Supprimer les Règles d'Approbation",
+      namedrule_delete_any_description: "Permet de supprimer les règles d'approbation.",
     },
   },
   request_policies: {

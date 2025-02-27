@@ -104,6 +104,7 @@ import {
 import { useStationStore } from '~/stores/station.store';
 import { Privilege } from '~/types/auth.types';
 import { ExtractOk } from '~/types/helper.types';
+import { hasRequiredPrivilege } from '~/utils/auth.utils';
 import { throttle, variantIs } from '~/utils/helper.utils';
 
 const station = useStationStore();
@@ -118,6 +119,10 @@ const triggerSearch = throttle(() => (forceReload.value = true), 500);
 const allPolicies = ref<RequestPolicy[] | null>(null);
 const mounted = ref(false);
 
+const canLoadLinkedPolicies = computed(() => {
+  return hasRequiredPrivilege({ anyOf: [Privilege.ListRequestPolicies] });
+});
+
 const headers = computed(() => {
   return [
     { title: i18n.t('terms.name'), key: 'name', sortable: false },
@@ -126,11 +131,15 @@ const headers = computed(() => {
       ? []
       : [
           { title: i18n.t('terms.rule'), key: 'rule', sortable: false },
-          {
-            title: i18n.t('pages.approval_rules.linked_policies'),
-            key: 'linked_policies',
-            sortable: false,
-          },
+          ...(canLoadLinkedPolicies.value
+            ? [
+                {
+                  title: i18n.t('pages.approval_rules.linked_policies'),
+                  key: 'linked_policies',
+                  sortable: false,
+                },
+              ]
+            : []),
         ]),
     { title: '', key: 'actions', sortable: false },
   ];
@@ -198,23 +207,25 @@ onMounted(async () => {
     componentUnmounted = true;
   });
 
-  let offset = 0;
-  let result: ExtractOk<ListRequestPoliciesResult>;
-  do {
-    result = await station.service.listRequestPolicies({
-      limit: 100,
-      offset: offset,
-    });
-    fetchedPolicies.push(...result.policies);
-    if (result.next_offset.length === 0 || componentUnmounted) {
-      break;
+  if (canLoadLinkedPolicies.value) {
+    let offset = 0;
+    let result: ExtractOk<ListRequestPoliciesResult>;
+    do {
+      result = await station.service.listRequestPolicies({
+        limit: 100,
+        offset: offset,
+      });
+      fetchedPolicies.push(...result.policies);
+      if (result.next_offset.length === 0 || componentUnmounted) {
+        break;
+      }
+
+      offset = Number(result.next_offset);
+    } while (result.total > fetchedPolicies.length);
+
+    if (!componentUnmounted) {
+      allPolicies.value = fetchedPolicies;
     }
-
-    offset = Number(result.next_offset);
-  } while (result.total > fetchedPolicies.length);
-
-  if (!componentUnmounted) {
-    allPolicies.value = fetchedPolicies;
   }
 });
 

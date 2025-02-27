@@ -1233,9 +1233,9 @@ export default {
       permission_update_description:
         'Concede controle total sobre as permissões da carteira, incluindo adicionar, atualizar e remover permissões.',
 
-      requestpolicy_list: 'Ver Página de Políticas de Solicitação',
+      requestpolicy_list: 'Ver Aba de Políticas de Solicitação',
       requestpolicy_list_description:
-        'Permite acessar a página de políticas de solicitação, exibindo apenas as políticas que o usuário pode visualizar.',
+        'Permite acessar a aba de políticas de solicitação, exibindo apenas as políticas que o usuário pode visualizar.',
       requestpolicy_read_any: 'Ver Todas as Políticas de Solicitação',
       requestpolicy_read_any_description:
         'Permite visualizar todas as políticas de solicitação e seus detalhes.',
@@ -1255,19 +1255,19 @@ export default {
       request_read_any_description:
         'Permite visualizar todas as solicitações, incluindo aquelas enviadas por outros usuários.',
 
-      namedrule_list: 'Ver Página de Políticas de Aprovação',
+      namedrule_list: 'Ver Aba de Regras de Aprovação',
       namedrule_list_description:
-        'Permite acessar a página de políticas de aprovação, exibindo apenas as políticas que o usuário pode visualizar.',
-      namedrule_read_any: 'Ver Todas as Políticas de Aprovação',
+        'Permite acessar a aba de regras de aprovação, exibindo apenas as regras que o usuário pode visualizar.',
+      namedrule_read_any: 'Ver Todas as Regras de Aprovação',
       namedrule_read_any_description:
-        'Permite visualizar todas as políticas de aprovação e seus detalhes.',
+        'Permite visualizar todas as regras de aprovação e seus detalhes.',
 
-      namedrule_create: 'Adicionar Novas Políticas de Aprovação',
-      namedrule_create_description: 'Permite adicionar novas políticas de aprovação à carteira.',
-      namedrule_update_any: 'Editar Políticas de Aprovação',
-      namedrule_update_any_description: 'Permite modificar as políticas de aprovação.',
-      namedrule_delete_any: 'Excluir Políticas de Aprovação',
-      namedrule_delete_any_description: 'Permite excluir políticas de aprovação.',
+      namedrule_create: 'Adicionar Novas Regras de Aprovação',
+      namedrule_create_description: 'Permite adicionar novas regras de aprovação à carteira.',
+      namedrule_update_any: 'Editar Regras de Aprovação',
+      namedrule_update_any_description: 'Permite modificar regras de aprovação.',
+      namedrule_delete_any: 'Excluir Regras de Aprovação',
+      namedrule_delete_any_description: 'Permite excluir regras de aprovação.',
     },
   },
   request_policies: {

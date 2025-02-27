@@ -1,6 +1,7 @@
 name: 'Release'
 
 on:
+  workflow_dispatch: null
   push:
     branches:
       - main
@@ -11,14 +12,18 @@ jobs:
   release_projects:
     name: 'release'
     runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged # Enable Docker in Docker
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
-      - uses: docker-practice/actions-setup-docker@master
-        timeout-minutes: 12
       # Helps with debugging
       - name: Show versions
         run: |
