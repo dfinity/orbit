@@ -1115,7 +1115,7 @@ fn create_external_canister_with_too_many_cycles() {
     )
     .unwrap_err();
     assert!(err
-        .description
+        .reject_message
         .contains("The method `try_execute_request` can only be called by the station canister."));
 
     // wait for the requests to be executed
