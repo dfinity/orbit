@@ -5,7 +5,7 @@ sidebar:
 description: This page provide the necessary information to get started with Orbit.
 ---
 
-Orbit Wallet is a **trustless multi-custody digital asset management platform** built on the **Internet Computer Protocol (ICP)**. Designed for both individual users and enterprise solutions, Orbit Wallet simplifies secure digital asset management through a highly adaptable and decentralized architecture.
+Orbit Wallet is a **non-custodial digital assets management platform** built on the **Internet Computer Protocol (ICP)**. Designed for both individual users and teams, Orbit Wallet simplifies secure digital asset management through a highly adaptable and decentralized architecture.
 
 ## **What is Orbit Wallet?**
 
