@@ -151,17 +151,6 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Record({ 'user' : User }),
     'Err' : ApiError,
   });
-  const SubscribedUser = IDL.Record({
-    'user_principal' : IDL.Principal,
-    'email' : IDL.Text,
-  });
-  const GetWaitingListResponse = IDL.Record({
-    'subscribed_users' : IDL.Vec(SubscribedUser),
-  });
-  const GetWaitingListResult = IDL.Variant({
-    'Ok' : GetWaitingListResponse,
-    'Err' : ApiError,
-  });
   const HeaderField = IDL.Tuple(IDL.Text, IDL.Text);
   const HttpRequest = IDL.Record({
     'url' : IDL.Text,
@@ -246,18 +235,6 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Null,
     'Err' : ApiError,
   });
-  const SubscribeToWaitingListResult = IDL.Variant({
-    'Ok' : IDL.Null,
-    'Err' : ApiError,
-  });
-  const UpdateWaitingListInput = IDL.Record({
-    'users' : IDL.Vec(IDL.Principal),
-    'new_status' : UserSubscriptionStatus,
-  });
-  const UpdateWaitingListResult = IDL.Variant({
-    'Ok' : IDL.Null,
-    'Err' : ApiError,
-  });
   const UploadCanisterModulesInput = IDL.Record({
     'station_wasm_module_extra_chunks' : IDL.Opt(
       IDL.Opt(WasmModuleExtraChunks)
@@ -303,7 +280,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'get_user' : IDL.Func([], [GetUserResult], ['query']),
-    'get_waiting_list' : IDL.Func([], [GetWaitingListResult], []),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
     'list_user_stations' : IDL.Func(
         [ListUserStationsInput],
@@ -327,16 +303,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'set_user_active' : IDL.Func([], [SetUserActiveResult], []),
-    'subscribe_to_waiting_list' : IDL.Func(
-        [IDL.Text],
-        [SubscribeToWaitingListResult],
-        [],
-      ),
-    'update_waiting_list' : IDL.Func(
-        [UpdateWaitingListInput],
-        [UpdateWaitingListResult],
-        [],
-      ),
     'upload_canister_modules' : IDL.Func(
         [UploadCanisterModulesInput],
         [UploadUploadCanisterModulesInputResult],

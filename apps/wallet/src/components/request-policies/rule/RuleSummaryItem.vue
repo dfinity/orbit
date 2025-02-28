@@ -2,7 +2,7 @@
   <template v-if="rule.kind === 'NamedRule'">
     <I18nT tag="span" keypath="request_policies.rule_rich_summary.named_rule">
       <template #name>
-        <InteractiveNamedRule :id="rule.id" :name="rule.name" />
+        <InteractiveNamedRule :id="rule.id" />
       </template>
     </I18nT>
   </template>

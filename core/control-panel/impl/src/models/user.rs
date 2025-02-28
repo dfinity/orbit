@@ -104,14 +104,6 @@ impl User {
     }
 
     pub fn can_deploy_station(&self) -> CanDeployStation {
-        match self.subscription_status {
-            UserSubscriptionStatus::Approved => (),
-            UserSubscriptionStatus::Unsubscribed
-            | UserSubscriptionStatus::Pending(_)
-            | UserSubscriptionStatus::Denylisted => {
-                return CanDeployStation::NotAllowed(self.subscription_status.clone());
-            }
-        };
         self.user_rate_limiter.can_deploy_station()
     }
 
@@ -129,7 +121,7 @@ impl User {
         User {
             id: new_user_id,
             identity: user_identity,
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
+            subscription_status: UserSubscriptionStatus::Approved,
             stations: stations.into_iter().map(|station| station.into()).collect(),
             deployed_stations: vec![],
             user_rate_limiter: RateLimiter::new_user(),
@@ -272,7 +264,7 @@ pub mod user_model_utils {
         User {
             id: *Uuid::new_v4().as_bytes(),
             identity: test_utils::random_principal(),
-            subscription_status: UserSubscriptionStatus::Unsubscribed,
+            subscription_status: UserSubscriptionStatus::Approved,
             stations: vec![],
             deployed_stations: vec![],
             user_rate_limiter: RateLimiter::new_user(),

@@ -14,7 +14,7 @@ use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use orbit_essentials::types::WasmModuleExtraChunks;
 use pocket_ic::management_canister::CanisterStatusResult;
-use pocket_ic::{query_candid_as, update_candid_as, CallError, PocketIc, UserError, WasmResult};
+use pocket_ic::{query_candid_as, update_candid_as, PocketIc, RejectResponse};
 use sha2::Digest;
 use sha2::Sha256;
 use station_api::{
@@ -180,7 +180,7 @@ pub fn submit_request_raw(
     user_id: Principal,
     station_canister_id: CanisterId,
     request_operation_input: RequestOperationInput,
-) -> Result<(Result<CreateRequestResponse, ApiErrorDTO>,), CallError> {
+) -> Result<(Result<CreateRequestResponse, ApiErrorDTO>,), RejectResponse> {
     let create_request_input = CreateRequestInput {
         operation: request_operation_input,
         title: None,
@@ -213,11 +213,9 @@ pub fn submit_request_with_expected_trap(
     station_canister_id: CanisterId,
     request_operation_input: RequestOperationInput,
 ) -> String {
-    let res = submit_request_raw(env, user_id, station_canister_id, request_operation_input);
-    match res.unwrap_err() {
-        CallError::UserError(error) => error.description,
-        CallError::Reject(message) => panic!("Unexpected reject: {}", message),
-    }
+    submit_request_raw(env, user_id, station_canister_id, request_operation_input)
+        .unwrap_err()
+        .reject_message
 }
 
 pub fn wait_for_request(
@@ -458,12 +456,8 @@ pub fn update_raw(
     sender: Principal,
     method: &str,
     payload: Vec<u8>,
-) -> Result<Vec<u8>, UserError> {
+) -> Result<Vec<u8>, RejectResponse> {
     env.update_call(canister_id, sender, method, payload)
-        .map(|res| match res {
-            WasmResult::Reply(bytes) => bytes,
-            WasmResult::Reject(message) => panic!("Unexpected reject: {}", message),
-        })
 }
 
 pub fn get_upgrader_disaster_recovery(
@@ -1133,17 +1127,11 @@ pub(crate) fn deploy_test_canister(env: &PocketIc, controller: Principal) -> Pri
     test_canister
 }
 
-pub fn expect_await_call_result<T>(result: WasmResult) -> T
+pub fn expect_await_call_result<T>(result: Vec<u8>) -> T
 where
     T: for<'a> ArgumentDecoder<'a>,
 {
-    match result {
-        WasmResult::Reply(vec) => {
-            let result: T = decode_args(&vec).expect("Failed to decode result");
-            result
-        }
-        WasmResult::Reject(error) => panic!("Unexpected reject: {error}"),
-    }
+    decode_args(&result).expect("Failed to decode result")
 }
 
 pub(crate) fn set_disaster_recovery_committee(

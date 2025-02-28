@@ -1,13 +1,6 @@
 use crate::{
     core::{metrics::USER_METRICS, with_memory_manager, Memory, USER_MEMORY_ID},
-    mappers::SubscribedUser,
-    models::{
-        indexes::{
-            user_identity_index::UserIdentityIndexCriteria,
-            user_status_index::{UserIndexSubscriptionStatus, UserStatusIndexCriteria},
-        },
-        User, UserKey, UserSubscriptionStatus,
-    },
+    models::{indexes::user_identity_index::UserIdentityIndexCriteria, User, UserKey},
     repositories::indexes::{
         user_identity_index::UserIdentityIndexRepository,
         user_status_index::UserStatusIndexRepository,
@@ -113,32 +106,12 @@ impl UserRepository {
             .iter()
             .find_map(|id| self.get(&UserKey(*id)))
     }
-
-    pub fn get_subscribed_users(&self) -> Vec<SubscribedUser> {
-        self.status_index
-            .find_by_criteria(UserStatusIndexCriteria {
-                status: UserIndexSubscriptionStatus::Pending,
-            })
-            .iter()
-            .filter_map(|id| {
-                let user = self.get(&UserKey(*id)).unwrap();
-                if let UserSubscriptionStatus::Pending(email) = user.subscription_status {
-                    Some(SubscribedUser {
-                        user_principal: user.identity,
-                        email,
-                    })
-                } else {
-                    None
-                }
-            })
-            .collect()
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{user_model_utils::mock_user, UserSubscriptionStatus};
+    use crate::models::user_model_utils::mock_user;
     use candid::Principal;
 
     #[test]
@@ -150,45 +123,6 @@ mod tests {
 
         repository.insert(UserKey(user.id), user.clone());
         assert_eq!(repository.get(&UserKey(user.id)), Some(user));
-    }
-
-    #[test]
-    fn get_subscribed_users() {
-        let repository = UserRepository::default();
-
-        let mut unsubscribed_user = mock_user();
-        unsubscribed_user.subscription_status = UserSubscriptionStatus::Unsubscribed;
-        repository.insert(UserKey(unsubscribed_user.id), unsubscribed_user.clone());
-
-        let email = "john@example.com".to_string();
-        let mut subscribed_user = mock_user();
-        subscribed_user.subscription_status = UserSubscriptionStatus::Pending(email.clone());
-        repository.insert(UserKey(subscribed_user.id), subscribed_user.clone());
-
-        let another_email = "martin@example.com".to_string();
-        let mut another_subscribed_user = mock_user();
-        another_subscribed_user.subscription_status =
-            UserSubscriptionStatus::Pending(another_email.clone());
-        repository.insert(
-            UserKey(another_subscribed_user.id),
-            another_subscribed_user.clone(),
-        );
-
-        let all_users = repository.list();
-        assert_eq!(all_users.len(), 3);
-
-        let subscribed_users = repository.get_subscribed_users();
-        assert_eq!(subscribed_users.len(), 2);
-        let subscribed = SubscribedUser {
-            user_principal: subscribed_user.identity,
-            email,
-        };
-        assert!(subscribed_users.contains(&subscribed));
-        let another_subscribed = SubscribedUser {
-            user_principal: another_subscribed_user.identity,
-            email: another_email,
-        };
-        assert!(subscribed_users.contains(&another_subscribed));
     }
 
     #[test]

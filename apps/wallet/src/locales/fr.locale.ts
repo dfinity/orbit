@@ -233,7 +233,7 @@ export default {
       external_canister: 'Canister Géré',
       system_info: 'Informations Système',
       asset: 'Actifs',
-      named_rule: 'Polices d approbation',
+      named_rule: 'Règles d approbation',
     },
     types: {
       addusergroup: {
@@ -344,16 +344,16 @@ export default {
         request_title: 'Demande d édition de sauvegarde',
       },
       addnamedrule: {
-        title: 'Ajouter une politique d approbation',
-        request_title: 'Demande d ajout d une politique d approbation',
+        title: 'Ajouter une règle d approbation',
+        request_title: 'Demande d ajout d une règle d approbation',
       },
       editnamedrule: {
-        title: 'Modifier une politique d approbation',
-        request_title: 'Demande de modification d une politique d approbation',
+        title: 'Modifier une règle d approbation',
+        request_title: 'Demande de modification d une règle d approbation',
       },
       removenamedrule: {
-        title: 'Supprimer une politique d approbation',
-        request_title: 'Demande de suppression d une politique d approbation',
+        title: 'Supprimer une règle d approbation',
+        request_title: 'Demande de suppression d une règle d approbation',
       },
       unknown: {
         title: 'Inconnu',
@@ -886,7 +886,7 @@ export default {
     request_policies: "Polices d'Aprobation",
     assets: 'Actifs',
     external_canisters: 'Canisters',
-    approval_policy: 'Police d approbation',
+    approval_rules: 'Règles d approbation',
   },
   pages: {
     dashboard: {
@@ -975,12 +975,12 @@ export default {
       add_station_title: 'Comment aimeriez-vous ajouter un portefeuille?',
       option_join_existing_station: 'Rejoindre un portefeuille existant',
       option_deploy_new_station: 'Déployer un nouveau portefeuille',
-      check_permissions_title: 'Vérification du statut de la liste d attente...',
-      join_waitlist_title: 'Rejoindre la liste d attente',
-      join_waitlist_body:
-        "Rejoignez la liste d'attente d'Orbit! Entrez votre email pour obtenir un accès anticipé et des mises à jour exclusives. Votre voyage commence maintenant.",
-      join_waitlist_email_field: 'Entrez votre adresse e-mail',
-      join_waitlist: "S'inscrire maintenant",
+      join_station_title: 'Rejoindre un portefeuille existant',
+      join_station_body:
+        "Contactez le propriétaire pour obtenir l'ID du portefeuille et envoyez-lui votre identité afin qu'un utilisateur puisse être créé pour vous.",
+      join_station_canister_id: 'ID du Portefeuille',
+      join_station_name: 'Nom du Portefeuille',
+      join_station: 'Rejoindre le portefeuille',
 
       station_title: 'Créer un portefeuille',
       station_body:
@@ -988,26 +988,19 @@ export default {
       station_name_field: 'Nom du Portefeuille',
       admin_name_field: "Ton nom d'utilisateur",
 
-      waitlist_pending_title: 'Vous êtes sur la liste d attente!',
-      waitlist_pending_body:
-        'Veuillez attendre l approbation. Vous recevrez un email une fois votre demande approuvée.',
-      waitlist_denied_title: 'Vous avez été refusé l accès.',
-      waitlist_denied_body:
-        'Malheureusement, vous n êtes pas éligible pour rejoindre la liste d attente.',
-
-      waitlist_check_error_title: 'Échec de vérification du statut de la liste d attente',
-      waitlist_check_error_body:
-        "Échec de la vérification du statut de la liste d'attente, veuillez réessayer.",
+      check_permissions_title: "Vérification de l'éligibilité au déploiement...",
 
       quota_exceed_error_title: 'Quota dépassé',
-      quota_exceed_error_body: 'Le nombre maximum de portefeuilles a été atteint.',
+      quota_exceed_error_body:
+        'Vous avez atteint le nombre maximum de portefeuilles que vous pouvez créer.',
 
-      join_station_title: 'Rejoindre un portefeuille existant',
-      join_station_body:
-        "Contactez le propriétaire pour obtenir l'ID du portefeuille et envoyez-lui votre identité afin qu'un utilisateur puisse être créé pour vous.",
-      join_station_canister_id: 'ID du Portefeuille',
-      join_station_name: 'Nom du Portefeuille',
-      join_station: 'Rejoindre le portefeuille',
+      waitlist_denied_title: 'Accès refusé.',
+      waitlist_denied_body:
+        "Malheureusement, vous n'êtes pas éligible pour déployer un portefeuille.",
+
+      deployment_check_error_title: "Échec de la vérification d'éligibilité au déploiement",
+      deployment_check_error_body:
+        "Échec de la vérification d'éligibilité au déploiement, veuillez réessayer.",
 
       status_starting: 'Initialization, veuillez patienter...',
       status_deploying: 'Deploiement de votre portefeuille au Internet Computer ...',
@@ -1026,8 +1019,8 @@ export default {
     },
     request_policies: {
       title: "Polices d'Aprobation",
-      create_label: 'Ajouter un police',
-      dialog_title: 'Police',
+      create_label: 'Ajouter une politique d approbation',
+      dialog_title: 'Police d approbation',
     },
     assets: {
       title: 'Actifs',
@@ -1049,11 +1042,11 @@ export default {
         option_add_custom_asset: 'Ajouter un actif personnalisé',
       },
     },
-    approval_policy: {
-      btn_new_entry: 'Ajouter une nouvelle police',
-      title: 'Police d approbation',
+    approval_rules: {
+      btn_new_entry: 'Ajouter une règle d approbation',
+      title: 'Règle d approbation',
       dialog: {
-        title: 'Police d approbation',
+        title: 'Règle d approbation',
       },
       linked_policies: 'Polices liées',
     },
@@ -1119,7 +1112,7 @@ export default {
       addressbook: "Carnet d'Adresses",
       managesysteminfo: 'Gérer les Informations Système',
       externalcanister: 'Canister Externe',
-      namedrule: 'Police d approbation',
+      namedrule: 'Règle d approbation',
     },
     categories: {
       treasury: 'Trésorerie (comptes, actifs, etc...)',
@@ -1238,9 +1231,9 @@ export default {
       permission_update_description:
         'Permet de modifier les autorisations pour les ressources et les actions spécifiées.',
 
-      requestpolicy_list: 'Voir la Page des Politiques de Demande',
+      requestpolicy_list: "Voir l'Onglet des Politiques de Demande",
       requestpolicy_list_description:
-        "Permet d'accéder à la page des politiques de demande, mais affiche uniquement les politiques que l'utilisateur est autorisé à voir.",
+        "Permet d'accéder à l'onglet des politiques de demande, en affichant uniquement les politiques que l'utilisateur est autorisé à voir.",
       requestpolicy_read_any: 'Voir Toutes les Politiques de Demande',
       requestpolicy_read_any_description:
         "Permet d'afficher toutes les politiques de demande et leurs détails.",
@@ -1260,19 +1253,19 @@ export default {
       request_read_any_description:
         "Permet d'afficher toutes les demandes, y compris celles soumises par d'autres utilisateurs.",
 
-      namedrule_list: 'Voir la Page des Politiques d approbation',
+      namedrule_list: "Voir l'Onglet des Règles d'Approbation",
       namedrule_list_description:
-        "Permet d'accéder à la page des politiques d'approbation, en affichant uniquement les politiques que l'utilisateur est autorisé à voir.",
-      namedrule_read_any: 'Voir Toutes les Politiques d approbation',
+        "Permet d'accéder à l'onglet des règles d'approbation, en affichant uniquement les règles que l'utilisateur est autorisé à voir.",
+      namedrule_read_any: "Voir Toutes les Règles d'Approbation",
       namedrule_read_any_description:
-        "Permet d'afficher toutes les politiques d'approbation et leurs détails.",
-      namedrule_create: 'Ajouter de Nouvelles Politiques d approbation',
+        "Permet d'afficher toutes les règles d'approbation et leurs détails.",
+      namedrule_create: "Ajouter de Nouvelles Règles d'Approbation",
       namedrule_create_description:
-        "Permet d'ajouter de nouvelles politiques d'approbation au portefeuille.",
-      namedrule_update_any: 'Modifier les Politiques d approbation',
-      namedrule_update_any_description: 'Permet de modifier les politiques d approbation.',
-      namedrule_delete_any: 'Supprimer les Politiques d approbation',
-      namedrule_delete_any_description: 'Permet de supprimer les politiques d approbation.',
+        "Permet d'ajouter de nouvelles règles d'approbation au portefeuille.",
+      namedrule_update_any: "Modifier les Règles d'Approbation",
+      namedrule_update_any_description: "Permet de modifier les règles d'approbation.",
+      namedrule_delete_any: "Supprimer les Règles d'Approbation",
+      namedrule_delete_any_description: "Permet de supprimer les règles d'approbation.",
     },
   },
   request_policies: {
@@ -1281,7 +1274,7 @@ export default {
     unsupported_specifier: 'Définition de spécificateur non supportée',
     rule_groups: {
       custom_rules: 'Règles personnalisées',
-      named_rules: 'Polices d approbation',
+      named_rules: 'Règles d approbation',
     },
     rule_user_specifier: {
       owner: 'Propriétaire',
@@ -1299,7 +1292,7 @@ export default {
       quorumpercentage: 'Pourcentage du Quorum',
       allowlistedbymetadata: 'Liste blanche par metadata',
       allowlisted: 'Liste blanche',
-      named_rule: 'Utiliser la politique d approbation: {name}',
+      named_rule: 'Utiliser la règle d approbation: {name}',
     },
     rule_tooltip_summary: {
       allof: 'Tout les suivants:',
@@ -1323,7 +1316,7 @@ export default {
       not: 'Not: {rule}',
       allof: ' ET ',
       anyof: ' OU ',
-      named_rule: 'Utiliser la politique d approbation: {name}',
+      named_rule: 'Utiliser la règle d approbation: {name}',
     },
     specifier: {
       editpermission: 'Modifier les permissions',
@@ -1351,9 +1344,9 @@ export default {
       addasset: 'Ajouter un actif',
       editasset: 'Modifier un actif',
       removeasset: 'Éffacer un actif',
-      addnamedrule: 'Ajouter une politique d approbation',
-      editnamedrule: 'Modifier une politique d approbation',
-      removenamedrule: 'Éffacer une politique d approbation',
+      addnamedrule: 'Ajouter une règle d approbation',
+      editnamedrule: 'Modifier une règle d approbation',
+      removenamedrule: 'Éffacer une règle d approbation',
     },
   },
   cycle_obtain_strategies: {
