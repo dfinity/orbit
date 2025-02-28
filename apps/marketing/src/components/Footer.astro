@@ -9,11 +9,16 @@ const currentYear = new Date().getFullYear();
 >
   <div class="container-page">
     <div class="lg:w-1/2 mx-auto lg:pt-80 pb-16 lg:pb-60">
-      <h2 class="text-h4 lg:text-h3 text-center">
+      <h2 class="text-h5 lg:text-h4 text-center text-white/80">
         Take the first step toward seamless and secure asset management with Orbit.
       </h2>
       <div class="text-center mt-10">
-        <a class="btn btn-outline lg:w-80 block lg:inline-flex" href="">Launch Orbit</a>
+        <a
+          class="btn btn-outline lg:w-80 block lg:inline-flex"
+          href="https://orbit.global"
+          target="_blank"
+          rel="noopener noreferrer">Launch Orbit</a
+        >
       </div>
     </div>
 
@@ -24,11 +29,11 @@ const currentYear = new Date().getFullYear();
         >
         <div class="flex-1"></div>
         <div class="items-center gap-x-14 hidden lg:flex">
-          <span class="text-h8">© {currentYear} Orbit</span>
+          <span class="text-body-caption">© {currentYear} Orbit</span>
           <div class="space-x-7">
             {
               footerLinks.other.map(item => (
-                <a href={item.href} class="text-h9">
+                <a href={item.href} class="text-body-caption">
                   {item.label}
                 </a>
               ))
@@ -39,12 +44,12 @@ const currentYear = new Date().getFullYear();
       <div
         class="flex-1 lg:border-l border-b border-white/40 flex flex-col items-start lg:pl-10 pb-10 lg:pb-4 pt-15 lg:pt-0"
       >
-        <h4 class="text-h8">Navigation</h4>
+        <h4 class="text-body-caption">Navigation</h4>
         <ul class="flex flex-col gap-y-2 mt-7">
           {
             footerNav.navigation.map(item => (
               <li>
-                <a href={item.href} class="text-h7 underline underline-offset-2">
+                <a href={item.href} class="text-body-small">
                   {item.label}
                 </a>
               </li>
@@ -56,12 +61,12 @@ const currentYear = new Date().getFullYear();
       <div
         class="flex-2 lg:border-l border-b border-white/40 flex flex-col items-start lg:pl-10 pb-10 lg:pb-4 pt-6 lg:pt-0"
       >
-        <h4 class="text-h8">Orbit</h4>
+        <h4 class="text-body-caption">Orbit</h4>
         <ul class="flex flex-col gap-y-2 mt-7">
           {
             footerNav.orbit.map(item => (
               <li>
-                <a href={item.href} class="text-h7 underline underline-offset-2">
+                <a href={item.href} class="text-body-small">
                   {item.label}
                 </a>
               </li>
@@ -74,7 +79,7 @@ const currentYear = new Date().getFullYear();
           <div class="space-x-7">
             {
               footerLinks.social.map(item => (
-                <a href={item.href} class="text-h9">
+                <a href={item.href} class="text-body-caption">
                   {item.label}
                 </a>
               ))
@@ -87,7 +92,7 @@ const currentYear = new Date().getFullYear();
         <div class="flex flex-wrap gap-6">
           {
             footerLinks.social.map(item => (
-              <a href={item.href} class="text-h9">
+              <a href={item.href} class="text-body-caption">
                 {item.label}
               </a>
             ))
@@ -98,10 +103,10 @@ const currentYear = new Date().getFullYear();
         </div>
 
         <div class="flex flex-wrap gap-4 pt-6 pb-6 border-b border-white/40">
-          <span class="text-h8">© {currentYear} Orbit</span>
+          <span class="text-body-caption">© {currentYear} Orbit</span>
           {
             footerLinks.other.map(item => (
-              <a href={item.href} class="text-h9">
+              <a href={item.href} class="text-body-caption">
                 {item.label}
               </a>
             ))

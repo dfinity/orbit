@@ -8,7 +8,7 @@ const { question, checked = undefined } = Astro.props;
   >
     <label class="cursor-pointer has-checked:mb-4 focus:outline-none" tabindex="0">
       <input type="checkbox" name="faq" class="hidden" checked={checked} />
-      <h3 class="text-h5 lg:text-h4 flex items-center justify-between">
+      <h3 class="text-h6 lg:text-h4 flex items-center justify-between">
         {question}
         <svg
           width="25"
@@ -32,7 +32,9 @@ const { question, checked = undefined } = Astro.props;
       </h3>
     </label>
 
-    <div class="min-h-0 group-has-checked:min-h-fit text-body-medium text-white/50">
+    <div
+      class="min-h-0 group-has-checked:min-h-fit text-body-medium text-white/50 prose max-w-none"
+    >
       <slot />
     </div>
   </div>

@@ -3,40 +3,43 @@ import FAQItem from './FAQItem.astro';
 ---
 
 <section class="pt-20 lg:pt-40" id="faq">
-  <h2 class="text-h3 lg:text-h2">All about Orbit</h2>
+  <h2 class="text-h4 lg:text-h3">About Orbit</h2>
 
   <div class="flex flex-col space-y-8 pt-10 lg:pt-20">
     <FAQItem question="What is Orbit?">
       <p>
-        Orbit is a secure and scalable solution for asset management and governance for DAOs and
-        teams, offering multi-signature approvals for transparent decision-making, real-time
-        treasury tracking with streamlined approvals, and auditable smart-contract deployment to
-        enhance operational security and efficiency.
+        Orbit is a secure and scalable solution for asset management and governance. Designed for
+        teams of any size, Orbit offers multi-signature approvals for transparent decision-making,
+        real-time treasury tracking with streamlined approvals, and auditable smart-contract
+        deployment to enhance operational security and efficiency.
       </p>
     </FAQItem>
     <FAQItem question="Who can use Orbit?">
       <p>
-        Orbit is designed for DAOs and teams of any size. It's a secure and scalable solution for
-        asset management and governance, offering multi-signature approvals for transparent
-        decision-making, real-time treasury tracking with streamlined approvals, and auditable
-        smart-contract deployment to enhance operational security and efficiency.
+        Orbit is perfectly geared towards teams, projects and DAOs in crypto and beyond, thanks to
+        its enterprise-grade tech stack powered by the Internet Computer Protocol.
       </p>
     </FAQItem>
     <FAQItem question="How secure is Orbit?">
       <p>
-        Orbit is designed for DAOs and teams of any size. It's a secure and scalable solution for
-        asset management and governance, offering multi-signature approvals for transparent
-        decision-making, real-time treasury tracking with streamlined approvals, and auditable
-        smart-contract deployment to enhance operational security and efficiency.
+        Orbit utilizes ICP’s Internet Identity for key management and authentication, along with a
+        combination of multisignature and multi-approver capabilities for flexible security
+        policies, reducing the risk of mismanagement or fraud. Users are able to define granular
+        permissions, enforce approval workflows, and manage updates with built-in disaster
+        recovery—all while maintaining control over their assets and smart contracts.
       </p>
     </FAQItem>
     <FAQItem question="Which tokens are supported?">
       <p>
-        Orbit is designed for DAOs and teams of any size. It's a secure and scalable solution for
-        asset management and governance, offering multi-signature approvals for transparent
-        decision-making, real-time treasury tracking with streamlined approvals, and auditable
-        smart-contract deployment to enhance operational security and efficiency.
+        Currently, Orbit natively supports ICP and ICRC-1 tokens and native governance for ICP-based
+        smart contracts, with near-term planned native support for ETH, ERC-20 and Bitcoin tokens.
+        While direct multichain governance is on the roadmap, developers can already extend Orbit’s
+        capabilities by:
       </p>
+      <ul>
+        <li>Integrating custom ICP smart contracts that interact with external blockchains</li>
+        <li>Using Orbit as an authorization layer for managing multichain operations securely</li>
+      </ul>
     </FAQItem>
   </div>
 </section>

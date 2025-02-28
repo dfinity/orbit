@@ -6,7 +6,7 @@ import { headerNav } from '../lib/nav';
   <header
     class="container-page text-white h-20 lg:h-32 flex flex-row items-center justify-between z-20"
   >
-    <img src="/logo.svg" alt="Orbit Logo" class="h-5 lg:h-7 z-10" />
+    <a href="/"><img src="/logo.svg" alt="Orbit Logo" class="h-5 lg:h-7 z-10" /></a>
 
     <div class="hidden lg:inline-flex flex-row items-center gap-x-7">
       {
@@ -18,7 +18,7 @@ import { headerNav } from '../lib/nav';
       }
 
       <a
-        class="btn btn-outline lg:w-72"
+        class="btn btn-outline lg:w-64 ml-8"
         href="https://orbit.global"
         target="_blank"
         rel="noopener noreferrer"
@@ -60,7 +60,7 @@ import { headerNav } from '../lib/nav';
         headerNav.navigation.map(item => (
           <a
             href={item.href}
-            class="text-h3 hover:text-white/70 transition-all duration-300"
+            class="text-h4 hover:text-white/70 transition-all duration-300"
             onclick="document.querySelector('input[name=mobileMenuTrigger]').checked = false"
           >
             {item.label}

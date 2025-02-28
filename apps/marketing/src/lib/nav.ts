@@ -9,12 +9,12 @@ export const headerNav = {
       href: '#products',
     },
     {
-      label: 'Clients',
-      href: '#clients',
-    },
-    {
       label: 'FAQ',
       href: '#faq',
+    },
+    {
+      label: 'Clients',
+      href: '#clients',
     },
   ],
 };
@@ -29,13 +29,14 @@ export const footerNav = {
       label: 'Products',
       href: '#products',
     },
-    {
-      label: 'Clients',
-      href: '#clients',
-    },
+
     {
       label: 'FAQ',
       href: '#faq',
+    },
+    {
+      label: 'Clients',
+      href: '#clients',
     },
   ],
   orbit: [
@@ -53,8 +54,8 @@ export const footerNav = {
 export const footerLinks = {
   other: [
     {
-      label: 'Privacy & terms',
-      href: '#',
+      label: 'License',
+      href: '/license',
     },
     {
       label: 'Change log',
