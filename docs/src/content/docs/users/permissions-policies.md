@@ -118,6 +118,6 @@ Approval policies can be based on the following rule types:
 
 ## **Best Practices for Approval Policies**
 
-- **Use Predefined policies for Consistency:** Define named rules for common approval scenarios to reduce errors.
+- **Use Predefined policies for Consistency:** Define approval rules for common approval scenarios to reduce errors.
 - **Leverage Quorum for High-Value Transactions:** Require multiple approvers for sensitive operations.
 - **Avoid Over-Complexity:** Keep policies straightforward to avoid delays in approvals.
