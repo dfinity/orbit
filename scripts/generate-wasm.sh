@@ -37,7 +37,6 @@ cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAG
 
 # Install ic-wasm if not already installed
 if ! cargo install --list | grep -q ic-wasm; then
-  print_message "Installing canbench..."
   cargo install ic-wasm --version 0.6.0 --locked
 fi
 
