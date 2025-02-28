@@ -61,7 +61,7 @@ Bulk transactions enable efficient handling of multiple transfers simultaneously
    - "amount" with transaction amounts
    - (optional) "comment" for additional notes
 3. Review and click **Transfer** to submit the batch for processing.
-4. For multi-signature wallets, additional user approvals may be required.
+4. For multi-approval wallets, additional user approvals may be required.
 
 :::caution
 Ensure the CSV file follows the required format to avoid errors. **Header row is mandatory**.
