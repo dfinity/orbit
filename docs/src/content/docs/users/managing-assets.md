@@ -11,7 +11,7 @@ In Orbit Wallet, you can manage a wide range of digital assets securely and effi
 
 Orbit Wallet supports the management of following digital assets:
 
-- **ICP (Internet Computer Protocol tokens)**
+- **ICP (Internet Computer Protocol token)**
 - **ICRC-1 tokens**
 
 :::tip
