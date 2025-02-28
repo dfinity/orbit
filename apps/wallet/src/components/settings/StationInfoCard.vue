@@ -153,22 +153,24 @@
               }}</VListItemTitle>
               <VListItemSubtitle>
                 <table style="min-width: 200px">
-                  <tr>
-                    <td>{{ $t('terms.station') }}:</td>
-                    <td class="text-right">
-                      {{ systemInfo ? formatCycles(systemInfo.cycles) : '-' }}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>{{ $t('terms.upgrader') }}:</td>
-                    <td class="text-right">
-                      {{
-                        systemInfo?.upgrader_cycles?.[0]
-                          ? formatCycles(systemInfo.upgrader_cycles[0])
-                          : '-'
-                      }}
-                    </td>
-                  </tr>
+                  <tbody>
+                    <tr>
+                      <td>{{ $t('terms.station') }}:</td>
+                      <td class="text-right">
+                        {{ systemInfo ? formatCycles(systemInfo.cycles) : '-' }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>{{ $t('terms.upgrader') }}:</td>
+                      <td class="text-right">
+                        {{
+                          systemInfo?.upgrader_cycles?.[0]
+                            ? formatCycles(systemInfo.upgrader_cycles[0])
+                            : '-'
+                        }}
+                      </td>
+                    </tr>
+                  </tbody>
                 </table>
               </VListItemSubtitle>
             </VListItem>

@@ -47,6 +47,14 @@ const createICAssetsJson = (
       match: '.well-known',
       ignore: false,
     },
+    well_known_ii: {
+      match: '.well-known/ii-alternative-origins',
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Content-Type': 'application/json',
+      },
+      ignore: false,
+    },
     all: {
       match: '**/*',
       headers: {
@@ -91,7 +99,7 @@ export const withIcAssetsFile = (
     name: 'with-ic-assets',
     writeBundle({ dir }) {
       const icAssetsPath = resolve(__dirname, '../..', publicDir, fileName);
-      const indexHtml = resolve(dir, 'index.html');
+      const indexHtml = resolve(dir!, 'index.html');
       const indexContent = readFileSync(indexHtml, { encoding: 'utf-8' });
       const virtualDOM = load(indexContent);
       const dynamicCspHeaders: Record<string, string[]> = {

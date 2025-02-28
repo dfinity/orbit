@@ -33,7 +33,7 @@ pub struct EditNamedRuleOperationDTO {
 pub struct EditNamedRuleOperationInput {
     pub named_rule_id: UuidDTO,
     pub name: Option<String>,
-    pub description: Option<String>,
+    pub description: Option<Option<String>>,
     pub rule: Option<RequestPolicyRuleDTO>,
 }
 

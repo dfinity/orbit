@@ -2,7 +2,7 @@
   <VContainer class="py-4">
     <VRow>
       <VCol cols="12" class="d-flex">
-        <BrandLogo variation="dark" class="flex-grow-1" />
+        <BrandLogo variation="dark" class="flex-grow-1" height="22" />
         <LanguageSelector v-if="props.languageSelector" />
       </VCol>
       <VCol v-if="showStationSelector" cols="12" class="d-flex ga-2 align-center">

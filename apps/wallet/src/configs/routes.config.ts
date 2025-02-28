@@ -22,7 +22,7 @@ export enum Routes {
   // Request Pages
   Requests = 'Requests',
   TransferRequests = 'TransferRequests',
-  RequestPolicies = 'RequestPolicies',
+  ApprovalRules = 'ApprovalRules',
 }
 
 export enum RouteStatusCode {

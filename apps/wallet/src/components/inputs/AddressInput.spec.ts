@@ -64,6 +64,8 @@ describe('AddressInput', () => {
   });
 
   it('loads addresses from the address book', async () => {
+    vi.useFakeTimers();
+
     const wrapper = mount(AddressInput, {
       props: {
         blockchain: 'icp',
@@ -73,6 +75,7 @@ describe('AddressInput', () => {
 
     expect(input.exists()).toBe(true);
 
+    vi.advanceTimersByTime(1000);
     await wrapper.vm.$nextTick();
     await flushPromises();
 

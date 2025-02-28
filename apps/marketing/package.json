@@ -1,0 +1,30 @@
+{
+  "name": "marketing-dapp",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dfinity/orbit.git",
+    "directory": "apps/docs"
+  },
+  "engines": {
+    "node": "^20",
+    "pnpm": "^9",
+    "npm": "please use pnpm",
+    "yarn": "please use pnpm"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "lint": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../../.prettierignore --check .\" \"ESLINT_USE_FLAT_CONFIG=false eslint --ext .js,.vue,.ts,.cjs,.mdx,.astro .\"",
+    "format": "concurrently -n prettier,eslint -c auto \"prettier --ignore-path ../../.prettierignore --write .\" \"ESLINT_USE_FLAT_CONFIG=false eslint --ext .js,.vue,.ts,.cjs,.mdx,.astro --fix .\""
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "4.0.4",
+    "astro": "5.2.5",
+    "tailwindcss": "4.0.4"
+  }
+}

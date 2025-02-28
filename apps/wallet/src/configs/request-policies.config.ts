@@ -1,5 +1,16 @@
 import { RequestPolicyRuleEnum, RequestSpecifierEnum } from '~/types/station.types';
 
+export const allRequestPolicyRules = [
+  RequestPolicyRuleEnum.AutoApproved,
+  RequestPolicyRuleEnum.QuorumPercentage,
+  RequestPolicyRuleEnum.Quorum,
+  RequestPolicyRuleEnum.AllOf,
+  RequestPolicyRuleEnum.AnyOf,
+  RequestPolicyRuleEnum.Not,
+  RequestPolicyRuleEnum.AllowListedByMetadata,
+  RequestPolicyRuleEnum.AllowListed,
+];
+
 export const defaultRequestPolicyRules = [
   RequestPolicyRuleEnum.AutoApproved,
   RequestPolicyRuleEnum.QuorumPercentage,

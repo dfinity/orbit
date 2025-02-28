@@ -8,7 +8,9 @@ use orbit_essentials::{
 };
 use uuid::Uuid;
 
+// 302240678275694148452352 is the very first UUID in the sequence of UUIDs.
 pub const ADMIN_GROUP_ID: &UUID = Uuid::from_u128(302240678275694148452352).as_bytes();
+pub const OPERATOR_GROUP_ID: &UUID = Uuid::from_u128(302240678275694148452353).as_bytes();
 
 /// The user gorup id, which is a UUID.
 pub type UserGroupId = UUID;

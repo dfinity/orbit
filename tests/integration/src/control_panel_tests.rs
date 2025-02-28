@@ -18,7 +18,7 @@ use control_panel_api::{ListUserStationsResponse, UploadCanisterModulesInput};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cmc::{SubnetFilter, SubnetSelection};
 use pocket_ic::management_canister::CanisterInstallMode;
-use pocket_ic::{update_candid_as, CallError, PocketIc};
+use pocket_ic::{update_candid_as, PocketIc};
 use sha2::{Digest, Sha256};
 use station_api::{
     AdminInitInput, HealthStatus, SystemInfoResponse, SystemInit as SystemInitArg,
@@ -316,10 +316,10 @@ fn deploy_too_many_stations() {
         assert!(res.0.is_ok());
 
         // deploying a new station should fail nonetheless
-        assert_eq!(
-            can_deploy(user_id).unwrap_err().code,
-            "DEPLOY_STATION_QUOTA_EXCEEDED"
-        );
+        assert!(matches!(
+            can_deploy(user_id).unwrap(),
+            CanDeployStationResponse::QuotaExceeded
+        ));
         assert_eq!(
             deploy_station(
                 &env,
@@ -344,12 +344,10 @@ fn deploy_too_many_stations() {
         }
 
         // deploying one more station on behalf of yet another use should fail due to global rate limit
-        assert_eq!(
-            can_deploy(user_test_id(max_stations_per_day))
-                .unwrap_err()
-                .code,
-            "DEPLOY_STATION_QUOTA_EXCEEDED"
-        );
+        assert!(matches!(
+            can_deploy(user_test_id(max_stations_per_day)).unwrap(),
+            CanDeployStationResponse::QuotaExceeded
+        ));
         assert_eq!(
             deploy_station(
                 &env,
@@ -676,13 +674,10 @@ fn deploy_station_with_insufficient_cycles() {
             station_init_args.clone(),
         )
         .unwrap_err();
-    match err {
-        CallError::Reject(msg) => panic!("Unexpected reject: {}", msg),
-        CallError::UserError(err) => assert!(err.description.contains(&format!(
-            "insufficient for transferring {} cycles when deploying the upgrader",
-            upgrader_initial_cycles
-        ))),
-    };
+    assert!(err.reject_message.contains(&format!(
+        "insufficient for transferring {} cycles when deploying the upgrader",
+        upgrader_initial_cycles
+    )));
     let cycles_after_failed_install = env.cycle_balance(station);
     assert!(cycles_before_install <= cycles_after_failed_install + 50_000_000_000);
 

@@ -35,6 +35,7 @@ export default {
     request_pending_message: 'O seu pedido foi criado e está pendente de aprovação.',
     request_approved_message: 'Este pedido foi approvado e está sendo processado.',
     request_rejected_message: 'Este pedido foi rejeitado.',
+    request_completed_message: 'Este pedido foi concluído.',
     user_status_active: 'Ativo',
     user_status_inactive: 'Inativo',
     add_new_identity: 'Adicionar nova identidade',
@@ -97,24 +98,21 @@ export default {
       verify_instructions:
         'Para verificar a atualização, abra o terminal e siga as instruções abaixo:',
     },
-    assets: 'Ativos',
+    asset: 'Ativo',
     no_data: 'Nenhum dado disponível.',
     no_matching_results: 'Nenhum resultado encontrado para `{search}`.',
     add_new_label: 'Adicionar novo rótulo: {label}',
     user_cancel_pending_requests: 'Cancelar todos os pedidos pendentes deste usuário.',
     error_dialog_title: 'Falha ao carregar.',
     error_dialog_message: 'Falha ao carregar, por favor, tente novamente.',
-  },
-  alpha_warning: {
-    version: 'Esta é uma versão alfa.',
-    caution: 'Utilize com cuidado.',
+    request_submit_failed: 'Falha ao enviar o pedido, por favor, tente novamente.',
   },
   sidebar: {
     highlights: {
-      main: 'Carteira Trustless {line1} {line2} {line3}',
-      line3: 'Multichain',
-      line1: 'Ativos Digitais',
-      line2: 'Multi-Custódia',
+      main: 'Carteira de confiança {line1} {line2} {line3}',
+      line1: 'Aprovação multipla',
+      line2: 'Ativos digitais',
+      line3: 'Contratos inteligentes',
     },
   },
   system_upgrade: {
@@ -200,6 +198,8 @@ export default {
       transfer: 'Transferências',
       external_canister: 'Canister gerenciado',
       system_info: 'Informações do sistema',
+      asset: 'Ativos',
+      named_rule: 'Regras de aprovação',
     },
     headers: {
       id: 'ID',
@@ -230,6 +230,10 @@ export default {
       amount: 'Quantidade',
       fee: 'Taxa',
       comment: 'Comentário',
+      rule_id: 'ID da regra',
+      rule_name: 'Nome da regra',
+      rule_description: 'Descrição da regra',
+      url: 'URL',
     },
     types: {
       addusergroup: {
@@ -339,6 +343,18 @@ export default {
         title: 'Configurar recuperação de desastres',
         request_title: 'Pedido de configuração de recuperação de desastres',
       },
+      addnamedrule: {
+        title: 'Adicionar regra de aprovação',
+        request_title: 'Pedido de adição de regra de aprovação',
+      },
+      editnamedrule: {
+        title: 'Editar regra de aprovação',
+        request_title: 'Pedido de edição de regra de aprovação',
+      },
+      removenamedrule: {
+        title: 'Remover regra de aprovação',
+        request_title: 'Pedido de remoção de regra de aprovação',
+      },
       unknown: {
         title: 'Desconhecido',
         request_title: 'Pedido desconhecido',
@@ -392,10 +408,15 @@ export default {
     },
   },
   landing: {
-    title: 'Gestão Multichain',
-    subtitle: 'Uma Plataforma, Supervisão Completa',
-    description:
-      'Orbit simplifica a gestão de ativos on-chain para empresas, DAOs e equipes, consolidando controle e visibilidade em uma única plataforma intuitiva.',
+    btn_accept_license: {
+      phrase: 'Ao clicar neste botão, você concorda com a {0}.',
+      license: 'Licença',
+    },
+    highlights: {
+      multiapproval: 'Políticas de aprovação',
+      treasury: 'Gestão do tesouro',
+      smartcontract: 'Gestão de contratos inteligentes',
+    },
     connect_title: 'Conecte-se de forma segura para gerenciar seus ativos digitais',
     connect_btn: 'Conectar com Internet Identity',
     connect_error: 'Falha ao conectar, por favor tente novamente.',
@@ -457,7 +478,7 @@ export default {
       tc: 'TC',
       bc: 'Bilhōes',
       mc: 'Milhōes',
-      e8s: 'e8s',
+      cycles: 'Ciclos',
     },
   },
   time: {
@@ -486,6 +507,7 @@ export default {
     not_found: 'Canister não encontrado.',
     not_found_description: 'O canister que está a tentar aceder não existe.',
     ic_settings: 'Configuraçōes do IC',
+    top_up: 'Recarregar',
     start_monitoring: 'Iniciar monitoramento',
     monitor: {
       title: 'Monitorizar ciclos',
@@ -645,6 +667,9 @@ export default {
     },
   },
   terms: {
+    license: 'Licença',
+    loading: 'Carregando',
+    permission: 'Permissão',
     controllers: 'Controladores',
     public: 'Público',
     execute: 'Executar',
@@ -687,6 +712,7 @@ export default {
     wasm: 'Wasm',
     download: 'Baixar',
     arg: 'Arg',
+    access: 'Acesso',
     target: 'Alvo',
     permissions: 'Permissões',
     approval_policies: 'Políticas de Aprovação',
@@ -856,6 +882,7 @@ export default {
     request_policies: 'Regras de aprovação',
     assets: 'Ativos',
     external_canisters: 'Canisters',
+    approval_rules: 'Regras de aprovação',
   },
   pages: {
     dashboard: {
@@ -988,8 +1015,8 @@ export default {
     },
     request_policies: {
       title: 'Regras de aprovação',
-      create_label: 'Criar Regra',
-      dialog_title: 'Regra',
+      create_label: 'Adicionar regra de aprovação',
+      dialog_title: 'Regra de aprovação',
     },
     assets: {
       title: 'Ativos',
@@ -1010,6 +1037,14 @@ export default {
         option_add_well_known_assets: 'Adicionar ativos conhecidos',
         option_add_custom_asset: 'Adicionar ativo personalizado',
       },
+    },
+    approval_rules: {
+      btn_new_entry: 'Adicionar regra de aprovação',
+      title: 'Regra de aprovação',
+      dialog: {
+        title: 'Regra de aprovação',
+      },
+      linked_policies: 'Políticas vinculadas',
     },
     not_found: {
       title: 'Ups, 404',
@@ -1042,59 +1077,205 @@ export default {
     expired_dialog_btn: 'Reautenticar',
   },
   permissions: {
-    resource_title: 'Recurso',
-    group_members_title: 'Membros do grupo',
-    specific_users_title: 'Usuários específicos',
-    everyone_title: 'Todos',
-    individual_resources_title: 'Acesso aos recursos individuais',
-    select_resource: 'Selecione o tipo de recurso',
+    global_permissions: 'Permissões Globais',
+    global_permissions_description:
+      'As permissões globais se aplicam a todas as áreas do sistema, como contas, livro de endereços ou outros recursos. Essas permissões não estão vinculadas a um item específico. Para configurar permissões para uma área específica (ex.: uma conta específica), acesse a página de configuração desse item e atualize as configurações lá.',
+    action_approval_legend:
+      'Ações que os usuários podem realizar (ex.: criar uma transferência) podem exigir aprovações adicionais antes de serem executadas.',
+    permitted_users: 'Usuários permitidos',
+    restrict_permitted_users: 'Restringir a determinados usuários...',
+    no_users_found: 'Nenhum usuário encontrado.',
+    allow: {
+      no_access: 'Desativado para Todos',
+      no_access_tooltip: 'Não acessível por ninguém, incluindo usuários autenticados.',
+      public: 'Público (Não Requer Login)',
+      public_tooltip: 'Acessível por qualquer pessoa, incluindo visitantes não autenticados.',
+      authenticated: 'Todos os Usuários Autenticados',
+      authenticated_tooltip: 'Acessível por qualquer usuário que esteja autenticado.',
+      restricted: 'Usuários/Grupos Específicos',
+      restricted_tooltip: 'Acessível apenas para os usuários ou grupos selecionados.',
+    },
     resources: {
       account: 'Conta',
       asset: 'Ativo',
       user: 'Usuário',
-      usergroup: 'Grupo de usuários',
-      permission: 'Regra de acesso',
-      requestpolicy: 'Regra para pedidos',
+      usergroup: 'Grupo de Usuários',
+      permission: 'Política de Acesso',
+      requestpolicy: 'Política de Solicitação',
       system: 'Sistema',
-      transfer: 'Transfência',
-      request: 'Pedido',
-      addressbook: 'Livro de endereços',
-      managesysteminfo: 'Gerir informações do sistema',
-      externalcanister: 'Canister gerenciado',
+      transfer: 'Transferência',
+      request: 'Solicitação',
+      addressbook: 'Livro de Endereços',
+      managesysteminfo: 'Gerenciar Informações do Sistema',
+      externalcanister: 'Canister Externo',
       callcanister: 'Chamar canister',
+      namedrule: 'Regra de aprovação',
+    },
+    categories: {
+      treasury: 'Tesouraria (contas, ativos, etc...)',
+      canisters: 'Canisters/Aplicações',
+      users: 'Usuários',
+      system: 'Sistema (Atualizações de software, Permissões, Políticas de Aprovação, etc...)',
     },
     actions: {
-      list: 'Listar',
-      create: 'Criar',
-      read: 'Ler',
-      update: 'Atualizar',
-      delete: 'Remover',
-      transfer: 'Transferência',
-      capabilities: 'Capacidades',
-      systeminfo: 'Informações do sistema',
-      systeminfocapabilities: 'Capacidades (Ativos Suportados)',
-      systeminfoconfig: 'Configuração (Atualizações, Métricas, Uso)',
-      managesysteminfo: 'Gerir Informações do Sistema (e.g. nome)',
-      systemupgrade: 'Atualizar o sistema',
-      change: 'Alterar',
-      fund: 'Financiar',
-    },
-    allow: {
-      public: 'Acesso público',
-      authenticated: 'Autenticado',
-      restricted: 'Restrito',
+      account_list: 'Ver Página de Contas',
+      account_list_description:
+        'Permite acesso à página de contas, mas exibe apenas as contas que o usuário tem permissão para visualizar.',
+      account_read_any: 'Ver Todas as Contas',
+      account_read_any_description:
+        'Permite visualizar todas as contas, incluindo saldos e ativos associados.',
+      account_create: 'Adicionar Novas Contas',
+      account_create_description: 'Permite criar novas contas e atribuir ativos (ex.: ICP, ckBTC).',
+      account_update_any: 'Editar Contas',
+      account_update_any_description:
+        'Permite editar detalhes da conta, incluindo permissões e políticas de aprovação.',
+      account_transfer_any: 'Criar Transferências',
+      account_transfer_any_description:
+        'Permite ao usuário iniciar transferências a partir de qualquer conta na carteira.',
+
+      addressbook_list: 'Ver Página do Livro de Endereços',
+      addressbook_list_description:
+        'Permite acesso à página do livro de endereços, exibindo apenas as entradas que o usuário pode visualizar.',
+      addressbook_read_any: 'Ver Todas as Entradas do Livro de Endereços',
+      addressbook_read_any_description:
+        'Permite visualizar todas as entradas do livro de endereços.',
+      addressbook_create: 'Adicionar Novas Entradas no Livro de Endereços',
+      addressbook_create_description:
+        'Permite adicionar novos contatos, incluindo metadados como nomes e detalhes adicionais.',
+      addressbook_update_any: 'Editar Entradas do Livro de Endereços',
+      addressbook_update_any_description:
+        'Permite editar entradas existentes no livro de endereços, incluindo metadados.',
+      addressbook_delete_any: 'Excluir Entradas do Livro de Endereços',
+      addressbook_delete_any_description:
+        'Permite excluir entradas do livro de endereços. ⚠ Nota: As entradas podem ser usadas em políticas de aprovação para restringir ou permitir transferências, então a exclusão deve ser feita com cuidado.',
+
+      asset_list: 'Ver Página de Ativos',
+      asset_list_description:
+        'Permite acesso à página de ativos, mas exibe apenas os ativos que o usuário pode visualizar.',
+      asset_read_any: 'Ver Todos os Ativos',
+      asset_read_any_description: 'Permite visualizar todos os ativos e seus detalhes.',
+      asset_create: 'Adicionar Novos Ativos',
+      asset_create_description:
+        'Permite adicionar novos ativos à carteira, que podem ser atribuídos a contas.',
+      asset_update_any: 'Editar Ativos',
+      asset_update_any_description:
+        'Permite editar detalhes dos ativos, incluindo permissões associadas e políticas de aprovação.',
+      asset_delete_any: 'Excluir Ativos',
+      asset_delete_any_description:
+        'Permite excluir ativos. ⚠ Nota: A remoção de um ativo o excluirá de todas as contas.',
+
+      externalcanister_list: 'Ver Página de Canisters',
+      externalcanister_list_description:
+        'Permite acesso à página de canisters, exibindo apenas aqueles que o usuário pode visualizar.',
+      externalcanister_read_any: 'Ver Todos os Canisters',
+      externalcanister_read_any_description:
+        'Permite visualizar todos os canisters e seus detalhes.',
+      externalcanister_create: 'Adicionar Novos Canisters',
+      externalcanister_create_description:
+        'Permite adicionar novos canisters ou canisters existentes à carteira. A carteira pode controlá-los totalmente ou atuar apenas como ferramenta de monitoramento e autorização.',
+      externalcanister_change_any: 'Editar Canisters',
+      externalcanister_change_any_description:
+        'Permite modificar detalhes dos canisters, permissões, políticas de aprovação, configurações e controladores.',
+      externalcanister_fund_any: 'Financiar Canisters',
+      externalcanister_fund_any_description:
+        'Permite ao usuário adicionar ciclos aos canisters usando a carteira.',
+      externalcanister_call_execution_method_any_validation_method_no: 'Chamar Canisters',
+      externalcanister_call_execution_method_any_validation_method_no_description:
+        'Permite executar chamadas para qualquer canister através da carteira. ⚠ Nota: Esta permissão permite a execução de chamadas arbitrárias para canisters, então as políticas de aprovação devem ser aplicadas corretamente.',
+
+      user_list: 'Ver Página de Usuários',
+      user_list_description:
+        'Permite acesso à página de usuários, exibindo apenas aqueles que o usuário pode visualizar.',
+      user_read_any: 'Ver Todos os Usuários',
+      user_read_any_description: 'Permite visualizar todos os usuários e seus detalhes.',
+      user_create: 'Adicionar Novos Usuários',
+      user_create_description: 'Permite adicionar novos usuários à carteira.',
+      user_update_any: 'Editar Usuários',
+      user_update_any_description:
+        'Permite editar detalhes dos usuários, incluindo identidades associadas e status.',
+
+      usergroup_list: 'Ver Página de Grupos de Usuários',
+      usergroup_list_description:
+        'Permite acessar a página de grupos de usuários, mas apenas exibe os grupos que o usuário tem permissão para visualizar.',
+      usergroup_read_any: 'Ver Todos os Grupos de Usuários',
+      usergroup_read_any_description:
+        'Permite visualizar todos os grupos de usuários e seus detalhes.',
+      usergroup_create: 'Adicionar Novos Grupos de Usuários',
+      usergroup_create_description: 'Permite adicionar novos grupos de usuários à carteira.',
+      usergroup_update_any: 'Editar Grupos de Usuários',
+      usergroup_update_any_description: 'Permite modificar detalhes dos grupos de usuários.',
+      usergroup_delete_any: 'Excluir Grupos de Usuários',
+      usergroup_delete_any_description:
+        'Permite excluir grupos de usuários. ⚠ Nota: A exclusão de um grupo de usuários removerá todos os seus membros e poderá afetar políticas de aprovação que dependem dele.',
+
+      system_capabilities: 'Ver Ativos Suportados',
+      system_capabilities_description:
+        'Permite visualizar a lista de ativos suportados, incluindo seus símbolos, nomes e metadados.',
+      system_systeminfo: 'Ver Informações do Sistema',
+      system_systeminfo_description:
+        'Permite visualizar informações do sistema, como a versão da carteira, ID do atualizador e saldo de ciclos.',
+      system_managesysteminfo: 'Gerenciar Informações do Sistema',
+      system_managesysteminfo_description:
+        'Permite modificar as configurações do sistema, incluindo o nome da carteira.',
+      system_upgrade: 'Realizar Atualização do Sistema',
+      system_upgrade_description:
+        'Permite atualizar a carteira para uma nova versão. ⚠ Nota: As atualizações podem afetar a disponibilidade e funcionalidade da carteira.',
+
+      permission_update: 'Gerenciar Permissões',
+      permission_update_description:
+        'Concede controle total sobre as permissões da carteira, incluindo adicionar, atualizar e remover permissões.',
+
+      requestpolicy_list: 'Ver Aba de Políticas de Solicitação',
+      requestpolicy_list_description:
+        'Permite acessar a aba de políticas de solicitação, exibindo apenas as políticas que o usuário pode visualizar.',
+      requestpolicy_read_any: 'Ver Todas as Políticas de Solicitação',
+      requestpolicy_read_any_description:
+        'Permite visualizar todas as políticas de solicitação e seus detalhes.',
+      requestpolicy_create: 'Adicionar Novas Políticas de Solicitação',
+      requestpolicy_create_description:
+        'Permite adicionar novas políticas de solicitação à carteira.',
+      requestpolicy_update_any: 'Editar Políticas de Solicitação',
+      requestpolicy_update_any_description: 'Permite modificar as políticas de solicitação.',
+      requestpolicy_delete_any: 'Excluir Políticas de Solicitação',
+      requestpolicy_delete_any_description:
+        'Permite excluir políticas de solicitação. ⚠ Nota: A exclusão de uma política de solicitação pode afetar solicitações existentes que dependem dela.',
+
+      request_list: 'Ver Página de Solicitações',
+      request_list_description:
+        'Permite acessar a página de solicitações, exibindo apenas as solicitações que o usuário pode visualizar. Na maioria dos casos, isso deve estar disponível para todos os usuários para que possam acompanhar as solicitações que exigem sua aprovação.',
+      request_read_any: 'Ver Todas as Solicitações',
+      request_read_any_description:
+        'Permite visualizar todas as solicitações, incluindo aquelas enviadas por outros usuários.',
+
+      namedrule_list: 'Ver Aba de Regras de Aprovação',
+      namedrule_list_description:
+        'Permite acessar a aba de regras de aprovação, exibindo apenas as regras que o usuário pode visualizar.',
+      namedrule_read_any: 'Ver Todas as Regras de Aprovação',
+      namedrule_read_any_description:
+        'Permite visualizar todas as regras de aprovação e seus detalhes.',
+
+      namedrule_create: 'Adicionar Novas Regras de Aprovação',
+      namedrule_create_description: 'Permite adicionar novas regras de aprovação à carteira.',
+      namedrule_update_any: 'Editar Regras de Aprovação',
+      namedrule_update_any_description: 'Permite modificar regras de aprovação.',
+      namedrule_delete_any: 'Excluir Regras de Aprovação',
+      namedrule_delete_any_description: 'Permite excluir regras de aprovação.',
     },
   },
   request_policies: {
     user_type_select: 'Tipo de usuário',
     add_rule_label: 'Adicionar regra +',
     unsupported_specifier: 'Especificador não suportado',
+    rule_groups: {
+      custom_rules: 'Regras personalizadas',
+      named_rules: 'Regras de aprovação',
+    },
     rule_user_specifier: {
       owner: 'Proprietário',
       requester: 'Requerente',
       any: 'Qualquer usuário',
-      group: 'Grupo de usuários',
-      id: 'Usuário específico',
+      group: 'Membro de grupo(s)',
+      id: 'Usuário específico(s)',
     },
     rule: {
       allof: 'todos',
@@ -1105,6 +1286,30 @@ export default {
       quorumpercentage: 'Percentual de quórum',
       allowlistedbymetadata: 'Lista branca por metadados',
       allowlisted: 'Lista branca',
+      named_rule: 'Usa regra de aprovação: {name}',
+    },
+    rule_tooltip_summary: {
+      allof: 'Todos os seguintes:',
+      anyof: 'Qualquer um dos seguintes:',
+      not: 'Aprovado, excepto quando:',
+    },
+    rule_rich_summary: {
+      complex_rule: 'Regra complexa',
+      no_user_specifier: 'Nenhuma lista de usuários',
+      any_user_specifier: '1 aprovação de qualquer usuário|{n} aprovações de qualquer usuário',
+      auto_approved: 'Nenhuma aprovação requerida',
+      invalid_rule_auto_approved: 'Regra inválida: Aprovado automaticamente',
+      single_user_specifier: '{user} aprova',
+      user_specifier: '{n} aprovação de {users}|{n} aprovações de {users}',
+      group_specifier: '{n} aprovação de {groups}|{n} aprovações de {groups}',
+      quorum_percentage_any_user: '{n}% aprovação de todos os usuários',
+      quorum_percentage_rule: '{n}% aprovação de {users}',
+      allowlisted_by_metadata: 'Endereço marcado com {metadata}',
+      allowlisted: 'Endereço no livro de endereços',
+      not: 'Não: {rule}',
+      allof: ' E ',
+      anyof: ' OU ',
+      named_rule: 'Use regra de aprovação: {name}',
     },
     specifier: {
       editpermission: 'Editar permissão',
@@ -1128,9 +1333,13 @@ export default {
       fundexternalcanister: 'Financiar canister',
       setdisasterrecovery: 'Recuperação de sistema',
       callexternalcanister: 'Interagir com canister',
+      createexternalcanister: 'Criar canister',
       addasset: 'Adicionar ativo',
       editasset: 'Editar ativo',
       removeasset: 'Remover ativo',
+      addnamedrule: 'Adicionar regra de aprovação',
+      editnamedrule: 'Editar regra de aprovação',
+      removenamedrule: 'Remover regra de aprovação',
     },
   },
   cycle_obtain_strategies: {

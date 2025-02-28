@@ -7,6 +7,7 @@ import {
   AddAccountOperationInput,
   AddAddressBookEntryOperationInput,
   AddAssetOperationInput,
+  AddNamedRuleOperationInput,
   AddRequestPolicyOperationInput,
   AddUserGroupOperationInput,
   AddUserOperationInput,
@@ -25,6 +26,7 @@ import {
   EditAccountOperationInput,
   EditAddressBookEntryOperationInput,
   EditAssetOperationInput,
+  EditNamedRuleOperationInput,
   EditPermissionOperationInput,
   EditRequestPolicyOperationInput,
   EditUserGroupOperationInput,
@@ -40,6 +42,7 @@ import {
   GetAssetResult,
   GetExternalCanisterFiltersResult,
   GetExternalCanisterResult,
+  GetNamedRuleResult,
   GetNextApprovableRequestResult,
   GetPermissionInput,
   GetPermissionResult,
@@ -56,6 +59,7 @@ import {
   ListAddressBookEntriesResult,
   ListAssetsResult,
   ListExternalCanistersResult,
+  ListNamedRulesResult,
   ListNotificationsInput,
   ListPermissionsInput,
   ListPermissionsResult,
@@ -1441,6 +1445,85 @@ export class StationService {
       title: [],
       summary: [],
       operation: { RemoveAddressBookEntry: { address_book_entry_id: id } },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async listNamedRules(
+    { limit, offset }: { limit?: number; offset?: number } = {},
+    verifiedCall = false,
+  ): Promise<ExtractOk<ListNamedRulesResult>> {
+    const actor = verifiedCall ? this.verified_actor : this.actor;
+    const result = await actor.list_named_rules({
+      paginate: [
+        {
+          limit: limit ? [limit] : [],
+          offset: offset ? [BigInt(offset)] : [],
+        },
+      ],
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async removeNamedRule(id: UUID): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
+      title: [],
+      summary: [],
+      operation: { RemoveNamedRule: { named_rule_id: id } },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async getNamedRule(id: UUID): Promise<ExtractOk<GetNamedRuleResult>> {
+    const result = await this.actor.get_named_rule({ named_rule_id: id });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok;
+  }
+
+  async editNamedRule(input: EditNamedRuleOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
+      title: [],
+      summary: [],
+      operation: { EditNamedRule: input },
+    });
+
+    if (variantIs(result, 'Err')) {
+      throw result.Err;
+    }
+
+    return result.Ok.request;
+  }
+
+  async addNamedRule(input: AddNamedRuleOperationInput): Promise<Request> {
+    const result = await this.actor.create_request({
+      execution_plan: [{ Immediate: null }],
+      expiration_dt: [],
+      title: [],
+      summary: [],
+      operation: { AddNamedRule: input },
     });
 
     if (variantIs(result, 'Err')) {

@@ -168,21 +168,21 @@ impl UserService {
             reason: "Canister config not initialized.".to_string(),
         })?;
 
-        let check_can_deploy_station =
-            |can_deploy_station_response: CanDeployStation| -> Result<usize, UserError> {
-                match can_deploy_station_response {
-                    CanDeployStation::Allowed(remaining) => Ok(remaining),
-                    CanDeployStation::QuotaExceeded => Err(UserError::DeployStationQuotaExceeded),
-                    CanDeployStation::NotAllowed(subscription_status) => {
-                        Err(UserError::BadUserSubscriptionStatus {
-                            subscription_status: subscription_status.into(),
-                        })
-                    }
-                }
-            };
-        let allowed_globally =
-            check_can_deploy_station(config.global_rate_limiter.can_deploy_station())?;
-        let allowed_per_user = check_can_deploy_station(user.can_deploy_station())?;
+        let allowed_globally = match config.global_rate_limiter.can_deploy_station() {
+            CanDeployStation::Allowed(remaining) => remaining,
+            CanDeployStation::QuotaExceeded => return Ok(CanDeployStation::QuotaExceeded),
+            CanDeployStation::NotAllowed(subscription_status) => {
+                return Ok(CanDeployStation::NotAllowed(subscription_status))
+            }
+        };
+
+        let allowed_per_user = match user.can_deploy_station() {
+            CanDeployStation::Allowed(remaining) => remaining,
+            CanDeployStation::QuotaExceeded => return Ok(CanDeployStation::QuotaExceeded),
+            CanDeployStation::NotAllowed(subscription_status) => {
+                return Ok(CanDeployStation::NotAllowed(subscription_status))
+            }
+        };
 
         Ok(CanDeployStation::Allowed(std::cmp::min(
             allowed_globally,

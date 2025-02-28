@@ -7,8 +7,8 @@ use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, PocketIc};
 
-const CURRENT_BASELINE_NR_OF_REQUEST_POLICIES: usize = 21; // can be found in the station core/init.rs
-const CURRENT_BASELINE_NR_PERMISSIONS: usize = 40; // can be found in the station core/init.rs
+const CURRENT_BASELINE_NR_OF_REQUEST_POLICIES: usize = 24; // can be found in the station core/init.rs
+const CURRENT_BASELINE_NR_PERMISSIONS: usize = 45; // can be found in the station core/init.rs
 
 const PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // baseline in the previous memory version core/init.rs
 const PREVIOUS_BASELINE_NR_PERMISSIONS: usize = 35; // baseline in the previous memory version core/init.rs
@@ -89,7 +89,7 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        USER_GROUPS_NR + 1, // +1 because there is the first admin group
+        USER_GROUPS_NR + 2, // +2 because there is the first admin group and the operator group
     );
     assert_can_list_address_book_entries(
         &env,
@@ -116,6 +116,7 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
         WALLET_ADMIN_USER,
         EXPECTED_ADDITIONAL_PERMISSIONS_NR + CURRENT_BASELINE_NR_PERMISSIONS,
     );
+    assert_can_list_named_rules(&env, canister_ids.station, WALLET_ADMIN_USER, 2);
 }
 
 #[test]
@@ -360,6 +361,31 @@ fn assert_can_list_accounts(
         "list_accounts",
         (station_api::ListAccountsInput {
             search_term: None,
+            paginate: Some(station_api::PaginationInput {
+                offset: Some(0),
+                limit: Some(25),
+            }),
+        },),
+    )
+    .unwrap();
+
+    let res = res.0.unwrap();
+
+    assert_eq!(res.total as usize, expected);
+}
+
+fn assert_can_list_named_rules(
+    env: &PocketIc,
+    station_id: Principal,
+    requester: Principal,
+    expected: usize,
+) {
+    let res: (ApiResult<station_api::ListNamedRulesResponse>,) = update_candid_as(
+        env,
+        station_id,
+        requester,
+        "list_named_rules",
+        (station_api::ListNamedRulesInput {
             paginate: Some(station_api::PaginationInput {
                 offset: Some(0),
                 limit: Some(25),

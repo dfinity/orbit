@@ -62,7 +62,7 @@ fn successful_four_eyes_upgrade() {
     let user_b = user_test_id(1);
     add_user(&env, user_b, vec![], canister_ids.station);
 
-    // submitting canister upgrade request fails due to insufficient permissions to create change canister requests
+    // submit canister upgrade request
     let chunk_len = module_bytes.len() / 3;
     assert!(0 < chunk_len && chunk_len < 1_000_000);
     let (base_chunk, module_extra_chunks) =
@@ -75,36 +75,7 @@ fn successful_four_eyes_upgrade() {
             module_extra_chunks: Some(module_extra_chunks),
             arg: None,
         });
-    let trap_message = submit_request_with_expected_trap(
-        &env,
-        user_a,
-        canister_ids.station,
-        change_canister_operation.clone(),
-    );
-    assert!(trap_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Change"
-    ));
 
-    // allow anyone to create change canister requests
-    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: station_api::ResourceDTO::ExternalCanister(
-            station_api::ExternalCanisterResourceActionDTO::Change(
-                ExternalCanisterIdDTO::Canister(canister_id),
-            ),
-        ),
-        auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
-        user_groups: None,
-        users: None,
-    });
-    execute_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        add_permission,
-    )
-    .unwrap();
-
-    // now the request to upgrade the counter canister can be successfully submitted
     let change_canister_operation_request = submit_request(
         &env,
         user_a,
@@ -380,11 +351,11 @@ fn create_external_canister_and_check_status() {
 
     // create new user identities and add them to the station
     let user_a = user_test_id(0);
-    let user_a_dto = add_user(&env, user_a, vec![], canister_ids.station);
+    add_user(&env, user_a, vec![], canister_ids.station);
     let user_b = user_test_id(1);
     add_user(&env, user_b, vec![], canister_ids.station);
 
-    // submitting request to create a external canister fails due to insufficient permissions to create such requests
+    // submit request to create an external canister
     let create_canister_operation =
         RequestOperationInput::CreateExternalCanister(CreateExternalCanisterOperationInput {
             kind: CreateExternalCanisterOperationKindDTO::CreateNew(
@@ -415,34 +386,7 @@ fn create_external_canister_and_check_status() {
                 calls: vec![],
             },
         });
-    let trap_message = submit_request_with_expected_trap(
-        &env,
-        user_a,
-        canister_ids.station,
-        create_canister_operation.clone(),
-    );
-    assert!(trap_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Create"
-    ));
 
-    // allow anyone to create requests to create a external canister
-    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: station_api::ResourceDTO::ExternalCanister(
-            station_api::ExternalCanisterResourceActionDTO::Create,
-        ),
-        auth_scope: Some(station_api::AuthScopeDTO::Authenticated),
-        user_groups: None,
-        users: None,
-    });
-    execute_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        add_permission,
-    )
-    .unwrap();
-
-    // now the request to create a external canister can be successfully submitted
     let create_canister_operation_request = submit_request(
         &env,
         user_a,
@@ -569,51 +513,8 @@ fn create_external_canister_and_check_status() {
     let status = canister_status(&env, Some(canister_ids.station), canister_id);
     assert_eq!(status.module_hash, None);
 
-    // checking canister status on behalf of the users fails due to insufficient permissions
-    let canister_id_record = CanisterIdRecord { canister_id };
-    let trap_message = update_raw(
-        &env,
-        canister_ids.station,
-        user_a,
-        "canister_status",
-        Encode!(&canister_id_record).unwrap(),
-    )
-    .unwrap_err();
-    assert!(trap_message.description.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Read"
-    ));
-    let trap_message = update_raw(
-        &env,
-        canister_ids.station,
-        user_b,
-        "canister_status",
-        Encode!(&canister_id_record).unwrap(),
-    )
-    .unwrap_err();
-    assert!(trap_message.description.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Read"
-    ));
+    // checking canister status on behalf of the user_a
 
-    // allow the first user to read the canister status of the external canister created above
-    let add_permission = RequestOperationInput::EditPermission(EditPermissionOperationInput {
-        resource: station_api::ResourceDTO::ExternalCanister(
-            station_api::ExternalCanisterResourceActionDTO::Read(ExternalCanisterIdDTO::Canister(
-                canister_id,
-            )),
-        ),
-        auth_scope: None,
-        user_groups: None,
-        users: Some(vec![user_a_dto.id.to_string()]),
-    });
-    execute_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        add_permission,
-    )
-    .unwrap();
-
-    // checking canister status on behalf of the first user now succeeds
     let canister_id_record = CanisterIdRecord { canister_id };
     let status: (ApiResult<CanisterStatusResult>,) = update_candid_as(
         &env,
@@ -624,17 +525,6 @@ fn create_external_canister_and_check_status() {
     )
     .unwrap();
     assert_eq!(status.0.unwrap().module_hash, None);
-    let trap_message = update_raw(
-        &env,
-        canister_ids.station,
-        user_b,
-        "canister_status",
-        Encode!(&canister_id_record).unwrap(),
-    )
-    .unwrap_err();
-    assert!(trap_message.description.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Read"
-    ));
 }
 
 #[test]
@@ -722,7 +612,7 @@ fn call_external_canister_test() {
         call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: 'Unauthorized access to resources: ExternalCanister(Call(CallExternalCanister("
     ));
 
     // nothing should have changed so far
@@ -911,7 +801,7 @@ fn call_external_canister_test() {
         illegal_call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: 'Unauthorized access to resources: ExternalCanister(Call(CallExternalCanister("
     ));
 
     bump_time_to_avoid_ratelimit(&env);
@@ -931,7 +821,7 @@ fn call_external_canister_test() {
         illegal_call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: 'Unauthorized access to resources: ExternalCanister(Call(CallExternalCanister("
     ));
 
     // submit a request labeling the validation method as the execution method which is illegal given the permissions set so far
@@ -949,7 +839,7 @@ fn call_external_canister_test() {
         illegal_call_canister_operation.clone(),
     );
     assert!(trap_message.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: ExternalCanister(Call"
+        "Canister called `ic0.trap` with message: 'Unauthorized access to resources: ExternalCanister(Call(CallExternalCanister("
     ));
 
     // nothing should have changed
@@ -1225,7 +1115,7 @@ fn create_external_canister_with_too_many_cycles() {
     )
     .unwrap_err();
     assert!(err
-        .description
+        .reject_message
         .contains("The method `try_execute_request` can only be called by the station canister."));
 
     // wait for the requests to be executed
