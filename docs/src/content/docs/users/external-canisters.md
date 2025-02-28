@@ -41,7 +41,7 @@ Managing external canisters through Orbit Wallet allows you to:
 4. Save the changes.
 
 :::caution[Security Tip]
-Regularly review canister permissions to prevent unauthorized access.
+Regularly review canister permissions to prevent unauthorized access. The permissions ensure that only authorized users can call into the methods, but for this to be enforced the canister needs to ensure that it only accepts calls from the controllers, or explicitly the Orbit Station.
 :::
 
 ## **Upgrading External Canisters**
