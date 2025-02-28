@@ -2,7 +2,7 @@ use crate::setup::setup_new_env;
 use crate::TestEnv;
 use candid::{Decode, Encode, Principal};
 use orbit_essentials::api::{HttpRequest, HttpResponse};
-use pocket_ic::{PocketIc, WasmResult};
+use pocket_ic::PocketIc;
 
 fn test_candid_decoding_quota(env: &PocketIc, canister_id: Principal) {
     // The anonymous end-user sends a small HTTP request. This should succeed.
@@ -13,18 +13,15 @@ fn test_candid_decoding_quota(env: &PocketIc, canister_id: Principal) {
         body: vec![42; 1_000],
     };
     let http_request_bytes = Encode!(&http_request).unwrap();
-    let response = match env
+    let bytes = env
         .update_call(
             canister_id,
             Principal::anonymous(),
             "http_request",
             http_request_bytes,
         )
-        .unwrap()
-    {
-        WasmResult::Reply(bytes) => Decode!(&bytes, HttpResponse).unwrap(),
-        WasmResult::Reject(reason) => panic!("Unexpected reject: {}", reason),
-    };
+        .unwrap();
+    let response = Decode!(&bytes, HttpResponse).unwrap();
     assert_eq!(response.status_code, 200);
 
     // The anonymous end-user sends a large HTTP request. This should be rejected.
@@ -39,8 +36,9 @@ fn test_candid_decoding_quota(env: &PocketIc, canister_id: Principal) {
             large_http_request_bytes,
         )
         .unwrap_err();
-    println!("desc: {}", err.description);
-    assert!(err.description.contains("Decoding cost exceeds the limit"));
+    assert!(err
+        .reject_message
+        .contains("Decoding cost exceeds the limit"));
 }
 
 #[test]

@@ -16,7 +16,7 @@ use control_panel_api::{
 use ic_ledger_types::AccountIdentifier;
 use orbit_essentials::api::ApiResult;
 
-use pocket_ic::{update_candid_as, CallError};
+use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{HealthStatus, SystemInfoResponse};
 use std::time::Duration;
@@ -148,19 +148,16 @@ fn successful_monitors_stations_and_tops_up() {
     assert_eq!(health_status, HealthStatus::Healthy);
 
     // WALLET_ADMIN_USER is not admin of the newly created station and thus the following call should trap
-    let res: Result<(ApiResult<SystemInfoResponse>,), CallError> = update_candid_as(
+    let user_error = update_candid_as::<_, (ApiResult<SystemInfoResponse>,)>(
         &env,
         newly_created_user_station,
         WALLET_ADMIN_USER,
         "system_info",
         (),
-    );
-    let user_error = match res.unwrap_err() {
-        CallError::UserError(user_error) => user_error,
-        CallError::Reject(message) => panic!("Unexpected reject: {}", message),
-    };
-    assert!(user_error.description.contains(
-        "Canister called `ic0.trap` with message: Unauthorized access to resources: System(SystemInfo)"
+    )
+    .unwrap_err();
+    assert!(user_error.reject_message.contains(
+        "Canister called `ic0.trap` with message: 'Unauthorized access to resources: System(SystemInfo)'."
     ));
 
     let upgrader_id = get_system_info(&env, user_id, newly_created_user_station).upgrader_id;
