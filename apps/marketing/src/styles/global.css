@@ -1,1 +1,187 @@
 @import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@font-face {
+  font-family: 'Rules';
+  src: url('/fonts/RulesRegular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Rules';
+  src: url('/fonts/RulesMedium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-feature-settings: 'calt' off;
+}
+
+@theme {
+  --color-*: initial;
+  --color-black: #0e0d0e;
+  --color-white: #ffffff;
+  --color-blue: #2c0dff;
+  --color-panel: #191919;
+
+  --font-*: initial;
+  --font-rules: 'Rules', sans-serif;
+
+  --breakpoint-3xl: 101.875rem; /* 1630px */
+}
+
+@utility text-h1 {
+  font-size: 3.625rem;
+  line-height: 120%;
+  font-weight: 500;
+}
+
+@utility text-h2 {
+  font-size: 2.875rem;
+  line-height: 140%;
+  font-weight: 500;
+}
+
+@utility text-h3 {
+  font-size: 2.625rem;
+  line-height: 130%;
+  font-weight: 500;
+}
+
+@utility text-h4 {
+  font-size: 1.75rem;
+  line-height: 130%;
+  font-weight: 500;
+}
+
+@utility text-h5 {
+  font-size: 1.5rem;
+  line-height: 130%;
+  font-weight: 500;
+}
+@utility text-h6 {
+  font-size: 1.375rem;
+  line-height: 120%;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+@utility text-h7 {
+  font-size: 1rem;
+  line-height: 150%;
+  font-weight: 500;
+}
+
+@utility text-h8 {
+  font-size: 0.875rem;
+  line-height: 150%;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  @apply uppercase;
+}
+
+@utility text-h9 {
+  font-size: 0.8125rem;
+  line-height: 130%;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  @apply uppercase;
+}
+
+@utility text-body-big {
+  font-size: 1rem;
+  line-height: 160%;
+  font-weight: 400;
+}
+
+@utility text-body-medium {
+  font-size: 0.8125rem;
+  line-height: 160%;
+  font-weight: 400;
+}
+
+@utility text-body-small {
+  font-size: 0.8125rem;
+  line-height: 150%;
+  font-weight: 500;
+}
+
+@utility text-body-caption {
+  font-size: 0.625rem;
+  line-height: 95%;
+  font-weight: 500;
+  @apply uppercase;
+}
+
+@utility btn {
+  @apply px-8 pt-2.5 pb-[0.875rem] text-body-small rounded-lg appearance-none cursor-pointer text-center inline-flex items-center justify-center focus:outline-2 outline-white outline-offset-2;
+}
+
+@utility btn-outline {
+  @apply bg-transparent border border-white text-white hover:bg-white hover:text-black transition-colors;
+}
+
+@utility btn-primary {
+  @apply bg-white border border-white text-black hover:bg-black hover:text-white transition-colors;
+}
+
+@utility toggle {
+  @apply rounded-lg appearance-none cursor-pointer text-center inline-flex items-center justify-center text-h7 px-5 pt-2 pb-3 transition-colors focus-visible:outline-2 outline-offset-2 outline-white;
+
+  &:not(:has(input:checked)) {
+    @apply bg-white/15 text-white/40 hover:bg-white/25;
+  }
+
+  &:has(input:checked) {
+    @apply bg-white text-black hover:bg-white/90;
+  }
+}
+
+@utility container-page {
+  @apply max-w-[87.5rem] 3xl:max-w-[99.375rem] mx-auto px-6 lg:px-10;
+}
+
+@utility badge {
+  @apply text-body-caption px-3 py-2 inline-flex gap-2.5 items-center rounded-md;
+}
+
+@utility badge-disabled {
+  @apply text-white/40 bg-white/10;
+}
+
+@utility text-gradient {
+  @apply bg-gradient-to-b from-white to-white/50 text-transparent bg-clip-text;
+}
+
+@utility panel {
+  @apply bg-panel rounded-xl outline-[11px] outline-white/2 focus-visible:outline-white/50 px-6;
+}
+
+body,
+html {
+  @apply bg-black;
+  font-family: var(--font-rules);
+
+  font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+
+  scroll-behavior: smooth;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@utility animate-delayed-fade-in {
+  animation: fade-in 1s ease-in-out 1.5s both;
+}
+
+@utility animate-fade-in-orbs {
+  animation: fade-in 3s ease-out both;
+}

@@ -16,5 +16,9 @@
     "headers": {
       "Cache-Control": "max-age=604800"
     }
+  },
+  {
+    "match": ".well-known",
+    "ignore": false
   }
 ]
