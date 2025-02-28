@@ -1,4 +1,5 @@
 ---
+import { walletUrl } from '../lib/config';
 import { footerLinks, footerNav } from '../lib/nav';
 
 const currentYear = new Date().getFullYear();
@@ -15,7 +16,7 @@ const currentYear = new Date().getFullYear();
       <div class="text-center mt-10">
         <a
           class="btn btn-outline lg:w-80 block lg:inline-flex"
-          href="https://orbit.global"
+          href={walletUrl}
           target="_blank"
           rel="noopener noreferrer">Launch Orbit</a
         >

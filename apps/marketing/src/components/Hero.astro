@@ -1,5 +1,6 @@
 ---
 import VerticalDivider from './VerticalDivider.astro';
+import { walletUrl } from '../lib/config';
 ---
 
 <section class="relative" id="top">
@@ -14,7 +15,7 @@ import VerticalDivider from './VerticalDivider.astro';
     <p class="pt-7 lg:pt-10 order-2 lg:order-1">
       <a
         class="block lg:inline-flex btn btn-primary lg:w-64"
-        href="https://orbit.global"
+        href={walletUrl}
         target="_blank"
         rel="noopener noreferrer"
       >

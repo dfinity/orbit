@@ -1,4 +1,5 @@
 ---
+import { walletUrl } from '../lib/config';
 import { headerNav } from '../lib/nav';
 ---
 
@@ -19,7 +20,7 @@ import { headerNav } from '../lib/nav';
 
       <a
         class="btn btn-outline lg:w-64 ml-8"
-        href="https://orbit.global"
+        href={walletUrl}
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -70,7 +71,7 @@ import { headerNav } from '../lib/nav';
 
       <a
         class="btn btn-outline block mt-20 w-full"
-        href="https://orbit.global"
+        href={walletUrl}
         target="_blank"
         rel="noopener noreferrer"
       >

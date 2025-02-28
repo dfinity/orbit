@@ -1,4 +1,5 @@
 ---
+import { walletUrl, docsUrl } from '../lib/config';
 import ProductPanel from './ProductPanel.astro';
 ---
 
@@ -7,16 +8,11 @@ import ProductPanel from './ProductPanel.astro';
 
   <div class="mt-10 lg:mt-16">
     <div class="flex flex-col lg:flex-row gap-x-10 gap-y-10">
-      <ProductPanel title="Users" label="WALLET" href="https://orbit.global" image="/orbit-app.svg">
+      <ProductPanel title="Users" label="WALLET" href={walletUrl} image="/orbit-app.svg">
         Use the enterprise-grade, multisig wallet
       </ProductPanel>
 
-      <ProductPanel
-        title="Developers"
-        label="STATION"
-        href="https://docs.orbit.global"
-        image="/orbit-station.svg"
-      >
+      <ProductPanel title="Developers" label="STATION" href={docsUrl} image="/orbit-station.svg">
         Get the latest docs to integrate seamlessly
       </ProductPanel>
     </div>

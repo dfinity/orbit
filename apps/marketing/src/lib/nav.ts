@@ -1,3 +1,5 @@
+import { docsUrl, walletUrl } from './config';
+
 export const headerNav = {
   navigation: [
     {
@@ -45,8 +47,12 @@ export const footerNav = {
       href: 'mailto:orbit@dfinity.org',
     },
     {
+      label: 'Wallet',
+      href: walletUrl,
+    },
+    {
       label: 'Documentation',
-      href: 'https://docs.orbit.global',
+      href: docsUrl,
     },
   ],
 };
