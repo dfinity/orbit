@@ -77,29 +77,6 @@ describe('DeployStation', () => {
     expect(wrapper.find('[data-test-id="deploy-check-error"]').exists()).toBe(true);
   });
 
-  it('will show the waitlist screen if the user is not on the waitlist', async () => {
-    vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValueOnce({
-      NotAllowed: { Unsubscribed: null },
-    } as CanDeployStationResponse);
-    const wrapper = mount(DeployStation);
-
-    await flushPromises();
-
-    expect(wrapper.find('[data-test-id="join-waitlist-form"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test-id="join-waitlist-form-email"]').exists()).toBe(true);
-  });
-
-  it("will show the pending screen if the user's waitlist status is still pending", async () => {
-    vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValueOnce({
-      NotAllowed: { Pending: null },
-    } as CanDeployStationResponse);
-    const wrapper = mount(DeployStation);
-
-    await flushPromises();
-
-    expect(wrapper.find('[data-test-id="deploy-in-waiting-list"]').exists()).toBe(true);
-  });
-
   it("will show the denied screen if the user's waitlist status is denied", async () => {
     vi.spyOn(services().controlPanel, 'canDeployStation').mockResolvedValueOnce({
       NotAllowed: { Denylisted: null },

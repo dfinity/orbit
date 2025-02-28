@@ -199,7 +199,7 @@ export default {
       external_canister: 'Canister gerenciado',
       system_info: 'Informações do sistema',
       asset: 'Ativos',
-      named_rule: 'Política de aprovação',
+      named_rule: 'Regras de aprovação',
     },
     headers: {
       id: 'ID',
@@ -344,16 +344,16 @@ export default {
         request_title: 'Pedido de configuração de recuperação de desastres',
       },
       addnamedrule: {
-        title: 'Adicionar política de aprovação',
-        request_title: 'Pedido de adição de política de aprovação',
+        title: 'Adicionar regra de aprovação',
+        request_title: 'Pedido de adição de regra de aprovação',
       },
       editnamedrule: {
-        title: 'Editar política de aprovação',
-        request_title: 'Pedido de edição de política de aprovação',
+        title: 'Editar regra de aprovação',
+        request_title: 'Pedido de edição de regra de aprovação',
       },
       removenamedrule: {
-        title: 'Remover política de aprovação',
-        request_title: 'Pedido de remoção de política de aprovação',
+        title: 'Remover regra de aprovação',
+        request_title: 'Pedido de remoção de regra de aprovação',
       },
       unknown: {
         title: 'Desconhecido',
@@ -882,7 +882,7 @@ export default {
     request_policies: 'Regras de aprovação',
     assets: 'Ativos',
     external_canisters: 'Canisters',
-    approval_policy: 'Política de aprovação',
+    approval_rules: 'Regras de aprovação',
   },
   pages: {
     dashboard: {
@@ -985,25 +985,17 @@ export default {
       station_name_field: 'Nome da carteira',
       admin_name_field: 'Seu nome de usuário',
 
-      check_permissions_title: 'Verificando o estado da lista de espera ...',
-      join_waitlist_title: 'Junte-se à lista de espera',
-      join_waitlist_body:
-        'Junte-se à lista de espera da Orbit! Insira o seu email para obter acesso antecipado e atualizações exclusivas. A sua jornada começa agora.',
-      join_waitlist_email_field: 'Insira o seu endereço de email',
-      join_waitlist: 'Inscreva-se agora',
-
-      waitlist_pending_title: 'Você está na lista de espera!',
-      waitlist_pending_body:
-        'Por favor, aguarde a aprovação. Você receberá um email assim que o seu pedido for aprovado.',
-      waitlist_denied_title: 'Você foi negado o acesso.',
-      waitlist_denied_body: 'Infelizmente, você não é elegível para se juntar à lista de espera.',
-
-      waitlist_check_error_title: 'Falha ao verificar o estado da lista de espera',
-      waitlist_check_error_body:
-        'Falha ao verificar o estado da lista de espera, por favor, tente novamente.',
+      check_permissions_title: 'Verificando a elegibilidade para o deployment...',
 
       quota_exceed_error_title: 'Limite de carteiras excedido',
       quota_exceed_error_body: 'Você atingiu o limite de carteiras que pode criar.',
+
+      waitlist_denied_title: 'Você foi negado o acesso.',
+      waitlist_denied_body: 'Infelizmente, você não é elegível para se juntar à lista de espera.',
+
+      deployment_check_error_title: 'Erro ao verificar a elegibilidade para o deployment',
+      deployment_check_error_body:
+        'Erro ao verificar a elegibilidade para o deployment, por favor, tente novamente.',
 
       status_starting: 'Inicializando, por favor, aguarde ...',
       status_deploying: 'Instalando a sua carteira no Internet Computer ...',
@@ -1023,8 +1015,8 @@ export default {
     },
     request_policies: {
       title: 'Regras de aprovação',
-      create_label: 'Criar Regra',
-      dialog_title: 'Regra',
+      create_label: 'Adicionar regra de aprovação',
+      dialog_title: 'Regra de aprovação',
     },
     assets: {
       title: 'Ativos',
@@ -1046,11 +1038,11 @@ export default {
         option_add_custom_asset: 'Adicionar ativo personalizado',
       },
     },
-    approval_policy: {
-      title: 'Política de aprovação',
-      btn_new_entry: 'Adicionar nova política',
+    approval_rules: {
+      btn_new_entry: 'Adicionar regra de aprovação',
+      title: 'Regra de aprovação',
       dialog: {
-        title: 'Política de aprovação',
+        title: 'Regra de aprovação',
       },
       linked_policies: 'Políticas vinculadas',
     },
@@ -1117,7 +1109,7 @@ export default {
       managesysteminfo: 'Gerenciar Informações do Sistema',
       externalcanister: 'Canister Externo',
       callcanister: 'Chamar canister',
-      namedrule: 'Política de aprovação',
+      namedrule: 'Regra de aprovação',
     },
     categories: {
       treasury: 'Tesouraria (contas, ativos, etc...)',
@@ -1233,9 +1225,9 @@ export default {
       permission_update_description:
         'Concede controle total sobre as permissões da carteira, incluindo adicionar, atualizar e remover permissões.',
 
-      requestpolicy_list: 'Ver Página de Políticas de Solicitação',
+      requestpolicy_list: 'Ver Aba de Políticas de Solicitação',
       requestpolicy_list_description:
-        'Permite acessar a página de políticas de solicitação, exibindo apenas as políticas que o usuário pode visualizar.',
+        'Permite acessar a aba de políticas de solicitação, exibindo apenas as políticas que o usuário pode visualizar.',
       requestpolicy_read_any: 'Ver Todas as Políticas de Solicitação',
       requestpolicy_read_any_description:
         'Permite visualizar todas as políticas de solicitação e seus detalhes.',
@@ -1255,19 +1247,19 @@ export default {
       request_read_any_description:
         'Permite visualizar todas as solicitações, incluindo aquelas enviadas por outros usuários.',
 
-      namedrule_list: 'Ver Página de Políticas de Aprovação',
+      namedrule_list: 'Ver Aba de Regras de Aprovação',
       namedrule_list_description:
-        'Permite acessar a página de políticas de aprovação, exibindo apenas as políticas que o usuário pode visualizar.',
-      namedrule_read_any: 'Ver Todas as Políticas de Aprovação',
+        'Permite acessar a aba de regras de aprovação, exibindo apenas as regras que o usuário pode visualizar.',
+      namedrule_read_any: 'Ver Todas as Regras de Aprovação',
       namedrule_read_any_description:
-        'Permite visualizar todas as políticas de aprovação e seus detalhes.',
+        'Permite visualizar todas as regras de aprovação e seus detalhes.',
 
-      namedrule_create: 'Adicionar Novas Políticas de Aprovação',
-      namedrule_create_description: 'Permite adicionar novas políticas de aprovação à carteira.',
-      namedrule_update_any: 'Editar Políticas de Aprovação',
-      namedrule_update_any_description: 'Permite modificar as políticas de aprovação.',
-      namedrule_delete_any: 'Excluir Políticas de Aprovação',
-      namedrule_delete_any_description: 'Permite excluir políticas de aprovação.',
+      namedrule_create: 'Adicionar Novas Regras de Aprovação',
+      namedrule_create_description: 'Permite adicionar novas regras de aprovação à carteira.',
+      namedrule_update_any: 'Editar Regras de Aprovação',
+      namedrule_update_any_description: 'Permite modificar regras de aprovação.',
+      namedrule_delete_any: 'Excluir Regras de Aprovação',
+      namedrule_delete_any_description: 'Permite excluir regras de aprovação.',
     },
   },
   request_policies: {
@@ -1276,7 +1268,7 @@ export default {
     unsupported_specifier: 'Especificador não suportado',
     rule_groups: {
       custom_rules: 'Regras personalizadas',
-      named_rules: 'Políticas de aprovação',
+      named_rules: 'Regras de aprovação',
     },
     rule_user_specifier: {
       owner: 'Proprietário',
@@ -1294,7 +1286,7 @@ export default {
       quorumpercentage: 'Percentual de quórum',
       allowlistedbymetadata: 'Lista branca por metadados',
       allowlisted: 'Lista branca',
-      named_rule: 'Usa política de aprovação: {name}',
+      named_rule: 'Usa regra de aprovação: {name}',
     },
     rule_tooltip_summary: {
       allof: 'Todos os seguintes:',
@@ -1317,7 +1309,7 @@ export default {
       not: 'Não: {rule}',
       allof: ' E ',
       anyof: ' OU ',
-      named_rule: 'Use política de aprovação: {name}',
+      named_rule: 'Use regra de aprovação: {name}',
     },
     specifier: {
       editpermission: 'Editar permissão',
@@ -1345,9 +1337,9 @@ export default {
       addasset: 'Adicionar ativo',
       editasset: 'Editar ativo',
       removeasset: 'Remover ativo',
-      addnamedrule: 'Adicionar política de aprovação',
-      editnamedrule: 'Editar política de aprovação',
-      removenamedrule: 'Remover política de aprovação',
+      addnamedrule: 'Adicionar regra de aprovação',
+      editnamedrule: 'Editar regra de aprovação',
+      removenamedrule: 'Remover regra de aprovação',
     },
   },
   cycle_obtain_strategies: {

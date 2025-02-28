@@ -223,7 +223,7 @@ export default {
       external_canister: 'External Canisters',
       system_info: 'System Info',
       asset: 'Assets',
-      named_rule: 'Approval Policy',
+      named_rule: 'Approval Rules',
     },
     types: {
       addusergroup: {
@@ -334,16 +334,16 @@ export default {
         request_title: 'Edit disaster recovery request',
       },
       addnamedrule: {
-        title: 'Add approval policy',
-        request_title: 'Add approval policy request',
+        title: 'Add approval rule',
+        request_title: 'Add approval rule request',
       },
       editnamedrule: {
-        title: 'Edit approval policy',
-        request_title: 'Edit approval policy request',
+        title: 'Edit approval rule',
+        request_title: 'Edit approval rule request',
       },
       removenamedrule: {
-        title: 'Remove approval policy',
-        request_title: 'Remove approval policy request',
+        title: 'Remove approval rule',
+        request_title: 'Remove approval rule request',
       },
       unknown: {
         title: 'Unknown',
@@ -876,7 +876,7 @@ export default {
     request_policies: 'Request Policies',
     assets: 'Assets',
     external_canisters: 'Canisters',
-    approval_policy: 'Approval Policy',
+    approval_rules: 'Approval Rules',
   },
   pages: {
     dashboard: {
@@ -973,25 +973,16 @@ export default {
       station_name_field: 'How would you like to name your wallet?',
       admin_name_field: 'What is your name?',
 
-      check_permissions_title: 'Checking waiting list status...',
-      join_waitlist_title: 'Join waiting list',
-      join_waitlist_body:
-        "Join Orbit's waiting list! Enter your email to get early access and exclusive updates. Your journey starts now.",
-      join_waitlist_email_field: 'Enter your email address',
-      join_waitlist: 'Sign up now',
-
-      waitlist_pending_title: 'You are on the waiting list!',
-      waitlist_pending_body:
-        'Please wait for the approval. You will receive an email once your request is approved.',
-
-      waitlist_check_error_title: 'Failed to check waiting list status',
-      waitlist_check_error_body: 'Failed to check waiting list status, please try again.',
+      check_permissions_title: 'Checking deployment eligibility...',
 
       quota_exceed_error_title: 'Quota exceeded',
       quota_exceed_error_body: 'You have reached the maximum number of wallets you can create.',
 
       waitlist_denied_title: "You've been denied access.",
-      waitlist_denied_body: 'Unfortunately, you are not eligible to join the waiting list.',
+      waitlist_denied_body: 'Unfortunately, you are not eligible to deploy a wallet.',
+
+      deployment_check_error_title: 'Failed to check deployment eligibility',
+      deployment_check_error_body: 'Failed to check deployment eligibility, please try again.',
 
       status_starting: 'Initializing, please wait ...',
       status_deploying: 'Deploying your wallet to the Internet Computer ...',
@@ -1010,8 +1001,8 @@ export default {
     },
     request_policies: {
       title: 'Request Policies',
-      create_label: 'Add Policy',
-      dialog_title: 'Policy',
+      create_label: 'Add Request Policy',
+      dialog_title: 'Request Policy',
     },
     assets: {
       title: 'Assets',
@@ -1033,11 +1024,11 @@ export default {
         option_add_custom_asset: 'Add custom asset',
       },
     },
-    approval_policy: {
-      btn_new_entry: 'Add new policy',
-      title: 'Approval Policy',
+    approval_rules: {
+      btn_new_entry: 'Add approval rule',
+      title: 'Approval rule',
       dialog: {
-        title: 'Approval Policy',
+        title: 'Approval rule',
       },
       linked_policies: 'Linked policies',
     },
@@ -1103,7 +1094,7 @@ export default {
       addressbook: 'Address Book',
       managesysteminfo: 'Manage System Info',
       externalcanister: 'External Canister',
-      namedrule: 'Approval Policy',
+      namedrule: 'Approval Rule',
     },
     categories: {
       treasury: 'Treasury (accounts, assets, etc...)',
@@ -1218,9 +1209,9 @@ export default {
       permission_update_description:
         'Grants full control over wallet permissions, including adding, updating, and removing permissions.',
 
-      requestpolicy_list: 'View Request Policies Page',
+      requestpolicy_list: 'View Request Policies Tab',
       requestpolicy_list_description:
-        'Grants access to the request policies page, showing only policies the user can view.',
+        'Grants access to the request policies tab, showing only policies the user can view.',
       requestpolicy_read_any: 'View All Request Policies',
       requestpolicy_read_any_description:
         'Allows viewing of all request policies and their details.',
@@ -1239,18 +1230,18 @@ export default {
       request_read_any_description:
         'Enables viewing of all requests, including those submitted by other users.',
 
-      namedrule_list: 'View Approval Policies Page',
+      namedrule_list: 'View Approval Rules Tab',
       namedrule_list_description:
-        'Grants access to the approval policies page, showing only policies the user can view.',
-      namedrule_read_any: 'View All Approval Policies',
-      namedrule_read_any_description: 'Allows viewing of all approval policies and their details.',
+        'Grants access to the approval rules tab, showing only rules the user can view.',
+      namedrule_read_any: 'View All Approval Rules',
+      namedrule_read_any_description: 'Allows viewing of all approval rules and their details.',
 
-      namedrule_create: 'Add New Approval Policies',
-      namedrule_create_description: 'Enables adding new approval policies to the wallet.',
-      namedrule_update_any: 'Edit Approval Policies',
-      namedrule_update_any_description: 'Grants permission to modify approval policies.',
-      namedrule_delete_any: 'Delete Approval Policies',
-      namedrule_delete_any_description: 'Allows deleting approval policies.',
+      namedrule_create: 'Add New Approval Rules',
+      namedrule_create_description: 'Enables adding new approval rules to the wallet.',
+      namedrule_update_any: 'Edit Approval Rules',
+      namedrule_update_any_description: 'Grants permission to modify approval rules.',
+      namedrule_delete_any: 'Delete Approval Rules',
+      namedrule_delete_any_description: 'Allows deleting approval rules.',
     },
   },
   request_policies: {
@@ -1259,7 +1250,7 @@ export default {
     unsupported_specifier: 'Unsupported specifier definition',
     rule_groups: {
       custom_rules: 'Custom rules',
-      named_rules: 'Approval policies',
+      named_rules: 'Approval rules',
     },
     rule_user_specifier: {
       owner: 'Owner',
@@ -1277,7 +1268,7 @@ export default {
       quorumpercentage: 'Quorum percentage',
       allowlistedbymetadata: 'Allowlisted by metadata',
       allowlisted: 'Allowlisted',
-      named_rule: 'Use approval policy: {name}',
+      named_rule: 'Use approval rule: {name}',
     },
     rule_tooltip_summary: {
       allof: 'All of the following:',
@@ -1300,7 +1291,7 @@ export default {
       not: 'Not: {rule}',
       allof: ' AND ',
       anyof: ' OR ',
-      named_rule: 'Use approval policy: {name}',
+      named_rule: 'Use approval rule: {name}',
     },
     specifier: {
       editpermission: 'Edit permission',
@@ -1328,9 +1319,9 @@ export default {
       addasset: 'Add asset',
       editasset: 'Edit asset',
       removeasset: 'Remove asset',
-      addnamedrule: 'Add approval policy',
-      editnamedrule: 'Edit approval policy',
-      removenamedrule: 'Remove approval policy',
+      addnamedrule: 'Add approval rule',
+      editnamedrule: 'Edit approval rule',
+      removenamedrule: 'Remove approval rule',
     },
   },
   cycle_obtain_strategies: {

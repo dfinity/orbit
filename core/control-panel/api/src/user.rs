@@ -14,17 +14,6 @@ pub struct GetUserResponse {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct SubscribedUserDTO {
-    pub user_principal: Principal,
-    pub email: String,
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct GetWaitingListResponse {
-    pub subscribed_users: Vec<SubscribedUserDTO>,
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum UserSubscriptionStatusDTO {
     Unsubscribed,
     Pending,
@@ -41,10 +30,4 @@ impl std::fmt::Display for UserSubscriptionStatusDTO {
             UserSubscriptionStatusDTO::Denylisted => write!(f, "denylisted"),
         }
     }
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub struct UpdateWaitingListInput {
-    pub users: Vec<Principal>,
-    pub new_status: UserSubscriptionStatusDTO,
 }
