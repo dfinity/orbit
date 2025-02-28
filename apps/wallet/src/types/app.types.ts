@@ -10,6 +10,7 @@ export interface AppInitConfig {
   isProduction: boolean;
   buildMode: string;
   apiGatewayUrl: URL;
+  derivationOrigin: string | undefined;
   locale: {
     default: string;
     supportedLocales: string[];
