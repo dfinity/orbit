@@ -89,7 +89,7 @@ Use group-based permissions for efficient management of large user bases.
 
 Approval policies are sets of rules that determine how transactions and actions within an Account are approved before execution. These policies can be predefined for convenience or defined manually on a per-action basis.
 
-### **Benefits of Predefined Policies:**
+### **Benefits of Predefined Approval Policies:**
 
 - **Consistency:** Apply the same set of rules across different actions.
 - **Ease of Maintenance:** Update rules in one place and apply changes system-wide.
