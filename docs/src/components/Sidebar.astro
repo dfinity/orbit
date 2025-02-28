@@ -2,7 +2,6 @@
 import MobileMenuFooter from '@astrojs/starlight/components/MobileMenuFooter.astro';
 import SidebarPersister from '@astrojs/starlight/components/SidebarPersister.astro';
 import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
-import type { Props } from '@astrojs/starlight/props';
 import type { SidebarEntry } from '@astrojs/starlight/utils/navigation';
 
 
@@ -20,7 +19,7 @@ function findParentGroup(sidebar: SidebarEntry[], id: string): SidebarEntry | nu
           return entry;
         }
         if (subEntry.type === 'group') {
-          const parentGroup = findParentGroup(subEntry.entries, id);
+          const parentGroup = findParentGroup([subEntry], id);
           if (parentGroup) {
             return entry;
           }
@@ -28,6 +27,7 @@ function findParentGroup(sidebar: SidebarEntry[], id: string): SidebarEntry | nu
       }
     }
   }
+
   return null;
 }
 
@@ -47,7 +47,7 @@ assertGroups(sidebar);
 ---
 
 <SidebarPersister {...Astro.props}>
-  <SidebarSublist sublist={sidebar.filter((group) => group === parentGroup)} />
+  <SidebarSublist sublist={parentGroup && parentGroup.entries} />
 </SidebarPersister>
 
 <div class="md:sl-hidden">

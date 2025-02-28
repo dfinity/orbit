@@ -3,15 +3,15 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import rehypeMermaid from 'rehype-mermaid';
 import { sidebar } from './astro.sidebar';
-import tailwind from '@astrojs/tailwind';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://docs.orbitwallet.io',
+  site: 'https://docs.orbit.global',
   integrations: [
     starlight({
       title: 'Orbit Documentation',
       defaultLocale: 'root',
+      favicon: '/favicon.ico',
       locales: {
         root: {
           label: 'English',
@@ -19,8 +19,8 @@ export default defineConfig({
         },
       },
       logo: {
-        dark: './src/assets/orbit-logo-light.svg',
-        light: './src/assets/orbit-logo-dark.svg',
+        light: './src/assets/logo.svg',
+        dark: './src/assets/logo-dark.svg',
         replacesTitle: true,
       },
       social: {
@@ -29,15 +29,13 @@ export default defineConfig({
       editLink: {
         baseUrl: 'https://github.com/dfinity/orbit/edit/main/docs/',
       },
-      customCss: ['./src/fonts/font-face.css', './src/styles/tailwind.css'],
+      customCss: ['./src/fonts/font-face.css', './src/styles/global.css'],
       sidebar,
       components: {
         // See https://docs.astro.build/reference/components
-        Sidebar: './src/components/starlight/Sidebar.astro',
+        Head: './src/components/Head.astro',
+        Sidebar: './src/components/Sidebar.astro',
       },
-    }),
-    tailwind({
-      applyBaseStyles: false,
     }),
   ],
   markdown: {
