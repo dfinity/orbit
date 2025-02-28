@@ -118,11 +118,16 @@ impl DeployService {
         })?;
 
         // The initial admins added to the station.
-        let admins = input
+        let intial_users = input
             .admins
             .iter()
-            .map(|admin| station_api::AdminInitInput {
-                identity: admin.identity,
+            .map(|admin| station_api::UserInitInput {
+                id: None,
+                identities: vec![station_api::UserIdentityInput {
+                    identity: admin.identity,
+                }],
+                groups: None,
+                status: None,
                 name: admin.username.clone(),
             })
             .collect::<Vec<_>>();
@@ -131,17 +136,16 @@ impl DeployService {
         let station_install_arg =
             Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                 name: input.name.clone(),
-                admins,
                 upgrader: station_api::SystemUpgraderInput::Deploy(
                     station_api::DeploySystemUpgraderInput {
                         wasm_module: upgrader_wasm_module,
                         initial_cycles: Some(upgrader_initial_cycles),
                     }
                 ),
-                quorum: Some(1),
                 fallback_controller: Some(NNS_ROOT_CANISTER_ID),
-                accounts: None,
-                assets: None,
+                entries: None,
+                users: intial_users,
+                quorum: None,
             }))
             .map_err(|err| DeployError::Failed {
                 reason: err.to_string(),

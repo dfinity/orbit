@@ -57,8 +57,18 @@ impl RequestPolicyService {
         &self,
         input: AddRequestPolicyOperationInput,
     ) -> ServiceResult<RequestPolicy> {
+        self.add_request_policy_with_id(input, None)
+    }
+
+    pub fn add_request_policy_with_id(
+        &self,
+        input: AddRequestPolicyOperationInput,
+        with_policy_id: Option<UUID>,
+    ) -> ServiceResult<RequestPolicy> {
+        let id = with_policy_id.unwrap_or_else(|| *Uuid::new_v4().as_bytes());
+
         let policy = RequestPolicy {
-            id: *Uuid::new_v4().as_bytes(),
+            id,
             specifier: input.specifier,
             rule: input.rule,
         };
