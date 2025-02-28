@@ -49,9 +49,9 @@ Permissions can be assigned at various levels to ensure flexibility and control:
 
 ### **Broad permissions:**
 
-- **Restricted:** No access unless specified via Group or User permission.
-- **Authenticated:** Access is granted to logged-in users.
-- **Public:** Accessible to anyone, regardless of authentication status.
+- **Specific Users/Groups:** Accessible only to the selected users or groups.
+- **All Logged-In Users:** Accessible by any user who is logged in.
+- **Public (No Login Required):** Accessible by anyone, including non-logged-in visitors.
 
 :::tip
 Use group-based permissions for efficient management of large user bases.
