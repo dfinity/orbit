@@ -2,7 +2,6 @@
   <PageLayout>
     <template #sidebar="{ showWarningBanner }">
       <AppSidebar
-        class="logo-markers-bg--contain"
         :class="{
           ['warning-banner--offset']: showWarningBanner,
         }"

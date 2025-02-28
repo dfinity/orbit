@@ -15,8 +15,8 @@ use crate::{
         RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks,
     },
     repositories::{
-        permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY, REQUEST_REPOSITORY,
-        USER_GROUP_REPOSITORY, USER_REPOSITORY,
+        permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY,
+        NAMED_RULE_REPOSITORY, REQUEST_REPOSITORY, USER_GROUP_REPOSITORY, USER_REPOSITORY,
     },
     services::{
         change_canister::{ChangeCanisterService, CHANGE_CANISTER_SERVICE},
@@ -377,6 +377,7 @@ impl SystemService {
         USER_REPOSITORY.build_cache();
         PERMISSION_REPOSITORY.build_cache();
         ASSET_REPOSITORY.build_cache();
+        NAMED_RULE_REPOSITORY.build_cache();
     }
 
     /// Initializes the canister with the given owners and settings.
@@ -396,7 +397,7 @@ impl SystemService {
         }
 
         // adds the default admin group
-        init_canister_sync_handlers::add_admin_group();
+        init_canister_sync_handlers::add_initial_groups();
 
         // registers the admins of the canister
         init_canister_sync_handlers::set_admins(input.admins.clone())?;
@@ -528,7 +529,7 @@ impl SystemService {
 
 mod init_canister_sync_handlers {
     use crate::core::ic_cdk::{api::print, next_time};
-    use crate::models::{AddUserOperationInput, Asset, UserStatus};
+    use crate::models::{AddUserOperationInput, Asset, UserStatus, OPERATOR_GROUP_ID};
     use crate::repositories::ASSET_REPOSITORY;
     use crate::services::USER_SERVICE;
     use crate::{
@@ -543,13 +544,23 @@ mod init_canister_sync_handlers {
 
     use super::INITIAL_ICP_ASSET;
 
-    pub fn add_admin_group() {
+    pub fn add_initial_groups() {
         // adds the admin group which is used as the default group for admins during the canister instantiation
         USER_GROUP_REPOSITORY.insert(
             ADMIN_GROUP_ID.to_owned(),
             UserGroup {
                 id: ADMIN_GROUP_ID.to_owned(),
                 name: "Admin".to_owned(),
+                last_modification_timestamp: next_time(),
+            },
+        );
+
+        // adds the operator group which is used as the default group for non-sensitive operators
+        USER_GROUP_REPOSITORY.insert(
+            OPERATOR_GROUP_ID.to_owned(),
+            UserGroup {
+                id: OPERATOR_GROUP_ID.to_owned(),
+                name: "Operator".to_owned(),
                 last_modification_timestamp: next_time(),
             },
         );
@@ -595,7 +606,7 @@ pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
 #[cfg(target_arch = "wasm32")]
 mod install_canister_handlers {
     use crate::core::ic_cdk::api::id as self_canister_id;
-    use crate::core::init::{default_policies, DEFAULT_PERMISSIONS};
+    use crate::core::init::{default_policies, get_default_named_rules, DEFAULT_PERMISSIONS};
     use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
     use crate::mappers::blockchain::BlockchainMapper;
     use crate::mappers::HelperMapper;
@@ -604,15 +615,17 @@ mod install_canister_handlers {
     use crate::models::{
         AddAccountOperationInput, AddAssetOperationInput, AddRequestPolicyOperationInput,
         CycleObtainStrategy, EditPermissionOperationInput, MonitorExternalCanisterStrategy,
-        MonitoringExternalCanisterEstimatedRuntimeInput, RequestPolicyRule, ADMIN_GROUP_ID,
+        MonitoringExternalCanisterEstimatedRuntimeInput, NamedRule, RequestPolicyRule,
+        ADMIN_GROUP_ID,
     };
-    use crate::repositories::ASSET_REPOSITORY;
+    use crate::repositories::{ASSET_REPOSITORY, NAMED_RULE_REPOSITORY};
     use crate::services::permission::PERMISSION_SERVICE;
     use crate::services::{ACCOUNT_SERVICE, ASSET_SERVICE};
     use crate::services::{EXTERNAL_CANISTER_SERVICE, REQUEST_POLICY_SERVICE};
     use candid::{Encode, Principal};
     use ic_cdk::api::management_canister::main::{self as mgmt};
     use ic_cdk::{id, print};
+    use orbit_essentials::model::ModelKey;
 
     use crate::services::cycle_manager::CYCLE_MANAGER;
     use orbit_essentials::api::ApiError;
@@ -625,7 +638,27 @@ mod install_canister_handlers {
     pub async fn init_post_process(init: &SystemInit) -> Result<(), String> {
         let admin_quorum = super::calc_initial_quorum(init.admins.len() as u16, init.quorum);
 
-        let policies_to_create = default_policies(admin_quorum);
+        let (regular_named_rule_config, admin_named_rule_config) =
+            get_default_named_rules(admin_quorum);
+
+        let regular_named_rule = NamedRule {
+            id: *Uuid::new_v4().as_bytes(),
+            name: regular_named_rule_config.0,
+            description: None,
+            rule: regular_named_rule_config.1,
+        };
+
+        let admin_named_rule = NamedRule {
+            id: *Uuid::new_v4().as_bytes(),
+            name: admin_named_rule_config.0,
+            description: None,
+            rule: admin_named_rule_config.1,
+        };
+
+        NAMED_RULE_REPOSITORY.insert(regular_named_rule.key(), regular_named_rule.clone());
+        NAMED_RULE_REPOSITORY.insert(admin_named_rule.key(), admin_named_rule.clone());
+
+        let policies_to_create = default_policies(regular_named_rule.id, admin_named_rule.id);
 
         // adds the default request policies which sets safe defaults for the canister
         for policy in policies_to_create.iter() {

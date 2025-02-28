@@ -12,38 +12,34 @@ import '@mdi/font/css/materialdesignicons.css';
 const light: ThemeDefinition = {
   dark: false,
   colors: {
-    primary: '#00ffcc',
-    secondary: '#030024',
-    background: '#f0f0f0',
-    surface: '#ffffff',
+    primary: '#29A3DA',
+    secondary: '#0E0D0E',
+    background: '#ffffff',
+    surface: '#F9F9F9',
     neutral: '#b0b0b5',
     info: '#5da3cf',
     success: '#258f5c',
     warning: '#e39632',
     error: '#bd3e33',
     // custom styles
-    sidebar: '#030024',
-    landing: '#030024',
-    'landing-surface': '#ffffff',
+    sidebar: '#0E0D0E',
   },
 };
 
 const dark: ThemeDefinition = {
   dark: true,
   colors: {
-    primary: '#00ffcc',
-    secondary: '#0c6a6b',
-    background: '#010011',
-    surface: '#191822',
+    primary: '#29A3DA',
+    secondary: '#ffffff',
+    background: '#0E0D0E',
+    surface: '#19181C',
     neutral: '#b0b0b5',
     info: '#5da3cf',
     success: '#258f5c',
     warning: '#e39632',
     error: '#bd3e33',
     // custom styles
-    sidebar: '#191822',
-    landing: '#030024',
-    'landing-surface': '#ffffff',
+    sidebar: '#19181C',
   },
 };
 

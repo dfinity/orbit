@@ -415,16 +415,16 @@ const router = createRouter({
               },
             },
             {
-              path: 'policies',
-              name: Routes.RequestPolicies,
-              component: () => import('~/pages/RequestPoliciesPage.vue'),
+              path: 'approval-rules',
+              name: Routes.ApprovalRules,
+              component: () => import('~/pages/ApprovalRulesPage.vue'),
               props: () => {
                 return {
-                  title: i18n.global.t('pages.request_policies.title'),
+                  title: i18n.global.t('pages.approval_rules.title'),
                   breadcrumbs: [
                     { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
                     { title: i18n.global.t('navigation.settings') },
-                    { title: i18n.global.t('navigation.request_policies') },
+                    { title: i18n.global.t('navigation.approval_rules') },
                   ],
                 };
               },
@@ -432,34 +432,12 @@ const router = createRouter({
                 auth: {
                   check: {
                     session: RequiredSessionState.ConnectedToStation,
-                    privileges: [Privilege.ListRequestPolicies],
+                    privileges: [Privilege.ListRequestPolicies, Privilege.ListNamedRules],
                   },
                 },
               },
             },
-            {
-              path: 'approval-policy',
-              name: Routes.ApprovalPolicy,
-              component: () => import('~/pages/ApprovalPolicyPage.vue'),
-              props: () => {
-                return {
-                  title: i18n.global.t('pages.approval_policy.title'),
-                  breadcrumbs: [
-                    { title: i18n.global.t('navigation.home'), to: { name: defaultHomeRoute } },
-                    { title: i18n.global.t('navigation.settings') },
-                    { title: i18n.global.t('navigation.approval_policy') },
-                  ],
-                };
-              },
-              meta: {
-                auth: {
-                  check: {
-                    session: RequiredSessionState.ConnectedToStation,
-                    privileges: [Privilege.ListNamedRules],
-                  },
-                },
-              },
-            },
+
             {
               path: 'assets',
               name: Routes.Assets,

@@ -1,7 +1,7 @@
 export default {
   app: {
-    title: '{app} Wallet',
-    name: 'Orbit Wallet',
+    title: '{app}',
+    name: 'Orbit',
     action_save_failed: 'Failed to save action, please try again.',
     action_save_success: 'Action successfully saved.',
     session_load_error: 'Failed to load your session, please try again.',
@@ -103,10 +103,7 @@ export default {
     user_cancel_pending_requests: 'Cancel all pending requests from this user.',
     error_dialog_title: 'Failed to load.',
     error_dialog_message: 'Failed to load, please try again.',
-  },
-  alpha_warning: {
-    version: 'This is an alpha version.',
-    caution: 'Use with caution.',
+    request_submit_failed: 'Request failed to submit, please try again.',
   },
   blockchains: {
     icp: {
@@ -226,7 +223,7 @@ export default {
       external_canister: 'External Canisters',
       system_info: 'System Info',
       asset: 'Assets',
-      named_rule: 'Approval Policy',
+      named_rule: 'Approval Rules',
     },
     types: {
       addusergroup: {
@@ -337,16 +334,16 @@ export default {
         request_title: 'Edit disaster recovery request',
       },
       addnamedrule: {
-        title: 'Add approval policy',
-        request_title: 'Add approval policy request',
+        title: 'Add approval rule',
+        request_title: 'Add approval rule request',
       },
       editnamedrule: {
-        title: 'Edit approval policy',
-        request_title: 'Edit approval policy request',
+        title: 'Edit approval rule',
+        request_title: 'Edit approval rule request',
       },
       removenamedrule: {
-        title: 'Remove approval policy',
-        request_title: 'Remove approval policy request',
+        title: 'Remove approval rule',
+        request_title: 'Remove approval rule request',
       },
       unknown: {
         title: 'Unknown',
@@ -399,17 +396,22 @@ export default {
   },
   sidebar: {
     highlights: {
-      main: 'Trustless Wallet {line1} {line2} {line3}',
-      line3: 'Multichain',
-      line1: 'Digital Assets',
-      line2: 'Multi-Custody',
+      main: 'Secure Wallet {line1} {line2} {line3}',
+      line1: 'Multi Approval',
+      line2: 'Digital Assets',
+      line3: 'Smart Contracts',
     },
   },
   landing: {
-    title: 'Seamless Multichain',
-    subtitle: 'One Platform, Full Control',
-    description:
-      'Orbit streamlines on-chain asset management for enterprises, DAOs, and teams, consolidating control and visibility into a single, intuitive platform.',
+    btn_accept_license: {
+      phrase: 'By clicking this button, you agree to the {0}.',
+      license: 'License',
+    },
+    highlights: {
+      multiapproval: 'Multi approval policies',
+      treasury: 'Treasury management',
+      smartcontract: 'Smart contract management',
+    },
     connect_title: 'Securely connect to manage your digital assets',
     connect_btn: 'Connect with Internet Identity',
     connect_error: 'Failed to connect, please try again.',
@@ -472,7 +474,7 @@ export default {
       tc: 'TC',
       bc: 'Billion',
       mc: 'Million',
-      e8s: 'e8s',
+      cycles: 'Cycles',
     },
   },
   time: {
@@ -659,6 +661,9 @@ export default {
     },
   },
   terms: {
+    license: 'License',
+    loading: 'Loading',
+    permission: 'Permission',
     controllers: 'Controllers',
     restore: 'Restore',
     public: 'Public',
@@ -871,7 +876,7 @@ export default {
     request_policies: 'Request Policies',
     assets: 'Assets',
     external_canisters: 'Canisters',
-    approval_policy: 'Approval Policy',
+    approval_rules: 'Approval Rules',
   },
   pages: {
     dashboard: {
@@ -965,28 +970,19 @@ export default {
       station_title: 'Create your own wallet',
       station_body:
         'Create your own wallet and manage your digital assets. You can add users, set permissions and manage request approval policies.',
-      station_name_field: 'Wallet Name',
-      admin_name_field: 'Your username',
+      station_name_field: 'How would you like to name your wallet?',
+      admin_name_field: 'What is your name?',
 
-      check_permissions_title: 'Checking waiting list status...',
-      join_waitlist_title: 'Join waiting list',
-      join_waitlist_body:
-        "Join Orbit's waiting list! Enter your email to get early access and exclusive updates. Your journey starts now.",
-      join_waitlist_email_field: 'Enter your email address',
-      join_waitlist: 'Sign up now',
-
-      waitlist_pending_title: 'You are on the waiting list!',
-      waitlist_pending_body:
-        'Please wait for the approval. You will receive an email once your request is approved.',
-
-      waitlist_check_error_title: 'Failed to check waiting list status',
-      waitlist_check_error_body: 'Failed to check waiting list status, please try again.',
+      check_permissions_title: 'Checking deployment eligibility...',
 
       quota_exceed_error_title: 'Quota exceeded',
       quota_exceed_error_body: 'You have reached the maximum number of wallets you can create.',
 
       waitlist_denied_title: "You've been denied access.",
-      waitlist_denied_body: 'Unfortunately, you are not eligible to join the waiting list.',
+      waitlist_denied_body: 'Unfortunately, you are not eligible to deploy a wallet.',
+
+      deployment_check_error_title: 'Failed to check deployment eligibility',
+      deployment_check_error_body: 'Failed to check deployment eligibility, please try again.',
 
       status_starting: 'Initializing, please wait ...',
       status_deploying: 'Deploying your wallet to the Internet Computer ...',
@@ -1005,8 +1001,8 @@ export default {
     },
     request_policies: {
       title: 'Request Policies',
-      create_label: 'Add Policy',
-      dialog_title: 'Policy',
+      create_label: 'Add Request Policy',
+      dialog_title: 'Request Policy',
     },
     assets: {
       title: 'Assets',
@@ -1028,11 +1024,11 @@ export default {
         option_add_custom_asset: 'Add custom asset',
       },
     },
-    approval_policy: {
-      btn_new_entry: 'Add new policy',
-      title: 'Approval Policy',
+    approval_rules: {
+      btn_new_entry: 'Add approval rule',
+      title: 'Approval rule',
       dialog: {
-        title: 'Approval Policy',
+        title: 'Approval rule',
       },
       linked_policies: 'Linked policies',
     },
@@ -1067,12 +1063,24 @@ export default {
     expired_dialog_btn: 'Reauthenticate',
   },
   permissions: {
-    resource_title: 'Resource',
-    group_members_title: 'Members of groups',
-    specific_users_title: 'Specific users',
-    everyone_title: 'Everyone',
-    individual_resources_title: 'Individual resource access',
-    select_resource: 'Resource Type',
+    global_permissions: 'Global Permissions',
+    global_permissions_description:
+      "Global permissions apply to all areas of the system, such as accounts, the address book, or other features. These permissions are not tied to a specific item. To configure permissions for a particular area (e.g., a specific account), visit that item's configuration page and update the settings there.",
+    action_approval_legend:
+      'Actions users can perform (e.g. create a transfer), might require additional approvals before being executed.',
+    permitted_users: 'Permitted users',
+    restrict_permitted_users: 'Restrict to certain users...',
+    no_users_found: 'No users found.',
+    allow: {
+      no_access: 'Disabled for Everyone',
+      no_access_tooltip: 'Not accessible by anyone, including logged-in users.',
+      public: 'Public (No Login Required)',
+      public_tooltip: 'Accessible by anyone, including non-logged-in visitors.',
+      authenticated: 'All Logged-In Users',
+      authenticated_tooltip: 'Accessible by any user who is logged in.',
+      restricted: 'Specific Users/Groups',
+      restricted_tooltip: 'Accessible only to the selected users or groups.',
+    },
     resources: {
       account: 'Account',
       asset: 'Asset',
@@ -1086,29 +1094,154 @@ export default {
       addressbook: 'Address Book',
       managesysteminfo: 'Manage System Info',
       externalcanister: 'External Canister',
-      namedrule: 'Approval Policy',
+      namedrule: 'Approval Rule',
+    },
+    categories: {
+      treasury: 'Treasury (accounts, assets, etc...)',
+      canisters: 'Canisters/Applications',
+      users: 'Users',
+      system: 'System (Software updates, Permissions, Approval Policies, etc...)',
     },
     actions: {
-      list: 'List',
-      create: 'Create',
-      read: 'Read',
-      update: 'Update',
-      delete: 'Delete',
-      transfer: 'Transfer',
-      capabilities: 'Capabilities',
-      systeminfo: 'System info',
-      systeminfocapabilities: 'Capabilities (Supported Assets)',
-      systeminfoconfig: 'Configuration (Upgrades, Metrics, Usage)',
-      managesysteminfo: 'Manage System Info (e.g. name)',
-      systemupgrade: 'Upgrade',
-      change: 'Change',
-      fund: 'Fund',
-      callcanister: 'Call',
-    },
-    allow: {
-      public: 'Anyone',
-      authenticated: 'Authenticated',
-      restricted: 'Restricted',
+      account_list: 'View Accounts Page',
+      account_list_description:
+        'Allows access to the accounts page, but only displays accounts the user has permission to view.',
+      account_read_any: 'View All Accounts',
+      account_read_any_description:
+        'Grants access to view all accounts, including balances and associated assets.',
+      account_create: 'Add New Accounts',
+      account_create_description:
+        'Allows the creation of new accounts and assigning assets (e.g., ICP, ckBTC).',
+      account_update_any: 'Edit Accounts',
+      account_update_any_description:
+        'Grants permission to edit account details, including permissions and approval policies.',
+      account_transfer_any: 'Create Transfers',
+      account_transfer_any_description:
+        'Allows the user to initiate transfers from any account within the wallet.',
+
+      addressbook_list: 'View Address Book Page',
+      addressbook_list_description:
+        'Grants access to the address book page, showing only entries the user can view.',
+      addressbook_read_any: 'View All Address Book Entries',
+      addressbook_read_any_description: 'Allows access to all address book entries.',
+      addressbook_create: 'Add New Address Book Entries',
+      addressbook_create_description:
+        'Enables adding new contacts, including metadata such as names and additional details.',
+      addressbook_update_any: 'Edit Address Book Entries',
+      addressbook_update_any_description:
+        'Allows editing existing address book entries, including metadata.',
+      addressbook_delete_any: 'Delete Address Book Entries',
+      addressbook_delete_any_description:
+        'Grants permission to delete address book entries. ⚠ Note: Entries may be used in approval policies to restrict or allow transfers, so deletion should be handled with care.',
+
+      asset_list: 'View Assets Page',
+      asset_list_description:
+        'Grants access to the assets page, but only displays assets the user can view.',
+      asset_read_any: 'View All Assets',
+      asset_read_any_description: 'Allows viewing of all assets and their details.',
+      asset_create: 'Add New Assets',
+      asset_create_description:
+        'Enables adding new assets to the wallet, which can then be assigned to accounts.',
+      asset_update_any: 'Edit Assets',
+      asset_update_any_description:
+        'Grants permission to edit asset details, including associated permissions and approval policies.',
+      asset_delete_any: 'Delete Assets',
+      asset_delete_any_description:
+        'Allows asset deletion. ⚠ Note: Deleting an asset will remove it from all accounts.',
+
+      externalcanister_list: 'View Canisters Page',
+      externalcanister_list_description:
+        'Grants access to the canisters page, showing only canisters the user can view.',
+      externalcanister_read_any: 'View All Canisters',
+      externalcanister_read_any_description:
+        'Allows access to view all canisters and their details.',
+      externalcanister_create: 'Add New Canisters',
+      externalcanister_create_description:
+        'Enables adding new or existing canisters to the wallet. The wallet can either fully control these canisters or act as a monitoring and authorization layer.',
+      externalcanister_change_any: 'Edit Canisters',
+      externalcanister_change_any_description:
+        'Grants permission to modify canister details, permissions, approval policies, settings, and controllers.',
+      externalcanister_fund_any: 'Fund Canisters',
+      externalcanister_fund_any_description:
+        'Allows the user to top up canisters with cycles using the wallet.',
+      externalcanister_call_execution_method_any_validation_method_no: 'Call Canisters',
+      externalcanister_call_execution_method_any_validation_method_no_description:
+        'Enables making calls to any canister through the wallet. ⚠ Note: This permission allows execution of arbitrary calls to canisters, so proper approval policies should be enforced.',
+
+      user_list: 'View Users Page',
+      user_list_description:
+        'Grants access to the users page, showing only users the user can view.',
+      user_read_any: 'View All Users',
+      user_read_any_description: 'Allows access to view all users and their details.',
+      user_create: 'Add New Users',
+      user_create_description: 'Enables adding new users to the wallet.',
+      user_update_any: 'Edit Users',
+      user_update_any_description:
+        'Grants permission to edit user details, including associated identities and status.',
+
+      usergroup_list: 'View User Groups Page',
+      usergroup_list_description:
+        'Grants access to the user groups page, but only for groups the user can view.',
+      usergroup_read_any: 'View All User Groups',
+      usergroup_read_any_description: 'Allows viewing of all user groups and their details.',
+      usergroup_create: 'Add New User Groups',
+      usergroup_create_description: 'Enables adding new user groups to the wallet.',
+      usergroup_update_any: 'Edit User Groups',
+      usergroup_update_any_description: 'Grants permission to modify user group details.',
+      usergroup_delete_any: 'Delete User Groups',
+      usergroup_delete_any_description:
+        'Allows deleting user groups. ⚠ Note: Deleting a user group removes it from all associated users and may impact approval policies that rely on it.',
+
+      system_capabilities: 'View Supported Assets',
+      system_capabilities_description:
+        'Can view the list of supported assets, including their symbols, names, and metadata.',
+      system_systeminfo: 'View System Information',
+      system_systeminfo_description:
+        'Allows viewing of system-wide information such as the wallet version, upgrader ID, and cycle balances.',
+      system_managesysteminfo: 'Manage System Information',
+      system_managesysteminfo_description:
+        'Grants permission to modify system settings, including the wallet name.',
+      system_upgrade: 'Perform System Upgrade',
+      system_upgrade_description:
+        'Allows upgrading the wallet to a new version. ⚠ Note: Upgrades can affect the availability and functionality of the wallet.',
+
+      permission_update: 'Manage Permissions',
+      permission_update_description:
+        'Grants full control over wallet permissions, including adding, updating, and removing permissions.',
+
+      requestpolicy_list: 'View Request Policies Tab',
+      requestpolicy_list_description:
+        'Grants access to the request policies tab, showing only policies the user can view.',
+      requestpolicy_read_any: 'View All Request Policies',
+      requestpolicy_read_any_description:
+        'Allows viewing of all request policies and their details.',
+      requestpolicy_create: 'Add New Request Policies',
+      requestpolicy_create_description: 'Enables adding new request policies to the wallet.',
+      requestpolicy_update_any: 'Edit Request Policies',
+      requestpolicy_update_any_description: 'Grants permission to modify request policies.',
+      requestpolicy_delete_any: 'Delete Request Policies',
+      requestpolicy_delete_any_description:
+        'Allows deleting request policies. ⚠ Note: Deleting a request policy may impact the functionality of the wallet.',
+
+      request_list: 'View Requests Page',
+      request_list_description:
+        'Allows access to the requests page, showing only requests the user can view. In most cases, this should be available to all users so they can track requests requiring their approval.',
+      request_read_any: 'View All Requests',
+      request_read_any_description:
+        'Enables viewing of all requests, including those submitted by other users.',
+
+      namedrule_list: 'View Approval Rules Tab',
+      namedrule_list_description:
+        'Grants access to the approval rules tab, showing only rules the user can view.',
+      namedrule_read_any: 'View All Approval Rules',
+      namedrule_read_any_description: 'Allows viewing of all approval rules and their details.',
+
+      namedrule_create: 'Add New Approval Rules',
+      namedrule_create_description: 'Enables adding new approval rules to the wallet.',
+      namedrule_update_any: 'Edit Approval Rules',
+      namedrule_update_any_description: 'Grants permission to modify approval rules.',
+      namedrule_delete_any: 'Delete Approval Rules',
+      namedrule_delete_any_description: 'Allows deleting approval rules.',
     },
   },
   request_policies: {
@@ -1117,7 +1250,7 @@ export default {
     unsupported_specifier: 'Unsupported specifier definition',
     rule_groups: {
       custom_rules: 'Custom rules',
-      named_rules: 'Approval policies',
+      named_rules: 'Approval rules',
     },
     rule_user_specifier: {
       owner: 'Owner',
@@ -1135,7 +1268,7 @@ export default {
       quorumpercentage: 'Quorum percentage',
       allowlistedbymetadata: 'Allowlisted by metadata',
       allowlisted: 'Allowlisted',
-      named_rule: 'Use approval policy: {name}',
+      named_rule: 'Use approval rule: {name}',
     },
     rule_tooltip_summary: {
       allof: 'All of the following:',
@@ -1158,7 +1291,7 @@ export default {
       not: 'Not: {rule}',
       allof: ' AND ',
       anyof: ' OR ',
-      named_rule: 'Use approval policy: {name}',
+      named_rule: 'Use approval rule: {name}',
     },
     specifier: {
       editpermission: 'Edit permission',
@@ -1186,9 +1319,9 @@ export default {
       addasset: 'Add asset',
       editasset: 'Edit asset',
       removeasset: 'Remove asset',
-      addnamedrule: 'Add approval policy',
-      editnamedrule: 'Edit approval policy',
-      removenamedrule: 'Remove approval policy',
+      addnamedrule: 'Add approval rule',
+      editnamedrule: 'Edit approval rule',
+      removenamedrule: 'Remove approval rule',
     },
   },
   cycle_obtain_strategies: {

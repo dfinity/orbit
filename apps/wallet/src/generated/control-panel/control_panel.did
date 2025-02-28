@@ -73,47 +73,11 @@ type ManageUserStationsResult = variant {
   Err : ApiError;
 };
 
-// The result of subscribing to the waiting list.
-type SubscribeToWaitingListResult = variant {
-  // Successfull operation result.
-  Ok;
-  // The error that occurred during the operation.
-  Err : ApiError;
-};
-
 type UserSubscriptionStatus = variant {
   Unsubscribed;
   Pending;
   Approved;
   Denylisted;
-};
-
-type SubscribedUser = record {
-  user_principal : principal;
-  email : text;
-};
-
-type GetWaitingListResponse = record {
-  subscribed_users : vec SubscribedUser;
-};
-
-type GetWaitingListResult = variant {
-  // Successfull operation result.
-  Ok : GetWaitingListResponse;
-  // The error that occurred during the operation.
-  Err : ApiError;
-};
-
-type UpdateWaitingListInput = record {
-  users : vec principal;
-  new_status : UserSubscriptionStatus;
-};
-
-type UpdateWaitingListResult = variant {
-  // Successfull operation result.
-  Ok;
-  // The error that occurred during the operation.
-  Err : ApiError;
 };
 
 // The station information associated with the user.
@@ -679,13 +643,6 @@ service : () -> {
   set_user_active : () -> (SetUserActiveResult);
   // Get the user information for the caller.
   get_user : () -> (GetUserResult) query;
-  // Subscribe the user associated with the caller to the waiting list.
-  // Takes the user's e-mail address to which notifications can be pushed.
-  subscribe_to_waiting_list : (text) -> (SubscribeToWaitingListResult);
-  // Retrieves the users (principal and e-mail address) subscribed to the waiting list.
-  get_waiting_list : () -> (GetWaitingListResult);
-  // Updates the status of users on the waiting list.
-  update_waiting_list : (input : UpdateWaitingListInput) -> (UpdateWaitingListResult);
   // Create a new user for the caller.
   register_user : (input : RegisterUserInput) -> (RegisterUserResult);
   // Delete user associated with the caller.

@@ -1,7 +1,7 @@
 use crate::utils::{submit_request, wait_for_request};
 use candid::Principal;
 use orbit_essentials::api::ApiResult;
-use pocket_ic::{query_candid_as, CallError, PocketIc};
+use pocket_ic::{query_candid_as, PocketIc, RejectResponse};
 use station_api::{
     EditRequestPolicyOperationInput, ListRequestPoliciesInput, ListRequestPoliciesResponse,
 };
@@ -32,7 +32,7 @@ pub fn list_request_policies(
     env: &PocketIc,
     station_canister_id: Principal,
     requester: Principal,
-) -> Result<(ApiResult<ListRequestPoliciesResponse>,), CallError> {
+) -> Result<(ApiResult<ListRequestPoliciesResponse>,), RejectResponse> {
     query_candid_as::<(ListRequestPoliciesInput,), (ApiResult<ListRequestPoliciesResponse>,)>(
         env,
         station_canister_id,
@@ -50,7 +50,7 @@ pub fn edit_request_policy(
     station_canister_id: Principal,
     requester: Principal,
     input: EditRequestPolicyOperationInput,
-) -> Result<(), CallError> {
+) -> Result<(), RejectResponse> {
     let edit_request_policy_request = submit_request(
         env,
         requester,

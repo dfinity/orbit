@@ -4,8 +4,8 @@ use crate::{
         canister_config, CallContext, CANISTER_CREATION_CYCLES, INITIAL_STATION_CYCLES,
         INITIAL_UPGRADER_CYCLES, NNS_ROOT_CANISTER_ID,
     },
-    errors::DeployError,
-    models::UserStation,
+    errors::{DeployError, UserError},
+    models::{CanDeployStation, UserStation},
     services::{USER_SERVICE, USER_STATION_SERVICE},
 };
 use candid::{Encode, Principal};
@@ -57,7 +57,18 @@ impl DeployService {
         let station_wasm_module = config.station_wasm_module;
         let station_wasm_module_extra_chunks = config.station_wasm_module_extra_chunks;
 
-        self.user_service.can_deploy_station(ctx)?;
+        let can_deploy_station_response = user.can_deploy_station();
+        match can_deploy_station_response {
+            CanDeployStation::Allowed(_) => {}
+            CanDeployStation::QuotaExceeded => {
+                return Err(UserError::DeployStationQuotaExceeded)?;
+            }
+            CanDeployStation::NotAllowed(subscription_status) => {
+                return Err(UserError::BadUserSubscriptionStatus {
+                    subscription_status: subscription_status.into(),
+                })?;
+            }
+        }
 
         // Creates the station canister
         let station_canister = create_canister(input.subnet_selection, CANISTER_CREATION_CYCLES)
