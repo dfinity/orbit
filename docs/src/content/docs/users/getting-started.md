@@ -10,7 +10,7 @@ Welcome! Follow this guide to set up and start using Orbit Wallet for secure and
 ## **1: Create Your Orbit Wallet Account**
 
 1. Orbit authenticates via [Internet Identity](https://internetcomputer.org/internet-identity). Create an Internet Identity account if you don't have one.
-1. Visit **[orbitwallet.io](https://orbitwallet.io)** and click **"Connect with Internet Identity"**.
+1. Visit **[app.orbit.global](https://app.orbit.global)** and click **"Connect with Internet Identity"**.
 1. Follow the prompts to authenticate and create your Orbit Wallet account.
 
 ## **2: Set Up Your Wallet**
