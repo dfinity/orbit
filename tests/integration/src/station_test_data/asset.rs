@@ -2,7 +2,7 @@ use super::next_unique_id;
 use crate::utils::{submit_request, wait_for_request};
 use candid::Principal;
 use orbit_essentials::api::ApiResult;
-use pocket_ic::{query_candid_as, CallError, PocketIc};
+use pocket_ic::{query_candid_as, PocketIc, RejectResponse};
 use station_api::{GetAssetInput, GetAssetResponse, ListAssetsInput, ListAssetsResponse};
 
 pub fn add_asset_with_input(
@@ -97,7 +97,7 @@ pub fn list_assets(
     env: &PocketIc,
     station_canister_id: Principal,
     requester: Principal,
-) -> Result<(ApiResult<ListAssetsResponse>,), CallError> {
+) -> Result<(ApiResult<ListAssetsResponse>,), RejectResponse> {
     query_candid_as::<(ListAssetsInput,), (ApiResult<ListAssetsResponse>,)>(
         env,
         station_canister_id,
@@ -112,7 +112,7 @@ pub fn get_asset(
     station_canister_id: Principal,
     requester: Principal,
     asset_id: station_api::UuidDTO,
-) -> Result<(ApiResult<GetAssetResponse>,), CallError> {
+) -> Result<(ApiResult<GetAssetResponse>,), RejectResponse> {
     query_candid_as::<(GetAssetInput,), (ApiResult<GetAssetResponse>,)>(
         env,
         station_canister_id,
