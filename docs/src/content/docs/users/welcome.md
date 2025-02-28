@@ -9,7 +9,7 @@ Orbit Wallet is a **non-custodial digital assets management platform** built on 
 
 ## **What is Orbit Wallet?**
 
-Orbit Wallet empowers users to manage their **Web3 assets** securely and efficiently. Built on ICP's advanced blockchain infrastructure, it ensures trustless and scalable operations by leveraging smart contracts (canisters) and secure custody models.
+Orbit Wallet empowers users to manage their **digital assets** securely and efficiently. Built on ICP's advanced blockchain infrastructure, it ensures security and scalable operations by leveraging smart contracts (canisters) and secure custody models.
 
 Whether you're a developer building financial applications, a team needing multi-signature approvals, or an individual managing digital assets, Orbit Wallet is your comprehensive solution.
 
