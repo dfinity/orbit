@@ -24,7 +24,7 @@ Whether you're a developer building financial applications, a team needing multi
 
 1. **Secure Multi-Custody Management:**
 
-   - Support for multi-signature wallets and role-based access for enterprise use.
+   - Support for multi-approval wallets and role-based access for enterprise use.
 
 2. **Trustless Architecture:**
 
