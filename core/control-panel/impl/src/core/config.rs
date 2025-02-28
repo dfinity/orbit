@@ -37,7 +37,7 @@ impl Default for CanisterConfig {
             station_wasm_module: vec![],
             station_wasm_module_extra_chunks: None,
             last_upgrade_timestamp: time(),
-            version: None,
+            version: Some(SYSTEM_VERSION.to_string()),
             global_rate_limiter: RateLimiter::new_global(),
         }
     }
