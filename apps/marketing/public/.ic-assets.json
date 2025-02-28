@@ -5,7 +5,7 @@
       "X-Frame-Options": "DENY",
       "X-Content-Type-Options": "nosniff",
       "Referrer-Policy": "same-origin",
-      "Content-Security-Policy": "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; connect-src 'self' https://icp-api.io https://ic0.app https://icp0.io localhost:4943; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' data: blob:; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests ",
+      "Content-Security-Policy": "default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; connect-src 'self' https://icp-api.io https://ic0.app https://icp0.io localhost:4943; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; style-src 'self' 'unsafe-inline'; media-src 'self' data: blob:; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests ",
       "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
       "X-XSS-Protection": "1; mode=block"
     },
