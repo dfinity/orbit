@@ -36,8 +36,15 @@ pub struct RequestDisasterRecoveryInstallCodeLog {
 }
 
 #[derive(Serialize)]
+pub struct RequestDisasterRecoverySnapshotLog {
+    pub replace_snapshot: Option<String>,
+    pub force: bool,
+}
+
+#[derive(Serialize)]
 pub enum RequestDisasterRecoveryOperationLog {
     InstallCode(RequestDisasterRecoveryInstallCodeLog),
+    Snapshot(RequestDisasterRecoverySnapshotLog),
 }
 
 impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
@@ -48,6 +55,13 @@ impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
                     f,
                     "InstallCode with mode {}, wasm hash {}, and arg hash {}",
                     install_code.install_mode, install_code.wasm_sha256, install_code.arg_sha256
+                )
+            }
+            RequestDisasterRecoveryOperationLog::Snapshot(snapshot) => {
+                write!(
+                    f,
+                    "Snapshot with replace_snapshot {:?} and force {}",
+                    snapshot.replace_snapshot, snapshot.force
                 )
             }
         }

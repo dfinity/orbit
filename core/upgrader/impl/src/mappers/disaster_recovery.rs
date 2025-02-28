@@ -1,9 +1,10 @@
 use crate::model::{
     DisasterRecovery, DisasterRecoveryV0, RequestDisasterRecoveryInstallCodeLog,
-    RequestDisasterRecoveryOperationLog, StationRecoveryRequest,
-    StationRecoveryRequestInstallCodeOperation,
+    RequestDisasterRecoveryOperationLog, RequestDisasterRecoverySnapshotLog,
+    StationRecoveryRequest, StationRecoveryRequestInstallCodeOperation,
     StationRecoveryRequestInstallCodeOperationFootprint, StationRecoveryRequestOperation,
-    StationRecoveryRequestOperationFootprint, StationRecoveryRequestV0,
+    StationRecoveryRequestOperationFootprint, StationRecoveryRequestSnapshotOperation,
+    StationRecoveryRequestSnapshotOperationFootprint, StationRecoveryRequestV0,
 };
 use orbit_essentials::utils::sha256_hash;
 
@@ -28,6 +29,14 @@ impl From<upgrader_api::RequestDisasterRecoveryInput> for StationRecoveryRequest
                     },
                 )
             }
+            upgrader_api::RequestDisasterRecoveryInput::Snapshot(snapshot) => {
+                StationRecoveryRequestOperation::Snapshot(StationRecoveryRequestSnapshotOperation {
+                    replace_snapshot: snapshot.replace_snapshot.map(|replace_snapshot| {
+                        hex::decode(replace_snapshot).expect("Failed to parse `replace_snapshot`")
+                    }),
+                    force: snapshot.force,
+                })
+            }
         }
     }
 }
@@ -41,6 +50,14 @@ impl From<&StationRecoveryRequestOperation> for StationRecoveryRequestOperationF
                         install_mode: install_code.install_mode,
                         wasm_sha256: install_code.wasm_sha256.clone(),
                         arg_sha256: install_code.arg_sha256.clone(),
+                    },
+                )
+            }
+            StationRecoveryRequestOperation::Snapshot(ref snapshot) => {
+                StationRecoveryRequestOperationFootprint::Snapshot(
+                    StationRecoveryRequestSnapshotOperationFootprint {
+                        replace_snapshot: snapshot.replace_snapshot.clone(),
+                        force: snapshot.force,
                     },
                 )
             }
@@ -60,6 +77,12 @@ impl From<&StationRecoveryRequestOperation> for RequestDisasterRecoveryOperation
                     },
                 )
             }
+            StationRecoveryRequestOperation::Snapshot(ref snapshot) => {
+                RequestDisasterRecoveryOperationLog::Snapshot(RequestDisasterRecoverySnapshotLog {
+                    replace_snapshot: snapshot.replace_snapshot.as_ref().map(hex::encode),
+                    force: snapshot.force,
+                })
+            }
         }
     }
 }
@@ -73,6 +96,14 @@ impl From<&StationRecoveryRequestOperation> for upgrader_api::StationRecoveryReq
                         install_mode: install_code.install_mode.into(),
                         wasm_sha256: install_code.wasm_sha256.clone(),
                         arg: install_code.arg.clone(),
+                    },
+                )
+            }
+            StationRecoveryRequestOperation::Snapshot(ref snapshot) => {
+                upgrader_api::StationRecoveryRequestOperation::Snapshot(
+                    upgrader_api::StationRecoveryRequestSnapshotOperation {
+                        replace_snapshot: snapshot.replace_snapshot.as_ref().map(hex::encode),
+                        force: snapshot.force,
                     },
                 )
             }
