@@ -1,0 +1,8 @@
+---
+const { class: className } = Astro.props;
+---
+
+<span class={'badge badge-disabled ' + className}>
+  <span class="relative -top-0.5">Coming soon</span>
+  <img src="/coming-soon.svg" alt="Coming soon" class="hidden lg:block" />
+</span>

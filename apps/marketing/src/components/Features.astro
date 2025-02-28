@@ -1,0 +1,157 @@
+---
+import ComingSoonBadge from './ComingSoonBadge.astro';
+import MobileFeatureItem from './MobileFeatureItem.astro';
+
+const largeFeatureTitle = 'One platform. Full control.';
+
+const largeFeatures = [
+  {
+    icon: '/icon-1.svg',
+    title: 'Multi-approver policies',
+    description:
+      'Multi-signature digital asset solution with customizable, automated approval workflows',
+  },
+  {
+    icon: '/icon-2.svg',
+    title: 'Enhanced Security',
+    description:
+      'Threshold cryptography for secure  transactions hosted on the blockchain end-to-end',
+  },
+  {
+    icon: '/icon-3.svg',
+    title: 'Decentralized key management',
+    description: 'Fine-grained access control for users and groups',
+  },
+  {
+    icon: '/icon-4.svg',
+    title: 'The future is multi-chain',
+    description:
+      'Securely manage digital assets and smart contracts across multiple blockchains thanks to ICP’s chain-key engine',
+    comingSoon: true,
+  },
+];
+
+const cardTitle = 'Get onchain with Orbit';
+
+const features = [
+  {
+    title: 'Multisig',
+    shortTitle: 'Multisig',
+    description:
+      'Multi-signature support and decentralized key management, granting users full control over their assets.',
+  },
+  {
+    title: 'Treasury',
+    shortTitle: 'Treasury',
+    description:
+      'Comprehensive treasury management solution with multi-approver automations, ideal for crypto payments, team payroll and token distribution.',
+  },
+  {
+    title: 'Smart Contracts',
+    shortTitle: 'Smart Contracts',
+    description:
+      'Secure smart contract governance with robust approval policies and four-eye controls.',
+  },
+  {
+    title: 'Governance',
+    shortTitle: 'Governance',
+    description:
+      'Multi-approver governance frameworks, ensuring that no single individual has unilateral control over assets.',
+  },
+];
+---
+
+<section class="flex flex-col lg:flex-row pt-20" id="features">
+  <div class="flex-1">
+    <h2 class="text-h4 lg:text-h3 lg:pr-20">{largeFeatureTitle}</h2>
+  </div>
+  <div
+    class="flex-1 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-24 gap-y-10 lg:gap-y-20 pt-16 lg:pt-0"
+  >
+    {
+      largeFeatures.map((feature, index) => (
+        <>
+          <div class="py-5 lg:py-0 hidden lg:block">
+            <div class="flex items-center justify-between">
+              <img src={feature.icon} alt="" class="" />
+              {feature.comingSoon && <ComingSoonBadge class="" />}
+            </div>
+            <h3 class={'text-h4 lg:text-h4 lg:mt-3 ' + (feature.comingSoon ? 'opacity-50' : '')}>
+              {feature.title}
+            </h3>
+            <p class="text-body-medium text-white/60 mt-5">{feature.description}</p>
+          </div>
+          <MobileFeatureItem
+            index={index + 1}
+            title={feature.title}
+            class="lg:hidden"
+            comingSoon={feature.comingSoon}
+          />
+        </>
+      ))
+    }
+  </div>
+</section>
+<div class="pt-28 lg:pt-32" id="other-features">
+  <div class="hidden lg:block panel px-16 pt-14 pb-32 bg-radial from-white/2">
+    <h3 class="text-h4">{cardTitle}</h3>
+    <div class="mt-16 px-30">
+      <div class="flex gap-x-3">
+        {
+          features.map((feature, index) => (
+            <label class="toggle" tabindex="0">
+              <input
+                name="feature"
+                type="radio"
+                value={feature.shortTitle}
+                class="hidden"
+                checked={index === 0}
+              />
+              {feature.shortTitle}
+            </label>
+          ))
+        }
+      </div>
+
+      <div class="grid grid-cols-1 grid-rows-1 mt-8">
+        {
+          features.map((feature, index) => (
+            <p
+              class={
+                'text-h4 col-start-1 row-start-1 transition-opacity duration-300  text-gradient' +
+                (index === 0 ? '' : ' opacity-0')
+              }
+            >
+              {feature.description}
+            </p>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+  <div class="lg:hidden">
+    <h3 class="text-h4">{cardTitle}</h3>
+    <div class="flex flex-col gap-14 pt-14">
+      {
+        features.map((feature, index) => (
+          <MobileFeatureItem
+            index={index + 1}
+            title={feature.title}
+            description={feature.description}
+          />
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('#other-features label[class="toggle"]').forEach((label, index) => {
+    label.addEventListener('click', () => {
+      document.querySelectorAll('#other-features p').forEach(p => {
+        p.classList.add('opacity-0');
+      });
+      document.querySelectorAll('#other-features p')[index].classList.remove('opacity-0');
+    });
+  });
+</script>

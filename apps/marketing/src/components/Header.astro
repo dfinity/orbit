@@ -1,0 +1,82 @@
+---
+import { walletUrl } from '../lib/config';
+import { headerNav } from '../lib/nav';
+---
+
+<div class="fixed top-0 left-0 right-0 bg-gradient-to-b from-black to-transparent z-10">
+  <header
+    class="container-page text-white h-20 lg:h-32 flex flex-row items-center justify-between z-20"
+  >
+    <a href="/"><img src="/logo.svg" alt="Orbit Logo" class="h-5 lg:h-7 z-10" /></a>
+
+    <div class="hidden lg:inline-flex flex-row items-center gap-x-7">
+      {
+        headerNav.navigation.map(item => (
+          <a href={item.href} class="text-h7 hover:text-white/70 transition-all duration-300">
+            {item.label}
+          </a>
+        ))
+      }
+
+      <a
+        class="btn btn-outline lg:w-64 ml-8"
+        href={walletUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Launch Orbit</a
+      >
+    </div>
+
+    <label class="lg:hidden cursor-pointer peer group z-10">
+      <input type="checkbox" class="hidden" name="mobileMenuTrigger" />
+      <svg
+        width="40"
+        height="40"
+        viewBox="0 0 40 40"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          class="group-has-checked:rotate-45 origin-[25.2px] transition-all duration-300"
+          d="M6 25H34"
+          stroke="white"
+          stroke-width="2"
+          stroke-linecap="square"
+          stroke-linejoin="round"></path>
+        <path
+          class="group-has-checked:-rotate-45 origin-[25.5px] transition-all duration-300"
+          d="M6 14H34"
+          stroke="white"
+          stroke-width="2"
+          stroke-linecap="square"
+          stroke-linejoin="round"></path>
+      </svg>
+    </label>
+
+    <nav
+      class="lg:hidden fixed inset-0 px-6 bg-black flex-col items-start pt-36 gap-y-5 flex opacity-0 pointer-events-none peer-has-checked:opacity-100 peer-has-checked:pointer-events-auto transition-all duration-300"
+    >
+      {
+        headerNav.navigation.map(item => (
+          <a
+            href={item.href}
+            class="text-h4 hover:text-white/70 transition-all duration-300"
+            onclick="document.querySelector('input[name=mobileMenuTrigger]').checked = false"
+          >
+            {item.label}
+          </a>
+        ))
+      }
+
+      <a
+        class="btn btn-outline block mt-20 w-full"
+        href={walletUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Launch Orbit</a
+      >
+    </nav>
+  </header>
+</div>
