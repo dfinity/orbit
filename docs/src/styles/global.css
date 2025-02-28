@@ -1,22 +1,32 @@
 :root {
   --sl-font: 'Roboto', sans-serif;
-  --sl-color-bg-nav: #030024;
+  --sl-color-bg-nav: transparent;
   --sl-color-hairline-light: --sl-color-bg-nav;
   --sl-color-hairline-shade: --sl-color-bg-nav;
   --sl-color-bg-sidebar: --sl-color-bg-nav;
 }
 
 .page {
-  background-color: #030024;
+  background-color: #0e0d0e;
 }
 
-.hero-bg {
-  background: url('../assets/logo-markers-bg.png') no-repeat bottom left / 50vmin;
-  position: absolute;
+.logo-markers {
   inset: 0 0 auto auto;
   height: 100vh;
   width: 100vw;
+  position: absolute;
   z-index: -1;
+  background-image: url('../assets/logo-markers-top.png'), url('../assets/logo-markers-bottom.png');
+  background-repeat: no-repeat, no-repeat;
+  background-position:
+    top left,
+    bottom right;
+  background-size: 50vmin, 35vmin;
+}
+
+[data-theme='dark'] .logo-markers {
+  background-image: url('../assets/logo-markers-top-dark.png'),
+    url('../assets/logo-markers-bottom-dark.png');
 }
 
 [data-theme='light'] .page {
@@ -34,7 +44,7 @@
 }
 
 .header img {
-  padding: 0.2em 0;
+  padding: 0.3em 0;
 }
 
 /* reset ugly margin in nested lists */
