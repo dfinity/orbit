@@ -2,7 +2,7 @@ use super::next_unique_id;
 use crate::utils::{submit_request, wait_for_request};
 use candid::Principal;
 use orbit_essentials::api::ApiResult;
-use pocket_ic::{query_candid_as, CallError, PocketIc};
+use pocket_ic::{query_candid_as, PocketIc, RejectResponse};
 use station_api::{
     GetNamedRuleInput, GetNamedRuleResponse, ListNamedRulesInput, ListNamedRulesResponse,
     RequestPolicyRuleDTO,
@@ -109,7 +109,7 @@ pub fn list_named_rules(
     env: &PocketIc,
     station_canister_id: Principal,
     requester: Principal,
-) -> Result<(ApiResult<ListNamedRulesResponse>,), CallError> {
+) -> Result<(ApiResult<ListNamedRulesResponse>,), RejectResponse> {
     query_candid_as::<(ListNamedRulesInput,), (ApiResult<ListNamedRulesResponse>,)>(
         env,
         station_canister_id,
@@ -125,7 +125,7 @@ pub fn get_named_rule(
     station_canister_id: Principal,
     requester: Principal,
     named_rule_id: station_api::UuidDTO,
-) -> Result<(ApiResult<GetNamedRuleResponse>,), CallError> {
+) -> Result<(ApiResult<GetNamedRuleResponse>,), RejectResponse> {
     query_candid_as::<(GetNamedRuleInput,), (ApiResult<GetNamedRuleResponse>,)>(
         env,
         station_canister_id,
