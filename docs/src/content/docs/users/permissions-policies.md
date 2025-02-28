@@ -15,7 +15,7 @@ Orbit permissions control access to the following resource types:
 - **Group:** Organize and manage groups for efficient permission handling.
 - **Account:** Manage digital asset accounts, including transactions and approvals.
 - **Address Book:** Store and manage contact information for transactions.
-- **Access Policy:** Define policies controlling access to resources.
+- **Permission:** Define permissions controlling access to resources.
 - **Request Policy:** Set rules for request handling and approvals.
 - **Request:** Manage individual requests for operations.
 - **System:** Access and manage system configurations.
