@@ -15,7 +15,7 @@ Whether you're a developer building financial applications, a team needing multi
 
 ## **Who Is It For?**
 
-- **Web3 Enthusiasts:** Securely manage digital assets with customizable custody models.
+- **Web3 Investors:** Securely manage digital assets with customizable custody models.
 - **Development Teams:** Integrate Orbit Wallet into your decentralized applications for enhanced user experiences.
 - **Enterprises:** Use advanced multi-custody systems for treasury management and secure, auditable asset transfers.
 - **Crypto Custodians:** Ensure scalable and compliant asset storage solutions with Orbit Wallet's trustless design.
