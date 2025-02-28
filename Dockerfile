@@ -1,6 +1,6 @@
 # Define the BUILD_MODE argument with a default value of "production"
 ARG BUILD_MODE=production
-ARG TARGETPLATFORM=linux/amd64
+ARG TARGETPLATFORM=linux/arm64
 
 # Operating system with basic tools
 FROM ubuntu:20.04 AS base

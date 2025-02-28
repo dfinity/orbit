@@ -35,16 +35,11 @@ package_version=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages
 
 cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE $FEATURES
 
-if [[ "$OSTYPE" == "linux"* || "$RUNNER_OS" == "Linux" ]]; then
-  URL="https://github.com/dfinity/ic-wasm/releases/download/0.6.0/ic-wasm-linux64"
-elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]; then
-  URL="https://github.com/dfinity/ic-wasm/releases/download/0.6.0/ic-wasm-macos"
-else
-  echo "OS not supported: ${OSTYPE:-$RUNNER_OS}"
-  exit 1
+# Install ic-wasm if not already installed
+if ! cargo install --list | grep -q ic-wasm; then
+  print_message "Installing canbench..."
+  cargo install ic-wasm --version 0.6.0 --locked
 fi
-curl -sL "${URL}" -o ic-wasm || exit 1
-chmod +x ic-wasm
 
 PACKAGE=$(echo $PACKAGE | tr - _)
 
