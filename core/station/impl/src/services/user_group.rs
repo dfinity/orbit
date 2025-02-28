@@ -92,7 +92,19 @@ impl UserGroupService {
     }
 
     pub async fn create(&self, input: AddUserGroupOperationInput) -> ServiceResult<UserGroup> {
-        let user_group_id = generate_uuid_v4().await;
+        self.create_with_id(input, None).await
+    }
+
+    pub async fn create_with_id(
+        &self,
+        input: AddUserGroupOperationInput,
+        with_user_group_id: Option<UUID>,
+    ) -> ServiceResult<UserGroup> {
+        let user_group_id = match with_user_group_id {
+            Some(id) => Uuid::from_bytes(id),
+            None => generate_uuid_v4().await,
+        };
+
         let user_group = UserGroup {
             id: *user_group_id.as_bytes(),
             name: input.name.to_string(),

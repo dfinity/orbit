@@ -2764,8 +2764,8 @@ type InitAssetInput = record {
 
 // The input type for creating a user group when initializing the canister for the first time.
 type InitUserGroupInput = record {
-  // The id of the user group, if not provided a new UUID will be generated.
-  id : opt UUID;
+  // The id of the user group.
+  id : UUID;
   // The name of the user group, must be unique.
   name : text;
 };
@@ -2803,41 +2803,59 @@ type InitPermissionInput = record {
 
 // The init type for adding a request approval policies when initializing the canister for the first time.
 type InitRequestPolicyInput = record {
+  // The id of the request policy, if not provided a new UUID will be generated.
+  id : opt UUID;
   // The request specifier that identifies for what operation this policy is for (e.g. "transfer").
   specifier : RequestSpecifier;
   // The rule to use for the request approval evaluation (e.g. "quorum").
   rule : RequestPolicyRule;
 };
 
-// The init configuration for the canister.
-//
-// Only used when installing the canister for the first time.
+// The init type for adding a named rule when initializing the canister for the first time.
+type InitNamedRuleInput = record {
+  // The id of the named rule.
+  id : UUID;  
+  // The name of the named rule.
+  name : text;
+  // The description of the named rule.
+  description : opt text;
+  // The rule to use for the named rule.
+  rule : RequestPolicyRule;
+};
+
+type InitalEntries = variant {
+  // Initialize the station with default policies, accounts and assets.
+  WithDefaultPolicies : record {
+    accounts : vec InitAccountInput;
+    assets : vec InitAssetInput;
+  };
+  // Initialize the station with all custom entries.
+  Complete : record {
+    user_groups : vec InitUserGroupInput;
+    permissions : vec InitPermissionInput;
+    request_policies : vec InitRequestPolicyInput;
+    named_rules : vec InitNamedRuleInput;
+    accounts : vec InitAccountInput;
+    assets : vec InitAssetInput;
+  };
+};
+
 type SystemInit = record {
   // The name of the station.
   name : text;
   // The upgrader configuration.
   upgrader : SystemUpgraderInput;
-  // The list of users to be associated with the station.
-  users : vec InitUserInput;
-  // The list of user groups to be associated with the station (optional).
-  user_groups : opt vec InitUserGroupInput;
-  // The list of permissions to be associated with the station (optional).
-  //
-  // If not provided the default permissions will be used enabling any authenticated user to access
-  // and create requests for the station.
-  permissions : opt vec InitPermissionInput;
-  // The list of request approval policies to be associated with the station (optional).
-  //
-  // If not provided the default request approval policies will be used setting a quorum of 51% of all users
-  // to approve a request before it can be executed.
-  request_policies : opt vec InitRequestPolicyInput;
   // An additional controller of the station and upgrader canisters (optional).
   fallback_controller : opt principal;
-  // Initial accounts to create (optional).
-  accounts : opt vec InitAccountInput;
-  // Initial assets to create (optional).
-  assets : opt vec InitAssetInput;
+  // The initial users to create.
+  users : vec InitUserInput;
+  // The quorum for the initial approval policy.
+  quorum : opt nat16;
+  // The initial entries to create.
+  entries: opt InitalEntries;
 };
+
+
 
 // The upgrade configuration for the canister.
 type SystemUpgrade = record {
