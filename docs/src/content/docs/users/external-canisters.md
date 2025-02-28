@@ -9,7 +9,7 @@ Orbit Wallet provides advanced features to manage external canisters on the Inte
 
 ## **What are External Canisters?**
 
-Canisters are smart contracts on the Internet Computer that store and execute code. External canisters are those that operate outside the immediate Orbit Wallet system but are accessible and manageable through Orbit Wallet's features.
+Canisters are smart contracts on the Internet Computer that store data and execute code. External canisters are those that operate outside the immediate Orbit Wallet system but are accessible and manageable through Orbit Wallet's features.
 
 ## **Why Manage External Canisters?**
 
