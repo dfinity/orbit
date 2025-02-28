@@ -29,4 +29,4 @@ See the [Managing Assets](managing-assets) section to add funds to your wallet. 
 
 ## **Get Help**
 
-If you run into any issues or have questions, contact support at **support@orbitwallet.io** (TBD?).
+If you run into any issues or have questions, contact support at **support@orbit.global**.
