@@ -2,7 +2,7 @@
 [package]
 name = 'station'
 include = ['src', 'Cargo.toml']
-version = '0.4.0'
+version = '0.5.0'
 authors.workspace = true
 edition.workspace = true
 repository.workspace = true
