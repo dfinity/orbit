@@ -10,8 +10,13 @@
             <VImg :src="betaImage" width="40" />
           </div>
           <div class="flex-grow-1 text-body-2 text-md-left text-right">
-            <!-- TODO: Add license link -->
-            <a href="#" target="_blank" class="text-decoration-none text-uppercase">
+            <a
+              :href="
+                appInitConfig.marketingSiteUrl ? appInitConfig.marketingSiteUrl + '/license' : '#'
+              "
+              target="_blank"
+              class="text-decoration-none text-uppercase"
+            >
               {{ $t('terms.license') }}
             </a>
           </div>
@@ -28,10 +33,11 @@
 
 <script lang="ts" setup>
 import { VCol, VContainer, VFooter, VRow } from 'vuetify/components';
+import GithubMark from '~/components/ui/svg/GithubMark.vue';
 import PoweredByImage from '~/components/ui/svg/PoweredByImage.vue';
+import { appInitConfig } from '~/configs/init.config';
 import { useAppStore } from '~/stores/app.store';
 import betaImage from '~assets/images/beta.png';
-import GithubMark from '~/components/ui/svg/GithubMark.vue';
 
 const app = useAppStore();
 </script>

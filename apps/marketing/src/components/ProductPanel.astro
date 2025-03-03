@@ -1,0 +1,47 @@
+---
+import OrbitLogo from './OrbitLogo.astro';
+const { title, label, href, image } = Astro.props;
+---
+
+<a
+  class="panel text-center flex-1 py-9 transition-all group relative overflow-hidden"
+  href={href}
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  <img
+    src="/panel-orb.png"
+    alt=""
+    class="opacity-0 lg:block absolute bottom-0 left-0 right-0 group-hover:opacity-100 transition-all translate-y-10 group-hover:translate-y-0 z-0"
+  />
+
+  <div
+    class="absolute inset-0 bg-radial from-white/2 pointer-events-none group-hover:opacity-100 opacity-0 transition-all"
+  >
+  </div>
+
+  <div class="z-10 flex flex-col items-center relative h-full">
+    <h3 class="text-h9 text-white/50 uppercase">{title}</h3>
+    <div class="flex-1 flex items-center justify-center">
+      <img src={image} alt={title} class="mt-7 w-[85%]" />
+    </div>
+
+    <div class="mt-7">
+      <div
+        class="px-8 py-2 text-h7 rounded-lg text-center inline-flex items-center justify-center text-black bg-white border border-white"
+      >
+        <span class="flex items-baseline gap-x-2">
+          <OrbitLogo color="currentColor" class="h-4" />
+          <span class="text-[0.5rem] leading-none relative -top-[0.75px] -left-2">{label}</span>
+        </span>
+      </div>
+    </div>
+
+    <p class="text-h5 lg:text-h5 max-w-[320px] mx-auto mt-6 lg:mt-6">
+      <slot />
+    </p>
+    <p class="mt-11">
+      <span class="text-body-medium mt-4">Learn more &rarr;</span>
+    </p>
+  </div>
+</a>

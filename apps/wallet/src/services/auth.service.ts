@@ -39,6 +39,7 @@ export class AuthService {
           onSuccess: () => resolve(client.getIdentity()),
           onError: reject,
           identityProvider: appInitConfig.providers.internetIdentity,
+          derivationOrigin: appInitConfig.derivationOrigin,
         })
         .catch(reject);
     });

@@ -3,15 +3,13 @@ use crate::setup::{
     get_canister_wasm, setup_new_env, setup_new_env_with_config, SetupConfig, WALLET_ADMIN_USER,
 };
 use crate::utils::{
-    advance_time_to_burn_cycles, controller_test_id, create_icp_account,
-    get_core_canister_health_status, get_icp_account_identifier, get_system_info, get_user,
-    user_test_id, NNS_ROOT_CANISTER_ID,
+    advance_time_to_burn_cycles, create_icp_account, get_core_canister_health_status,
+    get_icp_account_identifier, get_system_info, get_user, user_test_id, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use control_panel_api::{
     AssociateWithCallerInput, DeployStationAdminUserInput, DeployStationInput,
-    DeployStationResponse, RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput,
-    UserSubscriptionStatusDTO,
+    DeployStationResponse, RegisterUserInput, RegisterUserResponse,
 };
 use ic_ledger_types::AccountIdentifier;
 use orbit_essentials::api::ApiResult;
@@ -93,21 +91,7 @@ fn successful_monitors_stations_and_tops_up() {
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.identity, user_id);
 
-    // approve user
-    let update_waiting_list_args = UpdateWaitingListInput {
-        users: vec![user_id],
-        new_status: UserSubscriptionStatusDTO::Approved,
-    };
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        controller_test_id(),
-        "update_waiting_list",
-        (update_waiting_list_args,),
-    )
-    .unwrap();
-    res.0.unwrap();
-
+    // deploy user station
     let deploy_station_args = DeployStationInput {
         name: "test_station".to_string(),
         admins: vec![DeployStationAdminUserInput {
@@ -117,8 +101,6 @@ fn successful_monitors_stations_and_tops_up() {
         associate_with_caller: Some(AssociateWithCallerInput { labels: Vec::new() }),
         subnet_selection: None,
     };
-
-    // deploy user station
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
@@ -256,9 +238,10 @@ fn can_mint_cycles_to_top_up_self() {
     assert!(post_account_balance < pre_account_balance);
     assert!(post_cycle_balance > pre_cycle_balance);
 
-    // assert that while we lose some cycles during the process, it'll be roughly what we expect
+    // assert that while we lose some cycles during the process, it'll be roughly what we expect,
+    // which is currently set to `fallback_fund_cycles=300_000_000_000`
     assert!(
-        post_cycle_balance - pre_cycle_balance > 199_000_000_000
-            && post_cycle_balance - pre_cycle_balance < 200_000_000_000
+        post_cycle_balance - pre_cycle_balance > 299_000_000_000
+            && post_cycle_balance - pre_cycle_balance < 300_000_000_000
     );
 }

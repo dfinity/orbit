@@ -10,8 +10,8 @@ use crate::TestEnv;
 use candid::{Encode, Principal};
 use control_panel_api::{
     AssociateWithCallerInput, CanDeployStationResponse, DeployStationAdminUserInput,
-    DeployStationInput, DeployStationResponse, ListUserStationsInput, ManageUserStationsInput,
-    RegisterUserInput, RegisterUserResponse, UpdateWaitingListInput, UserStationDTO,
+    DeployStationInput, DeployStationResponse, GetUserResponse, ListUserStationsInput,
+    ManageUserStationsInput, RegisterUserInput, RegisterUserResponse, UserDTO, UserStationDTO,
     UserSubscriptionStatusDTO,
 };
 use control_panel_api::{ListUserStationsResponse, UploadCanisterModulesInput};
@@ -156,96 +156,16 @@ fn deploy_user_station() {
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.identity, user_id);
 
-    let deploy_station_args = DeployStationInput {
-        name: "station".to_string(),
-        admins: vec![DeployStationAdminUserInput {
-            identity: user_id,
-            username: "admin".to_string(),
-        }],
-        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
-        subnet_selection: None,
-    };
-
-    // user can't deploy station before being approved
-    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        user_id,
-        "deploy_station",
-        (deploy_station_args,),
-    )
-    .unwrap();
-    res.0.unwrap_err();
-
-    // subscribe to waiting list
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        user_id,
-        "subscribe_to_waiting_list",
-        ("john@example.com".to_string(),),
-    )
-    .unwrap();
-    res.0.unwrap();
-
-    let deploy_station_args = DeployStationInput {
-        name: "station".to_string(),
-        admins: vec![DeployStationAdminUserInput {
-            identity: user_id,
-            username: "admin".to_string(),
-        }],
-        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
-        subnet_selection: None,
-    };
-
-    // user can't deploy station before being approved
-    let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        user_id,
-        "deploy_station",
-        (deploy_station_args,),
-    )
-    .unwrap();
-    res.0.unwrap_err();
-
-    // only canister controllers can approve users
-    let update_waiting_list_args = UpdateWaitingListInput {
-        users: vec![user_id],
-        new_status: UserSubscriptionStatusDTO::Approved,
-    };
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        user_id,
-        "update_waiting_list",
-        (update_waiting_list_args.clone(),),
-    )
-    .unwrap();
-    res.0.unwrap_err();
-
-    // approve user
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        controller_test_id(),
-        "update_waiting_list",
-        (update_waiting_list_args,),
-    )
-    .unwrap();
-    res.0.unwrap();
-
-    let deploy_station_args = DeployStationInput {
-        name: "station".to_string(),
-        admins: vec![DeployStationAdminUserInput {
-            identity: user_id,
-            username: "admin".to_string(),
-        }],
-        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
-        subnet_selection: None,
-    };
-
     // deploy user station
+    let deploy_station_args = DeployStationInput {
+        name: "station".to_string(),
+        admins: vec![DeployStationAdminUserInput {
+            identity: user_id,
+            username: "admin".to_string(),
+        }],
+        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+        subnet_selection: None,
+    };
     let res: (ApiResult<DeployStationResponse>,) = update_candid_as(
         &env,
         canister_ids.control_panel,
@@ -333,36 +253,6 @@ fn deploy_too_many_stations() {
     // top up the control panel to deploy all the many stations
     env.add_cycles(canister_ids.control_panel, 10_000_000_000_000_000);
 
-    let bootstrap_user = |user_id: Principal| {
-        // register user
-        let register_args = RegisterUserInput { station: None };
-        let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
-            &env,
-            canister_ids.control_panel,
-            user_id,
-            "register_user",
-            (register_args,),
-        )
-        .unwrap();
-        let user_dto = res.0.unwrap().user;
-        assert_eq!(user_dto.identity, user_id);
-
-        // approve user
-        let update_waiting_list_args = UpdateWaitingListInput {
-            users: vec![user_id],
-            new_status: UserSubscriptionStatusDTO::Approved,
-        };
-        let res: (ApiResult<()>,) = update_candid_as(
-            &env,
-            canister_ids.control_panel,
-            controller_test_id(),
-            "update_waiting_list",
-            (update_waiting_list_args,),
-        )
-        .unwrap();
-        res.0.unwrap();
-    };
-
     let can_deploy = |user_id: Principal| -> ApiResult<CanDeployStationResponse> {
         update_candid_as::<_, (ApiResult<CanDeployStationResponse>,)>(
             &env,
@@ -375,32 +265,11 @@ fn deploy_too_many_stations() {
         .0
     };
 
-    let deploy = |user_id: Principal, day: usize, i: usize| -> ApiResult<DeployStationResponse> {
-        let deploy_station_args = DeployStationInput {
-            name: format!("station_{}_{}_{}", user_id, day, i),
-            admins: vec![DeployStationAdminUserInput {
-                identity: user_id,
-                username: "admin".to_string(),
-            }],
-            associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
-            subnet_selection: None,
-        };
-        update_candid_as::<_, (ApiResult<DeployStationResponse>,)>(
-            &env,
-            canister_ids.control_panel,
-            user_id,
-            "deploy_station",
-            (deploy_station_args,),
-        )
-        .unwrap()
-        .0
-    };
-
     let max_stations_per_user = 2;
     let max_stations_per_day = 100;
 
     for i in 0..(max_stations_per_day + 1) {
-        bootstrap_user(user_test_id(i));
+        register_user(&env, canister_ids.control_panel, user_test_id(i));
         // to prevent rate-limiting
         env.advance_time(std::time::Duration::from_secs(60));
     }
@@ -414,7 +283,9 @@ fn deploy_too_many_stations() {
                 can_deploy(user_id).unwrap(),
                 CanDeployStationResponse::Allowed(remaining) if max_stations_per_user == remaining + i
             ));
-            let station_id = deploy(user_id, day, i).unwrap().canister_id;
+            let station_id = deploy_station(&env, canister_ids.control_panel, user_id, day, i)
+                .unwrap()
+                .canister_id;
             stations.push(station_id);
         }
 
@@ -450,9 +321,15 @@ fn deploy_too_many_stations() {
             CanDeployStationResponse::QuotaExceeded
         ));
         assert_eq!(
-            deploy(user_id, day, max_stations_per_user)
-                .unwrap_err()
-                .code,
+            deploy_station(
+                &env,
+                canister_ids.control_panel,
+                user_id,
+                day,
+                max_stations_per_user
+            )
+            .unwrap_err()
+            .code,
             "DEPLOY_STATION_QUOTA_EXCEEDED"
         );
 
@@ -463,7 +340,7 @@ fn deploy_too_many_stations() {
                 can_deploy(user_test_id(i)).unwrap(),
                 CanDeployStationResponse::Allowed(remaining) if remaining == std::cmp::min(max_stations_per_user, max_stations_per_day as usize - max_stations_per_user - (i as usize - 1))
             ));
-            deploy(user_test_id(i), day, 0).unwrap();
+            deploy_station(&env, canister_ids.control_panel, user_test_id(i), day, 0).unwrap();
         }
 
         // deploying one more station on behalf of yet another use should fail due to global rate limit
@@ -472,9 +349,15 @@ fn deploy_too_many_stations() {
             CanDeployStationResponse::QuotaExceeded
         ));
         assert_eq!(
-            deploy(user_test_id(max_stations_per_day), day, 0)
-                .unwrap_err()
-                .code,
+            deploy_station(
+                &env,
+                canister_ids.control_panel,
+                user_test_id(max_stations_per_day),
+                day,
+                0
+            )
+            .unwrap_err()
+            .code,
             "DEPLOY_STATION_QUOTA_EXCEEDED"
         );
 
@@ -511,21 +394,6 @@ fn no_upload_canister_modules() {
     .unwrap();
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.identity, user_id);
-
-    // approve user
-    let update_waiting_list_args = UpdateWaitingListInput {
-        users: vec![user_id],
-        new_status: UserSubscriptionStatusDTO::Approved,
-    };
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        controller_test_id(),
-        "update_waiting_list",
-        (update_waiting_list_args,),
-    )
-    .unwrap();
-    res.0.unwrap();
 
     // deploying user station fails before uploading canister modules
     let deploy_station_args = DeployStationInput {
@@ -631,32 +499,6 @@ fn deploy_user_station_to_different_subnet() {
     let user_dto = res.0.unwrap().user;
     assert_eq!(user_dto.identity, user_id);
 
-    // subscribe to waiting list
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        user_id,
-        "subscribe_to_waiting_list",
-        ("john@example.com".to_string(),),
-    )
-    .unwrap();
-    res.0.unwrap();
-
-    // approve user
-    let update_waiting_list_args = UpdateWaitingListInput {
-        users: vec![user_id],
-        new_status: UserSubscriptionStatusDTO::Approved,
-    };
-    let res: (ApiResult<()>,) = update_candid_as(
-        &env,
-        canister_ids.control_panel,
-        controller_test_id(),
-        "update_waiting_list",
-        (update_waiting_list_args,),
-    )
-    .unwrap();
-    res.0.unwrap();
-
     // deploy user station
     let deploy_station_args = DeployStationInput {
         name: "station".to_string(),
@@ -720,21 +562,6 @@ fn insufficient_control_panel_cycles() {
         .unwrap();
         let user_dto = res.0.unwrap().user;
         assert_eq!(user_dto.identity, user_id);
-
-        // approve user
-        let update_waiting_list_args = UpdateWaitingListInput {
-            users: vec![user_id],
-            new_status: UserSubscriptionStatusDTO::Approved,
-        };
-        let res: (ApiResult<()>,) = update_candid_as(
-            &env,
-            canister_ids.control_panel,
-            controller_test_id(),
-            "update_waiting_list",
-            (update_waiting_list_args,),
-        )
-        .unwrap();
-        res.0.unwrap();
 
         // deploy station
         let deploy_station_args = DeployStationInput {
@@ -876,4 +703,145 @@ fn deploy_station_with_insufficient_cycles() {
 
     // and the station should eventually become healthy
     await_station_healthy(&env, station, WALLET_ADMIN_USER);
+}
+
+#[test]
+fn control_panel_upgrade() {
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+        ..
+    } = setup_new_env();
+
+    // register users
+    let num_users = 3;
+    for i in 0..num_users {
+        register_user(&env, canister_ids.control_panel, user_test_id(i));
+    }
+
+    // deploy stations
+    let main_stations: Vec<_> = (0..num_users)
+        .map(|i| {
+            deploy_station(&env, canister_ids.control_panel, user_test_id(i), 0, 0)
+                .unwrap()
+                .canister_id
+        })
+        .collect();
+    let stations: Vec<_> = (0..num_users)
+        .map(|i| {
+            deploy_station(&env, canister_ids.control_panel, user_test_id(i), 0, 1)
+                .unwrap()
+                .canister_id
+        })
+        .collect();
+
+    // check users and their stations before upgrade
+    let users: Vec<_> = (0..num_users)
+        .map(|i| get_user(&env, canister_ids.control_panel, user_test_id(i)))
+        .collect();
+    for (i, user) in users.iter().enumerate() {
+        assert_eq!(user.identity, user_test_id(i as u64));
+        assert_eq!(
+            user.subscription_status,
+            UserSubscriptionStatusDTO::Approved
+        );
+    }
+    let user_stations: Vec<_> = (0..num_users)
+        .map(|i| list_user_stations(&env, canister_ids.control_panel, user_test_id(i)))
+        .collect();
+    for (i, user_stations) in user_stations.iter().enumerate() {
+        assert_eq!(user_stations[0].canister_id, main_stations[i]);
+        assert_eq!(user_stations[1].canister_id, stations[i]);
+    }
+
+    // upgrade control panel: post-upgrade hook iterates over all users and sets their subscription status to `UserSubscriptionStatusDTO::Approved`
+    let control_panel_wasm = get_canister_wasm("control_panel").to_vec();
+    env.upgrade_canister(
+        canister_ids.control_panel,
+        control_panel_wasm,
+        Encode!(&()).unwrap(),
+        Some(controller),
+    )
+    .unwrap();
+
+    // check users and their stations after upgrade
+    let users_after_upgrade: Vec<_> = (0..num_users)
+        .map(|i| get_user(&env, canister_ids.control_panel, user_test_id(i)))
+        .collect();
+    assert_eq!(users_after_upgrade, users);
+    let user_stations_after_upgrade: Vec<_> = (0..num_users)
+        .map(|i| list_user_stations(&env, canister_ids.control_panel, user_test_id(i)))
+        .collect();
+    assert_eq!(user_stations_after_upgrade, user_stations);
+}
+
+fn get_user(env: &PocketIc, control_panel_id: Principal, user_id: Principal) -> UserDTO {
+    let res: (ApiResult<GetUserResponse>,) =
+        update_candid_as(env, control_panel_id, user_id, "get_user", ((),)).unwrap();
+    let user_dto = res.0.unwrap().user;
+    assert_eq!(user_dto.identity, user_id);
+    user_dto
+}
+
+fn list_user_stations(
+    env: &PocketIc,
+    control_panel_id: Principal,
+    user_id: Principal,
+) -> Vec<UserStationDTO> {
+    update_candid_as::<_, (ApiResult<ListUserStationsResponse>,)>(
+        env,
+        control_panel_id,
+        user_id,
+        "list_user_stations",
+        (ListUserStationsInput {
+            filter_by_labels: None,
+        },),
+    )
+    .unwrap()
+    .0
+    .unwrap()
+    .stations
+}
+
+fn register_user(env: &PocketIc, control_panel_id: Principal, user_id: Principal) -> UserDTO {
+    let register_args = RegisterUserInput { station: None };
+    let res: (ApiResult<RegisterUserResponse>,) = update_candid_as(
+        env,
+        control_panel_id,
+        user_id,
+        "register_user",
+        (register_args,),
+    )
+    .unwrap();
+    let user_dto = res.0.unwrap().user;
+    assert_eq!(user_dto.identity, user_id);
+    user_dto
+}
+
+fn deploy_station(
+    env: &PocketIc,
+    control_panel_id: Principal,
+    user_id: Principal,
+    day: usize,
+    i: usize,
+) -> ApiResult<DeployStationResponse> {
+    let deploy_station_args = DeployStationInput {
+        name: format!("station_{}_{}_{}", user_id, day, i),
+        admins: vec![DeployStationAdminUserInput {
+            identity: user_id,
+            username: "admin".to_string(),
+        }],
+        associate_with_caller: Some(AssociateWithCallerInput { labels: vec![] }),
+        subnet_selection: None,
+    };
+    update_candid_as::<_, (ApiResult<DeployStationResponse>,)>(
+        env,
+        control_panel_id,
+        user_id,
+        "deploy_station",
+        (deploy_station_args,),
+    )
+    .unwrap()
+    .0
 }
