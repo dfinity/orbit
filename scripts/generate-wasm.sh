@@ -24,6 +24,9 @@ if [ -z "${GIT_COMMIT_ID:-}" ]; then
   export GIT_COMMIT_ID=$(git rev-parse HEAD)
 fi
 
+echo "Ensuring rust toolchain is installed"
+rustup show active-toolchain || rustup toolchain install
+
 echo Building package $PACKAGE
 export RUSTFLAGS="--remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
 for l in $(ls ${CARGO_HOME}/registry/src/); do
