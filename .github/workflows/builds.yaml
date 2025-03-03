@@ -22,21 +22,18 @@ on:
 jobs:
   deterministic-build:
     name: 'deterministic-build:optional'
+    runs-on: macos-latest
     strategy:
       matrix:
         include:
           - project: control-panel
             artifact: control_panel.wasm.gz
-            os: ubuntu-22.04
           - project: station
             artifact: station.wasm.gz
-            os: ubuntu-22.04
           - project: upgrader
             artifact: upgrader.wasm.gz
-            os: ubuntu-22.04
           - project: wallet-dapp
             artifact: wallet-dapp.tar.gz
-            os: ubuntu-22.04
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
