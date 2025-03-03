@@ -1076,3 +1076,37 @@ fn test_disaster_recovery_committee_change_with_open_requests() {
     assert_eq!(state.recovery_status, upgrader_api::RecoveryStatus::Idle);
     assert!(state.last_recovery_result.is_none());
 }
+
+// Test disaster recovery via canister snapshots
+#[test]
+fn test_disaster_recovery_via_canister_snapshots() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+
+    // retrieve the existing snapshots from the management canister: there should be no snapshots yet
+    let snapshots: Vec<_> = env
+        .list_canister_snapshots(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
+        .unwrap();
+    assert!(snapshots.is_empty());
+
+    let snapshot_request = upgrader_api::RequestDisasterRecoveryInput::Snapshot(
+        upgrader_api::RequestDisasterRecoverySnapshotInput {
+            replace_snapshot: None,
+            force: false,
+        },
+    );
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, snapshot_request)
+        .expect("Failed to request disaster recovery");
+    await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+
+    // retrieve the existing snapshots from the management canister:
+    // there should be a single snapshot now
+    let snapshots = env
+        .list_canister_snapshots(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
+        .unwrap();
+    assert_eq!(snapshots.len(), 1);
+}

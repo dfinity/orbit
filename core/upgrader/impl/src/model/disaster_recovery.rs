@@ -83,8 +83,16 @@ pub struct StationRecoveryRequestInstallCodeOperation {
 
 #[storable]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StationRecoveryRequestSnapshotOperation {
+    pub replace_snapshot: Option<Vec<u8>>,
+    pub force: bool,
+}
+
+#[storable]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StationRecoveryRequestOperation {
     InstallCode(StationRecoveryRequestInstallCodeOperation),
+    Snapshot(StationRecoveryRequestSnapshotOperation),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -95,8 +103,15 @@ pub struct StationRecoveryRequestInstallCodeOperationFootprint {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct StationRecoveryRequestSnapshotOperationFootprint {
+    pub replace_snapshot: Option<Vec<u8>>,
+    pub force: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum StationRecoveryRequestOperationFootprint {
     InstallCode(StationRecoveryRequestInstallCodeOperationFootprint),
+    Snapshot(StationRecoveryRequestSnapshotOperationFootprint),
 }
 
 #[storable]
