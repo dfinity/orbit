@@ -11,6 +11,7 @@ export interface AppInitConfig {
   buildMode: string;
   apiGatewayUrl: URL;
   derivationOrigin: string | undefined;
+  marketingSiteUrl?: string;
   locale: {
     default: string;
     supportedLocales: string[];

@@ -55,7 +55,15 @@
 
                   <p class="text-caption">
                     <i18n-t keypath="landing.btn_accept_license.phrase" scope="global">
-                      <a href="#" target="_blank">{{ $t('landing.btn_accept_license.license') }}</a>
+                      <a
+                        :href="
+                          appInitConfig.marketingSiteUrl
+                            ? appInitConfig.marketingSiteUrl + '/license'
+                            : '#'
+                        "
+                        target="_blank"
+                        >{{ $t('landing.btn_accept_license.license') }}</a
+                      >
                     </i18n-t>
                   </p>
                 </VCardText>
@@ -78,6 +86,7 @@ import BrandLogo from '~/components/BrandLogo.vue';
 import LanguageSelector from '~/components/LanguageSelector.vue';
 import AppFooter from '~/components/layouts/AppFooter.vue';
 import PageLayout from '~/components/PageLayout.vue';
+import { appInitConfig } from '~/configs/init.config';
 import { logger } from '~/core/logger.core';
 import { useAppStore } from '~/stores/app.store';
 import { useSessionStore } from '~/stores/session.store';

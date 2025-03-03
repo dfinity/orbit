@@ -16,6 +16,7 @@ interface ImportMetaEnv {
   readonly APP_CANISTER_ID_INTERNET_IDENTITY: string;
   readonly APP_PROVIDER_URL_INTERNET_IDENTITY: string;
   readonly APP_CANISTER_ID_ICP_INDEX: string;
+  readonly APP_MARKETING_SITE_URL?: string;
 }
 
 interface ImportMeta {
