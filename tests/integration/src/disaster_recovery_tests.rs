@@ -19,9 +19,10 @@ use orbit_essentials::utils::sha256_hash;
 use pocket_ic::{query_candid_as, update_candid_as, PocketIc};
 use serde::Deserialize;
 use station_api::{
-    AccountDTO, AddAccountOperationInput, AllowDTO, DisasterRecoveryCommitteeDTO, HealthStatus,
-    ListAccountsResponse, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    SetDisasterRecoveryOperationInput, SystemInit, SystemInstall, SystemUpgrade,
+    AccountDTO, AddAccountOperationInput, AllowDTO, DisasterRecoveryCommitteeDTO,
+    EditUserOperationInput, HealthStatus, ListAccountsResponse, RequestOperationDTO,
+    RequestOperationInput, RequestPolicyRuleDTO, SetDisasterRecoveryOperationInput, SystemInit,
+    SystemInstall, SystemUpgrade,
 };
 use std::collections::BTreeMap;
 use std::str::FromStr;
@@ -1093,6 +1094,7 @@ fn test_disaster_recovery_via_canister_snapshots() {
         .unwrap();
     assert!(snapshots.is_empty());
 
+    // take a snapshot of the station via upgrader
     let snapshot_request = upgrader_api::RequestDisasterRecoveryInput::Snapshot(
         upgrader_api::RequestDisasterRecoverySnapshotInput {
             replace_snapshot: None,
@@ -1105,6 +1107,42 @@ fn test_disaster_recovery_via_canister_snapshots() {
 
     // retrieve the existing snapshots from the management canister:
     // there should be a single snapshot now
+    let snapshots = env
+        .list_canister_snapshots(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
+        .unwrap();
+    assert_eq!(snapshots.len(), 1);
+
+    // rename the admin user so that we can see if restoring the station from a snapshot
+    // has an effect
+    let admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let edit_user = RequestOperationInput::EditUser(EditUserOperationInput {
+        id: admin_user.id.clone(),
+        name: Some("Changed admin name".to_string()),
+        identities: None,
+        groups: None,
+        status: None,
+        cancel_pending_requests: None,
+    });
+    execute_request(&env, WALLET_ADMIN_USER, canister_ids.station, edit_user).unwrap();
+    let new_admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
+    assert_ne!(admin_user.name, new_admin_user.name);
+
+    // restore the station from its snapshot
+    let restore_request = upgrader_api::RequestDisasterRecoveryInput::Restore(
+        upgrader_api::RequestDisasterRecoveryRestoreInput {
+            snapshot_id: hex::encode(&snapshots[0].id),
+        },
+    );
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, restore_request)
+        .expect("Failed to request disaster recovery");
+    await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+
+    // check the name of the admin user after restoring a snapshot
+    let restored_admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
+    assert_eq!(admin_user.name, restored_admin_user.name);
+
+    // retrieve the existing snapshots from the management canister:
+    // there should still be a single snapshot now
     let snapshots = env
         .list_canister_snapshots(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .unwrap();

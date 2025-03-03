@@ -18,8 +18,10 @@ use crate::{
 use candid::Principal;
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
+use orbit_essentials::cdk::api::canister_version;
 use orbit_essentials::cdk::api::management_canister::main::{
-    take_canister_snapshot, TakeCanisterSnapshotArgs,
+    load_canister_snapshot, take_canister_snapshot, LoadCanisterSnapshotArgs,
+    TakeCanisterSnapshotArgs,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -301,6 +303,22 @@ impl DisasterRecoveryService {
                     replace_snapshot: snapshot.replace_snapshot,
                 };
                 take_canister_snapshot(snapshot_args)
+                    .await
+                    .map_err(|(_, err)| err)?;
+
+                installer.start(station_canister_id).await?;
+
+                Ok(())
+            }
+            StationRecoveryRequestOperation::Restore(snapshot) => {
+                installer.stop(station_canister_id).await?;
+
+                let snapshot_args = LoadCanisterSnapshotArgs {
+                    canister_id: station_canister_id,
+                    snapshot_id: snapshot.snapshot_id,
+                    sender_canister_version: Some(canister_version()),
+                };
+                load_canister_snapshot(snapshot_args)
                     .await
                     .map_err(|(_, err)| err)?;
 
