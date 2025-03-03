@@ -22,9 +22,9 @@ on:
 jobs:
   deterministic-build:
     name: 'deterministic-build:optional'
-    runs-on: ubuntu-22.04
     strategy:
       matrix:
+        os: [ubuntu-22.04, macos-latest]
         include:
           - project: control-panel
             artifact: control_panel.wasm.gz
