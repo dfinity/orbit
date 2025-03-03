@@ -31,9 +31,6 @@ jobs:
           - project: station
             artifact: station.wasm.gz
             os: ubuntu-22.04
-          - project: station
-            artifact: station.wasm.gz
-            os: macos-latest
           - project: upgrader
             artifact: upgrader.wasm.gz
             os: ubuntu-22.04
