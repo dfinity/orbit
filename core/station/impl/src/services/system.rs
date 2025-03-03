@@ -916,11 +916,11 @@ mod install_canister_handlers {
     pub fn init_cycle_monitor(upgrader_id: Principal, cycle_obtain_strategy: &CycleObtainStrategy) {
         let fund_strategy = MonitorExternalCanisterStrategy::BelowEstimatedRuntime(
             MonitoringExternalCanisterEstimatedRuntimeInput {
-                min_runtime_secs: 14 * 24 * 60 * 60,  // 14 days
+                min_runtime_secs: 60 * 24 * 60 * 60,  // 60 days
                 fund_runtime_secs: 30 * 24 * 60 * 60, // 30 days
-                max_runtime_cycles_fund: 1_000_000_000_000,
-                fallback_min_cycles: 400_000_000_000,
-                fallback_fund_cycles: 200_000_000_000,
+                max_runtime_cycles_fund: 2_000_000_000_000,
+                fallback_min_cycles: 600_000_000_000,
+                fallback_fund_cycles: 300_000_000_000,
             },
         );
 

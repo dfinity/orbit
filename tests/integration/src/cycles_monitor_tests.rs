@@ -238,9 +238,10 @@ fn can_mint_cycles_to_top_up_self() {
     assert!(post_account_balance < pre_account_balance);
     assert!(post_cycle_balance > pre_cycle_balance);
 
-    // assert that while we lose some cycles during the process, it'll be roughly what we expect
+    // assert that while we lose some cycles during the process, it'll be roughly what we expect,
+    // which is currently set to `fallback_fund_cycles=300_000_000_000`
     assert!(
-        post_cycle_balance - pre_cycle_balance > 199_000_000_000
-            && post_cycle_balance - pre_cycle_balance < 200_000_000_000
+        post_cycle_balance - pre_cycle_balance > 299_000_000_000
+            && post_cycle_balance - pre_cycle_balance < 300_000_000_000
     );
 }
