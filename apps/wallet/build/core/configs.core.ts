@@ -72,7 +72,8 @@ export const ENV: Record<string, string> = (() => {
 })();
 
 // Wether the build is in production mode.
-export const PRODUCTION = process.env.NODE_ENV === 'production';
+export const PRODUCTION =
+  process.env.NODE_ENV === 'production' && process.env.DFX_NETWORK !== 'local';
 
 // Determine if the build is optimized based on the build mode, localhost is opmitized to match the production build
 // when deploying to a local replica.

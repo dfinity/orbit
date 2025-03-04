@@ -11,7 +11,13 @@ const getContentSecurityPolicy = (
   const csp: Record<string, string[]> = {
     'default-src': ["'none'"],
     'script-src': ["'self'", "'wasm-unsafe-eval'"],
-    'connect-src': ["'self'", 'https://icp-api.io', 'https://ic0.app', 'https://icp0.io'],
+    'connect-src': [
+      "'self'",
+      'https://icp-api.io',
+      'https://ic0.app',
+      'https://icp0.io',
+      'https://3r4gx-wqaaa-aaaaq-aaaia-cai.icp0.io', // SNS aggregator
+    ],
     'img-src': ["'self'", 'data:'],
     'font-src': ["'self'"],
     'object-src': ["'none'"],
