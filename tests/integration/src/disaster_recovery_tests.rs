@@ -1128,10 +1128,10 @@ fn test_disaster_recovery_via_canister_snapshots() {
     assert_ne!(admin_user.name, new_admin_user.name);
 
     // uninstall the station
-    let snapshot_request = upgrader_api::RequestDisasterRecoveryInput::Prune(
+    let prune_request = upgrader_api::RequestDisasterRecoveryInput::Prune(
         upgrader_api::RequestDisasterRecoveryPruneInput::State,
     );
-    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, snapshot_request)
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, prune_request)
         .expect("Failed to request disaster recovery");
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
     let status = canister_status(&env, Some(upgrader_id), canister_ids.station);
@@ -1161,10 +1161,10 @@ fn test_disaster_recovery_via_canister_snapshots() {
     assert_eq!(snapshots.len(), 1);
 
     // prune the snapshot
-    let snapshot_request = upgrader_api::RequestDisasterRecoveryInput::Prune(
+    let prune_request = upgrader_api::RequestDisasterRecoveryInput::Prune(
         upgrader_api::RequestDisasterRecoveryPruneInput::Snapshot(hex::encode(&snapshots[0].id)),
     );
-    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, snapshot_request)
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, prune_request)
         .expect("Failed to request disaster recovery");
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
     let snapshots = env
@@ -1177,10 +1177,10 @@ fn test_disaster_recovery_via_canister_snapshots() {
         .stored_chunks(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .unwrap();
     assert!(!chunks.is_empty());
-    let snapshot_request = upgrader_api::RequestDisasterRecoveryInput::Prune(
+    let prune_request = upgrader_api::RequestDisasterRecoveryInput::Prune(
         upgrader_api::RequestDisasterRecoveryPruneInput::ChunkStore,
     );
-    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, snapshot_request)
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, prune_request)
         .expect("Failed to request disaster recovery");
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
     let chunks = env
