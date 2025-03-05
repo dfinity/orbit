@@ -177,10 +177,21 @@ pub struct RequestDisasterRecoveryRestoreInput {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum RequestDisasterRecoveryPruneInput {
+    #[serde(rename = "snapshot")]
+    Snapshot(String),
+    #[serde(rename = "chunk_store")]
+    ChunkStore,
+    #[serde(rename = "state")]
+    State,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum RequestDisasterRecoveryInput {
     InstallCode(RequestDisasterRecoveryInstallCodeInput),
     Snapshot(RequestDisasterRecoverySnapshotInput),
     Restore(RequestDisasterRecoveryRestoreInput),
+    Prune(RequestDisasterRecoveryPruneInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -237,10 +248,21 @@ pub struct StationRecoveryRequestRestoreOperation {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub enum StationRecoveryRequestPruneOperation {
+    #[serde(rename = "snapshot")]
+    Snapshot(String),
+    #[serde(rename = "chunk_store")]
+    ChunkStore,
+    #[serde(rename = "state")]
+    State,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub enum StationRecoveryRequestOperation {
     InstallCode(StationRecoveryRequestInstallCodeOperation),
     Snapshot(StationRecoveryRequestSnapshotOperation),
     Restore(StationRecoveryRequestRestoreOperation),
+    Prune(StationRecoveryRequestPruneOperation),
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]

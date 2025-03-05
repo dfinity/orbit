@@ -47,10 +47,34 @@ pub struct RequestDisasterRecoveryRestoreLog {
 }
 
 #[derive(Serialize)]
+pub enum RequestDisasterRecoveryPruneLog {
+    Snapshot(String),
+    ChunkStore,
+    State,
+}
+
+impl std::fmt::Display for RequestDisasterRecoveryPruneLog {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            RequestDisasterRecoveryPruneLog::Snapshot(snapshot_id) => {
+                write!(f, "snapshot_id {}", snapshot_id)
+            }
+            RequestDisasterRecoveryPruneLog::ChunkStore => {
+                write!(f, "chunk store")
+            }
+            RequestDisasterRecoveryPruneLog::State => {
+                write!(f, "state")
+            }
+        }
+    }
+}
+
+#[derive(Serialize)]
 pub enum RequestDisasterRecoveryOperationLog {
     InstallCode(RequestDisasterRecoveryInstallCodeLog),
     Snapshot(RequestDisasterRecoverySnapshotLog),
     Restore(RequestDisasterRecoveryRestoreLog),
+    Prune(RequestDisasterRecoveryPruneLog),
 }
 
 impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
@@ -72,6 +96,9 @@ impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
             }
             RequestDisasterRecoveryOperationLog::Restore(snapshot) => {
                 write!(f, "Restore snapshot_id {}", snapshot.snapshot_id,)
+            }
+            RequestDisasterRecoveryOperationLog::Prune(prune) => {
+                write!(f, "Prune {}", prune)
             }
         }
     }

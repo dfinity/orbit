@@ -1,10 +1,11 @@
 use crate::model::{
     DisasterRecovery, DisasterRecoveryV0, RequestDisasterRecoveryInstallCodeLog,
-    RequestDisasterRecoveryOperationLog, RequestDisasterRecoveryRestoreLog,
-    RequestDisasterRecoverySnapshotLog, StationRecoveryRequest,
+    RequestDisasterRecoveryOperationLog, RequestDisasterRecoveryPruneLog,
+    RequestDisasterRecoveryRestoreLog, RequestDisasterRecoverySnapshotLog, StationRecoveryRequest,
     StationRecoveryRequestInstallCodeOperation,
     StationRecoveryRequestInstallCodeOperationFootprint, StationRecoveryRequestOperation,
-    StationRecoveryRequestOperationFootprint, StationRecoveryRequestRestoreOperation,
+    StationRecoveryRequestOperationFootprint, StationRecoveryRequestPruneOperation,
+    StationRecoveryRequestPruneOperationFootprint, StationRecoveryRequestRestoreOperation,
     StationRecoveryRequestRestoreOperationFootprint, StationRecoveryRequestSnapshotOperation,
     StationRecoveryRequestSnapshotOperationFootprint, StationRecoveryRequestV0,
 };
@@ -45,6 +46,22 @@ impl From<upgrader_api::RequestDisasterRecoveryInput> for StationRecoveryRequest
                         .expect("Failed to parse `snapshot_id`"),
                 })
             }
+            upgrader_api::RequestDisasterRecoveryInput::Prune(prune) => {
+                let prune_op = match prune {
+                    upgrader_api::RequestDisasterRecoveryPruneInput::Snapshot(snapshot_id) => {
+                        StationRecoveryRequestPruneOperation::Snapshot(
+                            hex::decode(snapshot_id).expect("Failed to parse `snapshot_id`"),
+                        )
+                    }
+                    upgrader_api::RequestDisasterRecoveryPruneInput::ChunkStore => {
+                        StationRecoveryRequestPruneOperation::ChunkStore
+                    }
+                    upgrader_api::RequestDisasterRecoveryPruneInput::State => {
+                        StationRecoveryRequestPruneOperation::State
+                    }
+                };
+                StationRecoveryRequestOperation::Prune(prune_op)
+            }
         }
     }
 }
@@ -76,6 +93,22 @@ impl From<&StationRecoveryRequestOperation> for StationRecoveryRequestOperationF
                     },
                 )
             }
+            StationRecoveryRequestOperation::Prune(ref prune) => {
+                let prune_op = match prune {
+                    StationRecoveryRequestPruneOperation::Snapshot(snapshot_id) => {
+                        StationRecoveryRequestPruneOperationFootprint::Snapshot(hex::encode(
+                            snapshot_id,
+                        ))
+                    }
+                    StationRecoveryRequestPruneOperation::ChunkStore => {
+                        StationRecoveryRequestPruneOperationFootprint::ChunkStore
+                    }
+                    StationRecoveryRequestPruneOperation::State => {
+                        StationRecoveryRequestPruneOperationFootprint::State
+                    }
+                };
+                StationRecoveryRequestOperationFootprint::Prune(prune_op)
+            }
         }
     }
 }
@@ -102,6 +135,20 @@ impl From<&StationRecoveryRequestOperation> for RequestDisasterRecoveryOperation
                 RequestDisasterRecoveryOperationLog::Restore(RequestDisasterRecoveryRestoreLog {
                     snapshot_id: hex::encode(&snapshot.snapshot_id),
                 })
+            }
+            StationRecoveryRequestOperation::Prune(ref prune) => {
+                let prune_op = match prune {
+                    StationRecoveryRequestPruneOperation::Snapshot(snapshot_id) => {
+                        RequestDisasterRecoveryPruneLog::Snapshot(hex::encode(snapshot_id))
+                    }
+                    StationRecoveryRequestPruneOperation::ChunkStore => {
+                        RequestDisasterRecoveryPruneLog::ChunkStore
+                    }
+                    StationRecoveryRequestPruneOperation::State => {
+                        RequestDisasterRecoveryPruneLog::State
+                    }
+                };
+                RequestDisasterRecoveryOperationLog::Prune(prune_op)
             }
         }
     }
@@ -133,6 +180,22 @@ impl From<&StationRecoveryRequestOperation> for upgrader_api::StationRecoveryReq
                         snapshot_id: hex::encode(&snapshot.snapshot_id),
                     },
                 )
+            }
+            StationRecoveryRequestOperation::Prune(ref prune) => {
+                let prune_op = match prune {
+                    StationRecoveryRequestPruneOperation::Snapshot(snapshot_id) => {
+                        upgrader_api::StationRecoveryRequestPruneOperation::Snapshot(hex::encode(
+                            snapshot_id,
+                        ))
+                    }
+                    StationRecoveryRequestPruneOperation::ChunkStore => {
+                        upgrader_api::StationRecoveryRequestPruneOperation::ChunkStore
+                    }
+                    StationRecoveryRequestPruneOperation::State => {
+                        upgrader_api::StationRecoveryRequestPruneOperation::State
+                    }
+                };
+                upgrader_api::StationRecoveryRequestOperation::Prune(prune_op)
             }
         }
     }

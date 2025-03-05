@@ -184,10 +184,17 @@ type RequestDisasterRecoveryRestoreInput = record {
   // A snapshot to be restored.
   snapshot_id : text;
 };
+// The resource to prune.
+type RequestDisasterRecoveryPruneInput = variant {
+  chunk_store;
+  snapshot : text;
+  state;
+};
 type RequestDisasterRecoveryInput = variant {
   InstallCode : RequestDisasterRecoveryInstallCodeInput;
   Snapshot : RequestDisasterRecoverySnapshotInput;
   Restore : RequestDisasterRecoveryRestoreInput;
+  Prune : RequestDisasterRecoveryPruneInput;
 };
 
 type InstallMode = variant {
@@ -262,10 +269,18 @@ type StationRecoveryRequestRestoreOperation = record {
   snapshot_id : text;
 };
 
+// The resource to prune.
+type StationRecoveryRequestPruneOperation = variant {
+  chunk_store;
+  snapshot : text;
+  state;
+};
+
 type StationRecoveryRequestOperation = variant {
   InstallCode : StationRecoveryRequestInstallCodeOperation;
   Snapshot : StationRecoveryRequestSnapshotOperation;
   Restore : StationRecoveryRequestRestoreOperation;
+  Prune : StationRecoveryRequestPruneOperation;
 };
 
 // Request to recover the station.
