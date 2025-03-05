@@ -28,8 +28,8 @@ ENV PATH=$CARGO_HOME/bin:$PATH
 ENV PATH=$FNM_DIR/bin:$PATH
 # Install Rust and the Node.js version manager
 COPY rust-toolchain.toml .
-RUN curl -fsSL https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path && \
-    curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir $FNM_DIR/bin --skip-shell
+RUN curl -O https://static.rust-lang.org/rustup/archive/1.27.1/x86_64-unknown-linux-gnu/rustup-init && chmod +x rustup-init && ./rustup-init -y
+RUN curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir $FNM_DIR/bin --skip-shell
 # Add the fnm env var envaluation to the bashrc to enable it in bash by default
 RUN echo "eval \"$(fnm env)\"" >> $HOME/.bashrc
 # Add expected node version file and root package.json with expected pnpm version
