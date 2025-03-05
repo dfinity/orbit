@@ -9,6 +9,7 @@ use crate::{
         RecoveryStatus, RequestDisasterRecoveryLog, RequestDisasterRecoveryOperationLog,
         SetAccountsAndAssetsLog, SetAccountsLog, SetCommitteeLog, StationRecoveryRequest,
         StationRecoveryRequestOperation, StationRecoveryRequestOperationFootprint,
+        StationRecoveryRequestPruneOperation,
     },
     services::LOGGER_SERVICE,
     set_disaster_recovery,
@@ -20,8 +21,9 @@ use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::cdk::api::canister_version;
 use orbit_essentials::cdk::api::management_canister::main::{
-    load_canister_snapshot, take_canister_snapshot, LoadCanisterSnapshotArgs,
-    TakeCanisterSnapshotArgs,
+    clear_chunk_store, delete_canister_snapshot, load_canister_snapshot, take_canister_snapshot,
+    uninstall_code, CanisterIdRecord, ClearChunkStoreArgument, DeleteCanisterSnapshotArgs,
+    LoadCanisterSnapshotArgs, TakeCanisterSnapshotArgs,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -323,6 +325,41 @@ impl DisasterRecoveryService {
                     .map_err(|(_, err)| err)?;
 
                 installer.start(station_canister_id).await?;
+
+                Ok(())
+            }
+            StationRecoveryRequestOperation::Prune(
+                StationRecoveryRequestPruneOperation::Snapshot(snapshot_id),
+            ) => {
+                let snapshot_args = DeleteCanisterSnapshotArgs {
+                    canister_id: station_canister_id,
+                    snapshot_id,
+                };
+                delete_canister_snapshot(snapshot_args)
+                    .await
+                    .map_err(|(_, err)| err)?;
+
+                Ok(())
+            }
+            StationRecoveryRequestOperation::Prune(
+                StationRecoveryRequestPruneOperation::ChunkStore,
+            ) => {
+                let canister_id_record = ClearChunkStoreArgument {
+                    canister_id: station_canister_id,
+                };
+                clear_chunk_store(canister_id_record)
+                    .await
+                    .map_err(|(_, err)| err)?;
+
+                Ok(())
+            }
+            StationRecoveryRequestOperation::Prune(StationRecoveryRequestPruneOperation::State) => {
+                let canister_id_record = CanisterIdRecord {
+                    canister_id: station_canister_id,
+                };
+                uninstall_code(canister_id_record)
+                    .await
+                    .map_err(|(_, err)| err)?;
 
                 Ok(())
             }
