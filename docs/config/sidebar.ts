@@ -3,7 +3,7 @@ import enLabels from '../src/content/nav/en';
 
 type StarlightSidebarConfig = NonNullable<Parameters<typeof starlight>[0]['sidebar']>;
 type StarlightSidebarEntry = StarlightSidebarConfig[number];
-type StarlightManualSidebarGroup = Extract<StarlightSidebarEntry, { items: [] }>;
+type StarlightManualSidebarGroup = Extract<StarlightSidebarEntry, { items: unknown }>;
 type StarlightAutoSidebarGroup = Extract<
   StarlightSidebarEntry,
   { autogenerate: { directory: string; collapsed?: boolean | undefined } }
@@ -34,8 +34,14 @@ const translations = Object.entries(
  */
 export function group(
   key: NavKey,
-  group: Omit<StarlightManualSidebarGroup, 'label'> | Omit<StarlightAutoSidebarGroup, 'label'>,
-): StarlightManualSidebarGroup | StarlightAutoSidebarGroup {
+  group: Omit<StarlightManualSidebarGroup, 'label'>,
+): StarlightManualSidebarGroup;
+export function group(
+  key: NavKey,
+  group: Omit<StarlightAutoSidebarGroup, 'label'>,
+): StarlightAutoSidebarGroup;
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+export function group(key: NavKey, group: any) {
   return {
     label: enLabels[key],
     translations: translations[key],

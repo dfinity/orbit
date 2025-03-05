@@ -1,0 +1,12 @@
+---
+import Default from '@astrojs/starlight/components/Head.astro';
+
+// Get the URL of the generated image for the current page using its ID and
+// append the `.png` file extension.
+const ogImageUrl = new URL(`/social-share.png`, Astro.site);
+---
+
+<Default {...Astro.props} />
+
+<meta property="og:image" content={ogImageUrl} />
+<meta name="twitter:image" content={ogImageUrl} />

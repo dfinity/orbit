@@ -8,7 +8,7 @@
   <img src="docs/old/orbit-header.png" alt="Orbit logo" role="presentation"/><br />
 </div>
 
-Check out the [Orbit Wallet](https://orbitwallet.io) to see the platform in action.
+Check out the [Orbit Wallet](https://orbit.global) to see the platform in action.
 
 ## Overview
 
@@ -20,7 +20,7 @@ Our vision with Orbit is to emulate the transformation that Cloud providers brou
 
 ## User facing applications
 
-The [orbitwallet.io](https://orbitwallet.io) is the main entry point for users to interact with the Orbit platform. It provides access to the Orbit Wallet application, which is a dapp that allows users to manage their digital assets tailored for multi-approval scenarios. The wallet supports user management, transaction history, permissions management, and other features that are essential for managing digital assets in a secure and user-friendly way.
+The [orbit.global](https://orbit.global) is the main entry point for users to interact with the Orbit platform. It provides access to the Orbit Wallet application, which is a dapp that allows users to manage their digital assets tailored for multi-approval scenarios. The wallet supports user management, transaction history, permissions management, and other features that are essential for managing digital assets in a secure and user-friendly way.
 
 ## System Overview
 

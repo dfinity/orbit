@@ -319,7 +319,7 @@ watch(
       if (row?.[csvAmountColumn.value] !== undefined) {
         try {
           transfer.amount = amountToBigInt(row[csvAmountColumn.value], props.asset.decimals);
-        } catch (e) {
+        } catch (_e) {
           valid = false;
         }
       }

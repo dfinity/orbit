@@ -21,6 +21,8 @@ const appInitConfig: AppInitConfig = {
   buildMode: import.meta.env.APP_BUILD_MODE || 'production',
   isProduction: !!import.meta.env.PROD,
   apiGatewayUrl: new URL(import.meta.env.PROD ? 'https://icp-api.io' : 'http://localhost:4943'),
+  derivationOrigin: import.meta.env.PROD ? 'https://orbitwallet.io' : undefined,
+  marketingSiteUrl: import.meta.env.APP_MARKETING_SITE_URL,
   locale: {
     default: defaultLocale,
     supportedLocales,

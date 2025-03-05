@@ -58,11 +58,6 @@ export type GetRegistryEntryResult = { 'Ok' : GetRegistryEntryResponse } |
   { 'Err' : ApiError };
 export type GetUserResult = { 'Ok' : { 'user' : User } } |
   { 'Err' : ApiError };
-export interface GetWaitingListResponse {
-  'subscribed_users' : Array<SubscribedUser>,
-}
-export type GetWaitingListResult = { 'Ok' : GetWaitingListResponse } |
-  { 'Err' : ApiError };
 export type HeaderField = [string, string];
 export interface HttpRequest {
   'url' : string,
@@ -167,20 +162,8 @@ export type StationID = Principal;
 export interface SubnetFilter { 'subnet_type' : [] | [string] }
 export type SubnetSelection = { 'Filter' : SubnetFilter } |
   { 'Subnet' : { 'subnet' : Principal } };
-export type SubscribeToWaitingListResult = { 'Ok' : null } |
-  { 'Err' : ApiError };
-export interface SubscribedUser {
-  'user_principal' : Principal,
-  'email' : string,
-}
 export type TimestampRFC3339 = string;
 export type UUID = string;
-export interface UpdateWaitingListInput {
-  'users' : Array<Principal>,
-  'new_status' : UserSubscriptionStatus,
-}
-export type UpdateWaitingListResult = { 'Ok' : null } |
-  { 'Err' : ApiError };
 export interface UploadCanisterModulesInput {
   'station_wasm_module_extra_chunks' : [] | [[] | [WasmModuleExtraChunks]],
   'station_wasm_module' : [] | [Uint8Array | number[]],
@@ -247,7 +230,6 @@ export interface _SERVICE {
     GetRegistryEntryResult
   >,
   'get_user' : ActorMethod<[], GetUserResult>,
-  'get_waiting_list' : ActorMethod<[], GetWaitingListResult>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
   'list_user_stations' : ActorMethod<
     [ListUserStationsInput],
@@ -264,14 +246,6 @@ export interface _SERVICE {
   'register_user' : ActorMethod<[RegisterUserInput], RegisterUserResult>,
   'search_registry' : ActorMethod<[SearchRegistryInput], SearchRegistryResult>,
   'set_user_active' : ActorMethod<[], SetUserActiveResult>,
-  'subscribe_to_waiting_list' : ActorMethod<
-    [string],
-    SubscribeToWaitingListResult
-  >,
-  'update_waiting_list' : ActorMethod<
-    [UpdateWaitingListInput],
-    UpdateWaitingListResult
-  >,
   'upload_canister_modules' : ActorMethod<
     [UploadCanisterModulesInput],
     UploadUploadCanisterModulesInputResult

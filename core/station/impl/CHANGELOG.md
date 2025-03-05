@@ -1,3 +1,21 @@
+## 0.5.0 (2025-03-03)
+
+
+### 🚀 Features
+
+- **marketing:** marketing site home page ([#500](https://github.com/dfinity/orbit/pull/500))
+
+- **docs:** initial docs portal ([#493](https://github.com/dfinity/orbit/pull/493))
+
+- **station:** update monitoring strategy ([#524](https://github.com/dfinity/orbit/pull/524))
+
+
+### ❤️  Thank You
+
+- Jan Hrubes @jedna
+- Kepler Vital
+- olaszakos
+
 ## 0.4.0 (2025-02-26)
 
 

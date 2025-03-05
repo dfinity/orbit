@@ -13,43 +13,6 @@
     </div>
 
     <VForm
-      v-else-if="canDeployStatus === CanDeployStatus.JoinWaitingList"
-      ref="form"
-      class="mt-12"
-      data-test-id="join-waitlist-form"
-      @submit.prevent="joinWaitlist"
-    >
-      <h2 class="mb-6 text-h4">
-        {{ $t('pages.add_station.join_waitlist_title') }}
-      </h2>
-      <p class="text-body-1 mb-6">
-        {{ $t('pages.add_station.join_waitlist_body') }}
-      </p>
-
-      <VTextField
-        v-model="email"
-        type="email"
-        :rules="[requiredRule, validEmail]"
-        :label="$t('pages.add_station.join_waitlist_email_field')"
-        variant="filled"
-        hide-details="auto"
-        :disabled="working"
-        data-test-id="join-waitlist-form-email"
-      />
-      <div class="d-flex align-center ga-4 mt-6">
-        <VBtn
-          color="primary"
-          class=""
-          type="submit"
-          :loading="working"
-          :disabled="working || !isFormValid"
-        >
-          {{ $t('pages.add_station.join_waitlist') }}
-        </VBtn>
-      </div>
-    </VForm>
-
-    <VForm
       v-else-if="canDeployStatus === CanDeployStatus.PickName"
       ref="stationForm"
       class="mt-12"
@@ -101,18 +64,6 @@
     </VForm>
 
     <div
-      v-else-if="canDeployStatus === CanDeployStatus.InWaitingList"
-      class="mt-12"
-      data-test-id="deploy-in-waiting-list"
-    >
-      <h2 class="mb-6 text-h4">
-        {{ $t('pages.add_station.waitlist_pending_title') }}
-      </h2>
-      <p class="text-body-1 mb-6">
-        {{ $t('pages.add_station.waitlist_pending_body') }}
-      </p>
-    </div>
-    <div
       v-else-if="canDeployStatus === CanDeployStatus.NotAllowed"
       class="mt-12"
       data-test-id="deploy-not-allowed"
@@ -131,10 +82,10 @@
       data-test-id="deploy-check-error"
     >
       <h2 class="mb-6 text-h4">
-        {{ $t('pages.add_station.waitlist_check_error_title') }}
+        {{ $t('pages.add_station.deployment_check_error_title') }}
       </h2>
       <p class="text-body-1 mb-6">
-        {{ $t('pages.add_station.waitlist_check_error_body') }}
+        {{ $t('pages.add_station.deployment_check_error_body') }}
       </p>
     </div>
 
@@ -181,15 +132,13 @@ import { useSessionStore } from '~/stores/session.store';
 import { createUserInitialAccount, useStationStore } from '~/stores/station.store';
 import { VFormValidation } from '~/types/helper.types';
 import { maxLengthRule } from '~/utils/form.utils';
-import { requiredRule, validEmail } from '~/utils/form.utils';
+import { requiredRule } from '~/utils/form.utils';
 import { unreachable, variantIs, wait } from '~/utils/helper.utils';
 import { CONTROL_PANEL_USER_STATION_LABEL } from '~/core/constants.core';
 
 enum CanDeployStatus {
   CheckPermissions = 'check_permissions',
   CheckError = 'error',
-  JoinWaitingList = 'join_waitlist',
-  InWaitingList = 'in_waiting_list',
   NotAllowed = 'not_allowed',
   Approved = 'approved',
   QuotaExceeded = 'quota_exceeded',
@@ -218,10 +167,7 @@ const station = useStationStore();
 const app = useAppStore();
 const controlPanelService = services().controlPanel;
 
-const email = ref('');
 const working = ref(false);
-const form = ref<VFormValidation | null>(null);
-const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
 const stationName = ref('');
 const adminName = ref('');
@@ -312,18 +258,6 @@ const deployInitialStation = async (): Promise<void> => {
   }
 };
 
-async function joinWaitlist() {
-  try {
-    working.value = true;
-    await controlPanelService.subscribeToWaitlist(email.value);
-    canDeployStatus.value = CanDeployStatus.InWaitingList;
-    working.value = false;
-  } catch (e: unknown) {
-    app.sendErrorNotification(e);
-    working.value = false;
-  }
-}
-
 async function stationFormSubmit() {
   deploymentStatus.value = DeployStationStatus.Starting;
   canDeployStatus.value = CanDeployStatus.Approved;
@@ -347,9 +281,9 @@ onMounted(async () => {
       } else if (variantIs(canDeploy.NotAllowed, 'Denylisted')) {
         canDeployStatus.value = CanDeployStatus.NotAllowed;
       } else if (variantIs(canDeploy.NotAllowed, 'Pending')) {
-        canDeployStatus.value = CanDeployStatus.InWaitingList;
+        canDeployStatus.value = CanDeployStatus.NotAllowed;
       } else if (variantIs(canDeploy.NotAllowed, 'Unsubscribed')) {
-        canDeployStatus.value = CanDeployStatus.JoinWaitingList;
+        canDeployStatus.value = CanDeployStatus.NotAllowed;
       } else {
         unreachable(canDeploy.NotAllowed);
       }
@@ -365,15 +299,10 @@ onMounted(async () => {
 
     if (variantIs(canDeploy, 'QuotaExceeded')) {
       canDeployStatus.value = CanDeployStatus.QuotaExceeded;
-
       return;
     }
-
-    // this should never happen
-    canDeployStatus.value = CanDeployStatus.CheckError;
   } catch (e: unknown) {
     app.sendErrorNotification(e);
-
     canDeployStatus.value = CanDeployStatus.CheckError;
   }
 });

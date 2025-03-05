@@ -975,12 +975,12 @@ export default {
       add_station_title: 'Comment aimeriez-vous ajouter un portefeuille?',
       option_join_existing_station: 'Rejoindre un portefeuille existant',
       option_deploy_new_station: 'Déployer un nouveau portefeuille',
-      check_permissions_title: 'Vérification du statut de la liste d attente...',
-      join_waitlist_title: 'Rejoindre la liste d attente',
-      join_waitlist_body:
-        "Rejoignez la liste d'attente d'Orbit! Entrez votre email pour obtenir un accès anticipé et des mises à jour exclusives. Votre voyage commence maintenant.",
-      join_waitlist_email_field: 'Entrez votre adresse e-mail',
-      join_waitlist: "S'inscrire maintenant",
+      join_station_title: 'Rejoindre un portefeuille existant',
+      join_station_body:
+        "Contactez le propriétaire pour obtenir l'ID du portefeuille et envoyez-lui votre identité afin qu'un utilisateur puisse être créé pour vous.",
+      join_station_canister_id: 'ID du Portefeuille',
+      join_station_name: 'Nom du Portefeuille',
+      join_station: 'Rejoindre le portefeuille',
 
       station_title: 'Créer un portefeuille',
       station_body:
@@ -988,26 +988,19 @@ export default {
       station_name_field: 'Nom du Portefeuille',
       admin_name_field: "Ton nom d'utilisateur",
 
-      waitlist_pending_title: 'Vous êtes sur la liste d attente!',
-      waitlist_pending_body:
-        'Veuillez attendre l approbation. Vous recevrez un email une fois votre demande approuvée.',
-      waitlist_denied_title: 'Vous avez été refusé l accès.',
-      waitlist_denied_body:
-        'Malheureusement, vous n êtes pas éligible pour rejoindre la liste d attente.',
-
-      waitlist_check_error_title: 'Échec de vérification du statut de la liste d attente',
-      waitlist_check_error_body:
-        "Échec de la vérification du statut de la liste d'attente, veuillez réessayer.",
+      check_permissions_title: "Vérification de l'éligibilité au déploiement...",
 
       quota_exceed_error_title: 'Quota dépassé',
-      quota_exceed_error_body: 'Le nombre maximum de portefeuilles a été atteint.',
+      quota_exceed_error_body:
+        'Vous avez atteint le nombre maximum de portefeuilles que vous pouvez créer.',
 
-      join_station_title: 'Rejoindre un portefeuille existant',
-      join_station_body:
-        "Contactez le propriétaire pour obtenir l'ID du portefeuille et envoyez-lui votre identité afin qu'un utilisateur puisse être créé pour vous.",
-      join_station_canister_id: 'ID du Portefeuille',
-      join_station_name: 'Nom du Portefeuille',
-      join_station: 'Rejoindre le portefeuille',
+      waitlist_denied_title: 'Accès refusé.',
+      waitlist_denied_body:
+        "Malheureusement, vous n'êtes pas éligible pour déployer un portefeuille.",
+
+      deployment_check_error_title: "Échec de la vérification d'éligibilité au déploiement",
+      deployment_check_error_body:
+        "Échec de la vérification d'éligibilité au déploiement, veuillez réessayer.",
 
       status_starting: 'Initialization, veuillez patienter...',
       status_deploying: 'Deploiement de votre portefeuille au Internet Computer ...',
