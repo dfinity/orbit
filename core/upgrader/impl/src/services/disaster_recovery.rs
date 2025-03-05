@@ -399,8 +399,8 @@ impl DisasterRecoveryService {
         if let Err(reason) =
             Self::try_recovery(installer.clone(), station_canister_id, request.operation).await
         {
-            releaser.result = Some(RecoveryResult::Failure(RecoveryFailure { reason }));
             let _ = installer.start(station_canister_id).await;
+            releaser.result = Some(RecoveryResult::Failure(RecoveryFailure { reason }));
         } else {
             releaser.result = Some(RecoveryResult::Success);
         }
