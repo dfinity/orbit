@@ -1,5 +1,8 @@
 use super::TimestampRfc3339;
-use crate::{AccountSeedDTO, DisasterRecoveryCommitteeDTO, MetadataDTO, Sha256HashDTO, UuidDTO};
+use crate::{
+    AccountSeedDTO, AllowDTO, DisasterRecoveryCommitteeDTO, MetadataDTO, RequestPolicyRuleDTO,
+    RequestSpecifierDTO, ResourceDTO, Sha256HashDTO, UserStatusDTO, UuidDTO,
+};
 use candid::{CandidType, Deserialize, Principal};
 use orbit_essentials::types::WasmModuleExtraChunks;
 
@@ -59,9 +62,44 @@ pub struct SystemInfoResponse {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
-pub struct AdminInitInput {
+pub struct UserInitInput {
+    pub id: Option<UuidDTO>,
     pub name: String,
+    pub identities: Vec<UserIdentityInput>,
+    pub groups: Option<Vec<UuidDTO>>,
+    pub status: Option<UserStatusDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct UserIdentityInput {
     pub identity: Principal,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct InitUserGroupInput {
+    pub id: UuidDTO,
+    pub name: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct InitPermissionInput {
+    pub resource: ResourceDTO,
+    pub allow: AllowDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct InitRequestPolicyInput {
+    pub id: Option<UuidDTO>,
+    pub specifier: RequestSpecifierDTO,
+    pub rule: RequestPolicyRuleDTO,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct InitNamedRuleInput {
+    pub id: UuidDTO,
+    pub name: String,
+    pub description: Option<String>,
+    pub rule: RequestPolicyRuleDTO,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
@@ -98,21 +136,35 @@ pub struct InitAssetInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub enum InitialEntries {
+    WithDefaultPolicies {
+        assets: Vec<InitAssetInput>,
+        accounts: Vec<InitAccountInput>,
+    },
+    Complete {
+        permissions: Vec<InitPermissionInput>,
+        assets: Vec<InitAssetInput>,
+        request_policies: Vec<InitRequestPolicyInput>,
+        user_groups: Vec<InitUserGroupInput>,
+        accounts: Vec<InitAccountInput>,
+        named_rules: Vec<InitNamedRuleInput>,
+    },
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct SystemInit {
     /// The station name.
     pub name: String,
-    /// The initial admins.
-    pub admins: Vec<AdminInitInput>,
-    /// The quorum of admin approvals required in initial policies.
-    pub quorum: Option<u16>,
     /// The upgrader configuration.
     pub upgrader: SystemUpgraderInput,
     /// Optional fallback controller for the station and upgrader canisters.
     pub fallback_controller: Option<Principal>,
-    /// Optionally set the initial accounts.
-    pub accounts: Option<Vec<InitAccountInput>>,
-    /// Optionally set the initial accounts.
-    pub assets: Option<Vec<InitAssetInput>>,
+    /// The initial users.
+    pub users: Vec<UserInitInput>,
+    /// The initial quorum.
+    pub quorum: Option<u16>,
+    /// The initial database entries.
+    pub entries: Option<InitialEntries>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]

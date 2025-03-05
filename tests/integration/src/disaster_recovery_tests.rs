@@ -21,7 +21,7 @@ use serde::Deserialize;
 use station_api::{
     AccountDTO, AddAccountOperationInput, AllowDTO, DisasterRecoveryCommitteeDTO, HealthStatus,
     ListAccountsResponse, RequestOperationDTO, RequestOperationInput, RequestPolicyRuleDTO,
-    SetDisasterRecoveryOperationInput, SystemInit, SystemInstall, SystemUpgrade,
+    SetDisasterRecoveryOperationInput, SystemInit, SystemInstall, SystemUpgrade, UserIdentityInput,
 };
 use std::collections::BTreeMap;
 use std::str::FromStr;
@@ -503,25 +503,42 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                 module_extra_chunks: Some(module_extra_chunks),
                 arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                     name: "Station".to_string(),
-                    admins: vec![
-                        station_api::AdminInitInput {
-                            identity: WALLET_ADMIN_USER,
+                    users: vec![
+                        station_api::UserInitInput {
+                            identities: vec![UserIdentityInput {
+                                identity: WALLET_ADMIN_USER,
+                            }],
                             name: "updated-admin-name".to_string(),
+                            groups: None,
+                            id: None,
+                            status: None,
                         },
-                        station_api::AdminInitInput {
-                            identity: Principal::from_slice(&[95; 29]),
+                        station_api::UserInitInput {
+                            identities: vec![UserIdentityInput {
+                                identity: Principal::from_slice(&[95; 29]),
+                            }],
                             name: "another-admin".to_string(),
+                            groups: None,
+                            id: None,
+                            status: None,
                         },
-                        station_api::AdminInitInput {
-                            identity: Principal::from_slice(&[97; 29]),
+                        station_api::UserInitInput {
+                            identities: vec![UserIdentityInput {
+                                identity: Principal::from_slice(&[97; 29]),
+                            }],
                             name: "yet-another-admin".to_string(),
-                        }
+                            groups: None,
+                            id: None,
+                            status: None,
+                        },
                     ],
-                    quorum: None,
                     fallback_controller: None,
                     upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
-                    accounts: Some(init_accounts_input),
-                    assets: Some(vec![init_assets_input]),
+                    quorum: None,
+                    entries: Some(station_api::InitialEntries::WithDefaultPolicies {
+                        accounts: init_accounts_input,
+                        assets: vec![init_assets_input],
+                    }),
                 }))
                 .unwrap(),
                 install_mode: upgrader_api::InstallMode::Reinstall,
@@ -686,15 +703,19 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
                 module_extra_chunks: Some(module_extra_chunks),
                 arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                     name: "Station".to_string(),
-                    admins: vec![station_api::AdminInitInput {
-                        identity: WALLET_ADMIN_USER,
+                    users: vec![station_api::UserInitInput {
+                        identities: vec![UserIdentityInput {
+                            identity: WALLET_ADMIN_USER,
+                        }],
                         name: "updated-admin-name".to_string(),
+                        groups: None,
+                        id: None,
+                        status: None,
                     }],
-                    quorum: None,
                     fallback_controller: Some(fallback_controller),
                     upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
-                    accounts: None,
-                    assets: None,
+                    quorum: None,
+                    entries: None,
                 }))
                 .unwrap(),
                 install_mode: upgrader_api::InstallMode::Reinstall,
@@ -904,7 +925,6 @@ fn test_disaster_recovery_failing() {
     // intentionally bad arg to fail Upgrade
     let arg = SystemInstall::Init(SystemInit {
         fallback_controller: None,
-        quorum: None,
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: vec![],
@@ -912,9 +932,9 @@ fn test_disaster_recovery_failing() {
             },
         ),
         name: "Station".to_string(),
-        admins: vec![],
-        accounts: None,
-        assets: None,
+        users: vec![],
+        quorum: None,
+        entries: None,
     });
 
     // install with intentionally bad arg to fail
