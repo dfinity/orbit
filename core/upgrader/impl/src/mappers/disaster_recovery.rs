@@ -1,9 +1,11 @@
 use crate::model::{
     DisasterRecovery, DisasterRecoveryV0, RequestDisasterRecoveryInstallCodeLog,
-    RequestDisasterRecoveryOperationLog, RequestDisasterRecoverySnapshotLog,
-    StationRecoveryRequest, StationRecoveryRequestInstallCodeOperation,
+    RequestDisasterRecoveryOperationLog, RequestDisasterRecoveryRestoreLog,
+    RequestDisasterRecoverySnapshotLog, StationRecoveryRequest,
+    StationRecoveryRequestInstallCodeOperation,
     StationRecoveryRequestInstallCodeOperationFootprint, StationRecoveryRequestOperation,
-    StationRecoveryRequestOperationFootprint, StationRecoveryRequestSnapshotOperation,
+    StationRecoveryRequestOperationFootprint, StationRecoveryRequestRestoreOperation,
+    StationRecoveryRequestRestoreOperationFootprint, StationRecoveryRequestSnapshotOperation,
     StationRecoveryRequestSnapshotOperationFootprint, StationRecoveryRequestV0,
 };
 use orbit_essentials::utils::sha256_hash;
@@ -37,6 +39,12 @@ impl From<upgrader_api::RequestDisasterRecoveryInput> for StationRecoveryRequest
                     force: snapshot.force,
                 })
             }
+            upgrader_api::RequestDisasterRecoveryInput::Restore(snapshot) => {
+                StationRecoveryRequestOperation::Restore(StationRecoveryRequestRestoreOperation {
+                    snapshot_id: hex::decode(snapshot.snapshot_id)
+                        .expect("Failed to parse `snapshot_id`"),
+                })
+            }
         }
     }
 }
@@ -58,6 +66,13 @@ impl From<&StationRecoveryRequestOperation> for StationRecoveryRequestOperationF
                     StationRecoveryRequestSnapshotOperationFootprint {
                         replace_snapshot: snapshot.replace_snapshot.clone(),
                         force: snapshot.force,
+                    },
+                )
+            }
+            StationRecoveryRequestOperation::Restore(ref snapshot) => {
+                StationRecoveryRequestOperationFootprint::Restore(
+                    StationRecoveryRequestRestoreOperationFootprint {
+                        snapshot_id: snapshot.snapshot_id.clone(),
                     },
                 )
             }
@@ -83,6 +98,11 @@ impl From<&StationRecoveryRequestOperation> for RequestDisasterRecoveryOperation
                     force: snapshot.force,
                 })
             }
+            StationRecoveryRequestOperation::Restore(ref snapshot) => {
+                RequestDisasterRecoveryOperationLog::Restore(RequestDisasterRecoveryRestoreLog {
+                    snapshot_id: hex::encode(&snapshot.snapshot_id),
+                })
+            }
         }
     }
 }
@@ -104,6 +124,13 @@ impl From<&StationRecoveryRequestOperation> for upgrader_api::StationRecoveryReq
                     upgrader_api::StationRecoveryRequestSnapshotOperation {
                         replace_snapshot: snapshot.replace_snapshot.as_ref().map(hex::encode),
                         force: snapshot.force,
+                    },
+                )
+            }
+            StationRecoveryRequestOperation::Restore(ref snapshot) => {
+                upgrader_api::StationRecoveryRequestOperation::Restore(
+                    upgrader_api::StationRecoveryRequestRestoreOperation {
+                        snapshot_id: hex::encode(&snapshot.snapshot_id),
                     },
                 )
             }

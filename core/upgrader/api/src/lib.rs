@@ -172,9 +172,15 @@ pub struct RequestDisasterRecoverySnapshotInput {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct RequestDisasterRecoveryRestoreInput {
+    pub snapshot_id: String,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum RequestDisasterRecoveryInput {
     InstallCode(RequestDisasterRecoveryInstallCodeInput),
     Snapshot(RequestDisasterRecoverySnapshotInput),
+    Restore(RequestDisasterRecoveryRestoreInput),
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -226,9 +232,15 @@ pub struct StationRecoveryRequestSnapshotOperation {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub struct StationRecoveryRequestRestoreOperation {
+    pub snapshot_id: String,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub enum StationRecoveryRequestOperation {
     InstallCode(StationRecoveryRequestInstallCodeOperation),
     Snapshot(StationRecoveryRequestSnapshotOperation),
+    Restore(StationRecoveryRequestRestoreOperation),
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]

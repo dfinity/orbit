@@ -180,9 +180,14 @@ type RequestDisasterRecoverySnapshotInput = record {
   // Should a snapshot be taken if the station fails to stop.
   force : bool;
 };
+type RequestDisasterRecoveryRestoreInput = record {
+  // A snapshot to be restored.
+  snapshot_id : text;
+};
 type RequestDisasterRecoveryInput = variant {
   InstallCode : RequestDisasterRecoveryInstallCodeInput;
   Snapshot : RequestDisasterRecoverySnapshotInput;
+  Restore : RequestDisasterRecoveryRestoreInput;
 };
 
 type InstallMode = variant {
@@ -252,9 +257,15 @@ type StationRecoveryRequestSnapshotOperation = record {
   force : bool;
 };
 
+type StationRecoveryRequestRestoreOperation = record {
+  // A snapshot to be restored.
+  snapshot_id : text;
+};
+
 type StationRecoveryRequestOperation = variant {
   InstallCode : StationRecoveryRequestInstallCodeOperation;
   Snapshot : StationRecoveryRequestSnapshotOperation;
+  Restore : StationRecoveryRequestRestoreOperation;
 };
 
 // Request to recover the station.

@@ -42,9 +42,15 @@ pub struct RequestDisasterRecoverySnapshotLog {
 }
 
 #[derive(Serialize)]
+pub struct RequestDisasterRecoveryRestoreLog {
+    pub snapshot_id: String,
+}
+
+#[derive(Serialize)]
 pub enum RequestDisasterRecoveryOperationLog {
     InstallCode(RequestDisasterRecoveryInstallCodeLog),
     Snapshot(RequestDisasterRecoverySnapshotLog),
+    Restore(RequestDisasterRecoveryRestoreLog),
 }
 
 impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
@@ -63,6 +69,9 @@ impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
                     "Snapshot with replace_snapshot {:?} and force {}",
                     snapshot.replace_snapshot, snapshot.force
                 )
+            }
+            RequestDisasterRecoveryOperationLog::Restore(snapshot) => {
+                write!(f, "Restore snapshot_id {}", snapshot.snapshot_id,)
             }
         }
     }
