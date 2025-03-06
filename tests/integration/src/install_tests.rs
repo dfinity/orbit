@@ -732,7 +732,7 @@ fn assert_initial_permissions(
     env: &PocketIc,
     canister_id: Principal,
     requester: Principal,
-    expected_permissions: &Vec<InitPermissionInput>,
+    expected_permissions: &[InitPermissionInput],
     expected_extra_permissions: usize,
 ) -> Result<(), String> {
     let listed_permissions = list_permissions(env, canister_id, requester)
@@ -757,7 +757,7 @@ fn assert_initial_request_policies(
     env: &PocketIc,
     canister_id: Principal,
     requester: Principal,
-    expected_request_policies: &Vec<InitRequestPolicyInput>,
+    expected_request_policies: &[InitRequestPolicyInput],
     expected_extra_request_policies: usize,
 ) -> Result<(), String> {
     let listed_request_policies = list_request_policies(env, canister_id, requester)
@@ -849,7 +849,7 @@ fn assert_initial_assets(
     Ok(())
 }
 
-fn compare_arrays<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {
+fn compare_arrays<T: PartialEq>(a: &[T], b: &[T]) -> bool {
     a.len() == b.len() && a.iter().all(|item| b.contains(item))
 }
 
@@ -879,7 +879,7 @@ fn assert_initial_accounts(
             .find(|account| account.name == expected_account.name)
             .ok_or(format!("account {} not found", expected_account.name))?;
 
-        if expected_account.assets.len() > 0 && account.addresses.len() == 0 {
+        if !expected_account.assets.is_empty() && account.addresses.is_empty() {
             return Err(format!(
                 "account {} has no addresses, expected some",
                 expected_account.name
@@ -893,7 +893,7 @@ fn assert_initial_accounts(
                     .assets
                     .iter()
                     .map(|asset| asset.asset_id.clone())
-                    .collect(),
+                    .collect::<Vec<String>>(),
                 &expected_account.assets,
             )
         {
@@ -934,21 +934,21 @@ fn assert_default_policies_and_permissions_exist(
         .0
         .expect("failed to get request policies");
 
-    assert!(listed_policies.policies.len() > 0);
+    assert!(!listed_policies.policies.is_empty());
 
     let listed_permissions = list_permissions(env, canister_id, requester)
         .expect("failed to get permissions")
         .0
         .expect("failed to get permissions");
 
-    assert!(listed_permissions.permissions.len() > 0);
+    assert!(!listed_permissions.permissions.is_empty());
 
     let listed_named_rules = list_named_rules(env, canister_id, requester)
         .expect("failed to get named rules")
         .0
         .expect("failed to get named rules");
 
-    assert!(listed_named_rules.named_rules.len() > 0);
+    assert!(!listed_named_rules.named_rules.is_empty());
 }
 
 fn assert_default_assets_exist(env: &PocketIc, canister_id: Principal, requester: Principal) {
@@ -957,5 +957,5 @@ fn assert_default_assets_exist(env: &PocketIc, canister_id: Principal, requester
         .0
         .expect("failed to get assets");
 
-    assert!(listed_assets.assets.len() > 0);
+    assert!(!listed_assets.assets.is_empty());
 }
