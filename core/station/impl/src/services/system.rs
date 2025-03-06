@@ -12,7 +12,7 @@ use crate::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
         Asset, Blockchain, CanisterInstallMode, CanisterUpgradeModeArgs,
         ManageSystemInfoOperationInput, Metadata, RequestId, RequestKey, RequestOperation,
-        RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks,
+        RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks, ADMIN_GROUP_ID,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY,
@@ -174,7 +174,7 @@ impl SystemService {
     ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
 
-        ic_cdk::call(
+        ic_cdk::call::<_, ()>(
             upgrader_canister_id,
             "trigger_upgrade",
             (UpgradeParams {
@@ -267,10 +267,6 @@ impl SystemService {
         ) -> Result<(), String> {
             use crate::core::ic_cdk::api::id as self_canister_id;
 
-            // registers the default canister configurations such as policies and user groups.
-            print("Adding initial canister configurations");
-            install_canister_handlers::init_post_process(&init).await?;
-
             print("Init upgrader canister");
             let canister_id = self_canister_id();
             let mut upgrader_controllers = vec![canister_id];
@@ -295,16 +291,40 @@ impl SystemService {
             let quorum = calc_initial_quorum(initial_user_count, init.quorum);
 
             match init.entries {
-                Some(InitialEntries::WithDefaultPolicies { accounts, assets })
-                | Some(InitialEntries::Complete {
+                Some(InitialEntries::WithDefaultPolicies { accounts, assets }) => {
+                    print("Adding initial accounts");
+                    // initial accounts are added in the post process work timer, since they might do inter-canister calls
+                    install_canister_handlers::set_initial_accounts(
+                        accounts
+                            .into_iter()
+                            .map(|account| (account, None))
+                            .collect(),
+                        &assets,
+                        quorum,
+                    )
+                    .await?;
+                }
+                Some(InitialEntries::Complete {
                     accounts, assets, ..
                 }) => {
                     print("Adding initial accounts");
                     // initial accounts are added in the post process work timer, since they might do inter-canister calls
-                    install_canister_handlers::set_initial_accounts(accounts, &assets, quorum)
-                        .await?;
+                    install_canister_handlers::set_initial_accounts(
+                        accounts
+                            .into_iter()
+                            .map(|init_with_permissions| {
+                                (
+                                    init_with_permissions.account_init,
+                                    Some(init_with_permissions.permissions),
+                                )
+                            })
+                            .collect(),
+                        &assets,
+                        quorum,
+                    )
+                    .await?;
                 }
-                _ => (),
+                _ => {}
             }
 
             if SYSTEM_SERVICE.is_healthy() {
@@ -396,14 +416,22 @@ impl SystemService {
             })?;
         }
 
+        let admin_quorum = calc_initial_quorum(input.users.len() as u16, input.quorum);
+
         match &input.entries {
             Some(InitialEntries::WithDefaultPolicies { assets, .. }) => {
                 // adds the default admin group
                 init_canister_sync_handlers::add_default_groups();
                 // registers the admins of the canister
-                init_canister_sync_handlers::set_initial_users(input.users.clone())?;
+                init_canister_sync_handlers::set_initial_users(
+                    input.users.clone(),
+                    &[*ADMIN_GROUP_ID],
+                )?;
                 // adds the initial assets
                 init_canister_sync_handlers::set_initial_assets(assets).await?;
+
+                // registers the default canister configurations such as policies and user groups.
+                init_canister_sync_handlers::init_default_permissions_and_policies(admin_quorum)?;
 
                 // initial accounts are added in the post process work timer, since they might do inter-canister calls
             }
@@ -415,11 +443,17 @@ impl SystemService {
                 assets,
                 ..
             }) => {
+                print("adding initial user groups");
                 init_canister_sync_handlers::set_initial_user_groups(user_groups).await?;
-                init_canister_sync_handlers::set_initial_users(input.users.clone())?;
+                print("adding initial users");
+                init_canister_sync_handlers::set_initial_users(input.users.clone(), &[])?;
+                print("adding initial named rules");
                 init_canister_sync_handlers::set_initial_named_rules(named_rules)?;
+                print("adding initial permissions");
                 init_canister_sync_handlers::set_initial_permissions(permissions).await?;
+                print("adding initial assets");
                 init_canister_sync_handlers::set_initial_assets(assets).await?;
+                print("adding initial request policies");
                 init_canister_sync_handlers::set_initial_request_policies(request_policies)?;
                 // accounts in post process timer
             }
@@ -427,7 +461,14 @@ impl SystemService {
                 // // adds the default admin group
                 init_canister_sync_handlers::add_default_groups();
                 // registers the admins of the canister
-                init_canister_sync_handlers::set_initial_users(input.users.clone())?;
+                init_canister_sync_handlers::set_initial_users(
+                    input.users.clone(),
+                    &[*ADMIN_GROUP_ID],
+                )?;
+
+                // registers the default canister configurations such as policies and user groups.
+                init_canister_sync_handlers::init_default_permissions_and_policies(admin_quorum)?;
+
                 // // add default assets
                 init_canister_sync_handlers::add_default_assets();
             }
@@ -559,6 +600,7 @@ mod init_canister_sync_handlers {
     use std::cmp::Ordering;
 
     use crate::core::ic_cdk::{api::print, next_time};
+    use crate::core::init::{default_policies, get_default_named_rules, DEFAULT_PERMISSIONS};
     use crate::mappers::blockchain::BlockchainMapper;
     use crate::mappers::HelperMapper;
     use crate::models::request_specifier::RequestSpecifier;
@@ -566,9 +608,9 @@ mod init_canister_sync_handlers {
     use crate::models::{
         AddAssetOperationInput, AddNamedRuleOperationInput, AddRequestPolicyOperationInput,
         AddUserGroupOperationInput, AddUserOperationInput, Asset, EditPermissionOperationInput,
-        UserStatus, OPERATOR_GROUP_ID,
+        NamedRule, UserStatus, OPERATOR_GROUP_ID,
     };
-    use crate::repositories::ASSET_REPOSITORY;
+    use crate::repositories::{ASSET_REPOSITORY, NAMED_RULE_REPOSITORY};
     use crate::services::permission::PERMISSION_SERVICE;
     use crate::services::{
         ASSET_SERVICE, NAMED_RULE_SERVICE, REQUEST_POLICY_SERVICE, USER_GROUP_SERVICE, USER_SERVICE,
@@ -818,7 +860,10 @@ mod init_canister_sync_handlers {
     }
 
     /// Registers the newly added admins of the canister.
-    pub fn set_initial_users(users: Vec<UserInitInput>) -> Result<(), ApiError> {
+    pub fn set_initial_users(
+        users: Vec<UserInitInput>,
+        default_groups: &[UUID],
+    ) -> Result<(), ApiError> {
         print(format!("Registering {} admin users", users.len()));
         for user in users {
             let user_id = user
@@ -842,9 +887,9 @@ mod init_canister_sync_handlers {
                                         .map(|uuid| uuid.as_bytes().to_owned())
                                 })
                                 .collect::<Result<Vec<_>, _>>()
-                                .unwrap_or_else(|_| vec![*ADMIN_GROUP_ID])
+                                .unwrap_or_else(|_| default_groups.to_vec())
                         })
-                        .unwrap_or_else(|| vec![*ADMIN_GROUP_ID]),
+                        .unwrap_or_else(|| default_groups.to_vec()),
                     name: user.name.to_owned(),
                     status: user
                         .status
@@ -865,50 +910,9 @@ mod init_canister_sync_handlers {
         }
         Ok(())
     }
-}
-
-// Calculates the initial quorum based on the number of admins and the provided quorum, if not provided
-// the quorum is set to the majority of the admins.
-#[cfg(any(target_arch = "wasm32", test))]
-pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
-    quorum.unwrap_or(admin_count / 2 + 1).clamp(1, admin_count)
-}
-
-#[cfg(target_arch = "wasm32")]
-mod install_canister_handlers {
-    use crate::core::ic_cdk::api::id as self_canister_id;
-    use crate::core::init::{default_policies, get_default_named_rules, DEFAULT_PERMISSIONS};
-    use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
-    use crate::mappers::blockchain::BlockchainMapper;
-    use crate::mappers::HelperMapper;
-    use crate::models::permission::Allow;
-    use crate::models::request_specifier::UserSpecifier;
-    use crate::models::{
-        AddAccountOperationInput, AddAssetOperationInput, AddRequestPolicyOperationInput,
-        CycleObtainStrategy, EditPermissionOperationInput, MonitorExternalCanisterStrategy,
-        MonitoringExternalCanisterEstimatedRuntimeInput, NamedRule, RequestPolicyRule,
-        ADMIN_GROUP_ID,
-    };
-    use crate::repositories::{ASSET_REPOSITORY, NAMED_RULE_REPOSITORY};
-    use crate::services::permission::PERMISSION_SERVICE;
-    use crate::services::{ACCOUNT_SERVICE, ASSET_SERVICE};
-    use crate::services::{EXTERNAL_CANISTER_SERVICE, REQUEST_POLICY_SERVICE};
-    use candid::{Encode, Principal};
-    use ic_cdk::api::management_canister::main::{self as mgmt};
-    use ic_cdk::{id, print};
-    use orbit_essentials::model::ModelKey;
-
-    use crate::services::cycle_manager::CYCLE_MANAGER;
-    use orbit_essentials::api::ApiError;
-    use orbit_essentials::repository::Repository;
-    use orbit_essentials::types::UUID;
-    use station_api::{InitAccountInput, InitAssetInput, SystemInit};
-    use uuid::Uuid;
 
     /// Registers the default configurations for the canister.
-    pub async fn init_post_process(init: &SystemInit) -> Result<(), String> {
-        let admin_quorum = super::calc_initial_quorum(init.users.len() as u16, init.quorum);
-
+    pub fn init_default_permissions_and_policies(admin_quorum: u16) -> Result<(), ApiError> {
         let (regular_named_rule_config, admin_named_rule_config) =
             get_default_named_rules(admin_quorum);
 
@@ -933,39 +937,97 @@ mod install_canister_handlers {
 
         // adds the default request policies which sets safe defaults for the canister
         for policy in policies_to_create.iter() {
-            REQUEST_POLICY_SERVICE
-                .add_request_policy(AddRequestPolicyOperationInput {
-                    specifier: policy.0.to_owned(),
-                    rule: policy.1.to_owned(),
-                })
-                .map_err(|e| format!("Failed to add default request policy: {:?}", e))?;
+            REQUEST_POLICY_SERVICE.add_request_policy(AddRequestPolicyOperationInput {
+                specifier: policy.0.to_owned(),
+                rule: policy.1.to_owned(),
+            })?;
         }
 
         // adds the default permissions which sets safe defaults for the canister
         for policy in DEFAULT_PERMISSIONS.iter() {
             let allow = policy.0.to_owned();
-            PERMISSION_SERVICE
-                .edit_permission(EditPermissionOperationInput {
-                    auth_scope: Some(allow.auth_scope),
-                    user_groups: Some(allow.user_groups),
-                    users: Some(allow.users),
-                    resource: policy.1.to_owned(),
-                })
-                .map_err(|e| format!("Failed to add default permission: {:?}", e))?;
+            PERMISSION_SERVICE.edit_permission(EditPermissionOperationInput {
+                auth_scope: Some(allow.auth_scope),
+                user_groups: Some(allow.user_groups),
+                users: Some(allow.users),
+                resource: policy.1.to_owned(),
+            })?;
         }
 
         Ok(())
     }
+}
+
+// Calculates the initial quorum based on the number of admins and the provided quorum, if not provided
+// the quorum is set to the majority of the admins.
+pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
+    quorum.unwrap_or(admin_count / 2 + 1).clamp(1, admin_count)
+}
+
+#[cfg(target_arch = "wasm32")]
+mod install_canister_handlers {
+    use crate::core::ic_cdk::api::id as self_canister_id;
+    use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
+    use crate::mappers::HelperMapper;
+    use crate::models::permission::Allow;
+    use crate::models::request_specifier::UserSpecifier;
+    use crate::models::{
+        AddAccountOperationInput, CycleObtainStrategy, MonitorExternalCanisterStrategy,
+        MonitoringExternalCanisterEstimatedRuntimeInput, RequestPolicyRule, ADMIN_GROUP_ID,
+    };
+    use crate::repositories::ASSET_REPOSITORY;
+    use crate::services::cycle_manager::CYCLE_MANAGER;
+    use crate::services::ACCOUNT_SERVICE;
+    use crate::services::EXTERNAL_CANISTER_SERVICE;
+    use candid::{Encode, Principal};
+    use ic_cdk::api::management_canister::main::{self as mgmt};
+    use ic_cdk::{id, print};
+    use orbit_essentials::repository::Repository;
+    use orbit_essentials::types::UUID;
+    use station_api::{InitAccountInput, InitAccountPermissionsInput, InitAssetInput};
+    use uuid::Uuid;
 
     // Registers the initial accounts of the canister during the canister initialization.
     pub async fn set_initial_accounts(
-        accounts: Vec<InitAccountInput>,
+        accounts: Vec<(InitAccountInput, Option<InitAccountPermissionsInput>)>,
         initial_assets: &Vec<InitAssetInput>,
         quorum: u16,
     ) -> Result<(), String> {
         let add_accounts = accounts
             .into_iter()
-            .map(|account| {
+            .map(|(account, permissions)| {
+                let (
+                    transfer_request_policy,
+                    configs_request_policy,
+                    read_permission,
+                    configs_permission,
+                    transfer_permission,
+                ) = permissions
+                    .map(|permissions| {
+                        (
+                            permissions.transfer_request_policy.map(|rule| rule.into()),
+                            permissions.configs_request_policy.map(|rule| rule.into()),
+                            permissions.read_permission.into(),
+                            permissions.configs_permission.into(),
+                            permissions.transfer_permission.into(),
+                        )
+                    })
+                    .unwrap_or_else(|| {
+                        (
+                            Some(RequestPolicyRule::Quorum(
+                                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                                quorum,
+                            )),
+                            Some(RequestPolicyRule::Quorum(
+                                UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
+                                quorum,
+                            )),
+                            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+                            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+                            Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+                        )
+                    });
+
                 let input = AddAccountOperationInput {
                     name: account.name,
                     assets: account
@@ -978,17 +1040,11 @@ mod install_canister_handlers {
                         })
                         .collect(),
                     metadata: account.metadata.into(),
-                    transfer_request_policy: Some(RequestPolicyRule::Quorum(
-                        UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                        quorum,
-                    )),
-                    configs_request_policy: Some(RequestPolicyRule::Quorum(
-                        UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                        quorum,
-                    )),
-                    read_permission: Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-                    configs_permission: Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-                    transfer_permission: Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+                    transfer_request_policy,
+                    configs_request_policy,
+                    read_permission,
+                    configs_permission,
+                    transfer_permission,
                 };
 
                 (

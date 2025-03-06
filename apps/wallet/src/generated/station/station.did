@@ -2750,6 +2750,16 @@ type InitAccountInput = record {
   assets : vec UUID;
   // Metadata associated with the account (e.g. `{"contract": "0x1234", "symbol": "ANY"}`).
   metadata : vec AccountMetadata;
+  // Who can read the account information.
+  read_permission : Allow;
+  // Who can request updates to the account.
+  configs_permission : Allow;
+  // Who can request transfers from the account.
+  transfer_permission : Allow;
+  // The approval policy for updates to the account.
+  configs_request_policy : opt RequestPolicyRule;
+  // The approval policy for transfers from the account.
+  transfer_request_policy : opt RequestPolicyRule;
 };
 
 // The initial assets to create when initializing the canister for the first time, e.g., after disaster recovery.

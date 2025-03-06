@@ -2744,6 +2744,29 @@ type InitAccountInput = record {
   metadata : vec AccountMetadata;
 };
 
+// The permissions for the account.
+type InitAccountPermissionsInput = record {
+  // Who can read the account information.
+  read_permission : Allow;
+  // Who can request updates to the account.
+  configs_permission : Allow;
+  // Who can request transfers from the account.
+  transfer_permission : Allow;
+  // The approval policy for updates to the account.
+  configs_request_policy : opt RequestPolicyRule;
+  // The approval policy for transfers from the account.
+  transfer_request_policy : opt RequestPolicyRule;
+};
+
+// The initial account to create when initializing the canister for the first time.
+type InitAccountWithPermissionsInput = record {
+  // The initial account to create.
+  account_init : InitAccountInput;
+  // The permissions for the account.
+  permissions : InitAccountPermissionsInput;
+};
+
+
 // The initial assets to create when initializing the canister for the first time, e.g., after disaster recovery.
 type InitAssetInput = record {
   // The UUID of the asset, if not provided a new UUID will be generated.
@@ -2835,7 +2858,7 @@ type InitalEntries = variant {
     permissions : vec InitPermissionInput;
     request_policies : vec InitRequestPolicyInput;
     named_rules : vec InitNamedRuleInput;
-    accounts : vec InitAccountInput;
+    accounts : vec InitAccountWithPermissionsInput;
     assets : vec InitAssetInput;
   };
 };

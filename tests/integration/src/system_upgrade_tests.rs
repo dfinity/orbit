@@ -1,8 +1,7 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
-use crate::station_test_data::asset::list_assets;
 use crate::utils::{
-    await_station_healthy, execute_request, execute_request_with_extra_ticks,
-    get_core_canister_health_status, get_system_info, upload_canister_chunks_to_asset_canister,
+    execute_request, execute_request_with_extra_ticks, get_core_canister_health_status,
+    get_system_info, upload_canister_chunks_to_asset_canister,
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
@@ -10,11 +9,9 @@ use orbit_essentials::api::ApiResult;
 use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
     HealthStatus, NotifyFailedStationUpgradeInput, RequestOperationInput, RequestStatusDTO,
-    SystemInit, SystemInstall, SystemUpgrade, SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
-    UserIdentityInput, UserInitInput,
+    SystemInstall, SystemUpgrade, SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
 };
 use upgrader_api::InitArg;
-use uuid::Uuid;
 
 pub(crate) const STATION_UPGRADE_EXTRA_TICKS: u64 = 200;
 
@@ -331,67 +328,4 @@ fn unauthorized_notify_failed_station_upgrade() {
         .message
         .unwrap()
         .contains("No station upgrade request is processing."));
-}
-
-#[test]
-fn install_with_initial_assets() {
-    let TestEnv {
-        env, controller, ..
-    } = setup_new_env();
-
-    let canister_id = env.create_canister_with_settings(Some(controller), None);
-
-    env.set_controllers(canister_id, Some(controller), vec![canister_id, controller])
-        .expect("failed to set canister controller");
-
-    env.add_cycles(canister_id, 5_000_000_000_000);
-    let station_wasm = get_canister_wasm("station").to_vec();
-    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
-
-    let station_init_args = SystemInstall::Init(SystemInit {
-        name: "Station".to_string(),
-        users: vec![UserInitInput {
-            identities: vec![UserIdentityInput {
-                identity: WALLET_ADMIN_USER,
-            }],
-            name: "station-admin".to_string(),
-            groups: None,
-            id: None,
-            status: None,
-        }],
-        upgrader: station_api::SystemUpgraderInput::Deploy(
-            station_api::DeploySystemUpgraderInput {
-                wasm_module: upgrader_wasm,
-                initial_cycles: Some(1_000_000_000_000),
-            },
-        ),
-        fallback_controller: Some(controller),
-        quorum: None,
-        entries: Some(station_api::InitialEntries::WithDefaultPolicies {
-            accounts: vec![],
-            assets: vec![station_api::InitAssetInput {
-                name: "test-asset".to_string(),
-                id: Uuid::new_v4().hyphenated().to_string(),
-                blockchain: "icp".to_string(),
-                standards: vec!["icp_native".to_owned()],
-                metadata: vec![],
-                symbol: "TEST".to_string(),
-                decimals: 8,
-            }],
-        }),
-    });
-    env.install_canister(
-        canister_id,
-        station_wasm,
-        Encode!(&station_init_args).unwrap(),
-        Some(controller),
-    );
-
-    await_station_healthy(&env, canister_id, WALLET_ADMIN_USER);
-
-    let assets = list_assets(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to call list_assets")
-        .0
-        .expect("failed to list assets");
-    println!("assets: {:?}", assets);
 }

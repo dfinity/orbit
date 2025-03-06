@@ -125,6 +125,21 @@ pub struct InitAccountInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct InitAccountPermissionsInput {
+    pub read_permission: AllowDTO,
+    pub configs_permission: AllowDTO,
+    pub transfer_permission: AllowDTO,
+    pub configs_request_policy: Option<RequestPolicyRuleDTO>,
+    pub transfer_request_policy: Option<RequestPolicyRuleDTO>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
+pub struct InitAccountWithPermissionsInput {
+    pub account_init: InitAccountInput,
+    pub permissions: InitAccountPermissionsInput,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct InitAssetInput {
     pub id: UuidDTO,
     pub name: String,
@@ -146,7 +161,7 @@ pub enum InitialEntries {
         assets: Vec<InitAssetInput>,
         request_policies: Vec<InitRequestPolicyInput>,
         user_groups: Vec<InitUserGroupInput>,
-        accounts: Vec<InitAccountInput>,
+        accounts: Vec<InitAccountWithPermissionsInput>,
         named_rules: Vec<InitNamedRuleInput>,
     },
 }
