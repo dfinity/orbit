@@ -145,7 +145,7 @@ impl DeployService {
                 fallback_controller: Some(NNS_ROOT_CANISTER_ID),
                 entries: None,
                 users: intial_users,
-                quorum: None,
+                quorum: Some(1),
             }))
             .map_err(|err| DeployError::Failed {
                 reason: err.to_string(),
