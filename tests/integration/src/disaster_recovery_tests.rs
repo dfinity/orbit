@@ -16,6 +16,7 @@ use crate::TestEnv;
 use candid::{CandidType, Encode, Principal};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::utils::sha256_hash;
+use pocket_ic::management_canister::CanisterStatusResultStatus;
 use pocket_ic::{query_candid_as, update_candid_as, PocketIc};
 use serde::Deserialize;
 use station_api::{
@@ -1134,7 +1135,7 @@ fn test_disaster_recovery_via_canister_snapshots() {
     request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, prune_request)
         .expect("Failed to request disaster recovery");
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
-    let status = canister_status(&env, Some(upgrader_id), canister_ids.station);
+    let status = canister_status(&env, Some(NNS_ROOT_CANISTER_ID), canister_ids.station);
     assert_eq!(status.module_hash, None);
 
     // restore the station from its snapshot
@@ -1146,7 +1147,7 @@ fn test_disaster_recovery_via_canister_snapshots() {
     request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, restore_request)
         .expect("Failed to request disaster recovery");
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
-    let status = canister_status(&env, Some(upgrader_id), canister_ids.station);
+    let status = canister_status(&env, Some(NNS_ROOT_CANISTER_ID), canister_ids.station);
     status.module_hash.unwrap();
 
     // check the name of the admin user after restoring a snapshot
@@ -1187,4 +1188,18 @@ fn test_disaster_recovery_via_canister_snapshots() {
         .stored_chunks(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .unwrap();
     assert!(chunks.is_empty());
+
+    // restart the station via disaster recovery
+    // we stop the station by a mocked call from the NNS root canister
+    env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
+        .unwrap();
+    let status = canister_status(&env, Some(NNS_ROOT_CANISTER_ID), canister_ids.station);
+    assert!(matches!(status.status, CanisterStatusResultStatus::Stopped));
+    // now we restart the station via disaster recovery
+    let start_request = upgrader_api::RequestDisasterRecoveryInput::Start;
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, start_request)
+        .expect("Failed to request disaster recovery");
+    await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+    let status = canister_status(&env, Some(NNS_ROOT_CANISTER_ID), canister_ids.station);
+    assert!(matches!(status.status, CanisterStatusResultStatus::Running));
 }

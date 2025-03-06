@@ -109,6 +109,7 @@ pub enum StationRecoveryRequestOperation {
     Snapshot(StationRecoveryRequestSnapshotOperation),
     Restore(StationRecoveryRequestRestoreOperation),
     Prune(StationRecoveryRequestPruneOperation),
+    Start,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -142,6 +143,7 @@ pub enum StationRecoveryRequestOperationFootprint {
     Snapshot(StationRecoveryRequestSnapshotOperationFootprint),
     Restore(StationRecoveryRequestRestoreOperationFootprint),
     Prune(StationRecoveryRequestPruneOperationFootprint),
+    Start,
 }
 
 #[storable]
