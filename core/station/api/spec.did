@@ -2808,6 +2808,7 @@ type InitUserInput = record {
   // The identities of the user.
   identities : vec UserIdentityInput;
   // The user groups to associate with the user (optional).
+  // If not provided it defaults to the `admin` group if default user groups are created.
   groups : opt vec UUID;
   // The status of the user (e.g. `Active`).
   //

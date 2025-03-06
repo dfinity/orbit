@@ -1,12 +1,12 @@
 use std::mem;
 
 use candid::{Encode, Principal};
+use pocket_ic::PocketIc;
 use station_api::{
-    AccountDTO, AccountResourceActionDTO, AllowDTO, AssetDTO, AuthScopeDTO, InitAccountInput,
-    InitAssetInput, InitNamedRuleInput, InitPermissionInput, InitRequestPolicyInput,
-    InitUserGroupInput, MetadataDTO, NamedRuleDTO, PermissionDTO, PermissionResourceActionDTO,
-    RequestPolicyDTO, RequestPolicyRuleDTO, RequestSpecifierDTO, ResourceActionDTO, ResourceDTO,
-    ResourceIdDTO, SystemInit, SystemInstall, UserDTO, UserGroupDTO, UserIdentityInput,
+    AccountResourceActionDTO, AllowDTO, AuthScopeDTO, InitAccountInput, InitAssetInput,
+    InitNamedRuleInput, InitPermissionInput, InitRequestPolicyInput, InitUserGroupInput,
+    MetadataDTO, PermissionResourceActionDTO, RequestPolicyRuleDTO, RequestSpecifierDTO,
+    ResourceActionDTO, ResourceDTO, ResourceIdDTO, SystemInit, SystemInstall, UserIdentityInput,
     UserInitInput, UserResourceActionDTO, UserStatusDTO, UuidDTO,
 };
 use uuid::Uuid;
@@ -21,215 +21,6 @@ use crate::{
     utils::{await_station_healthy, ADMIN_GROUP_ID, OPERATOR_GROUP_ID},
     TestEnv,
 };
-
-fn assert_initial_users(
-    listed_users: &Vec<UserDTO>,
-    expected_users: &Vec<UserInitInput>,
-    default_groups: &Vec<UuidDTO>,
-) -> Result<(), String> {
-    if expected_users.len() != listed_users.len() {
-        return Err(format!(
-            "expected {} users, got {}",
-            expected_users.len(),
-            listed_users.len()
-        ));
-    }
-
-    for expected_user in expected_users {
-        let user = listed_users
-            .iter()
-            .find(|user| user.name == expected_user.name)
-            .ok_or(format!("user {} not found", expected_user.name))?;
-
-        expected_user.identities.iter().all(|identity| {
-            user.identities
-                .iter()
-                .any(|user_identity| user_identity == &identity.identity)
-        });
-
-        expected_user
-            .groups
-            .as_ref()
-            .unwrap_or(default_groups)
-            .iter()
-            .all(|group| user.groups.iter().any(|user_group| &user_group.id == group));
-
-        let expected_status = expected_user
-            .status
-            .as_ref()
-            .unwrap_or(&UserStatusDTO::Active);
-
-        if mem::discriminant(&user.status) != mem::discriminant(expected_status) {
-            return Err(format!(
-                "user {} has status {:?}, expected {:?}",
-                expected_user.name, user.status, expected_status
-            ));
-        }
-    }
-
-    Ok(())
-}
-
-fn assert_initial_user_groups(
-    listed_user_groups: &Vec<UserGroupDTO>,
-    expected_user_groups: &Vec<InitUserGroupInput>,
-) -> Result<(), String> {
-    if expected_user_groups.len() != listed_user_groups.len() {
-        return Err(format!(
-            "expected {} user groups, got {}",
-            expected_user_groups.len(),
-            listed_user_groups.len()
-        ));
-    }
-
-    for expected_user_group in expected_user_groups {
-        let _user_group = listed_user_groups
-            .iter()
-            .find(|user_group| user_group.name == expected_user_group.name)
-            .ok_or(format!("user group {} not found", expected_user_group.name))?;
-    }
-
-    Ok(())
-}
-
-fn assert_initial_permissions(
-    listed_permissions: &Vec<PermissionDTO>,
-    expected_permissions: &Vec<InitPermissionInput>,
-    expected_extra_permissions: usize,
-) -> Result<(), String> {
-    if listed_permissions.len() != expected_permissions.len() + expected_extra_permissions {
-        return Err(format!(
-            "expected {} permissions, got {}",
-            expected_permissions.len() + expected_extra_permissions,
-            listed_permissions.len()
-        ));
-    }
-
-    Ok(())
-}
-
-fn assert_initial_request_policies(
-    listed_request_policies: &Vec<RequestPolicyDTO>,
-    expected_request_policies: &Vec<InitRequestPolicyInput>,
-    expected_extra_request_policies: usize,
-) -> Result<(), String> {
-    if listed_request_policies.len()
-        != expected_request_policies.len() + expected_extra_request_policies
-    {
-        return Err(format!(
-            "expected {} request policies, got {}",
-            expected_request_policies.len() + expected_extra_request_policies,
-            listed_request_policies.len()
-        ));
-    }
-
-    Ok(())
-}
-
-fn assert_initial_named_rules(
-    listed_named_rules: &Vec<NamedRuleDTO>,
-    expected_named_rules: &Vec<InitNamedRuleInput>,
-) -> Result<(), String> {
-    if expected_named_rules.len() != listed_named_rules.len() {
-        return Err(format!(
-            "expected {} named rules, got {}",
-            expected_named_rules.len(),
-            listed_named_rules.len()
-        ));
-    }
-
-    for expected_named_rule in expected_named_rules {
-        let _named_rule = listed_named_rules
-            .iter()
-            .find(|named_rule| named_rule.name == expected_named_rule.name)
-            .ok_or(format!("named rule {} not found", expected_named_rule.name))?;
-    }
-
-    Ok(())
-}
-
-fn assert_initial_assets(
-    listed_assets: &Vec<AssetDTO>,
-    expected_assets: &Vec<InitAssetInput>,
-) -> Result<(), String> {
-    if expected_assets.len() != listed_assets.len() {
-        return Err(format!(
-            "expected {} assets, got {}",
-            expected_assets.len(),
-            listed_assets.len()
-        ));
-    }
-
-    for expected_asset in expected_assets {
-        let asset = listed_assets
-            .iter()
-            .find(|asset| asset.id == expected_asset.id)
-            .ok_or(format!("asset {} not found", expected_asset.id))?;
-
-        if asset.id != expected_asset.id
-            || asset.name != expected_asset.name
-            || asset.blockchain != expected_asset.blockchain
-            || asset.standards != expected_asset.standards
-            || asset.metadata != expected_asset.metadata
-            || asset.symbol != expected_asset.symbol
-            || asset.decimals != expected_asset.decimals
-        {
-            return Err(format!("asset {} does not match expected asset", asset.id));
-        }
-    }
-
-    Ok(())
-}
-
-fn compare_arrays<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {
-    a.len() == b.len() && a.iter().all(|item| b.contains(item))
-}
-
-fn assert_initial_accounts(
-    listed_accounts: &Vec<AccountDTO>,
-    expected_accounts: &Vec<InitAccountInput>,
-) -> Result<(), String> {
-    if expected_accounts.len() != listed_accounts.len() {
-        return Err(format!(
-            "expected {} accounts, got {}",
-            expected_accounts.len(),
-            listed_accounts.len()
-        ));
-    }
-
-    for expected_account in expected_accounts {
-        let account = listed_accounts
-            .iter()
-            .find(|account| account.name == expected_account.name)
-            .ok_or(format!("account {} not found", expected_account.name))?;
-
-        if expected_account.assets.len() > 0 && account.addresses.len() == 0 {
-            return Err(format!(
-                "account {} has no addresses, expected some",
-                expected_account.name
-            ));
-        }
-
-        if account.name != expected_account.name
-            || account.metadata != expected_account.metadata
-            || !compare_arrays(
-                &account
-                    .assets
-                    .iter()
-                    .map(|asset| asset.asset_id.clone())
-                    .collect(),
-                &expected_account.assets,
-            )
-        {
-            return Err(format!(
-                "account {} does not match expected account",
-                account.id
-            ));
-        }
-    }
-
-    Ok(())
-}
 
 #[test]
 fn install_with_default_policies() {
@@ -338,70 +129,24 @@ fn install_with_default_policies() {
 
     await_station_healthy(&env, canister_id, WALLET_ADMIN_USER);
 
-    let lised_assets = list_assets(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to call list_assets")
-        .0
-        .expect("failed to list assets");
-
-    let listed_accounts = list_accounts(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get account")
-        .0
-        .expect("failed to get account");
-
-    let listed_users = list_users(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get users")
-        .0
-        .expect("failed to get users");
-
-    assert_eq!(listed_users.users.len(), 3);
-
     assert_initial_users(
-        &listed_users.users,
+        &env,
+        canister_id,
+        WALLET_ADMIN_USER,
         &users,
         &vec![ADMIN_GROUP_ID.hyphenated().to_string()],
     )
     .expect("failed to assert initial users");
 
-    assert_initial_assets(&lised_assets.assets, &assets).expect("failed to assert initial assets");
+    assert_initial_assets(&env, canister_id, WALLET_ADMIN_USER, &assets)
+        .expect("failed to assert initial assets");
 
-    assert_initial_accounts(&listed_accounts.accounts, &accounts)
+    assert_initial_accounts(&env, canister_id, WALLET_ADMIN_USER, &accounts)
         .expect("failed to assert initial accounts");
 
-    let listed_policies = list_request_policies(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get request policies")
-        .0
-        .expect("failed to get request policies");
+    assert_default_policies_and_permissions_exist(&env, canister_id, WALLET_ADMIN_USER);
 
-    assert!(listed_policies.policies.len() > 0);
-
-    let permissions = list_permissions(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get permissions")
-        .0
-        .expect("failed to get permissions");
-
-    assert!(permissions.permissions.len() > 0);
-
-    let named_rules = list_named_rules(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get named rules")
-        .0
-        .expect("failed to get named rules");
-
-    assert!(named_rules.named_rules.len() > 0);
-
-    let user_groups = list_user_groups(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get user groups")
-        .0
-        .expect("failed to get user groups");
-
-    assert_eq!(user_groups.user_groups.len(), 2);
-    assert_eq!(
-        user_groups.user_groups[0].id,
-        ADMIN_GROUP_ID.hyphenated().to_string()
-    );
-    assert_eq!(
-        user_groups.user_groups[1].id,
-        OPERATOR_GROUP_ID.hyphenated().to_string()
-    );
+    assert_default_groups_exist(&env, canister_id, WALLET_ADMIN_USER);
 }
 
 #[test]
@@ -633,66 +378,42 @@ fn install_with_all_entries() {
     await_station_healthy(&env, canister_id, WALLET_ADMIN_USER);
 
     // assert that the users are in the right groups
-    let list_users_response = list_users(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get users")
-        .0
-        .expect("failed to get users");
-
-    assert_initial_users(&list_users_response.users, &users, &vec![])
+    assert_initial_users(&env, canister_id, WALLET_ADMIN_USER, &users, &vec![])
         .expect("failed to assert initial users");
 
     // assert the number of request policies
-    let request_policies_response = list_request_policies(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get request policies")
-        .0
-        .expect("failed to get request policies");
-
     assert_initial_request_policies(
-        &request_policies_response.policies,
+        &env,
+        canister_id,
+        WALLET_ADMIN_USER,
         &request_policies,
         accounts.len() * 2,
     )
     .expect("failed to assert initial request policies");
 
     // assert the number of permissions
-    let permissions_response = list_permissions(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get permissions")
-        .0
-        .expect("failed to get permissions");
-
     assert_initial_permissions(
-        &permissions_response.permissions,
+        &env,
+        canister_id,
+        WALLET_ADMIN_USER,
         &permissions,
         accounts.len() * 3,
     )
     .expect("failed to assert initial permissions");
 
     // assert the named rules
-    let list_named_rules_response = list_named_rules(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get named rules")
-        .0
-        .expect("failed to get named rules");
-
-    assert_initial_named_rules(&list_named_rules_response.named_rules, &named_rules)
+    assert_initial_named_rules(&env, canister_id, WALLET_ADMIN_USER, &named_rules)
         .expect("failed to assert initial named rules");
 
     // assert the names of the user groups
-    let list_user_groups_response = list_user_groups(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get user groups")
-        .0
-        .expect("failed to get user groups");
-
-    assert_initial_user_groups(&list_user_groups_response.user_groups, &user_groups)
+    assert_initial_user_groups(&env, canister_id, WALLET_ADMIN_USER, &user_groups)
         .expect("failed to assert initial user groups");
 
     // assert the number of accounts and that they have addresses
-    let list_accounts_response = list_accounts(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get accounts")
-        .0
-        .expect("failed to get accounts");
-
     assert_initial_accounts(
-        &list_accounts_response.accounts,
+        &env,
+        canister_id,
+        WALLET_ADMIN_USER,
         &accounts
             .iter()
             .map(|init| init.account_init.clone())
@@ -701,12 +422,7 @@ fn install_with_all_entries() {
     .expect("failed to assert initial accounts");
 
     // assert the number of assets and their names
-    let list_assets_response = list_assets(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get assets")
-        .0
-        .expect("failed to get assets");
-
-    assert_initial_assets(&list_assets_response.assets, &assets)
+    assert_initial_assets(&env, canister_id, WALLET_ADMIN_USER, &assets)
         .expect("failed to assert initial assets");
 }
 
@@ -777,66 +493,339 @@ fn install_with_all_defaults() {
 
     await_station_healthy(&env, canister_id, WALLET_ADMIN_USER);
 
-    let listed_assets = list_assets(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to call list_assets")
-        .0
-        .expect("failed to list assets");
-
-    let listed_accounts = list_accounts(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get account")
-        .0
-        .expect("failed to get account");
-
-    let listed_users = list_users(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get users")
-        .0
-        .expect("failed to get users");
-
     assert_initial_users(
-        &listed_users.users,
+        &env,
+        canister_id,
+        WALLET_ADMIN_USER,
         &users,
         &vec![ADMIN_GROUP_ID.hyphenated().to_string()],
     )
     .expect("failed to assert initial users");
 
-    assert!(listed_assets.assets.len() > 0);
+    assert_default_assets_exist(&env, canister_id, WALLET_ADMIN_USER);
 
-    assert_initial_accounts(&listed_accounts.accounts, &vec![])
+    assert_default_policies_and_permissions_exist(&env, canister_id, WALLET_ADMIN_USER);
+
+    assert_default_groups_exist(&env, canister_id, WALLET_ADMIN_USER);
+
+    assert_initial_accounts(&env, canister_id, WALLET_ADMIN_USER, &vec![])
         .expect("failed to assert initial accounts");
+}
 
-    let policies = list_request_policies(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get request policies")
+fn assert_initial_users(
+    env: &PocketIc,
+    canister_id: Principal,
+    requester: Principal,
+    expected_users: &Vec<UserInitInput>,
+    default_groups: &Vec<UuidDTO>,
+) -> Result<(), String> {
+    let listed_users = list_users(env, canister_id, requester)
+        .expect("failed to get users")
         .0
-        .expect("failed to get request policies");
+        .expect("failed to get users");
 
-    assert!(policies.policies.len() > 0);
+    if expected_users.len() != listed_users.users.len() {
+        return Err(format!(
+            "expected {} users, got {}",
+            expected_users.len(),
+            listed_users.users.len()
+        ));
+    }
 
-    let permissions = list_permissions(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get permissions")
-        .0
-        .expect("failed to get permissions");
+    for expected_user in expected_users {
+        let user = listed_users
+            .users
+            .iter()
+            .find(|user| user.name == expected_user.name)
+            .ok_or(format!("user {} not found", expected_user.name))?;
 
-    assert!(permissions.permissions.len() > 0);
+        expected_user.identities.iter().all(|identity| {
+            user.identities
+                .iter()
+                .any(|user_identity| user_identity == &identity.identity)
+        });
 
-    let named_rules = list_named_rules(&env, canister_id, WALLET_ADMIN_USER)
-        .expect("failed to get named rules")
-        .0
-        .expect("failed to get named rules");
+        expected_user
+            .groups
+            .as_ref()
+            .unwrap_or(default_groups)
+            .iter()
+            .all(|group| user.groups.iter().any(|user_group| &user_group.id == group));
 
-    assert!(named_rules.named_rules.len() > 0);
+        let expected_status = expected_user
+            .status
+            .as_ref()
+            .unwrap_or(&UserStatusDTO::Active);
 
-    let user_groups = list_user_groups(&env, canister_id, WALLET_ADMIN_USER)
+        if mem::discriminant(&user.status) != mem::discriminant(expected_status) {
+            return Err(format!(
+                "user {} has status {:?}, expected {:?}",
+                expected_user.name, user.status, expected_status
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn assert_initial_user_groups(
+    env: &PocketIc,
+    canister_id: Principal,
+    requester: Principal,
+    expected_user_groups: &Vec<InitUserGroupInput>,
+) -> Result<(), String> {
+    let listed_user_groups = list_user_groups(env, canister_id, requester)
         .expect("failed to get user groups")
         .0
         .expect("failed to get user groups");
 
-    assert_eq!(user_groups.user_groups.len(), 2);
+    if expected_user_groups.len() != listed_user_groups.user_groups.len() {
+        return Err(format!(
+            "expected {} user groups, got {}",
+            expected_user_groups.len(),
+            listed_user_groups.user_groups.len()
+        ));
+    }
+
+    for expected_user_group in expected_user_groups {
+        let _user_group = listed_user_groups
+            .user_groups
+            .iter()
+            .find(|user_group| user_group.name == expected_user_group.name)
+            .ok_or(format!("user group {} not found", expected_user_group.name))?;
+    }
+
+    Ok(())
+}
+
+fn assert_initial_permissions(
+    env: &PocketIc,
+    canister_id: Principal,
+    requester: Principal,
+    expected_permissions: &Vec<InitPermissionInput>,
+    expected_extra_permissions: usize,
+) -> Result<(), String> {
+    let listed_permissions = list_permissions(env, canister_id, requester)
+        .expect("failed to get permissions")
+        .0
+        .expect("failed to get permissions");
+
+    if listed_permissions.permissions.len()
+        != expected_permissions.len() + expected_extra_permissions
+    {
+        return Err(format!(
+            "expected {} permissions, got {}",
+            expected_permissions.len() + expected_extra_permissions,
+            listed_permissions.permissions.len()
+        ));
+    }
+
+    Ok(())
+}
+
+fn assert_initial_request_policies(
+    env: &PocketIc,
+    canister_id: Principal,
+    requester: Principal,
+    expected_request_policies: &Vec<InitRequestPolicyInput>,
+    expected_extra_request_policies: usize,
+) -> Result<(), String> {
+    let listed_request_policies = list_request_policies(env, canister_id, requester)
+        .expect("failed to get request policies")
+        .0
+        .expect("failed to get request policies");
+
+    if listed_request_policies.policies.len()
+        != expected_request_policies.len() + expected_extra_request_policies
+    {
+        return Err(format!(
+            "expected {} request policies, got {}",
+            expected_request_policies.len() + expected_extra_request_policies,
+            listed_request_policies.policies.len()
+        ));
+    }
+
+    Ok(())
+}
+
+fn assert_initial_named_rules(
+    env: &PocketIc,
+    canister_id: Principal,
+    requester: Principal,
+    expected_named_rules: &Vec<InitNamedRuleInput>,
+) -> Result<(), String> {
+    let listed_named_rules = list_named_rules(env, canister_id, requester)
+        .expect("failed to get named rules")
+        .0
+        .expect("failed to get named rules");
+
+    if expected_named_rules.len() != listed_named_rules.named_rules.len() {
+        return Err(format!(
+            "expected {} named rules, got {}",
+            expected_named_rules.len(),
+            listed_named_rules.named_rules.len()
+        ));
+    }
+
+    for expected_named_rule in expected_named_rules {
+        let _named_rule = listed_named_rules
+            .named_rules
+            .iter()
+            .find(|named_rule| named_rule.name == expected_named_rule.name)
+            .ok_or(format!("named rule {} not found", expected_named_rule.name))?;
+    }
+
+    Ok(())
+}
+
+fn assert_initial_assets(
+    env: &PocketIc,
+    canister_id: Principal,
+    requester: Principal,
+    expected_assets: &Vec<InitAssetInput>,
+) -> Result<(), String> {
+    let listed_assets = list_assets(env, canister_id, requester)
+        .expect("failed to call list_assets")
+        .0
+        .expect("failed to list assets");
+
+    if expected_assets.len() != listed_assets.assets.len() {
+        return Err(format!(
+            "expected {} assets, got {}",
+            expected_assets.len(),
+            listed_assets.assets.len()
+        ));
+    }
+
+    for expected_asset in expected_assets {
+        let asset = listed_assets
+            .assets
+            .iter()
+            .find(|asset| asset.id == expected_asset.id)
+            .ok_or(format!("asset {} not found", expected_asset.id))?;
+
+        if asset.id != expected_asset.id
+            || asset.name != expected_asset.name
+            || asset.blockchain != expected_asset.blockchain
+            || asset.standards != expected_asset.standards
+            || asset.metadata != expected_asset.metadata
+            || asset.symbol != expected_asset.symbol
+            || asset.decimals != expected_asset.decimals
+        {
+            return Err(format!("asset {} does not match expected asset", asset.id));
+        }
+    }
+
+    Ok(())
+}
+
+fn compare_arrays<T: PartialEq>(a: &Vec<T>, b: &Vec<T>) -> bool {
+    a.len() == b.len() && a.iter().all(|item| b.contains(item))
+}
+
+fn assert_initial_accounts(
+    env: &PocketIc,
+    canister_id: Principal,
+    requester: Principal,
+    expected_accounts: &Vec<InitAccountInput>,
+) -> Result<(), String> {
+    let listed_accounts = list_accounts(env, canister_id, requester)
+        .expect("failed to get account")
+        .0
+        .expect("failed to get account");
+
+    if expected_accounts.len() != listed_accounts.accounts.len() {
+        return Err(format!(
+            "expected {} accounts, got {}",
+            expected_accounts.len(),
+            listed_accounts.accounts.len()
+        ));
+    }
+
+    for expected_account in expected_accounts {
+        let account = listed_accounts
+            .accounts
+            .iter()
+            .find(|account| account.name == expected_account.name)
+            .ok_or(format!("account {} not found", expected_account.name))?;
+
+        if expected_account.assets.len() > 0 && account.addresses.len() == 0 {
+            return Err(format!(
+                "account {} has no addresses, expected some",
+                expected_account.name
+            ));
+        }
+
+        if account.name != expected_account.name
+            || account.metadata != expected_account.metadata
+            || !compare_arrays(
+                &account
+                    .assets
+                    .iter()
+                    .map(|asset| asset.asset_id.clone())
+                    .collect(),
+                &expected_account.assets,
+            )
+        {
+            return Err(format!(
+                "account {} does not match expected account",
+                account.id
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn assert_default_groups_exist(env: &PocketIc, canister_id: Principal, requester: Principal) {
+    let listed_user_groups = list_user_groups(env, canister_id, requester)
+        .expect("failed to get user groups")
+        .0
+        .expect("failed to get user groups");
+
+    assert_eq!(listed_user_groups.user_groups.len(), 2);
     assert_eq!(
-        user_groups.user_groups[0].id,
+        listed_user_groups.user_groups[0].id,
         ADMIN_GROUP_ID.hyphenated().to_string()
     );
     assert_eq!(
-        user_groups.user_groups[1].id,
+        listed_user_groups.user_groups[1].id,
         OPERATOR_GROUP_ID.hyphenated().to_string()
     );
+}
+
+fn assert_default_policies_and_permissions_exist(
+    env: &PocketIc,
+    canister_id: Principal,
+    requester: Principal,
+) {
+    let listed_policies = list_request_policies(env, canister_id, requester)
+        .expect("failed to get request policies")
+        .0
+        .expect("failed to get request policies");
+
+    assert!(listed_policies.policies.len() > 0);
+
+    let listed_permissions = list_permissions(env, canister_id, requester)
+        .expect("failed to get permissions")
+        .0
+        .expect("failed to get permissions");
+
+    assert!(listed_permissions.permissions.len() > 0);
+
+    let listed_named_rules = list_named_rules(env, canister_id, requester)
+        .expect("failed to get named rules")
+        .0
+        .expect("failed to get named rules");
+
+    assert!(listed_named_rules.named_rules.len() > 0);
+}
+
+fn assert_default_assets_exist(env: &PocketIc, canister_id: Principal, requester: Principal) {
+    let listed_assets = list_assets(env, canister_id, requester)
+        .expect("failed to get assets")
+        .0
+        .expect("failed to get assets");
+
+    assert!(listed_assets.assets.len() > 0);
 }
