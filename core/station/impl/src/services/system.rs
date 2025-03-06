@@ -990,7 +990,7 @@ mod install_canister_handlers {
     // Registers the initial accounts of the canister during the canister initialization.
     pub async fn set_initial_accounts(
         accounts: Vec<(InitAccountInput, Option<InitAccountPermissionsInput>)>,
-        initial_assets: &Vec<InitAssetInput>,
+        initial_assets: &[InitAssetInput],
         quorum: u16,
     ) -> Result<(), String> {
         let add_accounts = accounts
