@@ -363,6 +363,11 @@ impl DisasterRecoveryService {
 
                 Ok(())
             }
+            StationRecoveryRequestOperation::Start => {
+                installer.start(station_canister_id).await?;
+
+                Ok(())
+            }
         }
     }
 

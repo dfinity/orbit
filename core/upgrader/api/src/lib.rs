@@ -192,6 +192,7 @@ pub enum RequestDisasterRecoveryInput {
     Snapshot(RequestDisasterRecoverySnapshotInput),
     Restore(RequestDisasterRecoveryRestoreInput),
     Prune(RequestDisasterRecoveryPruneInput),
+    Start,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -263,6 +264,7 @@ pub enum StationRecoveryRequestOperation {
     Snapshot(StationRecoveryRequestSnapshotOperation),
     Restore(StationRecoveryRequestRestoreOperation),
     Prune(StationRecoveryRequestPruneOperation),
+    Start,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
