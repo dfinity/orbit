@@ -2,6 +2,7 @@ use std::mem;
 
 use candid::{Encode, Principal};
 use pocket_ic::PocketIc;
+use rstest::rstest;
 use station_api::{
     AccountResourceActionDTO, AllowDTO, AuthScopeDTO, InitAccountInput, InitAssetInput,
     InitNamedRuleInput, InitPermissionInput, InitRequestPolicyInput, InitUserGroupInput,
@@ -510,6 +511,135 @@ fn install_with_all_defaults() {
 
     assert_initial_accounts(&env, canister_id, WALLET_ADMIN_USER, &vec![])
         .expect("failed to assert initial accounts");
+}
+
+#[rstest]
+#[should_panic]
+#[case::empty_entries(station_api::InitialEntries::Complete {
+    accounts: vec![],
+    assets: vec![],
+    permissions: vec![],
+    request_policies: vec![],
+    user_groups: vec![], // no user groups yet user is referencing the ADMIN group
+    named_rules: vec![],
+})]
+#[should_panic]
+#[case::circular_named_rules({
+    let id_1 = Uuid::new_v4().hyphenated().to_string();
+    let id_2 = Uuid::new_v4().hyphenated().to_string();
+
+    station_api::InitialEntries::Complete {
+        accounts: vec![],
+        assets: vec![],
+        permissions: vec![],
+        request_policies: vec![],
+        user_groups: vec![
+            InitUserGroupInput {
+                id: ADMIN_GROUP_ID.hyphenated().to_string(),
+                name: "admin".to_string(),
+            },
+        ],
+        named_rules: vec![
+            // circular reference
+            InitNamedRuleInput {
+                id: id_1.clone(),
+                name: "named_rule".to_string(),
+                description: None,
+                rule: RequestPolicyRuleDTO::NamedRule(id_2.clone()),
+            },
+            InitNamedRuleInput {
+                id: id_2.clone(),
+                name: "named_rule_2".to_string(),
+                description: None,
+                rule: RequestPolicyRuleDTO::NamedRule(id_1.clone()),
+            },
+        ],
+    }
+})]
+#[should_panic]
+#[case::non_existent_asset_id({
+    let id_1 = Uuid::new_v4().hyphenated().to_string();
+    station_api::InitialEntries::WithDefaultPolicies {
+        accounts: vec![InitAccountInput {
+            name: "account".to_string(),
+            metadata: vec![],
+            assets: vec![
+                id_1.clone(), // non-existent asset id
+            ],
+            id: Some(id_1.clone()),
+            seed: Uuid::new_v4().to_bytes_le(),
+        }],
+        assets: vec![],
+    }
+})]
+#[should_panic]
+#[case::non_existent_policy_id({
+    let id_1 = Uuid::new_v4().hyphenated().to_string();
+    station_api::InitialEntries::Complete {
+        accounts: vec![],
+        assets: vec![],
+        permissions: vec![],
+        request_policies: vec![InitRequestPolicyInput {
+            id: None,
+            rule: RequestPolicyRuleDTO::AutoApproved,
+            specifier: RequestSpecifierDTO::EditRequestPolicy(
+                station_api::ResourceIdsDTO::Ids(vec![id_1.clone()]), // non-existent policy id
+            ),
+        }],
+        user_groups: vec![
+            InitUserGroupInput {
+                id: ADMIN_GROUP_ID.hyphenated().to_string(),
+                name: "admin".to_string(),
+            },
+        ],
+        named_rules: vec![],
+    }
+})]
+fn install_with_bad_input(#[case] bad_input: station_api::InitialEntries) {
+    let TestEnv {
+        env, controller, ..
+    } = setup_new_env();
+
+    let canister_id = env.create_canister_with_settings(Some(controller), None);
+
+    env.set_controllers(canister_id, Some(controller), vec![canister_id, controller])
+        .expect("failed to set canister controller");
+
+    env.add_cycles(canister_id, 5_000_000_000_000);
+    let station_wasm = get_canister_wasm("station").to_vec();
+    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
+
+    let users = vec![UserInitInput {
+        identities: vec![UserIdentityInput {
+            identity: WALLET_ADMIN_USER,
+        }],
+        name: "station-admin".to_string(),
+        groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
+        id: None,
+        status: None,
+    }];
+
+    let station_init_args = SystemInstall::Init(SystemInit {
+        name: "Station".to_string(),
+        users: users.clone(),
+        upgrader: station_api::SystemUpgraderInput::Deploy(
+            station_api::DeploySystemUpgraderInput {
+                wasm_module: upgrader_wasm.clone(),
+                initial_cycles: Some(1_000_000_000_000),
+            },
+        ),
+        fallback_controller: Some(controller),
+        quorum: None,
+        entries: Some(bad_input),
+    });
+    env.install_canister(
+        canister_id,
+        station_wasm.clone(),
+        Encode!(&station_init_args).unwrap(),
+        Some(controller),
+    );
+
+    await_station_healthy(&env, canister_id, WALLET_ADMIN_USER);
 }
 
 fn assert_initial_users(

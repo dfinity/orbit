@@ -1215,9 +1215,13 @@ mod install_canister_handlers {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::request_test_utils::mock_request;
+    use crate::{
+        core::validation::disable_mock_resource_validation,
+        models::request_test_utils::mock_request,
+        services::system::init_canister_sync_handlers::set_initial_named_rules,
+    };
     use candid::Principal;
-    use station_api::{UserIdentityInput, UserInitInput};
+    use station_api::{InitNamedRuleInput, UserIdentityInput, UserInitInput};
 
     #[tokio::test]
     async fn canister_init() {
@@ -1304,5 +1308,85 @@ mod tests {
         assert_eq!(calc_initial_quorum(4, Some(4)), 4);
         // larger than the number of admins
         assert_eq!(calc_initial_quorum(4, Some(5)), 4);
+    }
+
+    #[tokio::test]
+    async fn test_initial_named_rules_with_correct_dependencies() {
+        let id_1 = Uuid::new_v4().hyphenated().to_string();
+        let id_2 = Uuid::new_v4().hyphenated().to_string();
+        let id_3 = Uuid::new_v4().hyphenated().to_string();
+
+        // incorrect named rule order still succeeds because of sorting
+        let initial_named_rules = vec![
+            InitNamedRuleInput {
+                name: "NamedRule3".to_string(),
+                id: id_1.clone(),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::NamedRule(id_2.clone()),
+            },
+            InitNamedRuleInput {
+                name: "NamedRule2".to_string(),
+                id: id_2.clone(),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::NamedRule(id_3.clone()),
+            },
+            InitNamedRuleInput {
+                name: "NamedRule1".to_string(),
+                id: id_3.clone(),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+            },
+        ];
+        set_initial_named_rules(&initial_named_rules).expect("Failed to set initial named rules");
+    }
+
+    #[tokio::test]
+    async fn test_initial_named_rules_with_circular_dependencies() {
+        let id_1 = Uuid::new_v4().hyphenated().to_string();
+        let id_2 = Uuid::new_v4().hyphenated().to_string();
+        let id_3 = Uuid::new_v4().hyphenated().to_string();
+
+        // circular reference throws an error
+        let initial_named_rules = vec![
+            InitNamedRuleInput {
+                name: "NamedRule3".to_string(),
+                id: id_1.clone(),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::NamedRule(id_2.clone()),
+            },
+            InitNamedRuleInput {
+                name: "NamedRule2".to_string(),
+                id: id_2.clone(),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::NamedRule(id_3.clone()),
+            },
+            InitNamedRuleInput {
+                name: "NamedRule1".to_string(),
+                id: id_3.clone(),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::NamedRule(id_1.clone()),
+            },
+        ];
+
+        set_initial_named_rules(&initial_named_rules)
+            .expect_err("Should have failed due to circular reference");
+    }
+
+    #[tokio::test]
+    async fn test_initial_named_rules_with_unknown_key() {
+        disable_mock_resource_validation();
+
+        let id_1 = Uuid::new_v4().hyphenated().to_string();
+        let id_2 = Uuid::new_v4().hyphenated().to_string();
+        // unknown key throws an error
+        let initial_named_rules = vec![InitNamedRuleInput {
+            name: "NamedRule3".to_string(),
+            id: id_1.clone(),
+            description: None,
+            rule: station_api::RequestPolicyRuleDTO::NamedRule(id_2.clone()),
+        }];
+
+        set_initial_named_rules(&initial_named_rules)
+            .expect_err("Should have failed due to unknown key");
     }
 }
