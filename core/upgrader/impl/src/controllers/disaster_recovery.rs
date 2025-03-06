@@ -71,6 +71,11 @@ fn get_disaster_recovery_state() -> ApiResult<upgrader_api::GetDisasterRecoveryS
     CONTROLLER.get_disaster_recovery_state()
 }
 
+#[update]
+async fn canister_snapshots() -> ApiResult<Vec<upgrader_api::Snapshot>> {
+    CONTROLLER.canister_snapshots().await
+}
+
 pub struct DisasterRecoveryController {
     disaster_recovery_service: Arc<DisasterRecoveryService>,
 }
@@ -218,6 +223,19 @@ impl DisasterRecoveryController {
         }
 
         Ok(self.disaster_recovery_service.get_state().into())
+    }
+
+    async fn canister_snapshots(&self) -> ApiResult<Vec<upgrader_api::Snapshot>> {
+        let caller = caller();
+        if !self.disaster_recovery_service.is_committee_member(&caller) {
+            Err(UpgraderApiError::Unauthorized)?
+        }
+
+        self.disaster_recovery_service
+            .canister_snapshots()
+            .await
+            .map(|snapshots| snapshots.into_iter().map(|s| s.into()).collect())
+            .map_err(|err| UpgraderApiError::Unexpected(err).into())
     }
 }
 

@@ -5549,6 +5549,7 @@ name = "upgrader-api"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "hex",
  "ic-stable-structures",
  "orbit-essentials",
  "serde",
