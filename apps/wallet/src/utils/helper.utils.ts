@@ -79,11 +79,7 @@ export const throttle = <T extends (...args: unknown[]) => unknown>(fn: T, wait:
 };
 
 export const isSetAndNotFalse = (value: unknown) => {
-  if (value === 'false' || value === false || value === undefined || value === null) {
-    return false;
-  }
-
-  return true;
+  return !(value === 'false' || value === false || value === undefined || value === null);
 };
 
 export const isValidSha256 = (value: string): boolean => {
@@ -331,6 +327,7 @@ export const toUint8Array = (input: ArrayBuffer | number[] | Uint8Array): Uint8A
  * Removes all null and undefined values from an array and returns a new array.
  *
  * @param array - The array to compact.
+ * @param opts
  * @returns A new array with all null and undefined values removed.
  */
 export const compactArray = <T, R = T>(
@@ -406,7 +403,7 @@ export const parseToBigIntOrUndefined = (
     }
 
     return BigInt(value);
-  } catch (error) {
+  } catch (_error) {
     return undefined;
   }
 };
@@ -605,7 +602,7 @@ export const transformData = (
   const normalizedInput = normalize(input);
 
   if (typeof normalizedInput === 'object' || Array.isArray(normalizedInput)) {
-    const plainJson = JSON.parse(
+    return JSON.parse(
       JSON.stringify(normalizedInput, (_, value) => {
         // Json stringify takes care of removing all keys with undefined values, so we only need to remove null values.
         if (removeUndefinedOrNull && value === null) {
@@ -615,8 +612,6 @@ export const transformData = (
         return value;
       }),
     );
-
-    return plainJson;
   }
 
   return normalizedInput;
@@ -664,6 +659,7 @@ export function deepClone<T>(input: T): T {
  * @param debouncedFunction The function to debounce.
  * @param wait The time to wait before calling the debounced function. @default 500
  *
+ * @param opts
  * @returns The debounced function.
  */
 export const debounce = <T extends (...args: Parameters<T>) => ReturnType<T>>(

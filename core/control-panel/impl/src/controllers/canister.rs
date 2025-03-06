@@ -2,15 +2,13 @@
 use super::AVAILABLE_TOKENS_USER_REGISTRATION;
 use crate::core::ic_cdk::{api::set_certified_data, spawn};
 use crate::core::metrics::recompute_all_metrics;
-use crate::repositories::USER_REPOSITORY;
-use crate::services::CANISTER_SERVICE;
+use crate::services::{CANISTER_SERVICE, USER_SERVICE};
 use control_panel_api::UploadCanisterModulesInput;
 use ic_cdk_macros::{init, post_upgrade};
 use ic_cdk_timers::{set_timer, set_timer_interval};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::update;
 use orbit_essentials::http::certified_data_for_skip_certification;
-use orbit_essentials::repository::Repository;
 use std::time::Duration;
 
 pub const MINUTE: u64 = 60;
@@ -75,8 +73,8 @@ async fn post_upgrade() {
     recompute_all_metrics();
     init_timers_fn();
 
-    // deserialize all users to fail control panel upgrade in case of deserialization failures
-    let _users = USER_REPOSITORY.list();
+    // approve all users
+    USER_SERVICE.approve_all_users();
 
     CANISTER_SERVICE
         .init_canister()

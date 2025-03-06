@@ -4,8 +4,7 @@ use crate::core::middlewares::{call_context, logger, use_canister_call_metric};
 use crate::services::USER_SERVICE;
 use crate::{core::CallContext, services::UserService};
 use control_panel_api::{
-    DeleteUserResponse, GetUserResponse, GetWaitingListResponse, RegisterUserInput,
-    RegisterUserResponse, UpdateWaitingListInput, UserDTO,
+    DeleteUserResponse, GetUserResponse, RegisterUserInput, RegisterUserResponse, UserDTO,
 };
 use ic_cdk_macros::{query, update};
 use lazy_static::lazy_static;
@@ -45,21 +44,6 @@ async fn register_user(input: RegisterUserInput) -> ApiResult<RegisterUserRespon
     })?;
 
     CONTROLLER.register_user(input).await
-}
-
-#[update(name = "subscribe_to_waiting_list")]
-async fn subscribe_to_waiting_list(email: String) -> ApiResult<()> {
-    CONTROLLER.subscribe_to_waiting_list(email).await
-}
-
-#[update(name = "get_waiting_list")]
-async fn get_waiting_list() -> ApiResult<GetWaitingListResponse> {
-    CONTROLLER.get_waiting_list().await
-}
-
-#[update(name = "update_waiting_list")]
-async fn update_waiting_list(input: UpdateWaitingListInput) -> ApiResult<()> {
-    CONTROLLER.update_waiting_list(input).await
 }
 
 #[update(name = "delete_user")]
@@ -106,42 +90,6 @@ impl UserController {
         Ok(RegisterUserResponse {
             user: UserDTO::from(user),
         })
-    }
-
-    #[with_middleware(
-        guard = logger::<()>(__target_fn, context, None),
-        tail = logger(__target_fn, context, Some(&result)),
-        context = &call_context()
-    )]
-    #[with_middleware(tail = use_canister_call_metric("subscribe_to_waiting_list", &result))]
-    async fn subscribe_to_waiting_list(&self, email: String) -> ApiResult<()> {
-        let ctx: CallContext = CallContext::get();
-        self.user_service
-            .subscribe_to_waiting_list(email, &ctx)
-            .await?;
-
-        Ok(())
-    }
-
-    #[with_middleware(tail = use_canister_call_metric("get_waiting_list", &result))]
-    async fn get_waiting_list(&self) -> ApiResult<GetWaitingListResponse> {
-        let ctx: CallContext = CallContext::get();
-        self.user_service
-            .get_waiting_list(&ctx)
-            .map(|subscribed_users| GetWaitingListResponse { subscribed_users })
-    }
-
-    #[with_middleware(
-        guard = logger::<()>(__target_fn, context, None),
-        tail = logger(__target_fn, context, Some(&result)),
-        context = &call_context()
-    )]
-    #[with_middleware(tail = use_canister_call_metric("update_waiting_list", &result))]
-    async fn update_waiting_list(&self, input: UpdateWaitingListInput) -> ApiResult<()> {
-        let ctx: CallContext = CallContext::get();
-        self.user_service.update_waiting_list(input, &ctx)?;
-
-        Ok(())
     }
 
     #[with_middleware(

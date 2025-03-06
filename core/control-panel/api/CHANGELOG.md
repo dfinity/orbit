@@ -1,3 +1,55 @@
+## 0.2.0 (2025-03-03)
+
+
+### 🚀 Features
+
+- **station:** external canister snapshots ([#429](https://github.com/dfinity/orbit/pull/429))
+
+- **station:** monitor external canisters ([#416](https://github.com/dfinity/orbit/pull/416))
+
+- **station:** enable station top up from the cycles ledger balance ([#472](https://github.com/dfinity/orbit/pull/472))
+
+- **docs:** docs portal ([#486](https://github.com/dfinity/orbit/pull/486))
+
+- **apps:** init marketing project ([#498](https://github.com/dfinity/orbit/pull/498))
+
+- **wallet:** updated branding ([#497](https://github.com/dfinity/orbit/pull/497))
+
+- **control-panel:** public beta ([#519](https://github.com/dfinity/orbit/pull/519))
+
+- **marketing:** marketing site home page ([#500](https://github.com/dfinity/orbit/pull/500))
+
+- **docs:** initial docs portal ([#493](https://github.com/dfinity/orbit/pull/493))
+
+
+### 🩹 Fixes
+
+- **wallet:** update lockfile ([#459](https://github.com/dfinity/orbit/pull/459))
+
+- **ci:** install CMC in Orbit local deployment ([#465](https://github.com/dfinity/orbit/pull/465))
+
+- **ci:** build and CI issues ([#467](https://github.com/dfinity/orbit/pull/467))
+
+- **station:** docker build ([#492](https://github.com/dfinity/orbit/pull/492))
+
+- **station:** security issue 42 ([#505](https://github.com/dfinity/orbit/pull/505))
+
+- **wallet:** security issue 36, 37, 38, 39, 40, 41 ([#503](https://github.com/dfinity/orbit/pull/503))
+
+- **station:** security issue 19, 54 ([#509](https://github.com/dfinity/orbit/pull/509))
+
+- **station:** security issue 45 ([#510](https://github.com/dfinity/orbit/pull/510))
+
+- **ci:** update docker setup in release script ([#517](https://github.com/dfinity/orbit/pull/517))
+
+
+### ❤️  Thank You
+
+- Jan Hrubes @jedna
+- Kepler Vital
+- mraszyk @mraszyk
+- olaszakos
+
 ## 0.1.0 (2024-11-27)
 
 

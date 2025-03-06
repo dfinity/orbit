@@ -1,0 +1,46 @@
+---
+import VerticalDivider from './VerticalDivider.astro';
+import { walletUrl } from '../lib/config';
+---
+
+<section class="relative" id="top">
+  <h1 class="text-h4 lg:text-h1 lg:w-10/12">
+    Secure, onchain, multi-approver governance for multichain assets.
+  </h1>
+  <p class="pt-7 lg:pt-10 text-body-medium text-white/50 lg:w-6/10 xl:w-5/10">
+    No matter the size of your team, Orbit offers multisig payment workflows, multi-approver
+    governance, and automated controls for digital assets and smart contracts.
+  </p>
+  <div class="flex flex-col">
+    <p class="pt-7 lg:pt-10 order-2 lg:order-1">
+      <a
+        class="block lg:inline-flex btn btn-primary lg:w-64"
+        href={walletUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Launch Orbit</a
+      >
+    </p>
+
+    <p class="pt-8 lg:order-2">
+      <a href="https://internetcomputer.org" target="_blank" rel="noopener noreferrer">
+        <img src="/powered-by-icp.svg" alt="Powered by the Internet Computer" class="h-7" />
+      </a>
+    </p>
+  </div>
+
+  <!-- background blob -->
+  <div
+    class="absolute -top-28 lg:-top-64 -translate-y-1/3 right-0 translate-x-8/12 w-[2000px] lg:w-[2300px] lg:-translate-y-3/10 lg:translate-x-6/12 pointer-events-none z-[-1]"
+  >
+    <img
+      src="/orb-blue-hero.webp"
+      class="w-full h-full object-cover opacity-0 transition-opacity duration-1000"
+      onload="this.style.opacity = 1"
+      alt="Orbit multi-sig security meets on-chain asset management for seamless governance."
+    />
+  </div>
+</section>
+
+<VerticalDivider class="animate-delayed-fade-in lg:mt-10" />

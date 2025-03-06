@@ -57,8 +57,7 @@ function deterministic_build() {
   local target=$2
 
   # Build the canister
-  docker build --build-arg BUILD_MODE=$BUILD_MODE -t orbit-$project_name --target $target .
-   
+  docker build --build-arg BUILD_MODE=$BUILD_MODE -t orbit-$project_name --target $target . --platform=linux/amd64
 
   # Create a container to extract the generated artifacts
   docker create --name orbit-$project_name-container orbit-$project_name
