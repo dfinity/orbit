@@ -652,7 +652,7 @@ fn deploy_station_with_insufficient_cycles() {
             id: None,
             status: None,
         }],
-        quorum: None,
+        quorum: Some(1),
         entries: None,
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
