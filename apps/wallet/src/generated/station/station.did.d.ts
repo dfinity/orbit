@@ -128,7 +128,6 @@ export interface AddressBookEntryCallerPrivileges {
   'can_edit' : boolean,
 }
 export interface AddressBookMetadata { 'key' : string, 'value' : string }
-export interface AdminInitInput { 'name' : string, 'identity' : Principal }
 export interface Allow {
   'user_groups' : Array<UUID>,
   'auth_scope' : AuthScope,
@@ -731,6 +730,17 @@ export interface InitAccountInput {
   'assets' : Array<UUID>,
   'seed' : AccountSeed,
 }
+export interface InitAccountPermissionsInput {
+  'configs_request_policy' : [] | [RequestPolicyRule],
+  'read_permission' : Allow,
+  'configs_permission' : Allow,
+  'transfer_request_policy' : [] | [RequestPolicyRule],
+  'transfer_permission' : Allow,
+}
+export interface InitAccountWithPermissionsInput {
+  'permissions' : InitAccountPermissionsInput,
+  'account_init' : InitAccountInput,
+}
 export interface InitAssetInput {
   'id' : UUID,
   'decimals' : number,
@@ -740,6 +750,42 @@ export interface InitAssetInput {
   'blockchain' : string,
   'symbol' : string,
 }
+export interface InitNamedRuleInput {
+  'id' : UUID,
+  'name' : string,
+  'rule' : RequestPolicyRule,
+  'description' : [] | [string],
+}
+export interface InitPermissionInput { 'resource' : Resource, 'allow' : Allow }
+export interface InitRequestPolicyInput {
+  'id' : [] | [UUID],
+  'rule' : RequestPolicyRule,
+  'specifier' : RequestSpecifier,
+}
+export interface InitUserGroupInput { 'id' : UUID, 'name' : string }
+export interface InitUserInput {
+  'id' : [] | [UUID],
+  'status' : [] | [UserStatus],
+  'groups' : [] | [Array<UUID>],
+  'name' : string,
+  'identities' : Array<UserIdentityInput>,
+}
+export type InitalEntries = {
+    'WithDefaultPolicies' : {
+      'assets' : Array<InitAssetInput>,
+      'accounts' : Array<InitAccountInput>,
+    }
+  } |
+  {
+    'Complete' : {
+      'permissions' : Array<InitPermissionInput>,
+      'assets' : Array<InitAssetInput>,
+      'request_policies' : Array<InitRequestPolicyInput>,
+      'user_groups' : Array<InitUserGroupInput>,
+      'accounts' : Array<InitAccountWithPermissionsInput>,
+      'named_rules' : Array<InitNamedRuleInput>,
+    }
+  };
 export interface ListAccountTransfersInput {
   'account_id' : UUID,
   'status' : [] | [TransferStatusType],
@@ -1385,11 +1431,10 @@ export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
   { 'Err' : Error };
 export interface SystemInit {
   'name' : string,
-  'assets' : [] | [Array<InitAssetInput>],
   'fallback_controller' : [] | [Principal],
   'upgrader' : SystemUpgraderInput,
-  'accounts' : [] | [Array<InitAccountInput>],
-  'admins' : Array<AdminInitInput>,
+  'entries' : [] | [InitalEntries],
+  'users' : Array<InitUserInput>,
   'quorum' : [] | [number],
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
@@ -1488,6 +1533,7 @@ export interface UserGroupCallerPrivileges {
   'can_delete' : boolean,
   'can_edit' : boolean,
 }
+export interface UserIdentityInput { 'identity' : Principal }
 export type UserPrivilege = { 'AddUserGroup' : null } |
   { 'ListRequestPolicies' : null } |
   { 'ListNamedRules' : null } |

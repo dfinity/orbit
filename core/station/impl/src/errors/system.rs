@@ -8,10 +8,10 @@ pub enum SystemError {
     /// The initialization of the canister failed.
     #[error(r#"The initialization of the canister failed due to {reason}"#)]
     InitFailed { reason: String },
-    #[error(r#"The canister needs at least one admin"#)]
-    NoAdminsSpecified,
-    #[error(r#"There are too many admins defined, max allowed is {max}."#)]
-    TooManyAdminsSpecified { max: usize },
+    #[error(r#"The canister needs at least one user"#)]
+    NoUsersSpecified,
+    #[error(r#"There are too many users defined, max allowed is {max}."#)]
+    TooManyUsersSpecified { max: usize },
     #[error(r#"System upgrade failed."#)]
     UpgradeFailed { reason: String },
     #[error(r#"No station upgrade request is processing."#)]
@@ -27,7 +27,7 @@ impl DetailableError for SystemError {
 
                 Some(details)
             }
-            SystemError::TooManyAdminsSpecified { max } => {
+            SystemError::TooManyUsersSpecified { max } => {
                 details.insert("max".to_string(), max.to_string());
 
                 Some(details)
