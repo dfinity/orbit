@@ -324,7 +324,7 @@ impl SystemService {
                     )
                     .await?;
                 }
-                _ => {}
+                None => {}
             }
 
             if SYSTEM_SERVICE.is_healthy() {
@@ -772,7 +772,32 @@ mod init_canister_sync_handlers {
                 ResourceIds::Any => false,
                 ResourceIds::Ids(ids) => ids.contains(policy_id),
             },
-            _ => false,
+            RequestSpecifier::AddAccount
+            | RequestSpecifier::AddUser
+            | RequestSpecifier::EditAccount(..)
+            | RequestSpecifier::EditUser(..)
+            | RequestSpecifier::AddAddressBookEntry
+            | RequestSpecifier::EditAddressBookEntry(..)
+            | RequestSpecifier::RemoveAddressBookEntry(..)
+            | RequestSpecifier::Transfer(..)
+            | RequestSpecifier::SetDisasterRecovery
+            | RequestSpecifier::CreateExternalCanister
+            | RequestSpecifier::ChangeExternalCanister(..)
+            | RequestSpecifier::CallExternalCanister(..)
+            | RequestSpecifier::FundExternalCanister(..)
+            | RequestSpecifier::EditPermission(..)
+            | RequestSpecifier::AddRequestPolicy
+            | RequestSpecifier::AddUserGroup
+            | RequestSpecifier::EditUserGroup(..)
+            | RequestSpecifier::RemoveUserGroup(..)
+            | RequestSpecifier::ManageSystemInfo
+            | RequestSpecifier::SystemUpgrade
+            | RequestSpecifier::AddAsset
+            | RequestSpecifier::EditAsset(..)
+            | RequestSpecifier::RemoveAsset(..)
+            | RequestSpecifier::AddNamedRule
+            | RequestSpecifier::EditNamedRule(..)
+            | RequestSpecifier::RemoveNamedRule(..) => false,
         }
     }
 
