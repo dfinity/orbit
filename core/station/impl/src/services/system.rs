@@ -811,7 +811,7 @@ mod init_canister_sync_handlers {
         Ok(())
     }
 
-    // Registers the initial accounts of the canister during the canister initialization.
+    // Registers the initial assets of the canister during the canister initialization.
     pub async fn set_initial_assets(assets: &[InitAssetInput]) -> Result<(), ApiError> {
         let add_assets = assets
             .iter()
