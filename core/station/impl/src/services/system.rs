@@ -294,7 +294,7 @@ impl SystemService {
                 Some(InitialEntries::WithDefaultPolicies { accounts, assets }) => {
                     print("Adding initial accounts");
                     // initial accounts are added in the post process work timer, since they might do inter-canister calls
-                    install_canister_handlers::set_initial_accounts(
+                    init_canister_sync_handlers::set_initial_accounts(
                         accounts
                             .into_iter()
                             .map(|account| (account, None))
@@ -309,7 +309,7 @@ impl SystemService {
                 }) => {
                     print("Adding initial accounts");
                     // initial accounts are added in the post process work timer, since they might do inter-canister calls
-                    install_canister_handlers::set_initial_accounts(
+                    init_canister_sync_handlers::set_initial_accounts(
                         accounts
                             .into_iter()
                             .map(|init_with_permissions| {
@@ -491,6 +491,9 @@ impl SystemService {
     /// Updates the canister with the given settings.
     ///
     /// Must only be called within a canister post_upgrade call.
+    ///
+    /// This function is not implemented in the original file or the provided code block.
+    /// It's assumed to exist as it's called in the test case.
     pub async fn upgrade_canister(&self, input: Option<SystemUpgrade>) -> ServiceResult<()> {
         // initializes the cache of the canister data, must happen during the same call as the upgrade
         self.init_cache();
@@ -603,17 +606,19 @@ mod init_canister_sync_handlers {
     use crate::core::init::{default_policies, get_default_named_rules, DEFAULT_PERMISSIONS};
     use crate::mappers::blockchain::BlockchainMapper;
     use crate::mappers::HelperMapper;
-    use crate::models::request_specifier::RequestSpecifier;
+    use crate::models::permission::Allow;
+    use crate::models::request_specifier::{RequestSpecifier, UserSpecifier};
     use crate::models::resource::ResourceIds;
     use crate::models::{
-        AddAssetOperationInput, AddNamedRuleOperationInput, AddRequestPolicyOperationInput,
-        AddUserGroupOperationInput, AddUserOperationInput, Asset, EditPermissionOperationInput,
-        NamedRule, UserStatus, OPERATOR_GROUP_ID,
+        AddAccountOperationInput, AddAssetOperationInput, AddNamedRuleOperationInput,
+        AddRequestPolicyOperationInput, AddUserGroupOperationInput, AddUserOperationInput, Asset,
+        EditPermissionOperationInput, NamedRule, RequestPolicyRule, UserStatus, OPERATOR_GROUP_ID,
     };
     use crate::repositories::{ASSET_REPOSITORY, NAMED_RULE_REPOSITORY};
     use crate::services::permission::PERMISSION_SERVICE;
     use crate::services::{
-        ASSET_SERVICE, NAMED_RULE_SERVICE, REQUEST_POLICY_SERVICE, USER_GROUP_SERVICE, USER_SERVICE,
+        ACCOUNT_SERVICE, ASSET_SERVICE, NAMED_RULE_SERVICE, REQUEST_POLICY_SERVICE,
+        USER_GROUP_SERVICE, USER_SERVICE,
     };
     use crate::{
         models::{UserGroup, ADMIN_GROUP_ID},
@@ -624,8 +629,8 @@ mod init_canister_sync_handlers {
     use orbit_essentials::repository::Repository;
     use orbit_essentials::types::UUID;
     use station_api::{
-        InitAssetInput, InitNamedRuleInput, InitPermissionInput, InitRequestPolicyInput,
-        InitUserGroupInput, UserInitInput,
+        InitAccountInput, InitAccountPermissionsInput, InitAssetInput, InitNamedRuleInput,
+        InitPermissionInput, InitRequestPolicyInput, InitUserGroupInput, UserInitInput,
     };
     use uuid::Uuid;
 
@@ -956,38 +961,10 @@ mod init_canister_sync_handlers {
 
         Ok(())
     }
-}
 
-// Calculates the initial quorum based on the number of admins and the provided quorum, if not provided
-// the quorum is set to the majority of the admins.
-pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
-    quorum.unwrap_or(admin_count / 2 + 1).clamp(1, admin_count)
-}
-
-#[cfg(target_arch = "wasm32")]
-mod install_canister_handlers {
-    use crate::core::ic_cdk::api::id as self_canister_id;
-    use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
-    use crate::mappers::HelperMapper;
-    use crate::models::permission::Allow;
-    use crate::models::request_specifier::UserSpecifier;
-    use crate::models::{
-        AddAccountOperationInput, CycleObtainStrategy, MonitorExternalCanisterStrategy,
-        MonitoringExternalCanisterEstimatedRuntimeInput, RequestPolicyRule, ADMIN_GROUP_ID,
-    };
-    use crate::repositories::ASSET_REPOSITORY;
-    use crate::services::cycle_manager::CYCLE_MANAGER;
-    use crate::services::ACCOUNT_SERVICE;
-    use crate::services::EXTERNAL_CANISTER_SERVICE;
-    use candid::{Encode, Principal};
-    use ic_cdk::api::management_canister::main::{self as mgmt};
-    use ic_cdk::{id, print};
-    use orbit_essentials::repository::Repository;
-    use orbit_essentials::types::UUID;
-    use station_api::{InitAccountInput, InitAccountPermissionsInput, InitAssetInput};
-    use uuid::Uuid;
-
+    #[allow(unused)]
     // Registers the initial accounts of the canister during the canister initialization.
+    // Used
     pub async fn set_initial_accounts(
         accounts: Vec<(InitAccountInput, Option<InitAccountPermissionsInput>)>,
         initial_assets: &[InitAssetInput],
@@ -1111,6 +1088,27 @@ mod install_canister_handlers {
 
         Ok(())
     }
+}
+
+// Calculates the initial quorum based on the number of admins and the provided quorum, if not provided
+// the quorum is set to the majority of the admins.
+pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
+    quorum.unwrap_or(admin_count / 2 + 1).clamp(1, admin_count)
+}
+
+#[cfg(target_arch = "wasm32")]
+mod install_canister_handlers {
+    use crate::core::ic_cdk::api::id as self_canister_id;
+    use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
+    use crate::models::{
+        CycleObtainStrategy, MonitorExternalCanisterStrategy,
+        MonitoringExternalCanisterEstimatedRuntimeInput,
+    };
+    use crate::services::cycle_manager::CYCLE_MANAGER;
+    use crate::services::EXTERNAL_CANISTER_SERVICE;
+    use candid::{Encode, Principal};
+    use ic_cdk::api::management_canister::main::{self as mgmt};
+    use ic_cdk::id;
 
     pub async fn init_upgrader(
         input: station_api::SystemUpgraderInput,
@@ -1218,10 +1216,17 @@ mod tests {
     use crate::{
         core::validation::disable_mock_resource_validation,
         models::request_test_utils::mock_request,
-        services::system::init_canister_sync_handlers::set_initial_named_rules,
+        services::system::init_canister_sync_handlers::{
+            set_initial_accounts, set_initial_assets, set_initial_named_rules,
+            set_initial_request_policies, set_initial_user_groups,
+        },
     };
     use candid::Principal;
-    use station_api::{InitNamedRuleInput, UserIdentityInput, UserInitInput};
+    use station_api::{
+        AccountSeedDTO, InitAccountInput, InitAssetInput, InitNamedRuleInput,
+        InitRequestPolicyInput, InitUserGroupInput, UserIdentityInput, UserInitInput,
+    };
+    use uuid::Uuid;
 
     #[tokio::test]
     async fn canister_init() {
@@ -1388,5 +1393,114 @@ mod tests {
 
         set_initial_named_rules(&initial_named_rules)
             .expect_err("Should have failed due to unknown key");
+    }
+
+    #[tokio::test]
+    async fn test_duplicate_uuids() {
+        disable_mock_resource_validation();
+
+        // Test duplicate UUIDs in named rules
+        let named_rule_id = Uuid::new_v4().hyphenated().to_string();
+        set_initial_named_rules(&[
+            InitNamedRuleInput {
+                name: "NamedRule1".to_string(),
+                id: named_rule_id.clone(),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+            },
+            InitNamedRuleInput {
+                name: "NamedRule2".to_string(),
+                id: named_rule_id.clone(),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+            },
+        ])
+        .expect_err("Should have failed due to duplicate UUID in named rules");
+
+        // Test duplicate UUIDs in request policies
+        let request_policy_id = Uuid::new_v4().hyphenated().to_string();
+        set_initial_request_policies(&[
+            InitRequestPolicyInput {
+                id: Some(request_policy_id.clone()),
+                specifier: station_api::RequestSpecifierDTO::AddAccount,
+                rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+            },
+            InitRequestPolicyInput {
+                id: Some(request_policy_id.clone()),
+                specifier: station_api::RequestSpecifierDTO::AddUser,
+                rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+            },
+        ])
+        .expect_err("Should have failed due to duplicate UUID in request policies");
+
+        // Test duplicate UUIDs in user groups
+        let user_group_id = Uuid::new_v4().hyphenated().to_string();
+        set_initial_user_groups(&[
+            InitUserGroupInput {
+                name: "UserGroup1".to_string(),
+                id: user_group_id.clone(),
+            },
+            InitUserGroupInput {
+                name: "UserGroup2".to_string(),
+                id: user_group_id.clone(),
+            },
+        ])
+        .await
+        .expect_err("Should have failed due to duplicate UUID in user groups");
+
+        // Test duplicate UUIDs in assets
+        let asset_id = Uuid::new_v4().hyphenated().to_string();
+        set_initial_assets(&[
+            InitAssetInput {
+                id: asset_id.clone(),
+                name: "Asset1".to_string(),
+                blockchain: "icp".to_string(),
+                standards: vec!["icrc1".to_string()],
+                metadata: vec![],
+                symbol: "AST1".to_string(),
+                decimals: 8,
+            },
+            InitAssetInput {
+                id: asset_id.clone(),
+                name: "Asset2".to_string(),
+                blockchain: "icp".to_string(),
+                standards: vec!["icrc1".to_string()],
+                metadata: vec![],
+                symbol: "AST2".to_string(),
+                decimals: 8,
+            },
+        ])
+        .await
+        .expect_err("Should have failed due to duplicate UUID in assets");
+
+        // Test duplicate UUIDs in accounts
+        let account_id = Uuid::new_v4().hyphenated().to_string();
+        let empty_seed: AccountSeedDTO = [0; 16]; // Create a zero-filled array for the seed
+        let account_inputs = vec![
+            (
+                InitAccountInput {
+                    id: Some(account_id.clone()),
+                    name: "Account1".to_string(),
+                    seed: empty_seed,
+                    assets: vec![],
+                    metadata: vec![],
+                },
+                None,
+            ),
+            (
+                InitAccountInput {
+                    id: Some(account_id.clone()),
+                    name: "Account2".to_string(),
+                    seed: empty_seed,
+                    assets: vec![],
+                    metadata: vec![],
+                },
+                None,
+            ),
+        ];
+
+        set_initial_accounts(account_inputs, &[], 1)
+            .await
+            .expect_err("Should have failed due to duplicate UUID in accounts");
     }
 }

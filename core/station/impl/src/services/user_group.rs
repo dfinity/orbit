@@ -100,13 +100,21 @@ impl UserGroupService {
         input: AddUserGroupOperationInput,
         with_user_group_id: Option<UUID>,
     ) -> ServiceResult<UserGroup> {
-        let user_group_id = match with_user_group_id {
+        let user_group_uuid = match with_user_group_id {
             Some(id) => Uuid::from_bytes(id),
             None => generate_uuid_v4().await,
         };
 
+        let user_group_id = *user_group_uuid.as_bytes();
+
+        if self.user_group_repository.get(&user_group_id).is_some() {
+            Err(UserGroupError::IdAlreadyExists {
+                id: Uuid::from_bytes(user_group_id).hyphenated().to_string(),
+            })?;
+        }
+
         let user_group = UserGroup {
-            id: *user_group_id.as_bytes(),
+            id: user_group_id,
             name: input.name.to_string(),
             last_modification_timestamp: next_time(),
         };

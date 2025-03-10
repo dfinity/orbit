@@ -97,6 +97,16 @@ impl NamedRuleService {
     ) -> ServiceResult<NamedRule> {
         let id = with_named_rule_id.unwrap_or_else(|| *Uuid::new_v4().as_bytes());
 
+        if self
+            .named_rule_repository
+            .get(&NamedRuleKey { id })
+            .is_some()
+        {
+            Err(NamedRuleError::IdAlreadyExists {
+                id: Uuid::from_bytes(id).hyphenated().to_string(),
+            })?;
+        }
+
         let named_rule = NamedRule {
             id,
             name: input.name,
