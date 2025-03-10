@@ -2825,7 +2825,7 @@ type InitPermissionInput = record {
   allow : Allow;
 };
 
-// The init type for adding a request approval policies when initializing the canister for the first time.
+// The init type for adding a request approval policy when initializing the canister for the first time.
 type InitRequestPolicyInput = record {
   // The id of the request policy, if not provided a new UUID will be generated.
   id : opt UUID;
