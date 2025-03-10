@@ -873,17 +873,7 @@ mod init_canister_sync_handlers {
             .collect::<Vec<(AddAssetOperationInput, UUID)>>();
 
         for (new_asset, with_asset_id) in add_assets {
-            match ASSET_SERVICE.create(new_asset, Some(with_asset_id)) {
-                Err(ApiError { code, details, .. }) if &code == "ALREADY_EXISTS" => {
-                    // asset already exists, can skip safely
-                    print(format!(
-                        "Asset already exists, skipping. Details: {:?}",
-                        details.unwrap_or_default()
-                    ));
-                }
-                Err(e) => Err(e)?,
-                Ok(_) => {}
-            }
+            ASSET_SERVICE.create(new_asset, Some(with_asset_id))?;
         }
 
         Ok(())
