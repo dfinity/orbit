@@ -859,7 +859,7 @@ mod init_canister_sync_handlers {
         Ok(())
     }
 
-    /// Registers the newly added admins of the canister.
+    /// Registers the newly added users of the canister.
     pub fn set_initial_users(
         users: Vec<UserInitInput>,
         default_groups: &[UUID],
