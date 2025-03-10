@@ -2813,7 +2813,7 @@ type InitUserInput = record {
   // The status of the user (e.g. `Active`).
   //
   // If not provided the default status is `Active` when there is at least
-  // one identity ot `Inactive` otherwise.
+  // one identity or `Inactive` otherwise.
   status : opt UserStatus;
 };
 
