@@ -37,8 +37,8 @@ use upgrader_api::{
 };
 use uuid::Uuid;
 
-pub const ADMIN_GROUP_ID: Uuid = Uuid::from_u128(302240678275694148452352); // very first uuidv4 generated
-pub const OPERATOR_GROUP_ID: Uuid = Uuid::from_u128(302240678275694148452353); // very first uuidv4 generated
+pub const ADMIN_GROUP_ID: Uuid = Uuid::from_u128(302240678275694148452352); // 00000000-0000-4000-8000-000000000000
+pub const OPERATOR_GROUP_ID: Uuid = Uuid::from_u128(302240678275694148452353); // 00000000-0000-4000-8000-000000000001
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 
 pub const COUNTER_WAT: &str = r#"

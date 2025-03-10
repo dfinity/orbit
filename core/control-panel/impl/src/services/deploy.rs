@@ -121,14 +121,14 @@ impl DeployService {
         let intial_users = input
             .admins
             .iter()
-            .map(|admin| station_api::UserInitInput {
+            .map(|user| station_api::UserInitInput {
                 id: None,
                 identities: vec![station_api::UserIdentityInput {
-                    identity: admin.identity,
+                    identity: user.identity,
                 }],
                 groups: None,
                 status: None,
-                name: admin.username.clone(),
+                name: user.username.clone(),
             })
             .collect::<Vec<_>>();
 
