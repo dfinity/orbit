@@ -850,7 +850,9 @@ fn assert_initial_assets(
 }
 
 fn compare_arrays<T: PartialEq>(a: &[T], b: &[T]) -> bool {
-    a.len() == b.len() && a.iter().all(|item| b.contains(item)) && b.iter().all(|item| a.contains(item))
+    a.len() == b.len()
+        && a.iter().all(|item| b.contains(item))
+        && b.iter().all(|item| a.contains(item))
 }
 
 fn assert_initial_accounts(
