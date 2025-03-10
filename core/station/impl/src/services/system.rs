@@ -900,7 +900,7 @@ mod init_canister_sync_handlers {
             )?;
 
             print(&format!(
-                "Added admin user with principals {:?} and user id {}",
+                "Added user with principals {:?} and user id {}",
                 user.identities
                     .iter()
                     .map(|identity| identity.to_text())
