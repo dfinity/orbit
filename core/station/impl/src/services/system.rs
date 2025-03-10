@@ -864,7 +864,7 @@ mod init_canister_sync_handlers {
         users: Vec<UserInitInput>,
         default_groups: &[UUID],
     ) -> Result<(), ApiError> {
-        print(format!("Registering {} admin users", users.len()));
+        print(format!("Registering {} users", users.len()));
         for user in users {
             let user_id = user
                 .id
