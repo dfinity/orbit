@@ -896,6 +896,18 @@ mod init_canister_sync_handlers {
                 .map(|id_str| HelperMapper::to_uuid(id_str).map(|uuid| *uuid.as_bytes()))
                 .transpose()?;
 
+            let groups = user
+                .groups
+                .map(|ids| {
+                    ids.into_iter()
+                        .map(|id| {
+                            HelperMapper::to_uuid(id.clone()).map(|uuid| uuid.as_bytes().to_owned())
+                        })
+                        .collect::<Result<Vec<_>, _>>()
+                })
+                .transpose()?
+                .unwrap_or_else(|| default_groups.to_vec());
+
             let user = USER_SERVICE.add_user_with_id(
                 AddUserOperationInput {
                     identities: user
@@ -903,18 +915,7 @@ mod init_canister_sync_handlers {
                         .iter()
                         .map(|identity| identity.identity.to_owned())
                         .collect(),
-                    groups: user
-                        .groups
-                        .map(|ids| {
-                            ids.into_iter()
-                                .map(|id| {
-                                    HelperMapper::to_uuid(id.clone())
-                                        .map(|uuid| uuid.as_bytes().to_owned())
-                                })
-                                .collect::<Result<Vec<_>, _>>()
-                                .unwrap_or_else(|_| default_groups.to_vec())
-                        })
-                        .unwrap_or_else(|| default_groups.to_vec()),
+                    groups,
                     name: user.name.to_owned(),
                     status: user
                         .status
@@ -1025,17 +1026,17 @@ mod init_canister_sync_handlers {
                         )
                     });
 
+                let assets = account
+                    .assets
+                    .into_iter()
+                    .map(|id| {
+                        HelperMapper::to_uuid(id.clone()).map(|uuid| uuid.as_bytes().to_owned())
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+
                 let input = AddAccountOperationInput {
                     name: account.name,
-                    assets: account
-                        .assets
-                        .into_iter()
-                        .map(|asset| {
-                            *HelperMapper::to_uuid(asset)
-                                .expect("Invalid UUID")
-                                .as_bytes()
-                        })
-                        .collect(),
+                    assets: vec![],
                     metadata: account.metadata.into(),
                     transfer_request_policy,
                     configs_request_policy,
@@ -1044,14 +1045,15 @@ mod init_canister_sync_handlers {
                     transfer_permission,
                 };
 
-                (
-                    input,
-                    account
-                        .id
-                        .map(|id| *HelperMapper::to_uuid(id).expect("Invalid UUID").as_bytes()),
-                )
+                let account_id = account
+                    .id
+                    .map(|id| HelperMapper::to_uuid(id).map(|uuid| uuid.as_bytes().to_owned()))
+                    .transpose()?;
+
+                Ok((input, account_id))
             })
-            .collect::<Vec<(AddAccountOperationInput, Option<UUID>)>>();
+            .collect::<Result<Vec<(AddAccountOperationInput, Option<UUID>)>, ApiError>>()
+            .map_err(|e| format!("Invalid input: {:?}", e))?;
 
         for (new_account, with_account_id) in add_accounts {
             ACCOUNT_SERVICE
@@ -1192,7 +1194,7 @@ mod tests {
         models::request_test_utils::mock_request,
         services::system::init_canister_sync_handlers::{
             set_initial_accounts, set_initial_assets, set_initial_named_rules,
-            set_initial_request_policies, set_initial_user_groups,
+            set_initial_request_policies, set_initial_user_groups, set_initial_users,
         },
     };
     use candid::Principal;
@@ -1476,5 +1478,23 @@ mod tests {
         set_initial_accounts(account_inputs, &[], 1)
             .await
             .expect_err("Should have failed due to duplicate UUID in accounts");
+    }
+
+    #[tokio::test]
+    async fn test_initial_users_with_bad_groups() {
+        let user_id = Uuid::new_v4().hyphenated().to_string();
+
+        let user = UserInitInput {
+            name: "User".to_string(),
+            identities: vec![UserIdentityInput {
+                identity: Principal::from_slice(&[1; 29]),
+            }],
+            id: Some(user_id.clone()),
+            groups: Some(vec!["abc".to_string()]),
+            status: None,
+        };
+
+        set_initial_users(vec![user], &[])
+            .expect_err("Should have failed due to malformed group uuid");
     }
 }
