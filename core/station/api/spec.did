@@ -2816,6 +2816,7 @@ type CanisterStatusInput = record {
 type LogVisibility = variant {
   public;
   controllers;
+  allowed_viewers
 };
 
 type DefiniteCanisterSettings = record {

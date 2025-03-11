@@ -942,7 +942,8 @@ export type ListUsersResult = {
   } |
   { 'Err' : Error };
 export type LogVisibility = { 'controllers' : null } |
-  { 'public' : null };
+  { 'public' : null } |
+  { 'allowed_viewers' : null };
 export interface ManageSystemInfoOperation {
   'input' : ManageSystemInfoOperationInput,
 }
