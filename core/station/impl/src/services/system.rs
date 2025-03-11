@@ -725,7 +725,7 @@ mod init_canister_sync_handlers {
                     return Ordering::Less;
                 }
             }
-            Ordering::Greater
+            Ordering::Equal
         });
 
         for (new_named_rule, with_named_rule_id) in add_named_rules {
@@ -835,7 +835,7 @@ mod init_canister_sync_handlers {
                     return Ordering::Less;
                 }
             }
-            Ordering::Greater
+            Ordering::Equal
         });
 
         for (input, request_policy_id) in add_request_policies {
