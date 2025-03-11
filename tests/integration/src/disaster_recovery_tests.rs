@@ -465,7 +465,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
     }
 
     let init_assets_input = station_api::InitAssetInput {
-        id: icp_asset.id.clone(),
+        id: Some(icp_asset.id.clone()),
         name: icp_asset.name.clone(),
         symbol: icp_asset.symbol.clone(),
         decimals: icp_asset.decimals,

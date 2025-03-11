@@ -87,7 +87,7 @@ fn install_with_default_policies() {
     let assets = vec![
         station_api::InitAssetInput {
             name: "test-asset-1".to_string(),
-            id: asset_1_id.clone(),
+            id: Some(asset_1_id.clone()),
             blockchain: "icp".to_string(),
             standards: vec!["icp_native".to_owned()],
             metadata: vec![],
@@ -96,7 +96,7 @@ fn install_with_default_policies() {
         },
         station_api::InitAssetInput {
             name: "test-asset-2".to_string(),
-            id: asset_2_id.clone(),
+            id: Some(asset_2_id.clone()),
             blockchain: "icp".to_string(),
             standards: vec!["icp_native".to_owned()],
             metadata: vec![],
@@ -311,7 +311,7 @@ fn install_with_all_entries() {
     let assets = vec![
         station_api::InitAssetInput {
             name: "test-asset-1".to_string(),
-            id: asset_1_id.clone(),
+            id: Some(asset_1_id.clone()),
             blockchain: "icp".to_string(),
             standards: vec!["icp_native".to_owned()],
             metadata: vec![],
@@ -320,7 +320,7 @@ fn install_with_all_entries() {
         },
         station_api::InitAssetInput {
             name: "test-asset-2".to_string(),
-            id: asset_2_id.clone(),
+            id: Some(asset_2_id.clone()),
             blockchain: "icp".to_string(),
             standards: vec!["icp_native".to_owned()],
             metadata: vec![],
@@ -331,13 +331,13 @@ fn install_with_all_entries() {
 
     let named_rules = vec![
         InitNamedRuleInput {
-            id: Uuid::new_v4().hyphenated().to_string(),
+            id: None,
             name: "custom-named-rule-with-dependency".to_string(),
             description: None,
             rule: RequestPolicyRuleDTO::NamedRule(named_rule_dependent_id.clone()),
         },
         InitNamedRuleInput {
-            id: named_rule_dependent_id.clone(),
+            id: Some(named_rule_dependent_id.clone()),
             name: "custom-named-rule".to_string(),
             description: None,
             rule: RequestPolicyRuleDTO::AutoApproved,
@@ -345,7 +345,7 @@ fn install_with_all_entries() {
     ];
 
     let user_groups = vec![InitUserGroupInput {
-        id: custom_user_group_id.clone(),
+        id: Some(custom_user_group_id.clone()),
         name: "custom-user-group".to_string(),
     }];
 
@@ -535,20 +535,20 @@ fn install_with_all_defaults() {
         request_policies: vec![],
         user_groups: vec![
             InitUserGroupInput {
-                id: ADMIN_GROUP_ID.hyphenated().to_string(),
+                id: Some(ADMIN_GROUP_ID.hyphenated().to_string()),
                 name: "admin".to_string(),
             },
         ],
         named_rules: vec![
             // circular reference
             InitNamedRuleInput {
-                id: id_1.clone(),
+                id: Some(id_1.clone()),
                 name: "named_rule".to_string(),
                 description: None,
                 rule: RequestPolicyRuleDTO::NamedRule(id_2.clone()),
             },
             InitNamedRuleInput {
-                id: id_2.clone(),
+                id: Some(id_2.clone()),
                 name: "named_rule_2".to_string(),
                 description: None,
                 rule: RequestPolicyRuleDTO::NamedRule(id_1.clone()),
@@ -588,7 +588,7 @@ fn install_with_all_defaults() {
         }],
         user_groups: vec![
             InitUserGroupInput {
-                id: ADMIN_GROUP_ID.hyphenated().to_string(),
+                id: Some(ADMIN_GROUP_ID.hyphenated().to_string()),
                 name: "admin".to_string(),
             },
         ],
@@ -831,10 +831,14 @@ fn assert_initial_assets(
         let asset = listed_assets
             .assets
             .iter()
-            .find(|asset| asset.id == expected_asset.id)
-            .ok_or(format!("asset {} not found", expected_asset.id))?;
+            .find(|asset| asset.name == expected_asset.name)
+            .ok_or(format!("asset {} not found", expected_asset.name))?;
 
-        if asset.id != expected_asset.id
+        if expected_asset
+            .id
+            .as_ref()
+            .map(|id| id != &asset.id)
+            .unwrap_or(false)
             || asset.name != expected_asset.name
             || asset.blockchain != expected_asset.blockchain
             || asset.standards != expected_asset.standards

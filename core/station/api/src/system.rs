@@ -77,7 +77,7 @@ pub struct UserIdentityInput {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct InitUserGroupInput {
-    pub id: UuidDTO,
+    pub id: Option<UuidDTO>,
     pub name: String,
 }
 
@@ -96,7 +96,7 @@ pub struct InitRequestPolicyInput {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct InitNamedRuleInput {
-    pub id: UuidDTO,
+    pub id: Option<UuidDTO>,
     pub name: String,
     pub description: Option<String>,
     pub rule: RequestPolicyRuleDTO,
@@ -141,7 +141,7 @@ pub struct InitAccountWithPermissionsInput {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub struct InitAssetInput {
-    pub id: UuidDTO,
+    pub id: Option<UuidDTO>,
     pub name: String,
     pub blockchain: String,
     pub standards: Vec<String>,

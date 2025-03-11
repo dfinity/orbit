@@ -677,18 +677,19 @@ mod init_canister_sync_handlers {
                     name: user_group.name.clone(),
                 };
 
-                (
-                    input,
-                    *HelperMapper::to_uuid(user_group.id.clone())
-                        .expect("Invalid UUID")
-                        .as_bytes(),
-                )
+                let user_group_id = user_group
+                    .id
+                    .as_ref()
+                    .map(|id| HelperMapper::to_uuid(id.clone()).map(|uuid| *uuid.as_bytes()))
+                    .transpose();
+
+                user_group_id.map(|user_group_id| (input, user_group_id))
             })
-            .collect::<Vec<(AddUserGroupOperationInput, UUID)>>();
+            .collect::<Result<Vec<_>, _>>()?;
 
         for (new_user_group, with_user_group_id) in add_user_groups {
             USER_GROUP_SERVICE
-                .create_with_id(new_user_group, Some(with_user_group_id))
+                .create_with_id(new_user_group, with_user_group_id)
                 .await?;
         }
 
@@ -705,27 +706,30 @@ mod init_canister_sync_handlers {
                     rule: named_rule.rule.clone().into(),
                 };
 
-                (
-                    input,
-                    HelperMapper::to_uuid(named_rule.id.clone()).map(|uuid| *uuid.as_bytes()),
-                )
+                let named_rule_id = named_rule
+                    .id
+                    .as_ref()
+                    .map(|id| HelperMapper::to_uuid(id.clone()).map(|uuid| *uuid.as_bytes()))
+                    .transpose();
+
+                named_rule_id.map(|named_rule_id| (input, named_rule_id))
             })
-            .map(|(input, result)| result.map(|uuid| (input, uuid)))
             .collect::<Result<Vec<_>, _>>()?;
 
         // sorting criteria:
         // - if a policy depends on another policy, the dependent policy should be added first
         // - keep the original order of the policys otherwise
         add_named_rules.sort_by(|a, b| {
-            if b.0.rule.has_named_rule_id(&a.1) {
-                Ordering::Less
-            } else {
-                Ordering::Greater
+            if let Some(a_id) = &a.1 {
+                if b.0.rule.has_named_rule_id(a_id) {
+                    return Ordering::Less;
+                }
             }
+            Ordering::Greater
         });
 
         for (new_named_rule, with_named_rule_id) in add_named_rules {
-            NAMED_RULE_SERVICE.create_with_id(new_named_rule, Some(with_named_rule_id))?;
+            NAMED_RULE_SERVICE.create_with_id(new_named_rule, with_named_rule_id)?;
         }
 
         Ok(())
@@ -863,17 +867,18 @@ mod init_canister_sync_handlers {
                     metadata: asset.metadata.clone().into(),
                 };
 
-                (
-                    input,
-                    *HelperMapper::to_uuid(asset.id.clone())
-                        .expect("Invalid UUID")
-                        .as_bytes(),
-                )
+                let asset_id = asset
+                    .id
+                    .as_ref()
+                    .map(|id| HelperMapper::to_uuid(id.clone()).map(|uuid| *uuid.as_bytes()))
+                    .transpose();
+
+                asset_id.map(|asset_id| (input, asset_id))
             })
-            .collect::<Vec<(AddAssetOperationInput, UUID)>>();
+            .collect::<Result<Vec<_>, _>>()?;
 
         for (new_asset, with_asset_id) in add_assets {
-            ASSET_SERVICE.create(new_asset, Some(with_asset_id))?;
+            ASSET_SERVICE.create(new_asset, with_asset_id)?;
         }
 
         Ok(())
@@ -1048,53 +1053,7 @@ mod init_canister_sync_handlers {
             })
             .collect::<Vec<(AddAccountOperationInput, Option<UUID>)>>();
 
-        //
-        // In case there are assets existing in the Asset repository at the time of recovering the assets
-        // some of the assets might not be able to be recreated, in this case we try to find the same asset
-        // in the existing assets and replace the asset_id in the recreated account with the existing one.
-        //
-        for (mut new_account, with_account_id) in add_accounts {
-            let mut new_account_assets = new_account.assets.clone();
-            for asset_id in new_account.assets.iter() {
-                if ASSET_REPOSITORY.get(asset_id).is_none() {
-                    // the asset could not be recreated, try to find the same asset in the existing assets
-                    let asset_id_str = Uuid::from_bytes(*asset_id).hyphenated().to_string();
-                    let Some(original_asset_to_create) = initial_assets
-                        .iter()
-                        .find(|initial_asset| initial_asset.id == asset_id_str)
-                    else {
-                        // the asset does not exist and it could not be recreated, skip
-                        continue;
-                    };
-
-                    if let Some(existing_asset_id) = ASSET_REPOSITORY.exists_unique(
-                        &original_asset_to_create.blockchain,
-                        &original_asset_to_create.symbol,
-                    ) {
-                        // replace the asset_id in the recreated account with the existing one
-                        new_account_assets.retain(|id| asset_id != id);
-                        new_account_assets.push(existing_asset_id);
-
-                        print(format!(
-                            "Asset {} could not be recreated, replaced with existing asset {}",
-                            asset_id_str,
-                            Uuid::from_bytes(existing_asset_id).hyphenated()
-                        ));
-                    } else {
-                        // the asset does not exist and it could not be recreated, skip
-
-                        print(format!(
-                                "Asset {} could not be recreated and does not exist in the existing assets, skipping",
-                                asset_id_str
-                            ));
-
-                        continue;
-                    }
-                }
-            }
-
-            new_account.assets = new_account_assets;
-
+        for (new_account, with_account_id) in add_accounts {
             ACCOUNT_SERVICE
                 .create_account(new_account, with_account_id)
                 .await
@@ -1340,19 +1299,19 @@ mod tests {
         let initial_named_rules = vec![
             InitNamedRuleInput {
                 name: "NamedRule3".to_string(),
-                id: id_1.clone(),
+                id: Some(id_1.clone()),
                 description: None,
                 rule: station_api::RequestPolicyRuleDTO::NamedRule(id_2.clone()),
             },
             InitNamedRuleInput {
                 name: "NamedRule2".to_string(),
-                id: id_2.clone(),
+                id: Some(id_2.clone()),
                 description: None,
                 rule: station_api::RequestPolicyRuleDTO::NamedRule(id_3.clone()),
             },
             InitNamedRuleInput {
                 name: "NamedRule1".to_string(),
-                id: id_3.clone(),
+                id: Some(id_3.clone()),
                 description: None,
                 rule: station_api::RequestPolicyRuleDTO::AutoApproved,
             },
@@ -1370,19 +1329,19 @@ mod tests {
         let initial_named_rules = vec![
             InitNamedRuleInput {
                 name: "NamedRule3".to_string(),
-                id: id_1.clone(),
+                id: Some(id_1.clone()),
                 description: None,
                 rule: station_api::RequestPolicyRuleDTO::NamedRule(id_2.clone()),
             },
             InitNamedRuleInput {
                 name: "NamedRule2".to_string(),
-                id: id_2.clone(),
+                id: Some(id_2.clone()),
                 description: None,
                 rule: station_api::RequestPolicyRuleDTO::NamedRule(id_3.clone()),
             },
             InitNamedRuleInput {
                 name: "NamedRule1".to_string(),
-                id: id_3.clone(),
+                id: Some(id_3.clone()),
                 description: None,
                 rule: station_api::RequestPolicyRuleDTO::NamedRule(id_1.clone()),
             },
@@ -1401,7 +1360,7 @@ mod tests {
         // unknown key throws an error
         let initial_named_rules = vec![InitNamedRuleInput {
             name: "NamedRule3".to_string(),
-            id: id_1.clone(),
+            id: Some(id_1.clone()),
             description: None,
             rule: station_api::RequestPolicyRuleDTO::NamedRule(id_2.clone()),
         }];
@@ -1419,13 +1378,13 @@ mod tests {
         set_initial_named_rules(&[
             InitNamedRuleInput {
                 name: "NamedRule1".to_string(),
-                id: named_rule_id.clone(),
+                id: Some(named_rule_id.clone()),
                 description: None,
                 rule: station_api::RequestPolicyRuleDTO::AutoApproved,
             },
             InitNamedRuleInput {
                 name: "NamedRule2".to_string(),
-                id: named_rule_id.clone(),
+                id: Some(named_rule_id.clone()),
                 description: None,
                 rule: station_api::RequestPolicyRuleDTO::AutoApproved,
             },
@@ -1453,11 +1412,11 @@ mod tests {
         set_initial_user_groups(&[
             InitUserGroupInput {
                 name: "UserGroup1".to_string(),
-                id: user_group_id.clone(),
+                id: Some(user_group_id.clone()),
             },
             InitUserGroupInput {
                 name: "UserGroup2".to_string(),
-                id: user_group_id.clone(),
+                id: Some(user_group_id.clone()),
             },
         ])
         .await
@@ -1467,7 +1426,7 @@ mod tests {
         let asset_id = Uuid::new_v4().hyphenated().to_string();
         set_initial_assets(&[
             InitAssetInput {
-                id: asset_id.clone(),
+                id: Some(asset_id.clone()),
                 name: "Asset1".to_string(),
                 blockchain: "icp".to_string(),
                 standards: vec!["icrc1".to_string()],
@@ -1476,7 +1435,7 @@ mod tests {
                 decimals: 8,
             },
             InitAssetInput {
-                id: asset_id.clone(),
+                id: Some(asset_id.clone()),
                 name: "Asset2".to_string(),
                 blockchain: "icp".to_string(),
                 standards: vec!["icrc1".to_string()],
