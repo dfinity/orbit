@@ -54,7 +54,7 @@ impl RequestPolicyRule {
             RequestPolicyRule::Not(rule) => rule.has_named_rule_id(named_rule_id),
             RequestPolicyRule::AutoApproved
             | RequestPolicyRule::QuorumPercentage(..)
-            | RequestPolicyRule::Quorum(.., _)
+            | RequestPolicyRule::Quorum(..)
             | RequestPolicyRule::AllowListedByMetadata(..)
             | RequestPolicyRule::AllowListed => false,
         }
