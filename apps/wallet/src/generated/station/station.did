@@ -2766,11 +2766,10 @@ type InitAccountWithPermissionsInput = record {
   permissions : InitAccountPermissionsInput;
 };
 
-
 // The initial assets to create when initializing the canister for the first time, e.g., after disaster recovery.
 type InitAssetInput = record {
   // The UUID of the asset, if not provided a new UUID will be generated.
-  id : UUID;
+  id : opt UUID;
   // The name of the asset.
   name : text;
   // The blockchain identifier (e.g., `ethereum`, `bitcoin`, `icp`, etc.)
@@ -2788,7 +2787,7 @@ type InitAssetInput = record {
 // The input type for creating a user group when initializing the canister for the first time.
 type InitUserGroupInput = record {
   // The id of the user group.
-  id : UUID;
+  id : opt UUID;
   // The name of the user group, must be unique.
   name : text;
 };
@@ -2808,12 +2807,13 @@ type InitUserInput = record {
   // The identities of the user.
   identities : vec UserIdentityInput;
   // The user groups to associate with the user (optional).
-  // If not provided it defaults to the `admin` group if default user groups are created.
+  // If not provided it defaults to the `admin` group if default user groups are created,
+  // i.e., when the field `entries` in `SystemInit` is `null` or has the form of `WithDefaultPolicies`.
   groups : opt vec UUID;
   // The status of the user (e.g. `Active`).
   //
   // If not provided the default status is `Active` when there is at least
-  // one identity ot `Inactive` otherwise.
+  // one identity or `Inactive` otherwise.
   status : opt UserStatus;
 };
 
@@ -2825,7 +2825,7 @@ type InitPermissionInput = record {
   allow : Allow;
 };
 
-// The init type for adding a request approval policies when initializing the canister for the first time.
+// The init type for adding a request approval policy when initializing the canister for the first time.
 type InitRequestPolicyInput = record {
   // The id of the request policy, if not provided a new UUID will be generated.
   id : opt UUID;
@@ -2838,7 +2838,7 @@ type InitRequestPolicyInput = record {
 // The init type for adding a named rule when initializing the canister for the first time.
 type InitNamedRuleInput = record {
   // The id of the named rule.
-  id : UUID;  
+  id : opt UUID;  
   // The name of the named rule.
   name : text;
   // The description of the named rule.
@@ -2847,7 +2847,7 @@ type InitNamedRuleInput = record {
   rule : RequestPolicyRule;
 };
 
-type InitalEntries = variant {
+type InitialEntries = variant {
   // Initialize the station with default policies, accounts and assets.
   WithDefaultPolicies : record {
     accounts : vec InitAccountInput;
@@ -2876,10 +2876,8 @@ type SystemInit = record {
   // The quorum for the initial approval policy.
   quorum : opt nat16;
   // The initial entries to create.
-  entries: opt InitalEntries;
+  entries: opt InitialEntries;
 };
-
-
 
 // The upgrade configuration for the canister.
 type SystemUpgrade = record {

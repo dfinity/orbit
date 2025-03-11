@@ -12,7 +12,7 @@ export const idlFactory = ({ IDL }) => {
   const UUID = IDL.Text;
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const InitAssetInput = IDL.Record({
-    'id' : UUID,
+    'id' : IDL.Opt(UUID),
     'decimals' : IDL.Nat32,
     'standards' : IDL.Vec(IDL.Text),
     'metadata' : IDL.Vec(AssetMetadata),
@@ -194,7 +194,10 @@ export const idlFactory = ({ IDL }) => {
     'rule' : RequestPolicyRule,
     'specifier' : RequestSpecifier,
   });
-  const InitUserGroupInput = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });
+  const InitUserGroupInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'name' : IDL.Text,
+  });
   const InitAccountPermissionsInput = IDL.Record({
     'configs_request_policy' : IDL.Opt(RequestPolicyRule),
     'read_permission' : Allow,
@@ -207,12 +210,12 @@ export const idlFactory = ({ IDL }) => {
     'account_init' : InitAccountInput,
   });
   const InitNamedRuleInput = IDL.Record({
-    'id' : UUID,
+    'id' : IDL.Opt(UUID),
     'name' : IDL.Text,
     'rule' : RequestPolicyRule,
     'description' : IDL.Opt(IDL.Text),
   });
-  const InitalEntries = IDL.Variant({
+  const InitialEntries = IDL.Variant({
     'WithDefaultPolicies' : IDL.Record({
       'assets' : IDL.Vec(InitAssetInput),
       'accounts' : IDL.Vec(InitAccountInput),
@@ -242,7 +245,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
-    'entries' : IDL.Opt(InitalEntries),
+    'entries' : IDL.Opt(InitialEntries),
     'users' : IDL.Vec(InitUserInput),
     'quorum' : IDL.Opt(IDL.Nat16),
   });
@@ -1871,7 +1874,7 @@ export const init = ({ IDL }) => {
   const UUID = IDL.Text;
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const InitAssetInput = IDL.Record({
-    'id' : UUID,
+    'id' : IDL.Opt(UUID),
     'decimals' : IDL.Nat32,
     'standards' : IDL.Vec(IDL.Text),
     'metadata' : IDL.Vec(AssetMetadata),
@@ -2053,7 +2056,10 @@ export const init = ({ IDL }) => {
     'rule' : RequestPolicyRule,
     'specifier' : RequestSpecifier,
   });
-  const InitUserGroupInput = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });
+  const InitUserGroupInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'name' : IDL.Text,
+  });
   const InitAccountPermissionsInput = IDL.Record({
     'configs_request_policy' : IDL.Opt(RequestPolicyRule),
     'read_permission' : Allow,
@@ -2066,12 +2072,12 @@ export const init = ({ IDL }) => {
     'account_init' : InitAccountInput,
   });
   const InitNamedRuleInput = IDL.Record({
-    'id' : UUID,
+    'id' : IDL.Opt(UUID),
     'name' : IDL.Text,
     'rule' : RequestPolicyRule,
     'description' : IDL.Opt(IDL.Text),
   });
-  const InitalEntries = IDL.Variant({
+  const InitialEntries = IDL.Variant({
     'WithDefaultPolicies' : IDL.Record({
       'assets' : IDL.Vec(InitAssetInput),
       'accounts' : IDL.Vec(InitAccountInput),
@@ -2101,7 +2107,7 @@ export const init = ({ IDL }) => {
     'name' : IDL.Text,
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
-    'entries' : IDL.Opt(InitalEntries),
+    'entries' : IDL.Opt(InitialEntries),
     'users' : IDL.Vec(InitUserInput),
     'quorum' : IDL.Opt(IDL.Nat16),
   });

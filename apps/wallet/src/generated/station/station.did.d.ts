@@ -742,7 +742,7 @@ export interface InitAccountWithPermissionsInput {
   'account_init' : InitAccountInput,
 }
 export interface InitAssetInput {
-  'id' : UUID,
+  'id' : [] | [UUID],
   'decimals' : number,
   'standards' : Array<string>,
   'metadata' : Array<AssetMetadata>,
@@ -751,7 +751,7 @@ export interface InitAssetInput {
   'symbol' : string,
 }
 export interface InitNamedRuleInput {
-  'id' : UUID,
+  'id' : [] | [UUID],
   'name' : string,
   'rule' : RequestPolicyRule,
   'description' : [] | [string],
@@ -762,7 +762,7 @@ export interface InitRequestPolicyInput {
   'rule' : RequestPolicyRule,
   'specifier' : RequestSpecifier,
 }
-export interface InitUserGroupInput { 'id' : UUID, 'name' : string }
+export interface InitUserGroupInput { 'id' : [] | [UUID], 'name' : string }
 export interface InitUserInput {
   'id' : [] | [UUID],
   'status' : [] | [UserStatus],
@@ -770,7 +770,7 @@ export interface InitUserInput {
   'name' : string,
   'identities' : Array<UserIdentityInput>,
 }
-export type InitalEntries = {
+export type InitialEntries = {
     'WithDefaultPolicies' : {
       'assets' : Array<InitAssetInput>,
       'accounts' : Array<InitAccountInput>,
@@ -1433,7 +1433,7 @@ export interface SystemInit {
   'name' : string,
   'fallback_controller' : [] | [Principal],
   'upgrader' : SystemUpgraderInput,
-  'entries' : [] | [InitalEntries],
+  'entries' : [] | [InitialEntries],
   'users' : Array<InitUserInput>,
   'quorum' : [] | [number],
 }
