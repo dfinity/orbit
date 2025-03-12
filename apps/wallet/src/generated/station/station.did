@@ -2847,20 +2847,49 @@ type InitNamedRuleInput = record {
   rule : RequestPolicyRule;
 };
 
-type InitialEntries = variant {
+// The initial configuration for the station.
+type InitialConfig = variant {
+  // Initialize the station with default policies, permissions, and assets.
+  // This does not create an initial account.
+  WithAllDefaults : record {
+    // The initial users to create.
+    users : vec InitUserInput;
+    // The initial admin quorum in the admin level approval rule.
+    admin_quorum : nat16;
+    // The initial operator quorum in the operator level approval rule.
+    operator_quorum : nat16;
+  };
   // Initialize the station with default policies, accounts and assets.
   WithDefaultPolicies : record {
+    // The initial users to create.
+    users : vec InitUserInput;
+    // The initial accounts to create.
     accounts : vec InitAccountInput;
+    // The initial assets to create.
     assets : vec InitAssetInput;
+    // The initial admin quorum in the admin level approval rule.
+    admin_quorum : nat16;
+    // The initial operator quorum in the operator level approval rule.
+    operator_quorum : nat16;
   };
   // Initialize the station with all custom entries.
   Complete : record {
+    // The initial users to create.
+    users : vec InitUserInput;
+    // The initial user groups to create.
     user_groups : vec InitUserGroupInput;
+    // The initial permissions to create.
     permissions : vec InitPermissionInput;
+    // The initial request policies to create.
     request_policies : vec InitRequestPolicyInput;
+    // The initial named rules to create.
     named_rules : vec InitNamedRuleInput;
+    // The initial accounts to create.
     accounts : vec InitAccountWithPermissionsInput;
+    // The initial assets to create.
     assets : vec InitAssetInput;
+    // The initial disaster recovery committee to create.
+    disaster_recovery_committee : opt DisasterRecoveryCommittee;
   };
 };
 
@@ -2871,12 +2900,8 @@ type SystemInit = record {
   upgrader : SystemUpgraderInput;
   // An additional controller of the station and upgrader canisters (optional).
   fallback_controller : opt principal;
-  // The initial users to create.
-  users : vec InitUserInput;
-  // The quorum for the initial approval policy.
-  quorum : opt nat16;
-  // The initial entries to create.
-  entries: opt InitialEntries;
+  // The initial configuration to apply.
+  entries: InitialConfig;
 };
 
 // The upgrade configuration for the canister.

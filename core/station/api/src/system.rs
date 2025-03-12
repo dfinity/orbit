@@ -151,18 +151,46 @@ pub struct InitAssetInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
-pub enum InitialEntries {
-    WithDefaultPolicies {
-        assets: Vec<InitAssetInput>,
-        accounts: Vec<InitAccountInput>,
+pub enum InitialConfig {
+    WithAllDefaults {
+        /// The initial users to create.
+        users: Vec<UserInitInput>,
+        /// The initial admin quorum in the admin level approval rule.
+        admin_quorum: u16,
+        /// The initial operator quorum in the operator level approval rule.
+        operator_quorum: u16,
     },
-    Complete {
-        permissions: Vec<InitPermissionInput>,
+    /// Initialize the station with default policies, accounts and assets.
+    WithDefaultPolicies {
+        /// The initial users to create.
+        users: Vec<UserInitInput>,
+        /// The initial accounts to create.
+        accounts: Vec<InitAccountInput>,
+        /// The initial assets to create.
         assets: Vec<InitAssetInput>,
-        request_policies: Vec<InitRequestPolicyInput>,
+        /// The initial admin quorum in the admin level approval rule.
+        admin_quorum: u16,
+        /// The initial operator quorum in the operator level approval rule.
+        operator_quorum: u16,
+    },
+    /// Initialize the station with all custom entries.
+    Complete {
+        /// The initial users to create.
+        users: Vec<UserInitInput>,
+        /// The initial user groups to create.
         user_groups: Vec<InitUserGroupInput>,
-        accounts: Vec<InitAccountWithPermissionsInput>,
+        /// The initial permissions to create.
+        permissions: Vec<InitPermissionInput>,
+        /// The initial request policies to create.
+        request_policies: Vec<InitRequestPolicyInput>,
+        /// The initial named rules to create.
         named_rules: Vec<InitNamedRuleInput>,
+        /// The initial accounts to create.
+        accounts: Vec<InitAccountWithPermissionsInput>,
+        /// The initial assets to create.
+        assets: Vec<InitAssetInput>,
+        /// The initial disaster recovery committee to create.
+        disaster_recovery_committee: Option<DisasterRecoveryCommitteeDTO>,
     },
 }
 
@@ -174,12 +202,8 @@ pub struct SystemInit {
     pub upgrader: SystemUpgraderInput,
     /// Optional fallback controller for the station and upgrader canisters.
     pub fallback_controller: Option<Principal>,
-    /// The initial users.
-    pub users: Vec<UserInitInput>,
-    /// The initial quorum.
-    pub quorum: Option<u16>,
     /// The initial database entries.
-    pub entries: Option<InitialEntries>,
+    pub initial_config: InitialConfig,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]

@@ -770,10 +770,20 @@ export interface InitUserInput {
   'name' : string,
   'identities' : Array<UserIdentityInput>,
 }
-export type InitialEntries = {
+export type InitialConfig = {
     'WithDefaultPolicies' : {
       'assets' : Array<InitAssetInput>,
+      'admin_quorum' : number,
       'accounts' : Array<InitAccountInput>,
+      'users' : Array<InitUserInput>,
+      'operator_quorum' : number,
+    }
+  } |
+  {
+    'WithAllDefaults' : {
+      'admin_quorum' : number,
+      'users' : Array<InitUserInput>,
+      'operator_quorum' : number,
     }
   } |
   {
@@ -783,6 +793,8 @@ export type InitialEntries = {
       'request_policies' : Array<InitRequestPolicyInput>,
       'user_groups' : Array<InitUserGroupInput>,
       'accounts' : Array<InitAccountWithPermissionsInput>,
+      'disaster_recovery_committee' : [] | [DisasterRecoveryCommittee],
+      'users' : Array<InitUserInput>,
       'named_rules' : Array<InitNamedRuleInput>,
     }
   };
@@ -1433,9 +1445,7 @@ export interface SystemInit {
   'name' : string,
   'fallback_controller' : [] | [Principal],
   'upgrader' : SystemUpgraderInput,
-  'entries' : [] | [InitialEntries],
-  'users' : Array<InitUserInput>,
-  'quorum' : [] | [number],
+  'entries' : InitialConfig,
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
   { 'Init' : SystemInit };

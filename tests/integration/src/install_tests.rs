@@ -4,11 +4,12 @@ use candid::{Encode, Principal};
 use pocket_ic::PocketIc;
 use rstest::rstest;
 use station_api::{
-    AccountResourceActionDTO, AllowDTO, AuthScopeDTO, InitAccountInput, InitAssetInput,
-    InitNamedRuleInput, InitPermissionInput, InitRequestPolicyInput, InitUserGroupInput,
-    MetadataDTO, PermissionResourceActionDTO, RequestPolicyRuleDTO, RequestSpecifierDTO,
-    ResourceActionDTO, ResourceDTO, ResourceIdDTO, SystemInit, SystemInstall, UserIdentityInput,
-    UserInitInput, UserResourceActionDTO, UserStatusDTO, UuidDTO,
+    AccountResourceActionDTO, AllowDTO, AuthScopeDTO, DisasterRecoveryCommitteeDTO,
+    InitAccountInput, InitAssetInput, InitNamedRuleInput, InitPermissionInput,
+    InitRequestPolicyInput, InitUserGroupInput, MetadataDTO, PermissionResourceActionDTO,
+    RequestPolicyRuleDTO, RequestSpecifierDTO, ResourceActionDTO, ResourceDTO, ResourceIdDTO,
+    SystemInit, SystemInstall, UserIdentityInput, UserInitInput, UserResourceActionDTO,
+    UserStatusDTO, UuidDTO,
 };
 use uuid::Uuid;
 
@@ -107,7 +108,6 @@ fn install_with_default_policies() {
 
     let station_init_args = SystemInstall::Init(SystemInit {
         name: "Station".to_string(),
-        users: users.clone(),
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: upgrader_wasm,
@@ -115,11 +115,13 @@ fn install_with_default_policies() {
             },
         ),
         fallback_controller: Some(controller),
-        quorum: None,
-        entries: Some(station_api::InitialEntries::WithDefaultPolicies {
+        initial_config: station_api::InitialConfig::WithDefaultPolicies {
+            users: users.clone(),
+            admin_quorum: 1,
+            operator_quorum: 1,
             accounts: accounts.clone(),
             assets: assets.clone(),
-        }),
+        },
     });
     env.install_canister(
         canister_id,
@@ -351,7 +353,6 @@ fn install_with_all_entries() {
 
     let station_init_args = SystemInstall::Init(SystemInit {
         name: "Station".to_string(),
-        users: users.clone(),
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: upgrader_wasm,
@@ -359,15 +360,19 @@ fn install_with_all_entries() {
             },
         ),
         fallback_controller: Some(controller),
-        quorum: None,
-        entries: Some(station_api::InitialEntries::Complete {
+        initial_config: station_api::InitialConfig::Complete {
+            users: users.clone(),
             accounts: accounts.clone(),
             assets: assets.clone(),
             permissions: permissions.clone(),
             request_policies: request_policies.clone(),
             user_groups: user_groups.clone(),
             named_rules: named_rules.clone(),
-        }),
+            disaster_recovery_committee: Some(DisasterRecoveryCommitteeDTO {
+                quorum: 1,
+                user_group_id: custom_user_group_id,
+            }),
+        },
     });
     env.install_canister(
         canister_id,
@@ -474,7 +479,6 @@ fn install_with_all_defaults() {
 
     let station_init_args = SystemInstall::Init(SystemInit {
         name: "Station".to_string(),
-        users: users.clone(),
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: upgrader_wasm,
@@ -482,8 +486,11 @@ fn install_with_all_defaults() {
             },
         ),
         fallback_controller: Some(controller),
-        quorum: None,
-        entries: None,
+        initial_config: station_api::InitialConfig::WithAllDefaults {
+            users: users.clone(),
+            admin_quorum: 1,
+            operator_quorum: 1,
+        },
     });
     env.install_canister(
         canister_id,
@@ -515,20 +522,39 @@ fn install_with_all_defaults() {
 
 #[rstest]
 #[should_panic]
-#[case::empty_entries(station_api::InitialEntries::Complete {
+#[case::empty_entries(station_api::InitialConfig::Complete {
+    users: vec![UserInitInput {
+        identities: vec![UserIdentityInput {
+            identity: WALLET_ADMIN_USER,
+        }],
+        name: "station-admin".to_string(),
+        groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
+        id: None,
+        status: None,
+    }],
     accounts: vec![],
     assets: vec![],
     permissions: vec![],
     request_policies: vec![],
     user_groups: vec![], // no user groups yet user is referencing the ADMIN group
     named_rules: vec![],
+    disaster_recovery_committee: None,
 })]
 #[should_panic]
 #[case::circular_named_rules({
     let id_1 = Uuid::new_v4().hyphenated().to_string();
     let id_2 = Uuid::new_v4().hyphenated().to_string();
 
-    station_api::InitialEntries::Complete {
+    station_api::InitialConfig::Complete {
+        users: vec![UserInitInput {
+            identities: vec![UserIdentityInput {
+                identity: WALLET_ADMIN_USER,
+            }],
+            name: "station-admin".to_string(),
+            groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
+            id: None,
+            status: None,
+        }],
         accounts: vec![],
         assets: vec![],
         permissions: vec![],
@@ -554,12 +580,27 @@ fn install_with_all_defaults() {
                 rule: RequestPolicyRuleDTO::NamedRule(id_1.clone()),
             },
         ],
+        disaster_recovery_committee: Some(DisasterRecoveryCommitteeDTO {
+            quorum: 1,
+            user_group_id: ADMIN_GROUP_ID.hyphenated().to_string(),
+        }),
     }
 })]
 #[should_panic]
 #[case::non_existent_asset_id({
     let id_1 = Uuid::new_v4().hyphenated().to_string();
-    station_api::InitialEntries::WithDefaultPolicies {
+    station_api::InitialConfig::WithDefaultPolicies {
+        users: vec![UserInitInput {
+            identities: vec![UserIdentityInput {
+                identity: WALLET_ADMIN_USER,
+            }],
+            name: "station-admin".to_string(),
+            groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
+            id: None,
+            status: None,
+        }],
+        admin_quorum: 1,
+        operator_quorum: 1,
         accounts: vec![InitAccountInput {
             name: "account".to_string(),
             metadata: vec![],
@@ -575,7 +616,16 @@ fn install_with_all_defaults() {
 #[should_panic]
 #[case::non_existent_policy_id({
     let id_1 = Uuid::new_v4().hyphenated().to_string();
-    station_api::InitialEntries::Complete {
+    station_api::InitialConfig::Complete {
+        users:vec![UserInitInput {
+            identities: vec![UserIdentityInput {
+                identity: WALLET_ADMIN_USER,
+            }],
+            name: "station-admin".to_string(),
+            groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
+            id: None,
+            status: None,
+        }],
         accounts: vec![],
         assets: vec![],
         permissions: vec![],
@@ -593,9 +643,13 @@ fn install_with_all_defaults() {
             },
         ],
         named_rules: vec![],
+        disaster_recovery_committee: Some(DisasterRecoveryCommitteeDTO {
+            quorum: 1,
+            user_group_id: ADMIN_GROUP_ID.hyphenated().to_string(),
+        }),
     }
 })]
-fn install_with_bad_input(#[case] bad_input: station_api::InitialEntries) {
+fn install_with_bad_input(#[case] bad_input: station_api::InitialConfig) {
     let TestEnv {
         env, controller, ..
     } = setup_new_env();
@@ -609,19 +663,8 @@ fn install_with_bad_input(#[case] bad_input: station_api::InitialEntries) {
     let station_wasm = get_canister_wasm("station").to_vec();
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
 
-    let users = vec![UserInitInput {
-        identities: vec![UserIdentityInput {
-            identity: WALLET_ADMIN_USER,
-        }],
-        name: "station-admin".to_string(),
-        groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
-        id: None,
-        status: None,
-    }];
-
     let station_init_args = SystemInstall::Init(SystemInit {
         name: "Station".to_string(),
-        users: users.clone(),
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: upgrader_wasm.clone(),
@@ -629,8 +672,7 @@ fn install_with_bad_input(#[case] bad_input: station_api::InitialEntries) {
             },
         ),
         fallback_controller: Some(controller),
-        quorum: None,
-        entries: Some(bad_input),
+        initial_config: bad_input,
     });
     env.install_canister(
         canister_id,

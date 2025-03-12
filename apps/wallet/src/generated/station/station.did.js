@@ -29,6 +29,18 @@ export const idlFactory = ({ IDL }) => {
     'assets' : IDL.Vec(UUID),
     'seed' : AccountSeed,
   });
+  const UserStatus = IDL.Variant({
+    'Inactive' : IDL.Null,
+    'Active' : IDL.Null,
+  });
+  const UserIdentityInput = IDL.Record({ 'identity' : IDL.Principal });
+  const InitUserInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'status' : IDL.Opt(UserStatus),
+    'groups' : IDL.Opt(IDL.Vec(UUID)),
+    'name' : IDL.Text,
+    'identities' : IDL.Vec(UserIdentityInput),
+  });
   const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
   const RequestResourceAction = IDL.Variant({
     'List' : IDL.Null,
@@ -209,16 +221,28 @@ export const idlFactory = ({ IDL }) => {
     'permissions' : InitAccountPermissionsInput,
     'account_init' : InitAccountInput,
   });
+  const DisasterRecoveryCommittee = IDL.Record({
+    'user_group_id' : UUID,
+    'quorum' : IDL.Nat16,
+  });
   const InitNamedRuleInput = IDL.Record({
     'id' : IDL.Opt(UUID),
     'name' : IDL.Text,
     'rule' : RequestPolicyRule,
     'description' : IDL.Opt(IDL.Text),
   });
-  const InitialEntries = IDL.Variant({
+  const InitialConfig = IDL.Variant({
     'WithDefaultPolicies' : IDL.Record({
       'assets' : IDL.Vec(InitAssetInput),
+      'admin_quorum' : IDL.Nat16,
       'accounts' : IDL.Vec(InitAccountInput),
+      'users' : IDL.Vec(InitUserInput),
+      'operator_quorum' : IDL.Nat16,
+    }),
+    'WithAllDefaults' : IDL.Record({
+      'admin_quorum' : IDL.Nat16,
+      'users' : IDL.Vec(InitUserInput),
+      'operator_quorum' : IDL.Nat16,
     }),
     'Complete' : IDL.Record({
       'permissions' : IDL.Vec(InitPermissionInput),
@@ -226,28 +250,16 @@ export const idlFactory = ({ IDL }) => {
       'request_policies' : IDL.Vec(InitRequestPolicyInput),
       'user_groups' : IDL.Vec(InitUserGroupInput),
       'accounts' : IDL.Vec(InitAccountWithPermissionsInput),
+      'disaster_recovery_committee' : IDL.Opt(DisasterRecoveryCommittee),
+      'users' : IDL.Vec(InitUserInput),
       'named_rules' : IDL.Vec(InitNamedRuleInput),
     }),
-  });
-  const UserStatus = IDL.Variant({
-    'Inactive' : IDL.Null,
-    'Active' : IDL.Null,
-  });
-  const UserIdentityInput = IDL.Record({ 'identity' : IDL.Principal });
-  const InitUserInput = IDL.Record({
-    'id' : IDL.Opt(UUID),
-    'status' : IDL.Opt(UserStatus),
-    'groups' : IDL.Opt(IDL.Vec(UUID)),
-    'name' : IDL.Text,
-    'identities' : IDL.Vec(UserIdentityInput),
   });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
-    'entries' : IDL.Opt(InitialEntries),
-    'users' : IDL.Vec(InitUserInput),
-    'quorum' : IDL.Opt(IDL.Nat16),
+    'entries' : InitialConfig,
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,
@@ -521,10 +533,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditUserGroupOperation = IDL.Record({
     'input' : EditUserGroupOperationInput,
-  });
-  const DisasterRecoveryCommittee = IDL.Record({
-    'user_group_id' : UUID,
-    'quorum' : IDL.Nat16,
   });
   const SetDisasterRecoveryOperation = IDL.Record({
     'committee' : IDL.Opt(DisasterRecoveryCommittee),
@@ -1891,6 +1899,18 @@ export const init = ({ IDL }) => {
     'assets' : IDL.Vec(UUID),
     'seed' : AccountSeed,
   });
+  const UserStatus = IDL.Variant({
+    'Inactive' : IDL.Null,
+    'Active' : IDL.Null,
+  });
+  const UserIdentityInput = IDL.Record({ 'identity' : IDL.Principal });
+  const InitUserInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'status' : IDL.Opt(UserStatus),
+    'groups' : IDL.Opt(IDL.Vec(UUID)),
+    'name' : IDL.Text,
+    'identities' : IDL.Vec(UserIdentityInput),
+  });
   const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
   const RequestResourceAction = IDL.Variant({
     'List' : IDL.Null,
@@ -2071,16 +2091,28 @@ export const init = ({ IDL }) => {
     'permissions' : InitAccountPermissionsInput,
     'account_init' : InitAccountInput,
   });
+  const DisasterRecoveryCommittee = IDL.Record({
+    'user_group_id' : UUID,
+    'quorum' : IDL.Nat16,
+  });
   const InitNamedRuleInput = IDL.Record({
     'id' : IDL.Opt(UUID),
     'name' : IDL.Text,
     'rule' : RequestPolicyRule,
     'description' : IDL.Opt(IDL.Text),
   });
-  const InitialEntries = IDL.Variant({
+  const InitialConfig = IDL.Variant({
     'WithDefaultPolicies' : IDL.Record({
       'assets' : IDL.Vec(InitAssetInput),
+      'admin_quorum' : IDL.Nat16,
       'accounts' : IDL.Vec(InitAccountInput),
+      'users' : IDL.Vec(InitUserInput),
+      'operator_quorum' : IDL.Nat16,
+    }),
+    'WithAllDefaults' : IDL.Record({
+      'admin_quorum' : IDL.Nat16,
+      'users' : IDL.Vec(InitUserInput),
+      'operator_quorum' : IDL.Nat16,
     }),
     'Complete' : IDL.Record({
       'permissions' : IDL.Vec(InitPermissionInput),
@@ -2088,28 +2120,16 @@ export const init = ({ IDL }) => {
       'request_policies' : IDL.Vec(InitRequestPolicyInput),
       'user_groups' : IDL.Vec(InitUserGroupInput),
       'accounts' : IDL.Vec(InitAccountWithPermissionsInput),
+      'disaster_recovery_committee' : IDL.Opt(DisasterRecoveryCommittee),
+      'users' : IDL.Vec(InitUserInput),
       'named_rules' : IDL.Vec(InitNamedRuleInput),
     }),
-  });
-  const UserStatus = IDL.Variant({
-    'Inactive' : IDL.Null,
-    'Active' : IDL.Null,
-  });
-  const UserIdentityInput = IDL.Record({ 'identity' : IDL.Principal });
-  const InitUserInput = IDL.Record({
-    'id' : IDL.Opt(UUID),
-    'status' : IDL.Opt(UserStatus),
-    'groups' : IDL.Opt(IDL.Vec(UUID)),
-    'name' : IDL.Text,
-    'identities' : IDL.Vec(UserIdentityInput),
   });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
-    'entries' : IDL.Opt(InitialEntries),
-    'users' : IDL.Vec(InitUserInput),
-    'quorum' : IDL.Opt(IDL.Nat16),
+    'entries' : InitialConfig,
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,

@@ -212,19 +212,20 @@ lazy_static! {
 }
 
 pub fn get_default_named_rules(
-    quorum: u16,
+    admin_quorum: u16,
+    operator_quorum: u16,
 ) -> ((String, RequestPolicyRule), (String, RequestPolicyRule)) {
     (
+        (
+            "Admin approval".to_string(),
+            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), admin_quorum),
+        ),
         (
             "Operator approval".to_string(),
             RequestPolicyRule::Quorum(
                 UserSpecifier::Group(vec![*OPERATOR_GROUP_ID, *ADMIN_GROUP_ID]),
-                quorum,
+                operator_quorum,
             ),
-        ),
-        (
-            "Admin approval".to_string(),
-            RequestPolicyRule::Quorum(UserSpecifier::Group(vec![*ADMIN_GROUP_ID]), quorum),
         ),
     )
 }

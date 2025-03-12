@@ -643,17 +643,19 @@ fn deploy_station_with_insufficient_cycles() {
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let station_init_args = Encode!(&SystemInstallArg::Init(SystemInitArg {
         name: "Station".to_string(),
-        users: vec![UserInitInput {
-            identities: vec![UserIdentityInput {
-                identity: WALLET_ADMIN_USER,
+        initial_config: station_api::InitialConfig::WithAllDefaults {
+            users: vec![UserInitInput {
+                identities: vec![UserIdentityInput {
+                    identity: WALLET_ADMIN_USER,
+                }],
+                name: "station-admin".to_string(),
+                groups: None,
+                id: None,
+                status: None,
             }],
-            name: "station-admin".to_string(),
-            groups: None,
-            id: None,
-            status: None,
-        }],
-        quorum: Some(1),
-        entries: None,
+            admin_quorum: 1,
+            operator_quorum: 1,
+        },
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: upgrader_wasm,

@@ -143,9 +143,11 @@ impl DeployService {
                     }
                 ),
                 fallback_controller: Some(NNS_ROOT_CANISTER_ID),
-                entries: None,
-                users: intial_users,
-                quorum: Some(1),
+                initial_config: station_api::InitialConfig::WithAllDefaults {
+                    users: intial_users,
+                    admin_quorum: 1,
+                    operator_quorum: 1,
+                },
             }))
             .map_err(|err| DeployError::Failed {
                 reason: err.to_string(),
