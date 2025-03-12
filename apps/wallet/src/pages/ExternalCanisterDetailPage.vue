@@ -59,7 +59,8 @@
                   reserved_cycles_limit:
                     canisterDetails.status.value.settings.reserved_cycles_limit,
                   wasm_memory_limit: canisterDetails.status.value.settings.wasm_memory_limit,
-                  log_visibility: canisterDetails.status.value.settings.log_visibility as LogVisibility,
+                  log_visibility: canisterDetails.status.value.settings
+                    .log_visibility as LogVisibility,
                 }"
               />
             </template>
@@ -516,7 +517,8 @@ import { ApiError } from '~/generated/control-panel/control_panel.did';
 import {
   CanisterStatusResponse,
   ExternalCanister,
-  ExternalCanisterCallerPrivileges, LogVisibility,
+  ExternalCanisterCallerPrivileges,
+  LogVisibility,
 } from '~/generated/station/station.did';
 import { toCyclesUnit } from '~/mappers/cycles.mapper';
 import { mapAllowedCanisterMethods } from '~/mappers/external-canister.mapper';
