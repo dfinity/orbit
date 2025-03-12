@@ -62,6 +62,9 @@ impl From<upgrader_api::RequestDisasterRecoveryInput> for StationRecoveryRequest
                 };
                 StationRecoveryRequestOperation::Prune(prune_op)
             }
+            upgrader_api::RequestDisasterRecoveryInput::Start => {
+                StationRecoveryRequestOperation::Start
+            }
         }
     }
 }
@@ -109,6 +112,9 @@ impl From<&StationRecoveryRequestOperation> for StationRecoveryRequestOperationF
                 };
                 StationRecoveryRequestOperationFootprint::Prune(prune_op)
             }
+            StationRecoveryRequestOperation::Start => {
+                StationRecoveryRequestOperationFootprint::Start
+            }
         }
     }
 }
@@ -150,6 +156,7 @@ impl From<&StationRecoveryRequestOperation> for RequestDisasterRecoveryOperation
                 };
                 RequestDisasterRecoveryOperationLog::Prune(prune_op)
             }
+            StationRecoveryRequestOperation::Start => RequestDisasterRecoveryOperationLog::Start,
         }
     }
 }
@@ -196,6 +203,9 @@ impl From<&StationRecoveryRequestOperation> for upgrader_api::StationRecoveryReq
                     }
                 };
                 upgrader_api::StationRecoveryRequestOperation::Prune(prune_op)
+            }
+            StationRecoveryRequestOperation::Start => {
+                upgrader_api::StationRecoveryRequestOperation::Start
             }
         }
     }

@@ -195,6 +195,7 @@ type RequestDisasterRecoveryInput = variant {
   Snapshot : RequestDisasterRecoverySnapshotInput;
   Restore : RequestDisasterRecoveryRestoreInput;
   Prune : RequestDisasterRecoveryPruneInput;
+  Start;
 };
 
 type InstallMode = variant {
@@ -281,6 +282,7 @@ type StationRecoveryRequestOperation = variant {
   Snapshot : StationRecoveryRequestSnapshotOperation;
   Restore : StationRecoveryRequestRestoreOperation;
   Prune : StationRecoveryRequestPruneOperation;
+  Start;
 };
 
 // Request to recover the station.

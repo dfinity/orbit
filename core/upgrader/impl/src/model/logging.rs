@@ -75,6 +75,7 @@ pub enum RequestDisasterRecoveryOperationLog {
     Snapshot(RequestDisasterRecoverySnapshotLog),
     Restore(RequestDisasterRecoveryRestoreLog),
     Prune(RequestDisasterRecoveryPruneLog),
+    Start,
 }
 
 impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
@@ -99,6 +100,9 @@ impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
             }
             RequestDisasterRecoveryOperationLog::Prune(prune) => {
                 write!(f, "Prune {}", prune)
+            }
+            RequestDisasterRecoveryOperationLog::Start => {
+                write!(f, "Start")
             }
         }
     }
