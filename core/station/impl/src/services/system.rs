@@ -1053,7 +1053,7 @@ mod init_canister_sync_handlers {
 
                 let input = AddAccountOperationInput {
                     name: account.name,
-                    assets: vec![],
+                    assets,
                     metadata: account.metadata.into(),
                     transfer_request_policy: permissions
                         .transfer_request_policy
@@ -1081,6 +1081,8 @@ mod init_canister_sync_handlers {
                 .create_account(new_account, with_account_id)
                 .await
                 .map_err(|e| format!("Failed to add account: {:?}", e))?;
+
+            print("account created");
         }
 
         Ok(())
