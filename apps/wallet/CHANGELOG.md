@@ -1,3 +1,17 @@
+## 0.5.1 (2025-03-12)
+
+
+### 🩹 Fixes
+
+- **wallet:** add aggregator to CSP ([#530](https://github.com/dfinity/orbit/pull/530))
+
+- **CI:** use rustup 1.27.1 for docker build ([#532](https://github.com/dfinity/orbit/pull/532))
+
+
+### ❤️  Thank You
+
+- olaszakos
+
 ## 0.5.0 (2025-03-03)
 
 
