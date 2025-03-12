@@ -538,7 +538,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                         ],
                         accounts: init_accounts_input,
                         assets: vec![init_assets_input],
-                        admin_quorum: 1,
+                        admin_quorum: 2,
                         operator_quorum: 1,
                     },
                 }))
