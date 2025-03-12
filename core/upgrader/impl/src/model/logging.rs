@@ -36,8 +36,46 @@ pub struct RequestDisasterRecoveryInstallCodeLog {
 }
 
 #[derive(Serialize)]
+pub struct RequestDisasterRecoverySnapshotLog {
+    pub replace_snapshot: Option<String>,
+    pub force: bool,
+}
+
+#[derive(Serialize)]
+pub struct RequestDisasterRecoveryRestoreLog {
+    pub snapshot_id: String,
+}
+
+#[derive(Serialize)]
+pub enum RequestDisasterRecoveryPruneLog {
+    Snapshot(String),
+    ChunkStore,
+    State,
+}
+
+impl std::fmt::Display for RequestDisasterRecoveryPruneLog {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            RequestDisasterRecoveryPruneLog::Snapshot(snapshot_id) => {
+                write!(f, "snapshot_id {}", snapshot_id)
+            }
+            RequestDisasterRecoveryPruneLog::ChunkStore => {
+                write!(f, "chunk store")
+            }
+            RequestDisasterRecoveryPruneLog::State => {
+                write!(f, "state")
+            }
+        }
+    }
+}
+
+#[derive(Serialize)]
 pub enum RequestDisasterRecoveryOperationLog {
     InstallCode(RequestDisasterRecoveryInstallCodeLog),
+    Snapshot(RequestDisasterRecoverySnapshotLog),
+    Restore(RequestDisasterRecoveryRestoreLog),
+    Prune(RequestDisasterRecoveryPruneLog),
+    Start,
 }
 
 impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
@@ -49,6 +87,22 @@ impl std::fmt::Display for RequestDisasterRecoveryOperationLog {
                     "InstallCode with mode {}, wasm hash {}, and arg hash {}",
                     install_code.install_mode, install_code.wasm_sha256, install_code.arg_sha256
                 )
+            }
+            RequestDisasterRecoveryOperationLog::Snapshot(snapshot) => {
+                write!(
+                    f,
+                    "Snapshot with replace_snapshot {:?} and force {}",
+                    snapshot.replace_snapshot, snapshot.force
+                )
+            }
+            RequestDisasterRecoveryOperationLog::Restore(snapshot) => {
+                write!(f, "Restore snapshot_id {}", snapshot.snapshot_id,)
+            }
+            RequestDisasterRecoveryOperationLog::Prune(prune) => {
+                write!(f, "Prune {}", prune)
+            }
+            RequestDisasterRecoveryOperationLog::Start => {
+                write!(f, "Start")
             }
         }
     }

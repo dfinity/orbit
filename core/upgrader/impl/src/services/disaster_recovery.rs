@@ -5,11 +5,11 @@ use crate::{
     model::{
         Account, AdminUser, Asset, DisasterRecovery, DisasterRecoveryCommittee,
         DisasterRecoveryInProgressLog, DisasterRecoveryResultLog, DisasterRecoveryStartLog,
-        InstallMode, LogEntryType, MultiAssetAccount, RecoveryEvaluationResult, RecoveryFailure,
-        RecoveryResult, RecoveryStatus, RequestDisasterRecoveryLog,
-        RequestDisasterRecoveryOperationLog, SetAccountsAndAssetsLog, SetAccountsLog,
-        SetCommitteeLog, StationRecoveryRequest, StationRecoveryRequestOperation,
-        StationRecoveryRequestOperationFootprint,
+        LogEntryType, MultiAssetAccount, RecoveryEvaluationResult, RecoveryFailure, RecoveryResult,
+        RecoveryStatus, RequestDisasterRecoveryLog, RequestDisasterRecoveryOperationLog,
+        SetAccountsAndAssetsLog, SetAccountsLog, SetCommitteeLog, StationRecoveryRequest,
+        StationRecoveryRequestOperation, StationRecoveryRequestOperationFootprint,
+        StationRecoveryRequestPruneOperation,
     },
     services::LOGGER_SERVICE,
     set_disaster_recovery,
@@ -19,6 +19,12 @@ use crate::{
 use candid::Principal;
 use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
+use orbit_essentials::cdk::api::canister_version;
+use orbit_essentials::cdk::api::management_canister::main::{
+    clear_chunk_store, delete_canister_snapshot, load_canister_snapshot, take_canister_snapshot,
+    uninstall_code, CanisterIdRecord, ClearChunkStoreArgument, DeleteCanisterSnapshotArgs,
+    LoadCanisterSnapshotArgs, TakeCanisterSnapshotArgs,
+};
 use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
@@ -264,6 +270,107 @@ impl DisasterRecoveryService {
         RecoveryEvaluationResult::Unmet
     }
 
+    async fn try_recovery(
+        installer: Arc<dyn InstallCanister>,
+        station_canister_id: Principal,
+        operation: StationRecoveryRequestOperation,
+    ) -> Result<(), String> {
+        match operation {
+            StationRecoveryRequestOperation::InstallCode(install_code) => {
+                installer.stop(station_canister_id).await?;
+
+                installer
+                    .install(
+                        station_canister_id,
+                        install_code.wasm_module,
+                        install_code.wasm_module_extra_chunks,
+                        install_code.arg,
+                        install_code.install_mode,
+                    )
+                    .await?;
+
+                installer.start(station_canister_id).await?;
+
+                Ok(())
+            }
+            StationRecoveryRequestOperation::Snapshot(snapshot) => {
+                if let Err(reason) = installer.stop(station_canister_id).await {
+                    if !snapshot.force {
+                        return Err(reason);
+                    }
+                }
+
+                let snapshot_args = TakeCanisterSnapshotArgs {
+                    canister_id: station_canister_id,
+                    replace_snapshot: snapshot.replace_snapshot,
+                };
+                take_canister_snapshot(snapshot_args)
+                    .await
+                    .map_err(|(_, err)| err)?;
+
+                installer.start(station_canister_id).await?;
+
+                Ok(())
+            }
+            StationRecoveryRequestOperation::Restore(snapshot) => {
+                installer.stop(station_canister_id).await?;
+
+                let snapshot_args = LoadCanisterSnapshotArgs {
+                    canister_id: station_canister_id,
+                    snapshot_id: snapshot.snapshot_id,
+                    sender_canister_version: Some(canister_version()),
+                };
+                load_canister_snapshot(snapshot_args)
+                    .await
+                    .map_err(|(_, err)| err)?;
+
+                installer.start(station_canister_id).await?;
+
+                Ok(())
+            }
+            StationRecoveryRequestOperation::Prune(
+                StationRecoveryRequestPruneOperation::Snapshot(snapshot_id),
+            ) => {
+                let snapshot_args = DeleteCanisterSnapshotArgs {
+                    canister_id: station_canister_id,
+                    snapshot_id,
+                };
+                delete_canister_snapshot(snapshot_args)
+                    .await
+                    .map_err(|(_, err)| err)?;
+
+                Ok(())
+            }
+            StationRecoveryRequestOperation::Prune(
+                StationRecoveryRequestPruneOperation::ChunkStore,
+            ) => {
+                let canister_id_record = ClearChunkStoreArgument {
+                    canister_id: station_canister_id,
+                };
+                clear_chunk_store(canister_id_record)
+                    .await
+                    .map_err(|(_, err)| err)?;
+
+                Ok(())
+            }
+            StationRecoveryRequestOperation::Prune(StationRecoveryRequestPruneOperation::State) => {
+                let canister_id_record = CanisterIdRecord {
+                    canister_id: station_canister_id,
+                };
+                uninstall_code(canister_id_record)
+                    .await
+                    .map_err(|(_, err)| err)?;
+
+                Ok(())
+            }
+            StationRecoveryRequestOperation::Start => {
+                installer.start(station_canister_id).await?;
+
+                Ok(())
+            }
+        }
+    }
+
     async fn do_recovery(
         storage: DisasterRecoveryStorage,
         installer: Arc<dyn InstallCanister>,
@@ -294,40 +401,13 @@ impl DisasterRecoveryService {
             logger: logger.clone(),
         };
 
-        match request.operation {
-            StationRecoveryRequestOperation::InstallCode(install_code) => {
-                // only stop for upgrade
-                if install_code.install_mode == InstallMode::Upgrade {
-                    if let Err(err) = installer.stop(station_canister_id).await {
-                        ic_cdk::print(err);
-                    }
-                }
-
-                match installer
-                    .install(
-                        station_canister_id,
-                        install_code.wasm_module,
-                        install_code.wasm_module_extra_chunks,
-                        install_code.arg,
-                        install_code.install_mode,
-                    )
-                    .await
-                {
-                    Ok(_) => {
-                        releaser.result = Some(RecoveryResult::Success);
-                    }
-                    Err(reason) => {
-                        releaser.result = Some(RecoveryResult::Failure(RecoveryFailure { reason }));
-                    }
-                }
-
-                // only start for upgrade
-                if install_code.install_mode == InstallMode::Upgrade {
-                    if let Err(err) = installer.start(station_canister_id).await {
-                        ic_cdk::print(err);
-                    }
-                }
-            }
+        if let Err(reason) =
+            Self::try_recovery(installer.clone(), station_canister_id, request.operation).await
+        {
+            let _ = installer.start(station_canister_id).await;
+            releaser.result = Some(RecoveryResult::Failure(RecoveryFailure { reason }));
+        } else {
+            releaser.result = Some(RecoveryResult::Success);
         }
     }
 
@@ -562,6 +642,7 @@ mod tests {
                     assert_eq!(install_code.arg, vec![1, 2, 3]);
                     assert_eq!(install_code.wasm_module, vec![4, 5, 6]);
                 }
+                _ => panic!("Unexpected operation"),
             },
             _ => panic!("Unexpected result"),
         };

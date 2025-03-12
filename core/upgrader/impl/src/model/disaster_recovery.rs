@@ -83,8 +83,33 @@ pub struct StationRecoveryRequestInstallCodeOperation {
 
 #[storable]
 #[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StationRecoveryRequestSnapshotOperation {
+    pub replace_snapshot: Option<Vec<u8>>,
+    pub force: bool,
+}
+
+#[storable]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct StationRecoveryRequestRestoreOperation {
+    pub snapshot_id: Vec<u8>,
+}
+
+#[storable]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StationRecoveryRequestPruneOperation {
+    Snapshot(Vec<u8>),
+    ChunkStore,
+    State,
+}
+
+#[storable]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum StationRecoveryRequestOperation {
     InstallCode(StationRecoveryRequestInstallCodeOperation),
+    Snapshot(StationRecoveryRequestSnapshotOperation),
+    Restore(StationRecoveryRequestRestoreOperation),
+    Prune(StationRecoveryRequestPruneOperation),
+    Start,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -95,8 +120,30 @@ pub struct StationRecoveryRequestInstallCodeOperationFootprint {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct StationRecoveryRequestSnapshotOperationFootprint {
+    pub replace_snapshot: Option<Vec<u8>>,
+    pub force: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct StationRecoveryRequestRestoreOperationFootprint {
+    pub snapshot_id: Vec<u8>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub enum StationRecoveryRequestPruneOperationFootprint {
+    Snapshot(String),
+    ChunkStore,
+    State,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum StationRecoveryRequestOperationFootprint {
     InstallCode(StationRecoveryRequestInstallCodeOperationFootprint),
+    Snapshot(StationRecoveryRequestSnapshotOperationFootprint),
+    Restore(StationRecoveryRequestRestoreOperationFootprint),
+    Prune(StationRecoveryRequestPruneOperationFootprint),
+    Start,
 }
 
 #[storable]
