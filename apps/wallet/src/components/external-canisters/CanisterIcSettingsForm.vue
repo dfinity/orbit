@@ -372,7 +372,7 @@ const addController = () => {
 const logVisibilitySelected = computed({
   get: () => {
     if (model.value.log_visibility && variantIs(model.value.log_visibility, 'allowed_viewers')) {
-      return i18n.t('terms.allowed_viewers') + ' (change via dfx)';
+      return i18n.t('terms.allowed_viewers') + ' (unsupported)';
     }
 
     return model.value.log_visibility;
