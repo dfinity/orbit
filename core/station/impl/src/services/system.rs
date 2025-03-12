@@ -288,7 +288,7 @@ impl SystemService {
 
             // calculates the initial quorum based on the number of admins and the provided quorum
 
-            match &init.entries {
+            match &init.initial_config {
                 InitialConfig::WithAllDefaults { .. } => {}
                 InitialConfig::WithDefaultPolicies {
                     accounts,
@@ -327,7 +327,7 @@ impl SystemService {
                             .iter()
                             .map(|account| (account.clone(), default_permissions_policies.clone()))
                             .collect(),
-                        &assets,
+                        assets,
                     )
                     .await?;
                 }
@@ -346,7 +346,7 @@ impl SystemService {
                                 )
                             })
                             .collect(),
-                        &assets,
+                        assets,
                     )
                     .await?;
                 }
@@ -358,7 +358,7 @@ impl SystemService {
 
             install_canister_post_process_finish(system_info);
 
-            match init.entries {
+            match init.initial_config {
                 InitialConfig::WithAllDefaults { admin_quorum, .. }
                 | InitialConfig::WithDefaultPolicies { admin_quorum, .. } => {
                     SystemService::set_disaster_recovery_committee(Some(
@@ -927,11 +927,11 @@ mod init_canister_sync_handlers {
         default_groups: &[UUID],
     ) -> Result<(), ApiError> {
         if users.is_empty() {
-            return Err(SystemError::NoUsersSpecified)?;
+            Err(SystemError::NoUsersSpecified)?;
         }
 
         if users.len() > u16::MAX as usize {
-            return Err(SystemError::TooManyUsersSpecified {
+            Err(SystemError::TooManyUsersSpecified {
                 max: u16::MAX as usize,
             })?;
         }
