@@ -2847,10 +2847,22 @@ type InitNamedRuleInput = record {
   rule : RequestPolicyRule;
 };
 
-// The initial configuration for the station.
+// The initial configuration for the station. 
+//
+// Unless the `Complete` variant is used, the station will be initialized with default user 
+// groups, named rules (aka. approval rules), request policies, permissions, and assets.
+//
+// The default user groups for the station will be:
+//  - `Admin` with the UUID "00000000-0000-4000-8000-000000000000"
+//  - `Operator` with the UUID "00000000-0000-4000-8000-000000000001"
+//
+// The default named rules for the station will be:
+//  - `Admin approval` with a specified admin quorum
+//  - `Operator approval` with a specified operator quorum
+//
 type InitialConfig = variant {
-  // Initialize the station with default policies, permissions, and assets.
-  // This does not create an initial account.
+  // Initialize the station with default user groups, named rules, policies, permissions, and assets.
+  // This does not create an initial account. 
   WithAllDefaults : record {
     // The initial users to create.
     users : vec InitUserInput;
@@ -2859,7 +2871,7 @@ type InitialConfig = variant {
     // The initial operator quorum in the operator level approval rule.
     operator_quorum : nat16;
   };
-  // Initialize the station with default policies, accounts and assets.
+  // Initialize the station with default user groups, named rules, policies, permissions.
   WithDefaultPolicies : record {
     // The initial users to create.
     users : vec InitUserInput;
