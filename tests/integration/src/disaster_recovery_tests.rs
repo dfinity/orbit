@@ -2,7 +2,7 @@ use crate::setup::{
     get_canister_wasm, setup_new_env, setup_new_env_with_config, WALLET_ADMIN_USER,
 };
 use crate::utils::{
-    add_user, advance_time_to_burn_cycles, await_station_healthy, execute_request,
+    add_user, advance_time_to_burn_cycles, await_station_healthy, canister_status, execute_request,
     get_account_read_permission, get_account_transfer_permission, get_account_update_permission,
     get_core_canister_health_status, get_disaster_recovery_accounts,
     get_disaster_recovery_accounts_and_assets, get_disaster_recovery_committee,
@@ -1127,6 +1127,16 @@ fn test_disaster_recovery_via_canister_snapshots() {
     let new_admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
     assert_ne!(admin_user.name, new_admin_user.name);
 
+    // uninstall the station
+    let prune_request = upgrader_api::RequestDisasterRecoveryInput::Prune(
+        upgrader_api::RequestDisasterRecoveryPruneInput::State,
+    );
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, prune_request)
+        .expect("Failed to request disaster recovery");
+    await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+    let status = canister_status(&env, Some(upgrader_id), canister_ids.station);
+    assert_eq!(status.module_hash, None);
+
     // restore the station from its snapshot
     let restore_request = upgrader_api::RequestDisasterRecoveryInput::Restore(
         upgrader_api::RequestDisasterRecoveryRestoreInput {
@@ -1136,6 +1146,8 @@ fn test_disaster_recovery_via_canister_snapshots() {
     request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, restore_request)
         .expect("Failed to request disaster recovery");
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+    let status = canister_status(&env, Some(upgrader_id), canister_ids.station);
+    status.module_hash.unwrap();
 
     // check the name of the admin user after restoring a snapshot
     let restored_admin_user = get_user(&env, WALLET_ADMIN_USER, canister_ids.station);
@@ -1147,4 +1159,32 @@ fn test_disaster_recovery_via_canister_snapshots() {
         .list_canister_snapshots(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .unwrap();
     assert_eq!(snapshots.len(), 1);
+
+    // prune the snapshot
+    let prune_request = upgrader_api::RequestDisasterRecoveryInput::Prune(
+        upgrader_api::RequestDisasterRecoveryPruneInput::Snapshot(hex::encode(&snapshots[0].id)),
+    );
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, prune_request)
+        .expect("Failed to request disaster recovery");
+    await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+    let snapshots = env
+        .list_canister_snapshots(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
+        .unwrap();
+    assert!(snapshots.is_empty());
+
+    // prune the chunk store
+    let chunks = env
+        .stored_chunks(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
+        .unwrap();
+    assert!(!chunks.is_empty());
+    let prune_request = upgrader_api::RequestDisasterRecoveryInput::Prune(
+        upgrader_api::RequestDisasterRecoveryPruneInput::ChunkStore,
+    );
+    request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, prune_request)
+        .expect("Failed to request disaster recovery");
+    await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
+    let chunks = env
+        .stored_chunks(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
+        .unwrap();
+    assert!(chunks.is_empty());
 }
