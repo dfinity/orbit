@@ -1443,9 +1443,9 @@ export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
   { 'Err' : Error };
 export interface SystemInit {
   'name' : string,
+  'initial_config' : InitialConfig,
   'fallback_controller' : [] | [Principal],
   'upgrader' : SystemUpgraderInput,
-  'entries' : InitialConfig,
 }
 export type SystemInstall = { 'Upgrade' : SystemUpgrade } |
   { 'Init' : SystemInit };

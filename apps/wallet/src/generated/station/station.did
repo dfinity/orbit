@@ -2901,7 +2901,7 @@ type SystemInit = record {
   // An additional controller of the station and upgrader canisters (optional).
   fallback_controller : opt principal;
   // The initial configuration to apply.
-  entries: InitialConfig;
+  initial_config: InitialConfig;
 };
 
 // The upgrade configuration for the canister.

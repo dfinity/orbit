@@ -2,13 +2,6 @@ export const idlFactory = ({ IDL }) => {
   const RequestPolicyRule = IDL.Rec();
   const RequestPolicyRuleResult = IDL.Rec();
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
-  const SystemUpgraderInput = IDL.Variant({
-    'Id' : IDL.Principal,
-    'Deploy' : IDL.Record({
-      'initial_cycles' : IDL.Opt(IDL.Nat),
-      'wasm_module' : IDL.Vec(IDL.Nat8),
-    }),
-  });
   const UUID = IDL.Text;
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const InitAssetInput = IDL.Record({
@@ -255,11 +248,18 @@ export const idlFactory = ({ IDL }) => {
       'named_rules' : IDL.Vec(InitNamedRuleInput),
     }),
   });
+  const SystemUpgraderInput = IDL.Variant({
+    'Id' : IDL.Principal,
+    'Deploy' : IDL.Record({
+      'initial_cycles' : IDL.Opt(IDL.Nat),
+      'wasm_module' : IDL.Vec(IDL.Nat8),
+    }),
+  });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
+    'initial_config' : InitialConfig,
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
-    'entries' : InitialConfig,
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,
@@ -1872,13 +1872,6 @@ export const idlFactory = ({ IDL }) => {
 export const init = ({ IDL }) => {
   const RequestPolicyRule = IDL.Rec();
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
-  const SystemUpgraderInput = IDL.Variant({
-    'Id' : IDL.Principal,
-    'Deploy' : IDL.Record({
-      'initial_cycles' : IDL.Opt(IDL.Nat),
-      'wasm_module' : IDL.Vec(IDL.Nat8),
-    }),
-  });
   const UUID = IDL.Text;
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const InitAssetInput = IDL.Record({
@@ -2125,11 +2118,18 @@ export const init = ({ IDL }) => {
       'named_rules' : IDL.Vec(InitNamedRuleInput),
     }),
   });
+  const SystemUpgraderInput = IDL.Variant({
+    'Id' : IDL.Principal,
+    'Deploy' : IDL.Record({
+      'initial_cycles' : IDL.Opt(IDL.Nat),
+      'wasm_module' : IDL.Vec(IDL.Nat8),
+    }),
+  });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
+    'initial_config' : InitialConfig,
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
-    'entries' : InitialConfig,
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,
