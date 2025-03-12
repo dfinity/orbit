@@ -154,6 +154,9 @@ impl From<LogVisibility> for mgmt::LogVisibility {
         match input {
             LogVisibility::Public => mgmt::LogVisibility::Public,
             LogVisibility::Controllers => mgmt::LogVisibility::Controllers,
+            LogVisibility::AllowedViewers(principals) => {
+                mgmt::LogVisibility::AllowedViewers(principals)
+            }
         }
     }
 }
@@ -211,6 +214,9 @@ impl From<station_api::LogVisibility> for LogVisibility {
         match input {
             station_api::LogVisibility::Public => LogVisibility::Public,
             station_api::LogVisibility::Controllers => LogVisibility::Controllers,
+            station_api::LogVisibility::AllowedViewers(principals) => {
+                LogVisibility::AllowedViewers(principals)
+            }
         }
     }
 }

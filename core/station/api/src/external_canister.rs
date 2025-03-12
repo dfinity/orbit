@@ -15,6 +15,8 @@ pub enum LogVisibility {
     #[default]
     #[serde(rename = "controllers")]
     Controllers,
+    #[serde(rename = "allowed_viewers")]
+    AllowedViewers(Vec<Principal>),
 }
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, Default)]
 pub struct DefiniteCanisterSettingsInput {

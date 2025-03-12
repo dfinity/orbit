@@ -727,6 +727,7 @@ pub enum ConfigureExternalCanisterOperationKind {
 pub enum LogVisibility {
     Public,
     Controllers,
+    AllowedViewers(Vec<Principal>),
 }
 
 #[storable]

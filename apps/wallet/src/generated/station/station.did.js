@@ -329,6 +329,7 @@ export const idlFactory = ({ IDL }) => {
   const LogVisibility = IDL.Variant({
     'controllers' : IDL.Null,
     'public' : IDL.Null,
+    'allowed_viewers' : IDL.Vec(IDL.Principal),
   });
   const DefiniteCanisterSettingsInput = IDL.Record({
     'freezing_threshold' : IDL.Opt(IDL.Nat),

@@ -672,6 +672,7 @@ export default {
     permission: 'Permissão',
     controllers: 'Controladores',
     public: 'Público',
+    allowed_viewers: 'Visualizadores permitidos',
     execute: 'Executar',
     error: 'Erro',
     self: 'Próprio',

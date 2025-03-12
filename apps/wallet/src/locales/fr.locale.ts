@@ -676,6 +676,7 @@ export default {
     permission: 'Permission',
     controllers: 'Contrôleurs',
     public: 'Public',
+    allowed_viewers: 'Voir les autorisés',
     execute: 'Exécuter',
     error: 'Erreur',
     self: 'Soi',
