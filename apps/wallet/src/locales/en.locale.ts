@@ -667,6 +667,7 @@ export default {
     controllers: 'Controllers',
     restore: 'Restore',
     public: 'Public',
+    allowed_viewers: 'Allowed viewers',
     execute: 'Execute',
     error: 'Error',
     self: 'Self',

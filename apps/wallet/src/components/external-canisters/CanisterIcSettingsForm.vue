@@ -179,7 +179,7 @@
             :hint="$t('external_canisters.native_settings.freezing_threshold_hint')"
           />
           <VSelect
-            v-model="model.log_visibility"
+            v-model="logVisibilitySelected"
             :items="logVisibilityItems"
             :label="$t('external_canisters.native_settings.log_visibility')"
             :hint="$t('external_canisters.native_settings.log_visibility_hint')"
@@ -188,6 +188,7 @@
             density="comfortable"
             item-value="value"
             item-title="text"
+            :disabled="!!model.log_visibility && variantIs(model.log_visibility, 'allowed_viewers')"
           />
         </VCol>
       </VRow>
@@ -222,6 +223,7 @@ import CanisterIdField from '../inputs/CanisterIdField.vue';
 import { CanisterIcSettingsModel } from './external-canisters.types';
 import { LogVisibility } from '~/generated/station/station.did';
 import { useI18n } from 'vue-i18n';
+import { variantIs } from '~/utils/helper.utils.ts';
 
 const props = withDefaults(
   defineProps<{
@@ -365,6 +367,22 @@ const addController = () => {
 
   newController.value = '';
 };
+
+// temporary parsing of the log_visibility field to support the new variant type
+const logVisibilitySelected = computed({
+  get: () => {
+    if (model.value.log_visibility && variantIs(model.value.log_visibility, 'allowed_viewers')) {
+      return i18n.t('terms.allowed_viewers') + ' (change via dfx)';
+    }
+
+    return model.value.log_visibility;
+  },
+  set: (newValue: LogVisibility) => {
+    if (newValue) {
+      model.value.log_visibility = newValue;
+    }
+  },
+});
 
 const logVisibilityItems = computed<SelectItem<LogVisibility>[]>(() => [
   { value: { controllers: null }, text: i18n.t('terms.controllers') },
