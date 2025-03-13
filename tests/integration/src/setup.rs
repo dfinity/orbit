@@ -11,8 +11,8 @@ use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{update_candid_as, PocketIc, PocketIcBuilder};
 use serde::Serialize;
 use station_api::{
-    SystemInit as SystemInitArg, SystemInstall as SystemInstallArg, UserIdentityInput,
-    InitUserInput,
+    InitUserInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg,
+    UserIdentityInput,
 };
 use std::collections::{HashMap, HashSet};
 use std::env;

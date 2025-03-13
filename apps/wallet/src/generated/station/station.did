@@ -2786,7 +2786,7 @@ type InitAssetInput = record {
 
 // The input type for creating a user group when initializing the canister for the first time.
 type InitUserGroupInput = record {
-  // The id of the user group.
+  // The id of the user group, if not provided a new UUID will be generated.  
   id : opt UUID;
   // The name of the user group, must be unique.
   name : text;
@@ -2807,8 +2807,8 @@ type InitUserInput = record {
   // The identities of the user.
   identities : vec UserIdentityInput;
   // The user groups to associate with the user (optional).
-  // If not provided it defaults to the `admin` group if default user groups are created,
-  // i.e., when the field `entries` in `SystemInit` is `null` or has the form of `WithDefaultPolicies`.
+  // If not provided it defaults to the `Admin` group if default user groups are created,
+  // i.e., when the field `initial_config` in `SystemInit` has the form of `WithAllDefaults` or `WithDefaultPolicies`.
   groups : opt vec UUID;
   // The status of the user (e.g. `Active`).
   //
@@ -2829,7 +2829,7 @@ type InitPermissionInput = record {
 type InitRequestPolicyInput = record {
   // The id of the request policy, if not provided a new UUID will be generated.
   id : opt UUID;
-  // The request specifier that identifies for what operation this policy is for (e.g. "transfer").
+  // The request specifier that identifies what operation this policy is for (e.g. "transfer").
   specifier : RequestSpecifier;
   // The rule to use for the request approval evaluation (e.g. "quorum").
   rule : RequestPolicyRule;
@@ -2837,7 +2837,7 @@ type InitRequestPolicyInput = record {
 
 // The init type for adding a named rule when initializing the canister for the first time.
 type InitNamedRuleInput = record {
-  // The id of the named rule.
+  // The id of the named rule, if not provided a new UUID will be generated.
   id : opt UUID;  
   // The name of the named rule.
   name : text;

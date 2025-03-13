@@ -21,8 +21,8 @@ use pocket_ic::management_canister::CanisterInstallMode;
 use pocket_ic::{update_candid_as, PocketIc};
 use sha2::{Digest, Sha256};
 use station_api::{
-    HealthStatus, SystemInfoResponse, SystemInit as SystemInitArg,
-    SystemInstall as SystemInstallArg, UserIdentityInput, InitUserInput,
+    HealthStatus, InitUserInput, SystemInfoResponse, SystemInit as SystemInitArg,
+    SystemInstall as SystemInstallArg, UserIdentityInput,
 };
 
 #[test]
