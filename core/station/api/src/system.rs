@@ -62,7 +62,7 @@ pub struct SystemInfoResponse {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
-pub struct UserInitInput {
+pub struct InitUserInput {
     pub id: Option<UuidDTO>,
     pub name: String,
     pub identities: Vec<UserIdentityInput>,
@@ -154,7 +154,7 @@ pub struct InitAssetInput {
 pub enum InitialConfig {
     WithAllDefaults {
         /// The initial users to create.
-        users: Vec<UserInitInput>,
+        users: Vec<InitUserInput>,
         /// The initial admin quorum in the admin level approval rule.
         admin_quorum: u16,
         /// The initial operator quorum in the operator level approval rule.
@@ -163,7 +163,7 @@ pub enum InitialConfig {
     /// Initialize the station with default policies, accounts and assets.
     WithDefaultPolicies {
         /// The initial users to create.
-        users: Vec<UserInitInput>,
+        users: Vec<InitUserInput>,
         /// The initial accounts to create.
         accounts: Vec<InitAccountInput>,
         /// The initial assets to create.
@@ -176,7 +176,7 @@ pub enum InitialConfig {
     /// Initialize the station with all custom entries.
     Complete {
         /// The initial users to create.
-        users: Vec<UserInitInput>,
+        users: Vec<InitUserInput>,
         /// The initial user groups to create.
         user_groups: Vec<InitUserGroupInput>,
         /// The initial permissions to create.

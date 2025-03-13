@@ -10,7 +10,7 @@ use crate::{
     models::{
         resource::{Resource, ResourceId, UserResourceAction},
         AddUserOperationInput, EditUserOperationInput, RequestStatus, RequestStatusCode, User,
-        UserCallerPrivileges, UserGroupId, UserId, UserStatus, ADMIN_GROUP_ID,
+        UserCallerPrivileges, UserGroupId, UserId, UserKey, UserStatus, ADMIN_GROUP_ID,
     },
     repositories::{
         RequestRepository, UserRepository, UserWhereClause, REQUEST_REPOSITORY, USER_REPOSITORY,
@@ -126,6 +126,12 @@ impl UserService {
         }
 
         let user_id = with_id.unwrap_or_else(|| *Uuid::new_v4().as_bytes());
+
+        if self.user_repository.get(&UserKey { id: user_id }).is_some() {
+            Err(UserError::IdAlreadyExists {
+                user_id: Uuid::from_bytes(user_id).hyphenated().to_string(),
+            })?;
+        }
 
         self.assert_name_has_no_associated_user(&input.name, None)?;
 

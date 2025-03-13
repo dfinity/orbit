@@ -12,7 +12,7 @@ use pocket_ic::{update_candid_as, PocketIc, PocketIcBuilder};
 use serde::Serialize;
 use station_api::{
     SystemInit as SystemInitArg, SystemInstall as SystemInstallArg, UserIdentityInput,
-    UserInitInput,
+    InitUserInput,
 };
 use std::collections::{HashMap, HashSet};
 use std::env;
@@ -315,7 +315,7 @@ fn install_canisters(
         ),
         fallback_controller: config.fallback_controller,
         initial_config: station_api::InitialConfig::WithAllDefaults {
-            users: vec![UserInitInput {
+            users: vec![InitUserInput {
                 identities: vec![UserIdentityInput {
                     identity: WALLET_ADMIN_USER,
                 }],

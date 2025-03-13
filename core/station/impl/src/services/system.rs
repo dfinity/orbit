@@ -528,9 +528,6 @@ impl SystemService {
     /// Updates the canister with the given settings.
     ///
     /// Must only be called within a canister post_upgrade call.
-    ///
-    /// This function is not implemented in the original file or the provided code block.
-    /// It's assumed to exist as it's called in the test case.
     pub async fn upgrade_canister(&self, input: Option<SystemUpgrade>) -> ServiceResult<()> {
         // initializes the cache of the canister data, must happen during the same call as the upgrade
         self.init_cache();
@@ -667,7 +664,7 @@ mod init_canister_sync_handlers {
     use orbit_essentials::types::UUID;
     use station_api::{
         InitAccountInput, InitAccountPermissionsInput, InitAssetInput, InitNamedRuleInput,
-        InitPermissionInput, InitRequestPolicyInput, InitUserGroupInput, UserInitInput,
+        InitPermissionInput, InitRequestPolicyInput, InitUserGroupInput, InitUserInput,
     };
     use uuid::Uuid;
 
@@ -923,7 +920,7 @@ mod init_canister_sync_handlers {
 
     /// Registers the newly added users of the canister.
     pub fn set_initial_users(
-        users: Vec<UserInitInput>,
+        users: Vec<InitUserInput>,
         default_groups: &[UUID],
     ) -> Result<(), ApiError> {
         if users.is_empty() {
@@ -955,19 +952,24 @@ mod init_canister_sync_handlers {
                 .transpose()?
                 .unwrap_or_else(|| default_groups.to_vec());
 
+            let identities = user
+                .identities
+                .iter()
+                .map(|identity| identity.identity.to_owned())
+                .collect::<Vec<_>>();
+
             let user = USER_SERVICE.add_user_with_id(
                 AddUserOperationInput {
-                    identities: user
-                        .identities
-                        .iter()
-                        .map(|identity| identity.identity.to_owned())
-                        .collect(),
                     groups,
                     name: user.name.to_owned(),
-                    status: user
-                        .status
-                        .map(UserStatus::from)
-                        .unwrap_or(UserStatus::Active),
+                    status: user.status.map(UserStatus::from).unwrap_or_else(|| {
+                        if !identities.is_empty() {
+                            UserStatus::Active
+                        } else {
+                            UserStatus::Inactive
+                        }
+                    }),
+                    identities,
                 },
                 user_id,
             )?;
@@ -1035,7 +1037,6 @@ mod init_canister_sync_handlers {
 
     #[allow(unused)]
     // Registers the initial accounts of the canister during the canister initialization.
-    // Used
     pub async fn set_initial_accounts(
         accounts: Vec<(InitAccountInput, InitAccountPermissionsInput)>,
         initial_assets: &[InitAssetInput],
@@ -1217,8 +1218,8 @@ mod tests {
     use candid::Principal;
     use station_api::{
         AccountSeedDTO, AllowDTO, InitAccountInput, InitAccountPermissionsInput, InitAssetInput,
-        InitNamedRuleInput, InitRequestPolicyInput, InitUserGroupInput, RequestPolicyRuleDTO,
-        UserIdentityInput, UserInitInput,
+        InitNamedRuleInput, InitRequestPolicyInput, InitUserGroupInput, InitUserInput,
+        RequestPolicyRuleDTO, UserIdentityInput,
     };
     use uuid::Uuid;
 
@@ -1229,7 +1230,7 @@ mod tests {
                 name: "Station".to_string(),
 
                 initial_config: InitialConfig::WithAllDefaults {
-                    users: vec![UserInitInput {
+                    users: vec![InitUserInput {
                         name: "Admin".to_string(),
                         identities: vec![UserIdentityInput {
                             identity: Principal::from_slice(&[1; 29]),
@@ -1490,7 +1491,7 @@ mod tests {
     async fn test_initial_users_with_bad_groups() {
         let user_id = Uuid::new_v4().hyphenated().to_string();
 
-        let user = UserInitInput {
+        let user = InitUserInput {
             name: "User".to_string(),
             identities: vec![UserIdentityInput {
                 identity: Principal::from_slice(&[1; 29]),

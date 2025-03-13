@@ -508,7 +508,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                     upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
                     initial_config: station_api::InitialConfig::WithDefaultPolicies {
                         users: vec![
-                            station_api::UserInitInput {
+                            station_api::InitUserInput {
                                 identities: vec![UserIdentityInput {
                                     identity: WALLET_ADMIN_USER,
                                 }],
@@ -517,7 +517,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                                 id: None,
                                 status: None,
                             },
-                            station_api::UserInitInput {
+                            station_api::InitUserInput {
                                 identities: vec![UserIdentityInput {
                                     identity: Principal::from_slice(&[95; 29]),
                                 }],
@@ -526,7 +526,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                                 id: None,
                                 status: None,
                             },
-                            station_api::UserInitInput {
+                            station_api::InitUserInput {
                                 identities: vec![UserIdentityInput {
                                     identity: Principal::from_slice(&[97; 29]),
                                 }],
@@ -708,7 +708,7 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
                     fallback_controller: Some(fallback_controller),
                     upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
                     initial_config: station_api::InitialConfig::WithAllDefaults {
-                        users: vec![station_api::UserInitInput {
+                        users: vec![station_api::InitUserInput {
                             identities: vec![UserIdentityInput {
                                 identity: WALLET_ADMIN_USER,
                             }],

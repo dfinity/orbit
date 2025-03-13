@@ -22,7 +22,7 @@ use pocket_ic::{update_candid_as, PocketIc};
 use sha2::{Digest, Sha256};
 use station_api::{
     HealthStatus, SystemInfoResponse, SystemInit as SystemInitArg,
-    SystemInstall as SystemInstallArg, UserIdentityInput, UserInitInput,
+    SystemInstall as SystemInstallArg, UserIdentityInput, InitUserInput,
 };
 
 #[test]
@@ -644,7 +644,7 @@ fn deploy_station_with_insufficient_cycles() {
     let station_init_args = Encode!(&SystemInstallArg::Init(SystemInitArg {
         name: "Station".to_string(),
         initial_config: station_api::InitialConfig::WithAllDefaults {
-            users: vec![UserInitInput {
+            users: vec![InitUserInput {
                 identities: vec![UserIdentityInput {
                     identity: WALLET_ADMIN_USER,
                 }],

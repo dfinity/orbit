@@ -121,7 +121,7 @@ impl DeployService {
         let intial_users = input
             .admins
             .iter()
-            .map(|user| station_api::UserInitInput {
+            .map(|user| station_api::InitUserInput {
                 id: None,
                 identities: vec![station_api::UserIdentityInput {
                     identity: user.identity,

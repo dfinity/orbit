@@ -6,10 +6,10 @@ use rstest::rstest;
 use station_api::{
     AccountResourceActionDTO, AllowDTO, AuthScopeDTO, DisasterRecoveryCommitteeDTO,
     InitAccountInput, InitAssetInput, InitNamedRuleInput, InitPermissionInput,
-    InitRequestPolicyInput, InitUserGroupInput, MetadataDTO, PermissionResourceActionDTO,
-    RequestPolicyRuleDTO, RequestSpecifierDTO, ResourceActionDTO, ResourceDTO, ResourceIdDTO,
-    SystemInit, SystemInstall, UserIdentityInput, UserInitInput, UserResourceActionDTO,
-    UserStatusDTO, UuidDTO,
+    InitRequestPolicyInput, InitUserGroupInput, InitUserInput, MetadataDTO,
+    PermissionResourceActionDTO, RequestPolicyRuleDTO, RequestSpecifierDTO, ResourceActionDTO,
+    ResourceDTO, ResourceIdDTO, SystemInit, SystemInstall, UserIdentityInput,
+    UserResourceActionDTO, UserStatusDTO, UuidDTO,
 };
 use uuid::Uuid;
 
@@ -45,7 +45,7 @@ fn install_with_default_policies() {
     let account_1_id = Uuid::new_v4().hyphenated().to_string();
 
     let users = vec![
-        UserInitInput {
+        InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: WALLET_ADMIN_USER,
             }],
@@ -54,7 +54,7 @@ fn install_with_default_policies() {
             id: None,
             status: None,
         },
-        UserInitInput {
+        InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: Principal::from_slice(&[2; 29]),
             }],
@@ -63,7 +63,7 @@ fn install_with_default_policies() {
             id: None,
             status: Some(station_api::UserStatusDTO::Inactive),
         },
-        UserInitInput {
+        InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: Principal::from_slice(&[3; 29]),
             }],
@@ -244,7 +244,8 @@ fn install_with_all_entries() {
     ];
 
     let request_policies = vec![
-        // edit specific request policy, in the wrong order on purpose
+        // edit specific request policy, in the wrong order on purpose, where the
+        // 1st policy in the list depends on the 2nd policy.
         InitRequestPolicyInput {
             id: None,
             specifier: RequestSpecifierDTO::EditRequestPolicy(station_api::ResourceIdsDTO::Ids(
@@ -281,7 +282,7 @@ fn install_with_all_entries() {
     }];
 
     let users = vec![
-        UserInitInput {
+        InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: WALLET_ADMIN_USER,
             }],
@@ -290,7 +291,7 @@ fn install_with_all_entries() {
             id: None,
             status: None,
         },
-        UserInitInput {
+        InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: Principal::from_slice(&[2; 29]),
             }],
@@ -299,7 +300,7 @@ fn install_with_all_entries() {
             id: None,
             status: Some(station_api::UserStatusDTO::Inactive),
         },
-        UserInitInput {
+        InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: Principal::from_slice(&[3; 29]),
             }],
@@ -448,7 +449,7 @@ fn install_with_all_defaults() {
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
 
     let users = vec![
-        UserInitInput {
+        InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: WALLET_ADMIN_USER,
             }],
@@ -457,7 +458,7 @@ fn install_with_all_defaults() {
             id: None,
             status: None,
         },
-        UserInitInput {
+        InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: Principal::from_slice(&[2; 29]),
             }],
@@ -466,7 +467,7 @@ fn install_with_all_defaults() {
             id: None,
             status: Some(station_api::UserStatusDTO::Inactive),
         },
-        UserInitInput {
+        InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: Principal::from_slice(&[3; 29]),
             }],
@@ -521,9 +522,9 @@ fn install_with_all_defaults() {
 }
 
 #[rstest]
-#[should_panic]
+#[should_panic = "USER_GROUP_DOES_NOT_EXIST"]
 #[case::empty_entries(station_api::InitialConfig::Complete {
-    users: vec![UserInitInput {
+    users: vec![InitUserInput {
         identities: vec![UserIdentityInput {
             identity: WALLET_ADMIN_USER,
         }],
@@ -540,13 +541,13 @@ fn install_with_all_defaults() {
     named_rules: vec![],
     disaster_recovery_committee: None,
 })]
-#[should_panic]
+#[should_panic = "INVALID_RULE"]
 #[case::circular_named_rules({
     let id_1 = Uuid::new_v4().hyphenated().to_string();
     let id_2 = Uuid::new_v4().hyphenated().to_string();
 
     station_api::InitialConfig::Complete {
-        users: vec![UserInitInput {
+        users: vec![InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: WALLET_ADMIN_USER,
             }],
@@ -586,11 +587,11 @@ fn install_with_all_defaults() {
         }),
     }
 })]
-#[should_panic]
+#[should_panic = "Station did not become healthy within 100 rounds."]
 #[case::non_existent_asset_id({
     let id_1 = Uuid::new_v4().hyphenated().to_string();
     station_api::InitialConfig::WithDefaultPolicies {
-        users: vec![UserInitInput {
+        users: vec![InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: WALLET_ADMIN_USER,
             }],
@@ -613,11 +614,11 @@ fn install_with_all_defaults() {
         assets: vec![],
     }
 })]
-#[should_panic]
+#[should_panic = "VALIDATION_ERROR: The request policy has failed validation"]
 #[case::non_existent_policy_id({
     let id_1 = Uuid::new_v4().hyphenated().to_string();
     station_api::InitialConfig::Complete {
-        users:vec![UserInitInput {
+        users:vec![InitUserInput {
             identities: vec![UserIdentityInput {
                 identity: WALLET_ADMIN_USER,
             }],
@@ -688,7 +689,7 @@ fn assert_initial_users(
     env: &PocketIc,
     canister_id: Principal,
     requester: Principal,
-    expected_users: &Vec<UserInitInput>,
+    expected_users: &Vec<InitUserInput>,
     default_groups: &Vec<UuidDTO>,
 ) -> Result<(), String> {
     let listed_users = list_users(env, canister_id, requester)
@@ -711,18 +712,29 @@ fn assert_initial_users(
             .find(|user| user.name == expected_user.name)
             .ok_or(format!("user {} not found", expected_user.name))?;
 
-        expected_user.identities.iter().all(|identity| {
+        if !expected_user.identities.iter().all(|identity| {
             user.identities
                 .iter()
                 .any(|user_identity| user_identity == &identity.identity)
-        });
+        }) {
+            return Err(format!(
+                "user {} has identities {:?}, expected {:?}",
+                expected_user.name, user.identities, expected_user.identities
+            ));
+        }
 
-        expected_user
+        if !expected_user
             .groups
             .as_ref()
             .unwrap_or(default_groups)
             .iter()
-            .all(|group| user.groups.iter().any(|user_group| &user_group.id == group));
+            .all(|group| user.groups.iter().any(|user_group| &user_group.id == group))
+        {
+            return Err(format!(
+                "user {} has groups {:?}, expected {:?}",
+                expected_user.name, user.groups, expected_user.groups
+            ));
+        }
 
         let expected_status = expected_user
             .status
