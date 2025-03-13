@@ -10,7 +10,7 @@ use crate::{
     models::{
         resource::{Resource, ResourceId, UserResourceAction},
         AddUserOperationInput, EditUserOperationInput, RequestStatus, RequestStatusCode, User,
-        UserCallerPrivileges, UserGroupId, UserId, UserStatus, ADMIN_GROUP_ID,
+        UserCallerPrivileges, UserGroupId, UserId, UserKey, UserStatus, ADMIN_GROUP_ID,
     },
     repositories::{
         RequestRepository, UserRepository, UserWhereClause, REQUEST_REPOSITORY, USER_REPOSITORY,
@@ -110,13 +110,32 @@ impl UserService {
     ///
     /// This method should only be called by a system call (self canister call or controller).
     pub fn add_user(&self, input: AddUserOperationInput) -> ServiceResult<User> {
+        self.add_user_with_id(input, None)
+    }
+
+    /// Creates a new user with the given user details and returns the created user.
+    ///
+    /// This method should only be called by a system call (self canister call or controller).
+    pub fn add_user_with_id(
+        &self,
+        input: AddUserOperationInput,
+        with_id: Option<UserId>,
+    ) -> ServiceResult<User> {
         for identity in input.identities.iter() {
             self.assert_identity_has_no_associated_user(identity, None)?;
         }
 
+        let user_id = with_id.unwrap_or_else(|| *Uuid::new_v4().as_bytes());
+
+        if self.user_repository.get(&UserKey { id: user_id }).is_some() {
+            Err(UserError::IdAlreadyExists {
+                user_id: Uuid::from_bytes(user_id).hyphenated().to_string(),
+            })?;
+        }
+
         self.assert_name_has_no_associated_user(&input.name, None)?;
 
-        let user = UserMapper::from_create_input(*Uuid::new_v4().as_bytes(), input);
+        let user = UserMapper::from_create_input(user_id, input);
 
         user.validate()?;
 

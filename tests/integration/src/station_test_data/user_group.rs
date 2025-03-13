@@ -1,7 +1,9 @@
 use super::next_unique_id;
 use crate::utils::{submit_request, wait_for_request};
 use candid::Principal;
-use pocket_ic::PocketIc;
+use orbit_essentials::api::ApiResult;
+use pocket_ic::{query_candid_as, PocketIc, RejectResponse};
+use station_api::{ListUserGroupsInput, ListUserGroupsResponse};
 
 pub fn add_user_group(
     env: &PocketIc,
@@ -49,4 +51,21 @@ pub fn edit_user_group(
 
     wait_for_request(env, requester, station_canister_id, edit_user_group_request)
         .expect("Failed to edit user group");
+}
+
+pub fn list_user_groups(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+) -> Result<(ApiResult<ListUserGroupsResponse>,), RejectResponse> {
+    query_candid_as::<(ListUserGroupsInput,), (ApiResult<ListUserGroupsResponse>,)>(
+        env,
+        station_canister_id,
+        requester,
+        "list_user_groups",
+        (ListUserGroupsInput {
+            search_term: None,
+            paginate: None,
+        },),
+    )
 }

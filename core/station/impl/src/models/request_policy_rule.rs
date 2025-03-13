@@ -44,6 +44,23 @@ pub enum RequestPolicyRule {
     NamedRule(NamedRuleId),
 }
 
+impl RequestPolicyRule {
+    pub fn has_named_rule_id(&self, named_rule_id: &NamedRuleId) -> bool {
+        match self {
+            RequestPolicyRule::NamedRule(id) => id == named_rule_id,
+            RequestPolicyRule::And(rules) | RequestPolicyRule::Or(rules) => rules
+                .iter()
+                .any(|rule| rule.has_named_rule_id(named_rule_id)),
+            RequestPolicyRule::Not(rule) => rule.has_named_rule_id(named_rule_id),
+            RequestPolicyRule::AutoApproved
+            | RequestPolicyRule::QuorumPercentage(..)
+            | RequestPolicyRule::Quorum(..)
+            | RequestPolicyRule::AllowListedByMetadata(..)
+            | RequestPolicyRule::AllowListed => false,
+        }
+    }
+}
+
 impl ModelValidator<ValidationError> for RequestPolicyRule {
     fn validate(&self) -> ModelValidatorResult<ValidationError> {
         match self {

@@ -2786,6 +2786,7 @@ dependencies = [
  "rand",
  "rand_chacha",
  "reqwest",
+ "rstest",
  "serde",
  "sha2 0.10.8",
  "slog",

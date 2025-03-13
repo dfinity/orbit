@@ -43,6 +43,9 @@ pub enum AssetError {
         /// The asset blockchain.
         blockchain: String,
     },
+    /// The asset with id `{id}` already exists.
+    #[error(r#"The asset with id `{id}` already exists."#)]
+    IdAlreadyExists { id: String },
 }
 
 impl DetailableError for AssetError {
@@ -95,6 +98,10 @@ impl DetailableError for AssetError {
             AssetError::AssetInUse { id, resource } => {
                 details.insert("id".to_string(), id.to_string());
                 details.insert("resource".to_string(), resource.to_string());
+                Some(details)
+            }
+            AssetError::IdAlreadyExists { id } => {
+                details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
         }

@@ -12,6 +12,7 @@ mod dfx_orbit;
 mod disaster_recovery_tests;
 mod external_canister_tests;
 mod http;
+mod install_tests;
 mod interfaces;
 mod named_rule_tests;
 mod notification;

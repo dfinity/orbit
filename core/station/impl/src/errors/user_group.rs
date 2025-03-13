@@ -33,6 +33,9 @@ pub enum UserGroupError {
         /// The user group id.
         id: String,
     },
+    /// The user group with id `{id}` already exists.
+    #[error(r#"The user group with id `{id}` already exists."#)]
+    IdAlreadyExists { id: String },
 }
 
 impl DetailableError for UserGroupError {
@@ -56,6 +59,10 @@ impl DetailableError for UserGroupError {
                 Some(details)
             }
             UserGroupError::CannotDeleteDisasterRecoveryCommittee { id } => {
+                details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
+            UserGroupError::IdAlreadyExists { id } => {
                 details.insert("id".to_string(), id.to_string());
                 Some(details)
             }

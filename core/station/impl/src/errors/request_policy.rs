@@ -9,6 +9,9 @@ pub enum RequestPolicyError {
     /// The request policy has failed validation.
     #[error(r#"The request policy has failed validation."#)]
     ValidationError { info: String },
+    /// Request policy with id `{id}` already exists.
+    #[error(r#"Request policy with id `{id}` already exists."#)]
+    IdAlreadyExists { id: String },
 }
 
 impl DetailableError for RequestPolicyError {
@@ -17,6 +20,10 @@ impl DetailableError for RequestPolicyError {
         match self {
             RequestPolicyError::ValidationError { info } => {
                 details.insert("info".to_string(), info.to_string());
+                Some(details)
+            }
+            RequestPolicyError::IdAlreadyExists { id } => {
+                details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
         }

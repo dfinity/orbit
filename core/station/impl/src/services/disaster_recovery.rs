@@ -40,7 +40,7 @@ impl DisasterRecoveryService {
         let accounts = self.account_repository.list();
         let assets = self.asset_repository.list();
 
-        ic_cdk::call(
+        ic_cdk::call::<_, ()>(
             upgrader_canister_id,
             "set_disaster_recovery_accounts_and_assets",
             (upgrader_api::SetDisasterRecoveryAccountsAndAssetsInput {
@@ -72,7 +72,7 @@ impl DisasterRecoveryService {
             })
             .unwrap_or_default();
 
-        ic_cdk::call(
+        ic_cdk::call::<_, ()>(
             upgrader_canister_id,
             "set_disaster_recovery_committee",
             (upgrader_api::SetDisasterRecoveryCommitteeInput {

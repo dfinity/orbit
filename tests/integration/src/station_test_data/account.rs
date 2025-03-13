@@ -1,8 +1,9 @@
 use super::next_unique_id;
 use crate::utils::{get_icp_asset, submit_request, wait_for_request};
 use candid::Principal;
-use pocket_ic::PocketIc;
-use station_api::ChangeAssets;
+use orbit_essentials::api::ApiResult;
+use pocket_ic::{query_candid_as, PocketIc, RejectResponse};
+use station_api::{ChangeAssets, ListAccountsInput, ListAccountsResponse};
 
 pub fn add_account(
     env: &PocketIc,
@@ -106,4 +107,21 @@ pub fn edit_account_assets(
 
     wait_for_request(env, requester, station_canister_id, edit_account_request)
         .expect("Failed to edit account");
+}
+
+pub fn list_accounts(
+    env: &PocketIc,
+    station_canister_id: Principal,
+    requester: Principal,
+) -> Result<(ApiResult<ListAccountsResponse>,), RejectResponse> {
+    query_candid_as::<(ListAccountsInput,), (ApiResult<ListAccountsResponse>,)>(
+        env,
+        station_canister_id,
+        requester,
+        "list_accounts",
+        (ListAccountsInput {
+            search_term: None,
+            paginate: None,
+        },),
+    )
 }
