@@ -627,6 +627,7 @@ export default {
     top_up_hint: 'Ciclos a adicionar ao canister de destino.',
     monitor_hint: 'Configuração para monitorização automática de ciclos.',
     add_controller: 'Adicionar controlador',
+    add_principal: 'Adicionar principal',
     no_controllers: 'Nenhum controlador.',
     self_controller: 'Controlador próprio',
     non_orbit_controllers_warning:
