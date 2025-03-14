@@ -3198,11 +3198,6 @@ type CanisterSnapshotsResult = variant {
   Err : Error;
 };
 
-type CanisterStatusResult = variant {
-  Ok : CanisterStatusResponse;
-  Err : Error;
-};
-
 type HeaderField = record { text; text };
 
 type HttpRequest = record {
@@ -3313,7 +3308,7 @@ service : (opt SystemInstall) -> {
   // List all user groups of the station.
   list_user_groups : (input : ListUserGroupsInput) -> (ListUserGroupsResult) query;
   // Get canister status of a canister controlled by the station.
-  canister_status : (input : CanisterStatusInput) -> (CanisterStatusResult);
+  canister_status : (input : CanisterStatusInput) -> (CanisterStatusResponse);
   // Get snapshots of a canister controlled by the station.
   canister_snapshots : (input : CanisterSnapshotsInput) -> (CanisterSnapshotsResult);
   // HTTP Protocol interface.

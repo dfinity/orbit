@@ -514,9 +514,8 @@ fn create_external_canister_and_check_status() {
     assert_eq!(status.module_hash, None);
 
     // checking canister status on behalf of the user_a
-
     let canister_id_record = CanisterIdRecord { canister_id };
-    let status: (ApiResult<CanisterStatusResult>,) = update_candid_as(
+    let status: (CanisterStatusResult,) = update_candid_as(
         &env,
         canister_ids.station,
         user_a,
@@ -524,7 +523,22 @@ fn create_external_canister_and_check_status() {
         (canister_id_record.clone(),),
     )
     .unwrap();
-    assert_eq!(status.0.unwrap().module_hash, None);
+    assert_eq!(status.0.module_hash, None);
+
+    // checking canister status on behalf of the user_c which has no permission to call canister_status
+    let user_c = user_test_id(2);
+    let err = update_candid_as::<_, (CanisterStatusResult,)>(
+        &env,
+        canister_ids.station,
+        user_c,
+        "canister_status",
+        (canister_id_record.clone(),),
+    )
+    .unwrap_err();
+    assert!(err.reject_message.contains(&format!(
+        "Unauthorized access to resources: ExternalCanister(Read(Canister({})))",
+        canister_id
+    )));
 }
 
 #[test]

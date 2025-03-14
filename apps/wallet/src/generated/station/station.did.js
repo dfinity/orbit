@@ -871,10 +871,6 @@ export const idlFactory = ({ IDL }) => {
     'module_hash' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'reserved_cycles' : IDL.Nat,
   });
-  const CanisterStatusResult = IDL.Variant({
-    'Ok' : CanisterStatusResponse,
-    'Err' : Error,
-  });
   const StandardData = IDL.Record({
     'supported_operations' : IDL.Vec(IDL.Text),
     'supported_address_formats' : IDL.Vec(IDL.Text),
@@ -1678,7 +1674,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'canister_status' : IDL.Func(
         [CanisterStatusInput],
-        [CanisterStatusResult],
+        [CanisterStatusResponse],
         [],
       ),
     'capabilities' : IDL.Func([], [CapabilitiesResult], ['query']),
