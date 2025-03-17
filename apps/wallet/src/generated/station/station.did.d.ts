@@ -222,8 +222,6 @@ export interface CanisterStatusResponse {
   'module_hash' : [] | [Uint8Array | number[]],
   'reserved_cycles' : bigint,
 }
-export type CanisterStatusResult = { 'Ok' : CanisterStatusResponse } |
-  { 'Err' : Error };
 export interface Capabilities {
   'name' : string,
   'version' : string,
@@ -1534,7 +1532,10 @@ export interface _SERVICE {
     [CanisterSnapshotsInput],
     CanisterSnapshotsResult
   >,
-  'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
+  'canister_status' : ActorMethod<
+    [CanisterStatusInput],
+    CanisterStatusResponse
+  >,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
   'create_request' : ActorMethod<[CreateRequestInput], CreateRequestResult>,
   'fetch_account_balances' : ActorMethod<
