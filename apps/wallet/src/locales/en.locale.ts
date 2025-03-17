@@ -622,6 +622,7 @@ export default {
     top_up_hint: 'Amount of cycles to add to the target canister.',
     monitor_hint: 'Configuration for automated monitoring of cycles.',
     add_controller: 'Add controller',
+    add_principal: 'Add principal',
     no_controllers: 'No controllers',
     self_controller: 'Self controlled',
     non_orbit_controllers_warning:
@@ -667,6 +668,7 @@ export default {
     controllers: 'Controllers',
     restore: 'Restore',
     public: 'Public',
+    allowed_viewers: 'Allowed viewers',
     execute: 'Execute',
     error: 'Error',
     self: 'Self',
