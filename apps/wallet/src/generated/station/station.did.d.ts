@@ -221,8 +221,6 @@ export interface CanisterStatusResponse {
   'module_hash' : [] | [Uint8Array | number[]],
   'reserved_cycles' : bigint,
 }
-export type CanisterStatusResult = { 'Ok' : CanisterStatusResponse } |
-  { 'Err' : Error };
 export interface Capabilities {
   'name' : string,
   'version' : string,
@@ -1000,7 +998,8 @@ export type ListUsersResult = {
   } |
   { 'Err' : Error };
 export type LogVisibility = { 'controllers' : null } |
-  { 'public' : null };
+  { 'public' : null } |
+  { 'allowed_viewers' : Array<Principal> };
 export interface ManageSystemInfoOperation {
   'input' : ManageSystemInfoOperationInput,
 }
@@ -1589,7 +1588,10 @@ export interface _SERVICE {
     [CanisterSnapshotsInput],
     CanisterSnapshotsResult
   >,
-  'canister_status' : ActorMethod<[CanisterStatusInput], CanisterStatusResult>,
+  'canister_status' : ActorMethod<
+    [CanisterStatusInput],
+    CanisterStatusResponse
+  >,
   'capabilities' : ActorMethod<[], CapabilitiesResult>,
   'create_request' : ActorMethod<[CreateRequestInput], CreateRequestResult>,
   'fetch_account_balances' : ActorMethod<

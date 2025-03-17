@@ -885,8 +885,8 @@ dependencies = [
  "control-panel-api",
  "email_address",
  "hex",
- "ic-cdk 0.16.0",
- "ic-cdk-macros 0.16.0",
+ "ic-cdk 0.17.1",
+ "ic-cdk-macros 0.17.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "lazy_static",
@@ -2181,19 +2181,6 @@ dependencies = [
 
 [[package]]
 name = "ic-cdk"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd8ecacd682fa05a985253592963306cb9799622d7b1cce4b1edb89c6ec85be1"
-dependencies = [
- "candid",
- "ic-cdk-macros 0.16.0",
- "ic0 0.23.0",
- "serde",
- "serde_bytes",
-]
-
-[[package]]
-name = "ic-cdk"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "122efbcb0af5280d408a75a57b7dc6e9d92893bf6ed9cc98fe4dcff51f18b67c"
@@ -2231,20 +2218,6 @@ dependencies = [
  "serde",
  "serde_tokenstream 0.1.7",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "ic-cdk-macros"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d4d857135deef20cc7ea8f3869a30cd9cfeb1392b3a81043790b2cd82adc3e0"
-dependencies = [
- "candid",
- "proc-macro2",
- "quote",
- "serde",
- "serde_tokenstream 0.2.2",
- "syn 2.0.98",
 ]
 
 [[package]]
@@ -3395,7 +3368,7 @@ dependencies = [
  "convert_case",
  "getrandom",
  "hex",
- "ic-cdk 0.16.0",
+ "ic-cdk 0.17.1",
  "ic-cdk-timers",
  "ic-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=da70db93832f88ecc556ae082612aedec47d3816)",
  "ic-http-certification 2.6.0 (git+https://github.com/dfinity/response-verification?rev=da70db93832f88ecc556ae082612aedec47d3816)",
@@ -4865,8 +4838,8 @@ dependencies = [
  "deunicode",
  "futures",
  "hex",
- "ic-cdk 0.16.0",
- "ic-cdk-macros 0.16.0",
+ "ic-cdk 0.17.1",
+ "ic-cdk-macros 0.17.1",
  "ic-ledger-types",
  "ic-stable-structures",
  "icrc-ledger-types",
@@ -4892,7 +4865,7 @@ version = "0.4.0"
 dependencies = [
  "candid",
  "hex",
- "ic-cdk 0.16.0",
+ "ic-cdk 0.17.1",
  "orbit-essentials",
  "serde",
  "serde_bytes",
@@ -5085,8 +5058,8 @@ dependencies = [
  "candid",
  "candid_parser",
  "futures",
- "ic-cdk 0.16.0",
- "ic-cdk-macros 0.16.0",
+ "ic-cdk 0.17.1",
+ "ic-cdk-macros 0.17.1",
  "orbit-essentials",
  "serde",
 ]
@@ -5527,7 +5500,7 @@ dependencies = [
  "candid",
  "candid_parser",
  "hex",
- "ic-cdk 0.16.0",
+ "ic-cdk 0.17.1",
  "ic-cdk-timers",
  "ic-stable-structures",
  "lazy_static",

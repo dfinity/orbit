@@ -14,7 +14,6 @@ import {
   CancelRequestInput,
   CanisterMethod,
   CanisterSnapshotsResult,
-  CanisterStatusResult,
   Capabilities,
   ChangeExternalCanisterOperationInput,
   ConfigureExternalCanisterOperationKind,
@@ -87,6 +86,7 @@ import {
   UserPrivilege,
   UserStatus,
   _SERVICE,
+  CanisterStatusResponse,
 } from '~/generated/station/station.did';
 import { ExtractOk } from '~/types/helper.types';
 import {
@@ -766,16 +766,10 @@ export class StationService {
     return result.Ok.request;
   }
 
-  async getExternalCanisterStatus(canisterId: Principal): Promise<ExtractOk<CanisterStatusResult>> {
-    const result = await this.actor.canister_status({
+  async getExternalCanisterStatus(canisterId: Principal): Promise<CanisterStatusResponse> {
+    return await this.actor.canister_status({
       canister_id: canisterId,
     });
-
-    if (variantIs(result, 'Err')) {
-      throw result.Err;
-    }
-
-    return result.Ok;
   }
 
   async listAssets(

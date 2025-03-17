@@ -179,7 +179,7 @@
             :hint="$t('external_canisters.native_settings.freezing_threshold_hint')"
           />
           <VSelect
-            v-model="model.log_visibility"
+            v-model="logVisibilitySelected"
             :items="logVisibilityItems"
             :label="$t('external_canisters.native_settings.log_visibility')"
             :hint="$t('external_canisters.native_settings.log_visibility_hint')"
@@ -189,6 +189,78 @@
             item-value="value"
             item-title="text"
           />
+          <VCard
+            v-if="!!model.log_visibility && variantIs(model.log_visibility, 'allowed_viewers')"
+            variant="elevated"
+          >
+            <template #subtitle>
+              {{ $t('terms.allowed_viewers') }}
+            </template>
+            <template #text>
+              <VTable density="compact" hover>
+                <tbody>
+                  <tr v-for="(principal, idx) in model.log_visibility.allowed_viewers" :key="idx">
+                    <td class="pa-2 w-100">
+                      <div :class="{ 'd-inline': !app.isMobile }">
+                        <TextOverflow
+                          :text="principal.toText()"
+                          :max-length="app.isMobile ? 24 : 64"
+                        />
+
+                        <VBtn
+                          size="x-small"
+                          variant="text"
+                          :icon="mdiContentCopy"
+                          @click="
+                            copyToClipboard({
+                              textToCopy: principal.toText(),
+                              sendNotification: true,
+                            })
+                          "
+                        />
+                      </div>
+                    </td>
+                    <td v-if="!props.readonly" class="px-1 min-height-100 text-right">
+                      <VBtn
+                        size="small"
+                        variant="text"
+                        density="comfortable"
+                        :icon="mdiTrashCanOutline"
+                        @click="model.log_visibility.allowed_viewers.splice(idx, 1)"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </VTable>
+              <VTextField
+                v-if="!props.readonly"
+                v-model="newLogPrincipalString"
+                :label="$t('external_canisters.add_principal')"
+                name="new_log_principal"
+                density="comfortable"
+                class="mt-2"
+                :rules="[validPrincipalRule, uniqueRule(existingPrincipals)]"
+                @keydown.enter.stop.prevent="canAddLogPrincipal ? addLogPrincipal() : undefined"
+              >
+                <template #append>
+                  <VBtn
+                    :disabled="!canAddLogPrincipal"
+                    color="primary"
+                    variant="flat"
+                    size="small"
+                    :icon="mdiPlus"
+                    @click="addLogPrincipal"
+                  />
+                </template>
+              </VTextField>
+              <span
+                v-if="props.readonly && !model.log_visibility.allowed_viewers.length"
+                class="mt-2"
+              >
+                {{ $t('external_canisters.no_controllers') }}
+              </span>
+            </template>
+          </VCard>
         </VCol>
       </VRow>
     </VContainer>
@@ -220,8 +292,8 @@ import { numberRangeRule, requiredRule, uniqueRule, validPrincipalRule } from '~
 import TextOverflow from '../TextOverflow.vue';
 import CanisterIdField from '../inputs/CanisterIdField.vue';
 import { CanisterIcSettingsModel } from './external-canisters.types';
-import { LogVisibility } from '~/generated/station/station.did';
 import { useI18n } from 'vue-i18n';
+import { variantIs } from '~/utils/helper.utils.ts';
 
 const props = withDefaults(
   defineProps<{
@@ -253,6 +325,7 @@ const valid = ref(true);
 const i18n = useI18n();
 const fieldsWithErrors = ref<string[]>([]);
 const newController = ref<string>('');
+const newLogPrincipalString = ref<string>('');
 const app = useAppStore();
 const station = useStationStore();
 const initialModel = ref<string>('');
@@ -329,7 +402,7 @@ const hasMaxControllers = computed(
 const canAddController = computed(
   () =>
     form.value?.errors.find(error => error.id === 'new_controller') === undefined &&
-    newControllerPrincipal.value &&
+    newLogPrincipalString.value &&
     !hasMaxControllers.value,
 );
 
@@ -366,12 +439,92 @@ const addController = () => {
   newController.value = '';
 };
 
-const logVisibilityItems = computed<SelectItem<LogVisibility>[]>(() => [
-  { value: { controllers: null }, text: i18n.t('terms.controllers') },
-  { value: { public: null }, text: i18n.t('terms.public') },
+const existingControllers = computed(() => model.value.controllers?.map(c => c.toText()) || []);
+
+enum LogVisibilityEnum {
+  Controllers = 'controllers',
+  Public = 'public',
+  AllowedViewers = 'allowed_viewers',
+}
+
+// temporary parsing of the log_visibility field to support the new variant type
+const logVisibilitySelected = computed({
+  get: () => {
+    if (model.value.log_visibility) {
+      if (LogVisibilityEnum.AllowedViewers in model.value.log_visibility) {
+        return LogVisibilityEnum.AllowedViewers;
+      }
+      if (LogVisibilityEnum.Public in model.value.log_visibility) {
+        return LogVisibilityEnum.Public;
+      }
+      if (LogVisibilityEnum.Controllers in model.value.log_visibility) {
+        return LogVisibilityEnum.Controllers;
+      }
+    }
+
+    return null;
+  },
+  set: newValue => {
+    if (newValue) {
+      switch (newValue) {
+        case LogVisibilityEnum.Controllers:
+          model.value.log_visibility = { controllers: null };
+          break;
+        case LogVisibilityEnum.Public:
+          model.value.log_visibility = { public: null };
+          break;
+        case LogVisibilityEnum.AllowedViewers:
+          model.value.log_visibility = { allowed_viewers: [] };
+          break;
+      }
+    }
+  },
+});
+
+const logVisibilityItems = computed<SelectItem[]>(() => [
+  { value: LogVisibilityEnum.Controllers, text: i18n.t('terms.controllers') },
+  { value: LogVisibilityEnum.Public, text: i18n.t('terms.public') },
+  { value: LogVisibilityEnum.AllowedViewers, text: i18n.t('terms.allowed_viewers') },
 ]);
 
-const existingControllers = computed(() => model.value.controllers?.map(c => c.toText()) || []);
+const canAddLogPrincipal = computed(
+  () =>
+    form.value?.errors.find(error => error.id === 'new_log_principal') === undefined &&
+    newLogPrincipalString.value,
+);
+
+const addLogPrincipal = () => {
+  if (
+    !newLogPrincipal.value ||
+    !model.value.log_visibility ||
+    !('allowed_viewers' in model.value.log_visibility)
+  ) {
+    logger.warn('Unexpected code path, newLogPrincipalString should be defined');
+    return;
+  }
+
+  const currentPrincipals = model.value.log_visibility.allowed_viewers || [];
+
+  model.value.log_visibility.allowed_viewers = [...currentPrincipals, newLogPrincipal.value];
+
+  newLogPrincipalString.value = '';
+};
+
+const newLogPrincipal = computed(() => {
+  try {
+    return Principal.fromText(newLogPrincipalString.value);
+  } catch {
+    return undefined;
+  }
+});
+
+const existingPrincipals = computed(
+  () =>
+    (model.value.log_visibility &&
+      'allowed_viewers' in model.value.log_visibility &&
+      model.value.log_visibility.allowed_viewers?.map(p => p.toText())) ||
+    [],
+);
 
 const revalidate = async (): Promise<boolean> => {
   const { valid: isValid, errors } = form.value
