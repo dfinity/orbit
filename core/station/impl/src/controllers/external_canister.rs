@@ -1,4 +1,5 @@
 use crate::{
+    core::ic_cdk::api::trap,
     core::middlewares::{authorize, call_context},
     models::resource::{ExternalCanisterId, ExternalCanisterResourceAction, Resource},
     services::{ExternalCanisterService, EXTERNAL_CANISTER_SERVICE},
@@ -17,8 +18,11 @@ use std::sync::Arc;
 
 // Canister entrypoints for the controller.
 #[update(name = "canister_status")]
-async fn canister_status(input: CanisterIdRecord) -> ApiResult<CanisterStatusResponse> {
-    CONTROLLER.canister_status(input).await
+async fn canister_status(input: CanisterIdRecord) -> CanisterStatusResponse {
+    CONTROLLER
+        .canister_status(input)
+        .await
+        .unwrap_or_else(|e| trap(&format!("{:?}", e)))
 }
 
 #[update(name = "canister_snapshots")]
