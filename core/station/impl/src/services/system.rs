@@ -1526,6 +1526,6 @@ mod tests {
         assert!(users[0]
             .groups
             .iter()
-            .any(|g| DEFAULT_GROUP_IDS.contains(&g)));
+            .any(|g| DEFAULT_GROUP_IDS.contains(g)));
     }
 }
