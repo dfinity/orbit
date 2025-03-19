@@ -10,7 +10,7 @@ use crate::utils::{
     get_upgrader_logs, get_user, request_disaster_recovery, set_disaster_recovery,
     set_disaster_recovery_accounts, set_disaster_recovery_accounts_and_assets,
     set_disaster_recovery_committee, upload_canister_chunks_to_asset_canister, user_test_id,
-    NNS_ROOT_CANISTER_ID,
+    ADMIN_GROUP_ID, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{CandidType, Encode, Principal};
@@ -610,7 +610,11 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
     }
 
     assert_eq!(admin_user.groups.len(), 2);
-    let admin_user_group = admin_user.groups.first().expect("No user group found");
+    let admin_user_group = admin_user
+        .groups
+        .iter()
+        .find(|g| g.id == ADMIN_GROUP_ID.hyphenated().to_string())
+        .expect("No user group found");
 
     for (id, initial_account) in initial_accounts {
         let account = existing_accounts

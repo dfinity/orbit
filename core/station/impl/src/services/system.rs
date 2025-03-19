@@ -289,8 +289,6 @@ impl SystemService {
             }
             install_canister_handlers::set_controllers(station_controllers).await?;
 
-            // calculates the initial quorum based on the number of admins and the provided quorum
-
             match &init.initial_config {
                 InitialConfig::WithAllDefaults { .. } => {}
                 InitialConfig::WithDefaultPolicies {
