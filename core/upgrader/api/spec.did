@@ -174,8 +174,28 @@ type RequestDisasterRecoveryInstallCodeInput = record {
   // The install mode: Install, Upgrade, or Reinstall.
   install_mode : InstallMode;
 };
+type RequestDisasterRecoverySnapshotInput = record {
+  // A snapshot to be replaced.
+  replace_snapshot : opt text;
+  // Should a snapshot be taken if the station fails to stop.
+  force : bool;
+};
+type RequestDisasterRecoveryRestoreInput = record {
+  // A snapshot to be restored.
+  snapshot_id : text;
+};
+// The resource to prune.
+type RequestDisasterRecoveryPruneInput = variant {
+  chunk_store;
+  snapshot : text;
+  state;
+};
 type RequestDisasterRecoveryInput = variant {
   InstallCode : RequestDisasterRecoveryInstallCodeInput;
+  Snapshot : RequestDisasterRecoverySnapshotInput;
+  Restore : RequestDisasterRecoveryRestoreInput;
+  Prune : RequestDisasterRecoveryPruneInput;
+  Start;
 };
 
 type InstallMode = variant {
@@ -238,8 +258,31 @@ type StationRecoveryRequestInstallCodeOperation = record {
   arg : blob;
 };
 
+type StationRecoveryRequestSnapshotOperation = record {
+  // A snapshot to be replaced.
+  replace_snapshot : opt text;
+  // Should a snapshot be taken if the station fails to stop.
+  force : bool;
+};
+
+type StationRecoveryRequestRestoreOperation = record {
+  // A snapshot to be restored.
+  snapshot_id : text;
+};
+
+// The resource to prune.
+type StationRecoveryRequestPruneOperation = variant {
+  chunk_store;
+  snapshot : text;
+  state;
+};
+
 type StationRecoveryRequestOperation = variant {
   InstallCode : StationRecoveryRequestInstallCodeOperation;
+  Snapshot : StationRecoveryRequestSnapshotOperation;
+  Restore : StationRecoveryRequestRestoreOperation;
+  Prune : StationRecoveryRequestPruneOperation;
+  Start;
 };
 
 // Request to recover the station.
