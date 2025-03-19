@@ -28,8 +28,8 @@ use crate::{
 };
 use candid::Principal;
 use lazy_static::lazy_static;
-use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
+use orbit_essentials::{api::ServiceResult, types::UUID};
 use station_api::{HealthStatus, InitialConfig, SystemInit, SystemInstall, SystemUpgrade};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -41,6 +41,8 @@ use uuid::Uuid;
 pub const INITIAL_ICP_ASSET_ID: [u8; 16] = [
     0x78, 0x02, 0xcb, 0xab, 0x22, 0x1d, 0x4e, 0x49, 0xb7, 0x64, 0xa6, 0x95, 0xea, 0x6d, 0xef, 0x1a,
 ];
+
+pub const DEFAULT_GROUP_IDS: [UUID; 2] = [*OPERATOR_GROUP_ID, *ADMIN_GROUP_ID];
 
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> = Arc::new(SystemService::new(
@@ -456,10 +458,7 @@ impl SystemService {
                 // adds the default admin group
                 init_canister_sync_handlers::add_default_groups();
                 // registers the admins of the canister
-                init_canister_sync_handlers::set_initial_users(
-                    users.clone(),
-                    &[*ADMIN_GROUP_ID, *OPERATOR_GROUP_ID],
-                )?;
+                init_canister_sync_handlers::set_initial_users(users.clone(), &DEFAULT_GROUP_IDS)?;
                 // registers the default canister configurations such as policies and user groups.
                 init_canister_sync_handlers::init_default_permissions_and_policies(
                     *admin_quorum,
@@ -478,10 +477,7 @@ impl SystemService {
                 // adds the default admin group
                 init_canister_sync_handlers::add_default_groups();
                 // registers the admins of the canister
-                init_canister_sync_handlers::set_initial_users(
-                    users.clone(),
-                    &[*ADMIN_GROUP_ID, *OPERATOR_GROUP_ID],
-                )?;
+                init_canister_sync_handlers::set_initial_users(users.clone(), &DEFAULT_GROUP_IDS)?;
                 // adds the initial assets
                 init_canister_sync_handlers::set_initial_assets(assets).await?;
 
@@ -1521,13 +1517,15 @@ mod tests {
             status: station_api::UserStatusDTO::Active,
         };
 
-        set_initial_users(vec![user], &[]).expect("Should have succeeded");
+        set_initial_users(vec![user], &DEFAULT_GROUP_IDS).expect("Should have succeeded");
 
         let users = USER_REPOSITORY.list();
         assert_eq!(users.len(), 1);
         assert_eq!(users[0].id, user_id.as_bytes().to_owned());
-        assert_eq!(users[0].groups.len(), 2);
-        assert!(users[0].groups.iter().any(|g| g == OPERATOR_GROUP_ID));
-        assert!(users[0].groups.iter().any(|g| g == ADMIN_GROUP_ID));
+        assert_eq!(users[0].groups.len(), DEFAULT_GROUP_IDS.len());
+        assert!(users[0]
+            .groups
+            .iter()
+            .any(|g| DEFAULT_GROUP_IDS.contains(&g)));
     }
 }
