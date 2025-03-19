@@ -166,8 +166,33 @@ pub struct RequestDisasterRecoveryInstallCodeInput {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct RequestDisasterRecoverySnapshotInput {
+    pub replace_snapshot: Option<String>,
+    pub force: bool,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct RequestDisasterRecoveryRestoreInput {
+    pub snapshot_id: String,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub enum RequestDisasterRecoveryPruneInput {
+    #[serde(rename = "snapshot")]
+    Snapshot(String),
+    #[serde(rename = "chunk_store")]
+    ChunkStore,
+    #[serde(rename = "state")]
+    State,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
 pub enum RequestDisasterRecoveryInput {
     InstallCode(RequestDisasterRecoveryInstallCodeInput),
+    Snapshot(RequestDisasterRecoverySnapshotInput),
+    Restore(RequestDisasterRecoveryRestoreInput),
+    Prune(RequestDisasterRecoveryPruneInput),
+    Start,
 }
 
 #[derive(CandidType, Deserialize, Debug, Clone)]
@@ -213,8 +238,33 @@ pub struct StationRecoveryRequestInstallCodeOperation {
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub struct StationRecoveryRequestSnapshotOperation {
+    pub replace_snapshot: Option<String>,
+    pub force: bool,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub struct StationRecoveryRequestRestoreOperation {
+    pub snapshot_id: String,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
+pub enum StationRecoveryRequestPruneOperation {
+    #[serde(rename = "snapshot")]
+    Snapshot(String),
+    #[serde(rename = "chunk_store")]
+    ChunkStore,
+    #[serde(rename = "state")]
+    State,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
 pub enum StationRecoveryRequestOperation {
     InstallCode(StationRecoveryRequestInstallCodeOperation),
+    Snapshot(StationRecoveryRequestSnapshotOperation),
+    Restore(StationRecoveryRequestRestoreOperation),
+    Prune(StationRecoveryRequestPruneOperation),
+    Start,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]
