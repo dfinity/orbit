@@ -10,7 +10,7 @@ use crate::utils::{
     get_upgrader_logs, get_user, request_disaster_recovery, set_disaster_recovery,
     set_disaster_recovery_accounts, set_disaster_recovery_accounts_and_assets,
     set_disaster_recovery_committee, upload_canister_chunks_to_asset_canister, user_test_id,
-    NNS_ROOT_CANISTER_ID,
+    ADMIN_GROUP_ID, NNS_ROOT_CANISTER_ID,
 };
 use crate::TestEnv;
 use candid::{CandidType, Encode, Principal};
@@ -23,7 +23,7 @@ use station_api::{
     AccountDTO, AddAccountOperationInput, AllowDTO, DisasterRecoveryCommitteeDTO,
     EditUserOperationInput, HealthStatus, ListAccountsResponse, RequestOperationDTO,
     RequestOperationInput, RequestPolicyRuleDTO, SetDisasterRecoveryOperationInput, SystemInit,
-    SystemInstall, SystemUpgrade,
+    SystemInstall, SystemUpgrade, UserIdentityInput,
 };
 use std::collections::BTreeMap;
 use std::str::FromStr;
@@ -467,7 +467,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
     }
 
     let init_assets_input = station_api::InitAssetInput {
-        id: icp_asset.id.clone(),
+        id: Some(icp_asset.id.clone()),
         name: icp_asset.name.clone(),
         symbol: icp_asset.symbol.clone(),
         decimals: icp_asset.decimals,
@@ -505,25 +505,44 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                 module_extra_chunks: Some(module_extra_chunks),
                 arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                     name: "Station".to_string(),
-                    admins: vec![
-                        station_api::AdminInitInput {
-                            identity: WALLET_ADMIN_USER,
-                            name: "updated-admin-name".to_string(),
-                        },
-                        station_api::AdminInitInput {
-                            identity: Principal::from_slice(&[95; 29]),
-                            name: "another-admin".to_string(),
-                        },
-                        station_api::AdminInitInput {
-                            identity: Principal::from_slice(&[97; 29]),
-                            name: "yet-another-admin".to_string(),
-                        }
-                    ],
-                    quorum: None,
+
                     fallback_controller: None,
                     upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
-                    accounts: Some(init_accounts_input),
-                    assets: Some(vec![init_assets_input]),
+                    initial_config: station_api::InitialConfig::WithDefaultPolicies {
+                        users: vec![
+                            station_api::InitUserInput {
+                                identities: vec![UserIdentityInput {
+                                    identity: WALLET_ADMIN_USER,
+                                }],
+                                name: "updated-admin-name".to_string(),
+                                groups: None,
+                                id: None,
+                                status: station_api::UserStatusDTO::Active,
+                            },
+                            station_api::InitUserInput {
+                                identities: vec![UserIdentityInput {
+                                    identity: Principal::from_slice(&[95; 29]),
+                                }],
+                                name: "another-admin".to_string(),
+                                groups: None,
+                                id: None,
+                                status: station_api::UserStatusDTO::Active,
+                            },
+                            station_api::InitUserInput {
+                                identities: vec![UserIdentityInput {
+                                    identity: Principal::from_slice(&[97; 29]),
+                                }],
+                                name: "yet-another-admin".to_string(),
+                                groups: None,
+                                id: None,
+                                status: station_api::UserStatusDTO::Active,
+                            },
+                        ],
+                        accounts: init_accounts_input,
+                        assets: vec![init_assets_input],
+                        admin_quorum: 2,
+                        operator_quorum: 1,
+                    },
                 }))
                 .unwrap(),
                 install_mode: upgrader_api::InstallMode::Reinstall,
@@ -590,8 +609,12 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
         }
     }
 
-    assert_eq!(admin_user.groups.len(), 1);
-    let admin_user_group = admin_user.groups.first().expect("No user group found");
+    assert_eq!(admin_user.groups.len(), 2);
+    let admin_user_group = admin_user
+        .groups
+        .iter()
+        .find(|g| g.id == ADMIN_GROUP_ID.hyphenated().to_string())
+        .expect("No user group found");
 
     for (id, initial_account) in initial_accounts {
         let account = existing_accounts
@@ -688,15 +711,21 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
                 module_extra_chunks: Some(module_extra_chunks),
                 arg: Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
                     name: "Station".to_string(),
-                    admins: vec![station_api::AdminInitInput {
-                        identity: WALLET_ADMIN_USER,
-                        name: "updated-admin-name".to_string(),
-                    }],
-                    quorum: None,
                     fallback_controller: Some(fallback_controller),
                     upgrader: station_api::SystemUpgraderInput::Id(upgrader_id),
-                    accounts: None,
-                    assets: None,
+                    initial_config: station_api::InitialConfig::WithAllDefaults {
+                        users: vec![station_api::InitUserInput {
+                            identities: vec![UserIdentityInput {
+                                identity: WALLET_ADMIN_USER,
+                            }],
+                            name: "updated-admin-name".to_string(),
+                            groups: None,
+                            id: None,
+                            status: station_api::UserStatusDTO::Active,
+                        }],
+                        admin_quorum: 1,
+                        operator_quorum: 1
+                    },
                 }))
                 .unwrap(),
                 install_mode: upgrader_api::InstallMode::Reinstall,
@@ -906,7 +935,6 @@ fn test_disaster_recovery_failing() {
     // intentionally bad arg to fail Upgrade
     let arg = SystemInstall::Init(SystemInit {
         fallback_controller: None,
-        quorum: None,
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: vec![],
@@ -914,9 +942,11 @@ fn test_disaster_recovery_failing() {
             },
         ),
         name: "Station".to_string(),
-        admins: vec![],
-        accounts: None,
-        assets: None,
+        initial_config: station_api::InitialConfig::WithAllDefaults {
+            users: vec![],
+            admin_quorum: 1,
+            operator_quorum: 1,
+        },
     });
 
     // install with intentionally bad arg to fail

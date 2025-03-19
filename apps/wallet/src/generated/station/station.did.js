@@ -5,20 +5,13 @@ export const idlFactory = ({ IDL }) => {
   const UUID = IDL.Text;
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const InitAssetInput = IDL.Record({
-    'id' : UUID,
+    'id' : IDL.Opt(UUID),
     'decimals' : IDL.Nat32,
     'standards' : IDL.Vec(IDL.Text),
     'metadata' : IDL.Vec(AssetMetadata),
     'name' : IDL.Text,
     'blockchain' : IDL.Text,
     'symbol' : IDL.Text,
-  });
-  const SystemUpgraderInput = IDL.Variant({
-    'Id' : IDL.Principal,
-    'Deploy' : IDL.Record({
-      'initial_cycles' : IDL.Opt(IDL.Nat),
-      'wasm_module' : IDL.Vec(IDL.Nat8),
-    }),
   });
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AccountSeed = IDL.Vec(IDL.Nat8);
@@ -29,51 +22,17 @@ export const idlFactory = ({ IDL }) => {
     'assets' : IDL.Vec(UUID),
     'seed' : AccountSeed,
   });
-  const AdminInitInput = IDL.Record({
+  const UserStatus = IDL.Variant({
+    'Inactive' : IDL.Null,
+    'Active' : IDL.Null,
+  });
+  const UserIdentityInput = IDL.Record({ 'identity' : IDL.Principal });
+  const InitUserInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'status' : UserStatus,
+    'groups' : IDL.Opt(IDL.Vec(UUID)),
     'name' : IDL.Text,
-    'identity' : IDL.Principal,
-  });
-  const SystemInit = IDL.Record({
-    'name' : IDL.Text,
-    'assets' : IDL.Opt(IDL.Vec(InitAssetInput)),
-    'fallback_controller' : IDL.Opt(IDL.Principal),
-    'upgrader' : SystemUpgraderInput,
-    'accounts' : IDL.Opt(IDL.Vec(InitAccountInput)),
-    'admins' : IDL.Vec(AdminInitInput),
-    'quorum' : IDL.Opt(IDL.Nat16),
-  });
-  const SystemInstall = IDL.Variant({
-    'Upgrade' : SystemUpgrade,
-    'Init' : SystemInit,
-  });
-  const CancelRequestInput = IDL.Record({
-    'request_id' : UUID,
-    'reason' : IDL.Opt(IDL.Text),
-  });
-  const TimestampRFC3339 = IDL.Text;
-  const RequestStatus = IDL.Variant({
-    'Failed' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
-    'Approved' : IDL.Null,
-    'Rejected' : IDL.Null,
-    'Scheduled' : IDL.Record({ 'scheduled_at' : TimestampRFC3339 }),
-    'Cancelled' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
-    'Processing' : IDL.Record({ 'started_at' : TimestampRFC3339 }),
-    'Created' : IDL.Null,
-    'Completed' : IDL.Record({ 'completed_at' : TimestampRFC3339 }),
-  });
-  const RequestExecutionSchedule = IDL.Variant({
-    'Immediate' : IDL.Null,
-    'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
-  });
-  const RemoveAssetOperationInput = IDL.Record({ 'asset_id' : UUID });
-  const RemoveAssetOperation = IDL.Record({
-    'input' : RemoveAssetOperationInput,
-  });
-  const UserGroup = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });
-  const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
-  const AddUserGroupOperation = IDL.Record({
-    'user_group' : IDL.Opt(UserGroup),
-    'input' : AddUserGroupOperationInput,
+    'identities' : IDL.Vec(UserIdentityInput),
   });
   const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
   const RequestResourceAction = IDL.Variant({
@@ -161,34 +120,14 @@ export const idlFactory = ({ IDL }) => {
     'Public' : IDL.Null,
     'Restricted' : IDL.Null,
   });
-  const EditPermissionOperationInput = IDL.Record({
+  const Allow = IDL.Record({
+    'user_groups' : IDL.Vec(UUID),
+    'auth_scope' : AuthScope,
+    'users' : IDL.Vec(UUID),
+  });
+  const InitPermissionInput = IDL.Record({
     'resource' : Resource,
-    'user_groups' : IDL.Opt(IDL.Vec(UUID)),
-    'auth_scope' : IDL.Opt(AuthScope),
-    'users' : IDL.Opt(IDL.Vec(UUID)),
-  });
-  const EditPermissionOperation = IDL.Record({
-    'input' : EditPermissionOperationInput,
-  });
-  const SnapshotExternalCanisterOperationInput = IDL.Record({
-    'force' : IDL.Bool,
-    'replace_snapshot' : IDL.Opt(IDL.Text),
-    'canister_id' : IDL.Principal,
-  });
-  const SnapshotExternalCanisterOperation = IDL.Record({
-    'input' : SnapshotExternalCanisterOperationInput,
-    'snapshot_id' : IDL.Opt(IDL.Text),
-  });
-  const PruneExternalCanisterOperationInput = IDL.Record({
-    'canister_id' : IDL.Principal,
-    'prune' : IDL.Variant({
-      'snapshot' : IDL.Text,
-      'state' : IDL.Null,
-      'chunk_store' : IDL.Null,
-    }),
-  });
-  const PruneExternalCanisterOperation = IDL.Record({
-    'input' : PruneExternalCanisterOperationInput,
+    'allow' : Allow,
   });
   const UserSpecifier = IDL.Variant({
     'Id' : IDL.Vec(UUID),
@@ -220,6 +159,170 @@ export const idlFactory = ({ IDL }) => {
       'NamedRule' : UUID,
     })
   );
+  const ResourceIds = IDL.Variant({ 'Any' : IDL.Null, 'Ids' : IDL.Vec(UUID) });
+  const ResourceSpecifier = IDL.Variant({
+    'Any' : IDL.Null,
+    'Resource' : Resource,
+  });
+  const RequestSpecifier = IDL.Variant({
+    'RemoveAsset' : ResourceIds,
+    'AddUserGroup' : IDL.Null,
+    'EditPermission' : ResourceSpecifier,
+    'EditNamedRule' : ResourceIds,
+    'ChangeExternalCanister' : ExternalCanisterId,
+    'AddUser' : IDL.Null,
+    'EditAsset' : ResourceIds,
+    'EditUserGroup' : ResourceIds,
+    'SetDisasterRecovery' : IDL.Null,
+    'EditRequestPolicy' : ResourceIds,
+    'RemoveRequestPolicy' : ResourceIds,
+    'AddAsset' : IDL.Null,
+    'SystemUpgrade' : IDL.Null,
+    'RemoveAddressBookEntry' : ResourceIds,
+    'CreateExternalCanister' : IDL.Null,
+    'EditAddressBookEntry' : ResourceIds,
+    'FundExternalCanister' : ExternalCanisterId,
+    'EditUser' : ResourceIds,
+    'ManageSystemInfo' : IDL.Null,
+    'Transfer' : ResourceIds,
+    'EditAccount' : ResourceIds,
+    'AddAddressBookEntry' : IDL.Null,
+    'AddRequestPolicy' : IDL.Null,
+    'RemoveNamedRule' : ResourceIds,
+    'RemoveUserGroup' : ResourceIds,
+    'CallExternalCanister' : CallExternalCanisterResourceTarget,
+    'AddNamedRule' : IDL.Null,
+    'AddAccount' : IDL.Null,
+  });
+  const InitRequestPolicyInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'rule' : RequestPolicyRule,
+    'specifier' : RequestSpecifier,
+  });
+  const InitUserGroupInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'name' : IDL.Text,
+  });
+  const InitAccountPermissionsInput = IDL.Record({
+    'configs_request_policy' : IDL.Opt(RequestPolicyRule),
+    'read_permission' : Allow,
+    'configs_permission' : Allow,
+    'transfer_request_policy' : IDL.Opt(RequestPolicyRule),
+    'transfer_permission' : Allow,
+  });
+  const InitAccountWithPermissionsInput = IDL.Record({
+    'permissions' : InitAccountPermissionsInput,
+    'account_init' : InitAccountInput,
+  });
+  const DisasterRecoveryCommittee = IDL.Record({
+    'user_group_id' : UUID,
+    'quorum' : IDL.Nat16,
+  });
+  const InitNamedRuleInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'name' : IDL.Text,
+    'rule' : RequestPolicyRule,
+    'description' : IDL.Opt(IDL.Text),
+  });
+  const InitialConfig = IDL.Variant({
+    'WithDefaultPolicies' : IDL.Record({
+      'assets' : IDL.Vec(InitAssetInput),
+      'admin_quorum' : IDL.Nat16,
+      'accounts' : IDL.Vec(InitAccountInput),
+      'users' : IDL.Vec(InitUserInput),
+      'operator_quorum' : IDL.Nat16,
+    }),
+    'WithAllDefaults' : IDL.Record({
+      'admin_quorum' : IDL.Nat16,
+      'users' : IDL.Vec(InitUserInput),
+      'operator_quorum' : IDL.Nat16,
+    }),
+    'Complete' : IDL.Record({
+      'permissions' : IDL.Vec(InitPermissionInput),
+      'assets' : IDL.Vec(InitAssetInput),
+      'request_policies' : IDL.Vec(InitRequestPolicyInput),
+      'user_groups' : IDL.Vec(InitUserGroupInput),
+      'accounts' : IDL.Vec(InitAccountWithPermissionsInput),
+      'disaster_recovery_committee' : IDL.Opt(DisasterRecoveryCommittee),
+      'users' : IDL.Vec(InitUserInput),
+      'named_rules' : IDL.Vec(InitNamedRuleInput),
+    }),
+  });
+  const SystemUpgraderInput = IDL.Variant({
+    'Id' : IDL.Principal,
+    'Deploy' : IDL.Record({
+      'initial_cycles' : IDL.Opt(IDL.Nat),
+      'wasm_module' : IDL.Vec(IDL.Nat8),
+    }),
+  });
+  const SystemInit = IDL.Record({
+    'name' : IDL.Text,
+    'initial_config' : InitialConfig,
+    'fallback_controller' : IDL.Opt(IDL.Principal),
+    'upgrader' : SystemUpgraderInput,
+  });
+  const SystemInstall = IDL.Variant({
+    'Upgrade' : SystemUpgrade,
+    'Init' : SystemInit,
+  });
+  const CancelRequestInput = IDL.Record({
+    'request_id' : UUID,
+    'reason' : IDL.Opt(IDL.Text),
+  });
+  const TimestampRFC3339 = IDL.Text;
+  const RequestStatus = IDL.Variant({
+    'Failed' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
+    'Approved' : IDL.Null,
+    'Rejected' : IDL.Null,
+    'Scheduled' : IDL.Record({ 'scheduled_at' : TimestampRFC3339 }),
+    'Cancelled' : IDL.Record({ 'reason' : IDL.Opt(IDL.Text) }),
+    'Processing' : IDL.Record({ 'started_at' : TimestampRFC3339 }),
+    'Created' : IDL.Null,
+    'Completed' : IDL.Record({ 'completed_at' : TimestampRFC3339 }),
+  });
+  const RequestExecutionSchedule = IDL.Variant({
+    'Immediate' : IDL.Null,
+    'Scheduled' : IDL.Record({ 'execution_time' : TimestampRFC3339 }),
+  });
+  const RemoveAssetOperationInput = IDL.Record({ 'asset_id' : UUID });
+  const RemoveAssetOperation = IDL.Record({
+    'input' : RemoveAssetOperationInput,
+  });
+  const UserGroup = IDL.Record({ 'id' : UUID, 'name' : IDL.Text });
+  const AddUserGroupOperationInput = IDL.Record({ 'name' : IDL.Text });
+  const AddUserGroupOperation = IDL.Record({
+    'user_group' : IDL.Opt(UserGroup),
+    'input' : AddUserGroupOperationInput,
+  });
+  const EditPermissionOperationInput = IDL.Record({
+    'resource' : Resource,
+    'user_groups' : IDL.Opt(IDL.Vec(UUID)),
+    'auth_scope' : IDL.Opt(AuthScope),
+    'users' : IDL.Opt(IDL.Vec(UUID)),
+  });
+  const EditPermissionOperation = IDL.Record({
+    'input' : EditPermissionOperationInput,
+  });
+  const SnapshotExternalCanisterOperationInput = IDL.Record({
+    'force' : IDL.Bool,
+    'replace_snapshot' : IDL.Opt(IDL.Text),
+    'canister_id' : IDL.Principal,
+  });
+  const SnapshotExternalCanisterOperation = IDL.Record({
+    'input' : SnapshotExternalCanisterOperationInput,
+    'snapshot_id' : IDL.Opt(IDL.Text),
+  });
+  const PruneExternalCanisterOperationInput = IDL.Record({
+    'canister_id' : IDL.Principal,
+    'prune' : IDL.Variant({
+      'snapshot' : IDL.Text,
+      'state' : IDL.Null,
+      'chunk_store' : IDL.Null,
+    }),
+  });
+  const PruneExternalCanisterOperation = IDL.Record({
+    'input' : PruneExternalCanisterOperationInput,
+  });
   const EditNamedRuleOperationInput = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'rule' : IDL.Opt(RequestPolicyRule),
@@ -228,11 +331,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const EditNamedRuleOperation = IDL.Record({
     'input' : EditNamedRuleOperationInput,
-  });
-  const Allow = IDL.Record({
-    'user_groups' : IDL.Vec(UUID),
-    'auth_scope' : AuthScope,
-    'users' : IDL.Vec(UUID),
   });
   const CanisterExecutionAndValidationMethodPair = IDL.Record({
     'execution_method' : IDL.Text,
@@ -397,10 +495,6 @@ export const idlFactory = ({ IDL }) => {
     'canister_id' : IDL.Principal,
   });
   const MonitorExternalCanisterOperation = MonitorExternalCanisterOperationInput;
-  const UserStatus = IDL.Variant({
-    'Inactive' : IDL.Null,
-    'Active' : IDL.Null,
-  });
   const User = IDL.Record({
     'id' : UUID,
     'status' : UserStatus,
@@ -441,47 +535,8 @@ export const idlFactory = ({ IDL }) => {
   const EditUserGroupOperation = IDL.Record({
     'input' : EditUserGroupOperationInput,
   });
-  const DisasterRecoveryCommittee = IDL.Record({
-    'user_group_id' : UUID,
-    'quorum' : IDL.Nat16,
-  });
   const SetDisasterRecoveryOperation = IDL.Record({
     'committee' : IDL.Opt(DisasterRecoveryCommittee),
-  });
-  const ResourceIds = IDL.Variant({ 'Any' : IDL.Null, 'Ids' : IDL.Vec(UUID) });
-  const ResourceSpecifier = IDL.Variant({
-    'Any' : IDL.Null,
-    'Resource' : Resource,
-  });
-  const RequestSpecifier = IDL.Variant({
-    'RemoveAsset' : ResourceIds,
-    'AddUserGroup' : IDL.Null,
-    'EditPermission' : ResourceSpecifier,
-    'EditNamedRule' : ResourceIds,
-    'ChangeExternalCanister' : ExternalCanisterId,
-    'AddUser' : IDL.Null,
-    'EditAsset' : ResourceIds,
-    'EditUserGroup' : ResourceIds,
-    'SetDisasterRecovery' : IDL.Null,
-    'EditRequestPolicy' : ResourceIds,
-    'RemoveRequestPolicy' : ResourceIds,
-    'AddAsset' : IDL.Null,
-    'SystemUpgrade' : IDL.Null,
-    'RemoveAddressBookEntry' : ResourceIds,
-    'CreateExternalCanister' : IDL.Null,
-    'EditAddressBookEntry' : ResourceIds,
-    'FundExternalCanister' : ExternalCanisterId,
-    'EditUser' : ResourceIds,
-    'ManageSystemInfo' : IDL.Null,
-    'Transfer' : ResourceIds,
-    'EditAccount' : ResourceIds,
-    'AddAddressBookEntry' : IDL.Null,
-    'AddRequestPolicy' : IDL.Null,
-    'RemoveNamedRule' : ResourceIds,
-    'RemoveUserGroup' : ResourceIds,
-    'CallExternalCanister' : CallExternalCanisterResourceTarget,
-    'AddNamedRule' : IDL.Null,
-    'AddAccount' : IDL.Null,
   });
   const EditRequestPolicyOperationInput = IDL.Record({
     'rule' : IDL.Opt(RequestPolicyRule),
@@ -1812,24 +1867,18 @@ export const idlFactory = ({ IDL }) => {
   });
 };
 export const init = ({ IDL }) => {
+  const RequestPolicyRule = IDL.Rec();
   const SystemUpgrade = IDL.Record({ 'name' : IDL.Opt(IDL.Text) });
   const UUID = IDL.Text;
   const AssetMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const InitAssetInput = IDL.Record({
-    'id' : UUID,
+    'id' : IDL.Opt(UUID),
     'decimals' : IDL.Nat32,
     'standards' : IDL.Vec(IDL.Text),
     'metadata' : IDL.Vec(AssetMetadata),
     'name' : IDL.Text,
     'blockchain' : IDL.Text,
     'symbol' : IDL.Text,
-  });
-  const SystemUpgraderInput = IDL.Variant({
-    'Id' : IDL.Principal,
-    'Deploy' : IDL.Record({
-      'initial_cycles' : IDL.Opt(IDL.Nat),
-      'wasm_module' : IDL.Vec(IDL.Nat8),
-    }),
   });
   const AccountMetadata = IDL.Record({ 'key' : IDL.Text, 'value' : IDL.Text });
   const AccountSeed = IDL.Vec(IDL.Nat8);
@@ -1840,18 +1889,244 @@ export const init = ({ IDL }) => {
     'assets' : IDL.Vec(UUID),
     'seed' : AccountSeed,
   });
-  const AdminInitInput = IDL.Record({
+  const UserStatus = IDL.Variant({
+    'Inactive' : IDL.Null,
+    'Active' : IDL.Null,
+  });
+  const UserIdentityInput = IDL.Record({ 'identity' : IDL.Principal });
+  const InitUserInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'status' : UserStatus,
+    'groups' : IDL.Opt(IDL.Vec(UUID)),
     'name' : IDL.Text,
-    'identity' : IDL.Principal,
+    'identities' : IDL.Vec(UserIdentityInput),
+  });
+  const ResourceId = IDL.Variant({ 'Id' : UUID, 'Any' : IDL.Null });
+  const RequestResourceAction = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : ResourceId,
+  });
+  const NotificationResourceAction = IDL.Variant({
+    'List' : IDL.Null,
+    'Update' : ResourceId,
+  });
+  const SystemResourceAction = IDL.Variant({
+    'Upgrade' : IDL.Null,
+    'ManageSystemInfo' : IDL.Null,
+    'SystemInfo' : IDL.Null,
+    'Capabilities' : IDL.Null,
+  });
+  const UserResourceAction = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : ResourceId,
+    'Create' : IDL.Null,
+    'Update' : ResourceId,
+  });
+  const CanisterMethod = IDL.Record({
+    'canister_id' : IDL.Principal,
+    'method_name' : IDL.Text,
+  });
+  const ExecutionMethodResourceTarget = IDL.Variant({
+    'Any' : IDL.Null,
+    'ExecutionMethod' : CanisterMethod,
+  });
+  const ValidationMethodResourceTarget = IDL.Variant({
+    'No' : IDL.Null,
+    'ValidationMethod' : CanisterMethod,
+  });
+  const CallExternalCanisterResourceTarget = IDL.Record({
+    'execution_method' : ExecutionMethodResourceTarget,
+    'validation_method' : ValidationMethodResourceTarget,
+  });
+  const ExternalCanisterId = IDL.Variant({
+    'Any' : IDL.Null,
+    'Canister' : IDL.Principal,
+  });
+  const ExternalCanisterResourceAction = IDL.Variant({
+    'Call' : CallExternalCanisterResourceTarget,
+    'Fund' : ExternalCanisterId,
+    'List' : IDL.Null,
+    'Read' : ExternalCanisterId,
+    'Create' : IDL.Null,
+    'Change' : ExternalCanisterId,
+  });
+  const AccountResourceAction = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : ResourceId,
+    'Create' : IDL.Null,
+    'Transfer' : ResourceId,
+    'Update' : ResourceId,
+  });
+  const ResourceAction = IDL.Variant({
+    'List' : IDL.Null,
+    'Read' : ResourceId,
+    'Delete' : ResourceId,
+    'Create' : IDL.Null,
+    'Update' : ResourceId,
+  });
+  const PermissionResourceAction = IDL.Variant({
+    'Read' : IDL.Null,
+    'Update' : IDL.Null,
+  });
+  const Resource = IDL.Variant({
+    'Request' : RequestResourceAction,
+    'Notification' : NotificationResourceAction,
+    'System' : SystemResourceAction,
+    'User' : UserResourceAction,
+    'ExternalCanister' : ExternalCanisterResourceAction,
+    'Account' : AccountResourceAction,
+    'AddressBook' : ResourceAction,
+    'Asset' : ResourceAction,
+    'NamedRule' : ResourceAction,
+    'UserGroup' : ResourceAction,
+    'Permission' : PermissionResourceAction,
+    'RequestPolicy' : ResourceAction,
+  });
+  const AuthScope = IDL.Variant({
+    'Authenticated' : IDL.Null,
+    'Public' : IDL.Null,
+    'Restricted' : IDL.Null,
+  });
+  const Allow = IDL.Record({
+    'user_groups' : IDL.Vec(UUID),
+    'auth_scope' : AuthScope,
+    'users' : IDL.Vec(UUID),
+  });
+  const InitPermissionInput = IDL.Record({
+    'resource' : Resource,
+    'allow' : Allow,
+  });
+  const UserSpecifier = IDL.Variant({
+    'Id' : IDL.Vec(UUID),
+    'Any' : IDL.Null,
+    'Group' : IDL.Vec(UUID),
+  });
+  const Quorum = IDL.Record({
+    'min_approved' : IDL.Nat16,
+    'approvers' : UserSpecifier,
+  });
+  const QuorumPercentage = IDL.Record({
+    'min_approved' : IDL.Nat16,
+    'approvers' : UserSpecifier,
+  });
+  const AddressBookMetadata = IDL.Record({
+    'key' : IDL.Text,
+    'value' : IDL.Text,
+  });
+  RequestPolicyRule.fill(
+    IDL.Variant({
+      'Not' : RequestPolicyRule,
+      'Quorum' : Quorum,
+      'AllowListed' : IDL.Null,
+      'QuorumPercentage' : QuorumPercentage,
+      'AutoApproved' : IDL.Null,
+      'AllOf' : IDL.Vec(RequestPolicyRule),
+      'AnyOf' : IDL.Vec(RequestPolicyRule),
+      'AllowListedByMetadata' : AddressBookMetadata,
+      'NamedRule' : UUID,
+    })
+  );
+  const ResourceIds = IDL.Variant({ 'Any' : IDL.Null, 'Ids' : IDL.Vec(UUID) });
+  const ResourceSpecifier = IDL.Variant({
+    'Any' : IDL.Null,
+    'Resource' : Resource,
+  });
+  const RequestSpecifier = IDL.Variant({
+    'RemoveAsset' : ResourceIds,
+    'AddUserGroup' : IDL.Null,
+    'EditPermission' : ResourceSpecifier,
+    'EditNamedRule' : ResourceIds,
+    'ChangeExternalCanister' : ExternalCanisterId,
+    'AddUser' : IDL.Null,
+    'EditAsset' : ResourceIds,
+    'EditUserGroup' : ResourceIds,
+    'SetDisasterRecovery' : IDL.Null,
+    'EditRequestPolicy' : ResourceIds,
+    'RemoveRequestPolicy' : ResourceIds,
+    'AddAsset' : IDL.Null,
+    'SystemUpgrade' : IDL.Null,
+    'RemoveAddressBookEntry' : ResourceIds,
+    'CreateExternalCanister' : IDL.Null,
+    'EditAddressBookEntry' : ResourceIds,
+    'FundExternalCanister' : ExternalCanisterId,
+    'EditUser' : ResourceIds,
+    'ManageSystemInfo' : IDL.Null,
+    'Transfer' : ResourceIds,
+    'EditAccount' : ResourceIds,
+    'AddAddressBookEntry' : IDL.Null,
+    'AddRequestPolicy' : IDL.Null,
+    'RemoveNamedRule' : ResourceIds,
+    'RemoveUserGroup' : ResourceIds,
+    'CallExternalCanister' : CallExternalCanisterResourceTarget,
+    'AddNamedRule' : IDL.Null,
+    'AddAccount' : IDL.Null,
+  });
+  const InitRequestPolicyInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'rule' : RequestPolicyRule,
+    'specifier' : RequestSpecifier,
+  });
+  const InitUserGroupInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'name' : IDL.Text,
+  });
+  const InitAccountPermissionsInput = IDL.Record({
+    'configs_request_policy' : IDL.Opt(RequestPolicyRule),
+    'read_permission' : Allow,
+    'configs_permission' : Allow,
+    'transfer_request_policy' : IDL.Opt(RequestPolicyRule),
+    'transfer_permission' : Allow,
+  });
+  const InitAccountWithPermissionsInput = IDL.Record({
+    'permissions' : InitAccountPermissionsInput,
+    'account_init' : InitAccountInput,
+  });
+  const DisasterRecoveryCommittee = IDL.Record({
+    'user_group_id' : UUID,
+    'quorum' : IDL.Nat16,
+  });
+  const InitNamedRuleInput = IDL.Record({
+    'id' : IDL.Opt(UUID),
+    'name' : IDL.Text,
+    'rule' : RequestPolicyRule,
+    'description' : IDL.Opt(IDL.Text),
+  });
+  const InitialConfig = IDL.Variant({
+    'WithDefaultPolicies' : IDL.Record({
+      'assets' : IDL.Vec(InitAssetInput),
+      'admin_quorum' : IDL.Nat16,
+      'accounts' : IDL.Vec(InitAccountInput),
+      'users' : IDL.Vec(InitUserInput),
+      'operator_quorum' : IDL.Nat16,
+    }),
+    'WithAllDefaults' : IDL.Record({
+      'admin_quorum' : IDL.Nat16,
+      'users' : IDL.Vec(InitUserInput),
+      'operator_quorum' : IDL.Nat16,
+    }),
+    'Complete' : IDL.Record({
+      'permissions' : IDL.Vec(InitPermissionInput),
+      'assets' : IDL.Vec(InitAssetInput),
+      'request_policies' : IDL.Vec(InitRequestPolicyInput),
+      'user_groups' : IDL.Vec(InitUserGroupInput),
+      'accounts' : IDL.Vec(InitAccountWithPermissionsInput),
+      'disaster_recovery_committee' : IDL.Opt(DisasterRecoveryCommittee),
+      'users' : IDL.Vec(InitUserInput),
+      'named_rules' : IDL.Vec(InitNamedRuleInput),
+    }),
+  });
+  const SystemUpgraderInput = IDL.Variant({
+    'Id' : IDL.Principal,
+    'Deploy' : IDL.Record({
+      'initial_cycles' : IDL.Opt(IDL.Nat),
+      'wasm_module' : IDL.Vec(IDL.Nat8),
+    }),
   });
   const SystemInit = IDL.Record({
     'name' : IDL.Text,
-    'assets' : IDL.Opt(IDL.Vec(InitAssetInput)),
+    'initial_config' : InitialConfig,
     'fallback_controller' : IDL.Opt(IDL.Principal),
     'upgrader' : SystemUpgraderInput,
-    'accounts' : IDL.Opt(IDL.Vec(InitAccountInput)),
-    'admins' : IDL.Vec(AdminInitInput),
-    'quorum' : IDL.Opt(IDL.Nat16),
   });
   const SystemInstall = IDL.Variant({
     'Upgrade' : SystemUpgrade,

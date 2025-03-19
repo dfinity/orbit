@@ -21,8 +21,8 @@ use pocket_ic::management_canister::CanisterInstallMode;
 use pocket_ic::{update_candid_as, PocketIc};
 use sha2::{Digest, Sha256};
 use station_api::{
-    AdminInitInput, HealthStatus, SystemInfoResponse, SystemInit as SystemInitArg,
-    SystemInstall as SystemInstallArg,
+    HealthStatus, InitUserInput, SystemInfoResponse, SystemInit as SystemInitArg,
+    SystemInstall as SystemInstallArg, UserIdentityInput,
 };
 
 #[test]
@@ -643,12 +643,19 @@ fn deploy_station_with_insufficient_cycles() {
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let station_init_args = Encode!(&SystemInstallArg::Init(SystemInitArg {
         name: "Station".to_string(),
-        admins: vec![AdminInitInput {
-            identity: WALLET_ADMIN_USER,
-            name: "station-admin".to_string(),
-        }],
-        assets: None,
-        quorum: Some(1),
+        initial_config: station_api::InitialConfig::WithAllDefaults {
+            users: vec![InitUserInput {
+                identities: vec![UserIdentityInput {
+                    identity: WALLET_ADMIN_USER,
+                }],
+                name: "station-admin".to_string(),
+                groups: None,
+                id: None,
+                status: station_api::UserStatusDTO::Active,
+            }],
+            admin_quorum: 1,
+            operator_quorum: 1,
+        },
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: upgrader_wasm,
@@ -656,7 +663,6 @@ fn deploy_station_with_insufficient_cycles() {
             },
         ),
         fallback_controller: None,
-        accounts: None,
     }))
     .unwrap();
 

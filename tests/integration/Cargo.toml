@@ -34,3 +34,4 @@ control-panel-api = { path = '../../core/control-panel/api', version = '0.2.0' }
 upgrader-api = { path = '../../core/upgrader/api', version = '0.1.0' }
 station-api = { path = '../../core/station/api', version = '0.4.0' }
 wat = { workspace = true }
+rstest = { workspace = true }

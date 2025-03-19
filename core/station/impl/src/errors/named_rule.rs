@@ -42,6 +42,10 @@ pub enum NamedRuleError {
     // The named rule has a circular reference.
     #[error("The named rule has a circular reference.")]
     CircularReference,
+
+    // The named rule with id `{id}` already exists.
+    #[error(r#"The named rule with id `{id}` already exists."#)]
+    IdAlreadyExists { id: String },
 }
 
 impl DetailableError for NamedRuleError {
@@ -84,6 +88,11 @@ impl DetailableError for NamedRuleError {
             NamedRuleError::InUse => None,
 
             NamedRuleError::CircularReference => None,
+
+            NamedRuleError::IdAlreadyExists { id } => {
+                details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
         }
     }
 }
