@@ -29,7 +29,7 @@ export const idlFactory = ({ IDL }) => {
   const UserIdentityInput = IDL.Record({ 'identity' : IDL.Principal });
   const InitUserInput = IDL.Record({
     'id' : IDL.Opt(UUID),
-    'status' : IDL.Opt(UserStatus),
+    'status' : UserStatus,
     'groups' : IDL.Opt(IDL.Vec(UUID)),
     'name' : IDL.Text,
     'identities' : IDL.Vec(UserIdentityInput),
@@ -1896,7 +1896,7 @@ export const init = ({ IDL }) => {
   const UserIdentityInput = IDL.Record({ 'identity' : IDL.Principal });
   const InitUserInput = IDL.Record({
     'id' : IDL.Opt(UUID),
-    'status' : IDL.Opt(UserStatus),
+    'status' : UserStatus,
     'groups' : IDL.Opt(IDL.Vec(UUID)),
     'name' : IDL.Text,
     'identities' : IDL.Vec(UserIdentityInput),

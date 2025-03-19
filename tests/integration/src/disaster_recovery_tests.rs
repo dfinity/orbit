@@ -515,7 +515,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                                 name: "updated-admin-name".to_string(),
                                 groups: None,
                                 id: None,
-                                status: None,
+                                status: station_api::UserStatusDTO::Active,
                             },
                             station_api::InitUserInput {
                                 identities: vec![UserIdentityInput {
@@ -524,7 +524,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                                 name: "another-admin".to_string(),
                                 groups: None,
                                 id: None,
-                                status: None,
+                                status: station_api::UserStatusDTO::Active,
                             },
                             station_api::InitUserInput {
                                 identities: vec![UserIdentityInput {
@@ -533,7 +533,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
                                 name: "yet-another-admin".to_string(),
                                 groups: None,
                                 id: None,
-                                status: None,
+                                status: station_api::UserStatusDTO::Active,
                             },
                         ],
                         accounts: init_accounts_input,
@@ -607,7 +607,7 @@ fn test_disaster_recovery_flow_recreates_same_accounts() {
         }
     }
 
-    assert_eq!(admin_user.groups.len(), 1);
+    assert_eq!(admin_user.groups.len(), 2);
     let admin_user_group = admin_user.groups.first().expect("No user group found");
 
     for (id, initial_account) in initial_accounts {
@@ -715,7 +715,7 @@ fn test_disaster_recovery_flow_reuses_same_upgrader() {
                             name: "updated-admin-name".to_string(),
                             groups: None,
                             id: None,
-                            status: None,
+                            status: station_api::UserStatusDTO::Active,
                         }],
                         admin_quorum: 1,
                         operator_quorum: 1

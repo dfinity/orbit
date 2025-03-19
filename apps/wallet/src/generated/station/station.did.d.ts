@@ -763,7 +763,7 @@ export interface InitRequestPolicyInput {
 export interface InitUserGroupInput { 'id' : [] | [UUID], 'name' : string }
 export interface InitUserInput {
   'id' : [] | [UUID],
-  'status' : [] | [UserStatus],
+  'status' : UserStatus,
   'groups' : [] | [Array<UUID>],
   'name' : string,
   'identities' : Array<UserIdentityInput>,

@@ -67,7 +67,7 @@ pub struct InitUserInput {
     pub name: String,
     pub identities: Vec<UserIdentityInput>,
     pub groups: Option<Vec<UuidDTO>>,
-    pub status: Option<UserStatusDTO>,
+    pub status: UserStatusDTO,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
@@ -152,6 +152,7 @@ pub struct InitAssetInput {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub enum InitialConfig {
+    /// Initialize the station with default policies, accounts and assets.
     WithAllDefaults {
         /// The initial users to create.
         users: Vec<InitUserInput>,

@@ -127,7 +127,7 @@ impl DeployService {
                     identity: user.identity,
                 }],
                 groups: None,
-                status: None,
+                status: station_api::UserStatusDTO::Active,
                 name: user.username.clone(),
             })
             .collect::<Vec<_>>();

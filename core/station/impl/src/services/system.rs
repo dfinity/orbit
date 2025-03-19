@@ -13,6 +13,7 @@ use crate::{
         Asset, Blockchain, CanisterInstallMode, CanisterUpgradeModeArgs,
         ManageSystemInfoOperationInput, Metadata, RequestId, RequestKey, RequestOperation,
         RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks, ADMIN_GROUP_ID,
+        OPERATOR_GROUP_ID,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY,
@@ -455,7 +456,10 @@ impl SystemService {
                 // adds the default admin group
                 init_canister_sync_handlers::add_default_groups();
                 // registers the admins of the canister
-                init_canister_sync_handlers::set_initial_users(users.clone(), &[*ADMIN_GROUP_ID])?;
+                init_canister_sync_handlers::set_initial_users(
+                    users.clone(),
+                    &[*ADMIN_GROUP_ID, *OPERATOR_GROUP_ID],
+                )?;
                 // registers the default canister configurations such as policies and user groups.
                 init_canister_sync_handlers::init_default_permissions_and_policies(
                     *admin_quorum,
@@ -474,7 +478,10 @@ impl SystemService {
                 // adds the default admin group
                 init_canister_sync_handlers::add_default_groups();
                 // registers the admins of the canister
-                init_canister_sync_handlers::set_initial_users(users.clone(), &[*ADMIN_GROUP_ID])?;
+                init_canister_sync_handlers::set_initial_users(
+                    users.clone(),
+                    &[*ADMIN_GROUP_ID, *OPERATOR_GROUP_ID],
+                )?;
                 // adds the initial assets
                 init_canister_sync_handlers::set_initial_assets(assets).await?;
 
@@ -646,7 +653,7 @@ mod init_canister_sync_handlers {
     use crate::models::{
         AddAccountOperationInput, AddAssetOperationInput, AddNamedRuleOperationInput,
         AddRequestPolicyOperationInput, AddUserGroupOperationInput, AddUserOperationInput, Asset,
-        EditPermissionOperationInput, NamedRule, UserStatus, OPERATOR_GROUP_ID,
+        EditPermissionOperationInput, NamedRule, OPERATOR_GROUP_ID,
     };
     use crate::repositories::{ASSET_REPOSITORY, NAMED_RULE_REPOSITORY};
     use crate::services::permission::PERMISSION_SERVICE;
@@ -962,13 +969,7 @@ mod init_canister_sync_handlers {
                 AddUserOperationInput {
                     groups,
                     name: user.name.to_owned(),
-                    status: user.status.map(UserStatus::from).unwrap_or_else(|| {
-                        if !identities.is_empty() {
-                            UserStatus::Active
-                        } else {
-                            UserStatus::Inactive
-                        }
-                    }),
+                    status: user.status.into(),
                     identities,
                 },
                 user_id,
@@ -1237,7 +1238,7 @@ mod tests {
                         }],
                         id: None,
                         groups: None,
-                        status: None,
+                        status: station_api::UserStatusDTO::Active,
                     }],
                     admin_quorum: 1,
                     operator_quorum: 1,
@@ -1498,10 +1499,35 @@ mod tests {
             }],
             id: Some(user_id.clone()),
             groups: Some(vec!["abc".to_string()]),
-            status: None,
+            status: station_api::UserStatusDTO::Active,
         };
 
         set_initial_users(vec![user], &[])
             .expect_err("Should have failed due to malformed group uuid");
+    }
+
+    #[tokio::test]
+    async fn test_initial_users_with_default_groups() {
+        let user_id = Uuid::new_v4();
+        let user_id_str = user_id.hyphenated().to_string();
+
+        let user = InitUserInput {
+            name: "User".to_string(),
+            identities: vec![UserIdentityInput {
+                identity: Principal::from_slice(&[1; 29]),
+            }],
+            id: Some(user_id_str.clone()),
+            groups: None,
+            status: station_api::UserStatusDTO::Active,
+        };
+
+        set_initial_users(vec![user], &[]).expect("Should have succeeded");
+
+        let users = USER_REPOSITORY.list();
+        assert_eq!(users.len(), 1);
+        assert_eq!(users[0].id, user_id.as_bytes().to_owned());
+        assert_eq!(users[0].groups.len(), 2);
+        assert!(users[0].groups.iter().any(|g| g == OPERATOR_GROUP_ID));
+        assert!(users[0].groups.iter().any(|g| g == ADMIN_GROUP_ID));
     }
 }

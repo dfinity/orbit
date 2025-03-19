@@ -9,7 +9,7 @@ use station_api::{
     InitRequestPolicyInput, InitUserGroupInput, InitUserInput, MetadataDTO,
     PermissionResourceActionDTO, RequestPolicyRuleDTO, RequestSpecifierDTO, ResourceActionDTO,
     ResourceDTO, ResourceIdDTO, SystemInit, SystemInstall, UserIdentityInput,
-    UserResourceActionDTO, UserStatusDTO, UuidDTO,
+    UserResourceActionDTO, UuidDTO,
 };
 use uuid::Uuid;
 
@@ -52,7 +52,7 @@ fn install_with_default_policies() {
             name: "station-admin".to_string(),
             groups: None,
             id: None,
-            status: None,
+            status: station_api::UserStatusDTO::Active,
         },
         InitUserInput {
             identities: vec![UserIdentityInput {
@@ -61,7 +61,7 @@ fn install_with_default_policies() {
             name: "inactive-station-admin".to_string(),
             groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
             id: None,
-            status: Some(station_api::UserStatusDTO::Inactive),
+            status: station_api::UserStatusDTO::Inactive,
         },
         InitUserInput {
             identities: vec![UserIdentityInput {
@@ -70,7 +70,7 @@ fn install_with_default_policies() {
             name: "other-user".to_string(),
             groups: Some(vec![]),
             id: None,
-            status: Some(station_api::UserStatusDTO::Active),
+            status: station_api::UserStatusDTO::Active,
         },
     ];
 
@@ -137,7 +137,10 @@ fn install_with_default_policies() {
         canister_id,
         WALLET_ADMIN_USER,
         &users,
-        &vec![ADMIN_GROUP_ID.hyphenated().to_string()],
+        &vec![
+            ADMIN_GROUP_ID.hyphenated().to_string(),
+            OPERATOR_GROUP_ID.hyphenated().to_string(),
+        ],
     )
     .expect("failed to assert initial users");
 
@@ -289,7 +292,7 @@ fn install_with_all_entries() {
             name: "station-admin".to_string(),
             groups: Some(vec![custom_user_group_id.clone()]),
             id: None,
-            status: None,
+            status: station_api::UserStatusDTO::Active,
         },
         InitUserInput {
             identities: vec![UserIdentityInput {
@@ -298,7 +301,7 @@ fn install_with_all_entries() {
             name: "inactive-station-admin".to_string(),
             groups: Some(vec![custom_user_group_id.clone()]),
             id: None,
-            status: Some(station_api::UserStatusDTO::Inactive),
+            status: station_api::UserStatusDTO::Inactive,
         },
         InitUserInput {
             identities: vec![UserIdentityInput {
@@ -307,7 +310,7 @@ fn install_with_all_entries() {
             name: "other-user".to_string(),
             groups: Some(vec![]),
             id: None,
-            status: Some(station_api::UserStatusDTO::Active),
+            status: station_api::UserStatusDTO::Active,
         },
     ];
 
@@ -456,7 +459,7 @@ fn install_with_all_defaults() {
             name: "station-admin".to_string(),
             groups: None,
             id: None,
-            status: None,
+            status: station_api::UserStatusDTO::Active,
         },
         InitUserInput {
             identities: vec![UserIdentityInput {
@@ -465,7 +468,7 @@ fn install_with_all_defaults() {
             name: "inactive-operator".to_string(),
             groups: Some(vec![OPERATOR_GROUP_ID.hyphenated().to_string()]),
             id: None,
-            status: Some(station_api::UserStatusDTO::Inactive),
+            status: station_api::UserStatusDTO::Inactive,
         },
         InitUserInput {
             identities: vec![UserIdentityInput {
@@ -474,7 +477,7 @@ fn install_with_all_defaults() {
             name: "other-user".to_string(),
             groups: Some(vec![]),
             id: None,
-            status: Some(station_api::UserStatusDTO::Active),
+            status: station_api::UserStatusDTO::Active,
         },
     ];
 
@@ -507,7 +510,10 @@ fn install_with_all_defaults() {
         canister_id,
         WALLET_ADMIN_USER,
         &users,
-        &vec![ADMIN_GROUP_ID.hyphenated().to_string()],
+        &vec![
+            ADMIN_GROUP_ID.hyphenated().to_string(),
+            OPERATOR_GROUP_ID.hyphenated().to_string(),
+        ],
     )
     .expect("failed to assert initial users");
 
@@ -531,7 +537,7 @@ fn install_with_all_defaults() {
         name: "station-admin".to_string(),
         groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
         id: None,
-        status: None,
+        status: station_api::UserStatusDTO::Active,
     }],
     accounts: vec![],
     assets: vec![],
@@ -554,7 +560,7 @@ fn install_with_all_defaults() {
             name: "station-admin".to_string(),
             groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
             id: None,
-            status: None,
+            status: station_api::UserStatusDTO::Active,
         }],
         accounts: vec![],
         assets: vec![],
@@ -598,7 +604,7 @@ fn install_with_all_defaults() {
             name: "station-admin".to_string(),
             groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
             id: None,
-            status: None,
+            status: station_api::UserStatusDTO::Active,
         }],
         admin_quorum: 1,
         operator_quorum: 1,
@@ -625,7 +631,7 @@ fn install_with_all_defaults() {
             name: "station-admin".to_string(),
             groups: Some(vec![ADMIN_GROUP_ID.hyphenated().to_string()]),
             id: None,
-            status: None,
+            status: station_api::UserStatusDTO::Active,
         }],
         accounts: vec![],
         assets: vec![],
@@ -729,6 +735,14 @@ fn assert_initial_users(
             .unwrap_or(default_groups)
             .iter()
             .all(|group| user.groups.iter().any(|user_group| &user_group.id == group))
+            || !user.groups.iter().all(|user_group| {
+                expected_user
+                    .groups
+                    .as_ref()
+                    .unwrap_or(default_groups)
+                    .iter()
+                    .any(|group| group == &user_group.id)
+            })
         {
             return Err(format!(
                 "user {} has groups {:?}, expected {:?}",
@@ -736,15 +750,10 @@ fn assert_initial_users(
             ));
         }
 
-        let expected_status = expected_user
-            .status
-            .as_ref()
-            .unwrap_or(&UserStatusDTO::Active);
-
-        if mem::discriminant(&user.status) != mem::discriminant(expected_status) {
+        if mem::discriminant(&user.status) != mem::discriminant(&expected_user.status) {
             return Err(format!(
                 "user {} has status {:?}, expected {:?}",
-                expected_user.name, user.status, expected_status
+                expected_user.name, user.status, expected_user.status
             ));
         }
     }

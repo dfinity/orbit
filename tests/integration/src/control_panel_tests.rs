@@ -651,7 +651,7 @@ fn deploy_station_with_insufficient_cycles() {
                 name: "station-admin".to_string(),
                 groups: None,
                 id: None,
-                status: None,
+                status: station_api::UserStatusDTO::Active,
             }],
             admin_quorum: 1,
             operator_quorum: 1,

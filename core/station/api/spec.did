@@ -2807,14 +2807,11 @@ type InitUserInput = record {
   // The identities of the user.
   identities : vec UserIdentityInput;
   // The user groups to associate with the user (optional).
-  // If not provided it defaults to the `Admin` group if default user groups are created,
+  // If not provided it defaults to the [`Admin`,`Operator`] groups if default user groups are created,
   // i.e., when the field `initial_config` in `SystemInit` has the form of `WithAllDefaults` or `WithDefaultPolicies`.
   groups : opt vec UUID;
   // The status of the user (e.g. `Active`).
-  //
-  // If not provided the default status is `Active` when there is at least
-  // one identity or `Inactive` otherwise.
-  status : opt UserStatus;
+  status : UserStatus;
 };
 
 // The init type for initializing the permissions when first creating the canister.
@@ -2858,7 +2855,7 @@ type InitNamedRuleInput = record {
 //
 // The default named rules for the station will be:
 //  - `Admin approval` with a specified admin quorum
-//  - `Operator approval` with a specified operator quorum
+//  - `Operator approval` with a specified operator and admin quorum
 //
 type InitialConfig = variant {
   // Initialize the station with default user groups, named rules, policies, permissions, and assets.

@@ -322,7 +322,7 @@ fn install_canisters(
                 name: "station-admin".to_string(),
                 groups: None,
                 id: None,
-                status: None,
+                status: station_api::UserStatusDTO::Active,
             }],
             admin_quorum: 1,
             operator_quorum: 1,
