@@ -752,7 +752,7 @@ mod init_canister_sync_handlers {
 
         // sorting criteria:
         // - if a policy depends on another policy, the dependent policy should be added first
-        // - keep the original order of the policys otherwise
+        // - keep the original order of the policies otherwise
         add_named_rules.sort_by(|a, b| {
             if let Some(a_id) = &a.1 {
                 if b.0.rule.has_named_rule_id(a_id) {
