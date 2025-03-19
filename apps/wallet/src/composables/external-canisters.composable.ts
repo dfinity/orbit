@@ -8,7 +8,7 @@ import { icAgent } from '~/core/ic-agent.core';
 import logger from '~/core/logger.core';
 import { ApiError } from '~/generated/control-panel/control_panel.did';
 import {
-  CanisterStatusResult,
+  CanisterStatusResponse,
   GetExternalCanisterResult,
   UUID,
 } from '~/generated/station/station.did';
@@ -282,7 +282,7 @@ export const useLoadExternalCanisterModuleHash = async (
 
 export const useLoadExternalCanisterStatus = async (
   canisterId: Principal,
-): Promise<ExtractOk<CanisterStatusResult>> => {
+): Promise<CanisterStatusResponse> => {
   try {
     const station = useStationStore();
 
