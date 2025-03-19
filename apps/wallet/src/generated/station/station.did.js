@@ -329,6 +329,7 @@ export const idlFactory = ({ IDL }) => {
   const LogVisibility = IDL.Variant({
     'controllers' : IDL.Null,
     'public' : IDL.Null,
+    'allowed_viewers' : IDL.Vec(IDL.Principal),
   });
   const DefiniteCanisterSettingsInput = IDL.Record({
     'freezing_threshold' : IDL.Opt(IDL.Nat),
@@ -870,10 +871,6 @@ export const idlFactory = ({ IDL }) => {
     'idle_cycles_burned_per_day' : IDL.Nat,
     'module_hash' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'reserved_cycles' : IDL.Nat,
-  });
-  const CanisterStatusResult = IDL.Variant({
-    'Ok' : CanisterStatusResponse,
-    'Err' : Error,
   });
   const StandardData = IDL.Record({
     'supported_operations' : IDL.Vec(IDL.Text),
@@ -1678,7 +1675,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'canister_status' : IDL.Func(
         [CanisterStatusInput],
-        [CanisterStatusResult],
+        [CanisterStatusResponse],
         [],
       ),
     'capabilities' : IDL.Func([], [CapabilitiesResult], ['query']),

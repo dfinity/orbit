@@ -27,4 +27,18 @@ describe('CanisterIcSettingsForm', () => {
 
     expect(canisterIdInput.exists()).toBe(true);
   });
+
+  it('shows three select items for log visibility', () => {
+    const form = mount(CanisterIcSettingsForm, {
+      props: {
+        modelValue: { canisterId: Principal.anonymous(), log_visibility: { public: null } },
+        display: { canisterId: true },
+      },
+    });
+
+    const select = form.findComponent({ name: 'VSelect' });
+
+    expect(select.exists()).toBe(true);
+    expect(select.vm.items.length).toEqual(3);
+  });
 });
