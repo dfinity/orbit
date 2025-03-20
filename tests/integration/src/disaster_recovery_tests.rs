@@ -15,7 +15,7 @@ use crate::utils::{
 use crate::TestEnv;
 use candid::{CandidType, Encode, Principal};
 use orbit_essentials::api::ApiResult;
-use orbit_essentials::utils::sha256_hash;
+use orbit_essentials::utils::{sha256_hash, timestamp_to_rfc3339};
 use pocket_ic::management_canister::CanisterStatusResultStatus;
 use pocket_ic::{query_candid_as, update_candid_as, PocketIc};
 use serde::Deserialize;
@@ -1142,6 +1142,47 @@ fn test_disaster_recovery_via_canister_snapshots() {
         .list_canister_snapshots(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .unwrap();
     assert_eq!(snapshots.len(), 1);
+
+    // retrieve the existing snapshots via the upgrader
+    let snapshots_via_upgrader = update_candid_as::<_, (ApiResult<Vec<upgrader_api::Snapshot>>,)>(
+        &env,
+        upgrader_id,
+        WALLET_ADMIN_USER,
+        "canister_snapshots",
+        (),
+    )
+    .unwrap()
+    .0
+    .unwrap();
+    assert_eq!(snapshots_via_upgrader.len(), snapshots.len());
+    for i in 0..snapshots_via_upgrader.len() {
+        assert_eq!(
+            snapshots_via_upgrader[i].snapshot_id,
+            hex::encode(&snapshots[i].id)
+        );
+        assert_eq!(
+            snapshots_via_upgrader[i].taken_at_timestamp,
+            timestamp_to_rfc3339(&snapshots[i].taken_at_timestamp)
+        );
+        assert_eq!(
+            snapshots_via_upgrader[i].total_size,
+            snapshots[i].total_size
+        );
+    }
+
+    // try to retrieve the existing snapshots via the upgrader as non-committee member
+    let user_id = user_test_id(0);
+    let err = update_candid_as::<_, (ApiResult<Vec<upgrader_api::Snapshot>>,)>(
+        &env,
+        upgrader_id,
+        user_id,
+        "canister_snapshots",
+        (),
+    )
+    .unwrap()
+    .0
+    .unwrap_err();
+    assert_eq!(err.code, "UNAUTHORIZED".to_string());
 
     // rename the admin user so that we can see if restoring the station from a snapshot
     // has an effect
