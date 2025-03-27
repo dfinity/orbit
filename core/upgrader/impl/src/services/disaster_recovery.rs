@@ -21,9 +21,9 @@ use lazy_static::lazy_static;
 use orbit_essentials::api::ServiceResult;
 use orbit_essentials::cdk::api::canister_version;
 use orbit_essentials::cdk::api::management_canister::main::{
-    clear_chunk_store, delete_canister_snapshot, load_canister_snapshot, take_canister_snapshot,
-    uninstall_code, CanisterIdRecord, ClearChunkStoreArgument, DeleteCanisterSnapshotArgs,
-    LoadCanisterSnapshotArgs, TakeCanisterSnapshotArgs,
+    clear_chunk_store, delete_canister_snapshot, list_canister_snapshots, load_canister_snapshot,
+    take_canister_snapshot, uninstall_code, CanisterIdRecord, ClearChunkStoreArgument,
+    DeleteCanisterSnapshotArgs, LoadCanisterSnapshotArgs, Snapshot, TakeCanisterSnapshotArgs,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -459,6 +459,17 @@ impl DisasterRecoveryService {
                 Self::do_recovery(storage, installer, logger, *request).await;
             });
         }
+    }
+
+    pub async fn canister_snapshots(&self) -> Result<Vec<Snapshot>, String> {
+        let station_canister_id = get_target_canister();
+        let canister_id_record = CanisterIdRecord {
+            canister_id: station_canister_id,
+        };
+        list_canister_snapshots(canister_id_record)
+            .await
+            .map(|res| res.0)
+            .map_err(|(_, err)| err)
     }
 }
 

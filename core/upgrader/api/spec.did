@@ -1,3 +1,6 @@
+// The timestamp type used in the canister.
+type TimestampRFC3339 = text;
+
 // Generic error type added to responses that can fail.
 type Error = record {
   // Error code, added as a string to allow for custom error codes.
@@ -339,6 +342,17 @@ type GetDisasterRecoveryStateResult = variant {
   Err : Error;
 };
 
+type CanisterSnapshotsResponse = vec record {
+  snapshot_id : text;
+  taken_at_timestamp : TimestampRFC3339;
+  total_size : nat64;
+};
+
+type CanisterSnapshotsResult = variant {
+  Ok : CanisterSnapshotsResponse;
+  Err : Error;
+};
+
 service : (InitArg) -> {
   "trigger_upgrade" : (UpgradeParams) -> (TriggerUpgradeResponse);
   "set_disaster_recovery_committee" : (SetDisasterRecoveryCommitteeInput) -> (SetDisasterRecoveryResult);
@@ -351,4 +365,7 @@ service : (InitArg) -> {
   "get_disaster_recovery_state" : () -> (GetDisasterRecoveryStateResult) query;
   "request_disaster_recovery" : (RequestDisasterRecoveryInput) -> (RequestDisasterRecoveryResult);
   "get_logs" : (GetLogsInput) -> (GetLogsResult) query;
+  // Get snapshots of the station.
+  // This method can only be invoked by disaster recovery committee members.
+  "canister_snapshots" : () -> (CanisterSnapshotsResult);
 };
