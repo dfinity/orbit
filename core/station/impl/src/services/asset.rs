@@ -56,6 +56,12 @@ impl AssetService {
     ) -> ServiceResult<Asset> {
         let id = with_asset_id.unwrap_or(*Uuid::new_v4().as_bytes());
 
+        if self.asset_repository.get(&id).is_some() {
+            Err(AssetError::IdAlreadyExists {
+                id: Uuid::from_bytes(id).hyphenated().to_string(),
+            })?;
+        }
+
         let asset = Asset {
             id,
             blockchain: input.blockchain,

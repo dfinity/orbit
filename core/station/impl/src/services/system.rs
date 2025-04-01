@@ -12,7 +12,8 @@ use crate::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
         Asset, Blockchain, CanisterInstallMode, CanisterUpgradeModeArgs,
         ManageSystemInfoOperationInput, Metadata, RequestId, RequestKey, RequestOperation,
-        RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks,
+        RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks, ADMIN_GROUP_ID,
+        OPERATOR_GROUP_ID,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY,
@@ -27,9 +28,9 @@ use crate::{
 };
 use candid::Principal;
 use lazy_static::lazy_static;
-use orbit_essentials::api::ServiceResult;
 use orbit_essentials::repository::Repository;
-use station_api::{HealthStatus, SystemInit, SystemInstall, SystemUpgrade};
+use orbit_essentials::{api::ServiceResult, types::UUID};
+use station_api::{HealthStatus, InitialConfig, SystemInit, SystemInstall, SystemUpgrade};
 use std::{
     collections::{BTreeMap, BTreeSet},
     sync::Arc,
@@ -40,6 +41,8 @@ use uuid::Uuid;
 pub const INITIAL_ICP_ASSET_ID: [u8; 16] = [
     0x78, 0x02, 0xcb, 0xab, 0x22, 0x1d, 0x4e, 0x49, 0xb7, 0x64, 0xa6, 0x95, 0xea, 0x6d, 0xef, 0x1a,
 ];
+
+pub const DEFAULT_GROUP_IDS: [UUID; 2] = [*OPERATOR_GROUP_ID, *ADMIN_GROUP_ID];
 
 lazy_static! {
     pub static ref SYSTEM_SERVICE: Arc<SystemService> = Arc::new(SystemService::new(
@@ -174,7 +177,7 @@ impl SystemService {
     ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
 
-        ic_cdk::call(
+        ic_cdk::call::<_, ()>(
             upgrader_canister_id,
             "trigger_upgrade",
             (UpgradeParams {
@@ -267,10 +270,6 @@ impl SystemService {
         ) -> Result<(), String> {
             use crate::core::ic_cdk::api::id as self_canister_id;
 
-            // registers the default canister configurations such as policies and user groups.
-            print("Adding initial canister configurations");
-            install_canister_handlers::init_post_process(&init).await?;
-
             print("Init upgrader canister");
             let canister_id = self_canister_id();
             let mut upgrader_controllers = vec![canister_id];
@@ -290,21 +289,68 @@ impl SystemService {
             }
             install_canister_handlers::set_controllers(station_controllers).await?;
 
-            // calculates the initial quorum based on the number of admins and the provided quorum
-            let admin_count = init.admins.len() as u16;
-            let quorum = calc_initial_quorum(admin_count, init.quorum);
+            match &init.initial_config {
+                InitialConfig::WithAllDefaults { .. } => {}
+                InitialConfig::WithDefaultPolicies {
+                    accounts,
+                    assets,
+                    admin_quorum,
+                    ..
+                } => {
+                    let admin_group_id = Uuid::from_bytes(*ADMIN_GROUP_ID).hyphenated().to_string();
 
-            // if provided, creates the initial assets
-            if let Some(assets) = init.assets.clone() {
-                print("Adding initial assets");
-                install_canister_handlers::set_initial_assets(assets).await?;
-            }
+                    let policy =
+                        station_api::RequestPolicyRuleDTO::Quorum(station_api::QuorumDTO {
+                            approvers: station_api::UserSpecifierDTO::Group(vec![
+                                admin_group_id.clone()
+                            ]),
+                            min_approved: *admin_quorum,
+                        });
 
-            // if provided, creates the initial accounts
-            if let Some(accounts) = init.accounts {
-                print("Adding initial accounts");
-                install_canister_handlers::set_initial_accounts(accounts, &init.assets, quorum)
+                    let permission = station_api::AllowDTO {
+                        user_groups: vec![admin_group_id.clone()],
+                        auth_scope: station_api::AuthScopeDTO::Restricted,
+                        users: vec![],
+                    };
+
+                    let default_permissions_policies = station_api::InitAccountPermissionsInput {
+                        configs_request_policy: Some(policy.clone()),
+                        transfer_request_policy: Some(policy.clone()),
+                        configs_permission: permission.clone(),
+                        transfer_permission: permission.clone(),
+                        read_permission: permission.clone(),
+                    };
+
+                    print("Adding initial accounts");
+                    // initial accounts are added in the post process work timer, since they might do inter-canister calls
+                    init_canister_sync_handlers::set_initial_accounts(
+                        accounts
+                            .iter()
+                            .map(|account| (account.clone(), default_permissions_policies.clone()))
+                            .collect(),
+                        assets,
+                    )
                     .await?;
+                }
+                InitialConfig::Complete {
+                    accounts, assets, ..
+                } => {
+                    print("Adding initial accounts");
+                    // initial accounts are added in the post process work timer, since they might do inter-canister calls
+                    init_canister_sync_handlers::set_initial_accounts(
+                        accounts
+                            .iter()
+                            .map(|init_with_permissions| {
+                                (
+                                    init_with_permissions.account_init.clone(),
+                                    init_with_permissions.permissions.clone(),
+                                )
+                            })
+                            .collect(),
+                        assets,
+                    )
+                    .await?;
+                }
             }
 
             if SYSTEM_SERVICE.is_healthy() {
@@ -313,10 +359,25 @@ impl SystemService {
 
             install_canister_post_process_finish(system_info);
 
-            SystemService::set_disaster_recovery_committee(Some(DisasterRecoveryCommittee {
-                quorum,
-                user_group_id: *crate::models::ADMIN_GROUP_ID,
-            }));
+            match init.initial_config {
+                InitialConfig::WithAllDefaults { admin_quorum, .. }
+                | InitialConfig::WithDefaultPolicies { admin_quorum, .. } => {
+                    SystemService::set_disaster_recovery_committee(Some(
+                        DisasterRecoveryCommittee {
+                            quorum: admin_quorum,
+                            user_group_id: *crate::models::ADMIN_GROUP_ID,
+                        },
+                    ));
+                }
+                InitialConfig::Complete {
+                    disaster_recovery_committee,
+                    ..
+                } => {
+                    SystemService::set_disaster_recovery_committee(
+                        disaster_recovery_committee.map(|committee| committee.into()),
+                    );
+                }
+            }
 
             crate::core::ic_cdk::spawn(async {
                 DISASTER_RECOVERY_SERVICE.sync_all().await;
@@ -386,24 +447,70 @@ impl SystemService {
     pub async fn init_canister(&self, input: SystemInit) -> ServiceResult<()> {
         let mut system_info = SystemInfo::default();
 
-        if input.admins.is_empty() {
-            return Err(SystemError::NoAdminsSpecified)?;
+        match &input.initial_config {
+            InitialConfig::WithAllDefaults {
+                admin_quorum,
+                operator_quorum,
+                users,
+            } => {
+                // adds the default admin group
+                init_canister_sync_handlers::add_default_groups();
+                // registers the admins of the canister
+                init_canister_sync_handlers::set_initial_users(users.clone(), &DEFAULT_GROUP_IDS)?;
+                // registers the default canister configurations such as policies and user groups.
+                init_canister_sync_handlers::init_default_permissions_and_policies(
+                    *admin_quorum,
+                    *operator_quorum,
+                )?;
+                // add default assets
+                init_canister_sync_handlers::add_default_assets();
+            }
+            InitialConfig::WithDefaultPolicies {
+                assets,
+                users,
+                admin_quorum,
+                operator_quorum,
+                ..
+            } => {
+                // adds the default admin group
+                init_canister_sync_handlers::add_default_groups();
+                // registers the admins of the canister
+                init_canister_sync_handlers::set_initial_users(users.clone(), &DEFAULT_GROUP_IDS)?;
+                // adds the initial assets
+                init_canister_sync_handlers::set_initial_assets(assets).await?;
+
+                // registers the default canister configurations such as policies and user groups.
+                init_canister_sync_handlers::init_default_permissions_and_policies(
+                    *admin_quorum,
+                    *operator_quorum,
+                )?;
+
+                // initial accounts are added in the post process work timer, since they might do inter-canister calls
+            }
+            InitialConfig::Complete {
+                users,
+                user_groups,
+                permissions,
+                request_policies,
+                named_rules,
+                assets,
+                ..
+            } => {
+                print("adding initial user groups");
+                init_canister_sync_handlers::set_initial_user_groups(user_groups).await?;
+                print("adding initial users");
+                init_canister_sync_handlers::set_initial_users(users.clone(), &[])?;
+                print("adding initial named rules");
+                init_canister_sync_handlers::set_initial_named_rules(named_rules)?;
+                print("adding initial permissions");
+                init_canister_sync_handlers::set_initial_permissions(permissions).await?;
+                print("adding initial assets");
+                init_canister_sync_handlers::set_initial_assets(assets).await?;
+                print("adding initial request policies");
+                init_canister_sync_handlers::set_initial_request_policies(request_policies)?;
+                // accounts in post process timer
+            }
         }
-
-        if input.admins.len() > u16::MAX as usize {
-            return Err(SystemError::TooManyAdminsSpecified {
-                max: u16::MAX as usize,
-            })?;
-        }
-
-        // adds the default admin group
-        init_canister_sync_handlers::add_initial_groups();
-
-        // registers the admins of the canister
-        init_canister_sync_handlers::set_admins(input.admins.clone())?;
-
-        // add initial assets
-        init_canister_sync_handlers::add_initial_assets();
 
         // sets the name of the canister
         system_info.set_name(input.name.clone());
@@ -528,10 +635,26 @@ impl SystemService {
 }
 
 mod init_canister_sync_handlers {
+    use std::cmp::Ordering;
+
     use crate::core::ic_cdk::{api::print, next_time};
-    use crate::models::{AddUserOperationInput, Asset, UserStatus, OPERATOR_GROUP_ID};
-    use crate::repositories::ASSET_REPOSITORY;
-    use crate::services::USER_SERVICE;
+    use crate::core::init::{default_policies, get_default_named_rules, DEFAULT_PERMISSIONS};
+    use crate::errors::SystemError;
+    use crate::mappers::blockchain::BlockchainMapper;
+    use crate::mappers::HelperMapper;
+    use crate::models::request_specifier::RequestSpecifier;
+    use crate::models::resource::ResourceIds;
+    use crate::models::{
+        AddAccountOperationInput, AddAssetOperationInput, AddNamedRuleOperationInput,
+        AddRequestPolicyOperationInput, AddUserGroupOperationInput, AddUserOperationInput, Asset,
+        EditPermissionOperationInput, NamedRule, OPERATOR_GROUP_ID,
+    };
+    use crate::repositories::{ASSET_REPOSITORY, NAMED_RULE_REPOSITORY};
+    use crate::services::permission::PERMISSION_SERVICE;
+    use crate::services::{
+        ACCOUNT_SERVICE, ASSET_SERVICE, NAMED_RULE_SERVICE, REQUEST_POLICY_SERVICE,
+        USER_GROUP_SERVICE, USER_SERVICE,
+    };
     use crate::{
         models::{UserGroup, ADMIN_GROUP_ID},
         repositories::USER_GROUP_REPOSITORY,
@@ -539,12 +662,16 @@ mod init_canister_sync_handlers {
     use orbit_essentials::api::ApiError;
     use orbit_essentials::model::ModelKey;
     use orbit_essentials::repository::Repository;
-    use station_api::AdminInitInput;
+    use orbit_essentials::types::UUID;
+    use station_api::{
+        InitAccountInput, InitAccountPermissionsInput, InitAssetInput, InitNamedRuleInput,
+        InitPermissionInput, InitRequestPolicyInput, InitUserGroupInput, InitUserInput,
+    };
     use uuid::Uuid;
 
     use super::INITIAL_ICP_ASSET;
 
-    pub fn add_initial_groups() {
+    pub fn add_default_groups() {
         // adds the admin group which is used as the default group for admins during the canister instantiation
         USER_GROUP_REPOSITORY.insert(
             ADMIN_GROUP_ID.to_owned(),
@@ -566,7 +693,7 @@ mod init_canister_sync_handlers {
         );
     }
 
-    pub fn add_initial_assets() {
+    pub fn add_default_assets() {
         let initial_assets: Vec<Asset> = vec![INITIAL_ICP_ASSET.clone()];
 
         for asset in initial_assets {
@@ -575,71 +702,292 @@ mod init_canister_sync_handlers {
         }
     }
 
-    /// Registers the newly added admins of the canister.
-    pub fn set_admins(admins: Vec<AdminInitInput>) -> Result<(), ApiError> {
-        print(format!("Registering {} admin users", admins.len()));
-        for admin in admins {
-            let user = USER_SERVICE.add_user(AddUserOperationInput {
-                identities: vec![admin.identity.to_owned()],
-                groups: vec![ADMIN_GROUP_ID.to_owned()],
-                name: admin.name.to_owned(),
-                status: UserStatus::Active,
+    pub async fn set_initial_user_groups(
+        user_groups: &[InitUserGroupInput],
+    ) -> Result<(), ApiError> {
+        let add_user_groups = user_groups
+            .iter()
+            .map(|user_group| {
+                let input = AddUserGroupOperationInput {
+                    name: user_group.name.clone(),
+                };
+
+                let user_group_id = user_group
+                    .id
+                    .as_ref()
+                    .map(|id| HelperMapper::to_uuid(id.clone()).map(|uuid| *uuid.as_bytes()))
+                    .transpose();
+
+                user_group_id.map(|user_group_id| (input, user_group_id))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        for (new_user_group, with_user_group_id) in add_user_groups {
+            USER_GROUP_SERVICE
+                .create_with_id(new_user_group, with_user_group_id)
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    pub fn set_initial_named_rules(named_rules: &[InitNamedRuleInput]) -> Result<(), ApiError> {
+        let mut add_named_rules = named_rules
+            .iter()
+            .map(|named_rule| {
+                let input = AddNamedRuleOperationInput {
+                    name: named_rule.name.clone(),
+                    description: named_rule.description.clone(),
+                    rule: named_rule.rule.clone().into(),
+                };
+
+                let named_rule_id = named_rule
+                    .id
+                    .as_ref()
+                    .map(|id| HelperMapper::to_uuid(id.clone()).map(|uuid| *uuid.as_bytes()))
+                    .transpose();
+
+                named_rule_id.map(|named_rule_id| (input, named_rule_id))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // sorting criteria:
+        // - if a policy depends on another policy, the dependent policy should be added first
+        // - keep the original order of the policies otherwise
+        add_named_rules.sort_by(|a, b| {
+            if let Some(a_id) = &a.1 {
+                if b.0.rule.has_named_rule_id(a_id) {
+                    return Ordering::Less;
+                }
+            }
+            Ordering::Equal
+        });
+
+        for (new_named_rule, with_named_rule_id) in add_named_rules {
+            NAMED_RULE_SERVICE.create_with_id(new_named_rule, with_named_rule_id)?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn set_initial_permissions(
+        permissions: &[InitPermissionInput],
+    ) -> Result<(), ApiError> {
+        for permission in permissions {
+            let users = permission
+                .allow
+                .users
+                .iter()
+                .map(|id| HelperMapper::to_uuid(id.clone()).map(|uuid| *uuid.as_bytes()))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            let user_groups = permission
+                .allow
+                .user_groups
+                .iter()
+                .map(|id| HelperMapper::to_uuid(id.clone()).map(|uuid| *uuid.as_bytes()))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            let input = EditPermissionOperationInput {
+                resource: permission.resource.clone().into(),
+                auth_scope: Some(permission.allow.auth_scope.clone().into()),
+                users: Some(users),
+                user_groups: Some(user_groups),
+            };
+
+            PERMISSION_SERVICE.edit_permission(input)?;
+        }
+
+        Ok(())
+    }
+
+    fn specifier_has_reference_to_policy_id(
+        specifier: &RequestSpecifier,
+        policy_id: &UUID,
+    ) -> bool {
+        match specifier {
+            RequestSpecifier::EditRequestPolicy(resource_ids)
+            | RequestSpecifier::RemoveRequestPolicy(resource_ids) => match resource_ids {
+                ResourceIds::Any => false,
+                ResourceIds::Ids(ids) => ids.contains(policy_id),
+            },
+            RequestSpecifier::AddAccount
+            | RequestSpecifier::AddUser
+            | RequestSpecifier::EditAccount(..)
+            | RequestSpecifier::EditUser(..)
+            | RequestSpecifier::AddAddressBookEntry
+            | RequestSpecifier::EditAddressBookEntry(..)
+            | RequestSpecifier::RemoveAddressBookEntry(..)
+            | RequestSpecifier::Transfer(..)
+            | RequestSpecifier::SetDisasterRecovery
+            | RequestSpecifier::CreateExternalCanister
+            | RequestSpecifier::ChangeExternalCanister(..)
+            | RequestSpecifier::CallExternalCanister(..)
+            | RequestSpecifier::FundExternalCanister(..)
+            | RequestSpecifier::EditPermission(..)
+            | RequestSpecifier::AddRequestPolicy
+            | RequestSpecifier::AddUserGroup
+            | RequestSpecifier::EditUserGroup(..)
+            | RequestSpecifier::RemoveUserGroup(..)
+            | RequestSpecifier::ManageSystemInfo
+            | RequestSpecifier::SystemUpgrade
+            | RequestSpecifier::AddAsset
+            | RequestSpecifier::EditAsset(..)
+            | RequestSpecifier::RemoveAsset(..)
+            | RequestSpecifier::AddNamedRule
+            | RequestSpecifier::EditNamedRule(..)
+            | RequestSpecifier::RemoveNamedRule(..) => false,
+        }
+    }
+
+    pub fn set_initial_request_policies(
+        request_policies: &[InitRequestPolicyInput],
+    ) -> Result<(), ApiError> {
+        let mut add_request_policies = request_policies
+            .iter()
+            .map(|request_policy| {
+                let request_policy_id = request_policy
+                    .id
+                    .as_ref()
+                    .map(|id| HelperMapper::to_uuid(id.clone()).map(|uuid| *uuid.as_bytes()))
+                    .transpose();
+
+                let input = AddRequestPolicyOperationInput {
+                    specifier: request_policy.specifier.clone().into(),
+                    rule: request_policy.rule.clone().into(),
+                };
+
+                request_policy_id.map(|request_policy_id| (input, request_policy_id))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        // sorting criteria:
+        // - if a policy depends on another policy, the dependent policy should be added first
+        // - keep the original order of the policies otherwise
+        add_request_policies.sort_by(|a, b| {
+            if let Some(a_id) = &a.1 {
+                if specifier_has_reference_to_policy_id(&b.0.specifier, a_id) {
+                    return Ordering::Less;
+                }
+            }
+            Ordering::Equal
+        });
+
+        for (input, request_policy_id) in add_request_policies {
+            REQUEST_POLICY_SERVICE.add_request_policy_with_id(input, request_policy_id)?;
+        }
+
+        Ok(())
+    }
+
+    // Registers the initial assets of the canister during the canister initialization.
+    pub async fn set_initial_assets(assets: &[InitAssetInput]) -> Result<(), ApiError> {
+        let add_assets = assets
+            .iter()
+            .map(|asset| {
+                let input = AddAssetOperationInput {
+                    name: asset.name.clone(),
+                    blockchain: BlockchainMapper::to_blockchain(asset.blockchain.clone())
+                        .expect("Invalid blockchain"),
+                    standards: asset
+                        .standards
+                        .iter()
+                        .map(|standard| {
+                            BlockchainMapper::to_blockchain_standard(standard.clone())
+                                .expect("Invalid blockchain standard")
+                        })
+                        .collect(),
+                    decimals: asset.decimals,
+                    symbol: asset.symbol.clone(),
+                    metadata: asset.metadata.clone().into(),
+                };
+
+                let asset_id = asset
+                    .id
+                    .as_ref()
+                    .map(|id| HelperMapper::to_uuid(id.clone()).map(|uuid| *uuid.as_bytes()))
+                    .transpose();
+
+                asset_id.map(|asset_id| (input, asset_id))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        for (new_asset, with_asset_id) in add_assets {
+            ASSET_SERVICE.create(new_asset, with_asset_id)?;
+        }
+
+        Ok(())
+    }
+
+    /// Registers the newly added users of the canister.
+    pub fn set_initial_users(
+        users: Vec<InitUserInput>,
+        default_groups: &[UUID],
+    ) -> Result<(), ApiError> {
+        if users.is_empty() {
+            Err(SystemError::NoUsersSpecified)?;
+        }
+
+        if users.len() > u16::MAX as usize {
+            Err(SystemError::TooManyUsersSpecified {
+                max: u16::MAX as usize,
             })?;
+        }
+
+        print(format!("Registering {} users", users.len()));
+        for user in users {
+            let user_id = user
+                .id
+                .map(|id_str| HelperMapper::to_uuid(id_str).map(|uuid| *uuid.as_bytes()))
+                .transpose()?;
+
+            let groups = user
+                .groups
+                .map(|ids| {
+                    ids.into_iter()
+                        .map(|id| {
+                            HelperMapper::to_uuid(id.clone()).map(|uuid| uuid.as_bytes().to_owned())
+                        })
+                        .collect::<Result<Vec<_>, _>>()
+                })
+                .transpose()?
+                .unwrap_or_else(|| default_groups.to_vec());
+
+            let identities = user
+                .identities
+                .iter()
+                .map(|identity| identity.identity.to_owned())
+                .collect::<Vec<_>>();
+
+            let user = USER_SERVICE.add_user_with_id(
+                AddUserOperationInput {
+                    groups,
+                    name: user.name.to_owned(),
+                    status: user.status.into(),
+                    identities,
+                },
+                user_id,
+            )?;
 
             print(&format!(
-                "Added admin user with principal {} and user id {}",
-                admin.identity.to_text(),
+                "Added user with principals {:?} and user id {}",
+                user.identities
+                    .iter()
+                    .map(|identity| identity.to_text())
+                    .collect::<Vec<_>>(),
                 Uuid::from_bytes(user.id).hyphenated()
             ));
         }
         Ok(())
     }
-}
-
-// Calculates the initial quorum based on the number of admins and the provided quorum, if not provided
-// the quorum is set to the majority of the admins.
-#[cfg(any(target_arch = "wasm32", test))]
-pub fn calc_initial_quorum(admin_count: u16, quorum: Option<u16>) -> u16 {
-    quorum.unwrap_or(admin_count / 2 + 1).clamp(1, admin_count)
-}
-
-#[cfg(target_arch = "wasm32")]
-mod install_canister_handlers {
-    use crate::core::ic_cdk::api::id as self_canister_id;
-    use crate::core::init::{default_policies, get_default_named_rules, DEFAULT_PERMISSIONS};
-    use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
-    use crate::mappers::blockchain::BlockchainMapper;
-    use crate::mappers::HelperMapper;
-    use crate::models::permission::Allow;
-    use crate::models::request_specifier::UserSpecifier;
-    use crate::models::{
-        AddAccountOperationInput, AddAssetOperationInput, AddRequestPolicyOperationInput,
-        CycleObtainStrategy, EditPermissionOperationInput, MonitorExternalCanisterStrategy,
-        MonitoringExternalCanisterEstimatedRuntimeInput, NamedRule, RequestPolicyRule,
-        ADMIN_GROUP_ID,
-    };
-    use crate::repositories::{ASSET_REPOSITORY, NAMED_RULE_REPOSITORY};
-    use crate::services::permission::PERMISSION_SERVICE;
-    use crate::services::{ACCOUNT_SERVICE, ASSET_SERVICE};
-    use crate::services::{EXTERNAL_CANISTER_SERVICE, REQUEST_POLICY_SERVICE};
-    use candid::{Encode, Principal};
-    use ic_cdk::api::management_canister::main::{self as mgmt};
-    use ic_cdk::{id, print};
-    use orbit_essentials::model::ModelKey;
-
-    use crate::services::cycle_manager::CYCLE_MANAGER;
-    use orbit_essentials::api::ApiError;
-    use orbit_essentials::repository::Repository;
-    use orbit_essentials::types::UUID;
-    use station_api::{InitAccountInput, InitAssetInput, SystemInit};
-    use uuid::Uuid;
 
     /// Registers the default configurations for the canister.
-    pub async fn init_post_process(init: &SystemInit) -> Result<(), String> {
-        let admin_quorum = super::calc_initial_quorum(init.admins.len() as u16, init.quorum);
-
+    pub fn init_default_permissions_and_policies(
+        admin_quorum: u16,
+        operator_quorum: u16,
+    ) -> Result<(), ApiError> {
         let (regular_named_rule_config, admin_named_rule_config) =
-            get_default_named_rules(admin_quorum);
+            get_default_named_rules(admin_quorum, operator_quorum);
 
         let regular_named_rule = NamedRule {
             id: *Uuid::new_v4().as_bytes(),
@@ -662,177 +1010,94 @@ mod install_canister_handlers {
 
         // adds the default request policies which sets safe defaults for the canister
         for policy in policies_to_create.iter() {
-            REQUEST_POLICY_SERVICE
-                .add_request_policy(AddRequestPolicyOperationInput {
-                    specifier: policy.0.to_owned(),
-                    rule: policy.1.to_owned(),
-                })
-                .map_err(|e| format!("Failed to add default request policy: {:?}", e))?;
+            REQUEST_POLICY_SERVICE.add_request_policy(AddRequestPolicyOperationInput {
+                specifier: policy.0.to_owned(),
+                rule: policy.1.to_owned(),
+            })?;
         }
 
         // adds the default permissions which sets safe defaults for the canister
         for policy in DEFAULT_PERMISSIONS.iter() {
             let allow = policy.0.to_owned();
-            PERMISSION_SERVICE
-                .edit_permission(EditPermissionOperationInput {
-                    auth_scope: Some(allow.auth_scope),
-                    user_groups: Some(allow.user_groups),
-                    users: Some(allow.users),
-                    resource: policy.1.to_owned(),
-                })
-                .map_err(|e| format!("Failed to add default permission: {:?}", e))?;
+            PERMISSION_SERVICE.edit_permission(EditPermissionOperationInput {
+                auth_scope: Some(allow.auth_scope),
+                user_groups: Some(allow.user_groups),
+                users: Some(allow.users),
+                resource: policy.1.to_owned(),
+            })?;
         }
 
         Ok(())
     }
 
+    #[allow(unused)]
     // Registers the initial accounts of the canister during the canister initialization.
     pub async fn set_initial_accounts(
-        accounts: Vec<InitAccountInput>,
-        initial_assets: &Option<Vec<InitAssetInput>>,
-        quorum: u16,
+        accounts: Vec<(InitAccountInput, InitAccountPermissionsInput)>,
+        initial_assets: &[InitAssetInput],
     ) -> Result<(), String> {
         let add_accounts = accounts
             .into_iter()
-            .map(|account| {
+            .map(|(account, permissions)| {
+                let assets = account
+                    .assets
+                    .into_iter()
+                    .map(|id| {
+                        HelperMapper::to_uuid(id.clone()).map(|uuid| uuid.as_bytes().to_owned())
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+
                 let input = AddAccountOperationInput {
                     name: account.name,
-                    assets: account
-                        .assets
-                        .into_iter()
-                        .map(|asset| {
-                            *HelperMapper::to_uuid(asset)
-                                .expect("Invalid UUID")
-                                .as_bytes()
-                        })
-                        .collect(),
+                    assets,
                     metadata: account.metadata.into(),
-                    transfer_request_policy: Some(RequestPolicyRule::Quorum(
-                        UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                        quorum,
-                    )),
-                    configs_request_policy: Some(RequestPolicyRule::Quorum(
-                        UserSpecifier::Group(vec![*ADMIN_GROUP_ID]),
-                        quorum,
-                    )),
-                    read_permission: Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-                    configs_permission: Allow::user_groups(vec![*ADMIN_GROUP_ID]),
-                    transfer_permission: Allow::user_groups(vec![*ADMIN_GROUP_ID]),
+                    transfer_request_policy: permissions
+                        .transfer_request_policy
+                        .map(|rule| rule.into()),
+                    configs_request_policy: permissions
+                        .configs_request_policy
+                        .map(|rule| rule.into()),
+                    read_permission: permissions.read_permission.into(),
+                    configs_permission: permissions.configs_permission.into(),
+                    transfer_permission: permissions.transfer_permission.into(),
                 };
 
-                (
-                    input,
-                    account
-                        .id
-                        .map(|id| *HelperMapper::to_uuid(id).expect("Invalid UUID").as_bytes()),
-                )
+                let account_id = account
+                    .id
+                    .map(|id| HelperMapper::to_uuid(id).map(|uuid| uuid.as_bytes().to_owned()))
+                    .transpose()?;
+
+                Ok((input, account_id))
             })
-            .collect::<Vec<(AddAccountOperationInput, Option<UUID>)>>();
+            .collect::<Result<Vec<(AddAccountOperationInput, Option<UUID>)>, ApiError>>()
+            .map_err(|e| format!("Invalid input: {:?}", e))?;
 
-        //
-        // In case there are assets existing in the Asset repository at the time of recovering the assets
-        // some of the assets might not be able to be recreated, in this case we try to find the same asset
-        // in the existing assets and replace the asset_id in the recreated account with the existing one.
-        //
-        for (mut new_account, with_account_id) in add_accounts {
-            if let Some(initial_assets) = initial_assets {
-                let mut new_account_assets = new_account.assets.clone();
-                for asset_id in new_account.assets.iter() {
-                    if ASSET_REPOSITORY.get(asset_id).is_none() {
-                        // the asset could not be recreated, try to find the same asset in the existing assets
-                        let asset_id_str = Uuid::from_bytes(*asset_id).hyphenated().to_string();
-                        let Some(original_asset_to_create) = initial_assets
-                            .iter()
-                            .find(|initial_asset| initial_asset.id == asset_id_str)
-                        else {
-                            // the asset does not exist and it could not be recreated, skip
-                            continue;
-                        };
-
-                        if let Some(existing_asset_id) = ASSET_REPOSITORY.exists_unique(
-                            &original_asset_to_create.blockchain,
-                            &original_asset_to_create.symbol,
-                        ) {
-                            // replace the asset_id in the recreated account with the existing one
-                            new_account_assets.retain(|id| asset_id != id);
-                            new_account_assets.push(existing_asset_id);
-
-                            print(format!(
-                                "Asset {} could not be recreated, replaced with existing asset {}",
-                                asset_id_str,
-                                Uuid::from_bytes(existing_asset_id).hyphenated()
-                            ));
-                        } else {
-                            // the asset does not exist and it could not be recreated, skip
-
-                            print(format!(
-                                "Asset {} could not be recreated and does not exist in the existing assets, skipping",
-                                asset_id_str
-                            ));
-
-                            continue;
-                        }
-                    }
-                }
-
-                new_account.assets = new_account_assets;
-            }
-
+        for (new_account, with_account_id) in add_accounts {
             ACCOUNT_SERVICE
                 .create_account(new_account, with_account_id)
                 .await
                 .map_err(|e| format!("Failed to add account: {:?}", e))?;
+
+            print("account created");
         }
 
         Ok(())
     }
-    // Registers the initial accounts of the canister during the canister initialization.
-    pub async fn set_initial_assets(assets: Vec<InitAssetInput>) -> Result<(), String> {
-        let add_assets = assets
-            .into_iter()
-            .map(|asset| {
-                let input = AddAssetOperationInput {
-                    name: asset.name,
-                    blockchain: BlockchainMapper::to_blockchain(asset.blockchain.clone())
-                        .expect("Invalid blockchain"),
-                    standards: asset
-                        .standards
-                        .iter()
-                        .map(|standard| {
-                            BlockchainMapper::to_blockchain_standard(standard.clone())
-                                .expect("Invalid blockchain standard")
-                        })
-                        .collect(),
-                    decimals: asset.decimals,
-                    symbol: asset.symbol,
-                    metadata: asset.metadata.into(),
-                };
+}
 
-                (
-                    input,
-                    *HelperMapper::to_uuid(asset.id)
-                        .expect("Invalid UUID")
-                        .as_bytes(),
-                )
-            })
-            .collect::<Vec<(AddAssetOperationInput, UUID)>>();
-
-        for (new_asset, with_asset_id) in add_assets {
-            match ASSET_SERVICE.create(new_asset, Some(with_asset_id)) {
-                Err(ApiError { code, details, .. }) if &code == "ALREADY_EXISTS" => {
-                    // asset already exists, can skip safely
-                    print(format!(
-                        "Asset already exists, skipping. Details: {:?}",
-                        details.unwrap_or_default()
-                    ));
-                }
-                Err(e) => Err(format!("Failed to add asset: {:?}", e))?,
-                Ok(_) => {}
-            }
-        }
-
-        Ok(())
-    }
+#[cfg(target_arch = "wasm32")]
+mod install_canister_handlers {
+    use crate::core::ic_cdk::api::id as self_canister_id;
+    use crate::core::DEFAULT_INITIAL_UPGRADER_CYCLES;
+    use crate::models::{
+        CycleObtainStrategy, MonitorExternalCanisterStrategy,
+        MonitoringExternalCanisterEstimatedRuntimeInput,
+    };
+    use crate::services::cycle_manager::CYCLE_MANAGER;
+    use crate::services::EXTERNAL_CANISTER_SERVICE;
+    use candid::{Encode, Principal};
+    use ic_cdk::api::management_canister::main::{self as mgmt};
+    use ic_cdk::id;
 
     pub async fn init_upgrader(
         input: station_api::SystemUpgraderInput,
@@ -937,20 +1202,41 @@ mod install_canister_handlers {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::request_test_utils::mock_request;
+    use crate::{
+        core::validation::disable_mock_resource_validation,
+        models::request_test_utils::mock_request,
+        services::system::init_canister_sync_handlers::{
+            set_initial_accounts, set_initial_assets, set_initial_named_rules,
+            set_initial_request_policies, set_initial_user_groups, set_initial_users,
+        },
+    };
     use candid::Principal;
-    use station_api::AdminInitInput;
+    use station_api::{
+        AccountSeedDTO, AllowDTO, InitAccountInput, InitAccountPermissionsInput, InitAssetInput,
+        InitNamedRuleInput, InitRequestPolicyInput, InitUserGroupInput, InitUserInput,
+        RequestPolicyRuleDTO, UserIdentityInput,
+    };
+    use uuid::Uuid;
 
     #[tokio::test]
     async fn canister_init() {
         let result = SYSTEM_SERVICE
             .init_canister(SystemInit {
                 name: "Station".to_string(),
-                admins: vec![AdminInitInput {
-                    name: "Admin".to_string(),
-                    identity: Principal::from_slice(&[1; 29]),
-                }],
-                quorum: Some(1),
+
+                initial_config: InitialConfig::WithAllDefaults {
+                    users: vec![InitUserInput {
+                        name: "Admin".to_string(),
+                        identities: vec![UserIdentityInput {
+                            identity: Principal::from_slice(&[1; 29]),
+                        }],
+                        id: None,
+                        groups: None,
+                        status: station_api::UserStatusDTO::Active,
+                    }],
+                    admin_quorum: 1,
+                    operator_quorum: 1,
+                },
                 upgrader: station_api::SystemUpgraderInput::Deploy(
                     station_api::DeploySystemUpgraderInput {
                         wasm_module: vec![],
@@ -958,8 +1244,6 @@ mod tests {
                     },
                 ),
                 fallback_controller: None,
-                accounts: None,
-                assets: None,
             })
             .await;
 
@@ -992,35 +1276,254 @@ mod tests {
         assert!(system_info.get_change_canister_request().is_none());
     }
 
-    #[test]
-    fn test_initial_quorum_is_majority() {
-        assert_eq!(calc_initial_quorum(1, None), 1);
-        assert_eq!(calc_initial_quorum(2, None), 2);
-        assert_eq!(calc_initial_quorum(3, None), 2);
-        assert_eq!(calc_initial_quorum(4, None), 3);
-        assert_eq!(calc_initial_quorum(5, None), 3);
-        assert_eq!(calc_initial_quorum(6, None), 4);
-        assert_eq!(calc_initial_quorum(7, None), 4);
-        assert_eq!(calc_initial_quorum(8, None), 5);
-        assert_eq!(calc_initial_quorum(9, None), 5);
-        assert_eq!(calc_initial_quorum(10, None), 6);
-        assert_eq!(calc_initial_quorum(11, None), 6);
-        assert_eq!(calc_initial_quorum(12, None), 7);
-        assert_eq!(calc_initial_quorum(13, None), 7);
-        assert_eq!(calc_initial_quorum(14, None), 8);
-        assert_eq!(calc_initial_quorum(15, None), 8);
-        assert_eq!(calc_initial_quorum(16, None), 9);
+    #[tokio::test]
+    async fn test_initial_named_rules_with_correct_dependencies() {
+        let id_1 = Uuid::new_v4().hyphenated().to_string();
+        let id_2 = Uuid::new_v4().hyphenated().to_string();
+        let id_3 = Uuid::new_v4().hyphenated().to_string();
+
+        // incorrect named rule order still succeeds because of sorting
+        let initial_named_rules = vec![
+            InitNamedRuleInput {
+                name: "NamedRule3".to_string(),
+                id: Some(id_1.clone()),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::NamedRule(id_2.clone()),
+            },
+            InitNamedRuleInput {
+                name: "NamedRule2".to_string(),
+                id: Some(id_2.clone()),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::NamedRule(id_3.clone()),
+            },
+            InitNamedRuleInput {
+                name: "NamedRule1".to_string(),
+                id: Some(id_3.clone()),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+            },
+        ];
+        set_initial_named_rules(&initial_named_rules).expect("Failed to set initial named rules");
     }
 
-    #[test]
-    fn test_initial_quorum_is_custom() {
-        // smaller than the number of admins
-        assert_eq!(calc_initial_quorum(4, Some(1)), 1);
-        // half of the number of admins
-        assert_eq!(calc_initial_quorum(4, Some(2)), 2);
-        // equal to the number of admins
-        assert_eq!(calc_initial_quorum(4, Some(4)), 4);
-        // larger than the number of admins
-        assert_eq!(calc_initial_quorum(4, Some(5)), 4);
+    #[tokio::test]
+    async fn test_initial_named_rules_with_circular_dependencies() {
+        let id_1 = Uuid::new_v4().hyphenated().to_string();
+        let id_2 = Uuid::new_v4().hyphenated().to_string();
+        let id_3 = Uuid::new_v4().hyphenated().to_string();
+
+        // circular reference throws an error
+        let initial_named_rules = vec![
+            InitNamedRuleInput {
+                name: "NamedRule3".to_string(),
+                id: Some(id_1.clone()),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::NamedRule(id_2.clone()),
+            },
+            InitNamedRuleInput {
+                name: "NamedRule2".to_string(),
+                id: Some(id_2.clone()),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::NamedRule(id_3.clone()),
+            },
+            InitNamedRuleInput {
+                name: "NamedRule1".to_string(),
+                id: Some(id_3.clone()),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::NamedRule(id_1.clone()),
+            },
+        ];
+
+        set_initial_named_rules(&initial_named_rules)
+            .expect_err("Should have failed due to circular reference");
+    }
+
+    #[tokio::test]
+    async fn test_initial_named_rules_with_unknown_key() {
+        disable_mock_resource_validation();
+
+        let id_1 = Uuid::new_v4().hyphenated().to_string();
+        let id_2 = Uuid::new_v4().hyphenated().to_string();
+        // unknown key throws an error
+        let initial_named_rules = vec![InitNamedRuleInput {
+            name: "NamedRule3".to_string(),
+            id: Some(id_1.clone()),
+            description: None,
+            rule: station_api::RequestPolicyRuleDTO::NamedRule(id_2.clone()),
+        }];
+
+        set_initial_named_rules(&initial_named_rules)
+            .expect_err("Should have failed due to unknown key");
+    }
+
+    #[tokio::test]
+    async fn test_duplicate_uuids() {
+        disable_mock_resource_validation();
+
+        // Test duplicate UUIDs in named rules
+        let named_rule_id = Uuid::new_v4().hyphenated().to_string();
+        set_initial_named_rules(&[
+            InitNamedRuleInput {
+                name: "NamedRule1".to_string(),
+                id: Some(named_rule_id.clone()),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+            },
+            InitNamedRuleInput {
+                name: "NamedRule2".to_string(),
+                id: Some(named_rule_id.clone()),
+                description: None,
+                rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+            },
+        ])
+        .expect_err("Should have failed due to duplicate UUID in named rules");
+
+        // Test duplicate UUIDs in request policies
+        let request_policy_id = Uuid::new_v4().hyphenated().to_string();
+        set_initial_request_policies(&[
+            InitRequestPolicyInput {
+                id: Some(request_policy_id.clone()),
+                specifier: station_api::RequestSpecifierDTO::AddAccount,
+                rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+            },
+            InitRequestPolicyInput {
+                id: Some(request_policy_id.clone()),
+                specifier: station_api::RequestSpecifierDTO::AddUser,
+                rule: station_api::RequestPolicyRuleDTO::AutoApproved,
+            },
+        ])
+        .expect_err("Should have failed due to duplicate UUID in request policies");
+
+        // Test duplicate UUIDs in user groups
+        let user_group_id = Uuid::new_v4().hyphenated().to_string();
+        set_initial_user_groups(&[
+            InitUserGroupInput {
+                name: "UserGroup1".to_string(),
+                id: Some(user_group_id.clone()),
+            },
+            InitUserGroupInput {
+                name: "UserGroup2".to_string(),
+                id: Some(user_group_id.clone()),
+            },
+        ])
+        .await
+        .expect_err("Should have failed due to duplicate UUID in user groups");
+
+        // Test duplicate UUIDs in assets
+        let asset_id = Uuid::new_v4().hyphenated().to_string();
+        set_initial_assets(&[
+            InitAssetInput {
+                id: Some(asset_id.clone()),
+                name: "Asset1".to_string(),
+                blockchain: "icp".to_string(),
+                standards: vec!["icrc1".to_string()],
+                metadata: vec![],
+                symbol: "AST1".to_string(),
+                decimals: 8,
+            },
+            InitAssetInput {
+                id: Some(asset_id.clone()),
+                name: "Asset2".to_string(),
+                blockchain: "icp".to_string(),
+                standards: vec!["icrc1".to_string()],
+                metadata: vec![],
+                symbol: "AST2".to_string(),
+                decimals: 8,
+            },
+        ])
+        .await
+        .expect_err("Should have failed due to duplicate UUID in assets");
+
+        // Test duplicate UUIDs in accounts
+        let account_id = Uuid::new_v4().hyphenated().to_string();
+        let empty_seed: AccountSeedDTO = [0; 16]; // Create a zero-filled array for the seed
+
+        let allow = AllowDTO {
+            user_groups: vec![],
+            auth_scope: station_api::AuthScopeDTO::Authenticated,
+            users: vec![],
+        };
+
+        let rule = RequestPolicyRuleDTO::AutoApproved;
+
+        let initial_permissions = InitAccountPermissionsInput {
+            read_permission: allow.clone(),
+            configs_permission: allow.clone(),
+            transfer_permission: allow.clone(),
+            configs_request_policy: Some(rule.clone()),
+            transfer_request_policy: Some(rule.clone()),
+        };
+
+        let account_inputs = vec![
+            (
+                InitAccountInput {
+                    id: Some(account_id.clone()),
+                    name: "Account1".to_string(),
+                    seed: empty_seed,
+                    assets: vec![],
+                    metadata: vec![],
+                },
+                initial_permissions.clone(),
+            ),
+            (
+                InitAccountInput {
+                    id: Some(account_id.clone()),
+                    name: "Account2".to_string(),
+                    seed: empty_seed,
+                    assets: vec![],
+                    metadata: vec![],
+                },
+                initial_permissions.clone(),
+            ),
+        ];
+
+        set_initial_accounts(account_inputs, &[])
+            .await
+            .expect_err("Should have failed due to duplicate UUID in accounts");
+    }
+
+    #[tokio::test]
+    async fn test_initial_users_with_bad_groups() {
+        let user_id = Uuid::new_v4().hyphenated().to_string();
+
+        let user = InitUserInput {
+            name: "User".to_string(),
+            identities: vec![UserIdentityInput {
+                identity: Principal::from_slice(&[1; 29]),
+            }],
+            id: Some(user_id.clone()),
+            groups: Some(vec!["abc".to_string()]),
+            status: station_api::UserStatusDTO::Active,
+        };
+
+        set_initial_users(vec![user], &[])
+            .expect_err("Should have failed due to malformed group uuid");
+    }
+
+    #[tokio::test]
+    async fn test_initial_users_with_default_groups() {
+        let user_id = Uuid::new_v4();
+        let user_id_str = user_id.hyphenated().to_string();
+
+        let user = InitUserInput {
+            name: "User".to_string(),
+            identities: vec![UserIdentityInput {
+                identity: Principal::from_slice(&[1; 29]),
+            }],
+            id: Some(user_id_str.clone()),
+            groups: None,
+            status: station_api::UserStatusDTO::Active,
+        };
+
+        set_initial_users(vec![user], &DEFAULT_GROUP_IDS).expect("Should have succeeded");
+
+        let users = USER_REPOSITORY.list();
+        assert_eq!(users.len(), 1);
+        assert_eq!(users[0].id, user_id.as_bytes().to_owned());
+        assert_eq!(users[0].groups.len(), DEFAULT_GROUP_IDS.len());
+        assert!(users[0]
+            .groups
+            .iter()
+            .any(|g| DEFAULT_GROUP_IDS.contains(g)));
     }
 }

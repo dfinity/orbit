@@ -10,7 +10,10 @@ use candid::{CandidType, Encode, Principal};
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
 use pocket_ic::{update_candid_as, PocketIc, PocketIcBuilder};
 use serde::Serialize;
-use station_api::{AdminInitInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg};
+use station_api::{
+    InitUserInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg,
+    UserIdentityInput,
+};
 use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
@@ -303,12 +306,7 @@ fn install_canisters(
 
     let station_init_args = SystemInstallArg::Init(SystemInitArg {
         name: "Station".to_string(),
-        admins: vec![AdminInitInput {
-            identity: WALLET_ADMIN_USER,
-            name: "station-admin".to_string(),
-        }],
-        assets: None,
-        quorum: Some(1),
+
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
                 wasm_module: upgrader_wasm,
@@ -316,7 +314,19 @@ fn install_canisters(
             },
         ),
         fallback_controller: config.fallback_controller,
-        accounts: None,
+        initial_config: station_api::InitialConfig::WithAllDefaults {
+            users: vec![InitUserInput {
+                identities: vec![UserIdentityInput {
+                    identity: WALLET_ADMIN_USER,
+                }],
+                name: "station-admin".to_string(),
+                groups: None,
+                id: None,
+                status: station_api::UserStatusDTO::Active,
+            }],
+            admin_quorum: 1,
+            operator_quorum: 1,
+        },
     });
     env.install_canister(
         station,

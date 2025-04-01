@@ -6,6 +6,7 @@ use orbit_essentials::{
     model::{ModelKey, ModelValidator},
     pagination::{paginated_items, PaginatedData, PaginatedItemsArgs},
     repository::Repository,
+    types::UUID,
 };
 use station_api::ListNamedRulesInput;
 use uuid::Uuid;
@@ -17,7 +18,6 @@ use crate::{
         resource::{Resource, ResourceAction, ResourceId},
         AddNamedRuleOperationInput, EditNamedRuleOperationInput, NamedRule,
         NamedRuleCallerPrivileges, NamedRuleId, NamedRuleKey, RemoveNamedRuleOperationInput,
-        RequestPolicyRule,
     },
     repositories::{
         NamedRuleRepository, RequestPolicyRepository, NAMED_RULE_REPOSITORY,
@@ -90,8 +90,22 @@ impl NamedRuleService {
         Ok(result)
     }
 
-    pub fn create(&self, input: AddNamedRuleOperationInput) -> ServiceResult<NamedRule> {
-        let id = *Uuid::new_v4().as_bytes();
+    pub fn create_with_id(
+        &self,
+        input: AddNamedRuleOperationInput,
+        with_named_rule_id: Option<UUID>,
+    ) -> ServiceResult<NamedRule> {
+        let id = with_named_rule_id.unwrap_or_else(|| *Uuid::new_v4().as_bytes());
+
+        if self
+            .named_rule_repository
+            .get(&NamedRuleKey { id })
+            .is_some()
+        {
+            Err(NamedRuleError::IdAlreadyExists {
+                id: Uuid::from_bytes(id).hyphenated().to_string(),
+            })?;
+        }
 
         let named_rule = NamedRule {
             id,
@@ -108,35 +122,22 @@ impl NamedRuleService {
         Ok(named_rule)
     }
 
-    fn is_named_rule_referenced_in_rule(
-        rule: &RequestPolicyRule,
-        named_rule_id: &NamedRuleId,
-    ) -> bool {
-        match rule {
-            RequestPolicyRule::NamedRule(id) => id == named_rule_id,
-            RequestPolicyRule::And(rules) | RequestPolicyRule::Or(rules) => rules
-                .iter()
-                .any(|rule| Self::is_named_rule_referenced_in_rule(rule, named_rule_id)),
-            RequestPolicyRule::Not(rule) => {
-                Self::is_named_rule_referenced_in_rule(rule, named_rule_id)
-            }
-            _ => false,
-        }
+    pub fn create(&self, input: AddNamedRuleOperationInput) -> ServiceResult<NamedRule> {
+        self.create_with_id(input, None)
     }
 
     fn is_named_rule_in_use_by_request_policies(&self, named_rule_id: &NamedRuleId) -> bool {
         self.request_policy_repository
             .list()
             .iter()
-            .any(|request_policy| {
-                Self::is_named_rule_referenced_in_rule(&request_policy.rule, named_rule_id)
-            })
+            .any(|request_policy| request_policy.rule.has_named_rule_id(named_rule_id))
     }
 
     fn is_named_rule_in_use_by_named_rules(&self, named_rule_id: &NamedRuleId) -> bool {
-        self.named_rule_repository.list().iter().any(|named_rule| {
-            Self::is_named_rule_referenced_in_rule(&named_rule.rule, named_rule_id)
-        })
+        self.named_rule_repository
+            .list()
+            .iter()
+            .any(|named_rule| named_rule.rule.has_named_rule_id(named_rule_id))
     }
 
     pub fn remove(&self, input: RemoveNamedRuleOperationInput) -> ServiceResult<NamedRule> {
