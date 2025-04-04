@@ -41,6 +41,7 @@ impl Create<SystemUpgradeOperationInput> for SystemUpgradeRequestCreate {
                         hasher.finalize().to_vec()
                     }
                 },
+                take_backup_snapshot: operation_input.take_backup_snapshot,
                 input: operation_input.into(),
             }),
             "Upgrade System".to_string(),
@@ -89,6 +90,7 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
                         &self.operation.input.module,
                         &self.operation.input.module_extra_chunks,
                         arg,
+                        self.operation.input.take_backup_snapshot,
                     )
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
@@ -112,6 +114,10 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
                         &self.operation.input.module,
                         &self.operation.input.module_extra_chunks,
                         self.operation.input.arg.clone(),
+                        self.operation
+                            .input
+                            .take_backup_snapshot
+                            .unwrap_or_default(),
                     )
                     .await
                     .map_err(|err| RequestExecuteError::Failed {

@@ -238,6 +238,7 @@ pub struct SystemUpgradeOperationInput {
     pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
+    pub take_backup_snapshot: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -245,6 +246,7 @@ pub struct SystemUpgradeOperationDTO {
     pub target: SystemUpgradeTargetDTO,
     pub module_checksum: Sha256HashDTO,
     pub arg_checksum: Option<Sha256HashDTO>,
+    pub take_backup_snapshot: Option<bool>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
