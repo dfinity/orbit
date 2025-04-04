@@ -576,6 +576,7 @@ export const idlFactory = ({ IDL }) => {
     'UpgradeStation' : IDL.Null,
   });
   const SystemUpgradeOperation = IDL.Record({
+    'take_backup_snapshot' : IDL.Opt(IDL.Bool),
     'module_checksum' : Sha256Hash,
     'target' : SystemUpgradeTarget,
     'arg_checksum' : IDL.Opt(Sha256Hash),
@@ -965,6 +966,7 @@ export const idlFactory = ({ IDL }) => {
   const SystemUpgradeOperationInput = IDL.Record({
     'arg' : IDL.Opt(IDL.Vec(IDL.Nat8)),
     'module_extra_chunks' : IDL.Opt(WasmModuleExtraChunks),
+    'take_backup_snapshot' : IDL.Opt(IDL.Bool),
     'target' : SystemUpgradeTarget,
     'module' : IDL.Vec(IDL.Nat8),
   });

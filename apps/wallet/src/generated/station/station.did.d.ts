@@ -1454,6 +1454,7 @@ export type SystemResourceAction = { 'Upgrade' : null } |
   { 'Capabilities' : null };
 export interface SystemUpgrade { 'name' : [] | [string] }
 export interface SystemUpgradeOperation {
+  'take_backup_snapshot' : [] | [boolean],
   'module_checksum' : Sha256Hash,
   'target' : SystemUpgradeTarget,
   'arg_checksum' : [] | [Sha256Hash],
@@ -1461,6 +1462,7 @@ export interface SystemUpgradeOperation {
 export interface SystemUpgradeOperationInput {
   'arg' : [] | [Uint8Array | number[]],
   'module_extra_chunks' : [] | [WasmModuleExtraChunks],
+  'take_backup_snapshot' : [] | [boolean],
   'target' : SystemUpgradeTarget,
   'module' : Uint8Array | number[],
 }
