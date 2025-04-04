@@ -2197,8 +2197,6 @@ type SystemInfo = record {
   version : text;
   // The upgrader principal id.
   upgrader_id : principal;
-  // The upgrader backup snapshot ID.
-  upgrader_backup_snapshot_id : opt text;
   // Cycle balance of the station.
   cycles : nat64;
   // Cycle balance of the canister.

@@ -6,6 +6,7 @@ use crate::utils::{
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
+use pocket_ic::management_canister::CanisterIdRecord;
 use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
     HealthStatus, NotifyFailedStationUpgradeInput, RequestOperationInput, RequestStatusDTO,
@@ -366,12 +367,12 @@ fn backup_snapshot() {
     };
 
     let snapshot = |target: &SystemUpgradeTargetDTO| -> Option<Vec<u8>> {
-        let (canister_id, controller) = match target {
+        let (canister_id, caller) = match target {
             SystemUpgradeTargetDTO::UpgradeStation => (canister_ids.station, upgrader_id),
             SystemUpgradeTargetDTO::UpgradeUpgrader => (upgrader_id, canister_ids.station),
         };
         let snapshots: Vec<_> = env
-            .list_canister_snapshots(canister_id, Some(controller))
+            .list_canister_snapshots(canister_id, Some(caller))
             .unwrap();
         if snapshots.is_empty() {
             None
@@ -406,11 +407,28 @@ fn backup_snapshot() {
                 }
             }
             SystemUpgradeTargetDTO::UpgradeUpgrader => {
-                let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
-                assert_eq!(
-                    system_info.upgrader_backup_snapshot_id,
-                    snapshot_id.map(hex::encode)
-                );
+                let snapshots_via_station =
+                    update_candid_as::<_, (ApiResult<Vec<station_api::Snapshot>>,)>(
+                        &env,
+                        canister_ids.station,
+                        WALLET_ADMIN_USER,
+                        "canister_snapshots",
+                        (CanisterIdRecord {
+                            canister_id: upgrader_id,
+                        },),
+                    )
+                    .unwrap()
+                    .0
+                    .unwrap();
+                if let Some(snapshot_id) = snapshot_id {
+                    assert_eq!(snapshots_via_station.len(), 1);
+                    assert_eq!(
+                        snapshots_via_station[0].snapshot_id,
+                        hex::encode(snapshot_id)
+                    );
+                } else {
+                    assert!(snapshots_via_station.is_empty());
+                }
             }
         };
     };

@@ -16,7 +16,6 @@ impl SystemInfo {
             name: self.get_name().to_string(),
             last_upgrade_timestamp: timestamp_to_rfc3339(&self.get_last_upgrade_timestamp()),
             upgrader_id: *self.get_upgrader_canister_id(),
-            upgrader_backup_snapshot_id: self.get_upgrader_backup_snapshot_id().map(hex::encode),
             cycles: *cycles,
             version: version.to_string(),
             raw_rand_successful: raw_rand_successful(),
