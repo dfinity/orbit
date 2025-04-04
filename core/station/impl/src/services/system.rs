@@ -174,6 +174,7 @@ impl SystemService {
         module: &[u8],
         module_extra_chunks: &Option<WasmModuleExtraChunks>,
         arg: &[u8],
+        backup_snapshot: Option<bool>,
     ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
 
@@ -184,6 +185,7 @@ impl SystemService {
                 module: module.to_owned(),
                 module_extra_chunks: module_extra_chunks.clone().map(|c| c.into()),
                 arg: arg.to_owned(),
+                backup_snapshot,
             },),
         )
         .await

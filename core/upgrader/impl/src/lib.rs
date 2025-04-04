@@ -1,8 +1,8 @@
 use crate::model::{DisasterRecovery, DisasterRecoveryV0, LogEntry};
 use crate::services::insert_logs;
 use crate::upgrade::{
-    CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithStart,
-    WithStop,
+    CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithSnapshot,
+    WithStart, WithStop,
 };
 use candid::Principal;
 use ic_cdk::api::stable::{stable_size, stable_write};
@@ -75,6 +75,7 @@ thread_local! {
 #[storable]
 struct State {
     target_canister: Principal,
+    backup_snapshot_id: Option<Vec<u8>>,
     disaster_recovery: DisasterRecovery,
     stable_memory_version: u32,
 }
@@ -83,6 +84,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             target_canister: Principal::anonymous(),
+            backup_snapshot_id: None,
             disaster_recovery: Default::default(),
             stable_memory_version: STABLE_MEMORY_VERSION,
         }
@@ -104,6 +106,16 @@ pub fn get_target_canister() -> Principal {
 fn set_target_canister(target_canister: Principal) {
     let mut state = get_state();
     state.target_canister = target_canister;
+    set_state(state);
+}
+
+pub fn get_backup_snapshot_id() -> Option<Vec<u8>> {
+    get_state().backup_snapshot_id
+}
+
+fn set_backup_snapshot_id(backup_snapshot_id: Vec<u8>) {
+    let mut state = get_state();
+    state.backup_snapshot_id = Some(backup_snapshot_id);
     set_state(state);
 }
 
@@ -168,6 +180,7 @@ fn post_upgrade() {
 
         let state = State {
             target_canister,
+            backup_snapshot_id: None,
             disaster_recovery: disaster_recovery.into(),
             stable_memory_version: STABLE_MEMORY_VERSION,
         };
@@ -179,6 +192,7 @@ fn post_upgrade() {
 lazy_static! {
     static ref UPGRADER: Box<dyn Upgrade> = {
         let u = Upgrader {};
+        let u = WithSnapshot(u);
         let u = WithStop(u);
         let u = WithStart(u);
         let u = WithLogs(u, "upgrade".to_string());
@@ -197,6 +211,7 @@ async fn trigger_upgrade(params: upgrader_api::UpgradeParams) -> Result<(), Trig
         module_extra_chunks: params.module_extra_chunks,
         arg: params.arg,
         install_mode: CanisterInstallMode::Upgrade(None),
+        backup_snapshot: params.backup_snapshot.unwrap_or_default(),
     };
     UPGRADER.upgrade(input).await.map_err(|err| match err {
         UpgradeError::NotController => TriggerUpgradeError::NotController,

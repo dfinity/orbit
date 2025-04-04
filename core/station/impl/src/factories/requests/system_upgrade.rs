@@ -90,6 +90,7 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
                         &self.operation.input.module,
                         &self.operation.input.module_extra_chunks,
                         arg,
+                        self.operation.input.backup_snapshot,
                     )
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
