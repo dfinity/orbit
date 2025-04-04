@@ -334,3 +334,97 @@ fn unauthorized_notify_failed_station_upgrade() {
         .unwrap()
         .contains("No station upgrade request is processing."));
 }
+
+#[test]
+fn backup_snapshot() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+
+    let station_init_arg = SystemInstall::Upgrade(SystemUpgrade { name: None });
+    let station_init_arg_bytes = Encode!(&station_init_arg).unwrap();
+    let upgrader_init_arg = InitArg {
+        target_canister: canister_ids.station,
+    };
+    let upgrader_init_arg_bytes = Encode!(&upgrader_init_arg).unwrap();
+
+    for (target, arg_bytes, canister_name, chunk_len) in [
+        (
+            SystemUpgradeTargetDTO::UpgradeStation,
+            station_init_arg_bytes,
+            "station",
+            500_000,
+        ),
+        (
+            SystemUpgradeTargetDTO::UpgradeUpgrader,
+            upgrader_init_arg_bytes,
+            "upgrader",
+            50_000,
+        ),
+    ] {
+        // upload chunks to asset canister
+        let canister_wasm = get_canister_wasm(canister_name).to_vec();
+        let (base_chunk, module_extra_chunks) =
+            upload_canister_chunks_to_asset_canister(&env, canister_wasm, chunk_len);
+
+        // create system upgrade request from chunks
+        let system_upgrade_operation =
+            RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+                target: target.clone(),
+                module: base_chunk.to_owned(),
+                module_extra_chunks: Some(module_extra_chunks.clone()),
+                arg: Some(arg_bytes.clone()),
+                backup_snapshot: Some(true),
+            });
+
+        // retrieve the existing snapshots from the management canister: there should be no snapshots yet
+        let (canister_id, controller) = match target {
+            SystemUpgradeTargetDTO::UpgradeStation => (canister_ids.station, upgrader_id),
+            SystemUpgradeTargetDTO::UpgradeUpgrader => (upgrader_id, canister_ids.station),
+        };
+        let snapshots: Vec<_> = env
+            .list_canister_snapshots(canister_id, Some(controller))
+            .unwrap();
+        assert!(snapshots.is_empty());
+
+        // successful upgrade taking a backup snapshot
+        match target {
+            SystemUpgradeTargetDTO::UpgradeStation => {
+                do_successful_station_upgrade(&env, &canister_ids, system_upgrade_operation.clone())
+            }
+            SystemUpgradeTargetDTO::UpgradeUpgrader => do_successful_upgrader_upgrade(
+                &env,
+                &canister_ids,
+                system_upgrade_operation.clone(),
+            ),
+        };
+
+        // a backup snapshot should have been taken
+        let snapshots: Vec<_> = env
+            .list_canister_snapshots(canister_id, Some(controller))
+            .unwrap();
+        assert_eq!(snapshots.len(), 1);
+        let backup_snapshot = snapshots[0].clone();
+
+        // one more successful upgrade taking a new backup snapshot
+        match target {
+            SystemUpgradeTargetDTO::UpgradeStation => {
+                do_successful_station_upgrade(&env, &canister_ids, system_upgrade_operation)
+            }
+            SystemUpgradeTargetDTO::UpgradeUpgrader => {
+                do_successful_upgrader_upgrade(&env, &canister_ids, system_upgrade_operation)
+            }
+        };
+
+        // a new backup snapshot should have been taken, replacing the previous backup snapshot
+        let snapshots: Vec<_> = env
+            .list_canister_snapshots(canister_id, Some(controller))
+            .unwrap();
+        assert_eq!(snapshots.len(), 1);
+        let new_backup_snapshot = snapshots[0].clone();
+        assert_ne!(backup_snapshot.id, new_backup_snapshot.id);
+    }
+}
