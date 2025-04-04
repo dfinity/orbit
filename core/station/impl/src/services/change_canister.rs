@@ -154,7 +154,7 @@ impl ChangeCanisterService {
     }
 
     /// Execute an install or upgrade of a canister.
-    /// Returns the new backup snapshot id if a backup snapshot was taken.
+    /// Returns the new backup snapshot ID if a backup snapshot was taken.
     #[allow(clippy::too_many_arguments)]
     pub async fn install_canister(
         &self,

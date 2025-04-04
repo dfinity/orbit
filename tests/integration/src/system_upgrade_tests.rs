@@ -351,8 +351,8 @@ fn backup_snapshot() {
     };
     let upgrader_init_arg_bytes = Encode!(&upgrader_init_arg).unwrap();
 
-    let upgrade = |target: &SystemUpgradeTargetDTO,
-                   system_upgrade_operation_input: SystemUpgradeOperationInput| {
+    let upgrade = |system_upgrade_operation_input: SystemUpgradeOperationInput| {
+        let target = system_upgrade_operation_input.target.clone();
         let system_upgrade_operation =
             RequestOperationInput::SystemUpgrade(system_upgrade_operation_input);
         match target {
@@ -446,13 +446,13 @@ fn backup_snapshot() {
         // there should be no snapshots yet
         check_snapshots(&target, None);
 
-        upgrade(&target, system_upgrade_operation_input.clone());
+        upgrade(system_upgrade_operation_input.clone());
 
         // a backup snapshot should have been taken
         let backup_snapshot_id = snapshot(&target).unwrap();
         check_snapshots(&target, Some(backup_snapshot_id.clone()));
 
-        upgrade(&target, system_upgrade_operation_input.clone());
+        upgrade(system_upgrade_operation_input.clone());
 
         // a new backup snapshot should have been taken, replacing the previous backup snapshot
         let new_backup_snapshot_id = snapshot(&target).unwrap();
@@ -462,7 +462,7 @@ fn backup_snapshot() {
         // create system upgrade request operation input taking no backup snapshot
         system_upgrade_operation_input.take_backup_snapshot = None;
 
-        upgrade(&target, system_upgrade_operation_input);
+        upgrade(system_upgrade_operation_input);
 
         // no new backup snapshot should have been taken
         check_snapshots(&target, Some(new_backup_snapshot_id));
