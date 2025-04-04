@@ -470,19 +470,22 @@ fn backup_snapshot() {
         let backup_snapshot_id = snapshot(&target).unwrap();
         check_snapshots(&target, Some(backup_snapshot_id.clone()));
 
+        // create system upgrade request operation input taking no backup snapshot
+        system_upgrade_operation_input.take_backup_snapshot = None;
+
         upgrade(system_upgrade_operation_input.clone());
+
+        // no new backup snapshot should have been taken
+        check_snapshots(&target, Some(backup_snapshot_id.clone()));
+
+        // create system upgrade request operation input taking a backup snapshot
+        system_upgrade_operation_input.take_backup_snapshot = Some(true);
+
+        upgrade(system_upgrade_operation_input);
 
         // a new backup snapshot should have been taken, replacing the previous backup snapshot
         let new_backup_snapshot_id = snapshot(&target).unwrap();
         assert_ne!(backup_snapshot_id, new_backup_snapshot_id);
-        check_snapshots(&target, Some(new_backup_snapshot_id.clone()));
-
-        // create system upgrade request operation input taking no backup snapshot
-        system_upgrade_operation_input.take_backup_snapshot = None;
-
-        upgrade(system_upgrade_operation_input);
-
-        // no new backup snapshot should have been taken
         check_snapshots(&target, Some(new_backup_snapshot_id));
     }
 }
