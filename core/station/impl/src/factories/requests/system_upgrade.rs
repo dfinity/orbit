@@ -41,6 +41,7 @@ impl Create<SystemUpgradeOperationInput> for SystemUpgradeRequestCreate {
                         hasher.finalize().to_vec()
                     }
                 },
+                backup_snapshot: operation_input.backup_snapshot,
                 input: operation_input.into(),
             }),
             "Upgrade System".to_string(),

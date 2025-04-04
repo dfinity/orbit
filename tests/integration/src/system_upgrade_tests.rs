@@ -138,6 +138,7 @@ fn failed_station_upgrade() {
             module: vec![],
             module_extra_chunks: None,
             arg: None,
+            backup_snapshot: None,
         });
 
     do_failed_system_upgrade(
@@ -166,6 +167,7 @@ fn too_many_chunks() {
             module: base_chunk,
             module_extra_chunks: Some(module_extra_chunks),
             arg: None,
+            backup_snapshot: None,
         });
 
     do_failed_system_upgrade(
@@ -192,6 +194,7 @@ fn too_large_wasm() {
             module: base_chunk,
             module_extra_chunks: Some(module_extra_chunks),
             arg: None,
+            backup_snapshot: None,
         });
 
     do_failed_system_upgrade(
@@ -241,6 +244,7 @@ fn system_upgrade_from_chunks() {
                 module: base_chunk.to_owned(),
                 module_extra_chunks: Some(module_extra_chunks.clone()),
                 arg: Some(arg_bytes.clone()),
+                backup_snapshot: None,
             });
 
         // successful upgrade
@@ -262,6 +266,7 @@ fn system_upgrade_from_chunks() {
                 module: base_chunk.to_owned(),
                 module_extra_chunks: Some(module_extra_chunks.clone()),
                 arg: Some(arg_bytes),
+                backup_snapshot: None,
             });
 
         // failed upgrade
