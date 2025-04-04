@@ -31,10 +31,10 @@ type UpgradeParams = record {
   module_extra_chunks : opt WasmModuleExtraChunks;
   // The argument to be passed to upgrade.
   arg : blob;
-  // Determines whether a backup snapshot should be created (before the upgrade).
+  // Determines whether a backup snapshot should be taken (before the upgrade).
   // If so, the last backup snapshot (if one exists) is atomically replaced
-  // by a new backup snapshot.
-  backup_snapshot : opt bool;
+  // by the new backup snapshot.
+  take_backup_snapshot : opt bool;
 };
 
 type TriggerUpgradeError = variant {

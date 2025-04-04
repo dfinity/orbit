@@ -1302,7 +1302,7 @@ pub(crate) fn upgrade_station(
             module: base_chunk,
             module_extra_chunks: Some(module_extra_chunks),
             arg: Some(station_init_arg_bytes),
-            backup_snapshot: None,
+            take_backup_snapshot: None,
         });
 
     execute_request_with_extra_ticks(

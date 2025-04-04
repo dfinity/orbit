@@ -171,7 +171,6 @@ impl ChangeCanisterService {
         self.stop_canister(canister_id).await?;
 
         let backup_snapshot_id = if take_backup_snapshot {
-            // Take snapshot
             let snapshot_id = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {
                 canister_id,
                 replace_snapshot,

@@ -21,7 +21,7 @@ pub fn perform_upgrader_update(
                 module: upgrader_wasm.clone(),
                 module_extra_chunks: None,
                 arg: None,
-                backup_snapshot: None,
+                take_backup_snapshot: None,
             },
         ),
     );
@@ -52,7 +52,7 @@ pub fn perform_station_update(
             module: base_chunk,
             module_extra_chunks: Some(module_extra_chunks),
             arg: None,
-            backup_snapshot: None,
+            take_backup_snapshot: None,
         });
 
     let request_station_upgrade = submit_request(

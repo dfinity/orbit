@@ -25,7 +25,7 @@ fn notification_authorization() {
         module: vec![],
         module_extra_chunks: None,
         arg: None,
-        backup_snapshot: None,
+        take_backup_snapshot: None,
     };
     let request_status = execute_request_with_extra_ticks(
         &env,

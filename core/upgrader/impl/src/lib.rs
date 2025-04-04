@@ -211,7 +211,7 @@ async fn trigger_upgrade(params: upgrader_api::UpgradeParams) -> Result<(), Trig
         module_extra_chunks: params.module_extra_chunks,
         arg: params.arg,
         install_mode: CanisterInstallMode::Upgrade(None),
-        backup_snapshot: params.backup_snapshot.unwrap_or_default(),
+        take_backup_snapshot: params.take_backup_snapshot.unwrap_or_default(),
     };
     UPGRADER.upgrade(input).await.map_err(|err| match err {
         UpgradeError::NotController => TriggerUpgradeError::NotController,

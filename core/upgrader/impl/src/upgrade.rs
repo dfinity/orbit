@@ -33,7 +33,7 @@ pub struct UpgradeParams {
     pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     pub arg: Vec<u8>,
     pub install_mode: CanisterInstallMode,
-    pub backup_snapshot: bool,
+    pub take_backup_snapshot: bool,
 }
 
 #[automock]
@@ -67,7 +67,7 @@ pub struct WithSnapshot<T>(pub T);
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithSnapshot<T> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
-        if ps.backup_snapshot {
+        if ps.take_backup_snapshot {
             let id = get_target_canister();
             let replace_snapshot = get_backup_snapshot_id();
             let snapshot_id = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {
