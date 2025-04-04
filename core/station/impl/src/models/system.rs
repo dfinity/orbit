@@ -53,6 +53,8 @@ pub struct SystemInfo {
     /// The upgrader canister wasm module.
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     upgrader_wasm_module: Option<Vec<u8>>,
+    /// The backup snapshot of the upgrader.
+    upgrader_backup_snapshot_id: Option<Vec<u8>>,
     /// The disaster recovery committee user group id.
     disaster_recovery_committee: Option<DisasterRecoveryCommittee>,
     /// Defines how the station tops up itself with cycles.
@@ -72,6 +74,7 @@ impl Default for SystemInfo {
             change_canister_request: None,
             upgrader_canister_id: None,
             upgrader_wasm_module: None,
+            upgrader_backup_snapshot_id: None,
             disaster_recovery_committee: None,
             version: Some(SYSTEM_VERSION.to_string()),
             stable_memory_version: Some(STABLE_MEMORY_VERSION),
@@ -150,6 +153,14 @@ impl SystemInfo {
         self.upgrader_wasm_module
             .as_deref()
             .expect("upgrader_wasm_module is not set")
+    }
+
+    pub fn get_upgrader_backup_snapshot_id(&self) -> Option<Vec<u8>> {
+        self.upgrader_backup_snapshot_id.clone()
+    }
+
+    pub fn set_upgrader_backup_snapshot_id(&mut self, backup_snapshot_id: Vec<u8>) {
+        self.upgrader_backup_snapshot_id = Some(backup_snapshot_id);
     }
 
     pub fn set_change_canister_request(&mut self, request: UUID) {

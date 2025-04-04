@@ -11,6 +11,7 @@ pub struct SystemInfoDTO {
     pub name: String,
     pub version: String,
     pub upgrader_id: Principal,
+    pub upgrader_backup_snapshot_id: Option<String>,
     pub cycles: u64,
     pub upgrader_cycles: Option<u64>,
     pub last_upgrade_timestamp: TimestampRfc3339,

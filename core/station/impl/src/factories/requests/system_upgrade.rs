@@ -113,6 +113,7 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
                         &self.operation.input.module,
                         &self.operation.input.module_extra_chunks,
                         self.operation.input.arg.clone(),
+                        self.operation.input.backup_snapshot.unwrap_or_default(),
                     )
                     .await
                     .map_err(|err| RequestExecuteError::Failed {

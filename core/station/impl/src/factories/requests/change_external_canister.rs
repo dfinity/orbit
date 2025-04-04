@@ -79,6 +79,8 @@ impl Execute for ChangeExternalCanisterRequestExecute<'_, '_> {
                 &self.operation.input.module,
                 &self.operation.input.module_extra_chunks,
                 self.operation.input.arg.clone(),
+                false,
+                None,
             )
             .await
             .map_err(|err| RequestExecuteError::Failed {

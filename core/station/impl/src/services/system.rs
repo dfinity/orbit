@@ -200,20 +200,31 @@ impl SystemService {
         module: &[u8],
         module_extra_chunks: &Option<WasmModuleExtraChunks>,
         arg: Option<Vec<u8>>,
+        take_backup_snapshot: bool,
     ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
-        self.change_canister_service
+        let replace_snapshot = self.get_system_info().get_upgrader_backup_snapshot_id();
+        let backup_snapshot_id = self
+            .change_canister_service
             .install_canister(
                 upgrader_canister_id,
                 CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}),
                 module,
                 module_extra_chunks,
                 arg,
+                take_backup_snapshot,
+                replace_snapshot,
             )
             .await
             .map_err(|e| SystemError::UpgradeFailed {
                 reason: e.to_string(),
             })?;
+
+        if let Some(snapshot_id) = backup_snapshot_id {
+            let mut system_info = self.get_system_info();
+            system_info.set_upgrader_backup_snapshot_id(snapshot_id);
+            write_system_info(system_info);
+        }
 
         Ok(())
     }

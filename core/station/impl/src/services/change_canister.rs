@@ -154,6 +154,8 @@ impl ChangeCanisterService {
     }
 
     /// Execute an install or upgrade of a canister.
+    /// Returns the new backup snapshot id if a backup snapshot was taken.
+    #[allow(clippy::too_many_arguments)]
     pub async fn install_canister(
         &self,
         canister_id: Principal,
@@ -161,10 +163,28 @@ impl ChangeCanisterService {
         module: &[u8],
         module_extra_chunks: &Option<WasmModuleExtraChunks>,
         arg: Option<Vec<u8>>,
-    ) -> ServiceResult<(), ChangeCanisterError> {
+        take_backup_snapshot: bool,
+        replace_snapshot: Option<Vec<u8>>,
+    ) -> ServiceResult<Option<Vec<u8>>, ChangeCanisterError> {
         use candid::Encode;
 
         self.stop_canister(canister_id).await?;
+
+        let backup_snapshot_id = if take_backup_snapshot {
+            // Take snapshot
+            let snapshot_id = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {
+                canister_id,
+                replace_snapshot,
+            })
+            .await
+            .map(|res| res.0.id)
+            .map_err(|(_, err)| ChangeCanisterError::Failed {
+                reason: err.to_string(),
+            })?;
+            Some(snapshot_id)
+        } else {
+            None
+        };
 
         // Install or upgrade canister
         let default_bytes = Encode!(&()).unwrap();
@@ -181,6 +201,6 @@ impl ChangeCanisterService {
         // Restart canister (regardless of whether the upgrade succeeded or not)
         self.start_canister(canister_id).await?;
 
-        install_code_result
+        install_code_result.map(|()| backup_snapshot_id)
     }
 }
