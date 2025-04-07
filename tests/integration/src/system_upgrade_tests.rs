@@ -1,8 +1,8 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     execute_request, execute_request_with_extra_ticks, get_core_canister_health_status,
-    get_request, get_system_info, submit_delayed_request_raw,
-    upload_canister_chunks_to_asset_canister, wait_for_request_with_extra_ticks,
+    get_system_info, submit_delayed_request_raw, upload_canister_chunks_to_asset_canister,
+    wait_for_request,
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
@@ -356,37 +356,25 @@ fn delayed_system_upgrade() {
             arg: Some(upgrader_init_arg_bytes),
         });
 
+    let delay = Duration::from_secs(30 * 24 * 60 * 60);
     let request = submit_delayed_request_raw(
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
         system_upgrade_operation,
-        Duration::from_secs(30 * 24 * 60 * 60),
+        delay,
     )
     .unwrap()
     .0
     .unwrap()
     .request;
 
-    for _ in 0..100 {
-        let request = get_request(
-            &env,
-            WALLET_ADMIN_USER,
-            canister_ids.station,
-            request.clone(),
-        );
-        match request.status {
-            RequestStatusDTO::Created => (),
-            _ => {
-                break;
-            }
-        };
-        env.advance_time(Duration::from_secs(5));
-        env.tick();
-    }
+    match request.status {
+        RequestStatusDTO::Created => (),
+        _ => panic!("Unexpected request status: {:?}", request.status),
+    };
 
-    env.advance_time(Duration::from_secs(30 * 24 * 60 * 60));
+    env.advance_time(delay);
 
-    wait_for_request_with_extra_ticks(&env, WALLET_ADMIN_USER, canister_ids.station, request, 0)
-        .unwrap();
+    wait_for_request(&env, WALLET_ADMIN_USER, canister_ids.station, request).unwrap();
 }
