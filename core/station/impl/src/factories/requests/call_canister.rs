@@ -1,11 +1,12 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{CallExternalCanisterOperation, CanisterMethod, Request, RequestOperation},
+    models::{CallExternalCanisterOperation, Request, RequestOperation},
     services::ExternalCanisterService,
 };
 use async_trait::async_trait;
 use candid::Decode;
+use orbit_essentials::model::ModelValidator;
 use orbit_essentials::types::UUID;
 use sha2::{Digest, Sha256};
 use station_api::{CallExternalCanisterOperationInput, CreateRequestInput};
@@ -24,21 +25,27 @@ impl Create<CallExternalCanisterOperationInput> for CallExternalCanisterRequestC
         input: CreateRequestInput,
         operation_input: CallExternalCanisterOperationInput,
     ) -> Result<Request, RequestError> {
-        // Disallows the wildcard execution method
-        if operation_input.execution_method.method_name == CanisterMethod::WILDCARD {
-            return Err(RequestError::ValidationError {
-                info: "Wildcard execution method is not allowed.".to_string(),
-            });
-        }
+        let mut op = CallExternalCanisterOperation {
+            arg_checksum: operation_input.arg.as_ref().map(|arg| {
+                let mut hasher = Sha256::new();
+                hasher.update(arg);
+                hasher.finalize().to_vec()
+            }),
+            arg_rendering: None,
+            execution_method_reply: None,
+            input: operation_input.into(),
+        };
 
-        let arg_rendering = match operation_input.validation_method {
+        op.input.validate()?;
+
+        let arg_rendering = match op.input.validation_method {
             Some(ref validation_method) => {
                 let rendering_bytes = self
                     .external_canister_service
                     .call_external_canister(
                         validation_method.canister_id,
                         validation_method.method_name.clone(),
-                        operation_input.arg.clone(),
+                        op.input.arg.clone(),
                         None,
                     )
                     .await
@@ -64,20 +71,13 @@ impl Create<CallExternalCanisterOperationInput> for CallExternalCanisterRequestC
             None => None,
         };
 
+        op.arg_rendering = arg_rendering;
+
         let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
             input,
-            RequestOperation::CallExternalCanister(CallExternalCanisterOperation {
-                arg_checksum: operation_input.arg.as_ref().map(|arg| {
-                    let mut hasher = Sha256::new();
-                    hasher.update(arg);
-                    hasher.finalize().to_vec()
-                }),
-                arg_rendering,
-                execution_method_reply: None,
-                input: operation_input.into(),
-            }),
+            RequestOperation::CallExternalCanister(op),
             "Call canister".to_string(),
         );
 
