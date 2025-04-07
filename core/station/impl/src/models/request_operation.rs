@@ -1093,46 +1093,26 @@ impl ModelValidator<ValidationError> for RequestOperation {
                 EnsureUserGroup::id_exists(&ok.input.user_group_id)?;
             }
             RequestOperation::SystemUpgrade(_) => (),
-            RequestOperation::ChangeExternalCanister(op) => {
-                let canister_id = op.input.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
-            }
+            RequestOperation::ChangeExternalCanister(_) => (),
             RequestOperation::ConfigureExternalCanister(op) => {
-                let canister_id = op.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
                 if let ConfigureExternalCanisterOperationKind::Settings(settings) = &op.kind {
                     if let Some(updated_request_policies) = &settings.request_policies {
-                        ContextualModel::new(updated_request_policies.clone(), canister_id)
+                        ContextualModel::new(updated_request_policies.clone(), op.canister_id)
                             .validate()?;
                     }
                 }
             }
-            RequestOperation::FundExternalCanister(op) => {
-                let canister_id = op.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
-            }
-            RequestOperation::MonitorExternalCanister(op) => {
-                let canister_id = op.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
-            }
+            RequestOperation::FundExternalCanister(_) => (),
+            RequestOperation::MonitorExternalCanister(_) => (),
             RequestOperation::CreateExternalCanister(op) => {
                 op.input.validate()?;
             }
             RequestOperation::CallExternalCanister(op) => {
                 op.input.validate()?;
             }
-            RequestOperation::SnapshotExternalCanister(op) => {
-                let canister_id = op.input.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
-            }
-            RequestOperation::RestoreExternalCanister(op) => {
-                let canister_id = op.input.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
-            }
-            RequestOperation::PruneExternalCanister(op) => {
-                let canister_id = op.input.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
-            }
+            RequestOperation::SnapshotExternalCanister(_) => (),
+            RequestOperation::RestoreExternalCanister(_) => (),
+            RequestOperation::PruneExternalCanister(_) => (),
             RequestOperation::AddRequestPolicy(op) => {
                 op.input.specifier.validate()?;
                 op.input.rule.validate()?;
