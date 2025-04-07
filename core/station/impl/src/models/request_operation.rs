@@ -1179,13 +1179,11 @@ impl ModelValidator<ValidationError> for RequestOperation {
 mod test {
     use super::*;
     use crate::core::validation::disable_mock_resource_validation;
-    use crate::core::write_system_info;
-    use crate::errors::ExternalCanisterValidationError;
     use crate::models::asset_test_utils::mock_asset;
     use crate::models::permission::Allow;
     use crate::models::{
         Account, AccountKey, AddAccountOperationInput, AddAssetOperationInput, AddUserOperation,
-        AddUserOperationInput, Blockchain, Metadata, SystemInfo, TokenStandard, TransferOperation,
+        AddUserOperationInput, Blockchain, Metadata, TokenStandard, TransferOperation,
         TransferOperationInput,
     };
     use crate::repositories::ACCOUNT_REPOSITORY;
