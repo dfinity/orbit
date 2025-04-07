@@ -372,9 +372,9 @@ impl ModelValidator<RequestError> for Request {
         };
         if must_not_be_expired {
             validate_expiration_dt(&self.expiration_dt)?;
+            validate_execution_plan(&self.execution_plan)?;
         }
 
-        validate_execution_plan(&self.execution_plan)?;
         validate_status(&self.status)?;
         validate_request_operation_foreign_keys(&self.operation)?;
 
