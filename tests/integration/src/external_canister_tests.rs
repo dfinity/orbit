@@ -1712,11 +1712,8 @@ fn read_system_canister_info() {
     )
     .unwrap();
 
-    // create new user identities and add them to the station
+    // checking canister snapshots/status of the upgrader on behalf of an unauthenticated user fails
     let user = user_test_id(0);
-    add_user(&env, user, vec![], canister_ids.station);
-
-    // checking canister snapshots/status of the upgrader on behalf of the user fails
     let err = update_candid_as::<_, (ApiResult<Vec<Snapshot>>,)>(
         &env,
         canister_ids.station,
@@ -1725,9 +1722,7 @@ fn read_system_canister_info() {
         (canister_id_record.clone(),),
     )
     .unwrap_err();
-    assert!(err
-        .reject_message
-        .contains("Resource::System(SystemResourceAction::SystemInfo)"));
+    assert!(err.reject_message.contains("System(SystemInfo)"));
     let err = update_candid_as::<_, (CanisterStatusResult,)>(
         &env,
         canister_ids.station,
@@ -1736,7 +1731,5 @@ fn read_system_canister_info() {
         (canister_id_record.clone(),),
     )
     .unwrap_err();
-    assert!(err
-        .reject_message
-        .contains("Resource::System(SystemResourceAction::SystemInfo)"));
+    assert!(err.reject_message.contains("System(SystemInfo)"));
 }

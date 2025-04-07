@@ -78,7 +78,7 @@ impl ExternalCanisterController {
             .await
     }
 
-    #[with_middleware(guard = authorize(&call_context(), &[Resource::ExternalCanister(ExternalCanisterResourceAction::Read(ExternalCanisterId::Canister(input.canister_id)))]))]
+    #[with_middleware(guard = authorize(&call_context(), &[Resource::from(&input)]))]
     async fn canister_snapshots(&self, input: CanisterSnapshotsInput) -> ApiResult<Vec<Snapshot>> {
         self.canister_service
             .canister_snapshots(input.canister_id)
