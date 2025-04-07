@@ -502,6 +502,18 @@ impl RequestService {
                     reason: e.to_string(),
                 })?;
 
+        if let Err(err) = request.validate() {
+            match err {
+                RequestError::ValidationError { info } => {
+                    return Err(RequestExecuteError::ValidationError { info });
+                }
+                _ => {
+                    let reason = format!("Unexpected validation result: {:?}", err);
+                    return Err(RequestExecuteError::InternalError { reason });
+                }
+            }
+        }
+
         if !matches!(request.status, RequestStatus::Processing { .. }) {
             let reason = format!(
                 "The request {} is not processing and thus cannot be executed.",

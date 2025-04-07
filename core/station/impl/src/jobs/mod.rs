@@ -296,10 +296,10 @@ mod test {
     use crate::models::account_test_utils::mock_account;
     use crate::models::asset_test_utils::mock_asset;
     use crate::models::transfer_test_utils::mock_transfer;
-    use crate::models::{Account, AccountAsset, RequestStatus};
+    use crate::models::{Account, AccountAsset, RequestStatus, User, UserStatus};
     use crate::repositories::{
         RequestRepository, TransferRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY,
-        TRANSFER_REPOSITORY,
+        TRANSFER_REPOSITORY, USER_REPOSITORY,
     };
     use crate::{
         jobs::{cancel_expired_requests, to_coarse_time, JobStateDatabase, ScheduledJob},
@@ -481,6 +481,16 @@ mod test {
         let asset = mock_asset();
         ASSET_REPOSITORY.insert(asset.key(), asset.clone());
 
+        let user = User {
+            id: mock_request().requested_by,
+            name: "Mock user".to_string(),
+            status: UserStatus::Active,
+            identities: vec![],
+            groups: vec![],
+            last_modification_timestamp: 0,
+        };
+        USER_REPOSITORY.insert(user.key(), user);
+
         // create one account so transfer requests dont fail
         let account = Account {
             id: [1; 16],
@@ -504,7 +514,10 @@ mod test {
 
         // create 3 requests that must be set to scheduled
         for _ in 0..3 {
-            let request = mock_request();
+            let request = Request {
+                expiration_dt: expiration,
+                ..mock_request()
+            };
             request_repository.insert(request.to_key(), request);
         }
 
@@ -514,6 +527,7 @@ mod test {
                 status: RequestStatus::Scheduled {
                     scheduled_at: time(),
                 },
+                expiration_dt: expiration,
                 ..mock_request()
             };
             request_repository.insert(request.to_key(), request);
@@ -575,16 +589,6 @@ mod test {
         assert!(!JobStateDatabase::get_time_job_maps()
             .contains_key(&execute_created_transfers::Job::JOB_TYPE));
 
-        // time for expiration
-        set_mock_ic_time(SystemTime::UNIX_EPOCH + Duration::from_nanos(expiration_coarse));
-
-        // run the expiration job
-        Scheduler::run_scheduled::<cancel_expired_requests::Job>(expiration_coarse).await;
-
-        // expiration jobs should be removed
-        assert!(!JobStateDatabase::get_time_job_maps()
-            .contains_key(&cancel_expired_requests::Job::JOB_TYPE));
-
         // run the scheduled requests job
         for at_ns in JobStateDatabase::get_time_job_maps()
             .get(&execute_scheduled_requests::Job::JOB_TYPE)
@@ -597,6 +601,16 @@ mod test {
         // all scheduled requests should be executed
         assert!(!JobStateDatabase::get_time_job_maps()
             .contains_key(&execute_scheduled_requests::Job::JOB_TYPE));
+
+        // time for expiration
+        set_mock_ic_time(SystemTime::UNIX_EPOCH + Duration::from_nanos(expiration_coarse));
+
+        // run the expiration job
+        Scheduler::run_scheduled::<cancel_expired_requests::Job>(expiration_coarse).await;
+
+        // expiration jobs should be removed
+        assert!(!JobStateDatabase::get_time_job_maps()
+            .contains_key(&cancel_expired_requests::Job::JOB_TYPE));
 
         // there should be 7 new transfer jobs scheduled
         assert_eq!(
