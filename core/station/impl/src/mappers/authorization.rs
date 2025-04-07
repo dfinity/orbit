@@ -1,6 +1,6 @@
 use super::HelperMapper;
 use crate::{
-    core::{ic_cdk::api::trap, CallContext},
+    core::{ic_cdk::api::trap, validation::EnsureExternalCanister, CallContext},
     models::{
         resource::{
             AccountResourceAction, CallExternalCanisterResourceTarget,
@@ -15,7 +15,9 @@ use crate::{
 };
 use orbit_essentials::repository::Repository;
 use orbit_essentials::types::UUID;
-use station_api::{RequestOperationInput, UserPrivilege};
+use station_api::{
+    CanisterSnapshotsInput, CanisterStatusInput, RequestOperationInput, UserPrivilege,
+};
 
 pub const USER_PRIVILEGES: [UserPrivilege; 23] = [
     UserPrivilege::Capabilities,
@@ -376,6 +378,32 @@ impl From<&station_api::CreateRequestInput> for Resource {
                         .as_bytes(),
                 )))
             }
+        }
+    }
+}
+
+impl From<&CanisterSnapshotsInput> for Resource {
+    fn from(input: &CanisterSnapshotsInput) -> Self {
+        let canister_id = input.canister_id;
+        if let Ok(()) = EnsureExternalCanister::is_external_canister(canister_id) {
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
+                ExternalCanisterId::Canister(canister_id),
+            ))
+        } else {
+            Resource::System(SystemResourceAction::SystemInfo)
+        }
+    }
+}
+
+impl From<&CanisterStatusInput> for Resource {
+    fn from(input: &CanisterStatusInput) -> Self {
+        let canister_id = input.canister_id;
+        if let Ok(()) = EnsureExternalCanister::is_external_canister(canister_id) {
+            Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
+                ExternalCanisterId::Canister(canister_id),
+            ))
+        } else {
+            Resource::System(SystemResourceAction::SystemInfo)
         }
     }
 }

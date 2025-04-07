@@ -1,8 +1,8 @@
 use crate::setup::{create_canister, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     add_user, bump_time_to_avoid_ratelimit, canister_status, deploy_test_canister, execute_request,
-    get_core_canister_health_status, get_request, hash, submit_request, submit_request_approval,
-    submit_request_raw, submit_request_with_expected_trap, update_raw,
+    get_core_canister_health_status, get_request, get_system_info, hash, submit_request,
+    submit_request_approval, submit_request_raw, submit_request_with_expected_trap, update_raw,
     upload_canister_chunks_to_asset_canister, user_test_id, wait_for_request, COUNTER_WAT,
 };
 use crate::TestEnv;
@@ -1678,4 +1678,65 @@ fn snapshot_unstoppable_external_canister_test() {
     env.advance_time(Duration::from_secs(5 * 60));
     // the request should succeed now
     wait_for_request(&env, WALLET_ADMIN_USER, canister_ids.station, request).unwrap();
+}
+
+#[test]
+fn read_system_canister_info() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+
+    // checking canister snapshots/status of the upgrader on behalf of the admin succeeds
+    let canister_id_record = CanisterIdRecord {
+        canister_id: upgrader_id,
+    };
+    update_candid_as::<_, (ApiResult<Vec<Snapshot>>,)>(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "canister_snapshots",
+        (canister_id_record.clone(),),
+    )
+    .unwrap()
+    .0
+    .unwrap();
+    update_candid_as::<_, (CanisterStatusResult,)>(
+        &env,
+        canister_ids.station,
+        WALLET_ADMIN_USER,
+        "canister_status",
+        (canister_id_record.clone(),),
+    )
+    .unwrap();
+
+    // create new user identities and add them to the station
+    let user = user_test_id(0);
+    add_user(&env, user, vec![], canister_ids.station);
+
+    // checking canister snapshots/status of the upgrader on behalf of the user fails
+    let err = update_candid_as::<_, (ApiResult<Vec<Snapshot>>,)>(
+        &env,
+        canister_ids.station,
+        user,
+        "canister_snapshots",
+        (canister_id_record.clone(),),
+    )
+    .unwrap_err();
+    assert!(err
+        .reject_message
+        .contains("Resource::System(SystemResourceAction::SystemInfo)"));
+    let err = update_candid_as::<_, (CanisterStatusResult,)>(
+        &env,
+        canister_ids.station,
+        user,
+        "canister_status",
+        (canister_id_record.clone(),),
+    )
+    .unwrap_err();
+    assert!(err
+        .reject_message
+        .contains("Resource::System(SystemResourceAction::SystemInfo)"));
 }

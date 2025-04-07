@@ -420,11 +420,9 @@ impl ExternalCanisterService {
     /// The station needs to be a controller of the target canister.
     pub async fn canister_status(
         &self,
-        input: CanisterIdRecord,
+        canister_id: Principal,
     ) -> ServiceResult<CanisterStatusResponse> {
-        let canister_status_arg = CanisterIdRecord {
-            canister_id: input.canister_id,
-        };
+        let canister_status_arg = CanisterIdRecord { canister_id };
 
         let canister_status_response = mgmt::canister_status(canister_status_arg)
             .await
@@ -439,13 +437,8 @@ impl ExternalCanisterService {
     /// Calls the management canister to get the snapshots of the canister with the given id.
     ///
     /// The station needs to be a controller of the target canister.
-    pub async fn canister_snapshots(
-        &self,
-        input: CanisterIdRecord,
-    ) -> ServiceResult<Vec<Snapshot>> {
-        let canister_snapshots_arg = CanisterIdRecord {
-            canister_id: input.canister_id,
-        };
+    pub async fn canister_snapshots(&self, canister_id: Principal) -> ServiceResult<Vec<Snapshot>> {
+        let canister_snapshots_arg = CanisterIdRecord { canister_id };
 
         let canister_snapshots_response = mgmt::list_canister_snapshots(canister_snapshots_arg)
             .await
