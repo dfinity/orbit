@@ -514,10 +514,7 @@ mod test {
 
         // create 3 requests that must be set to scheduled
         for _ in 0..3 {
-            let request = Request {
-                expiration_dt: expiration,
-                ..mock_request()
-            };
+            let request = mock_request();
             request_repository.insert(request.to_key(), request);
         }
 
@@ -527,7 +524,6 @@ mod test {
                 status: RequestStatus::Scheduled {
                     scheduled_at: time(),
                 },
-                expiration_dt: expiration,
                 ..mock_request()
             };
             request_repository.insert(request.to_key(), request);
@@ -589,6 +585,16 @@ mod test {
         assert!(!JobStateDatabase::get_time_job_maps()
             .contains_key(&execute_created_transfers::Job::JOB_TYPE));
 
+        // time for expiration
+        set_mock_ic_time(SystemTime::UNIX_EPOCH + Duration::from_nanos(expiration_coarse));
+
+        // run the expiration job
+        Scheduler::run_scheduled::<cancel_expired_requests::Job>(expiration_coarse).await;
+
+        // expiration jobs should be removed
+        assert!(!JobStateDatabase::get_time_job_maps()
+            .contains_key(&cancel_expired_requests::Job::JOB_TYPE));
+
         // run the scheduled requests job
         for at_ns in JobStateDatabase::get_time_job_maps()
             .get(&execute_scheduled_requests::Job::JOB_TYPE)
@@ -601,16 +607,6 @@ mod test {
         // all scheduled requests should be executed
         assert!(!JobStateDatabase::get_time_job_maps()
             .contains_key(&execute_scheduled_requests::Job::JOB_TYPE));
-
-        // time for expiration
-        set_mock_ic_time(SystemTime::UNIX_EPOCH + Duration::from_nanos(expiration_coarse));
-
-        // run the expiration job
-        Scheduler::run_scheduled::<cancel_expired_requests::Job>(expiration_coarse).await;
-
-        // expiration jobs should be removed
-        assert!(!JobStateDatabase::get_time_job_maps()
-            .contains_key(&cancel_expired_requests::Job::JOB_TYPE));
 
         // there should be 7 new transfer jobs scheduled
         assert_eq!(
