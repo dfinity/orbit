@@ -1095,9 +1095,10 @@ impl ModelValidator<ValidationError> for RequestOperation {
             RequestOperation::SystemUpgrade(_) => (),
             RequestOperation::ChangeExternalCanister(_) => (),
             RequestOperation::ConfigureExternalCanister(op) => {
+                let canister_id = op.canister_id;
                 if let ConfigureExternalCanisterOperationKind::Settings(settings) = &op.kind {
                     if let Some(updated_request_policies) = &settings.request_policies {
-                        ContextualModel::new(updated_request_policies.clone(), op.canister_id)
+                        ContextualModel::new(updated_request_policies.clone(), canister_id)
                             .validate()?;
                     }
                 }
