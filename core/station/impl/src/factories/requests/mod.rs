@@ -3,8 +3,8 @@ use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{Request, RequestOperation},
     services::{
-        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, DISASTER_RECOVERY_SERVICE,
-        EXTERNAL_CANISTER_SERVICE, REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
+        permission::PERMISSION_SERVICE, CHANGE_CANISTER_SERVICE, EXTERNAL_CANISTER_SERVICE,
+        REQUEST_POLICY_SERVICE, SYSTEM_SERVICE,
     },
 };
 use async_trait::async_trait;
@@ -369,14 +369,9 @@ impl RequestFactory {
             RequestOperation::SetDisasterRecovery(operation) => Box::new(
                 set_disaster_recovery::SetDisasterRecoveryRequestExecute::new(request, operation),
             ),
-            RequestOperation::SystemUpgrade(operation) => {
-                Box::new(SystemUpgradeRequestExecute::new(
-                    request,
-                    operation,
-                    Arc::clone(&SYSTEM_SERVICE),
-                    Arc::clone(&DISASTER_RECOVERY_SERVICE),
-                ))
-            }
+            RequestOperation::SystemUpgrade(operation) => Box::new(
+                SystemUpgradeRequestExecute::new(request, operation, Arc::clone(&SYSTEM_SERVICE)),
+            ),
             RequestOperation::ChangeExternalCanister(operation) => {
                 Box::new(ChangeExternalCanisterRequestExecute::new(
                     request,
