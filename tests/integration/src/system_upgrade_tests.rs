@@ -1,18 +1,19 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     execute_request, execute_request_with_extra_ticks, get_core_canister_health_status,
-    get_system_info, submit_delayed_request_raw, upload_canister_chunks_to_asset_canister,
-    wait_for_request,
+    get_request, get_system_info, submit_delayed_request_raw,
+    upload_canister_chunks_to_asset_canister, wait_for_request,
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
+use orbit_essentials::utils::rfc3339_to_timestamp;
 use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
     HealthStatus, NotifyFailedStationUpgradeInput, RequestOperationInput, RequestStatusDTO,
     SystemInstall, SystemUpgrade, SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
 };
-use std::time::Duration;
+use std::time::{Duration, UNIX_EPOCH};
 use upgrader_api::InitArg;
 
 pub(crate) const STATION_UPGRADE_EXTRA_TICKS: u64 = 200;
@@ -357,7 +358,13 @@ fn delayed_system_upgrade() {
         });
 
     let delay = Duration::from_secs(30 * 24 * 60 * 60);
-    let request = submit_delayed_request_raw(
+    let expected_scheduled_at: u64 = (env.get_time() + delay)
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos()
+        .try_into()
+        .unwrap();
+    let mut request = submit_delayed_request_raw(
         &env,
         WALLET_ADMIN_USER,
         canister_ids.station,
@@ -370,9 +377,22 @@ fn delayed_system_upgrade() {
     .request;
 
     match request.status {
-        RequestStatusDTO::Created => (),
+        RequestStatusDTO::Approved => (),
         _ => panic!("Unexpected request status: {:?}", request.status),
     };
+
+    loop {
+        request = get_request(&env, WALLET_ADMIN_USER, canister_ids.station, request);
+        match request.status {
+            RequestStatusDTO::Scheduled { ref scheduled_at } => {
+                assert!(rfc3339_to_timestamp(scheduled_at) >= expected_scheduled_at);
+                break;
+            }
+            _ => (),
+        };
+        env.advance_time(Duration::from_secs(1));
+        env.tick();
+    }
 
     env.advance_time(delay);
 
