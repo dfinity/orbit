@@ -383,12 +383,9 @@ fn delayed_system_upgrade() {
 
     loop {
         request = get_request(&env, WALLET_ADMIN_USER, canister_ids.station, request);
-        match request.status {
-            RequestStatusDTO::Scheduled { ref scheduled_at } => {
-                assert!(rfc3339_to_timestamp(scheduled_at) >= expected_scheduled_at);
-                break;
-            }
-            _ => (),
+        if let RequestStatusDTO::Scheduled { ref scheduled_at } = request.status {
+            assert!(rfc3339_to_timestamp(scheduled_at) >= expected_scheduled_at);
+            break;
         };
         env.advance_time(Duration::from_secs(1));
         env.tick();
