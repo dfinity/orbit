@@ -2,7 +2,7 @@ use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
     models::{Request, RequestOperation, SystemUpgradeOperation, SystemUpgradeTarget},
-    services::{DisasterRecoveryService, SystemService},
+    services::SystemService,
 };
 use async_trait::async_trait;
 use candid::Encode;
@@ -54,7 +54,6 @@ pub struct SystemUpgradeRequestExecute<'p, 'o> {
     request: &'p Request,
     operation: &'o SystemUpgradeOperation,
     system_service: Arc<SystemService>,
-    disaster_recovery_service: Arc<DisasterRecoveryService>,
 }
 
 impl<'p, 'o> SystemUpgradeRequestExecute<'p, 'o> {
@@ -62,13 +61,11 @@ impl<'p, 'o> SystemUpgradeRequestExecute<'p, 'o> {
         request: &'p Request,
         operation: &'o SystemUpgradeOperation,
         system_service: Arc<SystemService>,
-        disaster_recovery_service: Arc<DisasterRecoveryService>,
     ) -> Self {
         Self {
             request,
             operation,
             system_service,
-            disaster_recovery_service,
         }
     }
 }
@@ -117,12 +114,6 @@ impl Execute for SystemUpgradeRequestExecute<'_, '_> {
                     .map_err(|err| RequestExecuteError::Failed {
                         reason: format!("failed to upgrade upgrader: {} ({:?})", err, err.details),
                     })?;
-
-                // The upgrader might have just gained the ability to perform disaster recovery, so sync it now.
-                let disaster_recovery_service = Arc::clone(&self.disaster_recovery_service);
-                crate::core::ic_cdk::spawn(async move {
-                    disaster_recovery_service.sync_all().await;
-                });
 
                 let mut operation = self.request.operation.clone();
                 if let RequestOperation::SystemUpgrade(operation) = &mut operation {
