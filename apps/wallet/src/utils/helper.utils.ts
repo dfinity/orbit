@@ -1,4 +1,5 @@
 import { Certificate, HttpAgent, LookupStatus } from '@dfinity/agent';
+import { decode } from '@dfinity/agent/lib/cjs/cbor';
 import type { IDL as CandidIDL } from '@dfinity/candid';
 import { Principal } from '@dfinity/principal';
 import { toRaw } from 'vue';
@@ -462,6 +463,42 @@ export async function fetchCanisterModuleHash(
   }
 
   return arrayBufferToHex(moduleHash.value);
+}
+
+export async function fetchCanisterControllers(
+  agent: HttpAgent,
+  canisterId: Principal,
+): Promise<Principal[] | null> {
+  const encoder = new TextEncoder();
+  const controllersPath: ArrayBuffer[] = [
+    encoder.encode('canister'),
+    canisterId.toUint8Array(),
+    encoder.encode('controllers'),
+  ];
+
+  const state = await agent.readState(canisterId, {
+    paths: [controllersPath],
+  });
+
+  const certificate = await Certificate.create({
+    canisterId,
+    certificate: state.certificate,
+    rootKey: agent.rootKey,
+  });
+
+  const controllers = certificate.lookup(controllersPath);
+
+  if (controllers.status !== LookupStatus.Found) {
+    return null;
+  }
+
+  if (!(controllers.value instanceof ArrayBuffer)) {
+    throw new Error('Controllers value is not an ArrayBuffer');
+  }
+
+  const cbor = decode<Uint8Array[]>(controllers.value);
+
+  return cbor.map(controller => Principal.fromUint8Array(controller));
 }
 
 /**

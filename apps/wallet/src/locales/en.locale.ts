@@ -21,6 +21,7 @@ export default {
     station_info_card_remove_btn: 'Remove wallet',
     station_info_card_remove_btn_confirm: 'Are you sure you want to remove this wallet?',
     disaster_recovery_card_title: 'Disaster Recovery',
+    disaster_recovery: 'Disaster Recovery',
     disaster_recovery_not_configured: 'Disaster recovery not configured.',
     disaster_recovery_dialog_title: 'Configure Disaster Recovery',
     manage_associated_station: 'Manage associated wallet',
@@ -1057,6 +1058,22 @@ export default {
     error: {
       title: 'Error',
       subtitle: 'An error occurred while loading the page.',
+    },
+    disaster_recovery: {
+      title: 'Disaster Recovery',
+      subtitle: 'Input the disaster recovery payload to restore your wallet.',
+      payload_label: 'Recovery Payload',
+      payload_placeholder: 'Paste your recovery payload here...',
+      submit_button: 'Submit Recovery Data',
+      recovery_instructions: 'Contact your wallet administrator to obtain a recovery payload.',
+      success_message: 'Recovery data submitted successfully.',
+      error_message: 'Failed to process recovery data. Please check your input and try again.',
+
+      loading_state: 'Getting upgrader information...',
+      error_state: 'Failed to get upgrader: {error}',
+      error_no_upgrader_found: 'No upgrader found',
+      error_state_loading: 'Loading disaster recovery state...',
+      error_state_loading_failed: 'Failed to get disaster recovery state: {error}',
     },
   },
   session: {

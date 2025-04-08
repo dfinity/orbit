@@ -8,6 +8,7 @@
           :title="$t('pages.unauthorized.title')"
           :subtitle="$t('pages.unauthorized.subtitle')"
           show-back-to-home
+          show-disaster-recovery
         />
 
         <ErrorScreen
@@ -16,6 +17,7 @@
           :title="$t('pages.not_found.title')"
           :subtitle="$t('pages.not_found.subtitle')"
           show-back-to-home
+          show-disaster-recovery
         />
 
         <ErrorScreen
@@ -27,6 +29,7 @@
           :title="$t('pages.disconnected.title_not_found_user_identity')"
           :subtitle="$t('pages.disconnected.subtitle_not_found_user_identity')"
           :show-back-to-home="false"
+          show-disaster-recovery
         >
           <div class="mt-4 w-md-75">
             <VTextField
@@ -56,6 +59,7 @@
             station.connectionErrorMessage || $t('pages.disconnected.subtitle_other_station_error')
           "
           :show-back-to-home="false"
+          show-disaster-recovery
         />
 
         <ErrorScreen
@@ -67,6 +71,7 @@
           :title="$t('pages.disconnected.title_canister_error')"
           :subtitle="$t('pages.disconnected.subtitle_canister_error')"
           :show-back-to-home="false"
+          show-disaster-recovery
         >
           <VTextarea
             v-model="station.connectionErrorMessage"
@@ -82,6 +87,7 @@
           :title="$t('pages.error.title')"
           :subtitle="$t('pages.error.subtitle')"
           show-back-to-home
+          show-disaster-recovery
         />
       </VCard>
     </template>

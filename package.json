@@ -6,9 +6,17 @@
     "lint": "pnpm run -r lint",
     "format": "pnpm run -r format",
     "test": "pnpm run -r test",
+    "dev": "pnpm run -r dev",
+    "dev:marketing": "pnpm run --filter \"./apps/marketing\" dev",
+    "dev:wallet": "pnpm run --filter \"./apps/wallet\" dev",
     "type-check": "pnpm run -r type-check",
     "postinstall": "pnpm run -r postinstall && pnpm run prepare-cli",
-    "prepare-cli": "pnpm run --filter orbit-cli build && pnpm run --filter orbit-cli expose"
+    "prepare-cli": "pnpm run --filter orbit-cli build && pnpm run --filter orbit-cli expose",
+    "test:e2e:deploy": "dfx start --background --clean  && ./orbit --init",
+    "test:e2e:run": "WALLET_URL=http://localhost:`dfx info webserver-port`?canisterId=werw6-ayaaa-aaaaa-774aa-cai playwright test",
+    "test:e2e:dev": "concurrently \"pnpm run dev:wallet\" \"WALLET_URL=http://localhost:5173?canisterId=werw6-ayaaa-aaaaa-774aa-cai playwright test --ui\"",
+    "test:e2e:stop": "dfx stop",
+    "test:e2e": "pnpm run test:e2e:deploy && pnpm run test:e2e:run && pnpm run test:e2e:stop"
   },
   "engines": {
     "node": "^20",
@@ -24,6 +32,7 @@
     "@nx/devkit": "19.8.3",
     "@nx/js": "19.8.3",
     "@nx/workspace": "19.8.3",
+    "@playwright/test": "^1.51.1",
     "@types/node": "22.7.4",
     "@typescript-eslint/eslint-plugin": "8.23.0",
     "@typescript-eslint/parser": "8.23.0",
