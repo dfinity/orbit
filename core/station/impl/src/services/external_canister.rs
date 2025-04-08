@@ -458,7 +458,7 @@ impl ExternalCanisterService {
         arg: Option<Vec<u8>>,
         cycles: Option<u64>,
     ) -> ServiceResult<Vec<u8>, ExternalCanisterError> {
-        EnsureExternalCanister::is_external_canister(canister_id)?;
+        EnsureExternalCanister::ensure_external_canister(canister_id)?;
 
         call_raw(
             canister_id,
@@ -504,7 +504,7 @@ impl ExternalCanisterService {
                 external_canister
             }
             CreateExternalCanisterOperationKind::AddExisting(opts) => {
-                EnsureExternalCanister::is_external_canister(opts.canister_id)?;
+                EnsureExternalCanister::ensure_external_canister(opts.canister_id)?;
                 self.check_unique_canister_id(&opts.canister_id, None)?;
 
                 let external_canister =

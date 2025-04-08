@@ -385,7 +385,7 @@ impl From<&station_api::CreateRequestInput> for Resource {
 impl From<&CanisterSnapshotsInput> for Resource {
     fn from(input: &CanisterSnapshotsInput) -> Self {
         let canister_id = input.canister_id;
-        if let Ok(()) = EnsureExternalCanister::is_external_canister(canister_id) {
+        if EnsureExternalCanister::is_external_canister(canister_id) {
             Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
                 ExternalCanisterId::Canister(canister_id),
             ))
@@ -398,7 +398,7 @@ impl From<&CanisterSnapshotsInput> for Resource {
 impl From<&CanisterStatusInput> for Resource {
     fn from(input: &CanisterStatusInput) -> Self {
         let canister_id = input.canister_id;
-        if let Ok(()) = EnsureExternalCanister::is_external_canister(canister_id) {
+        if EnsureExternalCanister::is_external_canister(canister_id) {
             Resource::ExternalCanister(ExternalCanisterResourceAction::Read(
                 ExternalCanisterId::Canister(canister_id),
             ))

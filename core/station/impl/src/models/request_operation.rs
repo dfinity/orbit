@@ -767,7 +767,7 @@ impl CanisterMethod {
 
 impl ModelValidator<ValidationError> for CanisterMethod {
     fn validate(&self) -> ModelValidatorResult<ValidationError> {
-        EnsureExternalCanister::is_external_canister(self.canister_id)?;
+        EnsureExternalCanister::ensure_external_canister(self.canister_id)?;
 
         Ok(())
     }
