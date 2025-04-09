@@ -34,7 +34,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v4
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.8
       - name: 'Test cargo crates'
         run: cargo test --locked --workspace --exclude integration-tests
   test-node:
@@ -70,7 +70,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v4
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.8
       - name: 'Build Package'
         run: ./scripts/generate-wasm.sh ${{ matrix.crate }}
       - name: 'Prepare artifacts'
@@ -134,7 +134,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v4
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.8
       - name: 'Download Artifacts'
         uses: actions/download-artifact@v4
         with:
@@ -157,7 +157,7 @@ jobs:
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Run sccache-cache'
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.8
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@main
       - name: 'Start PocketIC'
@@ -182,7 +182,7 @@ jobs:
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Run sccache-cache'
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.8
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@main
       - name: 'Start local replica'
@@ -210,7 +210,7 @@ jobs:
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Run sccache-cache'
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.8
       - name: 'Install dfx'
         uses: dfinity/setup-dfx@main
       - name: 'Start local replica'

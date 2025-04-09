@@ -1,16 +1,19 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     execute_request, execute_request_with_extra_ticks, get_core_canister_health_status,
-    get_system_info, upload_canister_chunks_to_asset_canister,
+    get_request, get_system_info, submit_delayed_request_raw,
+    upload_canister_chunks_to_asset_canister, wait_for_request,
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
 use orbit_essentials::api::ApiResult;
+use orbit_essentials::utils::rfc3339_to_timestamp;
 use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
     HealthStatus, NotifyFailedStationUpgradeInput, RequestOperationInput, RequestStatusDTO,
     SystemInstall, SystemUpgrade, SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
 };
+use std::time::{Duration, UNIX_EPOCH};
 use upgrader_api::InitArg;
 
 pub(crate) const STATION_UPGRADE_EXTRA_TICKS: u64 = 200;
@@ -328,4 +331,67 @@ fn unauthorized_notify_failed_station_upgrade() {
         .message
         .unwrap()
         .contains("No station upgrade request is processing."));
+}
+
+#[test]
+fn delayed_system_upgrade() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    // upload chunks to asset canister
+    let canister_wasm = get_canister_wasm("upgrader").to_vec();
+    let (base_chunk, module_extra_chunks) =
+        upload_canister_chunks_to_asset_canister(&env, canister_wasm, 50_000);
+
+    // create system upgrade request from chunks
+    let upgrader_init_arg = InitArg {
+        target_canister: canister_ids.station,
+    };
+    let upgrader_init_arg_bytes = Encode!(&upgrader_init_arg).unwrap();
+    let system_upgrade_operation =
+        RequestOperationInput::SystemUpgrade(SystemUpgradeOperationInput {
+            target: SystemUpgradeTargetDTO::UpgradeUpgrader,
+            module: base_chunk.to_owned(),
+            module_extra_chunks: Some(module_extra_chunks),
+            arg: Some(upgrader_init_arg_bytes),
+        });
+
+    let delay = Duration::from_secs(30 * 24 * 60 * 60);
+    let expected_scheduled_at: u64 = (env.get_time() + delay)
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos()
+        .try_into()
+        .unwrap();
+    let mut request = submit_delayed_request_raw(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        system_upgrade_operation,
+        delay,
+    )
+    .unwrap()
+    .0
+    .unwrap()
+    .request;
+
+    match request.status {
+        RequestStatusDTO::Approved => (),
+        _ => panic!("Unexpected request status: {:?}", request.status),
+    };
+
+    loop {
+        request = get_request(&env, WALLET_ADMIN_USER, canister_ids.station, request);
+        if let RequestStatusDTO::Scheduled { ref scheduled_at } = request.status {
+            assert!(rfc3339_to_timestamp(scheduled_at) >= expected_scheduled_at);
+            break;
+        };
+        env.advance_time(Duration::from_secs(1));
+        env.tick();
+    }
+
+    env.advance_time(delay);
+
+    wait_for_request(&env, WALLET_ADMIN_USER, canister_ids.station, request).unwrap();
 }
