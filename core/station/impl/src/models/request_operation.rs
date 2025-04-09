@@ -771,7 +771,7 @@ impl CanisterMethod {
 
 impl ModelValidator<ValidationError> for CanisterMethod {
     fn validate(&self) -> ModelValidatorResult<ValidationError> {
-        EnsureExternalCanister::is_external_canister(self.canister_id)?;
+        EnsureExternalCanister::ensure_external_canister(self.canister_id)?;
 
         Ok(())
     }
@@ -1095,11 +1095,11 @@ impl ModelValidator<ValidationError> for RequestOperation {
             RequestOperation::SystemUpgrade(_) => (),
             RequestOperation::ChangeExternalCanister(op) => {
                 let canister_id = op.input.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
             }
             RequestOperation::ConfigureExternalCanister(op) => {
                 let canister_id = op.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
                 if let ConfigureExternalCanisterOperationKind::Settings(settings) = &op.kind {
                     if let Some(updated_request_policies) = &settings.request_policies {
                         ContextualModel::new(updated_request_policies.clone(), canister_id)
@@ -1109,11 +1109,11 @@ impl ModelValidator<ValidationError> for RequestOperation {
             }
             RequestOperation::FundExternalCanister(op) => {
                 let canister_id = op.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
             }
             RequestOperation::MonitorExternalCanister(op) => {
                 let canister_id = op.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
             }
             RequestOperation::CreateExternalCanister(op) => {
                 op.input.validate()?;
@@ -1123,15 +1123,15 @@ impl ModelValidator<ValidationError> for RequestOperation {
             }
             RequestOperation::SnapshotExternalCanister(op) => {
                 let canister_id = op.input.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
             }
             RequestOperation::RestoreExternalCanister(op) => {
                 let canister_id = op.input.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
             }
             RequestOperation::PruneExternalCanister(op) => {
                 let canister_id = op.input.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
             }
             RequestOperation::AddRequestPolicy(op) => {
                 op.input.specifier.validate()?;

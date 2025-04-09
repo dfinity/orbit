@@ -296,10 +296,10 @@ mod test {
     use crate::models::account_test_utils::mock_account;
     use crate::models::asset_test_utils::mock_asset;
     use crate::models::transfer_test_utils::mock_transfer;
-    use crate::models::{Account, AccountAsset, RequestStatus};
+    use crate::models::{Account, AccountAsset, RequestStatus, User, UserStatus};
     use crate::repositories::{
         RequestRepository, TransferRepository, ACCOUNT_REPOSITORY, ASSET_REPOSITORY,
-        TRANSFER_REPOSITORY,
+        TRANSFER_REPOSITORY, USER_REPOSITORY,
     };
     use crate::{
         jobs::{cancel_expired_requests, to_coarse_time, JobStateDatabase, ScheduledJob},
@@ -480,6 +480,16 @@ mod test {
 
         let asset = mock_asset();
         ASSET_REPOSITORY.insert(asset.key(), asset.clone());
+
+        let user = User {
+            id: mock_request().requested_by,
+            name: "Mock user".to_string(),
+            status: UserStatus::Active,
+            identities: vec![],
+            groups: vec![],
+            last_modification_timestamp: 0,
+        };
+        USER_REPOSITORY.insert(user.key(), user);
 
         // create one account so transfer requests dont fail
         let account = Account {

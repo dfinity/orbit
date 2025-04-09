@@ -191,8 +191,22 @@ impl ModelValidator<RequestError> for Request {
         validate_title(&self.title)?;
         validate_summary(&self.summary)?;
         validate_requested_by(&self.requested_by)?;
-        validate_expiration_dt(&self.expiration_dt)?;
-        validate_execution_plan(&self.execution_plan)?;
+
+        let must_not_be_expired = match self.status {
+            RequestStatus::Created => true,
+            RequestStatus::Approved
+            | RequestStatus::Rejected
+            | RequestStatus::Scheduled { .. }
+            | RequestStatus::Cancelled { .. }
+            | RequestStatus::Processing { .. }
+            | RequestStatus::Completed { .. }
+            | RequestStatus::Failed { .. } => false,
+        };
+        if must_not_be_expired {
+            validate_expiration_dt(&self.expiration_dt)?;
+            validate_execution_plan(&self.execution_plan)?;
+        }
+
         validate_status(&self.status)?;
         self.operation.validate()?;
 

@@ -407,7 +407,7 @@ impl ModelValidator<ExternalCanisterValidationError> for CreateExternalCanisterO
         match &self.kind {
             CreateExternalCanisterOperationKind::AddExisting(existing) => {
                 let canister_id = existing.canister_id;
-                EnsureExternalCanister::is_external_canister(canister_id)?;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
                 ContextualModel::new(self.request_policies.clone(), canister_id).validate()?;
             }
             CreateExternalCanisterOperationKind::CreateNew(_) => {
