@@ -34,6 +34,6 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v4
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@v0.0.8
       - name: 'Run Station Benchmarks'
         run: ./scripts/benchmark-canister.sh ./core/station/impl
