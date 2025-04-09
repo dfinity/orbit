@@ -18,17 +18,17 @@ lazy_static! {
             Allow::authenticated(),
             Resource::System(SystemResourceAction::Capabilities),
         ),
-        // Admins can read the system info which includes the canister's version, cycles, etc.
+        // all authenticated users can read the system info which includes the canister's version, cycles, etc.
         (
             Allow::authenticated(),
             Resource::System(SystemResourceAction::SystemInfo),
         ),
-        // Admins can manage the system info (e.g. change the canister's name)
+        // all authenticated users can request to manage the system info (e.g. change the canister's name)
         (
             Allow::authenticated(),
             Resource::System(SystemResourceAction::ManageSystemInfo),
         ),
-        // Admins can upgrade the canister
+        // all authenticated users can request to upgrade the canister
         (
             Allow::authenticated(),
             Resource::System(SystemResourceAction::Upgrade),
