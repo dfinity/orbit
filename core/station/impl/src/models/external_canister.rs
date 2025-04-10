@@ -10,6 +10,7 @@ use super::{
     ExternalCanisterRequestPoliciesCreateInput, ExternalCanisterRequestPoliciesUpdateInput,
     Metadata, MonitorExternalCanisterStartInput, RequestPolicy, RequestPolicyRule,
 };
+use crate::core::validation::EnsureExternalCanister;
 use crate::errors::{ExternalCanisterError, ExternalCanisterValidationError};
 use crate::repositories::REQUEST_POLICY_REPOSITORY;
 use candid::Principal;
@@ -405,8 +406,9 @@ impl ModelValidator<ExternalCanisterValidationError> for CreateExternalCanisterO
     fn validate(&self) -> ModelValidatorResult<ExternalCanisterValidationError> {
         match &self.kind {
             CreateExternalCanisterOperationKind::AddExisting(existing) => {
-                ContextualModel::new(self.request_policies.clone(), existing.canister_id)
-                    .validate()?;
+                let canister_id = existing.canister_id;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
+                ContextualModel::new(self.request_policies.clone(), canister_id).validate()?;
             }
             CreateExternalCanisterOperationKind::CreateNew(_) => {
                 if self

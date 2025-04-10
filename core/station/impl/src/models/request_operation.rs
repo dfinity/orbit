@@ -1093,9 +1093,13 @@ impl ModelValidator<ValidationError> for RequestOperation {
                 EnsureUserGroup::id_exists(&ok.input.user_group_id)?;
             }
             RequestOperation::SystemUpgrade(_) => (),
-            RequestOperation::ChangeExternalCanister(_) => (),
+            RequestOperation::ChangeExternalCanister(op) => {
+                let canister_id = op.input.canister_id;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
+            }
             RequestOperation::ConfigureExternalCanister(op) => {
                 let canister_id = op.canister_id;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
                 if let ConfigureExternalCanisterOperationKind::Settings(settings) = &op.kind {
                     if let Some(updated_request_policies) = &settings.request_policies {
                         ContextualModel::new(updated_request_policies.clone(), canister_id)
@@ -1103,17 +1107,32 @@ impl ModelValidator<ValidationError> for RequestOperation {
                     }
                 }
             }
-            RequestOperation::FundExternalCanister(_) => (),
-            RequestOperation::MonitorExternalCanister(_) => (),
+            RequestOperation::FundExternalCanister(op) => {
+                let canister_id = op.canister_id;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
+            }
+            RequestOperation::MonitorExternalCanister(op) => {
+                let canister_id = op.canister_id;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
+            }
             RequestOperation::CreateExternalCanister(op) => {
                 op.input.validate()?;
             }
             RequestOperation::CallExternalCanister(op) => {
                 op.input.validate()?;
             }
-            RequestOperation::SnapshotExternalCanister(_) => (),
-            RequestOperation::RestoreExternalCanister(_) => (),
-            RequestOperation::PruneExternalCanister(_) => (),
+            RequestOperation::SnapshotExternalCanister(op) => {
+                let canister_id = op.input.canister_id;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
+            }
+            RequestOperation::RestoreExternalCanister(op) => {
+                let canister_id = op.input.canister_id;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
+            }
+            RequestOperation::PruneExternalCanister(op) => {
+                let canister_id = op.input.canister_id;
+                EnsureExternalCanister::ensure_external_canister(canister_id)?;
+            }
             RequestOperation::AddRequestPolicy(op) => {
                 op.input.specifier.validate()?;
                 op.input.rule.validate()?;
@@ -1160,11 +1179,13 @@ impl ModelValidator<ValidationError> for RequestOperation {
 mod test {
     use super::*;
     use crate::core::validation::disable_mock_resource_validation;
+    use crate::core::write_system_info;
+    use crate::errors::ExternalCanisterValidationError;
     use crate::models::asset_test_utils::mock_asset;
     use crate::models::permission::Allow;
     use crate::models::{
         Account, AccountKey, AddAccountOperationInput, AddAssetOperationInput, AddUserOperation,
-        AddUserOperationInput, Blockchain, Metadata, TokenStandard, TransferOperation,
+        AddUserOperationInput, Blockchain, Metadata, SystemInfo, TokenStandard, TransferOperation,
         TransferOperationInput,
     };
     use crate::repositories::ACCOUNT_REPOSITORY;
@@ -1454,5 +1475,233 @@ mod test {
         })
         .validate()
         .expect_err("Invalid resource id should fail");
+    }
+
+    #[tokio::test]
+    async fn fail_request_operation_with_non_external_canister() {
+        let upgrader_id = candid::Principal::from_slice(&[42; 29]);
+        let regular_canister = candid::Principal::from_slice(&[64; 29]);
+
+        let mut system_info = SystemInfo::default();
+        system_info.set_upgrader_canister_id(upgrader_id);
+        write_system_info(system_info);
+
+        let err = RequestOperation::CreateExternalCanister(
+            crate::models::CreateExternalCanisterOperation {
+                input: crate::models::CreateExternalCanisterOperationInput {
+                    kind: crate::models::CreateExternalCanisterOperationKind::AddExisting(
+                        crate::models::CreateExternalCanisterOperationKindAddExisting {
+                            canister_id: upgrader_id,
+                        },
+                    ),
+                    name: "canister".to_string(),
+                    description: None,
+                    labels: None,
+                    metadata: None,
+                    permissions: crate::models::ExternalCanisterPermissionsCreateInput {
+                        read: Allow {
+                            auth_scope: crate::models::permission::AuthScope::Public,
+                            users: vec![],
+                            user_groups: vec![],
+                        },
+                        change: Allow {
+                            auth_scope: crate::models::permission::AuthScope::Public,
+                            users: vec![],
+                            user_groups: vec![],
+                        },
+                        calls: vec![],
+                    },
+                    request_policies: crate::models::ExternalCanisterRequestPoliciesCreateInput {
+                        change: vec![],
+                        calls: vec![],
+                    },
+                },
+                canister_id: None,
+            },
+        )
+        .validate()
+        .unwrap_err();
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
+
+        let err = RequestOperation::ChangeExternalCanister(
+            crate::models::ChangeExternalCanisterOperation {
+                input: crate::models::ChangeExternalCanisterOperationInput {
+                    canister_id: upgrader_id,
+                    mode: crate::models::CanisterInstallMode::Upgrade(
+                        crate::models::CanisterUpgradeModeArgs {},
+                    ),
+                    module: vec![],
+                    module_extra_chunks: None,
+                    arg: None,
+                },
+                module_checksum: vec![],
+                arg_checksum: None,
+            },
+        )
+        .validate()
+        .unwrap_err();
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
+
+        let err = RequestOperation::ConfigureExternalCanister(
+            crate::models::ConfigureExternalCanisterOperation {
+                canister_id: upgrader_id,
+                kind: ConfigureExternalCanisterOperationKind::Delete,
+            },
+        )
+        .validate()
+        .unwrap_err();
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
+
+        let err =
+            RequestOperation::FundExternalCanister(crate::models::FundExternalCanisterOperation {
+                canister_id: upgrader_id,
+                kind: crate::models::FundExternalCanisterOperationKind::Send(
+                    crate::models::FundExternalCanisterSendCyclesInput {
+                        cycles: 100_000_000_000,
+                    },
+                ),
+            })
+            .validate()
+            .unwrap_err();
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
+
+        let err = RequestOperation::MonitorExternalCanister(
+            crate::models::MonitorExternalCanisterOperation {
+                canister_id: upgrader_id,
+                kind: crate::models::MonitorExternalCanisterOperationKind::Stop,
+            },
+        )
+        .validate()
+        .unwrap_err();
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
+
+        let err = RequestOperation::SnapshotExternalCanister(
+            crate::models::SnapshotExternalCanisterOperation {
+                input: crate::models::SnapshotExternalCanisterOperationInput {
+                    canister_id: upgrader_id,
+                    replace_snapshot: None,
+                    force: false,
+                },
+                snapshot_id: None,
+            },
+        )
+        .validate()
+        .unwrap_err();
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
+
+        let err = RequestOperation::RestoreExternalCanister(
+            crate::models::RestoreExternalCanisterOperation {
+                input: crate::models::RestoreExternalCanisterOperationInput {
+                    canister_id: upgrader_id,
+                    snapshot_id: vec![],
+                },
+            },
+        )
+        .validate()
+        .unwrap_err();
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
+
+        let err = RequestOperation::PruneExternalCanister(
+            crate::models::PruneExternalCanisterOperation {
+                input: crate::models::PruneExternalCanisterOperationInput {
+                    canister_id: upgrader_id,
+                    prune: crate::models::PruneExternalCanisterResource::State,
+                },
+            },
+        )
+        .validate()
+        .unwrap_err();
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
+
+        let err =
+            RequestOperation::CallExternalCanister(crate::models::CallExternalCanisterOperation {
+                input: crate::models::CallExternalCanisterOperationInput {
+                    validation_method: None,
+                    execution_method: crate::models::CanisterMethod {
+                        canister_id: upgrader_id,
+                        method_name: "bar".to_string(),
+                    },
+                    arg: None,
+                    execution_method_cycles: None,
+                },
+                arg_checksum: None,
+                arg_rendering: None,
+                execution_method_reply: None,
+            })
+            .validate()
+            .unwrap_err();
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
+
+        let err =
+            RequestOperation::CallExternalCanister(crate::models::CallExternalCanisterOperation {
+                input: crate::models::CallExternalCanisterOperationInput {
+                    validation_method: Some(crate::models::CanisterMethod {
+                        canister_id: upgrader_id,
+                        method_name: "foo".to_string(),
+                    }),
+                    execution_method: crate::models::CanisterMethod {
+                        canister_id: regular_canister,
+                        method_name: "bar".to_string(),
+                    },
+                    arg: None,
+                    execution_method_cycles: None,
+                },
+                arg_checksum: None,
+                arg_rendering: None,
+                execution_method_reply: None,
+            })
+            .validate()
+            .unwrap_err();
+        assert!(matches!(
+            err,
+            ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::InvalidExternalCanister { .. }
+            )
+        ));
     }
 }
