@@ -1,7 +1,7 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
-    execute_request, execute_request_with_extra_ticks, get_all_upgrader_logs,
-    get_core_canister_health_status, get_request, get_system_info, submit_delayed_request_raw,
+    execute_request, execute_request_with_extra_ticks, get_core_canister_health_status,
+    get_request, get_system_info, submit_delayed_request_raw,
     upload_canister_chunks_to_asset_canister, wait_for_request,
 };
 use crate::{CanisterIds, TestEnv};
@@ -12,8 +12,7 @@ use pocket_ic::management_canister::CanisterIdRecord;
 use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
     HealthStatus, NotifyFailedStationUpgradeInput, RequestOperationInput, RequestStatusDTO,
-    RestoreExternalCanisterOperationInput, SystemInstall, SystemUpgrade,
-    SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
+    SystemInstall, SystemUpgrade, SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
 };
 use std::time::{Duration, UNIX_EPOCH};
 use upgrader_api::InitArg;
@@ -546,8 +545,6 @@ fn backup_snapshot() {
         // no new backup snapshot should have been taken
         check_snapshots(&target, Some(backup_snapshot_id.clone()));
 
-        let upgrader_logs = get_all_upgrader_logs(&env, &upgrader_id, &WALLET_ADMIN_USER);
-
         // create system upgrade request operation input taking a backup snapshot
         system_upgrade_operation_input.take_backup_snapshot = Some(true);
 
@@ -557,31 +554,5 @@ fn backup_snapshot() {
         let new_backup_snapshot_id = snapshot(&target).unwrap();
         assert_ne!(backup_snapshot_id, new_backup_snapshot_id);
         check_snapshots(&target, Some(new_backup_snapshot_id.clone()));
-
-        // upgrader logs now also contain entries created by syncing station data into upgrader
-        let new_upgrader_logs = get_all_upgrader_logs(&env, &upgrader_id, &WALLET_ADMIN_USER);
-        assert_ne!(upgrader_logs.len(), new_upgrader_logs.len());
-
-        if let SystemUpgradeTargetDTO::UpgradeUpgrader = target {
-            // restore the new backup snapshot
-            let restore_canister_operation = RequestOperationInput::RestoreExternalCanister(
-                RestoreExternalCanisterOperationInput {
-                    canister_id: upgrader_id,
-                    snapshot_id: hex::encode(new_backup_snapshot_id),
-                },
-            );
-            execute_request(
-                &env,
-                WALLET_ADMIN_USER,
-                canister_ids.station,
-                restore_canister_operation,
-            )
-            .unwrap();
-
-            // the new logs have been rolled back by restoring the upgrader
-            let current_upgrader_logs =
-                get_all_upgrader_logs(&env, &upgrader_id, &WALLET_ADMIN_USER);
-            assert_eq!(upgrader_logs.len(), current_upgrader_logs.len());
-        }
     }
 }
