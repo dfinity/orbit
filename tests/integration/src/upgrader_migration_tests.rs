@@ -30,7 +30,7 @@ fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal
         pocket_ic::common::rest::BlobCompression::Gzip,
     );
 
-    // Then upgrade the canister to ensure that the healthiness check fails
+    // Then upgrade the canister to ensure that the health check fails
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     let err = env
         .upgrade_canister(
@@ -62,7 +62,7 @@ fn upgrade_from_v1(env: &PocketIc, upgrader_id: Principal, station_id: Principal
         pocket_ic::common::rest::BlobCompression::Gzip,
     );
 
-    // Then upgrade the canister to ensure that the healthiness check succeeds
+    // Then upgrade the canister to ensure that the health check succeeds
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     env.upgrade_canister(
         upgrader_id,
