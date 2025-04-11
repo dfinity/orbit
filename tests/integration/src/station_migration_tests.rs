@@ -119,15 +119,27 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     assert_can_list_named_rules(&env, canister_ids.station, WALLET_ADMIN_USER, 2);
 }
 
+/// Tests migration from v1 to latest.
 #[test]
-fn test_canister_migration_path_with_previous_wasm_memory_version() {
+fn test_station_migration_from_v1() {
+    test_canister_migration_path_with_previous_stable_memory_version(1);
+}
+
+/// Tests migration from v2 to latest.
+#[test]
+fn test_station_migration_from_v2() {
+    test_canister_migration_path_with_previous_stable_memory_version(2);
+}
+
+fn test_canister_migration_path_with_previous_stable_memory_version(stable_memory_version: u64) {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
 
     let station_wasm = get_canister_wasm("station").to_vec();
-    let wasm_memory =
-        read_file("station-memory-v1.bin").expect("Unexpected missing older wasm memory");
+    let stable_memory_file = format!("station-memory-v{}.bin", stable_memory_version);
+    let stable_memory =
+        read_file(&stable_memory_file).expect("Unexpected missing older stable memory");
 
     env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .expect("unexpected failure stopping canister");
@@ -140,7 +152,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
     // Set the stable memory of the canister to the previous version of the canister
     env.set_stable_memory(
         canister_ids.station,
-        wasm_memory,
+        stable_memory,
         pocket_ic::common::rest::BlobCompression::Gzip,
     );
 
