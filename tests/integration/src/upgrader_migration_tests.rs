@@ -72,6 +72,11 @@ fn upgrade_from_v1(env: &PocketIc, upgrader_id: Principal, station_id: Principal
     )
     .expect("Unexpected failure upgrading canister.");
 
+    let stable_memory_size_after_upgrade = env.get_stable_memory(upgrader_id).len();
+
+    // Assert that stable memory size doesn't grow after upgrade.
+    assert!(stable_memory_size_after_upgrade <= stable_memory_size_before_upgrade);
+
     true
 }
 
