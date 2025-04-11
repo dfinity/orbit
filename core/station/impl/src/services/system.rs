@@ -205,7 +205,7 @@ impl SystemService {
         take_backup_snapshot: bool,
     ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
-        let replace_snapshot = self.get_system_info().get_upgrader_backup_snapshot_id();
+        let replace_snapshot = self.get_system_info().replace_upgrader_backup_snapshot();
         let backup_snapshot_id = self
             .change_canister_service
             .install_canister(
@@ -224,7 +224,7 @@ impl SystemService {
 
         if let Some(snapshot_id) = backup_snapshot_id {
             let mut system_info = self.get_system_info();
-            system_info.set_upgrader_backup_snapshot_id(snapshot_id);
+            system_info.insert_upgrader_backup_snapshot(snapshot_id);
             write_system_info(system_info);
         }
 

@@ -7,12 +7,14 @@ use crate::{
 };
 use candid::Principal;
 use ic_stable_structures::{storable::Bound, Storable};
+use orbit_essentials::backup_snapshots::BackupSnapshots;
 use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
 use std::borrow::Cow;
 
 use super::{AccountId, UserGroupId};
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SystemState {
     Uninitialized, // This state is only used between wasm module instantiation and init().
@@ -53,8 +55,8 @@ pub struct SystemInfo {
     /// The upgrader canister wasm module.
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     upgrader_wasm_module: Option<Vec<u8>>,
-    /// The backup snapshot ID of the upgrader.
-    upgrader_backup_snapshot_id: Option<Vec<u8>>,
+    /// A rolling window of upgrader backup snapshots.
+    upgrader_backup_snapshots: BackupSnapshots,
     /// The disaster recovery committee user group id.
     disaster_recovery_committee: Option<DisasterRecoveryCommittee>,
     /// Defines how the station tops up itself with cycles.
@@ -74,7 +76,7 @@ impl Default for SystemInfo {
             change_canister_request: None,
             upgrader_canister_id: None,
             upgrader_wasm_module: None,
-            upgrader_backup_snapshot_id: None,
+            upgrader_backup_snapshots: BackupSnapshots::new(1),
             disaster_recovery_committee: None,
             version: Some(SYSTEM_VERSION.to_string()),
             stable_memory_version: Some(STABLE_MEMORY_VERSION),
@@ -155,12 +157,12 @@ impl SystemInfo {
             .expect("upgrader_wasm_module is not set")
     }
 
-    pub fn get_upgrader_backup_snapshot_id(&self) -> Option<Vec<u8>> {
-        self.upgrader_backup_snapshot_id.clone()
+    pub fn replace_upgrader_backup_snapshot(&self) -> Option<Vec<u8>> {
+        self.upgrader_backup_snapshots.replace_snapshot()
     }
 
-    pub fn set_upgrader_backup_snapshot_id(&mut self, backup_snapshot_id: Vec<u8>) {
-        self.upgrader_backup_snapshot_id = Some(backup_snapshot_id);
+    pub fn insert_upgrader_backup_snapshot(&mut self, snapshot_id: Vec<u8>) {
+        self.upgrader_backup_snapshots.insert_snapshot(snapshot_id);
     }
 
     pub fn set_change_canister_request(&mut self, request: UUID) {

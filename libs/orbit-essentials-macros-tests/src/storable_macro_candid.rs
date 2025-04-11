@@ -1,4 +1,4 @@
-use orbit_essentials::ic_stable_structures::Storable;
+use ic_stable_structures::Storable;
 use orbit_essentials::storable;
 
 #[storable(serializer = "candid")]

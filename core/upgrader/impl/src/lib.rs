@@ -15,6 +15,7 @@ use ic_stable_structures::{
     DefaultMemoryImpl, StableBTreeMap, Storable,
 };
 use lazy_static::lazy_static;
+use orbit_essentials::backup_snapshots::BackupSnapshots;
 use orbit_essentials::storable;
 use orbit_essentials::types::Timestamp;
 use std::{borrow::Cow, cell::RefCell, collections::BTreeMap, sync::Arc};
@@ -75,7 +76,7 @@ thread_local! {
 #[storable]
 struct State {
     target_canister: Principal,
-    backup_snapshot_id: Option<Vec<u8>>,
+    backup_snapshots: BackupSnapshots,
     disaster_recovery: DisasterRecovery,
     stable_memory_version: u32,
 }
@@ -84,7 +85,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             target_canister: Principal::anonymous(),
-            backup_snapshot_id: None,
+            backup_snapshots: BackupSnapshots::new(1),
             disaster_recovery: Default::default(),
             stable_memory_version: STABLE_MEMORY_VERSION,
         }
@@ -109,13 +110,13 @@ fn set_target_canister(target_canister: Principal) {
     set_state(state);
 }
 
-pub fn get_backup_snapshot_id() -> Option<Vec<u8>> {
-    get_state().backup_snapshot_id
+pub fn replace_backup_snapshot() -> Option<Vec<u8>> {
+    get_state().backup_snapshots.replace_snapshot()
 }
 
-fn set_backup_snapshot_id(backup_snapshot_id: Vec<u8>) {
+fn insert_backup_snapshot(snapshot_id: Vec<u8>) {
     let mut state = get_state();
-    state.backup_snapshot_id = Some(backup_snapshot_id);
+    state.backup_snapshots.insert_snapshot(snapshot_id);
     set_state(state);
 }
 
@@ -180,7 +181,7 @@ fn post_upgrade() {
 
         let state = State {
             target_canister,
-            backup_snapshot_id: None,
+            backup_snapshots: BackupSnapshots::new(1),
             disaster_recovery: disaster_recovery.into(),
             stable_memory_version: STABLE_MEMORY_VERSION,
         };

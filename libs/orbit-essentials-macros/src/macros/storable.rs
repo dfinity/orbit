@@ -177,7 +177,7 @@ fn expand_candid_impl(
         #derive_deserialize
         #input
 
-        impl orbit_essentials::ic_stable_structures::Storable for #object_name {
+        impl ic_stable_structures::Storable for #object_name {
             fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
                 use candid::Encode;
 
@@ -215,7 +215,7 @@ fn expand_cbor_impl(
         #derive_deserialize
         #input
 
-        impl orbit_essentials::ic_stable_structures::Storable for #object_name {
+        impl ic_stable_structures::Storable for #object_name {
             fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
                 std::borrow::Cow::Owned(serde_cbor::to_vec(self).unwrap())
             }
@@ -234,13 +234,13 @@ fn expand_cbor_impl(
 fn storage_bounds(size: Option<u32>) -> proc_macro2::TokenStream {
     match size {
         Some(size) => quote! {
-            const BOUND: orbit_essentials::ic_stable_structures::storable::Bound = orbit_essentials::ic_stable_structures::storable::Bound::Bounded {
+            const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Bounded {
                 max_size: #size,
                 is_fixed_size: false,
             };
         },
         None => quote! {
-            const BOUND: orbit_essentials::ic_stable_structures::storable::Bound = orbit_essentials::ic_stable_structures::storable::Bound::Unbounded;
+            const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
         },
     }
 }
@@ -288,7 +288,7 @@ mod tests {
                     pub id: u32,
                 }
 
-                impl orbit_essentials::ic_stable_structures::Storable for MyStruct {
+                impl ic_stable_structures::Storable for MyStruct {
                     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
                         std::borrow::Cow::Owned(serde_cbor::to_vec(self).unwrap())
                     }
@@ -297,7 +297,7 @@ mod tests {
                         serde_cbor::from_slice(bytes.as_ref()).unwrap()
                     }
 
-                    const BOUND: orbit_essentials::ic_stable_structures::storable::Bound = orbit_essentials::ic_stable_structures::storable::Bound::Unbounded;
+                    const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
                 }
             }
             .to_string()
@@ -324,7 +324,7 @@ mod tests {
                     pub id: u32,
                 }
 
-                impl orbit_essentials::ic_stable_structures::Storable for MyStruct {
+                impl ic_stable_structures::Storable for MyStruct {
                     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
                         use candid::Encode;
 
@@ -337,7 +337,7 @@ mod tests {
                         candid::Decode!(bytes.as_ref(), Self).unwrap()
                     }
 
-                    const BOUND: orbit_essentials::ic_stable_structures::storable::Bound = orbit_essentials::ic_stable_structures::storable::Bound::Unbounded;
+                    const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
                 }
             }
             .to_string()
