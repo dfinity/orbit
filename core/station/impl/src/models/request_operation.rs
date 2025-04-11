@@ -8,13 +8,17 @@ use super::{
     ExternalCanisterState, MetadataItem, NamedRuleId, TokenStandard, UserGroupId, UserId,
     UserStatus,
 };
-use crate::core::validation::EnsureExternalCanister;
-use crate::errors::ValidationError;
+use crate::core::validation::{
+    EnsureAccount, EnsureAddressBookEntry, EnsureAsset, EnsureExternalCanister, EnsureIdExists,
+    EnsureNamedRule, EnsureRequestPolicy, EnsureUser, EnsureUserGroup,
+};
+use crate::errors::{ExternalCanisterValidationError, ValidationError};
+use crate::models::resource::ExecutionMethodResourceTarget;
 use crate::models::Metadata;
 use candid::Principal;
 use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
 use orbit_essentials::cmc::SubnetSelection;
-use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
+use orbit_essentials::model::{ContextualModel, ModelValidator, ModelValidatorResult};
 use orbit_essentials::{storable, types::UUID};
 use std::{collections::HashSet, fmt::Display};
 
@@ -769,7 +773,7 @@ impl CanisterMethod {
 
 impl ModelValidator<ValidationError> for CanisterMethod {
     fn validate(&self) -> ModelValidatorResult<ValidationError> {
-        EnsureExternalCanister::is_external_canister(self.canister_id)?;
+        EnsureExternalCanister::ensure_external_canister(self.canister_id)?;
 
         Ok(())
     }
@@ -783,6 +787,29 @@ pub struct CallExternalCanisterOperationInput {
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
     pub execution_method_cycles: Option<u64>,
+}
+
+impl ModelValidator<ValidationError> for CallExternalCanisterOperationInput {
+    fn validate(&self) -> ModelValidatorResult<ValidationError> {
+        // Disallows the wildcard execution method
+        if self.execution_method.method_name == CanisterMethod::WILDCARD {
+            return Err(ValidationError::ExternalCanisterValidationError(
+                ExternalCanisterValidationError::ValidationError {
+                    info: "Wildcard execution method is not allowed.".to_string(),
+                },
+            ));
+        }
+
+        // Validate both methods
+        let validation_method_target: ValidationMethodResourceTarget =
+            self.validation_method.clone().into();
+        validation_method_target.validate()?;
+        let execution_method_target: ExecutionMethodResourceTarget =
+            self.execution_method.clone().into();
+        execution_method_target.validate()?;
+
+        Ok(())
+    }
 }
 
 #[storable]
@@ -971,9 +998,180 @@ pub struct EditNamedRuleOperationInput {
     pub rule: Option<RequestPolicyRule>,
 }
 
+impl ModelValidator<ValidationError> for RequestOperation {
+    fn validate(&self) -> ModelValidatorResult<ValidationError> {
+        match self {
+            RequestOperation::ManageSystemInfo(_) => (),
+            RequestOperation::Transfer(op) => {
+                EnsureAccount::id_exists(&op.input.from_account_id)?;
+                EnsureAsset::id_exists(&op.input.from_asset_id)?;
+            }
+            RequestOperation::AddAccount(op) => {
+                op.input.read_permission.validate()?;
+                op.input.configs_permission.validate()?;
+                op.input.transfer_permission.validate()?;
+
+                if let Some(policy_rule) = &op.input.transfer_request_policy {
+                    policy_rule.validate()?;
+                }
+
+                if let Some(policy_rule) = &op.input.configs_request_policy {
+                    policy_rule.validate()?;
+                }
+            }
+            RequestOperation::EditAccount(op) => {
+                EnsureAccount::id_exists(&op.input.account_id)?;
+
+                if let Some(allow) = &op.input.read_permission {
+                    allow.validate()?;
+                }
+
+                if let Some(allow) = &op.input.configs_permission {
+                    allow.validate()?;
+                }
+
+                if let Some(allow) = &op.input.transfer_permission {
+                    allow.validate()?;
+                }
+
+                if let Some(RequestPolicyRuleInput::Set(criteria)) =
+                    &op.input.configs_request_policy
+                {
+                    criteria.validate()?;
+                }
+
+                if let Some(RequestPolicyRuleInput::Set(policy_rule)) =
+                    &op.input.transfer_request_policy
+                {
+                    policy_rule.validate()?;
+                }
+
+                if let Some(ChangeAssets::ReplaceWith { assets }) = &op.input.change_assets {
+                    EnsureAsset::id_list_exists(assets)?;
+                }
+
+                if let Some(ChangeAssets::Change {
+                    add_assets,
+                    remove_assets,
+                }) = &op.input.change_assets
+                {
+                    EnsureAsset::id_list_exists(add_assets)?;
+                    EnsureAsset::id_list_exists(remove_assets)?;
+                }
+            }
+            RequestOperation::AddAddressBookEntry(_) => (),
+            RequestOperation::EditAddressBookEntry(op) => {
+                EnsureAddressBookEntry::id_exists(&op.input.address_book_entry_id)?;
+            }
+            RequestOperation::RemoveAddressBookEntry(op) => {
+                EnsureAddressBookEntry::id_exists(&op.input.address_book_entry_id)?;
+            }
+            RequestOperation::AddUser(op) => {
+                EnsureUserGroup::id_list_exists(&op.input.groups)?;
+            }
+            RequestOperation::EditUser(op) => {
+                EnsureUser::id_exists(&op.input.user_id)?;
+
+                if let Some(group_ids) = &op.input.groups {
+                    EnsureUserGroup::id_list_exists(group_ids)?;
+                }
+            }
+            RequestOperation::EditPermission(op) => {
+                op.input.resource.validate()?;
+
+                if let Some(user_ids) = &op.input.users {
+                    EnsureUser::id_list_exists(user_ids)?;
+                }
+
+                if let Some(group_ids) = &op.input.user_groups {
+                    EnsureUserGroup::id_list_exists(group_ids)?;
+                }
+            }
+            RequestOperation::AddUserGroup(_) => (),
+            RequestOperation::EditUserGroup(op) => {
+                EnsureUserGroup::id_exists(&op.input.user_group_id)?;
+            }
+            RequestOperation::RemoveUserGroup(ok) => {
+                EnsureUserGroup::id_exists(&ok.input.user_group_id)?;
+            }
+            RequestOperation::SystemUpgrade(_) => (),
+            RequestOperation::ChangeExternalCanister(_) => (),
+            RequestOperation::ConfigureExternalCanister(op) => {
+                let canister_id = op.canister_id;
+                if let ConfigureExternalCanisterOperationKind::Settings(settings) = &op.kind {
+                    if let Some(updated_request_policies) = &settings.request_policies {
+                        ContextualModel::new(updated_request_policies.clone(), canister_id)
+                            .validate()?;
+                    }
+                }
+            }
+            RequestOperation::FundExternalCanister(_) => (),
+            RequestOperation::MonitorExternalCanister(_) => (),
+            RequestOperation::CreateExternalCanister(op) => {
+                op.input.validate()?;
+            }
+            RequestOperation::CallExternalCanister(op) => {
+                op.input.validate()?;
+            }
+            RequestOperation::SnapshotExternalCanister(_) => (),
+            RequestOperation::RestoreExternalCanister(_) => (),
+            RequestOperation::PruneExternalCanister(_) => (),
+            RequestOperation::AddRequestPolicy(op) => {
+                op.input.specifier.validate()?;
+                op.input.rule.validate()?;
+            }
+            RequestOperation::EditRequestPolicy(op) => {
+                EnsureRequestPolicy::id_exists(&op.input.policy_id)?;
+
+                if let Some(specifier) = &op.input.specifier {
+                    specifier.validate()?;
+                }
+
+                if let Some(policy_rule) = &op.input.rule {
+                    policy_rule.validate()?;
+                }
+            }
+            RequestOperation::RemoveRequestPolicy(op) => {
+                EnsureRequestPolicy::id_exists(&op.input.policy_id)?;
+            }
+            RequestOperation::SetDisasterRecovery(op) => {
+                if let Some(committee) = &op.input.committee {
+                    EnsureUserGroup::id_exists(&committee.user_group_id)?;
+                }
+            }
+            RequestOperation::AddAsset(_) => (),
+            RequestOperation::EditAsset(op) => {
+                EnsureAsset::id_exists(&op.input.asset_id)?;
+            }
+            RequestOperation::RemoveAsset(op) => {
+                EnsureAsset::id_exists(&op.input.asset_id)?;
+            }
+            RequestOperation::AddNamedRule(_) => (),
+            RequestOperation::EditNamedRule(op) => {
+                EnsureNamedRule::id_exists(&op.input.named_rule_id)?;
+            }
+            RequestOperation::RemoveNamedRule(op) => {
+                EnsureNamedRule::id_exists(&op.input.named_rule_id)?;
+            }
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::models::AccountAsset;
+    use super::*;
+    use crate::core::validation::disable_mock_resource_validation;
+    use crate::models::asset_test_utils::mock_asset;
+    use crate::models::permission::Allow;
+    use crate::models::{
+        Account, AccountKey, AddAccountOperationInput, AddAssetOperationInput, AddUserOperation,
+        AddUserOperationInput, Blockchain, Metadata, TokenStandard, TransferOperation,
+        TransferOperationInput,
+    };
+    use crate::repositories::ACCOUNT_REPOSITORY;
+    use crate::services::{AccountService, AssetService};
+    use orbit_essentials::repository::Repository;
 
     use super::ChangeAssets;
 
@@ -1007,5 +1205,256 @@ mod test {
         assert!(assets.iter().any(|a| a.asset_id == [3; 16]));
 
         assert_eq!(assets.iter().filter(|a| a.asset_id == [3; 16]).count(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_request_operation_is_valid() {
+        disable_mock_resource_validation();
+
+        let asset = AssetService::default()
+            .create(
+                AddAssetOperationInput {
+                    name: "a".to_owned(),
+                    symbol: "a".to_owned(),
+                    decimals: 0,
+                    metadata: Metadata::default(),
+                    blockchain: Blockchain::InternetComputer,
+                    standards: vec![TokenStandard::InternetComputerNative],
+                },
+                None,
+            )
+            .expect("Failed to create asset");
+
+        let account_service = AccountService::default();
+        let account = account_service
+            .create_account(
+                AddAccountOperationInput {
+                    name: "a".to_owned(),
+                    assets: vec![asset.id],
+                    metadata: Metadata::default(),
+                    read_permission: Allow::default(),
+                    configs_permission: Allow::default(),
+                    transfer_permission: Allow::default(),
+                    configs_request_policy: None,
+                    transfer_request_policy: None,
+                },
+                None,
+            )
+            .await
+            .expect("Failed to create account");
+
+        let operation = RequestOperation::Transfer(TransferOperation {
+            transfer_id: None,
+            fee: None,
+
+            input: TransferOperationInput {
+                network: "mainnet".to_string(),
+                amount: 1u64.into(),
+                fee: None,
+                metadata: Metadata::default(),
+                to: "0x1234".to_string(),
+                from_account_id: account.id,
+                from_asset_id: asset.id,
+                with_standard: TokenStandard::InternetComputerNative,
+            },
+            asset,
+        });
+
+        assert!(operation.validate().is_ok());
+    }
+
+    #[tokio::test]
+    async fn fail_request_operation_with_invalid_id() {
+        disable_mock_resource_validation();
+
+        RequestOperation::Transfer(TransferOperation {
+            transfer_id: None,
+            fee: None,
+            input: TransferOperationInput {
+                network: "mainnet".to_string(),
+                amount: 1u64.into(),
+                fee: None,
+                metadata: Metadata::default(),
+                to: "0x1234".to_string(),
+                from_account_id: [0; 16],
+                from_asset_id: [0; 16],
+                with_standard: TokenStandard::InternetComputerNative,
+            },
+            asset: mock_asset(),
+        })
+        .validate()
+        .expect_err("Invalid account id should fail");
+
+        RequestOperation::AddUser(AddUserOperation {
+            user_id: None,
+            input: AddUserOperationInput {
+                name: "user-1".to_string(),
+                identities: vec![],
+                groups: vec![[1; 16]],
+                status: crate::models::UserStatus::Active,
+            },
+        })
+        .validate()
+        .expect_err("Invalid user group id should fail");
+
+        RequestOperation::EditUserGroup(crate::models::EditUserGroupOperation {
+            input: crate::models::EditUserGroupOperationInput {
+                user_group_id: [0; 16],
+                name: "a".to_owned(),
+            },
+        })
+        .validate()
+        .expect_err("Invalid user group id should fail");
+        RequestOperation::RemoveUserGroup(crate::models::RemoveUserGroupOperation {
+            input: crate::models::RemoveUserGroupOperationInput {
+                user_group_id: [0; 16],
+            },
+        })
+        .validate()
+        .expect_err("Invalid user group id should fail");
+
+        RequestOperation::AddRequestPolicy(crate::models::AddRequestPolicyOperation {
+            policy_id: None,
+            input: crate::models::AddRequestPolicyOperationInput {
+                specifier: crate::models::request_specifier::RequestSpecifier::EditUser(
+                    crate::models::resource::ResourceIds::Ids(vec![[1; 16]]),
+                ),
+                rule: crate::models::request_policy_rule::RequestPolicyRule::AutoApproved,
+            },
+        })
+        .validate()
+        .expect_err("Invalid request specifier should fail");
+
+        RequestOperation::EditRequestPolicy(crate::models::EditRequestPolicyOperation {
+            input: crate::models::EditRequestPolicyOperationInput {
+                policy_id: [0; 16],
+                specifier: None,
+                rule: None,
+            },
+        })
+        .validate()
+        .expect_err("Invalid request policy id should fail");
+
+        RequestOperation::RemoveRequestPolicy(crate::models::RemoveRequestPolicyOperation {
+            input: crate::models::RemoveRequestPolicyOperationInput { policy_id: [0; 16] },
+        })
+        .validate()
+        .expect_err("Invalid request policy id should fail");
+
+        RequestOperation::AddAccount(crate::models::AddAccountOperation {
+            account_id: None,
+            input: crate::models::AddAccountOperationInput {
+                name: "a".to_owned(),
+                assets: vec![],
+                metadata: Metadata::default(),
+                read_permission: Allow {
+                    auth_scope: crate::models::permission::AuthScope::Restricted,
+                    users: vec![[1; 16]],
+                    user_groups: vec![],
+                },
+                configs_permission: Allow::default(),
+                transfer_permission: Allow::default(),
+                configs_request_policy: None,
+                transfer_request_policy: None,
+            },
+        })
+        .validate()
+        .expect_err("Invalid user id should fail");
+
+        RequestOperation::EditAccount(crate::models::EditAccountOperation {
+            input: crate::models::EditAccountOperationInput {
+                account_id: [0; 16],
+                change_assets: None,
+                read_permission: None,
+                configs_permission: None,
+                transfer_permission: None,
+                configs_request_policy: None,
+                transfer_request_policy: None,
+                name: None,
+            },
+        })
+        .validate()
+        .expect_err("Invalid account id should fail");
+
+        ACCOUNT_REPOSITORY.insert(
+            AccountKey { id: [0; 16] },
+            Account {
+                id: [0; 16],
+                name: "a".to_owned(),
+                seed: [0; 16],
+                assets: vec![],
+                addresses: vec![],
+                metadata: Metadata::default(),
+                transfer_request_policy_id: None,
+                configs_request_policy_id: None,
+                last_modification_timestamp: 0,
+            },
+        );
+
+        RequestOperation::EditAccount(crate::models::EditAccountOperation {
+            input: crate::models::EditAccountOperationInput {
+                account_id: [0; 16],
+                change_assets: Some(ChangeAssets::ReplaceWith {
+                    assets: vec![[0; 16]],
+                }),
+                read_permission: None,
+                configs_permission: None,
+                transfer_permission: None,
+                configs_request_policy: None,
+                transfer_request_policy: None,
+                name: None,
+            },
+        })
+        .validate()
+        .expect_err("Invalid asset id should fail");
+
+        ACCOUNT_REPOSITORY.clear();
+
+        RequestOperation::EditAddressBookEntry(crate::models::EditAddressBookEntryOperation {
+            input: crate::models::EditAddressBookEntryOperationInput {
+                address_book_entry_id: [0; 16],
+                address_owner: None,
+                change_metadata: None,
+                labels: None,
+            },
+        })
+        .validate()
+        .expect_err("Invalid address book entry id should fail");
+
+        RequestOperation::RemoveAddressBookEntry(crate::models::RemoveAddressBookEntryOperation {
+            input: crate::models::RemoveAddressBookEntryOperationInput {
+                address_book_entry_id: [0; 16],
+            },
+        })
+        .validate()
+        .expect_err("Invalid address book entry id should fail");
+
+        RequestOperation::EditUser(crate::models::EditUserOperation {
+            input: crate::models::EditUserOperationInput {
+                user_id: [0; 16],
+                groups: None,
+                name: None,
+                identities: None,
+                status: None,
+                cancel_pending_requests: None,
+            },
+        })
+        .validate()
+        .expect_err("Invalid user id should fail");
+
+        RequestOperation::EditPermission(crate::models::EditPermissionOperation {
+            input: crate::models::EditPermissionOperationInput {
+                resource: crate::models::resource::Resource::Account(
+                    crate::models::resource::AccountResourceAction::Read(
+                        crate::models::resource::ResourceId::Id([0; 16]),
+                    ),
+                ),
+                users: None,
+                user_groups: None,
+                auth_scope: None,
+            },
+        })
+        .validate()
+        .expect_err("Invalid resource id should fail");
     }
 }

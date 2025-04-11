@@ -13,6 +13,7 @@ use ic_certified_assets::types::{
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use orbit_essentials::types::WasmModuleExtraChunks;
+use orbit_essentials::utils::timestamp_to_rfc3339;
 use pocket_ic::management_canister::CanisterStatusResult;
 use pocket_ic::{query_candid_as, update_candid_as, PocketIc, RejectResponse};
 use sha2::Digest;
@@ -31,7 +32,7 @@ use station_api::{
 };
 use std::io::Write;
 use std::path::PathBuf;
-use std::time::Duration;
+use std::time::{Duration, UNIX_EPOCH};
 use upgrader_api::{
     GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse, LogEntry, PaginationInput,
 };
@@ -174,6 +175,41 @@ fn is_request_evaluated(request: RequestDTO) -> bool {
         | RequestStatusDTO::Scheduled { .. }
         | RequestStatusDTO::Processing { .. } => false,
     }
+}
+
+pub fn submit_delayed_request_raw(
+    env: &PocketIc,
+    user_id: Principal,
+    station_canister_id: CanisterId,
+    request_operation_input: RequestOperationInput,
+    delay: Duration,
+) -> Result<(Result<CreateRequestResponse, ApiErrorDTO>,), RejectResponse> {
+    let execution_time = env.get_time() + delay;
+    let execution_time_nanos = timestamp_to_rfc3339(
+        &execution_time
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+            .try_into()
+            .unwrap(),
+    );
+
+    let create_request_input = CreateRequestInput {
+        operation: request_operation_input,
+        title: None,
+        summary: None,
+        execution_plan: Some(RequestExecutionScheduleDTO::Scheduled {
+            execution_time: execution_time_nanos,
+        }),
+        expiration_dt: None,
+    };
+    update_candid_as(
+        env,
+        station_canister_id,
+        user_id,
+        "create_request",
+        (create_request_input,),
+    )
 }
 
 pub fn submit_request_raw(

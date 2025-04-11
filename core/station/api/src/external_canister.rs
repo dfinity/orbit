@@ -7,6 +7,16 @@ use candid::{CandidType, Deserialize, Nat, Principal};
 use orbit_essentials::cmc::SubnetSelection;
 use orbit_essentials::types::WasmModuleExtraChunks;
 
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CanisterSnapshotsInput {
+    pub canister_id: Principal,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct CanisterStatusInput {
+    pub canister_id: Principal,
+}
+
 // Taken from https://internetcomputer.org/docs/current/references/ic-interface-spec/#ic-create_canister
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone, Default)]
 pub enum LogVisibility {

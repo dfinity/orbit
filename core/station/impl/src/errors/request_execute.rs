@@ -12,6 +12,9 @@ pub enum RequestExecuteError {
     /// Request can't be executed because it was not approved.
     #[error(r#"Request can't be executed because it was not approved."#)]
     NotApproved,
+    /// The request has failed validation.
+    #[error(r#"The request has failed validation."#)]
+    ValidationError { info: String },
     /// Request execution failed due to internal error: {reason}.
     #[error(r#"Request execution failed due to internal error: `{reason}`."#)]
     InternalError { reason: String },
