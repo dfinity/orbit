@@ -61,6 +61,7 @@ fn cancel_pending_requests() {
         module: vec![],
         module_extra_chunks: None,
         arg: None,
+        take_backup_snapshot: None,
     });
     let mut alice_request_dtos = vec![];
     for _ in 0..10 {

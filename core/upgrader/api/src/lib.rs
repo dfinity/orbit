@@ -13,6 +13,7 @@ pub struct UpgradeParams {
     pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     #[serde(with = "serde_bytes")]
     pub arg: Vec<u8>,
+    pub take_backup_snapshot: Option<bool>,
 }
 
 #[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]

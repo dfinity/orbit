@@ -407,6 +407,7 @@ pub struct SystemUpgradeOperationInput {
     pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg: Option<Vec<u8>>,
+    pub take_backup_snapshot: Option<bool>,
 }
 
 #[storable]
@@ -416,6 +417,7 @@ pub struct SystemUpgradeOperation {
     pub module_checksum: Vec<u8>,
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg_checksum: Option<Vec<u8>>,
+    pub take_backup_snapshot: Option<bool>,
     pub input: SystemUpgradeOperationInput,
 }
 

@@ -3402,6 +3402,7 @@ name = "orbit-essentials-macros-tests"
 version = "0.0.1"
 dependencies = [
  "candid",
+ "ic-stable-structures",
  "orbit-essentials",
  "serde",
  "serde_bytes",
