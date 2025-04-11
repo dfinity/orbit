@@ -8,6 +8,12 @@ pub struct BackupSnapshots {
     backup_snapshots: VecDeque<Vec<u8>>,
 }
 
+impl Default for BackupSnapshots {
+    fn default() -> Self {
+        Self::new(1)
+    }
+}
+
 impl BackupSnapshots {
     pub fn new(max_backup_snapshots: usize) -> Self {
         Self {

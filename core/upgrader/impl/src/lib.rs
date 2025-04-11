@@ -76,6 +76,7 @@ thread_local! {
 #[storable]
 struct State {
     target_canister: Principal,
+    #[serde(default)]
     backup_snapshots: BackupSnapshots,
     disaster_recovery: DisasterRecovery,
     stable_memory_version: u32,

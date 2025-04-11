@@ -56,6 +56,7 @@ pub struct SystemInfo {
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     upgrader_wasm_module: Option<Vec<u8>>,
     /// A rolling window of upgrader backup snapshots.
+    #[serde(default)]
     upgrader_backup_snapshots: BackupSnapshots,
     /// The disaster recovery committee user group id.
     disaster_recovery_committee: Option<DisasterRecoveryCommittee>,
