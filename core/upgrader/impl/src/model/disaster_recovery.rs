@@ -583,37 +583,6 @@ pub struct StationRecoveryRequestV0 {
     pub submitted_at: Timestamp,
 }
 
-#[storable]
-#[derive(Clone, Debug)]
-pub struct DisasterRecoveryV0 {
-    pub accounts: Vec<Account>,
-
-    #[serde(default)]
-    pub multi_asset_accounts: Vec<MultiAssetAccount>,
-    #[serde(default)]
-    pub assets: Vec<Asset>,
-
-    pub committee: Option<DisasterRecoveryCommittee>,
-
-    pub recovery_requests: Vec<StationRecoveryRequestV0>,
-    pub recovery_status: RecoveryStatus,
-    pub last_recovery_result: Option<RecoveryResult>,
-}
-
-impl Default for DisasterRecoveryV0 {
-    fn default() -> Self {
-        DisasterRecoveryV0 {
-            accounts: vec![],
-            multi_asset_accounts: vec![],
-            assets: vec![],
-            committee: None,
-            recovery_requests: vec![],
-            recovery_status: RecoveryStatus::Idle,
-            last_recovery_result: None,
-        }
-    }
-}
-
 #[cfg(test)]
 pub mod tests {
     use candid::Principal;
