@@ -62,6 +62,8 @@ fn upgrade_from_v1(env: &PocketIc, upgrader_id: Principal, station_id: Principal
         pocket_ic::common::rest::BlobCompression::Gzip,
     );
 
+    let stable_memory_size_before_upgrade = env.get_stable_memory(upgrader_id).len();
+
     // Then upgrade the canister to ensure that the health check succeeds
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     env.upgrade_canister(
