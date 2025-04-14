@@ -2,31 +2,22 @@ import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
 import { idlFactory } from '~/generated/upgrader';
 import { _SERVICE, GetDisasterRecoveryStateResponse } from '~/generated/upgrader/upgrader.did';
+import { CustomIdlAgent } from '~/utils/agent.utils';
 import * as helperUtils from '~/utils/helper.utils';
 
 export class UpgraderService {
-  // This actor is modified to only perform calls that can be verified, such as update calls that go through consensus.
-  private verified_actor: ActorSubclass<_SERVICE>;
-
   // This is the default actor that can perform all calls, including query calls.
   private actor: ActorSubclass<_SERVICE>;
 
   constructor(
     private agent: HttpAgent,
     private upgraderId: Principal = Principal.anonymous(),
+    private idl: string,
   ) {
     this.actor = Actor.createActor<_SERVICE>(idlFactory, {
       agent: this.agent,
       canisterId: this.upgraderId,
     });
-
-    this.verified_actor = Actor.createActor<_SERVICE>(
-      helperUtils.transformIdlWithOnlyVerifiedCalls(idlFactory),
-      {
-        agent: this.agent,
-        canisterId: this.upgraderId,
-      },
-    );
   }
 
   async getDisasterRecoveryState(): Promise<GetDisasterRecoveryStateResponse> {
@@ -52,5 +43,35 @@ export class UpgraderService {
     } catch (e) {
       console.error(e);
     }
+  }
+
+  async submitRecoveryUntyped(args: ArrayBuffer) {
+    const customIdlAgent = new CustomIdlAgent({
+      agent: this.agent,
+      idl: this.idl,
+      canisterId: this.upgraderId,
+    });
+
+    return await customIdlAgent.update('request_disaster_recovery', args);
+  }
+
+  async getLogs() {
+    const response = await this.actor.get_logs({ pagination: [] });
+
+    if (helperUtils.variantIs(response, 'Err')) {
+      throw response.Err;
+    }
+
+    return response.Ok;
+  }
+
+  async getLogsUntyped(): Promise<string> {
+    const customIdlAgent = new CustomIdlAgent({
+      agent: this.agent,
+      idl: this.idl,
+      canisterId: this.upgraderId,
+    });
+
+    return await customIdlAgent.query('get_logs', '(record { })');
   }
 }
