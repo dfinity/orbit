@@ -30,24 +30,24 @@ fi
 
 cd tests/integration
 echo "PocketIC download starting"
-#curl -sLO https://github.com/dfinity/pocketic/releases/download/8.0.0/pocket-ic-x86_64-$PLATFORM.gz || exit 1
-#gzip -df pocket-ic-x86_64-$PLATFORM.gz
-#mv pocket-ic-x86_64-$PLATFORM pocket-ic
+curl -sLO https://github.com/dfinity/pocketic/releases/download/8.0.0/pocket-ic-x86_64-$PLATFORM.gz || exit 1
+gzip -df pocket-ic-x86_64-$PLATFORM.gz
+mv pocket-ic-x86_64-$PLATFORM pocket-ic
 export POCKET_IC_BIN="$(pwd)/pocket-ic"
 chmod +x pocket-ic
 echo "PocketIC download completed"
 cd ../..
 
-#if [ $DOWNLOAD_NNS_CANISTERS == "true" ]; then
-#    ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister
-#    ./scripts/download-nns-canister-wasm.sh icp_index ic-icp-index-canister
-#    ./scripts/download-nns-canister-wasm.sh cmc cycles-minting-canister
-#    ./scripts/download-nns-canister-wasm.sh icrc1_ledger ic-icrc1-ledger
-#fi
+if [ $DOWNLOAD_NNS_CANISTERS == "true" ]; then
+    ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister
+    ./scripts/download-nns-canister-wasm.sh icp_index ic-icp-index-canister
+    ./scripts/download-nns-canister-wasm.sh cmc cycles-minting-canister
+    ./scripts/download-nns-canister-wasm.sh icrc1_ledger ic-icrc1-ledger
+fi
 
-#if [ $DOWNLOAD_ASSET_CANISTER == "true" ]; then
-#    ./scripts/download-asset-canister-wasm.sh
-#fi
+if [ $DOWNLOAD_ASSET_CANISTER == "true" ]; then
+    ./scripts/download-asset-canister-wasm.sh
+fi
 
 # ungzip station wasm to make it a large WASM for integration tests
 gzip -d wasms/station.wasm.gz
