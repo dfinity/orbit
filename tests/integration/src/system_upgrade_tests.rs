@@ -2,7 +2,7 @@ use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     execute_request, execute_request_with_extra_ticks, get_core_canister_health_status,
     get_request, get_system_info, submit_delayed_request_raw, submit_request, try_get_request,
-    upload_canister_chunks_to_asset_canister, wait_for_request,
+    upload_canister_chunks_to_asset_canister, wait_for_request, wait_for_request_with_extra_ticks,
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
@@ -470,6 +470,48 @@ fn system_restore() {
                 )
                 .unwrap();
             }
+        };
+    }
+}
+
+#[test]
+fn failed_system_restore() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    for target in [
+        SystemRestoreTargetDTO::RestoreStation,
+        SystemRestoreTargetDTO::RestoreUpgrader,
+    ] {
+        // providing an invalid snapshot id of length 1
+        let system_restore = RequestOperationInput::SystemRestore(SystemRestoreOperationInput {
+            target: target.clone(),
+            snapshot_id: hex::encode([42]),
+        });
+
+        let system_restore_request = submit_request(
+            &env,
+            WALLET_ADMIN_USER,
+            canister_ids.station,
+            system_restore,
+        );
+
+        let status = wait_for_request_with_extra_ticks(
+            &env,
+            WALLET_ADMIN_USER,
+            canister_ids.station,
+            system_restore_request,
+            STATION_UPGRADE_EXTRA_TICKS,
+        )
+        .unwrap_err()
+        .unwrap();
+
+        match status {
+            RequestStatusDTO::Failed { reason } => {
+                assert!(reason.unwrap().contains("IC0408: Payload deserialization error: InvalidLength(\"Invalid snapshot ID length: provided 1, minumum length expected 37.\""));
+            }
+            _ => panic!("Unexpected request status: {:?}", status),
         };
     }
 }

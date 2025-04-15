@@ -67,7 +67,11 @@ impl Execute for SystemRestoreRequestExecute<'_, '_> {
                     .restore_station(self.operation.input.snapshot_id.clone())
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
-                        reason: format!("failed to restore station: {}", err),
+                        reason: err
+                            .details
+                            .as_ref()
+                            .and_then(|details| details.get("reason").cloned())
+                            .unwrap_or(err.to_string()),
                     });
 
                 if out.is_err() {
@@ -86,7 +90,11 @@ impl Execute for SystemRestoreRequestExecute<'_, '_> {
                     .restore_upgrader(self.operation.input.snapshot_id.clone())
                     .await
                     .map_err(|err| RequestExecuteError::Failed {
-                        reason: format!("failed to restore upgrader: {}", err),
+                        reason: err
+                            .details
+                            .as_ref()
+                            .and_then(|details| details.get("reason").cloned())
+                            .unwrap_or(err.to_string()),
                     })?;
 
                 Ok(RequestExecuteStage::Completed(
