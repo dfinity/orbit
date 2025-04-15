@@ -186,7 +186,7 @@ fn test_canister_migration_path_with_previous_stable_memory_version(stable_memor
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        USER_GROUPS_NR + 1, // +1 because there is the first admin+operator group
+        USER_GROUPS_NR + 1, // +1 because there is the first admin group
     );
     assert_can_list_address_book_entries(
         &env,
