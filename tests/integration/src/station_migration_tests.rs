@@ -10,8 +10,8 @@ use pocket_ic::{update_candid_as, PocketIc};
 const CURRENT_BASELINE_NR_OF_REQUEST_POLICIES: usize = 24; // can be found in the station core/init.rs
 const CURRENT_BASELINE_NR_PERMISSIONS: usize = 45; // can be found in the station core/init.rs
 
-const PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES: usize = 24; // baseline in the previous memory version core/init.rs
-const PREVIOUS_BASELINE_NR_PERMISSIONS: usize = 45; // baseline in the previous memory version core/init.rs
+const PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES: usize = 21; // baseline in the previous memory version core/init.rs
+const PREVIOUS_BASELINE_NR_PERMISSIONS: usize = 40; // baseline in the previous memory version core/init.rs
 
 const POLICIES_ADDED_AT_MIGRATION: usize = 0;
 const PERMISSIONS_ADDED_AT_MIGRATION: usize = 0;
@@ -186,7 +186,7 @@ fn test_canister_migration_path_with_previous_stable_memory_version(stable_memor
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        USER_GROUPS_NR + 2, // +1 because there is the first admin+operator group
+        USER_GROUPS_NR + 1, // +1 because there is the first admin+operator group
     );
     assert_can_list_address_book_entries(
         &env,
@@ -254,7 +254,7 @@ fn test_canister_migration_path_with_previous_stable_memory_version(stable_memor
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        USER_GROUPS_NR + 2 + new_records, // +2 because there are the initial admin+operator groups
+        USER_GROUPS_NR + 1 + new_records, // +1 because there is the initial admin group
     );
     assert_can_list_address_book_entries(
         &env,
