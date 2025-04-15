@@ -49,6 +49,7 @@ use crate::{
         RestoreExternalCanisterOperation, RestoreExternalCanisterOperationInput,
         SetDisasterRecoveryOperation, SetDisasterRecoveryOperationInput,
         SnapshotExternalCanisterOperation, SnapshotExternalCanisterOperationInput,
+        SystemRestoreOperation, SystemRestoreOperationInput, SystemRestoreTarget,
         SystemUpgradeOperation, SystemUpgradeOperationInput, SystemUpgradeTarget,
         TransferOperation, User, WasmModuleExtraChunks,
     },
@@ -440,6 +441,58 @@ impl From<SystemUpgradeOperation> for station_api::SystemUpgradeOperationDTO {
             target: operation.input.target.into(),
             module_checksum: hex::encode(operation.module_checksum),
             arg_checksum: operation.arg_checksum.map(hex::encode),
+        }
+    }
+}
+
+impl From<SystemRestoreTarget> for station_api::SystemRestoreTargetDTO {
+    fn from(value: SystemRestoreTarget) -> Self {
+        match value {
+            SystemRestoreTarget::RestoreStation => {
+                station_api::SystemRestoreTargetDTO::RestoreStation
+            }
+            SystemRestoreTarget::RestoreUpgrader => {
+                station_api::SystemRestoreTargetDTO::RestoreUpgrader
+            }
+        }
+    }
+}
+
+impl From<station_api::SystemRestoreTargetDTO> for SystemRestoreTarget {
+    fn from(value: station_api::SystemRestoreTargetDTO) -> Self {
+        match value {
+            station_api::SystemRestoreTargetDTO::RestoreStation => {
+                SystemRestoreTarget::RestoreStation
+            }
+            station_api::SystemRestoreTargetDTO::RestoreUpgrader => {
+                SystemRestoreTarget::RestoreUpgrader
+            }
+        }
+    }
+}
+
+impl From<SystemRestoreOperationInput> for station_api::SystemRestoreOperationInput {
+    fn from(input: SystemRestoreOperationInput) -> station_api::SystemRestoreOperationInput {
+        station_api::SystemRestoreOperationInput {
+            target: input.target.into(),
+            snapshot_id: hex::encode(&input.snapshot_id),
+        }
+    }
+}
+
+impl From<station_api::SystemRestoreOperationInput> for SystemRestoreOperationInput {
+    fn from(input: station_api::SystemRestoreOperationInput) -> SystemRestoreOperationInput {
+        SystemRestoreOperationInput {
+            target: input.target.into(),
+            snapshot_id: hex::decode(&input.snapshot_id).unwrap(),
+        }
+    }
+}
+
+impl From<SystemRestoreOperation> for station_api::SystemRestoreOperationDTO {
+    fn from(operation: SystemRestoreOperation) -> station_api::SystemRestoreOperationDTO {
+        station_api::SystemRestoreOperationDTO {
+            input: operation.input.into(),
         }
     }
 }
@@ -2001,6 +2054,9 @@ impl From<RequestOperation> for RequestOperationDTO {
             RequestOperation::SystemUpgrade(operation) => {
                 RequestOperationDTO::SystemUpgrade(Box::new(operation.into()))
             }
+            RequestOperation::SystemRestore(operation) => {
+                RequestOperationDTO::SystemRestore(Box::new(operation.into()))
+            }
             RequestOperation::SetDisasterRecovery(operation) => {
                 RequestOperationDTO::SetDisasterRecovery(Box::new(operation.into()))
             }
@@ -2153,7 +2209,9 @@ impl RequestOperation {
                     Resource::UserGroup(ResourceAction::Delete(ResourceId::Any)),
                 ]
             }
-            RequestOperation::SetDisasterRecovery(_) | RequestOperation::SystemUpgrade(_) => {
+            RequestOperation::SetDisasterRecovery(_)
+            | RequestOperation::SystemUpgrade(_)
+            | RequestOperation::SystemRestore(_) => {
                 vec![Resource::System(SystemResourceAction::Upgrade)]
             }
             RequestOperation::ChangeExternalCanister(ChangeExternalCanisterOperation {

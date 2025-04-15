@@ -45,6 +45,9 @@ impl From<station_api::ListRequestsOperationTypeDTO> for ListRequestsOperationTy
             station_api::ListRequestsOperationTypeDTO::SystemUpgrade => {
                 ListRequestsOperationType::SystemUpgrade
             }
+            station_api::ListRequestsOperationTypeDTO::SystemRestore => {
+                ListRequestsOperationType::SystemRestore
+            }
             station_api::ListRequestsOperationTypeDTO::CreateExternalCanister => {
                 ListRequestsOperationType::CreateExternalCanister
             }
@@ -133,6 +136,7 @@ impl From<RequestOperationTypeDTO> for RequestOperationType {
             RequestOperationTypeDTO::EditUserGroup => RequestOperationType::EditUserGroup,
             RequestOperationTypeDTO::RemoveUserGroup => RequestOperationType::RemoveUserGroup,
             RequestOperationTypeDTO::SystemUpgrade => RequestOperationType::SystemUpgrade,
+            RequestOperationTypeDTO::SystemRestore => RequestOperationType::SystemRestore,
             RequestOperationTypeDTO::ChangeExternalCanister => {
                 RequestOperationType::ChangeExternalCanister
             }
@@ -201,6 +205,7 @@ impl From<RequestOperationType> for RequestOperationTypeDTO {
             RequestOperationType::EditUserGroup => RequestOperationTypeDTO::EditUserGroup,
             RequestOperationType::RemoveUserGroup => RequestOperationTypeDTO::RemoveUserGroup,
             RequestOperationType::SystemUpgrade => RequestOperationTypeDTO::SystemUpgrade,
+            RequestOperationType::SystemRestore => RequestOperationTypeDTO::SystemRestore,
             RequestOperationType::ChangeExternalCanister => {
                 RequestOperationTypeDTO::ChangeExternalCanister
             }
@@ -266,6 +271,7 @@ impl From<RequestOperation> for RequestOperationType {
             RequestOperation::EditUserGroup(_) => RequestOperationType::EditUserGroup,
             RequestOperation::RemoveUserGroup(_) => RequestOperationType::RemoveUserGroup,
             RequestOperation::SystemUpgrade(_) => RequestOperationType::SystemUpgrade,
+            RequestOperation::SystemRestore(_) => RequestOperationType::SystemRestore,
             RequestOperation::ChangeExternalCanister(_) => {
                 RequestOperationType::ChangeExternalCanister
             }
@@ -344,6 +350,9 @@ impl RequestOperation {
                 ListRequestsOperationTypeDTO::RemoveUserGroup,
             ) => true,
             (RequestOperation::SystemUpgrade(_), ListRequestsOperationTypeDTO::SystemUpgrade) => {
+                true
+            }
+            (RequestOperation::SystemRestore(_), ListRequestsOperationTypeDTO::SystemRestore) => {
                 true
             }
             (

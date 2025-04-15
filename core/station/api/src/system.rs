@@ -251,3 +251,26 @@ pub struct SystemUpgradeOperationDTO {
 pub struct NotifyFailedStationUpgradeInput {
     pub reason: String,
 }
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct NotifyStationRestoreInput {
+    #[serde(with = "serde_bytes")]
+    pub snapshot_id: Vec<u8>,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub enum SystemRestoreTargetDTO {
+    RestoreStation,
+    RestoreUpgrader,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct SystemRestoreOperationInput {
+    pub target: SystemRestoreTargetDTO,
+    pub snapshot_id: String,
+}
+
+#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
+pub struct SystemRestoreOperationDTO {
+    pub input: SystemRestoreOperationInput,
+}
