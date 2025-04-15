@@ -30,6 +30,16 @@ export class UpgraderService {
     return response.Ok;
   }
 
+  async getDisasterRecoveryStateUntyped(): Promise<string> {
+    const customIdlAgent = new CustomIdlAgent({
+      agent: this.agent,
+      idl: this.idl,
+      canisterId: this.upgraderId,
+    });
+
+    return await customIdlAgent.query('get_disaster_recovery_state', '()');
+  }
+
   async submitRecovery(args: ArrayBuffer) {
     try {
       const response = await this.agent.call(this.upgraderId.toText(), {
