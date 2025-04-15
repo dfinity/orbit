@@ -43,6 +43,7 @@ pub enum RequestOperationType {
     AddNamedRule = 33,
     EditNamedRule = 34,
     RemoveNamedRule = 35,
+    SystemRestore = 36,
 }
 
 /// A helper enum to filter the requests based on the operation type and
@@ -58,6 +59,7 @@ pub enum ListRequestsOperationType {
     EditUserGroup,
     RemoveUserGroup,
     SystemUpgrade,
+    SystemRestore,
     SetDisasterRecovery,
     CreateExternalCanister,
     ChangeExternalCanister(Option<Principal>),
@@ -116,6 +118,9 @@ impl PartialEq<ListRequestsOperationType> for RequestOperationFilterType {
             }
             ListRequestsOperationType::SystemUpgrade => {
                 matches!(self, RequestOperationFilterType::SystemUpgrade)
+            }
+            ListRequestsOperationType::SystemRestore => {
+                matches!(self, RequestOperationFilterType::SystemRestore)
             }
             ListRequestsOperationType::SetDisasterRecovery => {
                 matches!(self, RequestOperationFilterType::SetDisasterRecovery)
@@ -262,6 +267,7 @@ impl FromStr for RequestOperationType {
             "edit_user_group" => Ok(RequestOperationType::EditUserGroup),
             "remove_user_group" => Ok(RequestOperationType::RemoveUserGroup),
             "system_upgrade" => Ok(RequestOperationType::SystemUpgrade),
+            "system_restore" => Ok(RequestOperationType::SystemRestore),
             "change_external_canister" => Ok(RequestOperationType::ChangeExternalCanister),
             "create_external_canister" => Ok(RequestOperationType::CreateExternalCanister),
             "call_external_canister" => Ok(RequestOperationType::CallExternalCanister),
@@ -294,6 +300,7 @@ impl Display for RequestOperationType {
             RequestOperationType::EditUserGroup => write!(f, "edit_user_group"),
             RequestOperationType::RemoveUserGroup => write!(f, "remove_user_group"),
             RequestOperationType::SystemUpgrade => write!(f, "system_upgrade"),
+            RequestOperationType::SystemRestore => write!(f, "system_restore"),
             RequestOperationType::ChangeExternalCanister => write!(f, "change_external_canister"),
             RequestOperationType::CreateExternalCanister => write!(f, "create_external_canister"),
             RequestOperationType::CallExternalCanister => write!(f, "call_external_canister"),
@@ -414,6 +421,10 @@ mod tests {
         assert_eq!(
             RequestOperationType::from_str("system_upgrade").unwrap(),
             RequestOperationType::SystemUpgrade
+        );
+        assert_eq!(
+            RequestOperationType::from_str("system_restore").unwrap(),
+            RequestOperationType::SystemRestore
         );
         assert_eq!(
             RequestOperationType::from_str("change_external_canister").unwrap(),

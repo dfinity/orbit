@@ -39,6 +39,7 @@ pub enum RequestOperation {
     EditUserGroup(EditUserGroupOperation),
     RemoveUserGroup(RemoveUserGroupOperation),
     SystemUpgrade(SystemUpgradeOperation),
+    SystemRestore(SystemRestoreOperation),
     ChangeExternalCanister(ChangeExternalCanisterOperation),
     ConfigureExternalCanister(ConfigureExternalCanisterOperation),
     CreateExternalCanister(CreateExternalCanisterOperation),
@@ -77,6 +78,7 @@ impl Display for RequestOperation {
             RequestOperation::EditUserGroup(_) => write!(f, "adit_user_group"),
             RequestOperation::RemoveUserGroup(_) => write!(f, "remove_user_group"),
             RequestOperation::SystemUpgrade(_) => write!(f, "system_upgrade"),
+            RequestOperation::SystemRestore(_) => write!(f, "system_restore"),
             RequestOperation::ChangeExternalCanister(_) => write!(f, "change_external_canister"),
             RequestOperation::ConfigureExternalCanister(_) => {
                 write!(f, "configure_external_canister")
@@ -417,6 +419,27 @@ pub struct SystemUpgradeOperation {
     #[serde(deserialize_with = "orbit_essentials::deserialize::deserialize_option_blob")]
     pub arg_checksum: Option<Vec<u8>>,
     pub input: SystemUpgradeOperationInput,
+}
+
+#[storable]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub enum SystemRestoreTarget {
+    RestoreStation,
+    RestoreUpgrader,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SystemRestoreOperationInput {
+    pub target: SystemRestoreTarget,
+    #[serde(with = "serde_bytes")]
+    pub snapshot_id: Vec<u8>,
+}
+
+#[storable]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct SystemRestoreOperation {
+    pub input: SystemRestoreOperationInput,
 }
 
 #[storable]
@@ -1093,6 +1116,7 @@ impl ModelValidator<ValidationError> for RequestOperation {
                 EnsureUserGroup::id_exists(&ok.input.user_group_id)?;
             }
             RequestOperation::SystemUpgrade(_) => (),
+            RequestOperation::SystemRestore(_) => (),
             RequestOperation::ChangeExternalCanister(_) => (),
             RequestOperation::ConfigureExternalCanister(op) => {
                 let canister_id = op.canister_id;

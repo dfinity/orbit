@@ -1,8 +1,8 @@
 use crate::setup::{get_canister_wasm, setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     execute_request, execute_request_with_extra_ticks, get_core_canister_health_status,
-    get_request, get_system_info, submit_delayed_request_raw,
-    upload_canister_chunks_to_asset_canister, wait_for_request,
+    get_request, get_system_info, submit_delayed_request_raw, submit_request, try_get_request,
+    upload_canister_chunks_to_asset_canister, wait_for_request, wait_for_request_with_extra_ticks,
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
@@ -11,7 +11,8 @@ use orbit_essentials::utils::rfc3339_to_timestamp;
 use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
     HealthStatus, NotifyFailedStationUpgradeInput, RequestOperationInput, RequestStatusDTO,
-    SystemInstall, SystemUpgrade, SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
+    SystemInstall, SystemRestoreOperationInput, SystemRestoreTargetDTO, SystemUpgrade,
+    SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
 };
 use std::time::{Duration, UNIX_EPOCH};
 use upgrader_api::InitArg;
@@ -394,4 +395,123 @@ fn delayed_system_upgrade() {
     env.advance_time(delay);
 
     wait_for_request(&env, WALLET_ADMIN_USER, canister_ids.station, request).unwrap();
+}
+
+#[test]
+fn system_restore() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    let system_info = get_system_info(&env, WALLET_ADMIN_USER, canister_ids.station);
+    let upgrader_id = system_info.upgrader_id;
+
+    for target in [
+        SystemRestoreTargetDTO::RestoreStation,
+        SystemRestoreTargetDTO::RestoreUpgrader,
+    ] {
+        let target_canister_id = match target {
+            SystemRestoreTargetDTO::RestoreStation => canister_ids.station,
+            SystemRestoreTargetDTO::RestoreUpgrader => upgrader_id,
+        };
+        let controller = match target {
+            SystemRestoreTargetDTO::RestoreStation => upgrader_id,
+            SystemRestoreTargetDTO::RestoreUpgrader => canister_ids.station,
+        };
+        let snapshot = env
+            .take_canister_snapshot(target_canister_id, Some(controller), None)
+            .unwrap();
+
+        let system_restore = RequestOperationInput::SystemRestore(SystemRestoreOperationInput {
+            target: target.clone(),
+            snapshot_id: hex::encode(&snapshot.id),
+        });
+
+        match target {
+            SystemRestoreTargetDTO::RestoreStation => {
+                let system_restore_request = submit_request(
+                    &env,
+                    WALLET_ADMIN_USER,
+                    canister_ids.station,
+                    system_restore,
+                );
+                // wait until the station is restored (to a state before the restore request) at which point the restore request is not found anymore
+                loop {
+                    env.tick();
+                    env.advance_time(Duration::from_secs(5));
+                    match try_get_request(
+                        &env,
+                        WALLET_ADMIN_USER,
+                        canister_ids.station,
+                        system_restore_request.clone(),
+                    ) {
+                        Err(err) => assert!(
+                            err.reject_message.contains(&format!(
+                                "Canister {} is not running",
+                                canister_ids.station
+                            )) || err
+                                .reject_message
+                                .contains(&format!("Canister {} is stopped", canister_ids.station))
+                        ),
+                        Ok(Err(err)) => {
+                            assert_eq!(err.code, "NOT_FOUND");
+                            break;
+                        }
+                        Ok(Ok(_)) => (),
+                    }
+                }
+            }
+            SystemRestoreTargetDTO::RestoreUpgrader => {
+                execute_request(
+                    &env,
+                    WALLET_ADMIN_USER,
+                    canister_ids.station,
+                    system_restore,
+                )
+                .unwrap();
+            }
+        };
+    }
+}
+
+#[test]
+fn failed_system_restore() {
+    let TestEnv {
+        env, canister_ids, ..
+    } = setup_new_env();
+
+    for target in [
+        SystemRestoreTargetDTO::RestoreStation,
+        SystemRestoreTargetDTO::RestoreUpgrader,
+    ] {
+        // providing an invalid snapshot id of length 1
+        let system_restore = RequestOperationInput::SystemRestore(SystemRestoreOperationInput {
+            target: target.clone(),
+            snapshot_id: hex::encode([42]),
+        });
+
+        let system_restore_request = submit_request(
+            &env,
+            WALLET_ADMIN_USER,
+            canister_ids.station,
+            system_restore,
+        );
+
+        let status = wait_for_request_with_extra_ticks(
+            &env,
+            WALLET_ADMIN_USER,
+            canister_ids.station,
+            system_restore_request,
+            STATION_UPGRADE_EXTRA_TICKS,
+        )
+        .unwrap_err()
+        .unwrap();
+
+        match status {
+            RequestStatusDTO::Failed { reason } => {
+                assert!(reason.unwrap().contains("IC0408: Payload deserialization error: InvalidLength(\"Invalid snapshot ID length: provided 1, minumum length expected 37.\""));
+            }
+            _ => panic!("Unexpected request status: {:?}", status),
+        };
+    }
 }

@@ -16,15 +16,28 @@ pub struct UpgradeParams {
 }
 
 #[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]
-pub struct InitArg {
-    pub target_canister: Principal,
-}
-
-#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]
 pub enum TriggerUpgradeError {
     NotController,
     Unauthorized,
     UnexpectedError(String),
+}
+
+#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]
+pub struct RestoreParams {
+    #[serde(with = "serde_bytes")]
+    pub snapshot_id: Vec<u8>,
+}
+
+#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]
+pub enum TriggerRestoreError {
+    NotController,
+    Unauthorized,
+    UnexpectedError(String),
+}
+
+#[derive(Clone, Debug, CandidType, serde::Serialize, Deserialize)]
+pub struct InitArg {
+    pub target_canister: Principal,
 }
 
 #[derive(Clone, Debug, CandidType, Deserialize, PartialEq, Eq)]

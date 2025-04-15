@@ -12,8 +12,8 @@ use crate::{
         system::{DisasterRecoveryCommittee, SystemInfo, SystemState},
         Asset, Blockchain, CanisterInstallMode, CanisterUpgradeModeArgs,
         ManageSystemInfoOperationInput, Metadata, RequestId, RequestKey, RequestOperation,
-        RequestStatus, SystemUpgradeTarget, TokenStandard, WasmModuleExtraChunks, ADMIN_GROUP_ID,
-        OPERATOR_GROUP_ID,
+        RequestStatus, SystemRestoreTarget, SystemUpgradeTarget, TokenStandard,
+        WasmModuleExtraChunks, ADMIN_GROUP_ID, OPERATOR_GROUP_ID,
     },
     repositories::{
         permission::PERMISSION_REPOSITORY, RequestRepository, ASSET_REPOSITORY,
@@ -35,7 +35,7 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     sync::Arc,
 };
-use upgrader_api::UpgradeParams;
+use upgrader_api::{RestoreParams, UpgradeParams};
 use uuid::Uuid;
 
 pub const INITIAL_ICP_ASSET_ID: [u8; 16] = [
@@ -212,6 +212,36 @@ impl SystemService {
             )
             .await
             .map_err(|e| SystemError::UpgradeFailed {
+                reason: e.to_string(),
+            })?;
+
+        Ok(())
+    }
+
+    /// Execute a restore of the station by requesting the upgrader to perform it on our behalf.
+    pub async fn restore_station(&self, snapshot_id: Vec<u8>) -> ServiceResult<()> {
+        let upgrader_canister_id = self.get_upgrader_canister_id();
+
+        ic_cdk::call::<_, ()>(
+            upgrader_canister_id,
+            "trigger_restore",
+            (RestoreParams { snapshot_id },),
+        )
+        .await
+        .map_err(|(_, err)| SystemError::RestoreFailed {
+            reason: err.to_string(),
+        })?;
+
+        Ok(())
+    }
+
+    /// Execute a restore of the upgrader canister.
+    pub async fn restore_upgrader(&self, snapshot_id: Vec<u8>) -> ServiceResult<()> {
+        let upgrader_canister_id = self.get_upgrader_canister_id();
+        self.change_canister_service
+            .restore_canister(upgrader_canister_id, snapshot_id)
+            .await
+            .map_err(|e| SystemError::RestoreFailed {
                 reason: e.to_string(),
             })?;
 
@@ -600,7 +630,7 @@ impl SystemService {
 
         let request = self.request_service.get_request(request_id)?;
 
-        // Check that the request is indeed a station upgrade request.
+        // Check that the request is indeed a station upgrade or restore request.
         match request.operation {
             RequestOperation::SystemUpgrade(ref system_upgrade) => {
                 match system_upgrade.input.target {
@@ -611,8 +641,17 @@ impl SystemService {
                     ),
                 }
             }
+            RequestOperation::SystemRestore(ref system_restore) => {
+                match system_restore.input.target {
+                    SystemRestoreTarget::RestoreStation => (),
+                    _ => panic!(
+                        "Expected restore request for station, got restore request for {:?}",
+                        system_restore.input.target
+                    ),
+                }
+            }
             _ => panic!(
-                "Expected station upgrade request, got {:?}",
+                "Expected station upgrade or restore request, got {:?}",
                 request.operation
             ),
         };

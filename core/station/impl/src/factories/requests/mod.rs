@@ -50,6 +50,7 @@ mod remove_user_group;
 mod restore_external_canister;
 mod set_disaster_recovery;
 mod snapshot_external_canister;
+mod system_restore;
 mod system_upgrade;
 mod transfer;
 
@@ -86,6 +87,7 @@ use self::{
     restore_external_canister::RestoreExternalCanisterRequestExecute,
     snapshot_external_canister::SnapshotExternalCanisterRequestCreate,
     snapshot_external_canister::SnapshotExternalCanisterRequestExecute,
+    system_restore::{SystemRestoreRequestCreate, SystemRestoreRequestExecute},
     system_upgrade::{SystemUpgradeRequestCreate, SystemUpgradeRequestExecute},
     transfer::{TransferRequestCreate, TransferRequestExecute},
 };
@@ -194,6 +196,12 @@ impl RequestFactory {
             }
             RequestOperationInput::SystemUpgrade(operation) => {
                 let creator = Box::new(SystemUpgradeRequestCreate {});
+                creator
+                    .create(id, requested_by_user, input.clone(), operation.clone())
+                    .await
+            }
+            RequestOperationInput::SystemRestore(operation) => {
+                let creator = Box::new(SystemRestoreRequestCreate {});
                 creator
                     .create(id, requested_by_user, input.clone(), operation.clone())
                     .await
@@ -371,6 +379,9 @@ impl RequestFactory {
             ),
             RequestOperation::SystemUpgrade(operation) => Box::new(
                 SystemUpgradeRequestExecute::new(request, operation, Arc::clone(&SYSTEM_SERVICE)),
+            ),
+            RequestOperation::SystemRestore(operation) => Box::new(
+                SystemRestoreRequestExecute::new(request, operation, Arc::clone(&SYSTEM_SERVICE)),
             ),
             RequestOperation::ChangeExternalCanister(operation) => {
                 Box::new(ChangeExternalCanisterRequestExecute::new(

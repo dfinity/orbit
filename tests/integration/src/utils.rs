@@ -130,25 +130,35 @@ pub fn user_test_id(n: u64) -> Principal {
     Principal::from_slice(&bytes)
 }
 
-pub fn get_request(
+pub fn try_get_request(
     env: &PocketIc,
     user_id: Principal,
     station_canister_id: CanisterId,
     request: RequestDTO,
-) -> RequestDTO {
+) -> Result<Result<RequestDTO, ApiErrorDTO>, RejectResponse> {
     let get_request_args = GetRequestInput {
         request_id: request.id,
         with_full_info: Some(false),
     };
-    let res: (Result<GetRequestResponse, ApiErrorDTO>,) = update_candid_as(
+    update_candid_as::<_, (Result<GetRequestResponse, ApiErrorDTO>,)>(
         env,
         station_canister_id,
         user_id,
         "get_request",
         (get_request_args,),
     )
-    .unwrap();
-    res.0.unwrap().request
+    .map(|resp| resp.0.map(|resp| resp.request))
+}
+
+pub fn get_request(
+    env: &PocketIc,
+    user_id: Principal,
+    station_canister_id: CanisterId,
+    request: RequestDTO,
+) -> RequestDTO {
+    try_get_request(env, user_id, station_canister_id, request)
+        .unwrap()
+        .unwrap()
 }
 
 fn is_request_completed(request: RequestDTO) -> bool {

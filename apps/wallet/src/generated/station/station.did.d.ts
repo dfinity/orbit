@@ -941,6 +941,7 @@ export type ListRequestsOperationType = { 'RemoveAsset' : null } |
   { 'AddAsset' : null } |
   { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : null } |
+  { 'SystemRestore' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'FundExternalCanister' : [] | [Principal] } |
@@ -1199,6 +1200,7 @@ export type RequestOperation = { 'RemoveAsset' : RemoveAssetOperation } |
   { 'AddAsset' : AddAssetOperation } |
   { 'SystemUpgrade' : SystemUpgradeOperation } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation } |
+  { 'SystemRestore' : SystemRestoreOperation } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperation } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperation } |
   { 'FundExternalCanister' : FundExternalCanisterOperation } |
@@ -1234,6 +1236,7 @@ export type RequestOperationInput = {
   { 'AddAsset' : AddAssetOperationInput } |
   { 'SystemUpgrade' : SystemUpgradeOperationInput } |
   { 'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput } |
+  { 'SystemRestore' : SystemRestoreOperationInput } |
   { 'CreateExternalCanister' : CreateExternalCanisterOperationInput } |
   { 'EditAddressBookEntry' : EditAddressBookEntryOperationInput } |
   { 'FundExternalCanister' : FundExternalCanisterOperationInput } |
@@ -1267,6 +1270,7 @@ export type RequestOperationType = { 'RemoveAsset' : null } |
   { 'AddAsset' : null } |
   { 'SystemUpgrade' : null } |
   { 'RemoveAddressBookEntry' : null } |
+  { 'SystemRestore' : null } |
   { 'CreateExternalCanister' : null } |
   { 'EditAddressBookEntry' : null } |
   { 'FundExternalCanister' : null } |
@@ -1452,6 +1456,15 @@ export type SystemResourceAction = { 'Upgrade' : null } |
   { 'ManageSystemInfo' : null } |
   { 'SystemInfo' : null } |
   { 'Capabilities' : null };
+export interface SystemRestoreOperation {
+  'input' : SystemRestoreOperationInput,
+}
+export interface SystemRestoreOperationInput {
+  'target' : SystemRestoreTarget,
+  'snapshot_id' : string,
+}
+export type SystemRestoreTarget = { 'RestoreUpgrader' : null } |
+  { 'RestoreStation' : null };
 export interface SystemUpgrade { 'name' : [] | [string] }
 export interface SystemUpgradeOperation {
   'module_checksum' : Sha256Hash,

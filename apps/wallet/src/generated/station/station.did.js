@@ -586,6 +586,17 @@ export const idlFactory = ({ IDL }) => {
   const RemoveAddressBookEntryOperation = IDL.Record({
     'input' : RemoveAddressBookEntryOperationInput,
   });
+  const SystemRestoreTarget = IDL.Variant({
+    'RestoreUpgrader' : IDL.Null,
+    'RestoreStation' : IDL.Null,
+  });
+  const SystemRestoreOperationInput = IDL.Record({
+    'target' : SystemRestoreTarget,
+    'snapshot_id' : IDL.Text,
+  });
+  const SystemRestoreOperation = IDL.Record({
+    'input' : SystemRestoreOperationInput,
+  });
   const ExternalCanisterPermissions = IDL.Record({
     'calls' : IDL.Vec(ExternalCanisterCallPermission),
     'read' : Allow,
@@ -839,6 +850,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAsset' : AddAssetOperation,
     'SystemUpgrade' : SystemUpgradeOperation,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperation,
+    'SystemRestore' : SystemRestoreOperation,
     'CreateExternalCanister' : CreateExternalCanisterOperation,
     'EditAddressBookEntry' : EditAddressBookEntryOperation,
     'FundExternalCanister' : FundExternalCanisterOperation,
@@ -993,6 +1005,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAsset' : AddAssetOperationInput,
     'SystemUpgrade' : SystemUpgradeOperationInput,
     'RemoveAddressBookEntry' : RemoveAddressBookEntryOperationInput,
+    'SystemRestore' : SystemRestoreOperationInput,
     'CreateExternalCanister' : CreateExternalCanisterOperationInput,
     'EditAddressBookEntry' : EditAddressBookEntryOperationInput,
     'FundExternalCanister' : FundExternalCanisterOperationInput,
@@ -1226,6 +1239,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAsset' : IDL.Null,
     'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
+    'SystemRestore' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
     'FundExternalCanister' : IDL.Opt(IDL.Principal),
@@ -1492,6 +1506,7 @@ export const idlFactory = ({ IDL }) => {
     'AddAsset' : IDL.Null,
     'SystemUpgrade' : IDL.Null,
     'RemoveAddressBookEntry' : IDL.Null,
+    'SystemRestore' : IDL.Null,
     'CreateExternalCanister' : IDL.Null,
     'EditAddressBookEntry' : IDL.Null,
     'FundExternalCanister' : IDL.Null,
