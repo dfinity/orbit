@@ -85,7 +85,7 @@ pub struct WithStop<T>(pub T);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithStop<T> {
-    /// Perform an upgrade but ensure that the target canister is stopped first
+    /// Perform an upgrade or restore but ensure that the target canister is stopped first
     async fn upgrade(&self, ps: ChangeParams) -> Result<(), UpgradeError> {
         let id = get_target_canister();
 
@@ -101,8 +101,8 @@ pub struct WithStart<T>(pub T);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithStart<T> {
-    /// Perform an upgrade but ensure that the target canister is restarted
-    /// regardless of the upgrade succeeding or not
+    /// Perform an upgrade or restore but ensure that the target canister is restarted
+    /// regardless of the operation succeeding or not
     async fn upgrade(&self, ps: ChangeParams) -> Result<(), UpgradeError> {
         let out = self.0.upgrade(ps).await;
 
@@ -120,7 +120,7 @@ pub struct WithBackground<T>(pub Arc<T>);
 
 #[async_trait]
 impl<T: Upgrade> Upgrade for WithBackground<T> {
-    /// Spawn a background task performing the upgrade
+    /// Spawn a background task performing the upgrade or restore
     /// so that it is performed in a non-blocking manner
     async fn upgrade(&self, ps: ChangeParams) -> Result<(), UpgradeError> {
         let u = self.0.clone();

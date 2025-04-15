@@ -253,12 +253,6 @@ pub struct NotifyFailedStationUpgradeInput {
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
-pub struct NotifyStationRestoreInput {
-    #[serde(with = "serde_bytes")]
-    pub snapshot_id: Vec<u8>,
-}
-
-#[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
 pub enum SystemRestoreTargetDTO {
     RestoreStation,
     RestoreUpgrader,
