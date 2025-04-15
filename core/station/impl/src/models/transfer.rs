@@ -49,7 +49,7 @@ impl Display for TransferStatus {
 }
 
 /// Represents a transfer in the system.
-#[storable(skip_deserialize = true)]
+#[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Transfer {
     /// The transfer id, which is a UUID.
