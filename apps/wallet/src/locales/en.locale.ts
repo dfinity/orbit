@@ -1064,10 +1064,12 @@ export default {
       subtitle: 'Input the disaster recovery payload to restore your wallet.',
       payload_label: 'Recovery Payload',
       payload_placeholder: 'Paste your recovery payload here...',
-      submit_button: 'Submit Recovery Data',
+      submit_button: 'Submit Disaster Recovery Request',
       recovery_instructions: 'Contact your wallet administrator to obtain a recovery payload.',
       success_message: 'Recovery data submitted successfully.',
       error_message: 'Failed to process recovery data. Please check your input and try again.',
+      error_logs_unauthorized: 'Unauthorized to query logs',
+      error_state_unauthorized: 'Unauthorized to query state',
 
       loading_state: 'Getting upgrader information...',
       error_state: 'Failed to get upgrader: {error}',

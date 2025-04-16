@@ -8,9 +8,9 @@
         <VCard style="max-width: 100%">
           <div class="d-flex flex-row flex-no-wrap justify-space-between" style="max-width: 100%">
             <div class="flex-grow-1 my-4" style="max-width: 100%">
-              <VCardTitle class="text-h4 text-wrap"> Status </VCardTitle>
+              <VCardTitle class="text-h4 text-wrap"> Upgrader Status </VCardTitle>
 
-              <template v-if="state.name === 'loading_upgrader'">
+              <template v-if="upgraderState.name === 'loading_upgrader'">
                 <div class="d-flex flex-column flex-no-wrap align-center">
                   <VProgressCircular
                     class="mt-10"
@@ -25,8 +25,8 @@
                 </div>
               </template>
 
-              <template v-if="state.name === 'submitting_recovery'">
-                <VCardText> Upgrader: {{ state.upgrader.upgrader.toText() }} </VCardText>
+              <template v-else-if="upgraderState.name === 'upgrader_loaded'">
+                <VCardText> Upgrader: {{ upgraderState.upgrader.upgrader.toText() }} </VCardText>
 
                 <div
                   class="d-lg-flex flex-row flex-no-wrap justify-space-between"
@@ -35,31 +35,37 @@
                   <VCardText class="w-100 w-lg-50">
                     <VLabel>Disaster Recovery State</VLabel>
                     <VTextarea
-                      v-if="state.disasterRecoveryState.name !== 'error'"
+                      v-if="upgraderState.disasterRecoveryState.name !== 'error'"
                       :rows="24"
                       class="font-monospace small-font no-wrap"
                       density="compact"
                       v-model="humanReadableState"
                       readonly
                     ></VTextarea>
-                    <VAlert v-else-if="state.disasterRecoveryState.name === 'error'" color="error">
-                      {{ state.disasterRecoveryState.error }}
+                    <VAlert
+                      v-else-if="upgraderState.disasterRecoveryState.name === 'error'"
+                      color="error"
+                    >
+                      {{ upgraderState.disasterRecoveryState.error }}
                     </VAlert>
                   </VCardText>
 
                   <VCardText class="w-100 w-lg-50">
                     <VLabel>Recent Logs</VLabel>
                     <VTextarea
-                      v-if="state.logs.name === 'untyped'"
-                      v-model="state.logs.candid"
+                      v-if="upgraderState.logs.name === 'untyped'"
+                      v-model="upgraderState.logs.candid"
                       density="compact"
                       :rows="24"
                       class="font-monospace small-font no-wrap"
                       readonly
                     ></VTextarea>
 
-                    <VExpansionPanels variant="accordion" v-else-if="state.logs.name === 'typed'">
-                      <VExpansionPanel v-for="log in state.logs.data.logs" :key="log.time">
+                    <VExpansionPanels
+                      variant="accordion"
+                      v-else-if="upgraderState.logs.name === 'typed'"
+                    >
+                      <VExpansionPanel v-for="log in upgraderState.logs.data.logs" :key="log.time">
                         <VExpansionPanelTitle class="d-flex flex-row flex-no-wrap">
                           <div style="display: flex; flex: 1; overflow: hidden">
                             <div style="width: 200px; flex-shrink: 0">
@@ -77,11 +83,14 @@
                       </VExpansionPanel>
                     </VExpansionPanels>
 
-                    <VAlert v-else-if="state.logs.name === 'error'" color="error">
-                      {{ state.logs.error }}
+                    <VAlert v-else-if="upgraderState.logs.name === 'error'" color="error">
+                      {{ upgraderState.logs.error }}
                     </VAlert>
                   </VCardText>
                 </div>
+              </template>
+              <template v-else-if="upgraderState.name === 'error'">
+                <VCardText> {{ upgraderState.error }} </VCardText>
               </template>
             </div>
           </div>
@@ -90,11 +99,11 @@
           <VCardTitle class="text-h4 text-wrap"> Submit Recovery Request </VCardTitle>
           <div class="d-flex flex-row flex-no-wrap justify-space-between">
             <div class="flex-grow-1 my-4">
-              <template v-if="state.name === 'submitting_recovery'">
+              <template v-if="wasmPickingState.registryState.name === 'loaded_registry'">
                 <VCardText>
                   <VSelect
-                    v-if="state.registryState.name === 'loaded_registry'"
-                    :items="state.registryState.registry"
+                    v-if="wasmPickingState.registryState.name === 'loaded_registry'"
+                    :items="wasmPickingState.registryState.registry"
                     item-title="value.WasmModule.version"
                     item-value="id"
                     placeholder="Select Orbit station version"
@@ -104,11 +113,11 @@
                   />
                 </VCardText>
 
-                <div v-if="state.wasm?.wasmIdl">
+                <div v-if="wasmPickingState.wasm?.wasmIdl">
                   <VCardText>
                     <VLabel>Station IDL</VLabel>
                     <VTextarea
-                      v-model="state.wasm.wasmIdl"
+                      v-model="wasmPickingState.wasm.wasmIdl"
                       density="compact"
                       :rows="16"
                       class="font-monospace small-font no-wrap"
@@ -120,7 +129,7 @@
 
                 <VCardText>
                   <CanisterArgumentField
-                    v-if="state.wasm"
+                    v-if="wasmPickingState.wasm"
                     ref="canisterArgumentField"
                     v-model="payload"
                     required
@@ -128,7 +137,7 @@
                     :rows="10"
                     :icon="false"
                     :candid="{
-                      idl: state.wasm?.wasmIdl ?? '',
+                      idl: wasmPickingState.wasm?.wasmIdl ?? '',
                       withType: { serviceParams: null },
                     }"
                   />
@@ -136,12 +145,12 @@
 
                 <div
                   class="d-flex flex-row flex-no-wrap justify-space-between"
-                  v-if="state.wasm?.wasmIdl && state.upgrader"
+                  v-if="wasmPickingState.wasm?.wasmIdl"
                 >
-                  <VCardText v-if="state.wasm">
+                  <VCardText v-if="upgraderState.name === 'upgrader_loaded'">
                     <VLabel>Upgrader IDL</VLabel>
                     <VTextarea
-                      v-model="state.upgrader.candid"
+                      v-model="upgraderState.upgrader.candid"
                       density="compact"
                       :rows="16"
                       class="font-monospace small-font no-wrap"
@@ -163,15 +172,19 @@
 
                 <VCardText>
                   <CanisterArgumentField
-                    v-if="state.wasm"
+                    v-if="wasmPickingState.wasm && upgraderState.name === 'upgrader_loaded'"
                     ref="drRequestPayloadField"
                     v-model="drRequestPayload"
                     required
                     name="argument"
-                    :candid="{
-                      idl: state.upgrader.candid,
-                      withType: { methodParams: 'request_disaster_recovery' },
-                    }"
+                    :candid="
+                      upgraderState.name === 'upgrader_loaded'
+                        ? {
+                            idl: upgraderState.upgrader.candid,
+                            withType: { methodParams: 'request_disaster_recovery' },
+                          }
+                        : undefined
+                    "
                     :rows="10"
                     :icon="false"
                   />
@@ -180,18 +193,29 @@
 
               <VCardActions>
                 <VBtn
-                  v-if="state.name === 'submitting_recovery'"
+                  v-if="upgraderState.name === 'upgrader_loaded'"
                   color="primary"
                   variant="elevated"
                   size="large"
                   block
-                  :loading="state.submitLoading"
-                  :disabled="!drRequestPayload || state.submitLoading"
+                  :loading="upgraderState.submitLoading"
+                  :disabled="!drRequestPayload || upgraderState.submitLoading"
                   @click="submitRecovery"
                 >
                   {{ $t('pages.disaster_recovery.submit_button') }}
                 </VBtn>
               </VCardActions>
+
+              <VCardText v-if="upgraderState.name === 'upgrader_loaded' && upgraderState.result">
+                <VLabel>Result</VLabel>
+                <VTextarea
+                  v-model="upgraderState.result"
+                  density="compact"
+                  :rows="16"
+                  class="font-monospace small-font no-wrap"
+                  readonly
+                ></VTextarea>
+              </VCardText>
             </div>
           </div>
         </VCard>
@@ -244,6 +268,7 @@ import {
 } from '~/generated/upgrader/upgrader.did';
 import { services } from '~/plugins/services.plugin';
 import { UpgraderService } from '~/services/upgrader.service';
+import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import { fetchCanisterIdlFromMetadata } from '~/utils/didc.utils';
 import {
@@ -258,6 +283,7 @@ import { focusText } from '~/utils/form.utils';
 import { fetchCanisterControllers } from '~/utils/helper.utils';
 
 const i18n = useI18n();
+const appStore = useAppStore();
 
 type UpgraderInfo = {
   upgrader: Principal;
@@ -282,8 +308,10 @@ const unmounted = ref(false);
 const selectedRegistry = ref<RegistryEntry | null>(null);
 
 useInterval(async () => {
-  if (state.value.name === 'submitting_recovery') {
-    state.value.logs = await getLogs(state.value.upgraderService as UpgraderService);
+  if (upgraderState.value.name === 'upgrader_loaded') {
+    upgraderState.value.logs = await getLogs(
+      upgraderState.value.upgraderService as UpgraderService,
+    );
   }
 }, 5000);
 
@@ -344,35 +372,56 @@ type ConnectionState =
       error: string;
     }
   | {
-      name: 'submitting_recovery';
+      name: 'upgrader_loaded';
       upgrader: UpgraderInfo;
       upgraderService: UpgraderService;
+
       disasterRecoveryState: DisasterRecoveryStateResult;
       logs: LogsResult;
+
       submitLoading: boolean;
-      error: string;
       payload: Uint8Array;
-      registryState: RegistryState;
-      wasm: DownloadedWasm | null;
+
+      lastSubmitError: string | null;
+
+      result: string | null | undefined;
+    }
+  | {
+      name: 'error';
+      error: string;
     };
 
-const state = ref<ConnectionState>({
+type WasmPickingState = {
+  registryState: RegistryState;
+  wasm: DownloadedWasm | null;
+};
+
+const upgraderState = ref<ConnectionState>({
   name: 'loading_upgrader',
   isLoading: true,
   error: '',
+});
+
+const wasmPickingState = ref<WasmPickingState>({
+  registryState: {
+    name: 'loading_registry',
+    isLoading: true,
+    error: '',
+  },
+  wasm: null,
 });
 
 const stationIdlTextarea = ref<InstanceType<typeof VTextarea>>();
 const upgraderIdlTextarea = ref<InstanceType<typeof VTextarea>>();
 
 const humanReadableState = computed(() => {
-  if (state.value.name === 'submitting_recovery') {
-    if (state.value.disasterRecoveryState.name === 'typed') {
+  if (upgraderState.value.name === 'upgrader_loaded') {
+    if (upgraderState.value.disasterRecoveryState.name === 'typed') {
       return stateToHumanReadable(
-        state.value.disasterRecoveryState.data as GetDisasterRecoveryStateResponse,
+        upgraderState.value.disasterRecoveryState.data as GetDisasterRecoveryStateResponse,
       );
-    } else if (state.value.disasterRecoveryState.name === 'untyped') {
-      return state.value.disasterRecoveryState.candid;
+    } else if (upgraderState.value.disasterRecoveryState.name === 'untyped') {
+      return upgraderState.value.disasterRecoveryState.candid;
     } else {
       return '';
     }
@@ -390,12 +439,14 @@ const drRequestPayloadField = ref<InstanceType<typeof CanisterArgumentField>>();
 watch(
   [
     () =>
-      (state.value.name === 'submitting_recovery' ? state.value.upgrader.upgrader : undefined) as
-        | Principal
-        | undefined,
-    () => (state.value.name === 'submitting_recovery' ? state.value.wasm?.wasmIdl : undefined),
+      (upgraderState.value.name === 'upgrader_loaded'
+        ? upgraderState.value.upgrader.upgrader
+        : undefined) as Principal | undefined,
+    () => wasmPickingState.value.wasm?.wasmIdl,
     () =>
-      state.value.name === 'submitting_recovery' ? state.value.disasterRecoveryState : undefined,
+      upgraderState.value.name === 'upgrader_loaded'
+        ? upgraderState.value.disasterRecoveryState
+        : undefined,
     canisterArgumentField,
   ],
   ([upgraderId, wasmIdl, disasterRecoveryState, canisterArgumentField]) => {
@@ -412,36 +463,28 @@ watch(
   },
 );
 
-watch(
-  [
-    payloadHumanReadable,
-    () => (state.value.name === 'submitting_recovery' ? state.value.wasm : undefined),
-  ],
-  ([payloadHumanReadable, wasm]) => {
-    if (payloadHumanReadable && wasm) {
-      drRequestPayloadField.value?.setArgument(
-        drRequestArgs(payloadHumanReadable, wasm.extraChunks as WasmModuleExtraChunks),
-      );
-    }
-  },
-);
+watch([payloadHumanReadable, () => wasmPickingState.value.wasm], ([payloadHumanReadable, wasm]) => {
+  if (payloadHumanReadable && wasm) {
+    drRequestPayloadField.value?.setArgument(
+      drRequestArgs(payloadHumanReadable, wasm.extraChunks as WasmModuleExtraChunks),
+    );
+  }
+});
 
 watch(selectedRegistry, async newSelectedRegistry => {
   if (newSelectedRegistry) {
     const wasm = await downloadRegistryEntry(newSelectedRegistry as RegistryEntry);
 
-    if (state.value.name === 'submitting_recovery') {
-      state.value = {
-        ...state.value,
-        wasm: wasm,
-      };
-      await nextTick();
-      focusText(stationIdlTextarea.value?.$el.querySelector('textarea'), 'type SystemInstall');
-      focusText(
-        upgraderIdlTextarea.value?.$el.querySelector('textarea'),
-        'type RequestDisasterRecoveryInput',
-      );
-    }
+    wasmPickingState.value = {
+      ...wasmPickingState.value,
+      wasm: wasm,
+    };
+    await nextTick();
+    focusText(stationIdlTextarea.value?.$el.querySelector('textarea'), 'type SystemInstall');
+    focusText(
+      upgraderIdlTextarea.value?.$el.querySelector('textarea'),
+      'type RequestDisasterRecoveryInput',
+    );
   }
 });
 
@@ -465,25 +508,38 @@ async function getUpgrader(): Promise<UpgraderInfo> {
 }
 
 async function submitRecovery() {
-  if (state.value.name === 'submitting_recovery' && drRequestPayload.value) {
-    state.value.submitLoading = true;
+  if (upgraderState.value.name === 'upgrader_loaded' && drRequestPayload.value) {
+    upgraderState.value.submitLoading = true;
     try {
-      const upgraderService = state.value.upgraderService;
+      const upgraderService = upgraderState.value.upgraderService;
 
-      await upgraderService.submitRecoveryUntyped(drRequestPayload.value);
+      const result = await upgraderService.submitRecoveryUntyped(drRequestPayload.value);
+      // (variant { Ok })
 
-      state.value.wasm = null;
-      selectedRegistry.value = null;
+      if (result == '(variant { Ok })') {
+        wasmPickingState.value.wasm = null;
+        selectedRegistry.value = null;
+        appStore.sendNotification({
+          type: 'success',
+          message: i18n.t('pages.disaster_recovery.success_submit_recovery'),
+        });
+      } else {
+        upgraderState.value.result = result;
+      }
 
-      state.value.logs = await getLogs(upgraderService as UpgraderService);
-      state.value.disasterRecoveryState = await getDisasterRecoveryState(
+      upgraderState.value.logs = await getLogs(upgraderService as UpgraderService);
+      upgraderState.value.disasterRecoveryState = await getDisasterRecoveryState(
         upgraderService as UpgraderService,
       );
     } catch (error) {
-      state.value.error = i18n.t('pages.disaster_recovery.error_submit_recovery', { error });
-      console.log(error);
+      upgraderState.value.lastSubmitError = i18n.t(
+        'pages.disaster_recovery.error_submit_recovery',
+        {
+          error,
+        },
+      );
     } finally {
-      state.value.submitLoading = false;
+      upgraderState.value.submitLoading = false;
     }
   }
 }
@@ -500,7 +556,7 @@ async function getLogs(service: UpgraderService): Promise<LogsResult> {
     if (err instanceof Object && 'code' in err && err.code === 'UNAUTHORIZED') {
       return {
         name: 'error',
-        error: i18n.t('pages.disaster_recovery.error_unauthorized'),
+        error: i18n.t('pages.disaster_recovery.error_logs_unauthorized'),
       };
     } else {
       try {
@@ -532,7 +588,7 @@ async function getDisasterRecoveryState(
     if (err instanceof Object && 'code' in err && err.code === 'UNAUTHORIZED') {
       return {
         name: 'error',
-        error: i18n.t('pages.disaster_recovery.error_unauthorized'),
+        error: i18n.t('pages.disaster_recovery.error_state_unauthorized'),
       };
     } else {
       try {
@@ -551,8 +607,8 @@ async function getDisasterRecoveryState(
   }
 }
 
-onMounted(async () => {
-  state.value = {
+async function initUpgraderState() {
+  upgraderState.value = {
     name: 'loading_upgrader',
     isLoading: true,
     error: '',
@@ -560,7 +616,7 @@ onMounted(async () => {
 
   try {
     const upgraderInfo = await getUpgrader();
-    state.value = {
+    upgraderState.value = {
       name: 'loading_state',
       upgrader: upgraderInfo,
       upgraderService: markRaw(
@@ -570,9 +626,8 @@ onMounted(async () => {
       error: '',
     };
   } catch (error) {
-    state.value = {
-      name: 'loading_upgrader',
-      isLoading: false,
+    upgraderState.value = {
+      name: 'error',
       error: i18n.t('pages.disaster_recovery.error_state', { error: error }),
     };
     return;
@@ -580,30 +635,26 @@ onMounted(async () => {
     if (unmounted.value) return;
   }
 
-  const upgraderService = state.value.upgraderService as UpgraderService;
+  const upgraderService = upgraderState.value.upgraderService as UpgraderService;
 
   const disasterRecoveryState = await getDisasterRecoveryState(upgraderService);
   const logs = await getLogs(upgraderService);
 
   if (unmounted.value) return;
 
-  state.value = {
-    name: 'submitting_recovery',
-    upgrader: state.value.upgrader,
+  upgraderState.value = {
+    name: 'upgrader_loaded',
+    upgrader: upgraderState.value.upgrader,
     upgraderService,
     disasterRecoveryState,
     logs,
-    registryState: {
-      name: 'loading_registry',
-      isLoading: true,
-      error: '',
-    },
     submitLoading: false,
-    error: '',
+    lastSubmitError: null,
     payload: new Uint8Array(),
-    wasm: null,
+    result: null,
   };
-
+}
+async function initWasmPickingState() {
   try {
     const registryEntries = await controlPanelService.findRegistryEntries({
       filter_by: [{ Name: '@orbit/station' }],
@@ -611,28 +662,30 @@ onMounted(async () => {
       sort_by: [],
     });
 
-    state.value = {
-      ...state.value,
+    wasmPickingState.value = {
       registryState: {
         name: 'loaded_registry',
         registry: registryEntries.entries,
       },
-      payload: new Uint8Array(),
+      wasm: null,
     };
   } catch (error) {
-    state.value = {
-      ...state.value,
+    wasmPickingState.value = {
       registryState: {
-        name: 'loading_registry',
+        name: 'error',
         error: i18n.t('pages.disaster_recovery.error_registry_loading_failed', { error: error }),
-        isLoading: false,
       },
+      wasm: null,
     };
 
     return;
   } finally {
     if (unmounted.value) return;
   }
+}
+
+onMounted(async () => {
+  Promise.all([initUpgraderState(), initWasmPickingState()]);
 });
 
 onBeforeUnmount(() => {
