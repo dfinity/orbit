@@ -35,12 +35,16 @@
                   <VCardText class="w-100 w-lg-50">
                     <VLabel>Disaster Recovery State</VLabel>
                     <VTextarea
+                      v-if="state.disasterRecoveryState.name !== 'error'"
                       :rows="24"
                       class="font-monospace small-font no-wrap"
                       density="compact"
                       v-model="humanReadableState"
                       readonly
                     ></VTextarea>
+                    <VAlert v-else-if="state.disasterRecoveryState.name === 'error'" color="error">
+                      {{ state.disasterRecoveryState.error }}
+                    </VAlert>
                   </VCardText>
 
                   <VCardText class="w-100 w-lg-50">
@@ -72,6 +76,10 @@
                         </VExpansionPanelText>
                       </VExpansionPanel>
                     </VExpansionPanels>
+
+                    <VAlert v-else-if="state.logs.name === 'error'" color="error">
+                      {{ state.logs.error }}
+                    </VAlert>
                   </VCardText>
                 </div>
               </template>
@@ -117,18 +125,18 @@
                     v-model="payload"
                     required
                     name="argument"
+                    :rows="10"
+                    :icon="false"
                     :candid="{
                       idl: state.wasm?.wasmIdl ?? '',
                       withType: { serviceParams: null },
                     }"
-                    :rows="10"
-                    :icon="false"
                   />
                 </VCardText>
 
                 <div
                   class="d-flex flex-row flex-no-wrap justify-space-between"
-                  v-if="state.wasm?.wasmIdl"
+                  v-if="state.wasm?.wasmIdl && state.upgrader"
                 >
                   <VCardText v-if="state.wasm">
                     <VLabel>Upgrader IDL</VLabel>
@@ -142,7 +150,7 @@
                     ></VTextarea>
                   </VCardText>
                   <VCardText>
-                    <VLabel>Install Mode Payload</VLabel>
+                    <VLabel>Station Service Payload</VLabel>
                     <VTextarea
                       v-model="payloadHumanReadable"
                       density="compact"
@@ -355,6 +363,7 @@ const state = ref<ConnectionState>({
 });
 
 const stationIdlTextarea = ref<InstanceType<typeof VTextarea>>();
+const upgraderIdlTextarea = ref<InstanceType<typeof VTextarea>>();
 
 const humanReadableState = computed(() => {
   if (state.value.name === 'submitting_recovery') {
@@ -428,6 +437,10 @@ watch(selectedRegistry, async newSelectedRegistry => {
       };
       await nextTick();
       focusText(stationIdlTextarea.value?.$el.querySelector('textarea'), 'type SystemInstall');
+      focusText(
+        upgraderIdlTextarea.value?.$el.querySelector('textarea'),
+        'type RequestDisasterRecoveryInput',
+      );
     }
   }
 });
@@ -562,37 +575,26 @@ onMounted(async () => {
     if (unmounted.value) return;
   }
 
-  try {
-    const drState = await getDisasterRecoveryState();
+  const disasterRecoveryState = await getDisasterRecoveryState();
+  const logs = await getLogs();
 
-    state.value = {
-      name: 'submitting_recovery',
-      upgrader: state.value.upgrader,
-      disasterRecoveryState: drState,
-      logs: await getLogs(),
-      registryState: {
-        name: 'loading_registry',
-        isLoading: true,
-        error: '',
-      },
-      submitLoading: false,
+  if (unmounted.value) return;
+
+  state.value = {
+    name: 'submitting_recovery',
+    upgrader: state.value.upgrader,
+    disasterRecoveryState,
+    logs,
+    registryState: {
+      name: 'loading_registry',
+      isLoading: true,
       error: '',
-      payload: new Uint8Array(),
-      wasm: null,
-    };
-    console.log(state.value.logs);
-  } catch (error) {
-    state.value = {
-      name: 'loading_state',
-      upgrader: state.value.upgrader,
-      // service: state.value.service,
-      stateLoading: false,
-      error: i18n.t('pages.disaster_recovery.error_state_loading_failed', { error: error }),
-    };
-    return;
-  } finally {
-    if (unmounted.value) return;
-  }
+    },
+    submitLoading: false,
+    error: '',
+    payload: new Uint8Array(),
+    wasm: null,
+  };
 
   try {
     const registryEntries = await controlPanelService.findRegistryEntries({
