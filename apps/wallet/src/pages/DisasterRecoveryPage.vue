@@ -219,7 +219,7 @@
 
 <script setup lang="ts">
 import { Principal } from '@dfinity/principal';
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, markRaw, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
   VBtn,
@@ -281,11 +281,9 @@ const unmounted = ref(false);
 
 const selectedRegistry = ref<RegistryEntry | null>(null);
 
-let upgraderService: UpgraderService | null = null;
-
 useInterval(async () => {
   if (state.value.name === 'submitting_recovery') {
-    state.value.logs = await getLogs();
+    state.value.logs = await getLogs(state.value.upgraderService as UpgraderService);
   }
 }, 5000);
 
@@ -341,18 +339,20 @@ type ConnectionState =
   | {
       name: 'loading_state';
       upgrader: UpgraderInfo;
+      upgraderService: UpgraderService;
       stateLoading: boolean;
       error: string;
     }
   | {
       name: 'submitting_recovery';
       upgrader: UpgraderInfo;
+      upgraderService: UpgraderService;
       disasterRecoveryState: DisasterRecoveryStateResult;
       logs: LogsResult;
-      registryState: RegistryState;
       submitLoading: boolean;
       error: string;
       payload: Uint8Array;
+      registryState: RegistryState;
       wasm: DownloadedWasm | null;
     };
 
@@ -468,24 +468,29 @@ async function submitRecovery() {
   if (state.value.name === 'submitting_recovery' && drRequestPayload.value) {
     state.value.submitLoading = true;
     try {
-      await upgraderService!.submitRecoveryUntyped(drRequestPayload.value);
+      const upgraderService = state.value.upgraderService;
+
+      await upgraderService.submitRecoveryUntyped(drRequestPayload.value);
 
       state.value.wasm = null;
       selectedRegistry.value = null;
 
-      state.value.logs = await getLogs();
-      state.value.disasterRecoveryState = await getDisasterRecoveryState();
+      state.value.logs = await getLogs(upgraderService as UpgraderService);
+      state.value.disasterRecoveryState = await getDisasterRecoveryState(
+        upgraderService as UpgraderService,
+      );
     } catch (error) {
       state.value.error = i18n.t('pages.disaster_recovery.error_submit_recovery', { error });
+      console.log(error);
     } finally {
       state.value.submitLoading = false;
     }
   }
 }
 
-async function getLogs(): Promise<LogsResult> {
+async function getLogs(service: UpgraderService): Promise<LogsResult> {
   try {
-    const logs = await upgraderService!.getLogs();
+    const logs = await service.getLogs();
 
     return {
       name: 'typed',
@@ -499,7 +504,7 @@ async function getLogs(): Promise<LogsResult> {
       };
     } else {
       try {
-        const logs = await upgraderService!.getLogsUntyped();
+        const logs = await service.getLogsUntyped();
         return {
           name: 'untyped',
           candid: logs,
@@ -514,9 +519,11 @@ async function getLogs(): Promise<LogsResult> {
   }
 }
 
-async function getDisasterRecoveryState(): Promise<DisasterRecoveryStateResult> {
+async function getDisasterRecoveryState(
+  service: UpgraderService,
+): Promise<DisasterRecoveryStateResult> {
   try {
-    const drState = await upgraderService!.getDisasterRecoveryState();
+    const drState = await service.getDisasterRecoveryState();
     return {
       name: 'typed',
       data: drState,
@@ -529,7 +536,7 @@ async function getDisasterRecoveryState(): Promise<DisasterRecoveryStateResult> 
       };
     } else {
       try {
-        const drState = await upgraderService!.getDisasterRecoveryStateUntyped();
+        const drState = await service.getDisasterRecoveryStateUntyped();
         return {
           name: 'untyped',
           candid: drState,
@@ -553,14 +560,12 @@ onMounted(async () => {
 
   try {
     const upgraderInfo = await getUpgrader();
-    upgraderService = new UpgraderService(
-      icAgent.get(),
-      upgraderInfo.upgrader,
-      upgraderInfo.candid,
-    );
     state.value = {
       name: 'loading_state',
       upgrader: upgraderInfo,
+      upgraderService: markRaw(
+        new UpgraderService(icAgent.get(), upgraderInfo.upgrader, upgraderInfo.candid),
+      ),
       stateLoading: true,
       error: '',
     };
@@ -575,14 +580,17 @@ onMounted(async () => {
     if (unmounted.value) return;
   }
 
-  const disasterRecoveryState = await getDisasterRecoveryState();
-  const logs = await getLogs();
+  const upgraderService = state.value.upgraderService as UpgraderService;
+
+  const disasterRecoveryState = await getDisasterRecoveryState(upgraderService);
+  const logs = await getLogs(upgraderService);
 
   if (unmounted.value) return;
 
   state.value = {
     name: 'submitting_recovery',
     upgrader: state.value.upgrader,
+    upgraderService,
     disasterRecoveryState,
     logs,
     registryState: {
