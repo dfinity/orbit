@@ -449,7 +449,7 @@ export async function fetchCanisterModuleHash(
   const certificate = await Certificate.create({
     canisterId,
     certificate: state.certificate,
-    rootKey: agent.rootKey,
+    rootKey: agent.rootKey!,
   });
 
   const moduleHash = certificate.lookup(moduleHashPath);
@@ -483,7 +483,7 @@ export async function fetchCanisterControllers(
   const certificate = await Certificate.create({
     canisterId,
     certificate: state.certificate,
-    rootKey: agent.rootKey,
+    rootKey: agent.rootKey!,
   });
 
   const controllers = certificate.lookup(controllersPath);

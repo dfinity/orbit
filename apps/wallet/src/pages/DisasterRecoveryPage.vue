@@ -232,7 +232,6 @@ import { RegistryEntry, WasmModuleExtraChunks } from '~/generated/control-panel/
 import {
   GetDisasterRecoveryStateResponse,
   GetLogsResponse,
-  GetLogsResult,
   LogEntry,
 } from '~/generated/upgrader/upgrader.did';
 import { services } from '~/plugins/services.plugin';
