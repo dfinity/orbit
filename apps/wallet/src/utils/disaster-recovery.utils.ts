@@ -8,6 +8,7 @@ import {
   GetDisasterRecoveryStateResponse,
   MultiAssetAccount,
 } from '~/generated/upgrader/upgrader.did';
+import { unreachable, variantIs } from './helper.utils';
 
 async function unzipBlob(blob: Blob): Promise<Uint8Array> {
   return new Promise((resolve, reject) => {
@@ -150,6 +151,7 @@ export function systemInstallArgs(
 export function drRequestArgs(payloadHumanReadable: string, extraChunks: WasmModuleExtraChunks) {
   return `(variant {
       InstallCode = record {
+        install_mode = variant { Reinstall };
         module = blob "";
         module_extra_chunks = opt record {
           store_canister = principal "${extraChunks.store_canister.toText()}";
@@ -157,7 +159,6 @@ export function drRequestArgs(payloadHumanReadable: string, extraChunks: WasmMod
           wasm_module_hash = blob "${blobToHumanReadable(extraChunks.wasm_module_hash)}";
         } ;
         arg = ${payloadHumanReadable};
-        install_mode = variant { Reinstall };
       }
     })`;
 }
@@ -170,7 +171,58 @@ export function blobToHumanReadable(blob: Uint8Array | number[]): string {
 }
 
 export function stateToHumanReadable(state: GetDisasterRecoveryStateResponse): string {
-  let result = 'Committee (quorum=' + state.committee[0]?.quorum + '):';
+  let result = '';
+
+  if (variantIs(state.recovery_status, 'InProgress')) {
+    result += `Status: in progress since ${state.recovery_status.InProgress.since}\n`;
+  } else if (variantIs(state.recovery_status, 'Idle')) {
+    result += `Status: idle\n`;
+  } else {
+    result += `Status: ${JSON.stringify(state.recovery_status)}\n`;
+  }
+
+  result += `\n`;
+
+  result += `Last Recovery Result: `;
+  if (state.last_recovery_result[0]) {
+    if (variantIs(state.last_recovery_result[0], 'Success')) {
+      result += `Success`;
+    } else {
+      result += `Failure\n  - reason: ${state.last_recovery_result[0].Failure.reason}`;
+    }
+  } else {
+    result += `No recovery result found`;
+  }
+
+  result += `\n\n`;
+
+  if (state.recovery_requests.length > 0) {
+    result += `Existing Requests:`;
+
+    for (const request of state.recovery_requests) {
+      result += `\n  - user id: ${request.user_id}`;
+      result += `\n    operation: `;
+
+      if (variantIs(request.operation, 'InstallCode')) {
+        result += `InstallCode`;
+        result += `\n        - arg: blob "${blobToHumanReadable(request.operation.InstallCode.arg)}"`;
+        result += `\n        - wasm_sha256: blob "${blobToHumanReadable(request.operation.InstallCode.wasm_sha256)}"`;
+        result += `\n        - install_mode: ${Object.keys(request.operation.InstallCode.install_mode)[0]}`;
+      } else {
+        try {
+          // just to emit compiler error, but should not fail at runtime
+          unreachable(request.operation);
+        } catch {}
+
+        result += `Unknown operation`;
+        result += `\n        - ${JSON.stringify(request.operation)}`;
+      }
+      result += `\n    submitted at: ${request.submitted_at}`;
+    }
+    result += `\n\n`;
+  }
+
+  result += `Committee (quorum=${state.committee[0]?.quorum}):`;
 
   for (const user of state.committee[0]?.users ?? []) {
     result += `\n  - name: ${user.name}`;

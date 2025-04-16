@@ -1,6 +1,8 @@
 <template>
   <div class="d-flex ga-4">
-    <div class="text-medium-emphasis"><VIcon :icon="mdiCodeArray" /></div>
+    <div class="text-medium-emphasis" v-if="props.icon">
+      <VIcon :icon="props.icon" />
+    </div>
     <div class="d-flex flex-column ga-0 flex-grow-1">
       <div class="d-flex flex-nowrap">
         <VBtnToggle v-model="selectedParseFormat" rounded="0" group density="compact">
@@ -58,6 +60,7 @@ const props = withDefaults(
     density?: 'comfortable' | 'compact' | 'default';
     variant?: 'filled' | 'outlined' | 'plain' | 'solo' | 'underlined';
     rows?: number;
+    icon?: string | false;
     preprocessCandid?: (input: string) => string;
   }>(),
   {
@@ -70,6 +73,7 @@ const props = withDefaults(
     variant: 'filled',
     rows: 3,
     preprocessCandid: undefined,
+    icon: mdiCodeArray,
   },
 );
 

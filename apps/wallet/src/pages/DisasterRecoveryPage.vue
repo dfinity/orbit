@@ -9,12 +9,6 @@
           <div class="d-flex flex-row flex-no-wrap justify-space-between" style="max-width: 100%">
             <div class="flex-grow-1 my-4" style="max-width: 100%">
               <VCardTitle class="text-h4 text-wrap"> Status </VCardTitle>
-              <VCardSubtitle class="text-wrap">
-                <!-- {{ $t('pages.disaster_recovery.subtitle') }} -->
-                Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptas et, dolorum
-                dolorem sed, voluptatem officia dicta eveniet quibusdam nemo suscipit blanditiis vel
-                ducimus. Corrupti, quasi totam. Deserunt officia impedit minus.
-              </VCardSubtitle>
 
               <template v-if="state.name === 'loading_upgrader'">
                 <div class="d-flex flex-column flex-no-wrap align-center">
@@ -35,10 +29,10 @@
                 <VCardText> Upgrader: {{ state.upgrader.upgrader.toText() }} </VCardText>
 
                 <div
-                  class="d-flex flex-row flex-no-wrap justify-space-between"
+                  class="d-lg-flex flex-row flex-no-wrap justify-space-between"
                   style="max-width: 100%"
                 >
-                  <VCardText class="w-50">
+                  <VCardText class="w-100 w-lg-50">
                     <VLabel>Disaster Recovery State</VLabel>
                     <VTextarea
                       :rows="24"
@@ -49,7 +43,7 @@
                     ></VTextarea>
                   </VCardText>
 
-                  <VCardText class="w-50">
+                  <VCardText class="w-100 w-lg-50">
                     <VLabel>Recent Logs</VLabel>
                     <VTextarea
                       v-if="state.logs.name === 'untyped'"
@@ -62,21 +56,20 @@
 
                     <VExpansionPanels variant="accordion" v-else-if="state.logs.name === 'typed'">
                       <VExpansionPanel v-for="log in state.logs.data.logs" :key="log.time">
-                        <!-- :title="getLogTitle(log)"
-                        :text="log.message" -->
-                        <VExpansionPanelTitle
-                          class="d-flex flex-row flex-no-wrap"
-                          v-slot="{ expanded }"
-                        >
+                        <VExpansionPanelTitle class="d-flex flex-row flex-no-wrap">
                           <div style="display: flex; flex: 1; overflow: hidden">
                             <div style="width: 200px; flex-shrink: 0">
                               {{ getLogTime(log) }}
                             </div>
-                            <div :class="expanded ? 'w-100' : 'no-wrap-ellipsis'">
+                            <div class="no-wrap-ellipsis">
                               {{ log.message }}
                             </div>
                           </div>
                         </VExpansionPanelTitle>
+                        <VExpansionPanelText>
+                          <div class="">{{ log.message }}</div>
+                          <div class="font-monospace small-font mt-4">{{ log.data_json }}</div>
+                        </VExpansionPanelText>
                       </VExpansionPanel>
                     </VExpansionPanels>
                   </VCardText>
@@ -129,6 +122,7 @@
                       withType: { serviceParams: null },
                     }"
                     :rows="10"
+                    :icon="false"
                   />
                 </VCardText>
 
@@ -171,6 +165,7 @@
                       withType: { methodParams: 'request_disaster_recovery' },
                     }"
                     :rows="10"
+                    :icon="false"
                   />
                 </VCardText>
               </template>
@@ -179,10 +174,11 @@
                 <VBtn
                   v-if="state.name === 'submitting_recovery'"
                   color="primary"
+                  variant="elevated"
                   size="large"
                   block
                   :loading="state.submitLoading"
-                  :disabled="!drRequestPayload"
+                  :disabled="!drRequestPayload || state.submitLoading"
                   @click="submitRecovery"
                 >
                   {{ $t('pages.disaster_recovery.submit_button') }}
@@ -221,7 +217,6 @@ import {
   VBtn,
   VCard,
   VCardActions,
-  VCardSubtitle,
   VCardText,
   VCardTitle,
   VProgressCircular,
@@ -231,6 +226,7 @@ import CanisterArgumentField from '~/components/inputs/CanisterArgumentField.vue
 import PageBody from '~/components/layouts/PageBody.vue';
 import PageHeader from '~/components/layouts/PageHeader.vue';
 import PageLayout from '~/components/PageLayout.vue';
+import { useInterval } from '~/composables/util.composable';
 import { icAgent } from '~/core/ic-agent.core';
 import { RegistryEntry, WasmModuleExtraChunks } from '~/generated/control-panel/control_panel.did';
 import {
@@ -279,6 +275,12 @@ const unmounted = ref(false);
 const selectedRegistry = ref<RegistryEntry | null>(null);
 
 let upgraderService: UpgraderService | null = null;
+
+useInterval(async () => {
+  if (state.value.name === 'submitting_recovery') {
+    state.value.logs = await getLogs();
+  }
+}, 5000);
 
 type RegistryState =
   | {
@@ -332,14 +334,12 @@ type ConnectionState =
   | {
       name: 'loading_state';
       upgrader: UpgraderInfo;
-      // service: UpgraderService;
       stateLoading: boolean;
       error: string;
     }
   | {
       name: 'submitting_recovery';
       upgrader: UpgraderInfo;
-      // service: UpgraderService;
       disasterRecoveryState: DisasterRecoveryStateResult;
       logs: LogsResult;
       registryState: RegistryState;
@@ -370,12 +370,6 @@ const humanReadableState = computed(() => {
     }
   }
 });
-
-function getLogTitle(log: LogEntry) {
-  const time = new Date(log.time);
-  const date = time.toLocaleDateString() + ' ' + time.toLocaleTimeString();
-  return `${date} ${log.message.slice(0, 100)}${log.message.length > 100 ? '...' : ''}`;
-}
 
 function getLogTime(log: LogEntry) {
   const time = new Date(log.time);
@@ -460,14 +454,27 @@ async function getUpgrader(): Promise<UpgraderInfo> {
 
 async function submitRecovery() {
   if (state.value.name === 'submitting_recovery' && drRequestPayload.value) {
-    // state.value.submitLoading = true;
-    const result = await upgraderService!.submitRecoveryUntyped(drRequestPayload.value);
+    state.value.submitLoading = true;
+    try {
+      await upgraderService!.submitRecoveryUntyped(drRequestPayload.value);
+
+      state.value.wasm = null;
+      selectedRegistry.value = null;
+
+      state.value.logs = await getLogs();
+      state.value.disasterRecoveryState = await getDisasterRecoveryState();
+    } catch (error) {
+      state.value.error = i18n.t('pages.disaster_recovery.error_submit_recovery', { error });
+    } finally {
+      state.value.submitLoading = false;
+    }
   }
 }
 
 async function getLogs(): Promise<LogsResult> {
   try {
     const logs = await upgraderService!.getLogs();
+
     return {
       name: 'typed',
       data: logs,
