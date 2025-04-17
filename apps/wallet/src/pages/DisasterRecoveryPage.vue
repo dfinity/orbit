@@ -135,6 +135,7 @@
                     :placeholder="$t('pages.disaster_recovery.select_orbit_station_version')"
                     :return-object="true"
                     hide-details
+                    data-test-id="select-registry-wasm"
                   />
                 </VCardText>
 
@@ -232,6 +233,7 @@
                   :loading="upgraderState.submitLoading"
                   :disabled="!drRequestPayload || upgraderState.submitLoading"
                   @click="submitRecovery"
+                  data-test-id="submit-recovery-button"
                 >
                   {{ $t('pages.disaster_recovery.submit_button') }}
                 </VBtn>
@@ -329,7 +331,7 @@ useInterval(async () => {
       upgraderState.value.upgraderService as UpgraderService,
     );
   }
-}, 5000);
+}, 3000);
 
 type RegistryState =
   | {

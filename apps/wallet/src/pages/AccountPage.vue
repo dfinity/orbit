@@ -85,6 +85,7 @@
                         });
                       }
                     "
+                    data-test-id="account-assets-table"
                   >
                     <template #bottom>
                       <!--this hides the footer as pagination is not required-->

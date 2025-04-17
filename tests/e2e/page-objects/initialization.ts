@@ -31,8 +31,10 @@ export class InitializationPage {
     return canisterId!;
   }
 
-  async joinStation(canisterId: string) {
+  async joinStation(_canisterId: string) {
     await this.page.getByTestId('join-existing-station-radio').click();
     await this.page.getByTestId('continue-button').click();
+
+    // todo: finish
   }
 }
