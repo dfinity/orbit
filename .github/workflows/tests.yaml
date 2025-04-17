@@ -166,6 +166,10 @@ jobs:
         uses: dfinity/setup-dfx@main
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
+      - name: 'Install cbor2'
+        run: pip install cbor2
+      - name: 'Install crc32'
+        run: sudo apt install -y libarchive-zip-perl
       - name: 'Install Dependencies'
         run: |
           pnpm install --frozen-lockfile
