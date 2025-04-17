@@ -9,6 +9,8 @@ export function publishArtifact(artifact: string) {
 }
 
 export function copyArtifact(artifact: string) {
+  spawnSync('mkdir', ['-p', 'artifacts/' + artifact]);
+
   const result = spawnSync('cp', ['wasms/' + artifact + '.wasm.gz', 'artifacts/' + artifact]);
 
   if (result.status !== 0) {
