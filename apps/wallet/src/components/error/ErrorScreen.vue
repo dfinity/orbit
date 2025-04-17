@@ -34,6 +34,18 @@
           >
             {{ $t('app.btn_home_back') }}
           </VBtn>
+          <VBtn
+            v-if="props.showDisasterRecovery"
+            color="warning mx-2"
+            variant="tonal"
+            size="small"
+            :prepend-icon="mdiLifebuoy"
+            :to="{
+              name: Routes.DisasterRecovery,
+            }"
+          >
+            {{ $t('app.disaster_recovery') }}
+          </VBtn>
         </slot>
       </VCardActions>
     </div>
@@ -41,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { mdiAlertCircle, mdiHome } from '@mdi/js';
+import { mdiAlertCircle, mdiHome, mdiLifebuoy } from '@mdi/js';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import {
@@ -53,7 +65,7 @@ import {
   VCardTitle,
   VIcon,
 } from 'vuetify/components';
-import { defaultHomeRoute } from '~/configs/routes.config';
+import { Routes, defaultHomeRoute } from '~/configs/routes.config';
 
 const props = withDefaults(
   defineProps<{
@@ -61,12 +73,14 @@ const props = withDefaults(
     subtitle?: string;
     icon?: string;
     showBackToHome?: boolean;
+    showDisasterRecovery?: boolean;
   }>(),
   {
     title: '',
     subtitle: '',
     icon: mdiAlertCircle,
     showBackToHome: true,
+    showDisasterRecovery: false,
   },
 );
 

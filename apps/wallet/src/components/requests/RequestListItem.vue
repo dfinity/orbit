@@ -69,6 +69,7 @@ import RemoveAssetOperation from './operations/RemoveAssetOperation.vue';
 import AddNamedRuleOperation from './operations/AddNamedRuleOperation.vue';
 import EditNamedRuleOperation from './operations/EditNamedRuleOperation.vue';
 import RemoveNamedRuleOperation from './operations/RemoveNamedRuleOperation.vue';
+import SetDisasterRecoveryOperation from './operations/SetDisasterRecoveryOperation.vue';
 const props = withDefaults(
   defineProps<{
     request: Request;
@@ -113,12 +114,12 @@ const componentsMap: {
   AddNamedRule: AddNamedRuleOperation,
   EditNamedRule: EditNamedRuleOperation,
   RemoveNamedRule: RemoveNamedRuleOperation,
+  SetDisasterRecovery: SetDisasterRecoveryOperation,
 
   // below variants are not supported yet
   ChangeExternalCanister: UnsupportedOperation,
   CreateExternalCanister: UnsupportedOperation,
   ConfigureExternalCanister: UnsupportedOperation,
-  SetDisasterRecovery: UnsupportedOperation,
   FundExternalCanister: UnsupportedOperation,
   MonitorExternalCanister: UnsupportedOperation,
   PruneExternalCanister: UnsupportedOperation,

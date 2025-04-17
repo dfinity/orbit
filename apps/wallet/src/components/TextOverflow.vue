@@ -1,5 +1,5 @@
 <template>
-  <div class="d-inline" :title="props.text" @copy="handleCopy">
+  <div class="d-inline" :title="props.text" :data-test-id="props.testId" @copy="handleCopy">
     <span aria-hidden="true">{{ truncatedText }}</span>
     <span class="d-none" tabindex="-1">{{ props.text }}</span>
   </div>
@@ -14,11 +14,13 @@ const props = withDefaults(
     maxLength?: number;
     overflowText?: string;
     overflowPosition?: 'start' | 'middle' | 'end' | ((input: string) => string);
+    testId?: string;
   }>(),
   {
     maxLength: 18,
     overflowText: '...',
     overflowPosition: 'middle',
+    testId: undefined,
   },
 );
 

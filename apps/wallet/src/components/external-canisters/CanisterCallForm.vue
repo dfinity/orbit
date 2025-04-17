@@ -47,7 +47,12 @@
             name="argument"
             :readonly="readonly"
             :candid="
-              props.candidIdl ? { idl: props.candidIdl, method: model.methodName } : undefined
+              props.candidIdl
+                ? {
+                    idl: props.candidIdl,
+                    withType: model.methodName ? { methodParams: model.methodName } : undefined,
+                  }
+                : undefined
             "
           />
         </VCol>
