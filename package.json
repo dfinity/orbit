@@ -16,7 +16,7 @@
     "test:e2e:run": "WALLET_URL=http://localhost:`dfx info webserver-port`?canisterId=werw6-ayaaa-aaaaa-774aa-cai playwright test",
     "test:e2e:dev": "concurrently \"pnpm run dev:wallet\" \"WALLET_URL=http://localhost:5173?canisterId=werw6-ayaaa-aaaaa-774aa-cai playwright test --ui\"",
     "test:e2e:stop": "dfx stop",
-    "test:e2e": "pnpm run test:e2e:deploy && pnpm run test:e2e:run && pnpm run test:e2e:stop"
+    "test:e2e": "pnpm exec playwright install && pnpm run test:e2e:deploy && pnpm run test:e2e:run && pnpm run test:e2e:stop"
   },
   "engines": {
     "node": "^20",
