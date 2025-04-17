@@ -1,6 +1,6 @@
 <template>
   <div class="d-flex ga-4">
-    <div class="text-medium-emphasis" v-if="props.icon">
+    <div v-if="props.icon" class="text-medium-emphasis">
       <VIcon :icon="props.icon" />
     </div>
     <div class="d-flex flex-column ga-0 flex-grow-1">

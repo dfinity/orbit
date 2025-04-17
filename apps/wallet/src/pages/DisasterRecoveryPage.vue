@@ -60,10 +60,10 @@
                     </VLabel>
                     <VTextarea
                       v-if="upgraderState.disasterRecoveryState.name !== 'error'"
+                      v-model="humanReadableState"
                       :rows="24"
                       class="font-monospace small-font no-wrap"
                       density="compact"
-                      v-model="humanReadableState"
                       readonly
                     ></VTextarea>
                     <VAlert
@@ -88,8 +88,8 @@
                     ></VTextarea>
 
                     <VExpansionPanels
-                      variant="accordion"
                       v-else-if="upgraderState.logs.name === 'typed'"
+                      variant="accordion"
                     >
                       <VExpansionPanel v-for="log in upgraderState.logs.data.logs" :key="log.time">
                         <VExpansionPanelTitle class="d-flex flex-row flex-no-wrap">
@@ -131,11 +131,11 @@
                 <VCardText>
                   <VSelect
                     v-if="wasmPickingState.registryState.name === 'loaded_registry'"
+                    v-model="selectedRegistry"
                     :items="wasmPickingState.registryState.registry"
                     item-title="value.WasmModule.version"
                     item-value="id"
                     :placeholder="$t('pages.disaster_recovery.select_orbit_station_version')"
-                    v-model="selectedRegistry"
                     :return-object="true"
                     hide-details
                   />
@@ -147,11 +147,11 @@
                       {{ $t('pages.disaster_recovery.station_idl') }}
                     </VLabel>
                     <VTextarea
+                      ref="stationIdlTextarea"
                       v-model="wasmPickingState.wasm.wasmIdl"
                       density="compact"
                       :rows="16"
                       class="font-monospace small-font no-wrap"
-                      ref="stationIdlTextarea"
                       readonly
                     ></VTextarea>
                   </VCardText>
@@ -174,19 +174,19 @@
                 </VCardText>
 
                 <div
-                  class="d-flex flex-row flex-no-wrap justify-space-between"
                   v-if="wasmPickingState.wasm?.wasmIdl"
+                  class="d-flex flex-row flex-no-wrap justify-space-between"
                 >
                   <VCardText v-if="upgraderState.name === 'upgrader_loaded'">
                     <VLabel>
                       {{ $t('pages.disaster_recovery.upgrader_idl') }}
                     </VLabel>
                     <VTextarea
+                      ref="upgraderIdlTextarea"
                       v-model="upgraderState.upgrader.candid"
                       density="compact"
                       :rows="16"
                       class="font-monospace small-font no-wrap"
-                      ref="upgraderIdlTextarea"
                       readonly
                     ></VTextarea>
                   </VCardText>
@@ -259,32 +259,6 @@
     </template>
   </PageLayout>
 </template>
-
-<style>
-.small-font textarea {
-  font-size: 0.8rem !important;
-}
-
-.no-wrap textarea {
-  white-space: pre;
-  overflow-wrap: normal;
-  overflow-x: scroll;
-}
-.no-wrap-ellipsis {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.prose {
-  p,
-  ol {
-    margin-bottom: 1rem;
-  }
-  ol {
-    margin-left: 2rem;
-  }
-}
-</style>
 
 <script setup lang="ts">
 import { Principal } from '@dfinity/principal';
@@ -736,3 +710,29 @@ onBeforeUnmount(() => {
   unmounted.value = true;
 });
 </script>
+
+<style>
+.small-font textarea {
+  font-size: 0.8rem !important;
+}
+
+.no-wrap textarea {
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: scroll;
+}
+.no-wrap-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.prose {
+  p,
+  ol {
+    margin-bottom: 1rem;
+  }
+  ol {
+    margin-left: 2rem;
+  }
+}
+</style>

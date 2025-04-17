@@ -47,8 +47,8 @@
                     size="large"
                     class="text-caption"
                     :loading="isAuthenticating"
-                    @click.prevent="performLogin"
                     data-test-id="internet-identity-button"
+                    @click.prevent="performLogin"
                   >
                     <VImg :src="infinityMark" width="20" />
                     <span class="text-body-1 ml-1">{{ $t('landing.connect_btn') }}</span>

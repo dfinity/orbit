@@ -1,12 +1,12 @@
 <template>
   <div v-if="isListMode" class="d-flex flex-column ga-0 text-caption">
     <RequestOperationListRow v-if="formValue.user_group_id">
-      <template #name v-if="userGroupName">{{ $t('terms.user_group') }}</template>
-      <template #name v-else>{{ $t('terms.user_group_id') }}</template>
-      <template #content v-if="userGroupName">
+      <template v-if="userGroupName" #name>{{ $t('terms.user_group') }}</template>
+      <template v-else #name>{{ $t('terms.user_group_id') }}</template>
+      <template v-if="userGroupName" #content>
         {{ userGroupName }} ({{ formValue.user_group_id }})
       </template>
-      <template #content v-else>
+      <template v-else #content>
         {{ formValue.user_group_id }}
       </template>
     </RequestOperationListRow>
