@@ -5,10 +5,81 @@
     </template>
     <template #main-body>
       <PageBody>
-        <VCard style="max-width: 100%">
+        <VCard color="info">
+          <VCardText class="w-md-75 text-body-1">
+            <p>
+              Disaster recovery is intended for recovering access to assets in the event the station
+              canister becomes non-operational or inaccessible. It works by submitting a recovery
+              request to the station's upgrader canister that stores, among other things, a backup
+              of the station's core user data and account information.
+            </p>
+            <p class="mt-4">
+              Submitting a recovery request involves constructing a recovery payload, which is a
+              Candid value specifying the user and account data to be recovered, the station version
+              to be used, and the method of recovery (i.e., install/reinstall/upgrade).
+            </p>
+            <p class="mt-4">
+              The upgrader canister stores a set of users called the "disaster recovery committee"
+              that need to reach consensus on the disaster recovery request in order for the
+              recovery process to start. The number of users that need to reach consensus is called
+              the "quorum". This information is queried and displayed in the "Upgrader status" card.
+            </p>
+            <p class="mt-4">The recovery process is as follows:</p>
+            <ol class="ml-8">
+              <li>
+                From the version upgrade registry, select the version of the station you wish to
+                recover to. The station IDL (the API definition of the station) is displayed for the
+                selected version.
+              </li>
+              <li>
+                Construct the service initialization Candid payload (e.g., for `(opt
+                SystemInstall)`) that will be used as the argument for the reinstall/install/upgrade
+                operation. If the upgrader canister is sufficiently up to date, then the UI will
+                automatically fill that out based on the upgrader's backup storage. Constructing a
+                valid payload will result in a binary representation of the payload that needs to be
+                used in the next step.
+              </li>
+              <li>
+                The page will display the upgrader IDL (the API definition of the upgrader)
+                currently in use for the station. Construct the disaster recovery request payload
+                (for type `RequestDisasterRecoveryInput`) using the IDL and the payload from the
+                previous step. The UI will automatically fill out the payload for you if the
+                argument payload is available.
+              </li>
+              <li>
+                When the final payload is valid, click the submit button to submit the recovery
+                request.
+              </li>
+              <li>
+                A sufficient number of users (i.e., exactly `quorum` amount) have to submit the same
+                recovery request before the recovery process can start. Users can re-submit requests
+                multiple times; each submission will override the previous one.
+              </li>
+              <li>
+                The recovery process will start after the quorum is reached. The upgrader will
+                perform the operation specified in the payload.
+              </li>
+            </ol>
+            <p class="mt-4">Good luck!</p>
+          </VCardText>
+        </VCard>
+        <VCard color="warning" class="mt-4">
+          <VCardText class="w-md-75 text-body-1">
+            Warning: disaster recovery is a complex process that could lead to irreversible loss of
+            access to assets if performed incorrectly. Please seek assistance from members of the
+            foundation on the forum.
+          </VCardText>
+        </VCard>
+        <VCard
+          style="max-width: 100%"
+          :loading="upgraderState.name === 'loading_state'"
+          class="mt-4"
+        >
           <div class="d-flex flex-row flex-no-wrap justify-space-between" style="max-width: 100%">
             <div class="flex-grow-1 my-4" style="max-width: 100%">
-              <VCardTitle class="text-h4 text-wrap"> Upgrader Status </VCardTitle>
+              <VCardTitle class="text-h4 text-wrap">
+                {{ $t('pages.disaster_recovery.upgrader_status') }}
+              </VCardTitle>
 
               <template v-if="upgraderState.name === 'loading_upgrader'">
                 <div class="d-flex flex-column flex-no-wrap align-center">
@@ -26,14 +97,18 @@
               </template>
 
               <template v-else-if="upgraderState.name === 'upgrader_loaded'">
-                <VCardText> Upgrader: {{ upgraderState.upgrader.upgrader.toText() }} </VCardText>
+                <VCardText>
+                  {{ $t('terms.upgrader') }}: {{ upgraderState.upgrader.upgrader.toText() }}
+                </VCardText>
 
                 <div
                   class="d-lg-flex flex-row flex-no-wrap justify-space-between"
                   style="max-width: 100%"
                 >
                   <VCardText class="w-100 w-lg-50">
-                    <VLabel>Disaster Recovery State</VLabel>
+                    <VLabel>
+                      {{ $t('pages.disaster_recovery.disaster_recovery_state') }}
+                    </VLabel>
                     <VTextarea
                       v-if="upgraderState.disasterRecoveryState.name !== 'error'"
                       :rows="24"
@@ -51,7 +126,9 @@
                   </VCardText>
 
                   <VCardText class="w-100 w-lg-50">
-                    <VLabel>Recent Logs</VLabel>
+                    <VLabel>
+                      {{ $t('pages.disaster_recovery.recent_logs') }}
+                    </VLabel>
                     <VTextarea
                       v-if="upgraderState.logs.name === 'untyped'"
                       v-model="upgraderState.logs.candid"
@@ -95,8 +172,10 @@
             </div>
           </div>
         </VCard>
-        <VCard class="mt-4">
-          <VCardTitle class="text-h4 text-wrap"> Submit Recovery Request </VCardTitle>
+        <VCard class="mt-4" :loading="wasmPickingState.registryState.name === 'loading_registry'">
+          <VCardTitle class="text-h4 text-wrap">
+            {{ $t('pages.disaster_recovery.submit_recovery_request') }}
+          </VCardTitle>
           <div class="d-flex flex-row flex-no-wrap justify-space-between">
             <div class="flex-grow-1 my-4">
               <template v-if="wasmPickingState.registryState.name === 'loaded_registry'">
@@ -106,7 +185,7 @@
                     :items="wasmPickingState.registryState.registry"
                     item-title="value.WasmModule.version"
                     item-value="id"
-                    placeholder="Select Orbit station version"
+                    :placeholder="$t('pages.disaster_recovery.select_orbit_station_version')"
                     v-model="selectedRegistry"
                     :return-object="true"
                     hide-details
@@ -115,7 +194,9 @@
 
                 <div v-if="wasmPickingState.wasm?.wasmIdl">
                   <VCardText>
-                    <VLabel>Station IDL</VLabel>
+                    <VLabel>
+                      {{ $t('pages.disaster_recovery.station_idl') }}
+                    </VLabel>
                     <VTextarea
                       v-model="wasmPickingState.wasm.wasmIdl"
                       density="compact"
@@ -148,7 +229,9 @@
                   v-if="wasmPickingState.wasm?.wasmIdl"
                 >
                   <VCardText v-if="upgraderState.name === 'upgrader_loaded'">
-                    <VLabel>Upgrader IDL</VLabel>
+                    <VLabel>
+                      {{ $t('pages.disaster_recovery.upgrader_idl') }}
+                    </VLabel>
                     <VTextarea
                       v-model="upgraderState.upgrader.candid"
                       density="compact"
@@ -159,7 +242,9 @@
                     ></VTextarea>
                   </VCardText>
                   <VCardText>
-                    <VLabel>Station Service Payload</VLabel>
+                    <VLabel>
+                      {{ $t('pages.disaster_recovery.station_service_payload') }}
+                    </VLabel>
                     <VTextarea
                       v-model="payloadHumanReadable"
                       density="compact"
@@ -207,7 +292,9 @@
               </VCardActions>
 
               <VCardText v-if="upgraderState.name === 'upgrader_loaded' && upgraderState.result">
-                <VLabel>Result</VLabel>
+                <VLabel>
+                  {{ $t('pages.disaster_recovery.result') }}
+                </VLabel>
                 <VTextarea
                   v-model="upgraderState.result"
                   density="compact"
@@ -514,7 +601,6 @@ async function submitRecovery() {
       const upgraderService = upgraderState.value.upgraderService;
 
       const result = await upgraderService.submitRecoveryUntyped(drRequestPayload.value);
-      // (variant { Ok })
 
       if (result == '(variant { Ok })') {
         wasmPickingState.value.wasm = null;

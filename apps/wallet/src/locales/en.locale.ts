@@ -1061,21 +1061,39 @@ export default {
     },
     disaster_recovery: {
       title: 'Disaster Recovery',
-      subtitle: 'Input the disaster recovery payload to restore your wallet.',
-      payload_label: 'Recovery Payload',
-      payload_placeholder: 'Paste your recovery payload here...',
+      upgrader_status: 'Upgrader Status',
+      loading_upgrader: 'Loading upgrader...',
+
+      disaster_recovery_state: 'Disaster Recovery State',
+      disaster_recovery_state_loading: 'Loading disaster recovery state...',
+
+      recent_logs: 'Recent Logs',
+
+      select_orbit_station_version: 'Select Orbit station version',
+
+      submit_recovery_request: 'Submit Disaster Recovery Request',
       submit_button: 'Submit Disaster Recovery Request',
+
+      station_idl: 'Station IDL',
+      upgrader_idl: 'Upgrader IDL',
+
+      station_service_payload: 'Station Service Payload',
+
+      result: 'Result',
+
       recovery_instructions: 'Contact your wallet administrator to obtain a recovery payload.',
-      success_message: 'Recovery data submitted successfully.',
-      error_message: 'Failed to process recovery data. Please check your input and try again.',
       error_logs_unauthorized: 'Unauthorized to query logs',
       error_state_unauthorized: 'Unauthorized to query state',
 
-      loading_state: 'Getting upgrader information...',
       error_state: 'Failed to get upgrader: {error}',
       error_no_upgrader_found: 'No upgrader found',
-      error_state_loading: 'Loading disaster recovery state...',
       error_state_loading_failed: 'Failed to get disaster recovery state: {error}',
+      error_logs_loading_failed: 'Failed to get logs: {error}',
+
+      error_registry_loading_failed: 'Failed to query update registry: {error}',
+
+      success_submit_recovery: 'Recovery request submitted successfully',
+      error_submit_recovery: 'Failed to submit recovery request: {error}',
     },
   },
   session: {
