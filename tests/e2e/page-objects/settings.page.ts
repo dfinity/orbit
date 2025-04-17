@@ -1,12 +1,12 @@
 import { Page } from '@playwright/test';
-import { getWalletUrl } from '../config';
-import { getCanisterInfo } from '../utils/dfx';
+import { getWalletPath } from '../config';
+import { getCanisterInfo } from '../utils/dfx.utils';
 
 export class SettingsPage {
   constructor(private readonly page: Page) {}
 
   async go() {
-    await this.page.goto(getWalletUrl('/en/settings/system'));
+    await this.page.goto(getWalletPath('/en/settings/system'));
   }
 
   async installCustomWasm(path: string, stationId: string, checkForNewModuleHash: boolean = true) {

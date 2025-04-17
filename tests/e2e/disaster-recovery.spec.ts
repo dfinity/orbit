@@ -1,15 +1,14 @@
-import { test, expect } from '@playwright/test';
-import { LoginPage } from './page-objects/login';
-import { InitializationPage } from './page-objects/initialization';
-import { getWalletUrl, walletUrl } from './config';
-import { spawnSync } from 'child_process';
-import { SettingsPage } from './page-objects/settings';
+import { expect, test } from '@playwright/test';
 import path from 'path';
-import { copyArtifact, publishArtifact, topUpAccount } from './utils/orbit';
-import { DisasterRecoveryPage } from './page-objects/disaster-recovery';
-import { AccountsPage } from './page-objects/accounts';
-import { AccountPage } from './page-objects/account';
-import { AccountAssetPage } from './page-objects/account-asset';
+import { walletUrl } from './config';
+import { AccountAssetPage } from './page-objects/account-asset.page';
+import { AccountPage } from './page-objects/account.page';
+import { AccountsPage } from './page-objects/accounts.page';
+import { DisasterRecoveryPage } from './page-objects/disaster-recovery.page';
+import { InitializationPage } from './page-objects/initialization.page';
+import { LoginPage } from './page-objects/login.page';
+import { SettingsPage } from './page-objects/settings.page';
+import { copyArtifact, publishArtifact, topUpAccount } from './utils/orbit.utils';
 
 test('can recover uninstalled station', async ({ page }) => {
   await copyArtifact('station');

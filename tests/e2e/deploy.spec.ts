@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { LoginPage } from './page-objects/login';
-import { InitializationPage } from './page-objects/initialization';
+import { LoginPage } from './page-objects/login.page';
+import { InitializationPage } from './page-objects/initialization.page';
 import { walletUrl } from './config';
 
 test('can deploy station', async ({ page }) => {

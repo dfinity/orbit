@@ -1,5 +1,5 @@
 import { expect, Page } from '@playwright/test';
-import { InternetIdentityPage } from './ii';
+import { InternetIdentityPage } from './internet-identity.page';
 
 export class LoginPage {
   constructor(private page: Page) {}

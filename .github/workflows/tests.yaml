@@ -148,6 +148,28 @@ jobs:
           ./scripts/run-integration-tests.sh 2> logs.txt
           grep "rng succesfully initialized" logs.txt
           ! grep "canister reports healthy already before its initialization has finished" logs.txt
+  e2e-tests:
+    name: 'e2e-tests:required'
+    needs: [merge-artifacts]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.8
+      - name: 'Download Artifacts'
+        uses: actions/download-artifact@v4
+        with:
+          name: integration-tests
+          path: wasms
+      - name: 'Setup Node'
+        uses: ./.github/actions/setup-node
+      - name: 'Install Dependencies'
+        run: |
+          pnpm install --frozen-lockfile
+      - name: Run e2e tests
+        run: |
+          pnpm run test:e2e
   deployment-test:
     name: 'deployment-test:required'
     runs-on: ubuntu-latest
