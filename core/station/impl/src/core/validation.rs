@@ -192,10 +192,8 @@ impl EnsureIdExists<Resource> for EnsurePermission {
 pub struct EnsureExternalCanister {}
 
 impl EnsureExternalCanister {
-    // The management canister, the orbit station, and the upgrader are NOT external canisters.
-    pub fn is_external_canister(
-        principal: Principal,
-    ) -> Result<(), ExternalCanisterValidationError> {
+    // Known ledger canisters, the management canister, the orbit station, and the upgrader are NOT external canisters.
+    pub fn is_external_canister(principal: Principal) -> bool {
         // Check if the target canister is a ledger canister of an asset.
         let principal_str = principal.to_text();
         let is_ledger_canister_id = ASSET_REPOSITORY.list().iter().any(|asset| {
@@ -205,11 +203,16 @@ impl EnsureExternalCanister {
                 .map_or(false, |canister_id| canister_id == principal_str)
         });
 
-        if is_ledger_canister_id
+        !(is_ledger_canister_id
             || principal == Principal::management_canister()
             || principal == crate::core::ic_cdk::api::id()
-            || principal == SYSTEM_SERVICE.get_upgrader_canister_id()
-        {
+            || principal == SYSTEM_SERVICE.get_upgrader_canister_id())
+    }
+
+    pub fn ensure_external_canister(
+        principal: Principal,
+    ) -> Result<(), ExternalCanisterValidationError> {
+        if !Self::is_external_canister(principal) {
             return Err(ExternalCanisterValidationError::InvalidExternalCanister { principal });
         }
 
@@ -286,7 +289,9 @@ mod test {
         let principal = Principal::from_slice(&[1; 29]);
 
         let is_external_canister = EnsureExternalCanister::is_external_canister(principal);
-        assert!(is_external_canister.is_ok());
+        assert!(is_external_canister);
+        let ensure_external_canister = EnsureExternalCanister::ensure_external_canister(principal);
+        assert!(ensure_external_canister.is_ok());
 
         let mut asset = mock_asset();
 
@@ -302,6 +307,8 @@ mod test {
         ASSET_REPOSITORY.insert(asset.key(), asset);
 
         let is_external_canister = EnsureExternalCanister::is_external_canister(principal);
-        assert!(is_external_canister.is_err());
+        assert!(!is_external_canister);
+        let ensure_external_canister = EnsureExternalCanister::ensure_external_canister(principal);
+        assert!(ensure_external_canister.is_err());
     }
 }
