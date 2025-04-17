@@ -49,13 +49,14 @@ export class CustomIdlAgent {
         );
 
         switch (status) {
-          case 'replied':
+          case 'replied': {
             const reply = lookupResultToBuffer(certificate.lookup([...path, 'reply']))!;
             return decode({
               idl: this.config.idl,
               input: uint8ArrayToHexString(new Uint8Array(reply)),
               serviceMethod: methodName,
             });
+          }
           case 'rejected': {
             const rejectCode = new Uint8Array(
               lookupResultToBuffer(certificate.lookup([...path, 'reject_code']))!,

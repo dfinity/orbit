@@ -49,6 +49,7 @@ const props = withDefaults(
   }>(),
   {
     valid: false,
+    mode: 'edit',
   },
 );
 

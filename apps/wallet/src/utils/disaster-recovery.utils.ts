@@ -212,7 +212,9 @@ export function stateToHumanReadable(state: GetDisasterRecoveryStateResponse): s
         try {
           // just to emit compiler error, but should not fail at runtime
           unreachable(request.operation);
-        } catch {}
+        } catch {
+          // ignore
+        }
 
         result += `Unknown operation`;
         result += `\n        - ${JSON.stringify(request.operation)}`;

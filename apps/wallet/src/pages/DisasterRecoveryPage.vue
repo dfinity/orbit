@@ -6,17 +6,14 @@
     <template #main-body>
       <PageBody>
         <VCard color="info">
-          <VCardText
-            class="w-md-75 text-body-1 prose"
-            v-html="$t('pages.disaster_recovery.help_block')"
-          >
+          <VCardText class="w-md-75 text-body-1 prose">
+            <!-- eslint-disable-next-line vue/no-v-html -->
+            <div v-html="$t('pages.disaster_recovery.help_block')"></div>
           </VCardText>
         </VCard>
         <VCard color="warning" class="mt-4">
-          <VCardText
-            class="w-md-75 text-body-1"
-            v-html="$t('pages.disaster_recovery.warning_block')"
-          >
+          <VCardText class="w-md-75 text-body-1">
+            {{ $t('pages.disaster_recovery.warning_block') }}
           </VCardText>
         </VCard>
         <VCard
@@ -441,10 +438,9 @@ const humanReadableState = computed(() => {
       );
     } else if (upgraderState.value.disasterRecoveryState.name === 'untyped') {
       return upgraderState.value.disasterRecoveryState.candid;
-    } else {
-      return '';
     }
   }
+  return '';
 });
 
 function getLogTime(log: LogEntry) {
@@ -649,9 +645,9 @@ async function initUpgraderState() {
       error: i18n.t('pages.disaster_recovery.error_state', { error: error }),
     };
     return;
-  } finally {
-    if (unmounted.value) return;
   }
+
+  if (unmounted.value) return;
 
   const upgraderService = upgraderState.value.upgraderService as UpgraderService;
 
@@ -695,11 +691,9 @@ async function initWasmPickingState() {
       },
       wasm: null,
     };
-
     return;
-  } finally {
-    if (unmounted.value) return;
   }
+  if (unmounted.value) return;
 }
 
 onMounted(async () => {

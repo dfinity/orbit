@@ -62,7 +62,9 @@ onBeforeMount(async () => {
       });
 
       userGroupName.value = result.user_group.name;
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 });
 </script>
