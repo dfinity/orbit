@@ -50,9 +50,7 @@
               props.candidIdl
                 ? {
                     idl: props.candidIdl,
-                    withType: model.methodName
-                      ? { methodParams: model.methodName }
-                      undefined,
+                    withType: model.methodName ? { methodParams: model.methodName } : undefined,
                   }
                 : undefined
             "
