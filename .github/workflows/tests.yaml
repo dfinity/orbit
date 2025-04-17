@@ -162,6 +162,8 @@ jobs:
         with:
           name: integration-tests
           path: wasms
+      - name: 'Install dfx'
+        uses: dfinity/setup-dfx@main
       - name: 'Setup Node'
         uses: ./.github/actions/setup-node
       - name: 'Install Dependencies'
