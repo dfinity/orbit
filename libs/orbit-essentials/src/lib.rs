@@ -8,6 +8,7 @@
 //! - UUID generation.
 
 pub mod api;
+pub mod backup_snapshots;
 pub mod cdk;
 pub mod cmc;
 pub mod deserialize;
@@ -22,5 +23,4 @@ pub mod pagination;
 pub mod types;
 pub mod utils;
 
-pub use ic_stable_structures;
 pub use orbit_essentials_macros::*;
