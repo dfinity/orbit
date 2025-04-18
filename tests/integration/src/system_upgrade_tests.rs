@@ -420,17 +420,17 @@ fn backup_snapshot() {
     let upgrader_init_arg_bytes = Encode!(&upgrader_init_arg).unwrap();
 
     let upgrade = |system_upgrade_operation_input: SystemUpgradeOperationInput| {
-        let target = system_upgrade_operation_input.target.clone();
-        let system_upgrade_operation =
-            RequestOperationInput::SystemUpgrade(system_upgrade_operation_input);
-        match target {
-            SystemUpgradeTargetDTO::UpgradeStation => {
-                do_successful_station_upgrade(&env, &canister_ids, system_upgrade_operation)
-            }
-            SystemUpgradeTargetDTO::UpgradeUpgrader => {
-                do_successful_upgrader_upgrade(&env, &canister_ids, system_upgrade_operation)
-            }
+        let extra_ticks = match system_upgrade_operation_input.target {
+            SystemUpgradeTargetDTO::UpgradeStation => STATION_UPGRADE_EXTRA_TICKS,
+            SystemUpgradeTargetDTO::UpgradeUpgrader => 0,
         };
+        execute_request_with_extra_ticks(
+            &env,
+            WALLET_ADMIN_USER,
+            canister_ids.station,
+            RequestOperationInput::SystemUpgrade(system_upgrade_operation_input),
+            extra_ticks,
+        )
     };
 
     let snapshot = |target: &SystemUpgradeTargetDTO| -> Option<Vec<u8>> {
@@ -531,7 +531,7 @@ fn backup_snapshot() {
         // there should be no snapshots yet
         check_snapshots(&target, None);
 
-        upgrade(system_upgrade_operation_input.clone());
+        upgrade(system_upgrade_operation_input.clone()).unwrap();
 
         // a backup snapshot should have been taken
         let backup_snapshot_id = snapshot(&target).unwrap();
@@ -540,7 +540,7 @@ fn backup_snapshot() {
         // create system upgrade request operation input taking no backup snapshot
         system_upgrade_operation_input.take_backup_snapshot = None;
 
-        upgrade(system_upgrade_operation_input.clone());
+        upgrade(system_upgrade_operation_input.clone()).unwrap();
 
         // no new backup snapshot should have been taken
         check_snapshots(&target, Some(backup_snapshot_id.clone()));
@@ -548,11 +548,30 @@ fn backup_snapshot() {
         // create system upgrade request operation input taking a backup snapshot
         system_upgrade_operation_input.take_backup_snapshot = Some(true);
 
-        upgrade(system_upgrade_operation_input);
+        upgrade(system_upgrade_operation_input.clone()).unwrap();
 
         // a new backup snapshot should have been taken, replacing the previous backup snapshot
         let new_backup_snapshot_id = snapshot(&target).unwrap();
         assert_ne!(backup_snapshot_id, new_backup_snapshot_id);
         check_snapshots(&target, Some(new_backup_snapshot_id.clone()));
+
+        // create system upgrade request operation input taking a backup snapshot and containing an invalid WASM
+        system_upgrade_operation_input.module = vec![];
+        system_upgrade_operation_input.module_extra_chunks = None;
+
+        let status = upgrade(system_upgrade_operation_input)
+            .unwrap_err()
+            .unwrap();
+        match status {
+            RequestStatusDTO::Failed { reason } => {
+                assert!(reason.unwrap().contains("Canister's Wasm module is not valid: Failed to decode wasm module: unsupported canister module format."));
+            }
+            _ => panic!("Unexpected request status: {:?}", status),
+        };
+
+        // a new backup snapshot should have been taken, replacing the previous backup snapshot
+        let newest_backup_snapshot_id = snapshot(&target).unwrap();
+        assert_ne!(new_backup_snapshot_id, newest_backup_snapshot_id);
+        check_snapshots(&target, Some(newest_backup_snapshot_id.clone()));
     }
 }

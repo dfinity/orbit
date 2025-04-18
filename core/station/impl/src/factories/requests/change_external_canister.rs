@@ -72,7 +72,8 @@ impl<'p, 'o> ChangeExternalCanisterRequestExecute<'p, 'o> {
 #[async_trait]
 impl Execute for ChangeExternalCanisterRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
-        self.change_canister_service
+        let (_backup_snapshot_id, result) = self
+            .change_canister_service
             .install_canister(
                 self.operation.input.canister_id,
                 self.operation.input.mode.clone(),
@@ -82,13 +83,14 @@ impl Execute for ChangeExternalCanisterRequestExecute<'_, '_> {
                 false,
                 None,
             )
-            .await
-            .map_err(|err| RequestExecuteError::Failed {
-                reason: format!(
-                    "failed to install external canister {}: {}",
-                    self.operation.input.canister_id, err
-                ),
-            })?;
+            .await;
+
+        result.map_err(|err| RequestExecuteError::Failed {
+            reason: format!(
+                "failed to install external canister {}: {}",
+                self.operation.input.canister_id, err
+            ),
+        })?;
 
         Ok(RequestExecuteStage::Completed(
             self.request.operation.clone(),

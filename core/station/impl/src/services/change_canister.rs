@@ -154,7 +154,8 @@ impl ChangeCanisterService {
     }
 
     /// Execute an install or upgrade of a canister.
-    /// Returns the new backup snapshot ID if a backup snapshot was taken.
+    /// Returns the new backup snapshot ID if a backup snapshot was taken
+    /// and the result of this operation.
     #[allow(clippy::too_many_arguments)]
     pub async fn install_canister(
         &self,
@@ -165,13 +166,15 @@ impl ChangeCanisterService {
         arg: Option<Vec<u8>>,
         take_backup_snapshot: bool,
         replace_snapshot: Option<Vec<u8>>,
-    ) -> ServiceResult<Option<Vec<u8>>, ChangeCanisterError> {
+    ) -> (Option<Vec<u8>>, ServiceResult<(), ChangeCanisterError>) {
         use candid::Encode;
 
-        self.stop_canister(canister_id).await?;
+        if let Err(err) = self.stop_canister(canister_id).await {
+            return (None, Err(err));
+        }
 
         let backup_snapshot_id = if take_backup_snapshot {
-            let snapshot_id = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {
+            let res = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {
                 canister_id,
                 replace_snapshot,
             })
@@ -179,8 +182,13 @@ impl ChangeCanisterService {
             .map(|res| res.0.id)
             .map_err(|(_, err)| ChangeCanisterError::Failed {
                 reason: err.to_string(),
-            })?;
-            Some(snapshot_id)
+            });
+            match res {
+                Ok(snapshot_id) => Some(snapshot_id),
+                Err(err) => {
+                    return (None, Err(err));
+                }
+            }
         } else {
             None
         };
@@ -198,8 +206,12 @@ impl ChangeCanisterService {
         .map_err(|err| ChangeCanisterError::Failed { reason: err });
 
         // Restart canister (regardless of whether the upgrade succeeded or not)
-        self.start_canister(canister_id).await?;
+        let start_canister_result = self.start_canister(canister_id).await;
 
-        install_code_result.map(|()| backup_snapshot_id)
+        let result = match (install_code_result, start_canister_result) {
+            (Ok(()), Ok(())) => Ok(()),
+            (Err(err), _) | (_, Err(err)) => Err(err),
+        };
+        (backup_snapshot_id, result)
     }
 }
