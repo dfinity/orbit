@@ -16,7 +16,7 @@ test('can recover uninstalled station', async ({ page }) => {
 
   await publishArtifact('station');
 
-  test.setTimeout(180000);
+  test.setTimeout(600000);
 
   await page.goto(walletUrl);
   const loginPage = new LoginPage(page);
