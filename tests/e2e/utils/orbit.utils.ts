@@ -2,6 +2,9 @@ import { execSync } from 'child_process';
 
 export function publishArtifact(artifact: string) {
   console.log(`PATH: ${process.env.PATH}`);
+  const which = execSync('which dfx', { stdio: 'pipe' }).toString().trim();
+  console.log('which dfx →', which || '<not found>');
+  execSync('dfx --version', { stdio: 'inherit' });
   execSync(`orbit-cli registry publish --app ${artifact}`, { stdio: 'inherit' });
 }
 
