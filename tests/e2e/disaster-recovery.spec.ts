@@ -12,6 +12,7 @@ import { copyArtifact, publishArtifact, topUpAccount } from './utils/orbit.utils
 
 test('can recover uninstalled station', async ({ page }) => {
   await copyArtifact('station');
+  await copyArtifact('upgrader');
 
   await publishArtifact('station');
 

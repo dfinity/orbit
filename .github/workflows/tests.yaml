@@ -173,10 +173,6 @@ jobs:
       - name: 'Install Dependencies'
         run: |
           pnpm install --frozen-lockfile
-      - name: Confirm dfx is on PATH
-        run: |
-          echo $PATH
-          dfx --version
       - name: Run e2e tests
         run: |
           pnpm run test:e2e
