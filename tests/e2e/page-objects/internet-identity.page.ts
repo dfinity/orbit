@@ -12,6 +12,10 @@ export class InternetIdentityPage {
 
     await this.page.locator('#displayUserContinue').click();
 
-    return (await anchor.textContent()) ?? '';
+    const anchorText = await anchor.textContent();
+
+    await this.page.waitForEvent('close', { timeout: 15000 });
+
+    return anchorText ?? '';
   }
 }

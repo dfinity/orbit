@@ -1,5 +1,5 @@
 export const walletUrl =
-  process.env.WALLET_URL ?? 'http://localhost:4943?canisterId=werw6-ayaaa-aaaaa-774aa-cai';
+  process.env.WALLET_URL ?? 'http://werw6-ayaaa-aaaaa-774aa-cai.localhost:4943';
 
 export function getWalletPath(path: string) {
   const url = new URL(walletUrl);
