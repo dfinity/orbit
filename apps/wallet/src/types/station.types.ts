@@ -192,6 +192,7 @@ export enum RequestOperationEnum {
   RemoveRequestPolicy = 'RemoveRequestPolicy',
   EditPermission = 'EditPermission',
   SystemUpgrade = 'SystemUpgrade',
+  SystemRestore = 'SystemRestore',
   Transfer = 'Transfer',
   ManageSystemInfo = 'ManageSystemInfo',
   ChangeExternalCanister = 'ChangeExternalCanister',

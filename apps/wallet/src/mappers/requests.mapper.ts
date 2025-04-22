@@ -54,6 +54,7 @@ export const mapRequestsOperationTypeToGroup = (
 
   if (
     variantIs(operationType, 'SystemUpgrade') ||
+    variantIs(operationType, 'SystemRestore') ||
     variantIs(operationType, 'SetDisasterRecovery')
   ) {
     return ListRequestsOperationTypeGroup.SystemUpgrade;
@@ -233,6 +234,9 @@ export const mapRequestOperationToTypeEnum = (
   if (variantIs(operation, 'SystemUpgrade')) {
     return RequestOperationEnum.SystemUpgrade;
   }
+  if (variantIs(operation, 'SystemRestore')) {
+    return RequestOperationEnum.SystemRestore;
+  }
   if (variantIs(operation, 'AddUserGroup')) {
     return RequestOperationEnum.AddUserGroup;
   }
@@ -342,6 +346,8 @@ export const mapRequestOperationToListRequestsOperationType = (
     return { EditPermission: null };
   } else if (variantIs(requestOperation, 'SystemUpgrade')) {
     return { SystemUpgrade: null };
+  } else if (variantIs(requestOperation, 'SystemRestore')) {
+    return { SystemRestore: null };
   } else if (variantIs(requestOperation, 'AddUserGroup')) {
     return { AddUserGroup: null };
   } else if (variantIs(requestOperation, 'EditUserGroup')) {
