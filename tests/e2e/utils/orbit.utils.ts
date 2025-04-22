@@ -5,7 +5,7 @@ export function publishArtifact(artifact: string) {
   const which = execSync('which dfx', { stdio: 'pipe' }).toString().trim();
   console.log('which dfx →', which || '<not found>');
   execSync('dfx --version', { stdio: 'inherit' });
-  execSync(`orbit-cli registry publish --app ${artifact}`, { stdio: 'inherit' });
+  execSync(`bash -lc "orbit-cli registry publish --app ${artifact}"`, { stdio: 'inherit' });
 }
 
 export function copyArtifact(artifact: string) {
