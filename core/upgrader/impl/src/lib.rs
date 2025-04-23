@@ -13,8 +13,8 @@ use lazy_static::lazy_static;
 use orbit_essentials::backup_snapshots::BackupSnapshots;
 use orbit_essentials::storable;
 use std::{cell::RefCell, sync::Arc};
-use upgrade::{UpgradeError, UpgradeParams};
-use upgrader_api::{InitArg, TriggerUpgradeError};
+use upgrade::{ChangeParams, RestoreParams, UpgradeError, UpgradeParams};
+use upgrader_api::{InitArg, TriggerRestoreError, TriggerUpgradeError};
 
 #[cfg(not(test))]
 pub use orbit_essentials::cdk as upgrader_ic_cdk;
@@ -160,11 +160,33 @@ async fn trigger_upgrade(params: upgrader_api::UpgradeParams) -> Result<(), Trig
         install_mode: CanisterInstallMode::Upgrade(None),
         take_backup_snapshot: params.take_backup_snapshot.unwrap_or_default(),
     };
-    UPGRADER.upgrade(input).await.map_err(|err| match err {
-        UpgradeError::NotController => TriggerUpgradeError::NotController,
-        UpgradeError::Unauthorized => TriggerUpgradeError::Unauthorized,
-        UpgradeError::UnexpectedError(err) => TriggerUpgradeError::UnexpectedError(err.to_string()),
-    })
+    UPGRADER
+        .upgrade(ChangeParams::Upgrade(input))
+        .await
+        .map_err(|err| match err {
+            UpgradeError::NotController => TriggerUpgradeError::NotController,
+            UpgradeError::Unauthorized => TriggerUpgradeError::Unauthorized,
+            UpgradeError::UnexpectedError(err) => {
+                TriggerUpgradeError::UnexpectedError(err.to_string())
+            }
+        })
+}
+
+#[update]
+async fn trigger_restore(params: upgrader_api::RestoreParams) -> Result<(), TriggerRestoreError> {
+    let input: RestoreParams = RestoreParams {
+        snapshot_id: params.snapshot_id,
+    };
+    UPGRADER
+        .upgrade(ChangeParams::Restore(input))
+        .await
+        .map_err(|err| match err {
+            UpgradeError::NotController => TriggerRestoreError::NotController,
+            UpgradeError::Unauthorized => TriggerRestoreError::Unauthorized,
+            UpgradeError::UnexpectedError(err) => {
+                TriggerRestoreError::UnexpectedError(err.to_string())
+            }
+        })
 }
 
 #[cfg(test)]

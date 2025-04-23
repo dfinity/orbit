@@ -26,7 +26,8 @@ use crate::{
     RestoreExternalCanisterOperationDTO, RestoreExternalCanisterOperationInput,
     SetDisasterRecoveryOperationDTO, SetDisasterRecoveryOperationInput,
     SnapshotExternalCanisterOperationDTO, SnapshotExternalCanisterOperationInput, SortDirection,
-    SystemUpgradeOperationDTO, SystemUpgradeOperationInput, UuidDTO,
+    SystemRestoreOperationDTO, SystemRestoreOperationInput, SystemUpgradeOperationDTO,
+    SystemUpgradeOperationInput, UuidDTO,
 };
 use candid::{CandidType, Deserialize, Principal};
 
@@ -80,6 +81,7 @@ pub enum RequestOperationDTO {
     EditUserGroup(Box<EditUserGroupOperationDTO>),
     RemoveUserGroup(Box<RemoveUserGroupOperationDTO>),
     SystemUpgrade(Box<SystemUpgradeOperationDTO>),
+    SystemRestore(Box<SystemRestoreOperationDTO>),
     SetDisasterRecovery(Box<SetDisasterRecoveryOperationDTO>),
     ChangeExternalCanister(Box<ChangeExternalCanisterOperationDTO>),
     CreateExternalCanister(Box<CreateExternalCanisterOperationDTO>),
@@ -117,6 +119,7 @@ pub enum RequestOperationInput {
     EditUserGroup(EditUserGroupOperationInput),
     RemoveUserGroup(RemoveUserGroupOperationInput),
     SystemUpgrade(SystemUpgradeOperationInput),
+    SystemRestore(SystemRestoreOperationInput),
     SetDisasterRecovery(SetDisasterRecoveryOperationInput),
     ChangeExternalCanister(ChangeExternalCanisterOperationInput),
     CreateExternalCanister(CreateExternalCanisterOperationInput),
@@ -154,6 +157,7 @@ pub enum RequestOperationTypeDTO {
     EditUserGroup,
     RemoveUserGroup,
     SystemUpgrade,
+    SystemRestore,
     SetDisasterRecovery,
     ChangeExternalCanister,
     CreateExternalCanister,
@@ -191,6 +195,7 @@ pub enum ListRequestsOperationTypeDTO {
     EditUserGroup,
     RemoveUserGroup,
     SystemUpgrade,
+    SystemRestore,
     ChangeExternalCanister(Option<Principal>),
     CreateExternalCanister,
     CallExternalCanister(Option<Principal>),

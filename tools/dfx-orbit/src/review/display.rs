@@ -230,6 +230,7 @@ pub(super) fn display_request_operation(op: &RequestOperationDTO) -> &'static st
         RequestOperationDTO::EditUserGroup(_) => "EditUserGroup",
         RequestOperationDTO::RemoveUserGroup(_) => "RemoveUserGroup",
         RequestOperationDTO::SystemUpgrade(_) => "SystemUpgrade",
+        RequestOperationDTO::SystemRestore(_) => "SystemRestore",
         RequestOperationDTO::SetDisasterRecovery(_) => "SetDisasterRecovery",
         RequestOperationDTO::ChangeExternalCanister(_) => "ChangeExternalCanister",
         RequestOperationDTO::CreateExternalCanister(_) => "CreateExternalCanister",
