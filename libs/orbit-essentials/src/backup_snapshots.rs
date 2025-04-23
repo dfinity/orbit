@@ -22,7 +22,7 @@ impl BackupSnapshots {
         }
     }
 
-    pub fn replace_snapshot(&self) -> Option<Vec<u8>> {
+    pub fn get_snapshot_to_replace(&self) -> Option<Vec<u8>> {
         if self.backup_snapshots.len() >= self.max_backup_snapshots {
             self.backup_snapshots.front().cloned()
         } else {

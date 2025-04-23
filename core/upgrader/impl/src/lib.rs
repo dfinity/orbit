@@ -105,8 +105,8 @@ fn set_target_canister(target_canister: Principal) {
     set_state(state);
 }
 
-pub fn replace_backup_snapshot() -> Option<Vec<u8>> {
-    get_state().backup_snapshots.replace_snapshot()
+pub fn get_backup_snapshot_to_replace() -> Option<Vec<u8>> {
+    get_state().backup_snapshots.get_snapshot_to_replace()
 }
 
 fn insert_backup_snapshot(snapshot_id: Vec<u8>) {

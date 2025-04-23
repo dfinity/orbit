@@ -1,7 +1,6 @@
 use crate::{
-    get_target_canister, insert_backup_snapshot,
+    get_backup_snapshot_to_replace, get_target_canister, insert_backup_snapshot,
     model::{LogEntryType, UpgradeResultLog},
-    replace_backup_snapshot,
     services::LOGGER_SERVICE,
 };
 use anyhow::anyhow;
@@ -69,7 +68,7 @@ impl<T: Upgrade> Upgrade for WithSnapshot<T> {
     async fn upgrade(&self, ps: UpgradeParams) -> Result<(), UpgradeError> {
         if ps.take_backup_snapshot {
             let id = get_target_canister();
-            let replace_snapshot = replace_backup_snapshot();
+            let replace_snapshot = get_backup_snapshot_to_replace();
             let snapshot_id = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {
                 canister_id: id,
                 replace_snapshot,

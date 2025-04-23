@@ -205,7 +205,9 @@ impl SystemService {
         take_backup_snapshot: bool,
     ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
-        let replace_snapshot = self.get_system_info().replace_upgrader_backup_snapshot();
+        let replace_snapshot = self
+            .get_system_info()
+            .get_upgrader_backup_snapshot_to_replace();
         let (backup_snapshot_id, result) = self
             .change_canister_service
             .install_canister(

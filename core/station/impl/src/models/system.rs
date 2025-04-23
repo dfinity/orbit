@@ -158,8 +158,8 @@ impl SystemInfo {
             .expect("upgrader_wasm_module is not set")
     }
 
-    pub fn replace_upgrader_backup_snapshot(&self) -> Option<Vec<u8>> {
-        self.upgrader_backup_snapshots.replace_snapshot()
+    pub fn get_upgrader_backup_snapshot_to_replace(&self) -> Option<Vec<u8>> {
+        self.upgrader_backup_snapshots.get_snapshot_to_replace()
     }
 
     pub fn insert_upgrader_backup_snapshot(&mut self, snapshot_id: Vec<u8>) {
