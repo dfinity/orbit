@@ -14,6 +14,8 @@ pub enum SystemError {
     TooManyUsersSpecified { max: usize },
     #[error(r#"System upgrade failed."#)]
     UpgradeFailed { reason: String },
+    #[error(r#"System restore failed."#)]
+    RestoreFailed { reason: String },
     #[error(r#"No station upgrade request is processing."#)]
     NoStationUpgradeProcessing,
 }
@@ -33,6 +35,11 @@ impl DetailableError for SystemError {
                 Some(details)
             }
             SystemError::UpgradeFailed { reason } => {
+                details.insert("reason".to_string(), reason.to_string());
+
+                Some(details)
+            }
+            SystemError::RestoreFailed { reason } => {
                 details.insert("reason".to_string(), reason.to_string());
 
                 Some(details)

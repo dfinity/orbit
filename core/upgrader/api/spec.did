@@ -39,6 +39,27 @@ type TriggerUpgradeError = variant {
   UnexpectedError : text;
 };
 
+type TriggerUpgradeResponse = variant {
+  Ok;
+  Err : TriggerUpgradeError;
+};
+
+type RestoreParams = record {
+  // The snapshot to restore.
+  snapshot_id : blob;
+};
+
+type TriggerRestoreError = variant {
+  NotController;
+  Unauthorized;
+  UnexpectedError : text;
+};
+
+type TriggerRestoreResponse = variant {
+  Ok;
+  Err : TriggerRestoreError;
+};
+
 // Metadata for an account in the station canister.
 type Metadata = record { key : text; value : text };
 
@@ -85,12 +106,6 @@ type DisasterRecoveryCommittee = record {
   users : vec AdminUser;
   // The percentage of users that need to agree to perform an upgrade.
   quorum : nat16;
-};
-
-// Response to a successful trigger_upgrade query.
-type TriggerUpgradeResponse = variant {
-  Ok;
-  Err : TriggerUpgradeError;
 };
 
 // Set disaster recovery committee result.
@@ -355,6 +370,7 @@ type CanisterSnapshotsResult = variant {
 
 service : (InitArg) -> {
   "trigger_upgrade" : (UpgradeParams) -> (TriggerUpgradeResponse);
+  "trigger_restore" : (RestoreParams) -> (TriggerRestoreResponse);
   "set_disaster_recovery_committee" : (SetDisasterRecoveryCommitteeInput) -> (SetDisasterRecoveryResult);
   "set_disaster_recovery_accounts" : (SetDisasterRecoveryAccountsInput) -> (SetDisasterRecoveryResult);
   "set_disaster_recovery_accounts_and_assets" : (SetDisasterRecoveryAccountsAndAssetsInput) -> (SetDisasterRecoveryResult);

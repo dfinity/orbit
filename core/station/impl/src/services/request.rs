@@ -479,6 +479,14 @@ impl RequestService {
         Ok(request)
     }
 
+    pub fn complete_request(&self, mut request: Request, request_completed_time: u64) {
+        request.status = RequestStatus::Completed {
+            completed_at: request_completed_time,
+        };
+        request.last_modification_timestamp = request_completed_time;
+        self.request_repository.insert(request.to_key(), request);
+    }
+
     pub async fn fail_request(
         &self,
         mut request: Request,
