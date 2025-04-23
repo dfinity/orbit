@@ -58,6 +58,8 @@ test('can recover uninstalled station', async ({ page }) => {
   await disasterRecoveryPage.submitRecovery();
   await disasterRecoveryPage.waitRecoverySuccess();
 
+  await page.waitForTimeout(5000);
+
   await accountsPage.goto();
   await accountsPage.openByName('Main');
 
