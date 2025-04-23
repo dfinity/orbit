@@ -420,6 +420,7 @@ impl From<SystemUpgradeOperationInput> for station_api::SystemUpgradeOperationIn
             module: input.module,
             module_extra_chunks: input.module_extra_chunks.map(|c| c.into()),
             arg: input.arg,
+            take_backup_snapshot: input.take_backup_snapshot,
         }
     }
 }
@@ -431,6 +432,7 @@ impl From<station_api::SystemUpgradeOperationInput> for SystemUpgradeOperationIn
             module: input.module,
             module_extra_chunks: input.module_extra_chunks.map(|c| c.into()),
             arg: input.arg,
+            take_backup_snapshot: input.take_backup_snapshot,
         }
     }
 }
@@ -441,6 +443,7 @@ impl From<SystemUpgradeOperation> for station_api::SystemUpgradeOperationDTO {
             target: operation.input.target.into(),
             module_checksum: hex::encode(operation.module_checksum),
             arg_checksum: operation.arg_checksum.map(hex::encode),
+            take_backup_snapshot: operation.take_backup_snapshot,
         }
     }
 }

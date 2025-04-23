@@ -15,6 +15,7 @@ bench = false
 
 [dependencies]
 candid = { workspace = true }
+ic-stable-structures = { workspace = true }
 serde = { workspace = true, features = ['derive'] }
 serde_cbor = { workspace = true }
 serde_bytes = { workspace = true }

@@ -601,6 +601,10 @@ type SystemUpgradeOperationInput = record {
   module_extra_chunks : opt WasmModuleExtraChunks;
   // The initial argument passed to the new wasm module.
   arg : opt blob;
+  // Determines whether a backup snapshot should be taken (before the upgrade).
+  // If so, the last backup snapshot (if one exists) is atomically replaced
+  // by the new backup snapshot.
+  take_backup_snapshot : opt bool;
 };
 
 type SystemUpgradeOperation = record {
@@ -610,6 +614,10 @@ type SystemUpgradeOperation = record {
   module_checksum : Sha256Hash;
   // The checksum of the arg blob.
   arg_checksum : opt Sha256Hash;
+  // Determines whether a backup snapshot should be taken (before the upgrade).
+  // If so, the last backup snapshot (if one exists) is atomically replaced
+  // by the new backup snapshot.
+  take_backup_snapshot : opt bool;
 };
 
 type SystemRestoreTarget = variant {

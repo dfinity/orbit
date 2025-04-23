@@ -1,7 +1,7 @@
 use crate::model::DisasterRecovery;
 use crate::upgrade::{
-    CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithStart,
-    WithStop,
+    CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithSnapshot,
+    WithStart, WithStop,
 };
 use candid::Principal;
 use ic_cdk::{api::management_canister::main::CanisterInstallMode, init, post_upgrade, update};
@@ -10,6 +10,7 @@ use ic_stable_structures::{
     DefaultMemoryImpl, StableBTreeMap,
 };
 use lazy_static::lazy_static;
+use orbit_essentials::backup_snapshots::BackupSnapshots;
 use orbit_essentials::storable;
 use std::{cell::RefCell, sync::Arc};
 use upgrade::{ChangeParams, RestoreParams, UpgradeError, UpgradeParams};
@@ -69,6 +70,8 @@ thread_local! {
 #[storable]
 struct State {
     target_canister: Principal,
+    #[serde(default)]
+    backup_snapshots: BackupSnapshots,
     disaster_recovery: DisasterRecovery,
     stable_memory_version: u32,
 }
@@ -77,6 +80,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             target_canister: Principal::anonymous(),
+            backup_snapshots: BackupSnapshots::new(1),
             disaster_recovery: Default::default(),
             stable_memory_version: STABLE_MEMORY_VERSION,
         }
@@ -98,6 +102,16 @@ pub fn get_target_canister() -> Principal {
 fn set_target_canister(target_canister: Principal) {
     let mut state = get_state();
     state.target_canister = target_canister;
+    set_state(state);
+}
+
+pub fn get_backup_snapshot_to_replace() -> Option<Vec<u8>> {
+    get_state().backup_snapshots.get_snapshot_to_replace()
+}
+
+fn insert_backup_snapshot(snapshot_id: Vec<u8>) {
+    let mut state = get_state();
+    state.backup_snapshots.insert_snapshot(snapshot_id);
     set_state(state);
 }
 
@@ -125,6 +139,7 @@ fn post_upgrade() {
 lazy_static! {
     static ref UPGRADER: Box<dyn Upgrade> = {
         let u = Upgrader {};
+        let u = WithSnapshot(u);
         let u = WithStop(u);
         let u = WithStart(u);
         let u = WithLogs(u, "upgrade".to_string());
@@ -143,6 +158,7 @@ async fn trigger_upgrade(params: upgrader_api::UpgradeParams) -> Result<(), Trig
         module_extra_chunks: params.module_extra_chunks,
         arg: params.arg,
         install_mode: CanisterInstallMode::Upgrade(None),
+        take_backup_snapshot: params.take_backup_snapshot.unwrap_or_default(),
     };
     UPGRADER
         .upgrade(ChangeParams::Upgrade(input))
