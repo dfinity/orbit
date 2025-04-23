@@ -10,21 +10,32 @@ use pocket_ic::{update_candid_as, PocketIc};
 const CURRENT_BASELINE_NR_OF_REQUEST_POLICIES: usize = 24; // can be found in the station core/init.rs
 const CURRENT_BASELINE_NR_PERMISSIONS: usize = 45; // can be found in the station core/init.rs
 
-const PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES: usize = 18; // baseline in the previous memory version core/init.rs
-const PREVIOUS_BASELINE_NR_PERMISSIONS: usize = 35; // baseline in the previous memory version core/init.rs
+const PREVIOUS_BASELINE_NR_OF_REQUEST_POLICIES: usize = 21; // baseline in the previous memory version core/init.rs
+const PREVIOUS_BASELINE_NR_PERMISSIONS: usize = 40; // baseline in the previous memory version core/init.rs
 
-const POLICIES_ADDED_AT_MIGRATION: usize = 3;
-const PERMISSIONS_ADDED_AT_MIGRATION: usize = 5;
+const POLICIES_ADDED_AT_MIGRATION: usize = 0;
+const PERMISSIONS_ADDED_AT_MIGRATION: usize = 0;
 
 const USER_GROUPS_NR: usize = 10;
 const USER_NR: usize = 10;
 const ACCOUNTS_NR: usize = 25;
 const ADDRESS_BOOK_ENTRIES_NR: usize = 25;
 const PERMISSIONS_NR: usize = 5;
+const ASSET_NR: usize = 5;
 const REQUEST_POLICY_NR: usize = 3;
 const SYSTEM_UPGRADER_UPDATES_NR: usize = 1;
 const SYSTEM_STATION_UPDATES_NR: usize = 1;
-const EXPECTED_GENERATED_REQUESTS: usize = 150;
+const EXPECTED_GENERATED_REQUESTS: usize = // based on StationDataGenerator::generate()
+    USER_GROUPS_NR * 2
+        + USER_NR * 2
+        + ACCOUNTS_NR * 3
+        + ADDRESS_BOOK_ENTRIES_NR * 2
+        + ASSET_NR * 2
+        + PERMISSIONS_NR
+        + REQUEST_POLICY_NR
+        + SYSTEM_UPGRADER_UPDATES_NR
+        + SYSTEM_STATION_UPDATES_NR;
+
 const EXPECTED_ADDITIONAL_REQUEST_POLICIES_NR: usize =
     // for accounts there are transfer policies and configuration policies
     ACCOUNTS_NR * 2 + REQUEST_POLICY_NR;
@@ -48,6 +59,7 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
             .with_upgrader_updates(SYSTEM_UPGRADER_UPDATES_NR)
             .with_permission_updates(PERMISSIONS_NR)
             .with_request_policy_updates(REQUEST_POLICY_NR)
+            .with_assets(ASSET_NR)
             .with_max_user_groups_per_user(5)
             .with_edit_operations();
 
@@ -119,15 +131,21 @@ fn test_canister_migration_path_is_not_triggered_with_same_wasm() {
     assert_can_list_named_rules(&env, canister_ids.station, WALLET_ADMIN_USER, 2);
 }
 
+/// Tests migration from v2 to latest.
 #[test]
-fn test_canister_migration_path_with_previous_wasm_memory_version() {
+fn test_station_migration_from_v2() {
+    test_canister_migration_path_with_previous_stable_memory_version(2);
+}
+
+fn test_canister_migration_path_with_previous_stable_memory_version(stable_memory_version: u64) {
     let TestEnv {
         env, canister_ids, ..
     } = setup_new_env();
 
     let station_wasm = get_canister_wasm("station").to_vec();
-    let wasm_memory =
-        read_file("station-memory-v1.bin").expect("Unexpected missing older wasm memory");
+    let stable_memory_file = format!("station-memory-v{}.bin", stable_memory_version);
+    let stable_memory =
+        read_file(&stable_memory_file).expect("Unexpected missing older stable memory");
 
     env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .expect("unexpected failure stopping canister");
@@ -140,7 +158,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
     // Set the stable memory of the canister to the previous version of the canister
     env.set_stable_memory(
         canister_ids.station,
-        wasm_memory,
+        stable_memory,
         pocket_ic::common::rest::BlobCompression::Gzip,
     );
 
@@ -236,7 +254,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
-        USER_GROUPS_NR + 1 + new_records, // +1 because there is the first admin user
+        USER_GROUPS_NR + 1 + new_records, // +1 because there is the initial admin group
     );
     assert_can_list_address_book_entries(
         &env,
@@ -283,7 +301,7 @@ fn test_canister_migration_path_with_previous_wasm_memory_version() {
         canister_ids.station,
         WALLET_ADMIN_USER,
         // there should be one asset here already: ICP
-        new_records + 1,
+        1 + ASSET_NR + new_records,
     );
 }
 
@@ -546,14 +564,17 @@ fn assert_has_icp_asset(env: &PocketIc, station_id: Principal, requester: Princi
         .0
         .expect("Failed to list assets");
 
-    assert!(assets.assets.len() == 1);
-    assert_eq!(assets.assets[0].symbol, "ICP");
-    assert_eq!(assets.assets[0].name, "Internet Computer");
-    assert_eq!(&assets.assets[0].blockchain, "icp");
+    let icp_asset = assets.assets.iter().find(|asset| asset.symbol == "ICP");
+
+    assert!(icp_asset.is_some());
+
+    let icp_asset = icp_asset.unwrap();
+
+    assert_eq!(icp_asset.symbol, "ICP");
+    assert_eq!(icp_asset.name, "Internet Computer");
+    assert_eq!(&icp_asset.blockchain, "icp");
     assert!(
-        assets.assets[0]
-            .standards
-            .contains(&"icp_native".to_string())
-            && assets.assets[0].standards.contains(&"icrc1".to_string())
+        icp_asset.standards.contains(&"icp_native".to_string())
+            && icp_asset.standards.contains(&"icrc1".to_string())
     );
 }
