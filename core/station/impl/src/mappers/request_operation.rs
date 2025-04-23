@@ -484,7 +484,12 @@ impl From<station_api::SystemRestoreOperationInput> for SystemRestoreOperationIn
     fn from(input: station_api::SystemRestoreOperationInput) -> SystemRestoreOperationInput {
         SystemRestoreOperationInput {
             target: input.target.into(),
-            snapshot_id: hex::decode(&input.snapshot_id).unwrap(),
+            snapshot_id: hex::decode(&input.snapshot_id).unwrap_or_else(|err| {
+                ic_cdk::trap(&format!(
+                    "Failed to decode snapshot id {} to hex: {}",
+                    input.snapshot_id, err
+                ))
+            }),
         }
     }
 }
