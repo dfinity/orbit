@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::BTreeMap, sync::Arc};
+use std::{cell::RefCell, sync::Arc};
 
 use ic_stable_structures::{memory_manager::MemoryId, StableBTreeMap};
 use lazy_static::lazy_static;
@@ -19,15 +19,6 @@ thread_local! {
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(MEMORY_ID_LOGS))),
         )
     );
-}
-
-// only use this function for stable memory migration!
-pub fn insert_logs(logs: BTreeMap<Timestamp, LogEntry>) {
-    STORAGE.with(|storage| {
-        for (timestamp, log) in logs {
-            storage.borrow_mut().insert(timestamp, log);
-        }
-    });
 }
 
 lazy_static! {
