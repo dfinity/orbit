@@ -612,6 +612,22 @@ type SystemUpgradeOperation = record {
   arg_checksum : opt Sha256Hash;
 };
 
+type SystemRestoreTarget = variant {
+  RestoreStation;
+  RestoreUpgrader;
+};
+
+type SystemRestoreOperationInput = record {
+  // The target to restore from a snapshot.
+  target : SystemRestoreTarget;
+  // A snapshot to be restored.
+  snapshot_id : text;
+};
+
+type SystemRestoreOperation = record {
+  input: SystemRestoreOperationInput;
+};
+
 type DisasterRecoveryCommittee = record {
   // The user group id of the committee.
   user_group_id : UUID;
@@ -1026,6 +1042,8 @@ type RequestOperation = variant {
   RemoveUserGroup : RemoveUserGroupOperation;
   // An operation for performing a system upgrade on the station or upgrader.
   SystemUpgrade : SystemUpgradeOperation;
+  // An operation for restoring the station or upgrader from a snapshot.
+  SystemRestore : SystemRestoreOperation;
   // An operation for setting disaster recovery.
   SetDisasterRecovery : SetDisasterRecoveryOperation;
   // An operation for changing a external canister.
@@ -1095,6 +1113,8 @@ type RequestOperationInput = variant {
   RemoveUserGroup : RemoveUserGroupOperationInput;
   // An operation for performing a system upgrade on the station or upgrader.
   SystemUpgrade : SystemUpgradeOperationInput;
+  // An operation for restoring the station or upgrader from a snapshot.
+  SystemRestore : SystemRestoreOperationInput;
   // An operation for setting disaster recovery.
   SetDisasterRecovery : SetDisasterRecoveryOperationInput;
   // An operation for changing a external canister.
@@ -1164,6 +1184,8 @@ type RequestOperationType = variant {
   RemoveUserGroup;
   // An operation for performing a system upgrade on the station or upgrader.
   SystemUpgrade;
+  // An operation for restoring the station or upgrader from a snapshot.
+  SystemRestore;
   // An operation for setting disaster recovery for a canister.
   SetDisasterRecovery;
   // An operation for changing a external canister.
@@ -1334,6 +1356,8 @@ type ListRequestsOperationType = variant {
   RemoveUserGroup;
   // An operation for performing a system upgrade on the station or upgrader.
   SystemUpgrade;
+  // An operation for restoring the station or upgrader from a snapshot.
+  SystemRestore;
   // An operation for changing a external canister with an optionally specified canister ID.
   ChangeExternalCanister : opt principal;
   // An operation for configuring an external canister.

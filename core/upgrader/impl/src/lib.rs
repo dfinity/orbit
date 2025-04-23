@@ -1,25 +1,19 @@
-use crate::model::{DisasterRecovery, DisasterRecoveryV0, LogEntry};
-use crate::services::insert_logs;
+use crate::model::DisasterRecovery;
 use crate::upgrade::{
     CheckController, Upgrade, Upgrader, WithAuthorization, WithBackground, WithLogs, WithStart,
     WithStop,
 };
 use candid::Principal;
-use ic_cdk::api::stable::{stable_size, stable_write};
-use ic_cdk::{
-    api::management_canister::main::CanisterInstallMode, init, post_upgrade, trap, update,
-};
+use ic_cdk::{api::management_canister::main::CanisterInstallMode, init, post_upgrade, update};
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
-    storable::Bound,
-    DefaultMemoryImpl, StableBTreeMap, Storable,
+    DefaultMemoryImpl, StableBTreeMap,
 };
 use lazy_static::lazy_static;
 use orbit_essentials::storable;
-use orbit_essentials::types::Timestamp;
-use std::{borrow::Cow, cell::RefCell, collections::BTreeMap, sync::Arc};
-use upgrade::{UpgradeError, UpgradeParams};
-use upgrader_api::{InitArg, TriggerUpgradeError};
+use std::{cell::RefCell, sync::Arc};
+use upgrade::{ChangeParams, RestoreParams, UpgradeError, UpgradeParams};
+use upgrader_api::{InitArg, TriggerRestoreError, TriggerUpgradeError};
 
 #[cfg(not(test))]
 pub use orbit_essentials::cdk as upgrader_ic_cdk;
@@ -124,56 +118,8 @@ fn init_fn(InitArg { target_canister }: InitArg) {
 
 #[post_upgrade]
 fn post_upgrade() {
-    pub struct RawBytes(pub Vec<u8>);
-    impl Storable for RawBytes {
-        fn to_bytes(&self) -> Cow<[u8]> {
-            trap("RawBytes should never be serialized")
-        }
-
-        fn from_bytes(bytes: Cow<[u8]>) -> Self {
-            Self(bytes.to_vec())
-        }
-
-        const BOUND: Bound = Bound::Unbounded;
-    }
-
-    const OLD_MEMORY_ID_TARGET_CANISTER_ID: u8 = 0;
-    const OLD_MEMORY_ID_DISASTER_RECOVERY: u8 = 1;
-    const OLD_MEMORY_ID_LOGS: u8 = 4;
-
-    let old_memory_manager = MemoryManager::init(DefaultMemoryImpl::default());
-
-    // determine stable memory layout by trying to parse the target canister from memory with OLD_MEMORY_ID_TARGET_CANISTER_ID
-    let old_target_canister_bytes: StableValue<RawBytes> =
-        StableValue::init(old_memory_manager.get(MemoryId::new(OLD_MEMORY_ID_TARGET_CANISTER_ID)));
-    let target_canister_bytes = old_target_canister_bytes
-        .get(&())
-        .unwrap_or_else(|| trap("Could not determine stable memory layout."));
-    // if a principal can be parsed out of memory with OLD_MEMORY_ID_TARGET_CANISTER_ID
-    // then we need to perform stable memory migration
-    if let Ok(target_canister) = serde_cbor::from_slice::<Principal>(&target_canister_bytes.0) {
-        let old_disaster_recovery: StableValue<DisasterRecoveryV0> = StableValue::init(
-            old_memory_manager.get(MemoryId::new(OLD_MEMORY_ID_DISASTER_RECOVERY)),
-        );
-        let disaster_recovery: DisasterRecoveryV0 =
-            old_disaster_recovery.get(&()).unwrap_or_default();
-
-        let old_logs: StableBTreeMap<Timestamp, LogEntry, Memory> =
-            StableBTreeMap::init(old_memory_manager.get(MemoryId::new(OLD_MEMORY_ID_LOGS)));
-        let logs: BTreeMap<Timestamp, LogEntry> = old_logs.iter().collect();
-
-        // clear the stable memory
-        let stable_memory_size_bytes = stable_size() * (WASM_PAGE_SIZE as u64);
-        stable_write(0, &vec![0; stable_memory_size_bytes as usize]);
-
-        let state = State {
-            target_canister,
-            disaster_recovery: disaster_recovery.into(),
-            stable_memory_version: STABLE_MEMORY_VERSION,
-        };
-        set_state(state);
-        insert_logs(logs);
-    }
+    // basic health check
+    let _ = get_state();
 }
 
 lazy_static! {
@@ -198,11 +144,33 @@ async fn trigger_upgrade(params: upgrader_api::UpgradeParams) -> Result<(), Trig
         arg: params.arg,
         install_mode: CanisterInstallMode::Upgrade(None),
     };
-    UPGRADER.upgrade(input).await.map_err(|err| match err {
-        UpgradeError::NotController => TriggerUpgradeError::NotController,
-        UpgradeError::Unauthorized => TriggerUpgradeError::Unauthorized,
-        UpgradeError::UnexpectedError(err) => TriggerUpgradeError::UnexpectedError(err.to_string()),
-    })
+    UPGRADER
+        .upgrade(ChangeParams::Upgrade(input))
+        .await
+        .map_err(|err| match err {
+            UpgradeError::NotController => TriggerUpgradeError::NotController,
+            UpgradeError::Unauthorized => TriggerUpgradeError::Unauthorized,
+            UpgradeError::UnexpectedError(err) => {
+                TriggerUpgradeError::UnexpectedError(err.to_string())
+            }
+        })
+}
+
+#[update]
+async fn trigger_restore(params: upgrader_api::RestoreParams) -> Result<(), TriggerRestoreError> {
+    let input: RestoreParams = RestoreParams {
+        snapshot_id: params.snapshot_id,
+    };
+    UPGRADER
+        .upgrade(ChangeParams::Restore(input))
+        .await
+        .map_err(|err| match err {
+            UpgradeError::NotController => TriggerRestoreError::NotController,
+            UpgradeError::Unauthorized => TriggerRestoreError::Unauthorized,
+            UpgradeError::UnexpectedError(err) => {
+                TriggerRestoreError::UnexpectedError(err.to_string())
+            }
+        })
 }
 
 #[cfg(test)]

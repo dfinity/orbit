@@ -125,6 +125,7 @@ const componentsMap: {
   PruneExternalCanister: UnsupportedOperation,
   RestoreExternalCanister: UnsupportedOperation,
   SnapshotExternalCanister: UnsupportedOperation,
+  SystemRestore: UnsupportedOperation,
 };
 
 defineEmits<{

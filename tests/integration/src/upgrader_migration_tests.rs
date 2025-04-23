@@ -16,7 +16,7 @@ fn init_test_data_generator(
     UpgraderDataGenerator::new(env, upgrader_id, station_id)
 }
 
-fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal) {
+fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal) -> bool {
     // This is needed to avoid `install_code` rate limit error
     env.tick();
     env.tick();
@@ -30,9 +30,41 @@ fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal
         pocket_ic::common::rest::BlobCompression::Gzip,
     );
 
+    // Then upgrade the canister to ensure that the health check fails
+    let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
+    let err = env
+        .upgrade_canister(
+            upgrader_id,
+            upgrader_wasm,
+            Encode!(&()).expect("Failed to encode arguments"),
+            Some(station_id),
+        )
+        .unwrap_err();
+
+    assert!(err
+        .reject_message
+        .contains("invalid type: byte array, expected struct State"));
+
+    false
+}
+
+fn upgrade_from_v1(env: &PocketIc, upgrader_id: Principal, station_id: Principal) -> bool {
+    // This is needed to avoid `install_code` rate limit error
+    env.tick();
+    env.tick();
+    env.tick();
+
+    // Set the stable memory of the canister to v1
+    let wasm_memory = read_file("upgrader-memory-v1.bin").expect("Unexpected missing wasm memory");
+    env.set_stable_memory(
+        upgrader_id,
+        wasm_memory,
+        pocket_ic::common::rest::BlobCompression::Gzip,
+    );
+
     let stable_memory_size_before_upgrade = env.get_stable_memory(upgrader_id).len();
 
-    // Then upgrade the canister to trigger the migration path
+    // Then upgrade the canister to ensure that the health check succeeds
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
     env.upgrade_canister(
         upgrader_id,
@@ -46,9 +78,11 @@ fn upgrade_from_v0(env: &PocketIc, upgrader_id: Principal, station_id: Principal
 
     // Assert that stable memory size doesn't grow after upgrade.
     assert!(stable_memory_size_after_upgrade <= stable_memory_size_before_upgrade);
+
+    true
 }
 
-fn upgrade_from_latest(env: &PocketIc, upgrader_id: Principal, station_id: Principal) {
+fn upgrade_from_latest(env: &PocketIc, upgrader_id: Principal, station_id: Principal) -> bool {
     let mut canister_memory = env.get_stable_memory(upgrader_id);
 
     // Assert that stable memory size is 21 buckets of 1MiB each + stable structures header (64KiB) for the latest layout.
@@ -67,11 +101,13 @@ fn upgrade_from_latest(env: &PocketIc, upgrader_id: Principal, station_id: Princ
         Some(station_id),
     )
     .expect("Unexpected failure upgrading canister.");
+
+    true
 }
 
 fn test_upgrader_migration_from_version<F>(upgrade_from: F)
 where
-    F: FnOnce(&PocketIc, Principal, Principal),
+    F: FnOnce(&PocketIc, Principal, Principal) -> bool,
 {
     let config = SetupConfig {
         set_time_to_now: false,
@@ -94,7 +130,9 @@ where
     env.stop_canister(upgrader_id, Some(canister_ids.station))
         .expect("Unexpected failure stopping canister");
 
-    upgrade_from(&env, upgrader_id, canister_ids.station);
+    if !upgrade_from(&env, upgrader_id, canister_ids.station) {
+        return;
+    }
 
     let canister_memory = env.get_stable_memory(upgrader_id);
     let stable_memory_size_after_upgrade = canister_memory.len();
@@ -160,4 +198,10 @@ fn test_upgrader_migration_from_latest() {
 #[test]
 fn test_upgrader_migration_from_v0() {
     test_upgrader_migration_from_version(upgrade_from_v0);
+}
+
+/// Tests migration from v1 to latest.
+#[test]
+fn test_upgrader_migration_from_v1() {
+    test_upgrader_migration_from_version(upgrade_from_v1);
 }
