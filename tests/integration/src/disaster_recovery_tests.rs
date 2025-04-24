@@ -14,9 +14,9 @@ use crate::utils::{
 };
 use crate::TestEnv;
 use candid::{CandidType, Encode, Principal};
+use ic_management_canister_types::CanisterStatusType;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::utils::{sha256_hash, timestamp_to_rfc3339};
-use pocket_ic::management_canister::CanisterStatusResultStatus;
 use pocket_ic::{query_candid_as, update_candid_as, PocketIc};
 use serde::Deserialize;
 use station_api::{
@@ -1265,12 +1265,12 @@ fn test_disaster_recovery_via_canister_snapshots() {
     env.stop_canister(canister_ids.station, Some(NNS_ROOT_CANISTER_ID))
         .unwrap();
     let status = canister_status(&env, Some(NNS_ROOT_CANISTER_ID), canister_ids.station);
-    assert!(matches!(status.status, CanisterStatusResultStatus::Stopped));
+    assert!(matches!(status.status, CanisterStatusType::Stopped));
     // now we restart the station via disaster recovery
     let start_request = upgrader_api::RequestDisasterRecoveryInput::Start;
     request_disaster_recovery(&env, upgrader_id, WALLET_ADMIN_USER, start_request)
         .expect("Failed to request disaster recovery");
     await_disaster_recovery_success(&env, canister_ids.station, upgrader_id);
     let status = canister_status(&env, Some(NNS_ROOT_CANISTER_ID), canister_ids.station);
-    assert!(matches!(status.status, CanisterStatusResultStatus::Running));
+    assert!(matches!(status.status, CanisterStatusType::Running));
 }

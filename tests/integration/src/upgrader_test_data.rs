@@ -2,6 +2,7 @@
 
 use candid::Principal;
 use pocket_ic::PocketIc;
+use std::time::SystemTime;
 use time::format_description::well_known::Rfc3339;
 use time::{Duration, OffsetDateTime};
 use upgrader_api::{
@@ -41,7 +42,8 @@ fn next_unique_uuid() -> String {
 }
 
 fn pic_time_to_rfc3339(env: &PocketIc) -> String {
-    let datetime: OffsetDateTime = env.get_time().into();
+    let system_time: SystemTime = env.get_time().try_into().unwrap();
+    let datetime: OffsetDateTime = system_time.into();
 
     datetime
         .format(&Rfc3339)

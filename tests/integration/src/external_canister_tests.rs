@@ -7,10 +7,10 @@ use crate::utils::{
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
+use ic_management_canister_types::{CanisterIdRecord, CanisterStatusResult, CanisterStatusType};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cmc::{SubnetFilter, SubnetSelection};
 use orbit_essentials::utils::timestamp_to_rfc3339;
-use pocket_ic::management_canister::{CanisterIdRecord, CanisterStatusResult};
 use pocket_ic::update_candid_as;
 use sha2::{Digest, Sha256};
 use station_api::{
@@ -1625,8 +1625,7 @@ fn snapshot_unstoppable_external_canister_test() {
         let status = env
             .canister_status(external_canister_id, Some(canister_ids.station))
             .unwrap();
-        if let pocket_ic::management_canister::CanisterStatusResultStatus::Stopping = status.status
-        {
+        if let CanisterStatusType::Stopping = status.status {
             break;
         }
     }
@@ -1669,8 +1668,7 @@ fn snapshot_unstoppable_external_canister_test() {
         let status = env
             .canister_status(external_canister_id, Some(canister_ids.station))
             .unwrap();
-        if let pocket_ic::management_canister::CanisterStatusResultStatus::Stopping = status.status
-        {
+        if let CanisterStatusType::Stopping = status.status {
             break;
         }
     }

@@ -117,8 +117,9 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
     // live mode would set the time back to the current time.
     // Therefore, if we want to use live mode, we need to start the tests with the time
     // set to the past.
+    let system_time = SystemTime::now() - Duration::from_secs(24 * 60 * 60);
     if config.set_time_to_now {
-        env.set_time(SystemTime::now() - Duration::from_secs(24 * 60 * 60));
+        env.set_time(system_time.into());
     }
     let controller = controller_test_id();
     let minter = minter_test_id();
