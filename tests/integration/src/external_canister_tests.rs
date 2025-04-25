@@ -1390,6 +1390,29 @@ fn snapshot_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 4_u32.to_le_bytes());
 
+    // taking another snapshot without specifying a snapshot to replace should fail
+    let snapshot_canister_operation =
+        RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
+            canister_id: external_canister_id,
+            replace_snapshot: None,
+            force: false,
+        });
+    let failed_request_status = execute_request(
+        &env,
+        WALLET_ADMIN_USER,
+        canister_ids.station,
+        snapshot_canister_operation,
+    )
+    .unwrap_err()
+    .unwrap();
+    match failed_request_status {
+        RequestStatusDTO::Failed { reason } => assert!(reason.unwrap().contains(&format!(
+            "Canister {} has reached the maximum number of snapshots allowed: 1.",
+            external_canister_id
+        ))),
+        _ => panic!("Unexpected request status: {:?}", failed_request_status),
+    };
+
     // restore the canister from the snapshot
     let restore_canister_operation =
         RequestOperationInput::RestoreExternalCanister(RestoreExternalCanisterOperationInput {
