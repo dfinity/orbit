@@ -29,6 +29,8 @@ use station_api::{
 use std::str::FromStr;
 use std::time::Duration;
 
+const MAX_CANISTER_SNAPSHOTS: usize = 10;
+
 #[test]
 fn successful_four_eyes_upgrade() {
     let TestEnv {
@@ -1316,34 +1318,41 @@ fn snapshot_external_canister_test() {
         .unwrap();
     assert!(snapshots.is_empty());
 
-    // execute a request taking a snapshot
-    let snapshot_canister_operation =
-        RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
-            canister_id: external_canister_id,
-            replace_snapshot: None,
-            force: false,
-        });
-    let request = execute_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        snapshot_canister_operation,
-    )
-    .unwrap();
+    // execute `MAX_CANISTER_SNAPSHOTS` requests taking a snapshot (max. number of canister snapshots)
+    let mut snapshot_ids = vec![];
+    for _ in 0..MAX_CANISTER_SNAPSHOTS {
+        let snapshot_canister_operation = RequestOperationInput::SnapshotExternalCanister(
+            SnapshotExternalCanisterOperationInput {
+                canister_id: external_canister_id,
+                replace_snapshot: None,
+                force: false,
+            },
+        );
+        let request = execute_request(
+            &env,
+            WALLET_ADMIN_USER,
+            canister_ids.station,
+            snapshot_canister_operation,
+        )
+        .unwrap();
 
-    // fetch the snapshot id from the executed request
-    let snapshot_id = match request.operation {
-        RequestOperationDTO::SnapshotExternalCanister(op) => op.snapshot_id.unwrap(),
-        _ => panic!("Unexpected request operation: {:?}", request.operation),
-    };
+        // fetch the snapshot id from the executed request
+        let snapshot_id = match request.operation {
+            RequestOperationDTO::SnapshotExternalCanister(op) => op.snapshot_id.unwrap(),
+            _ => panic!("Unexpected request operation: {:?}", request.operation),
+        };
+        snapshot_ids.push(snapshot_id);
+    }
 
     // retrieve the existing snapshots from the management canister:
-    // there should be a single snapshot with the snapshot id from the request
+    // there should be `MAX_CANISTER_SNAPSHOTS` snapshots with snapshot ids from the requests
     let snapshots = env
         .list_canister_snapshots(external_canister_id, Some(canister_ids.station))
         .unwrap();
-    assert_eq!(snapshots.len(), 1);
-    assert_eq!(snapshots[0].id, hex::decode(&snapshot_id).unwrap());
+    assert_eq!(snapshots.len(), MAX_CANISTER_SNAPSHOTS);
+    for i in 0..MAX_CANISTER_SNAPSHOTS {
+        assert_eq!(snapshots[i].id, hex::decode(&snapshot_ids[i]).unwrap());
+    }
 
     // retrieve the existing snapshots from a dedicated endpoint of the station:
     // the snapshots should match the snapshots from the management canister
@@ -1358,16 +1367,18 @@ fn snapshot_external_canister_test() {
     )
     .unwrap();
     let snapshots_via_orbit = res.0.unwrap();
-    assert_eq!(snapshots_via_orbit.len(), 1);
-    assert_eq!(
-        snapshots_via_orbit[0].snapshot_id,
-        hex::encode(&snapshots[0].id)
-    );
-    assert_eq!(
-        snapshots_via_orbit[0].taken_at_timestamp,
-        timestamp_to_rfc3339(&snapshots[0].taken_at_timestamp)
-    );
-    assert_eq!(snapshots_via_orbit[0].total_size, snapshots[0].total_size);
+    assert_eq!(snapshots_via_orbit.len(), MAX_CANISTER_SNAPSHOTS);
+    for i in 0..MAX_CANISTER_SNAPSHOTS {
+        assert_eq!(
+            snapshots_via_orbit[i].snapshot_id,
+            hex::encode(&snapshots[i].id)
+        );
+        assert_eq!(
+            snapshots_via_orbit[i].taken_at_timestamp,
+            timestamp_to_rfc3339(&snapshots[i].taken_at_timestamp)
+        );
+        assert_eq!(snapshots_via_orbit[i].total_size, snapshots[i].total_size);
+    }
 
     // bump the counter
     update_raw(
@@ -1407,8 +1418,8 @@ fn snapshot_external_canister_test() {
     .unwrap();
     match failed_request_status {
         RequestStatusDTO::Failed { reason } => assert!(reason.unwrap().contains(&format!(
-            "Canister {} has reached the maximum number of snapshots allowed: 1.",
-            external_canister_id
+            "Canister {} has reached the maximum number of snapshots allowed: {}.",
+            external_canister_id, MAX_CANISTER_SNAPSHOTS
         ))),
         _ => panic!("Unexpected request status: {:?}", failed_request_status),
     };
@@ -1417,7 +1428,7 @@ fn snapshot_external_canister_test() {
     let restore_canister_operation =
         RequestOperationInput::RestoreExternalCanister(RestoreExternalCanisterOperationInput {
             canister_id: external_canister_id,
-            snapshot_id: snapshot_id.clone(),
+            snapshot_id: snapshot_ids[0].clone(),
         });
     execute_request(
         &env,
@@ -1438,11 +1449,11 @@ fn snapshot_external_canister_test() {
     .unwrap();
     assert_eq!(ctr, 2_u32.to_le_bytes());
 
-    // taking another snapshot succeeds if we replace the original snapshot
+    // taking another snapshot succeeds if we replace an existing snapshot
     let snapshot_canister_operation =
         RequestOperationInput::SnapshotExternalCanister(SnapshotExternalCanisterOperationInput {
             canister_id: external_canister_id,
-            replace_snapshot: Some(snapshot_id.clone()),
+            replace_snapshot: Some(snapshot_ids[0].clone()),
             force: false,
         });
     let request = execute_request(
@@ -1458,31 +1469,45 @@ fn snapshot_external_canister_test() {
         RequestOperationDTO::SnapshotExternalCanister(op) => op.snapshot_id.unwrap(),
         _ => panic!("Unexpected request operation: {:?}", request.operation),
     };
-    assert_ne!(new_snapshot_id, snapshot_id);
+    for snapshot_id in &snapshot_ids {
+        assert_ne!(new_snapshot_id, *snapshot_id);
+    }
+
+    let mut new_snapshot_ids = snapshot_ids[1..].to_vec();
+    new_snapshot_ids.push(new_snapshot_id);
 
     // retrieve the existing snapshots from the management canister:
-    // there should be a single snapshot with the new snapshot id from the request
+    // there should be `MAX_CANISTER_SNAPSHOTS` snapshots with the new snapshot id from the request
+    // and without the snapshot specified to be replaced
     let snapshots: Vec<_> = env
         .list_canister_snapshots(external_canister_id, Some(canister_ids.station))
         .unwrap()
         .into_iter()
         .map(|snapshot| snapshot.id)
         .collect();
-    assert_eq!(snapshots, vec![hex::decode(&new_snapshot_id).unwrap()]);
+    assert_eq!(
+        snapshots,
+        new_snapshot_ids
+            .iter()
+            .map(|snapshot_id| hex::decode(snapshot_id).unwrap())
+            .collect::<Vec<_>>()
+    );
 
-    // prune the new snapshot
-    let prune_canister_operation =
-        RequestOperationInput::PruneExternalCanister(PruneExternalCanisterOperationInput {
-            canister_id: external_canister_id,
-            prune: PruneExternalCanisterResourceDTO::Snapshot(new_snapshot_id),
-        });
-    execute_request(
-        &env,
-        WALLET_ADMIN_USER,
-        canister_ids.station,
-        prune_canister_operation,
-    )
-    .unwrap();
+    // prune the snapshots
+    for snapshot_id in new_snapshot_ids {
+        let prune_canister_operation =
+            RequestOperationInput::PruneExternalCanister(PruneExternalCanisterOperationInput {
+                canister_id: external_canister_id,
+                prune: PruneExternalCanisterResourceDTO::Snapshot(snapshot_id),
+            });
+        execute_request(
+            &env,
+            WALLET_ADMIN_USER,
+            canister_ids.station,
+            prune_canister_operation,
+        )
+        .unwrap();
+    }
 
     // retrieve the existing snapshots from the management canister: there should be no snapshots anymore
     let snapshots: Vec<_> = env
