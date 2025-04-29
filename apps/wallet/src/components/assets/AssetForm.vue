@@ -1,7 +1,7 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
     <VTextField
-      v-if="model.id && props.display.value.id"
+      v-if="model.id && displayId"
       v-model="model.id"
       name="id"
       :label="$t('terms.id')"
@@ -9,78 +9,116 @@
       density="compact"
       :disabled="isViewMode"
     />
-    <BlockchainAutocomplete
-      v-if="!isViewMode || model.blockchain"
-      v-model="model.blockchain"
-      class="mb-2"
-      :label="$t('terms.blockchain')"
-      :prepend-icon="mdiTransitConnectionVariant"
-      :rules="[requiredRule]"
-      variant="filled"
-      density="comfortable"
-      :disabled="isViewMode || !!model.id"
-    />
 
-    <StandardsAutocomplete
-      v-if="model.blockchain"
-      v-model="model.standards"
-      class="mb-2"
-      :blockchain="model.blockchain"
-      :label="$t('terms.standards')"
-      :prepend-icon="mdiKeyChain"
-      :rules="[requiredRule]"
-      variant="filled"
-      density="comfortable"
-      :disabled="isViewMode || !!model.id"
-      :multiple="true"
-    />
+    <DiffView :before-value="currentAsset?.blockchain" :after-value="model.blockchain">
+      <template #default="{ value, mode }">
+        <BlockchainAutocomplete
+          v-if="!isViewMode || value"
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (model.blockchain = val)"
+          class="mb-2"
+          :name="mode === 'before' ? 'blockchain-before' : 'blockchain'"
+          :label="$t('terms.blockchain')"
+          :prepend-icon="mdiTransitConnectionVariant"
+          :rules="mode === 'before' ? [] : [requiredRule]"
+          variant="filled"
+          density="comfortable"
+          :disabled="isViewMode || mode === 'before' || !!model.id"
+        />
+      </template>
+    </DiffView>
 
+    <DiffView :before-value="currentAsset?.standards" :after-value="model.standards">
+      <template #default="{ value, mode }">
+        <StandardsAutocomplete
+          v-if="model.blockchain"
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (model.standards = val)"
+          class="mb-2"
+          :name="mode === 'before' ? 'standards-before' : 'standards'"
+          :blockchain="model.blockchain"
+          :label="$t('terms.standards')"
+          :prepend-icon="mdiKeyChain"
+          :rules="mode === 'before' ? [] : [requiredRule]"
+          variant="filled"
+          density="comfortable"
+          :disabled="isViewMode || mode === 'before' || !!model.id"
+          :multiple="true"
+        />
+      </template>
+    </DiffView>
     <InternetComputerNativeStandardForm
       v-if="shouldUseIcpForm"
       v-model="model.metadata!"
       :readonly="isViewMode"
+      :current-metadata="currentAsset?.metadata"
     ></InternetComputerNativeStandardForm>
-
     <template v-if="model.blockchain && model.standards && model.standards.length > 0">
-      <VTextField
-        v-model="model.name"
-        name="name"
-        :label="$t('terms.name')"
-        variant="filled"
-        density="comfortable"
-        :disabled="isViewMode"
-        :prepend-icon="mdiTextBox"
-        :rules="[requiredRule, maxLengthRule(64, $t('terms.name'))]"
-      />
-      <VTextField
-        v-model="model.symbol"
-        name="symbol"
-        :label="$t('terms.symbol')"
-        variant="filled"
-        density="comfortable"
-        :disabled="isViewMode"
-        :prepend-icon="mdiTag"
-        :rules="[requiredRule, validSymbolRule]"
-      />
-      <VTextField
-        v-model="decimals"
-        name="decimals"
-        type="number"
-        :label="$t('pages.assets.forms.decimals')"
-        variant="filled"
-        density="comfortable"
-        :disabled="isViewMode || !!model.id"
-        :prepend-icon="mdiDecimal"
-        :rules="[requiredRule, numberRangeRule({ min: 0, max: 18 })]"
-      />
+      <DiffView :before-value="currentAsset?.name" :after-value="model.name">
+        <template #default="{ value, mode }">
+          <VTextField
+            :model-value="value"
+            @update:model-value="val => mode === 'after' && (model.name = val)"
+            :name="mode === 'before' ? 'name-before' : 'name'"
+            :label="$t('terms.name')"
+            variant="filled"
+            density="comfortable"
+            :disabled="isViewMode || mode === 'before'"
+            :prepend-icon="mdiTextBox"
+            :rules="mode === 'before' ? [] : [requiredRule, maxLengthRule(64, $t('terms.name'))]"
+          />
+        </template>
+      </DiffView>
 
-      <MetadataField
-        v-model="model.metadata"
-        :label="$t('terms.metadata')"
-        :rules="[requiredRule]"
-        :disabled="isViewMode"
-        :hide-keys="hiddenMetadataKeys"
-      />
+      <DiffView :before-value="currentAsset?.symbol" :after-value="model.symbol">
+        <template #default="{ value, mode }">
+          <VTextField
+            :model-value="value"
+            @update:model-value="val => mode === 'after' && (model.symbol = val)"
+            :name="mode === 'before' ? 'symbol-before' : 'symbol'"
+            :label="$t('terms.symbol')"
+            variant="filled"
+            density="comfortable"
+            :disabled="isViewMode || mode === 'before'"
+            :prepend-icon="mdiTag"
+            :rules="mode === 'before' ? [] : [requiredRule, validSymbolRule]"
+          />
+        </template>
+      </DiffView>
+
+      <DiffView :before-value="currentAssetDecimals" :after-value="decimals">
+        <template #default="{ value, mode }">
+          <VTextField
+            :model-value="value"
+            @update:model-value="val => mode === 'after' && (decimals = val)"
+            :name="mode === 'before' ? 'decimals-before' : 'decimals'"
+            type="number"
+            :label="$t('pages.assets.forms.decimals')"
+            variant="filled"
+            density="comfortable"
+            :disabled="isViewMode || mode === 'before' || !!model.id"
+            :prepend-icon="mdiDecimal"
+            :rules="mode === 'before' ? [] : [requiredRule, numberRangeRule({ min: 0, max: 18 })]"
+          />
+        </template>
+      </DiffView>
+
+      <DiffView
+        :before-value="currentAsset?.metadata"
+        :after-value="model.metadata"
+        :compare-values="compareAssetMetadata"
+      >
+        <template #default="{ value, mode }">
+          <MetadataField
+            :model-value="value"
+            @update:model-value="val => mode === 'after' && (model.metadata = val)"
+            :label="$t('terms.metadata')"
+            :rules="mode === 'before' ? [] : [requiredRule]"
+            :disabled="isViewMode || mode === 'before'"
+            :hide-keys="hiddenMetadataKeys"
+          />
+        </template>
+      </DiffView>
     </template>
   </VForm>
 </template>
@@ -91,15 +129,23 @@ import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import { VForm, VTextField } from 'vuetify/components';
 import BlockchainAutocomplete from '~/components/inputs/BlockchainAutocomplete.vue';
 import MetadataField from '~/components/inputs/MetadataField.vue';
-import { Asset } from '~/generated/station/station.did';
+import { Asset, AssetMetadata } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
-import { maxLengthRule, numberRangeRule, requiredRule, validSymbolRule } from '~/utils/form.utils';
+import {
+  compareMetadata,
+  maxLengthRule,
+  numberRangeRule,
+  requiredRule,
+  validSymbolRule,
+} from '~/utils/form.utils';
 import StandardsAutocomplete from '../inputs/StandardsAutocomplete.vue';
 import InternetComputerNativeStandardForm from './standards/InternetComputerNativeStandardForm.vue';
 import { BlockchainStandard } from '~/types/chain.types';
+import DiffView from '~/components/requests/DiffView.vue';
 
 export type AssetFormProps = {
   modelValue: Partial<Asset>;
+  currentAsset?: Asset;
   triggerSubmit?: boolean;
   valid?: boolean;
   mode?: 'view' | 'edit';
@@ -117,10 +163,14 @@ const input = withDefaults(defineProps<AssetFormProps>(), {
   }),
   mode: 'edit',
   triggerSubmit: false,
+  currentAsset: undefined,
 });
 const props = toRefs(input);
 
+console.log('props', props);
+
 const isViewMode = computed(() => props.mode.value === 'view');
+const displayId = computed(() => props.display.value.id);
 
 const emit = defineEmits<{
   (event: 'update:modelValue', payload: AssetFormProps['modelValue']): void;
@@ -132,6 +182,12 @@ const emit = defineEmits<{
 const model = computed(() => props.modelValue.value);
 
 watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });
+
+const currentAssetDecimals = computed(() =>
+  props.currentAsset.value?.decimals !== undefined
+    ? props.currentAsset.value.decimals.toString()
+    : undefined,
+);
 
 const decimals = computed({
   get: () => (model.value.decimals === undefined ? '' : model.value.decimals.toString()),
@@ -177,7 +233,14 @@ const shouldUseIcpForm = computed(
       (model.value.standards && model.value.standards.includes(BlockchainStandard.ICRC1))),
 );
 
-const hiddenMetadataKeys = computed(() =>
-  shouldUseIcpForm.value ? ['ledger_canister_id', 'index_canister_id'] : [],
-);
+const icpKeys = ['ledger_canister_id', 'index_canister_id'];
+
+const hiddenMetadataKeys = computed(() => (shouldUseIcpForm.value ? icpKeys : []));
+
+function compareAssetMetadata(before: AssetMetadata[], after: AssetMetadata[]) {
+  before = before.filter(item => !icpKeys.includes(item.key));
+  after = after.filter(item => !icpKeys.includes(item.key));
+
+  return compareMetadata(before, after);
+}
 </script>

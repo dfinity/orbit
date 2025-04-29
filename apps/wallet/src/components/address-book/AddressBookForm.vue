@@ -56,7 +56,11 @@
         />
       </template>
     </DiffView>
-    <DiffView :before-value="currentEntry?.metadata" :after-value="model.metadata">
+    <DiffView
+      :before-value="currentEntry?.metadata"
+      :after-value="model.metadata"
+      :compare-values="compareMetadata"
+    >
       <template #default="{ value, mode }">
         <MetadataField
           :model-value="value"
@@ -78,7 +82,7 @@ import MetadataField from '~/components/inputs/MetadataField.vue';
 import { AddressBookEntry, Asset } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
 import { VFormValidation } from '~/types/helper.types';
-import { requiredRule } from '~/utils/form.utils';
+import { compareMetadata, requiredRule } from '~/utils/form.utils';
 import DiffView from '~/components/requests/DiffView.vue';
 
 export type AddressBookFormProps = {

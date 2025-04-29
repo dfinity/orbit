@@ -279,3 +279,22 @@ export const validAddress =
       return i18n.global.t('forms.rules.validAddress');
     }
   };
+
+export function compareMetadata<T extends { key: string; value: string }[]>(a: T, b: T): boolean {
+  // Quick length check
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  // Sort both arrays by key then value to compare order-insensitively
+  const sortEntries = (arr: { key: string; value: string }[]) =>
+    [...arr].sort((x, y) => x.key.localeCompare(y.key) || x.value.localeCompare(y.value));
+
+  const sortedA = sortEntries(a);
+  const sortedB = sortEntries(b);
+
+  // Compare each entry one-to-one
+  return sortedA.every(
+    (entry, index) => entry.key === sortedB[index].key && entry.value === sortedB[index].value,
+  );
+}

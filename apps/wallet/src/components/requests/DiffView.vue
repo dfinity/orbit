@@ -47,7 +47,7 @@ const props = defineProps<{
 const showBefore = computed(() =>
   props.beforeValue && props.afterValue
     ? props.compareValues
-      ? props.compareValues(props.beforeValue, props.afterValue)
+      ? !props.compareValues(props.beforeValue, props.afterValue)
       : JSON.stringify(props.beforeValue) !== JSON.stringify(props.afterValue)
     : false,
 );
