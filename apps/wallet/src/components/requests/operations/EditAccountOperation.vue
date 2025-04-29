@@ -24,13 +24,19 @@
     </RequestOperationListRow>
   </div>
   <LoadingMessage v-else-if="loading" />
-  <AccountSetupWizard v-else :model-value="model" mode="view" />
+  <AccountSetupWizard
+    v-else
+    :model-value="model"
+    mode="view"
+    :current-model="currentAccountModel"
+  />
 </template>
 
 <script setup lang="ts">
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import AccountSetupWizard, {
   AccountSetupWizardModel,
+  CurrentAccountSetupWizardModel,
 } from '~/components/accounts/wizard/AccountSetupWizard.vue';
 import LoadingMessage from '~/components/LoadingMessage.vue';
 import {
@@ -39,7 +45,7 @@ import {
 } from '~/composables/account.composable';
 import logger from '~/core/logger.core';
 import { EditAccountOperation, Request } from '~/generated/station/station.did';
-import { unreachable, variantIs } from '~/utils/helper.utils';
+import { deepClone, unreachable, variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 import { useI18n } from 'vue-i18n';
 import { useStationStore } from '~/stores/station.store';
@@ -60,6 +66,8 @@ const i18n = useI18n();
 const isListMode = computed(() => props.mode === 'list');
 const model: Ref<AccountSetupWizardModel> = ref(useDefaultAccountSetupWizardModel());
 const loading = ref(false);
+
+const currentAccountModel = ref<CurrentAccountSetupWizardModel | undefined>(undefined);
 
 const editAssets = computed(() => {
   const assets = {
@@ -116,7 +124,14 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    model.value = await useLoadAccountSetupWizardModel(props.operation.input.account_id);
+    const currentModel = await useLoadAccountSetupWizardModel(props.operation.input.account_id);
+
+    model.value = currentModel;
+
+    if (variantIs(props.request.status, 'Created')) {
+      // make copy of currentModel to avoid mutating the original
+      currentAccountModel.value = deepClone(currentModel);
+    }
 
     if (props.operation.input.name?.[0]) {
       model.value.configuration.name = props.operation.input.name[0];

@@ -27,17 +27,22 @@
       />
     </VCol>
     <VCol cols="12" class="pt-0 pb-4">
-      <VTextField
-        v-model="model.name"
-        name="name"
-        :label="$t('terms.name')"
-        :rules="[requiredRule, maxLengthRule(64, $t('terms.name'))]"
-        variant="filled"
-        class="mb-2"
-        density="comfortable"
-        :prepend-icon="mdiWallet"
-        :disabled="isViewMode"
-      />
+      <DiffView :before-value="props.currentConfiguration?.name" :after-value="model.name">
+        <template #default="{ value, mode }">
+          <VTextField
+            :name="mode === 'before' ? 'name' : 'name-after'"
+            :model-value="value"
+            @update:model-value="val => mode === 'after' && (model.name = val)"
+            :label="$t('terms.name')"
+            density="comfortable"
+            :prepend-icon="mdiWallet"
+            :rules="mode === 'before' ? [] : [requiredRule, maxLengthRule(64, $t('terms.name'))]"
+            :variant="isViewMode ? 'plain' : 'filled'"
+            :disabled="isViewMode || mode === 'before'"
+            class="mb-2"
+          />
+        </template>
+      </DiffView>
     </VCol>
   </VRow>
 </template>
@@ -47,6 +52,7 @@ import { mdiBank, mdiIdentifier, mdiWallet } from '@mdi/js';
 import { computed } from 'vue';
 import { VCol, VRow, VTextField } from 'vuetify/components';
 import TokenAutocomplete from '~/components/inputs/TokenAutocomplete.vue';
+import DiffView from '~/components/requests/DiffView.vue';
 import { TimestampRFC3339, UUID } from '~/generated/station/station.did';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 
@@ -65,6 +71,7 @@ const props = withDefaults(
       id?: boolean;
       asset?: boolean;
     };
+    currentConfiguration?: AccountConfigurationModel;
   }>(),
   {
     display: () => ({
@@ -72,7 +79,7 @@ const props = withDefaults(
       asset: true,
     }),
     mode: 'edit',
-    triggerSubmit: false,
+    currentConfiguration: undefined,
   },
 );
 

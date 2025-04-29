@@ -48,7 +48,7 @@
             </td>
           </template>
         </tr>
-        <tr>
+        <tr v-if="!props.readonly.value && !props.disabled.value">
           <td class="px-0" colspan="3">
             <VBtn
               size="small"

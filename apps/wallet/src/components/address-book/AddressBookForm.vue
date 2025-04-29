@@ -1,7 +1,7 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
     <VTextField
-      v-if="model.id && props.display.value.id"
+      v-if="model.id && displayId"
       v-model="model.id"
       name="id"
       :label="$t('terms.id')"
@@ -9,38 +9,63 @@
       density="compact"
       :disabled="isViewMode"
     />
-    <BlockchainAutocomplete
-      v-model="model.blockchain"
-      class="mb-2"
-      :label="$t('terms.blockchain')"
-      :prepend-icon="mdiTransitConnectionVariant"
-      :rules="[requiredRule]"
-      variant="filled"
-      density="comfortable"
-      :disabled="isViewMode || !!model.id"
-    />
-    <VTextField
-      v-model="model.address_owner"
-      name="name"
-      :label="$t('terms.name')"
-      variant="filled"
-      :rules="[requiredRule]"
-      class="mb-2"
-      density="comfortable"
-      :prepend-icon="mdiAccount"
-      :disabled="isViewMode"
-    />
-    <VTextField
-      v-model="model.address"
-      class="mb-2"
-      :label="$t('terms.address')"
-      :prepend-icon="mdiKeyChain"
-      :rules="[requiredRule]"
-      variant="filled"
-      density="comfortable"
-      :disabled="isViewMode"
-    />
-    <MetadataField v-model="model.metadata" :label="$t('terms.metadata')" :disabled="isViewMode" />
+    <DiffView :before-value="currentEntry?.blockchain" :after-value="model.blockchain">
+      <template #default="{ value, mode }">
+        <BlockchainAutocomplete
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (model.blockchain = val)"
+          class="mb-2"
+          :label="$t('terms.blockchain')"
+          :prepend-icon="mdiTransitConnectionVariant"
+          :rules="mode === 'before' ? [] : [requiredRule]"
+          variant="filled"
+          density="comfortable"
+          :disabled="isViewMode || mode === 'before' || !!model.id"
+        />
+      </template>
+    </DiffView>
+    <DiffView :before-value="currentEntry?.address_owner" :after-value="model.address_owner">
+      <template #default="{ value, mode }">
+        <VTextField
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (model.address_owner = val)"
+          :name="mode === 'before' ? 'address_owner-before' : 'address_owner'"
+          :label="$t('terms.name')"
+          variant="filled"
+          :rules="mode === 'before' ? [] : [requiredRule]"
+          class="mb-2"
+          density="comfortable"
+          :prepend-icon="mdiAccount"
+          :disabled="isViewMode || mode === 'before'"
+        />
+      </template>
+    </DiffView>
+    <DiffView :before-value="currentEntry?.address" :after-value="model.address">
+      <template #default="{ value, mode }">
+        <VTextField
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (model.address = val)"
+          :name="mode === 'before' ? 'address-before' : 'address'"
+          class="mb-2"
+          :label="$t('terms.address')"
+          :prepend-icon="mdiKeyChain"
+          :rules="mode === 'before' ? [] : [requiredRule]"
+          variant="filled"
+          density="comfortable"
+          :disabled="isViewMode || mode === 'before' || !!model.id"
+        />
+      </template>
+    </DiffView>
+    <DiffView :before-value="currentEntry?.metadata" :after-value="model.metadata">
+      <template #default="{ value, mode }">
+        <MetadataField
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (model.metadata = val)"
+          :label="$t('terms.metadata')"
+          :disabled="isViewMode || mode === 'before'"
+        />
+      </template>
+    </DiffView>
   </VForm>
 </template>
 
@@ -54,12 +79,14 @@ import { AddressBookEntry, Asset } from '~/generated/station/station.did';
 import { useStationStore } from '~/stores/station.store';
 import { VFormValidation } from '~/types/helper.types';
 import { requiredRule } from '~/utils/form.utils';
+import DiffView from '~/components/requests/DiffView.vue';
 
 export type AddressBookFormProps = {
   modelValue: Partial<AddressBookEntry>;
   triggerSubmit?: boolean;
   valid?: boolean;
   mode?: 'view' | 'edit';
+  currentEntry?: AddressBookEntry;
   display?: {
     id?: boolean;
   };
@@ -74,6 +101,7 @@ const input = withDefaults(defineProps<AddressBookFormProps>(), {
   }),
   mode: 'edit',
   triggerSubmit: false,
+  currentEntry: undefined,
 });
 const props = toRefs(input);
 
@@ -134,4 +162,6 @@ const submit = async () => {
     emit('submit', model.value);
   }
 };
+
+const displayId = computed(() => props.display.value.id);
 </script>

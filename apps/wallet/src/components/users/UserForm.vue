@@ -9,26 +9,37 @@
       density="compact"
       disabled
     />
-    <VTextField
-      v-model="name"
-      name="name"
-      :label="$t('terms.name')"
-      density="comfortable"
-      :rules="[maxLengthRule(50, $t('terms.name'))]"
-      :variant="isViewMode ? 'plain' : 'filled'"
-      :disabled="isViewMode"
-    />
-    <VAutocomplete
-      v-model="status"
-      name="status"
-      :label="$t('terms.status')"
-      density="comfortable"
-      :items="statusItems"
-      :rules="[requiredRule]"
-      chips
-      :variant="isViewMode ? 'plain' : 'filled'"
-      :disabled="isViewMode"
-    />
+
+    <DiffView :before-value="currentUser?.name" :after-value="model.name">
+      <template #default="{ value, mode }">
+        <VTextField
+          :name="mode === 'before' ? 'name-before' : 'name'"
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (name = val)"
+          :label="$t('terms.name')"
+          density="comfortable"
+          :rules="mode === 'before' ? [] : [maxLengthRule(50, $t('terms.name'))]"
+          :variant="isViewMode ? 'plain' : 'filled'"
+          :disabled="isViewMode || mode === 'before'"
+        />
+      </template>
+    </DiffView>
+    <DiffView :before-value="statusBefore" :after-value="status">
+      <template #default="{ value, mode }">
+        <VAutocomplete
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (status = val)"
+          :name="mode === 'before' ? 'status-before' : 'status'"
+          :label="$t('terms.status')"
+          density="comfortable"
+          :items="statusItems"
+          :rules="[requiredRule]"
+          chips
+          :variant="isViewMode ? 'plain' : 'filled'"
+          :disabled="isViewMode || mode === 'before'"
+        />
+      </template>
+    </DiffView>
     <VCheckbox
       v-if="
         (userWasActive && status === UserStatusType.Inactive) ||
@@ -40,85 +51,97 @@
       :variant="isViewMode ? 'plain' : 'filled'"
       :disabled="isViewMode"
     />
-    <UserGroupAutocomplete
-      v-model="userGroups"
-      name="groups"
-      density="comfortable"
-      :label="$t('terms.user_groups')"
-      :variant="isViewMode ? 'plain' : 'filled'"
-      :disabled="isViewMode"
-      :rules="[requiredRule]"
-      chips
-      multiple
-    />
-    <VAutocomplete
-      ref="identitiesInput"
-      v-model="identities"
-      name="identities"
-      density="comfortable"
-      :label="$t('terms.identities')"
-      :variant="isViewMode ? 'plain' : 'filled'"
-      :disabled="isViewMode"
-      :rules="[requiredRule]"
-      :items="identities"
-      chips
-      multiple
-    >
-      <template v-if="!isViewMode" #append>
-        <ActionBtn
-          v-model="addNewPrincipalModel"
-          :title="$t('app.add_new_identity')"
-          :icon="mdiPlus"
-          variant="tonal"
-          :submit="
-            newPrincipal => {
-              if (newPrincipal.model) {
-                if (identities?.includes(newPrincipal.model)) {
-                  app.sendNotification({
-                    type: 'warning',
-                    message: $t('app.principal_already_added'),
-                  });
 
-                  return;
-                }
-
-                // an assignment is necessary to trigger the reactivity
-                identities = [...identities, newPrincipal.model];
-
-                identitiesInput?.validate();
-              }
-            }
-          "
-          data-test-id="add-principal-btn"
-        >
-          <template #default="{ model: elem, submit: addNewPrincipal }">
-            <AddPrincipalForm
-              v-model="elem.value.model"
-              @valid="isValid => (elem.value.valid = isValid)"
-              @submit="addNewPrincipal"
-            >
-              <template #prepend>
-                <VAlert type="warning" variant="tonal" density="compact" class="mb-4">
-                  {{ $t('app.user_associate_identity_warning') }}
-                </VAlert>
-              </template>
-            </AddPrincipalForm>
-          </template>
-          <template #actions="{ submit: addNewPrincipal, loading: saving, model: elem }">
-            <VSpacer />
-            <VBtn
-              :loading="saving"
-              :disabled="!elem.value.valid"
-              color="primary"
-              variant="flat"
-              @click="addNewPrincipal"
-            >
-              {{ $t('terms.add') }}
-            </VBtn>
-          </template>
-        </ActionBtn>
+    <DiffView :before-value="userGroupsBefore" :after-value="userGroups">
+      <template #default="{ value, mode }">
+        <UserGroupAutocomplete
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (userGroups = val)"
+          :name="mode === 'before' ? 'groups-before' : 'groups'"
+          density="comfortable"
+          :label="$t('terms.user_groups')"
+          :variant="isViewMode ? 'plain' : 'filled'"
+          :disabled="isViewMode || mode === 'before'"
+          :rules="[requiredRule]"
+          chips
+          multiple
+        />
       </template>
-    </VAutocomplete>
+    </DiffView>
+
+    <DiffView :before-value="identitiesBefore" :after-value="identities">
+      <template #default="{ value, mode }">
+        <VAutocomplete
+          ref="identitiesInput"
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (identities = val)"
+          :name="mode === 'before' ? 'identities-before' : 'identities'"
+          density="comfortable"
+          :label="$t('terms.identities')"
+          :variant="isViewMode ? 'plain' : 'filled'"
+          :disabled="isViewMode"
+          :rules="[requiredRule]"
+          :items="identities"
+          chips
+          multiple
+        >
+          <template v-if="!isViewMode" #append>
+            <ActionBtn
+              v-model="addNewPrincipalModel"
+              :title="$t('app.add_new_identity')"
+              :icon="mdiPlus"
+              variant="tonal"
+              :submit="
+                newPrincipal => {
+                  if (newPrincipal.model) {
+                    if (identities?.includes(newPrincipal.model)) {
+                      app.sendNotification({
+                        type: 'warning',
+                        message: $t('app.principal_already_added'),
+                      });
+
+                      return;
+                    }
+
+                    // an assignment is necessary to trigger the reactivity
+                    identities = [...identities, newPrincipal.model];
+
+                    identitiesInput?.validate();
+                  }
+                }
+              "
+              data-test-id="add-principal-btn"
+            >
+              <template #default="{ model: elem, submit: addNewPrincipal }">
+                <AddPrincipalForm
+                  v-model="elem.value.model"
+                  @valid="isValid => (elem.value.valid = isValid)"
+                  @submit="addNewPrincipal"
+                >
+                  <template #prepend>
+                    <VAlert type="warning" variant="tonal" density="compact" class="mb-4">
+                      {{ $t('app.user_associate_identity_warning') }}
+                    </VAlert>
+                  </template>
+                </AddPrincipalForm>
+              </template>
+              <template #actions="{ submit: addNewPrincipal, loading: saving, model: elem }">
+                <VSpacer />
+                <VBtn
+                  :loading="saving"
+                  :disabled="!elem.value.valid"
+                  color="primary"
+                  variant="flat"
+                  @click="addNewPrincipal"
+                >
+                  {{ $t('terms.add') }}
+                </VBtn>
+              </template>
+            </ActionBtn>
+          </template>
+        </VAutocomplete>
+      </template>
+    </DiffView>
   </VForm>
 </template>
 
@@ -146,10 +169,12 @@ import {
   VTextField,
 } from 'vuetify/components';
 import { variantIs } from '~/utils/helper.utils';
+import DiffView from '../requests/DiffView.vue';
 
 const props = withDefaults(
   defineProps<{
     modelValue: Partial<User & { cancelPendingRequests?: boolean }>;
+    currentUser?: User;
     valid?: boolean;
     triggerSubmit?: boolean;
     mode?: 'view' | 'edit';
@@ -158,6 +183,7 @@ const props = withDefaults(
     valid: true,
     triggerSubmit: false,
     mode: 'edit',
+    currentUser: undefined,
   },
 );
 
@@ -192,6 +218,14 @@ const status = computed({
   },
 });
 
+const statusBefore = computed({
+  get: () =>
+    props.currentUser?.status ? fromUserStatusVariantToEnum(props.currentUser.status) : undefined,
+  set: value => {
+    model.value.status = value ? fromUserStatusEnumToVariant(value) : undefined;
+  },
+});
+
 const name = computed({
   get: () => model.value.name,
   set: value => {
@@ -206,11 +240,21 @@ const identities = computed({
   },
 });
 
+const identitiesBefore = computed({
+  get: () => props.currentUser?.identities?.map(i => i.toText()),
+  set: () => {}, // noop, readonly field
+});
+
 const userGroups = computed({
   get: () => model.value.groups?.map(g => g.id) ?? [],
   set: value => {
     model.value.groups = value?.map(id => ({ id, name: '' })) ?? [];
   },
+});
+
+const userGroupsBefore = computed({
+  get: () => props.currentUser?.groups?.map(g => g.id),
+  set: () => {}, // noop, readonly field
 });
 
 const statusItems = computed(() =>

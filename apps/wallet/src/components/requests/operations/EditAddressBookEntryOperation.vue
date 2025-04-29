@@ -22,7 +22,7 @@
     </RequestOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" indeterminate />
-  <AddressBookForm v-else :model-value="formValue" mode="view" />
+  <AddressBookForm v-else :model-value="formValue" mode="view" :current-entry="currentEntry" />
 </template>
 
 <script setup lang="ts">
@@ -38,6 +38,7 @@ import { useStationStore } from '~/stores/station.store';
 import { variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 import { VProgressCircular } from 'vuetify/components';
+import { useAppStore } from '~/stores/app.store';
 
 const props = withDefaults(
   defineProps<{
@@ -54,18 +55,24 @@ const isListMode = computed(() => props.mode === 'list');
 const formValue: Ref<Partial<AddressBookEntry>> = ref({});
 const loading = ref(false);
 const station = useStationStore();
+const appStore = useAppStore();
+const currentEntry = ref<AddressBookEntry | undefined>(undefined);
 
 const fetchDetails = async () => {
   try {
     loading.value = true;
-    const currentEntry = await station.service.getAddressBookEntry(
+    const response = await station.service.getAddressBookEntry(
       {
         address_book_entry_id: props.operation.input.address_book_entry_id,
       },
       true,
     );
 
-    let currentMetadata = currentEntry.address_book_entry.metadata;
+    if (variantIs(props.request.status, 'Created')) {
+      currentEntry.value = response.address_book_entry;
+    }
+
+    let currentMetadata = response.address_book_entry.metadata;
     if (props.operation.input.change_metadata?.[0]) {
       const changeMetadata = props.operation.input.change_metadata[0];
       if (variantIs(changeMetadata, 'ReplaceAllBy')) {
@@ -88,8 +95,11 @@ const fetchDetails = async () => {
     }
 
     formValue.value.metadata = currentMetadata;
+
+    formValue.value.address = response.address_book_entry.address;
   } catch (e) {
     logger.error('Failed to fetch address book entry details', e);
+    appStore.sendErrorNotification(e);
   } finally {
     loading.value = false;
   }
