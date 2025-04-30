@@ -15,9 +15,9 @@ use control_panel_api::{
     UserSubscriptionStatusDTO,
 };
 use control_panel_api::{ListUserStationsResponse, UploadCanisterModulesInput};
+use ic_management_canister_types::CanisterInstallMode;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cmc::{SubnetFilter, SubnetSelection};
-use pocket_ic::management_canister::CanisterInstallMode;
 use pocket_ic::{update_candid_as, PocketIc};
 use sha2::{Digest, Sha256};
 use station_api::{

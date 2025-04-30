@@ -6,16 +6,16 @@ use crate::utils::{
 };
 use crate::{CanisterIds, TestEnv};
 use candid::{Encode, Principal};
+use ic_management_canister_types::CanisterIdRecord;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::utils::rfc3339_to_timestamp;
-use pocket_ic::management_canister::CanisterIdRecord;
 use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
     HealthStatus, NotifyFailedStationUpgradeInput, RequestOperationInput, RequestStatusDTO,
     SystemInstall, SystemRestoreOperationInput, SystemRestoreTargetDTO, SystemUpgrade,
     SystemUpgradeOperationInput, SystemUpgradeTargetDTO,
 };
-use std::time::{Duration, UNIX_EPOCH};
+use std::time::Duration;
 use upgrader_api::InitArg;
 
 pub(crate) const STATION_UPGRADE_EXTRA_TICKS: u64 = 200;
@@ -366,12 +366,7 @@ fn delayed_system_upgrade() {
         });
 
     let delay = Duration::from_secs(30 * 24 * 60 * 60);
-    let expected_scheduled_at: u64 = (env.get_time() + delay)
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_nanos()
-        .try_into()
-        .unwrap();
+    let expected_scheduled_at: u64 = (env.get_time() + delay).as_nanos_since_unix_epoch();
     let mut request = submit_delayed_request_raw(
         &env,
         WALLET_ADMIN_USER,
