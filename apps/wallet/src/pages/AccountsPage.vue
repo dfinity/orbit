@@ -42,12 +42,12 @@
             :items="accounts"
             :items-per-page="-1"
             :hover="true"
+            data-test-id="accounts-table"
             @click:row="
               (_: unknown, { item }: any) => {
                 $router.push({ name: Routes.Account, params: { id: item.id } });
               }
             "
-            data-test-id="accounts-table"
           >
             <template #bottom>
               <!--this hides the footer as pagination is not required-->

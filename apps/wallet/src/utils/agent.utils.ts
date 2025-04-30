@@ -20,7 +20,8 @@ export class CustomIdlAgent {
         idl: this.config.idl,
         input: arg,
         withType: {
-          methodParams: methodName,
+          kind: 'methodParams',
+          name: methodName,
         },
         targetFormat: 'blob',
       });
@@ -89,7 +90,8 @@ export class CustomIdlAgent {
         idl: this.config.idl,
         input: arg,
         withType: {
-          methodParams: methodName,
+          kind: 'methodParams',
+          name: methodName,
         },
         targetFormat: 'hex',
       });

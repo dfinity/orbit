@@ -105,8 +105,8 @@ importers:
         specifier: 2.4.1
         version: 2.4.1(@dfinity/principal@2.4.1)
       '@dfinity/didc':
-        specifier: https://github.com/olaszakos/candid/releases/download/0.0.3/dfinity-didc-0.0.3.tgz
-        version: https://github.com/olaszakos/candid/releases/download/0.0.3/dfinity-didc-0.0.3.tgz
+        specifier: https://github.com/olaszakos/candid/releases/download/0.0.3-pre-release/dfinity-didc-0.0.2.tgz
+        version: https://github.com/olaszakos/candid/releases/download/0.0.3-pre-release/dfinity-didc-0.0.2.tgz
       '@dfinity/identity':
         specifier: 2.4.1
         version: 2.4.1(@dfinity/agent@2.4.1(@dfinity/candid@2.4.1(@dfinity/principal@2.4.1))(@dfinity/principal@2.4.1))(@dfinity/principal@2.4.1)
@@ -890,9 +890,9 @@ packages:
     peerDependencies:
       '@dfinity/principal': ^2.4.1
 
-  '@dfinity/didc@https://github.com/olaszakos/candid/releases/download/0.0.3/dfinity-didc-0.0.3.tgz':
-    resolution: {tarball: https://github.com/olaszakos/candid/releases/download/0.0.3/dfinity-didc-0.0.3.tgz}
-    version: 0.0.3
+  '@dfinity/didc@https://github.com/olaszakos/candid/releases/download/0.0.3-pre-release/dfinity-didc-0.0.2.tgz':
+    resolution: {tarball: https://github.com/olaszakos/candid/releases/download/0.0.3-pre-release/dfinity-didc-0.0.2.tgz}
+    version: 0.0.2
     engines: {node: ^20, npm: please use pnpm, pnpm: ^9, yarn: please use pnpm}
 
   '@dfinity/identity@1.4.0':
@@ -7422,7 +7422,7 @@ snapshots:
     dependencies:
       '@dfinity/principal': 2.4.1
 
-  '@dfinity/didc@https://github.com/olaszakos/candid/releases/download/0.0.3/dfinity-didc-0.0.3.tgz': {}
+  '@dfinity/didc@https://github.com/olaszakos/candid/releases/download/0.0.3-pre-release/dfinity-didc-0.0.2.tgz': {}
 
   '@dfinity/identity@1.4.0(@dfinity/agent@1.4.0(@dfinity/candid@1.4.0(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0)(@peculiar/webcrypto@1.4.3)':
     dependencies:

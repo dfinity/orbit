@@ -166,7 +166,7 @@
                     :icon="false"
                     :candid="{
                       idl: wasmPickingState.wasm?.wasmIdl ?? '',
-                      withType: { serviceParams: null },
+                      withType: { kind: 'serviceParams' },
                     }"
                   />
                 </VCardText>
@@ -213,7 +213,7 @@
                       upgraderState.name === 'upgrader_loaded'
                         ? {
                             idl: upgraderState.upgrader.candid,
-                            withType: { methodParams: 'request_disaster_recovery' },
+                            withType: { kind: 'methodParams', name: 'request_disaster_recovery' },
                           }
                         : undefined
                     "
@@ -232,8 +232,8 @@
                   block
                   :loading="upgraderState.submitLoading"
                   :disabled="!drRequestPayload || upgraderState.submitLoading"
-                  @click="submitRecovery"
                   data-test-id="submit-recovery-button"
+                  @click="submitRecovery"
                 >
                   {{ $t('pages.disaster_recovery.submit_button') }}
                 </VBtn>

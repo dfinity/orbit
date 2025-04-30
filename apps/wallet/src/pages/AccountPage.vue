@@ -77,6 +77,7 @@
                     :items="account.assets"
                     :items-per-page="-1"
                     :hover="true"
+                    data-test-id="account-assets-table"
                     @click:row="
                       (_: unknown, { item }: any) => {
                         $router.push({
@@ -85,7 +86,6 @@
                         });
                       }
                     "
-                    data-test-id="account-assets-table"
                   >
                     <template #bottom>
                       <!--this hides the footer as pagination is not required-->
