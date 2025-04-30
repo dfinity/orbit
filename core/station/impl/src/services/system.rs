@@ -174,6 +174,7 @@ impl SystemService {
         module: &[u8],
         module_extra_chunks: &Option<WasmModuleExtraChunks>,
         arg: &[u8],
+        take_backup_snapshot: Option<bool>,
     ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
 
@@ -184,6 +185,7 @@ impl SystemService {
                 module: module.to_owned(),
                 module_extra_chunks: module_extra_chunks.clone().map(|c| c.into()),
                 arg: arg.to_owned(),
+                take_backup_snapshot,
             },),
         )
         .await
@@ -200,22 +202,37 @@ impl SystemService {
         module: &[u8],
         module_extra_chunks: &Option<WasmModuleExtraChunks>,
         arg: Option<Vec<u8>>,
+        take_backup_snapshot: bool,
     ) -> ServiceResult<()> {
         let upgrader_canister_id = self.get_upgrader_canister_id();
-        self.change_canister_service
+        let replace_snapshot = self
+            .get_system_info()
+            .get_upgrader_backup_snapshot_to_replace();
+        let (backup_snapshot_id, result) = self
+            .change_canister_service
             .install_canister(
                 upgrader_canister_id,
                 CanisterInstallMode::Upgrade(CanisterUpgradeModeArgs {}),
                 module,
                 module_extra_chunks,
                 arg,
+                take_backup_snapshot,
+                replace_snapshot,
             )
-            .await
-            .map_err(|e| SystemError::UpgradeFailed {
-                reason: e.to_string(),
-            })?;
+            .await;
 
-        Ok(())
+        if let Some(snapshot_id) = backup_snapshot_id {
+            let mut system_info = self.get_system_info();
+            system_info.insert_upgrader_backup_snapshot(snapshot_id);
+            write_system_info(system_info);
+        }
+
+        result.map_err(|e| {
+            SystemError::UpgradeFailed {
+                reason: e.to_string(),
+            }
+            .into()
+        })
     }
 
     /// Execute a restore of the station by requesting the upgrader to perform it on our behalf.

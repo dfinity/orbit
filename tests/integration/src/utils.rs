@@ -10,11 +10,11 @@ use ic_certified_assets::types::{
     BatchOperation, CommitBatchArguments, CreateAssetArguments, CreateBatchResponse,
     CreateChunkArg, CreateChunkResponse, SetAssetContentArguments,
 };
+use ic_management_canister_types::CanisterStatusResult;
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cdk::api::management_canister::main::CanisterId;
 use orbit_essentials::types::WasmModuleExtraChunks;
 use orbit_essentials::utils::timestamp_to_rfc3339;
-use pocket_ic::management_canister::CanisterStatusResult;
 use pocket_ic::{query_candid_as, update_candid_as, PocketIc, RejectResponse};
 use sha2::Digest;
 use sha2::Sha256;
@@ -32,7 +32,7 @@ use station_api::{
 };
 use std::io::Write;
 use std::path::PathBuf;
-use std::time::{Duration, UNIX_EPOCH};
+use std::time::Duration;
 use upgrader_api::{
     GetDisasterRecoveryStateResponse, GetLogsInput, GetLogsResponse, LogEntry, PaginationInput,
 };
@@ -195,14 +195,7 @@ pub fn submit_delayed_request_raw(
     delay: Duration,
 ) -> Result<(Result<CreateRequestResponse, ApiErrorDTO>,), RejectResponse> {
     let execution_time = env.get_time() + delay;
-    let execution_time_nanos = timestamp_to_rfc3339(
-        &execution_time
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-            .try_into()
-            .unwrap(),
-    );
+    let execution_time_nanos = timestamp_to_rfc3339(&execution_time.as_nanos_since_unix_epoch());
 
     let create_request_input = CreateRequestInput {
         operation: request_operation_input,
@@ -1348,6 +1341,7 @@ pub(crate) fn upgrade_station(
             module: base_chunk,
             module_extra_chunks: Some(module_extra_chunks),
             arg: Some(station_init_arg_bytes),
+            take_backup_snapshot: None,
         });
 
     execute_request_with_extra_ticks(

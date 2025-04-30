@@ -181,6 +181,7 @@ const submitUpgrade = async (model: SystemUpgradeFormProps['modelValue']): Promi
       module: wasmModule,
       module_extra_chunks: model.wasmModuleExtraChunks ? [model.wasmModuleExtraChunks] : [],
       target: assertAndReturn(model.target, 'model.target is required'),
+      take_backup_snapshot: [true],
     },
     {
       comment: model.comment,

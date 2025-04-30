@@ -1,5 +1,5 @@
 use crate::{
-    get_target_canister,
+    get_backup_snapshot_to_replace, get_target_canister, insert_backup_snapshot,
     model::{LogEntryType, UpgradeResultLog},
     services::LOGGER_SERVICE,
 };
@@ -7,6 +7,7 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use ic_cdk::api::management_canister::main::{
     self as mgmt, CanisterIdRecord, CanisterInfoRequest, CanisterInstallMode,
+    TakeCanisterSnapshotArgs,
 };
 use mockall::automock;
 use orbit_essentials::api::ApiResult;
@@ -40,6 +41,7 @@ pub struct UpgradeParams {
     pub module_extra_chunks: Option<WasmModuleExtraChunks>,
     pub arg: Vec<u8>,
     pub install_mode: CanisterInstallMode,
+    pub take_backup_snapshot: bool,
 }
 
 pub struct RestoreParams {
@@ -78,6 +80,33 @@ impl Upgrade for Upgrader {
             .await
             .map_err(|(_, e)| anyhow!(e).into()),
         }
+    }
+}
+
+pub struct WithSnapshot<T>(pub T);
+
+#[async_trait]
+impl<T: Upgrade> Upgrade for WithSnapshot<T> {
+    async fn upgrade(&self, ps: ChangeParams) -> Result<(), UpgradeError> {
+        match &ps {
+            ChangeParams::Upgrade(ps) => {
+                if ps.take_backup_snapshot {
+                    let id = get_target_canister();
+                    let replace_snapshot = get_backup_snapshot_to_replace();
+                    let snapshot_id = mgmt::take_canister_snapshot(TakeCanisterSnapshotArgs {
+                        canister_id: id,
+                        replace_snapshot,
+                    })
+                    .await
+                    .map(|res| res.0.id)
+                    .map_err(|(_, err)| anyhow!("failed to take backup snapshot: {err}"))?;
+                    insert_backup_snapshot(snapshot_id);
+                }
+            }
+            ChangeParams::Restore(_) => (),
+        };
+
+        self.0.upgrade(ps).await
     }
 }
 
