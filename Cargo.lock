@@ -2759,6 +2759,7 @@ dependencies = [
  "dfx-orbit",
  "flate2",
  "hex",
+ "ic-cdk 0.17.1",
  "ic-certified-assets",
  "ic-ledger-types",
  "ic-management-canister-types",

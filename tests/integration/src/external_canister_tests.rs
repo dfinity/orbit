@@ -7,7 +7,8 @@ use crate::utils::{
 };
 use crate::TestEnv;
 use candid::{Encode, Principal};
-use ic_management_canister_types::{CanisterIdRecord, CanisterStatusResult, CanisterStatusType};
+use ic_cdk::api::management_canister::main::CanisterStatusResponse;
+use ic_management_canister_types::{CanisterIdRecord, CanisterStatusType};
 use orbit_essentials::api::ApiResult;
 use orbit_essentials::cmc::{SubnetFilter, SubnetSelection};
 use orbit_essentials::utils::timestamp_to_rfc3339;
@@ -517,7 +518,7 @@ fn create_external_canister_and_check_status() {
 
     // checking canister status on behalf of the user_a
     let canister_id_record = CanisterIdRecord { canister_id };
-    let status: (CanisterStatusResult,) = update_candid_as(
+    let status: (CanisterStatusResponse,) = update_candid_as(
         &env,
         canister_ids.station,
         user_a,
@@ -529,7 +530,7 @@ fn create_external_canister_and_check_status() {
 
     // checking canister status on behalf of the user_c which has no permission to call canister_status
     let user_c = user_test_id(2);
-    let err = update_candid_as::<_, (CanisterStatusResult,)>(
+    let err = update_candid_as::<_, (CanisterStatusResponse,)>(
         &env,
         canister_ids.station,
         user_c,
@@ -1726,7 +1727,7 @@ fn read_system_canister_info() {
     .unwrap()
     .0
     .unwrap();
-    update_candid_as::<_, (CanisterStatusResult,)>(
+    update_candid_as::<_, (CanisterStatusResponse,)>(
         &env,
         canister_ids.station,
         WALLET_ADMIN_USER,
@@ -1746,7 +1747,7 @@ fn read_system_canister_info() {
     )
     .unwrap_err();
     assert!(err.reject_message.contains("System(SystemInfo)"));
-    let err = update_candid_as::<_, (CanisterStatusResult,)>(
+    let err = update_candid_as::<_, (CanisterStatusResponse,)>(
         &env,
         canister_ids.station,
         user,
