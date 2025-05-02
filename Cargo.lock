@@ -2383,12 +2383,11 @@ dependencies = [
 
 [[package]]
 name = "ic-management-canister-types"
-version = "0.2.1"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a23527ab5e2ede1aae270cdb79ef0491479c8b5c2de9fd393048ca907cac5e1"
+checksum = "90253c6ac92f9a0b548a53a02c2d29dfa0f04a6c1ae919b86a6f54d4767d78b9"
 dependencies = [
  "candid",
- "candid_parser",
  "serde",
  "serde_bytes",
 ]
@@ -3689,9 +3688,9 @@ dependencies = [
 
 [[package]]
 name = "pocket-ic"
-version = "8.0.0"
+version = "9.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60ea6e0f78d5b212c2d974850c12575fbdef34de12de88b50623fcb4b8126992"
+checksum = "1d0dee25e0f699db883fa2228b18b6e86ae874a0f538dd362aef70679ca5cc6d"
 dependencies = [
  "backoff",
  "base64 0.13.1",
