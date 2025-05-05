@@ -51,7 +51,7 @@
             "
           />
         </VCol>
-        <VCol v-if="hasConfiguredValidationMethods" cols="12" class="px-0 px-6">
+        <VCol v-if="hasConfiguredValidationMethods" cols="12" class="pb-0 px-6">
           <VSelect
             v-model="model.validationTarget"
             :prepend-icon="mdiCodeBraces"

@@ -10,20 +10,33 @@
       disabled
     />
 
-    <SpecifierSelector
-      v-model="model.specifier"
-      :disabled="isViewMode"
-      @changed-variant="onChangedVariant"
-    />
+    <DiffView
+      :before-value="props.currentRequestPolicy.value?.specifier"
+      :after-value="model.specifier"
+    >
+      <template #default="{ value, mode }">
+        <SpecifierSelector
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (model.specifier = val)"
+          :disabled="isViewMode || mode === 'before'"
+          @changed-variant="() => mode === 'after' && onChangedVariant()"
+        />
+      </template>
+    </DiffView>
 
     <template v-if="model.specifier">
       <div class="mt-4 mb-2 text-body-2">{{ $t('terms.rule') }}</div>
-      <RuleBuilder
-        v-model="model.rule"
-        :specifier="model.specifier"
-        :disabled="isViewMode"
-        @remove="model.rule = undefined"
-      />
+      <DiffView :before-value="props.currentRequestPolicy.value?.rule" :after-value="model.rule">
+        <template #default="{ value, mode }">
+          <RuleBuilder
+            :model-value="value"
+            @update:model-value="val => mode === 'after' && (model.rule = val)"
+            :specifier="value ? props.modelValue.value.specifier! : undefined"
+            :disabled="isViewMode || mode === 'before'"
+            @remove="mode === 'after' && (model.rule = undefined)"
+          />
+        </template>
+      </DiffView>
 
       <span v-if="!model.rule && isViewMode">
         {{ $t('terms.none') }}
@@ -36,6 +49,7 @@
 import { computed, ref, toRefs } from 'vue';
 import RuleBuilder from '~/components/request-policies/rule/RuleBuilder.vue';
 import SpecifierSelector from '~/components/request-policies/specifier/SpecifierSelector.vue';
+import DiffView from '~/components/requests/DiffView.vue';
 import { RequestPolicy } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
 
@@ -47,6 +61,7 @@ export type RequestPolicyFormProps = {
     id?: boolean;
     specifier?: boolean;
   };
+  currentRequestPolicy?: RequestPolicy;
 };
 
 const form = ref<VFormValidation | null>(null);
@@ -58,6 +73,7 @@ const input = withDefaults(defineProps<RequestPolicyFormProps>(), {
     specifier: true,
   }),
   mode: 'edit',
+  currentRequestPolicy: undefined,
 });
 const props = toRefs(input);
 

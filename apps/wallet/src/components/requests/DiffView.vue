@@ -41,11 +41,12 @@ const { mobile } = useDisplay();
 const props = defineProps<{
   beforeValue?: T;
   afterValue?: T;
-  compareValues?: (before: T, after: T) => boolean;
+  compareValues?: (before: T | undefined, after: T) => boolean;
+  hasBefore?: boolean;
 }>();
 
 const showBefore = computed(() =>
-  props.beforeValue && props.afterValue
+  (props.beforeValue !== undefined || props.hasBefore) && props.afterValue !== undefined
     ? props.compareValues
       ? !props.compareValues(props.beforeValue, props.afterValue)
       : JSON.stringify(props.beforeValue) !== JSON.stringify(props.afterValue)

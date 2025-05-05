@@ -9,15 +9,21 @@
       density="compact"
       disabled
     />
-    <VTextField
-      v-model="modelValue.name"
-      name="name"
-      :label="$t('terms.name')"
-      density="comfortable"
-      :variant="isViewMode ? 'plain' : 'filled'"
-      :rules="rules.name"
-      :disabled="isViewMode"
-    />
+
+    <DiffView :before-value="currentUserGroup?.name" :after-value="modelValue.name">
+      <template #default="{ value, mode }">
+        <VTextField
+          :name="mode === 'before' ? 'name-before' : 'name'"
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (modelValue.name = val)"
+          :label="$t('terms.name')"
+          density="comfortable"
+          :rules="mode === 'before' ? [] : rules.name"
+          :variant="isViewMode ? 'plain' : 'filled'"
+          :disabled="isViewMode || mode === 'before'"
+        />
+      </template>
+    </DiffView>
   </VForm>
 </template>
 
@@ -28,6 +34,7 @@ import { VForm, VTextField } from 'vuetify/components';
 import { UserGroup } from '~/generated/station/station.did';
 import { FormValidationRules, VFormValidation } from '~/types/helper.types';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
+import DiffView from '~/components/requests/DiffView.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -35,11 +42,13 @@ const props = withDefaults(
     valid?: boolean;
     mode?: 'view' | 'edit';
     triggerSubmit?: boolean;
+    currentUserGroup?: UserGroup;
   }>(),
   {
     valid: true,
     mode: 'edit',
     triggerSubmit: false,
+    currentUserGroup: undefined,
   },
 );
 

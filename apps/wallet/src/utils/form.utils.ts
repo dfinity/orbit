@@ -298,3 +298,15 @@ export function compareMetadata<T extends { key: string; value: string }[]>(a: T
     (entry, index) => entry.key === sortedB[index].key && entry.value === sortedB[index].value,
   );
 }
+
+export function compareTruthy<T>(a: T | undefined, b: T): boolean {
+  if (!a && !b) {
+    return true;
+  }
+
+  if (!a || !b) {
+    return false;
+  }
+
+  return JSON.stringify(a) === JSON.stringify(b);
+}

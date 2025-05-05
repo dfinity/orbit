@@ -14,7 +14,12 @@
     </RequestOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" />
-  <RequestPolicyForm v-else :model-value="formValue" mode="view" />
+  <RequestPolicyForm
+    v-else
+    :model-value="formValue"
+    mode="view"
+    :current-request-policy="currentRequestPolicy"
+  />
 </template>
 
 <script setup lang="ts">
@@ -29,6 +34,7 @@ import { useStationStore } from '~/stores/station.store';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 import RequestPolicyForm from '~/components/request-policies/RequestPolicyForm.vue';
 import { useI18n } from 'vue-i18n';
+import { useAppStore } from '~/stores/app.store';
 
 const props = withDefaults(
   defineProps<{
@@ -43,8 +49,10 @@ const props = withDefaults(
 
 const isListMode = computed(() => props.mode === 'list');
 const formValue: Ref<Partial<RequestPolicy>> = ref({});
+const currentRequestPolicy: Ref<RequestPolicy | undefined> = ref();
 const loading = ref(false);
 const station = useStationStore();
+const appStore = useAppStore();
 
 const fetchDetails = async () => {
   try {
@@ -79,7 +87,7 @@ const requestPolicyType = computed(() => {
   return undefined;
 });
 
-onBeforeMount(() => {
+onBeforeMount(async () => {
   const policy: Partial<RequestPolicy> = {};
   policy.id = props.operation.input.policy_id;
   if (props.operation.input.rule?.[0]) {
@@ -90,7 +98,14 @@ onBeforeMount(() => {
   }
 
   formValue.value = policy;
-
+  // load full existing policy for diff
+  try {
+    const { policy } = await station.service.getRequestPolicy(props.operation.input.policy_id);
+    currentRequestPolicy.value = policy;
+  } catch (e) {
+    logger.error('Failed to fetch current request policy', e);
+    appStore.sendErrorNotification(e);
+  }
   fetchDetails();
 });
 </script>

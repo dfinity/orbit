@@ -12,7 +12,16 @@
         <p class="text-body-1 font-weight-medium mb-2">
           {{ $t('permissions.permitted_users') }}
         </p>
-        <AllowInput v-model="model" :mode="props.readonly ? 'view' : 'edit'" />
+        <DiffView :before-value="props.currentPermission?.allow" :after-value="model">
+          <template #default="{ value, mode }">
+            <AllowInput
+              v-if="value"
+              :model-value="value"
+              @update:model-value="val => mode === 'after' && (model = val)"
+              :mode="props.readonly ? 'view' : mode === 'before' ? 'view' : 'edit'"
+            />
+          </template>
+        </DiffView>
       </div>
     </div>
   </VForm>
@@ -38,20 +47,23 @@ import {
   useOnFailedOperation,
   useOnSuccessfulOperation,
 } from '~/composables/notifications.composable';
-import { Allow, Resource } from '~/generated/station/station.did';
+import { Allow, Resource, Permission } from '~/generated/station/station.did';
 import { fromResourceToDisplayText } from '~/mappers/permissions.mapper';
 import { useStationStore } from '~/stores/station.store';
 import { isApiError } from '~/utils/app.utils';
 import AllowInput from '../inputs/AllowInput.vue';
+import DiffView from '~/components/requests/DiffView.vue';
 
 const props = withDefaults(
   defineProps<{
     resource: Resource;
     modelValue: Allow;
     readonly?: boolean;
+    currentPermission?: Permission;
   }>(),
   {
     readonly: false,
+    currentPermission: undefined,
   },
 );
 

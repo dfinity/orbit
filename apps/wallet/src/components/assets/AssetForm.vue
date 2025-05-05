@@ -237,7 +237,18 @@ const icpKeys = ['ledger_canister_id', 'index_canister_id'];
 
 const hiddenMetadataKeys = computed(() => (shouldUseIcpForm.value ? icpKeys : []));
 
-function compareAssetMetadata(before: AssetMetadata[], after: AssetMetadata[]) {
+function compareAssetMetadata(
+  before: AssetMetadata[] | undefined,
+  after: AssetMetadata[] | undefined,
+) {
+  if (!before && !after) {
+    return true;
+  }
+
+  if (!before || !after) {
+    return false;
+  }
+
   before = before.filter(item => !icpKeys.includes(item.key));
   after = after.filter(item => !icpKeys.includes(item.key));
 

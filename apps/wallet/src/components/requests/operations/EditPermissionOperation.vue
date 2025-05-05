@@ -16,6 +16,7 @@
     v-else-if="permission.allow && permission.resource"
     :model-value="permission.allow"
     :resource="permission.resource"
+    :current-permission="currentPermission"
     readonly
     class="py-2"
   />
@@ -30,6 +31,7 @@ import { EditPermissionOperation, Permission, Request } from '~/generated/statio
 import { fromResourceToResourceEnum } from '~/mappers/permissions.mapper';
 import { useStationStore } from '~/stores/station.store';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
+import { useAppStore } from '~/stores/app.store';
 
 const props = withDefaults(
   defineProps<{
@@ -44,7 +46,9 @@ const props = withDefaults(
 
 const isListMode = computed(() => props.mode === 'list');
 const station = useStationStore();
+const appStore = useAppStore();
 const permission: Ref<Partial<Permission>> = ref({});
+const currentPermission: Ref<Permission | undefined> = ref();
 const loading = ref(false);
 
 const fetchDetails = async () => {
@@ -58,13 +62,17 @@ const fetchDetails = async () => {
       resource: props.operation.input.resource,
     });
 
-    result.allow.auth_scope = props.operation.input.auth_scope?.[0] ?? result.allow.auth_scope;
-    result.allow.users = props.operation.input.users?.[0] ?? result.allow.users;
-    result.allow.user_groups = props.operation.input.user_groups?.[0] ?? result.allow.user_groups;
-
-    permission.value = result;
+    // snapshot original for diff
+    currentPermission.value = { ...result, allow: { ...result.allow } };
+    // merge overrides for updated view
+    const updatedAllow = { ...result.allow };
+    updatedAllow.auth_scope = props.operation.input.auth_scope?.[0] ?? updatedAllow.auth_scope;
+    updatedAllow.users = props.operation.input.users?.[0] ?? updatedAllow.users;
+    updatedAllow.user_groups = props.operation.input.user_groups?.[0] ?? updatedAllow.user_groups;
+    permission.value = { resource: result.resource, allow: updatedAllow };
   } catch (e) {
     logger.error('Failed to fetch permission details', e);
+    appStore.sendErrorNotification(e);
   } finally {
     loading.value = false;
   }
