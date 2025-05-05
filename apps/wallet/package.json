@@ -27,7 +27,7 @@
     "@dfinity/agent": "2.4.1",
     "@dfinity/auth-client": "2.4.1",
     "@dfinity/candid": "2.4.1",
-    "@dfinity/didc": "https://github.com/olaszakos/candid/releases/download/0.0.3-pre-release/dfinity-didc-0.0.2.tgz",
+    "@dfinity/didc": "0.0.3",
     "@dfinity/identity": "2.4.1",
     "@dfinity/ledger-icrc": "2.8.0",
     "@dfinity/principal": "2.4.1",
