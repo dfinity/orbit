@@ -105,8 +105,8 @@ importers:
         specifier: 2.4.1
         version: 2.4.1(@dfinity/principal@2.4.1)
       '@dfinity/didc':
-        specifier: 0.0.3
-        version: 0.0.3
+        specifier: 0.0.4
+        version: 0.0.4
       '@dfinity/identity':
         specifier: 2.4.1
         version: 2.4.1(@dfinity/agent@2.4.1(@dfinity/candid@2.4.1(@dfinity/principal@2.4.1))(@dfinity/principal@2.4.1))(@dfinity/principal@2.4.1)
@@ -890,8 +890,8 @@ packages:
     peerDependencies:
       '@dfinity/principal': ^2.4.1
 
-  '@dfinity/didc@0.0.3':
-    resolution: {integrity: sha512-Z42x4gJxIvz6W7e/Q0MZFii7vmn2ybWwPrj0Ddqc1iBtHKLrthkyPq8Dp9pH3gz7utWLbbrYBcVUM8pjDgr0/Q==}
+  '@dfinity/didc@0.0.4':
+    resolution: {integrity: sha512-vFtvVE6X8xzYVjVlGMm1hfeWLYL2xWF7TU2aMVy4rShE3AfK9JCQyfu+suUPlWB4MwjATCq15mO09sysey3esQ==}
     engines: {node: ^20, npm: please use pnpm, pnpm: ^9, yarn: please use pnpm}
 
   '@dfinity/identity@1.4.0':
@@ -7436,7 +7436,7 @@ snapshots:
     dependencies:
       '@dfinity/principal': 2.4.1
 
-  '@dfinity/didc@0.0.3': {}
+  '@dfinity/didc@0.0.4': {}
 
   '@dfinity/identity@1.4.0(@dfinity/agent@1.4.0(@dfinity/candid@1.4.0(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0))(@dfinity/principal@1.4.0)(@peculiar/webcrypto@1.4.3)':
     dependencies:
