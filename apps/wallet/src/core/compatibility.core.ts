@@ -31,7 +31,7 @@ export async function fetchCanisterVersion(
   const certificate = await Certificate.create({
     canisterId,
     certificate: state.certificate,
-    rootKey: agent.rootKey,
+    rootKey: agent.rootKey!,
   });
 
   const version = certificate.lookup(versionPath);

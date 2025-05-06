@@ -14,37 +14,39 @@
     </VCol>
     <VCol cols="12" class="pt-4 pb-0">
       <DiffView :before-value="currentAssetIds" :after-value="assetIds">
-        <template #default="{ value, mode }">
+        <template #default="{ value, diffMode }">
           <TokenAutocomplete
             v-if="props.display.asset"
             :model-value="value"
-            @update:model-value="val => mode === 'after' && (assetIds = val as UUID[])"
             class="mb-2"
             :label="$t('terms.asset')"
             :prepend-icon="mdiBank"
-            :rules="mode === 'before' ? [] : [requiredRule]"
+            :rules="diffMode === 'before' ? [] : [requiredRule]"
             variant="filled"
             density="comfortable"
-            :disabled="isViewMode || !!model.id || mode === 'before'"
+            :disabled="isViewMode || !!model.id || diffMode === 'before'"
             :multiple="true"
+            @update:model-value="val => diffMode === 'after' && (assetIds = val as UUID[])"
           />
         </template>
       </DiffView>
     </VCol>
     <VCol cols="12" class="pt-0 pb-4">
       <DiffView :before-value="props.currentConfiguration?.name" :after-value="model.name">
-        <template #default="{ value, mode }">
+        <template #default="{ value, diffMode }">
           <VTextField
-            :name="mode === 'before' ? 'name' : 'name-after'"
+            :name="diffMode === 'before' ? 'name-before' : 'name'"
             :model-value="value"
-            @update:model-value="val => mode === 'after' && (model.name = val)"
             :label="$t('terms.name')"
             density="comfortable"
             :prepend-icon="mdiWallet"
-            :rules="mode === 'before' ? [] : [requiredRule, maxLengthRule(64, $t('terms.name'))]"
+            :rules="
+              diffMode === 'before' ? [] : [requiredRule, maxLengthRule(64, $t('terms.name'))]
+            "
             :variant="isViewMode ? 'plain' : 'filled'"
-            :disabled="isViewMode || mode === 'before'"
+            :disabled="isViewMode || diffMode === 'before'"
             class="mb-2"
+            @update:model-value="val => diffMode === 'after' && (model.name = val)"
           />
         </template>
       </DiffView>

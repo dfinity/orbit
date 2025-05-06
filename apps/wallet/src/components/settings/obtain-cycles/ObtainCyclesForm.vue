@@ -35,11 +35,7 @@
 import { ref, computed, watch } from 'vue';
 import { VAutocomplete } from 'vuetify/components';
 import { UUID } from '~/generated/control-panel/control_panel.did';
-import {
-  CycleObtainStrategyInput,
-  ManageSystemInfoOperationInput,
-  SystemInfo,
-} from '~/generated/station/station.did';
+import { CycleObtainStrategyInput, SystemInfo } from '~/generated/station/station.did';
 import { cycleObtainStrategyInputToKey } from '~/mappers/obtain-cycles.mapper';
 import { CycleObtainStrategyEnum } from '~/types/obtain-cycles.types';
 import { requiredRule } from '~/utils/form.utils';

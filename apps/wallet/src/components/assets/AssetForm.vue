@@ -11,39 +11,39 @@
     />
 
     <DiffView :before-value="currentAsset?.blockchain" :after-value="model.blockchain">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <BlockchainAutocomplete
           v-if="!isViewMode || value"
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (model.blockchain = val)"
           class="mb-2"
-          :name="mode === 'before' ? 'blockchain-before' : 'blockchain'"
+          :name="diffMode === 'before' ? 'blockchain-before' : 'blockchain'"
           :label="$t('terms.blockchain')"
           :prepend-icon="mdiTransitConnectionVariant"
-          :rules="mode === 'before' ? [] : [requiredRule]"
+          :rules="diffMode === 'before' ? [] : [requiredRule]"
           variant="filled"
           density="comfortable"
-          :disabled="isViewMode || mode === 'before' || !!model.id"
+          :disabled="isViewMode || diffMode === 'before' || !!model.id"
+          @update:model-value="val => diffMode === 'after' && (model.blockchain = val)"
         />
       </template>
     </DiffView>
 
     <DiffView :before-value="currentAsset?.standards" :after-value="model.standards">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <StandardsAutocomplete
           v-if="model.blockchain"
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (model.standards = val)"
           class="mb-2"
-          :name="mode === 'before' ? 'standards-before' : 'standards'"
+          :name="diffMode === 'before' ? 'standards-before' : 'standards'"
           :blockchain="model.blockchain"
           :label="$t('terms.standards')"
           :prepend-icon="mdiKeyChain"
-          :rules="mode === 'before' ? [] : [requiredRule]"
+          :rules="diffMode === 'before' ? [] : [requiredRule]"
           variant="filled"
           density="comfortable"
-          :disabled="isViewMode || mode === 'before' || !!model.id"
+          :disabled="isViewMode || diffMode === 'before' || !!model.id"
           :multiple="true"
+          @update:model-value="val => diffMode === 'after' && (model.standards = val)"
         />
       </template>
     </DiffView>
@@ -55,50 +55,54 @@
     ></InternetComputerNativeStandardForm>
     <template v-if="model.blockchain && model.standards && model.standards.length > 0">
       <DiffView :before-value="currentAsset?.name" :after-value="model.name">
-        <template #default="{ value, mode }">
+        <template #default="{ value, diffMode }">
           <VTextField
             :model-value="value"
-            @update:model-value="val => mode === 'after' && (model.name = val)"
-            :name="mode === 'before' ? 'name-before' : 'name'"
+            :name="diffMode === 'before' ? 'name-before' : 'name'"
             :label="$t('terms.name')"
             variant="filled"
             density="comfortable"
-            :disabled="isViewMode || mode === 'before'"
+            :disabled="isViewMode || diffMode === 'before'"
             :prepend-icon="mdiTextBox"
-            :rules="mode === 'before' ? [] : [requiredRule, maxLengthRule(64, $t('terms.name'))]"
+            :rules="
+              diffMode === 'before' ? [] : [requiredRule, maxLengthRule(64, $t('terms.name'))]
+            "
+            @update:model-value="val => diffMode === 'after' && (model.name = val)"
           />
         </template>
       </DiffView>
 
       <DiffView :before-value="currentAsset?.symbol" :after-value="model.symbol">
-        <template #default="{ value, mode }">
+        <template #default="{ value, diffMode }">
           <VTextField
             :model-value="value"
-            @update:model-value="val => mode === 'after' && (model.symbol = val)"
-            :name="mode === 'before' ? 'symbol-before' : 'symbol'"
+            :name="diffMode === 'before' ? 'symbol-before' : 'symbol'"
             :label="$t('terms.symbol')"
             variant="filled"
             density="comfortable"
-            :disabled="isViewMode || mode === 'before'"
+            :disabled="isViewMode || diffMode === 'before'"
             :prepend-icon="mdiTag"
-            :rules="mode === 'before' ? [] : [requiredRule, validSymbolRule]"
+            :rules="diffMode === 'before' ? [] : [requiredRule, validSymbolRule]"
+            @update:model-value="val => diffMode === 'after' && (model.symbol = val)"
           />
         </template>
       </DiffView>
 
       <DiffView :before-value="currentAssetDecimals" :after-value="decimals">
-        <template #default="{ value, mode }">
+        <template #default="{ value, diffMode }">
           <VTextField
             :model-value="value"
-            @update:model-value="val => mode === 'after' && (decimals = val)"
-            :name="mode === 'before' ? 'decimals-before' : 'decimals'"
+            :name="diffMode === 'before' ? 'decimals-before' : 'decimals'"
             type="number"
             :label="$t('pages.assets.forms.decimals')"
             variant="filled"
             density="comfortable"
-            :disabled="isViewMode || mode === 'before' || !!model.id"
+            :disabled="isViewMode || diffMode === 'before' || !!model.id"
             :prepend-icon="mdiDecimal"
-            :rules="mode === 'before' ? [] : [requiredRule, numberRangeRule({ min: 0, max: 18 })]"
+            :rules="
+              diffMode === 'before' ? [] : [requiredRule, numberRangeRule({ min: 0, max: 18 })]
+            "
+            @update:model-value="val => diffMode === 'after' && (decimals = val)"
           />
         </template>
       </DiffView>
@@ -108,14 +112,14 @@
         :after-value="model.metadata"
         :compare-values="compareAssetMetadata"
       >
-        <template #default="{ value, mode }">
+        <template #default="{ value, diffMode }">
           <MetadataField
             :model-value="value"
-            @update:model-value="val => mode === 'after' && (model.metadata = val)"
             :label="$t('terms.metadata')"
-            :rules="mode === 'before' ? [] : [requiredRule]"
-            :disabled="isViewMode || mode === 'before'"
+            :rules="diffMode === 'before' ? [] : [requiredRule]"
+            :disabled="isViewMode || diffMode === 'before'"
             :hide-keys="hiddenMetadataKeys"
+            @update:model-value="val => diffMode === 'after' && (model.metadata = val)"
           />
         </template>
       </DiffView>
@@ -166,8 +170,6 @@ const input = withDefaults(defineProps<AssetFormProps>(), {
   currentAsset: undefined,
 });
 const props = toRefs(input);
-
-console.log('props', props);
 
 const isViewMode = computed(() => props.mode.value === 'view');
 const displayId = computed(() => props.display.value.id);

@@ -11,16 +11,16 @@
     />
 
     <DiffView :before-value="currentUserGroup?.name" :after-value="modelValue.name">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <VTextField
-          :name="mode === 'before' ? 'name-before' : 'name'"
+          :name="diffMode === 'before' ? 'name-before' : 'name'"
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (modelValue.name = val)"
           :label="$t('terms.name')"
           density="comfortable"
-          :rules="mode === 'before' ? [] : rules.name"
+          :rules="diffMode === 'before' ? [] : rules.name"
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode || mode === 'before'"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (modelValue.name = val)"
         />
       </template>
     </DiffView>

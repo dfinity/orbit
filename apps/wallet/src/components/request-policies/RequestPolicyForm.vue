@@ -14,12 +14,12 @@
       :before-value="props.currentRequestPolicy.value?.specifier"
       :after-value="model.specifier"
     >
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <SpecifierSelector
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (model.specifier = val)"
-          :disabled="isViewMode || mode === 'before'"
-          @changed-variant="() => mode === 'after' && onChangedVariant()"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (model.specifier = val)"
+          @changed-variant="() => diffMode === 'after' && onChangedVariant()"
         />
       </template>
     </DiffView>
@@ -27,13 +27,13 @@
     <template v-if="model.specifier">
       <div class="mt-4 mb-2 text-body-2">{{ $t('terms.rule') }}</div>
       <DiffView :before-value="props.currentRequestPolicy.value?.rule" :after-value="model.rule">
-        <template #default="{ value, mode }">
+        <template #default="{ value, diffMode }">
           <RuleBuilder
             :model-value="value"
-            @update:model-value="val => mode === 'after' && (model.rule = val)"
             :specifier="value ? props.modelValue.value.specifier! : undefined"
-            :disabled="isViewMode || mode === 'before'"
-            @remove="mode === 'after' && (model.rule = undefined)"
+            :disabled="isViewMode || diffMode === 'before'"
+            @update:model-value="val => diffMode === 'after' && (model.rule = val)"
+            @remove="diffMode === 'after' && (model.rule = undefined)"
           />
         </template>
       </DiffView>

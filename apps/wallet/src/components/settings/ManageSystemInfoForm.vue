@@ -1,31 +1,31 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
     <DiffView :before-value="currentName" :after-value="name">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <VTextField
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (name = val)"
-          :name="mode === 'before' ? 'name-before' : 'name'"
+          :name="diffMode === 'before' ? 'name-before' : 'name'"
           :label="$t('terms.name')"
           density="comfortable"
           :rules="[maxLengthRule(48, $t('terms.name'))]"
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode || mode === 'before'"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (name = val)"
         />
       </template>
     </DiffView>
 
     <DiffView :before-value="currentObtainCyclesModel" :after-value="obtainCyclesModel">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <ObtainCyclesForm
           v-if="value"
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (obtainCyclesModel = val)"
           :valid="valid"
           :trigger-submit="triggerSubmit"
           :current-system-info="currentSystemInfo"
-          :is-view-mode="isViewMode || mode === 'before'"
-          :is-before="mode === 'before'"
+          :is-view-mode="isViewMode || diffMode === 'before'"
+          :is-before="diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (obtainCyclesModel = val)"
         />
       </template>
     </DiffView>
@@ -134,7 +134,7 @@ const currentObtainCyclesModel = computed((): CycleObtainStrategyInput | undefin
       },
     };
   } else {
-    unreachable(props.currentSystemInfo.cycle_obtain_strategy);
+    return unreachable(props.currentSystemInfo.cycle_obtain_strategy);
   }
 });
 

@@ -10,12 +10,12 @@
         </VCardTitle>
         <VCardText>
           <DiffView :before-value="props.currentPermissions?.read" :after-value="model.read">
-            <template #default="{ value, mode }">
+            <template #default="{ value, diffMode }">
               <AllowInput
                 v-if="value"
                 :model-value="value"
-                @update:model-value="val => mode === 'after' && (model.read = val)"
-                :mode="mode === 'before' ? 'view' : props.mode"
+                :mode="diffMode === 'before' ? 'view' : props.mode"
+                @update:model-value="val => diffMode === 'after' && (model.read = val)"
               />
             </template>
           </DiffView>
@@ -36,12 +36,12 @@
             :before-value="props.currentPermissions?.configuration"
             :after-value="model.configuration"
           >
-            <template #default="{ value, mode }">
+            <template #default="{ value, diffMode }">
               <AllowInput
                 v-if="value"
                 :model-value="value"
-                @update:model-value="val => mode === 'after' && (model.configuration = val)"
-                :mode="mode === 'before' ? 'view' : props.mode"
+                :mode="diffMode === 'before' ? 'view' : props.mode"
+                @update:model-value="val => diffMode === 'after' && (model.configuration = val)"
               />
             </template>
           </DiffView>
@@ -62,12 +62,12 @@
             :before-value="props.currentPermissions?.transfer"
             :after-value="model.transfer"
           >
-            <template #default="{ value, mode }">
+            <template #default="{ value, diffMode }">
               <AllowInput
                 v-if="value"
                 :model-value="value"
-                @update:model-value="val => mode === 'after' && (model.transfer = val)"
-                :mode="mode === 'before' ? 'view' : props.mode"
+                :mode="diffMode === 'before' ? 'view' : props.mode"
+                @update:model-value="val => diffMode === 'after' && (model.transfer = val)"
               />
             </template>
           </DiffView>

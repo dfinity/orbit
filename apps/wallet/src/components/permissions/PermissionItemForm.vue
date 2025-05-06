@@ -13,12 +13,12 @@
           {{ $t('permissions.permitted_users') }}
         </p>
         <DiffView :before-value="props.currentPermission?.allow" :after-value="model">
-          <template #default="{ value, mode }">
+          <template #default="{ value, diffMode }">
             <AllowInput
               v-if="value"
               :model-value="value"
-              @update:model-value="val => mode === 'after' && (model = val)"
-              :mode="props.readonly ? 'view' : mode === 'before' ? 'view' : 'edit'"
+              :mode="props.readonly ? 'view' : diffMode === 'before' ? 'view' : 'edit'"
+              @update:model-value="val => diffMode === 'after' && (model = val)"
             />
           </template>
         </DiffView>

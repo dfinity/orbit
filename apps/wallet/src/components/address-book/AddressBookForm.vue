@@ -10,49 +10,49 @@
       :disabled="isViewMode"
     />
     <DiffView :before-value="currentEntry?.blockchain" :after-value="model.blockchain">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <BlockchainAutocomplete
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (model.blockchain = val)"
           class="mb-2"
           :label="$t('terms.blockchain')"
           :prepend-icon="mdiTransitConnectionVariant"
-          :rules="mode === 'before' ? [] : [requiredRule]"
+          :rules="diffMode === 'before' ? [] : [requiredRule]"
           variant="filled"
           density="comfortable"
-          :disabled="isViewMode || mode === 'before' || !!model.id"
+          :disabled="isViewMode || diffMode === 'before' || !!model.id"
+          @update:model-value="val => diffMode === 'after' && (model.blockchain = val)"
         />
       </template>
     </DiffView>
     <DiffView :before-value="currentEntry?.address_owner" :after-value="model.address_owner">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <VTextField
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (model.address_owner = val)"
-          :name="mode === 'before' ? 'address_owner-before' : 'address_owner'"
+          :name="diffMode === 'before' ? 'address_owner-before' : 'address_owner'"
           :label="$t('terms.name')"
           variant="filled"
-          :rules="mode === 'before' ? [] : [requiredRule]"
+          :rules="diffMode === 'before' ? [] : [requiredRule]"
           class="mb-2"
           density="comfortable"
           :prepend-icon="mdiAccount"
-          :disabled="isViewMode || mode === 'before'"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (model.address_owner = val)"
         />
       </template>
     </DiffView>
     <DiffView :before-value="currentEntry?.address" :after-value="model.address">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <VTextField
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (model.address = val)"
-          :name="mode === 'before' ? 'address-before' : 'address'"
+          :name="diffMode === 'before' ? 'address-before' : 'address'"
           class="mb-2"
           :label="$t('terms.address')"
           :prepend-icon="mdiKeyChain"
-          :rules="mode === 'before' ? [] : [requiredRule]"
+          :rules="diffMode === 'before' ? [] : [requiredRule]"
           variant="filled"
           density="comfortable"
-          :disabled="isViewMode || mode === 'before' || !!model.id"
+          :disabled="isViewMode || diffMode === 'before' || !!model.id"
+          @update:model-value="val => diffMode === 'after' && (model.address = val)"
         />
       </template>
     </DiffView>
@@ -61,12 +61,12 @@
       :after-value="model.metadata"
       :compare-values="compareMetadata"
     >
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <MetadataField
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (model.metadata = val)"
           :label="$t('terms.metadata')"
-          :disabled="isViewMode || mode === 'before'"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (model.metadata = val)"
         />
       </template>
     </DiffView>

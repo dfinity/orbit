@@ -11,32 +11,32 @@
     />
 
     <DiffView :before-value="currentUser?.name" :after-value="model.name">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <VTextField
-          :name="mode === 'before' ? 'name-before' : 'name'"
+          :name="diffMode === 'before' ? 'name-before' : 'name'"
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (name = val)"
           :label="$t('terms.name')"
           density="comfortable"
-          :rules="mode === 'before' ? [] : [maxLengthRule(50, $t('terms.name'))]"
+          :rules="diffMode === 'before' ? [] : [maxLengthRule(50, $t('terms.name'))]"
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode || mode === 'before'"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (name = val)"
         />
       </template>
     </DiffView>
     <DiffView :before-value="statusBefore" :after-value="status">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <VAutocomplete
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (status = val)"
-          :name="mode === 'before' ? 'status-before' : 'status'"
+          :name="diffMode === 'before' ? 'status-before' : 'status'"
           :label="$t('terms.status')"
           density="comfortable"
           :items="statusItems"
           :rules="[requiredRule]"
           chips
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode || mode === 'before'"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (status = val)"
         />
       </template>
     </DiffView>
@@ -53,29 +53,28 @@
     />
 
     <DiffView :before-value="userGroupsBefore" :after-value="userGroups">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <UserGroupAutocomplete
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (userGroups = val)"
-          :name="mode === 'before' ? 'groups-before' : 'groups'"
+          :name="diffMode === 'before' ? 'groups-before' : 'groups'"
           density="comfortable"
           :label="$t('terms.user_groups')"
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode || mode === 'before'"
+          :disabled="isViewMode || diffMode === 'before'"
           :rules="[requiredRule]"
           chips
           multiple
+          @update:model-value="val => diffMode === 'after' && (userGroups = val)"
         />
       </template>
     </DiffView>
 
     <DiffView :before-value="identitiesBefore" :after-value="identities">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <VAutocomplete
           ref="identitiesInput"
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (identities = val)"
-          :name="mode === 'before' ? 'identities-before' : 'identities'"
+          :name="diffMode === 'before' ? 'identities-before' : 'identities'"
           density="comfortable"
           :label="$t('terms.identities')"
           :variant="isViewMode ? 'plain' : 'filled'"
@@ -84,6 +83,7 @@
           :items="identities"
           chips
           multiple
+          @update:model-value="val => diffMode === 'after' && (identities = val)"
         >
           <template v-if="!isViewMode" #append>
             <ActionBtn

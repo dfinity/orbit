@@ -280,9 +280,12 @@ export const validAddress =
     }
   };
 
-export function compareMetadata<T extends { key: string; value: string }[]>(a: T, b: T): boolean {
+export function compareMetadata<T extends { key: string; value: string }[]>(
+  a: T | undefined,
+  b: T,
+): boolean {
   // Quick length check
-  if (a.length !== b.length) {
+  if (a?.length !== b.length) {
     return false;
   }
 

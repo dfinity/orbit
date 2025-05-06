@@ -139,7 +139,12 @@ const parseArgumentRule = async (value: unknown): Promise<string | boolean> => {
         const candid = assertAndReturn(props.candid, 'Candid definition is expected');
         const hexString = encode({
           idl: candid.idl,
-          serviceMethod: candid.method,
+          withType: candid.method
+            ? {
+                kind: 'methodParams',
+                name: candid.method,
+              }
+            : undefined,
           input: rawArgument,
           targetFormat: 'hex',
         });

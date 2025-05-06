@@ -13,13 +13,13 @@
             :before-value="props.currentPolicies?.configurationRule"
             :after-value="model.configurationRule"
           >
-            <template #default="{ value, mode }">
+            <template #default="{ value, diffMode }">
               <RuleBuilder
                 :model-value="value"
-                @update:model-value="val => mode === 'after' && (model.configurationRule = val)"
                 :specifier="{ EditAccount: { Any: null } }"
-                :disabled="mode === 'before' ? true : isViewMode"
-                @remove="mode === 'after' && (model.configurationRule = undefined)"
+                :disabled="diffMode === 'before' ? true : isViewMode"
+                @update:model-value="val => diffMode === 'after' && (model.configurationRule = val)"
+                @remove="diffMode === 'after' && (model.configurationRule = undefined)"
               />
             </template>
           </DiffView>
@@ -40,13 +40,13 @@
             :before-value="props.currentPolicies?.transferRule"
             :after-value="model.transferRule"
           >
-            <template #default="{ value, mode }">
+            <template #default="{ value, diffMode }">
               <RuleBuilder
                 :model-value="value"
-                @update:model-value="val => mode === 'after' && (model.transferRule = val)"
                 :specifier="{ Transfer: { Any: null } }"
-                :disabled="mode === 'before' ? true : isViewMode"
-                @remove="mode === 'after' && (model.transferRule = undefined)"
+                :disabled="diffMode === 'before' ? true : isViewMode"
+                @update:model-value="val => diffMode === 'after' && (model.transferRule = val)"
+                @remove="diffMode === 'after' && (model.transferRule = undefined)"
               />
             </template>
           </DiffView>

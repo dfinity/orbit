@@ -1,35 +1,37 @@
 <template>
   <DiffView :before-value="currentLedgerId" :after-value="ledgerId">
-    <template #default="{ value, mode }">
+    <template #default="{ value, diffMode }">
       <VTextField
         :model-value="value"
-        @update:model-value="val => mode === 'after' && (ledgerId = val)"
         :name="
-          mode === 'before' ? 'metadata_ledger_canister_id-before' : 'metadata_ledger_canister_id'
+          diffMode === 'before'
+            ? 'metadata_ledger_canister_id-before'
+            : 'metadata_ledger_canister_id'
         "
         :label="$t('pages.assets.forms.ledger_canister_id')"
         variant="filled"
         density="comfortable"
-        :disabled="props.readonly || mode === 'before'"
+        :disabled="props.readonly || diffMode === 'before'"
         :prepend-icon="mdiDatabase"
-        :rules="mode === 'before' ? [] : [requiredRule, validCanisterId]"
+        :rules="diffMode === 'before' ? [] : [requiredRule, validCanisterId]"
+        @update:model-value="val => diffMode === 'after' && (ledgerId = val)"
       />
     </template>
   </DiffView>
   <DiffView :before-value="currentIndexId" :after-value="indexId">
-    <template #default="{ value, mode }">
+    <template #default="{ value, diffMode }">
       <VTextField
         :model-value="value"
-        @update:model-value="val => mode === 'after' && (indexId = val)"
         :name="
-          mode === 'before' ? 'metadata_index_canister_id-before' : 'metadata_index_canister_id'
+          diffMode === 'before' ? 'metadata_index_canister_id-before' : 'metadata_index_canister_id'
         "
         :label="$t('pages.assets.forms.index_canister_id')"
         variant="filled"
         density="comfortable"
-        :disabled="props.readonly || mode === 'before'"
+        :disabled="props.readonly || diffMode === 'before'"
         :prepend-icon="mdiDatabase"
-        :rules="mode === 'before' ? [] : [requiredRule, validCanisterId]"
+        :rules="diffMode === 'before' ? [] : [requiredRule, validCanisterId]"
+        @update:model-value="val => diffMode === 'after' && (indexId = val)"
       />
     </template>
   </DiffView>

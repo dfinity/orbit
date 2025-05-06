@@ -58,8 +58,6 @@ onMounted(async () => {
   try {
     const { system } = await stationService.systemInfo();
     currentSystemInfo.value = system;
-
-    console.log('currentSystemInfo', currentSystemInfo.value);
   } catch (error) {
     appStore.sendErrorNotification(error);
   }

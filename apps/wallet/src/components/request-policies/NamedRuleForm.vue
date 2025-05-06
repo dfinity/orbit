@@ -12,16 +12,16 @@
     />
 
     <DiffView :before-value="props.currentNamedRule.value?.name" :after-value="model.name">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <VTextField
-          :name="mode === 'before' ? 'name-before' : 'name'"
+          :name="diffMode === 'before' ? 'name-before' : 'name'"
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (model.name = val)"
           :label="$t('terms.name')"
           density="comfortable"
-          :rules="mode === 'before' ? [] : [requiredRule]"
+          :rules="diffMode === 'before' ? [] : [requiredRule]"
           :prepend-icon="mdiFileDocumentCheckOutline"
-          :disabled="isViewMode || mode === 'before'"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (model.name = val)"
         />
       </template>
     </DiffView>
@@ -32,27 +32,27 @@
       :has-before="!!props.currentNamedRule.value"
       :compare-values="compareTruthy"
     >
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <VTextField
-          :name="mode === 'before' ? 'description-before' : 'description'"
+          :name="diffMode === 'before' ? 'description-before' : 'description'"
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (description = val)"
           :label="$t('terms.description')"
           density="comfortable"
           :prepend-icon="mdiInformationBoxOutline"
-          :disabled="isViewMode || mode === 'before'"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (description = val)"
         />
       </template>
     </DiffView>
 
     <div class="mt-4 mb-2 text-body-1">{{ $t('terms.rule') }}</div>
     <DiffView :before-value="props.currentNamedRule.value?.rule" :after-value="model.rule">
-      <template #default="{ value, mode }">
+      <template #default="{ value, diffMode }">
         <RuleBuilder
           :model-value="value"
-          @update:model-value="val => mode === 'after' && (model.rule = val)"
-          :disabled="isViewMode || mode === 'before'"
-          @remove="mode === 'after' && (model.rule = undefined)"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (model.rule = val)"
+          @remove="diffMode === 'after' && (model.rule = undefined)"
         />
       </template>
     </DiffView>
