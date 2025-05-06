@@ -21,6 +21,7 @@ export default {
     station_info_card_remove_btn: 'Retirer le portefeuille',
     station_info_card_remove_btn_confirm: 'Êtes-vous sûrs de vouloir retirer ce portefeuille?',
     disaster_recovery_card_title: 'Sauvegarde',
+    disaster_recovery: 'Récupération après sinistre',
     disaster_recovery_not_configured: 'Sauvegarde non configurée.',
     disaster_recovery_dialog_title: 'Configurer la sauvegarde',
     manage_associated_station: 'Gerer le portefeuille associé',
@@ -1075,6 +1076,62 @@ export default {
     error: {
       title: 'Erreur',
       subtitle: 'Une erreur est survenue lors du chargement de la page.',
+    },
+    disaster_recovery: {
+      title: 'Récupération après sinistre',
+      upgrader_status: 'Statut du système de mise à jour',
+      loading_upgrader: 'Chargement du système de mise à jour...',
+
+      disaster_recovery_state: 'État de la récupération après sinistre',
+      disaster_recovery_state_loading: "Chargement de l'état de récupération après sinistre...",
+
+      recent_logs: 'Journaux récents',
+
+      select_orbit_station_version: 'Sélectionner la version du portefeuille Orbit',
+
+      submit_recovery_request: 'Soumettre une demande de récupération',
+      submit_button: 'Soumettre une demande de récupération',
+
+      station_idl: 'IDL du portefeuille',
+      upgrader_idl: 'IDL du système de mise à jour',
+
+      station_service_payload: 'Payload du service de portefeuille',
+
+      result: 'Résultat',
+
+      recovery_instructions:
+        "Contactez l'administrateur de votre portefeuille pour obtenir un payload de récupération.",
+      error_logs_unauthorized: 'Non autorisé à consulter les journaux',
+      error_state_unauthorized: "Non autorisé à consulter l'état",
+
+      error_state: 'Échec de récupération du système de mise à jour: {error}',
+      error_no_upgrader_found: 'Aucun système de mise à jour trouvé',
+      error_state_loading_failed:
+        "Échec de récupération de l'état de récupération après sinistre: {error}",
+      error_logs_loading_failed: 'Échec de récupération des journaux: {error}',
+
+      error_registry_loading_failed: 'Échec de la requête au registre de mise à jour: {error}',
+
+      success_submit_recovery: 'Demande de récupération soumise avec succès',
+      error_submit_recovery: 'Échec de soumission de la demande de récupération: {error}',
+
+      help_block: `
+<p>La récupération après sinistre est destinée à récupérer l'accès aux actifs dans le cas où le canister du portefeuille devient non opérationnel ou inaccessible. Elle fonctionne en soumettant une demande de récupération au canister de mise à jour du portefeuille qui stocke, entre autres, une sauvegarde des données utilisateur principales et des informations de compte du portefeuille.</p>
+<p>La soumission d'une demande de récupération implique la construction d'un payload de récupération, qui est une valeur Candid spécifiant les données utilisateur et de compte à récupérer, la version du portefeuille à utiliser et la méthode de récupération (c'est-à-dire, installation/réinstallation/mise à jour).</p>
+<p>Le canister de mise à jour stocke un ensemble d'utilisateurs appelé "comité de récupération après sinistre" qui doivent parvenir à un consensus sur la demande de récupération pour que le processus de récupération puisse démarrer. Le nombre d'utilisateurs devant parvenir à un consensus est appelé "quorum". Ces informations sont consultées et affichées dans la carte "Statut du système de mise à jour".</p>
+<p>Le processus de récupération est le suivant:</p>
+<ol>
+<li>À partir du registre de mise à jour de version, sélectionnez la version du portefeuille vers laquelle vous souhaitez récupérer. L'IDL du portefeuille (la définition API du portefeuille) est affichée pour la version sélectionnée.</li>
+<li>Construisez le payload Candid d'initialisation du service (par exemple, pour \`(opt SystemInstall)\`) qui sera utilisé comme argument pour l'opération de réinstallation/installation/mise à jour. Si le canister de mise à jour est suffisamment à jour, l'interface utilisateur remplira automatiquement cela en fonction du stockage de sauvegarde du système de mise à jour. La construction d'un payload valide donnera une représentation binaire du payload qui doit être utilisée à l'étape suivante.</li>
+<li>La page affichera l'IDL du système de mise à jour (la définition API du système de mise à jour) actuellement utilisé pour le portefeuille. Construisez le payload de demande de récupération après sinistre (pour le type \`RequestDisasterRecoveryInput\`) en utilisant l'IDL et le payload de l'étape précédente. L'interface utilisateur remplira automatiquement le payload pour vous si le payload d'argument est disponible.</li>
+<li>Lorsque le payload final est valide, cliquez sur le bouton soumettre pour soumettre la demande de récupération.</li>
+<li>Un nombre suffisant d'utilisateurs (c'est-à-dire, exactement le montant du \`quorum\`) doivent soumettre la même demande de récupération avant que le processus de récupération puisse démarrer. Les utilisateurs peuvent soumettre à nouveau des demandes plusieurs fois; chaque soumission remplacera la précédente.</li>
+<li>Le processus de récupération démarrera après que le quorum soit atteint. Le système de mise à jour effectuera l'opération spécifiée dans le payload.</li>
+</ol>
+<p>Bonne chance!</p>`,
+
+      warning_block:
+        "Attention: la récupération après sinistre est un processus complexe qui pourrait entraîner une perte irréversible d'accès aux actifs si elle est effectuée incorrectement. Veuillez demander l'aide des membres de la fondation sur le forum.",
     },
   },
   session: {

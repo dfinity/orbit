@@ -55,6 +55,7 @@
         <VBtn
           color="primary"
           type="submit"
+          data-test-id="deploy-station-form-continue-button"
           :loading="working"
           :disabled="working || !isStationFormValid"
         >

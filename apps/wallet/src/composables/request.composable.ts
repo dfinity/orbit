@@ -98,6 +98,7 @@ export const useAvailableDomains = (
       { AddNamedRule: null },
       { EditNamedRule: null },
       { RemoveNamedRule: null },
+      { SetDisasterRecovery: null },
     ],
   });
 
