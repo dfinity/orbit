@@ -35,7 +35,7 @@ pub struct TestEnv {
     pub minter: Principal,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct CanisterIds {
     pub icp_ledger: Principal,
     pub icp_index: Principal,

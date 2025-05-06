@@ -8,7 +8,7 @@ use crate::utils::{
 use crate::{CanisterIds, TestEnv};
 use candid::{CandidType, Encode, Principal};
 use ic_ledger_types::{AccountIdentifier, Tokens, DEFAULT_SUBACCOUNT};
-use pocket_ic::{update_candid_as, PocketIc, PocketIcBuilder};
+use pocket_ic::{update_candid_as, PocketIc, PocketIcBuilder, PocketIcState};
 use serde::Serialize;
 use station_api::{
     InitUserInput, SystemInit as SystemInitArg, SystemInstall as SystemInstallArg,
@@ -19,6 +19,7 @@ use std::env;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 use std::time::{Duration, SystemTime};
 
 pub static WALLET_ADMIN_USER: Principal = Principal::from_slice(&[1; 29]);
@@ -70,6 +71,7 @@ pub struct SetupConfig {
     pub fallback_controller: Option<Principal>,
     pub start_cycles: Option<u128>,
     pub set_time_to_now: bool,
+    pub capture_state: bool,
 }
 
 impl Default for SetupConfig {
@@ -79,12 +81,49 @@ impl Default for SetupConfig {
             fallback_controller: Some(NNS_ROOT_CANISTER_ID),
             start_cycles: None,
             set_time_to_now: true,
+            capture_state: false,
         }
     }
 }
 
+struct CachedTestEnv {
+    pub state: PocketIcState,
+    pub canister_ids: CanisterIds,
+    pub controller: Principal,
+    pub minter: Principal,
+}
+
+static CACHED_TEST_ENV: OnceLock<CachedTestEnv> = OnceLock::new();
+
 pub fn setup_new_env() -> TestEnv {
-    setup_new_env_with_config(SetupConfig::default())
+    let cached_test_env = CACHED_TEST_ENV.get_or_init(|| {
+        let config = SetupConfig {
+            capture_state: true,
+            ..Default::default()
+        };
+
+        let test_env = setup_new_env_with_config(config);
+
+        // serialize and expose the state
+        let state = test_env.env.drop_and_take_state().unwrap();
+
+        CachedTestEnv {
+            state,
+            canister_ids: test_env.canister_ids,
+            controller: test_env.controller,
+            minter: test_env.minter,
+        }
+    });
+
+    let env = PocketIcBuilder::new()
+        .with_read_only_state(&cached_test_env.state)
+        .build();
+    TestEnv {
+        env,
+        canister_ids: cached_test_env.canister_ids,
+        controller: cached_test_env.controller,
+        minter: cached_test_env.minter,
+    }
 }
 
 pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
@@ -105,7 +144,11 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
         ", &path);
     }
 
-    let mut env = PocketIcBuilder::new()
+    let mut builder = PocketIcBuilder::new();
+    if config.capture_state {
+        builder = builder.with_state(PocketIcState::new());
+    }
+    let mut env = builder
         .with_nns_subnet()
         .with_ii_subnet()
         .with_fiduciary_subnet()
@@ -117,8 +160,9 @@ pub fn setup_new_env_with_config(config: SetupConfig) -> TestEnv {
     // live mode would set the time back to the current time.
     // Therefore, if we want to use live mode, we need to start the tests with the time
     // set to the past.
+    let system_time = SystemTime::now() - Duration::from_secs(24 * 60 * 60);
     if config.set_time_to_now {
-        env.set_time(SystemTime::now() - Duration::from_secs(24 * 60 * 60));
+        env.set_time(system_time.into());
     }
     let controller = controller_test_id();
     let minter = minter_test_id();
