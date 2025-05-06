@@ -13,18 +13,23 @@
       />
     </VCol>
     <VCol cols="12" class="pt-4 pb-0">
-      <TokenAutocomplete
-        v-if="props.display.asset"
-        v-model="assetIds"
-        class="mb-2"
-        :label="$t('terms.asset')"
-        :prepend-icon="mdiBank"
-        :rules="[requiredRule]"
-        variant="filled"
-        density="comfortable"
-        :disabled="isViewMode || !!model.id"
-        :multiple="true"
-      />
+      <DiffView :before-value="currentAssetIds" :after-value="assetIds">
+        <template #default="{ value, mode }">
+          <TokenAutocomplete
+            v-if="props.display.asset"
+            :model-value="value"
+            @update:model-value="val => mode === 'after' && (assetIds = val as UUID[])"
+            class="mb-2"
+            :label="$t('terms.asset')"
+            :prepend-icon="mdiBank"
+            :rules="mode === 'before' ? [] : [requiredRule]"
+            variant="filled"
+            density="comfortable"
+            :disabled="isViewMode || !!model.id || mode === 'before'"
+            :multiple="true"
+          />
+        </template>
+      </DiffView>
     </VCol>
     <VCol cols="12" class="pt-0 pb-4">
       <DiffView :before-value="props.currentConfiguration?.name" :after-value="model.name">
@@ -98,4 +103,6 @@ const assetIds = computed({
   get: () => model.value.assets,
   set: value => (model.value.assets = value),
 });
+
+const currentAssetIds = computed(() => props.currentConfiguration?.assets);
 </script>

@@ -1,61 +1,50 @@
 <template>
   <VForm ref="form" @submit.prevent="submit">
-    <VTextField
-      v-model="name"
-      name="name"
-      :label="$t('terms.name')"
-      density="comfortable"
-      :rules="[maxLengthRule(48, $t('terms.name'))]"
-      :variant="isViewMode ? 'plain' : 'filled'"
-      :disabled="isViewMode"
-    />
+    <DiffView :before-value="currentName" :after-value="name">
+      <template #default="{ value, mode }">
+        <VTextField
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (name = val)"
+          :name="mode === 'before' ? 'name-before' : 'name'"
+          :label="$t('terms.name')"
+          density="comfortable"
+          :rules="[maxLengthRule(48, $t('terms.name'))]"
+          :variant="isViewMode ? 'plain' : 'filled'"
+          :disabled="isViewMode || mode === 'before'"
+        />
+      </template>
+    </DiffView>
 
-    <VAutocomplete
-      v-model="cycleObtainStrategySelected"
-      class="mt-2"
-      :items="cycleObtainStrategies"
-      density="comfortable"
-      :label="$t('terms.cycle_obtain_strategy')"
-      hide-details
-      clearable
-      :rules="[requiredRule]"
-      :variant="isViewMode ? 'plain' : 'filled'"
-      :disabled="isViewMode"
-    />
-
-    <template v-if="cycleObtainStrategySelected !== null">
-      <MintFromNativeToken
-        v-if="cycleObtainStrategySelected == 'MintFromNativeToken'"
-        v-model="mintFromNativeTokenAccountId"
-        :variant="isViewMode ? 'plain' : 'filled'"
-        :disabled="isViewMode"
-      ></MintFromNativeToken>
-      <WithdrawFromCyclesLedger
-        v-if="cycleObtainStrategySelected == 'WithdrawFromCyclesLedger'"
-        v-model="withdrawFromCyclesLedgerAccountId"
-        :variant="isViewMode ? 'plain' : 'filled'"
-        :disabled="isViewMode"
-      ></WithdrawFromCyclesLedger>
-      <template v-else-if="cycleObtainStrategySelected == 'Disabled'"></template>
-    </template>
+    <DiffView :before-value="currentObtainCyclesModel" :after-value="obtainCyclesModel">
+      <template #default="{ value, mode }">
+        <ObtainCyclesForm
+          v-if="value"
+          :model-value="value"
+          @update:model-value="val => mode === 'after' && (obtainCyclesModel = val)"
+          :valid="valid"
+          :trigger-submit="triggerSubmit"
+          :current-system-info="currentSystemInfo"
+          :is-view-mode="isViewMode || mode === 'before'"
+          :is-before="mode === 'before'"
+        />
+      </template>
+    </DiffView>
   </VForm>
 </template>
 
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
-import { useI18n } from 'vue-i18n';
-import { VAutocomplete, VForm, VTextField } from 'vuetify/components';
-import { UUID } from '~/generated/control-panel/control_panel.did';
-import { ManageSystemInfoOperationInput } from '~/generated/station/station.did';
-import { cycleObtainStrategyInputToKey } from '~/mappers/obtain-cycles.mapper';
+import { VForm, VTextField } from 'vuetify/components';
+import DiffView from '~/components/requests/DiffView.vue';
+import ObtainCyclesForm from '~/components/settings/obtain-cycles/ObtainCyclesForm.vue';
+import {
+  CycleObtainStrategyInput,
+  ManageSystemInfoOperationInput,
+  SystemInfo,
+} from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
-import { CycleObtainStrategyEnum } from '~/types/obtain-cycles.types';
-import { maxLengthRule, requiredRule } from '~/utils/form.utils';
-import { variantIs } from '~/utils/helper.utils';
-import MintFromNativeToken from '~/components/settings/obtain-cycles/MintFromNativeToken.vue';
-import WithdrawFromCyclesLedger from '~/components/settings/obtain-cycles/WithdrawFromCyclesLedger.vue';
-
-const i18n = useI18n();
+import { maxLengthRule } from '~/utils/form.utils';
+import { unreachable, variantIs } from '~/utils/helper.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -63,11 +52,13 @@ const props = withDefaults(
     valid?: boolean;
     triggerSubmit?: boolean;
     mode?: 'view' | 'edit';
+    currentSystemInfo?: SystemInfo;
   }>(),
   {
     valid: true,
     triggerSubmit: false,
     mode: 'edit',
+    currentSystemInfo: undefined,
   },
 );
 
@@ -81,84 +72,20 @@ const emit = defineEmits<{
 const form = ref<VFormValidation | null>(null);
 const isFormValid = computed(() => (form.value ? form.value.isValid : false));
 
+const obtainCyclesModel = ref<CycleObtainStrategyInput | undefined>(
+  props.modelValue.cycle_obtain_strategy?.[0],
+);
+
 const model = computed(() => props.modelValue);
 watch(model.value, newValue => emit('update:modelValue', newValue), { deep: true });
 
-const cycleObtainStrategySelected = ref(
-  model.value.cycle_obtain_strategy?.[0]
-    ? cycleObtainStrategyInputToKey(model.value.cycle_obtain_strategy[0])
-    : null,
-);
-
-const mintFromNativeTokenAccountId = ref<UUID | null>(
-  model.value.cycle_obtain_strategy?.[0] &&
-    variantIs(model.value.cycle_obtain_strategy?.[0], 'MintFromNativeToken')
-    ? model.value.cycle_obtain_strategy?.[0].MintFromNativeToken.account_id
-    : null,
-);
-
-const withdrawFromCyclesLedgerAccountId = ref<UUID | null>(
-  model.value.cycle_obtain_strategy?.[0] &&
-    variantIs(model.value.cycle_obtain_strategy?.[0], 'WithdrawFromCyclesLedger')
-    ? model.value.cycle_obtain_strategy?.[0].WithdrawFromCyclesLedger.account_id
-    : null,
-);
-
-const cycleObtainStrategyKeys = ref<CycleObtainStrategyEnum[]>([
-  CycleObtainStrategyEnum.Disabled,
-  CycleObtainStrategyEnum.MintFromNativeToken,
-  CycleObtainStrategyEnum.WithdrawFromCyclesLedger,
-]);
-
-const cycleObtainStrategies = computed(() => {
-  return cycleObtainStrategyKeys.value.map(key => ({
-    value: key,
-    title: i18n.t(`cycle_obtain_strategies.${key.toLowerCase()}`),
-  }));
+watch(obtainCyclesModel, value => {
+  if (value) {
+    model.value.cycle_obtain_strategy = [value];
+  } else {
+    model.value.cycle_obtain_strategy = [];
+  }
 });
-
-watch(
-  () => cycleObtainStrategySelected.value,
-  newValue => {
-    if (newValue) {
-      switch (newValue) {
-        case CycleObtainStrategyEnum.Disabled:
-          model.value.cycle_obtain_strategy = [{ Disabled: null }];
-          break;
-      }
-    }
-  },
-);
-
-watch(
-  () => mintFromNativeTokenAccountId.value,
-  newValue => {
-    if (newValue) {
-      model.value.cycle_obtain_strategy = [
-        {
-          MintFromNativeToken: {
-            account_id: newValue,
-          },
-        },
-      ];
-    }
-  },
-);
-
-watch(
-  () => withdrawFromCyclesLedgerAccountId.value,
-  newValue => {
-    if (newValue) {
-      model.value.cycle_obtain_strategy = [
-        {
-          WithdrawFromCyclesLedger: {
-            account_id: newValue,
-          },
-        },
-      ];
-    }
-  },
-);
 
 watch(
   () => isFormValid.value,
@@ -183,6 +110,33 @@ watch(
 );
 
 const isViewMode = computed(() => props.mode === 'view');
+
+const currentName = computed(() => props.currentSystemInfo?.name);
+
+const currentObtainCyclesModel = computed((): CycleObtainStrategyInput | undefined => {
+  if (!props.currentSystemInfo?.cycle_obtain_strategy) {
+    return;
+  }
+
+  if (variantIs(props.currentSystemInfo.cycle_obtain_strategy, 'Disabled')) {
+    return { Disabled: null };
+  } else if (variantIs(props.currentSystemInfo.cycle_obtain_strategy, 'MintFromNativeToken')) {
+    return {
+      MintFromNativeToken: {
+        account_id: props.currentSystemInfo.cycle_obtain_strategy.MintFromNativeToken.account_id,
+      },
+    };
+  } else if (variantIs(props.currentSystemInfo.cycle_obtain_strategy, 'WithdrawFromCyclesLedger')) {
+    return {
+      WithdrawFromCyclesLedger: {
+        account_id:
+          props.currentSystemInfo.cycle_obtain_strategy.WithdrawFromCyclesLedger.account_id,
+      },
+    };
+  } else {
+    unreachable(props.currentSystemInfo.cycle_obtain_strategy);
+  }
+});
 
 const submit = async () => {
   const { valid } = form.value ? await form.value.validate() : { valid: false };

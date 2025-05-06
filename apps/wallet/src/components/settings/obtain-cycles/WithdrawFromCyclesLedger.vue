@@ -3,7 +3,7 @@
     v-model="model"
     v-bind="$attrs"
     class="mt-2"
-    name="account_id"
+    :name="elementName"
     :label="$t('terms.account')"
     :loading="autocomplete.loading.value"
     :items="accountList"
@@ -32,11 +32,13 @@ const props = withDefaults(
     valid?: boolean;
     triggerSubmit?: boolean;
     mode?: 'view' | 'edit';
+    elementName?: string;
   }>(),
   {
     valid: true,
     triggerSubmit: false,
     mode: 'edit',
+    elementName: 'account_id',
   },
 );
 

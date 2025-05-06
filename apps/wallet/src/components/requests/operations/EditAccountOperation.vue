@@ -126,7 +126,7 @@ const fetchDetails = async () => {
     loading.value = true;
     const currentModel = await useLoadAccountSetupWizardModel(props.operation.input.account_id);
 
-    model.value = currentModel;
+    model.value = deepClone(currentModel);
 
     if (variantIs(props.request.status, 'Created')) {
       // make copy of currentModel to avoid mutating the original
@@ -165,6 +165,26 @@ const fetchDetails = async () => {
 
     if (props.operation.input.configs_permission?.[0]) {
       model.value.permission.configuration = props.operation.input.configs_permission?.[0];
+    }
+
+    if (props.operation.input.change_assets?.[0]) {
+      if (variantIs(props.operation.input.change_assets[0], 'Change')) {
+        const { add_assets, remove_assets } = props.operation.input.change_assets[0].Change;
+
+        model.value.configuration.assets = [
+          ...add_assets,
+          ...(model.value.configuration.assets ?? []),
+        ];
+
+        model.value.configuration.assets = model.value.configuration.assets.filter(
+          asset => !remove_assets.includes(asset),
+        );
+      } else if (variantIs(props.operation.input.change_assets[0], 'ReplaceWith')) {
+        model.value.configuration.assets =
+          props.operation.input.change_assets[0].ReplaceWith.assets;
+      } else {
+        unreachable(props.operation.input.change_assets[0]);
+      }
     }
   } catch (e) {
     logger.error('Failed to fetch account details', e);
