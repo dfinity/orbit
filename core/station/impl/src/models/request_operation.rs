@@ -971,6 +971,8 @@ pub struct RemoveRequestPolicyOperation {
 pub struct ManageSystemInfoOperationInput {
     pub name: Option<String>,
     pub cycle_obtain_strategy: Option<CycleObtainStrategy>,
+    pub max_station_backup_snapshots: Option<u64>,
+    pub max_upgrader_backup_snapshots: Option<u64>,
 }
 
 #[storable]

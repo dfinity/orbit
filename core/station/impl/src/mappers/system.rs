@@ -29,6 +29,8 @@ impl SystemInfo {
             }),
             cycle_obtain_strategy: (*self.get_cycle_obtain_strategy()).into(),
             upgrader_cycles,
+            max_station_backup_snapshots: self.get_max_station_backup_snapshots(),
+            max_upgrader_backup_snapshots: self.get_max_upgrader_backup_snapshots(),
         }
     }
 }

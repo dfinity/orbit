@@ -1777,6 +1777,8 @@ impl From<ManageSystemInfoOperationInput> for station_api::ManageSystemInfoOpera
         station_api::ManageSystemInfoOperationInput {
             name: input.name,
             cycle_obtain_strategy: input.cycle_obtain_strategy.map(|strategy| strategy.into()),
+            max_station_backup_snapshots: input.max_station_backup_snapshots,
+            max_upgrader_backup_snapshots: input.max_upgrader_backup_snapshots,
         }
     }
 }
@@ -1786,6 +1788,8 @@ impl From<station_api::ManageSystemInfoOperationInput> for ManageSystemInfoOpera
         ManageSystemInfoOperationInput {
             name: input.name,
             cycle_obtain_strategy: input.cycle_obtain_strategy.map(|strategy| strategy.into()),
+            max_station_backup_snapshots: input.max_station_backup_snapshots,
+            max_upgrader_backup_snapshots: input.max_upgrader_backup_snapshots,
         }
     }
 }

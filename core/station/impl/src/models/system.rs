@@ -67,6 +67,8 @@ pub struct SystemInfo {
     version: Option<String>,
     /// Last run migration version.
     stable_memory_version: Option<u32>,
+    /// The maximum number of station backup snapshots to keep.
+    max_station_backup_snapshots: u64,
 }
 
 impl Default for SystemInfo {
@@ -82,6 +84,7 @@ impl Default for SystemInfo {
             version: Some(SYSTEM_VERSION.to_string()),
             stable_memory_version: Some(STABLE_MEMORY_VERSION),
             cycle_obtain_strategy: CycleObtainStrategy::default(),
+            max_station_backup_snapshots: 1,
         }
     }
 }
@@ -195,6 +198,27 @@ impl SystemInfo {
 
     pub fn get_disaster_recovery_committee(&self) -> Option<&DisasterRecoveryCommittee> {
         self.disaster_recovery_committee.as_ref()
+    }
+
+    pub fn get_max_station_backup_snapshots(&self) -> u64 {
+        self.max_station_backup_snapshots
+    }
+
+    pub fn set_max_station_backup_snapshots(&mut self, max_backup_snapshots: u64) {
+        self.max_station_backup_snapshots = max_backup_snapshots;
+    }
+
+    pub fn get_max_upgrader_backup_snapshots(&self) -> u64 {
+        self.upgrader_backup_snapshots.get_max_backup_snapshots()
+    }
+
+    pub async fn set_max_upgrader_backup_snapshots(
+        &mut self,
+        max_backup_snapshots: u64,
+    ) -> Result<(), String> {
+        self.upgrader_backup_snapshots
+            .set_max_backup_snapshots(max_backup_snapshots, *self.get_upgrader_canister_id())
+            .await
     }
 }
 
