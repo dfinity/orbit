@@ -81,7 +81,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             target_canister: Principal::anonymous(),
-            backup_snapshots: BackupSnapshots::new(1),
+            backup_snapshots: BackupSnapshots::default(),
             disaster_recovery: Default::default(),
             stable_memory_version: STABLE_MEMORY_VERSION,
         }

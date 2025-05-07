@@ -3,6 +3,8 @@ use ic_cdk::api::management_canister::main::{self as mgmt, DeleteCanisterSnapsho
 use orbit_essentials_macros::storable;
 use std::collections::VecDeque;
 
+pub const DEFAULT_MAX_BACKUP_SNAPSHOTS: u64 = 1;
+
 #[storable]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BackupSnapshots {
@@ -12,7 +14,7 @@ pub struct BackupSnapshots {
 
 impl Default for BackupSnapshots {
     fn default() -> Self {
-        Self::new(1)
+        Self::new(DEFAULT_MAX_BACKUP_SNAPSHOTS)
     }
 }
 

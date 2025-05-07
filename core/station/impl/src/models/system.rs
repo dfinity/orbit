@@ -7,7 +7,7 @@ use crate::{
 };
 use candid::Principal;
 use ic_stable_structures::{storable::Bound, Storable};
-use orbit_essentials::backup_snapshots::BackupSnapshots;
+use orbit_essentials::backup_snapshots::{BackupSnapshots, DEFAULT_MAX_BACKUP_SNAPSHOTS};
 use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
 use std::borrow::Cow;
@@ -79,12 +79,12 @@ impl Default for SystemInfo {
             change_canister_request: None,
             upgrader_canister_id: None,
             upgrader_wasm_module: None,
-            upgrader_backup_snapshots: BackupSnapshots::new(1),
+            upgrader_backup_snapshots: BackupSnapshots::default(),
             disaster_recovery_committee: None,
             version: Some(SYSTEM_VERSION.to_string()),
             stable_memory_version: Some(STABLE_MEMORY_VERSION),
             cycle_obtain_strategy: CycleObtainStrategy::default(),
-            max_station_backup_snapshots: 1,
+            max_station_backup_snapshots: DEFAULT_MAX_BACKUP_SNAPSHOTS,
         }
     }
 }
