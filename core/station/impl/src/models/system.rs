@@ -41,6 +41,10 @@ pub enum CycleObtainStrategy {
     },
 }
 
+fn default_max_backup_snapshots() -> u64 {
+    DEFAULT_MAX_BACKUP_SNAPSHOTS
+}
+
 #[storable(size = SYSTEM_RESERVED_MEMORY_BYTES)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SystemInfo {
@@ -68,6 +72,7 @@ pub struct SystemInfo {
     /// Last run migration version.
     stable_memory_version: Option<u32>,
     /// The maximum number of station backup snapshots to keep.
+    #[serde(default = "default_max_backup_snapshots")]
     max_station_backup_snapshots: u64,
 }
 
