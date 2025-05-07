@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      disabled
+      readonly
     />
 
     <DiffView :before-value="currentUser?.name" :after-value="model.name">
@@ -19,7 +19,7 @@
           density="comfortable"
           :rules="diffMode === 'before' ? [] : [maxLengthRule(50, $t('terms.name'))]"
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode || diffMode === 'before'"
+          :readonly="isViewMode || diffMode === 'before'"
           @update:model-value="val => diffMode === 'after' && (name = val)"
         />
       </template>
@@ -35,7 +35,7 @@
           :rules="[requiredRule]"
           chips
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode || diffMode === 'before'"
+          :readonly="isViewMode || diffMode === 'before'"
           @update:model-value="val => diffMode === 'after' && (status = val)"
         />
       </template>
@@ -49,7 +49,7 @@
       :label="$t('app.user_cancel_pending_requests')"
       density="comfortable"
       :variant="isViewMode ? 'plain' : 'filled'"
-      :disabled="isViewMode"
+      :readonly="isViewMode"
     />
 
     <DiffView :before-value="userGroupsBefore" :after-value="userGroups">
@@ -60,7 +60,7 @@
           density="comfortable"
           :label="$t('terms.user_groups')"
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode || diffMode === 'before'"
+          :readonly="isViewMode || diffMode === 'before'"
           :rules="[requiredRule]"
           chips
           multiple
@@ -78,7 +78,7 @@
           density="comfortable"
           :label="$t('terms.identities')"
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode"
+          :readonly="isViewMode"
           :rules="[requiredRule]"
           :items="identities"
           chips

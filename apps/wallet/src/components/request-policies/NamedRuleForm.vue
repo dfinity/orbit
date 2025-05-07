@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="comfortable"
-      disabled
+      readonly
       :prepend-icon="mdiIdentifier"
     />
 
@@ -20,7 +20,8 @@
           density="comfortable"
           :rules="diffMode === 'before' ? [] : [requiredRule]"
           :prepend-icon="mdiFileDocumentCheckOutline"
-          :disabled="isViewMode || diffMode === 'before'"
+          :variant="isViewMode ? 'plain' : 'filled'"
+          :readonly="isViewMode || diffMode === 'before'"
           @update:model-value="val => diffMode === 'after' && (model.name = val)"
         />
       </template>
@@ -38,8 +39,9 @@
           :model-value="value"
           :label="$t('terms.description')"
           density="comfortable"
+          :variant="isViewMode ? 'plain' : 'filled'"
           :prepend-icon="mdiInformationBoxOutline"
-          :disabled="isViewMode || diffMode === 'before'"
+          :readonly="isViewMode || diffMode === 'before'"
           @update:model-value="val => diffMode === 'after' && (description = val)"
         />
       </template>

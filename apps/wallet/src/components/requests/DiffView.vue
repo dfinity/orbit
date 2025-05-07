@@ -1,25 +1,42 @@
 <template>
-  <div class="d-flex flex-column flex-md-row position-relative pr-6">
+  <div class="d-flex flex-column flex-md-row position-relative">
     <VSheet
-      v-if="showBefore"
-      :class="showBefore ? 'w-md-50 pa-1 mb-1 mb-md-2' : 'flex-1-1'"
-      :color="'#ff808020'"
+      v-if="showDiff"
+      :class="showDiff ? 'w-md-50 pa-1 mb-1 mb-md-2 has-min-h' : 'flex-1-1'"
+      :color="app.theme === SupportedTheme.Light ? '#ff808040' : '#ff808020'"
     >
-      <slot :value="beforeValue" :diff-mode="'before'"></slot>
+      <slot :value="beforeValue" :diff-mode="'before'" :show-diff="showDiff"></slot>
     </VSheet>
 
-    <VIcon
-      v-if="showBefore"
-      :icon="mobile ? mdiArrowDown : mdiArrowRight"
-      class="mt-2 align-self-center text-grey-lighten-1 position-absolute position-md-static diff-view-icon"
-    />
+    <div class="mobile-container">
+      <VIcon
+        v-if="showDiff"
+        :icon="mobile ? mdiArrowDown : mdiArrowRight"
+        :class="[
+          'mb-md-2 align-self-center position-absolute position-md-static diff-view-icon',
+          {
+            'diff-view-icon-light': app.theme === SupportedTheme.Light,
+            'diff-view-icon-dark': app.theme === SupportedTheme.Dark,
+          },
+        ]"
+        :color="
+          app.theme === SupportedTheme.Light
+            ? mobile
+              ? '#fff'
+              : '#00000080'
+            : mobile
+              ? '#fff'
+              : '#fff'
+        "
+      />
 
-    <VSheet
-      :class="showBefore ? 'w-md-50 pa-1 mb-4 mb-md-2' : 'flex-1-1'"
-      :color="showBefore ? '#80ff8015' : ''"
-    >
-      <slot :value="afterValue" :diff-mode="'after'"></slot>
-    </VSheet>
+      <VSheet
+        :class="showDiff ? 'w-md-50 pa-1 mb-4 mb-md-2 has-min-h' : 'flex-1-1'"
+        :color="showDiff ? (app.theme === SupportedTheme.Light ? '#40b04035' : '#80ff8015') : ''"
+      >
+        <slot :value="afterValue" :diff-mode="'after'" :show-diff="showDiff"></slot>
+      </VSheet>
+    </div>
   </div>
 </template>
 
@@ -27,9 +44,13 @@
 import { mdiArrowDown, mdiArrowRight } from '@mdi/js';
 import { computed } from 'vue';
 import { useDisplay } from 'vuetify';
-import { VSheet } from 'vuetify/components';
+import { VIcon, VSheet } from 'vuetify/components';
+import { useAppStore } from '~/stores/app.store';
+import { SupportedTheme } from '~/types/app.types';
 
 const { mobile } = useDisplay();
+
+const app = useAppStore();
 
 const props = defineProps<{
   beforeValue?: T;
@@ -38,7 +59,7 @@ const props = defineProps<{
   hasBefore?: boolean;
 }>();
 
-const showBefore = computed(() =>
+const showDiff = computed(() =>
   (props.beforeValue !== undefined || props.hasBefore) && props.afterValue !== undefined
     ? props.compareValues
       ? !props.compareValues(props.beforeValue, props.afterValue)
@@ -47,9 +68,42 @@ const showBefore = computed(() =>
 );
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@use '../../styles/variables' as *;
+
 .diff-view-icon {
-  top: calc(50% - 24px);
+  top: -16px;
   right: 0;
+  border-radius: 50%;
+  padding: 4px;
+  width: 32px;
+  height: 32px;
+}
+
+.diff-view-icon-light {
+  background-color: #00000080;
+}
+
+.diff-view-icon-dark {
+  background-color: #ffffff40;
+}
+.has-min-h {
+  min-height: 32px;
+}
+.mobile-container {
+  position: relative;
+}
+
+@media (min-width: #{$device-md}) {
+  .mobile-container {
+    display: contents;
+  }
+  .diff-view-icon-light {
+    background-color: transparent;
+  }
+
+  .diff-view-icon-dark {
+    background-color: transparent;
+  }
 }
 </style>

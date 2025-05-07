@@ -97,6 +97,7 @@ const fetchDetails = async () => {
     formValue.value.metadata = currentMetadata;
 
     formValue.value.address = response.address_book_entry.address;
+    formValue.value.blockchain = response.address_book_entry.blockchain;
   } catch (e) {
     logger.error('Failed to fetch address book entry details', e);
     appStore.sendErrorNotification(e);

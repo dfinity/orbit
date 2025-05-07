@@ -8,10 +8,10 @@
     :loading="autocomplete.loading.value"
     :items="accountList"
     chips
-    clearable
+    :clearable="!isViewMode && !readonly"
     :rules="[requiredRule]"
     :variant="isViewMode ? 'plain' : 'filled'"
-    :disabled="isViewMode"
+    :readonly="isViewMode || readonly"
     @update:search="autocomplete.searchItems"
   />
 </template>
@@ -33,12 +33,14 @@ const props = withDefaults(
     triggerSubmit?: boolean;
     mode?: 'view' | 'edit';
     elementName?: string;
+    readonly?: boolean;
   }>(),
   {
     valid: true,
     triggerSubmit: false,
     mode: 'edit',
     elementName: 'account_id',
+    readonly: false,
   },
 );
 

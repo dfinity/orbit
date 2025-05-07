@@ -6,10 +6,10 @@
     density="comfortable"
     :label="$t('terms.cycle_obtain_strategy')"
     hide-details
-    clearable
+    :clearable="!isViewMode"
     :rules="[requiredRule]"
     :variant="isViewMode ? 'plain' : 'filled'"
-    :disabled="isViewMode"
+    :readonly="isViewMode"
   />
 
   <template v-if="cycleObtainStrategySelected !== null">
@@ -17,14 +17,14 @@
       v-if="cycleObtainStrategySelected == 'MintFromNativeToken'"
       v-model="mintFromNativeTokenAccountId"
       :variant="isViewMode ? 'plain' : 'filled'"
-      :disabled="isViewMode"
       :element-name="isBefore ? 'account_id_before' : 'account_id'"
+      :readonly="isViewMode"
     ></MintFromNativeToken>
     <WithdrawFromCyclesLedger
       v-else-if="cycleObtainStrategySelected == 'WithdrawFromCyclesLedger'"
       v-model="withdrawFromCyclesLedgerAccountId"
       :variant="isViewMode ? 'plain' : 'filled'"
-      :disabled="isViewMode"
+      :readonly="isViewMode"
       :element-name="isBefore ? 'account_id_before' : 'account_id'"
     ></WithdrawFromCyclesLedger>
     <template v-else-if="cycleObtainStrategySelected == 'Disabled'"></template>

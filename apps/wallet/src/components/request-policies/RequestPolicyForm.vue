@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      disabled
+      readonly
     />
 
     <DiffView

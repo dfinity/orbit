@@ -9,7 +9,7 @@
         variant="plain"
         density="comfortable"
         hide-details
-        disabled
+        readonly
       />
     </VCol>
     <VCol cols="12" class="pt-4 pb-0">
@@ -22,9 +22,9 @@
             :label="$t('terms.asset')"
             :prepend-icon="mdiBank"
             :rules="diffMode === 'before' ? [] : [requiredRule]"
-            variant="filled"
+            :variant="isViewMode ? 'plain' : 'filled'"
             density="comfortable"
-            :disabled="isViewMode || !!model.id || diffMode === 'before'"
+            :readonly="isViewMode || !!model.id"
             :multiple="true"
             @update:model-value="val => diffMode === 'after' && (assetIds = val as UUID[])"
           />
@@ -44,7 +44,7 @@
               diffMode === 'before' ? [] : [requiredRule, maxLengthRule(64, $t('terms.name'))]
             "
             :variant="isViewMode ? 'plain' : 'filled'"
-            :disabled="isViewMode || diffMode === 'before'"
+            :readonly="isViewMode || diffMode === 'before'"
             class="mb-2"
             @update:model-value="val => diffMode === 'after' && (model.name = val)"
           />

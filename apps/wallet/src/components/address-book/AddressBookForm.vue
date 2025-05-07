@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      :disabled="isViewMode"
+      readonly
     />
     <DiffView :before-value="currentEntry?.blockchain" :after-value="model.blockchain">
       <template #default="{ value, diffMode }">
@@ -19,7 +19,7 @@
           :rules="diffMode === 'before' ? [] : [requiredRule]"
           variant="filled"
           density="comfortable"
-          :disabled="isViewMode || diffMode === 'before' || !!model.id"
+          :readonly="isViewMode || diffMode === 'before' || !!model.id"
           @update:model-value="val => diffMode === 'after' && (model.blockchain = val)"
         />
       </template>
@@ -35,7 +35,7 @@
           class="mb-2"
           density="comfortable"
           :prepend-icon="mdiAccount"
-          :disabled="isViewMode || diffMode === 'before'"
+          :readonly="isViewMode || diffMode === 'before'"
           @update:model-value="val => diffMode === 'after' && (model.address_owner = val)"
         />
       </template>
@@ -51,7 +51,7 @@
           :rules="diffMode === 'before' ? [] : [requiredRule]"
           variant="filled"
           density="comfortable"
-          :disabled="isViewMode || diffMode === 'before' || !!model.id"
+          :readonly="isViewMode || diffMode === 'before' || !!model.id"
           @update:model-value="val => diffMode === 'after' && (model.address = val)"
         />
       </template>
@@ -65,7 +65,7 @@
         <MetadataField
           :model-value="value"
           :label="$t('terms.metadata')"
-          :disabled="isViewMode || diffMode === 'before'"
+          :readonly="isViewMode || diffMode === 'before'"
           @update:model-value="val => diffMode === 'after' && (model.metadata = val)"
         />
       </template>

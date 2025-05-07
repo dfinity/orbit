@@ -9,7 +9,7 @@
           density="comfortable"
           :rules="[maxLengthRule(48, $t('terms.name'))]"
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode || diffMode === 'before'"
+          :readonly="isViewMode || diffMode === 'before'"
           @update:model-value="val => diffMode === 'after' && (name = val)"
         />
       </template>

@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      :disabled="isViewMode"
+      readonly
     />
 
     <DiffView :before-value="currentAsset?.blockchain" :after-value="model.blockchain">
@@ -20,9 +20,9 @@
           :label="$t('terms.blockchain')"
           :prepend-icon="mdiTransitConnectionVariant"
           :rules="diffMode === 'before' ? [] : [requiredRule]"
-          variant="filled"
+          :variant="isViewMode || !!model.id ? 'plain' : 'filled'"
           density="comfortable"
-          :disabled="isViewMode || diffMode === 'before' || !!model.id"
+          :readonly="isViewMode || diffMode === 'before' || !!model.id"
           @update:model-value="val => diffMode === 'after' && (model.blockchain = val)"
         />
       </template>
@@ -39,9 +39,9 @@
           :label="$t('terms.standards')"
           :prepend-icon="mdiKeyChain"
           :rules="diffMode === 'before' ? [] : [requiredRule]"
-          variant="filled"
+          :variant="isViewMode ? 'plain' : 'filled'"
           density="comfortable"
-          :disabled="isViewMode || diffMode === 'before' || !!model.id"
+          :readonly="isViewMode || diffMode === 'before' || !!model.id"
           :multiple="true"
           @update:model-value="val => diffMode === 'after' && (model.standards = val)"
         />
@@ -60,9 +60,9 @@
             :model-value="value"
             :name="diffMode === 'before' ? 'name-before' : 'name'"
             :label="$t('terms.name')"
-            variant="filled"
+            :variant="isViewMode ? 'plain' : 'filled'"
             density="comfortable"
-            :disabled="isViewMode || diffMode === 'before'"
+            :readonly="isViewMode || diffMode === 'before'"
             :prepend-icon="mdiTextBox"
             :rules="
               diffMode === 'before' ? [] : [requiredRule, maxLengthRule(64, $t('terms.name'))]
@@ -78,9 +78,9 @@
             :model-value="value"
             :name="diffMode === 'before' ? 'symbol-before' : 'symbol'"
             :label="$t('terms.symbol')"
-            variant="filled"
+            :variant="isViewMode ? 'plain' : 'filled'"
             density="comfortable"
-            :disabled="isViewMode || diffMode === 'before'"
+            :readonly="isViewMode || diffMode === 'before'"
             :prepend-icon="mdiTag"
             :rules="diffMode === 'before' ? [] : [requiredRule, validSymbolRule]"
             @update:model-value="val => diffMode === 'after' && (model.symbol = val)"
@@ -95,9 +95,9 @@
             :name="diffMode === 'before' ? 'decimals-before' : 'decimals'"
             type="number"
             :label="$t('pages.assets.forms.decimals')"
-            variant="filled"
+            :variant="isViewMode ? 'plain' : 'filled'"
             density="comfortable"
-            :disabled="isViewMode || diffMode === 'before' || !!model.id"
+            :readonly="isViewMode || diffMode === 'before' || !!model.id"
             :prepend-icon="mdiDecimal"
             :rules="
               diffMode === 'before' ? [] : [requiredRule, numberRangeRule({ min: 0, max: 18 })]
@@ -117,7 +117,7 @@
             :model-value="value"
             :label="$t('terms.metadata')"
             :rules="diffMode === 'before' ? [] : [requiredRule]"
-            :disabled="isViewMode || diffMode === 'before'"
+            :readonly="isViewMode || diffMode === 'before'"
             :hide-keys="hiddenMetadataKeys"
             @update:model-value="val => diffMode === 'after' && (model.metadata = val)"
           />

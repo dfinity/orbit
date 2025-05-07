@@ -7,7 +7,7 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      disabled
+      readonly
     />
 
     <DiffView :before-value="currentUserGroup?.name" :after-value="modelValue.name">
@@ -19,7 +19,7 @@
           density="comfortable"
           :rules="diffMode === 'before' ? [] : rules.name"
           :variant="isViewMode ? 'plain' : 'filled'"
-          :disabled="isViewMode || diffMode === 'before'"
+          :readonly="isViewMode || diffMode === 'before'"
           @update:model-value="val => diffMode === 'after' && (modelValue.name = val)"
         />
       </template>

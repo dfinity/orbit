@@ -9,9 +9,9 @@
             : 'metadata_ledger_canister_id'
         "
         :label="$t('pages.assets.forms.ledger_canister_id')"
-        variant="filled"
+        :variant="props.readonly ? 'plain' : 'filled'"
         density="comfortable"
-        :disabled="props.readonly || diffMode === 'before'"
+        :readonly="props.readonly || diffMode === 'before'"
         :prepend-icon="mdiDatabase"
         :rules="diffMode === 'before' ? [] : [requiredRule, validCanisterId]"
         @update:model-value="val => diffMode === 'after' && (ledgerId = val)"
@@ -26,9 +26,9 @@
           diffMode === 'before' ? 'metadata_index_canister_id-before' : 'metadata_index_canister_id'
         "
         :label="$t('pages.assets.forms.index_canister_id')"
-        variant="filled"
+        :variant="props.readonly ? 'plain' : 'filled'"
         density="comfortable"
-        :disabled="props.readonly || diffMode === 'before'"
+        :readonly="props.readonly || diffMode === 'before'"
         :prepend-icon="mdiDatabase"
         :rules="diffMode === 'before' ? [] : [requiredRule, validCanisterId]"
         @update:model-value="val => diffMode === 'after' && (indexId = val)"
