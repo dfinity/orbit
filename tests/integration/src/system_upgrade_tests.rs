@@ -832,6 +832,7 @@ fn set_max_backup_snapshots() {
         // set the maximum number of backup snapshots to `max_backup_snapshots`.
         let max_backup_snapshots = 5;
         set_max_backup_snapshots(&target, max_backup_snapshots);
+        assert_eq!(snapshots(&target).len() as u64, initial_upgrades);
 
         // perform `max_backup_snapshots - initial_upgrades` additional upgrades
         assert!(initial_upgrades < max_backup_snapshots);
