@@ -4,6 +4,7 @@
       v-if="showDiff"
       :class="showDiff ? 'w-md-50 pa-1 mb-1 mb-md-2 has-min-h' : 'flex-1-1'"
       :color="app.theme === SupportedTheme.Light ? '#ff808040' : '#ff808020'"
+      data-diff-mode="before"
     >
       <slot :value="beforeValue" :diff-mode="'before'" :show-diff="showDiff"></slot>
     </VSheet>
@@ -33,6 +34,7 @@
       <VSheet
         :class="showDiff ? 'w-md-50 pa-1 mb-4 mb-md-2 has-min-h' : 'flex-1-1'"
         :color="showDiff ? (app.theme === SupportedTheme.Light ? '#40b04035' : '#80ff8015') : ''"
+        data-diff-mode="after"
       >
         <slot :value="afterValue" :diff-mode="'after'" :show-diff="showDiff"></slot>
       </VSheet>
