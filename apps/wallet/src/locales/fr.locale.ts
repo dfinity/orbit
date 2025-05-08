@@ -154,6 +154,8 @@ export default {
     no_results_found: 'Aucun resultat trouvé.',
     no_more_requests_to_approve: 'Pas de demandes à approuver.',
     load_next: 'Charger le suivant',
+    failed_to_fetch_details:
+      "Échec de récupération des détails de l'entrée existante. Les changements demandés ne peuvent pas être affichés.",
     status: {
       created: 'En Attente',
       cancelled: 'Annulé',

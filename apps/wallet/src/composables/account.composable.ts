@@ -1,7 +1,10 @@
 import { Ref, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { AccountSetupWizardModel } from '~/components/accounts/wizard/AccountSetupWizard.vue';
+import {
+  AccountSetupWizardModel,
+  CurrentAccountSetupWizardModel,
+} from '~/components/accounts/wizard/AccountSetupWizard.vue';
 import { DateRangeModel } from '~/components/inputs/DateRange.vue';
 import logger from '~/core/logger.core';
 import { UUID } from '~/generated/station/station.did';
@@ -108,7 +111,7 @@ export const useDefaultAccountSetupWizardModel = ({
 
 export const useLoadAccountSetupWizardModel = async (
   accountId: UUID,
-): Promise<AccountSetupWizardModel> => {
+): Promise<CurrentAccountSetupWizardModel> => {
   const station = useStationStore();
 
   // load the individual account details and permissions in parallel

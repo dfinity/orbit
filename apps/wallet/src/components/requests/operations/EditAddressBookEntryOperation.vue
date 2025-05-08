@@ -22,7 +22,13 @@
     </RequestOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" indeterminate />
-  <AddressBookForm v-else :model-value="formValue" mode="view" />
+  <template v-else>
+    <VAlert v-if="currentEntryFailed" type="error" variant="tonal" density="compact" class="mb-4">
+      {{ $t('requests.failed_to_fetch_details') }}
+      <div>{{ currentEntryFailed }}</div>
+    </VAlert>
+    <AddressBookForm :model-value="formValue" mode="view" :current-entry="currentEntry" />
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -38,6 +44,8 @@ import { useStationStore } from '~/stores/station.store';
 import { variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 import { VProgressCircular } from 'vuetify/components';
+import { useAppStore } from '~/stores/app.store';
+import { getErrorMessage } from '~/utils/error.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -51,21 +59,30 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
+const isDiffMode = computed(() => !isListMode.value && variantIs(props.request.status, 'Created'));
 const formValue: Ref<Partial<AddressBookEntry>> = ref({});
 const loading = ref(false);
 const station = useStationStore();
+const appStore = useAppStore();
+const currentEntry = ref<AddressBookEntry | undefined>(undefined);
+const currentEntryFailed = ref<string | undefined>();
 
 const fetchDetails = async () => {
   try {
     loading.value = true;
-    const currentEntry = await station.service.getAddressBookEntry(
+    currentEntryFailed.value = undefined;
+    const response = await station.service.getAddressBookEntry(
       {
         address_book_entry_id: props.operation.input.address_book_entry_id,
       },
       true,
     );
 
-    let currentMetadata = currentEntry.address_book_entry.metadata;
+    if (isDiffMode.value) {
+      currentEntry.value = response.address_book_entry;
+    }
+
+    let currentMetadata = response.address_book_entry.metadata;
     if (props.operation.input.change_metadata?.[0]) {
       const changeMetadata = props.operation.input.change_metadata[0];
       if (variantIs(changeMetadata, 'ReplaceAllBy')) {
@@ -88,8 +105,15 @@ const fetchDetails = async () => {
     }
 
     formValue.value.metadata = currentMetadata;
+
+    formValue.value.address = response.address_book_entry.address;
+    formValue.value.blockchain = response.address_book_entry.blockchain;
   } catch (e) {
     logger.error('Failed to fetch address book entry details', e);
+    if (isDiffMode.value) {
+      currentEntryFailed.value = getErrorMessage(e);
+    }
+    appStore.sendErrorNotification(e);
   } finally {
     loading.value = false;
   }

@@ -50,6 +50,10 @@ describe('AssetForm', () => {
       .find('input[name="metadata_ledger_canister_id"]')
       .setValue('ryjl3-tyaaa-aaaaa-aaaba-cai');
 
+    await wrapper
+      .find('input[name="metadata_index_canister_id"]')
+      .setValue('qhbym-qaaaa-aaaaa-aaafq-cai');
+
     await wrapper.vm.$nextTick();
     expect(wrapper.emitted('valid')).toEqual([[false], [true]]);
   });
