@@ -19,7 +19,14 @@
       </template>
     </RequestOperationListRow>
   </div>
-  <UserForm v-else :model-value="formValue" mode="view" :current-user="currentUser as User" />
+  <template v-else>
+    <VAlert v-if="currentUserFailed" type="error" variant="tonal" density="compact" class="mb-4">
+      {{ $t('requests.failed_to_fetch_details') }}
+      <div>{{ currentUserFailed }}</div>
+    </VAlert>
+    <!-- prettier-ignore -->
+    <UserForm  :model-value="formValue" mode="view" :current-user="(currentUser as User)" />
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -31,6 +38,8 @@ import RequestOperationListRow from '../RequestOperationListRow.vue';
 import { variantIs } from '~/utils/helper.utils';
 import { services } from '~/plugins/services.plugin';
 import { useAppStore } from '~/stores/app.store';
+import { getErrorMessage } from '~/utils/error.utils';
+import { VAlert } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{
@@ -44,11 +53,13 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
+const isDiffMode = computed(() => !isListMode.value && variantIs(props.request.status, 'Created'));
 const formValue: Ref<Partial<User & { cancelPendingRequests?: boolean }>> = ref({});
 
 const stationService = services().station;
 const appStore = useAppStore();
 const currentUser = ref<User | undefined>(undefined);
+const currentUserFailed = ref<string | undefined>();
 
 onBeforeMount(async () => {
   const user: Partial<User> = {};
@@ -72,7 +83,7 @@ onBeforeMount(async () => {
         : undefined,
   };
 
-  if (!isListMode.value && variantIs(props.request.status, 'Created')) {
+  if (isDiffMode.value) {
     try {
       currentUser.value = (
         await stationService.getUser(
@@ -83,7 +94,7 @@ onBeforeMount(async () => {
         )
       ).user;
     } catch (error) {
-      // TODO: display an error message for the user that they couldn't fetch the user and diff view is not available
+      currentUserFailed.value = getErrorMessage(error);
       appStore.sendErrorNotification(error);
     }
   }

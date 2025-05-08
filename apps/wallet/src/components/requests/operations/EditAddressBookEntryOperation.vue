@@ -22,7 +22,13 @@
     </RequestOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" indeterminate />
-  <AddressBookForm v-else :model-value="formValue" mode="view" :current-entry="currentEntry" />
+  <template v-else>
+    <VAlert v-if="currentEntryFailed" type="error" variant="tonal" density="compact" class="mb-4">
+      {{ $t('requests.failed_to_fetch_details') }}
+      <div>{{ currentEntryFailed }}</div>
+    </VAlert>
+    <AddressBookForm :model-value="formValue" mode="view" :current-entry="currentEntry" />
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -39,6 +45,7 @@ import { variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 import { VProgressCircular } from 'vuetify/components';
 import { useAppStore } from '~/stores/app.store';
+import { getErrorMessage } from '~/utils/error.utils';
 
 const props = withDefaults(
   defineProps<{
@@ -52,15 +59,18 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
+const isDiffMode = computed(() => !isListMode.value && variantIs(props.request.status, 'Created'));
 const formValue: Ref<Partial<AddressBookEntry>> = ref({});
 const loading = ref(false);
 const station = useStationStore();
 const appStore = useAppStore();
 const currentEntry = ref<AddressBookEntry | undefined>(undefined);
+const currentEntryFailed = ref<string | undefined>();
 
 const fetchDetails = async () => {
   try {
     loading.value = true;
+    currentEntryFailed.value = undefined;
     const response = await station.service.getAddressBookEntry(
       {
         address_book_entry_id: props.operation.input.address_book_entry_id,
@@ -68,7 +78,7 @@ const fetchDetails = async () => {
       true,
     );
 
-    if (variantIs(props.request.status, 'Created')) {
+    if (isDiffMode.value) {
       currentEntry.value = response.address_book_entry;
     }
 
@@ -100,6 +110,9 @@ const fetchDetails = async () => {
     formValue.value.blockchain = response.address_book_entry.blockchain;
   } catch (e) {
     logger.error('Failed to fetch address book entry details', e);
+    if (isDiffMode.value) {
+      currentEntryFailed.value = getErrorMessage(e);
+    }
     appStore.sendErrorNotification(e);
   } finally {
     loading.value = false;

@@ -24,12 +24,21 @@
     </RequestOperationListRow>
   </div>
   <LoadingMessage v-else-if="loading" />
-  <AccountSetupWizard
-    v-else
-    :model-value="model"
-    mode="view"
-    :current-model="currentAccountModel"
-  />
+
+  <template v-else>
+    <VAlert
+      v-if="currentAccountModelFailed"
+      type="error"
+      variant="tonal"
+      density="compact"
+      class="mb-4"
+    >
+      {{ $t('requests.failed_to_fetch_details') }}
+      <div>{{ currentAccountModelFailed }}</div>
+    </VAlert>
+
+    <AccountSetupWizard :model-value="model" mode="view" :current-model="currentAccountModel" />
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -49,7 +58,8 @@ import { deepClone, unreachable, variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 import { useI18n } from 'vue-i18n';
 import { useStationStore } from '~/stores/station.store';
-
+import { getErrorMessage } from '~/utils/error.utils';
+import { useAppStore } from '~/stores/app.store';
 const props = withDefaults(
   defineProps<{
     request: Request;
@@ -62,13 +72,15 @@ const props = withDefaults(
 );
 
 const i18n = useI18n();
+const appStore = useAppStore();
 
 const isListMode = computed(() => props.mode === 'list');
+const isDiffMode = computed(() => !isListMode.value && variantIs(props.request.status, 'Created'));
 const model: Ref<AccountSetupWizardModel> = ref(useDefaultAccountSetupWizardModel());
 const loading = ref(false);
 
 const currentAccountModel = ref<CurrentAccountSetupWizardModel | undefined>(undefined);
-
+const currentAccountModelFailed = ref<string | undefined>();
 const editAssets = computed(() => {
   const assets = {
     addAssets: '',
@@ -128,7 +140,7 @@ const fetchDetails = async () => {
 
     model.value = deepClone(currentModel);
 
-    if (variantIs(props.request.status, 'Created')) {
+    if (isDiffMode.value) {
       // make copy of currentModel to avoid mutating the original
       currentAccountModel.value = deepClone(currentModel);
     }
@@ -188,6 +200,10 @@ const fetchDetails = async () => {
     }
   } catch (e) {
     logger.error('Failed to fetch account details', e);
+    if (isDiffMode.value) {
+      currentAccountModelFailed.value = getErrorMessage(e);
+    }
+    appStore.sendErrorNotification(e);
   } finally {
     loading.value = false;
   }

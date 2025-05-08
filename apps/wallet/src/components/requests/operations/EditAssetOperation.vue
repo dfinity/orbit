@@ -12,7 +12,13 @@
     </RequestOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" indeterminate />
-  <AssetForm v-else :model-value="formValue" mode="view" :current-asset="currentAsset" />
+  <template v-else>
+    <VAlert v-if="currentAssetFailed" type="error" variant="tonal" density="compact" class="mb-4">
+      {{ $t('requests.failed_to_fetch_details') }}
+      <div>{{ currentAssetFailed }}</div>
+    </VAlert>
+    <AssetForm :model-value="formValue" mode="view" :current-asset="currentAsset" />
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -25,6 +31,7 @@ import { unreachable, variantIs } from '~/utils/helper.utils';
 import { VProgressCircular } from 'vuetify/components';
 import { useI18n } from 'vue-i18n';
 import { useAppStore } from '~/stores/app.store';
+import { getErrorMessage } from '~/utils/error.utils';
 
 const i18n = useI18n();
 
@@ -40,8 +47,10 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
+const isDiffMode = computed(() => !isListMode.value && variantIs(props.request.status, 'Created'));
 const formValue: Ref<Partial<Asset>> = ref({});
 const currentAsset: Ref<Asset | undefined> = ref(undefined);
+const currentAssetFailed = ref<string | undefined>();
 const station = useStationStore();
 const appStore = useAppStore();
 const loading = ref(false);
@@ -60,7 +69,7 @@ const fetchDetails = async () => {
       true,
     );
 
-    if (variantIs(props.request.status, 'Created')) {
+    if (isDiffMode.value) {
       currentAsset.value = response.asset as Asset;
     }
 
@@ -118,6 +127,9 @@ const fetchDetails = async () => {
     formValue.value = entry;
   } catch (e) {
     appStore.sendErrorNotification(e);
+    if (isDiffMode.value) {
+      currentAssetFailed.value = getErrorMessage(e);
+    }
   } finally {
     loading.value = false;
   }
