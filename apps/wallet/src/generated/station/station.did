@@ -602,7 +602,8 @@ type SystemUpgradeOperationInput = record {
   // The initial argument passed to the new wasm module.
   arg : opt blob;
   // Determines whether a backup snapshot should be taken (before the upgrade).
-  // If so, the last backup snapshot (if one exists) is atomically replaced
+  // If so and the maximum number of backup snapshots is reached,
+  // then the oldest backup snapshot is atomically replaced
   // by the new backup snapshot.
   take_backup_snapshot : opt bool;
 };
@@ -615,7 +616,8 @@ type SystemUpgradeOperation = record {
   // The checksum of the arg blob.
   arg_checksum : opt Sha256Hash;
   // Determines whether a backup snapshot should be taken (before the upgrade).
-  // If so, the last backup snapshot (if one exists) is atomically replaced
+  // If so and the maximum number of backup snapshots is reached,
+  // then the oldest backup snapshot is atomically replaced
   // by the new backup snapshot.
   take_backup_snapshot : opt bool;
 };
@@ -2175,6 +2177,10 @@ type ManageSystemInfoOperationInput = record {
   name : opt text;
   // The strategy to use to for the station to top itself up with cycles.
   cycle_obtain_strategy : opt CycleObtainStrategyInput;
+  // The maximum number of station backup snapshots to keep.
+  max_station_backup_snapshots : opt nat64;
+  // The maximum number of upgrader backup snapshots to keep.
+  max_upgrader_backup_snapshots : opt nat64;
 };
 
 // Strategy defining how the station canister tops up its own cycles.
@@ -2233,6 +2239,10 @@ type SystemInfo = record {
   disaster_recovery : opt DisasterRecovery;
   // Strategy defining how the station canister tops up its own cycles.
   cycle_obtain_strategy : CycleObtainStrategy;
+  // The maximum number of station backup snapshots to keep.
+  max_station_backup_snapshots : nat64;
+  // The maximum number of upgrader backup snapshots to keep.
+  max_upgrader_backup_snapshots : nat64;
 };
 
 // The disaster recovery committee extended with the user group name.

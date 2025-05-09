@@ -423,6 +423,8 @@ const manageSystemInfoInput = ref<{
 }>({
   valid: false,
   model: {
+    max_station_backup_snapshots: [],
+    max_upgrader_backup_snapshots: [],
     name: [station.configuration.details.name],
     cycle_obtain_strategy: station.configuration.cycleObtainStrategy
       ? [cycleObtainStrategyToInput(station.configuration.cycleObtainStrategy)]

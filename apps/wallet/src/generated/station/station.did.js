@@ -674,6 +674,8 @@ export const idlFactory = ({ IDL }) => {
   const ManageSystemInfoOperationInput = IDL.Record({
     'name' : IDL.Opt(IDL.Text),
     'cycle_obtain_strategy' : IDL.Opt(CycleObtainStrategyInput),
+    'max_upgrader_backup_snapshots' : IDL.Opt(IDL.Nat64),
+    'max_station_backup_snapshots' : IDL.Opt(IDL.Nat64),
   });
   const ManageSystemInfoOperation = IDL.Record({
     'input' : ManageSystemInfoOperationInput,
@@ -1729,6 +1731,8 @@ export const idlFactory = ({ IDL }) => {
     'cycles' : IDL.Nat64,
     'upgrader_id' : IDL.Principal,
     'cycle_obtain_strategy' : CycleObtainStrategy,
+    'max_upgrader_backup_snapshots' : IDL.Nat64,
+    'max_station_backup_snapshots' : IDL.Nat64,
   });
   const SystemInfoResult = IDL.Variant({
     'Ok' : IDL.Record({ 'system' : SystemInfo }),

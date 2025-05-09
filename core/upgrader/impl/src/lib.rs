@@ -4,7 +4,8 @@ use crate::upgrade::{
     WithStart, WithStop,
 };
 use candid::Principal;
-use ic_cdk::{api::management_canister::main::CanisterInstallMode, init, post_upgrade, update};
+use ic_cdk::api::management_canister::main::CanisterInstallMode;
+use ic_cdk::{init, post_upgrade, update};
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager, VirtualMemory},
     DefaultMemoryImpl, StableBTreeMap,
@@ -80,7 +81,7 @@ impl Default for State {
     fn default() -> Self {
         Self {
             target_canister: Principal::anonymous(),
-            backup_snapshots: BackupSnapshots::new(1),
+            backup_snapshots: BackupSnapshots::default(),
             disaster_recovery: Default::default(),
             stable_memory_version: STABLE_MEMORY_VERSION,
         }
@@ -187,6 +188,25 @@ async fn trigger_restore(params: upgrader_api::RestoreParams) -> Result<(), Trig
                 TriggerRestoreError::UnexpectedError(err.to_string())
             }
         })
+}
+
+#[update]
+async fn set_max_backup_snapshots(max_backup_snapshots: u64) -> Result<(), String> {
+    let id = get_target_canister();
+    if ic_cdk::caller() != id {
+        return Err(format!(
+            "Only the target canister {} is authorized to call `set_max_backup_snapshots`.",
+            id
+        ));
+    }
+
+    let mut state = get_state();
+    let res = state
+        .backup_snapshots
+        .set_max_backup_snapshots(max_backup_snapshots, id)
+        .await;
+    set_state(state);
+    res
 }
 
 #[cfg(test)]
