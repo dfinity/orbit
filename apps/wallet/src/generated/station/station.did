@@ -602,7 +602,7 @@ type SystemUpgradeOperationInput = record {
   // The initial argument passed to the new wasm module.
   arg : opt blob;
   // Determines whether a backup snapshot should be taken (before the upgrade).
-  // If the maximum number of backup snapshots is reached,
+  // If so and the maximum number of backup snapshots is reached,
   // then the oldest backup snapshot is atomically replaced
   // by the new backup snapshot.
   take_backup_snapshot : opt bool;
@@ -616,7 +616,7 @@ type SystemUpgradeOperation = record {
   // The checksum of the arg blob.
   arg_checksum : opt Sha256Hash;
   // Determines whether a backup snapshot should be taken (before the upgrade).
-  // If the maximum number of backup snapshots is reached,
+  // If so and the maximum number of backup snapshots is reached,
   // then the oldest backup snapshot is atomically replaced
   // by the new backup snapshot.
   take_backup_snapshot : opt bool;
