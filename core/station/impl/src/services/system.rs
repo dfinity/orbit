@@ -27,7 +27,6 @@ use crate::{
     SYSTEM_VERSION,
 };
 use candid::Principal;
-use ic_cdk::call;
 use lazy_static::lazy_static;
 use orbit_essentials::repository::Repository;
 use orbit_essentials::{api::ServiceResult, types::UUID};
@@ -147,7 +146,6 @@ impl SystemService {
     pub async fn do_update_system_info(
         system_info: &mut SystemInfo,
         input: ManageSystemInfoOperationInput,
-        upgrader_id: Principal,
     ) -> Result<(), String> {
         if let Some(name) = input.name {
             system_info.set_name(name.clone());
@@ -158,15 +156,9 @@ impl SystemService {
         }
 
         if let Some(max_backup_snapshots) = input.max_station_backup_snapshots {
-            call::<_, (Result<(), String>,)>(
-                upgrader_id,
-                "set_max_backup_snapshots",
-                (max_backup_snapshots,),
-            )
-            .await
-            .map_err(|(_, err)| err)?
-            .0?;
-            system_info.set_max_station_backup_snapshots(max_backup_snapshots);
+            system_info
+                .set_max_station_backup_snapshots(max_backup_snapshots)
+                .await?;
         }
 
         if let Some(max_backup_snapshots) = input.max_upgrader_backup_snapshots {
@@ -184,8 +176,7 @@ impl SystemService {
     ) -> Result<(), String> {
         let mut system_info = self.get_system_info();
 
-        let upgrader_id = self.get_upgrader_canister_id();
-        let res = Self::do_update_system_info(&mut system_info, input, upgrader_id).await;
+        let res = Self::do_update_system_info(&mut system_info, input).await;
 
         write_system_info(system_info);
 

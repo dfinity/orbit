@@ -6,6 +6,7 @@ use crate::{
     STABLE_MEMORY_VERSION, SYSTEM_VERSION,
 };
 use candid::Principal;
+use ic_cdk::call;
 use ic_stable_structures::{storable::Bound, Storable};
 use orbit_essentials::backup_snapshots::{default_max_backup_snapshots, BackupSnapshots};
 use orbit_essentials::storable;
@@ -205,8 +206,21 @@ impl SystemInfo {
         self.max_station_backup_snapshots
     }
 
-    pub fn set_max_station_backup_snapshots(&mut self, max_backup_snapshots: u64) {
+    pub async fn set_max_station_backup_snapshots(
+        &mut self,
+        max_backup_snapshots: u64,
+    ) -> Result<(), String> {
+        let upgrader_id = *self.get_upgrader_canister_id();
+        call::<_, (Result<(), String>,)>(
+            upgrader_id,
+            "set_max_backup_snapshots",
+            (max_backup_snapshots,),
+        )
+        .await
+        .map_err(|(_, err)| err)?
+        .0?;
         self.max_station_backup_snapshots = max_backup_snapshots;
+        Ok(())
     }
 
     pub fn get_max_upgrader_backup_snapshots(&self) -> u64 {
@@ -217,8 +231,9 @@ impl SystemInfo {
         &mut self,
         max_backup_snapshots: u64,
     ) -> Result<(), String> {
+        let upgrader_id = *self.get_upgrader_canister_id();
         self.upgrader_backup_snapshots
-            .set_max_backup_snapshots(max_backup_snapshots, *self.get_upgrader_canister_id())
+            .set_max_backup_snapshots(max_backup_snapshots, upgrader_id)
             .await
     }
 }
