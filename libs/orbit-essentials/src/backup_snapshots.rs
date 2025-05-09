@@ -3,6 +3,11 @@ use ic_cdk::api::management_canister::main::{self as mgmt, DeleteCanisterSnapsho
 use orbit_essentials_macros::storable;
 use std::collections::VecDeque;
 
+/// The maximum number of canister snapshots allowed by the protocol.
+pub const ICP_MAX_CANISTER_SNAPSHOTS: u64 = 10;
+
+/// The default maximum number of backup canister snapshots.
+/// A small value is chosen to limit memory usage.
 const DEFAULT_MAX_BACKUP_SNAPSHOTS: u64 = 1;
 
 /// A function is required by `#[serde(default = "default_max_backup_snapshots")]`.
