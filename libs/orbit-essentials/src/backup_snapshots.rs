@@ -36,7 +36,7 @@ impl BackupSnapshots {
         canister_id: Principal,
     ) -> Result<(), String> {
         while self.backup_snapshots.len() as u64 > max_backup_snapshots {
-            let snapshot_id = self.get_oldest_snapshot().unwrap();
+            let snapshot_id = self.backup_snapshots.front().unwrap().clone();
             mgmt::delete_canister_snapshot(DeleteCanisterSnapshotArgs {
                 canister_id,
                 snapshot_id,
@@ -50,7 +50,7 @@ impl BackupSnapshots {
         Ok(())
     }
 
-    pub fn get_oldest_snapshot(&self) -> Option<Vec<u8>> {
+    pub fn get_snapshot_to_replace(&self) -> Option<Vec<u8>> {
         if self.backup_snapshots.len() as u64 >= self.max_backup_snapshots {
             self.backup_snapshots.front().cloned()
         } else {

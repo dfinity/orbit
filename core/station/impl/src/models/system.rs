@@ -167,7 +167,7 @@ impl SystemInfo {
     }
 
     pub fn get_upgrader_backup_snapshot_to_replace(&self) -> Option<Vec<u8>> {
-        self.upgrader_backup_snapshots.get_oldest_snapshot()
+        self.upgrader_backup_snapshots.get_snapshot_to_replace()
     }
 
     pub fn insert_upgrader_backup_snapshot(&mut self, snapshot_id: Vec<u8>) {
