@@ -3,7 +3,12 @@ use ic_cdk::api::management_canister::main::{self as mgmt, DeleteCanisterSnapsho
 use orbit_essentials_macros::storable;
 use std::collections::VecDeque;
 
-pub const DEFAULT_MAX_BACKUP_SNAPSHOTS: u64 = 1;
+const DEFAULT_MAX_BACKUP_SNAPSHOTS: u64 = 1;
+
+/// A function is required by `#[serde(default = "default_max_backup_snapshots")]`.
+pub fn default_max_backup_snapshots() -> u64 {
+    DEFAULT_MAX_BACKUP_SNAPSHOTS
+}
 
 #[storable]
 #[derive(Clone, Debug, Eq, PartialEq)]

@@ -7,7 +7,7 @@ use crate::{
 };
 use candid::Principal;
 use ic_stable_structures::{storable::Bound, Storable};
-use orbit_essentials::backup_snapshots::{BackupSnapshots, DEFAULT_MAX_BACKUP_SNAPSHOTS};
+use orbit_essentials::backup_snapshots::{default_max_backup_snapshots, BackupSnapshots};
 use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
 use std::borrow::Cow;
@@ -39,10 +39,6 @@ pub enum CycleObtainStrategy {
     WithdrawFromCyclesLedger {
         account_id: AccountId,
     },
-}
-
-fn default_max_backup_snapshots() -> u64 {
-    DEFAULT_MAX_BACKUP_SNAPSHOTS
 }
 
 #[storable(size = SYSTEM_RESERVED_MEMORY_BYTES)]
@@ -89,7 +85,7 @@ impl Default for SystemInfo {
             version: Some(SYSTEM_VERSION.to_string()),
             stable_memory_version: Some(STABLE_MEMORY_VERSION),
             cycle_obtain_strategy: CycleObtainStrategy::default(),
-            max_station_backup_snapshots: DEFAULT_MAX_BACKUP_SNAPSHOTS,
+            max_station_backup_snapshots: default_max_backup_snapshots(),
         }
     }
 }
