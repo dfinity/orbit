@@ -1,4 +1,7 @@
-use crate::errors::{ExternalCanisterValidationError, RecordValidationError, ValidationError};
+use crate::errors::{
+    ExternalCanisterValidationError, RecordValidationError, SystemInfoValidationError,
+    ValidationError,
+};
 use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -65,11 +68,20 @@ impl From<ExternalCanisterValidationError> for RequestPolicyError {
     }
 }
 
+impl From<SystemInfoValidationError> for RequestPolicyError {
+    fn from(err: SystemInfoValidationError) -> RequestPolicyError {
+        RequestPolicyError::ValidationError {
+            info: err.to_string(),
+        }
+    }
+}
+
 impl From<ValidationError> for RequestPolicyError {
     fn from(err: ValidationError) -> RequestPolicyError {
         match err {
             ValidationError::RecordValidationError(err) => err.into(),
             ValidationError::ExternalCanisterValidationError(err) => err.into(),
+            ValidationError::SystemInfoValidationError(err) => err.into(),
         }
     }
 }

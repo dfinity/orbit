@@ -143,9 +143,10 @@ impl SystemService {
         }
     }
 
-    pub fn update_system_info(&self, input: ManageSystemInfoOperationInput) {
-        let mut system_info = self.get_system_info();
-
+    pub async fn do_update_system_info(
+        system_info: &mut SystemInfo,
+        input: ManageSystemInfoOperationInput,
+    ) -> Result<(), String> {
         if let Some(name) = input.name {
             system_info.set_name(name.clone());
         }
@@ -154,7 +155,32 @@ impl SystemService {
             system_info.set_cycle_obtain_strategy(strategy);
         }
 
+        if let Some(max_backup_snapshots) = input.max_station_backup_snapshots {
+            system_info
+                .set_max_station_backup_snapshots(max_backup_snapshots)
+                .await?;
+        }
+
+        if let Some(max_backup_snapshots) = input.max_upgrader_backup_snapshots {
+            system_info
+                .set_max_upgrader_backup_snapshots(max_backup_snapshots)
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn update_system_info(
+        &self,
+        input: ManageSystemInfoOperationInput,
+    ) -> Result<(), String> {
+        let mut system_info = self.get_system_info();
+
+        let res = Self::do_update_system_info(&mut system_info, input).await;
+
         write_system_info(system_info);
+
+        res
     }
 
     pub fn set_disaster_recovery_committee(committee: Option<DisasterRecoveryCommittee>) {

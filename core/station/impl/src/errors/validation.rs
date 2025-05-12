@@ -7,6 +7,7 @@ use thiserror::Error;
 pub enum ValidationError {
     RecordValidationError(RecordValidationError),
     ExternalCanisterValidationError(ExternalCanisterValidationError),
+    SystemInfoValidationError(SystemInfoValidationError),
 }
 
 impl Display for ValidationError {
@@ -14,6 +15,7 @@ impl Display for ValidationError {
         match self {
             ValidationError::RecordValidationError(err) => write!(f, "{}", err),
             ValidationError::ExternalCanisterValidationError(err) => write!(f, "{}", err),
+            ValidationError::SystemInfoValidationError(err) => write!(f, "{}", err),
         }
     }
 }
@@ -23,6 +25,7 @@ impl DetailableError for ValidationError {
         match self {
             ValidationError::RecordValidationError(err) => err.details(),
             ValidationError::ExternalCanisterValidationError(err) => err.details(),
+            ValidationError::SystemInfoValidationError(err) => err.details(),
         }
     }
 }
@@ -36,6 +39,12 @@ impl From<RecordValidationError> for ValidationError {
 impl From<ExternalCanisterValidationError> for ValidationError {
     fn from(err: ExternalCanisterValidationError) -> ValidationError {
         ValidationError::ExternalCanisterValidationError(err)
+    }
+}
+
+impl From<SystemInfoValidationError> for ValidationError {
+    fn from(err: SystemInfoValidationError) -> ValidationError {
+        ValidationError::SystemInfoValidationError(err)
     }
 }
 
@@ -80,6 +89,22 @@ impl DetailableError for ExternalCanisterValidationError {
                 details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
+        }
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum SystemInfoValidationError {
+    #[error(
+        r#"The provided maximum number of backup snapshots {provided} exceeds the limit {limit}."#
+    )]
+    InvalidMaxBackupSnapshots { provided: u64, limit: u64 },
+}
+
+impl DetailableError for SystemInfoValidationError {
+    fn details(&self) -> Option<std::collections::HashMap<String, String>> {
+        match self {
+            SystemInfoValidationError::InvalidMaxBackupSnapshots { .. } => None,
         }
     }
 }
