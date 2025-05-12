@@ -1007,6 +1007,8 @@ export interface ManageSystemInfoOperation {
 export interface ManageSystemInfoOperationInput {
   'name' : [] | [string],
   'cycle_obtain_strategy' : [] | [CycleObtainStrategyInput],
+  'max_upgrader_backup_snapshots' : [] | [bigint],
+  'max_station_backup_snapshots' : [] | [bigint],
 }
 export type MarkNotificationReadResult = { 'Ok' : null } |
   { 'Err' : Error };
@@ -1441,6 +1443,8 @@ export interface SystemInfo {
   'cycles' : bigint,
   'upgrader_id' : Principal,
   'cycle_obtain_strategy' : CycleObtainStrategy,
+  'max_upgrader_backup_snapshots' : bigint,
+  'max_station_backup_snapshots' : bigint,
 }
 export type SystemInfoResult = { 'Ok' : { 'system' : SystemInfo } } |
   { 'Err' : Error };

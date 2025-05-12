@@ -17,6 +17,8 @@ pub struct SystemInfoDTO {
     pub raw_rand_successful: bool,
     pub disaster_recovery: Option<DisasterRecoveryDTO>,
     pub cycle_obtain_strategy: CycleObtainStrategyDTO,
+    pub max_station_backup_snapshots: u64,
+    pub max_upgrader_backup_snapshots: u64,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -54,6 +56,8 @@ pub enum CycleObtainStrategyInput {
 pub struct ManageSystemInfoOperationInput {
     pub name: Option<String>,
     pub cycle_obtain_strategy: Option<CycleObtainStrategyInput>,
+    pub max_station_backup_snapshots: Option<u64>,
+    pub max_upgrader_backup_snapshots: Option<u64>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
