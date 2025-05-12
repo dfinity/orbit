@@ -15,6 +15,7 @@ use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
 use orbit_essentials::types::UUID;
+use std::fmt;
 use uuid::Uuid;
 
 #[storable]
@@ -85,6 +86,41 @@ pub enum RequestSpecifier {
     AddNamedRule,
     EditNamedRule(ResourceIds),
     RemoveNamedRule(ResourceIds),
+}
+
+impl fmt::Display for RequestSpecifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RequestSpecifier::AddAccount => write!(f, "AddAccount"),
+            RequestSpecifier::AddUser => write!(f, "AddUser"),
+            RequestSpecifier::EditAccount(_) => write!(f, "EditAccount"),
+            RequestSpecifier::EditUser(_) => write!(f, "EditUser"),
+            RequestSpecifier::AddAddressBookEntry => write!(f, "AddAddressBookEntry"),
+            RequestSpecifier::EditAddressBookEntry(_) => write!(f, "EditAddressBookEntry"),
+            RequestSpecifier::RemoveAddressBookEntry(_) => write!(f, "RemoveAddressBookEntry"),
+            RequestSpecifier::Transfer(_) => write!(f, "Transfer"),
+            RequestSpecifier::SetDisasterRecovery => write!(f, "SetDisasterRecovery"),
+            RequestSpecifier::CreateExternalCanister => write!(f, "CreateExternalCanister"),
+            RequestSpecifier::ChangeExternalCanister(_) => write!(f, "ChangeExternalCanister"),
+            RequestSpecifier::CallExternalCanister(_) => write!(f, "CallExternalCanister"),
+            RequestSpecifier::FundExternalCanister(_) => write!(f, "FundExternalCanister"),
+            RequestSpecifier::EditPermission(_) => write!(f, "EditPermission"),
+            RequestSpecifier::AddRequestPolicy => write!(f, "AddRequestPolicy"),
+            RequestSpecifier::EditRequestPolicy(_) => write!(f, "EditRequestPolicy"),
+            RequestSpecifier::RemoveRequestPolicy(_) => write!(f, "RemoveRequestPolicy"),
+            RequestSpecifier::AddUserGroup => write!(f, "AddUserGroup"),
+            RequestSpecifier::EditUserGroup(_) => write!(f, "EditUserGroup"),
+            RequestSpecifier::RemoveUserGroup(_) => write!(f, "RemoveUserGroup"),
+            RequestSpecifier::ManageSystemInfo => write!(f, "ManageSystemInfo"),
+            RequestSpecifier::SystemUpgrade => write!(f, "SystemUpgrade"),
+            RequestSpecifier::AddAsset => write!(f, "AddAsset"),
+            RequestSpecifier::EditAsset(_) => write!(f, "EditAsset"),
+            RequestSpecifier::RemoveAsset(_) => write!(f, "RemoveAsset"),
+            RequestSpecifier::AddNamedRule => write!(f, "AddNamedRule"),
+            RequestSpecifier::EditNamedRule(_) => write!(f, "EditNamedRule"),
+            RequestSpecifier::RemoveNamedRule(_) => write!(f, "RemoveNamedRule"),
+        }
+    }
 }
 
 impl ModelValidator<ValidationError> for RequestSpecifier {

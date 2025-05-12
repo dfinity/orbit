@@ -53,10 +53,29 @@ impl From<MatchError> for EvaluateError {
     }
 }
 
+// metadata related rules can only be applied to accounts
+pub fn validate_rule_for_specifier(
+    rule: &RequestPolicyRule,
+    specifier: &RequestSpecifier,
+) -> ModelValidatorResult<RequestPolicyError> {
+    match (rule, specifier) {
+        (RequestPolicyRule::AllowListed, RequestSpecifier::Transfer(_))
+        | (RequestPolicyRule::AllowListedByMetadata(_), RequestSpecifier::Transfer(_)) => Ok(()),
+        (RequestPolicyRule::AllowListed, _) | (RequestPolicyRule::AllowListedByMetadata(_), _) => {
+            Err(RequestPolicyError::InvalidRuleForSpecifier {
+                rule: rule.to_string(),
+                specifier: specifier.to_string(),
+            })
+        }
+        (_, _) => Ok(()),
+    }
+}
+
 impl ModelValidator<RequestPolicyError> for RequestPolicy {
     fn validate(&self) -> ModelValidatorResult<RequestPolicyError> {
         self.specifier.validate()?;
         self.rule.validate()?;
+        validate_rule_for_specifier(&self.rule, &self.specifier)?;
         Ok(())
     }
 }
@@ -66,14 +85,16 @@ pub mod request_policy_test_utils {
     use super::RequestPolicy;
     use crate::{
         core::CallContext,
+        errors::RequestPolicyError,
         models::{
             request_policy_rule::RequestPolicyRule, request_specifier::RequestSpecifier,
             AddNamedRuleOperationInput, AddRequestPolicyOperationInput, AddUserOperationInput,
-            ADMIN_GROUP_ID,
+            MetadataItem, ADMIN_GROUP_ID,
         },
         services::{NAMED_RULE_SERVICE, REQUEST_POLICY_SERVICE, REQUEST_SERVICE, USER_SERVICE},
     };
     use candid::Principal;
+    use orbit_essentials::model::ModelValidator;
     use station_api::CreateRequestInput;
     use uuid::Uuid;
 
@@ -149,5 +170,54 @@ pub mod request_policy_test_utils {
             request.status,
             crate::models::RequestStatus::Approved
         ));
+    }
+
+    #[test]
+    fn test_invalid_rule_for_specifier() {
+        let tests = [
+            (
+                RequestSpecifier::AddAccount,
+                RequestPolicyRule::AllowListed,
+                Err(RequestPolicyError::InvalidRuleForSpecifier {
+                    rule: "AllowListed".to_string(),
+                    specifier: "AddAccount".to_string(),
+                }),
+            ),
+            (
+                RequestSpecifier::AddAccount,
+                RequestPolicyRule::AllowListedByMetadata(MetadataItem {
+                    key: "test".to_string(),
+                    value: "test".to_string(),
+                }),
+                Err(RequestPolicyError::InvalidRuleForSpecifier {
+                    rule: "AllowListedByMetadata".to_string(),
+                    specifier: "AddAccount".to_string(),
+                }),
+            ),
+            (
+                RequestSpecifier::Transfer(crate::models::resource::ResourceIds::Any),
+                RequestPolicyRule::AllowListed,
+                Ok(()),
+            ),
+            (
+                RequestSpecifier::Transfer(crate::models::resource::ResourceIds::Any),
+                RequestPolicyRule::AllowListedByMetadata(MetadataItem {
+                    key: "test".to_string(),
+                    value: "test".to_string(),
+                }),
+                Ok(()),
+            ),
+        ];
+
+        for (specifier, rule, expected) in tests {
+            let policy = RequestPolicy {
+                id: *Uuid::new_v4().as_bytes(),
+                specifier,
+                rule,
+            };
+
+            let result = policy.validate();
+            assert_eq!(result, expected);
+        }
     }
 }

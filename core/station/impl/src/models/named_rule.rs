@@ -6,12 +6,17 @@ use orbit_essentials::{
     storable,
     types::UUID,
 };
+use uuid::Uuid;
 
 use crate::{
-    core::utils::format_unique_string, errors::NamedRuleError, repositories::NAMED_RULE_REPOSITORY,
+    core::utils::format_unique_string,
+    errors::NamedRuleError,
+    repositories::{NAMED_RULE_REPOSITORY, REQUEST_POLICY_REPOSITORY},
 };
 
-use super::{indexes::unique_index::UniqueIndexKey, RequestPolicyRule};
+use super::{
+    indexes::unique_index::UniqueIndexKey, validate_rule_for_specifier, RequestPolicyRule,
+};
 
 pub type NamedRuleId = UUID;
 
@@ -126,6 +131,30 @@ fn collect_child_ids(rule: &RequestPolicyRule) -> Vec<NamedRuleId> {
     ids
 }
 
+fn find_all_named_rules_referencing_named_rule(named_rule_id: &NamedRuleId) -> Vec<NamedRuleId> {
+    let mut ids = HashSet::new();
+
+    let all_named_rules = NAMED_RULE_REPOSITORY.list();
+
+    loop {
+        let mut found_new_named_rules = false;
+        for named_rule in all_named_rules.iter() {
+            if (named_rule.rule.has_named_rule_id(named_rule_id)
+                || ids.iter().any(|id| named_rule.rule.has_named_rule_id(id)))
+                && ids.insert(named_rule.id)
+            {
+                found_new_named_rules = true;
+            }
+        }
+
+        if !found_new_named_rules {
+            break;
+        }
+    }
+
+    ids.into_iter().collect()
+}
+
 /// Validates that the named rule does not have a circular reference.
 fn validate_circular_reference(rule: &NamedRule) -> ModelValidatorResult<NamedRuleError> {
     let mut visited = HashSet::new();
@@ -168,6 +197,31 @@ fn validate_description(description: &Option<String>) -> ModelValidatorResult<Na
     Ok(())
 }
 
+fn validate_policy_compatibility(
+    id: &NamedRuleId,
+    rule: &RequestPolicyRule,
+) -> ModelValidatorResult<NamedRuleError> {
+    let policies = REQUEST_POLICY_REPOSITORY.list();
+    let mut referencing_named_rules = find_all_named_rules_referencing_named_rule(id);
+
+    referencing_named_rules.push(*id);
+
+    for policy in policies {
+        for referencing_named_rule in referencing_named_rules.iter() {
+            if policy.rule.has_named_rule_id(referencing_named_rule) {
+                validate_rule_for_specifier(rule, &policy.specifier).map_err(|e| {
+                    NamedRuleError::IncompatibleWithLinkedPolicy {
+                        policy_id: Uuid::from_bytes(policy.id).hyphenated().to_string(),
+                        error: e.to_string(),
+                    }
+                })?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 impl ModelValidator<NamedRuleError> for NamedRule {
     fn validate(&self) -> ModelValidatorResult<NamedRuleError> {
         validate_name(&self.name)?;
@@ -181,6 +235,9 @@ impl ModelValidator<NamedRuleError> for NamedRule {
 
         validate_uniqueness(&self.id, &self.name)?;
         validate_circular_reference(self)?;
+
+        validate_policy_compatibility(&self.id, &self.rule)?;
+
         Ok(())
     }
 }
@@ -201,8 +258,13 @@ mod test {
 
     use crate::{
         errors::NamedRuleError,
-        models::{NamedRule, RequestPolicyRule},
+        models::{
+            request_specifier::RequestSpecifier, AddNamedRuleOperationInput,
+            AddRequestPolicyOperationInput, EditNamedRuleOperationInput, MetadataItem, NamedRule,
+            RequestPolicyRule,
+        },
         repositories::NAMED_RULE_REPOSITORY,
+        services::{NAMED_RULE_SERVICE, REQUEST_POLICY_SERVICE},
     };
 
     use super::{validate_description, validate_name};
@@ -308,5 +370,94 @@ mod test {
             named_rule_1.validate(),
             Err(NamedRuleError::CircularReference)
         ));
+    }
+
+    #[test]
+    fn test_policy_compatibility() {
+        let named_rule = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                name: "test".to_string(),
+                description: None,
+                rule: RequestPolicyRule::AutoApproved,
+            })
+            .expect("Named rule should be created.");
+
+        REQUEST_POLICY_SERVICE
+            .add_request_policy(AddRequestPolicyOperationInput {
+                specifier: RequestSpecifier::AddUser,
+                rule: RequestPolicyRule::NamedRule(named_rule.id),
+            })
+            .expect("Policy should be created.");
+
+        let named_rule_edit_err = NAMED_RULE_SERVICE
+            .edit(EditNamedRuleOperationInput {
+                named_rule_id: named_rule.id,
+                name: None,
+                description: None,
+                rule: Some(RequestPolicyRule::AllowListed),
+            })
+            .expect_err("Named rule should be invalid.");
+
+        assert_eq!(named_rule_edit_err.code, "INCOMPATIBLE_WITH_LINKED_POLICY");
+
+        let named_rule_edit_err = NAMED_RULE_SERVICE
+            .edit(EditNamedRuleOperationInput {
+                named_rule_id: named_rule.id,
+                name: None,
+                description: None,
+                rule: Some(RequestPolicyRule::AllowListedByMetadata(MetadataItem {
+                    key: "test".to_string(),
+                    value: "test".to_string(),
+                })),
+            })
+            .expect_err("Named rule should be invalid.");
+
+        assert_eq!(named_rule_edit_err.code, "INCOMPATIBLE_WITH_LINKED_POLICY");
+
+        NAMED_RULE_SERVICE
+            .edit(EditNamedRuleOperationInput {
+                named_rule_id: named_rule.id,
+                name: None,
+                description: None,
+                rule: Some(RequestPolicyRule::AutoApproved),
+            })
+            .expect("Named rule should be valid.");
+    }
+
+    #[test]
+    fn test_indirect_policy_compatibility() {
+        let named_rule_1 = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                name: "test_1".to_string(),
+                description: None,
+                rule: RequestPolicyRule::AutoApproved,
+            })
+            .expect("Named rule should be created.");
+
+        let named_rule_2 = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                name: "test_2".to_string(),
+                description: None,
+                rule: RequestPolicyRule::NamedRule(named_rule_1.id),
+            })
+            .expect("Named rule should be created.");
+
+        REQUEST_POLICY_SERVICE
+            .add_request_policy(AddRequestPolicyOperationInput {
+                specifier: RequestSpecifier::AddUser,
+                rule: RequestPolicyRule::NamedRule(named_rule_2.id),
+            })
+            .expect("Policy should be created.");
+
+        let named_rule_edit_err = NAMED_RULE_SERVICE
+            .edit(EditNamedRuleOperationInput {
+                named_rule_id: named_rule_1.id,
+                name: None,
+                description: None,
+                rule: Some(RequestPolicyRule::AllowListed),
+            })
+            .expect_err("Named rule should be invalid.");
+
+        assert_eq!(named_rule_edit_err.code, "INCOMPATIBLE_WITH_LINKED_POLICY");
     }
 }

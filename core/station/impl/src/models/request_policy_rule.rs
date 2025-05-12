@@ -24,6 +24,7 @@ use orbit_essentials::{
     repository::Repository,
 };
 use station_api::EvaluationSummaryReasonDTO;
+use std::fmt;
 use std::{cmp, hash::Hash};
 use std::{collections::HashSet, sync::Arc};
 use uuid::Uuid;
@@ -44,6 +45,22 @@ pub enum RequestPolicyRule {
     NamedRule(NamedRuleId),
 }
 
+impl fmt::Display for RequestPolicyRule {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RequestPolicyRule::AutoApproved => write!(f, "AutoApproved"),
+            RequestPolicyRule::QuorumPercentage(_, _) => write!(f, "QuorumPercentage"),
+            RequestPolicyRule::Quorum(_, _) => write!(f, "Quorum"),
+            RequestPolicyRule::AllowListedByMetadata(_) => write!(f, "AllowListedByMetadata"),
+            RequestPolicyRule::AllowListed => write!(f, "AllowListed"),
+            RequestPolicyRule::Or(_) => write!(f, "Or"),
+            RequestPolicyRule::And(_) => write!(f, "And"),
+            RequestPolicyRule::Not(_) => write!(f, "Not"),
+            RequestPolicyRule::NamedRule(_) => write!(f, "NamedRule"),
+        }
+    }
+}
+
 impl RequestPolicyRule {
     pub fn has_named_rule_id(&self, named_rule_id: &NamedRuleId) -> bool {
         match self {
@@ -59,6 +76,19 @@ impl RequestPolicyRule {
             | RequestPolicyRule::AllowListed => false,
         }
     }
+
+    // pub fn has_named_rule_id_recursive(&self, named_rule_id: &NamedRuleId) -> bool {
+    //     if self.has_named_rule_id(named_rule_id) {
+    //         return true;
+    //     } else {
+
+    //     match self {
+    //         RequestPolicyRule::NamedRule(id) => {
+
+    //         }
+    //         _ => false
+    //     }
+    // }
 }
 
 impl ModelValidator<ValidationError> for RequestPolicyRule {
