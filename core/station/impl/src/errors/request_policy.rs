@@ -15,7 +15,7 @@ pub enum RequestPolicyError {
     /// Request policy with id `{id}` already exists.
     #[error(r#"Request policy with id `{id}` already exists."#)]
     IdAlreadyExists { id: String },
-    /// The rule `{rule}` is invalid for the specifier `{specifier}`.
+    /// The rule `{invalid_rule}` is invalid for the specifier `{specifier}`.
     #[error(r#"The rule `{invalid_rule}` is invalid for the specifier `{specifier}`."#)]
     InvalidRuleForSpecifier {
         invalid_rule: String,
