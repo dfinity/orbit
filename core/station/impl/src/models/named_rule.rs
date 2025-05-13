@@ -460,4 +460,49 @@ mod test {
 
         assert_eq!(named_rule_edit_err.code, "INCOMPATIBLE_WITH_LINKED_POLICY");
     }
+
+    #[test]
+    fn test_indirect_policy_compatibility_root_change() {
+        let named_rule_1 = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                name: "test_1".to_string(),
+                description: None,
+                rule: RequestPolicyRule::AutoApproved,
+            })
+            .expect("Named rule should be created.");
+
+        let named_rule_2 = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                name: "test_2".to_string(),
+                description: None,
+                rule: RequestPolicyRule::NamedRule(named_rule_1.id),
+            })
+            .expect("Named rule should be created.");
+
+        let named_rule_3 = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                name: "test_3".to_string(),
+                description: None,
+                rule: RequestPolicyRule::AllowListed,
+            })
+            .expect("Named rule should be created.");
+
+        REQUEST_POLICY_SERVICE
+            .add_request_policy(AddRequestPolicyOperationInput {
+                specifier: RequestSpecifier::AddUser,
+                rule: RequestPolicyRule::NamedRule(named_rule_2.id),
+            })
+            .expect("Policy should be created.");
+
+        let named_rule_edit_err = NAMED_RULE_SERVICE
+            .edit(EditNamedRuleOperationInput {
+                named_rule_id: named_rule_2.id,
+                name: None,
+                description: None,
+                rule: Some(RequestPolicyRule::NamedRule(named_rule_3.id)),
+            })
+            .expect_err("Named rule should be invalid.");
+
+        assert_eq!(named_rule_edit_err.code, "INCOMPATIBLE_WITH_LINKED_POLICY");
+    }
 }
