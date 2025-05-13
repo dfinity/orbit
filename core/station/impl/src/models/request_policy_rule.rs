@@ -76,19 +76,6 @@ impl RequestPolicyRule {
             | RequestPolicyRule::AllowListed => false,
         }
     }
-
-    // pub fn has_named_rule_id_recursive(&self, named_rule_id: &NamedRuleId) -> bool {
-    //     if self.has_named_rule_id(named_rule_id) {
-    //         return true;
-    //     } else {
-
-    //     match self {
-    //         RequestPolicyRule::NamedRule(id) => {
-
-    //         }
-    //         _ => false
-    //     }
-    // }
 }
 
 impl ModelValidator<ValidationError> for RequestPolicyRule {

@@ -209,12 +209,11 @@ fn validate_policy_compatibility(
     for policy in policies {
         for referencing_named_rule in referencing_named_rules.iter() {
             if policy.rule.has_named_rule_id(referencing_named_rule) {
-                validate_rule_for_specifier(rule, &policy.specifier).map_err(|e| {
-                    NamedRuleError::IncompatibleWithLinkedPolicy {
+                validate_rule_for_specifier(&policy.rule, &policy.specifier, &[(id, rule)])
+                    .map_err(|e| NamedRuleError::IncompatibleWithLinkedPolicy {
                         policy_id: Uuid::from_bytes(policy.id).hyphenated().to_string(),
                         error: e.to_string(),
-                    }
-                })?;
+                    })?;
             }
         }
     }
@@ -236,6 +235,7 @@ impl ModelValidator<NamedRuleError> for NamedRule {
         validate_uniqueness(&self.id, &self.name)?;
         validate_circular_reference(self)?;
 
+        // validate_policy_compatibility assumes no circular references.
         validate_policy_compatibility(&self.id, &self.rule)?;
 
         Ok(())
@@ -504,5 +504,23 @@ mod test {
             .expect_err("Named rule should be invalid.");
 
         assert_eq!(named_rule_edit_err.code, "INCOMPATIBLE_WITH_LINKED_POLICY");
+    }
+
+    #[test]
+    fn test_nested_rule_compatibility() {
+        let named_rule = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                name: "test_1".to_string(),
+                description: None,
+                rule: RequestPolicyRule::And(vec![RequestPolicyRule::AllowListed]),
+            })
+            .expect("Named rule should be created.");
+
+        REQUEST_POLICY_SERVICE
+            .add_request_policy(AddRequestPolicyOperationInput {
+                specifier: RequestSpecifier::AddUser,
+                rule: RequestPolicyRule::NamedRule(named_rule.id),
+            })
+            .expect_err("Policy should be incompatible with the named rule.");
     }
 }
