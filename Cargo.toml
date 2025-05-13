@@ -36,7 +36,7 @@ byteorder = "1.5"
 canbench-rs = "0.1.1"
 candid = "0.10.3"
 candid_parser = "0.1.3"
-canfund = "0.7.0"
+canfund = "0.8.3"
 cap-std = "3.4.1"
 ciborium = "0.2.2"
 clap = { version = "4.5.7", features = ["derive"] }
