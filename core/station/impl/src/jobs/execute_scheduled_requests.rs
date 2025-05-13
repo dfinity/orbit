@@ -107,12 +107,20 @@ impl Job {
                 .await
                 .map_err(|e| (request, e))
         } else {
-            call::<_, (_,)>(id(), "try_execute_request", (request.id,))
-                .await
-                .map(|res| res.0)
-                .map_err(|(_code, msg)| {
-                    (request, RequestExecuteError::InternalError { reason: msg })
-                })
+            call::<_, (Result<(), RequestExecuteError>,)>(
+                id(),
+                "try_execute_request",
+                (request.id,),
+            )
+            .await
+            .map_err(|(_code, msg)| {
+                (
+                    request.clone(),
+                    RequestExecuteError::InternalError { reason: msg },
+                )
+            })?
+            .0
+            .map_err(|e| (request, e))
         }
     }
 }
