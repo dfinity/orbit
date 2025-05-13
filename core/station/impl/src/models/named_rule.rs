@@ -197,6 +197,8 @@ fn validate_description(description: &Option<String>) -> ModelValidatorResult<Na
     Ok(())
 }
 
+/// Validates that the named rule is compatible with the policies that reference it.
+/// It traverses all linked policy rules recursively and assumes no circular references.
 fn validate_policy_compatibility(
     id: &NamedRuleId,
     rule: &RequestPolicyRule,

@@ -45,18 +45,73 @@ pub enum RequestPolicyRule {
     NamedRule(NamedRuleId),
 }
 
+// Implement Display with circular reference detection for NamedRules
 impl fmt::Display for RequestPolicyRule {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut visited = HashSet::new();
+        self.fmt_with_context(f, &mut visited)
+    }
+}
+
+impl RequestPolicyRule {
+    fn fmt_with_context(
+        &self,
+        f: &mut fmt::Formatter<'_>,
+        visited: &mut HashSet<NamedRuleId>,
+    ) -> fmt::Result {
         match self {
             RequestPolicyRule::AutoApproved => write!(f, "AutoApproved"),
             RequestPolicyRule::QuorumPercentage(_, _) => write!(f, "QuorumPercentage"),
             RequestPolicyRule::Quorum(_, _) => write!(f, "Quorum"),
             RequestPolicyRule::AllowListedByMetadata(_) => write!(f, "AllowListedByMetadata"),
             RequestPolicyRule::AllowListed => write!(f, "AllowListed"),
-            RequestPolicyRule::Or(_) => write!(f, "Or"),
-            RequestPolicyRule::And(_) => write!(f, "And"),
-            RequestPolicyRule::Not(_) => write!(f, "Not"),
-            RequestPolicyRule::NamedRule(_) => write!(f, "NamedRule"),
+            RequestPolicyRule::Or(rules) => {
+                write!(f, "Or(")?;
+                for (i, rule) in rules.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ",")?;
+                    }
+                    rule.fmt_with_context(f, visited)?;
+                }
+                write!(f, ")")
+            }
+            RequestPolicyRule::And(rules) => {
+                write!(f, "And(")?;
+                for (i, rule) in rules.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ",")?;
+                    }
+                    rule.fmt_with_context(f, visited)?;
+                }
+                write!(f, ")")
+            }
+            RequestPolicyRule::Not(rule) => {
+                write!(f, "Not(")?;
+                rule.fmt_with_context(f, visited)?;
+                write!(f, ")")
+            }
+            RequestPolicyRule::NamedRule(id) => {
+                if !visited.insert(*id) {
+                    return write!(
+                        f,
+                        "NamedRule(CIRCULAR_REFERENCE {})",
+                        Uuid::from_bytes(*id).hyphenated()
+                    );
+                }
+                write!(f, "NamedRule(")?;
+                if let Some(named_rule) = NAMED_RULE_REPOSITORY.get(&NamedRuleKey { id: *id }) {
+                    named_rule.rule.fmt_with_context(f, visited)?;
+                } else {
+                    write!(
+                        f,
+                        "MISSING_NAMED_RULE {}",
+                        Uuid::from_bytes(*id).hyphenated()
+                    )?;
+                }
+                write!(f, ")")?;
+                visited.remove(id);
+                Ok(())
+            }
         }
     }
 }
@@ -624,7 +679,7 @@ pub mod request_policy_rule_test_utils {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::core::validation::disable_mock_resource_validation;
+    use crate::{core::validation::disable_mock_resource_validation, models::NamedRule};
 
     #[test]
     fn fail_critera_with_non_existent_user_specifier() {
@@ -708,6 +763,117 @@ mod test {
         assert_eq!(
             request_result.get_status_reason(),
             vec![EvaluationSummaryReason::AllowListMetadata]
+        );
+    }
+
+    #[test]
+    fn test_rule_to_string() {
+        assert_eq!(RequestPolicyRule::AutoApproved.to_string(), "AutoApproved");
+        assert_eq!(
+            RequestPolicyRule::QuorumPercentage(UserSpecifier::Id(vec![[0; 16]]), Percentage(100))
+                .to_string(),
+            "QuorumPercentage"
+        );
+        assert_eq!(
+            RequestPolicyRule::Quorum(UserSpecifier::Id(vec![[0; 16]]), 1).to_string(),
+            "Quorum"
+        );
+        assert_eq!(
+            RequestPolicyRule::AllowListedByMetadata(MetadataItem {
+                key: "k".to_owned(),
+                value: "v".to_owned(),
+            })
+            .to_string(),
+            "AllowListedByMetadata"
+        );
+        assert_eq!(RequestPolicyRule::AllowListed.to_string(), "AllowListed");
+        assert_eq!(
+            RequestPolicyRule::Or(vec![
+                RequestPolicyRule::AllowListed,
+                RequestPolicyRule::AutoApproved,
+            ])
+            .to_string(),
+            "Or(AllowListed,AutoApproved)"
+        );
+        assert_eq!(
+            RequestPolicyRule::And(vec![
+                RequestPolicyRule::AllowListed,
+                RequestPolicyRule::AutoApproved,
+            ])
+            .to_string(),
+            "And(AllowListed,AutoApproved)"
+        );
+        assert_eq!(
+            RequestPolicyRule::Not(Box::new(RequestPolicyRule::AllowListed)).to_string(),
+            "Not(AllowListed)"
+        );
+        assert_eq!(
+            RequestPolicyRule::NamedRule([1u8; 16]).to_string(),
+            "NamedRule(MISSING_NAMED_RULE 01010101-0101-0101-0101-010101010101)"
+        );
+
+        NAMED_RULE_REPOSITORY.insert(
+            NamedRuleKey { id: [1u8; 16] },
+            NamedRule {
+                id: [1u8; 16],
+                name: "test".to_owned(),
+                description: None,
+                rule: RequestPolicyRule::And(vec![
+                    RequestPolicyRule::AllowListed,
+                    RequestPolicyRule::AutoApproved,
+                ]),
+            },
+        );
+
+        assert_eq!(
+            RequestPolicyRule::NamedRule([1u8; 16]).to_string(),
+            "NamedRule(And(AllowListed,AutoApproved))"
+        );
+    }
+
+    #[test]
+    fn test_rule_to_string_with_circular_reference() {
+        let rule1_id = [1u8; 16];
+        let rule2_id = [2u8; 16];
+
+        NAMED_RULE_REPOSITORY.insert(
+            NamedRuleKey { id: rule1_id },
+            NamedRule {
+                id: rule1_id,
+                name: "test".to_owned(),
+                description: None,
+                rule: RequestPolicyRule::NamedRule(rule1_id),
+            },
+        );
+
+        assert_eq!(
+            RequestPolicyRule::NamedRule(rule1_id).to_string(),
+            "NamedRule(NamedRule(CIRCULAR_REFERENCE 01010101-0101-0101-0101-010101010101))"
+        );
+
+        NAMED_RULE_REPOSITORY.insert(
+            NamedRuleKey { id: rule1_id },
+            NamedRule {
+                id: rule1_id,
+                name: "test".to_owned(),
+                description: None,
+                rule: RequestPolicyRule::NamedRule(rule2_id),
+            },
+        );
+
+        NAMED_RULE_REPOSITORY.insert(
+            NamedRuleKey { id: rule2_id },
+            NamedRule {
+                id: rule2_id,
+                name: "test".to_owned(),
+                description: None,
+                rule: RequestPolicyRule::NamedRule(rule1_id),
+            },
+        );
+
+        assert_eq!(
+            RequestPolicyRule::NamedRule(rule1_id).to_string(),
+            "NamedRule(NamedRule(NamedRule(CIRCULAR_REFERENCE 01010101-0101-0101-0101-010101010101)))"
         );
     }
 }

@@ -58,9 +58,18 @@ impl From<MatchError> for EvaluateError {
 }
 
 /// Check for compatibility between a rule and a specifier:
-/// - AllowListed and AllowListedByMetadata are compatible only with Transfer.
+/// - AllowListed and AllowListedByMetadata are compatible only with Transfer requests.
 ///
 pub fn validate_rule_for_specifier(
+    rule: &RequestPolicyRule,
+    specifier: &RequestSpecifier,
+    updated_named_rules: &[(&NamedRuleId, &RequestPolicyRule)],
+) -> ModelValidatorResult<RequestPolicyError> {
+    _validate_rule_for_specifier(rule, rule, specifier, updated_named_rules)
+}
+
+fn _validate_rule_for_specifier(
+    root_rule: &RequestPolicyRule,
     rule: &RequestPolicyRule,
     specifier: &RequestSpecifier,
     updated_named_rules: &[(&NamedRuleId, &RequestPolicyRule)],
@@ -73,20 +82,21 @@ pub fn validate_rule_for_specifier(
             match specifier {
                 RequestSpecifier::Transfer(_) => Ok(()),
                 _ => Err(RequestPolicyError::InvalidRuleForSpecifier {
-                    rule: rule.to_string(),
+                    invalid_rule: rule.to_string(),
                     specifier: specifier.to_string(),
+                    rule: root_rule.to_string(),
                 }),
             }
         }
 
         RequestPolicyRule::And(rules) | RequestPolicyRule::Or(rules) => {
             for rule in rules {
-                validate_rule_for_specifier(rule, specifier, updated_named_rules)?;
+                _validate_rule_for_specifier(root_rule, rule, specifier, updated_named_rules)?;
             }
             Ok(())
         }
         RequestPolicyRule::Not(rule) => {
-            validate_rule_for_specifier(rule, specifier, updated_named_rules)
+            _validate_rule_for_specifier(root_rule, rule, specifier, updated_named_rules)
         }
         RequestPolicyRule::NamedRule(named_rule_id) => {
             let rule = if let Some((_, rule)) = updated_named_rules
@@ -107,7 +117,7 @@ pub fn validate_rule_for_specifier(
                 named_rule.rule
             };
 
-            validate_rule_for_specifier(&rule, specifier, updated_named_rules)
+            _validate_rule_for_specifier(root_rule, &rule, specifier, updated_named_rules)
         }
     }
 }
@@ -242,8 +252,9 @@ pub mod request_policy_test_utils {
                 RequestSpecifier::AddAccount,
                 RequestPolicyRule::AllowListed,
                 Err(RequestPolicyError::InvalidRuleForSpecifier {
-                    rule: "AllowListed".to_string(),
+                    invalid_rule: "AllowListed".to_string(),
                     specifier: "AddAccount".to_string(),
+                    rule: "AllowListed".to_string(),
                 }),
             ),
             (
@@ -253,24 +264,27 @@ pub mod request_policy_test_utils {
                     value: "test".to_string(),
                 }),
                 Err(RequestPolicyError::InvalidRuleForSpecifier {
-                    rule: "AllowListedByMetadata".to_string(),
+                    invalid_rule: "AllowListedByMetadata".to_string(),
                     specifier: "AddAccount".to_string(),
+                    rule: "AllowListedByMetadata".to_string(),
                 }),
             ),
             (
                 RequestSpecifier::AddAccount,
                 RequestPolicyRule::NamedRule(incompatible_rule_1.id),
                 Err(RequestPolicyError::InvalidRuleForSpecifier {
-                    rule: "AllowListed".to_string(),
+                    invalid_rule: "AllowListed".to_string(),
                     specifier: "AddAccount".to_string(),
+                    rule: "NamedRule(And(AllowListed,AutoApproved))".to_string(),
                 }),
             ),
             (
                 RequestSpecifier::AddAccount,
                 RequestPolicyRule::NamedRule(incompatible_rule_2.id),
                 Err(RequestPolicyError::InvalidRuleForSpecifier {
-                    rule: "AllowListedByMetadata".to_string(),
+                    invalid_rule: "AllowListedByMetadata".to_string(),
                     specifier: "AddAccount".to_string(),
+                    rule: "NamedRule(AllowListedByMetadata)".to_string(),
                 }),
             ),
             (
