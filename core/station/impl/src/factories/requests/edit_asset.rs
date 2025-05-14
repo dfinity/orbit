@@ -18,19 +18,14 @@ impl Create<station_api::EditAssetOperationInput> for EditAssetRequestCreate {
         input: station_api::CreateRequestInput,
         operation_input: station_api::EditAssetOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::EditAsset(EditAssetOperation {
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "Edit asset".to_string()),
-            input.summary,
+            "Edit asset".to_string(),
         );
 
         Ok(request)
