@@ -131,30 +131,6 @@ fn collect_child_ids(rule: &RequestPolicyRule) -> Vec<NamedRuleId> {
     ids
 }
 
-fn find_all_named_rules_referencing_named_rule(named_rule_id: &NamedRuleId) -> Vec<NamedRuleId> {
-    let mut ids = HashSet::new();
-
-    let all_named_rules = NAMED_RULE_REPOSITORY.list();
-
-    loop {
-        let mut found_new_named_rules = false;
-        for named_rule in all_named_rules.iter() {
-            if (named_rule.rule.has_named_rule_id(named_rule_id)
-                || ids.iter().any(|id| named_rule.rule.has_named_rule_id(id)))
-                && ids.insert(named_rule.id)
-            {
-                found_new_named_rules = true;
-            }
-        }
-
-        if !found_new_named_rules {
-            break;
-        }
-    }
-
-    ids.into_iter().collect()
-}
-
 /// Validates that the named rule does not have a circular reference.
 fn validate_circular_reference(rule: &NamedRule) -> ModelValidatorResult<NamedRuleError> {
     let mut visited = HashSet::new();
@@ -198,26 +174,19 @@ fn validate_description(description: &Option<String>) -> ModelValidatorResult<Na
 }
 
 /// Validates that the named rule is compatible with the policies that reference it.
-/// It traverses all linked policy rules recursively and assumes no circular references.
+/// It traverses all policy rules recursively and assumes no circular references.
 fn validate_policy_compatibility(
     id: &NamedRuleId,
     rule: &RequestPolicyRule,
 ) -> ModelValidatorResult<NamedRuleError> {
     let policies = REQUEST_POLICY_REPOSITORY.list();
-    let mut referencing_named_rules = find_all_named_rules_referencing_named_rule(id);
-
-    referencing_named_rules.push(*id);
-
     for policy in policies {
-        for referencing_named_rule in referencing_named_rules.iter() {
-            if policy.rule.has_named_rule_id(referencing_named_rule) {
-                validate_rule_for_specifier(&policy.rule, &policy.specifier, &[(id, rule)])
-                    .map_err(|e| NamedRuleError::IncompatibleWithLinkedPolicy {
-                        policy_id: Uuid::from_bytes(policy.id).hyphenated().to_string(),
-                        error: e.to_string(),
-                    })?;
-            }
-        }
+        validate_rule_for_specifier(&policy.rule, &policy.specifier, &[(id, rule)]).map_err(
+            |e| NamedRuleError::IncompatibleWithLinkedPolicy {
+                policy_id: Uuid::from_bytes(policy.id).hyphenated().to_string(),
+                error: e.to_string(),
+            },
+        )?;
     }
 
     Ok(())
