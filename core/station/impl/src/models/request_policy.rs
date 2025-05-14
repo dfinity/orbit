@@ -81,11 +81,39 @@ fn _validate_rule_for_specifier(
         RequestPolicyRule::AllowListed | RequestPolicyRule::AllowListedByMetadata(_) => {
             match specifier {
                 RequestSpecifier::Transfer(_) => Ok(()),
-                _ => Err(RequestPolicyError::InvalidRuleForSpecifier {
+                RequestSpecifier::AddAccount
+                | RequestSpecifier::AddUser
+                | RequestSpecifier::EditAccount(..)
+                | RequestSpecifier::EditUser(..)
+                | RequestSpecifier::AddAddressBookEntry
+                | RequestSpecifier::EditAddressBookEntry(..)
+                | RequestSpecifier::RemoveAddressBookEntry(..)
+                | RequestSpecifier::SetDisasterRecovery
+                | RequestSpecifier::CreateExternalCanister
+                | RequestSpecifier::ChangeExternalCanister(..)
+                | RequestSpecifier::CallExternalCanister(..)
+                | RequestSpecifier::FundExternalCanister(..)
+                | RequestSpecifier::EditPermission(..)
+                | RequestSpecifier::AddRequestPolicy
+                | RequestSpecifier::EditRequestPolicy(..)
+                | RequestSpecifier::RemoveRequestPolicy(..)
+                | RequestSpecifier::AddUserGroup
+                | RequestSpecifier::EditUserGroup(..)
+                | RequestSpecifier::RemoveUserGroup(..)
+                | RequestSpecifier::ManageSystemInfo
+                | RequestSpecifier::SystemUpgrade
+                | RequestSpecifier::AddAsset
+                | RequestSpecifier::EditAsset(..)
+                | RequestSpecifier::RemoveAsset(..)
+                | RequestSpecifier::AddNamedRule
+                | RequestSpecifier::EditNamedRule(..)
+                | RequestSpecifier::RemoveNamedRule(..) => {
+                    Err(RequestPolicyError::InvalidRuleForSpecifier {
                     invalid_rule: rule.to_string(),
                     specifier: specifier.to_string(),
                     rule: root_rule.to_string(),
-                }),
+                    })
+                }
             }
         }
 
