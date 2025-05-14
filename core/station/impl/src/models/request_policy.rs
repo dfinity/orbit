@@ -109,9 +109,9 @@ fn _validate_rule_for_specifier(
                 | RequestSpecifier::EditNamedRule(..)
                 | RequestSpecifier::RemoveNamedRule(..) => {
                     Err(RequestPolicyError::InvalidRuleForSpecifier {
-                    invalid_rule: rule.to_string(),
-                    specifier: specifier.to_string(),
-                    rule: root_rule.to_string(),
+                        invalid_rule: rule.to_string(),
+                        specifier: specifier.to_string(),
+                        policy_rule: root_rule.to_string(),
                     })
                 }
             }
@@ -282,7 +282,7 @@ pub mod request_policy_test_utils {
                 Err(RequestPolicyError::InvalidRuleForSpecifier {
                     invalid_rule: "AllowListed".to_string(),
                     specifier: "AddAccount".to_string(),
-                    rule: "AllowListed".to_string(),
+                    policy_rule: "AllowListed".to_string(),
                 }),
             ),
             (
@@ -294,7 +294,7 @@ pub mod request_policy_test_utils {
                 Err(RequestPolicyError::InvalidRuleForSpecifier {
                     invalid_rule: "AllowListedByMetadata".to_string(),
                     specifier: "AddAccount".to_string(),
-                    rule: "AllowListedByMetadata".to_string(),
+                    policy_rule: "AllowListedByMetadata".to_string(),
                 }),
             ),
             (
@@ -303,7 +303,7 @@ pub mod request_policy_test_utils {
                 Err(RequestPolicyError::InvalidRuleForSpecifier {
                     invalid_rule: "AllowListed".to_string(),
                     specifier: "AddAccount".to_string(),
-                    rule: "NamedRule(And(AllowListed,AutoApproved))".to_string(),
+                    policy_rule: "NamedRule(And(AllowListed,AutoApproved))".to_string(),
                 }),
             ),
             (
@@ -312,7 +312,7 @@ pub mod request_policy_test_utils {
                 Err(RequestPolicyError::InvalidRuleForSpecifier {
                     invalid_rule: "AllowListedByMetadata".to_string(),
                     specifier: "AddAccount".to_string(),
-                    rule: "NamedRule(AllowListedByMetadata)".to_string(),
+                    policy_rule: "NamedRule(AllowListedByMetadata)".to_string(),
                 }),
             ),
             (

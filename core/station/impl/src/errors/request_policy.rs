@@ -15,12 +15,12 @@ pub enum RequestPolicyError {
     /// Request policy with id `{id}` already exists.
     #[error(r#"Request policy with id `{id}` already exists."#)]
     IdAlreadyExists { id: String },
-    /// The rule `{invalid_rule}` is invalid for the specifier `{specifier}`.
-    #[error(r#"The rule `{invalid_rule}` is invalid for the specifier `{specifier}`."#)]
+    /// The rule `{invalid_rule}` is invalid for the policy with specifier `{specifier}` and rule `{policy_rule}`.
+    #[error(r#"The rule `{invalid_rule}` is invalid for the policy with specifier `{specifier}` and rule `{policy_rule}`."#)]
     InvalidRuleForSpecifier {
         invalid_rule: String,
         specifier: String,
-        rule: String,
+        policy_rule: String,
     },
 }
 
@@ -39,11 +39,11 @@ impl DetailableError for RequestPolicyError {
             RequestPolicyError::InvalidRuleForSpecifier {
                 invalid_rule,
                 specifier,
-                rule,
+                policy_rule,
             } => {
                 details.insert("invalid_rule".to_string(), invalid_rule.to_string());
                 details.insert("specifier".to_string(), specifier.to_string());
-                details.insert("rule".to_string(), rule.to_string());
+                details.insert("rule".to_string(), policy_rule.to_string());
                 Some(details)
             }
         }
