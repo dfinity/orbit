@@ -19,14 +19,14 @@
       :rules="[requiredRule]"
       variant="underlined"
       density="comfortable"
-      :disabled="props.disabled.value"
+      :readonly="props.disabled.value"
     />
     <VTextField
       v-model="model.value"
       :label="$t('terms.value')"
       variant="underlined"
       density="comfortable"
-      :disabled="props.disabled.value"
+      :readonly="props.disabled.value"
     />
   </div>
 </template>

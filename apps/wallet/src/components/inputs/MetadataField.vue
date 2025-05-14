@@ -14,23 +14,23 @@
       <tbody>
         <tr v-for="(item, idx) in model" :key="idx">
           <template v-if="!hideKeys.includes(item.key)">
-            <td class="px-0 py-2">
+            <td class="py-2">
               <VTextField
                 v-model="item.key"
                 :readonly="props.readonly.value"
                 :disabled="props.disabled.value"
-                variant="filled"
+                :variant="props.readonly.value ? 'plain' : 'filled'"
                 density="compact"
                 :rules="[requiredRule]"
                 hide-details
               />
             </td>
-            <td class="px-1">
+            <td>
               <VTextField
                 v-model="item.value"
                 :readonly="props.readonly.value"
                 :disabled="props.disabled.value"
-                variant="filled"
+                :variant="props.readonly.value ? 'plain' : 'filled'"
                 density="compact"
                 hide-details
               />
@@ -48,7 +48,7 @@
             </td>
           </template>
         </tr>
-        <tr>
+        <tr v-if="!props.readonly.value && !props.disabled.value">
           <td class="px-0" colspan="3">
             <VBtn
               size="small"

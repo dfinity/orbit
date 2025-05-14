@@ -7,23 +7,36 @@
       :label="$t('terms.id')"
       variant="plain"
       density="compact"
-      disabled
+      readonly
     />
 
-    <SpecifierSelector
-      v-model="model.specifier"
-      :disabled="isViewMode"
-      @changed-variant="onChangedVariant"
-    />
+    <DiffView
+      :before-value="props.currentRequestPolicy.value?.specifier"
+      :after-value="model.specifier"
+    >
+      <template #default="{ value, diffMode }">
+        <SpecifierSelector
+          :model-value="value"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (model.specifier = val)"
+          @changed-variant="() => diffMode === 'after' && onChangedVariant()"
+        />
+      </template>
+    </DiffView>
 
     <template v-if="model.specifier">
       <div class="mt-4 mb-2 text-body-2">{{ $t('terms.rule') }}</div>
-      <RuleBuilder
-        v-model="model.rule"
-        :specifier="model.specifier"
-        :disabled="isViewMode"
-        @remove="model.rule = undefined"
-      />
+      <DiffView :before-value="props.currentRequestPolicy.value?.rule" :after-value="model.rule">
+        <template #default="{ value, diffMode }">
+          <RuleBuilder
+            :model-value="value"
+            :specifier="value ? props.modelValue.value.specifier! : undefined"
+            :disabled="isViewMode || diffMode === 'before'"
+            @update:model-value="val => diffMode === 'after' && (model.rule = val)"
+            @remove="diffMode === 'after' && (model.rule = undefined)"
+          />
+        </template>
+      </DiffView>
 
       <span v-if="!model.rule && isViewMode">
         {{ $t('terms.none') }}
@@ -36,6 +49,7 @@
 import { computed, ref, toRefs } from 'vue';
 import RuleBuilder from '~/components/request-policies/rule/RuleBuilder.vue';
 import SpecifierSelector from '~/components/request-policies/specifier/SpecifierSelector.vue';
+import DiffView from '~/components/requests/DiffView.vue';
 import { RequestPolicy } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
 
@@ -47,6 +61,7 @@ export type RequestPolicyFormProps = {
     id?: boolean;
     specifier?: boolean;
   };
+  currentRequestPolicy?: RequestPolicy;
 };
 
 const form = ref<VFormValidation | null>(null);
@@ -58,6 +73,7 @@ const input = withDefaults(defineProps<RequestPolicyFormProps>(), {
     specifier: true,
   }),
   mode: 'edit',
+  currentRequestPolicy: undefined,
 });
 const props = toRefs(input);
 

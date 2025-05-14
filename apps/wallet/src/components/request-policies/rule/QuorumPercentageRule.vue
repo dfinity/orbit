@@ -13,20 +13,20 @@
         @click="emit('remove')"
       />
     </div>
-    <div class="d-flex flex-column flex-md-row ga-4 align-center">
+    <div class="d-flex flex-column flex-md-row ga-4 align-md-center">
       <VSlider
         v-model="model.min_approved"
         :min="0"
         :max="100"
         :step="1"
-        class="w-md-50 w-100"
+        class="flex-1-1"
         thumb-label="always"
         thumb-size="12"
         hide-details
-        :disabled="disabledSlider || props.disabled.value"
+        :readonly="disabledSlider || props.disabled.value"
       />
       <span class="text-body-1">{{ $t('terms.of') }}</span>
-      <div class="d-flex flex-row ga-4 w-md-50 w-100">
+      <div class="d-flex flex-row ga-4 flex-1-1">
         <VAutocomplete
           v-model="userTypeModel"
           :label="$t('request_policies.user_type_select')"
@@ -35,7 +35,7 @@
           item-title="text"
           variant="underlined"
           density="comfortable"
-          :disabled="props.disabled.value"
+          :readonly="props.disabled.value"
         />
         <UserGroupAutocomplete
           v-if="variantIs(model.approvers, 'Group')"
