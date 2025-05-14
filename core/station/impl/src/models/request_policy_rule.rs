@@ -92,11 +92,7 @@ impl RequestPolicyRule {
             }
             RequestPolicyRule::NamedRule(id) => {
                 if !visited.insert(*id) {
-                    return write!(
-                        f,
-                        "NamedRule(CIRCULAR_REFERENCE {})",
-                        Uuid::from_bytes(*id).hyphenated()
-                    );
+                    return write!(f, "NamedRule(CIRCULAR_REFERENCE)",);
                 }
                 write!(f, "NamedRule(")?;
                 if let Some(named_rule) = NAMED_RULE_REPOSITORY.get(&NamedRuleKey { id: *id }) {
@@ -848,7 +844,7 @@ mod test {
 
         assert_eq!(
             RequestPolicyRule::NamedRule(rule1_id).to_string(),
-            "NamedRule(NamedRule(CIRCULAR_REFERENCE 01010101-0101-0101-0101-010101010101))"
+            "NamedRule(NamedRule(CIRCULAR_REFERENCE))"
         );
 
         NAMED_RULE_REPOSITORY.insert(
@@ -873,7 +869,7 @@ mod test {
 
         assert_eq!(
             RequestPolicyRule::NamedRule(rule1_id).to_string(),
-            "NamedRule(NamedRule(NamedRule(CIRCULAR_REFERENCE 01010101-0101-0101-0101-010101010101)))"
+            "NamedRule(NamedRule(NamedRule(CIRCULAR_REFERENCE)))"
         );
     }
 }
