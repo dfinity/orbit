@@ -464,10 +464,8 @@ impl RequestService {
         // Must happen after the approval is added to the request to ensure the approval is counted.
         let maybe_evaluation = request.reevaluate().await?;
 
-        request.last_modification_timestamp = next_time();
-
         self.request_repository
-            .insert(request.to_key(), request.to_owned());
+            .save_modified(&mut request, next_time());
 
         if let Some(evaluation) = maybe_evaluation {
             self.evaluation_result_repository
@@ -485,8 +483,8 @@ impl RequestService {
         request.status = RequestStatus::Completed {
             completed_at: request_completed_time,
         };
-        request.last_modification_timestamp = request_completed_time;
-        self.request_repository.insert(request.to_key(), request);
+        self.request_repository
+            .save_modified(&mut request, request_completed_time);
     }
 
     pub async fn fail_request(
@@ -498,9 +496,9 @@ impl RequestService {
         request.status = RequestStatus::Failed {
             reason: Some(reason),
         };
-        request.last_modification_timestamp = request_failed_time;
+
         self.request_repository
-            .insert(request.to_key(), request.to_owned());
+            .save_modified(&mut request, request_failed_time);
 
         self.failed_request_hook(&request).await;
     }
@@ -554,10 +552,8 @@ impl RequestService {
             RequestExecuteStage::Processing(operation) => operation,
         };
 
-        request.last_modification_timestamp = request_execution_time;
-
         self.request_repository
-            .insert(request.to_key(), request.to_owned());
+            .save_modified(&mut request, request_execution_time);
 
         Ok(())
     }

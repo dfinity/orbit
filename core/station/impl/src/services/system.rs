@@ -627,14 +627,14 @@ impl SystemService {
                     request.status = RequestStatus::Completed {
                         completed_at: completed_time,
                     };
-                    request.last_modification_timestamp = completed_time;
 
                     if let RequestOperation::SystemUpgrade(operation) = &mut request.operation {
                         // Clears the module when the operation is completed, this helps to reduce memory usage.
                         operation.input.module = Vec::new();
                     }
 
-                    self.request_repository.insert(request.to_key(), request);
+                    self.request_repository
+                        .save_modified(&mut request, completed_time);
                 }
                 None => {
                     // Do not fail the upgrade if the request is not found, even though this should never happen

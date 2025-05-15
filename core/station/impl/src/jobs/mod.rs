@@ -14,7 +14,6 @@ use crate::{
     repositories::REQUEST_REPOSITORY,
 };
 use async_trait::async_trait;
-use orbit_essentials::repository::Repository;
 
 mod cancel_expired_requests;
 mod execute_created_transfers;
@@ -182,9 +181,8 @@ fn schedule_request_for_execution(request: &Request) -> u64 {
     let mut request = request.clone();
 
     request.status = RequestStatus::Scheduled { scheduled_at };
-    request.last_modification_timestamp = request_processing_time;
 
-    REQUEST_REPOSITORY.insert(request.to_key(), request.to_owned());
+    REQUEST_REPOSITORY.save_modified(&mut request, request_processing_time);
 
     scheduled_at
 }

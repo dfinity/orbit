@@ -12,7 +12,6 @@ use futures::future;
 use orbit_essentials::cdk::api::call::RejectionCode;
 #[cfg(not(test))]
 use orbit_essentials::cdk::{call, id};
-use orbit_essentials::repository::Repository;
 
 #[derive(Debug, Default)]
 pub struct Job {
@@ -65,9 +64,8 @@ impl Job {
             request.status = RequestStatus::Processing {
                 started_at: request_processing_time,
             };
-            request.last_modification_timestamp = request_processing_time;
             self.request_repository
-                .insert(request.to_key(), request.to_owned());
+                .save_modified(request, request_processing_time);
         }
 
         // batch the requests to be executed

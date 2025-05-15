@@ -143,9 +143,9 @@ impl Job {
                         request.status = RequestStatus::Completed {
                             completed_at: transfer_completed_time,
                         };
-                        request.last_modification_timestamp = transfer_completed_time;
+
                         self.request_repository
-                            .insert(request.to_key(), request.to_owned());
+                            .save_modified(&mut request, transfer_completed_time);
                     } else {
                         print(format!(
                             "Error: request not found for transfer {}",
