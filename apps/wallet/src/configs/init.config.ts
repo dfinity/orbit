@@ -12,6 +12,14 @@ if (parts.length && isSemanticVersion(parts[0], 'v')) {
   versionedBaseUrl = `${baseUrl}${parts[0]}/`;
 }
 
+const getHttpGatewayUrl =
+  (isProduction: boolean) =>
+  (canisterId: string): URL => {
+    return isProduction
+      ? new URL(`https://${canisterId}.icp0.io`)
+      : new URL(`http://localhost:4943?canisterId=${canisterId}`);
+  };
+
 const appInitConfig: AppInitConfig = {
   name: import.meta.env.APP_TITLE || 'Orbit',
   version: import.meta.env.APP_VERSION || '0.0.0',
@@ -21,6 +29,7 @@ const appInitConfig: AppInitConfig = {
   buildMode: import.meta.env.APP_BUILD_MODE || 'production',
   isProduction: !!import.meta.env.PROD,
   apiGatewayUrl: new URL(import.meta.env.PROD ? 'https://icp-api.io' : 'http://localhost:4943'),
+  httpGatewayUrl: getHttpGatewayUrl(import.meta.env.PROD),
   derivationOrigin: import.meta.env.PROD ? 'https://orbitwallet.io' : undefined,
   marketingSiteUrl: import.meta.env.APP_MARKETING_SITE_URL,
   locale: {

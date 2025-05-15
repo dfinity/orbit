@@ -10,6 +10,7 @@ export interface AppInitConfig {
   isProduction: boolean;
   buildMode: string;
   apiGatewayUrl: URL;
+  httpGatewayUrl: (canisterId: string) => URL;
   derivationOrigin: string | undefined;
   marketingSiteUrl?: string;
   locale: {

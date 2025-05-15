@@ -46,6 +46,7 @@
         :disabled="saving"
         :append-icon="formMode === SystemUpgradeFormMode.Advanced ? mdiCloudDownload : mdiWrenchCog"
         variant="text"
+        data-test-id="toggle-form-mode-btn"
         @click="toggleFormMode"
       >
         {{
@@ -71,6 +72,7 @@
           :disabled="!elem.value.valid"
           color="primary"
           variant="flat"
+          data-test-id="continue-action-btn"
           @click="goToConfirmation(elem.value.modelValue)"
         >
           {{ $t('terms.continue') }}
@@ -81,6 +83,7 @@
           :disabled="saving"
           color="primary"
           variant="flat"
+          data-test-id="submit-action-btn"
           @click="submit"
         >
           {{ $t('terms.submit') }}

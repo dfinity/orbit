@@ -1,4 +1,4 @@
-import { exec, execSync, spawnSync } from 'child_process';
+import { exec, execSync } from 'child_process';
 import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { homedir } from 'os';
@@ -82,8 +82,12 @@ export const assertReplicaIsHealthy = async (network: string): Promise<void> => 
 };
 
 export const commandExists = (command: string): boolean => {
-  const result = spawnSync('command', ['-v', command], { stdio: 'ignore' });
-  return result.status === 0;
+  try {
+    execSync(`command -v ${command}`, { stdio: 'ignore' });
+    return true;
+  } catch (error) {
+    return false;
+  }
 };
 
 export const assertCommandExists = (command: string): void => {

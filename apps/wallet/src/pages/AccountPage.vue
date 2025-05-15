@@ -77,6 +77,7 @@
                     :items="account.assets"
                     :items-per-page="-1"
                     :hover="true"
+                    data-test-id="account-assets-table"
                     @click:row="
                       (_: unknown, { item }: any) => {
                         $router.push({

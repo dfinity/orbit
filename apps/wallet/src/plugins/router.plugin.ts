@@ -19,6 +19,7 @@ import { i18n, i18nRouteGuard } from './i18n.plugin';
 import { initStateGuard } from './pinia.plugin';
 import { services } from './services.plugin';
 import DashboardPage from '~/pages/DashboardPage.vue';
+import DisasterRecoveryPage from '~/pages/DisasterRecoveryPage.vue';
 
 export const redirectToKey = 'redirectTo';
 
@@ -485,6 +486,18 @@ const router = createRouter({
               check: {
                 session: RequiredSessionState.ConnectedToStation,
                 privileges: [Privilege.ListAddressBookEntries],
+              },
+            },
+          },
+        },
+        {
+          path: 'disaster-recovery',
+          name: Routes.DisasterRecovery,
+          component: DisasterRecoveryPage,
+          meta: {
+            auth: {
+              check: {
+                session: RequiredSessionState.Authenticated,
               },
             },
           },
