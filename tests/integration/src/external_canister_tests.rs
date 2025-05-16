@@ -101,7 +101,7 @@ fn successful_four_eyes_upgrade() {
         change_canister_operation_request,
     );
     match rejected_request.status {
-        RequestStatusDTO::Rejected { .. } => (),
+        RequestStatusDTO::Rejected => (),
         _ => panic!("Request should have been rejected."),
     };
 
@@ -412,7 +412,7 @@ fn create_external_canister_and_check_status() {
         create_canister_operation_request,
     );
     match rejected_request.status {
-        RequestStatusDTO::Rejected { .. } => (),
+        RequestStatusDTO::Rejected => (),
         _ => panic!("Request should have been rejected."),
     };
     match rejected_request.operation {
@@ -723,7 +723,7 @@ fn call_external_canister_test() {
         call_canister_operation_request,
     );
     match rejected_request.status {
-        RequestStatusDTO::Rejected { .. } => (),
+        RequestStatusDTO::Rejected => (),
         _ => panic!("Request should have been rejected."),
     };
 

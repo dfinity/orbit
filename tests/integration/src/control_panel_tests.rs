@@ -641,7 +641,7 @@ fn deploy_station_with_insufficient_cycles() {
 
     // station init args
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
-    let station_init_args = Encode!(&SystemInstallArg::Init(SystemInitArg {
+    let station_init_args = Encode!(&SystemInstallArg::Init(Box::new(SystemInitArg {
         name: "Station".to_string(),
         initial_config: station_api::InitialConfig::WithAllDefaults {
             users: vec![InitUserInput {
@@ -663,7 +663,7 @@ fn deploy_station_with_insufficient_cycles() {
             },
         ),
         fallback_controller: None,
-    }))
+    })))
     .unwrap();
 
     // installing the station should fail due to insufficient balance for deploying the upgrader

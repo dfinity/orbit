@@ -111,10 +111,7 @@ impl RegistryService {
             items: paginated_ids
                 .items
                 .into_iter()
-                .flat_map(|id| match self.get(&id) {
-                    Ok(entry) => Some(entry),
-                    Err(_) => None,
-                })
+                .flat_map(|id| self.get(&id).ok())
                 .collect::<Vec<RegistryEntry>>(),
         })
     }

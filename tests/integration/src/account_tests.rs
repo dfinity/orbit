@@ -102,9 +102,7 @@ fn test_fetch_balances() {
     results.iter().any(|result| {
         result.balances[0]
             .as_ref()
-            .map_or(false, |account_balance| {
-                account_balance.query_state == "fresh"
-            })
+            .is_some_and(|account_balance| account_balance.query_state == "fresh")
     });
     results.iter().any(|result| result.balances[0].is_none());
 
@@ -145,9 +143,7 @@ fn test_fetch_balances() {
     results.iter().all(|result| {
         result.balances[0]
             .as_ref()
-            .map_or(false, |account_balance| {
-                account_balance.query_state == "fresh"
-            })
+            .is_some_and(|account_balance| account_balance.query_state == "fresh")
     });
 
     env.advance_time(Duration::from_secs(10));
@@ -189,15 +185,11 @@ fn test_fetch_balances() {
     results.iter().any(|result| {
         result.balances[0]
             .as_ref()
-            .map_or(false, |account_balance| {
-                account_balance.query_state == "fresh"
-            })
+            .is_some_and(|account_balance| account_balance.query_state == "fresh")
     });
     results.iter().any(|result| {
         result.balances[0]
             .as_ref()
-            .map_or(false, |account_balance| {
-                account_balance.query_state == "stale_refreshing"
-            })
+            .is_some_and(|account_balance| account_balance.query_state == "stale_refreshing")
     });
 }
