@@ -164,7 +164,7 @@ pub fn get_request(
 fn is_request_completed(request: RequestDTO) -> bool {
     match request.status {
         RequestStatusDTO::Completed { .. } => true,
-        RequestStatusDTO::Rejected { .. }
+        RequestStatusDTO::Rejected
         | RequestStatusDTO::Cancelled { .. }
         | RequestStatusDTO::Failed { .. }
         | RequestStatusDTO::Created
@@ -177,7 +177,7 @@ fn is_request_completed(request: RequestDTO) -> bool {
 fn is_request_evaluated(request: RequestDTO) -> bool {
     match request.status {
         RequestStatusDTO::Completed { .. }
-        | RequestStatusDTO::Rejected { .. }
+        | RequestStatusDTO::Rejected
         | RequestStatusDTO::Cancelled { .. }
         | RequestStatusDTO::Failed { .. } => true,
         RequestStatusDTO::Created
@@ -468,7 +468,7 @@ pub fn advance_time_to_burn_cycles(
     }
 
     // advance time to burn the remaining cycles
-    let advance_times_to_burn_cycles = (cycles_to_burn + burned_cycles - 1) / burned_cycles;
+    let advance_times_to_burn_cycles = cycles_to_burn.div_ceil(burned_cycles);
     let burn_duration = Duration::from_secs(jump_secs * advance_times_to_burn_cycles as u64);
     env.advance_time(burn_duration);
     env.tick();
@@ -723,7 +723,7 @@ pub fn create_account(
 
     let account_creation_request_dto = res.0.unwrap().request;
     match account_creation_request_dto.status {
-        RequestStatusDTO::Approved { .. } => {}
+        RequestStatusDTO::Approved => {}
         _ => {
             panic!("request must be approved by now");
         }

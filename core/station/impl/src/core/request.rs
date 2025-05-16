@@ -317,7 +317,7 @@ impl<'a> RequestApprovalRightsEvaluator<'a> {
     }
 }
 
-impl<'a> Evaluate<bool> for RequestApprovalRightsEvaluator<'a> {
+impl Evaluate<bool> for RequestApprovalRightsEvaluator<'_> {
     fn evaluate(&self) -> Result<bool, EvaluateError> {
         let matching_policies = self
             .request
