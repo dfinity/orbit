@@ -494,7 +494,7 @@ impl SystemService {
                 };
                 crate::core::ic_timers::set_timer(std::time::Duration::from_millis(0), move || {
                     use crate::core::ic_cdk::spawn;
-                    spawn(install_canister_post_process_timer(init, system_info))
+                    spawn(install_canister_post_process_timer(*init, system_info))
                 });
             }
             SystemInstall::Upgrade(_) => {
@@ -594,7 +594,7 @@ impl SystemService {
         // Handles the post init process in a one-off timer to allow for inter canister calls,
         // this adds the default canister configurations, deploys the station upgrader and makes sure
         // there are no unintended controllers of the canister.
-        self.install_canister_post_process(system_info, SystemInstall::Init(input));
+        self.install_canister_post_process(system_info, SystemInstall::Init(Box::new(input)));
 
         Ok(())
     }
@@ -627,14 +627,14 @@ impl SystemService {
                     request.status = RequestStatus::Completed {
                         completed_at: completed_time,
                     };
-                    request.last_modification_timestamp = completed_time;
 
                     if let RequestOperation::SystemUpgrade(operation) = &mut request.operation {
                         // Clears the module when the operation is completed, this helps to reduce memory usage.
                         operation.input.module = Vec::new();
                     }
 
-                    self.request_repository.insert(request.to_key(), request);
+                    self.request_repository
+                        .save_modified(&mut request, completed_time);
                 }
                 None => {
                     // Do not fail the upgrade if the request is not found, even though this should never happen
@@ -1051,7 +1051,7 @@ mod init_canister_sync_handlers {
                 user_id,
             )?;
 
-            print(&format!(
+            print(format!(
                 "Added user with principals {:?} and user id {}",
                 user.identities
                     .iter()

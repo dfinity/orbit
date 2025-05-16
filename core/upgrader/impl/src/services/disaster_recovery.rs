@@ -205,7 +205,7 @@ impl DisasterRecoveryService {
             .get()
             .committee
             .as_ref()
-            .map_or(false, |committee| {
+            .is_some_and(|committee| {
                 committee
                     .users
                     .iter()
