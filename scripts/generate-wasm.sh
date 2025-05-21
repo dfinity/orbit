@@ -46,7 +46,7 @@ else
   echo "OS not supported: ${OSTYPE:-$RUNNER_OS}"
   exit 1
 fi
-#curl -sL "${URL}" -o ic-wasm || exit 1
+curl -sL "${URL}" -o ic-wasm || exit 1
 chmod +x ic-wasm
 
 PACKAGE=$(echo $PACKAGE | tr - _)
