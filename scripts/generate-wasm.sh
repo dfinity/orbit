@@ -28,7 +28,7 @@ echo "Ensuring rust toolchain is installed"
 rustup show active-toolchain || rustup toolchain install
 
 echo Building package $PACKAGE
-export RUSTFLAGS="--remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
+export RUSTFLAGS="--remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git --cfg getrandom_backend=\"custom\""
 for l in $(ls ${CARGO_HOME}/registry/src/); do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
 done
@@ -46,7 +46,7 @@ else
   echo "OS not supported: ${OSTYPE:-$RUNNER_OS}"
   exit 1
 fi
-curl -sL "${URL}" -o ic-wasm || exit 1
+#curl -sL "${URL}" -o ic-wasm || exit 1
 chmod +x ic-wasm
 
 PACKAGE=$(echo $PACKAGE | tr - _)
