@@ -45,7 +45,7 @@ dfx-core = { git = "https://github.com/dfinity/sdk.git", rev = "d65717bd6d0c1722
 flate2 = "1.0"
 convert_case = "0.6"
 futures = "0.3"
-getrandom = { version = "0.2", features = ["custom"] }
+getrandom = { version = "0.3.3" }
 hex = "0.4"
 ic-agent = "0.38"
 ic-asset = { git = "https://github.com/dfinity/sdk.git", rev = "d65717bd6d0c172247c37dd23395c9fb13b2ba20" }
@@ -88,6 +88,6 @@ tempfile = "3.10"
 thiserror = "1.0.48"
 time = { version = "0.3", features = ["formatting", "parsing"] }
 tokio = { version = "1.44.2" }
-uuid = { version = "=1.4.1", features = ["serde", "v4"] }
+uuid = { version = "1.16.0", features = ["serde", "v4", "rng-getrandom"] }
 wat = "1.0.52"
 semver = "1.0.23"
