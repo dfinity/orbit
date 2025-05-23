@@ -33,13 +33,25 @@
             </VStepperHeader>
             <VStepperWindow>
               <VStepperWindowItem :value="AccountSetupStep.Configuration">
-                <AccountConfigurationSettings v-model="model.configuration" :mode="props.mode" />
+                <AccountConfigurationSettings
+                  v-model="model.configuration"
+                  :mode="props.mode"
+                  :current-configuration="props.currentModel?.configuration"
+                />
               </VStepperWindowItem>
               <VStepperWindowItem :value="AccountSetupStep.Permission">
-                <AccountAccessSettings v-model="model.permission" :mode="props.mode" />
+                <AccountAccessSettings
+                  v-model="model.permission"
+                  :mode="props.mode"
+                  :current-permissions="props.currentModel?.permission"
+                />
               </VStepperWindowItem>
               <VStepperWindowItem :value="AccountSetupStep.ApprovalPolicy">
-                <AccountRequestPolicySettings v-model="model.request_policy" :mode="props.mode" />
+                <AccountRequestPolicySettings
+                  v-model="model.request_policy"
+                  :mode="props.mode"
+                  :current-policies="props.currentModel?.request_policy"
+                />
               </VStepperWindowItem>
             </VStepperWindow>
           </VStepper>
@@ -102,17 +114,25 @@ export interface AccountSetupWizardModel {
   request_policy: AccountRequestPolicyModel;
 }
 
+export interface CurrentAccountSetupWizardModel {
+  configuration: AccountConfigurationModel;
+  permission: AccountPermissionModel;
+  request_policy: AccountRequestPolicyModel;
+}
+
 const props = withDefaults(
   defineProps<{
     step?: 1 | 2 | 3;
     saving?: boolean;
     mode?: 'view' | 'edit';
     modelValue: AccountSetupWizardModel;
+    currentModel?: CurrentAccountSetupWizardModel;
   }>(),
   {
     step: 1,
     mode: 'view',
     saving: false,
+    currentModel: undefined,
   },
 );
 

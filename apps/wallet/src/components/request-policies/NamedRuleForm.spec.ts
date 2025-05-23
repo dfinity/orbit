@@ -87,7 +87,7 @@ describe('NamedRuleForm', () => {
     expect(wrapper.emitted('valid')).toEqual([[false], [true]]);
   });
 
-  it('handles view mode correctly', () => {
+  it('handles view mode correctly', async () => {
     const wrapper = mount(NamedRuleForm, {
       props: {
         modelValue: {
@@ -102,7 +102,8 @@ describe('NamedRuleForm', () => {
     // In view mode, inputs should be disabled
     const nameInput = wrapper.find('input[name="name"]');
 
-    expect(nameInput.attributes('disabled')).toBeDefined();
+    // Test that the input is disabled in view mode
+    expect(nameInput.attributes('readonly')).toBeDefined();
   });
 
   it('handles form submission', async () => {

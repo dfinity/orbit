@@ -7,7 +7,8 @@
     item-value="value"
     item-title="text"
     density="comfortable"
-    :disabled="props.disabled.value"
+    :variant="props.disabled.value ? 'plain' : undefined"
+    :readonly="props.disabled.value"
   />
 
   <div v-else class="py-2">

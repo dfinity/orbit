@@ -19,7 +19,14 @@
       </template>
     </RequestOperationListRow>
   </div>
-  <UserForm v-else :model-value="formValue" mode="view" />
+  <template v-else>
+    <VAlert v-if="currentUserFailed" type="error" variant="tonal" density="compact" class="mb-4">
+      {{ $t('requests.failed_to_fetch_details') }}
+      <div>{{ currentUserFailed }}</div>
+    </VAlert>
+    <!-- prettier-ignore -->
+    <UserForm  :model-value="formValue" mode="view" :current-user="(currentUser as User)" />
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -28,6 +35,11 @@ import UserForm from '~/components/users/UserForm.vue';
 import { EditUserOperation, Request, User } from '~/generated/station/station.did';
 import { fromUserStatusVariantToEnum } from '~/mappers/users.mapper';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
+import { variantIs } from '~/utils/helper.utils';
+import { services } from '~/plugins/services.plugin';
+import { useAppStore } from '~/stores/app.store';
+import { getErrorMessage } from '~/utils/error.utils';
+import { VAlert } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{
@@ -41,9 +53,15 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
+const isDiffMode = computed(() => !isListMode.value && variantIs(props.request.status, 'Created'));
 const formValue: Ref<Partial<User & { cancelPendingRequests?: boolean }>> = ref({});
 
-onBeforeMount(() => {
+const stationService = services().station;
+const appStore = useAppStore();
+const currentUser = ref<User | undefined>(undefined);
+const currentUserFailed = ref<string | undefined>();
+
+onBeforeMount(async () => {
   const user: Partial<User> = {};
   user.id = props.operation.input.id;
   user.name = props.operation.input.name?.[0];
@@ -64,5 +82,21 @@ onBeforeMount(() => {
         ? props.operation.input.cancel_pending_requests[0]
         : undefined,
   };
+
+  if (isDiffMode.value) {
+    try {
+      currentUser.value = (
+        await stationService.getUser(
+          {
+            user_id: props.operation.input.id,
+          },
+          false,
+        )
+      ).user;
+    } catch (error) {
+      currentUserFailed.value = getErrorMessage(error);
+      appStore.sendErrorNotification(error);
+    }
+  }
 });
 </script>

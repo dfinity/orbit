@@ -29,22 +29,22 @@
   <VRow v-else>
     <VCol cols="12" class="py-2 pl-0">
       <VRadioGroup v-model="displayScope" hide-details>
-        <VRadio :disabled="isViewMode" :value="AllowAuthScope.NoOne">
+        <VRadio :readonly="isViewMode" :value="AllowAuthScope.NoOne">
           <template #label>
             {{ $t('permissions.allow.no_access') }}
           </template>
         </VRadio>
-        <VRadio :disabled="isViewMode" :value="AllowAuthScope.Public">
+        <VRadio :readonly="isViewMode" :value="AllowAuthScope.Public">
           <template #label>
             {{ $t('permissions.allow.public') }}
           </template>
         </VRadio>
-        <VRadio :disabled="isViewMode" :value="AllowAuthScope.LoggedIn">
+        <VRadio :readonly="isViewMode" :value="AllowAuthScope.LoggedIn">
           <template #label>
             {{ $t('permissions.allow.authenticated') }}
           </template>
         </VRadio>
-        <VRadio :disabled="isViewMode" :value="AllowAuthScope.SpecifiedUsers">
+        <VRadio :readonly="isViewMode" :value="AllowAuthScope.SpecifiedUsers">
           <template #label>
             {{ $t('permissions.allow.restricted') }}
           </template>

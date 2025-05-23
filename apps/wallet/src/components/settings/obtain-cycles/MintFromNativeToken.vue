@@ -3,15 +3,15 @@
     v-model="model"
     v-bind="$attrs"
     class="mt-2"
-    name="account_id"
+    :name="elementName"
     :label="$t('terms.account')"
     :loading="autocomplete.loading.value"
     :items="accountList"
     chips
-    clearable
+    :clearable="!isViewMode && !readonly"
     :rules="[requiredRule]"
     :variant="isViewMode ? 'plain' : 'filled'"
-    :disabled="isViewMode"
+    :readonly="isViewMode || readonly"
     @update:search="autocomplete.searchItems"
   />
 </template>
@@ -32,11 +32,15 @@ const props = withDefaults(
     valid?: boolean;
     triggerSubmit?: boolean;
     mode?: 'view' | 'edit';
+    elementName?: string;
+    readonly?: boolean;
   }>(),
   {
     valid: true,
     triggerSubmit: false,
     mode: 'edit',
+    elementName: 'account_id',
+    readonly: false,
   },
 );
 
