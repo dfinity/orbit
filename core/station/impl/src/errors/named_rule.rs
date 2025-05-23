@@ -31,6 +31,10 @@ pub enum NamedRuleError {
     #[error("The rule is invalid.")]
     InvalidRule { error: String },
 
+    // The rule is incompatible with a linked request policy.
+    #[error("The rule is incompatible with a linked request policy with id {policy_id}.")]
+    IncompatibleWithLinkedPolicy { policy_id: String, error: String },
+
     // The named rule already exists.
     #[error("The named rule already exists.")]
     AlreadyExists { name: String },
@@ -91,6 +95,12 @@ impl DetailableError for NamedRuleError {
 
             NamedRuleError::IdAlreadyExists { id } => {
                 details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
+
+            NamedRuleError::IncompatibleWithLinkedPolicy { policy_id, error } => {
+                details.insert("policy_id".to_string(), policy_id.to_string());
+                details.insert("error".to_string(), error.to_string());
                 Some(details)
             }
         }
