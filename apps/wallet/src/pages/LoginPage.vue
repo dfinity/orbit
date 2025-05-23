@@ -47,6 +47,7 @@
                     size="large"
                     class="text-caption"
                     :loading="isAuthenticating"
+                    data-test-id="internet-identity-button"
                     @click.prevent="performLogin"
                   >
                     <VImg :src="infinityMark" width="20" />

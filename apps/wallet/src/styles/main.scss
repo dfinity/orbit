@@ -135,6 +135,16 @@ a {
   }
 }
 
+@media (min-width: #{$device-lg}) {
+  .w-lg-50 {
+    width: 50% !important;
+  }
+
+  .w-lg-75 {
+    width: 75% !important;
+  }
+}
+
 .mvh-50 {
   max-height: 50vh !important;
 }
@@ -214,4 +224,8 @@ a {
 
 .underline-dotted {
   text-decoration: underline dotted;
+}
+
+.font-monospace {
+  font-family: monospace;
 }

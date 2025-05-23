@@ -42,6 +42,7 @@
             :items="accounts"
             :items-per-page="-1"
             :hover="true"
+            data-test-id="accounts-table"
             @click:row="
               (_: unknown, { item }: any) => {
                 $router.push({ name: Routes.Account, params: { id: item.id } });
