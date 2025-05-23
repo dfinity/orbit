@@ -27,8 +27,6 @@ unsafe extern "Rust" fn __getrandom_v03_custom(
 ) -> Result<(), getrandom::Error> {
     RNG.with(|rng| {
         let buf = unsafe {
-            // fill the buffer with zeros
-            core::ptr::write_bytes(dest, 0, len);
             // create mutable byte slice
             core::slice::from_raw_parts_mut(dest, len)
         };
