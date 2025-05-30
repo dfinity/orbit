@@ -21,6 +21,7 @@ export default {
     station_info_card_remove_btn: 'Remove wallet',
     station_info_card_remove_btn_confirm: 'Are you sure you want to remove this wallet?',
     disaster_recovery_card_title: 'Disaster Recovery',
+    disaster_recovery: 'Disaster Recovery',
     disaster_recovery_not_configured: 'Disaster recovery not configured.',
     disaster_recovery_dialog_title: 'Configure Disaster Recovery',
     manage_associated_station: 'Manage associated wallet',
@@ -1059,6 +1060,60 @@ export default {
     error: {
       title: 'Error',
       subtitle: 'An error occurred while loading the page.',
+    },
+    disaster_recovery: {
+      title: 'Disaster Recovery',
+      upgrader_status: 'Upgrader Status',
+      loading_upgrader: 'Loading upgrader...',
+
+      disaster_recovery_state: 'Disaster Recovery State',
+      disaster_recovery_state_loading: 'Loading disaster recovery state...',
+
+      recent_logs: 'Recent Logs',
+
+      select_orbit_station_version: 'Select Orbit station version',
+
+      submit_recovery_request: 'Submit Disaster Recovery Request',
+      submit_button: 'Submit Disaster Recovery Request',
+
+      station_idl: 'Station IDL',
+      upgrader_idl: 'Upgrader IDL',
+
+      station_service_payload: 'Station Service Payload',
+
+      result: 'Result',
+
+      recovery_instructions: 'Contact your wallet administrator to obtain a recovery payload.',
+      error_logs_unauthorized: 'Unauthorized to query logs',
+      error_state_unauthorized: 'Unauthorized to query state',
+
+      error_state: 'Failed to get upgrader: {error}',
+      error_no_upgrader_found: 'No upgrader found',
+      error_state_loading_failed: 'Failed to get disaster recovery state: {error}',
+      error_logs_loading_failed: 'Failed to get logs: {error}',
+
+      error_registry_loading_failed: 'Failed to query update registry: {error}',
+
+      success_submit_recovery: 'Recovery request submitted successfully',
+      error_submit_recovery: 'Failed to submit recovery request: {error}',
+
+      help_block: `
+<p>Disaster recovery is intended for recovering access to assets in the event the station canister becomes non-operational or inaccessible. It works by submitting a recovery request to the station's upgrader canister that stores, among other things, a backup of the station's core user data and account information.</p>
+<p>Submitting a recovery request involves constructing a recovery payload, which is a Candid value specifying the user and account data to be recovered, the station version to be used, and the method of recovery (i.e., install/reinstall/upgrade).</p>
+<p>The upgrader canister stores a set of users called the "disaster recovery committee" that need to reach consensus on the disaster recovery request in order for the recovery process to start. The number of users that need to reach consensus is called the "quorum". This information is queried and displayed in the "Upgrader status" card.</p>
+<p>The recovery process is as follows:</p>
+<ol>
+<li>From the version upgrade registry, select the version of the station you wish to recover to. The station IDL (the API definition of the station) is displayed for the selected version.</li>
+<li>Construct the service initialization Candid payload (e.g., for \`(opt SystemInstall)\`) that will be used as the argument for the reinstall/install/upgrade operation. If the upgrader canister is sufficiently up to date, then the UI will automatically fill that out based on the upgrader's backup storage. Constructing a valid payload will result in a binary representation of the payload that needs to be used in the next step.</li>
+<li>The page will display the upgrader IDL (the API definition of the upgrader) currently in use for the station. Construct the disaster recovery request payload (for type \`RequestDisasterRecoveryInput\`) using the IDL and the payload from the previous step. The UI will automatically fill out the payload for you if the argument payload is available.</li>
+<li>When the final payload is valid, click the submit button to submit the recovery request.</li>
+<li>A sufficient number of users (i.e., exactly \`quorum\` amount) have to submit the same recovery request before the recovery process can start. Users can re-submit requests multiple times; each submission will override the previous one.</li>
+<li>The recovery process will start after the quorum is reached. The upgrader will perform the operation specified in the payload.</li>
+</ol>
+<p>Good luck!</p>`,
+
+      warning_block:
+        'Warning: disaster recovery is a complex process that could lead to irreversible loss of access to assets if performed incorrectly. Please seek assistance from members of the foundation on the forum.',
     },
   },
   session: {

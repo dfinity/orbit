@@ -11,6 +11,7 @@ const getContentSecurityPolicy = (
   const csp: Record<string, string[]> = {
     'default-src': ["'none'"],
     'script-src': ["'self'", "'wasm-unsafe-eval'"],
+    'worker-src': ["'self'", 'blob:'],
     'connect-src': [
       "'self'",
       'https://icp-api.io',

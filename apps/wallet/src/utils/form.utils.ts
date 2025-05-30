@@ -259,26 +259,26 @@ export const validEmail = (value: unknown): string | boolean => {
 
 export const validAddress =
   (blockchain: string) =>
-  (value: unknown): string | boolean => {
-    const hasValue = !!value;
-    if (!hasValue) {
-      // this rule only applies if there is a value
-      return true;
-    }
-
-    if (typeof value !== 'string') {
-      return i18n.global.t('forms.rules.validAddress');
-    }
-
-    try {
-      if (detectAddressFormat(blockchain, value) !== undefined) {
+    (value: unknown): string | boolean => {
+      const hasValue = !!value;
+      if (!hasValue) {
+        // this rule only applies if there is a value
         return true;
       }
-      return i18n.global.t('forms.rules.validAddress');
-    } catch {
-      return i18n.global.t('forms.rules.validAddress');
-    }
-  };
+
+      if (typeof value !== 'string') {
+        return i18n.global.t('forms.rules.validAddress');
+      }
+
+      try {
+        if (detectAddressFormat(blockchain, value) !== undefined) {
+          return true;
+        }
+        return i18n.global.t('forms.rules.validAddress');
+      } catch {
+        return i18n.global.t('forms.rules.validAddress');
+      }
+    };
 
 export function compareMetadata<T extends { key: string; value: string }[]>(
   a: T | undefined,
@@ -312,4 +312,20 @@ export function compareTruthy<T>(a: T | undefined, b: T): boolean {
   }
 
   return JSON.stringify(a) === JSON.stringify(b);
+}
+
+export function focusText(el: HTMLTextAreaElement, term: string, offsetLines = 2) {
+  const text = el.value;
+  const index = text?.indexOf(term);
+
+  if (index !== undefined && index >= 0) {
+    setTimeout(() => {
+      const lines = text.substr(0, index).split('\n');
+      const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 18;
+      const lineNumber = lines.length - 1;
+      const scrollPosition = lineNumber * lineHeight;
+      el.scrollTop = scrollPosition - lineHeight * offsetLines;
+      el.setSelectionRange(index, index + term.length);
+    }, 0);
+  }
 }
