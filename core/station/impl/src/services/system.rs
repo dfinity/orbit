@@ -143,9 +143,10 @@ impl SystemService {
         }
     }
 
-    pub fn update_system_info(&self, input: ManageSystemInfoOperationInput) {
-        let mut system_info = self.get_system_info();
-
+    pub async fn do_update_system_info(
+        system_info: &mut SystemInfo,
+        input: ManageSystemInfoOperationInput,
+    ) -> Result<(), String> {
         if let Some(name) = input.name {
             system_info.set_name(name.clone());
         }
@@ -154,7 +155,32 @@ impl SystemService {
             system_info.set_cycle_obtain_strategy(strategy);
         }
 
+        if let Some(max_backup_snapshots) = input.max_station_backup_snapshots {
+            system_info
+                .set_max_station_backup_snapshots(max_backup_snapshots)
+                .await?;
+        }
+
+        if let Some(max_backup_snapshots) = input.max_upgrader_backup_snapshots {
+            system_info
+                .set_max_upgrader_backup_snapshots(max_backup_snapshots)
+                .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn update_system_info(
+        &self,
+        input: ManageSystemInfoOperationInput,
+    ) -> Result<(), String> {
+        let mut system_info = self.get_system_info();
+
+        let res = Self::do_update_system_info(&mut system_info, input).await;
+
         write_system_info(system_info);
+
+        res
     }
 
     pub fn set_disaster_recovery_committee(committee: Option<DisasterRecoveryCommittee>) {
@@ -468,7 +494,7 @@ impl SystemService {
                 };
                 crate::core::ic_timers::set_timer(std::time::Duration::from_millis(0), move || {
                     use crate::core::ic_cdk::spawn;
-                    spawn(install_canister_post_process_timer(init, system_info))
+                    spawn(install_canister_post_process_timer(*init, system_info))
                 });
             }
             SystemInstall::Upgrade(_) => {
@@ -568,7 +594,7 @@ impl SystemService {
         // Handles the post init process in a one-off timer to allow for inter canister calls,
         // this adds the default canister configurations, deploys the station upgrader and makes sure
         // there are no unintended controllers of the canister.
-        self.install_canister_post_process(system_info, SystemInstall::Init(input));
+        self.install_canister_post_process(system_info, SystemInstall::Init(Box::new(input)));
 
         Ok(())
     }
@@ -601,14 +627,14 @@ impl SystemService {
                     request.status = RequestStatus::Completed {
                         completed_at: completed_time,
                     };
-                    request.last_modification_timestamp = completed_time;
 
                     if let RequestOperation::SystemUpgrade(operation) = &mut request.operation {
                         // Clears the module when the operation is completed, this helps to reduce memory usage.
                         operation.input.module = Vec::new();
                     }
 
-                    self.request_repository.insert(request.to_key(), request);
+                    self.request_repository
+                        .save_modified(&mut request, completed_time);
                 }
                 None => {
                     // Do not fail the upgrade if the request is not found, even though this should never happen
@@ -1025,7 +1051,7 @@ mod init_canister_sync_handlers {
                 user_id,
             )?;
 
-            print(&format!(
+            print(format!(
                 "Added user with principals {:?} and user id {}",
                 user.identities
                     .iter()

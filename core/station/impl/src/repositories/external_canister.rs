@@ -126,7 +126,7 @@ impl ExternalCanisterRepository {
     /// If `skip_id` is provided, it will be ignored if the match would be the same.
     pub fn is_unique_name(&self, name: &str, skip_id: Option<ExternalCanisterEntryId>) -> bool {
         self.find_by_name(name)
-            .map_or(true, |existing_id| skip_id == Some(existing_id))
+            .is_none_or(|existing_id| skip_id == Some(existing_id))
     }
 
     /// Verifies that the canister id is unique among external canisters.
@@ -138,7 +138,7 @@ impl ExternalCanisterRepository {
         skip_id: Option<ExternalCanisterEntryId>,
     ) -> bool {
         self.find_by_canister_id(canister_id)
-            .map_or(true, |existing_id| skip_id == Some(existing_id))
+            .is_none_or(|existing_id| skip_id == Some(existing_id))
     }
 
     /// Finds all the labels of the external canisters, which are unique.

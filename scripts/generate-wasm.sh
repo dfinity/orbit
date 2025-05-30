@@ -28,7 +28,7 @@ echo "Ensuring rust toolchain is installed"
 rustup show active-toolchain || rustup toolchain install
 
 echo Building package $PACKAGE
-export RUSTFLAGS="--remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git"
+export RUSTFLAGS="--remap-path-prefix $(readlink -f ${SCRIPT_DIR}/..)=/build --remap-path-prefix ${CARGO_HOME}/bin=/cargo/bin --remap-path-prefix ${CARGO_HOME}/git=/cargo/git --cfg getrandom_backend=\"custom\""
 for l in $(ls ${CARGO_HOME}/registry/src/); do
   export RUSTFLAGS="--remap-path-prefix ${CARGO_HOME}/registry/src/${l}=/cargo/registry/src/github ${RUSTFLAGS}"
 done
@@ -39,9 +39,9 @@ package_version=$(cargo metadata --format-version=1 --no-deps | jq -r '.packages
 cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE $FEATURES
 
 if [[ "$OSTYPE" == "linux"* || "$RUNNER_OS" == "Linux" ]]; then
-  URL="https://github.com/dfinity/ic-wasm/releases/download/0.6.0/ic-wasm-linux64"
+  URL="https://github.com/dfinity/ic-wasm/releases/download/0.9.3/ic-wasm-linux64"
 elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]; then
-  URL="https://github.com/dfinity/ic-wasm/releases/download/0.6.0/ic-wasm-macos"
+  URL="https://github.com/dfinity/ic-wasm/releases/download/0.9.3/ic-wasm-macos"
 else
   echo "OS not supported: ${OSTYPE:-$RUNNER_OS}"
   exit 1

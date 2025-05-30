@@ -26,7 +26,7 @@ use orbit_essentials::{
     types::{Timestamp, UUID},
 };
 use station_api::ListRequestsSortBy;
-use std::{cell::RefCell, collections::HashSet, sync::Arc, u64};
+use std::{cell::RefCell, collections::HashSet, sync::Arc};
 
 thread_local! {
     static DB: RefCell<StableBTreeMap<RequestKey, Request, VirtualMemory<Memory>>> = with_memory_manager(|memory_manager| {
@@ -256,14 +256,14 @@ impl RequestRepository {
         INDEXED_FIELDS_CACHE
             .with(|cache| cache.borrow().get(request_id).cloned())
             .or_else(|| {
-                return self.get(&RequestKey { id: *request_id }).map(|request| {
+                self.get(&RequestKey { id: *request_id }).map(|request| {
                     let fields = request.index_fields();
                     INDEXED_FIELDS_CACHE.with(|cache| {
                         cache.borrow_mut().insert(*request_id, fields.clone());
                     });
 
                     fields
-                });
+                })
             })
     }
 
@@ -421,8 +421,7 @@ impl RequestRepository {
         request.status = RequestStatus::Cancelled {
             reason: maybe_reason,
         };
-        request.last_modification_timestamp = request_cancellation_time;
-        self.insert(request.to_key(), request.to_owned());
+        self.save_modified(&mut request, request_cancellation_time);
 
         request
     }
@@ -434,6 +433,11 @@ impl RequestRepository {
             remove_observer: Observer::default(),
             ..Default::default()
         }
+    }
+
+    pub fn save_modified(&self, request: &mut Request, modified_at: u64) {
+        request.last_modification_timestamp = modified_at;
+        self.insert(request.to_key(), request.clone());
     }
 }
 
@@ -823,6 +827,19 @@ mod tests {
 
         assert_eq!(requests.len(), 1);
         assert_eq!(requests[0], add_group_request.id);
+    }
+
+    #[test]
+    fn save_modified_should_update_last_modification_timestamp() {
+        let mut request = mock_request();
+        request.last_modification_timestamp = 1;
+        REQUEST_REPOSITORY.save_modified(&mut request, 2);
+        assert_eq!(request.last_modification_timestamp, 2);
+
+        let updated_request = REQUEST_REPOSITORY
+            .get(&request.to_key())
+            .expect("Request not found");
+        assert_eq!(updated_request.last_modification_timestamp, 2);
     }
 }
 

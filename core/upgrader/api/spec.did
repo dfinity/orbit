@@ -372,9 +372,15 @@ type CanisterSnapshotsResult = variant {
   Err : Error;
 };
 
+type SetMaxBackupSnapshotsResult = variant {
+  Ok;
+  Err : text;
+};
+
 service : (InitArg) -> {
   "trigger_upgrade" : (UpgradeParams) -> (TriggerUpgradeResponse);
   "trigger_restore" : (RestoreParams) -> (TriggerRestoreResponse);
+  "set_max_backup_snapshots" : (nat64) -> (SetMaxBackupSnapshotsResult);
   "set_disaster_recovery_committee" : (SetDisasterRecoveryCommitteeInput) -> (SetDisasterRecoveryResult);
   "set_disaster_recovery_accounts" : (SetDisasterRecoveryAccountsInput) -> (SetDisasterRecoveryResult);
   "set_disaster_recovery_accounts_and_assets" : (SetDisasterRecoveryAccountsAndAssetsInput) -> (SetDisasterRecoveryResult);

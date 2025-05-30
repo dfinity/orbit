@@ -98,7 +98,7 @@ fn make_transfer_successful() {
 
     let account_creation_request_dto = res.0.unwrap().request;
     match account_creation_request_dto.status {
-        RequestStatusDTO::Approved { .. } => {}
+        RequestStatusDTO::Approved => {}
         _ => {
             panic!("request must be approved by now");
         }

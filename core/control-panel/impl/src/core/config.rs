@@ -85,7 +85,7 @@ impl Storable for CanisterState {
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        if bytes.len() == 0 {
+        if bytes.is_empty() {
             return CanisterState::Uninitialized;
         }
         CanisterState::Initialized(CanisterConfig::from_bytes(bytes))

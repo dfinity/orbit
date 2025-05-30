@@ -238,7 +238,7 @@ fn setup_assets() -> (PathBuf, BTreeMap<String, String>) {
         asset_b,
     );
 
-    (asset_dir.into_path(), assets)
+    (asset_dir.keep(), assets)
 }
 
 /// Install the assets canister under orbit control

@@ -200,7 +200,7 @@ impl EnsureExternalCanister {
             asset
                 .metadata
                 .get(TokenStandard::METADATA_KEY_LEDGER_CANISTER_ID)
-                .map_or(false, |canister_id| canister_id == principal_str)
+                .is_some_and(|canister_id| canister_id == principal_str)
         });
 
         !(is_ledger_canister_id
