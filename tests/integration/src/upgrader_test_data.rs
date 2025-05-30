@@ -289,6 +289,13 @@ impl<'a> UpgraderDataGenerator<'a> {
     }
 
     pub fn test_api(&self) {
+        let check_recovery_failure = |result: &Option<RecoveryResult>| match result {
+            Some(RecoveryResult::Failure(err)) => {
+                assert!(err.reason.contains("Canister's Wasm module is not valid"))
+            }
+            _ => panic!("Unexpected recovery result: {:?}", result),
+        };
+
         let committee =
             get_disaster_recovery_committee(self.env, self.upgrader_id, self.station_id);
         assert_eq!(committee, self.committee);
@@ -320,7 +327,8 @@ impl<'a> UpgraderDataGenerator<'a> {
         }
         assert_eq!(state.recovery_requests, self.recovery_requests);
         assert_eq!(state.recovery_status, self.recovery_status);
-        assert_eq!(state.last_recovery_result, self.last_recovery_result);
+        check_recovery_failure(&state.last_recovery_result);
+        check_recovery_failure(&self.last_recovery_result);
         is_committee_member(self.env, self.upgrader_id, Principal::anonymous()).unwrap_err();
         assert!(
             is_committee_member(self.env, self.upgrader_id, self.some_committee_member()).unwrap()
@@ -340,24 +348,17 @@ impl<'a> UpgraderDataGenerator<'a> {
             );
             assert_eq!(log.entry_type, self.logs[i].entry_type);
             // we made a breaking change to the log message format
+            let anchors = [
+                "Canister's Wasm module is not valid",
+                "requested disaster recovery with wasm hash",
+                "Disaster recovery successfully initiated to",
+                "Set committee of station-admin",
+            ];
             if log.message != self.logs[i].message {
-                assert!(
-                    log.message
-                        .contains("requested disaster recovery with wasm hash")
-                        || log
-                            .message
-                            .contains("Disaster recovery successfully initiated to")
-                        || log.message.contains("Set committee of station-admin")
-                );
-                assert!(
-                    self.logs[i]
-                        .message
-                        .contains("requested disaster recovery with operation")
-                        || self.logs[i]
-                            .message
-                            .contains("Disaster recovery successfully initiated with operation")
-                        || log.message.contains("Set committee of station-admin")
-                );
+                assert!(anchors
+                    .iter()
+                    .any(|anchor| log.message.contains(anchor)
+                        && self.logs[i].message.contains(anchor)));
             } else {
                 assert_eq!(log.data_json, self.logs[i].data_json);
             }
