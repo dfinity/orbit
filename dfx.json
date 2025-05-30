@@ -73,6 +73,16 @@
       "build": "./scripts/generate-wasm.sh station",
       "wasm": "./wasms/station.wasm.gz"
     },
+    "upgrader": {
+      "type": "custom",
+      "candid": "core/upgrader/api/spec.did",
+      "declarations": {
+        "output": "apps/wallet/src/generated/upgrader",
+        "node_compatibility": true
+      },
+      "build": "./scripts/generate-wasm.sh upgrader",
+      "wasm": "./wasms/upgrader.wasm.gz"
+    },
     "app_wallet": {
       "type": "assets",
       "source": [

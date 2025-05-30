@@ -279,3 +279,19 @@ export const validAddress =
       return i18n.global.t('forms.rules.validAddress');
     }
   };
+
+export function focusText(el: HTMLTextAreaElement, term: string, offsetLines = 2) {
+  const text = el.value;
+  const index = text?.indexOf(term);
+
+  if (index !== undefined && index >= 0) {
+    setTimeout(() => {
+      const lines = text.substr(0, index).split('\n');
+      const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 18;
+      const lineNumber = lines.length - 1;
+      const scrollPosition = lineNumber * lineHeight;
+      el.scrollTop = scrollPosition - lineHeight * offsetLines;
+      el.setSelectionRange(index, index + term.length);
+    }, 0);
+  }
+}

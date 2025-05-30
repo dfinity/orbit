@@ -1,6 +1,8 @@
 <template>
   <div class="d-flex ga-4">
-    <div class="text-medium-emphasis"><VIcon :icon="mdiCodeArray" /></div>
+    <div v-if="props.icon" class="text-medium-emphasis">
+      <VIcon :icon="props.icon" />
+    </div>
     <div class="d-flex flex-column ga-0 flex-grow-1">
       <div class="d-flex flex-nowrap">
         <VBtnToggle v-model="selectedParseFormat" rounded="0" group density="compact">
@@ -23,7 +25,7 @@
         :density="props.density"
         :variant="props.variant"
         :rules="[...(props.required ? [requiredRule] : []), parseArgumentRule]"
-        :rows="3"
+        :rows="props.rows"
         class="mt-0"
         v-bind="$attrs"
       />
@@ -31,6 +33,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { EncodeArgs } from '@dfinity/didc';
 import { mdiCodeArray } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -49,13 +52,16 @@ const props = withDefaults(
      */
     candid?: {
       idl: string;
-      method?: string;
+      withType?: EncodeArgs['withType'];
     };
     readonly?: boolean;
     required?: boolean;
     label?: string;
     density?: 'comfortable' | 'compact' | 'default';
     variant?: 'filled' | 'outlined' | 'plain' | 'solo' | 'underlined';
+    rows?: number;
+    icon?: string | false;
+    preprocessCandid?: (input: string) => string;
   }>(),
   {
     modelValue: undefined,
@@ -65,6 +71,9 @@ const props = withDefaults(
     candid: undefined,
     density: 'comfortable',
     variant: 'filled',
+    rows: 3,
+    preprocessCandid: undefined,
+    icon: mdiCodeArray,
   },
 );
 
@@ -90,6 +99,16 @@ const label = computed(() => {
 
 const argument = ref<string>();
 const selectedParseFormat = ref<string>(props.candid ? 'candid' : 'hex');
+
+const setArgument = (value: string) => {
+  argument.value = value;
+  parseArgumentRule(value);
+};
+
+defineExpose({
+  setArgument,
+});
+
 const availableParseFormats = computed<SelectItem[]>(() => {
   const items: SelectItem[] = [];
 
@@ -136,11 +155,16 @@ const parseArgumentRule = async (value: unknown): Promise<string | boolean> => {
         break;
       }
       case 'candid': {
+        let processedArgument = rawArgument;
+        if (props.preprocessCandid) {
+          processedArgument = props.preprocessCandid(rawArgument);
+        }
+
         const candid = assertAndReturn(props.candid, 'Candid definition is expected');
         const hexString = encode({
           idl: candid.idl,
-          serviceMethod: candid.method,
-          input: rawArgument,
+          withType: props.candid?.withType,
+          input: processedArgument,
           targetFormat: 'hex',
         });
 

@@ -3,9 +3,10 @@
     v-if="format === AddressFormat.ICRC1"
     :text="address"
     :overflow-position="shortenIcrc1Address"
+    :test-id="format"
   ></TextOverflow>
 
-  <TextOverflow v-else :text="address" :max-length="32"></TextOverflow>
+  <TextOverflow v-else :text="address" :max-length="32" :test-id="format"></TextOverflow>
 </template>
 
 <script setup lang="ts">
