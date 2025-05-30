@@ -7,31 +7,57 @@
       :label="$t('terms.id')"
       variant="plain"
       density="comfortable"
-      disabled
+      readonly
       :prepend-icon="mdiIdentifier"
     />
 
-    <VTextField
-      v-model="model.name"
-      name="name"
-      :label="$t('terms.name')"
-      density="comfortable"
-      :rules="[requiredRule]"
-      :prepend-icon="mdiFileDocumentCheckOutline"
-      :disabled="isViewMode"
-    />
+    <DiffView :before-value="props.currentNamedRule.value?.name" :after-value="model.name">
+      <template #default="{ value, diffMode }">
+        <VTextField
+          :name="diffMode === 'before' ? 'name-before' : 'name'"
+          :model-value="value"
+          :label="$t('terms.name')"
+          density="comfortable"
+          :rules="diffMode === 'before' ? [] : [requiredRule]"
+          :prepend-icon="mdiFileDocumentCheckOutline"
+          :variant="isViewMode ? 'plain' : 'filled'"
+          :readonly="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (model.name = val)"
+        />
+      </template>
+    </DiffView>
 
-    <VTextField
-      v-model="description"
-      name="description"
-      :label="$t('terms.description')"
-      density="comfortable"
-      :prepend-icon="mdiInformationBoxOutline"
-      :disabled="isViewMode"
-    />
+    <DiffView
+      :before-value="descriptionBefore"
+      :after-value="description"
+      :has-before="!!props.currentNamedRule.value"
+      :compare-values="compareTruthy"
+    >
+      <template #default="{ value, diffMode }">
+        <VTextField
+          :name="diffMode === 'before' ? 'description-before' : 'description'"
+          :model-value="value"
+          :label="$t('terms.description')"
+          density="comfortable"
+          :variant="isViewMode ? 'plain' : 'filled'"
+          :prepend-icon="mdiInformationBoxOutline"
+          :readonly="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (description = val)"
+        />
+      </template>
+    </DiffView>
 
     <div class="mt-4 mb-2 text-body-1">{{ $t('terms.rule') }}</div>
-    <RuleBuilder v-model="model.rule" :disabled="isViewMode" @remove="model.rule = undefined" />
+    <DiffView :before-value="props.currentNamedRule.value?.rule" :after-value="model.rule">
+      <template #default="{ value, diffMode }">
+        <RuleBuilder
+          :model-value="value"
+          :disabled="isViewMode || diffMode === 'before'"
+          @update:model-value="val => diffMode === 'after' && (model.rule = val)"
+          @remove="diffMode === 'after' && (model.rule = undefined)"
+        />
+      </template>
+    </DiffView>
 
     <span v-if="!model.rule && isViewMode">
       {{ $t('terms.none') }}
@@ -45,7 +71,8 @@ import { computed, ref, toRefs, watch } from 'vue';
 import RuleBuilder from '~/components/request-policies/rule/RuleBuilder.vue';
 import { NamedRule } from '~/generated/station/station.did';
 import { VFormValidation } from '~/types/helper.types';
-import { requiredRule } from '~/utils/form.utils';
+import { compareTruthy, requiredRule } from '~/utils/form.utils';
+import DiffView from '~/components/requests/DiffView.vue';
 
 export type RequestPolicyFormProps = {
   modelValue: Partial<NamedRule>;
@@ -54,6 +81,7 @@ export type RequestPolicyFormProps = {
   display?: {
     id?: boolean;
   };
+  currentNamedRule?: NamedRule;
 };
 
 const form = ref<VFormValidation | null>(null);
@@ -64,6 +92,7 @@ const input = withDefaults(defineProps<RequestPolicyFormProps>(), {
     id: true,
   }),
   mode: 'edit',
+  currentNamedRule: undefined,
 });
 const props = toRefs(input);
 
@@ -83,6 +112,8 @@ const description = computed({
     model.value.description = value ? [value] : undefined;
   },
 });
+
+const descriptionBefore = computed(() => props.currentNamedRule.value?.description[0]);
 
 const isViewMode = computed(() => props.mode.value === 'view');
 

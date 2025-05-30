@@ -14,7 +14,23 @@
     </RequestOperationListRow>
   </div>
   <VProgressCircular v-else-if="loading" />
-  <RequestPolicyForm v-else :model-value="formValue" mode="view" />
+  <template v-else>
+    <VAlert
+      v-if="currentRequestPolicyFailed"
+      type="error"
+      variant="tonal"
+      density="compact"
+      class="mb-4"
+    >
+      {{ $t('requests.failed_to_fetch_details') }}
+      <div>{{ currentRequestPolicyFailed }}</div>
+    </VAlert>
+    <RequestPolicyForm
+      :model-value="formValue"
+      mode="view"
+      :current-request-policy="currentRequestPolicy"
+    />
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -29,6 +45,10 @@ import { useStationStore } from '~/stores/station.store';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 import RequestPolicyForm from '~/components/request-policies/RequestPolicyForm.vue';
 import { useI18n } from 'vue-i18n';
+import { useAppStore } from '~/stores/app.store';
+import { deepClone, variantIs } from '~/utils/helper.utils';
+import { getErrorMessage } from '~/utils/error.utils';
+import { VAlert } from 'vuetify/components';
 
 const props = withDefaults(
   defineProps<{
@@ -42,9 +62,13 @@ const props = withDefaults(
 );
 
 const isListMode = computed(() => props.mode === 'list');
+const isDiffMode = computed(() => !isListMode.value && variantIs(props.request.status, 'Created'));
 const formValue: Ref<Partial<RequestPolicy>> = ref({});
+const currentRequestPolicy: Ref<RequestPolicy | undefined> = ref();
+const currentRequestPolicyFailed = ref<string | undefined>();
 const loading = ref(false);
 const station = useStationStore();
+const appStore = useAppStore();
 
 const fetchDetails = async () => {
   try {
@@ -54,6 +78,11 @@ const fetchDetails = async () => {
 
     loading.value = true;
     const currentEntry = await station.service.getRequestPolicy(props.operation.input.policy_id);
+
+    if (isDiffMode.value) {
+      currentRequestPolicy.value = deepClone(currentEntry.policy);
+    }
+
     if (formValue.value.rule) {
       currentEntry.policy.rule = formValue.value.rule;
     }
@@ -64,6 +93,10 @@ const fetchDetails = async () => {
     formValue.value = currentEntry.policy;
   } catch (e) {
     logger.error('Failed to fetch request policy details', e);
+    if (isDiffMode.value) {
+      currentRequestPolicyFailed.value = getErrorMessage(e);
+    }
+    appStore.sendErrorNotification(e);
   } finally {
     loading.value = false;
   }
@@ -79,7 +112,7 @@ const requestPolicyType = computed(() => {
   return undefined;
 });
 
-onBeforeMount(() => {
+onBeforeMount(async () => {
   const policy: Partial<RequestPolicy> = {};
   policy.id = props.operation.input.policy_id;
   if (props.operation.input.rule?.[0]) {

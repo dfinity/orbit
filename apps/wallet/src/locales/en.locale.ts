@@ -145,6 +145,8 @@ export default {
     no_results_found: 'No requests found.',
     no_more_requests_to_approve: 'No more requests to approve.',
     load_next: 'Load next',
+    failed_to_fetch_details:
+      'Failed to fetch existing entry. Details of requested changes cannot be displayed.',
     status: {
       created: 'Pending',
       cancelled: 'Cancelled',
