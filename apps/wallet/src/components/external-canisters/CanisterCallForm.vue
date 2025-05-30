@@ -47,11 +47,18 @@
             name="argument"
             :readonly="readonly"
             :candid="
-              props.candidIdl ? { idl: props.candidIdl, method: model.methodName } : undefined
+              props.candidIdl
+                ? {
+                    idl: props.candidIdl,
+                    withType: model.methodName
+                      ? { kind: 'methodParams', name: model.methodName }
+                      : undefined,
+                  }
+                : undefined
             "
           />
         </VCol>
-        <VCol v-if="hasConfiguredValidationMethods" cols="12" class="px-0 px-6">
+        <VCol v-if="hasConfiguredValidationMethods" cols="12" class="pb-0 px-6">
           <VSelect
             v-model="model.validationTarget"
             :prepend-icon="mdiCodeBraces"

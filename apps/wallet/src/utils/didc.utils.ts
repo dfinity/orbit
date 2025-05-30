@@ -24,7 +24,7 @@ export const fetchCanisterIdlFromMetadata = async (
   const certificate = await Certificate.create({
     canisterId,
     certificate: state.certificate,
-    rootKey: agent.rootKey,
+    rootKey: agent.rootKey!,
   });
 
   const serviceIdl = certificate.lookup(versionPath);

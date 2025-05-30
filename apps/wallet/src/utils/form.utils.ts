@@ -279,3 +279,53 @@ export const validAddress =
       return i18n.global.t('forms.rules.validAddress');
     }
   };
+
+export function compareMetadata<T extends { key: string; value: string }[]>(
+  a: T | undefined,
+  b: T,
+): boolean {
+  // Quick length check
+  if (a?.length !== b.length) {
+    return false;
+  }
+
+  // Sort both arrays by key then value to compare order-insensitively
+  const sortEntries = (arr: { key: string; value: string }[]) =>
+    [...arr].sort((x, y) => x.key.localeCompare(y.key) || x.value.localeCompare(y.value));
+
+  const sortedA = sortEntries(a);
+  const sortedB = sortEntries(b);
+
+  // Compare each entry one-to-one
+  return sortedA.every(
+    (entry, index) => entry.key === sortedB[index].key && entry.value === sortedB[index].value,
+  );
+}
+
+export function compareTruthy<T>(a: T | undefined, b: T): boolean {
+  if (!a && !b) {
+    return true;
+  }
+
+  if (!a || !b) {
+    return false;
+  }
+
+  return JSON.stringify(a) === JSON.stringify(b);
+}
+
+export function focusText(el: HTMLTextAreaElement, term: string, offsetLines = 2) {
+  const text = el.value;
+  const index = text?.indexOf(term);
+
+  if (index !== undefined && index >= 0) {
+    setTimeout(() => {
+      const lines = text.substr(0, index).split('\n');
+      const lineHeight = parseFloat(getComputedStyle(el).lineHeight) || 18;
+      const lineNumber = lines.length - 1;
+      const scrollPosition = lineNumber * lineHeight;
+      el.scrollTop = scrollPosition - lineHeight * offsetLines;
+      el.setSelectionRange(index, index + term.length);
+    }, 0);
+  }
+}

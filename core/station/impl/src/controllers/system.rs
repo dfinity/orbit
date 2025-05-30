@@ -33,7 +33,7 @@ async fn initialize(input: Option<SystemInstall>) {
 
     set_certified_data_for_skip_certification();
     match input {
-        Some(SystemInstall::Init(input)) => CONTROLLER.initialize(input).await,
+        Some(SystemInstall::Init(input)) => CONTROLLER.initialize(*input).await,
         Some(SystemInstall::Upgrade(_)) | None => trap("Invalid args to initialize canister"),
     }
 }

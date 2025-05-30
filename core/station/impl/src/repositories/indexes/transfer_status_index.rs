@@ -44,12 +44,12 @@ impl IndexRepository<TransferStatusIndex, UUID> for TransferStatusIndexRepositor
             let start_key = TransferStatusIndex {
                 status: criteria.status.to_owned(),
                 last_modification_timestamp: criteria.from_dt.to_owned().unwrap_or(u64::MIN),
-                transfer_id: [std::u8::MIN; 16],
+                transfer_id: [u8::MIN; 16],
             };
             let end_key = TransferStatusIndex {
                 status: criteria.status.to_owned(),
                 last_modification_timestamp: criteria.to_dt.to_owned().unwrap_or(u64::MAX),
-                transfer_id: [std::u8::MAX; 16],
+                transfer_id: [u8::MAX; 16],
             };
 
             db.borrow()

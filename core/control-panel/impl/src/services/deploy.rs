@@ -133,8 +133,8 @@ impl DeployService {
             .collect::<Vec<_>>();
 
         // installs the station canister with the associated upgrader wasm module
-        let station_install_arg =
-            Encode!(&station_api::SystemInstall::Init(station_api::SystemInit {
+        let station_install_arg = Encode!(&station_api::SystemInstall::Init(Box::new(
+            station_api::SystemInit {
                 name: input.name.clone(),
                 upgrader: station_api::SystemUpgraderInput::Deploy(
                     station_api::DeploySystemUpgraderInput {
@@ -148,10 +148,11 @@ impl DeployService {
                     admin_quorum: 1,
                     operator_quorum: 1,
                 },
-            }))
-            .map_err(|err| DeployError::Failed {
-                reason: err.to_string(),
-            })?;
+            }
+        )))
+        .map_err(|err| DeployError::Failed {
+            reason: err.to_string(),
+        })?;
         install_chunked_code(
             station_canister,
             mgmt::CanisterInstallMode::Install,

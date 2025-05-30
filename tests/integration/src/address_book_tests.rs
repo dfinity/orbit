@@ -339,7 +339,7 @@ fn check_address_book_for_transfer() {
     )
     .unwrap_err();
     match transfer_error {
-        Some(RequestStatusDTO::Rejected { .. }) => (),
+        Some(RequestStatusDTO::Rejected) => (),
         _ => panic!("unexpected transfer status"),
     };
 

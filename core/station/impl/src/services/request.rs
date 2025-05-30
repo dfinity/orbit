@@ -465,7 +465,7 @@ impl RequestService {
         let maybe_evaluation = request.reevaluate().await?;
 
         self.request_repository
-            .insert(request.to_key(), request.to_owned());
+            .save_modified(&mut request, next_time());
 
         if let Some(evaluation) = maybe_evaluation {
             self.evaluation_result_repository
@@ -483,8 +483,8 @@ impl RequestService {
         request.status = RequestStatus::Completed {
             completed_at: request_completed_time,
         };
-        request.last_modification_timestamp = request_completed_time;
-        self.request_repository.insert(request.to_key(), request);
+        self.request_repository
+            .save_modified(&mut request, request_completed_time);
     }
 
     pub async fn fail_request(
@@ -496,9 +496,9 @@ impl RequestService {
         request.status = RequestStatus::Failed {
             reason: Some(reason),
         };
-        request.last_modification_timestamp = request_failed_time;
+
         self.request_repository
-            .insert(request.to_key(), request.to_owned());
+            .save_modified(&mut request, request_failed_time);
 
         self.failed_request_hook(&request).await;
     }
@@ -552,10 +552,8 @@ impl RequestService {
             RequestExecuteStage::Processing(operation) => operation,
         };
 
-        request.last_modification_timestamp = request_execution_time;
-
         self.request_repository
-            .insert(request.to_key(), request.to_owned());
+            .save_modified(&mut request, request_execution_time);
 
         Ok(())
     }
@@ -1471,6 +1469,70 @@ mod tests {
 
         assert_eq!(approvable_requests.items.len(), 1);
         assert_eq!(approvable_requests.items[0].id, approvable_request.id);
+    }
+
+    #[tokio::test]
+    async fn adding_approval_updates_last_modification_timestamp() {
+        let TestContext { call_context, .. } = setup();
+
+        let user_2 = mock_user();
+        USER_REPOSITORY.insert(user_2.to_key(), user_2.clone());
+
+        let user_3 = mock_user();
+        USER_REPOSITORY.insert(user_3.to_key(), user_3.clone());
+
+        let policy = RequestPolicy {
+            id: [0; 16],
+            specifier: RequestSpecifier::AddAddressBookEntry,
+            rule: RequestPolicyRule::QuorumPercentage(UserSpecifier::Any, Percentage(100)),
+        };
+        REQUEST_POLICY_REPOSITORY.insert(policy.key(), policy);
+
+        let input = station_api::CreateRequestInput {
+            execution_plan: None,
+            expiration_dt: None,
+            operation: station_api::RequestOperationInput::AddAddressBookEntry(
+                station_api::AddAddressBookEntryOperationInput {
+                    address_owner: "test".to_string(),
+                    address: "0x1234".to_string(),
+                    address_format: "icp_account_identifier".to_string(),
+                    blockchain: "icp".to_string(),
+                    metadata: vec![],
+                    labels: vec![],
+                },
+            ),
+            summary: None,
+            title: None,
+        };
+
+        let request_before_approval = REQUEST_SERVICE
+            .create_request(input, &call_context)
+            .await
+            .expect("Failed to create request");
+
+        let request_after_approval = REQUEST_SERVICE
+            .submit_request_approval(
+                station_api::SubmitRequestApprovalInput {
+                    decision: RequestApprovalStatusDTO::Approved,
+                    reason: None,
+                    request_id: Uuid::from_bytes(request_before_approval.id)
+                        .hyphenated()
+                        .to_string(),
+                },
+                &CallContext::new(user_2.identities[0]),
+            )
+            .await
+            .expect("Failed to submit request approval");
+
+        // assert that the last modification timestamp was updated
+        assert!(
+            request_after_approval.last_modification_timestamp
+                > request_before_approval.last_modification_timestamp
+        );
+
+        // assert that the request is still pending and the timestamp modification happened
+        // only because of the approval
+        assert!(request_after_approval.status == RequestStatus::Created);
     }
 }
 

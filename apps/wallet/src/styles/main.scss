@@ -133,6 +133,20 @@ a {
   .w-md-100 {
     width: 100% !important;
   }
+
+  .position-md-static {
+    position: static !important;
+  }
+}
+
+@media (min-width: #{$device-lg}) {
+  .w-lg-50 {
+    width: 50% !important;
+  }
+
+  .w-lg-75 {
+    width: 75% !important;
+  }
 }
 
 .mvh-50 {
@@ -214,4 +228,8 @@ a {
 
 .underline-dotted {
   text-decoration: underline dotted;
+}
+
+.font-monospace {
+  font-family: monospace;
 }

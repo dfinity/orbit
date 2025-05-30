@@ -1,0 +1,311 @@
+// Generic error type added to responses that can fail.
+type Error = record {
+  // Error code, added as a string to allow for custom error codes.
+  code : text;
+  // Error message to be displayed to the user.
+  message : opt text;
+  // Error details to be displayed to the user.
+  details : opt vec record { text; text };
+};
+
+type InitArg = record {
+  target_canister : principal;
+};
+
+type WasmModuleExtraChunks = record {
+  // The asset canister from which the chunks are to be retrieved.
+  store_canister : principal;
+  // The name of the asset containing extra chunks in the asset canister.
+  extra_chunks_key : text;
+  // The hash of the assembled wasm module.
+  wasm_module_hash : blob;
+};
+
+type UpgradeParams = record {
+  // The wasm module to upgrade to.
+  module : blob;
+  // Additional wasm module chunks to append to the wasm module.
+  module_extra_chunks : opt WasmModuleExtraChunks;
+  // The argument to be passed to upgrade.
+  arg : blob;
+};
+
+type TriggerUpgradeError = variant {
+  NotController;
+  Unauthorized;
+  UnexpectedError : text;
+};
+
+// Metadata for an account in the station canister.
+type Metadata = record { key : text; value : text };
+
+// Backup of Asset in the station canister.
+type Asset = record {
+  id : text;
+  name : text;
+  symbol : text;
+  decimals : nat32;
+  blockchain : text;
+  standards : vec text;
+  metadata : vec Metadata;
+};
+
+// Backup of a legacy Account in the station canister.
+type Account = record {
+  id : text;
+  decimals : nat32;
+  metadata : vec Metadata;
+  name : text;
+  blockchain : text;
+  address : text;
+  standard : text;
+  symbol : text;
+};
+
+// Backup of a multi asset Account in the station canister.
+type MultiAssetAccount = record {
+  id : text;
+  name : text;
+  seed : blob;
+  assets : vec text;
+  metadata : vec Metadata;
+};
+
+// Backup of admin user in the station canister.
+type AdminUser = record { id : text; name : text; identities : vec principal };
+
+// The set of users (aka. the disaster recovery committee) that are able
+// to perform install/upgrader/reinstall of the station canister in the
+// event of the station becoming non-operational.
+type DisasterRecoveryCommittee = record {
+  // The list of users that are part of the committee.
+  users : vec AdminUser;
+  // The percentage of users that need to agree to perform an upgrade.
+  quorum : nat16;
+};
+
+// Response to a successful trigger_upgrade query.
+type TriggerUpgradeResponse = variant {
+  Ok;
+  Err : TriggerUpgradeError;
+};
+
+// Set disaster recovery committee result.
+type SetDisasterRecoveryResult = variant {
+  Ok;
+  Err : Error;
+};
+
+// Response to a successful is_committee_member query.
+type IsCommitteeMemberResponse = record {
+  is_committee_member : bool;
+};
+
+// Result of the is_committee_member query.
+type IsCommitteeMemberResult = variant {
+  Ok : IsCommitteeMemberResponse;
+  Err : Error;
+};
+
+// Response to a successful get_disaster_recovery_accounts query.
+type GetDisasterRecoveryAccountsResponse = record {
+  accounts : vec Account;
+};
+
+// Response to a successful get_disaster_recovery_accounts_and_assets query.
+type GetDisasterRecoveryAccountsAndAssetsResponse = record {
+  accounts : vec MultiAssetAccount;
+  assets : vec Asset;
+};
+
+// Result of the get_disaster_recovery_accounts query.
+type GetDisasterRecoveryAccountsResult = variant {
+  Ok : GetDisasterRecoveryAccountsResponse;
+  Err : Error;
+};
+
+// Result of the get_disaster_recovery_accounts_and_assets query.
+type GetDisasterRecoveryAccountsAndAssetsResult = variant {
+  Ok : GetDisasterRecoveryAccountsAndAssetsResponse;
+  Err : Error;
+};
+
+// Response to a successful get_disaster_recovery_committee query.
+type GetDisasterRecoveryCommitteeResponse = record {
+  committee : opt DisasterRecoveryCommittee;
+};
+
+// Result of the get_disaster_recovery_committee query.
+type GetDisasterRecoveryCommitteeResult = variant {
+  Ok : GetDisasterRecoveryCommitteeResponse;
+  Err : Error;
+};
+
+// Set the disaster recovery committee. Called by the station canister
+// when users are changed.
+type SetDisasterRecoveryCommitteeInput = record {
+  committee : DisasterRecoveryCommittee;
+};
+
+// Set the disaster recovery accounts. Called by the station canister
+// when accounts are added.
+type SetDisasterRecoveryAccountsInput = record {
+  accounts : vec Account;
+};
+
+// Set the disaster recovery accounts and assets. Called by the station canister
+// when accounts are added.
+type SetDisasterRecoveryAccountsAndAssetsInput = record {
+  accounts : vec MultiAssetAccount;
+  assets : vec Asset;
+};
+
+// Request to trigger disaster recovery. Requests are stored in the Upgrader
+// canister, and when at least `quorum` of the committee members
+// agree on the exact disaster recovery input, the request is processed.
+// Requests older than 1 week will be discarded.
+type RequestDisasterRecoveryInstallCodeInput = record {
+  // The wasm module to be installed.
+  module : blob;
+  // Additional wasm module chunks to append to the wasm module.
+  module_extra_chunks : opt WasmModuleExtraChunks;
+  // The argument to be passed to the install function.
+  arg : blob;
+  // The install mode: Install, Upgrade, or Reinstall.
+  install_mode : InstallMode;
+};
+type RequestDisasterRecoveryInput = variant {
+  InstallCode : RequestDisasterRecoveryInstallCodeInput;
+};
+
+type InstallMode = variant {
+  // Install the wasm module.
+  Install;
+  // Upgrade the wasm module.
+  Upgrade;
+  // Reinstall the wasm module.
+  Reinstall;
+};
+
+// Result of the request_disaster_recovery query.
+type RequestDisasterRecoveryResult = variant {
+  Ok;
+  Err : Error;
+};
+
+// Pagination input for get_logs query.
+type GetLogsInputPagination = record {
+  offset : opt nat64;
+  limit : opt nat64;
+};
+
+// Request to get logs.
+type GetLogsInput = record {
+  pagination : opt GetLogsInputPagination;
+};
+
+// Log entry.
+type LogEntry = record {
+  // The timestamp of the log entry.
+  time : text;
+  // The type of the log entry.
+  entry_type : text;
+  // The human readable message of the log entry.
+  message : text;
+  // The payload of the entry in JSON format.
+  data_json : text;
+};
+
+// Response to a successful get_logs query.
+type GetLogsResponse = record {
+  logs : vec LogEntry;
+  total : nat64;
+  next_offset : opt nat64;
+};
+
+// Result of the get_logs query.
+type GetLogsResult = variant {
+  Ok : GetLogsResponse;
+  Err : Error;
+};
+
+type StationRecoveryRequestInstallCodeOperation = record {
+  // The install mode: Install, Upgrade, or Reinstall.
+  install_mode : InstallMode;
+  // The sha of the wasm module to be installed.
+  wasm_sha256 : blob;
+  // The argument to be passed to the install function.
+  arg : blob;
+};
+
+type StationRecoveryRequestOperation = variant {
+  InstallCode : StationRecoveryRequestInstallCodeOperation;
+};
+
+// Request to recover the station.
+type StationRecoveryRequest = record {
+  // The requester user id.
+  user_id : text;
+  // The disaster recovery operation.
+  operation : StationRecoveryRequestOperation;
+  // The request submission timestamp.
+  submitted_at : text;
+};
+
+// Current recovery status.
+type RecoveryStatus = variant {
+  Idle;
+  InProgress : record {
+    since : text;
+  };
+};
+
+// Failure reason for the last recovery attempt.
+type RecoveryFailure = record {
+  reason : text;
+};
+
+// Result of the last recovery attempt.
+type RecoveryResult = variant {
+  Success;
+  Failure : RecoveryFailure;
+};
+
+// Response to a successful get_disaster_recovery_state query.
+type GetDisasterRecoveryStateResponse = record {
+  // The disaster recovery committee.
+  committee : opt DisasterRecoveryCommittee;
+  // The backup of the legacy station accounts.
+  accounts : vec Account;
+  // The backup of the station multi asset accounts.
+  multi_asset_accounts : vec MultiAssetAccount;
+  // The backup of the station assets.
+  assets : vec Asset;
+  // The current list of recovery requests.
+  recovery_requests : vec StationRecoveryRequest;
+  // The current recovery status.
+  recovery_status : RecoveryStatus;
+  // The result of the last recovery attempt.
+  last_recovery_result : opt RecoveryResult;
+};
+
+// Result of the get_disaster_recovery_state query.
+// This query is only available for controllers of the upgrader.
+type GetDisasterRecoveryStateResult = variant {
+  Ok : GetDisasterRecoveryStateResponse;
+  Err : Error;
+};
+
+service : (InitArg) -> {
+  "trigger_upgrade" : (UpgradeParams) -> (TriggerUpgradeResponse);
+  "set_disaster_recovery_committee" : (SetDisasterRecoveryCommitteeInput) -> (SetDisasterRecoveryResult);
+  "set_disaster_recovery_accounts" : (SetDisasterRecoveryAccountsInput) -> (SetDisasterRecoveryResult);
+  "set_disaster_recovery_accounts_and_assets" : (SetDisasterRecoveryAccountsAndAssetsInput) -> (SetDisasterRecoveryResult);
+  "is_committee_member" : () -> (IsCommitteeMemberResult) query;
+  "get_disaster_recovery_accounts" : () -> (GetDisasterRecoveryAccountsResult) query;
+  "get_disaster_recovery_accounts_and_assets" : () -> (GetDisasterRecoveryAccountsAndAssetsResult) query;
+  "get_disaster_recovery_committee" : () -> (GetDisasterRecoveryCommitteeResult) query;
+  "get_disaster_recovery_state" : () -> (GetDisasterRecoveryStateResult) query;
+  "request_disaster_recovery" : (RequestDisasterRecoveryInput) -> (RequestDisasterRecoveryResult);
+  "get_logs" : (GetLogsInput) -> (GetLogsResult) query;
+};

@@ -21,6 +21,7 @@
     :prepend-icon="mdiCube"
     variant="filled"
     density="comfortable"
+    data-test-id="advanced-update-mode-wasm-input"
   />
 
   <VTextarea

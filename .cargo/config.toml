@@ -1,0 +1,2 @@
+[alias]
+lint = "clippy --fix --allow-dirty --allow-staged --all-targets --all-features --locked --workspace -- -D clippy::all"
