@@ -2383,7 +2383,7 @@ mod benchs {
             .expect("Unexpected admin identity not available");
 
         let first_admin = first_admin.clone();
-        let caller_identity = first_admin_identity.clone();
+        let caller_identity = *first_admin_identity;
 
         // these should only be accessible to admins
         add_test_external_canisters(
@@ -2473,14 +2473,16 @@ mod external_canister_test_utils {
 
             EXTERNAL_CANISTER_REPOSITORY.insert(external_canister.key(), external_canister.clone());
 
-            let mut input = ConfigureExternalCanisterSettingsInput::default();
-            input.permissions = Some(ExternalCanisterPermissionsUpdateInput {
-                calls: Some(ExternalCanisterChangeCallPermissionsInput::ReplaceAllBy(
-                    calls,
-                )),
-                read: Some(allow.clone()),
-                change: Some(allow.clone()),
-            });
+            let input = ConfigureExternalCanisterSettingsInput {
+                permissions: Some(ExternalCanisterPermissionsUpdateInput {
+                    calls: Some(ExternalCanisterChangeCallPermissionsInput::ReplaceAllBy(
+                        calls,
+                    )),
+                    read: Some(allow.clone()),
+                    change: Some(allow.clone()),
+                }),
+                ..Default::default()
+            };
 
             EXTERNAL_CANISTER_SERVICE
                 .edit_external_canister(&external_canister.id, input)

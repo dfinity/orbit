@@ -259,26 +259,26 @@ export const validEmail = (value: unknown): string | boolean => {
 
 export const validAddress =
   (blockchain: string) =>
-    (value: unknown): string | boolean => {
-      const hasValue = !!value;
-      if (!hasValue) {
-        // this rule only applies if there is a value
+  (value: unknown): string | boolean => {
+    const hasValue = !!value;
+    if (!hasValue) {
+      // this rule only applies if there is a value
+      return true;
+    }
+
+    if (typeof value !== 'string') {
+      return i18n.global.t('forms.rules.validAddress');
+    }
+
+    try {
+      if (detectAddressFormat(blockchain, value) !== undefined) {
         return true;
       }
-
-      if (typeof value !== 'string') {
-        return i18n.global.t('forms.rules.validAddress');
-      }
-
-      try {
-        if (detectAddressFormat(blockchain, value) !== undefined) {
-          return true;
-        }
-        return i18n.global.t('forms.rules.validAddress');
-      } catch {
-        return i18n.global.t('forms.rules.validAddress');
-      }
-    };
+      return i18n.global.t('forms.rules.validAddress');
+    } catch {
+      return i18n.global.t('forms.rules.validAddress');
+    }
+  };
 
 export function compareMetadata<T extends { key: string; value: string }[]>(
   a: T | undefined,
