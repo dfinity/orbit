@@ -530,12 +530,10 @@ impl ExternalCanisterService {
                 )),
             },
         )
-        .map_err(|err| {
+        .inspect_err(|_| {
             // remove the external canister if the permission configuration failed
             self.external_canister_repository
                 .remove(&external_canister.key());
-
-            err
         })?;
         self.configure_external_canister_request_policies(
             &external_canister,
@@ -549,12 +547,10 @@ impl ExternalCanisterService {
                 ),
             },
         )
-        .map_err(|err| {
+        .inspect_err(|_| {
             // remove the external canister if the request policy configuration failed
             self.external_canister_repository
                 .remove(&external_canister.key());
-
-            err
         })?;
 
         Ok(external_canister)

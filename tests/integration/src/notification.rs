@@ -153,7 +153,7 @@ fn notification_authorization() {
         change_canister_operation_request,
     );
     match rejected_request.status {
-        RequestStatusDTO::Rejected { .. } => (),
+        RequestStatusDTO::Rejected => (),
         _ => panic!("Request should have been rejected."),
     };
 

@@ -12,10 +12,11 @@ use crate::core::validation::{
     EnsureAccount, EnsureAddressBookEntry, EnsureAsset, EnsureExternalCanister, EnsureIdExists,
     EnsureNamedRule, EnsureRequestPolicy, EnsureUser, EnsureUserGroup,
 };
-use crate::errors::{ExternalCanisterValidationError, ValidationError};
+use crate::errors::{ExternalCanisterValidationError, SystemInfoValidationError, ValidationError};
 use crate::models::resource::ExecutionMethodResourceTarget;
 use crate::models::Metadata;
 use candid::Principal;
+use orbit_essentials::backup_snapshots::ICP_MAX_CANISTER_SNAPSHOTS;
 use orbit_essentials::cdk::api::management_canister::main::{self as mgmt};
 use orbit_essentials::cmc::SubnetSelection;
 use orbit_essentials::model::{ContextualModel, ModelValidator, ModelValidatorResult};
@@ -971,6 +972,35 @@ pub struct RemoveRequestPolicyOperation {
 pub struct ManageSystemInfoOperationInput {
     pub name: Option<String>,
     pub cycle_obtain_strategy: Option<CycleObtainStrategy>,
+    pub max_station_backup_snapshots: Option<u64>,
+    pub max_upgrader_backup_snapshots: Option<u64>,
+}
+
+impl ModelValidator<ValidationError> for ManageSystemInfoOperationInput {
+    fn validate(&self) -> ModelValidatorResult<ValidationError> {
+        let check_max_backup_snapshots =
+            |max_backup_snapshots: u64| -> ModelValidatorResult<ValidationError> {
+                if max_backup_snapshots > ICP_MAX_CANISTER_SNAPSHOTS {
+                    let err = SystemInfoValidationError::InvalidMaxBackupSnapshots {
+                        provided: max_backup_snapshots,
+                        limit: ICP_MAX_CANISTER_SNAPSHOTS,
+                    };
+                    return Err(err.into());
+                }
+
+                Ok(())
+            };
+
+        if let Some(max_backup_snapshots) = self.max_station_backup_snapshots {
+            check_max_backup_snapshots(max_backup_snapshots)?;
+        }
+
+        if let Some(max_backup_snapshots) = self.max_upgrader_backup_snapshots {
+            check_max_backup_snapshots(max_backup_snapshots)?;
+        }
+
+        Ok(())
+    }
 }
 
 #[storable]
@@ -1024,7 +1054,9 @@ pub struct EditNamedRuleOperationInput {
 impl ModelValidator<ValidationError> for RequestOperation {
     fn validate(&self) -> ModelValidatorResult<ValidationError> {
         match self {
-            RequestOperation::ManageSystemInfo(_) => (),
+            RequestOperation::ManageSystemInfo(op) => {
+                op.input.validate()?;
+            }
             RequestOperation::Transfer(op) => {
                 EnsureAccount::id_exists(&op.input.from_account_id)?;
                 EnsureAsset::id_exists(&op.input.from_asset_id)?;
@@ -1729,5 +1761,83 @@ mod test {
                 ExternalCanisterValidationError::InvalidExternalCanister { .. }
             )
         ));
+    }
+
+    #[tokio::test]
+    async fn request_operation_with_many_backup_snapshots() {
+        let upgrader_id = candid::Principal::from_slice(&[42; 29]);
+
+        let mut system_info = SystemInfo::default();
+        system_info.set_upgrader_canister_id(upgrader_id);
+        write_system_info(system_info);
+
+        let max_backup_snapshots = ICP_MAX_CANISTER_SNAPSHOTS;
+
+        RequestOperation::ManageSystemInfo(crate::models::ManageSystemInfoOperation {
+            input: crate::models::ManageSystemInfoOperationInput {
+                cycle_obtain_strategy: None,
+                name: None,
+                max_station_backup_snapshots: Some(max_backup_snapshots),
+                max_upgrader_backup_snapshots: None,
+            },
+        })
+        .validate()
+        .unwrap();
+
+        RequestOperation::ManageSystemInfo(crate::models::ManageSystemInfoOperation {
+            input: crate::models::ManageSystemInfoOperationInput {
+                cycle_obtain_strategy: None,
+                name: None,
+                max_station_backup_snapshots: None,
+                max_upgrader_backup_snapshots: Some(max_backup_snapshots),
+            },
+        })
+        .validate()
+        .unwrap();
+    }
+
+    #[tokio::test]
+    async fn fail_request_operation_with_too_many_backup_snapshots() {
+        let upgrader_id = candid::Principal::from_slice(&[42; 29]);
+
+        let mut system_info = SystemInfo::default();
+        system_info.set_upgrader_canister_id(upgrader_id);
+        write_system_info(system_info);
+
+        let max_backup_snapshots = ICP_MAX_CANISTER_SNAPSHOTS + 1;
+
+        let check_err = |err: ValidationError| match err {
+            ValidationError::SystemInfoValidationError(
+                SystemInfoValidationError::InvalidMaxBackupSnapshots { provided, limit },
+            ) => {
+                assert_eq!(provided, max_backup_snapshots);
+                assert_eq!(limit, ICP_MAX_CANISTER_SNAPSHOTS);
+            }
+            _ => panic!("Unexpected error: {:?}", err),
+        };
+
+        let err = RequestOperation::ManageSystemInfo(crate::models::ManageSystemInfoOperation {
+            input: crate::models::ManageSystemInfoOperationInput {
+                cycle_obtain_strategy: None,
+                name: None,
+                max_station_backup_snapshots: Some(max_backup_snapshots),
+                max_upgrader_backup_snapshots: None,
+            },
+        })
+        .validate()
+        .unwrap_err();
+        check_err(err);
+
+        let err = RequestOperation::ManageSystemInfo(crate::models::ManageSystemInfoOperation {
+            input: crate::models::ManageSystemInfoOperationInput {
+                cycle_obtain_strategy: None,
+                name: None,
+                max_station_backup_snapshots: None,
+                max_upgrader_backup_snapshots: Some(max_backup_snapshots),
+            },
+        })
+        .validate()
+        .unwrap_err();
+        check_err(err);
     }
 }

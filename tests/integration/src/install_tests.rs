@@ -106,7 +106,7 @@ fn install_with_default_policies() {
         },
     ];
 
-    let station_init_args = SystemInstall::Init(SystemInit {
+    let station_init_args = SystemInstall::Init(Box::new(SystemInit {
         name: "Station".to_string(),
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
@@ -122,7 +122,7 @@ fn install_with_default_policies() {
             accounts: accounts.clone(),
             assets: assets.clone(),
         },
-    });
+    }));
     env.install_canister(
         canister_id,
         station_wasm,
@@ -355,7 +355,7 @@ fn install_with_all_entries() {
         name: "custom-user-group".to_string(),
     }];
 
-    let station_init_args = SystemInstall::Init(SystemInit {
+    let station_init_args = SystemInstall::Init(Box::new(SystemInit {
         name: "Station".to_string(),
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
@@ -377,7 +377,7 @@ fn install_with_all_entries() {
                 user_group_id: custom_user_group_id,
             }),
         },
-    });
+    }));
     env.install_canister(
         canister_id,
         station_wasm,
@@ -481,7 +481,7 @@ fn install_with_all_defaults() {
         },
     ];
 
-    let station_init_args = SystemInstall::Init(SystemInit {
+    let station_init_args = SystemInstall::Init(Box::new(SystemInit {
         name: "Station".to_string(),
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
@@ -495,7 +495,7 @@ fn install_with_all_defaults() {
             admin_quorum: 1,
             operator_quorum: 1,
         },
-    });
+    }));
     env.install_canister(
         canister_id,
         station_wasm,
@@ -670,7 +670,7 @@ fn install_with_bad_input(#[case] bad_input: station_api::InitialConfig) {
     let station_wasm = get_canister_wasm("station").to_vec();
     let upgrader_wasm = get_canister_wasm("upgrader").to_vec();
 
-    let station_init_args = SystemInstall::Init(SystemInit {
+    let station_init_args = SystemInstall::Init(Box::new(SystemInit {
         name: "Station".to_string(),
         upgrader: station_api::SystemUpgraderInput::Deploy(
             station_api::DeploySystemUpgraderInput {
@@ -680,7 +680,7 @@ fn install_with_bad_input(#[case] bad_input: station_api::InitialConfig) {
         ),
         fallback_controller: Some(controller),
         initial_config: bad_input,
-    });
+    }));
     env.install_canister(
         canister_id,
         station_wasm.clone(),

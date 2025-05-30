@@ -6,8 +6,9 @@ use crate::{
     STABLE_MEMORY_VERSION, SYSTEM_VERSION,
 };
 use candid::Principal;
+use ic_cdk::call;
 use ic_stable_structures::{storable::Bound, Storable};
-use orbit_essentials::backup_snapshots::BackupSnapshots;
+use orbit_essentials::backup_snapshots::{default_max_backup_snapshots, BackupSnapshots};
 use orbit_essentials::storable;
 use orbit_essentials::types::{Timestamp, UUID};
 use std::borrow::Cow;
@@ -67,6 +68,9 @@ pub struct SystemInfo {
     version: Option<String>,
     /// Last run migration version.
     stable_memory_version: Option<u32>,
+    /// The maximum number of station backup snapshots to keep.
+    #[serde(default = "default_max_backup_snapshots")]
+    max_station_backup_snapshots: u64,
 }
 
 impl Default for SystemInfo {
@@ -77,11 +81,12 @@ impl Default for SystemInfo {
             change_canister_request: None,
             upgrader_canister_id: None,
             upgrader_wasm_module: None,
-            upgrader_backup_snapshots: BackupSnapshots::new(1),
+            upgrader_backup_snapshots: BackupSnapshots::default(),
             disaster_recovery_committee: None,
             version: Some(SYSTEM_VERSION.to_string()),
             stable_memory_version: Some(STABLE_MEMORY_VERSION),
             cycle_obtain_strategy: CycleObtainStrategy::default(),
+            max_station_backup_snapshots: default_max_backup_snapshots(),
         }
     }
 }
@@ -196,6 +201,41 @@ impl SystemInfo {
     pub fn get_disaster_recovery_committee(&self) -> Option<&DisasterRecoveryCommittee> {
         self.disaster_recovery_committee.as_ref()
     }
+
+    pub fn get_max_station_backup_snapshots(&self) -> u64 {
+        self.max_station_backup_snapshots
+    }
+
+    pub async fn set_max_station_backup_snapshots(
+        &mut self,
+        max_backup_snapshots: u64,
+    ) -> Result<(), String> {
+        let upgrader_id = *self.get_upgrader_canister_id();
+        call::<_, (Result<(), String>,)>(
+            upgrader_id,
+            "set_max_backup_snapshots",
+            (max_backup_snapshots,),
+        )
+        .await
+        .map_err(|(_, err)| err)?
+        .0?;
+        self.max_station_backup_snapshots = max_backup_snapshots;
+        Ok(())
+    }
+
+    pub fn get_max_upgrader_backup_snapshots(&self) -> u64 {
+        self.upgrader_backup_snapshots.get_max_backup_snapshots()
+    }
+
+    pub async fn set_max_upgrader_backup_snapshots(
+        &mut self,
+        max_backup_snapshots: u64,
+    ) -> Result<(), String> {
+        let upgrader_id = *self.get_upgrader_canister_id();
+        self.upgrader_backup_snapshots
+            .set_max_backup_snapshots(max_backup_snapshots, upgrader_id)
+            .await
+    }
 }
 
 impl SystemState {
@@ -221,7 +261,7 @@ impl Storable for SystemState {
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        if bytes.len() == 0 {
+        if bytes.is_empty() {
             return SystemState::Uninitialized;
         }
         SystemState::Initialized(SystemInfo::from_bytes(bytes))

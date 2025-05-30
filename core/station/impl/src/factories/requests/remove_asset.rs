@@ -1,7 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{RemoveAssetOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{RemoveAssetOperation, Request, RequestOperation},
     services::AssetService,
 };
 use async_trait::async_trait;
@@ -18,19 +18,14 @@ impl Create<station_api::RemoveAssetOperationInput> for RemoveAssetRequestCreate
         input: station_api::CreateRequestInput,
         operation_input: station_api::RemoveAssetOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::RemoveAsset(RemoveAssetOperation {
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "Remove asset".to_string()),
-            input.summary,
+            "Remove asset".to_string(),
         );
 
         Ok(request)

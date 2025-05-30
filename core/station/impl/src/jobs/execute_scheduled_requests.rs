@@ -8,11 +8,7 @@ use crate::{
 };
 use async_trait::async_trait;
 use futures::future;
-#[cfg(test)]
-use orbit_essentials::cdk::api::call::RejectionCode;
-#[cfg(not(test))]
 use orbit_essentials::cdk::{call, id};
-use orbit_essentials::repository::Repository;
 
 #[derive(Debug, Default)]
 pub struct Job {
@@ -65,9 +61,8 @@ impl Job {
             request.status = RequestStatus::Processing {
                 started_at: request_processing_time,
             };
-            request.last_modification_timestamp = request_processing_time;
             self.request_repository
-                .insert(request.to_key(), request.to_owned());
+                .save_modified(request, request_processing_time);
         }
 
         // batch the requests to be executed
@@ -78,15 +73,13 @@ impl Job {
 
         // wait for all the requests to be executed
         let results = future::join_all(calls).await;
-        let requests = requests.clone();
 
         // update the status of the requests
-        for (pos, result) in results.iter().enumerate() {
+        for result in results.into_iter() {
             match result {
                 Ok(()) => (),
-                Err(e) => {
+                Err((request, e)) => {
                     let request_failed_time = next_time();
-                    let request = requests[pos].clone();
                     self.request_service
                         .fail_request(request, e.to_string(), request_failed_time)
                         .await;
@@ -102,15 +95,30 @@ impl Job {
     /// This function will handle the request execution for the given operation type.
     /// In production, the actual request execution is wrapped inside an inter-canister call
     /// to catch traps and report them as `RequestExecuteError::InternalError`.
-    async fn execute_request(&self, request: Request) -> Result<(), RequestExecuteError> {
-        #[cfg(not(test))]
-        let res = call::<_, (_,)>(id(), "try_execute_request", (request.id,)).await;
-        #[cfg(test)]
-        let res: Result<_, (RejectionCode, String)> =
-            Ok((self.request_service.try_execute_request(request.id).await,));
-        match res {
-            Ok(res) => res.0,
-            Err((_code, msg)) => Err(RequestExecuteError::InternalError { reason: msg }),
+    async fn execute_request(
+        &self,
+        request: Request,
+    ) -> Result<(), (Request, RequestExecuteError)> {
+        if cfg!(test) {
+            self.request_service
+                .try_execute_request(request.id)
+                .await
+                .map_err(|e| (request, e))
+        } else {
+            call::<_, (Result<(), RequestExecuteError>,)>(
+                id(),
+                "try_execute_request",
+                (request.id,),
+            )
+            .await
+            .map_err(|(_code, msg)| {
+                (
+                    request.clone(),
+                    RequestExecuteError::InternalError { reason: msg },
+                )
+            })?
+            .0
+            .map_err(|e| (request, e))
         }
     }
 }

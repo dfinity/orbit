@@ -214,7 +214,7 @@ impl<'a> SelectionFilter<'a> for AndSelectionFilter<'a> {
         for filter in &self.filters {
             found_ids = Some(filter.apply(found_ids.as_ref()));
 
-            if found_ids.as_ref().map_or(false, |ids| ids.is_empty()) {
+            if found_ids.as_ref().is_some_and(|ids| ids.is_empty()) {
                 break;
             }
         }
@@ -290,7 +290,7 @@ pub struct IdentitySelectionFilter {
     pub ids: HashSet<UUID>,
 }
 
-impl<'a> SelectionFilter<'a> for IdentitySelectionFilter {
+impl SelectionFilter<'_> for IdentitySelectionFilter {
     type IdType = UUID;
 
     fn matches(&self, id: &Self::IdType) -> bool {
@@ -323,7 +323,7 @@ pub struct DefaultSortingStrategy {
     pub direction: Option<SortDirection>,
 }
 
-impl<'a> SortingStrategy<'a> for DefaultSortingStrategy {
+impl SortingStrategy<'_> for DefaultSortingStrategy {
     type IdType = UUID;
 
     fn sort(&self, ids: &mut [Self::IdType]) {

@@ -1,4 +1,7 @@
-use crate::errors::{ExternalCanisterValidationError, RecordValidationError, ValidationError};
+use crate::errors::{
+    ExternalCanisterValidationError, RecordValidationError, SystemInfoValidationError,
+    ValidationError,
+};
 use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -106,11 +109,20 @@ impl From<ExternalCanisterValidationError> for RequestError {
     }
 }
 
+impl From<SystemInfoValidationError> for RequestError {
+    fn from(err: SystemInfoValidationError) -> RequestError {
+        RequestError::ValidationError {
+            info: err.to_string(),
+        }
+    }
+}
+
 impl From<ValidationError> for RequestError {
     fn from(err: ValidationError) -> RequestError {
         match err {
             ValidationError::RecordValidationError(err) => err.into(),
             ValidationError::ExternalCanisterValidationError(err) => err.into(),
+            ValidationError::SystemInfoValidationError(err) => err.into(),
         }
     }
 }

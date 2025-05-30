@@ -46,7 +46,10 @@ impl<'p, 'o> ManageSystemInfoRequestExecute<'p, 'o> {
 #[async_trait]
 impl Execute for ManageSystemInfoRequestExecute<'_, '_> {
     async fn execute(&self) -> Result<RequestExecuteStage, RequestExecuteError> {
-        SYSTEM_SERVICE.update_system_info(self.operation.input.clone());
+        SYSTEM_SERVICE
+            .update_system_info(self.operation.input.clone())
+            .await
+            .map_err(|err| RequestExecuteError::Failed { reason: err })?;
 
         Ok(RequestExecuteStage::Completed(
             self.request.operation.clone(),
@@ -89,6 +92,8 @@ mod tests {
                 input: ManageSystemInfoOperationInput {
                     name: Some("name".to_string()),
                     cycle_obtain_strategy: None,
+                    max_station_backup_snapshots: None,
+                    max_upgrader_backup_snapshots: None,
                 },
             })
         );
@@ -140,6 +145,8 @@ mod mnanage_system_info_test_utils {
         station_api::ManageSystemInfoOperationInput {
             name: Some("name".to_string()),
             cycle_obtain_strategy: None,
+            max_station_backup_snapshots: None,
+            max_upgrader_backup_snapshots: None,
         }
     }
 

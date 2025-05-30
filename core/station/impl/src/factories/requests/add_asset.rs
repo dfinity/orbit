@@ -1,7 +1,7 @@
 use super::{Create, Execute, RequestExecuteStage};
 use crate::{
     errors::{RequestError, RequestExecuteError},
-    models::{AddAssetOperation, Request, RequestExecutionPlan, RequestOperation},
+    models::{AddAssetOperation, Request, RequestOperation},
     services::AssetService,
 };
 use async_trait::async_trait;
@@ -18,20 +18,15 @@ impl Create<station_api::AddAssetOperationInput> for AddAssetRequestCreate {
         input: station_api::CreateRequestInput,
         operation_input: station_api::AddAssetOperationInput,
     ) -> Result<Request, RequestError> {
-        let request = Request::new(
+        let request = Request::from_request_creation_input(
             request_id,
             requested_by_user,
-            Request::default_expiration_dt_ns(),
+            input,
             RequestOperation::AddAsset(AddAssetOperation {
                 asset_id: None,
                 input: operation_input.into(),
             }),
-            input
-                .execution_plan
-                .map(Into::into)
-                .unwrap_or(RequestExecutionPlan::Immediate),
-            input.title.unwrap_or_else(|| "Asset creation".to_string()),
-            input.summary,
+            "Add asset".to_string(),
         );
 
         Ok(request)

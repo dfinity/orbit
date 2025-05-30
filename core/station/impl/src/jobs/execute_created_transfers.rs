@@ -107,9 +107,8 @@ impl Job {
 
         // wait for all the transfers to be executed
         let results = future::join_all(calls).await;
-        let transfers = transfers.clone();
 
-        for (pos, result) in results.iter().enumerate() {
+        for result in results.into_iter() {
             match result {
                 Ok((transfer, details)) => {
                     let (mut transfer, _account, asset) = transfer.clone();
@@ -143,9 +142,9 @@ impl Job {
                         request.status = RequestStatus::Completed {
                             completed_at: transfer_completed_time,
                         };
-                        request.last_modification_timestamp = transfer_completed_time;
+
                         self.request_repository
-                            .insert(request.to_key(), request.to_owned());
+                            .save_modified(&mut request, transfer_completed_time);
                     } else {
                         print(format!(
                             "Error: request not found for transfer {}",
@@ -153,8 +152,7 @@ impl Job {
                         ));
                     }
                 }
-                Err(e) => {
-                    let mut transfer = transfers[pos].clone();
+                Err((mut transfer, e)) => {
                     transfer.status = TransferStatus::Failed {
                         reason: e.to_string(),
                     };
@@ -187,38 +185,51 @@ impl Job {
     async fn execute_transfer(
         &self,
         transfer: Transfer,
-    ) -> Result<((Transfer, Account, Asset), BlockchainTransactionSubmitted), TransferError> {
+    ) -> Result<
+        ((Transfer, Account, Asset), BlockchainTransactionSubmitted),
+        (Transfer, TransferError),
+    > {
         let account = self
             .account_repository
             .get(&Account::key(transfer.from_account))
-            .ok_or(TransferError::ValidationError {
-                info: format!(
-                    "Transfer account not found for id {}",
-                    Uuid::from_bytes(transfer.from_account).hyphenated()
-                ),
-            })?;
+            .ok_or((
+                transfer.clone(),
+                TransferError::ValidationError {
+                    info: format!(
+                        "Transfer account not found for id {}",
+                        Uuid::from_bytes(transfer.from_account).hyphenated()
+                    ),
+                },
+            ))?;
 
-        let asset = self.asset_repository.get(&transfer.from_asset).ok_or(
+        let asset = self.asset_repository.get(&transfer.from_asset).ok_or((
+            transfer.clone(),
             TransferError::ValidationError {
                 info: format!(
                     "Transfer asset not found for id {}",
                     Uuid::from_bytes(transfer.from_asset).hyphenated()
                 ),
             },
-        )?;
+        ))?;
 
         let blockchain_api = BlockchainApiFactory::build(&asset.blockchain).map_err(|e| {
-            TransferError::ExecutionError {
-                reason: format!("Failed to build blockchain api: {}", e),
-            }
+            (
+                transfer.clone(),
+                TransferError::ExecutionError {
+                    reason: format!("Failed to build blockchain api: {}", e),
+                },
+            )
         })?;
 
         match blockchain_api.submit_transaction(&account, &transfer).await {
             Ok(details) => Ok(((transfer, account, asset), details)),
 
-            Err(error) => Err(TransferError::ExecutionError {
-                reason: error.to_json_string(),
-            })?,
+            Err(error) => Err((
+                transfer,
+                TransferError::ExecutionError {
+                    reason: error.to_json_string(),
+                },
+            ))?,
         }
     }
 }

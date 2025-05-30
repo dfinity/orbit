@@ -145,7 +145,7 @@ jobs:
           ./scripts/generate-wasm.sh test_canister
       - name: Run integration tests
         run: |
-          ./scripts/run-integration-tests.sh 2> logs.txt
+          ./scripts/run-integration-tests.sh 2> >(tee logs.txt >&2)
           grep "rng succesfully initialized" logs.txt
           ! grep "canister reports healthy already before its initialization has finished" logs.txt
   e2e-tests:
