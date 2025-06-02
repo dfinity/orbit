@@ -3,7 +3,7 @@ ARG BUILD_MODE=production
 ARG TARGETPLATFORM=linux/amd64
 
 # Operating system with basic tools
-FROM ubuntu:20.04 AS base
+FROM ubuntu:24.04 AS base
 SHELL ["bash", "-c"]
 ENV TZ=UTC
 ENV LC_ALL=C.UTF-8
