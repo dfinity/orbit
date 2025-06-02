@@ -115,7 +115,7 @@ const input = withDefaults(
   }>(),
   {
     open: false,
-    dialogMaxWidth: 800,
+    dialogMaxWidth: 1200,
     readonly: false,
   },
 );

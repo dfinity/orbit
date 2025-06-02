@@ -78,3 +78,9 @@ wasms/*.wasm.gz
 # the system time added to PocketIC being the current time, making it non deterministic.
 tests/integration/assets/station-memory-latest.bin
 tests/integration/assets/upgrader-memory-latest.bin
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

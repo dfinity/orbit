@@ -13,28 +13,28 @@
         @click="emit('remove')"
       />
     </div>
-    <div class="d-flex flex-column flex-md-row ga-4 align-center">
-      <div class="w-md-50 w-100">
+    <div class="d-flex flex-column flex-md-row ga-4 align-md-center">
+      <div class="flex-1-1">
         <VTextField
           v-model="quorum"
           :label="$t('terms.min')"
           type="number"
           :rules="rules.min"
-          :disabled="disabledInput || props.disabled.value"
+          :readonly="disabledInput || props.disabled.value"
           density="comfortable"
-          variant="underlined"
+          :variant="props.disabled.value ? 'plain' : 'underlined'"
         />
       </div>
       <span class="text-body-1">{{ $t('terms.of') }}</span>
-      <div class="d-flex flex-row ga-4 w-md-50 w-100">
+      <div class="d-flex flex-row ga-4 flex-1-1">
         <VAutocomplete
           v-model="userTypeModel"
           :label="$t('request_policies.user_type_select')"
           :items="userSelectorItems"
           item-value="value"
           item-title="text"
-          :disabled="props.disabled.value"
-          variant="underlined"
+          :readonly="props.disabled.value"
+          :variant="props.disabled.value ? 'plain' : 'underlined'"
           density="comfortable"
         />
         <UserGroupAutocomplete
@@ -42,14 +42,16 @@
           v-model="model.approvers.Group"
           :label="$t('request_policies.rule_user_specifier.group')"
           multiple
-          :disabled="props.disabled.value"
+          :readonly="props.disabled.value"
+          :variant="props.disabled.value ? 'plain' : 'underlined'"
         />
         <UserAutocomplete
           v-else-if="variantIs(model.approvers, 'Id')"
           v-model="model.approvers.Id"
           :label="$t('request_policies.rule_user_specifier.id')"
           multiple
-          :disabled="props.disabled.value"
+          :readonly="props.disabled.value"
+          :variant="props.disabled.value ? 'plain' : 'underlined'"
         />
       </div>
     </div>

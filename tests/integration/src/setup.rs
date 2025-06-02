@@ -348,7 +348,7 @@ fn install_canisters(
         upload_canister_modules(env, control_panel, controller);
     }
 
-    let station_init_args = SystemInstallArg::Init(SystemInitArg {
+    let station_init_args = SystemInstallArg::Init(Box::new(SystemInitArg {
         name: "Station".to_string(),
 
         upgrader: station_api::SystemUpgraderInput::Deploy(
@@ -371,7 +371,7 @@ fn install_canisters(
             admin_quorum: 1,
             operator_quorum: 1,
         },
-    });
+    }));
     env.install_canister(
         station,
         station_wasm,

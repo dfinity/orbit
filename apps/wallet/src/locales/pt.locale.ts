@@ -21,6 +21,7 @@ export default {
     station_info_card_remove_btn: 'Remover carteira',
     station_info_card_remove_btn_confirm: 'Tem a certeza que pretende remover esta carteira?',
     disaster_recovery_card_title: 'Recuperação de desastres',
+    disaster_recovery: 'Recuperação de desastres',
     disaster_recovery_not_configured: 'Recuperação de desastres não configurada.',
     disaster_recovery_dialog_title: 'Configurar recuperação de desastres',
     manage_associated_station: 'Gerenciar carteira associada',
@@ -171,6 +172,8 @@ export default {
     no_results_found: 'Nenhum resultado encontrado.',
     no_more_requests_to_approve: 'Não há mais pedidos para aprovar.',
     load_next: 'Carregar próximo',
+    failed_to_fetch_details:
+      'Falha ao recuperar os detalhes da entrada existente. Os alterações solicitadas não podem ser exibidas.',
     processing_started_at: 'Processamento iniciado em {dt}',
     processing_completed_at: 'Processamento concluído em {dt}',
     processing_scheduled_at: 'Processamento agendado para {dt}',
@@ -1071,6 +1074,61 @@ export default {
     error: {
       title: 'Erro',
       subtitle: 'Ocorreu um erro, por favor, tente novamente.',
+    },
+    disaster_recovery: {
+      title: 'Recuperação de Desastres',
+      upgrader_status: 'Status do Atualizador',
+      loading_upgrader: 'Carregando atualizador...',
+
+      disaster_recovery_state: 'Estado da Recuperação de Desastres',
+      disaster_recovery_state_loading: 'Carregando estado da recuperação de desastres...',
+
+      recent_logs: 'Logs Recentes',
+
+      select_orbit_station_version: 'Selecione a versão da carteira Orbit',
+
+      submit_recovery_request: 'Enviar Pedido de Recuperação de Desastres',
+      submit_button: 'Enviar Pedido de Recuperação de Desastres',
+
+      station_idl: 'IDL da Carteira',
+      upgrader_idl: 'IDL do Atualizador',
+
+      station_service_payload: 'Payload do Serviço da Carteira',
+
+      result: 'Resultado',
+
+      recovery_instructions:
+        'Contacte o administrador da sua carteira para obter um payload de recuperação.',
+      error_logs_unauthorized: 'Não autorizado para consultar logs',
+      error_state_unauthorized: 'Não autorizado para consultar o estado',
+
+      error_state: 'Falha ao obter o atualizador: {error}',
+      error_no_upgrader_found: 'Nenhum atualizador encontrado',
+      error_state_loading_failed: 'Falha ao obter o estado da recuperação de desastres: {error}',
+      error_logs_loading_failed: 'Falha ao obter logs: {error}',
+
+      error_registry_loading_failed: 'Falha ao consultar o registro de atualizações: {error}',
+
+      success_submit_recovery: 'Pedido de recuperação enviado com sucesso',
+      error_submit_recovery: 'Falha ao enviar o pedido de recuperação: {error}',
+
+      help_block: `
+<p>A recuperação de desastres destina-se a recuperar o acesso aos ativos caso o canister da carteira torne-se não operacional ou inacessível. Funciona através do envio de um pedido de recuperação ao canister atualizador da carteira que armazena, entre outras coisas, um backup dos dados principais dos usuários e informações de conta da carteira.</p>
+<p>O envio de um pedido de recuperação envolve a construção de um payload de recuperação, que é um valor Candid especificando os dados de usuário e conta a serem recuperados, a versão da carteira a ser utilizada e o método de recuperação (ou seja, instalar/reinstalar/atualizar).</p>
+<p>O canister atualizador armazena um conjunto de usuários chamado "comitê de recuperação de desastres" que precisam chegar a um consenso sobre o pedido de recuperação para que o processo de recuperação seja iniciado. O número de usuários que precisam chegar a um consenso é chamado "quórum". Essas informações são consultadas e exibidas no cartão "Status do Atualizador".</p>
+<p>O processo de recuperação é o seguinte:</p>
+<ol>
+<li>Do registro de atualização de versão, selecione a versão da carteira para a qual deseja recuperar. O IDL da carteira (a definição de API da carteira) é exibido para a versão selecionada.</li>
+<li>Construa o payload Candid de inicialização do serviço (por exemplo, para \`(opt SystemInstall)\`) que será usado como argumento para a operação de reinstalação/instalação/atualização. Se o canister atualizador estiver suficientemente atualizado, a interface preencherá automaticamente com base no armazenamento de backup do atualizador. A construção de um payload válido resultará em uma representação binária do payload que precisa ser usada na próxima etapa.</li>
+<li>A página exibirá o IDL do atualizador (a definição de API do atualizador) atualmente em uso para a carteira. Construa o payload do pedido de recuperação de desastres (para o tipo \`RequestDisasterRecoveryInput\`) usando o IDL e o payload da etapa anterior. A interface preencherá automaticamente o payload para você se o payload do argumento estiver disponível.</li>
+<li>Quando o payload final for válido, clique no botão enviar para submeter o pedido de recuperação.</li>
+<li>Um número suficiente de usuários (ou seja, exatamente a quantidade de \`quórum\`) deve enviar o mesmo pedido de recuperação antes que o processo de recuperação possa começar. Os usuários podem reenviar pedidos várias vezes; cada envio substituirá o anterior.</li>
+<li>O processo de recuperação começará após o quórum ser atingido. O atualizador executará a operação especificada no payload.</li>
+</ol>
+<p>Boa sorte!</p>`,
+
+      warning_block:
+        'Aviso: a recuperação de desastres é um processo complexo que pode levar à perda irreversível de acesso aos ativos se realizado incorretamente. Procure assistência dos membros da fundação no fórum.',
     },
   },
   session: {

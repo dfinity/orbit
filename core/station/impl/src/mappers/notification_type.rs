@@ -49,7 +49,7 @@ impl TryFrom<NotificationType> for NotificationTypeDTO {
                 let maybe_evaluation = REQUEST_EVALUATION_RESULT_REPOSITORY.get(&ctx.request_id);
 
                 match request.status {
-                    RequestStatus::Rejected { .. } => {
+                    RequestStatus::Rejected => {
                         NotificationTypeDTO::RequestRejected(RequestRejectedNotificationDTO {
                             request_id: Uuid::from_bytes(ctx.request_id).to_string(),
                             operation_type: RequestOperationType::from(request.operation).into(),

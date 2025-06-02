@@ -218,7 +218,7 @@ pub struct SystemUpgrade {
 
 #[derive(CandidType, serde::Serialize, Deserialize, Clone, Debug)]
 pub enum SystemInstall {
-    Init(SystemInit),
+    Init(Box<SystemInit>),
     Upgrade(SystemUpgrade),
 }
 

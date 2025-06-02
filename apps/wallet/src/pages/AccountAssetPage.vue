@@ -128,6 +128,7 @@
                     v-model:force-reload="forceReload"
                     :load="loadTransfers"
                     :refresh-interval-ms="10000"
+                    :error-msg="transfersErrorMessage"
                   >
                     <VProgressCircular v-if="loadingTransfers" indeterminate color="primary" />
                     <VTable v-else-if="data" hover class="elevation-2 rounded">
@@ -295,6 +296,7 @@ import {
   Asset,
 } from '~/generated/station/station.did';
 import { ChainApiFactory } from '~/services/chains';
+import { useAppStore } from '~/stores/app.store';
 import { useStationStore } from '~/stores/station.store';
 import type { PageProps } from '~/types/app.types';
 import {
@@ -308,6 +310,7 @@ import { RequestDomains } from '~/types/station.types';
 import { copyToClipboard } from '~/utils/app.utils';
 import { detectAddressFormat } from '~/utils/asset.utils';
 import { convertDate } from '~/utils/date.utils';
+import { getErrorMessage } from '~/utils/error.utils';
 import { formatBalance, throttle } from '~/utils/helper.utils';
 
 const props = withDefaults(defineProps<PageProps>(), {
@@ -374,6 +377,9 @@ const saveFilters = (): void => {
   router.replace({ query: filterUtils.getQuery(filters.value) });
 };
 
+const transfersErrorMessage = ref<string | undefined>(undefined);
+const appStore = useAppStore();
+
 const chainApi = computed(() => {
   if (!account.value || !asset.value) {
     return null;
@@ -397,6 +403,7 @@ const isReceivedTransfer = (transfer: AccountIncomingTransfer): boolean => {
 const loadTransfers = async (): Promise<
   (AccountIncomingTransfer & { format: string | undefined })[]
 > => {
+  transfersErrorMessage.value = undefined;
   if (
     !account.value ||
     !accountAsset.value ||
@@ -407,24 +414,31 @@ const loadTransfers = async (): Promise<
   ) {
     return [];
   }
-  const transfers = await chainApi.value.fetchTransfers({
-    fromDt: convertDate(filters.value.created.from, {
-      time: 'start-of-day',
-      tz: 'local',
-    }),
-    toDt: convertDate(filters.value.created.to, {
-      time: 'end-of-day',
-      tz: 'local',
-    }),
-  });
 
-  return transfers.map(transfer => ({
-    ...transfer,
-    format: detectAddressFormat(
-      asset.value!.blockchain,
-      isReceivedTransfer(transfer) ? transfer.from : transfer.to,
-    ),
-  }));
+  try {
+    const transfers = await chainApi.value.fetchTransfers({
+      fromDt: convertDate(filters.value.created.from, {
+        time: 'start-of-day',
+        tz: 'local',
+      }),
+      toDt: convertDate(filters.value.created.to, {
+        time: 'end-of-day',
+        tz: 'local',
+      }),
+    });
+
+    return transfers.map(transfer => ({
+      ...transfer,
+      format: detectAddressFormat(
+        asset.value!.blockchain,
+        isReceivedTransfer(transfer) ? transfer.from : transfer.to,
+      ),
+    }));
+  } catch (error) {
+    appStore.sendErrorNotification(error);
+    transfersErrorMessage.value = getErrorMessage(error);
+    throw error;
+  }
 };
 
 let useVerifiedCall = false;

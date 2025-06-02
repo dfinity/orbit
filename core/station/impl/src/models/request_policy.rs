@@ -1,12 +1,16 @@
 use super::{request_policy_rule::RequestPolicyRule, request_specifier::RequestSpecifier};
-use crate::errors::{MatchError, RequestPolicyError};
+use super::{NamedRuleId, NamedRuleKey};
+use crate::errors::{MatchError, RecordValidationError, RequestPolicyError, ValidationError};
+use crate::repositories::NAMED_RULE_REPOSITORY;
 use candid::{CandidType, Deserialize};
 use orbit_essentials::model::ModelKey;
+use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
     types::UUID,
 };
+use uuid::Uuid;
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -53,10 +57,104 @@ impl From<MatchError> for EvaluateError {
     }
 }
 
+/// Check for compatibility between a rule and a specifier:
+/// - AllowListed and AllowListedByMetadata are compatible only with Transfer requests.
+///
+pub fn validate_rule_for_specifier(
+    rule: &RequestPolicyRule,
+    specifier: &RequestSpecifier,
+    updated_named_rules: &[(&NamedRuleId, &RequestPolicyRule)],
+) -> ModelValidatorResult<RequestPolicyError> {
+    _validate_rule_for_specifier(rule, rule, specifier, updated_named_rules)
+}
+
+fn _validate_rule_for_specifier(
+    root_rule: &RequestPolicyRule,
+    rule: &RequestPolicyRule,
+    specifier: &RequestSpecifier,
+    updated_named_rules: &[(&NamedRuleId, &RequestPolicyRule)],
+) -> ModelValidatorResult<RequestPolicyError> {
+    match rule {
+        RequestPolicyRule::AutoApproved => Ok(()),
+        RequestPolicyRule::QuorumPercentage(_, _) => Ok(()),
+        RequestPolicyRule::Quorum(_, _) => Ok(()),
+        RequestPolicyRule::AllowListed | RequestPolicyRule::AllowListedByMetadata(_) => {
+            match specifier {
+                RequestSpecifier::Transfer(_) => Ok(()),
+                RequestSpecifier::AddAccount
+                | RequestSpecifier::AddUser
+                | RequestSpecifier::EditAccount(..)
+                | RequestSpecifier::EditUser(..)
+                | RequestSpecifier::AddAddressBookEntry
+                | RequestSpecifier::EditAddressBookEntry(..)
+                | RequestSpecifier::RemoveAddressBookEntry(..)
+                | RequestSpecifier::SetDisasterRecovery
+                | RequestSpecifier::CreateExternalCanister
+                | RequestSpecifier::ChangeExternalCanister(..)
+                | RequestSpecifier::CallExternalCanister(..)
+                | RequestSpecifier::FundExternalCanister(..)
+                | RequestSpecifier::EditPermission(..)
+                | RequestSpecifier::AddRequestPolicy
+                | RequestSpecifier::EditRequestPolicy(..)
+                | RequestSpecifier::RemoveRequestPolicy(..)
+                | RequestSpecifier::AddUserGroup
+                | RequestSpecifier::EditUserGroup(..)
+                | RequestSpecifier::RemoveUserGroup(..)
+                | RequestSpecifier::ManageSystemInfo
+                | RequestSpecifier::SystemUpgrade
+                | RequestSpecifier::AddAsset
+                | RequestSpecifier::EditAsset(..)
+                | RequestSpecifier::RemoveAsset(..)
+                | RequestSpecifier::AddNamedRule
+                | RequestSpecifier::EditNamedRule(..)
+                | RequestSpecifier::RemoveNamedRule(..) => {
+                    Err(RequestPolicyError::InvalidRuleForSpecifier {
+                        invalid_rule: rule.to_string(),
+                        specifier: specifier.to_string(),
+                        policy_rule: root_rule.to_string(),
+                    })
+                }
+            }
+        }
+
+        RequestPolicyRule::And(rules) | RequestPolicyRule::Or(rules) => {
+            for rule in rules {
+                _validate_rule_for_specifier(root_rule, rule, specifier, updated_named_rules)?;
+            }
+            Ok(())
+        }
+        RequestPolicyRule::Not(rule) => {
+            _validate_rule_for_specifier(root_rule, rule, specifier, updated_named_rules)
+        }
+        RequestPolicyRule::NamedRule(named_rule_id) => {
+            let rule = if let Some((_, rule)) = updated_named_rules
+                .iter()
+                .find(|(id, _)| *id == named_rule_id)
+            {
+                (*rule).clone()
+            } else {
+                let named_rule = NAMED_RULE_REPOSITORY
+                    .get(&NamedRuleKey { id: *named_rule_id })
+                    .ok_or(ValidationError::RecordValidationError(
+                        RecordValidationError::NotFound {
+                            model_name: "NamedRule".to_string(),
+                            id: Uuid::from_bytes(*named_rule_id).hyphenated().to_string(),
+                        },
+                    ))?;
+
+                named_rule.rule
+            };
+
+            _validate_rule_for_specifier(root_rule, &rule, specifier, updated_named_rules)
+        }
+    }
+}
+
 impl ModelValidator<RequestPolicyError> for RequestPolicy {
     fn validate(&self) -> ModelValidatorResult<RequestPolicyError> {
         self.specifier.validate()?;
         self.rule.validate()?;
+        validate_rule_for_specifier(&self.rule, &self.specifier, &[])?;
         Ok(())
     }
 }
@@ -66,14 +164,16 @@ pub mod request_policy_test_utils {
     use super::RequestPolicy;
     use crate::{
         core::CallContext,
+        errors::RequestPolicyError,
         models::{
             request_policy_rule::RequestPolicyRule, request_specifier::RequestSpecifier,
             AddNamedRuleOperationInput, AddRequestPolicyOperationInput, AddUserOperationInput,
-            ADMIN_GROUP_ID,
+            MetadataItem, ADMIN_GROUP_ID,
         },
         services::{NAMED_RULE_SERVICE, REQUEST_POLICY_SERVICE, REQUEST_SERVICE, USER_SERVICE},
     };
     use candid::Principal;
+    use orbit_essentials::model::ModelValidator;
     use station_api::CreateRequestInput;
     use uuid::Uuid;
 
@@ -101,7 +201,7 @@ pub mod request_policy_test_utils {
                 name: "test".to_string(),
                 rule: RequestPolicyRule::Or(vec![
                     RequestPolicyRule::NamedRule(named_rule_1.id),
-                    RequestPolicyRule::AllowListed,
+                    RequestPolicyRule::Not(Box::new(RequestPolicyRule::AutoApproved)),
                 ]),
             })
             .expect("Failed to create named rule");
@@ -149,5 +249,96 @@ pub mod request_policy_test_utils {
             request.status,
             crate::models::RequestStatus::Approved
         ));
+    }
+
+    #[test]
+    fn test_invalid_rule_for_specifier() {
+        let incompatible_rule_1 = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                name: "test_1".to_string(),
+                description: None,
+                rule: RequestPolicyRule::And(vec![
+                    RequestPolicyRule::AllowListed,
+                    RequestPolicyRule::AutoApproved,
+                ]),
+            })
+            .expect("Failed to create named rule");
+
+        let incompatible_rule_2 = NAMED_RULE_SERVICE
+            .create(AddNamedRuleOperationInput {
+                name: "test_2".to_string(),
+                description: None,
+                rule: RequestPolicyRule::AllowListedByMetadata(MetadataItem {
+                    key: "test".to_string(),
+                    value: "test".to_string(),
+                }),
+            })
+            .expect("Failed to create named rule");
+
+        let tests = [
+            (
+                RequestSpecifier::AddAccount,
+                RequestPolicyRule::AllowListed,
+                Err(RequestPolicyError::InvalidRuleForSpecifier {
+                    invalid_rule: "AllowListed".to_string(),
+                    specifier: "AddAccount".to_string(),
+                    policy_rule: "AllowListed".to_string(),
+                }),
+            ),
+            (
+                RequestSpecifier::AddAccount,
+                RequestPolicyRule::AllowListedByMetadata(MetadataItem {
+                    key: "test".to_string(),
+                    value: "test".to_string(),
+                }),
+                Err(RequestPolicyError::InvalidRuleForSpecifier {
+                    invalid_rule: "AllowListedByMetadata".to_string(),
+                    specifier: "AddAccount".to_string(),
+                    policy_rule: "AllowListedByMetadata".to_string(),
+                }),
+            ),
+            (
+                RequestSpecifier::AddAccount,
+                RequestPolicyRule::NamedRule(incompatible_rule_1.id),
+                Err(RequestPolicyError::InvalidRuleForSpecifier {
+                    invalid_rule: "AllowListed".to_string(),
+                    specifier: "AddAccount".to_string(),
+                    policy_rule: "NamedRule(And(AllowListed,AutoApproved))".to_string(),
+                }),
+            ),
+            (
+                RequestSpecifier::AddAccount,
+                RequestPolicyRule::NamedRule(incompatible_rule_2.id),
+                Err(RequestPolicyError::InvalidRuleForSpecifier {
+                    invalid_rule: "AllowListedByMetadata".to_string(),
+                    specifier: "AddAccount".to_string(),
+                    policy_rule: "NamedRule(AllowListedByMetadata)".to_string(),
+                }),
+            ),
+            (
+                RequestSpecifier::Transfer(crate::models::resource::ResourceIds::Any),
+                RequestPolicyRule::AllowListed,
+                Ok(()),
+            ),
+            (
+                RequestSpecifier::Transfer(crate::models::resource::ResourceIds::Any),
+                RequestPolicyRule::AllowListedByMetadata(MetadataItem {
+                    key: "test".to_string(),
+                    value: "test".to_string(),
+                }),
+                Ok(()),
+            ),
+        ];
+
+        for (specifier, rule, expected) in tests {
+            let policy = RequestPolicy {
+                id: *Uuid::new_v4().as_bytes(),
+                specifier,
+                rule,
+            };
+
+            let result = policy.validate();
+            assert_eq!(result, expected);
+        }
     }
 }

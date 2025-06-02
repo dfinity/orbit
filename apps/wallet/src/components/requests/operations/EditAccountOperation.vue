@@ -24,13 +24,28 @@
     </RequestOperationListRow>
   </div>
   <LoadingMessage v-else-if="loading" />
-  <AccountSetupWizard v-else :model-value="model" mode="view" />
+
+  <template v-else>
+    <VAlert
+      v-if="currentAccountModelFailed"
+      type="error"
+      variant="tonal"
+      density="compact"
+      class="mb-4"
+    >
+      {{ $t('requests.failed_to_fetch_details') }}
+      <div>{{ currentAccountModelFailed }}</div>
+    </VAlert>
+
+    <AccountSetupWizard :model-value="model" mode="view" :current-model="currentAccountModel" />
+  </template>
 </template>
 
 <script setup lang="ts">
 import { Ref, computed, onBeforeMount, ref } from 'vue';
 import AccountSetupWizard, {
   AccountSetupWizardModel,
+  CurrentAccountSetupWizardModel,
 } from '~/components/accounts/wizard/AccountSetupWizard.vue';
 import LoadingMessage from '~/components/LoadingMessage.vue';
 import {
@@ -39,11 +54,12 @@ import {
 } from '~/composables/account.composable';
 import logger from '~/core/logger.core';
 import { EditAccountOperation, Request } from '~/generated/station/station.did';
-import { unreachable, variantIs } from '~/utils/helper.utils';
+import { deepClone, unreachable, variantIs } from '~/utils/helper.utils';
 import RequestOperationListRow from '../RequestOperationListRow.vue';
 import { useI18n } from 'vue-i18n';
 import { useStationStore } from '~/stores/station.store';
-
+import { getErrorMessage } from '~/utils/error.utils';
+import { useAppStore } from '~/stores/app.store';
 const props = withDefaults(
   defineProps<{
     request: Request;
@@ -56,11 +72,15 @@ const props = withDefaults(
 );
 
 const i18n = useI18n();
+const appStore = useAppStore();
 
 const isListMode = computed(() => props.mode === 'list');
+const isDiffMode = computed(() => !isListMode.value && variantIs(props.request.status, 'Created'));
 const model: Ref<AccountSetupWizardModel> = ref(useDefaultAccountSetupWizardModel());
 const loading = ref(false);
 
+const currentAccountModel = ref<CurrentAccountSetupWizardModel | undefined>(undefined);
+const currentAccountModelFailed = ref<string | undefined>();
 const editAssets = computed(() => {
   const assets = {
     addAssets: '',
@@ -116,7 +136,14 @@ const fetchDetails = async () => {
     }
 
     loading.value = true;
-    model.value = await useLoadAccountSetupWizardModel(props.operation.input.account_id);
+    const currentModel = await useLoadAccountSetupWizardModel(props.operation.input.account_id);
+
+    model.value = deepClone(currentModel);
+
+    if (isDiffMode.value) {
+      // make copy of currentModel to avoid mutating the original
+      currentAccountModel.value = deepClone(currentModel);
+    }
 
     if (props.operation.input.name?.[0]) {
       model.value.configuration.name = props.operation.input.name[0];
@@ -151,8 +178,32 @@ const fetchDetails = async () => {
     if (props.operation.input.configs_permission?.[0]) {
       model.value.permission.configuration = props.operation.input.configs_permission?.[0];
     }
+
+    if (props.operation.input.change_assets?.[0]) {
+      if (variantIs(props.operation.input.change_assets[0], 'Change')) {
+        const { add_assets, remove_assets } = props.operation.input.change_assets[0].Change;
+
+        model.value.configuration.assets = [
+          ...add_assets,
+          ...(model.value.configuration.assets ?? []),
+        ];
+
+        model.value.configuration.assets = model.value.configuration.assets.filter(
+          asset => !remove_assets.includes(asset),
+        );
+      } else if (variantIs(props.operation.input.change_assets[0], 'ReplaceWith')) {
+        model.value.configuration.assets =
+          props.operation.input.change_assets[0].ReplaceWith.assets;
+      } else {
+        unreachable(props.operation.input.change_assets[0]);
+      }
+    }
   } catch (e) {
     logger.error('Failed to fetch account details', e);
+    if (isDiffMode.value) {
+      currentAccountModelFailed.value = getErrorMessage(e);
+    }
+    appStore.sendErrorNotification(e);
   } finally {
     loading.value = false;
   }
