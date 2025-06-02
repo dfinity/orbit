@@ -2,6 +2,8 @@ use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
 
+use super::ValidationError;
+
 /// Container for asset errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum AssetError {
@@ -14,15 +16,6 @@ pub enum AssetError {
     /// Invalid decimals value.
     #[error(r#"Decimals must be between {min} and {max}."#)]
     InvalidDecimals { min: u32, max: u32 },
-    /// Invalid name length.
-    #[error(r#"Name must be between {min_length} and {max_length}."#)]
-    InvalidNameLength { min_length: u16, max_length: u16 },
-    /// Invalid symbol length.
-    #[error(r#"Symbol must be between {min_length} and {max_length}."#)]
-    InvalidSymbolLength { min_length: u16, max_length: u16 },
-    /// Invalid symbol.
-    #[error(r#"Symbol must contain only alphanumeric characters."#)]
-    InvalidSymbol,
     /// The given blockchain is unknown to the system.
     #[error(r#"The given blockchain is unknown to the system."#)]
     UnknownBlockchain { blockchain: String },
@@ -69,23 +62,6 @@ impl DetailableError for AssetError {
                 details.insert("max".to_string(), max.to_string());
                 Some(details)
             }
-            AssetError::InvalidNameLength {
-                min_length,
-                max_length,
-            } => {
-                details.insert("min_length".to_string(), min_length.to_string());
-                details.insert("max_length".to_string(), max_length.to_string());
-                Some(details)
-            }
-            AssetError::InvalidSymbol => Some(details),
-            AssetError::InvalidSymbolLength {
-                min_length,
-                max_length,
-            } => {
-                details.insert("min_length".to_string(), min_length.to_string());
-                details.insert("max_length".to_string(), max_length.to_string());
-                Some(details)
-            }
             AssetError::NotFound { id } => {
                 details.insert("id".to_string(), id.to_string());
                 Some(details)
@@ -104,6 +80,14 @@ impl DetailableError for AssetError {
                 details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
+        }
+    }
+}
+
+impl From<ValidationError> for AssetError {
+    fn from(err: ValidationError) -> Self {
+        AssetError::ValidationError {
+            info: err.to_string(),
         }
     }
 }

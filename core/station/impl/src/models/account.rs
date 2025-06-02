@@ -1,11 +1,13 @@
-use super::{AccountBalance, AssetId};
-use crate::core::validation::{EnsureAsset, EnsureIdExists};
+use super::{AccountBalance, AddressFormat, AssetId};
+use crate::core::validation::{
+    EnsureAsset, EnsureIdExists, StringFieldValidator, StringFieldValidatorBuilder, ValidateField,
+};
 use crate::core::ACCOUNT_BALANCE_FRESHNESS_IN_MS;
 use crate::errors::{AccountError, RecordValidationError};
 use crate::models::Metadata;
 use crate::repositories::request_policy::REQUEST_POLICY_REPOSITORY;
 use candid::{CandidType, Deserialize};
-use ic_ledger_types::AccountIdentifier;
+use lazy_static::lazy_static;
 use orbit_essentials::model::ModelKey;
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
@@ -14,8 +16,16 @@ use orbit_essentials::{
     types::{Timestamp, UUID},
 };
 use std::fmt;
-use std::str::FromStr;
 use std::{collections::HashMap, hash::Hash};
+
+lazy_static! {
+    pub static ref ACCOUNT_NAME_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("name".to_string())
+            .min_length(Account::NAME_RANGE.0 as usize)
+            .max_length(Account::NAME_RANGE.1 as usize)
+            .build()
+    };
+}
 
 /// The account id, which is a UUID.
 pub type AccountId = UUID;
@@ -83,90 +93,6 @@ pub struct AccountAddress {
     pub format: AddressFormat,
 }
 
-#[storable]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum AddressFormat {
-    ICPAccountIdentifier,
-    ICRC1Account,
-    EthereumAddress,
-    BitcoinAddressP2WPKH,
-    BitcoinAddressP2TR,
-}
-
-impl fmt::Display for AddressFormat {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            AddressFormat::ICPAccountIdentifier => write!(f, "icp_account_identifier"),
-            AddressFormat::ICRC1Account => write!(f, "icrc1_account"),
-            AddressFormat::EthereumAddress => write!(f, "ethereum_address"),
-            AddressFormat::BitcoinAddressP2WPKH => write!(f, "bitcoin_address_p2wpkh"),
-            AddressFormat::BitcoinAddressP2TR => write!(f, "bitcoin_address_p2tr"),
-        }
-    }
-}
-
-impl FromStr for AddressFormat {
-    type Err = AccountError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "icp_account_identifier" => Ok(AddressFormat::ICPAccountIdentifier),
-            "icrc1_account" => Ok(AddressFormat::ICRC1Account),
-            "ethereum_address" => Ok(AddressFormat::EthereumAddress),
-            "bitcoin_address_p2wpkh" => Ok(AddressFormat::BitcoinAddressP2WPKH),
-            "bitcoin_address_p2tr" => Ok(AddressFormat::BitcoinAddressP2TR),
-            _ => Err(AccountError::UnknownAddressFormat {
-                address_format: s.to_string(),
-            }),
-        }
-    }
-}
-
-impl AddressFormat {
-    pub fn validate_address(&self, address: &str) -> ModelValidatorResult<AccountError> {
-        match self {
-            AddressFormat::ICPAccountIdentifier => AccountIdentifier::from_hex(address)
-                .map_err(|_| AccountError::InvalidAddress {
-                    address: address.to_string(),
-                    address_format: self.to_string(),
-                })
-                .map(|_| ()),
-            AddressFormat::ICRC1Account => {
-                icrc_ledger_types::icrc1::account::Account::from_str(address)
-                    .map_err(|_| AccountError::InvalidAddress {
-                        address: address.to_string(),
-                        address_format: self.to_string(),
-                    })
-                    .map(|_| ())
-            }
-            AddressFormat::EthereumAddress => todo!(),
-            AddressFormat::BitcoinAddressP2WPKH => todo!(),
-            AddressFormat::BitcoinAddressP2TR => todo!(),
-        }
-    }
-}
-
-impl AccountAddress {
-    const ADDRESS_RANGE: (u8, u8) = (1, 255);
-}
-
-impl ModelValidator<AccountError> for AccountAddress {
-    fn validate(&self) -> ModelValidatorResult<AccountError> {
-        if (self.address.len() < AccountAddress::ADDRESS_RANGE.0 as usize)
-            || (self.address.len() > AccountAddress::ADDRESS_RANGE.1 as usize)
-        {
-            return Err(AccountError::InvalidAddressLength {
-                min_length: AccountAddress::ADDRESS_RANGE.0,
-                max_length: AccountAddress::ADDRESS_RANGE.1,
-            });
-        }
-
-        self.format.validate_address(&self.address)?;
-
-        Ok(())
-    }
-}
-
 #[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct AccountCallerPrivileges {
     pub id: UUID,
@@ -191,31 +117,14 @@ fn validate_asset_id(asset_id: &AssetId) -> ModelValidatorResult<AccountError> {
     Ok(())
 }
 
-fn validate_account_name(name: &str) -> ModelValidatorResult<AccountError> {
-    if (name.len() < Account::NAME_RANGE.0 as usize)
-        || (name.len() > Account::NAME_RANGE.1 as usize)
-    {
-        return Err(AccountError::InvalidNameLength {
-            min_length: Account::NAME_RANGE.0,
-            max_length: Account::NAME_RANGE.1,
-        });
-    }
-
-    Ok(())
-}
-
 impl ModelValidator<AccountError> for Account {
     fn validate(&self) -> ModelValidatorResult<AccountError> {
         self.metadata.validate()?;
 
-        validate_account_name(&self.name)?;
+        ACCOUNT_NAME_VALIDATOR.validate_field(&self.name)?;
 
         for asset in &self.assets {
             validate_asset_id(&asset.asset_id)?;
-        }
-
-        for address in &self.addresses {
-            address.validate()?;
         }
 
         if let Some(transfer_request_policy_id) = &self.transfer_request_policy_id {
@@ -284,53 +193,6 @@ mod tests {
     use super::account_test_utils::mock_account;
     use super::*;
 
-    const VALID_ACCOUNT_IDENTIFIER: &str =
-        "5c76bc95e544204de4928e4d901e52b49df248b9c346807040e7af75aa61f4b3";
-
-    #[test]
-    fn fail_address_format_invalid() {
-        let format = AddressFormat::ICPAccountIdentifier;
-
-        format
-            .validate_address("foo")
-            .expect_err("foo is not a valid AccountIdentifier");
-
-        format
-            .validate_address(VALID_ACCOUNT_IDENTIFIER)
-            .expect("The address is valid");
-    }
-    #[test]
-    fn fail_address_length_invalid() {
-        let mut account_address: AccountAddress = AccountAddress {
-            address: "".to_string(),
-            format: AddressFormat::ICPAccountIdentifier,
-        };
-
-        let result = account_address.validate();
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            AccountError::InvalidAddressLength {
-                min_length: 1,
-                max_length: 255
-            }
-        );
-
-        account_address.address = "a".repeat(Account::ADDRESS_RANGE.1 as usize + 1);
-
-        let result = account_address.validate();
-
-        assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            AccountError::InvalidAddressLength {
-                min_length: 1,
-                max_length: 255
-            }
-        );
-    }
-
     #[test]
     fn fail_missing_policy_id() {
         let mut account = mock_account();
@@ -366,7 +228,7 @@ pub mod account_test_utils {
     use super::*;
     use crate::repositories::ACCOUNT_REPOSITORY;
     use candid::Principal;
-    use ic_ledger_types::Subaccount;
+    use ic_ledger_types::{AccountIdentifier, Subaccount};
     use orbit_essentials::repository::Repository;
     use uuid::Uuid;
 

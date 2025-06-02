@@ -2,6 +2,8 @@ use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
 
+use super::ValidationError;
+
 /// Container for account errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum AccountError {
@@ -25,11 +27,6 @@ pub enum AccountError {
         r#"The account address is out of range, it must be between {min_length} and {max_length}."#
     )]
     InvalidAddressLength { min_length: u8, max_length: u8 },
-    /// The account name is out of range.
-    #[error(
-        r#"The account name is out of range, it must be between {min_length} and {max_length}."#
-    )]
-    InvalidNameLength { min_length: u8, max_length: u8 },
     /// The address format is unknown to the system.
     #[error(r#"The given address format is unknown to the system."#)]
     UnknownAddressFormat { address_format: String },
@@ -108,7 +105,32 @@ impl DetailableError for AccountError {
                 details.insert("max".to_string(), max.to_string());
                 Some(details)
             }
-            _ => None,
+            AccountError::AssetDoesNotExist { id } => {
+                details.insert("id".to_string(), id.to_string());
+                Some(details)
+            }
+            AccountError::Forbidden => Some(details),
+            AccountError::UnknownAddressFormat { address_format } => {
+                details.insert("address_format".to_string(), address_format.to_string());
+                Some(details)
+            }
+            AccountError::InvalidAddress {
+                address,
+                address_format,
+            } => {
+                details.insert("address".to_string(), address.to_string());
+                details.insert("address_format".to_string(), address_format.to_string());
+                Some(details)
+            }
+            AccountError::AccountNameAlreadyExists => Some(details),
+        }
+    }
+}
+
+impl From<ValidationError> for AccountError {
+    fn from(err: ValidationError) -> Self {
+        AccountError::ValidationError {
+            info: err.to_string(),
         }
     }
 }

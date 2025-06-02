@@ -6,6 +6,8 @@ use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
 
+use super::FieldValidationError;
+
 /// Container for system request errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum RequestError {
@@ -117,12 +119,21 @@ impl From<SystemInfoValidationError> for RequestError {
     }
 }
 
+impl From<FieldValidationError> for RequestError {
+    fn from(err: FieldValidationError) -> RequestError {
+        RequestError::ValidationError {
+            info: err.to_string(),
+        }
+    }
+}
+
 impl From<ValidationError> for RequestError {
     fn from(err: ValidationError) -> RequestError {
         match err {
             ValidationError::RecordValidationError(err) => err.into(),
             ValidationError::ExternalCanisterValidationError(err) => err.into(),
             ValidationError::SystemInfoValidationError(err) => err.into(),
+            ValidationError::FieldValidationError(err) => err.into(),
         }
     }
 }
