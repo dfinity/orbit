@@ -19,20 +19,20 @@ use crate::core::validation::{
 lazy_static! {
     pub static ref ADDRESS_BOOK_ADDRESS_OWNER_VALIDATOR: StringFieldValidator = {
         StringFieldValidatorBuilder::new("address_owner".to_string())
-            .min_length(AddressBookEntry::ADDRESS_OWNER_RANGE.0 as usize)
-            .max_length(AddressBookEntry::ADDRESS_OWNER_RANGE.1 as usize)
+            .min_length(AddressBookEntry::ADDRESS_OWNER_RANGE.0)
+            .max_length(AddressBookEntry::ADDRESS_OWNER_RANGE.1)
             .build()
     };
     pub static ref ADDRESS_BOOK_ADDRESS_VALIDATOR: StringFieldValidator = {
         StringFieldValidatorBuilder::new("address".to_string())
-            .min_length(AddressBookEntry::ADDRESS_RANGE.0 as usize)
-            .max_length(AddressBookEntry::ADDRESS_RANGE.1 as usize)
+            .min_length(AddressBookEntry::ADDRESS_RANGE.0)
+            .max_length(AddressBookEntry::ADDRESS_RANGE.1)
             .build()
     };
     pub static ref ADDRESS_BOOK_LABEL_VALIDATOR: StringFieldValidator = {
         StringFieldValidatorBuilder::new("label".to_string())
             .min_length(1)
-            .max_length(AddressBookEntry::MAX_LABEL_LENGTH as usize)
+            .max_length(AddressBookEntry::MAX_LABEL_LENGTH)
             .build()
     };
     pub static ref ADDRESS_BOOK_LABELS_VALIDATOR: VecFieldValidator<String> = {
@@ -99,8 +99,8 @@ impl ModelValidator<AddressBookError> for AddressBookEntry {
 }
 
 impl AddressBookEntry {
-    pub const ADDRESS_RANGE: (u16, u16) = (1, 255);
-    pub const ADDRESS_OWNER_RANGE: (u16, u16) = (1, 255);
+    pub const ADDRESS_RANGE: (usize, usize) = (1, 255);
+    pub const ADDRESS_OWNER_RANGE: (usize, usize) = (1, 255);
     pub const MAX_LABELS: usize = 10;
     pub const MAX_LABEL_LENGTH: usize = 150;
 
