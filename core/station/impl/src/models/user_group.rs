@@ -1,5 +1,10 @@
-use crate::{errors::UserGroupError, repositories::USER_GROUP_REPOSITORY};
+use crate::{
+    core::validation::{StringFieldValidator, StringFieldValidatorBuilder, ValidateField},
+    errors::UserGroupError,
+    repositories::USER_GROUP_REPOSITORY,
+};
 use candid::{CandidType, Deserialize};
+use lazy_static::lazy_static;
 use orbit_essentials::model::ModelKey;
 use orbit_essentials::storable;
 use orbit_essentials::{
@@ -14,6 +19,15 @@ pub const OPERATOR_GROUP_ID: &UUID = Uuid::from_u128(302240678275694148452353).a
 
 /// The user gorup id, which is a UUID.
 pub type UserGroupId = UUID;
+
+lazy_static! {
+    pub static ref USER_GROUP_NAME_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("name".to_string())
+            .min_length(UserGroup::NAME_RANGE.0 as usize)
+            .max_length(UserGroup::NAME_RANGE.1 as usize)
+            .build()
+    };
+}
 
 /// Represents a user group within the system.
 #[storable]
@@ -45,17 +59,7 @@ impl UserGroup {
 }
 
 fn validate_name(name: &str) -> ModelValidatorResult<UserGroupError> {
-    if name.len() < UserGroup::NAME_RANGE.0 as usize {
-        return Err(UserGroupError::NameTooShort {
-            min_length: UserGroup::NAME_RANGE.0,
-        });
-    }
-
-    if name.len() > UserGroup::NAME_RANGE.1 as usize {
-        return Err(UserGroupError::NameTooLong {
-            max_length: UserGroup::NAME_RANGE.1,
-        });
-    }
+    USER_GROUP_NAME_VALIDATOR.validate_field(&name.to_string())?;
 
     Ok(())
 }
@@ -99,12 +103,12 @@ mod tests {
         let result = validate_name(&group.name);
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            UserGroupError::NameTooShort {
-                min_length: UserGroup::NAME_RANGE.0
-            }
-        );
+        let error = result.unwrap_err();
+        if let UserGroupError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be shorter than 1"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -115,12 +119,12 @@ mod tests {
         let result = validate_name(&group.name);
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            UserGroupError::NameTooLong {
-                max_length: UserGroup::NAME_RANGE.1
-            }
-        );
+        let error = result.unwrap_err();
+        if let UserGroupError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 50"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
