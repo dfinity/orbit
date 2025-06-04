@@ -3,14 +3,14 @@ ARG BUILD_MODE=production
 ARG TARGETPLATFORM=linux/amd64
 
 # Operating system with basic tools
-FROM ubuntu:20.04 AS base
+FROM ubuntu:24.04 AS base
 SHELL ["bash", "-c"]
 ENV TZ=UTC
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
-    apt -yq update && \
-    apt -yqq install --no-install-recommends curl ca-certificates \
+    apt -yq -o Acquire::http::Pipeline-Depth=0 -o Acquire::Retries=3 update && \
+    apt -yqq -o Acquire::http::Pipeline-Depth=0 -o Acquire::Retries=3 install --no-install-recommends curl ca-certificates \
         build-essential pkg-config libssl-dev llvm-dev liblmdb-dev clang cmake \
         git jq npm xxd file curl unzip
 
