@@ -1,5 +1,7 @@
 use super::{NotificationStatus, NotificationType, UserId};
+use crate::core::validation::{StringFieldValidator, StringFieldValidatorBuilder, ValidateField};
 use crate::errors::NotificationError;
+use lazy_static::lazy_static;
 use orbit_essentials::model::ModelKey;
 use orbit_essentials::storable;
 use orbit_essentials::{
@@ -39,38 +41,28 @@ impl ModelKey<NotificationKey> for Notification {
     }
 }
 
-fn validate_title(title: &str) -> ModelValidatorResult<NotificationError> {
-    if title.len() > Notification::MAX_TITLE_LEN as usize {
-        return Err(NotificationError::ValidationError {
-            info: format!(
-                "Notification title exceeds the maximum allowed: {}",
-                Notification::MAX_TITLE_LEN
-            ),
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_message(message: &Option<String>) -> ModelValidatorResult<NotificationError> {
-    if let Some(message) = message {
-        if message.len() > Notification::MAX_MESSAGE_LEN as usize {
-            return Err(NotificationError::ValidationError {
-                info: format!(
-                    "Notification message exceeds the maximum allowed: {}",
-                    Notification::MAX_MESSAGE_LEN
-                ),
-            });
-        }
-    }
-
-    Ok(())
+lazy_static! {
+    pub static ref NOTIFICATION_TITLE_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("title".to_string())
+            .min_length(1)
+            .max_length(Notification::MAX_TITLE_LEN as usize)
+            .build()
+    };
+    pub static ref NOTIFICATION_MESSAGE_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("message".to_string())
+            .min_length(0)
+            .max_length(Notification::MAX_MESSAGE_LEN as usize)
+            .build()
+    };
 }
 
 impl ModelValidator<NotificationError> for Notification {
     fn validate(&self) -> ModelValidatorResult<NotificationError> {
-        validate_title(&self.title)?;
-        validate_message(&self.message)?;
+        NOTIFICATION_TITLE_VALIDATOR.validate_field(&self.title)?;
+
+        if let Some(message) = &self.message {
+            NOTIFICATION_MESSAGE_VALIDATOR.validate_field(message)?;
+        }
 
         Ok(())
     }
@@ -99,18 +91,15 @@ mod tests {
         let mut notitication = mock_notification();
         notitication.title = "a".repeat(Notification::MAX_TITLE_LEN as usize + 1);
 
-        let result = validate_title(&notitication.title);
+        let result = notitication.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            NotificationError::ValidationError {
-                info: format!(
-                    "Notification title exceeds the maximum allowed: {}",
-                    Notification::MAX_TITLE_LEN
-                )
-            }
-        );
+        let error = result.unwrap_err();
+        if let NotificationError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 255"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -118,18 +107,15 @@ mod tests {
         let mut notitication = mock_notification();
         notitication.message = Some("a".repeat(Notification::MAX_MESSAGE_LEN as usize + 1));
 
-        let result = validate_message(&notitication.message);
+        let result = notitication.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            NotificationError::ValidationError {
-                info: format!(
-                    "Notification message exceeds the maximum allowed: {}",
-                    Notification::MAX_MESSAGE_LEN
-                )
-            }
-        );
+        let error = result.unwrap_err();
+        if let NotificationError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 4096"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
