@@ -58,12 +58,6 @@ impl UserGroup {
     const NAME_RANGE: (u8, u8) = (1, 50);
 }
 
-fn validate_name(name: &str) -> ModelValidatorResult<UserGroupError> {
-    USER_GROUP_NAME_VALIDATOR.validate_field(&name.to_string())?;
-
-    Ok(())
-}
-
 fn validate_unique_name(
     user_group_id: &UUID,
     name: &String,
@@ -82,7 +76,7 @@ fn validate_unique_name(
 
 impl ModelValidator<UserGroupError> for UserGroup {
     fn validate(&self) -> ModelValidatorResult<UserGroupError> {
-        validate_name(&self.name)?;
+        USER_GROUP_NAME_VALIDATOR.validate_field(&self.name)?;
         validate_unique_name(&self.id, &self.name)?;
 
         Ok(())
@@ -100,7 +94,7 @@ mod tests {
         let mut group = mock_user_group();
         group.name = String::new();
 
-        let result = validate_name(&group.name);
+        let result = group.validate();
 
         assert!(result.is_err());
         let error = result.unwrap_err();
@@ -116,7 +110,7 @@ mod tests {
         let mut group: UserGroup = mock_user_group();
         group.name = "a".repeat(UserGroup::NAME_RANGE.1 as usize + 1);
 
-        let result = validate_name(&group.name);
+        let result = group.validate();
 
         assert!(result.is_err());
         let error = result.unwrap_err();
@@ -132,7 +126,7 @@ mod tests {
         let mut group = mock_user_group();
         group.name = "finance".to_string();
 
-        let result = validate_name(&group.name);
+        let result = group.validate();
 
         assert!(result.is_ok());
     }

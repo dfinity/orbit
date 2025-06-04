@@ -125,17 +125,11 @@ fn validate_groups(group_ids: &[UUID]) -> ModelValidatorResult<UserError> {
     Ok(())
 }
 
-fn validate_name(name: &str) -> ModelValidatorResult<UserError> {
-    USER_NAME_VALIDATOR.validate_field(&name.to_string())?;
-
-    Ok(())
-}
-
 impl ModelValidator<UserError> for User {
     fn validate(&self) -> ModelValidatorResult<UserError> {
         validate_identities(&self.identities)?;
         validate_groups(&self.groups)?;
-        validate_name(&self.name)?;
+        USER_NAME_VALIDATOR.validate_field(&self.name)?;
 
         Ok(())
     }
@@ -277,7 +271,7 @@ mod tests {
         let mut user = mock_user();
         user.name = "a".repeat(User::MAX_NAME_LENGTH as usize + 1);
 
-        let result = validate_name(&user.name);
+        let result = user.validate();
 
         assert!(result.is_err());
         let error = result.unwrap_err();
@@ -293,7 +287,7 @@ mod tests {
         let mut user = mock_user();
         user.name = "a".repeat(User::MAX_NAME_LENGTH as usize);
 
-        let result = validate_name(&user.name);
+        let result = user.validate();
 
         assert!(result.is_ok());
     }
