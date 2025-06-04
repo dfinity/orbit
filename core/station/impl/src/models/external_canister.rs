@@ -508,10 +508,9 @@ mod tests {
         assert!(result.is_err());
         let error = result.unwrap_err();
         if let ExternalCanisterError::ValidationError { info } = error {
-            assert!(info.contains("name"));
-            assert!(info.contains("100"));
+            assert!(info.contains("Length cannot be longer than 100"));
         } else {
-            panic!("Expected ValidationError");
+            panic!("Expected ValidationError, got: {:?}", error);
         }
     }
 
@@ -526,10 +525,9 @@ mod tests {
         assert!(result.is_err());
         let error = result.unwrap_err();
         if let ExternalCanisterError::ValidationError { info } = error {
-            assert!(info.contains("description"));
-            assert!(info.contains("1000"));
+            assert!(info.contains("Length cannot be longer than 1000"));
         } else {
-            panic!("Expected ValidationError");
+            panic!("Expected ValidationError, got: {:?}", error);
         }
     }
 
@@ -543,10 +541,9 @@ mod tests {
         assert!(result.is_err());
         let error = result.unwrap_err();
         if let ExternalCanisterError::ValidationError { info } = error {
-            assert!(info.contains("label"));
-            assert!(info.contains("50"));
+            assert!(info.contains("Length cannot be longer than 50"));
         } else {
-            panic!("Expected ValidationError");
+            panic!("Expected ValidationError, got: {:?}", error);
         }
     }
 
@@ -560,10 +557,9 @@ mod tests {
         assert!(result.is_err());
         let error = result.unwrap_err();
         if let ExternalCanisterError::ValidationError { info } = error {
-            assert!(info.contains("labels"));
-            assert!(info.contains("10"));
+            assert!(info.contains("Cannot have more than 10 items"));
         } else {
-            panic!("Expected ValidationError");
+            panic!("Expected ValidationError, got: {:?}", error);
         }
     }
 

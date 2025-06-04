@@ -1,3 +1,4 @@
+use crate::errors::ValidationError;
 use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -38,6 +39,14 @@ impl DetailableError for TransferError {
                 details.insert("reason".to_string(), reason.to_string());
                 Some(details)
             }
+        }
+    }
+}
+
+impl From<ValidationError> for TransferError {
+    fn from(err: ValidationError) -> TransferError {
+        TransferError::ValidationError {
+            info: err.to_string(),
         }
     }
 }
