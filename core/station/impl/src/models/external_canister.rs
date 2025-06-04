@@ -11,9 +11,14 @@ use super::{
     Metadata, MonitorExternalCanisterStartInput, RequestPolicy, RequestPolicyRule,
 };
 use crate::core::validation::EnsureExternalCanister;
+use crate::core::validation::{
+    StringFieldValidator, StringFieldValidatorBuilder, ValidateField, VecFieldValidator,
+    VecFieldValidatorBuilder,
+};
 use crate::errors::{ExternalCanisterError, ExternalCanisterValidationError};
 use crate::repositories::REQUEST_POLICY_REPOSITORY;
 use candid::Principal;
+use lazy_static::lazy_static;
 use orbit_essentials::model::{ContextualModel, ModelKey};
 use orbit_essentials::repository::Repository;
 use orbit_essentials::storable;
@@ -24,10 +29,40 @@ use orbit_essentials::{
 use station_api::GetExternalCanisterFiltersResponse;
 use std::collections::BTreeSet;
 use std::hash::Hash;
+use std::sync::Arc;
 use uuid::Uuid;
 
 /// The external canister id, which is a UUID.
 pub type ExternalCanisterEntryId = UUID;
+
+lazy_static! {
+    pub static ref EXTERNAL_CANISTER_NAME_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("name".to_string())
+            .min_length(1)
+            .max_length(ExternalCanister::MAX_NAME_LENGTH)
+            .build()
+    };
+    pub static ref EXTERNAL_CANISTER_DESCRIPTION_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("description".to_string())
+            .min_length(0)
+            .max_length(ExternalCanister::MAX_DESCRIPTION_LENGTH)
+            .build()
+    };
+    pub static ref EXTERNAL_CANISTER_LABEL_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("label".to_string())
+            .min_length(1)
+            .max_length(ExternalCanister::MAX_LABEL_LENGTH)
+            .build()
+    };
+    pub static ref EXTERNAL_CANISTER_LABELS_VALIDATOR: VecFieldValidator<String> = {
+        VecFieldValidatorBuilder::new(
+            "labels".to_string(),
+            Arc::new(EXTERNAL_CANISTER_LABEL_VALIDATOR.clone()),
+        )
+        .max_length(ExternalCanister::MAX_LABELS)
+        .build()
+    };
+}
 
 /// Represents an external canister that the station can interact with.
 #[storable]
@@ -168,79 +203,22 @@ impl ExternalCanister {
     }
 }
 
-fn validate_name(name: &str) -> ModelValidatorResult<ExternalCanisterError> {
-    if name.is_empty() {
-        return Err(ExternalCanisterError::ValidationError {
-            info: "The name of the external canister cannot be empty.".to_string(),
-        });
-    }
-
-    if name.len() > ExternalCanister::MAX_NAME_LENGTH {
-        return Err(ExternalCanisterError::ValidationError {
-            info: format!(
-                "The name of the external canister cannot be longer than {} characters.",
-                ExternalCanister::MAX_NAME_LENGTH
-            ),
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_description(
-    description: &Option<String>,
-) -> ModelValidatorResult<ExternalCanisterError> {
-    if let Some(description) = description {
-        if description.len() > ExternalCanister::MAX_DESCRIPTION_LENGTH {
-            return Err(ExternalCanisterError::ValidationError {
-                info: format!(
-                    "The description of the external canister cannot be longer than {} characters.",
-                    ExternalCanister::MAX_DESCRIPTION_LENGTH
-                ),
-            });
-        }
-    }
-
-    Ok(())
-}
-
-fn validate_labels(labels: &[String]) -> ModelValidatorResult<ExternalCanisterError> {
-    if labels.len() > ExternalCanister::MAX_LABELS {
-        return Err(ExternalCanisterError::ValidationError {
-            info: format!(
-                "The external canister cannot have more than {} labels.",
-                ExternalCanister::MAX_LABELS
-            ),
-        });
-    }
-
-    for label in labels {
-        if label.len() > ExternalCanister::MAX_LABEL_LENGTH {
-            return Err(ExternalCanisterError::ValidationError {
-                info: format!(
-                    "The label '{}' cannot be longer than {} characters.",
-                    label,
-                    ExternalCanister::MAX_LABEL_LENGTH
-                ),
-            });
-        }
-    }
-
-    let labels_set: BTreeSet<&String> = labels.iter().collect();
-    if labels_set.len() != labels.len() {
-        return Err(ExternalCanisterError::ValidationError {
-            info: "The labels cannot be duplicated.".to_string(),
-        });
-    }
-
-    Ok(())
-}
-
 impl ModelValidator<ExternalCanisterError> for ExternalCanister {
     fn validate(&self) -> ModelValidatorResult<ExternalCanisterError> {
-        validate_name(&self.name)?;
-        validate_description(&self.description)?;
-        validate_labels(&self.labels)?;
+        EXTERNAL_CANISTER_NAME_VALIDATOR.validate_field(&self.name)?;
+
+        if let Some(description) = &self.description {
+            EXTERNAL_CANISTER_DESCRIPTION_VALIDATOR.validate_field(description)?;
+        }
+
+        EXTERNAL_CANISTER_LABELS_VALIDATOR.validate_field(&self.labels)?;
+
+        let labels_set: BTreeSet<&String> = self.labels.iter().collect();
+        if labels_set.len() != self.labels.len() {
+            return Err(ExternalCanisterError::ValidationError {
+                info: "The labels cannot be duplicated.".to_string(),
+            });
+        }
 
         self.metadata
             .validate()
@@ -522,74 +500,79 @@ mod tests {
 
     #[test]
     fn invalid_external_canister_validation_with_long_name() {
-        let result = validate_name(&"a".repeat(ExternalCanister::MAX_NAME_LENGTH + 1));
+        let mut external_canister = mock_external_canister();
+        external_canister.name = "a".repeat(ExternalCanister::MAX_NAME_LENGTH + 1);
+
+        let result = external_canister.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            ExternalCanisterError::ValidationError {
-                info: format!(
-                    "The name of the external canister cannot be longer than {} characters.",
-                    ExternalCanister::MAX_NAME_LENGTH
-                )
-            }
-        );
+        let error = result.unwrap_err();
+        if let ExternalCanisterError::ValidationError { info } = error {
+            assert!(info.contains("name"));
+            assert!(info.contains("100"));
+        } else {
+            panic!("Expected ValidationError");
+        }
     }
 
     #[test]
     fn invalid_external_canister_validation_with_long_description() {
-        let result = validate_description(&Some(
-            "a".repeat(ExternalCanister::MAX_DESCRIPTION_LENGTH + 1),
-        ));
+        let mut external_canister = mock_external_canister();
+        external_canister.description =
+            Some("a".repeat(ExternalCanister::MAX_DESCRIPTION_LENGTH + 1));
+
+        let result = external_canister.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            ExternalCanisterError::ValidationError {
-                info: format!(
-                    "The description of the external canister cannot be longer than {} characters.",
-                    ExternalCanister::MAX_DESCRIPTION_LENGTH
-                )
-            }
-        );
+        let error = result.unwrap_err();
+        if let ExternalCanisterError::ValidationError { info } = error {
+            assert!(info.contains("description"));
+            assert!(info.contains("1000"));
+        } else {
+            panic!("Expected ValidationError");
+        }
     }
 
     #[test]
     fn invalid_external_canister_validation_with_long_label() {
-        let result = validate_labels(&["a".repeat(ExternalCanister::MAX_LABEL_LENGTH + 1)]);
+        let mut external_canister = mock_external_canister();
+        external_canister.labels = vec!["a".repeat(ExternalCanister::MAX_LABEL_LENGTH + 1)];
+
+        let result = external_canister.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            ExternalCanisterError::ValidationError {
-                info: format!(
-                    "The label '{}' cannot be longer than {} characters.",
-                    "a".repeat(ExternalCanister::MAX_LABEL_LENGTH + 1),
-                    ExternalCanister::MAX_LABEL_LENGTH
-                )
-            }
-        );
+        let error = result.unwrap_err();
+        if let ExternalCanisterError::ValidationError { info } = error {
+            assert!(info.contains("label"));
+            assert!(info.contains("50"));
+        } else {
+            panic!("Expected ValidationError");
+        }
     }
 
     #[test]
     fn invalid_external_canister_validation_with_too_many_labels() {
-        let result = validate_labels(&vec!["a".to_string(); ExternalCanister::MAX_LABELS + 1]);
+        let mut external_canister = mock_external_canister();
+        external_canister.labels = vec!["a".to_string(); ExternalCanister::MAX_LABELS + 1];
+
+        let result = external_canister.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            ExternalCanisterError::ValidationError {
-                info: format!(
-                    "The external canister cannot have more than {} labels.",
-                    ExternalCanister::MAX_LABELS
-                )
-            }
-        );
+        let error = result.unwrap_err();
+        if let ExternalCanisterError::ValidationError { info } = error {
+            assert!(info.contains("labels"));
+            assert!(info.contains("10"));
+        } else {
+            panic!("Expected ValidationError");
+        }
     }
 
     #[test]
     fn invalid_external_canister_validation_with_duplicate_labels() {
-        let result = validate_labels(&["a".to_string(), "a".to_string()]);
+        let mut external_canister = mock_external_canister();
+        external_canister.labels = vec!["a".to_string(), "a".to_string()];
+
+        let result = external_canister.validate();
 
         assert!(result.is_err());
         assert_eq!(
