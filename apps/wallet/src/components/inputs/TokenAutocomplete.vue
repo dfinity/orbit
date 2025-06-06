@@ -27,7 +27,7 @@ const input = withDefaults(
     modelValue?: string | string[];
     excludedIds?: string[];
     label?: string;
-    variant?: 'underlined' | 'outlined' | 'filled';
+    variant?: 'underlined' | 'outlined' | 'filled' | 'plain';
     density?: 'comfortable' | 'compact';
     multiple?: boolean;
     readonly?: boolean;

@@ -134,7 +134,7 @@ const save = async (): Promise<void> => {
       const request = await station.service.editNamedRule({
         named_rule_id: namedRule.value.id,
         name: [assertAndReturn(namedRule.value.name)],
-        description: [assertAndReturn(namedRule.value.description)],
+        description: namedRule.value.description ? [namedRule.value.description] : [['']],
         rule: [assertAndReturn(namedRule.value.rule)],
       });
 

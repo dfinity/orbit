@@ -879,7 +879,7 @@ checksum = "c2459377285ad874054d797f3ccebf984978aa39129f6eafde5cdc8315b612f8"
 
 [[package]]
 name = "control-panel"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "candid",
  "candid_parser",
@@ -4905,7 +4905,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "station"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4940,7 +4940,7 @@ dependencies = [
 
 [[package]]
 name = "station-api"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "candid",
  "hex",
@@ -5573,7 +5573,7 @@ checksum = "8ecb6da28b8a351d773b68d5825ac39017e680750f980f3a1a85cd8dd28a47c1"
 
 [[package]]
 name = "upgrader"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5600,7 +5600,7 @@ dependencies = [
 
 [[package]]
 name = "upgrader-api"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "candid",
  "hex",

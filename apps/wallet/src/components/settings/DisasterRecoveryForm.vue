@@ -10,6 +10,7 @@
       variant="filled"
       :rules="[requiredRule]"
       chips
+      :disabled="mode === 'view'"
     />
 
     <VTextField
@@ -19,6 +20,7 @@
       variant="filled"
       density="comfortable"
       :rules="[requiredRule, intNumberRangeRule($t('terms.min'), 1)]"
+      :disabled="mode === 'view'"
     />
   </VForm>
 </template>
@@ -43,9 +45,11 @@ const props = withDefaults(
   defineProps<{
     modelValue: DisasterRecoveryModel;
     valid?: boolean;
+    mode?: 'view' | 'edit';
   }>(),
   {
     valid: false,
+    mode: 'edit',
   },
 );
 

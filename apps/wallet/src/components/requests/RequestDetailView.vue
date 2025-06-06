@@ -276,6 +276,7 @@ import { useStationStore } from '~/stores/station.store';
 import AddNamedRuleOperation from './operations/AddNamedRuleOperation.vue';
 import EditNamedRuleOperation from './operations/EditNamedRuleOperation.vue';
 import RemoveNamedRuleOperation from './operations/RemoveNamedRuleOperation.vue';
+import SetDisasterRecoveryOperation from './operations/SetDisasterRecoveryOperation.vue';
 
 const i18n = useI18n();
 const store = useStationStore();
@@ -320,11 +321,11 @@ const componentsMap: {
   AddNamedRule: AddNamedRuleOperation,
   EditNamedRule: EditNamedRuleOperation,
   RemoveNamedRule: RemoveNamedRuleOperation,
+  SetDisasterRecovery: SetDisasterRecoveryOperation,
 
   ChangeExternalCanister: UnsupportedOperation,
   CreateExternalCanister: UnsupportedOperation,
   ConfigureExternalCanister: UnsupportedOperation,
-  SetDisasterRecovery: UnsupportedOperation,
   FundExternalCanister: UnsupportedOperation,
   MonitorExternalCanister: UnsupportedOperation,
   PruneExternalCanister: UnsupportedOperation,

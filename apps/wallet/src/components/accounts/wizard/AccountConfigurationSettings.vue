@@ -9,35 +9,47 @@
         variant="plain"
         density="comfortable"
         hide-details
-        disabled
+        readonly
       />
     </VCol>
     <VCol cols="12" class="pt-4 pb-0">
-      <TokenAutocomplete
-        v-if="props.display.asset"
-        v-model="assetIds"
-        class="mb-2"
-        :label="$t('terms.asset')"
-        :prepend-icon="mdiBank"
-        :rules="[requiredRule]"
-        variant="filled"
-        density="comfortable"
-        :disabled="isViewMode || !!model.id"
-        :multiple="true"
-      />
+      <DiffView :before-value="currentAssetIds" :after-value="assetIds">
+        <template #default="{ value, diffMode }">
+          <TokenAutocomplete
+            v-if="props.display.asset"
+            :model-value="value"
+            class="mb-2"
+            :label="$t('terms.asset')"
+            :prepend-icon="mdiBank"
+            :rules="diffMode === 'before' ? [] : [requiredRule]"
+            :variant="isViewMode ? 'plain' : 'filled'"
+            density="comfortable"
+            :readonly="isViewMode || !!model.id"
+            :multiple="true"
+            @update:model-value="val => diffMode === 'after' && (assetIds = val as UUID[])"
+          />
+        </template>
+      </DiffView>
     </VCol>
     <VCol cols="12" class="pt-0 pb-4">
-      <VTextField
-        v-model="model.name"
-        name="name"
-        :label="$t('terms.name')"
-        :rules="[requiredRule, maxLengthRule(64, $t('terms.name'))]"
-        variant="filled"
-        class="mb-2"
-        density="comfortable"
-        :prepend-icon="mdiWallet"
-        :disabled="isViewMode"
-      />
+      <DiffView :before-value="props.currentConfiguration?.name" :after-value="model.name">
+        <template #default="{ value, diffMode }">
+          <VTextField
+            :name="diffMode === 'before' ? 'name-before' : 'name'"
+            :model-value="value"
+            :label="$t('terms.name')"
+            density="comfortable"
+            :prepend-icon="mdiWallet"
+            :rules="
+              diffMode === 'before' ? [] : [requiredRule, maxLengthRule(64, $t('terms.name'))]
+            "
+            :variant="isViewMode ? 'plain' : 'filled'"
+            :readonly="isViewMode || diffMode === 'before'"
+            class="mb-2"
+            @update:model-value="val => diffMode === 'after' && (model.name = val)"
+          />
+        </template>
+      </DiffView>
     </VCol>
   </VRow>
 </template>
@@ -47,6 +59,7 @@ import { mdiBank, mdiIdentifier, mdiWallet } from '@mdi/js';
 import { computed } from 'vue';
 import { VCol, VRow, VTextField } from 'vuetify/components';
 import TokenAutocomplete from '~/components/inputs/TokenAutocomplete.vue';
+import DiffView from '~/components/requests/DiffView.vue';
 import { TimestampRFC3339, UUID } from '~/generated/station/station.did';
 import { maxLengthRule, requiredRule } from '~/utils/form.utils';
 
@@ -65,6 +78,7 @@ const props = withDefaults(
       id?: boolean;
       asset?: boolean;
     };
+    currentConfiguration?: AccountConfigurationModel;
   }>(),
   {
     display: () => ({
@@ -72,7 +86,7 @@ const props = withDefaults(
       asset: true,
     }),
     mode: 'edit',
-    triggerSubmit: false,
+    currentConfiguration: undefined,
   },
 );
 
@@ -91,4 +105,6 @@ const assetIds = computed({
   get: () => model.value.assets,
   set: value => (model.value.assets = value),
 });
+
+const currentAssetIds = computed(() => props.currentConfiguration?.assets);
 </script>
