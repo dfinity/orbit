@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eEuo pipefails
+set -eEuo pipefail
 
 POCKET_IC_SERVER_VERSION="9.0.3"
 
