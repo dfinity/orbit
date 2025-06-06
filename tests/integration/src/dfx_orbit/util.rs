@@ -59,12 +59,13 @@ pub(super) async fn poll_request_completion(
 /// resource being fetched.
 pub(super) async fn fetch_asset(canister_id: Principal, path: &str) -> Vec<u8> {
     let port = PORT.with(|port| *port.borrow());
-    let local_url = format!("http://localhost:{}/{}", port, path);
-    let referer = format!("http://localhost:{}?canisterId={}", port, canister_id);
+    let local_url = format!(
+        "http://localhost:{}/{}?canisterId={}",
+        port, path, canister_id
+    );
 
     reqwest::Client::new()
         .get(local_url)
-        .header("Referer", referer)
         .send()
         .await
         .unwrap()
