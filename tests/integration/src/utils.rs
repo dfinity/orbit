@@ -42,6 +42,13 @@ pub const ADMIN_GROUP_ID: Uuid = Uuid::from_u128(302240678275694148452352); // 0
 pub const OPERATOR_GROUP_ID: Uuid = Uuid::from_u128(302240678275694148452353); // 00000000-0000-4000-8000-000000000001
 pub const NNS_ROOT_CANISTER_ID: Principal = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 3, 1, 1]);
 
+pub const VALID_ACCOUNT_IDENTIFIER_1: &str =
+    "5c76bc95e544204de4928e4d901e52b49df248b9c346807040e7af75aa61f4b3";
+pub const VALID_ACCOUNT_IDENTIFIER_2: &str =
+    "ee3b789626a6d3d44bac678c7eb9f264307b8241f52b2710467f65657217cb27";
+
+pub const VALID_ICRC1_ADDRESS: &str = "wmzac-nabae-aqcai-baeaq-caiba-eaqca-ibaea-qcaib-aeaqc-aibae-aqc-haltvua.102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f";
+
 pub const COUNTER_WAT: &str = r#"
     (module
         (import "ic0" "debug_print"
