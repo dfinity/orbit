@@ -65,7 +65,10 @@ itertools = "0.13.0"
 lazy_static = "1.4.0"
 mockall = "0.12.1"
 num-bigint = "0.4"
-pocket-ic = "9.0.0"
+# `pocket-ic` should be pinned to an exact version so that the PocketIC server binary version
+# `POCKET_IC_SERVER_VERSION` defined in `scripts/run-integration-tests.sh` is compatible:
+# https://docs.google.com/document/d/1VYmHUTjrgbzRHtsAyRrI5cj-gWGs7ktTnutPvUMJioU/edit
+pocket-ic = "=9.0.2"
 proc-macro2 = "1.0"
 prometheus = "0.13.3"
 quote = "1.0"
