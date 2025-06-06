@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-set -eEuo pipefail
+set -eEuo pipefails
+
+POCKET_IC_SERVER_VERSION="9.0.3"
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -30,7 +32,7 @@ fi
 
 cd tests/integration
 echo "PocketIC download starting"
-curl -sLO https://github.com/dfinity/pocketic/releases/download/9.0.2/pocket-ic-x86_64-$PLATFORM.gz || exit 1
+curl -sLO https://github.com/dfinity/pocketic/releases/download/${POCKET_IC_SERVER_VERSION}/pocket-ic-x86_64-$PLATFORM.gz || exit 1
 gzip -df pocket-ic-x86_64-$PLATFORM.gz
 mv pocket-ic-x86_64-$PLATFORM pocket-ic
 export POCKET_IC_BIN="$(pwd)/pocket-ic"
