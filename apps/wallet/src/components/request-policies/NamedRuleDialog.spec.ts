@@ -172,10 +172,10 @@ describe('NamedRuleDialog', () => {
 
     // Verify inputs are disabled
     const nameInput = form.find('input[name="name"]');
-    expect(nameInput.attributes('disabled')).toBeDefined();
+    expect(nameInput.attributes('readonly')).toBeDefined();
 
     const descriptionInput = form.find('input[name="description"]');
-    expect(descriptionInput.attributes('disabled')).toBeDefined();
+    expect(descriptionInput.attributes('readonly')).toBeDefined();
 
     // Verify save button is not present
     const saveButton = dialogContents.find('button[data-test-id="save-named-rule"]');

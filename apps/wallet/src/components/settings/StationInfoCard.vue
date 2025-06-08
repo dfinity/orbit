@@ -1,7 +1,11 @@
 <template>
   <VCard :loading="loadingSystemInfo">
-    <VCardTitle data-test-id="user-selected-station-name">
+    <VCardTitle
+      data-test-id="user-selected-station-name"
+      class="d-flex align-center justify-space-between"
+    >
       {{ $t(`app.station_info_card_title`, { name: station.name }) }}
+      <VBtn variant="text" :icon="mdiLifebuoy" :to="`/${$route.params.locale}/disaster-recovery`" />
     </VCardTitle>
     <VCardText class="pb-0">
       <VList lines="two" class="bg-transparent">
@@ -243,7 +247,7 @@
 
 <script lang="ts" setup>
 import { Principal } from '@dfinity/principal';
-import { mdiContentCopy, mdiPencil } from '@mdi/js';
+import { mdiContentCopy, mdiLifebuoy, mdiPencil } from '@mdi/js';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {

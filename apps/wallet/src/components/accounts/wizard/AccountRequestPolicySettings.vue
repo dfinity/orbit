@@ -9,12 +9,20 @@
           />
         </VCardTitle>
         <VCardText>
-          <RuleBuilder
-            v-model="model.configurationRule"
-            :specifier="{ EditAccount: { Any: null } }"
-            :disabled="isViewMode"
-            @remove="model.configurationRule = undefined"
-          />
+          <DiffView
+            :before-value="props.currentPolicies?.configurationRule"
+            :after-value="model.configurationRule"
+          >
+            <template #default="{ value, diffMode }">
+              <RuleBuilder
+                :model-value="value"
+                :specifier="{ EditAccount: { Any: null } }"
+                :disabled="diffMode === 'before' ? true : isViewMode"
+                @update:model-value="val => diffMode === 'after' && (model.configurationRule = val)"
+                @remove="diffMode === 'after' && (model.configurationRule = undefined)"
+              />
+            </template>
+          </DiffView>
         </VCardText>
       </VCard>
     </VCol>
@@ -28,12 +36,20 @@
           />
         </VCardTitle>
         <VCardText>
-          <RuleBuilder
-            v-model="model.transferRule"
-            :specifier="{ Transfer: { Any: null } }"
-            :disabled="isViewMode"
-            @remove="model.transferRule = undefined"
-          />
+          <DiffView
+            :before-value="props.currentPolicies?.transferRule"
+            :after-value="model.transferRule"
+          >
+            <template #default="{ value, diffMode }">
+              <RuleBuilder
+                :model-value="value"
+                :specifier="{ Transfer: { Any: null } }"
+                :disabled="diffMode === 'before' ? true : isViewMode"
+                @update:model-value="val => diffMode === 'after' && (model.transferRule = val)"
+                @remove="diffMode === 'after' && (model.transferRule = undefined)"
+              />
+            </template>
+          </DiffView>
         </VCardText>
       </VCard>
     </VCol>
@@ -46,6 +62,7 @@ import { VCard, VCardText, VCardTitle, VCol, VDivider, VRow } from 'vuetify/comp
 import TextLabel from '~/components/ui/TextLabel.vue';
 import RuleBuilder from '~/components/request-policies/rule/RuleBuilder.vue';
 import { RequestPolicyRule } from '~/generated/station/station.did';
+import DiffView from '~/components/requests/DiffView.vue';
 
 export interface AccountRequestPolicyModel {
   configurationRule?: RequestPolicyRule;
@@ -56,10 +73,12 @@ const props = withDefaults(
   defineProps<{
     modelValue: AccountRequestPolicyModel;
     mode?: 'view' | 'edit';
+    currentPolicies?: AccountRequestPolicyModel;
   }>(),
   {
     valid: true,
     mode: 'edit',
+    currentPolicies: undefined,
   },
 );
 

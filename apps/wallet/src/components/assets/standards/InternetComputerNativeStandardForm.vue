@@ -1,34 +1,52 @@
 <template>
-  <VTextField
-    v-model="ledgerId"
-    name="metadata_ledger_canister_id"
-    :label="$t('pages.assets.forms.ledger_canister_id')"
-    variant="filled"
-    density="comfortable"
-    :disabled="props.readonly"
-    :prepend-icon="mdiDatabase"
-    :rules="[requiredRule, validCanisterId]"
-  />
-  <VTextField
-    v-model="indexId"
-    name="metadata_index_canister_id"
-    :label="$t('pages.assets.forms.index_canister_id')"
-    variant="filled"
-    density="comfortable"
-    :disabled="props.readonly"
-    :prepend-icon="mdiDatabase"
-    :rules="[validCanisterId]"
-  />
+  <DiffView :before-value="currentLedgerId" :after-value="ledgerId">
+    <template #default="{ value, diffMode }">
+      <VTextField
+        :model-value="value"
+        :name="
+          diffMode === 'before'
+            ? 'metadata_ledger_canister_id-before'
+            : 'metadata_ledger_canister_id'
+        "
+        :label="$t('pages.assets.forms.ledger_canister_id')"
+        :variant="props.readonly ? 'plain' : 'filled'"
+        density="comfortable"
+        :readonly="props.readonly || diffMode === 'before'"
+        :prepend-icon="mdiDatabase"
+        :rules="diffMode === 'before' ? [] : [requiredRule, validCanisterId]"
+        @update:model-value="val => diffMode === 'after' && (ledgerId = val)"
+      />
+    </template>
+  </DiffView>
+  <DiffView :before-value="currentIndexId" :after-value="indexId">
+    <template #default="{ value, diffMode }">
+      <VTextField
+        :model-value="value"
+        :name="
+          diffMode === 'before' ? 'metadata_index_canister_id-before' : 'metadata_index_canister_id'
+        "
+        :label="$t('pages.assets.forms.index_canister_id')"
+        :variant="props.readonly ? 'plain' : 'filled'"
+        density="comfortable"
+        :readonly="props.readonly || diffMode === 'before'"
+        :prepend-icon="mdiDatabase"
+        :rules="diffMode === 'before' ? [] : [requiredRule, validCanisterId]"
+        @update:model-value="val => diffMode === 'after' && (indexId = val)"
+      />
+    </template>
+  </DiffView>
 </template>
 <script lang="ts" setup>
 import { mdiDatabase } from '@mdi/js';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed } from 'vue';
 import { VTextField } from 'vuetify/components';
+import DiffView from '~/components/requests/DiffView.vue';
 import { AssetMetadata } from '~/generated/station/station.did';
 import { requiredRule, validCanisterId } from '~/utils/form.utils';
 
 const props = defineProps<{
   modelValue: AssetMetadata[];
+  currentMetadata?: AssetMetadata[];
   readonly: boolean;
 }>();
 
@@ -36,41 +54,32 @@ const emit = defineEmits<{
   'update:modelValue': [AssetMetadata[]];
 }>();
 
-const ledgerId = ref();
-const indexId = ref();
-
-const model = computed({
-  get: () => props.modelValue,
-  set: (value: AssetMetadata[]) => {
-    emit('update:modelValue', value);
+const ledgerId = computed<string | undefined>({
+  get: () => props.modelValue.find(m => m.key === 'ledger_canister_id')?.value,
+  set: (value: string | undefined) => {
+    const newValue = props.modelValue.filter(m => m.key !== 'ledger_canister_id');
+    if (value) {
+      newValue.push({ key: 'ledger_canister_id', value });
+    }
+    emit('update:modelValue', newValue);
   },
 });
 
-onMounted(() => {
-  const ledger = props.modelValue.find(m => m.key === 'ledger_canister_id');
-  const index = props.modelValue.find(m => m.key === 'index_canister_id');
-
-  ledgerId.value = ledger?.value;
-  indexId.value = index?.value;
+const indexId = computed<string | undefined>({
+  get: () => props.modelValue.find(m => m.key === 'index_canister_id')?.value,
+  set: (value: string | undefined) => {
+    const newValue = props.modelValue.filter(m => m.key !== 'index_canister_id');
+    if (value) {
+      newValue.push({ key: 'index_canister_id', value });
+    }
+    emit('update:modelValue', newValue);
+  },
 });
 
-watch(ledgerId, () => {
-  const newValue = model.value.filter(m => m.key !== 'ledger_canister_id');
-
-  if (ledgerId.value) {
-    newValue.push({ key: 'ledger_canister_id', value: ledgerId.value });
-  }
-
-  model.value = newValue;
-});
-
-watch(indexId, () => {
-  const newValue = model.value.filter(m => m.key !== 'index_canister_id');
-
-  if (indexId.value) {
-    newValue.push({ key: 'index_canister_id', value: indexId.value });
-  }
-
-  model.value = newValue;
-});
+const currentLedgerId = computed<string | undefined>(
+  () => props.currentMetadata?.find(m => m.key === 'ledger_canister_id')?.value,
+);
+const currentIndexId = computed<string | undefined>(
+  () => props.currentMetadata?.find(m => m.key === 'index_canister_id')?.value,
+);
 </script>

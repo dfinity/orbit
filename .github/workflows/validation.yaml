@@ -83,6 +83,9 @@ jobs:
         run: |
           cargo fmt --all -- --check
           cargo clippy --locked --verbose --tests --benches --workspace -- -D clippy::all
+      - name: 'Check code (wasm32-unknown-unknown)'
+        run: |
+          export RUSTFLAGS="--cfg getrandom_backend=\"custom\""
           cargo clippy --locked --verbose --target wasm32-unknown-unknown -p control-panel -p station -p upgrader -- -D clippy::all
         env:
           RUST_BACKTRACE: 1

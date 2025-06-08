@@ -1,3 +1,29 @@
+## 0.6.0 (2025-06-02)
+
+
+### 🚀 Features
+
+- **station:** configurable station initialization ([#482](https://github.com/dfinity/orbit/pull/482))
+
+- **upgrader:** new endpoint to list station snapshots ([#545](https://github.com/dfinity/orbit/pull/545))
+
+- **station:** update Request::last_modification_timestamp on adding approval ([#576](https://github.com/dfinity/orbit/pull/576))
+
+- **wallet:** DR UI ([#557](https://github.com/dfinity/orbit/pull/557))
+
+
+### 🩹 Fixes
+
+- **station:** bump ic-cdk to fix canister_status parsing ([#538](https://github.com/dfinity/orbit/pull/538))
+
+
+### ❤️  Thank You
+
+- Jan Hrubes @jedna
+- Kepler Vital
+- mraszyk @mraszyk
+- olaszakos
+
 ## 0.5.1 (2025-03-12)
 
 

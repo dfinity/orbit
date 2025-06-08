@@ -1,3 +1,37 @@
+## 0.5.0 (2025-06-02)
+
+
+### 🚀 Features
+
+- **marketing:** marketing site home page ([#500](https://github.com/dfinity/orbit/pull/500))
+
+- **docs:** initial docs portal ([#493](https://github.com/dfinity/orbit/pull/493))
+
+- **station:** configurable station initialization ([#482](https://github.com/dfinity/orbit/pull/482))
+
+- **upgrader:** new endpoint to list station snapshots ([#545](https://github.com/dfinity/orbit/pull/545))
+
+- **station:** update Request::last_modification_timestamp on adding approval ([#576](https://github.com/dfinity/orbit/pull/576))
+
+- **wallet:** DR UI ([#557](https://github.com/dfinity/orbit/pull/557))
+
+
+### 🩹 Fixes
+
+- **CI:** use rustup 1.27.1 for docker build ([#532](https://github.com/dfinity/orbit/pull/532))
+
+- **station:** bump ic-cdk to fix canister_status parsing ([#538](https://github.com/dfinity/orbit/pull/538))
+
+- **station:** restrict access to system canister info ([#553](https://github.com/dfinity/orbit/pull/553))
+
+
+### ❤️  Thank You
+
+- Jan Hrubes @jedna
+- Kepler Vital
+- mraszyk @mraszyk
+- olaszakos
+
 ## 0.4.0 (2025-02-26)
 
 
