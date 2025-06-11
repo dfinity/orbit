@@ -239,8 +239,16 @@ export const useStationStore = defineStore('station', {
         this.privileges = myUser.privileges;
 
         if (hasRequiredPrivilege({ anyOf: [Privilege.SystemInfo] })) {
-          const systemInfo = await stationService.systemInfo();
-          this.configuration.cycleObtainStrategy = systemInfo.system.cycle_obtain_strategy;
+          await stationService
+            .systemInfo()
+            .then(info => {
+              this.configuration.cycleObtainStrategy = info.system.cycle_obtain_strategy;
+            })
+            .catch(err => {
+              logger.error(`Failed to load system info`, { err });
+
+              this.configuration.cycleObtainStrategy = { Disabled: null };
+            });
         }
 
         // loads the capabilities of the station
@@ -400,8 +408,8 @@ export const useStationStore = defineStore('station', {
       return stationVersion;
     },
     async loadUpgraderVersion(): Promise<string> {
-      const { system } = await this.service.systemInfo();
-      const upgraderVersion = await fetchCanisterVersion(icAgent.get(), system.upgrader_id);
+      const upgraderId = await this.service.fetchUpgraderId();
+      const upgraderVersion = await fetchCanisterVersion(icAgent.get(), upgraderId);
 
       this.versionManagement.upgraderVersion = upgraderVersion;
 
