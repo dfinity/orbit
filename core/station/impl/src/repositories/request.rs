@@ -891,7 +891,7 @@ mod benchs {
             });
         });
 
-        let heap_pages = result.total.heap_increase;
+        let heap_pages = result.total.heap_increase.unwrap();
         let heap_size_bytes = heap_pages * WASM_PAGE_SIZE as u64;
         let byte_size_per_entry = heap_size_bytes / entries_count;
 

@@ -1,7 +1,6 @@
 benches:
   batch_insert_100_requests:
     total:
-      start_instructions: 18109
       calls: 1
       instructions: 197637008
       heap_increase: 0
@@ -9,15 +8,13 @@ benches:
     scopes: {}
   find_100_users_from_50k_user_dataset:
     total:
-      start_instructions: 48221220183
       calls: 1
-      instructions: 230410192
+      instructions: 230395205
       heap_increase: 97
       stable_memory_increase: 0
     scopes: {}
   find_500_external_canister_policies_from_50k_dataset:
     total:
-      start_instructions: 78731704430
       calls: 1
       instructions: 21538003
       heap_increase: 0
@@ -25,15 +22,13 @@ benches:
     scopes: {}
   heap_size_of_indexed_request_fields_cache_is_lt_300mib:
     total:
-      start_instructions: 91421134
       calls: 1
-      instructions: 169820833
+      instructions: 169838717
       heap_increase: 85
       stable_memory_increase: 0
     scopes: {}
   list_1k_requests:
     total:
-      start_instructions: 2608386857
       calls: 1
       instructions: 114862517
       heap_increase: 14
@@ -41,34 +36,30 @@ benches:
     scopes: {}
   list_external_canisters_with_all_statuses:
     total:
-      start_instructions: 26043148096
       calls: 1
-      instructions: 179766495
+      instructions: 180045419
       heap_increase: 0
       stable_memory_increase: 0
     scopes: {}
   repository_find_1k_requests_from_10k_dataset_default_filters:
     total:
-      start_instructions: 33167310414
       calls: 1
-      instructions: 73716437
+      instructions: 73854942
       heap_increase: 17
       stable_memory_increase: 0
     scopes: {}
   service_filter_5k_requests_from_100k_dataset:
     total:
-      start_instructions: 381826354514
       calls: 1
-      instructions: 518067262
+      instructions: 517654409
       heap_increase: 112
       stable_memory_increase: 16
     scopes: {}
   service_find_all_requests_from_2k_dataset:
     total:
-      start_instructions: 5629275003
       calls: 1
-      instructions: 209946008
+      instructions: 210370481
       heap_increase: 49
       stable_memory_increase: 16
     scopes: {}
-version: 0.1.16
+version: 0.1.17
