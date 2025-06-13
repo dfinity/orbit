@@ -3396,7 +3396,7 @@ dependencies = [
  "base64 0.22.1",
  "candid",
  "convert_case",
- "getrandom 0.3.3",
+ "getrandom 0.2.16",
  "hex",
  "ic-cdk 0.17.2",
  "ic-cdk-timers",
@@ -5649,22 +5649,12 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.16.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "458f7a779bf54acc9f347480ac654f68407d3aab21269a6e3c9f922acd9e2da9"
+checksum = "79daa5ed5740825c40b389c5e50312b9c86df53fccd33f281df655642b43869d"
 dependencies = [
- "getrandom 0.3.3",
+ "getrandom 0.2.16",
  "serde",
- "uuid-rng-internal",
-]
-
-[[package]]
-name = "uuid-rng-internal"
-version = "1.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9376f53b15ed85851c10175b5e45f0af556b4853ff3fe335080b337e3828981e"
-dependencies = [
- "getrandom 0.3.3",
 ]
 
 [[package]]
