@@ -1,8 +1,12 @@
 use super::{AccountId, AssetId, TokenStandard, UserId};
 use crate::core::ic_cdk::next_time;
-use crate::core::validation::{EnsureAccount, EnsureIdExists, EnsureRequest, EnsureUser};
+use crate::core::validation::{
+    EnsureAccount, EnsureIdExists, EnsureRequest, EnsureUser, StringFieldValidator,
+    StringFieldValidatorBuilder, ValidateField,
+};
 use crate::errors::{RecordValidationError, TransferError};
 use crate::models::Metadata;
+use lazy_static::lazy_static;
 use orbit_essentials::model::ModelKey;
 use orbit_essentials::storable;
 use orbit_essentials::{
@@ -19,6 +23,21 @@ pub const METADATA_MEMO_KEY: &str = "memo";
 
 /// The transfer id, which is a UUID.
 pub type TransferId = UUID;
+
+lazy_static! {
+    pub static ref TRANSFER_ADDRESS_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("to_address".to_string())
+            .min_length(Transfer::ADDRESS_RANGE.0 as usize)
+            .max_length(Transfer::ADDRESS_RANGE.1 as usize)
+            .build()
+    };
+    pub static ref TRANSFER_NETWORK_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("blockchain_network".to_string())
+            .min_length(Transfer::NETWORK_RANGE.0 as usize)
+            .max_length(Transfer::NETWORK_RANGE.1 as usize)
+            .build()
+    };
+}
 
 #[storable]
 #[derive(Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -147,43 +166,11 @@ impl Transfer {
     }
 }
 
-fn validate_to_address(to_address: &str) -> ModelValidatorResult<TransferError> {
-    if (to_address.len() < Transfer::ADDRESS_RANGE.0 as usize)
-        || (to_address.len() > Transfer::ADDRESS_RANGE.1 as usize)
-    {
-        return Err(TransferError::ValidationError {
-            info: format!(
-                "Transfer destination address length exceeds the allowed range: {} to {}",
-                Transfer::ADDRESS_RANGE.0,
-                Transfer::ADDRESS_RANGE.1
-            ),
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_network(blockchain_network: &str) -> ModelValidatorResult<TransferError> {
-    if (blockchain_network.len() < Transfer::NETWORK_RANGE.0 as usize)
-        || (blockchain_network.len() > Transfer::NETWORK_RANGE.1 as usize)
-    {
-        return Err(TransferError::ValidationError {
-            info: format!(
-                "Transfer network length exceeds the allowed range: {} to {}",
-                Transfer::NETWORK_RANGE.0,
-                Transfer::NETWORK_RANGE.1
-            ),
-        });
-    }
-
-    Ok(())
-}
-
 impl ModelValidator<TransferError> for Transfer {
     fn validate(&self) -> ModelValidatorResult<TransferError> {
         self.metadata.validate()?;
-        validate_to_address(&self.to_address)?;
-        validate_network(&self.blockchain_network)?;
+        TRANSFER_ADDRESS_VALIDATOR.validate_field(&self.to_address)?;
+        TRANSFER_NETWORK_VALIDATOR.validate_field(&self.blockchain_network)?;
 
         EnsureUser::id_exists(&self.initiator_user).map_err(|err| match err {
             RecordValidationError::NotFound { id, .. } => TransferError::ValidationError {
@@ -218,7 +205,7 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.to_address = "a".repeat(255);
 
-        let result = validate_to_address(&transfer.to_address);
+        let result = transfer.validate();
 
         assert!(result.is_ok());
     }
@@ -228,19 +215,15 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.to_address = "a".repeat(Transfer::ADDRESS_RANGE.1 as usize + 1);
 
-        let result = validate_to_address(&transfer.to_address);
+        let result = transfer.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            TransferError::ValidationError {
-                info: format!(
-                    "Transfer destination address length exceeds the allowed range: {} to {}",
-                    Transfer::ADDRESS_RANGE.0,
-                    Transfer::ADDRESS_RANGE.1
-                )
-            }
-        );
+        let error = result.unwrap_err();
+        if let TransferError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 255"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -248,19 +231,15 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.to_address = "".to_string();
 
-        let result = validate_to_address(&transfer.to_address);
+        let result = transfer.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            TransferError::ValidationError {
-                info: format!(
-                    "Transfer destination address length exceeds the allowed range: {} to {}",
-                    Transfer::ADDRESS_RANGE.0,
-                    Transfer::ADDRESS_RANGE.1
-                )
-            }
-        );
+        let error = result.unwrap_err();
+        if let TransferError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be shorter than 1"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -268,7 +247,7 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.blockchain_network = "icp:mainnet".to_string();
 
-        let result = validate_network(&transfer.blockchain_network);
+        let result = transfer.validate();
 
         assert!(result.is_ok());
     }
@@ -278,19 +257,15 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.blockchain_network = "a".repeat(Transfer::NETWORK_RANGE.1 as usize + 1);
 
-        let result = validate_network(&transfer.blockchain_network);
+        let result = transfer.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            TransferError::ValidationError {
-                info: format!(
-                    "Transfer network length exceeds the allowed range: {} to {}",
-                    Transfer::NETWORK_RANGE.0,
-                    Transfer::NETWORK_RANGE.1
-                )
-            }
-        );
+        let error = result.unwrap_err();
+        if let TransferError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 50"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -298,19 +273,15 @@ mod tests {
         let mut transfer = mock_transfer();
         transfer.blockchain_network = "".to_string();
 
-        let result = validate_network(&transfer.blockchain_network);
+        let result = transfer.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            TransferError::ValidationError {
-                info: format!(
-                    "Transfer network length exceeds the allowed range: {} to {}",
-                    Transfer::NETWORK_RANGE.0,
-                    Transfer::NETWORK_RANGE.1
-                )
-            }
-        );
+        let error = result.unwrap_err();
+        if let TransferError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be shorter than 1"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 }
 

@@ -177,7 +177,8 @@ mod tests {
     use crate::{
         core::test_utils,
         models::{
-            address_book_entry_test_utils::mock_address_book_entry, AddAddressBookEntryOperation,
+            address_book_entry_test_utils::mock_address_book_entry,
+            address_format_test_utils::VALID_ACCOUNT_IDENTIFIER, AddAddressBookEntryOperation,
             AddAddressBookEntryOperationInput, AddressFormat, Blockchain, ChangeMetadata, Metadata,
             MetadataItem,
         },
@@ -207,7 +208,7 @@ mod tests {
             address_book_entry_id: None,
             input: AddAddressBookEntryOperationInput {
                 address_owner: "foo".to_string(),
-                address: "0x1234".to_string(),
+                address: VALID_ACCOUNT_IDENTIFIER.to_string(),
                 blockchain: Blockchain::InternetComputer,
                 metadata: address_book_entry.metadata.clone().into(),
                 labels: vec![],
