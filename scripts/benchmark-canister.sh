@@ -25,7 +25,8 @@ print_message "Benchmarking canister at $CANISTER_PATH"
 # Install canbench if not already installed
 if ! cargo install --list | grep -q canbench; then
   print_message "Installing canbench..."
-  cargo install canbench --version 0.1.16 --locked
+  # `canbench` should be pinned to the same version as `canbench-rs` in `../Cargo.toml`.
+  cargo install canbench --version 0.2.0 --locked
 fi
 
 # Changes to the canister path

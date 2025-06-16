@@ -1,5 +1,6 @@
 import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
 import { Principal } from '@dfinity/principal';
+import logger from '~/core/logger.core';
 import { idlFactory } from '~/generated/station';
 import {
   Account,
@@ -97,7 +98,11 @@ import {
   ListExternalCanistersArgs,
   ListRequestsArgs,
 } from '~/types/station.types';
-import { transformIdlWithOnlyVerifiedCalls, variantIs } from '~/utils/helper.utils';
+import {
+  fetchCanisterControllers,
+  transformIdlWithOnlyVerifiedCalls,
+  variantIs,
+} from '~/utils/helper.utils';
 
 export class StationService {
   // This actor is modified to only perform calls that can be verified, such as update calls that go through consensus.
@@ -405,6 +410,33 @@ export class StationService {
     }
 
     return result.Ok;
+  }
+
+  async fetchUpgraderId(): Promise<Principal> {
+    let controllers = (await fetchCanisterControllers(this.agent, this.stationId)) ?? [];
+    controllers = controllers.filter(
+      (c: Principal) => c.toText() !== 'r7inp-6aaaa-aaaaa-aaabq-cai',
+    ); // filter out nns root
+    const maybe_upgrader_id = controllers.length > 0 ? controllers[0] : null;
+
+    try {
+      const { system } = await this.systemInfo();
+      return system.upgrader_id;
+    } catch (error) {
+      if (maybe_upgrader_id) {
+        logger.warn(
+          `Failed to fetch upgrader ID from system info, using first controller as upgrader ID. Reason: ${JSON.stringify(error)}`,
+        );
+
+        return maybe_upgrader_id;
+      }
+
+      logger.error(
+        `Failed to fetch upgrader ID from system info and no controllers found. Reason: ${JSON.stringify(error)}`,
+      );
+
+      throw new Error('No upgrader ID found');
+    }
   }
 
   async listNotifications(

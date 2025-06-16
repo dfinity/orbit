@@ -588,9 +588,9 @@ checksum = "ade8366b8bd5ba243f0a58f036cc0ca8a2f069cff1a2351ef1cac6b083e16fc0"
 
 [[package]]
 name = "canbench-rs"
-version = "0.1.16"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd174679fab5618da45bf4c41a10d270a15754a5f6d3288a41191e6fe7c45b88"
+checksum = "1bf8bb62243691def9834aeab86a137177fed7e46ec802456488dd671f0979bd"
 dependencies = [
  "canbench-rs-macros",
  "candid",
@@ -600,9 +600,9 @@ dependencies = [
 
 [[package]]
 name = "canbench-rs-macros"
-version = "0.1.16"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cfff7906eb0a76c56b525c4c606d63ad2cdb658a1a73c4a44c9fd8a643c96e3"
+checksum = "9fbe69748d1d4ab1c0588996318a6399087462dabccb9b913de615645c2a88c5"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3396,7 +3396,7 @@ dependencies = [
  "base64 0.22.1",
  "candid",
  "convert_case",
- "getrandom 0.3.3",
+ "getrandom 0.2.16",
  "hex",
  "ic-cdk 0.17.2",
  "ic-cdk-timers",
@@ -5649,22 +5649,12 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.16.0"
+version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "458f7a779bf54acc9f347480ac654f68407d3aab21269a6e3c9f922acd9e2da9"
+checksum = "79daa5ed5740825c40b389c5e50312b9c86df53fccd33f281df655642b43869d"
 dependencies = [
- "getrandom 0.3.3",
+ "getrandom 0.2.16",
  "serde",
- "uuid-rng-internal",
-]
-
-[[package]]
-name = "uuid-rng-internal"
-version = "1.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9376f53b15ed85851c10175b5e45f0af556b4853ff3fe335080b337e3828981e"
-dependencies = [
- "getrandom 0.3.3",
 ]
 
 [[package]]

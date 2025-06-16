@@ -17,7 +17,7 @@ bench = false
 base64 = { workspace = true }
 candid = { workspace = true }
 convert_case = { workspace = true }
-getrandom = { workspace = true }
+getrandom = { workspace = true, features = ['custom'] }
 hex = { workspace = true }
 ic-cdk = { workspace = true }
 ic-certification = { workspace = true }
@@ -33,7 +33,7 @@ serde_json = { workspace = true }
 serde_bytes = { workspace = true }
 time = { workspace = true, features = ['formatting', 'parsing'] }
 thiserror = { workspace = true }
-uuid = { workspace = true, features = ['serde', 'v4', 'rng-getrandom'] }
+uuid = { workspace = true, features = ['serde', 'v4'] }
 ic-cdk-timers = { workspace = true }
 sha2 = { workspace = true }
 
