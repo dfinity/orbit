@@ -156,7 +156,7 @@ impl AddressBookRepository {
                 )),
                 Some(UniqueIndexKey::AddressBookBlockchainAddress(
                     blockchain.to_string().to_lowercase(),
-                    max_string_of_size(&(AddressBookEntry::ADDRESS_RANGE.1 as usize)),
+                    max_string_of_size(&AddressBookEntry::ADDRESS_RANGE.1),
                 )),
                 None,
             )

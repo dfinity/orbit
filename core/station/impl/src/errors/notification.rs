@@ -1,3 +1,4 @@
+use crate::errors::ValidationError;
 use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -32,6 +33,14 @@ impl DetailableError for NotificationError {
                 details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
+        }
+    }
+}
+
+impl From<ValidationError> for NotificationError {
+    fn from(err: ValidationError) -> NotificationError {
+        NotificationError::ValidationError {
+            info: err.to_string(),
         }
     }
 }

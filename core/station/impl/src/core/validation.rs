@@ -1,10 +1,17 @@
-use std::{hash::Hash, sync::Arc};
+use std::{
+    fmt::{Display, Formatter},
+    hash::Hash,
+    sync::Arc,
+};
 
 #[cfg(test)]
 use std::cell::RefCell;
 
 use crate::{
-    errors::{ExternalCanisterValidationError, RecordValidationError},
+    errors::{
+        ExternalCanisterValidationError, FieldValidationError, RecordValidationError,
+        ValidationError,
+    },
     models::{
         resource::{Resource, ResourceId, ResourceIds},
         AccountKey, AddressBookEntryKey, NamedRuleKey, NotificationKey, RequestKey, TokenStandard,
@@ -266,6 +273,256 @@ impl EnsureIdExists<UUID> for EnsureNamedRule {
 }
 
 impl EnsureResourceIdExists for EnsureNamedRule {}
+
+pub trait ValidateField<T>: Send + Sync {
+    fn validate_field(&self, value: &T) -> Result<(), ValidationError>;
+}
+
+#[derive(Clone)]
+pub enum StringCharacterSet {
+    Alphanumeric,
+}
+
+impl StringCharacterSet {
+    pub fn validate(&self, str: &str) -> bool {
+        match self {
+            StringCharacterSet::Alphanumeric => str.chars().all(|c| c.is_alphanumeric()),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct StringFieldValidator {
+    field_name: String,
+    min_length: Option<usize>,
+    max_length: Option<usize>,
+    char_set: Option<StringCharacterSet>,
+}
+
+pub struct StringFieldValidatorBuilder {
+    validator: StringFieldValidator,
+}
+
+impl Display for StringCharacterSet {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            StringCharacterSet::Alphanumeric => write!(f, "alphanumeric"),
+        }
+    }
+}
+
+impl StringFieldValidatorBuilder {
+    pub fn new(field_name: String) -> Self {
+        Self {
+            validator: StringFieldValidator {
+                field_name,
+                min_length: None,
+                max_length: None,
+                char_set: None,
+            },
+        }
+    }
+
+    pub fn min_length(mut self, min_length: usize) -> Self {
+        self.validator.min_length = Some(min_length);
+        self
+    }
+
+    pub fn max_length(mut self, max_length: usize) -> Self {
+        self.validator.max_length = Some(max_length);
+        self
+    }
+
+    pub fn char_set(mut self, char_set: StringCharacterSet) -> Self {
+        self.validator.char_set = Some(char_set);
+        self
+    }
+
+    pub fn build(self) -> StringFieldValidator {
+        self.validator
+    }
+}
+
+impl ValidateField<String> for StringFieldValidator {
+    fn validate_field(&self, value: &String) -> Result<(), ValidationError> {
+        if let Some(min_length) = self.min_length {
+            if value.len() < min_length {
+                return Err(ValidationError::FieldValidationError(
+                    FieldValidationError::InvalidRecord {
+                        field_name: self.field_name.clone(),
+                        error: format!("Length cannot be shorter than {}", min_length),
+                    },
+                ));
+            }
+        }
+
+        if let Some(max_length) = self.max_length {
+            if value.len() > max_length {
+                return Err(ValidationError::FieldValidationError(
+                    FieldValidationError::InvalidRecord {
+                        field_name: self.field_name.clone(),
+                        error: format!("Length cannot be longer than {}", max_length),
+                    },
+                ));
+            }
+        }
+
+        if let Some(char_set) = &self.char_set {
+            if !char_set.validate(value) {
+                return Err(ValidationError::FieldValidationError(
+                    FieldValidationError::InvalidRecord {
+                        field_name: self.field_name.clone(),
+                        error: format!("Allowed characters: {}", char_set),
+                    },
+                ));
+            }
+        }
+
+        Ok(())
+    }
+}
+
+pub struct NumberFieldValidatorBuilder<T: PartialOrd + Display> {
+    validator: NumberFieldValidator<T>,
+}
+
+impl<T: PartialOrd + Display> NumberFieldValidatorBuilder<T> {
+    pub fn new(field_name: String) -> Self {
+        Self {
+            validator: NumberFieldValidator::new(field_name),
+        }
+    }
+
+    pub fn min(mut self, min: T) -> Self {
+        self.validator.min = Some(min);
+        self
+    }
+
+    pub fn max(mut self, max: T) -> Self {
+        self.validator.max = Some(max);
+        self
+    }
+
+    pub fn build(self) -> NumberFieldValidator<T> {
+        self.validator
+    }
+}
+
+pub struct NumberFieldValidator<T: PartialOrd + Display> {
+    field_name: String,
+    min: Option<T>,
+    max: Option<T>,
+}
+
+impl<T: PartialOrd + Display> NumberFieldValidator<T> {
+    pub fn new(field_name: String) -> Self {
+        Self {
+            field_name,
+            min: None,
+            max: None,
+        }
+    }
+
+    pub fn validate_field(&self, value: T) -> Result<(), ValidationError> {
+        if let Some(min) = &self.min {
+            if &value < min {
+                return Err(ValidationError::FieldValidationError(
+                    FieldValidationError::InvalidRecord {
+                        field_name: self.field_name.clone(),
+                        error: format!("Cannot be less than {}", min),
+                    },
+                ));
+            }
+        }
+
+        if let Some(max) = &self.max {
+            if &value > max {
+                return Err(ValidationError::FieldValidationError(
+                    FieldValidationError::InvalidRecord {
+                        field_name: self.field_name.clone(),
+                        error: format!("Cannot be greater than {}", max),
+                    },
+                ));
+            }
+        }
+
+        Ok(())
+    }
+}
+
+pub struct VecFieldValidator<T> {
+    field_name: String,
+    min_length: Option<usize>,
+    max_length: Option<usize>,
+    item_validator: Arc<dyn ValidateField<T>>,
+}
+
+pub struct VecFieldValidatorBuilder<T> {
+    validator: VecFieldValidator<T>,
+}
+
+impl<T> VecFieldValidator<T> {
+    pub fn new(field_name: String, item_validator: Arc<dyn ValidateField<T>>) -> Self {
+        Self {
+            field_name,
+            min_length: None,
+            max_length: None,
+            item_validator,
+        }
+    }
+
+    pub fn validate_field(&self, value: &Vec<T>) -> Result<(), ValidationError> {
+        if let Some(min_length) = self.min_length {
+            if value.len() < min_length {
+                return Err(ValidationError::FieldValidationError(
+                    FieldValidationError::InvalidRecord {
+                        field_name: self.field_name.clone(),
+                        error: format!("Cannot have fewer than {} items", min_length),
+                    },
+                ));
+            }
+        }
+
+        if let Some(max_length) = self.max_length {
+            if value.len() > max_length {
+                return Err(ValidationError::FieldValidationError(
+                    FieldValidationError::InvalidRecord {
+                        field_name: self.field_name.clone(),
+                        error: format!("Cannot have more than {} items", max_length),
+                    },
+                ));
+            }
+        }
+
+        for item in value {
+            self.item_validator.validate_field(item)?;
+        }
+
+        Ok(())
+    }
+}
+
+impl<T> VecFieldValidatorBuilder<T> {
+    pub fn new(field_name: String, item_validator: Arc<dyn ValidateField<T>>) -> Self {
+        Self {
+            validator: VecFieldValidator::new(field_name, item_validator),
+        }
+    }
+
+    pub fn min_length(mut self, min_length: usize) -> Self {
+        self.validator.min_length = Some(min_length);
+        self
+    }
+
+    pub fn max_length(mut self, max_length: usize) -> Self {
+        self.validator.max_length = Some(max_length);
+        self
+    }
+
+    pub fn build(self) -> VecFieldValidator<T> {
+        self.validator
+    }
+}
 
 #[cfg(test)]
 mod test {

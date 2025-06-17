@@ -2,6 +2,8 @@ use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
 use thiserror::Error;
 
+use super::{AddressFormatError, ValidationError};
+
 /// Container for address book errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum AddressBookError {
@@ -14,16 +16,6 @@ pub enum AddressBookError {
     /// The requested address book entry was not found.
     #[error(r#"The requested address book entry was not found."#)]
     AddressBookEntryNotFound { id: String },
-    /// The given address owner length is out of range.
-    #[error(
-        r#"The adress owner length is out of range, it must be between {min_length} and {max_length}."#
-    )]
-    InvalidAddressOwnerLength { min_length: u16, max_length: u16 },
-    /// The given address length is out of range.
-    #[error(
-        r#"The adress length is out of range, it must be between {min_length} and {max_length}."#
-    )]
-    InvalidAddressLength { min_length: u16, max_length: u16 },
     /// The given blockchain is unknown to the system.
     #[error(r#"The given blockchain is unknown to the system."#)]
     UnknownBlockchain { blockchain: String },
@@ -51,22 +43,6 @@ impl DetailableError for AddressBookError {
                 details.insert("id".to_string(), id.to_string());
                 Some(details)
             }
-            AddressBookError::InvalidAddressOwnerLength {
-                min_length,
-                max_length,
-            } => {
-                details.insert("min_length".to_string(), min_length.to_string());
-                details.insert("max_length".to_string(), max_length.to_string());
-                Some(details)
-            }
-            AddressBookError::InvalidAddressLength {
-                min_length,
-                max_length,
-            } => {
-                details.insert("min_length".to_string(), min_length.to_string());
-                details.insert("max_length".to_string(), max_length.to_string());
-                Some(details)
-            }
             AddressBookError::UnknownBlockchain { blockchain } => {
                 details.insert("blockchain".to_string(), blockchain.to_string());
                 Some(details)
@@ -84,6 +60,22 @@ impl DetailableError for AddressBookError {
                 details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
+        }
+    }
+}
+
+impl From<ValidationError> for AddressBookError {
+    fn from(err: ValidationError) -> Self {
+        AddressBookError::ValidationError {
+            info: err.to_string(),
+        }
+    }
+}
+
+impl From<AddressFormatError> for AddressBookError {
+    fn from(err: AddressFormatError) -> Self {
+        AddressBookError::ValidationError {
+            info: err.to_string(),
         }
     }
 }

@@ -1,8 +1,33 @@
-use crate::errors::MetadataError;
+use crate::{
+    core::validation::{
+        NumberFieldValidator, NumberFieldValidatorBuilder, StringFieldValidator,
+        StringFieldValidatorBuilder, ValidateField,
+    },
+    errors::MetadataError,
+};
+use lazy_static::lazy_static;
 use orbit_essentials::model::{ModelValidator, ModelValidatorResult};
 use orbit_essentials::storable;
 use station_api::MetadataDTO;
 use std::collections::{BTreeMap, HashMap};
+
+lazy_static! {
+    pub static ref METADATA_COUNT_VALIDATOR: NumberFieldValidator<usize> = {
+        NumberFieldValidatorBuilder::new("metadata_count".to_string())
+            .max(Metadata::MAX_METADATA as usize)
+            .build()
+    };
+    pub static ref METADATA_KEY_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("metadata_key".to_string())
+            .max_length(Metadata::MAX_METADATA_KEY_LEN as usize)
+            .build()
+    };
+    pub static ref METADATA_VALUE_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("metadata_value".to_string())
+            .max_length(Metadata::MAX_METADATA_VALUE_LEN as usize)
+            .build()
+    };
+}
 
 #[storable]
 #[derive(Default, Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -99,33 +124,11 @@ impl Metadata {
 
 impl ModelValidator<MetadataError> for Metadata {
     fn validate(&self) -> ModelValidatorResult<MetadataError> {
-        if self.metadata.len() > Self::MAX_METADATA as usize {
-            return Err(MetadataError::ValidationError {
-                info: format!(
-                    "Metadata count exceeds the maximum allowed: {}",
-                    Self::MAX_METADATA
-                ),
-            });
-        }
+        METADATA_COUNT_VALIDATOR.validate_field(self.metadata.len())?;
 
         for (k, v) in self.metadata.iter() {
-            if k.len() > Self::MAX_METADATA_KEY_LEN as usize {
-                return Err(MetadataError::ValidationError {
-                    info: format!(
-                        "Metadata key length exceeds the maximum allowed: {}",
-                        Self::MAX_METADATA_KEY_LEN
-                    ),
-                });
-            }
-
-            if v.len() > Self::MAX_METADATA_VALUE_LEN as usize {
-                return Err(MetadataError::ValidationError {
-                    info: format!(
-                        "Metadata value length exceeds the maximum allowed: {}",
-                        Self::MAX_METADATA_VALUE_LEN
-                    ),
-                });
-            }
+            METADATA_KEY_VALIDATOR.validate_field(k)?;
+            METADATA_VALUE_VALIDATOR.validate_field(v)?;
         }
 
         Ok(())
@@ -151,10 +154,8 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             MetadataError::ValidationError {
-                info: format!(
-                    "Metadata count exceeds the maximum allowed: {}",
-                    Metadata::MAX_METADATA
-                ),
+                info: "The field `metadata_count` is invalid: Cannot be greater than 10."
+                    .to_string(),
             }
         );
     }
@@ -174,10 +175,8 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             MetadataError::ValidationError {
-                info: format!(
-                    "Metadata key length exceeds the maximum allowed: {}",
-                    Metadata::MAX_METADATA_KEY_LEN
-                ),
+                info: "The field `metadata_key` is invalid: Length cannot be longer than 24."
+                    .to_string(),
             }
         );
     }
@@ -197,10 +196,8 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             MetadataError::ValidationError {
-                info: format!(
-                    "Metadata value length exceeds the maximum allowed: {}",
-                    Metadata::MAX_METADATA_VALUE_LEN
-                ),
+                info: "The field `metadata_value` is invalid: Length cannot be longer than 255."
+                    .to_string(),
             }
         );
     }
