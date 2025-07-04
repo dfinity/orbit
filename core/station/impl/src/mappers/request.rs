@@ -23,6 +23,7 @@ impl Request {
         execution_plan: RequestExecutionPlan,
         title: String,
         summary: Option<String>,
+        deduplication_key: Option<String>,
     ) -> Request {
         let now = next_time();
 
@@ -38,6 +39,7 @@ impl Request {
             approvals: vec![],
             created_timestamp: now,
             last_modification_timestamp: now,
+            deduplication_key,
         }
     }
 
@@ -71,6 +73,7 @@ impl Request {
                 .iter()
                 .map(|approval| approval.to_owned().into())
                 .collect(),
+            deduplication_key: self.deduplication_key,
         }
     }
 
@@ -112,6 +115,7 @@ impl Request {
             execution_plan,
             request_config.title.unwrap_or(request_default_title),
             request_config.summary,
+            request_config.deduplication_key,
         )
     }
 }

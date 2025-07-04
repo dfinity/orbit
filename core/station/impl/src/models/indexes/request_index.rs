@@ -19,6 +19,7 @@ pub struct RequestIndexFields {
     pub approved_by: BTreeSet<UserId>,
     pub rejected_by: BTreeSet<UserId>,
     pub resources: Vec<Resource>,
+    pub deduplication_key: Option<String>,
 }
 
 #[storable]
@@ -71,6 +72,7 @@ impl Request {
                 })
                 .collect(),
             resources: self.operation.to_resources(),
+            deduplication_key: self.deduplication_key.clone(),
         }
     }
 

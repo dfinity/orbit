@@ -212,6 +212,7 @@ impl RequestService {
                 not_approvers: filter_by_votable.clone(),
                 not_requesters: filter_by_votable,
                 excluded_ids: vec![],
+                deduplication_keys: vec![],
             },
             input.sort_by,
         )?;
@@ -293,6 +294,7 @@ impl RequestService {
                 not_approvers: filter_by_votable.clone(),
                 not_requesters: filter_by_votable,
                 excluded_ids: exclude_request_ids,
+                deduplication_keys: vec![],
             },
             input.sort_by,
         )?;
@@ -786,6 +788,7 @@ mod tests {
                     summary: None,
                     execution_plan: None,
                     expiration_dt: None,
+                    deduplication_key: None,
                 },
                 &ctx.call_context,
             )
@@ -830,6 +833,7 @@ mod tests {
                     summary: None,
                     execution_plan: Some(station_api::RequestExecutionScheduleDTO::Immediate),
                     expiration_dt: None,
+                    deduplication_key: None,
                 },
                 &ctx.call_context,
             )
@@ -1503,6 +1507,7 @@ mod tests {
             ),
             summary: None,
             title: None,
+            deduplication_key: None,
         };
 
         let request_before_approval = REQUEST_SERVICE
