@@ -231,6 +231,15 @@ impl RequestRepository {
             .collect::<Vec<Request>>()
     }
 
+    /// Find requests that have the provided deduplication key.
+    pub fn find_by_deduplication_key(&self, deduplication_key: String) -> Vec<Request> {
+        self.index
+            .find_by_deduplication_key(deduplication_key, None)
+            .iter()
+            .filter_map(|(request_id, _)| self.get(&RequestKey { id: *request_id }))
+            .collect::<Vec<Request>>()
+    }
+
     /// Get the number of all processing requests.
     pub fn get_num_processing(&self) -> usize {
         self.index

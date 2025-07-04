@@ -189,19 +189,19 @@ fn validate_deduplication_key(
                 info: "The deduplication key must not be empty".to_owned(),
             });
         }
-        let request_ids = REQUEST_REPOSITORY
-            .find_ids_where(
-                RequestWhereClause {
-                    deduplication_keys: vec![deduplication_key.clone()],
-                    statuses: vec![RequestStatusCode::Created],
-                    ..Default::default()
-                },
-                None,
-            )
-            .map_err(|e| RequestError::ValidationError {
-                info: format!("Failed to find request ids: {}", e),
-            })?;
-        if !request_ids.is_empty() {
+        let is_not_unique = REQUEST_REPOSITORY
+            .find_by_deduplication_key(deduplication_key.clone())
+            .iter()
+            .any(|request| {
+                matches!(
+                    request.status,
+                    RequestStatus::Created
+                        | RequestStatus::Scheduled { .. }
+                        | RequestStatus::Processing { .. }
+                        | RequestStatus::Approved
+                )
+            });
+        if is_not_unique {
             return Err(RequestError::ValidationError {
                 info: "The deduplication key must be unique".to_owned(),
             });
