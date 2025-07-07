@@ -25,6 +25,9 @@
   },
   "dependencies": {
     "@icp-sdk/core": "1.0.0-beta.1",
+    "@dfinity/candid": "3.0.0-beta.2",
+    "@dfinity/auth-client": "3.0.0-beta.2",
+    "@dfinity/identity": "3.0.0-beta.2",
     "@dfinity/didc": "0.0.4",
     "@dfinity/ledger-icrc": "2.8.0",
     "@dfinity/utils": "2.12.0",

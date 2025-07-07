@@ -1,5 +1,4 @@
-import { Certificate, HttpAgent, LookupStatus } from '@icp-sdk/core/agent';
-import { decode } from '@icp-sdk/core/agent/lib/cjs/cbor';
+import { HttpAgent, Cbor } from '@icp-sdk/core/agent';
 import type { IDL as CandidIDL } from '@icp-sdk/core/candid';
 import { Principal } from '@icp-sdk/core/principal';
 import { toRaw } from 'vue';
@@ -7,6 +6,8 @@ import { LocationQuery, LocationQueryValue } from 'vue-router';
 import { TransferStatus } from '~/generated/station/station.did';
 import { AccountTransferStatus } from '~/types/station.types';
 import { arrayBufferToHex } from '~/utils/crypto.utils';
+
+const {decode} = Cbor;
 
 export const timer = (
   cb: () => void,
@@ -432,8 +433,8 @@ export const parseToNumberOrUndefined = (
 };
 
 export async function fetchCanisterModuleHash(
-  agent: HttpAgent,
-  canisterId: Principal,
+  _agent: HttpAgent,
+  _canisterId: Principal,
 ): Promise<string | null> {
   const encoder = new TextEncoder();
   const moduleHashPath: ArrayBuffer[] = [
@@ -454,7 +455,7 @@ export async function fetchCanisterModuleHash(
 
   const moduleHash = certificate.lookup(moduleHashPath);
 
-  if (moduleHash.status !== LookupStatus.Found) {
+  if (moduleHash.status !== LookupPathStatus.Found) {
     return null;
   }
 
@@ -466,8 +467,8 @@ export async function fetchCanisterModuleHash(
 }
 
 export async function fetchCanisterControllers(
-  agent: HttpAgent,
-  canisterId: Principal,
+  _agent: HttpAgent,
+  _canisterId: Principal,
 ): Promise<Principal[] | null> {
   const encoder = new TextEncoder();
   const controllersPath: ArrayBuffer[] = [
@@ -488,7 +489,7 @@ export async function fetchCanisterControllers(
 
   const controllers = certificate.lookup(controllersPath);
 
-  if (controllers.status !== LookupStatus.Found) {
+  if (controllers.status !== LookupPathStatus.Found) {
     return null;
   }
 
