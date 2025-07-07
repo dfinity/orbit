@@ -13,8 +13,7 @@ use crate::core::request::{
     RequestApprovalRightsEvaluator, RequestEvaluator, RequestPossibleApproversFinder,
 };
 use crate::errors::{EvaluateError, RequestError};
-use crate::models::RequestStatusCode;
-use crate::repositories::{RequestWhereClause, REQUEST_REPOSITORY, USER_REPOSITORY};
+use crate::repositories::{REQUEST_REPOSITORY, USER_REPOSITORY};
 use candid::{CandidType, Deserialize};
 use orbit_essentials::model::ModelKey;
 use orbit_essentials::repository::Repository;
@@ -203,7 +202,7 @@ fn validate_deduplication_key(
             });
         if is_not_unique {
             return Err(RequestError::ValidationError {
-                info: "The deduplication key must be unique".to_owned(),
+                info: "A request with the same deduplication key already exists".to_owned(),
             });
         }
         Ok(())
@@ -240,11 +239,25 @@ impl ModelValidator<RequestError> for Request {
         if must_not_be_expired {
             validate_expiration_dt(&self.expiration_dt)?;
             validate_execution_plan(&self.execution_plan)?;
-            validate_deduplication_key(&self.deduplication_key)?;
         }
 
         validate_status(&self.status)?;
         self.operation.validate()?;
+
+        let should_be_checked_for_duplicates = match self.status {
+            RequestStatus::Created => true,
+            RequestStatus::Approved
+            | RequestStatus::Rejected
+            | RequestStatus::Scheduled { .. }
+            | RequestStatus::Cancelled { .. }
+            | RequestStatus::Processing { .. }
+            | RequestStatus::Completed { .. }
+            | RequestStatus::Failed { .. } => false,
+        };
+
+        if should_be_checked_for_duplicates {
+            validate_deduplication_key(&self.deduplication_key)?;
+        }
 
         Ok(())
     }

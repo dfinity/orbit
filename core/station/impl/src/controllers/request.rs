@@ -53,6 +53,7 @@ async fn submit_request_approval(
 
 #[update(name = "create_request")]
 async fn create_request(input: CreateRequestInput) -> ApiResult<CreateRequestResponse> {
+    ic_cdk::print("create_request");
     CONTROLLER.create_request(input, arg_data_raw_size()).await
 }
 
@@ -147,6 +148,7 @@ impl RequestController {
         input: CreateRequestInput,
         msg_arg_data_size: usize,
     ) -> ApiResult<CreateRequestResponse> {
+        ic_cdk::print("create_request");
         let ctx = &call_context();
 
         // rate-limiting

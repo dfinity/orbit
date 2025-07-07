@@ -1,13 +1,14 @@
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::user_test_id;
 use crate::TestEnv;
+use orbit_essentials::utils::timestamp_to_rfc3339;
 use pocket_ic::update_candid_as;
 use station_api::{
     AddUserOperationInput, ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetRequestInput,
     GetRequestResponse, RequestExecutionScheduleDTO, RequestOperationDTO, RequestOperationInput,
-    RequestStatusDTO,
+    RequestStatusDTO, TimestampRfc3339,
 };
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 #[test]
 fn test_request_deduplication() {
@@ -24,11 +25,13 @@ fn test_request_deduplication() {
         groups: vec![],
         status: station_api::UserStatusDTO::Active,
     };
-    let add_user_request = CreateRequestInput {
+    let execution_time = env.get_time() + Duration::from_secs(5);
+    let execution_time_nanos = timestamp_to_rfc3339(&execution_time.as_nanos_since_unix_epoch());
+    let mut add_user_request = CreateRequestInput {
         operation: RequestOperationInput::AddUser(add_user),
         title: None,
         summary: None,
-        execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
+        execution_plan: Some(RequestExecutionScheduleDTO::Scheduled { execution_time: execution_time_nanos }),
         expiration_dt: None,
         deduplication_key: Some("test".to_string()),
     };
@@ -42,6 +45,9 @@ fn test_request_deduplication() {
     )
     .unwrap();
     assert!(res.0.is_ok());
+    println!("res: {:?}", res.0);
+
+    add_user_request.execution_plan = Some(RequestExecutionScheduleDTO::Immediate);
 
     // submit the same request again
     let res: (Result<CreateRequestResponse, ApiErrorDTO>,) = update_candid_as(
@@ -53,6 +59,7 @@ fn test_request_deduplication() {
     )
     .unwrap();
 
+    println!("res: {:?}", res.0);
     assert!(res.0.is_err());
     
     // wait for the request to be approved and scheduled (timer's period is 5 seconds)
@@ -69,6 +76,7 @@ fn test_request_deduplication() {
     )
     .unwrap();
 
+    println!("res: {:?}", res.0);
     assert!(res.0.is_err());
 
     // wait for the request to be executed (timer's period is 5 seconds)

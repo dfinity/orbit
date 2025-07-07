@@ -105,6 +105,13 @@ impl RequestIndexRepository {
         take_limit: Option<usize>,
     ) -> HashMap<RequestId, RequestIndexFields> {
         DB.with(|m| {
+            ic_cdk::println!(
+                "find_by_criteria: {:?}, {:?} db length: {}, db keys: {:?}",
+                start_key,
+                end_key,
+                m.borrow().len(),
+                m.borrow().keys().collect::<Vec<_>>()
+            );
             m.borrow()
                 .range(
                     RequestIndexKey {
