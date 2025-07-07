@@ -1,7 +1,7 @@
-import { Certificate, HttpAgent, LookupStatus } from '@dfinity/agent';
-import { decode } from '@dfinity/agent/lib/cjs/cbor';
-import type { IDL as CandidIDL } from '@dfinity/candid';
-import { Principal } from '@dfinity/principal';
+import { Certificate, HttpAgent, LookupStatus } from '@icp-sdk/core/agent';
+import { decode } from '@icp-sdk/core/agent/lib/cjs/cbor';
+import type { IDL as CandidIDL } from '@icp-sdk/core/candid';
+import { Principal } from '@icp-sdk/core/principal';
 import { toRaw } from 'vue';
 import { LocationQuery, LocationQueryValue } from 'vue-router';
 import { TransferStatus } from '~/generated/station/station.did';

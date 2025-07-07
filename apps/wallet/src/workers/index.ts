@@ -1,4 +1,4 @@
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { logger } from '~/core/logger.core';
 import { useStationStore } from '~/stores/station.store';
 import { unreachable } from '~/utils/helper.utils';

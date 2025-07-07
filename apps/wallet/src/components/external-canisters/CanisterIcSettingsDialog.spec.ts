@@ -1,4 +1,4 @@
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { describe, expect, it, vi } from 'vitest';
 import { StationService } from '~/services/station.service';
 import { mount } from '~/test.utils';

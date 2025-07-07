@@ -267,7 +267,7 @@
   </VForm>
 </template>
 <script lang="ts" setup>
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { mdiContentCopy, mdiPlus, mdiTrashCanOutline } from '@mdi/js';
 import { computed, onMounted, ref, watch } from 'vue';
 import {

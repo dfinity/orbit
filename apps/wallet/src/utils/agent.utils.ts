@@ -1,6 +1,6 @@
-import { bufFromBufLike, Certificate, HttpAgent, lookupResultToBuffer } from '@dfinity/agent';
+import { bufFromBufLike, Certificate, HttpAgent, lookupResultToBuffer } from '@icp-sdk/core/agent';
 import { decode, encode } from '@dfinity/didc';
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { uint8ArrayToHexString } from '@dfinity/utils';
 import { hexStringToUint8Array } from './helper.utils';
 

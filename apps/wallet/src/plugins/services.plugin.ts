@@ -1,4 +1,4 @@
-import { HttpAgent } from '@dfinity/agent';
+import { HttpAgent } from '@icp-sdk/core/agent';
 import { App } from 'vue';
 import { appInitConfig } from '~/configs/init.config';
 import { AuthService } from '~/services/auth.service';

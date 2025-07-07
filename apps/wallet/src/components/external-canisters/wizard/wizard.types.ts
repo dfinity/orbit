@@ -1,4 +1,4 @@
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { Allow, RequestPolicyRule, UUID } from '~/generated/station/station.did';
 import { ExternalCanisterStateEnum } from '~/types/station.types';
 

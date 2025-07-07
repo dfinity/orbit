@@ -246,7 +246,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { mdiContentCopy, mdiLifebuoy, mdiPencil } from '@mdi/js';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';

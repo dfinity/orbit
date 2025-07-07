@@ -1,4 +1,4 @@
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { UserStation } from '~/generated/control-panel/control_panel.did';
 import { StoreUserStation } from '~/stores/session.store';
 

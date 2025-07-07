@@ -211,7 +211,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import {
   mdiChevronRight,
   mdiCog,

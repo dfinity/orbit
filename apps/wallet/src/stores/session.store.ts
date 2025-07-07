@@ -1,5 +1,5 @@
-import { AnonymousIdentity, Identity } from '@dfinity/agent';
-import { Principal } from '@dfinity/principal';
+import { AnonymousIdentity, Identity } from '@icp-sdk/core/agent';
+import { Principal } from '@icp-sdk/core/principal';
 import { defineStore } from 'pinia';
 import { Ref } from 'vue';
 import { CONTROL_PANEL_USER_STATION_LABEL } from '~/core/constants.core';

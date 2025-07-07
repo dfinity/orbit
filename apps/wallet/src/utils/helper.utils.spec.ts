@@ -1,5 +1,5 @@
-import { IDL } from '@dfinity/candid';
-import { Principal } from '@dfinity/principal';
+import { IDL } from '@icp-sdk/core/candid';
+import { Principal } from '@icp-sdk/core/principal';
 import { describe, expect, it, vi } from 'vitest';
 import { LocationQuery } from 'vue-router';
 import { idlFactory } from '~/generated/control-panel';

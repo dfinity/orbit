@@ -12,7 +12,7 @@
   />
 </template>
 <script lang="ts" setup>
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { mdiIdentifier } from '@mdi/js';
 import { computed, ref, watch } from 'vue';
 import { VTextField } from 'vuetify/components';

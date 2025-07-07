@@ -1,5 +1,5 @@
-import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
-import { Principal } from '@dfinity/principal';
+import { Actor, ActorSubclass, HttpAgent } from '@icp-sdk/core/agent';
+import { Principal } from '@icp-sdk/core/principal';
 import { appInitConfig } from '~/configs/init.config';
 import { idlFactory } from '~/generated/control-panel';
 import {
