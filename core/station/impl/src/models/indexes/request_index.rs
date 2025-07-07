@@ -116,13 +116,15 @@ impl Request {
 
     /// Converts the request to an index by its deduplication key if it has one.
     fn to_index_by_deduplication_key(&self) -> Option<(RequestIndexKey, RequestIndexFields)> {
-        self.deduplication_key.as_ref().map(|deduplication_key| (
+        self.deduplication_key.as_ref().map(|deduplication_key| {
+            (
                 RequestIndexKey {
                     kind: RequestIndexKeyKind::DeduplicationKey(deduplication_key.clone()),
                     request_id: self.id,
                 },
                 self.index_fields(),
-            ))
+            )
+        })
     }
 
     /// Converts the request to a list of indexes.

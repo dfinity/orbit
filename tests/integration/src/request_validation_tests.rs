@@ -1,14 +1,61 @@
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::user_test_id;
 use crate::TestEnv;
+use candid::Principal;
 use orbit_essentials::utils::timestamp_to_rfc3339;
-use pocket_ic::update_candid_as;
+use pocket_ic::{update_candid_as, PocketIc};
 use station_api::{
-    AddUserOperationInput, ApiErrorDTO, CreateRequestInput, CreateRequestResponse, GetRequestInput,
-    GetRequestResponse, RequestExecutionScheduleDTO, RequestOperationDTO, RequestOperationInput,
-    RequestStatusDTO, TimestampRfc3339,
+    AddUserOperationInput, ApiErrorDTO, CreateRequestInput, CreateRequestResponse,
+    ListRequestsInput, ListRequestsResponse, RequestExecutionScheduleDTO, RequestOperationInput,
+    RequestStatusDTO,
 };
-use std::time::{Duration, Instant};
+use std::time::Duration;
+
+fn assert_list_requests_only_one_active_requests_with_dedup_key(
+    env: &PocketIc,
+    canister_id: Principal,
+    deduplication_key: &str,
+) {
+    // list the requests, see that there is a request with the same deduplication key
+    let res: (Result<ListRequestsResponse, ApiErrorDTO>,) = update_candid_as(
+        env,
+        canister_id,
+        WALLET_ADMIN_USER,
+        "list_requests",
+        (ListRequestsInput {
+            deduplication_keys: Some(vec![deduplication_key.to_string()]),
+            requester_ids: None,
+            approver_ids: None,
+            statuses: None,
+            operation_types: None,
+            expiration_from_dt: None,
+            expiration_to_dt: None,
+            created_from_dt: None,
+            created_to_dt: None,
+            paginate: None,
+            sort_by: None,
+            only_approvable: false,
+            with_evaluation_results: false,
+        },),
+    )
+    .unwrap();
+    assert!(res.0.is_ok());
+    let requests = res.0.unwrap().requests;
+    let active_requests = requests
+        .into_iter()
+        .filter(|r| {
+            matches!(
+                r.status,
+                RequestStatusDTO::Created
+                    | RequestStatusDTO::Approved
+                    | RequestStatusDTO::Scheduled { .. }
+                    | RequestStatusDTO::Processing { .. }
+            )
+        })
+        .collect::<Vec<_>>();
+    assert!(active_requests.len() == 1);
+    assert!(active_requests[0].deduplication_key == Some(deduplication_key.to_string()));
+}
 
 #[test]
 fn test_request_deduplication() {
@@ -31,7 +78,9 @@ fn test_request_deduplication() {
         operation: RequestOperationInput::AddUser(add_user),
         title: None,
         summary: None,
-        execution_plan: Some(RequestExecutionScheduleDTO::Scheduled { execution_time: execution_time_nanos }),
+        execution_plan: Some(RequestExecutionScheduleDTO::Scheduled {
+            execution_time: execution_time_nanos,
+        }),
         expiration_dt: None,
         deduplication_key: Some("test".to_string()),
     };
@@ -45,7 +94,11 @@ fn test_request_deduplication() {
     )
     .unwrap();
     assert!(res.0.is_ok());
-    println!("res: {:?}", res.0);
+    assert_list_requests_only_one_active_requests_with_dedup_key(
+        &env,
+        canister_ids.station,
+        "test",
+    );
 
     add_user_request.execution_plan = Some(RequestExecutionScheduleDTO::Immediate);
 
@@ -59,9 +112,13 @@ fn test_request_deduplication() {
     )
     .unwrap();
 
-    println!("res: {:?}", res.0);
     assert!(res.0.is_err());
-    
+    assert_list_requests_only_one_active_requests_with_dedup_key(
+        &env,
+        canister_ids.station,
+        "test",
+    );
+
     // wait for the request to be approved and scheduled (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
     env.tick();
@@ -76,8 +133,12 @@ fn test_request_deduplication() {
     )
     .unwrap();
 
-    println!("res: {:?}", res.0);
     assert!(res.0.is_err());
+    assert_list_requests_only_one_active_requests_with_dedup_key(
+        &env,
+        canister_ids.station,
+        "test",
+    );
 
     // wait for the request to be executed (timer's period is 5 seconds)
     env.advance_time(Duration::from_secs(5));
@@ -94,5 +155,9 @@ fn test_request_deduplication() {
     .unwrap();
 
     assert!(res.0.is_ok());
-
+    assert_list_requests_only_one_active_requests_with_dedup_key(
+        &env,
+        canister_ids.station,
+        "test",
+    );
 }
