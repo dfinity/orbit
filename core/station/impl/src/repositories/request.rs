@@ -962,6 +962,7 @@ mod benchs {
                     statuses: vec![RequestStatusCode::Created],
                     excluded_ids: vec![],
                     not_requesters: vec![],
+                    deduplication_keys: vec![],
                 },
                 None,
             );

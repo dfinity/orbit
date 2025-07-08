@@ -886,6 +886,7 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'execution_plan' : RequestExecutionSchedule,
     'expiration_dt' : TimestampRFC3339,
+    'deduplication_key' : IDL.Opt(IDL.Text),
     'created_at' : TimestampRFC3339,
     'requested_by' : UUID,
     'summary' : IDL.Opt(IDL.Text),

@@ -1294,6 +1294,8 @@ type Request = record {
   expiration_dt : TimestampRFC3339;
   // The time at which the request should be executed if approved.
   execution_plan : RequestExecutionSchedule;
+  // The optional deduplication key used to ensure request uniqueness.
+  deduplication_key : opt text;
 };
 
 // The input type for creating a request.

@@ -1703,6 +1703,7 @@ mod benchs {
                             )),
                             only_approvable: false,
                             with_evaluation_results: false,
+                            deduplication_keys: None,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )
@@ -1748,6 +1749,7 @@ mod benchs {
                             )),
                             only_approvable: false,
                             with_evaluation_results: false,
+                            deduplication_keys: None,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )
