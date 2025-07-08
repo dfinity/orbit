@@ -54,6 +54,7 @@ const pendingProps: RequestDetailViewProps = {
     requested_by: 'requester-id',
     summary: [],
     title: '',
+    deduplication_key: [],
   },
 };
 
@@ -100,6 +101,7 @@ const approvedProps: RequestDetailViewProps = {
     requested_by: 'approver-1-id',
     summary: [],
     title: '',
+    deduplication_key: [],
   },
 };
 
@@ -146,6 +148,7 @@ const rejectedProps: RequestDetailViewProps = {
     requested_by: 'approver-1-id',
     summary: [],
     title: '',
+    deduplication_key: [],
   },
 };
 const failedProps: RequestDetailViewProps = {
@@ -191,6 +194,7 @@ const failedProps: RequestDetailViewProps = {
     requested_by: 'approver-1-id',
     summary: [],
     title: '',
+    deduplication_key: [],
   },
 };
 
@@ -237,6 +241,7 @@ const cancelledProps: RequestDetailViewProps = {
     requested_by: 'approver-1-id',
     summary: [],
     title: '',
+    deduplication_key: [],
   },
 };
 
