@@ -239,6 +239,7 @@ pub struct RequestDTO {
     pub status: RequestStatusDTO,
     pub expiration_dt: TimestampRfc3339,
     pub execution_plan: RequestExecutionScheduleDTO,
+    pub tags: Vec<String>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]
@@ -262,6 +263,7 @@ pub struct CreateRequestInput {
     pub summary: Option<String>,
     pub execution_plan: Option<RequestExecutionScheduleDTO>,
     pub expiration_dt: Option<TimestampRfc3339>,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

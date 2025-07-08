@@ -786,6 +786,7 @@ mod tests {
                     summary: None,
                     execution_plan: None,
                     expiration_dt: None,
+                    tags: None,
                 },
                 &ctx.call_context,
             )
@@ -830,6 +831,7 @@ mod tests {
                     summary: None,
                     execution_plan: Some(station_api::RequestExecutionScheduleDTO::Immediate),
                     expiration_dt: None,
+                    tags: None,
                 },
                 &ctx.call_context,
             )
@@ -1503,6 +1505,7 @@ mod tests {
             ),
             summary: None,
             title: None,
+            tags: None,
         };
 
         let request_before_approval = REQUEST_SERVICE

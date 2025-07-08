@@ -159,6 +159,7 @@ mod mnanage_system_info_test_utils {
             operation: station_api::RequestOperationInput::ManageSystemInfo(
                 mock_manage_system_info_api_input(),
             ),
+            tags: None,
         }
     }
 }

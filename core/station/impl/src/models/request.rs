@@ -60,6 +60,8 @@ pub struct Request {
     pub created_timestamp: Timestamp,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
+    /// The tags of the request.
+    pub tags: Vec<String>,
 }
 
 #[storable]
@@ -568,6 +570,7 @@ pub mod request_test_utils {
             }],
             created_timestamp: 0,
             last_modification_timestamp: 0,
+            tags: vec!["tag1".to_string(), "tag2".to_string()],
         }
     }
 }

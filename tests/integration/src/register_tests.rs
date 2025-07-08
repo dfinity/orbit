@@ -30,6 +30,7 @@ fn register_user_successful() {
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
         expiration_dt: None,
+        tags: None,
     };
 
     let res: (Result<CreateRequestResponse, ApiErrorDTO>,) = update_candid_as(

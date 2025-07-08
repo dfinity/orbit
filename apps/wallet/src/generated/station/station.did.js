@@ -886,6 +886,7 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'execution_plan' : RequestExecutionSchedule,
     'expiration_dt' : TimestampRFC3339,
+    'tags' : IDL.Vec(IDL.Text),
     'created_at' : TimestampRFC3339,
     'requested_by' : UUID,
     'summary' : IDL.Opt(IDL.Text),
@@ -1030,6 +1031,7 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Opt(IDL.Text),
     'execution_plan' : IDL.Opt(RequestExecutionSchedule),
     'expiration_dt' : IDL.Opt(TimestampRFC3339),
+    'tags' : IDL.Opt(IDL.Vec(IDL.Text)),
     'summary' : IDL.Opt(IDL.Text),
     'operation' : RequestOperationInput,
   });

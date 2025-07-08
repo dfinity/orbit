@@ -75,6 +75,7 @@ fn test_request_size_rate_limiter() {
             summary: None,
             execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
             expiration_dt: None,
+            tags: None,
         };
         let bytes = Encode!(&create_request_input).unwrap();
         assert!(arg_length <= bytes.len() && bytes.len() <= request_size);
@@ -133,6 +134,7 @@ where
             summary: None,
             execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
             expiration_dt: None,
+            tags: None,
         };
         let create_request_bytes = Encode!(&create_request_input).unwrap();
         update_candid_as::<_, ()>(

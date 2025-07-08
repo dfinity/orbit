@@ -303,6 +303,7 @@ export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
   'expiration_dt' : [] | [TimestampRFC3339],
+  'tags' : [] | [Array<string>],
   'summary' : [] | [string],
   'operation' : RequestOperationInput,
 }
@@ -1152,6 +1153,7 @@ export interface Request {
   'title' : string,
   'execution_plan' : RequestExecutionSchedule,
   'expiration_dt' : TimestampRFC3339,
+  'tags' : Array<string>,
   'created_at' : TimestampRFC3339,
   'requested_by' : UUID,
   'summary' : [] | [string],
