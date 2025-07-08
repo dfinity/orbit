@@ -303,6 +303,7 @@ export interface CreateRequestInput {
   'title' : [] | [string],
   'execution_plan' : [] | [RequestExecutionSchedule],
   'expiration_dt' : [] | [TimestampRFC3339],
+  'deduplication_key' : [] | [string],
   'summary' : [] | [string],
   'operation' : RequestOperationInput,
 }
@@ -911,6 +912,7 @@ export type ListRequestPoliciesResult = {
   { 'Err' : Error };
 export interface ListRequestsInput {
   'sort_by' : [] | [ListRequestsSortBy],
+  'deduplication_keys' : [] | [Array<string>],
   'with_evaluation_results' : boolean,
   'expiration_from_dt' : [] | [TimestampRFC3339],
   'created_to_dt' : [] | [TimestampRFC3339],
