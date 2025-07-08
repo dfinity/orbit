@@ -194,7 +194,7 @@ fn validate_deduplication_key(
         | RequestStatus::Completed { .. }
         | RequestStatus::Failed { .. } => false,
     };
-    
+
     if let Some(deduplication_key) = deduplication_key {
         if deduplication_key.len() > Request::MAX_DEDUPLICATION_KEY_LEN as usize {
             return Err(RequestError::ValidationError {
