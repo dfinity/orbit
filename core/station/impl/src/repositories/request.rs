@@ -350,7 +350,8 @@ impl RequestRepository {
                     return false;
                 }
 
-                if !where_tags.is_empty() && !fields.tags.iter().any(|tag| where_tags.contains(tag)) {
+                if !where_tags.is_empty() && !fields.tags.iter().any(|tag| where_tags.contains(tag))
+                {
                     return false;
                 }
 
@@ -859,8 +860,8 @@ mod tests {
     #[test]
     fn find_with_tags() {
         let mut request = mock_request();
-            request.tags = vec![];
-            REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+        request.tags = vec![];
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
 
         for i in 0..5 {
             let mut request = mock_request();

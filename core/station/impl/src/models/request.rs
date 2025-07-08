@@ -136,13 +136,22 @@ fn validate_tags(tags: &[String]) -> ModelValidatorResult<RequestError> {
 
     if tags.len() > Request::MAX_TAGS_LEN as usize {
         return Err(RequestError::ValidationError {
-            info: format!("The number of tags exceeds the maximum allowed: {}", Request::MAX_TAGS_LEN),
+            info: format!(
+                "The number of tags exceeds the maximum allowed: {}",
+                Request::MAX_TAGS_LEN
+            ),
         });
     }
 
-    if tags.iter().any(|tag| tag.len() > Request::MAX_TAG_LEN as usize) {
+    if tags
+        .iter()
+        .any(|tag| tag.len() > Request::MAX_TAG_LEN as usize)
+    {
         return Err(RequestError::ValidationError {
-            info: format!("The tag length exceeds the maximum allowed: {}", Request::MAX_TAG_LEN),
+            info: format!(
+                "The tag length exceeds the maximum allowed: {}",
+                Request::MAX_TAG_LEN
+            ),
         });
     }
 
@@ -571,7 +580,10 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             RequestError::ValidationError {
-                info: format!("The number of tags exceeds the maximum allowed: {}", Request::MAX_TAGS_LEN),
+                info: format!(
+                    "The number of tags exceeds the maximum allowed: {}",
+                    Request::MAX_TAGS_LEN
+                ),
             }
         );
     }
@@ -587,7 +599,10 @@ mod tests {
         assert_eq!(
             result.unwrap_err(),
             RequestError::ValidationError {
-                info: format!("The tag length exceeds the maximum allowed: {}", Request::MAX_TAG_LEN),
+                info: format!(
+                    "The tag length exceeds the maximum allowed: {}",
+                    Request::MAX_TAG_LEN
+                ),
             }
         );
     }
