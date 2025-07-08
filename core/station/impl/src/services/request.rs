@@ -212,6 +212,7 @@ impl RequestService {
                 not_approvers: filter_by_votable.clone(),
                 not_requesters: filter_by_votable,
                 excluded_ids: vec![],
+                tags: input.tags.unwrap_or_default(),
             },
             input.sort_by,
         )?;
@@ -293,6 +294,7 @@ impl RequestService {
                 not_approvers: filter_by_votable.clone(),
                 not_requesters: filter_by_votable,
                 excluded_ids: exclude_request_ids,
+                tags: vec![],
             },
             input.sort_by,
         )?;
@@ -1024,6 +1026,7 @@ mod tests {
             paginate: None,
             sort_by: None,
             statuses: None,
+            tags: None,
         };
 
         let users = vec![requester, approver, another_user];
@@ -1094,6 +1097,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: false,
                     with_evaluation_results: false,
+                    tags: None,
                 },
                 &ctx.call_context,
             )
@@ -1229,6 +1233,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: true,
                     with_evaluation_results: false,
+                    tags: None,
                 },
                 &ctx.call_context,
             )
@@ -1254,6 +1259,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: true,
                     with_evaluation_results: false,
+                    tags: None,
                 },
                 &CallContext::new(transfer_requester_user.identities[0]),
             )
@@ -1278,6 +1284,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: true,
                     with_evaluation_results: false,
+                    tags: None,
                 },
                 &CallContext::new(no_access_user.identities[0]),
             )
@@ -1319,6 +1326,7 @@ mod tests {
                     )),
                     only_approvable: true,
                     with_evaluation_results: false,
+                    tags: None,
                 },
                 &ctx.call_context,
             )
@@ -1463,6 +1471,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: true,
                     with_evaluation_results: false,
+                    tags: None,
                 },
                 &CallContext::new(user_2.identities[0]),
             )
@@ -1623,6 +1632,7 @@ mod benchs {
                             )),
                             only_approvable: false,
                             with_evaluation_results: false,
+                            tags: None,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )
@@ -1668,6 +1678,7 @@ mod benchs {
                             )),
                             only_approvable: false,
                             with_evaluation_results: false,
+                            tags: None,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )

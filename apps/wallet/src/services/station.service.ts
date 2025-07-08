@@ -278,6 +278,7 @@ export class StationService {
       title: [],
       summary: [],
       operation: { RemoveUserGroup: input },
+      tags: [],
     });
 
     if ('Err' in result) {
@@ -294,6 +295,7 @@ export class StationService {
       title: [],
       summary: [],
       operation: { AddUserGroup: input },
+      tags: [],
     });
 
     if ('Err' in result) {
@@ -310,6 +312,7 @@ export class StationService {
       title: [],
       summary: [],
       operation: { EditUserGroup: input },
+      tags: [],
     });
 
     if ('Err' in result) {
@@ -326,6 +329,7 @@ export class StationService {
       title: [],
       summary: [],
       operation: { AddUser: input },
+      tags: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -342,6 +346,7 @@ export class StationService {
       title: [],
       summary: [],
       operation: { EditUser: input },
+      tags: [],
     });
 
     if (variantIs(result, 'Err')) {
@@ -694,6 +699,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         FundExternalCanister: input,
       },
@@ -712,6 +718,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         MonitorExternalCanister: input,
       },
@@ -733,6 +740,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         ConfigureExternalCanister: {
           canister_id: canisterId,
@@ -757,6 +765,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: {
         ChangeExternalCanister: input,
       },
@@ -783,6 +792,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         ConfigureExternalCanister: {
           canister_id: input.canisterId,
@@ -871,6 +881,7 @@ export class StationService {
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
+      tags: [],
       operation: { AddAsset: input },
       expiration_dt: [],
     });
@@ -911,6 +922,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { CreateExternalCanister: input },
     });
 
@@ -926,6 +938,7 @@ export class StationService {
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditAsset: input },
       expiration_dt: [],
     });
@@ -942,6 +955,7 @@ export class StationService {
       execution_plan: [{ Immediate: null }],
       title: [],
       summary: [],
+      tags: [],
       operation: { RemoveAsset: input },
       expiration_dt: [],
     });
@@ -987,6 +1001,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { AddAddressBookEntry: input },
     });
 
@@ -1003,6 +1018,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditAddressBookEntry: input },
     });
 
@@ -1088,6 +1104,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { CreateExternalCanister: input },
     });
 
@@ -1113,6 +1130,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: {
         CallExternalCanister: {
           execution_method: {
@@ -1142,6 +1160,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         ConfigureExternalCanister: {
           canister_id: canisterId,
@@ -1182,6 +1201,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: {
         SnapshotExternalCanister: {
           canister_id: canisterId,
@@ -1208,6 +1228,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: {
         RestoreExternalCanister: {
           canister_id: canisterId,
@@ -1233,6 +1254,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: {
         PruneExternalCanister: {
           canister_id: canisterId,
@@ -1270,6 +1292,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditPermission: input },
     });
 
@@ -1286,6 +1309,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditRequestPolicy: input },
     });
 
@@ -1302,6 +1326,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { AddRequestPolicy: input },
     });
 
@@ -1318,6 +1343,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { ManageSystemInfo: input },
     });
 
@@ -1336,6 +1362,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: {
         SetDisasterRecovery: {
           committee: [input],
@@ -1356,6 +1383,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditAccount: input },
     });
 
@@ -1372,6 +1400,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { AddAccount: input },
     });
 
@@ -1388,6 +1417,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: summary ? [summary] : [],
+      tags: [],
       operation: { Transfer: input },
     });
 
@@ -1407,6 +1437,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: opts.comment ? [opts.comment] : [],
+      tags: [],
       operation: { SystemUpgrade: input },
     });
 
@@ -1454,6 +1485,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { RemoveRequestPolicy: { policy_id: id } },
     });
 
@@ -1470,6 +1502,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { RemoveAddressBookEntry: { address_book_entry_id: id } },
     });
 
@@ -1507,6 +1540,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { RemoveNamedRule: { named_rule_id: id } },
     });
 
@@ -1533,6 +1567,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { EditNamedRule: input },
     });
 
@@ -1549,6 +1584,7 @@ export class StationService {
       expiration_dt: [],
       title: [],
       summary: [],
+      tags: [],
       operation: { AddNamedRule: input },
     });
 

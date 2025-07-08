@@ -325,6 +325,7 @@ pub struct ListRequestsInput {
     pub sort_by: Option<ListRequestsSortBy>,
     pub only_approvable: bool,
     pub with_evaluation_results: bool,
+    pub tags: Option<Vec<String>>,
 }
 
 #[derive(CandidType, serde::Serialize, Deserialize, Debug, Clone)]

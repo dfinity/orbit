@@ -129,6 +129,35 @@ fn validate_expiration_dt(expiration_dt: &Timestamp) -> ModelValidatorResult<Req
     Ok(())
 }
 
+fn validate_tags(tags: &[String]) -> ModelValidatorResult<RequestError> {
+    if tags.is_empty() {
+        return Ok(());
+    }
+
+    if tags.len() > Request::MAX_TAGS_LEN as usize {
+        return Err(RequestError::ValidationError {
+            info: format!("The number of tags exceeds the maximum allowed: {}", Request::MAX_TAGS_LEN),
+        });
+    }
+
+    if tags.iter().any(|tag| tag.len() > Request::MAX_TAG_LEN as usize) {
+        return Err(RequestError::ValidationError {
+            info: format!("The tag length exceeds the maximum allowed: {}", Request::MAX_TAG_LEN),
+        });
+    }
+
+    let mut unique_tags = HashSet::new();
+    for tag in tags {
+        if !unique_tags.insert(tag.as_str()) {
+            return Err(RequestError::ValidationError {
+                info: "The tags must be unique".to_owned(),
+            });
+        }
+    }
+
+    Ok(())
+}
+
 fn validate_status(status: &RequestStatus) -> ModelValidatorResult<RequestError> {
     match status {
         RequestStatus::Cancelled {
@@ -211,6 +240,7 @@ impl ModelValidator<RequestError> for Request {
 
         validate_status(&self.status)?;
         self.operation.validate()?;
+        validate_tags(&self.tags)?;
 
         Ok(())
     }
@@ -220,6 +250,8 @@ impl Request {
     pub const MAX_TITLE_LEN: u8 = 255;
     pub const MAX_CANCEL_REASON_LEN: u16 = 1000;
     pub const MAX_SUMMARY_LEN: u16 = 1000;
+    pub const MAX_TAGS_LEN: u8 = 10;
+    pub const MAX_TAG_LEN: u8 = 64;
 
     /// Creates a new request key from the given key components.
     pub fn key(request_id: RequestId) -> RequestKey {
@@ -522,6 +554,76 @@ mod tests {
         request.summary = Some("a".repeat(Request::MAX_SUMMARY_LEN as usize));
 
         let result = validate_summary(&request.summary);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_request_tags_too_many() {
+        let mut request = mock_request();
+        for i in 0..Request::MAX_TAGS_LEN as usize + 1 {
+            request.tags.push(format!("tag{}", i));
+        }
+
+        let result = validate_tags(&request.tags);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: format!("The number of tags exceeds the maximum allowed: {}", Request::MAX_TAGS_LEN),
+            }
+        );
+    }
+
+    #[test]
+    fn fail_request_tag_too_long() {
+        let mut request = mock_request();
+        request.tags = vec!["a".repeat(Request::MAX_TAG_LEN as usize + 1)];
+
+        let result = validate_tags(&request.tags);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: format!("The tag length exceeds the maximum allowed: {}", Request::MAX_TAG_LEN),
+            }
+        );
+    }
+
+    #[test]
+    fn fail_request_tags_not_unique() {
+        let mut request = mock_request();
+        request.tags = vec!["tag1".to_string(), "tag1".to_string()];
+
+        let result = validate_tags(&request.tags);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: "The tags must be unique".to_owned(),
+            }
+        );
+    }
+
+    #[test]
+    fn test_request_tags_is_valid() {
+        let mut request = mock_request();
+        request.tags = vec!["tag1".to_string(), "tag2".to_string()];
+
+        let result = validate_tags(&request.tags);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_request_tags_is_empty() {
+        let mut request = mock_request();
+        request.tags = vec![];
+
+        let result = validate_tags(&request.tags);
 
         assert!(result.is_ok());
     }
