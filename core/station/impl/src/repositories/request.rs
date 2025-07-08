@@ -359,7 +359,6 @@ impl RequestRepository {
                     return false;
                 }
 
-
                 if !where_deduplication_keys.is_empty() {
                     if let Some(deduplication_key) = &fields.deduplication_key {
                         if !where_deduplication_keys.contains(deduplication_key) {

@@ -186,7 +186,10 @@ fn validate_deduplication_key(
     if let Some(deduplication_key) = deduplication_key {
         if deduplication_key.len() > Request::MAX_DEDUPLICATION_KEY_LEN as usize {
             return Err(RequestError::ValidationError {
-                info: format!("The deduplication key length exceeds the maximum allowed: {}", Request::MAX_DEDUPLICATION_KEY_LEN),
+                info: format!(
+                    "The deduplication key length exceeds the maximum allowed: {}",
+                    Request::MAX_DEDUPLICATION_KEY_LEN
+                ),
             });
         }
 
@@ -217,7 +220,7 @@ fn validate_deduplication_key(
             });
         }
     }
-    
+
     Ok(())
 }
 
@@ -658,7 +661,8 @@ mod tests {
     fn fail_request_deduplication_key_is_too_long() {
         let mut request = mock_request();
         request.status = RequestStatus::Created;
-        request.deduplication_key = Some("a".repeat(Request::MAX_DEDUPLICATION_KEY_LEN as usize + 1));
+        request.deduplication_key =
+            Some("a".repeat(Request::MAX_DEDUPLICATION_KEY_LEN as usize + 1));
         let result = validate_deduplication_key(&request.deduplication_key, true);
         assert!(result.is_err());
     }
