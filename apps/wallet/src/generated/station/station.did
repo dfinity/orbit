@@ -1310,6 +1310,8 @@ type CreateRequestInput = record {
   execution_plan : opt RequestExecutionSchedule;
   // The time at which the request will expire if still pending.
   expiration_dt : opt TimestampRFC3339;
+  // The optional deduplication key to ensure uniqueness.
+  deduplication_key : opt text;
 };
 
 // The result type for creating a request.
