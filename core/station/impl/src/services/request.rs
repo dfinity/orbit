@@ -222,8 +222,6 @@ impl RequestService {
             Resource::Request(RequestResourceAction::Read(ResourceId::Id(*id)))
         });
 
-        ic_cdk::println!("request_ids: {:#?}", request_ids);
-
         // users have access to a request if they can approve it, or have already send their approval to it,
         // to see if a user can approve a request no further filtering is necessary
 
@@ -1602,8 +1600,6 @@ mod tests {
             )
             .await
             .expect("Failed to list requests");
-
-        println!("requests: {:#?}", requests);
 
         assert_eq!(requests.items.len(), 3);
 

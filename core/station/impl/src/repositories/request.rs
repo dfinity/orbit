@@ -302,7 +302,6 @@ impl RequestRepository {
         let where_not_ids: HashSet<_> = condition.excluded_ids.iter().collect();
         let where_deduplication_keys: HashSet<_> = condition.deduplication_keys.iter().collect();
 
-        ic_cdk::println!("find_ids_where: entries: {:?}", entries);
         // filter the result set based on the condition
         entries = entries
             .into_iter()
@@ -360,17 +359,13 @@ impl RequestRepository {
                     return false;
                 }
 
-                ic_cdk::println!("find_ids_where: deduplication_key: {:?}", fields.deduplication_key);
 
                 if !where_deduplication_keys.is_empty() {
                     if let Some(deduplication_key) = &fields.deduplication_key {
                         if !where_deduplication_keys.contains(deduplication_key) {
-                            ic_cdk::println!("find_ids_where: deduplication_key of request {:?} does not match: {:?}", id, deduplication_key);
                             return false;
                         }
-                        ic_cdk::println!("find_ids_where: deduplication_key of request {:?} matches: {:?}", id, deduplication_key);
                     } else {
-                        ic_cdk::println!("find_ids_where: deduplication_key of request {:?} is None", id);
                         return false;
                     }
                 }

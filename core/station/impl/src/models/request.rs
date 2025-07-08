@@ -181,8 +181,19 @@ fn validate_execution_plan(
 
 fn validate_deduplication_key(
     deduplication_key: &Option<String>,
+    should_be_checked_for_duplicates: bool,
 ) -> ModelValidatorResult<RequestError> {
     if let Some(deduplication_key) = deduplication_key {
+        if deduplication_key.len() > Request::MAX_DEDUPLICATION_KEY_LEN as usize {
+            return Err(RequestError::ValidationError {
+                info: format!("The deduplication key length exceeds the maximum allowed: {}", Request::MAX_DEDUPLICATION_KEY_LEN),
+            });
+        }
+
+        if !should_be_checked_for_duplicates {
+            return Ok(());
+        }
+
         if deduplication_key.is_empty() {
             return Err(RequestError::ValidationError {
                 info: "The deduplication key must not be empty".to_owned(),
@@ -205,10 +216,9 @@ fn validate_deduplication_key(
                 info: "A request with the same deduplication key already exists".to_owned(),
             });
         }
-        Ok(())
-    } else {
-        Ok(())
     }
+    
+    Ok(())
 }
 
 fn validate_requested_by(requested_by: &UserId) -> ModelValidatorResult<RequestError> {
@@ -255,9 +265,7 @@ impl ModelValidator<RequestError> for Request {
             | RequestStatus::Failed { .. } => false,
         };
 
-        if should_be_checked_for_duplicates {
-            validate_deduplication_key(&self.deduplication_key)?;
-        }
+        validate_deduplication_key(&self.deduplication_key, should_be_checked_for_duplicates)?;
 
         Ok(())
     }
@@ -267,6 +275,7 @@ impl Request {
     pub const MAX_TITLE_LEN: u8 = 255;
     pub const MAX_CANCEL_REASON_LEN: u16 = 1000;
     pub const MAX_SUMMARY_LEN: u16 = 1000;
+    pub const MAX_DEDUPLICATION_KEY_LEN: u8 = 32;
 
     /// Creates a new request key from the given key components.
     pub fn key(request_id: RequestId) -> RequestKey {
@@ -577,7 +586,7 @@ mod tests {
     fn test_request_deduplication_key_is_valid() {
         let mut request = mock_request();
         request.deduplication_key = Some("a".to_string());
-        let result = validate_deduplication_key(&request.deduplication_key);
+        let result = validate_deduplication_key(&request.deduplication_key, true);
 
         assert!(result.is_ok());
     }
@@ -586,7 +595,7 @@ mod tests {
     fn fail_request_deduplication_key_is_empty() {
         let mut request = mock_request();
         request.deduplication_key = Some("".to_string());
-        let result = validate_deduplication_key(&request.deduplication_key);
+        let result = validate_deduplication_key(&request.deduplication_key, true);
 
         assert!(result.is_err());
         assert_eq!(
@@ -606,7 +615,7 @@ mod tests {
         let mut request = mock_request();
         request.status = RequestStatus::Created;
         request.deduplication_key = Some("b".to_string());
-        let result = validate_deduplication_key(&request.deduplication_key);
+        let result = validate_deduplication_key(&request.deduplication_key, true);
 
         assert!(result.is_ok());
     }
@@ -620,7 +629,7 @@ mod tests {
         let mut request = mock_request();
         request.status = RequestStatus::Approved;
         request.deduplication_key = Some("a".to_string());
-        let result = validate_deduplication_key(&request.deduplication_key);
+        let result = validate_deduplication_key(&request.deduplication_key, true);
 
         assert!(result.is_ok());
     }
@@ -634,7 +643,7 @@ mod tests {
         let mut request = mock_request();
         request.status = RequestStatus::Created;
         request.deduplication_key = Some("a".to_string());
-        let result = validate_deduplication_key(&request.deduplication_key);
+        let result = validate_deduplication_key(&request.deduplication_key, true);
 
         assert!(result.is_err());
         assert_eq!(
@@ -643,6 +652,15 @@ mod tests {
                 info: "The deduplication key must be unique".to_owned()
             }
         );
+    }
+
+    #[test]
+    fn fail_request_deduplication_key_is_too_long() {
+        let mut request = mock_request();
+        request.status = RequestStatus::Created;
+        request.deduplication_key = Some("a".repeat(Request::MAX_DEDUPLICATION_KEY_LEN as usize + 1));
+        let result = validate_deduplication_key(&request.deduplication_key, true);
+        assert!(result.is_err());
     }
 }
 

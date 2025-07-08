@@ -15,6 +15,7 @@ use station_api::{
 use uuid::Uuid;
 
 impl Request {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         request_id: UUID,
         requester: UserId,
