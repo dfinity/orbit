@@ -507,6 +507,7 @@ export class StationService {
       sort_by: sortingCriteria,
       only_approvable: !!onlyApprovable,
       with_evaluation_results: false,
+      tags: [],
     });
 
     if (variantIs(result, 'Err')) {
