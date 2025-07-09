@@ -61,6 +61,7 @@ pub struct Request {
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
     /// The tags of the request.
+    #[serde(default)]
     pub tags: Vec<String>,
 }
 
