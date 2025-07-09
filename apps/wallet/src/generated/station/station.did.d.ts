@@ -914,6 +914,7 @@ export interface ListRequestsInput {
   'sort_by' : [] | [ListRequestsSortBy],
   'with_evaluation_results' : boolean,
   'expiration_from_dt' : [] | [TimestampRFC3339],
+  'tags' : [] | [Array<string>],
   'created_to_dt' : [] | [TimestampRFC3339],
   'statuses' : [] | [Array<RequestStatusCode>],
   'approver_ids' : [] | [Array<UUID>],

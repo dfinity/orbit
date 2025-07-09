@@ -82,6 +82,7 @@ export const createUserInitialAccount = async (
     summary: [],
     execution_plan: [{ Immediate: null }],
     expiration_dt: [],
+    tags: [],
     operation: {
       AddAccount: {
         name: i18n.global.t('app.initial_account_name'),

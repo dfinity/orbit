@@ -1605,6 +1605,7 @@ export const idlFactory = ({ IDL }) => {
     'sort_by' : IDL.Opt(ListRequestsSortBy),
     'with_evaluation_results' : IDL.Bool,
     'expiration_from_dt' : IDL.Opt(TimestampRFC3339),
+    'tags' : IDL.Opt(IDL.Vec(IDL.Text)),
     'created_to_dt' : IDL.Opt(TimestampRFC3339),
     'statuses' : IDL.Opt(IDL.Vec(RequestStatusCode)),
     'approver_ids' : IDL.Opt(IDL.Vec(UUID)),

@@ -1460,6 +1460,8 @@ type ListRequestsInput = record {
   only_approvable : bool;
   // Return the full evaluation results for the requests.
   with_evaluation_results : bool;
+  // The tags to search. Return only requests which have at least one matching tag.
+  tags : opt vec text;
 };
 
 // The result type for getting the list of requests.
