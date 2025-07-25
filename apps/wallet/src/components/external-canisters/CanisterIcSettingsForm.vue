@@ -402,7 +402,6 @@ const hasMaxControllers = computed(
 const canAddController = computed(
   () =>
     form.value?.errors.find(error => error.id === 'new_controller') === undefined &&
-    newLogPrincipalString.value &&
     !hasMaxControllers.value,
 );
 
