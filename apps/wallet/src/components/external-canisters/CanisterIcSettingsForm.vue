@@ -85,6 +85,7 @@
                 variant="flat"
                 size="small"
                 :icon="mdiPlus"
+                data-test-id="add-controller-button"
                 @click="addController"
               />
             </template>
@@ -402,6 +403,7 @@ const hasMaxControllers = computed(
 const canAddController = computed(
   () =>
     form.value?.errors.find(error => error.id === 'new_controller') === undefined &&
+    newControllerPrincipal.value &&
     !hasMaxControllers.value,
 );
 
