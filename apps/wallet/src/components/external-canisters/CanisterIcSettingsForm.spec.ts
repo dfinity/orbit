@@ -2,7 +2,6 @@ import { Principal } from '@dfinity/principal';
 import { describe, expect, it } from 'vitest';
 import { mount } from '~/test.utils';
 import CanisterIcSettingsForm from './CanisterIcSettingsForm.vue';
-import { flushPromises } from '@vue/test-utils';
 
 describe('CanisterIcSettingsForm', () => {
   it('hides the canisterId when display is set to false', () => {
@@ -59,9 +58,8 @@ describe('CanisterIcSettingsForm', () => {
     const controllerInput = form.find("[name='new_controller']");
 
     expect(controllerInput.exists()).toBe(true);
-    controllerInput.setValue('ryjl3-tyaaa-aaaaa-aaaba-cai');
 
-    await flushPromises();
+    await controllerInput.setValue('ryjl3-tyaaa-aaaaa-aaaba-cai');
 
     expect(btn.attributes().disabled).toBeUndefined();
   });
