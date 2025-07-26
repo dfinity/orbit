@@ -231,6 +231,15 @@ impl RequestRepository {
             .collect::<Vec<Request>>()
     }
 
+    /// Find requests that have the provided deduplication key.
+    pub fn find_by_deduplication_key(&self, deduplication_key: String) -> Vec<Request> {
+        self.index
+            .find_by_deduplication_key(deduplication_key, None)
+            .iter()
+            .filter_map(|(request_id, _)| self.get(&RequestKey { id: *request_id }))
+            .collect::<Vec<Request>>()
+    }
+
     /// Get the number of all processing requests.
     pub fn get_num_processing(&self) -> usize {
         self.index
@@ -291,6 +300,7 @@ impl RequestRepository {
         let where_not_requesters: HashSet<_> = condition.not_requesters.iter().cloned().collect();
         let where_status: HashSet<_> = condition.statuses.iter().collect();
         let where_not_ids: HashSet<_> = condition.excluded_ids.iter().collect();
+        let where_deduplication_keys: HashSet<_> = condition.deduplication_keys.iter().collect();
 
         // filter the result set based on the condition
         entries = entries
@@ -347,6 +357,16 @@ impl RequestRepository {
                         .any(|approver| where_not_approvals.contains(approver))
                 {
                     return false;
+                }
+
+                if !where_deduplication_keys.is_empty() {
+                    if let Some(deduplication_key) = &fields.deduplication_key {
+                        if !where_deduplication_keys.contains(deduplication_key) {
+                            return false;
+                        }
+                    } else {
+                        return false;
+                    }
                 }
 
                 INDEXED_FIELDS_CACHE.with(|cache| {
@@ -454,6 +474,7 @@ pub struct RequestWhereClause {
     pub requesters: Vec<UUID>,
     pub not_requesters: Vec<UUID>,
     pub excluded_ids: Vec<UUID>,
+    pub deduplication_keys: Vec<String>,
 }
 
 #[cfg(test)]
@@ -553,6 +574,7 @@ mod tests {
             requesters: vec![],
             not_requesters: vec![],
             excluded_ids: vec![],
+            deduplication_keys: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -602,6 +624,7 @@ mod tests {
             requesters: vec![],
             not_requesters: vec![],
             excluded_ids: vec![],
+            deduplication_keys: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -654,6 +677,7 @@ mod tests {
             statuses: vec![RequestStatusCode::Created],
             not_requesters: vec![],
             excluded_ids: vec![],
+            deduplication_keys: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -674,6 +698,7 @@ mod tests {
             statuses: vec![RequestStatusCode::Approved],
             not_requesters: vec![],
             excluded_ids: vec![],
+            deduplication_keys: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -694,6 +719,7 @@ mod tests {
             statuses: vec![RequestStatusCode::Approved, RequestStatusCode::Created],
             not_requesters: vec![],
             excluded_ids: vec![],
+            deduplication_keys: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -714,6 +740,7 @@ mod tests {
             statuses: vec![RequestStatusCode::Approved],
             not_requesters: vec![],
             excluded_ids: vec![],
+            deduplication_keys: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -739,6 +766,7 @@ mod tests {
             requesters: vec![],
             not_requesters: vec![],
             excluded_ids: vec![],
+            deduplication_keys: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -819,6 +847,7 @@ mod tests {
             statuses: vec![RequestStatusCode::Approved],
             not_requesters: vec![],
             excluded_ids: vec![],
+            deduplication_keys: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -933,6 +962,7 @@ mod benchs {
                     statuses: vec![RequestStatusCode::Created],
                     excluded_ids: vec![],
                     not_requesters: vec![],
+                    deduplication_keys: vec![],
                 },
                 None,
             );
