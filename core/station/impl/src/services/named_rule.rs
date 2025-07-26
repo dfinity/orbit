@@ -415,7 +415,7 @@ mod test {
             "Creating a named rule with an empty name should fail"
         );
         let err = result.unwrap_err();
-        assert_eq!(err.code, "INVALID_NAME");
+        assert_eq!(err.code, "VALIDATION_ERROR");
     }
 
     #[test]

@@ -1,9 +1,13 @@
 use super::UserStatus;
 use crate::{
-    core::validation::{EnsureIdExists, EnsureUserGroup},
+    core::validation::{
+        EnsureIdExists, EnsureUserGroup, NumberFieldValidator, NumberFieldValidatorBuilder,
+        StringFieldValidator, StringFieldValidatorBuilder, ValidateField,
+    },
     errors::{RecordValidationError, UserError},
 };
 use candid::{CandidType, Deserialize, Principal};
+use lazy_static::lazy_static;
 use orbit_essentials::{model::ModelKey, storable};
 use orbit_essentials::{
     model::{ModelValidator, ModelValidatorResult},
@@ -12,6 +16,25 @@ use orbit_essentials::{
 
 /// The user id, which is a UUID.
 pub type UserId = UUID;
+
+lazy_static! {
+    pub static ref USER_NAME_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("name".to_string())
+            .max_length(User::MAX_NAME_LENGTH as usize)
+            .build()
+    };
+    pub static ref USER_IDENTITIES_COUNT_VALIDATOR: NumberFieldValidator<usize> = {
+        NumberFieldValidatorBuilder::new("identities".to_string())
+            .min(User::IDENTITIES_RANGE.0 as usize)
+            .max(User::IDENTITIES_RANGE.1 as usize)
+            .build()
+    };
+    pub static ref USER_GROUPS_COUNT_VALIDATOR: NumberFieldValidator<usize> = {
+        NumberFieldValidatorBuilder::new("groups".to_string())
+            .max(User::MAX_USER_GROUPS as usize)
+            .build()
+    };
+}
 
 /// Represents a user within the system.
 ///
@@ -77,15 +100,7 @@ impl User {
 }
 
 fn validate_identities(identities: &[Principal]) -> ModelValidatorResult<UserError> {
-    if identities.len() < User::IDENTITIES_RANGE.0 as usize {
-        return Err(UserError::TooLittleIdentities);
-    }
-
-    if identities.len() > User::IDENTITIES_RANGE.1 as usize {
-        return Err(UserError::TooManyIdentities {
-            max_identities: User::IDENTITIES_RANGE.1,
-        });
-    }
+    USER_IDENTITIES_COUNT_VALIDATOR.validate_field(identities.len())?;
 
     for identity in identities {
         if Principal::anonymous() == *identity {
@@ -99,11 +114,7 @@ fn validate_identities(identities: &[Principal]) -> ModelValidatorResult<UserErr
 }
 
 fn validate_groups(group_ids: &[UUID]) -> ModelValidatorResult<UserError> {
-    if group_ids.len() > User::MAX_USER_GROUPS as usize {
-        return Err(UserError::TooManyUserGroups {
-            max: User::MAX_USER_GROUPS,
-        });
-    }
+    USER_GROUPS_COUNT_VALIDATOR.validate_field(group_ids.len())?;
 
     EnsureUserGroup::id_list_exists(group_ids).map_err(|err| match err {
         RecordValidationError::NotFound { id, .. } => {
@@ -114,21 +125,11 @@ fn validate_groups(group_ids: &[UUID]) -> ModelValidatorResult<UserError> {
     Ok(())
 }
 
-fn validate_name(name: &str) -> ModelValidatorResult<UserError> {
-    if name.len() > User::MAX_NAME_LENGTH as usize {
-        return Err(UserError::NameTooLong {
-            max_length: User::MAX_NAME_LENGTH as usize,
-        });
-    }
-
-    Ok(())
-}
-
 impl ModelValidator<UserError> for User {
     fn validate(&self) -> ModelValidatorResult<UserError> {
         validate_identities(&self.identities)?;
         validate_groups(&self.groups)?;
-        validate_name(&self.name)?;
+        USER_NAME_VALIDATOR.validate_field(&self.name)?;
 
         Ok(())
     }
@@ -154,7 +155,12 @@ mod tests {
         let result = validate_identities(&user.identities);
 
         assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), UserError::TooLittleIdentities);
+        let error = result.unwrap_err();
+        if let UserError::ValidationError { info } = error {
+            assert!(info.contains("Cannot be less than 1"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -166,12 +172,12 @@ mod tests {
         let result = validate_identities(&user.identities);
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            UserError::TooManyIdentities {
-                max_identities: User::IDENTITIES_RANGE.1
-            }
-        );
+        let error = result.unwrap_err();
+        if let UserError::ValidationError { info } = error {
+            assert!(info.contains("Cannot be greater than 10"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -234,12 +240,12 @@ mod tests {
         let result = validate_groups(&user.groups);
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            UserError::TooManyUserGroups {
-                max: User::MAX_USER_GROUPS
-            }
-        );
+        let error = result.unwrap_err();
+        if let UserError::ValidationError { info } = error {
+            assert!(info.contains("Cannot be greater than 25"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -265,15 +271,15 @@ mod tests {
         let mut user = mock_user();
         user.name = "a".repeat(User::MAX_NAME_LENGTH as usize + 1);
 
-        let result = validate_name(&user.name);
+        let result = user.validate();
 
         assert!(result.is_err());
-        assert_eq!(
-            result.unwrap_err(),
-            UserError::NameTooLong {
-                max_length: User::MAX_NAME_LENGTH as usize
-            }
-        );
+        let error = result.unwrap_err();
+        if let UserError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 50"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
     }
 
     #[test]
@@ -281,7 +287,7 @@ mod tests {
         let mut user = mock_user();
         user.name = "a".repeat(User::MAX_NAME_LENGTH as usize);
 
-        let result = validate_name(&user.name);
+        let result = user.validate();
 
         assert!(result.is_ok());
     }

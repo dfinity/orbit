@@ -5,6 +5,9 @@
 pub mod account;
 pub use account::*;
 
+pub mod address_format;
+pub use address_format::*;
+
 pub mod address_book;
 pub use address_book::*;
 

@@ -2,6 +2,7 @@ use crate::interfaces::{default_account, get_icp_balance, send_icp_to_account, I
 use crate::setup::{setup_new_env, WALLET_ADMIN_USER};
 use crate::utils::{
     execute_request, get_icp_account_identifier, get_icp_asset, get_user, user_test_id,
+    VALID_ACCOUNT_IDENTIFIER_1, VALID_ACCOUNT_IDENTIFIER_2,
 };
 use crate::TestEnv;
 use ic_ledger_types::AccountIdentifier;
@@ -25,7 +26,7 @@ fn address_book_entry_lifecycle() {
     let add_address_book_entry =
         RequestOperationInput::AddAddressBookEntry(AddAddressBookEntryOperationInput {
             address_owner: "John Doe".to_string(),
-            address: "0x1234".to_string(),
+            address: VALID_ACCOUNT_IDENTIFIER_1.to_string(),
             address_format: "icp_account_identifier".to_string(),
             blockchain: "icp".to_string(),
             labels: vec!["icp_native".to_string()],
@@ -48,7 +49,10 @@ fn address_book_entry_lifecycle() {
         _ => panic!("unexpected request operation"),
     };
     assert_eq!(address_book_entry.address_owner, "John Doe".to_string());
-    assert_eq!(address_book_entry.address, "0x1234".to_string());
+    assert_eq!(
+        address_book_entry.address,
+        VALID_ACCOUNT_IDENTIFIER_1.to_string()
+    );
     assert_eq!(address_book_entry.blockchain, "icp".to_string());
     assert_eq!(address_book_entry.labels, vec!["icp_native".to_string()]);
     assert_eq!(
@@ -64,8 +68,7 @@ fn address_book_entry_lifecycle() {
         RequestOperationInput::AddAddressBookEntry(AddAddressBookEntryOperationInput {
             address_owner: "Max Mustermann".to_string(),
             address_format: "icp_account_identifier".to_string(),
-
-            address: "0x1234".to_string(),
+            address: VALID_ACCOUNT_IDENTIFIER_1.to_string(),
             blockchain: "icp".to_string(),
             labels: vec!["icp_native".to_string()],
             metadata: vec![MetadataDTO {
@@ -86,7 +89,7 @@ fn address_book_entry_lifecycle() {
         RequestOperationInput::AddAddressBookEntry(AddAddressBookEntryOperationInput {
             address_owner: "Max Mustermann".to_string(),
             address_format: "icp_account_identifier".to_string(),
-            address: "0x5678".to_string(),
+            address: VALID_ACCOUNT_IDENTIFIER_2.to_string(),
             blockchain: "icp".to_string(),
             labels: vec!["icp_native".to_string()],
             metadata: vec![MetadataDTO {
@@ -111,7 +114,10 @@ fn address_book_entry_lifecycle() {
         next_address_book_entry.address_owner,
         "Max Mustermann".to_string()
     );
-    assert_eq!(next_address_book_entry.address, "0x5678".to_string());
+    assert_eq!(
+        next_address_book_entry.address,
+        VALID_ACCOUNT_IDENTIFIER_2.to_string()
+    );
     assert_eq!(next_address_book_entry.blockchain, "icp".to_string());
     assert_eq!(
         next_address_book_entry.labels,

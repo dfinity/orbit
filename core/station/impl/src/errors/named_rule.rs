@@ -1,6 +1,8 @@
 use orbit_essentials::api::DetailableError;
 use thiserror::Error;
 
+use super::ValidationError;
+
 /// Container for named rule errors.
 #[derive(Error, Debug, Eq, PartialEq, Clone)]
 pub enum NamedRuleError {
@@ -9,22 +11,6 @@ pub enum NamedRuleError {
     NotFound {
         /// The named rule id.
         id: String,
-    },
-
-    // The named rule name is invalid.
-    #[error("The named rule name must be between {min_length} and {max_length} characters.")]
-    InvalidName {
-        min_length: usize,
-        max_length: usize,
-    },
-
-    // The named rule description is invalid.
-    #[error(
-        "The named rule description must be between {min_length} and {max_length} characters."
-    )]
-    InvalidDescription {
-        min_length: usize,
-        max_length: usize,
     },
 
     // Invalid rule.
@@ -50,6 +36,18 @@ pub enum NamedRuleError {
     // The named rule with id `{id}` already exists.
     #[error(r#"The named rule with id `{id}` already exists."#)]
     IdAlreadyExists { id: String },
+
+    /// Validation error from the unified validation framework.
+    #[error("Validation failed: {info}")]
+    ValidationError { info: String },
+}
+
+impl From<ValidationError> for NamedRuleError {
+    fn from(err: ValidationError) -> Self {
+        NamedRuleError::ValidationError {
+            info: err.to_string(),
+        }
+    }
 }
 
 impl DetailableError for NamedRuleError {
@@ -58,24 +56,6 @@ impl DetailableError for NamedRuleError {
         match self {
             NamedRuleError::NotFound { id } => {
                 details.insert("id".to_string(), id.to_string());
-                Some(details)
-            }
-
-            NamedRuleError::InvalidName {
-                min_length,
-                max_length,
-            } => {
-                details.insert("min_length".to_string(), min_length.to_string());
-                details.insert("max_length".to_string(), max_length.to_string());
-                Some(details)
-            }
-
-            NamedRuleError::InvalidDescription {
-                min_length,
-                max_length,
-            } => {
-                details.insert("min_length".to_string(), min_length.to_string());
-                details.insert("max_length".to_string(), max_length.to_string());
                 Some(details)
             }
 
@@ -101,6 +81,11 @@ impl DetailableError for NamedRuleError {
             NamedRuleError::IncompatibleWithLinkedPolicy { policy_id, error } => {
                 details.insert("policy_id".to_string(), policy_id.to_string());
                 details.insert("error".to_string(), error.to_string());
+                Some(details)
+            }
+
+            NamedRuleError::ValidationError { info } => {
+                details.insert("info".to_string(), info.to_string());
                 Some(details)
             }
         }
