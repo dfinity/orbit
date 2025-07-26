@@ -53,6 +53,7 @@ const pendingProps: RequestDetailViewProps = {
     expiration_dt: '',
     requested_by: 'requester-id',
     summary: [],
+    tags: [],
     title: '',
   },
 };
@@ -99,6 +100,7 @@ const approvedProps: RequestDetailViewProps = {
     expiration_dt: '',
     requested_by: 'approver-1-id',
     summary: [],
+    tags: [],
     title: '',
   },
 };
@@ -145,6 +147,7 @@ const rejectedProps: RequestDetailViewProps = {
     expiration_dt: '',
     requested_by: 'approver-1-id',
     summary: [],
+    tags: [],
     title: '',
   },
 };
@@ -190,6 +193,7 @@ const failedProps: RequestDetailViewProps = {
     expiration_dt: '',
     requested_by: 'approver-1-id',
     summary: [],
+    tags: [],
     title: '',
   },
 };
@@ -236,6 +240,7 @@ const cancelledProps: RequestDetailViewProps = {
     expiration_dt: '',
     requested_by: 'approver-1-id',
     summary: [],
+    tags: [],
     title: '',
   },
 };
