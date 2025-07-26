@@ -1,5 +1,5 @@
-import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
-import { Principal } from '@dfinity/principal';
+import { Actor, ActorSubclass, HttpAgent } from '@icp-sdk/core/agent';
+import { Principal } from '@icp-sdk/core/principal';
 import { idlFactory } from '~/generated/upgrader';
 import { _SERVICE, GetDisasterRecoveryStateResponse } from '~/generated/upgrader/upgrader.did';
 import { CustomIdlAgent } from '~/utils/agent.utils';

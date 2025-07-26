@@ -91,7 +91,7 @@
 </template>
 
 <script lang="ts" setup>
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { mdiCogs, mdiDatabase, mdiIdentifier, mdiLabel, mdiText } from '@mdi/js';
 import { computed, onBeforeMount, ref, watch } from 'vue';
 import {

@@ -1,4 +1,4 @@
-import { Actor, ActorSubclass, HttpAgent } from '@dfinity/agent';
+import { Actor, ActorSubclass, HttpAgent } from '@icp-sdk/core/agent';
 import { icAgent } from '~/core/ic-agent.core';
 import {
   AccountIncomingTransfer,

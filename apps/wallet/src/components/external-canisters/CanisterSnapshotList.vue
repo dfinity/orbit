@@ -97,7 +97,7 @@
   </section>
 </template>
 <script setup lang="ts">
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { computed, ref, toRefs, watch } from 'vue';
 import { VBtn } from 'vuetify/components';
 import { useStationStore } from '~/stores/station.store';
