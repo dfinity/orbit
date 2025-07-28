@@ -291,6 +291,7 @@ impl RequestRepository {
         let where_not_requesters: HashSet<_> = condition.not_requesters.iter().cloned().collect();
         let where_status: HashSet<_> = condition.statuses.iter().collect();
         let where_not_ids: HashSet<_> = condition.excluded_ids.iter().collect();
+        let where_tags: HashSet<_> = condition.tags.iter().collect();
 
         // filter the result set based on the condition
         entries = entries
@@ -345,6 +346,11 @@ impl RequestRepository {
                     && all_approvals
                         .iter()
                         .any(|approver| where_not_approvals.contains(approver))
+                {
+                    return false;
+                }
+
+                if !where_tags.is_empty() && !fields.tags.iter().any(|tag| where_tags.contains(tag))
                 {
                     return false;
                 }
@@ -454,6 +460,7 @@ pub struct RequestWhereClause {
     pub requesters: Vec<UUID>,
     pub not_requesters: Vec<UUID>,
     pub excluded_ids: Vec<UUID>,
+    pub tags: Vec<String>,
 }
 
 #[cfg(test)]
@@ -553,6 +560,7 @@ mod tests {
             requesters: vec![],
             not_requesters: vec![],
             excluded_ids: vec![],
+            tags: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -602,6 +610,7 @@ mod tests {
             requesters: vec![],
             not_requesters: vec![],
             excluded_ids: vec![],
+            tags: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -654,6 +663,7 @@ mod tests {
             statuses: vec![RequestStatusCode::Created],
             not_requesters: vec![],
             excluded_ids: vec![],
+            tags: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -674,6 +684,7 @@ mod tests {
             statuses: vec![RequestStatusCode::Approved],
             not_requesters: vec![],
             excluded_ids: vec![],
+            tags: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -694,6 +705,7 @@ mod tests {
             statuses: vec![RequestStatusCode::Approved, RequestStatusCode::Created],
             not_requesters: vec![],
             excluded_ids: vec![],
+            tags: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -714,6 +726,7 @@ mod tests {
             statuses: vec![RequestStatusCode::Approved],
             not_requesters: vec![],
             excluded_ids: vec![],
+            tags: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -739,6 +752,7 @@ mod tests {
             requesters: vec![],
             not_requesters: vec![],
             excluded_ids: vec![],
+            tags: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -819,6 +833,7 @@ mod tests {
             statuses: vec![RequestStatusCode::Approved],
             not_requesters: vec![],
             excluded_ids: vec![],
+            tags: vec![],
         };
 
         let requests = REQUEST_REPOSITORY
@@ -840,6 +855,121 @@ mod tests {
             .get(&request.to_key())
             .expect("Request not found");
         assert_eq!(updated_request.last_modification_timestamp, 2);
+    }
+
+    #[test]
+    fn find_with_tags() {
+        let mut request = mock_request();
+        request.tags = vec![];
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+
+        for i in 0..5 {
+            let mut request = mock_request();
+            request.tags = vec!["common".to_string(), i.to_string()];
+            REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+        }
+
+        let condition = RequestWhereClause {
+            created_dt_from: None,
+            created_dt_to: None,
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: vec![],
+            requesters: vec![],
+            approvers: vec![],
+            not_approvers: vec![],
+            statuses: vec![],
+            not_requesters: vec![],
+            excluded_ids: vec![],
+            tags: vec!["common".to_string()],
+        };
+        let requests = REQUEST_REPOSITORY.find_ids_where(condition, None).unwrap();
+        assert_eq!(requests.len(), 5);
+
+        let condition = RequestWhereClause {
+            created_dt_from: None,
+            created_dt_to: None,
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: vec![],
+            requesters: vec![],
+            approvers: vec![],
+            not_approvers: vec![],
+            statuses: vec![],
+            not_requesters: vec![],
+            excluded_ids: vec![],
+            tags: vec!["common".to_string(), "1".to_string()],
+        };
+        let requests = REQUEST_REPOSITORY.find_ids_where(condition, None).unwrap();
+        assert_eq!(requests.len(), 5);
+
+        let condition = RequestWhereClause {
+            created_dt_from: None,
+            created_dt_to: None,
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: vec![],
+            requesters: vec![],
+            approvers: vec![],
+            not_approvers: vec![],
+            statuses: vec![],
+            not_requesters: vec![],
+            excluded_ids: vec![],
+            tags: vec!["1".to_string()],
+        };
+        let requests = REQUEST_REPOSITORY.find_ids_where(condition, None).unwrap();
+        assert_eq!(requests.len(), 1);
+
+        let condition = RequestWhereClause {
+            created_dt_from: None,
+            created_dt_to: None,
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: vec![],
+            requesters: vec![],
+            approvers: vec![],
+            not_approvers: vec![],
+            statuses: vec![],
+            not_requesters: vec![],
+            excluded_ids: vec![],
+            tags: vec!["1".to_string(), "2".to_string()],
+        };
+        let requests = REQUEST_REPOSITORY.find_ids_where(condition, None).unwrap();
+        assert_eq!(requests.len(), 2);
+
+        let condition = RequestWhereClause {
+            created_dt_from: None,
+            created_dt_to: None,
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: vec![],
+            requesters: vec![],
+            approvers: vec![],
+            not_approvers: vec![],
+            statuses: vec![],
+            not_requesters: vec![],
+            excluded_ids: vec![],
+            tags: vec!["non-existent".to_string()],
+        };
+        let requests = REQUEST_REPOSITORY.find_ids_where(condition, None).unwrap();
+        assert_eq!(requests.len(), 0);
+
+        let condition = RequestWhereClause {
+            created_dt_from: None,
+            created_dt_to: None,
+            expiration_dt_from: None,
+            expiration_dt_to: None,
+            operation_types: vec![],
+            requesters: vec![],
+            approvers: vec![],
+            not_approvers: vec![],
+            statuses: vec![],
+            not_requesters: vec![],
+            excluded_ids: vec![],
+            tags: vec!["1".to_string(), "non-existent".to_string()],
+        };
+        let requests = REQUEST_REPOSITORY.find_ids_where(condition, None).unwrap();
+        assert_eq!(requests.len(), 1);
     }
 }
 
@@ -933,6 +1063,7 @@ mod benchs {
                     statuses: vec![RequestStatusCode::Created],
                     excluded_ids: vec![],
                     not_requesters: vec![],
+                    tags: vec![],
                 },
                 None,
             );
