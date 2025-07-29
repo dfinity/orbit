@@ -5,6 +5,7 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ValidationError {
+    FieldValidationError(FieldValidationError),
     RecordValidationError(RecordValidationError),
     ExternalCanisterValidationError(ExternalCanisterValidationError),
     SystemInfoValidationError(SystemInfoValidationError),
@@ -16,6 +17,7 @@ impl Display for ValidationError {
             ValidationError::RecordValidationError(err) => write!(f, "{}", err),
             ValidationError::ExternalCanisterValidationError(err) => write!(f, "{}", err),
             ValidationError::SystemInfoValidationError(err) => write!(f, "{}", err),
+            ValidationError::FieldValidationError(err) => write!(f, "{}", err),
         }
     }
 }
@@ -26,7 +28,14 @@ impl DetailableError for ValidationError {
             ValidationError::RecordValidationError(err) => err.details(),
             ValidationError::ExternalCanisterValidationError(err) => err.details(),
             ValidationError::SystemInfoValidationError(err) => err.details(),
+            ValidationError::FieldValidationError(err) => err.details(),
         }
+    }
+}
+
+impl From<FieldValidationError> for ValidationError {
+    fn from(err: FieldValidationError) -> ValidationError {
+        ValidationError::FieldValidationError(err)
     }
 }
 
@@ -45,6 +54,25 @@ impl From<ExternalCanisterValidationError> for ValidationError {
 impl From<SystemInfoValidationError> for ValidationError {
     fn from(err: SystemInfoValidationError) -> ValidationError {
         ValidationError::SystemInfoValidationError(err)
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum FieldValidationError {
+    #[error(r#"The field `{field_name}` is invalid: {error}."#)]
+    InvalidRecord { field_name: String, error: String },
+}
+
+impl DetailableError for FieldValidationError {
+    fn details(&self) -> Option<std::collections::HashMap<String, String>> {
+        match self {
+            FieldValidationError::InvalidRecord { field_name, error } => {
+                let mut details = std::collections::HashMap::new();
+                details.insert("field_name".to_string(), field_name.to_string());
+                details.insert("error".to_string(), error.to_string());
+                Some(details)
+            }
+        }
     }
 }
 

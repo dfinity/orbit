@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use lazy_static::lazy_static;
 use orbit_essentials::{
     model::{ModelKey, ModelValidator, ModelValidatorResult},
     repository::Repository,
@@ -9,7 +10,10 @@ use orbit_essentials::{
 use uuid::Uuid;
 
 use crate::{
-    core::utils::format_unique_string,
+    core::{
+        utils::format_unique_string,
+        validation::{StringFieldValidator, StringFieldValidatorBuilder, ValidateField},
+    },
     errors::NamedRuleError,
     repositories::{NAMED_RULE_REPOSITORY, REQUEST_POLICY_REPOSITORY},
 };
@@ -19,6 +23,21 @@ use super::{
 };
 
 pub type NamedRuleId = UUID;
+
+lazy_static! {
+    pub static ref NAMED_RULE_NAME_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("name".to_string())
+            .min_length(NamedRule::MIN_NAME_LENGTH as usize)
+            .max_length(NamedRule::MAX_NAME_LENGTH as usize)
+            .build()
+    };
+    pub static ref NAMED_RULE_DESCRIPTION_VALIDATOR: StringFieldValidator = {
+        StringFieldValidatorBuilder::new("description".to_string())
+            .min_length(NamedRule::MIN_DESCRIPTION_LENGTH as usize)
+            .max_length(NamedRule::MAX_DESCRIPTION_LENGTH as usize)
+            .build()
+    };
+}
 
 #[storable]
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -145,34 +164,6 @@ fn validate_circular_reference(rule: &NamedRule) -> ModelValidatorResult<NamedRu
     Ok(())
 }
 
-fn validate_name(name: &str) -> ModelValidatorResult<NamedRuleError> {
-    if name.len() < NamedRule::MIN_NAME_LENGTH as usize
-        || name.len() > NamedRule::MAX_NAME_LENGTH as usize
-    {
-        return Err(NamedRuleError::InvalidName {
-            min_length: NamedRule::MIN_NAME_LENGTH as usize,
-            max_length: NamedRule::MAX_NAME_LENGTH as usize,
-        });
-    }
-
-    Ok(())
-}
-
-fn validate_description(description: &Option<String>) -> ModelValidatorResult<NamedRuleError> {
-    if let Some(description) = description {
-        if description.len() < NamedRule::MIN_DESCRIPTION_LENGTH as usize
-            || description.len() > NamedRule::MAX_DESCRIPTION_LENGTH as usize
-        {
-            return Err(NamedRuleError::InvalidDescription {
-                min_length: NamedRule::MIN_DESCRIPTION_LENGTH as usize,
-                max_length: NamedRule::MAX_DESCRIPTION_LENGTH as usize,
-            });
-        }
-    }
-
-    Ok(())
-}
-
 /// Validates that the named rule is compatible with the policies that reference it.
 /// It traverses all policy rules recursively and assumes no circular references.
 fn validate_policy_compatibility(
@@ -194,8 +185,11 @@ fn validate_policy_compatibility(
 
 impl ModelValidator<NamedRuleError> for NamedRule {
     fn validate(&self) -> ModelValidatorResult<NamedRuleError> {
-        validate_name(&self.name)?;
-        validate_description(&self.description)?;
+        NAMED_RULE_NAME_VALIDATOR.validate_field(&self.name)?;
+
+        if let Some(description) = &self.description {
+            NAMED_RULE_DESCRIPTION_VALIDATOR.validate_field(description)?;
+        }
 
         self.rule
             .validate()
@@ -238,28 +232,85 @@ mod test {
         services::{NAMED_RULE_SERVICE, REQUEST_POLICY_SERVICE},
     };
 
-    use super::{validate_description, validate_name};
-
     #[test]
     fn test_name_validation() {
-        assert!(validate_name("").is_err());
-        assert!(
-            validate_name("a".repeat(NamedRule::MAX_NAME_LENGTH as usize + 1).as_str()).is_err()
-        );
-        assert!(validate_name("a").is_ok());
+        // Test empty name
+        let named_rule = NamedRule {
+            id: [0; 16],
+            name: "".to_string(),
+            description: Some("test".to_string()),
+            rule: RequestPolicyRule::AutoApproved,
+        };
+        let result = named_rule.validate();
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        if let NamedRuleError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be shorter than 1"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
+
+        // Test name too long
+        let named_rule = NamedRule {
+            id: [1; 16],
+            name: "a".repeat(NamedRule::MAX_NAME_LENGTH as usize + 1),
+            description: Some("test".to_string()),
+            rule: RequestPolicyRule::AutoApproved,
+        };
+        let result = named_rule.validate();
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        if let NamedRuleError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 64"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
+
+        // Test valid name
+        let named_rule = NamedRule {
+            id: [2; 16],
+            name: "a".to_string(),
+            description: Some("test".to_string()),
+            rule: RequestPolicyRule::AutoApproved,
+        };
+        assert!(named_rule.validate().is_ok());
     }
 
     #[test]
     fn test_description_validation() {
-        assert!(validate_description(&Some(
-            "a".repeat(NamedRule::MAX_DESCRIPTION_LENGTH as usize + 1)
-        ))
-        .is_err());
-        assert!(validate_description(&Some(
-            "a".repeat(NamedRule::MAX_DESCRIPTION_LENGTH as usize)
-        ))
-        .is_ok());
-        assert!(validate_description(&None).is_ok());
+        // Test description too long
+        let named_rule = NamedRule {
+            id: [0; 16],
+            name: "test".to_string(),
+            description: Some("a".repeat(NamedRule::MAX_DESCRIPTION_LENGTH as usize + 1)),
+            rule: RequestPolicyRule::AutoApproved,
+        };
+        let result = named_rule.validate();
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        if let NamedRuleError::ValidationError { info } = error {
+            assert!(info.contains("Length cannot be longer than 255"));
+        } else {
+            panic!("Expected ValidationError, got: {:?}", error);
+        }
+
+        // Test valid description at max length
+        let named_rule = NamedRule {
+            id: [1; 16],
+            name: "test".to_string(),
+            description: Some("a".repeat(NamedRule::MAX_DESCRIPTION_LENGTH as usize)),
+            rule: RequestPolicyRule::AutoApproved,
+        };
+        assert!(named_rule.validate().is_ok());
+
+        // Test no description
+        let named_rule = NamedRule {
+            id: [2; 16],
+            name: "test".to_string(),
+            description: None,
+            rule: RequestPolicyRule::AutoApproved,
+        };
+        assert!(named_rule.validate().is_ok());
     }
 
     #[test]

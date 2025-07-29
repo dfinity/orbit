@@ -1,4 +1,5 @@
 use crate::errors::ExternalCanisterValidationError;
+use crate::errors::ValidationError;
 use candid::Principal;
 use orbit_essentials::api::DetailableError;
 use std::collections::HashMap;
@@ -53,6 +54,14 @@ impl From<ExternalCanisterValidationError> for ExternalCanisterError {
             ExternalCanisterValidationError::ValidationError { info } => {
                 ExternalCanisterError::ValidationError { info }
             }
+        }
+    }
+}
+
+impl From<ValidationError> for ExternalCanisterError {
+    fn from(err: ValidationError) -> ExternalCanisterError {
+        ExternalCanisterError::ValidationError {
+            info: err.to_string(),
         }
     }
 }
