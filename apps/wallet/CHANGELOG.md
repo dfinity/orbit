@@ -1,3 +1,18 @@
+## 0.6.1 (2025-07-28)
+
+
+### 🩹 Fixes
+
+- **ui:** degraded experience when failed to load system info ([#585](https://github.com/dfinity/orbit/pull/585))
+
+- **wallet:** remove invalid check for new controller input ([#593](https://github.com/dfinity/orbit/pull/593))
+
+
+### ❤️  Thank You
+
+- Jan Hrubes @jedna
+- Kepler Vital
+
 ## 0.6.0 (2025-06-02)
 
 
