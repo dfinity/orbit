@@ -209,7 +209,7 @@ fn validate_deduplication_key(
             return Ok(());
         }
 
-        if deduplication_key.is_empty() {
+        if deduplication_key.trim().is_empty() {
             return Err(RequestError::ValidationError {
                 info: "The deduplication key must not be empty".to_owned(),
             });
@@ -279,7 +279,7 @@ impl Request {
     pub const MAX_TITLE_LEN: u8 = 255;
     pub const MAX_CANCEL_REASON_LEN: u16 = 1000;
     pub const MAX_SUMMARY_LEN: u16 = 1000;
-    pub const MAX_DEDUPLICATION_KEY_LEN: u8 = 32;
+    pub const MAX_DEDUPLICATION_KEY_LEN: u8 = 64;
 
     /// Creates a new request key from the given key components.
     pub fn key(request_id: RequestId) -> RequestKey {
