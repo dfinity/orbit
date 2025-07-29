@@ -1,6 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import NamedRuleForm from './NamedRuleForm.vue';
 import { mount } from '~/test.utils';
+
+// Mock the station store to prevent API calls
+vi.mock('~/stores/station.store', () => ({
+  useStationStore: () => ({
+    $state: {
+      user: null,
+      privileges: null,
+    },
+    service: {
+      listNamedRules: vi.fn().mockResolvedValue({ named_rules: [] }),
+    },
+  }),
+}));
 
 describe('NamedRuleForm', () => {
   it('renders correctly for creation', () => {

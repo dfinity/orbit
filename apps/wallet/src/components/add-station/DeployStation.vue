@@ -119,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { mdiChevronLeft } from '@mdi/js';
 import { computed } from 'vue';
 import { onMounted, ref } from 'vue';

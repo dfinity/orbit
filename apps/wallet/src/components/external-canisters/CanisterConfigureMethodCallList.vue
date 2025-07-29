@@ -121,7 +121,7 @@
   </section>
 </template>
 <script setup lang="ts">
-import { Principal } from '@dfinity/principal';
+import { Principal } from '@icp-sdk/core/principal';
 import { mdiCodeBraces, mdiPencil, mdiTrashCan } from '@mdi/js';
 import { onMounted, Ref, ref, toRefs, watch } from 'vue';
 import { VBtn, VDivider, VIcon } from 'vuetify/components';
