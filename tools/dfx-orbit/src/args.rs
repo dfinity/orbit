@@ -189,6 +189,7 @@ impl RequestArgs {
             summary: self.summary,
             execution_plan: None,
             expiration_dt: None,
+            deduplication_key: None,
         })
     }
 }

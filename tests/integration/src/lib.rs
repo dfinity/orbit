@@ -18,6 +18,7 @@ mod named_rule_tests;
 mod notification;
 mod rate_limiter;
 mod register_tests;
+mod request_validation_tests;
 mod setup;
 mod station_migration_tests;
 mod station_test_data;

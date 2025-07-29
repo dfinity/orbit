@@ -82,6 +82,7 @@ fn make_transfer_successful() {
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
         expiration_dt: None,
+        deduplication_key: None,
     };
     let res: (ApiResult<CreateRequestResponse>,) = update_candid_as(
         &env,
@@ -185,6 +186,7 @@ fn make_transfer_successful() {
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
         expiration_dt: None,
+        deduplication_key: None,
     };
     let res: (Result<CreateRequestResponse, ApiErrorDTO>,) = update_candid_as(
         &env,

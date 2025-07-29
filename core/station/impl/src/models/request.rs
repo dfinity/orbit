@@ -13,7 +13,7 @@ use crate::core::request::{
     RequestApprovalRightsEvaluator, RequestEvaluator, RequestPossibleApproversFinder,
 };
 use crate::errors::{EvaluateError, RequestError};
-use crate::repositories::USER_REPOSITORY;
+use crate::repositories::{REQUEST_REPOSITORY, USER_REPOSITORY};
 use candid::{CandidType, Deserialize};
 use orbit_essentials::model::ModelKey;
 use orbit_essentials::repository::Repository;
@@ -60,6 +60,8 @@ pub struct Request {
     pub created_timestamp: Timestamp,
     /// The last time the record was updated or created.
     pub last_modification_timestamp: Timestamp,
+    /// The deduplication key of the request.
+    pub deduplication_key: Option<String>,
 }
 
 #[storable]
@@ -177,6 +179,63 @@ fn validate_execution_plan(
     Ok(())
 }
 
+fn validate_deduplication_key(
+    deduplication_key: &Option<String>,
+    status: &RequestStatus,
+) -> ModelValidatorResult<RequestError> {
+    // Only check for duplicates when a request is created
+    let should_be_checked_for_duplicates = match status {
+        RequestStatus::Created => true,
+        RequestStatus::Approved
+        | RequestStatus::Rejected
+        | RequestStatus::Scheduled { .. }
+        | RequestStatus::Cancelled { .. }
+        | RequestStatus::Processing { .. }
+        | RequestStatus::Completed { .. }
+        | RequestStatus::Failed { .. } => false,
+    };
+
+    if let Some(deduplication_key) = deduplication_key {
+        if deduplication_key.len() > Request::MAX_DEDUPLICATION_KEY_LEN as usize {
+            return Err(RequestError::ValidationError {
+                info: format!(
+                    "The deduplication key length exceeds the maximum allowed: {}",
+                    Request::MAX_DEDUPLICATION_KEY_LEN
+                ),
+            });
+        }
+
+        if !should_be_checked_for_duplicates {
+            return Ok(());
+        }
+
+        if deduplication_key.trim().is_empty() {
+            return Err(RequestError::ValidationError {
+                info: "The deduplication key must not be empty".to_owned(),
+            });
+        }
+        let is_not_unique = REQUEST_REPOSITORY
+            .find_by_deduplication_key(deduplication_key.clone())
+            .iter()
+            .any(|request| {
+                matches!(
+                    request.status,
+                    RequestStatus::Created
+                        | RequestStatus::Scheduled { .. }
+                        | RequestStatus::Processing { .. }
+                        | RequestStatus::Approved
+                )
+            });
+        if is_not_unique {
+            return Err(RequestError::ValidationError {
+                info: "A request with the same deduplication key already exists".to_owned(),
+            });
+        }
+    }
+
+    Ok(())
+}
+
 fn validate_requested_by(requested_by: &UserId) -> ModelValidatorResult<RequestError> {
     USER_REPOSITORY
         .get(&UserKey { id: *requested_by })
@@ -210,6 +269,8 @@ impl ModelValidator<RequestError> for Request {
         validate_status(&self.status)?;
         self.operation.validate()?;
 
+        validate_deduplication_key(&self.deduplication_key, &self.status)?;
+
         Ok(())
     }
 }
@@ -218,6 +279,7 @@ impl Request {
     pub const MAX_TITLE_LEN: u8 = 255;
     pub const MAX_CANCEL_REASON_LEN: u16 = 1000;
     pub const MAX_SUMMARY_LEN: u16 = 1000;
+    pub const MAX_DEDUPLICATION_KEY_LEN: u8 = 64;
 
     /// Creates a new request key from the given key components.
     pub fn key(request_id: RequestId) -> RequestKey {
@@ -523,6 +585,108 @@ mod tests {
 
         assert!(result.is_ok());
     }
+
+    #[test]
+    fn test_request_deduplication_key_is_valid() {
+        let mut request = mock_request();
+        request.status = RequestStatus::Created;
+        request.deduplication_key = Some("a".to_string());
+        let result = validate_deduplication_key(&request.deduplication_key, &request.status);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn fail_request_deduplication_key_is_empty() {
+        let mut request = mock_request();
+        request.status = RequestStatus::Created;
+        request.deduplication_key = Some("".to_string());
+        let result = validate_deduplication_key(&request.deduplication_key, &request.status);
+
+        assert!(result.is_err());
+        assert_eq!(
+            result.unwrap_err(),
+            RequestError::ValidationError {
+                info: "The deduplication key must not be empty".to_owned()
+            }
+        );
+    }
+
+    #[test]
+    fn test_request_deduplication_key_is_unique() {
+        let mut request = mock_request();
+        request.status = RequestStatus::Created;
+        request.deduplication_key = Some("a".to_string());
+        REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+        let mut request = mock_request();
+        request.status = RequestStatus::Created;
+        request.deduplication_key = Some("b".to_string());
+        let result = validate_deduplication_key(&request.deduplication_key, &request.status);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_request_deduplication_key_can_be_reused_after_request_is_not_pending() {
+        let duplicatable_statuses = [
+            RequestStatus::Rejected,
+            RequestStatus::Cancelled { reason: None },
+            RequestStatus::Completed { completed_at: 0 },
+            RequestStatus::Failed { reason: None },
+        ];
+        for (i, initial_status) in duplicatable_statuses.iter().enumerate() {
+            let key = format!("{i}");
+            let mut request = mock_request();
+            request.status = initial_status.clone();
+            request.deduplication_key = Some(key.clone());
+            REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+            let mut request = mock_request();
+            request.status = RequestStatus::Created;
+            request.deduplication_key = Some(key);
+            let result = validate_deduplication_key(&request.deduplication_key, &request.status);
+
+            assert!(result.is_ok());
+        }
+    }
+
+    #[test]
+    fn fail_request_deduplication_key_is_not_unique() {
+        let validated_statuses = [
+            RequestStatus::Created,
+            RequestStatus::Approved,
+            RequestStatus::Scheduled { scheduled_at: 0 },
+            RequestStatus::Processing { started_at: 0 },
+        ];
+        for (i, initial_status) in validated_statuses.iter().enumerate() {
+            let key = format!("{i}");
+            let mut request = mock_request();
+            request.status = initial_status.clone();
+            request.deduplication_key = Some(key.clone());
+            REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+            let mut request = mock_request();
+            request.status = RequestStatus::Created;
+            request.deduplication_key = Some(key);
+            let result = validate_deduplication_key(&request.deduplication_key, &request.status);
+
+            assert!(result.is_err());
+            assert_eq!(
+                result.unwrap_err(),
+                RequestError::ValidationError {
+                    info: "A request with the same deduplication key already exists".to_owned()
+                }
+            );
+        }
+    }
+
+    #[test]
+    fn fail_request_deduplication_key_is_too_long() {
+        let mut request = mock_request();
+        request.status = RequestStatus::Created;
+        request.deduplication_key =
+            Some("a".repeat(Request::MAX_DEDUPLICATION_KEY_LEN as usize + 1));
+        let result = validate_deduplication_key(&request.deduplication_key, &request.status);
+        assert!(result.is_err());
+    }
 }
 
 #[cfg(any(test, feature = "canbench"))]
@@ -568,6 +732,7 @@ pub mod request_test_utils {
             }],
             created_timestamp: 0,
             last_modification_timestamp: 0,
+            deduplication_key: None,
         }
     }
 }

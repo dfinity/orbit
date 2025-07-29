@@ -130,7 +130,7 @@ impl RequestService {
             .then(|| {
                 self.evaluation_result_repository
                     .get(&request.id)
-                    .map(|evaluation| evaluation.to_owned())
+                    .map(|evaluation: crate::models::RequestEvaluationResult| evaluation.to_owned())
             })
             .flatten();
 
@@ -212,6 +212,7 @@ impl RequestService {
                 not_approvers: filter_by_votable.clone(),
                 not_requesters: filter_by_votable,
                 excluded_ids: vec![],
+                deduplication_keys: input.deduplication_keys.unwrap_or_default(),
             },
             input.sort_by,
         )?;
@@ -293,6 +294,7 @@ impl RequestService {
                 not_approvers: filter_by_votable.clone(),
                 not_requesters: filter_by_votable,
                 excluded_ids: exclude_request_ids,
+                deduplication_keys: vec![],
             },
             input.sort_by,
         )?;
@@ -786,6 +788,7 @@ mod tests {
                     summary: None,
                     execution_plan: None,
                     expiration_dt: None,
+                    deduplication_key: None,
                 },
                 &ctx.call_context,
             )
@@ -830,6 +833,7 @@ mod tests {
                     summary: None,
                     execution_plan: Some(station_api::RequestExecutionScheduleDTO::Immediate),
                     expiration_dt: None,
+                    deduplication_key: None,
                 },
                 &ctx.call_context,
             )
@@ -1022,6 +1026,7 @@ mod tests {
             paginate: None,
             sort_by: None,
             statuses: None,
+            deduplication_keys: None,
         };
 
         let users = vec![requester, approver, another_user];
@@ -1092,6 +1097,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: false,
                     with_evaluation_results: false,
+                    deduplication_keys: None,
                 },
                 &ctx.call_context,
             )
@@ -1227,6 +1233,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: true,
                     with_evaluation_results: false,
+                    deduplication_keys: None,
                 },
                 &ctx.call_context,
             )
@@ -1252,6 +1259,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: true,
                     with_evaluation_results: false,
+                    deduplication_keys: None,
                 },
                 &CallContext::new(transfer_requester_user.identities[0]),
             )
@@ -1276,6 +1284,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: true,
                     with_evaluation_results: false,
+                    deduplication_keys: None,
                 },
                 &CallContext::new(no_access_user.identities[0]),
             )
@@ -1317,6 +1326,7 @@ mod tests {
                     )),
                     only_approvable: true,
                     with_evaluation_results: false,
+                    deduplication_keys: None,
                 },
                 &ctx.call_context,
             )
@@ -1461,6 +1471,7 @@ mod tests {
                     sort_by: None,
                     only_approvable: true,
                     with_evaluation_results: false,
+                    deduplication_keys: None,
                 },
                 &CallContext::new(user_2.identities[0]),
             )
@@ -1503,6 +1514,7 @@ mod tests {
             ),
             summary: None,
             title: None,
+            deduplication_key: None,
         };
 
         let request_before_approval = REQUEST_SERVICE
@@ -1533,6 +1545,77 @@ mod tests {
         // assert that the request is still pending and the timestamp modification happened
         // only because of the approval
         assert!(request_after_approval.status == RequestStatus::Created);
+    }
+
+    #[tokio::test]
+    async fn list_by_deduplication_key_returns_correct_requests() {
+        let ctx = setup();
+        let user_2 = mock_user();
+        USER_REPOSITORY.insert(user_2.to_key(), user_2.clone());
+        REQUEST_POLICY_REPOSITORY.insert(
+            [0; 16],
+            RequestPolicy {
+                id: [0; 16],
+                specifier: RequestSpecifier::Transfer(ResourceIds::Any),
+                rule: RequestPolicyRule::QuorumPercentage(
+                    UserSpecifier::Id(vec![ctx.caller_user.id, user_2.id]),
+                    Percentage(100),
+                ),
+            },
+        );
+
+        let deduplication_keys = vec![
+            None,
+            Some("1".to_string()),
+            Some("1".to_string()),
+            Some("2".to_string()),
+            Some("3".to_string()),
+        ];
+
+        for deduplication_key in deduplication_keys {
+            let mut request = mock_request();
+            request.deduplication_key = deduplication_key;
+            REQUEST_REPOSITORY.insert(request.to_key(), request.clone());
+        }
+
+        let requests = ctx
+            .service
+            .list_requests(
+                ListRequestsInput {
+                    deduplication_keys: Some(vec!["1".to_string(), "2".to_string()]),
+                    requester_ids: None,
+                    approver_ids: None,
+                    statuses: None,
+                    operation_types: None,
+                    expiration_from_dt: None,
+                    expiration_to_dt: None,
+                    created_from_dt: None,
+                    created_to_dt: None,
+                    paginate: None,
+                    sort_by: None,
+                    only_approvable: false,
+                    with_evaluation_results: false,
+                },
+                &CallContext::new(user_2.identities[0]),
+            )
+            .await
+            .expect("Failed to list requests");
+
+        assert_eq!(requests.items.len(), 3);
+
+        // go over the results and make sure there are 2 with deduplication key 1 and 1 with deduplication key 2
+        let mut deduplication_key_1_count = 0;
+        let mut deduplication_key_2_count = 0;
+        for request in requests.items {
+            if request.deduplication_key == Some("1".to_string()) {
+                deduplication_key_1_count += 1;
+            } else if request.deduplication_key == Some("2".to_string()) {
+                deduplication_key_2_count += 1;
+            }
+        }
+
+        assert_eq!(deduplication_key_1_count, 2);
+        assert_eq!(deduplication_key_2_count, 1);
     }
 }
 
@@ -1620,6 +1703,7 @@ mod benchs {
                             )),
                             only_approvable: false,
                             with_evaluation_results: false,
+                            deduplication_keys: None,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )
@@ -1665,6 +1749,7 @@ mod benchs {
                             )),
                             only_approvable: false,
                             with_evaluation_results: false,
+                            deduplication_keys: None,
                         },
                         &CallContext::new(Principal::from_slice(&[5; 29])),
                     )
