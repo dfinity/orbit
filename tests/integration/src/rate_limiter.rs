@@ -75,6 +75,7 @@ fn test_request_size_rate_limiter() {
             summary: None,
             execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
             expiration_dt: None,
+            deduplication_key: None,
             tags: None,
         };
         let bytes = Encode!(&create_request_input).unwrap();
@@ -134,6 +135,7 @@ where
             summary: None,
             execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
             expiration_dt: None,
+            deduplication_key: None,
             tags: None,
         };
         let create_request_bytes = Encode!(&create_request_input).unwrap();

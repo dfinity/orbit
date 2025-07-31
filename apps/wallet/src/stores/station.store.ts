@@ -103,6 +103,7 @@ export const createUserInitialAccount = async (
         transfer_request_policy: [{ Quorum: { min_approved: 1, approvers: { Id: [userId] } } }],
       },
     },
+    deduplication_key: [],
   });
 };
 

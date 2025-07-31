@@ -476,6 +476,7 @@ fn assert_can_list_requests(
                 offset: Some(0),
                 limit: Some(25),
             }),
+            deduplication_keys: None,
             tags: None,
         },),
     )

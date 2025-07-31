@@ -239,6 +239,7 @@ pub mod request_policy_test_utils {
                     summary: None,
                     execution_plan: None,
                     expiration_dt: None,
+                    deduplication_key: None,
                     tags: None,
                 },
                 &ctx,

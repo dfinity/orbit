@@ -19,6 +19,7 @@ pub struct RequestIndexFields {
     pub approved_by: BTreeSet<UserId>,
     pub rejected_by: BTreeSet<UserId>,
     pub resources: Vec<Resource>,
+    pub deduplication_key: Option<String>,
     #[serde(default)]
     pub tags: Vec<String>,
 }
@@ -32,6 +33,8 @@ pub enum RequestIndexKeyKind {
     ScheduledAt(Timestamp),
     // Always created for each request, with the status of the request
     Status(RequestStatusCode),
+    // Only created if the request has a deduplication key, with the deduplication key
+    DeduplicationKey(String),
 }
 
 #[storable]
@@ -73,6 +76,7 @@ impl Request {
                 })
                 .collect(),
             resources: self.operation.to_resources(),
+            deduplication_key: self.deduplication_key.clone(),
             tags: self.tags.clone(),
         }
     }
@@ -113,11 +117,28 @@ impl Request {
         )
     }
 
+    /// Converts the request to an index by its deduplication key if it has one.
+    fn to_index_by_deduplication_key(&self) -> Option<(RequestIndexKey, RequestIndexFields)> {
+        self.deduplication_key.as_ref().map(|deduplication_key| {
+            (
+                RequestIndexKey {
+                    kind: RequestIndexKeyKind::DeduplicationKey(deduplication_key.clone()),
+                    request_id: self.id,
+                },
+                self.index_fields(),
+            )
+        })
+    }
+
     /// Converts the request to a list of indexes.
     pub fn to_indexes(&self) -> Vec<(RequestIndexKey, RequestIndexFields)> {
         let mut indexes = vec![self.to_index_by_status(), self.to_index_by_created_at()];
 
         if let Some(index) = self.to_index_by_scheduled_at() {
+            indexes.push(index);
+        }
+
+        if let Some(index) = self.to_index_by_deduplication_key() {
             indexes.push(index);
         }
 

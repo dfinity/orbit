@@ -30,6 +30,7 @@ fn register_user_successful() {
         summary: None,
         execution_plan: Some(RequestExecutionScheduleDTO::Immediate),
         expiration_dt: None,
+        deduplication_key: None,
         tags: None,
     };
 

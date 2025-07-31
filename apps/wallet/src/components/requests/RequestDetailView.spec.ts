@@ -55,6 +55,7 @@ const pendingProps: RequestDetailViewProps = {
     summary: [],
     tags: [],
     title: '',
+    deduplication_key: [],
   },
 };
 
@@ -102,6 +103,7 @@ const approvedProps: RequestDetailViewProps = {
     summary: [],
     tags: [],
     title: '',
+    deduplication_key: [],
   },
 };
 
@@ -149,6 +151,7 @@ const rejectedProps: RequestDetailViewProps = {
     summary: [],
     tags: [],
     title: '',
+    deduplication_key: [],
   },
 };
 const failedProps: RequestDetailViewProps = {
@@ -195,6 +198,7 @@ const failedProps: RequestDetailViewProps = {
     summary: [],
     tags: [],
     title: '',
+    deduplication_key: [],
   },
 };
 
@@ -242,6 +246,7 @@ const cancelledProps: RequestDetailViewProps = {
     summary: [],
     tags: [],
     title: '',
+    deduplication_key: [],
   },
 };
 
