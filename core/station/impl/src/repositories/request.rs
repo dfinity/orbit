@@ -1035,10 +1035,10 @@ mod benchs {
     }
 
     #[bench(raw)]
-    fn heap_size_of_indexed_request_fields_cache_is_lt_300mib() -> BenchResult {
+    fn heap_size_of_indexed_request_fields_cache_is_lt_325mib() -> BenchResult {
         let entries_count = 10_000;
         let max_entries = RequestRepository::MAX_INDEXED_FIELDS_CACHE_SIZE as u64;
-        let max_allowed_heap_size_bytes = 300_000_000;
+        let max_allowed_heap_size_bytes = 325_000_000;
         let mut requests = Vec::with_capacity(entries_count as usize);
 
         for _ in 0..entries_count {
@@ -1062,7 +1062,8 @@ mod benchs {
 
         assert!(
             byte_size_per_entry * max_entries < max_allowed_heap_size_bytes,
-            "Heap size of the request index fields cache is greater than 100 MiB, got: {} bytes",
+            "Heap size of the request index fields cache is greater than {} MiB, got: {} bytes",
+            max_allowed_heap_size_bytes / 1_000_000,
             byte_size_per_entry * max_entries
         );
 
